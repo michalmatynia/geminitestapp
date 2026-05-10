@@ -15,6 +15,7 @@
 import 'server-only';
 
 import fs from 'fs/promises';
+import type { Dirent } from 'fs';
 import path from 'path';
 
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
@@ -71,9 +72,55 @@ const deriveAssetName = (filename: string): string | null => {
   const withoutExt = filename.replace(/\.[^/.]+$/, '');
   const withoutTimestampPrefix = withoutExt.replace(/^\d{10,}-/, '');
   const cleaned = withoutTimestampPrefix.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
-  if (!cleaned) return null;
+  if (cleaned === '') return null;
   return toTitleCase(cleaned);
 };
+
+interface Asset3DReindexStats {
+  diskFiles: number;
+  supportedFiles: number;
+  existingRecords: number;
+  created: number;
+  skipped: number;
+  createdIds: string[];
+}
+
+const buildReindexStats = (
+  diskFiles: string[],
+  supported: string[],
+  existingRecords: number,
+  createdIds: string[]
+): Asset3DReindexStats => ({
+  diskFiles: diskFiles.length,
+  supportedFiles: supported.length,
+  existingRecords,
+  created: createdIds.length,
+  skipped: supported.length - createdIds.length,
+  createdIds,
+});
+
+async function createMissingAsset(filename: string): Promise<string> {
+  const repository = getAsset3DRepository();
+  const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
+  const format = SUPPORTED_3D_FORMATS[ext];
+  const stat = await fs.stat(path.join(assets3dDiskDir, filename));
+  const record = await repository.createAsset3D({
+    name: deriveAssetName(filename) ?? filename,
+    description: null,
+    filename,
+    filepath: `${assets3dPublicDir}/${filename}`,
+    fileUrl: `${assets3dPublicDir}/${filename}`,
+    mimetype: format.mimetype,
+    size: stat.size,
+    fileSize: stat.size,
+    format: ext.slice(1),
+    tags: [],
+    categoryId: null,
+    metadata: {},
+    isPublic: false,
+  });
+  return record.id;
+}
 
 /**
  * Reindexes 3D assets from disk into the database
@@ -87,37 +134,23 @@ const deriveAssetName = (filename: string): string | null => {
  *   - skipped: Files already in database
  *   - createdIds: IDs of newly created records
  */
-export async function reindexAsset3DUploadsFromDisk(): Promise<{
-  diskFiles: number;
-  supportedFiles: number;
-  existingRecords: number;
-  created: number;
-  skipped: number;
-  createdIds: string[];
-}> {
+export async function reindexAsset3DUploadsFromDisk(): Promise<Asset3DReindexStats> {
   // Read all files from the assets directory
-  const entries: import('fs').Dirent[] = await fs
+  const entries: Dirent[] = await fs
     .readdir(assets3dDiskDir, { withFileTypes: true })
     .catch(() => []);
   
   // Filter to only files (not directories)
   const diskFiles: string[] = entries
-    .filter((entry: import('fs').Dirent) => entry.isFile())
-    .map((entry: import('fs').Dirent) => entry.name);
+    .filter((entry: Dirent) => entry.isFile())
+    .map((entry: Dirent) => entry.name);
   
   // Filter to only supported 3D formats
   const supported: string[] = diskFiles.filter(isSupported3DFile);
 
   // Early return if no supported files found
   if (supported.length === 0) {
-    return {
-      diskFiles: diskFiles.length,
-      supportedFiles: 0,
-      existingRecords: 0,
-      created: 0,
-      skipped: 0,
-      createdIds: [],
-    };
+    return buildReindexStats(diskFiles, supported, 0, []);
   }
 
   // Get repository and existing assets from database
@@ -129,7 +162,9 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   const existingNames: Set<string> = new Set(
     existingAssets
       .map((asset) => asset.filename)
-      .filter((filename): filename is string => Boolean(filename && supportedNames.has(filename)))
+      .filter(
+        (filename): filename is string => filename !== undefined && supportedNames.has(filename)
+      )
   );
 
   // Find files on disk that don't have database records
@@ -137,44 +172,9 @@ export async function reindexAsset3DUploadsFromDisk(): Promise<{
   
   // Early return if all files already indexed
   if (missing.length === 0) {
-    return {
-      diskFiles: diskFiles.length,
-      supportedFiles: supported.length,
-      existingRecords: existingNames.size,
-      created: 0,
-      skipped: supported.length,
-      createdIds: [],
-    };
+    return buildReindexStats(diskFiles, supported, existingNames.size, []);
   }
 
-  const createdIds: string[] = await Promise.all(missing.map(async (filename) => {
-    const ext = `.${filename.split('.').pop() ?? ''}`.toLowerCase() as Supported3DExtension;
-    const format = SUPPORTED_3D_FORMATS[ext];
-    const stat = await fs.stat(path.join(assets3dDiskDir, filename));
-    const record = await repository.createAsset3D({
-      name: deriveAssetName(filename) ?? filename,
-      description: null,
-      filename,
-      filepath: `${assets3dPublicDir}/${filename}`,
-      fileUrl: `${assets3dPublicDir}/${filename}`,
-      mimetype: format?.mimetype ?? 'application/octet-stream',
-      size: stat.size,
-      fileSize: stat.size,
-      format: ext.slice(1),
-      tags: [],
-      categoryId: null,
-      metadata: {},
-      isPublic: false,
-    });
-    return record.id;
-  }));
-
-  return {
-    diskFiles: diskFiles.length,
-    supportedFiles: supported.length,
-    existingRecords: existingNames.size,
-    created: createdIds.length,
-    skipped: supported.length - missing.length,
-    createdIds,
-  };
+  const createdIds: string[] = await Promise.all(missing.map(createMissingAsset));
+  return buildReindexStats(diskFiles, supported, existingNames.size, createdIds);
 }

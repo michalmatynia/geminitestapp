@@ -29,10 +29,6 @@ vi.mock('@/features/integrations/services/base-listing-canonicalization', () => 
     ['baselinker', 'base', 'base-com'].includes((value ?? '').trim().toLowerCase()),
 }));
 
-vi.mock('@/features/integrations/services/ecommerce-product-export', () => ({
-  checkEcommerceProductsExistence: async () => new Set<string>(),
-}));
-
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: vi.fn(),
 }));
@@ -82,6 +78,7 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'auth_required',
       },
     });
@@ -123,6 +120,7 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'auth_required',
       },
     });
@@ -159,6 +157,7 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'active',
       },
     });
@@ -195,6 +194,7 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'closed',
       },
     });
@@ -231,6 +231,7 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'closed',
       },
     });
@@ -269,7 +270,93 @@ describe('integration product listings handler', () => {
 
     expect(payload).toEqual({
       'product-1': {
+        ecommerce: 'active',
         tradera: 'processing',
+      },
+    });
+  });
+
+  it('assumes requested products are active in ecommerce by default', async () => {
+    listIntegrationsMock.mockResolvedValue([]);
+    listProductListingsByProductIdsMock.mockResolvedValue([]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1,product-2'
+      ),
+      {
+        query: { productIds: ['product-1', 'product-2'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        ecommerce: 'active',
+      },
+      'product-2': {
+        ecommerce: 'active',
+      },
+    });
+  });
+
+  it('reads ecommerce badges from product listing records', async () => {
+    listIntegrationsMock.mockResolvedValue([]);
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-ecommerce',
+        productId: 'product-1',
+        integrationId: 'ecommerce-export',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        ecommerce: 'active',
+      },
+    });
+  });
+
+  it('keeps explicit ecommerce removal status from product listing records', async () => {
+    listIntegrationsMock.mockResolvedValue([]);
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-ecommerce',
+        productId: 'product-1',
+        integrationId: 'ecommerce-export',
+        status: 'removed',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        ecommerce: 'removed',
       },
     });
   });

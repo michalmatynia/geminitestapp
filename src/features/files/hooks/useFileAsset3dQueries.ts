@@ -23,22 +23,30 @@ const normalizeAsset3DListFilters = (filters: Asset3DListFilters): Asset3DListFi
     ).sort((left, right) => left.localeCompare(right))
     : [];
 
-  return {
-    ...(normalizedFilename ? { filename: normalizedFilename } : {}),
-    ...(normalizedCategory ? { categoryId: normalizedCategory } : {}),
-    ...(normalizedSearch ? { search: normalizedSearch } : {}),
-    ...(normalizedTags.length > 0 ? { tags: normalizedTags } : {}),
-    ...(typeof filters.isPublic === 'boolean' ? { isPublic: filters.isPublic } : {}),
-  };
+  const result: Asset3DListFilters = {};
+  if (normalizedFilename !== '') result.filename = normalizedFilename;
+  if (normalizedCategory !== '') result.categoryId = normalizedCategory;
+  if (normalizedSearch !== '') result.search = normalizedSearch;
+  if (normalizedTags.length > 0) result.tags = normalizedTags;
+  if (typeof filters.isPublic === 'boolean') result.isPublic = filters.isPublic;
+  return result;
 };
 
 const fetchAssets3D = async (filters: Asset3DListFilters): Promise<Asset3DRecord[]> => {
   const params: Record<string, string> = {};
-  if (filters.filename) params['filename'] = filters.filename;
-  if (filters.categoryId) params['categoryId'] = filters.categoryId;
-  if (filters.search) params['search'] = filters.search;
-  if (filters.isPublic !== undefined) params['isPublic'] = String(filters.isPublic);
-  if (filters.tags && filters.tags.length > 0) {
+  if (filters.filename !== undefined && filters.filename !== '') {
+    params['filename'] = filters.filename;
+  }
+  if (filters.categoryId !== undefined && filters.categoryId !== '') {
+    params['categoryId'] = filters.categoryId;
+  }
+  if (filters.search !== undefined && filters.search !== '') {
+    params['search'] = filters.search;
+  }
+  if (filters.isPublic !== undefined) {
+    params['isPublic'] = String(filters.isPublic);
+  }
+  if (Array.isArray(filters.tags) && filters.tags.length > 0) {
     params['tags'] = filters.tags.join(',');
   }
 

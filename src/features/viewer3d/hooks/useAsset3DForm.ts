@@ -13,12 +13,51 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react';
 
 import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { updateAsset3D } from '../api';
+
+interface UseAsset3DFormReturn {
+  name: string;
+  setName: Dispatch<SetStateAction<string>>;
+  description: string;
+  setDescription: Dispatch<SetStateAction<string>>;
+  category: string;
+  setCategory: Dispatch<SetStateAction<string>>;
+  tags: string[];
+  setTags: Dispatch<SetStateAction<string[]>>;
+  newTag: string;
+  setNewTag: Dispatch<SetStateAction<string>>;
+  isPublic: boolean;
+  setIsPublic: Dispatch<SetStateAction<boolean>>;
+  isSaving: boolean;
+  error: string | null;
+  handleAddTag: () => void;
+  handleRemoveTag: (tag: string) => void;
+  handleSave: () => Promise<void>;
+}
+
+const getAssetTags = (asset: Asset3DRecord): string[] => asset.tags ?? [];
+
+function buildAssetUpdateInput(
+  asset: Asset3DRecord,
+  form: { name: string; description: string; category: string; tags: string[]; isPublic: boolean }
+): Asset3DUpdateInput {
+  const trimmedName = form.name.trim();
+  const trimmedDescription = form.description.trim();
+  const trimmedCategory = form.category.trim();
+
+  return {
+    name: trimmedName !== '' ? trimmedName : asset.name,
+    description: trimmedDescription !== '' ? trimmedDescription : null,
+    categoryId: trimmedCategory !== '' ? trimmedCategory : null,
+    tags: form.tags,
+    isPublic: form.isPublic,
+  };
+}
 
 /**
  * Hook for managing 3D asset edit form state and operations
@@ -31,12 +70,12 @@ export function useAsset3DForm(
   asset: Asset3DRecord,
   onSave: (updated: Asset3DRecord) => void,
   onClose: () => void
-) {
+): UseAsset3DFormReturn {
   /** Form field states initialized from asset data */
-  const [name, setName] = useState(asset.name ?? '');
+  const [name, setName] = useState(asset.name);
   const [description, setDescription] = useState(asset.description ?? '');
   const [category, setCategory] = useState(asset.categoryId ?? '');
-  const [tags, setTags] = useState<string[]>(asset.tags || []);
+  const [tags, setTags] = useState<string[]>(getAssetTags(asset));
   const [newTag, setNewTag] = useState('');
   const [isPublic, setIsPublic] = useState(asset.isPublic ?? false);
   
@@ -46,10 +85,10 @@ export function useAsset3DForm(
 
   /** Sync form state when asset prop changes */
   useEffect(() => {
-    setName(asset.name ?? '');
+    setName(asset.name);
     setDescription(asset.description ?? '');
     setCategory(asset.categoryId ?? '');
-    setTags(asset.tags || []);
+    setTags(getAssetTags(asset));
     setIsPublic(asset.isPublic ?? false);
     setError(null);
   }, [asset]);
@@ -57,7 +96,7 @@ export function useAsset3DForm(
   /** Add new tag to the list if valid and unique */
   const handleAddTag = useCallback((): void => {
     const trimmed = newTag.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) {
+    if (trimmed !== '' && !tags.includes(trimmed)) {
       setTags([...tags, trimmed]);
       setNewTag('');
     }
@@ -74,15 +113,7 @@ export function useAsset3DForm(
     setError(null);
 
     try {
-      /** Prepare update payload with normalized data */
-      const data: Asset3DUpdateInput = {
-        name: name.trim() || asset.name,
-        description: description.trim() || null,
-        categoryId: category.trim() || null,
-        tags,
-        isPublic,
-      };
-
+      const data = buildAssetUpdateInput(asset, { name, description, category, tags, isPublic });
       const updated = await updateAsset3D(asset.id, data);
       onSave(updated);
       onClose();
@@ -95,23 +126,5 @@ export function useAsset3DForm(
     }
   }, [name, description, category, tags, isPublic, asset.id, onSave, onClose]);
 
-  return {
-    name,
-    setName,
-    description,
-    setDescription,
-    category,
-    setCategory,
-    tags,
-    setTags,
-    newTag,
-    setNewTag,
-    isPublic,
-    setIsPublic,
-    isSaving,
-    error,
-    handleAddTag,
-    handleRemoveTag,
-    handleSave,
-  };
+  return { name, setName, description, setDescription, category, setCategory, tags, setTags, newTag, setNewTag, isPublic, setIsPublic, isSaving, error, handleAddTag, handleRemoveTag, handleSave };
 }

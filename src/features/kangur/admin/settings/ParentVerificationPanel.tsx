@@ -1,9 +1,9 @@
-import { FormSection } from '@/features/kangur/shared/ui';
+import { AdminPanel } from '../shared/AdminPanel';
 import { KangurParentVerificationSettingsPanel } from '../components/KangurParentVerificationSettingsPanel';
 
 export function ParentVerificationPanel({ controller, className }: any) {
   return (
-    <FormSection title='Parent Verification' description='Manage email verification and CAPTCHA rules.' className={className}>
+    <AdminPanel title='Parent Verification' description='Manage email verification and CAPTCHA rules.' className={className}>
       <KangurParentVerificationSettingsPanel
         requireEmailVerification={controller.parentVerificationRequireEmailVerification}
         setRequireEmailVerification={controller.setParentVerificationRequireEmailVerification}
@@ -17,6 +17,6 @@ export function ParentVerificationPanel({ controller, className }: any) {
         setResendCooldownInput={controller.setParentVerificationResendCooldownInput}
         notificationsPausedUntil={controller.parentVerificationNotificationsPausedUntil}
       />
-    </FormSection>
+    </AdminPanel>
   );
 }

@@ -322,11 +322,14 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     [parameterMapperRuleStatuses, parameterMapperRules, showStaleRulesOnly]
   );
   const categoryMapperHref = useMemo((): string => {
-    const params = new URLSearchParams({ marketplace: 'tradera' });
+    const params = new URLSearchParams();
     if (selectedConnectionId) {
       params.set('connectionId', selectedConnectionId);
     }
-    return `/admin/integrations/marketplaces/category-mapper?${params.toString()}`;
+    const queryString = params.toString();
+    return `/admin/integrations/marketplaces/tradera/category-mapping${
+      queryString ? `?${queryString}` : ''
+    }`;
   }, [selectedConnectionId]);
 
   useEffect(() => {

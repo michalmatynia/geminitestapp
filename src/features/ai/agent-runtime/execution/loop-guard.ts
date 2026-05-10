@@ -1,4 +1,3 @@
-import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -12,8 +11,9 @@ import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-dele
 import type { LoopSignal, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { detectLoopPattern } from './loop-guard-patterns';
 
+export { detectLoopPattern };
 
 type PlanStepSpecInput = {
   title?: string;
@@ -64,72 +64,157 @@ const runLoopGuardTask = async (input: {
   return response.text.trim();
 };
 
-export const detectLoopPattern = (
-  recent: Array<{
-    title: string;
-    status: PlanStep['status'];
-    tool?: string | null;
-    url: string | null;
-  }>
-): LoopSignal | null => {
-  if (recent.length < 3) return null;
-  const lastThree = recent.slice(-3);
-  const lastFour = recent.slice(-4);
-  const titlesThree = lastThree.map((item: { title: string }) => item.title);
-  const titlesFour = lastFour.map((item: { title: string }) => item.title);
-  const urlsThree = lastThree.map((item: { url: string | null }) => item.url);
-  const statusesThree = lastThree.map((item: { status: PlanStep['status'] }) => item.status);
-  const sameTitle = new Set(titlesThree.map((title: string) => title.toLowerCase())).size === 1;
-  if (sameTitle) {
-    return {
-      reason: 'Repeated the same step multiple times.',
-      pattern: 'repeat-same-step',
-      titles: titlesThree,
-      urls: urlsThree,
-      statuses: statusesThree,
-    };
+interface ParsedLoopGuardResponse {
+  action?: string;
+  reason?: string;
+  questions?: string[];
+  evidence?: string[];
+  steps?: Array<{
+    title?: string;
+    tool?: string;
+    expectedObservation?: string;
+    successCriteria?: string;
+    phase?: string;
+    priority?: number;
+    dependsOn?: number[] | string[];
+  }>;
+  goals?: Array<{
+    title?: string;
+    successCriteria?: string;
+    subgoals?: Array<{
+      title?: string;
+      successCriteria?: string;
+      steps?: Array<{
+        title?: string;
+        tool?: string;
+        expectedObservation?: string;
+        successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+      }>;
+    }>;
+  }>;
+  taskType?: string;
+}
+
+const resolveLoopGuardSteps = (args: {
+  parsed: ParsedLoopGuardResponse;
+  action: 'continue' | 'replan' | 'wait_human';
+  meta: PlannerMeta;
+  maxSteps: number;
+  maxStepAttempts: number;
+}): PlanStep[] => {
+  const { parsed, action, meta, maxSteps, maxStepAttempts } = args;
+  if (action !== 'replan') return [];
+
+  const hierarchy = normalizePlanHierarchy(parsed);
+  const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
+  const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+
+  const steps = buildPlanStepsFromSpecs(
+    normalizePlanStepSpecs(stepSpecs),
+    meta,
+    true,
+    maxStepAttempts
+  ).slice(0, maxSteps);
+
+  if (steps.length === 0) {
+    const fallbackBranch = buildBranchStepsFromAlternatives(
+      meta.alternatives ?? undefined,
+      maxStepAttempts,
+      maxSteps
+    );
+    if (fallbackBranch.length > 0) return fallbackBranch;
   }
-  if (lastFour.length === 4) {
-    const [a, b, c, d] = titlesFour.map((title: string) => title.toLowerCase());
-    if (a === c && b === d && a !== b) {
-      return {
-        reason: 'Alternating between the same two steps.',
-        pattern: 'alternate-two-steps',
-        titles: titlesFour,
-        urls: lastFour.map((item: { url: string | null }) => item.url),
-        statuses: lastFour.map((item: { status: PlanStep['status'] }) => item.status),
-      };
-    }
-  }
-  const stableUrl =
-    urlsThree[0] !== null &&
-    urlsThree.every((url: string | null) => url !== null && url.length > 0 && url === urlsThree[0]) &&
-    statusesThree.filter((status: PlanStep['status']) => status === 'failed').length >= 2;
-  if (stableUrl) {
-    return {
-      reason: 'Repeated failures on the same URL.',
-      pattern: 'same-url-failures',
-      titles: titlesThree,
-      urls: urlsThree,
-      statuses: statusesThree,
-    };
-  }
-  return null;
+
+  return steps;
 };
 
-export async function buildLoopGuardReview({
-  prompt,
-  memory,
-  model,
-  browserContext,
-  currentPlan,
-  completedIndex,
-  loopSignal,
-  lastError,
-  runId,
-  maxSteps,
-  maxStepAttempts,
-}: {
+const recordLoopGuardAudit = async (
+  runId: string | undefined,
+  action: string,
+  reason: string | null,
+  loopSignal: LoopSignal
+): Promise<void> => {
+  const agentAuditLog = getAgentAuditLogDelegate();
+  if (agentAuditLog && runId !== undefined) {
+    await agentAuditLog.create({
+      data: {
+        runId,
+        level: 'info',
+        message: 'Loop guard completed.',
+        metadata: {
+          action,
+          reason,
+          loop: loopSignal,
+        },
+      },
+    });
+  }
+};
+
+const buildLoopGuardUserContent = (args: {
+  prompt: string;
+  memory: string[];
+  browserContext?: {
+    url: string;
+    title: string | null;
+    domTextSample: string;
+    logs: { level: string; message: string }[];
+    uiInventory?: unknown;
+  } | null;
+  lastError?: string | null;
+  loopSignal: LoopSignal;
+  completedIndex: number;
+  currentPlan: PlanStep[];
+  maxSteps: number;
+}): string => {
+  return JSON.stringify({
+    prompt: args.prompt,
+    memory: args.memory,
+    browserContext: args.browserContext,
+    lastError: args.lastError,
+    loopSignal: args.loopSignal,
+    completedStepIndex: args.completedIndex,
+    currentPlan: args.currentPlan.map((step: PlanStep) => ({
+      title: step.title,
+      status: step.status,
+      tool: step.tool,
+      expectedObservation: step.expectedObservation,
+      successCriteria: step.successCriteria,
+    })),
+    maxSteps: args.maxSteps,
+  });
+};
+
+const performLoopGuardReview = async (args: {
+  model: string;
+  prompt: string;
+  memory: string[];
+  browserContext?: {
+    url: string;
+    title: string | null;
+    domTextSample: string;
+    logs: { level: string; message: string }[];
+    uiInventory?: unknown;
+  } | null;
+  lastError?: string | null;
+  loopSignal: LoopSignal;
+  completedIndex: number;
+  currentPlan: PlanStep[];
+  maxSteps: number;
+}): Promise<ParsedLoopGuardResponse | null> => {
+  const content = await runLoopGuardTask({
+    model: args.model,
+    systemPrompt:
+      'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
+    userContent: buildLoopGuardUserContent(args),
+  });
+  return parsePlanJson(content) as ParsedLoopGuardResponse | null;
+};
+
+export interface LoopGuardReviewArgs {
   prompt: string;
   memory: string[];
   model: string;
@@ -147,7 +232,9 @@ export async function buildLoopGuardReview({
   runId?: string;
   maxSteps: number;
   maxStepAttempts: number;
-}): Promise<{
+}
+
+export interface LoopGuardReviewResult {
   action: 'continue' | 'replan' | 'wait_human';
   reason?: string;
   questions?: string[];
@@ -155,103 +242,23 @@ export async function buildLoopGuardReview({
   steps: PlanStep[];
   hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
   meta?: PlannerMeta | null;
-}> {
+}
+
+export async function buildLoopGuardReview(args: LoopGuardReviewArgs): Promise<LoopGuardReviewResult> {
+  const { runId, maxSteps, maxStepAttempts, loopSignal } = args;
+
   try {
-    const content = await runLoopGuardTask({
-      model,
-      systemPrompt:
-        'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
-      userContent: JSON.stringify({
-        prompt,
-        memory,
-        browserContext,
-        lastError,
-        loopSignal,
-        completedStepIndex: completedIndex,
-        currentPlan: currentPlan.map((step: PlanStep) => ({
-          title: step.title,
-          status: step.status,
-          tool: step.tool,
-          expectedObservation: step.expectedObservation,
-          successCriteria: step.successCriteria,
-        })),
-        maxSteps,
-      }),
-    });
-    const parsed = parsePlanJson(content) as {
-      action?: string;
-      reason?: string;
-      questions?: string[];
-      evidence?: string[];
-      steps?: Array<{
-        title?: string;
-        tool?: string;
-        expectedObservation?: string;
-        successCriteria?: string;
-        phase?: string;
-        priority?: number;
-        dependsOn?: number[] | string[];
-      }>;
-      goals?: Array<{
-        title?: string;
-        successCriteria?: string;
-        subgoals?: Array<{
-          title?: string;
-          successCriteria?: string;
-          steps?: Array<{
-            title?: string;
-            tool?: string;
-            expectedObservation?: string;
-            successCriteria?: string;
-            phase?: string;
-            priority?: number;
-            dependsOn?: number[] | string[];
-          }>;
-        }>;
-      }>;
-      taskType?: string;
-    } | null;
+    const parsed = await performLoopGuardReview(args);
     if (!parsed) return { action: 'continue', steps: [] };
+
     const action =
       parsed.action === 'replan' || parsed.action === 'wait_human' ? parsed.action : 'continue';
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
-    const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
-    let steps =
-      action === 'replan'
-        ? buildPlanStepsFromSpecs(
-          normalizePlanStepSpecs(stepSpecs),
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(0, maxSteps)
-        : [];
-    if (action === 'replan' && steps.length === 0) {
-      const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta.alternatives ?? undefined,
-        maxStepAttempts,
-        maxSteps
-      );
-      if (fallbackBranch.length > 0) {
-        steps = fallbackBranch;
-      }
-    }
-    const agentAuditLog = getAgentAuditLogDelegate();
-    if (agentAuditLog && runId !== undefined) {
-      await agentAuditLog.create({
-        data: {
-          runId,
-          level: 'info',
-          message: 'Loop guard completed.',
-          metadata: {
-            action,
-            reason: parsed.reason ?? null,
-            loop: loopSignal,
-          },
-        },
-      });
-    }
+    const steps = resolveLoopGuardSteps({ parsed, action, meta, maxSteps, maxStepAttempts });
+
+    await recordLoopGuardAudit(runId, action, parsed.reason ?? null, loopSignal);
+
     return {
       action,
       ...(parsed.reason !== undefined && parsed.reason !== '' && { reason: parsed.reason }),
@@ -262,15 +269,13 @@ export async function buildLoopGuardReview({
       meta,
     };
   } catch (error) {
-    logClientError(error);
-    if (DEBUG_CHATBOT) {
-      void ErrorSystem.logWarning('Loop guard failed', {
-        service: 'agent-engine',
-        action: 'loop-guard',
-        runId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'agent-engine',
+      feature: 'agent-runtime',
+      action: 'loop-guard',
+      runId,
+    });
     return { action: 'continue', steps: [] };
   }
 }
+

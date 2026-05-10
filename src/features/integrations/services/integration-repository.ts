@@ -21,6 +21,94 @@ const toIntegrationWithConnectionsBase = (
   updatedAt: toIsoStringOrNull(integration.updatedAt),
 });
 
+type Scanner1688ConnectionFields = Pick<
+  IntegrationConnectionBasic,
+  | 'scanner1688StartUrl'
+  | 'scanner1688LoginMode'
+  | 'scanner1688DefaultSearchMode'
+  | 'scanner1688CandidateResultLimit'
+  | 'scanner1688MinimumCandidateScore'
+  | 'scanner1688MaxExtractedImages'
+  | 'scanner1688AllowUrlImageSearchFallback'
+>;
+
+type TraderaListingConnectionFields = Pick<
+  IntegrationConnectionBasic,
+  | 'traderaDefaultTemplateId'
+  | 'traderaDefaultDurationHours'
+  | 'traderaAutoRelistEnabled'
+  | 'traderaAutoRelistLeadMinutes'
+>;
+
+type TraderaApiConnectionFields = Pick<
+  IntegrationConnectionBasic,
+  'traderaApiAppId' | 'traderaApiPublicKey' | 'traderaApiUserId' | 'traderaApiSandbox'
+>;
+
+type GoogleConnectionFields = Pick<
+  IntegrationConnectionBasic,
+  'hasGoogleAccessToken' | 'googleScope' | 'googleExpiresAt' | 'googleTokenUpdatedAt'
+>;
+
+type BaseConnectionFields = Pick<IntegrationConnectionBasic, 'baseLastInventoryId'>;
+
+type JobApplicationConnectionFields = Pick<
+  IntegrationConnectionBasic,
+  'jobApplicationPersonId' | 'jobApplicationPersonName'
+>;
+
+const toScanner1688ConnectionFields = (
+  connection: IntegrationConnectionRecord
+): Scanner1688ConnectionFields => ({
+  scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
+  scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
+  scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,
+  scanner1688CandidateResultLimit: connection.scanner1688CandidateResultLimit ?? null,
+  scanner1688MinimumCandidateScore: connection.scanner1688MinimumCandidateScore ?? null,
+  scanner1688MaxExtractedImages: connection.scanner1688MaxExtractedImages ?? null,
+  scanner1688AllowUrlImageSearchFallback: connection.scanner1688AllowUrlImageSearchFallback ?? null,
+});
+
+const toTraderaListingConnectionFields = (
+  connection: IntegrationConnectionRecord
+): TraderaListingConnectionFields => ({
+  traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
+  traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
+  traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
+  traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180,
+});
+
+const toTraderaApiConnectionFields = (
+  connection: IntegrationConnectionRecord
+): TraderaApiConnectionFields => ({
+  traderaApiAppId: connection.traderaApiAppId ?? null,
+  traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
+  traderaApiUserId: connection.traderaApiUserId ?? null,
+  traderaApiSandbox: connection.traderaApiSandbox ?? false,
+});
+
+const toGoogleConnectionFields = (
+  connection: IntegrationConnectionRecord
+): GoogleConnectionFields => ({
+  hasGoogleAccessToken: Boolean(connection.googleAccessToken),
+  googleScope: connection.googleScope ?? null,
+  googleExpiresAt: toIsoStringOrNull(connection.googleExpiresAt),
+  googleTokenUpdatedAt: toIsoStringOrNull(connection.googleTokenUpdatedAt),
+});
+
+const toBaseConnectionFields = (
+  connection: IntegrationConnectionRecord
+): BaseConnectionFields => ({
+  baseLastInventoryId: connection.baseLastInventoryId ?? null,
+});
+
+const toJobApplicationConnectionFields = (
+  connection: IntegrationConnectionRecord
+): JobApplicationConnectionFields => ({
+  jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
+  jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
+});
+
 const toIntegrationConnectionBasic = (
   connection: IntegrationConnectionRecord
 ): IntegrationConnectionBasic => ({
@@ -31,28 +119,12 @@ const toIntegrationConnectionBasic = (
   hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
   hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
-  scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
-  scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
-  scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,
-  scanner1688CandidateResultLimit: connection.scanner1688CandidateResultLimit ?? null,
-  scanner1688MinimumCandidateScore: connection.scanner1688MinimumCandidateScore ?? null,
-  scanner1688MaxExtractedImages: connection.scanner1688MaxExtractedImages ?? null,
-  scanner1688AllowUrlImageSearchFallback: connection.scanner1688AllowUrlImageSearchFallback ?? null,
-  traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
-  traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
-  traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
-  traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180,
-  traderaApiAppId: connection.traderaApiAppId ?? null,
-  traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
-  traderaApiUserId: connection.traderaApiUserId ?? null,
-  traderaApiSandbox: connection.traderaApiSandbox ?? false,
-  hasGoogleAccessToken: Boolean(connection.googleAccessToken),
-  googleScope: connection.googleScope ?? null,
-  googleExpiresAt: toIsoStringOrNull(connection.googleExpiresAt),
-  googleTokenUpdatedAt: toIsoStringOrNull(connection.googleTokenUpdatedAt),
-  baseLastInventoryId: connection.baseLastInventoryId ?? null,
-  jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
-  jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
+  ...toScanner1688ConnectionFields(connection),
+  ...toTraderaListingConnectionFields(connection),
+  ...toTraderaApiConnectionFields(connection),
+  ...toGoogleConnectionFields(connection),
+  ...toBaseConnectionFields(connection),
+  ...toJobApplicationConnectionFields(connection),
 });
 
 export function getIntegrationRepository(): IntegrationRepository {

@@ -1,5 +1,4 @@
 import 'server-only';
-/* eslint-disable complexity */
 
 import type { Collection, Document } from 'mongodb';
 
@@ -104,6 +103,14 @@ const normalizeStatus = (value: unknown): FilemakerJobApplicationApplyRunStatus 
   return 'queued';
 };
 
+const normalizeStepStatus = (
+  value: unknown
+): FilemakerJobApplicationApplyRunStep['status'] => {
+  if (value === 'ok') return 'ok';
+  if (value === 'failed') return 'failed';
+  return 'pending';
+};
+
 const normalizeArtifactVersionIds = (
   value: unknown
 ): FilemakerJobApplicationApplyRunArtifacts => {
@@ -122,11 +129,7 @@ const normalizeStep = (value: unknown): FilemakerJobApplicationApplyRunStep | nu
   const label = normalizeString(record['label']);
   const detail = normalizeString(record['detail']) ?? '';
   const createdAt = normalizeString(record['createdAt']);
-  const rawStatus = record['status'];
-  const status =
-    rawStatus === 'ok' || rawStatus === 'failed' || rawStatus === 'pending'
-      ? rawStatus
-      : 'pending';
+  const status = normalizeStepStatus(record['status']);
   if (id === null || label === null || createdAt === null) return null;
   return {
     id,

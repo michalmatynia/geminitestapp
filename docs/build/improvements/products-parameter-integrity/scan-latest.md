@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-06'
+last_reviewed: '2026-05-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Products parameter integrity Improvement Track
 
-Generated at: 2026-05-06T11:44:17.516Z
+Generated at: 2026-05-10T01:05:02.194Z
 
 ## Snapshot
 
 - Track id: `products-parameter-integrity`
 - Category: `data`
 - Included in default read-only bundle: yes
-- Overall status: `attention`
-- Latest report timestamp: 2026-04-15T10:54:26.139Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-10T01:05:02.191Z
 
 ## Purpose
 
@@ -39,9 +39,9 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
+| `classify` | `failed` | 8 | 8 | 0 | 8 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
 
@@ -49,6 +49,16 @@ Audits missing product parameters, refreshes recovery classification, and rebuil
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `audit` | `passed` | `automatic` | `products-parameter-audit` | `products:audit:missing-parameters` |
+| `classify` | `failed` | `automatic` | `products-parameter-recovery-classification` | `products:classify:parameter-recovery` |
+| `classify` | `failed` | `automatic` | `products-parameter-source-report` | `products:report:parameter-source-recovery` |
+| `classify` | `failed` | `automatic` | `products-parameter-source-summary` | `products:summarize:parameter-source-recovery` |
+| `classify` | `failed` | `automatic` | `products-parameter-source-template` | `products:generate:parameter-source-recovery-template` |
+| `classify` | `failed` | `automatic` | `products-parameter-source-batch-split` | `products:split:parameter-source-recovery-template` |
+| `classify` | `failed` | `automatic` | `products-parameter-family-mapping-packs` | `products:generate:parameter-family-mapping-pack` |
+| `classify` | `failed` | `automatic` | `products-parameter-family-mapping-index` | `products:build:parameter-family-mapping-index` |
+| `classify` | `failed` | `automatic` | `products-parameter-family-mapping-checklist` | `products:render:parameter-family-mapping-checklist` |
+| `plan` | `manual` | `manual` | `products-parameter-integrity-plan-review` | manual |
 | `apply` | `manual` | `manual` | `products-parameter-integrity-apply` | manual |
 
 ## Related Docs

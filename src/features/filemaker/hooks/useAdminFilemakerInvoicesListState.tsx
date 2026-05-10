@@ -71,14 +71,24 @@ const buildInvoiceListParams = (input: {
   return params;
 };
 
-/* eslint-disable-next-line complexity */
+const readQuotedDownloadFilename = (contentDisposition: string): string | null => {
+  const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
+  return quoted?.[1] !== undefined && quoted[1].length > 0 ? quoted[1] : null;
+};
+
+const readUnquotedDownloadFilename = (contentDisposition: string): string | null => {
+  const unquoted = /filename=([^;]+)/i.exec(contentDisposition);
+  const filename = unquoted?.[1]?.trim() ?? '';
+  return filename.length > 0 ? filename : null;
+};
+
 const readDownloadFilename = (response: Response, fallback: string): string => {
   const contentDisposition = response.headers.get('Content-Disposition') ?? '';
-  const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
-  if (quoted?.[1] !== undefined && quoted[1].length > 0) return quoted[1];
-  const unquoted = /filename=([^;]+)/i.exec(contentDisposition);
-  const unquotedFilename = unquoted?.[1]?.trim() ?? '';
-  return unquotedFilename.length > 0 ? unquotedFilename : fallback;
+  return (
+    readQuotedDownloadFilename(contentDisposition) ??
+    readUnquotedDownloadFilename(contentDisposition) ??
+    fallback
+  );
 };
 
 const downloadBlob = (blob: Blob, filename: string): void => {
@@ -175,26 +185,11 @@ function useInvoiceRenderNode(
   );
 }
 
-/* eslint-disable-next-line max-lines-per-function */
-export function useAdminFilemakerInvoicesListState(): InvoiceListState {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_INVOICE_PAGE_SIZE);
-  const [filters, setFilters] = useState<InvoiceFilters>(createDefaultInvoiceFilters);
+function useInvoicePdfExport(toast: ReturnType<typeof useToast>['toast']): {
+  exportingInvoiceId: string | null;
+  handleExportInvoicePdf: (invoiceId: string) => void;
+} {
   const [exportingInvoiceId, setExportingInvoiceId] = useState<string | null>(null);
-  const deferredQuery = useDeferredValue(query.trim());
-  const mongoInvoices = useMongoFilemakerInvoices({
-    filters,
-    page,
-    pageSize,
-    query: deferredQuery,
-  });
-  const actions = useInvoiceActions(router);
-  const invoices = mongoInvoices.invoices;
-  const nodes = useMemo(() => buildFilemakerInvoiceListNodes(invoices), [invoices]);
-
   const handleExportInvoicePdf = useCallback(
     (invoiceId: string): void => {
       setExportingInvoiceId(invoiceId);
@@ -221,6 +216,71 @@ export function useAdminFilemakerInvoicesListState(): InvoiceListState {
     [toast]
   );
 
+  return { exportingInvoiceId, handleExportInvoicePdf };
+}
+
+function useInvoiceListControlHandlers({
+  setFilters,
+  setPage,
+  setPageSize,
+  setQuery,
+}: {
+  setFilters: React.Dispatch<React.SetStateAction<InvoiceFilters>>;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  setPageSize: React.Dispatch<React.SetStateAction<number>>;
+  setQuery: React.Dispatch<React.SetStateAction<string>>;
+}): Pick<
+  InvoiceListState,
+  'onFilterChange' | 'onPageSizeChange' | 'onQueryChange' | 'onResetFilters'
+> {
+  return useMemo(
+    () => ({
+      onFilterChange: (key, value) => {
+        setFilters((current) => ({ ...current, ...normalizeFilterValue(key, value) }));
+        setPage(1);
+      },
+      onPageSizeChange: (value) => {
+        setPageSize(value);
+        setPage(1);
+      },
+      onQueryChange: (value) => {
+        setQuery(value);
+        setPage(1);
+      },
+      onResetFilters: () => {
+        setQuery('');
+        setFilters(createDefaultInvoiceFilters());
+        setPage(1);
+      },
+    }),
+    [setFilters, setPage, setPageSize, setQuery]
+  );
+}
+
+export function useAdminFilemakerInvoicesListState(): InvoiceListState {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_INVOICE_PAGE_SIZE);
+  const [filters, setFilters] = useState<InvoiceFilters>(createDefaultInvoiceFilters);
+  const controlHandlers = useInvoiceListControlHandlers({
+    setFilters,
+    setPage,
+    setPageSize,
+    setQuery,
+  });
+  const deferredQuery = useDeferredValue(query.trim());
+  const mongoInvoices = useMongoFilemakerInvoices({
+    filters,
+    page,
+    pageSize,
+    query: deferredQuery,
+  });
+  const actions = useInvoiceActions(router);
+  const invoices = mongoInvoices.invoices;
+  const nodes = useMemo(() => buildFilemakerInvoiceListNodes(invoices), [invoices]);
+  const { exportingInvoiceId, handleExportInvoicePdf } = useInvoicePdfExport(toast);
   const renderNode = useInvoiceRenderNode(invoices, exportingInvoiceId, handleExportInvoicePdf);
 
   return {
@@ -231,24 +291,11 @@ export function useAdminFilemakerInvoicesListState(): InvoiceListState {
     isLoading: mongoInvoices.isLoading,
     nodes,
     onExportInvoicePdf: handleExportInvoicePdf,
-    onFilterChange: (key, value) => {
-      setFilters((current) => ({ ...current, ...normalizeFilterValue(key, value) }));
-      setPage(1);
-    },
+    onFilterChange: controlHandlers.onFilterChange,
     onPageChange: setPage,
-    onPageSizeChange: (value) => {
-      setPageSize(value);
-      setPage(1);
-    },
-    onQueryChange: (value) => {
-      setQuery(value);
-      setPage(1);
-    },
-    onResetFilters: () => {
-      setQuery('');
-      setFilters(createDefaultInvoiceFilters());
-      setPage(1);
-    },
+    onPageSizeChange: controlHandlers.onPageSizeChange,
+    onQueryChange: controlHandlers.onQueryChange,
+    onResetFilters: controlHandlers.onResetFilters,
     page,
     pageSize,
     query,

@@ -6,13 +6,14 @@ import { randomUUID } from 'crypto';
 import { isFatalJobBoardError } from '@/features/job-board/server/job-board-fatal-errors';
 import type { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
 import {
-  collectOfferUrls,
-} from '@/features/filemaker/services/job-board';
-import { runFilemakerJobBoardScrape } from '../services/job-board-scrape/scraper';
+  collectJobBoardOfferUrls,
+  collectJobBoardOfferUrlsDeterministically,
+} from '@/features/job-board/server/providers/job-board-sync';
 import { getFilemakerOrganizationsCollection } from '@/features/filemaker/server/filemaker-organizations-mongo';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import {
   getJobBoardSourceSite,
+  isJobBoardOfferUrl,
   resolveJobBoardProvider,
   type JobBoardProvider,
 } from '@/shared/lib/job-board/job-board-providers';

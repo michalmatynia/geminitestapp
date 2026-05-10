@@ -5,6 +5,7 @@ import React, { useCallback } from 'react';
 
 import { FormModal } from '@/shared/ui/FormModal';
 import { IntegrationSelector } from '@/shared/ui/integration-selector';
+import { Alert } from '@/shared/ui/primitives.public';
 import { useIntegrationSelection } from '../hooks/useIntegrationSelection';
 
 export function ProductIntegrationSelectionModal(props: {
@@ -26,6 +27,12 @@ export function ProductIntegrationSelectionModal(props: {
   let content: React.ReactNode;
   if (state.isLoading === true) {
     content = <p className='text-sm text-muted-foreground'>Loading integrations...</p>;
+  } else if (state.error !== null) {
+    content = (
+      <Alert variant='error' title='Integrations unavailable'>
+        {state.error}
+      </Alert>
+    );
   } else if (state.integrations.length === 0) {
     content = (
       <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>

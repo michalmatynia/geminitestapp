@@ -19,7 +19,21 @@ import { api, ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, marketplaceKeys } from '@/shared/lib/query-key-exports';
 
-export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConnections> {
+type IntegrationQueryOptions = {
+  enabled?: boolean;
+  retry?: boolean | number;
+};
+
+const applyIntegrationQueryOptions = (
+  options: IntegrationQueryOptions | undefined
+): IntegrationQueryOptions => ({
+  ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
+  ...(options?.retry !== undefined ? { retry: options.retry } : {}),
+});
+
+export function useIntegrationsWithConnections(
+  options?: IntegrationQueryOptions
+): ListQuery<IntegrationWithConnections> {
   const queryKey = integrationKeys.withConnections();
   const queryFn = async (): Promise<IntegrationWithConnections[]> =>
     api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections');
@@ -27,6 +41,7 @@ export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConne
   return createListQueryV2({
     queryKey,
     queryFn,
+    ...applyIntegrationQueryOptions(options),
     meta: {
       source: 'shared.hooks.useIntegrationsWithConnections',
       operation: 'list',
@@ -88,7 +103,9 @@ export function useDefaultExportInventory(): SingleQuery<BaseDefaultInventoryPre
   });
 }
 
-export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionPreferenceResponse> {
+export function useDefaultExportConnection(
+  options?: IntegrationQueryOptions
+): SingleQuery<BaseDefaultConnectionPreferenceResponse> {
   const queryKey = integrationKeys.selection.defaultConnection();
   const queryFn = async (): Promise<BaseDefaultConnectionPreferenceResponse> =>
     api.get<BaseDefaultConnectionPreferenceResponse>(
@@ -99,6 +116,7 @@ export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionP
     id: 'default-export-connection',
     queryKey,
     queryFn,
+    ...applyIntegrationQueryOptions(options),
     meta: {
       source: 'shared.hooks.useDefaultExportConnection',
       operation: 'detail',
@@ -111,7 +129,9 @@ export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionP
   });
 }
 
-export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnectionPreferenceResponse> {
+export function useDefaultTraderaConnection(
+  options?: IntegrationQueryOptions
+): SingleQuery<TraderaDefaultConnectionPreferenceResponse> {
   const queryKey = integrationKeys.selection.traderaDefaultConnection();
   const queryFn = async (): Promise<TraderaDefaultConnectionPreferenceResponse> =>
     api.get<TraderaDefaultConnectionPreferenceResponse>(
@@ -122,6 +142,7 @@ export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnect
     id: 'default-tradera-connection',
     queryKey,
     queryFn,
+    ...applyIntegrationQueryOptions(options),
     meta: {
       source: 'shared.hooks.useDefaultTraderaConnection',
       operation: 'detail',

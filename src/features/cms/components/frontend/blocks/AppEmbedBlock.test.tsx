@@ -115,9 +115,8 @@ vi.mock('@/shared/lib/auth/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 
-vi.mock('@/shared/lib/kangur-cms-bridge', async () => {
+vi.mock('@/shared/lib/kangur-cms-bridge', () => {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...kangurAdapterTestDouble,
   };
 });

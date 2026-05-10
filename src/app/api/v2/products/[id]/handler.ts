@@ -189,6 +189,7 @@ const cleanupDeletedProductEcommerceExport = async (productId: string): Promise<
     void logSystemEvent({
       level: 'warn',
       message: 'products.DELETE: failed to remove ecommerce export record',
+      source: 'products.DELETE',
       context: {
         productId,
         error: error instanceof Error ? error.message : String(error),

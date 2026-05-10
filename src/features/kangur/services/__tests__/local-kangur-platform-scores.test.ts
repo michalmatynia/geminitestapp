@@ -62,7 +62,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
     _report: unknown,
     task: () => Promise<unknown>,
     options: {
-      fallback: unknown | (() => unknown);
+      fallback: unknown;
       onError?: (error: unknown) => void;
       shouldReport?: (error: unknown) => boolean;
       shouldRethrow?: (error: unknown) => boolean;
@@ -120,7 +120,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
       ok: true,
       status: 200,
       statusText: 'OK',
-      json: async () => [REMOTE_SCORE],
+      json: () => Promise.resolve([REMOTE_SCORE]),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -154,7 +154,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
       ok: true,
       status: 200,
       statusText: 'OK',
-      json: async () => [REMOTE_SCORE],
+      json: () => Promise.resolve([REMOTE_SCORE]),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -183,7 +183,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
       ok: true,
       status: 201,
       statusText: 'Created',
-      json: async () => REMOTE_SCORE,
+      json: () => Promise.resolve(REMOTE_SCORE),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -253,9 +253,8 @@ describe('local-kangur-platform scores shared API client integration', () => {
         ok: true,
         status: 200,
         statusText: 'OK',
-        json: async () => {
-          throw new SyntaxError(`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`);
-        },
+        json: () =>
+          Promise.reject(new SyntaxError('Unexpected token \'<\', "<!DOCTYPE "... is not valid JSON')),
       }),
     );
 
@@ -276,7 +275,7 @@ describe('local-kangur-platform scores shared API client integration', () => {
         ok: false,
         status: 502,
         statusText: 'Bad Gateway',
-        text: async () => JSON.stringify({ error: 'Kangur API proxy request failed.' }),
+        text: () => Promise.resolve(JSON.stringify({ error: 'Kangur API proxy request failed.' })),
       }),
     );
 

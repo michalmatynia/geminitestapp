@@ -1,9 +1,9 @@
-import { FormSection } from '@/features/kangur/shared/ui';
+import { AdminPanel } from '../shared/AdminPanel';
 import { KangurAiTutorSettingsPanel } from '../components/KangurAiTutorSettingsPanel';
 
 export function AiTutorSettingsPanel({ controller, className }: any) {
   return (
-    <FormSection title='AI Tutor Settings' description='Configure agent persona, motion, and onboarding.' className={className}>
+    <AdminPanel title='AI Tutor Settings' description='Configure agent persona, motion, and onboarding.' className={className}>
       <KangurAiTutorSettingsPanel
         agentPersonaId={controller.agentPersonaId}
         setAgentPersonaId={controller.setAgentPersonaId}
@@ -17,6 +17,6 @@ export function AiTutorSettingsPanel({ controller, className }: any) {
         setHomeOnboardingMode={controller.setHomeOnboardingMode}
         agentPersonas={controller.agentPersonas}
       />
-    </FormSection>
+    </AdminPanel>
   );
 }

@@ -22,6 +22,92 @@ const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = {
   label: 'All categories',
 };
 
+type Admin3DAssetsState = ReturnType<typeof useAdmin3DAssetsContext>;
+
+function Admin3DAssetsStats({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+  if (state.loading || state.assets.length === 0) return null;
+  return (
+    <div className='text-xs text-muted-foreground font-medium'>
+      Showing {state.assets.length} asset{state.assets.length !== 1 ? 's' : ''}
+      {state.hasActiveFilters ? ' (filtered)' : ''}
+    </div>
+  );
+}
+
+function Admin3DAdvancedFilters({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+  const categoryOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      ALL_CATEGORIES_OPTION,
+      ...state.categories.map((cat) => ({ value: cat, label: cat })),
+    ],
+    [state.categories]
+  );
+
+  if (!state.showFilters) return null;
+  return (
+    <FormSection variant='subtle' className='p-4 mb-4 border border-border/40'>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <FormField label='Category'>
+          <SelectSimple size='sm' value={state.selectedCategory ?? '__all__'} onValueChange={(v) => state.setSelectedCategory(v === '__all__' ? null : v)} options={categoryOptions} placeholder='All categories' ariaLabel='All categories' title='All categories' />
+        </FormField>
+        <FormField label='Tags'>
+          <div className='flex flex-wrap gap-2 pt-1'>
+            {state.allTags.map((tag) => (
+              <Button key={tag} variant={state.selectedTags.includes(tag) ? 'default' : 'outline'} size='xs' onClick={() => state.setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])} className='h-6 px-2 text-[10px]'>
+                {tag}
+              </Button>
+            ))}
+            {state.allTags.length === 0 && <span className='text-xs text-muted-foreground italic'>No tags available</span>}
+          </div>
+        </FormField>
+      </div>
+    </FormSection>
+  );
+}
+
+function Admin3DUploaderSection({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+  if (!state.showUploader) return null;
+  return (
+    <FormSection title='Upload 3D Asset' actions={<Button variant='ghost' size='sm' onClick={() => state.setShowUploader(false)} className='h-7 text-xs'>Cancel</Button>} className='p-4 mb-6' variant='glass'>
+      <div className='mt-4'>
+        <Asset3DUploader />
+      </div>
+    </FormSection>
+  );
+}
+
+function Admin3DAssetsEmpty({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+  if (state.loading || state.assets.length > 0) return null;
+  const description = state.hasActiveFilters ? 'Try adjusting your filters.' : 'Upload your first .glb or .gltf file to get started.';
+  return (
+    <EmptyState
+      title={state.hasActiveFilters ? 'No matching assets' : 'Library is empty'}
+      description={description}
+      icon={<Box className='h-12 w-12 opacity-60' />}
+      action={<Admin3DAssetsEmptyState hasActiveFilters={state.hasActiveFilters} setShowUploader={state.setShowUploader} handleReindex={() => { void state.handleReindex(); }} isReindexing={state.isReindexing} />}
+    />
+  );
+}
+
+function Admin3DAssetsGrid({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+  if (state.loading || state.assets.length === 0 || state.viewMode !== 'grid') return null;
+  return (
+    <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+      {state.assets.map((asset) => <Asset3DCard key={asset.id} asset={asset} />)}
+    </div>
+  );
+}
+
+function Admin3DAssetsModals({ state }: { state: Admin3DAssetsState }): React.JSX.Element {
+  return (
+    <>
+      {state.previewAsset !== null && <Asset3DPreviewModal isOpen={true} onClose={() => state.setPreviewAsset(null)} item={state.previewAsset} />}
+      {state.editAsset !== null && <Asset3DEditModal isOpen={true} onClose={() => state.setEditAsset(null)} item={state.editAsset} />}
+      <state.ConfirmationModal />
+    </>
+  );
+}
+
 function Admin3DAssetsContent(): React.JSX.Element {
   const state = useAdmin3DAssetsContext();
   const columns = useAdmin3DAssetsColumns({
@@ -30,22 +116,6 @@ function Admin3DAssetsContent(): React.JSX.Element {
     handleDelete: state.handleDelete,
     isDeleting: state.isDeleting,
   });
-
-  const stats =
-    !state.loading && state.assets.length > 0 ? (
-      <div className='text-xs text-muted-foreground font-medium'>
-        Showing {state.assets.length} asset{state.assets.length !== 1 ? 's' : ''}
-        {state.hasActiveFilters && ' (filtered)'}
-      </div>
-    ) : null;
-
-  const categoryOptions = useMemo(
-    (): Array<LabeledOptionDto<string>> => [
-      ALL_CATEGORIES_OPTION,
-      ...state.categories.map((cat) => ({ value: cat, label: cat })),
-    ],
-    [state.categories]
-  );
 
   return (
     <StandardDataTablePanel
@@ -82,115 +152,16 @@ function Admin3DAssetsContent(): React.JSX.Element {
           setViewMode={state.setViewMode}
         />
       }
-      footer={stats}
+      footer={<Admin3DAssetsStats state={state} />}
       columns={columns}
       data={state.assets}
       isLoading={state.loading}
     >
-      {state.showFilters && (
-        <FormSection variant='subtle' className='p-4 mb-4 border border-border/40'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <FormField label='Category'>
-              <SelectSimple
-                size='sm'
-                value={state.selectedCategory ?? '__all__'}
-                onValueChange={(v) => state.setSelectedCategory(v === '__all__' ? null : v)}
-                options={categoryOptions}
-                placeholder='All categories'
-               ariaLabel='All categories' title='All categories'/>
-            </FormField>
-
-            <FormField label='Tags'>
-              <div className='flex flex-wrap gap-2 pt-1'>
-                {state.allTags.map((tag) => (
-                  <Button
-                    key={tag}
-                    variant={state.selectedTags.includes(tag) ? 'default' : 'outline'}
-                    size='xs'
-                    onClick={() =>
-                      state.setSelectedTags((prev) =>
-                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-                      )
-                    }
-                    className='h-6 px-2 text-[10px]'
-                  >
-                    {tag}
-                  </Button>
-                ))}
-                {state.allTags.length === 0 && (
-                  <span className='text-xs text-muted-foreground italic'>No tags available</span>
-                )}
-              </div>
-            </FormField>
-          </div>
-        </FormSection>
-      )}
-
-      {state.showUploader && (
-        <FormSection
-          title='Upload 3D Asset'
-          actions={
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => state.setShowUploader(false)}
-              className='h-7 text-xs'
-            >
-              Cancel
-            </Button>
-          }
-          className='p-4 mb-6'
-          variant='glass'
-        >
-          <div className='mt-4'>
-            <Asset3DUploader />
-          </div>
-        </FormSection>
-      )}
-
-      {!state.loading && state.assets.length === 0 && (
-        <EmptyState
-          title={state.hasActiveFilters ? 'No matching assets' : 'Library is empty'}
-          description={
-            state.hasActiveFilters
-              ? 'Try adjusting your filters.'
-              : 'Upload your first .glb or .gltf file to get started.'
-          }
-          icon={<Box className='h-12 w-12 opacity-60' />}
-          action={
-            <Admin3DAssetsEmptyState
-              hasActiveFilters={state.hasActiveFilters}
-              setShowUploader={state.setShowUploader}
-              handleReindex={() => { void state.handleReindex(); }}
-              isReindexing={state.isReindexing}
-            />
-          }
-        />
-      )}
-
-      {!state.loading && state.assets.length > 0 && state.viewMode === 'grid' && (
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {state.assets.map((asset) => (
-            <Asset3DCard key={asset.id} asset={asset} />
-          ))}
-        </div>
-      )}
-
-      {!state.loading && state.assets.length > 0 && state.viewMode === 'list' && null}
-
-      {state.previewAsset && (
-        <Asset3DPreviewModal
-          isOpen={true}
-          onClose={() => state.setPreviewAsset(null)}
-          item={state.previewAsset}
-        />
-      )}
-
-      {state.editAsset && (
-        <Asset3DEditModal isOpen={true} onClose={() => state.setEditAsset(null)} item={state.editAsset} />
-      )}
-
-      <state.ConfirmationModal />
+      <Admin3DAdvancedFilters state={state} />
+      <Admin3DUploaderSection state={state} />
+      <Admin3DAssetsEmpty state={state} />
+      <Admin3DAssetsGrid state={state} />
+      <Admin3DAssetsModals state={state} />
     </StandardDataTablePanel>
   );
 }

@@ -51,7 +51,11 @@ export const assertAiPathsEnabled = async (): Promise<void> => {
   const enabled = await getAiPathsEnabledCached();
   if (enabled) return;
   throw configurationError(
-    'AI Paths is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
+    'AI Paths is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.',
+    {
+      feature: 'ai_paths',
+      action: 'assertAiPathsEnabled',
+    }
   );
 };
 

@@ -1,9 +1,5 @@
-/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/no-unused-vars -- Local score persistence split keeps helper imports during migration. */
 import { z } from 'zod';
-import {
-  buildKangurScoreListPath,
-  createKangurApiClient,
-} from '@kangur/api-client';
+import { createKangurApiClient } from '@kangur/api-client';
 
 import {
   hasGuestKangurScores,
@@ -11,7 +7,6 @@ import {
   resetGuestKangurScoreSession,
   syncGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
-import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import type { KangurScoreCreateInput, KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurScoreSchema } from '@kangur/contracts/kangur';
@@ -50,10 +45,19 @@ const kangurScoreApiClient = createKangurApiClient({
 });
 
 import {
-  getScoreDedupKey,
   mergeScoreRows,
   buildScoresUrl,
 } from '@/features/kangur/services/scores';
+
+type ScoreListQuery = {
+  sort?: string;
+  limit?: number;
+  player_name?: string;
+  operation?: string;
+  subject?: KangurLessonSubject;
+  created_by?: string;
+  learner_id?: string;
+};
 
 const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
   if (!hasGuestKangurScores()) {
@@ -94,33 +98,29 @@ const syncGuestScoresToApiIfAuthenticated = async (): Promise<void> => {
   }
 };
 
-export const requestMergedScores = async (params: {
-  sort?: string;
-  limit?: number;
-  player_name?: string;
-  operation?: string;
-  subject?: KangurLessonSubject;
-  created_by?: string;
-  learner_id?: string;
-}): Promise<KangurScoreRecord[]> => {
-  let syncError: unknown = null;
-  if (hasGuestKangurScores()) {
-    try {
-      await syncGuestScoresToApiIfAuthenticated();
-    } catch (error: unknown) {
-      if (!isRecoverableKangurClientFetchError(error)) {
-        void ErrorSystem.captureException(error);
-        reportKangurClientError(error, {
-          source: 'kangur.local-platform',
-          action: 'score.syncGuest',
-          description: 'Guest score sync failed before listing scores.',
-        });
-      }
-      syncError = error;
-    }
-  }
+const reportGuestScoreSyncError = (error: unknown): void => {
+  if (isRecoverableKangurClientFetchError(error)) return;
+  void ErrorSystem.captureException(error);
+  reportKangurClientError(error, {
+    source: 'kangur.local-platform',
+    action: 'score.syncGuest',
+    description: 'Guest score sync failed before listing scores.',
+  });
+};
 
-  const localRows = listGuestKangurScores({
+const syncGuestScoresBeforeList = async (): Promise<unknown> => {
+  if (!hasGuestKangurScores()) return null;
+  try {
+    await syncGuestScoresToApiIfAuthenticated();
+    return null;
+  } catch (error: unknown) {
+    reportGuestScoreSyncError(error);
+    return error;
+  }
+};
+
+const listLocalGuestScores = (params: ScoreListQuery): KangurScoreRecord[] =>
+  listGuestKangurScores({
     sort: params.sort,
     limit: typeof params.limit === 'number' ? params.limit : DEFAULT_SCORE_LIMIT,
     filters: {
@@ -131,6 +131,37 @@ export const requestMergedScores = async (params: {
       learner_id: params.learner_id,
     },
   });
+
+const reportRemoteScoreListError = (error: unknown, url: string): void => {
+  if (isRecoverableKangurClientFetchError(error)) return;
+  void ErrorSystem.captureException(error);
+  reportKangurClientError(error, {
+    source: 'kangur.local-platform',
+    action: 'score.list',
+    description: 'Failed to load remote scores while merging with guest scores.',
+    context: {
+      endpoint: url,
+    },
+  });
+};
+
+const handleRemoteScoreListError = (input: {
+  error: unknown;
+  localRows: KangurScoreRecord[];
+  syncError: unknown;
+  url: string;
+}): KangurScoreRecord[] => {
+  if (isRecoverableScoreListReadError(input.error)) return input.localRows;
+  reportRemoteScoreListError(input.error, input.url);
+  if (input.localRows.length > 0) return input.localRows;
+  throw input.syncError ?? input.error;
+};
+
+export const requestMergedScores = async (
+  params: ScoreListQuery
+): Promise<KangurScoreRecord[]> => {
+  const syncError = await syncGuestScoresBeforeList();
+  const localRows = listLocalGuestScores(params);
   const url = buildScoresUrl(params);
 
   try {
@@ -142,39 +173,56 @@ export const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
-    if (isRecoverableScoreListReadError(error)) {
-      return localRows;
-    }
-
-    if (!isRecoverableKangurClientFetchError(error)) {
-      void ErrorSystem.captureException(error);
-      reportKangurClientError(error, {
-        source: 'kangur.local-platform',
-        action: 'score.list',
-        description: 'Failed to load remote scores while merging with guest scores.',
-        context: {
-          endpoint: url,
-        },
-      });
-    }
-    if (localRows.length > 0) {
-      return localRows;
-    }
-    throw syncError ?? error;
+    return handleRemoteScoreListError({ error, localRows, syncError, url });
   }
 };
 
+const fetchScoresFromApi = async (
+  url: string,
+  query: ScoreListQuery
+): Promise<KangurScoreRecord[]> =>
+  withKangurClientError(
+    (error) => ({
+      source: 'kangur.local-platform',
+      action: 'score.list',
+      description: 'Fetch score list from the Kangur API.',
+      context: {
+        endpoint: url,
+        method: 'GET',
+        ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+      },
+    }),
+    async () => {
+      const payload = await kangurScoreApiClient.listScores(query);
+      const parsed = scoreListSchema.safeParse(payload);
+      if (!parsed.success) {
+        throw new Error('Kangur score list payload validation failed.');
+      }
+
+      scoreQueryCache.set(url, {
+        rows: parsed.data,
+        expiresAt: Date.now() + SCORE_CACHE_TTL_MS,
+      });
+
+      return [...parsed.data];
+    },
+    {
+      fallback: [] as KangurScoreRecord[],
+      shouldReport: (error) => !isRecoverableScoreListReadError(error),
+      shouldRethrow: () => true,
+      onError: (error) => {
+        if (isRecoverableScoreListReadError(error)) return;
+        trackReadFailure('score.list', error, {
+          endpoint: url,
+          method: 'GET',
+        });
+      },
+    }
+  );
+
 const requestScoresFromApi = async (
   url: string,
-  query: {
-    sort?: string;
-    limit?: number;
-    player_name?: string;
-    operation?: string;
-    subject?: KangurLessonSubject;
-    created_by?: string;
-    learner_id?: string;
-  }
+  query: ScoreListQuery
 ): Promise<KangurScoreRecord[]> => {
   const now = Date.now();
   const cached = scoreQueryCache.get(url);
@@ -187,52 +235,10 @@ const requestScoresFromApi = async (
     return inFlight;
   }
 
-  const requestPromise = (async (): Promise<KangurScoreRecord[]> => {
-    try {
-      return await withKangurClientError(
-        (error) => ({
-          source: 'kangur.local-platform',
-          action: 'score.list',
-          description: 'Fetch score list from the Kangur API.',
-          context: {
-            endpoint: url,
-            method: 'GET',
-            ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
-          },
-        }),
-        async () => {
-          const payload = await kangurScoreApiClient.listScores(query);
-          const parsed = scoreListSchema.safeParse(payload);
-          if (!parsed.success) {
-            throw new Error('Kangur score list payload validation failed.');
-          }
-
-          scoreQueryCache.set(url, {
-            rows: parsed.data,
-            expiresAt: Date.now() + SCORE_CACHE_TTL_MS,
-          });
-
-          return [...parsed.data];
-        },
-        {
-          fallback: [] as KangurScoreRecord[],
-          shouldReport: (error) => !isRecoverableScoreListReadError(error),
-          shouldRethrow: () => true,
-          onError: (error) => {
-            if (isRecoverableScoreListReadError(error)) {
-              return;
-            }
-            trackReadFailure('score.list', error, {
-              endpoint: url,
-              method: 'GET',
-            });
-          },
-        }
-      );
-    } finally {
+  const requestPromise = fetchScoresFromApi(url, query)
+    .finally((): void => {
       scoreQueryInFlight.delete(url);
-    }
-  })();
+    });
 
   scoreQueryInFlight.set(url, requestPromise);
 

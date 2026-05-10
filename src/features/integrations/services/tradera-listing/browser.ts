@@ -3,7 +3,12 @@ import {
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { BrowserListingResultDto, PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type {
+  BrowserListingResultDto,
+  PlaywrightRelistBrowserMode,
+  ProductListing,
+  TraderaExecutionStep,
+} from '@/shared/contracts/integrations/listings';
 export { ensureLoggedIn } from './tradera-browser-auth';
 import {
   runTraderaBrowserListingScripted,
@@ -16,6 +21,7 @@ export type { BrowserListingResultDto as TraderaBrowserListingResult };
 
 type TraderaBrowserRunOptions = {
   onRunStarted?: ((runId: string) => Promise<void> | void) | undefined;
+  onExecutionStepsUpdated?: ((steps: TraderaExecutionStep[]) => Promise<void> | void) | undefined;
 };
 
 export const runTraderaBrowserListing = async ({
@@ -59,7 +65,7 @@ export const runTraderaBrowserListing = async ({
     systemSettings,
     source,
     action,
-  });
+  }, options);
 };
 
 export const runTraderaBrowserCheckStatus = async ({

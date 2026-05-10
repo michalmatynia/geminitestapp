@@ -469,7 +469,7 @@ export const PART_4C = String.raw`
         });
       }
 
-      shippingDialog = await waitForVisibleShippingDialog(2_500);
+      shippingDialog = await waitForVisibleShippingDialog(8_000);
       if (shippingDialog) {
         log?.('tradera.quicklist.delivery.dialog_opened', {
           flow: 'checkbox',
@@ -509,7 +509,7 @@ export const PART_4C = String.raw`
               (await findVisibleShippingSmootherDialog())
           ),
       });
-      shippingDialog = await waitForVisibleShippingDialog(2_500);
+      shippingDialog = await waitForVisibleShippingDialog(8_000);
 
       if (!shippingDialog) {
         const shippingReenableNeeded = !(await isCheckboxChecked(shippingToggle));
@@ -521,7 +521,7 @@ export const PART_4C = String.raw`
                   (await findVisibleShippingSmootherDialog())
               ),
           });
-          shippingDialog = await waitForVisibleShippingDialog(2_500);
+          shippingDialog = await waitForVisibleShippingDialog(8_000);
         }
       }
 

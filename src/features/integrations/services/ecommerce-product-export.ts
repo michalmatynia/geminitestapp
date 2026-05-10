@@ -61,6 +61,7 @@ const upsertEcommerceProductListing = async (productId: string): Promise<void> =
     void logSystemEvent({
       level: 'warn',
       message: 'ecommerce-product-export: failed to upsert product_listing badge record',
+      source: 'ecommerce-product-export',
       context: { productId, error: error instanceof Error ? error.message : String(error) },
     });
   }
@@ -78,6 +79,7 @@ const tryCreateIndex = async (
     void logSystemEvent({
       level: 'warn',
       message: 'ecommerce-product-export: createIndex skipped (already exists or conflict)',
+      source: 'ecommerce-product-export',
       context: { collection, options, error: error instanceof Error ? error.message : String(error) },
     });
   }
@@ -178,6 +180,7 @@ export const deleteProductFromEcommerceExport = async (
       void logSystemEvent({
         level: 'warn',
         message: 'ecommerce-product-export: deleteProductFromEcommerceExport — one source failed',
+        source: 'ecommerce-product-export',
         context: { productId: normalizedProductId, error: result.reason instanceof Error ? result.reason.message : String(result.reason) },
       });
     }
@@ -254,6 +257,7 @@ export const checkEcommerceProductsExistence = async (
     void logSystemEvent({
       level: 'warn',
       message: 'ecommerce-product-export: checkEcommerceProductsExistence failed',
+      source: 'ecommerce-product-export',
       context: { error: error instanceof Error ? error.message : String(error), productIdCount: productIds.length },
     });
     return new Set<string>();

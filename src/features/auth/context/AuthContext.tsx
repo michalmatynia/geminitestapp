@@ -26,6 +26,8 @@ import type { Session } from 'next-auth';
 import type { AuthRole, AuthPermission, AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import type { AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
 import type { AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
+import type { AuthRoleSettings } from '@/shared/contracts/auth';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 
 interface AuthContextValue {
   session: Session | null; // NextAuth session object
@@ -62,7 +64,7 @@ const useAuthContextValue = ({
   settingsQuery: { data: Map<string, string> | undefined; isPending: boolean; refetch: () => Promise<unknown> };
   updateSetting: ReturnType<typeof useUpdateSetting>;
   isPublicMode: boolean;
-  roleSettingsQuery: { data: any; isPending: boolean; isSuccess: boolean; refetch: () => Promise<unknown> } | null;
+  roleSettingsQuery: SingleQuery<AuthRoleSettings> | null;
 }): AuthContextValue => {
   const computed = useAuthComputedState({
     session,

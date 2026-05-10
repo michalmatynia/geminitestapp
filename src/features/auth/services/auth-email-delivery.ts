@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import 'server-only';
 
 import { createTransport, type Transporter } from 'nodemailer';
@@ -78,12 +77,12 @@ async function handleEmailDelivery(record: AuthEmailDeliveryRecord): Promise<voi
   const wh = secrets.webhookUrl;
   const st = secrets.smtp;
 
-  if (wh !== undefined && wh !== '') {
-    await sendViaWebhook(wh, secrets.webhookSecret, record);
+  if (wh !== null && wh.length > 0) {
+    await sendViaWebhook(wh, secrets.webhookSecret ?? undefined, record);
     return;
   }
 
-  if (st !== undefined) {
+  if (st !== null) {
     await sendViaSmtp(st, record);
     return;
   }
@@ -105,11 +104,12 @@ export const sendAuthEmail = async (input: {
   purpose: 'magic_login' | 'email_verification';
   metadata?: Record<string, unknown>;
 }): Promise<void> => {
+  const trimmedHtml = input.html?.trim() ?? null;
   const record: AuthEmailDeliveryRecord = {
     to: input.to.trim().toLowerCase(),
     subject: input.subject.trim(),
     text: input.text,
-    html: (input.html ?? null)?.trim() || null,
+    html: trimmedHtml !== null && trimmedHtml.length > 0 ? trimmedHtml : null,
     purpose: input.purpose,
     metadata: input.metadata,
     sentAt: new Date().toISOString(),

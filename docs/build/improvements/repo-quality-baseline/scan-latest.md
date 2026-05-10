@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-06'
+last_reviewed: '2026-05-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Repository quality baseline Improvement Track
 
-Generated at: 2026-05-06T11:44:17.516Z
+Generated at: 2026-05-10T01:05:02.194Z
 
 ## Snapshot
 
@@ -16,7 +16,7 @@ Generated at: 2026-05-06T11:44:17.516Z
 - Category: `quality`
 - Included in default read-only bundle: yes
 - Overall status: `failed`
-- Latest report timestamp: 2026-05-06T11:44:17.513Z
+- Latest report timestamp: 2026-05-10T01:05:02.191Z
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Runs the core read-only quality checks that establish the current repository bas
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `failed` | 2 | 2 | 0 | 1 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `failed` | 2 | 2 | 0 | 2 | 0 |
 | `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
@@ -49,6 +49,8 @@ Runs the core read-only quality checks that establish the current repository bas
 | --- | --- | --- | --- | --- |
 | `audit` | `passed` | `automatic` | `repo-quality-api-error-sources` | `check:api-error-sources` |
 | `audit` | `failed` | `automatic` | `repo-quality-canonical-sitewide` | `canonical:check:sitewide` |
+| `classify` | `failed` | `automatic` | `repo-quality-lint` | `quality:baseline:lint` |
+| `classify` | `failed` | `automatic` | `repo-quality-typecheck` | `quality:baseline:typecheck` |
 | `plan` | `manual` | `manual` | `repo-quality-baseline-plan` | manual |
 | `apply` | `manual` | `manual` | `repo-quality-baseline-apply` | manual |
 

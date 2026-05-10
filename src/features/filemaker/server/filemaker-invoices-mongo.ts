@@ -12,8 +12,6 @@
 
 import 'server-only';
 
-/* eslint-disable complexity, max-lines-per-function */
-
 import type { Collection, Document } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -116,6 +114,14 @@ const optionalMetadataString = (value: string | undefined): string | undefined =
   return normalized.length > 0 ? normalized : undefined;
 };
 
+const optionalStringMetadata = (
+  key: string,
+  value: string | undefined
+): Record<string, string> => {
+  const normalized = optionalMetadataString(value);
+  return normalized === undefined ? {} : { [key]: normalized };
+};
+
 export const getFilemakerInvoicesCollection = async (): Promise<
   Collection<FilemakerInvoiceMongoDocument>
 > => {
@@ -127,112 +133,55 @@ const toOrganizationLink = (
   link: FilemakerInvoiceOrganizationLinkMongoDocument
 ): MongoFilemakerInvoiceOrganizationLink => ({
   id: link.id,
-  ...(optionalMetadataString(link.legacyOrganizationUuid) !== undefined
-    ? { legacyOrganizationUuid: optionalMetadataString(link.legacyOrganizationUuid) }
-    : {}),
-  ...(optionalMetadataString(link.organizationId) !== undefined
-    ? { organizationId: optionalMetadataString(link.organizationId) }
-    : {}),
-  ...(optionalMetadataString(link.organizationName) !== undefined
-    ? { organizationName: optionalMetadataString(link.organizationName) }
-    : {}),
+  ...optionalStringMetadata('legacyOrganizationUuid', link.legacyOrganizationUuid),
+  ...optionalStringMetadata('organizationId', link.organizationId),
+  ...optionalStringMetadata('organizationName', link.organizationName),
 });
+
+const countUnresolvedOrganizationLinks = (
+  organizationLinks: FilemakerInvoiceOrganizationLinkMongoDocument[]
+): number =>
+  organizationLinks.filter(
+    (link: FilemakerInvoiceOrganizationLinkMongoDocument): boolean =>
+      optionalMetadataString(link.organizationId) === undefined
+  ).length;
 
 export function toMongoFilemakerInvoice(
   document: InvoiceWithLinksDocument
 ): MongoFilemakerInvoice {
   const organizationLinks = document.organizationLinks ?? [];
   return {
-    ...(optionalMetadataString(document.cIssueYear) !== undefined
-      ? { cIssueYear: optionalMetadataString(document.cIssueYear) }
-      : {}),
-    ...(optionalMetadataString(document.cPaymentDue) !== undefined
-      ? { cPaymentDue: optionalMetadataString(document.cPaymentDue) }
-      : {}),
-    ...(optionalMetadataString(document.dayForPayment) !== undefined
-      ? { dayForPayment: optionalMetadataString(document.dayForPayment) }
-      : {}),
-    ...(optionalMetadataString(document.eventDate) !== undefined
-      ? { eventDate: optionalMetadataString(document.eventDate) }
-      : {}),
-    ...(optionalMetadataString(document.filesPathListComment) !== undefined
-      ? { filesPathListComment: optionalMetadataString(document.filesPathListComment) }
-      : {}),
-    ...(optionalMetadataString(document.filesPathListDateEntered) !== undefined
-      ? { filesPathListDateEntered: optionalMetadataString(document.filesPathListDateEntered) }
-      : {}),
-    ...(optionalMetadataString(document.filesPathListName) !== undefined
-      ? { filesPathListName: optionalMetadataString(document.filesPathListName) }
-      : {}),
-    ...(optionalMetadataString(document.filesPathListUuid) !== undefined
-      ? { filesPathListUuid: optionalMetadataString(document.filesPathListUuid) }
-      : {}),
-    ...(optionalMetadataString(document.hidePersonBuyer) !== undefined
-      ? { hidePersonBuyer: optionalMetadataString(document.hidePersonBuyer) }
-      : {}),
+    ...optionalStringMetadata('cIssueYear', document.cIssueYear),
+    ...optionalStringMetadata('cPaymentDue', document.cPaymentDue),
+    ...optionalStringMetadata('dayForPayment', document.dayForPayment),
+    ...optionalStringMetadata('eventDate', document.eventDate),
+    ...optionalStringMetadata('filesPathListComment', document.filesPathListComment),
+    ...optionalStringMetadata('filesPathListDateEntered', document.filesPathListDateEntered),
+    ...optionalStringMetadata('filesPathListName', document.filesPathListName),
+    ...optionalStringMetadata('filesPathListUuid', document.filesPathListUuid),
+    ...optionalStringMetadata('hidePersonBuyer', document.hidePersonBuyer),
     id: document.id,
-    ...(optionalMetadataString(document.invoiceNo) !== undefined
-      ? { invoiceNo: optionalMetadataString(document.invoiceNo) }
-      : {}),
-    ...(optionalMetadataString(document.issueDate) !== undefined
-      ? { issueDate: optionalMetadataString(document.issueDate) }
-      : {}),
-    ...(optionalMetadataString(document.isPaid) !== undefined
-      ? { isPaid: optionalMetadataString(document.isPaid) }
-      : {}),
+    ...optionalStringMetadata('invoiceNo', document.invoiceNo),
+    ...optionalStringMetadata('issueDate', document.issueDate),
+    ...optionalStringMetadata('isPaid', document.isPaid),
     linkedOrganizations: organizationLinks.map(toOrganizationLink),
-    ...(optionalMetadataString(document.organizationBName) !== undefined
-      ? { organizationBName: optionalMetadataString(document.organizationBName) }
-      : {}),
-    ...(optionalMetadataString(document.organizationBUuid) !== undefined
-      ? { organizationBUuid: optionalMetadataString(document.organizationBUuid) }
-      : {}),
+    ...optionalStringMetadata('organizationBName', document.organizationBName),
+    ...optionalStringMetadata('organizationBUuid', document.organizationBUuid),
     organizationLinkCount: organizationLinks.length,
-    ...(optionalMetadataString(document.organizationSName) !== undefined
-      ? { organizationSName: optionalMetadataString(document.organizationSName) }
-      : {}),
-    ...(optionalMetadataString(document.organizationSUuid) !== undefined
-      ? { organizationSUuid: optionalMetadataString(document.organizationSUuid) }
-      : {}),
-    ...(optionalMetadataString(document.orgFilter) !== undefined
-      ? { orgFilter: optionalMetadataString(document.orgFilter) }
-      : {}),
-    ...(optionalMetadataString(document.paidSoFar) !== undefined
-      ? { paidSoFar: optionalMetadataString(document.paidSoFar) }
-      : {}),
-    ...(optionalMetadataString(document.paymentType) !== undefined
-      ? { paymentType: optionalMetadataString(document.paymentType) }
-      : {}),
-    ...(optionalMetadataString(document.servicesAmount) !== undefined
-      ? { servicesAmount: optionalMetadataString(document.servicesAmount) }
-      : {}),
-    ...(optionalMetadataString(document.servicesCurrency) !== undefined
-      ? { servicesCurrency: optionalMetadataString(document.servicesCurrency) }
-      : {}),
-    ...(optionalMetadataString(document.servicesServiceNameUuid) !== undefined
-      ? { servicesServiceNameUuid: optionalMetadataString(document.servicesServiceNameUuid) }
-      : {}),
-    ...(optionalMetadataString(document.servicesServiceType) !== undefined
-      ? { servicesServiceType: optionalMetadataString(document.servicesServiceType) }
-      : {}),
-    ...(optionalMetadataString(document.servicesSum) !== undefined
-      ? { servicesSum: optionalMetadataString(document.servicesSum) }
-      : {}),
-    ...(optionalMetadataString(document.servicesTaxComment) !== undefined
-      ? { servicesTaxComment: optionalMetadataString(document.servicesTaxComment) }
-      : {}),
-    ...(optionalMetadataString(document.servicesVatUuid) !== undefined
-      ? { servicesVatUuid: optionalMetadataString(document.servicesVatUuid) }
-      : {}),
-    ...(optionalMetadataString(document.signature) !== undefined
-      ? { signature: optionalMetadataString(document.signature) }
-      : {}),
-    ...(optionalMetadataString(document.stationaryUuid) !== undefined
-      ? { stationaryUuid: optionalMetadataString(document.stationaryUuid) }
-      : {}),
-    unresolvedOrganizationLinkCount: organizationLinks.filter(
-      (link: FilemakerInvoiceOrganizationLinkMongoDocument): boolean =>
-        optionalMetadataString(link.organizationId) === undefined
-    ).length,
+    ...optionalStringMetadata('organizationSName', document.organizationSName),
+    ...optionalStringMetadata('organizationSUuid', document.organizationSUuid),
+    ...optionalStringMetadata('orgFilter', document.orgFilter),
+    ...optionalStringMetadata('paidSoFar', document.paidSoFar),
+    ...optionalStringMetadata('paymentType', document.paymentType),
+    ...optionalStringMetadata('servicesAmount', document.servicesAmount),
+    ...optionalStringMetadata('servicesCurrency', document.servicesCurrency),
+    ...optionalStringMetadata('servicesServiceNameUuid', document.servicesServiceNameUuid),
+    ...optionalStringMetadata('servicesServiceType', document.servicesServiceType),
+    ...optionalStringMetadata('servicesSum', document.servicesSum),
+    ...optionalStringMetadata('servicesTaxComment', document.servicesTaxComment),
+    ...optionalStringMetadata('servicesVatUuid', document.servicesVatUuid),
+    ...optionalStringMetadata('signature', document.signature),
+    ...optionalStringMetadata('stationaryUuid', document.stationaryUuid),
+    unresolvedOrganizationLinkCount: countUnresolvedOrganizationLinks(organizationLinks),
   };
 }

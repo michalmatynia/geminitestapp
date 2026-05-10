@@ -13,9 +13,10 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useAssets3D,
@@ -23,10 +24,31 @@ import {
   useAsset3DTags,
   useReindexAssets3DMutation,
 } from '../hooks/useAsset3dQueries';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ViewMode } from './view-mode';
 import type { Asset3DGridItem } from '../components/Asset3DListSubcomponents';
+
+function useAsset3DListFilters(
+  searchQuery: string,
+  selectedCategory: string | null,
+  selectedTags: string[]
+): Asset3DListFilters {
+  return useMemo(
+    () => ({
+      ...(searchQuery !== '' ? { search: searchQuery } : {}),
+      ...(selectedCategory !== null && selectedCategory !== '' ? { categoryId: selectedCategory } : {}),
+      ...(selectedTags.length > 0 ? { tags: selectedTags } : {}),
+    }),
+    [searchQuery, selectedCategory, selectedTags]
+  );
+}
+
+const getAssetPickerLabel = (asset: Asset3DRecord): string => {
+  const filename = asset.filename ?? '';
+  if (asset.name !== '') return asset.name;
+  if (filename !== '') return filename;
+  return asset.id;
+};
 
 /** Return type interface for the asset list state hook */
 export interface UseAsset3DListStateReturn {
@@ -86,15 +108,7 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  /** Memoized filter object for API queries */
-  const filters = useMemo(
-    () => ({
-      ...(searchQuery && { search: searchQuery }),
-      ...(selectedCategory && { categoryId: selectedCategory }),
-      ...(selectedTags.length > 0 && { tags: selectedTags }),
-    }),
-    [searchQuery, selectedCategory, selectedTags]
-  );
+  const filters = useAsset3DListFilters(searchQuery, selectedCategory, selectedTags);
 
   /** Query hooks for data fetching */
   const assetsQuery = useAssets3D(filters);
@@ -110,64 +124,37 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
   const allTags = tagsQuery.data ?? [];
 
   /** Handle asset reindexing with error logging */
-  const handleReindex = async () => {
+  const handleReindex = useCallback(async (): Promise<void> => {
     try {
       await reindexMutation.mutateAsync();
-    } catch (error) {
-      logClientCatch(error, {
+    } catch (caughtError) {
+      logClientCatch(caughtError, {
         service: 'viewer3d',
         action: 'reindexAssets',
       });
     }
-  };
+  }, [reindexMutation]);
 
   /** Transform assets into picker component format */
   const pickerItems = useMemo<Asset3DGridItem[]>(
     () =>
-      assets.map((asset) => {
-        const name = asset.name;
-        const filename = asset.filename ?? '';
-        
-        /** Determine display label priority: name > filename > id */
-        let label = asset.id;
-        if (name !== '') {
-          label = name;
-        } else if (filename !== '') {
-          label = filename;
-        }
-        
-        return {
-          id: asset.id,
-          label,
-          value: asset,
-        };
-      }),
+      assets.map((asset) => ({
+        id: asset.id,
+        label: getAssetPickerLabel(asset),
+        value: asset,
+      })),
     [assets]
   );
 
   /** Check if any filters are currently active */
-  const isFiltered = searchQuery !== '' || (selectedCategory ?? '') !== '' || selectedTags.length > 0;
+  const isFiltered =
+    searchQuery !== '' || (selectedCategory !== null && selectedCategory !== '') || selectedTags.length > 0;
 
-  return {
-    previewAsset,
-    setPreviewAsset,
-    viewMode,
-    setViewMode,
-    searchQuery,
-    setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
-    selectedTags,
-    setSelectedTags,
-    assets,
-    loading,
-    error,
-    categories,
-    allTags,
-    reindexing: reindexMutation.isPending,
-    handleReindex,
-    refetch: () => void assetsQuery.refetch(),
-    pickerItems,
-    isFiltered,
-  };
+  const refetch = useCallback((): void => {
+    assetsQuery.refetch().catch((caughtError: unknown) => {
+      logClientCatch(caughtError, { service: 'viewer3d', action: 'refetchAssets' });
+    });
+  }, [assetsQuery]);
+
+  return { previewAsset, setPreviewAsset, viewMode, setViewMode, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedTags, setSelectedTags, assets, loading, error, categories, allTags, reindexing: reindexMutation.isPending, handleReindex, refetch, pickerItems, isFiltered };
 }

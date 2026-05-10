@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-15'
+last_reviewed: '2026-05-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-04-15T14:56:15.477Z
+Generated at: 2026-05-10T01:05:20.285Z
 
 ## Summary
 
@@ -35,7 +35,7 @@ Generated at: 2026-04-15T14:56:15.477Z
 | Authentication + Session Bootstrap (API) | PASS | 2 | 120 | -118 | 0 | 7 | -7 |
 | Products CRUD + Listing Refresh (API) | PASS | 2 | 90 | -88 | 0 | 7 | -7 |
 | Image Studio Generate + Preview (API) | PASS | 2 | 380 | -378 | 0 | 47 | -47 |
-| AI Paths Run Execution (API) | PASS | 2 | 130 | -128 | 0 | 11 | -11 |
+| AI Paths Run Execution (API) | PASS | 8 | 130 | -122 | 0 | 11 | -11 |
 | Case Resolver OCR + Capture Mapping (API) | PASS | 2 | 60 | -58 | 0 | 7 | -7 |
 
 ## UI File Breakdown
@@ -76,7 +76,7 @@ Generated at: 2026-04-15T14:56:15.477Z
 
 ### AI Paths Run Execution (API)
 
-- `src/app/api/ai-paths/runs/handler.ts`: 2 LOC | 0 branch points
+- `src/app/api/ai-paths/runs/handler.ts`: 8 LOC | 0 branch points
 
 ### Case Resolver OCR + Capture Mapping (API)
 
@@ -86,30 +86,30 @@ Generated at: 2026-04-15T14:56:15.477Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/components/list/ProductAmazonScanModal.test.tsx` | 4175 |
-| `src/features/products/components/form/ProductFormScans.test.tsx` | 3065 |
-| `src/features/products/server/parts/product-scan-amazon-script.part1.ts` | 2939 |
-| `src/features/products/server/parts/product-scan-1688-script.part1.ts` | 2227 |
-| `src/features/products/server/product-scans-service.amazon.test.ts` | 2166 |
-| `src/features/products/components/list/ProductAmazonScanModal.tsx` | 2130 |
-| `src/features/products/components/ProductModals.test.tsx` | 1920 |
-| `src/features/products/server/product-scan-amazon-evaluator.ts` | 1712 |
-| `src/features/integrations/services/tradera-listing-service.test.ts` | 1676 |
-| `src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx` | 1673 |
+| `src/features/filemaker/components/page/OrganizationJobListingsSection.tsx` | 4883 |
+| `src/features/products/components/list/ProductScanModal.test.tsx` | 4631 |
+| `src/features/filemaker/server/filemaker-job-board-scrape.test.ts` | 3676 |
+| `src/features/playwright/server/ai-step-service.test.ts` | 3242 |
+| `src/features/playwright/pages/AdminPlaywrightProgrammableIntegrationPage.test.tsx` | 3129 |
+| `src/features/products/components/form/ProductFormScans.test.tsx` | 2832 |
+| `src/shared/lib/browser-execution/__tests__/product-scan-sequencers.test.ts` | 2825 |
+| `src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.tsx` | 2629 |
+| `src/features/filemaker/__tests__/AdminFilemakerMailPages.routing.test.tsx` | 2451 |
+| `src/features/playwright/server/ai-step-service.ts` | 2443 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 144 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 160 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 136 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 120 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 116 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
-| `src/app/api/databases/[[...path]]/route.ts` | 100 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 104 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 80 |
 | `src/app/api/kangur/[[...path]]/route.ts` | 60 |
 | `src/app/api/marketplace/[resource]/route.ts` | 37 |
+| `src/app/api/settings/route.ts` | 37 |
 | `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 30 |
 
 ## Notes

@@ -25,6 +25,10 @@ const toMongoId = (id: string): string | ObjectId => {
 /**
  * Reads the first available value from a list of settings keys.
  */
+import { databaseError, internalError } from '@/shared/errors/app-error';
+
+// ... (existing imports)
+
 export const readFirstAvailableSettingValue = async (keys: string[]): Promise<string | null> => {
   if (keys.length === 0 || !process.env['MONGODB_URI']) {
     return null;
@@ -72,14 +76,13 @@ export const readFirstAvailableSettingValue = async (keys: string[]): Promise<st
 
     return null;
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    return null;
+    throw databaseError('Failed to read CMS settings keys.', error, {
+      collection: 'settings',
+      keys,
+    });
   }
 };
 
-/**
- * Fetches and resolves CMS menu settings for a domain and locale.
- */
 export const getCmsMenuSettings = cache(async (
   domainId?: string | null,
   locale?: string | null,
@@ -90,8 +93,15 @@ export const getCmsMenuSettings = cache(async (
   const stored = await readFirstAvailableSettingValue(fallbackKeys);
 
   if (stored) {
-    const parsed = parseJsonSetting<unknown>(stored, null);
-    return normalizeMenuSettings(parsed);
+    try {
+      const parsed = parseJsonSetting<unknown>(stored, null);
+      return normalizeMenuSettings(parsed);
+    } catch (error) {
+      throw internalError('Failed to normalize CMS menu settings.', {
+        cause: error,
+        fallbackKeys,
+      });
+    }
   }
 
   return DEFAULT_MENU_SETTINGS;

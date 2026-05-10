@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-05-06T11:44:15.224Z",
+  "generatedAt": "2026-05-10T01:05:00.008Z",
   "status": "warn",
   "summary": {
-    "total": 5,
+    "total": 6,
     "errorCount": 0,
-    "warningCount": 5,
+    "warningCount": 6,
     "infoCount": 0,
     "status": "warn",
-    "routeFileCount": 391,
-    "handlerFileCount": 538
+    "routeFileCount": 398,
+    "handlerFileCount": 523
   },
   "scope": {
     "root": "src/app/api"
@@ -48,6 +48,16 @@
       "severity": "warn",
       "ruleId": "unchecked-req-json",
       "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
+      "file": "src/app/api/filemaker/mail/google/oauth/disconnect/handler.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "unchecked-req-json",
+      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
       "file": "src/app/api/filemaker/organizations/job-board-scrape/classifications/handler.ts",
       "line": 10,
       "column": null,
@@ -69,7 +79,7 @@
     {
       "ruleId": "unchecked-req-json",
       "errorCount": 0,
-      "warningCount": 4,
+      "warningCount": 5,
       "infoCount": 0
     },
     {
@@ -79,5 +89,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 97
+  "durationMs": 109
 }

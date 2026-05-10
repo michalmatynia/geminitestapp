@@ -51,7 +51,7 @@ export default async function RootLayout({
   );
 
   return (
-    <html lang={locale || 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
+    <html lang={locale.length > 0 ? locale : 'en'} data-app-font-set={fontSetId} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         {sanitizedLiteSettingsScript !== null ? (
           <script

@@ -678,6 +678,148 @@ describe('ProductListingDetails', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the queued Tradera listing step plan before the worker run starts', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-queued-1',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: null,
+            inventoryId: null,
+            status: 'queued',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T10:00:00.000Z',
+            updatedAt: '2026-04-13T10:00:01.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'list',
+                  requestId: 'job-queued-1',
+                  queuedAt: '2026-04-13T10:00:00.000Z',
+                  requestedBrowserMode: 'connection_default',
+                  requestedSelectorProfile: 'default',
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Queued listing steps')).toBeInTheDocument();
+    expect(screen.getByText('Live queued')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for worker to start.')).toBeInTheDocument();
+    expect(screen.getByText('browser_preparation')).toBeInTheDocument();
+    expect(screen.getByText('auth_check')).toBeInTheDocument();
+    expect(screen.getByText('publish_verify')).toBeInTheDocument();
+    expect(screen.getByText('Pending queue job:')).toBeInTheDocument();
+    expect(screen.getByText('job-queued-1')).toBeInTheDocument();
+  });
+
+  it('shows persisted pending Tradera execution steps for a standard listing run', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-standard-live-1',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: null,
+            inventoryId: null,
+            status: 'running',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T10:00:00.000Z',
+            updatedAt: '2026-04-13T10:00:01.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'list',
+                  requestId: 'job-standard-live-1',
+                  queuedAt: '2026-04-13T10:00:00.000Z',
+                  requestedBrowserMode: 'connection_default',
+                  latestStage: 'sell_page_open',
+                  executionSteps: [
+                    {
+                      id: 'browser_open',
+                      label: 'Open browser',
+                      status: 'success',
+                      message: 'Browser was opened successfully.',
+                    },
+                    {
+                      id: 'sell_page_open',
+                      label: 'Open listing editor',
+                      status: 'running',
+                      message: 'Opening the Tradera listing editor.',
+                    },
+                  ],
+                },
+                lastExecution: {
+                  action: 'list',
+                  executedAt: '2026-04-13T09:59:00.000Z',
+                  metadata: {
+                    executionSteps: [
+                      {
+                        id: 'publish_verify',
+                        label: 'Verify published listing',
+                        status: 'success',
+                        message: 'Old persisted completion.',
+                      },
+                    ],
+                  },
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Execution steps')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText('Now: Open listing editor')).toBeInTheDocument();
+    expect(screen.getAllByText('sell_page_open').length).toBeGreaterThan(0);
+    expect(screen.getByText('Opening the Tradera listing editor.')).toBeInTheDocument();
+    expect(screen.queryByText('Old persisted completion.')).not.toBeInTheDocument();
+  });
+
   it('renders live Tradera execution steps from the active Playwright run while pending', () => {
     useTraderaLiveExecutionMock.mockReturnValue({
       runId: 'run-live-123',
@@ -759,6 +901,7 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText('image_upload').length).toBeGreaterThan(0);
     expect(screen.getByText('Execution steps')).toBeInTheDocument();
     expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText('Now: Upload listing images')).toBeInTheDocument();
     expect(screen.getByText('Upload listing images')).toBeInTheDocument();
     expect(screen.getByText('Uploading listing images.')).toBeInTheDocument();
     expect(screen.getByText('Tradera run result')).toBeInTheDocument();

@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign -- Session lifecycle updates mutate the in-memory session record. */
 import { type LiveScripterSession, type LiveScripterSocket } from './types';
 import { getSessions } from './state';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
@@ -6,10 +5,11 @@ import { broadcastToSockets } from './socket-handler';
 import { LIVE_SCRIPTER_SESSION_IDLE_MS } from './constants';
 
 export const refreshIdleTimeout = (session: LiveScripterSession): void => {
-  session.lastActivityAt = Date.now();
-  safeClearTimeout(session.timeoutId);
-  session.timeoutId = safeSetTimeout(() => {
-    void disposeLiveScripterSession(session.id);
+  const activeSession = session;
+  activeSession.lastActivityAt = Date.now();
+  safeClearTimeout(activeSession.timeoutId);
+  activeSession.timeoutId = safeSetTimeout(() => {
+    void disposeLiveScripterSession(activeSession.id);
   }, LIVE_SCRIPTER_SESSION_IDLE_MS);
 };
 

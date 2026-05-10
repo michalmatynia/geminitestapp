@@ -10,7 +10,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import type { RowSelectionState } from '@tanstack/react-table';
+import type { ExpandedState, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 
 import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 
@@ -49,8 +49,8 @@ export type OrdersImportScopeState = {
 export type OrdersImportTableState = {
   rowSelection: RowSelectionState;
   setRowSelection: Dispatch<SetStateAction<RowSelectionState>>;
-  expanded: Record<string, boolean>;
-  setExpanded: Dispatch<SetStateAction<Record<string, boolean>>>;
+  expanded: ExpandedState;
+  setExpanded: OnChangeFn<ExpandedState>;
   handleToggleExpanded: (orderId: string) => void;
 };
 
@@ -172,16 +172,19 @@ export const useOrdersImportScopeState = (
 
 export const useOrdersImportTableState = (): OrdersImportTableController => {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const resetPreviewTableState = useCallback((): void => {
     setRowSelection({});
     setExpanded({});
   }, []);
   const handleToggleExpanded = useCallback((orderId: string): void => {
-    setExpanded((prev) => ({
-      ...prev,
-      [orderId]: prev[orderId] !== true,
-    }));
+    setExpanded((prev) => {
+      const current = prev === true ? {} : prev;
+      return {
+        ...current,
+        [orderId]: current[orderId] !== true,
+      };
+    });
   }, []);
 
   return {

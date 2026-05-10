@@ -17,7 +17,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useGLTF, Html } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 /**
@@ -59,20 +59,18 @@ function optimizeMaterials(scene: THREE.Group, enableShadows: boolean): void {
   scene.traverse((child: THREE.Object3D) => {
     // Only process mesh objects
     if (child instanceof THREE.Mesh) {
+      const mesh = child;
       // Configure shadow rendering
-      // eslint-disable-next-line no-param-reassign
-      child.castShadow = enableShadows;
-      // eslint-disable-next-line no-param-reassign
-      child.receiveShadow = enableShadows;
+      mesh.castShadow = enableShadows;
+      mesh.receiveShadow = enableShadows;
 
       // Optimize standard materials
-      if (child.material instanceof THREE.MeshStandardMaterial) {
+      if (mesh.material instanceof THREE.MeshStandardMaterial) {
+        const material = mesh.material;
         // Adjust environment map intensity for better lighting
-        if (child.material.envMapIntensity !== 1.5) {
-          // eslint-disable-next-line no-param-reassign
-          child.material.envMapIntensity = 1.5;
-          // eslint-disable-next-line no-param-reassign
-          child.material.needsUpdate = true;
+        if (material.envMapIntensity !== 1.5) {
+          material.envMapIntensity = 1.5;
+          material.needsUpdate = true;
         }
       }
     }
@@ -86,8 +84,8 @@ function optimizeMaterials(scene: THREE.Group, enableShadows: boolean): void {
  * @param props - Component props
  * @returns JSX element or null if model fails to load
  */
-export function Model3D(props: Model3DProps): React.JSX.Element | null {
-  const { url, onLoad, onError, position, rotation, scale, enableShadows } = props;
+export function Model3D(props: Model3DProps): React.JSX.Element {
+  const { url, onLoad, position, rotation, scale, enableShadows } = props;
 
   // Track if we've replaced blob: textures with fallback
   const replacedTextureRef = useRef(false);
@@ -126,25 +124,6 @@ export function Model3D(props: Model3DProps): React.JSX.Element | null {
     optimizeMaterials(scene, enableShadows);
     onLoad?.();
   }, [scene, onLoad, enableShadows]);
-
-  // Handle loading errors
-  useEffect(() => {
-    // scene is always defined after suspension, but we keep this for type safety in case of unexpected useGLTF behavior
-    if (!scene && onError !== undefined) {
-      onError(new Error('Failed to load model'));
-    }
-  }, [scene, onError]);
-
-  if (!scene) {
-    return (
-      <Html center>
-        <div className='text-red-400 text-center p-4 bg-black/50 rounded'>
-          <p>Model not found</p>
-          <p className='text-sm text-gray-400 mt-2'>The 3D asset could not be loaded</p>
-        </div>
-      </Html>
-    );
-  }
 
   return (
     <primitive

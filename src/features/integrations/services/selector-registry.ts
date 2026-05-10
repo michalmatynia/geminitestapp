@@ -8,7 +8,6 @@ import {
   isBrainModelVisionCapable,
   runBrainChatCompletion,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import { mutateSelectorRegistryProfile } from './selector-registry/registry-mutations';
 import {
   readPlaywrightEngineArtifact,
   runPlaywrightEngineTask,

@@ -87,6 +87,28 @@ describe('useIntegrationSelection', () => {
     expect(result.current.selectedConnectionId).toBe('conn-tradera-2');
   });
 
+  it('returns an error instead of a loading state when integrations fail to load', () => {
+    useQueriesMock.mockReturnValue([
+      { data: null },
+      { data: null },
+      {
+        data: undefined,
+        error: new Error('Unauthorized.'),
+        isError: true,
+        isPending: false,
+      },
+      { data: null },
+    ]);
+
+    const { result } = renderHook(() =>
+      useIntegrationSelection(undefined, undefined, { filterIntegrationSlug: 'tradera' })
+    );
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.integrations).toEqual([]);
+    expect(result.current.error).toBe('Unable to load integrations: Unauthorized.');
+  });
+
   it('updates the selected Tradera target when the initial recovery ids change after mount', async () => {
     useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },

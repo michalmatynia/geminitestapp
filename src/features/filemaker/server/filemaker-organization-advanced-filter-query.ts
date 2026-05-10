@@ -1,5 +1,4 @@
 import 'server-only';
-/* eslint-disable complexity */
 
 import type { Filter } from 'mongodb';
 
@@ -143,43 +142,80 @@ const buildRangeFilter = (
   return {};
 };
 
+const isSyntheticBooleanField = (
+  field: OrganizationAdvancedFilterField
+): field is 'hasAddress' | 'hasBank' | 'hasParent' =>
+  field === 'hasAddress' || field === 'hasBank' || field === 'hasParent';
+
+const isSetOperator = (
+  operator: OrganizationAdvancedFilterOperator
+): operator is 'in' | 'notIn' => operator === 'in' || operator === 'notIn';
+
+const isStringComparisonOperator = (
+  operator: OrganizationAdvancedFilterOperator
+): operator is 'contains' | 'eq' | 'neq' =>
+  operator === 'contains' || operator === 'eq' || operator === 'neq';
+
+const buildEmptyValueFilter = (
+  field: keyof FilemakerOrganizationMongoDocument,
+  operator: OrganizationAdvancedFilterOperator,
+  input: BuildOrganizationAdvancedFilterInput
+): Filter<FilemakerOrganizationMongoDocument> | null => {
+  if (operator === 'isEmpty') return input.hasNoFieldValueFilter(field);
+  if (operator === 'isNotEmpty') return input.hasFieldValueFilter(field);
+  return null;
+};
+
+const buildSetConditionFilter = (
+  field: keyof FilemakerOrganizationMongoDocument,
+  condition: OrganizationAdvancedFilterCondition,
+  input: BuildOrganizationAdvancedFilterInput
+): Filter<FilemakerOrganizationMongoDocument> | null => {
+  if (!isSetOperator(condition.operator) || !Array.isArray(condition.value)) return null;
+  return buildSetFilter(field, condition.operator, condition.value, input.escapeRegex);
+};
+
+const buildScalarConditionFilter = (
+  field: keyof FilemakerOrganizationMongoDocument,
+  condition: OrganizationAdvancedFilterCondition,
+  input: BuildOrganizationAdvancedFilterInput
+): Filter<FilemakerOrganizationMongoDocument> => {
+  const value = normalizeScalar(condition.value);
+  const valueTo = normalizeScalar(condition.valueTo);
+  if (value === null || value === '') return {};
+
+  if (isStringComparisonOperator(condition.operator)) {
+    return buildStringComparisonFilter(field, condition.operator, String(value), input.escapeRegex);
+  }
+
+  return buildRangeFilter(field, condition.operator, value, valueTo);
+};
+
+const buildMappedConditionFilter = (
+  field: keyof FilemakerOrganizationMongoDocument,
+  condition: OrganizationAdvancedFilterCondition,
+  input: BuildOrganizationAdvancedFilterInput
+): Filter<FilemakerOrganizationMongoDocument> => {
+  const emptyValueFilter = buildEmptyValueFilter(field, condition.operator, input);
+  if (emptyValueFilter !== null) return emptyValueFilter;
+
+  const setFilter = buildSetConditionFilter(field, condition, input);
+  if (setFilter !== null) return setFilter;
+
+  return buildScalarConditionFilter(field, condition, input);
+};
+
 const buildConditionFilter = (
   condition: OrganizationAdvancedFilterCondition,
   input: BuildOrganizationAdvancedFilterInput
 ): Filter<FilemakerOrganizationMongoDocument> => {
-  if (
-    condition.field === 'hasAddress' ||
-    condition.field === 'hasBank' ||
-    condition.field === 'hasParent'
-  ) {
+  if (isSyntheticBooleanField(condition.field)) {
     return buildBooleanFieldFilter(condition.field, condition.value, condition.operator, input);
   }
 
   const field = FIELD_MAP[condition.field];
   if (field === undefined) return {};
-  if (condition.operator === 'isEmpty') return input.hasNoFieldValueFilter(field);
-  if (condition.operator === 'isNotEmpty') return input.hasFieldValueFilter(field);
-
-  if (
-    (condition.operator === 'in' || condition.operator === 'notIn') &&
-    Array.isArray(condition.value)
-  ) {
-    return buildSetFilter(field, condition.operator, condition.value, input.escapeRegex);
-  }
-
-  const value = normalizeScalar(condition.value);
-  const valueTo = normalizeScalar(condition.valueTo);
-  if (value === null || value === '') return {};
-
-  if (
-    condition.operator === 'contains' ||
-    condition.operator === 'eq' ||
-    condition.operator === 'neq'
-  ) {
-    return buildStringComparisonFilter(field, condition.operator, String(value), input.escapeRegex);
-  }
-
-  return buildRangeFilter(field, condition.operator, value, valueTo);
+  return buildMappedConditionFilter(field, condition, input);
 };
 
 const buildRuleFilter = (

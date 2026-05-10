@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/strict-boolean-expressions -- Node-file relation indexing traverses nested graph/file state. */
 import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { CaseResolverGraph, CaseResolverNodeFileRelationIndex } from '@/shared/contracts/case-resolver/graph';
 import {
@@ -10,6 +9,102 @@ import {
   mergeRelationMap,
 } from '@/features/case-resolver/services/node-file-relations';
 
+type RelationIndexMaps = {
+  documentFileIdsByNodeFileAssetId: Record<string, string[]>;
+  nodeFileAssetIdsByDocumentFileId: Record<string, string[]>;
+  nodeIdsByDocumentFileId: Record<string, string[]>;
+  nodeIdsByNodeFileAssetId: Record<string, string[]>;
+};
+
+const getTrimmedNodeId = (node: CaseResolverGraph['nodes'][number]): string =>
+  typeof node.id === 'string' ? node.id.trim() : '';
+
+const getValidNodeIds = (graph: CaseResolverGraph): Set<string> =>
+  new Set<string>(
+    graph.nodes
+      .map((node): string => getTrimmedNodeId(node))
+      .filter((nodeId: string): boolean => nodeId.length > 0)
+  );
+
+const getValidNodeFileAssetIds = (assets: CaseResolverAssetFile[]): Set<string> =>
+  new Set<string>(
+    assets
+      .filter((asset: CaseResolverAssetFile): boolean => isCanonicalNodeFileAsset(asset))
+      .map((asset: CaseResolverAssetFile): string => asset.id.trim())
+      .filter((assetId: string): boolean => assetId.length > 0)
+  );
+
+const getValidDocumentFileIds = (
+  files?: CaseResolverFile[] | null
+): Set<string> | null => {
+  if (files === undefined || files === null) return null;
+  return new Set<string>(
+    files
+      .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
+      .map((file: CaseResolverFile): string => file.id.trim())
+      .filter((fileId: string): boolean => fileId.length > 0)
+  );
+};
+
+const createRelationIndexMaps = (): RelationIndexMaps => ({
+  nodeIdsByDocumentFileId: {},
+  nodeFileAssetIdsByDocumentFileId: {},
+  documentFileIdsByNodeFileAssetId: {},
+  nodeIdsByNodeFileAssetId: {},
+});
+
+const toRelationIndex = (maps: RelationIndexMaps): CaseResolverNodeFileRelationIndex => ({
+  nodeIdsByDocumentFileId: sortRecordValues(maps.nodeIdsByDocumentFileId),
+  nodeFileAssetIdsByDocumentFileId: sortRecordValues(maps.nodeFileAssetIdsByDocumentFileId),
+  documentFileIdsByNodeFileAssetId: sortRecordValues(maps.documentFileIdsByNodeFileAssetId),
+  nodeIdsByNodeFileAssetId: sortRecordValues(maps.nodeIdsByNodeFileAssetId),
+});
+
+const isKnownDocumentFileId = (
+  fileId: string,
+  validDocumentFileIds: Set<string> | null
+): boolean => {
+  if (fileId.length === 0) return false;
+  return validDocumentFileIds === null || validDocumentFileIds.has(fileId);
+};
+
+const isKnownNodeFileAssetId = (
+  assetId: string,
+  validNodeFileAssetIds: Set<string>
+): boolean => assetId.length > 0 && validNodeFileAssetIds.has(assetId);
+
+const addNodeRelationLinks = ({
+  documentFileId,
+  maps,
+  nodeFileAssetId,
+  nodeId,
+  validDocumentFileIds,
+  validNodeFileAssetIds,
+}: {
+  documentFileId: string;
+  maps: RelationIndexMaps;
+  nodeFileAssetId: string;
+  nodeId: string;
+  validDocumentFileIds: Set<string> | null;
+  validNodeFileAssetIds: Set<string>;
+}): void => {
+  const documentFileIsValid = isKnownDocumentFileId(documentFileId, validDocumentFileIds);
+  const nodeFileAssetIsValid = isKnownNodeFileAssetId(nodeFileAssetId, validNodeFileAssetIds);
+
+  if (documentFileIsValid) {
+    addUnique(maps.nodeIdsByDocumentFileId, documentFileId, nodeId);
+  }
+
+  if (nodeFileAssetIsValid) {
+    addUnique(maps.nodeIdsByNodeFileAssetId, nodeFileAssetId, nodeId);
+  }
+
+  if (!documentFileIsValid || !nodeFileAssetIsValid) return;
+
+  addUnique(maps.nodeFileAssetIdsByDocumentFileId, documentFileId, nodeFileAssetId);
+  addUnique(maps.documentFileIdsByNodeFileAssetId, nodeFileAssetId, documentFileId);
+};
+
 export const buildCaseResolverNodeFileRelationIndex = ({
   graph,
   assets,
@@ -19,67 +114,30 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  const validNodeIds = new Set<string>(
-    graph.nodes
-      .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))
-      .filter(Boolean)
-  );
-  const validNodeFileAssetIds = new Set<string>(
-    assets
-      .filter((asset: CaseResolverAssetFile): boolean => isCanonicalNodeFileAsset(asset))
-      .map((asset: CaseResolverAssetFile): string => asset.id.trim())
-      .filter(Boolean)
-  );
-  const validDocumentFileIds = files
-    ? new Set(
-      files
-        .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-        .map((file: CaseResolverFile): string => file.id.trim())
-        .filter(Boolean)
-    )
-    : null;
-
+  const validNodeIds = getValidNodeIds(graph);
+  const validNodeFileAssetIds = getValidNodeFileAssetIds(assets);
+  const validDocumentFileIds = getValidDocumentFileIds(files);
   const sourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);
   const nodeFileByNode = normalizeRecord(graph.nodeFileAssetIdByNode);
-
-  const nodeIdsByDocumentFileId: Record<string, string[]> = {};
-  const nodeFileAssetIdsByDocumentFileId: Record<string, string[]> = {};
-  const documentFileIdsByNodeFileAssetId: Record<string, string[]> = {};
-  const nodeIdsByNodeFileAssetId: Record<string, string[]> = {};
+  const maps = createRelationIndexMaps();
 
   graph.nodes.forEach((node): void => {
-    const nodeId = typeof node.id === 'string' ? node.id.trim() : '';
-    if (!nodeId || !validNodeIds.has(nodeId)) return;
+    const nodeId = getTrimmedNodeId(node);
+    if (nodeId.length === 0 || !validNodeIds.has(nodeId)) return;
 
     const documentFileId = sourceByNode[nodeId] ?? '';
     const nodeFileAssetId = nodeFileByNode[nodeId] ?? '';
-
-    const documentFileIsValid =
-      documentFileId.length > 0 &&
-      (validDocumentFileIds === null || validDocumentFileIds.has(documentFileId));
-    const nodeFileAssetIsValid =
-      nodeFileAssetId.length > 0 && validNodeFileAssetIds.has(nodeFileAssetId);
-
-    if (documentFileIsValid) {
-      addUnique(nodeIdsByDocumentFileId, documentFileId, nodeId);
-    }
-
-    if (nodeFileAssetIsValid) {
-      addUnique(nodeIdsByNodeFileAssetId, nodeFileAssetId, nodeId);
-    }
-
-    if (!documentFileIsValid || !nodeFileAssetIsValid) return;
-
-    addUnique(nodeFileAssetIdsByDocumentFileId, documentFileId, nodeFileAssetId);
-    addUnique(documentFileIdsByNodeFileAssetId, nodeFileAssetId, documentFileId);
+    addNodeRelationLinks({
+      documentFileId,
+      maps,
+      nodeFileAssetId,
+      nodeId,
+      validDocumentFileIds,
+      validNodeFileAssetIds,
+    });
   });
 
-  return {
-    nodeIdsByDocumentFileId: sortRecordValues(nodeIdsByDocumentFileId),
-    nodeFileAssetIdsByDocumentFileId: sortRecordValues(nodeFileAssetIdsByDocumentFileId),
-    documentFileIdsByNodeFileAssetId: sortRecordValues(documentFileIdsByNodeFileAssetId),
-    nodeIdsByNodeFileAssetId: sortRecordValues(nodeIdsByNodeFileAssetId),
-  };
+  return toRelationIndex(maps);
 };
 
 export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
@@ -89,12 +147,9 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  const nodeIdsByDocumentFileId: Record<string, string[]> = {};
-  const nodeFileAssetIdsByDocumentFileId: Record<string, string[]> = {};
-  const documentFileIdsByNodeFileAssetId: Record<string, string[]> = {};
-  const nodeIdsByNodeFileAssetId: Record<string, string[]> = {};
+  const maps = createRelationIndexMaps();
 
-  if (files) {
+  if (files !== null) {
     files.forEach((file: CaseResolverFile): void => {
       const graph = file.graph;
       if (!graph) return;
@@ -103,25 +158,20 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
         assets,
         files,
       });
-      mergeRelationMap(nodeIdsByDocumentFileId, relationIndex.nodeIdsByDocumentFileId);
+      mergeRelationMap(maps.nodeIdsByDocumentFileId, relationIndex.nodeIdsByDocumentFileId);
       mergeRelationMap(
-        nodeFileAssetIdsByDocumentFileId,
+        maps.nodeFileAssetIdsByDocumentFileId,
         relationIndex.nodeFileAssetIdsByDocumentFileId
       );
       mergeRelationMap(
-        documentFileIdsByNodeFileAssetId,
+        maps.documentFileIdsByNodeFileAssetId,
         relationIndex.documentFileIdsByNodeFileAssetId
       );
-      mergeRelationMap(nodeIdsByNodeFileAssetId, relationIndex.nodeIdsByNodeFileAssetId);
+      mergeRelationMap(maps.nodeIdsByNodeFileAssetId, relationIndex.nodeIdsByNodeFileAssetId);
     });
   }
 
-  return {
-    nodeIdsByDocumentFileId: sortRecordValues(nodeIdsByDocumentFileId),
-    nodeFileAssetIdsByDocumentFileId: sortRecordValues(nodeFileAssetIdsByDocumentFileId),
-    documentFileIdsByNodeFileAssetId: sortRecordValues(documentFileIdsByNodeFileAssetId),
-    nodeIdsByNodeFileAssetId: sortRecordValues(nodeIdsByNodeFileAssetId),
-  };
+  return toRelationIndex(maps);
 };
 
 export const sanitizeCaseResolverGraphNodeFileRelations = ({
@@ -133,23 +183,9 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
 }): CaseResolverGraph => {
-  const validNodeIds = new Set<string>(
-    graph.nodes
-      .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))
-      .filter(Boolean)
-  );
-  const validNodeFileAssetIds = new Set<string>(
-    assets
-      .filter((asset: CaseResolverAssetFile): boolean => isCanonicalNodeFileAsset(asset))
-      .map((asset: CaseResolverAssetFile): string => asset.id.trim())
-      .filter(Boolean)
-  );
-  const validDocumentFileIds = new Set<string>(
-    files
-      .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-      .map((file: CaseResolverFile): string => file.id.trim())
-      .filter(Boolean)
-  );
+  const validNodeIds = getValidNodeIds(graph);
+  const validNodeFileAssetIds = getValidNodeFileAssetIds(assets);
+  const validDocumentFileIds = getValidDocumentFileIds(files) ?? new Set<string>();
   const currentSourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);
   const currentNodeFileByNode = normalizeRecord(graph.nodeFileAssetIdByNode);
 
@@ -165,7 +201,7 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
     if (!validNodeIds.has(nodeId)) return;
     if (!validNodeFileAssetIds.has(assetId)) return;
     const sourceFileId = nextSourceByNode[nodeId] ?? '';
-    if (!sourceFileId) return;
+    if (sourceFileId.length === 0) return;
     nextNodeFileByNode[nodeId] = assetId;
   });
 

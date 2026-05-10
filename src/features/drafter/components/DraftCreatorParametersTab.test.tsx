@@ -1,5 +1,3 @@
-/* eslint-disable max-lines-per-function */
-
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';

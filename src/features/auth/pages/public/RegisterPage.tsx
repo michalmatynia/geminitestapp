@@ -37,6 +37,51 @@ type RegisterInput = {
   password: string;
 };
 
+type RegisterFailurePayload = {
+  error?: string;
+  details?: { issues?: string[] };
+} | null;
+
+type RegisterErrorLogger = (
+  errorObj: unknown,
+  context: Record<string, unknown>
+) => void;
+
+const logRegisterError = logClientCatch as RegisterErrorLogger;
+
+const buildRegisterInput = (data: RegisterInput): {
+  email: string;
+  password: string;
+  name?: string;
+} => {
+  const registerInput = { email: data.email, password: data.password };
+  const trimmedName = data.name.trim();
+  return trimmedName.length > 0 ? { ...registerInput, name: trimmedName } : registerInput;
+};
+
+const resolveRegisterFailureDetails = (payload: RegisterFailurePayload): string => {
+  const issues = payload?.details?.issues;
+  return Array.isArray(issues) ? issues.join(' ') : '';
+};
+
+const resolveRegisterFailureError = (payload: RegisterFailurePayload): string | null => {
+  const error = payload?.error;
+  return typeof error === 'string' ? error : null;
+};
+
+const appendRegisterFailureDetails = (message: string, details: string): string =>
+  details.length > 0 ? `${message} ${details}` : message;
+
+const resolveRegisterFailureMessage = (
+  payload: RegisterFailurePayload,
+  fallbackMessage: string
+): string => {
+  const details = resolveRegisterFailureDetails(payload);
+  const payloadError = resolveRegisterFailureError(payload);
+  if (payloadError === null) return fallbackMessage;
+  return appendRegisterFailureDetails(payloadError, details);
+};
+
 const useRegisterFormLogic = (): RegisterFormState => {
   const translations = useTranslations('AuthRegister');
   const [name, setName] = useState('');
@@ -46,19 +91,15 @@ const useRegisterFormLogic = (): RegisterFormState => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const registerUserMutation = useRegisterUser();
 
-  // eslint-disable-next-line complexity
   const handleRegister = useCallback(async (data: RegisterInput): Promise<void> => {
-    const registerInput: { email: string; password: string; name?: string } = { email: data.email, password: data.password };
-    const trimmedName = data.name.trim();
-    if (trimmedName !== '') registerInput.name = trimmedName;
+    const registerInput = buildRegisterInput(data);
     const response = await registerUserMutation.mutateAsync(registerInput);
-    if (!response.ok) {
-      const payload = response.payload as { error?: string; details?: { issues?: string[] } } | null;
-      const details = payload?.details?.issues?.join(' ') ?? '';
-      const payloadError = typeof payload?.error === 'string' ? payload.error : null;
-      const message = payloadError !== null ? `${payloadError}${details.length > 0 ? ` ${details}` : ''}` : translations('createAccountFailed');
-      throw new Error(message);
-    }
+    if (response.ok) return;
+    const message = resolveRegisterFailureMessage(
+      response.payload as RegisterFailurePayload,
+      translations('createAccountFailed')
+    );
+    throw new Error(message);
   }, [registerUserMutation, translations]);
 
   const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -69,7 +110,7 @@ const useRegisterFormLogic = (): RegisterFormState => {
       await handleRegister({ name, email, password });
       await signIn('credentials', { email, password, callbackUrl: '/admin' });
     } catch (err) {
-      logClientCatch(err, { source: 'RegisterPage', action: 'handleSubmit', email });
+      logRegisterError(err, { source: 'RegisterPage', action: 'handleSubmit', email });
       setError(err instanceof Error ? err.message : translations('createAccountFailed'));
     } finally {
       setIsSubmitting(false);

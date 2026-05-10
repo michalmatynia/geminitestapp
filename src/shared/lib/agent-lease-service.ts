@@ -541,44 +541,46 @@ export async function getAgentLeaseState(resourceId: string, scopeId?: string | 
  * @param input - The raw mutation request payload.
  * @returns A result object indicating success or failure.
  */
+import { configurationError, operationFailedError } from '@/shared/errors/app-error';
+
+// ...
+
 export function mutateAgentLease(input: unknown) {
   const request = AgentLeaseMutationRequestSchema.parse(input);
   const resource = getAgentResource(request.resourceId);
   const scopeId = normalizeScopeId(request.scopeId ?? null);
 
   if (!resource) {
-    return AgentLeaseMutationResultSchema.parse({
-      ok: false,
-      code: 'not_found',
-      message: `Unknown agent resource: ${request.resourceId}`,
+    throw configurationError(`Unknown agent resource: ${request.resourceId}`, {
+      resourceId: request.resourceId,
     });
   }
 
   // Broker leases cannot be mutated through this API; they are managed by the broker runtime
   if (request.resourceId === PLAYWRIGHT_BROKER_RESOURCE_ID) {
-    return AgentLeaseMutationResultSchema.parse({
-      ok: false,
-      code: 'unsupported',
-      message:
-        'Playwright runtime broker scopes are managed by runtime-broker.mjs. Use GET /api/agent/leases for discovery and acquire broker runtimes through the broker entrypoint.',
-    });
+    throw configurationError(
+      'Playwright runtime broker scopes are managed by runtime-broker.mjs. Use GET /api/agent/leases for discovery.',
+      {
+        resourceId: request.resourceId,
+        action: 'unsupported',
+      }
+    );
   }
 
   if (!resource.requiresLease) {
-    return AgentLeaseMutationResultSchema.parse({
-      ok: false,
-      code: 'unsupported',
-      message: `Resource ${request.resourceId} does not require a live lease.`,
-      state: getInternalLeaseState(request.resourceId, scopeId),
+    throw configurationError(`Resource ${request.resourceId} does not require a live lease.`, {
+      resourceId: request.resourceId,
     });
   }
 
   if (resource.scopeRequired && !scopeId) {
-    return AgentLeaseMutationResultSchema.parse({
-      ok: false,
-      code: 'unsupported',
-      message: `Resource ${request.resourceId} requires a scopeId (${resource.scopeDescription ?? 'scope identifier'}).`,
-    });
+    throw configurationError(
+      `Resource ${request.resourceId} requires a scopeId (${resource.scopeDescription ?? 'scope identifier'}).`,
+      {
+        resourceId: request.resourceId,
+        scopeDescription: resource.scopeDescription,
+      }
+    );
   }
 
   const normalizedRequest = {

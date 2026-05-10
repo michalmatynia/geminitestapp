@@ -1,0 +1,233 @@
+import type { ContextNode } from '@/shared/contracts/ai-context-registry';
+
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/components.ts';
+
+export const componentNodesPart3: ContextNode[] = [
+  {
+    id: 'component:ai-insights-logs-panel',
+    kind: 'component',
+    name: 'LogInsightsPanel',
+    description:
+      'AI Insights dashboard panel for browsing system log insights and manually triggering a log insight run.',
+    tags: ['ai-insights', 'logs', 'admin', 'panel'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-insights' },
+      { type: 'uses', targetId: 'action:system-logs-generate-insight' },
+      { type: 'reads', targetId: 'collection:system-logs' },
+      { type: 'reads', targetId: 'collection:ai-insights-history' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-state-overview',
+    kind: 'component',
+    name: 'BrainStateOverview',
+    description:
+      'Top-level AI Brain overview cards summarizing routing health, runtime readiness, and the latest cross-surface AI control-plane state.',
+    tags: ['ai', 'brain', 'admin', 'overview'],
+    relationships: [
+      { type: 'uses', targetId: 'page:brain' },
+      { type: 'reads', targetId: 'collection:ai-insights-history' },
+      { type: 'reads', targetId: 'collection:analytics-events' },
+      { type: 'reads', targetId: 'collection:system-logs' },
+      { type: 'reads', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-operations-overview',
+    kind: 'component',
+    name: 'OperationsTab',
+    description:
+      'Read-only AI Brain operations tab for monitoring AI Paths, chatbot, agent runtime, and Image Studio health over a selected incident window.',
+    tags: ['ai', 'brain', 'operations', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:brain' },
+      { type: 'reads', targetId: 'collection:ai-path-runs' },
+      { type: 'reads', targetId: 'collection:chatbot-sessions' },
+      { type: 'reads', targetId: 'collection:image-studio-runs' },
+      { type: 'related_to', targetId: 'page:ai-paths' },
+      { type: 'related_to', targetId: 'page:admin-chatbot' },
+      { type: 'related_to', targetId: 'page:admin-image-studio' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-routing-controls',
+    kind: 'component',
+    name: 'RoutingTab',
+    description:
+      'AI Brain routing tab for configuring default model and agent assignments across AI-enabled product features.',
+    tags: ['ai', 'brain', 'routing', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:brain' },
+      { type: 'related_to', targetId: 'page:cms-page-builder' },
+      { type: 'related_to', targetId: 'page:admin-chatbot' },
+      { type: 'related_to', targetId: 'page:admin-image-studio' },
+      { type: 'related_to', targetId: 'page:ai-paths' },
+      { type: 'related_to', targetId: 'page:agent-teaching-chat' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-provider-credentials',
+    kind: 'component',
+    name: 'ProvidersTab',
+    description:
+      'AI Brain provider tab for managing provider keys, live model discovery, and model catalog availability shown to Brain routing controls.',
+    tags: ['ai', 'brain', 'providers', 'admin'],
+    relationships: [{ type: 'uses', targetId: 'page:brain' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-report-controls',
+    kind: 'component',
+    name: 'ReportsTab',
+    description:
+      'AI Brain reports tab for configuring schedules, prompt steering, and report-level routing for analytics, runtime analytics, and system log insights.',
+    tags: ['ai', 'brain', 'reports', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:brain' },
+      { type: 'related_to', targetId: 'action:analytics-generate-insight' },
+      { type: 'related_to', targetId: 'action:runtime-analytics-generate-insight' },
+      { type: 'related_to', targetId: 'action:system-logs-generate-insight' },
+      { type: 'reads', targetId: 'collection:ai-insights-history' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:brain-metrics-dashboard',
+    kind: 'component',
+    name: 'MetricsTab',
+    description:
+      'AI Brain metrics tab combining analytics totals, system log metrics, AI insight history, and AI Paths runtime analytics in one dashboard.',
+    tags: ['ai', 'brain', 'metrics', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:brain' },
+      { type: 'reads', targetId: 'collection:analytics-events' },
+      { type: 'reads', targetId: 'collection:system-logs' },
+      { type: 'reads', targetId: 'collection:ai-insights-history' },
+      { type: 'reads', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-slot-tree',
+    kind: 'component',
+    name: 'ImageStudioSlotTree',
+    description:
+      'Left-hand slot tree in Image Studio for browsing folders, selecting slots, and organizing project assets.',
+    tags: ['image-studio', 'slots', 'tree', 'sidebar'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-projects' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-center-preview',
+    kind: 'component',
+    name: 'ImageStudioCenterPreview',
+    description:
+      'Central preview canvas in Image Studio for the active slot, masks, focus mode, and generation results.',
+    tags: ['image-studio', 'preview', 'canvas', 'mask'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+      { type: 'uses', targetId: 'action:image-studio-sequence-run' },
+      { type: 'uses', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'uses', targetId: 'action:image-studio-mask-ai' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'component:image-studio-right-sidebar',
+    kind: 'component',
+    name: 'ImageStudioRightSidebar',
+    description:
+      'Right-side controls in Image Studio for prompt editing, prompt params, masks, settings, and run history.',
+    tags: ['image-studio', 'sidebar', 'prompt', 'settings'],
+    relationships: [
+      { type: 'uses', targetId: 'page:admin-image-studio' },
+      { type: 'reads', targetId: 'collection:image-studio-runs' },
+      { type: 'uses', targetId: 'action:image-studio-run' },
+      { type: 'uses', targetId: 'action:image-studio-sequence-run' },
+      { type: 'uses', targetId: 'action:image-studio-ai-path-object-analysis' },
+      { type: 'uses', targetId: 'action:image-studio-prompt-extract' },
+      { type: 'uses', targetId: 'action:image-studio-ui-extractor' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+];

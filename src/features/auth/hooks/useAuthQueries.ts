@@ -72,12 +72,13 @@ export function useAuthRoleSettings(enabled: boolean = true): SingleQuery<AuthRo
 }
 
 export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUserSecurityProfile> {
-  const queryKey = userId ? authKeys.users.security(userId) : authKeys.users.security('');
+  const hasUserId = userId !== undefined && userId !== null && userId !== '';
+  const queryKey = hasUserId ? authKeys.users.security(userId) : authKeys.users.security('');
   return createSingleQueryV2<AuthUserSecurityProfile>({
     id: userId ?? 'auth-user-security',
     queryKey,
     queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId ?? ''),
-    enabled: userId !== undefined && userId !== null && userId !== '',
+    enabled: hasUserId,
     staleTime: AUTH_SECURITY_STALE_MS,
     meta: {
       source: 'auth.hooks.useAuthUserSecurity',

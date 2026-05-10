@@ -120,245 +120,302 @@ async function postHandler(
     throw notFoundError(`Agent run "${runId}" not found. The run may have expired or the id is incorrect.`);
   }
 
+async function handleResumeAction(args: {
+  id: string;
+  payload: { prompt?: string; stepId?: string };
+  agentRun: AgentRunRouteRecord;
+  storage: any;
+  start: number
+}): Promise<Response> {
+  const { id, payload, agentRun, storage, start } = args;
+
+  if (agentRun.status === 'running') {
+    return NextResponse.json({ status: agentRun.status });
+  }
+
+  const nextPrompt = (typeof payload.prompt === 'string' && payload.prompt.trim() !== '') ? payload.prompt.trim() : null;
+  const resumeStepId = (typeof payload.stepId === 'string' && payload.stepId.trim() !== '') ? payload.stepId.trim() : null;
+
+  const resumePlanState =
+    (agentRun.planState !== null && typeof agentRun.planState === 'object')
+      ? {
+        ...(agentRun.planState as Record<string, unknown>),
+        resumeRequestedAt: new Date().toISOString(),
+        ...(nextPrompt !== null && { promptUpdatedAt: new Date().toISOString() }),
+        ...(resumeStepId !== null && { activeStepId: resumeStepId }),
+      }
+      : {
+        resumeRequestedAt: new Date().toISOString(),
+        ...(nextPrompt !== null && { promptUpdatedAt: new Date().toISOString() }),
+        ...(resumeStepId !== null && { activeStepId: resumeStepId }),
+      };
+
+  const updated = await storage.update<AgentRunStatusRecord>({
+    where: { id: id },
+    data: {
+      status: 'queued',
+      requiresHumanIntervention: false,
+      errorMessage: null,
+      finishedAt: null,
+      checkpointedAt: new Date(),
+      planState: resumePlanState as InputJsonValue,
+      ...(resumeStepId !== null && { activeStepId: resumeStepId }),
+      ...(nextPrompt !== null && { prompt: nextPrompt }),
+      logLines: {
+        push: `[${new Date().toISOString()}] Run resume requested.`,
+      },
+    },
+  });
+
+  if (nextPrompt !== null && nextPrompt !== agentRun.prompt) {
+    await logAgentAudit(updated.id, 'warning', 'Agent prompt updated.', {
+      promptLength: nextPrompt.length,
+    });
+  }
+  await logAgentAudit(updated.id, 'info', 'Agent run resume requested.');
+  if (DEBUG_CHATBOT) {
+    void ErrorSystem.logInfo('Resumed', {
+      service: 'agent-api',
+      runId: id,
+      status: updated.status,
+      durationMs: Date.now() - start,
+    });
+  }
+  return NextResponse.json({ status: updated.status });
+}
+
+// ... inside postHandler ...
   if (body.action === 'resume') {
-    if (run.status === 'running') {
-      return NextResponse.json({ status: run.status });
-    }
-    const nextPrompt =
-      typeof body.prompt === 'string' && body.prompt.trim() ? body.prompt.trim() : null;
-    const resumeStepId =
-      typeof body.stepId === 'string' && body.stepId.trim() ? body.stepId.trim() : null;
-    const resumePlanState =
-      run.planState && typeof run.planState === 'object'
-        ? {
-          ...(run.planState as Record<string, unknown>),
-          resumeRequestedAt: new Date().toISOString(),
-          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-        }
-        : {
-          resumeRequestedAt: new Date().toISOString(),
-          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-        };
-    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
-      where: { id: runId },
-      data: {
-        status: 'queued',
-        requiresHumanIntervention: false,
-        errorMessage: null,
-        finishedAt: null,
-        checkpointedAt: new Date(),
-        planState: resumePlanState,
-        ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-        ...(nextPrompt ? { prompt: nextPrompt } : {}),
-        logLines: {
-          push: `[${new Date().toISOString()}] Run resume requested.`,
-        },
-      },
-    });
-    if (nextPrompt && nextPrompt !== run.prompt) {
-      await logAgentAudit(updated.id, 'warning', 'Agent prompt updated.', {
-        promptLength: nextPrompt.length,
-      });
-    }
-    await logAgentAudit(updated.id, 'info', 'Agent run resume requested.');
-    if (DEBUG_CHATBOT) {
-      void ErrorSystem.logInfo('Resumed', {
-        service: 'agent-api',
-        runId,
-        status: updated.status,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-    return NextResponse.json({ status: updated.status });
+    return await handleResumeAction({ id: runId, payload: body, agentRun: run, storage: chatbotAgentRun, start: requestStart });
   }
 
+
+
+
+async function handleRetryStepAction(args: {
+  id: string;
+  payload: { stepId?: string };
+  agentRun: AgentRunRouteRecord;
+  storage: any;
+}): Promise<Response> {
+  const { id, payload, agentRun, storage } = args;
+
+  if (agentRun.status === 'running') {
+    throw conflictError('Run is running. Stop it before retrying steps.');
+  }
+  const stepId = (typeof payload.stepId === 'string' && payload.stepId.trim() !== '') ? payload.stepId.trim() : null;
+  if (stepId === null) {
+    throw badRequestError('stepId is required for retry_step. Provide the id of the step to retry.');
+  }
+  
+  const planState = (agentRun.planState !== null && typeof agentRun.planState === 'object') ? (agentRun.planState as Record<string, unknown>) : null;
+  const steps = Array.isArray(planState?.['steps']) ? (planState?.['steps'] as Array<Record<string, unknown>>) : null;
+  if (steps === null) {
+    throw badRequestError(`No plan steps available to retry for run "${id}".`);
+  }
+  
+  const nextSteps = steps.map((step) => {
+    if (step !== null && typeof step === 'object' && step['id'] === stepId) {
+      const typed = step as {
+        id: string;
+        status?: string;
+        attempts?: number;
+        maxAttempts?: number;
+      };
+      return {
+        ...typed,
+        status: 'pending',
+        attempts: 0,
+        maxAttempts: (typeof typed.maxAttempts === 'number' ? typed.maxAttempts : 1) + 1,
+      };
+    }
+    return step;
+  });
+  
+  const now = new Date().toISOString();
+  const nextPlanState = {
+    ...(planState ?? {}),
+    steps: nextSteps,
+    activeStepId: stepId,
+    resumeRequestedAt: now,
+    updatedAt: now,
+  };
+  
+  await storage.update<AgentRunStatusRecord>({
+    where: { id: id },
+    data: {
+      status: 'queued',
+      requiresHumanIntervention: false,
+      errorMessage: null,
+      finishedAt: null,
+      checkpointedAt: new Date(),
+      planState: nextPlanState as InputJsonValue,
+      activeStepId: stepId,
+      logLines: {
+        push: `[${new Date().toISOString()}] Step retry requested (${stepId}).`,
+      },
+    },
+  });
+  return NextResponse.json({ status: 'queued' });
+  }
+
+  // ... inside postHandler ...
   if (body.action === 'retry_step') {
-    if (run.status === 'running') {
-      throw conflictError('Run is running. Stop it before retrying steps.');
-    }
-    if (!body.stepId?.trim()) {
-      throw badRequestError('stepId is required for retry_step. Provide the id of the step to retry in the request body.');
-    }
-    const planState =
-      run.planState && typeof run.planState === 'object'
-        ? (run.planState as Record<string, unknown>)
-        : null;
-    const steps = Array.isArray(planState?.['steps'])
-      ? (planState?.['steps'] as Array<Record<string, unknown>>)
-      : null;
-    if (!steps) {
-      throw badRequestError(`No plan steps available to retry for run "${runId}". The run may not have a plan state yet or the plan has no steps.`);
-    }
-    const nextSteps = steps.map((step) => {
-      if (step && typeof step === 'object' && step['id'] === body.stepId) {
-        const typed = step as {
-          id: string;
-          status?: string;
-          attempts?: number;
-          maxAttempts?: number;
-        };
-        return {
-          ...typed,
-          status: 'pending',
-          attempts: 0,
-          maxAttempts: (typed['maxAttempts'] ?? 1) + 1,
-        };
-      }
-      return step;
-    });
-    const now = new Date().toISOString();
-    const nextPlanState = {
-      ...(planState ?? {}),
-      steps: nextSteps,
-      activeStepId: body.stepId,
-      resumeRequestedAt: now,
-      updatedAt: now,
-    };
-    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
-      where: { id: runId },
-      data: {
-        status: 'queued',
-        requiresHumanIntervention: false,
-        errorMessage: null,
-        finishedAt: null,
-        checkpointedAt: new Date(),
-        planState: nextPlanState as InputJsonValue,
-        activeStepId: body.stepId,
-        logLines: {
-          push: `[${new Date().toISOString()}] Step retry requested (${body.stepId}).`,
-        },
-      },
-    });
-    await logAgentAudit(updated.id, 'warning', 'Step retry requested.', {
-      stepId: body.stepId,
-    });
-    if (DEBUG_CHATBOT) {
-      void ErrorSystem.logInfo('Step retry queued', {
-        service: 'agent-api',
-        runId,
-        stepId: body.stepId,
-        durationMs: Date.now() - requestStart,
-      });
-    }
+    return await handleRetryStepAction({ id: runId, payload: body, agentRun: run, storage: chatbotAgentRun });
+  }
+
+  if (body.action === 'stop') {
+
     return NextResponse.json({ status: updated.status });
   }
 
-  if (body.action === 'override_step') {
-    if (run.status === 'running') {
-      throw conflictError('Run is running. Stop it before overriding steps.');
+async function handleOverrideStepAction(args: {
+  id: string;
+  payload: { stepId?: string; status?: string };
+  agentRun: AgentRunRouteRecord;
+  storage: any;
+}): Promise<Response> {
+  const { id, payload, agentRun, storage } = args;
+
+  if (agentRun.status === 'running') {
+    throw conflictError('Run is running. Stop it before overriding steps.');
+  }
+  const stepId = (typeof payload.stepId === 'string' && payload.stepId.trim() !== '') ? payload.stepId.trim() : null;
+  const status = (typeof payload.status === 'string' && payload.status.trim() !== '') ? payload.status.trim() : null;
+  
+  if (stepId === null || status === null) {
+    throw badRequestError('stepId and status are required for override_step.');
+  }
+
+  const planState = (agentRun.planState !== null && typeof agentRun.planState === 'object') ? (agentRun.planState as Record<string, unknown>) : null;
+  const steps = Array.isArray(planState?.['steps']) ? (planState?.['steps'] as Array<Record<string, unknown>>) : null;
+  
+  if (steps === null) {
+    throw badRequestError(`No plan steps available to override for run "${id}".`);
+  }
+
+  const nextSteps = steps.map((step) => {
+    if (step !== null && typeof step === 'object' && step['id'] === stepId) {
+      return { ...step, status };
     }
-    if (!body.stepId?.trim() || !body.status) {
-      throw badRequestError('stepId and status are required for override_step. Provide both the step id and the target status (completed, failed, or pending) in the request body.');
-    }
-    const planState =
-      run.planState && typeof run.planState === 'object'
-        ? (run.planState as Record<string, unknown>)
-        : null;
-    const steps = Array.isArray(planState?.['steps'])
-      ? (planState?.['steps'] as Array<Record<string, unknown>>)
-      : null;
-    if (!steps) {
-      throw badRequestError(`No plan steps available to override for run "${runId}". The run may not have a plan state yet or the plan has no steps.`);
-    }
-    const nextSteps = steps.map((step) => {
-      if (step && typeof step === 'object' && step['id'] === body.stepId) {
-        return { ...step, status: body.status };
-      }
-      return step;
-    });
-    const nextActive =
-      body.status === 'completed'
-        ? ((
-            nextSteps.find(
-              (step) =>
-                step &&
-                typeof step === 'object' &&
-                (step as { status?: string }).status !== 'completed'
-            ) as { id?: string } | undefined
-        )?.id ?? null)
-        : body.stepId;
-    const now = new Date().toISOString();
-    const nextPlanState = {
-      ...(planState ?? {}),
-      steps: nextSteps,
+    return step;
+  });
+  
+  const nextActive = (status === 'completed')
+    ? (nextSteps.find((s) => (s !== null && typeof s === 'object' && (s as { status?: string }).status !== 'completed')) as { id?: string } | undefined)?.id ?? null
+    : stepId;
+  
+  const now = new Date().toISOString();
+  const nextPlanState = {
+    ...(planState ?? {}),
+    steps: nextSteps,
+    activeStepId: nextActive,
+    updatedAt: now,
+  };
+  
+  const updated = await storage.update<AgentRunStatusRecord>({
+    where: { id },
+    data: {
+      planState: nextPlanState as InputJsonValue,
       activeStepId: nextActive,
-      updatedAt: now,
-    };
-    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
-      where: { id: runId },
-      data: {
-        planState: nextPlanState as InputJsonValue,
-        activeStepId: nextActive,
-        checkpointedAt: new Date(),
-        logLines: {
-          push: `[${new Date().toISOString()}] Step overridden (${body.stepId} -> ${body.status}).`,
-        },
+      checkpointedAt: new Date(),
+      logLines: {
+        push: `[${now}] Step overridden (${stepId} -> ${status}).`,
       },
+    },
+  });
+  
+  await logAgentAudit(updated.id, 'warning', 'Step overridden.', {
+    stepId,
+    status,
+  });
+
+  if (DEBUG_CHATBOT) {
+    void ErrorSystem.logInfo('Step overridden', {
+      service: 'agent-api',
+      runId: id,
+      stepId,
+      status,
     });
-    await logAgentAudit(updated.id, 'warning', 'Step overridden.', {
-      stepId: body.stepId,
-      status: body.status,
-    });
-    if (DEBUG_CHATBOT) {
-      void ErrorSystem.logInfo('Step overridden', {
-        service: 'agent-api',
-        runId,
-        stepId: body.stepId,
-        status: body.status,
-        durationMs: Date.now() - requestStart,
-      });
-    }
-    return NextResponse.json({ status: updated.status });
+  }
+  
+  return NextResponse.json({ status: updated.status });
+}
+
+// ... inside postHandler ...
+  if (body.action === 'override_step') {
+    return await handleOverrideStepAction({ id: runId, payload: body, agentRun: run, storage: chatbotAgentRun });
   }
 
-  if (body.action === 'approve_step') {
-    if (run.status === 'running') {
-      throw conflictError('Run is running. Stop it before approving steps.');
-    }
-    if (!body.stepId?.trim()) {
-      throw badRequestError('stepId is required for approve_step. Provide the id of the step to approve in the request body.');
-    }
-    const planState =
-      run.planState && typeof run.planState === 'object'
-        ? (run.planState as Record<string, unknown>)
-        : null;
-    const now = new Date().toISOString();
-    const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
-      where: { id: runId },
-      data: {
-        status: 'queued',
-        requiresHumanIntervention: false,
-        errorMessage: null,
-        finishedAt: null,
-        checkpointedAt: new Date(),
-        planState: {
-          ...(planState ?? {}),
-          approvalRequestedStepId: null,
-          approvalGrantedStepId: body.stepId.trim(),
-          activeStepId: body.stepId.trim(),
-          updatedAt: now,
-        },
-        activeStepId: body.stepId.trim(),
-        logLines: {
-          push: `[${new Date().toISOString()}] Step approval granted (${body.stepId}).`,
-        },
-      },
-    });
-    await logAgentAudit(updated.id, 'warning', 'Step approval granted.', {
-      stepId: body.stepId.trim(),
-    });
-    if (DEBUG_CHATBOT) {
-      void ErrorSystem.logInfo('Step approved', {
-        service: 'agent-api',
-        runId,
-        stepId: body.stepId.trim(),
-        durationMs: Date.now() - requestStart,
-      });
-    }
-    return NextResponse.json({ status: updated.status });
+
+import { 
+  type AgentRunRouteRecord, 
+  type AgentRunStatusRecord,
+  type AgentRuntimeRunDelegate 
+} from '@/features/ai/agent-runtime/store-delegates';
+
+async function handleApproveStepAction(args: {
+  id: string;
+  payload: { stepId?: string };
+  agentRun: AgentRunRouteRecord;
+  storage: AgentRuntimeRunDelegate;
+}): Promise<Response> {
+  const { id, payload, agentRun, storage } = args;
+
+  if (agentRun.status === 'running') {
+    throw conflictError('Run is running. Stop it before approving steps.');
   }
+  const stepId = (typeof payload.stepId === 'string' && payload.stepId.trim() !== '') ? payload.stepId.trim() : null;
+  if (stepId === null) {
+    throw badRequestError('stepId is required for approve_step.');
+  }
+
+  const planState = (agentRun.planState !== null && typeof agentRun.planState === 'object') ? (agentRun.planState as Record<string, unknown>) : null;
+  const now = new Date().toISOString();
+  
+  const updated = await storage.update<AgentRunStatusRecord>({
+    where: { id },
+    data: {
+      status: 'queued',
+      requiresHumanIntervention: false,
+      errorMessage: null,
+      finishedAt: null,
+      checkpointedAt: new Date(),
+      planState: {
+        ...(planState ?? {}),
+        approvalRequestedStepId: null,
+        approvalGrantedStepId: stepId,
+        activeStepId: stepId,
+        updatedAt: now,
+      } as InputJsonValue,
+      activeStepId: stepId,
+      logLines: {
+        push: `[${now}] Step approval granted (${stepId}).`,
+      },
+    },
+  });
+
+  await logAgentAudit(updated.id, 'warning', 'Step approval granted.', {
+    stepId,
+  });
+
+  if (DEBUG_CHATBOT) {
+    void ErrorSystem.logInfo('Step approved', {
+      service: 'agent-api',
+      runId: id,
+      stepId,
+    });
+  }
+  
+  return NextResponse.json({ status: updated.status });
+}
+
+
+// ... inside postHandler ...
+  if (body.action === 'approve_step') {
+    return await handleApproveStepAction({ id: runId, payload: body, agentRun: run, storage: chatbotAgentRun });
+  }
+
 
   if (run.status === 'completed' || run.status === 'failed' || run.status === 'stopped') {
     if (DEBUG_CHATBOT) {
@@ -372,8 +429,15 @@ async function postHandler(
     return NextResponse.json({ status: run.status });
   }
 
-  const updated = await chatbotAgentRun.update<AgentRunStatusRecord>({
-    where: { id: runId },
+async function handleStopAction(args: {
+  id: string;
+  storage: any;
+  start: number
+}): Promise<Response> {
+  const { id, storage, start } = args;
+
+  const updated = await storage.update<AgentRunStatusRecord>({
+    where: { id },
     data: {
       status: 'stopped',
       finishedAt: new Date(),
@@ -382,21 +446,29 @@ async function postHandler(
       },
     },
   });
+  
   await logAgentAudit(updated.id, 'warning', 'Agent run stopped by user.');
-
   if (DEBUG_CHATBOT) {
     void ErrorSystem.logInfo('Stopped', {
       service: 'agent-api',
-      runId,
+      runId: id,
       status: updated.status,
-      durationMs: Date.now() - requestStart,
+      durationMs: Date.now() - start,
     });
   }
-
   return NextResponse.json({ status: updated.status });
 }
 
+// ... in postHandler ...
+  if (body.action === 'stop') {
+    return await handleStopAction({ id: runId, storage: chatbotAgentRun, start: requestStart });
+  }
+
+  throw badRequestError(`Unsupported action "${body.action ?? ''}".`);
+}
+
 async function deleteHandler(
+
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {

@@ -14,7 +14,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import type { Asset3dOrderedDitheringPresetKey, Viewer3DState } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
@@ -171,162 +171,97 @@ export const { Context: Viewer3DActionsContext, useStrictContext: useViewer3DAct
     errorFactory: internalError,
   });
 
-export function Viewer3DProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const [autoRotate, setAutoRotate] = useState(true);
-  const [autoRotateSpeed, setAutoRotateSpeed] = useState(2);
-  const [environment, setEnvironment] = useState<EnvironmentPreset>('studio');
-  const [lighting, setLighting] = useState<LightingPreset>('studio');
-  const [lightIntensity, setLightIntensity] = useState(1);
-  const [enableShadows, setEnableShadows] = useState(true);
-  const [enableContactShadows, setEnableContactShadows] = useState(true);
-  const [showGround, setShowGround] = useState(false);
-  const [enableBloom, setEnableBloom] = useState(false);
-  const [bloomIntensity, setBloomIntensity] = useState(0.5);
-  const [enableVignette, setEnableVignette] = useState(false);
-  const [enableToneMapping, setEnableToneMapping] = useState(true);
-  const [exposure, setExposure] = useState(1);
-  const [enableDithering, setEnableDithering] = useState(false);
-  const [ditheringIntensity, setDitheringIntensity] = useState(1.0);
-  const [enablePixelation, setEnablePixelation] = useState(false);
-  const [pixelSize, setPixelSize] = useState(6);
-  const [enableOrderedDithering, setEnableOrderedDithering] = useState(false);
-  const [orderedDitheringGridSize, setOrderedDitheringGridSize] = useState(4);
-  const [orderedDitheringPixelSizeRatio, setOrderedDitheringPixelSizeRatio] = useState(1);
-  const [orderedDitheringGrayscaleOnly, setOrderedDitheringGrayscaleOnly] = useState(false);
-  const [orderedDitheringInvertColor, setOrderedDitheringInvertColor] = useState(false);
-  const [orderedDitheringLuminanceMethod, setOrderedDitheringLuminanceMethod] = useState(1);
-  const [orderedDitheringPreset, setOrderedDitheringPreset] =
-    useState<OrderedDitheringPresetKey>('balanced');
-  const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
+const initialViewer3DState: Viewer3DStateContextType = {
+  autoRotate: true,
+  autoRotateSpeed: 2,
+  environment: 'studio',
+  lighting: 'studio',
+  lightIntensity: 1,
+  enableShadows: true,
+  enableContactShadows: true,
+  showGround: false,
+  enableBloom: false,
+  bloomIntensity: 0.5,
+  enableVignette: false,
+  enableToneMapping: true,
+  exposure: 1,
+  enableDithering: false,
+  ditheringIntensity: 1.0,
+  enablePixelation: false,
+  pixelSize: 6,
+  enableOrderedDithering: false,
+  orderedDitheringGridSize: 4,
+  orderedDitheringPixelSizeRatio: 1,
+  orderedDitheringGrayscaleOnly: false,
+  orderedDitheringInvertColor: false,
+  orderedDitheringLuminanceMethod: 1,
+  orderedDitheringPreset: 'balanced',
+  backgroundColor: '#1a1a2e',
+};
 
+type Viewer3DStateSetter = Dispatch<SetStateAction<Viewer3DStateContextType>>;
+
+const setViewerValue =
+  <K extends keyof Viewer3DStateContextType>(setViewerState: Viewer3DStateSetter, key: K) =>
+    (value: Viewer3DStateContextType[K]): void => {
+      setViewerState((current) => ({ ...current, [key]: value }));
+    };
+
+const createViewer3DActions = (
+  setViewerState: Viewer3DStateSetter,
+  resetSettings: () => void,
+  applyOrderedDitheringPreset: (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => void
+): Viewer3DActionsContextType => ({
+  setAutoRotate: setViewerValue(setViewerState, 'autoRotate'),
+  setAutoRotateSpeed: setViewerValue(setViewerState, 'autoRotateSpeed'),
+  setEnvironment: setViewerValue(setViewerState, 'environment'),
+  setLighting: setViewerValue(setViewerState, 'lighting'),
+  setLightIntensity: setViewerValue(setViewerState, 'lightIntensity'),
+  setEnableShadows: setViewerValue(setViewerState, 'enableShadows'),
+  setEnableContactShadows: setViewerValue(setViewerState, 'enableContactShadows'),
+  setShowGround: setViewerValue(setViewerState, 'showGround'),
+  setEnableBloom: setViewerValue(setViewerState, 'enableBloom'),
+  setBloomIntensity: setViewerValue(setViewerState, 'bloomIntensity'),
+  setEnableVignette: setViewerValue(setViewerState, 'enableVignette'),
+  setEnableToneMapping: setViewerValue(setViewerState, 'enableToneMapping'),
+  setExposure: setViewerValue(setViewerState, 'exposure'),
+  setEnableDithering: setViewerValue(setViewerState, 'enableDithering'),
+  setDitheringIntensity: setViewerValue(setViewerState, 'ditheringIntensity'),
+  setEnablePixelation: setViewerValue(setViewerState, 'enablePixelation'),
+  setPixelSize: setViewerValue(setViewerState, 'pixelSize'),
+  setEnableOrderedDithering: setViewerValue(setViewerState, 'enableOrderedDithering'),
+  setOrderedDitheringGridSize: setViewerValue(setViewerState, 'orderedDitheringGridSize'),
+  setOrderedDitheringPixelSizeRatio: setViewerValue(setViewerState, 'orderedDitheringPixelSizeRatio'),
+  setOrderedDitheringGrayscaleOnly: setViewerValue(setViewerState, 'orderedDitheringGrayscaleOnly'),
+  setOrderedDitheringInvertColor: setViewerValue(setViewerState, 'orderedDitheringInvertColor'),
+  setOrderedDitheringLuminanceMethod: setViewerValue(setViewerState, 'orderedDitheringLuminanceMethod'),
+  setOrderedDitheringPreset: setViewerValue(setViewerState, 'orderedDitheringPreset'),
+  setBackgroundColor: setViewerValue(setViewerState, 'backgroundColor'),
+  resetSettings,
+  applyOrderedDitheringPreset,
+});
+
+export function Viewer3DProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const [stateValue, setViewerState] = useState<Viewer3DStateContextType>(initialViewer3DState);
+  const resetSettings = useCallback((): void => setViewerState({ ...initialViewer3DState }), []);
   const applyOrderedDitheringPreset = useCallback(
-    (preset: Exclude<OrderedDitheringPresetKey, 'custom'>) => {
+    (preset: Exclude<OrderedDitheringPresetKey, 'custom'>): void => {
       const config = orderedDitheringPresets[preset];
-      setOrderedDitheringGridSize(config.gridSize);
-      setOrderedDitheringPixelSizeRatio(config.pixelSizeRatio);
-      setOrderedDitheringGrayscaleOnly(config.grayscaleOnly);
-      setOrderedDitheringInvertColor(config.invertColor);
-      setOrderedDitheringLuminanceMethod(config.luminanceMethod);
-      setOrderedDitheringPreset(preset);
+      setViewerState((current) => ({
+        ...current,
+        orderedDitheringGridSize: config.gridSize,
+        orderedDitheringPixelSizeRatio: config.pixelSizeRatio,
+        orderedDitheringGrayscaleOnly: config.grayscaleOnly,
+        orderedDitheringInvertColor: config.invertColor,
+        orderedDitheringLuminanceMethod: config.luminanceMethod,
+        orderedDitheringPreset: preset,
+      }));
     },
     []
   );
 
-  const resetSettings = useCallback(() => {
-    setAutoRotate(true);
-    setAutoRotateSpeed(2);
-    setEnvironment('studio');
-    setLighting('studio');
-    setLightIntensity(1);
-    setEnableShadows(true);
-    setEnableContactShadows(true);
-    setShowGround(false);
-    setEnableBloom(false);
-    setBloomIntensity(0.5);
-    setEnableVignette(false);
-    setEnableToneMapping(true);
-    setExposure(1);
-    setEnableDithering(false);
-    setDitheringIntensity(1.0);
-    setEnablePixelation(false);
-    setPixelSize(6);
-    setEnableOrderedDithering(false);
-    setOrderedDitheringGridSize(4);
-    setOrderedDitheringPixelSizeRatio(1);
-    setOrderedDitheringGrayscaleOnly(false);
-    setOrderedDitheringInvertColor(false);
-    setOrderedDitheringLuminanceMethod(1);
-    setOrderedDitheringPreset('balanced');
-    setBackgroundColor('#1a1a2e');
-  }, []);
-
-  const stateValue = useMemo<Viewer3DStateContextType>(
-    () => ({
-      autoRotate,
-      autoRotateSpeed,
-      environment,
-      lighting,
-      lightIntensity,
-      enableShadows,
-      enableContactShadows,
-      showGround,
-      enableBloom,
-      bloomIntensity,
-      enableVignette,
-      enableToneMapping,
-      exposure,
-      enableDithering,
-      ditheringIntensity,
-      enablePixelation,
-      pixelSize,
-      enableOrderedDithering,
-      orderedDitheringGridSize,
-      orderedDitheringPixelSizeRatio,
-      orderedDitheringGrayscaleOnly,
-      orderedDitheringInvertColor,
-      orderedDitheringLuminanceMethod,
-      orderedDitheringPreset,
-      backgroundColor,
-    }),
-    [
-      autoRotate,
-      autoRotateSpeed,
-      environment,
-      lighting,
-      lightIntensity,
-      enableShadows,
-      enableContactShadows,
-      showGround,
-      enableBloom,
-      bloomIntensity,
-      enableVignette,
-      enableToneMapping,
-      exposure,
-      enableDithering,
-      ditheringIntensity,
-      enablePixelation,
-      pixelSize,
-      enableOrderedDithering,
-      orderedDitheringGridSize,
-      orderedDitheringPixelSizeRatio,
-      orderedDitheringGrayscaleOnly,
-      orderedDitheringInvertColor,
-      orderedDitheringLuminanceMethod,
-      orderedDitheringPreset,
-      backgroundColor,
-    ]
-  );
-
-  const actionsValue = useMemo<Viewer3DActionsContextType>(
-    () => ({
-      setAutoRotate,
-      setAutoRotateSpeed,
-      setEnvironment,
-      setLighting,
-      setLightIntensity,
-      setEnableShadows,
-      setEnableContactShadows,
-      setShowGround,
-      setEnableBloom,
-      setBloomIntensity,
-      setEnableVignette,
-      setEnableToneMapping,
-      setExposure,
-      setEnableDithering,
-      setDitheringIntensity,
-      setEnablePixelation,
-      setPixelSize,
-      setEnableOrderedDithering,
-      setOrderedDitheringGridSize,
-      setOrderedDitheringPixelSizeRatio,
-      setOrderedDitheringGrayscaleOnly,
-      setOrderedDitheringInvertColor,
-      setOrderedDitheringLuminanceMethod,
-      setOrderedDitheringPreset,
-      setBackgroundColor,
-      resetSettings,
-      applyOrderedDitheringPreset,
-    }),
+  const actionsValue = useMemo(
+    () => createViewer3DActions(setViewerState, resetSettings, applyOrderedDitheringPreset),
     [resetSettings, applyOrderedDitheringPreset]
   );
 

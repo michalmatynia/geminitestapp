@@ -1,15 +1,17 @@
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
+
 export const ADMIN_MENU_FAVORITES_KEY = 'admin_menu_favorites';
 export const ADMIN_MENU_SECTION_COLORS_KEY = 'admin_menu_section_colors';
 export const ADMIN_MENU_CUSTOM_ENABLED_KEY = 'admin_menu_custom_enabled';
 export const ADMIN_MENU_CUSTOM_NAV_KEY = 'admin_menu_custom_nav';
+export const ADMIN_DASHBOARD_SECTION = { label: 'Admin', href: '/admin' } as const;
 
 export const parseAdminMenuJson = <T>(value: string | undefined, fallback: T): T => {
   if (value === undefined || value === '') return fallback;
   try {
     return JSON.parse(value) as T;
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, { service: 'admin', feature: 'menu-settings' });
     return fallback;
   }
 };
@@ -26,7 +28,7 @@ const parseAdminMenuBooleanJson = (value: string): boolean | null => {
     const parsed: unknown = JSON.parse(value);
     return typeof parsed === 'boolean' ? parsed : Boolean(parsed);
   } catch (error) {
-    logClientError(error);
+    void ErrorSystem.captureException(error, { service: 'admin', feature: 'menu-settings' });
     return null;
   }
 };

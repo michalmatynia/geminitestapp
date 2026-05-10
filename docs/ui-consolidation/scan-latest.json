@@ -1,25 +1,25 @@
 {
   "summary": {
-    "generatedAt": "2026-05-06T12:19:59.616Z",
-    "scannedFileCount": 3126,
-    "duplicateNameClusterCount": 0,
+    "generatedAt": "2026-05-10T01:04:13.341Z",
+    "scannedFileCount": 3139,
+    "duplicateNameClusterCount": 1,
     "propSignatureClusterCount": 4,
-    "tokenSimilarityClusterCount": 3,
-    "thinReExportWrapperCount": 36,
+    "tokenSimilarityClusterCount": 2,
+    "thinReExportWrapperCount": 37,
     "totalOpportunities": 6,
     "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 2193
+        "count": 2211
       },
       {
         "family": "Section",
-        "count": 221
+        "count": 219
       },
       {
         "family": "Page",
-        "count": 192
+        "count": 191
       },
       {
         "family": "Panel",
@@ -27,23 +27,23 @@
       },
       {
         "family": "Modal",
-        "count": 92
+        "count": 91
       },
       {
         "family": "Card",
-        "count": 49
+        "count": 48
       },
       {
         "family": "Tab",
-        "count": 45
+        "count": 44
+      },
+      {
+        "family": "Settings",
+        "count": 36
       },
       {
         "family": "Header",
         "count": 35
-      },
-      {
-        "family": "Settings",
-        "count": 34
       },
       {
         "family": "List",
@@ -58,16 +58,16 @@
         "count": 13
       },
       {
-        "family": "Table",
-        "count": 13
-      },
-      {
         "family": "Dialog",
         "count": 12
       },
       {
+        "family": "Table",
+        "count": 12
+      },
+      {
         "family": "Picker",
-        "count": 9
+        "count": 10
       },
       {
         "family": "Sidebar",
@@ -76,28 +76,24 @@
       {
         "family": "Drawer",
         "count": 3
-      },
-      {
-        "family": "Tabs",
-        "count": 1
       }
     ],
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 2518
+        "count": 2530
       },
       {
         "domain": "app",
-        "count": 362
+        "count": 360
       },
       {
         "domain": "shared-ui",
-        "count": 188
+        "count": 189
       },
       {
         "domain": "shared",
-        "count": 58
+        "count": 60
       }
     ]
   },
@@ -147,10 +143,46 @@
     },
     {
       "method": "prop_signature",
+      "family": "Modal",
+      "score": 1529,
+      "fileCount": 2,
+      "totalLines": 520,
+      "maxLines": 270,
+      "featureCount": 2,
+      "scopes": [
+        "feature:filemaker",
+        "feature:products"
+      ],
+      "templateUsers": 0,
+      "templateCoverage": 0,
+      "recommendation": "migrate-to-shared-modal-template",
+      "risk": "medium",
+      "similarity": null,
+      "files": [
+        {
+          "path": "src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx",
+          "lines": 270,
+          "scope": "feature:products",
+          "family": "Modal",
+          "templateImports": 0,
+          "useClient": true
+        },
+        {
+          "path": "src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx",
+          "lines": 250,
+          "scope": "feature:filemaker",
+          "family": "Modal",
+          "templateImports": 0,
+          "useClient": true
+        }
+      ]
+    },
+    {
+      "method": "prop_signature",
       "family": "Panel",
-      "score": 939,
+      "score": 880,
       "fileCount": 3,
-      "totalLines": 207,
+      "totalLines": 194,
       "maxLines": 114,
       "featureCount": 1,
       "scopes": [
@@ -172,7 +204,7 @@
         },
         {
           "path": "src/features/filemaker/components/cv-builder/CvLayerPanel.tsx",
-          "lines": 47,
+          "lines": 40,
           "scope": "feature:filemaker",
           "family": "Panel",
           "templateImports": 0,
@@ -180,7 +212,7 @@
         },
         {
           "path": "src/features/filemaker/components/email-builder/EmailLayerPanel.tsx",
-          "lines": 46,
+          "lines": 40,
           "scope": "feature:filemaker",
           "family": "Panel",
           "templateImports": 0,
@@ -191,10 +223,10 @@
     {
       "method": "token_similarity",
       "family": "Panel",
-      "score": 634,
+      "score": 612,
       "fileCount": 2,
-      "totalLines": 361,
-      "maxLines": 189,
+      "totalLines": 349,
+      "maxLines": 183,
       "featureCount": 1,
       "scopes": [
         "feature:filemaker"
@@ -203,11 +235,11 @@
       "templateCoverage": 1,
       "recommendation": "migrate-to-panel-template",
       "risk": "medium",
-      "similarity": 0.739,
+      "similarity": 0.726,
       "files": [
         {
           "path": "src/features/filemaker/components/page/FilemakerEventsListPanel.tsx",
-          "lines": 189,
+          "lines": 183,
           "scope": "feature:filemaker",
           "family": "Panel",
           "templateImports": 1,
@@ -215,80 +247,10 @@
         },
         {
           "path": "src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
-          "lines": 172,
+          "lines": 166,
           "scope": "feature:filemaker",
           "family": "Panel",
           "templateImports": 1,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Picker",
-      "score": 472,
-      "fileCount": 2,
-      "totalLines": 216,
-      "maxLines": 111,
-      "featureCount": 1,
-      "scopes": [
-        "feature:filemaker"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "migrate-to-generic-picker",
-      "risk": "low",
-      "similarity": 0.621,
-      "files": [
-        {
-          "path": "src/features/filemaker/components/cv-builder/CvBlockPicker.tsx",
-          "lines": 111,
-          "scope": "feature:filemaker",
-          "family": "Picker",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/filemaker/components/email-builder/EmailBlockPicker.tsx",
-          "lines": 105,
-          "scope": "feature:filemaker",
-          "family": "Picker",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Picker",
-      "score": 435,
-      "fileCount": 2,
-      "totalLines": 216,
-      "maxLines": 111,
-      "featureCount": 1,
-      "scopes": [
-        "feature:filemaker"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "migrate-to-generic-picker",
-      "risk": "low",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/filemaker/components/cv-builder/CvBlockPicker.tsx",
-          "lines": 111,
-          "scope": "feature:filemaker",
-          "family": "Picker",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/filemaker/components/email-builder/EmailBlockPicker.tsx",
-          "lines": 105,
-          "scope": "feature:filemaker",
-          "family": "Picker",
-          "templateImports": 0,
           "useClient": true
         }
       ]
@@ -327,10 +289,71 @@
           "useClient": true
         }
       ]
+    },
+    {
+      "method": "duplicate_name",
+      "family": "Picker",
+      "score": 261,
+      "fileCount": 2,
+      "totalLines": 132,
+      "maxLines": 70,
+      "featureCount": 2,
+      "scopes": [
+        "feature:cms",
+        "feature:filemaker"
+      ],
+      "templateUsers": 1,
+      "templateCoverage": 0.5,
+      "recommendation": "migrate-to-generic-picker",
+      "risk": "low",
+      "similarity": null,
+      "files": [
+        {
+          "path": "src/features/filemaker/components/shared/BlockPicker.tsx",
+          "lines": 70,
+          "scope": "feature:filemaker",
+          "family": "Picker",
+          "templateImports": 0,
+          "useClient": true
+        },
+        {
+          "path": "src/features/cms/components/page-builder/BlockPicker.tsx",
+          "lines": 62,
+          "scope": "feature:cms",
+          "family": "Picker",
+          "templateImports": 1,
+          "useClient": true
+        }
+      ]
     }
   ],
   "clusterDiagnostics": {
-    "duplicateName": [],
+    "duplicateName": [
+      {
+        "method": "duplicate_name",
+        "family": "Picker",
+        "clusterKey": "name:BlockPicker.tsx",
+        "fileCount": 2,
+        "totalLines": 132,
+        "scopes": [
+          "feature:cms",
+          "feature:filemaker"
+        ],
+        "similarity": null,
+        "files": [
+          {
+            "path": "src/features/filemaker/components/shared/BlockPicker.tsx",
+            "lines": 70,
+            "scope": "feature:filemaker"
+          },
+          {
+            "path": "src/features/cms/components/page-builder/BlockPicker.tsx",
+            "lines": 62,
+            "scope": "feature:cms"
+          }
+        ]
+      }
+    ],
     "propSignature": [
       {
         "method": "prop_signature",
@@ -365,7 +388,7 @@
         "family": "Panel",
         "clusterKey": "props:Panel|blocks|className|onChange|onSelectBlock|selectedBlockId",
         "fileCount": 3,
-        "totalLines": 207,
+        "totalLines": 194,
         "scopes": [
           "feature:filemaker"
         ],
@@ -378,35 +401,36 @@
           },
           {
             "path": "src/features/filemaker/components/cv-builder/CvLayerPanel.tsx",
-            "lines": 47,
+            "lines": 40,
             "scope": "feature:filemaker"
           },
           {
             "path": "src/features/filemaker/components/email-builder/EmailLayerPanel.tsx",
-            "lines": 46,
+            "lines": 40,
             "scope": "feature:filemaker"
           }
         ]
       },
       {
         "method": "prop_signature",
-        "family": "Picker",
-        "clusterKey": "props:Picker|blocks|className|onChange|onSelectBlock|selectedBlockId",
+        "family": "Modal",
+        "clusterKey": "props:Modal|onApply|onClear|onClose",
         "fileCount": 2,
-        "totalLines": 216,
+        "totalLines": 520,
         "scopes": [
-          "feature:filemaker"
+          "feature:filemaker",
+          "feature:products"
         ],
         "similarity": null,
         "files": [
           {
-            "path": "src/features/filemaker/components/cv-builder/CvBlockPicker.tsx",
-            "lines": 111,
-            "scope": "feature:filemaker"
+            "path": "src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx",
+            "lines": 270,
+            "scope": "feature:products"
           },
           {
-            "path": "src/features/filemaker/components/email-builder/EmailBlockPicker.tsx",
-            "lines": 105,
+            "path": "src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx",
+            "lines": 250,
             "scope": "feature:filemaker"
           }
         ]
@@ -441,43 +465,20 @@
         "family": "Panel",
         "clusterKey": "tokens:Panel:src/features/filemaker/components/page/FilemakerEventsListPanel.tsx|src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
         "fileCount": 2,
-        "totalLines": 361,
+        "totalLines": 349,
         "scopes": [
           "feature:filemaker"
         ],
-        "similarity": 0.739,
+        "similarity": 0.726,
         "files": [
           {
             "path": "src/features/filemaker/components/page/FilemakerEventsListPanel.tsx",
-            "lines": 189,
+            "lines": 183,
             "scope": "feature:filemaker"
           },
           {
             "path": "src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
-            "lines": 172,
-            "scope": "feature:filemaker"
-          }
-        ]
-      },
-      {
-        "method": "token_similarity",
-        "family": "Picker",
-        "clusterKey": "tokens:Picker:src/features/filemaker/components/cv-builder/CvBlockPicker.tsx|src/features/filemaker/components/email-builder/EmailBlockPicker.tsx",
-        "fileCount": 2,
-        "totalLines": 216,
-        "scopes": [
-          "feature:filemaker"
-        ],
-        "similarity": 0.621,
-        "files": [
-          {
-            "path": "src/features/filemaker/components/cv-builder/CvBlockPicker.tsx",
-            "lines": 111,
-            "scope": "feature:filemaker"
-          },
-          {
-            "path": "src/features/filemaker/components/email-builder/EmailBlockPicker.tsx",
-            "lines": 105,
+            "lines": 166,
             "scope": "feature:filemaker"
           }
         ]

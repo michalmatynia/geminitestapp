@@ -1,0 +1,235 @@
+import type { ContextNode } from '@/shared/contracts/ai-context-registry';
+
+const SOURCE_REF = 'src/features/ai/ai-context-registry/registry/definitions/actions.ts';
+
+export const actionNodesPart1: ContextNode[] = [
+  {
+    id: 'action:export-products',
+    kind: 'action',
+    name: 'Export Products',
+    description:
+      'Triggers a bulk export of the product catalog to CSV or JSON. ' +
+      'Supports field selection and filter scoping.',
+    tags: ['products', 'export', 'bulk', 'admin'],
+    relationships: [
+      { type: 'uses', targetId: 'page:products' },
+      { type: 'reads', targetId: 'collection:products' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:product-studio-send',
+    kind: 'action',
+    name: 'Product Studio Send',
+    description:
+      'Launches a Product Studio generation or sequence run from the product editor, resolving ' +
+      'the current page context registry envelope before dispatching Image Studio work.',
+    tags: ['products', 'studio', 'image-studio', 'generation', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'uses', targetId: 'component:product-form-studio' },
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'reads', targetId: 'collection:image-studio-projects' },
+      { type: 'reads', targetId: 'collection:image-studio-slots' },
+      { type: 'writes', targetId: 'collection:image-studio-runs' },
+      { type: 'writes', targetId: 'collection:image-studio-sequence-runs' },
+      { type: 'depends_on', targetId: 'action:image-studio-run' },
+      { type: 'depends_on', targetId: 'action:image-studio-sequence-run' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:product-validator-runtime-evaluate',
+    kind: 'action',
+    name: 'Product Validator Runtime Evaluate',
+    description:
+      'Runs AI-backed product validator runtime checks from the Product Editor using the current page context registry envelope and live validation workspace state.',
+    tags: ['products', 'validation', 'runtime', 'editor', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:product-editor' },
+      { type: 'uses', targetId: 'component:product-form' },
+      { type: 'uses', targetId: 'component:product-form-validation-tab' },
+      { type: 'reads', targetId: 'collection:products' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:run-ai-path',
+    kind: 'action',
+    name: 'Run AI Path',
+    description:
+      'Queues an AI path execution with optional runtime input overrides and the current page context registry envelope. ' +
+      'Returns a run ID for polling status and streaming events.',
+    tags: ['ai', 'automation', 'paths', 'execution'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'component:ai-paths-canvas-board' },
+      { type: 'writes', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      requiresApproval: true,
+      riskTier: 'medium',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:ai-paths-preview-model',
+    kind: 'action',
+    name: 'AI Paths Preview Model',
+    description:
+      'Runs the node-config "Send to AI Model" preview flow using the current AI Paths page context registry envelope.',
+    tags: ['ai-paths', 'preview', 'model', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'component:ai-paths-node-config-dialog' },
+      { type: 'uses', targetId: 'component:ai-paths-canvas-board' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:ai-paths-playwright-run',
+    kind: 'action',
+    name: 'AI Paths Playwright Run',
+    description:
+      'Queues an AI Paths Playwright browser-automation node using the current page context registry envelope and exposes the resolved workspace bundle to the Playwright runtime.',
+    tags: ['ai-paths', 'playwright', 'automation', 'browser', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'uses', targetId: 'component:ai-paths-canvas-board' },
+      { type: 'uses', targetId: 'component:ai-paths-node-config-dialog' },
+      { type: 'writes', targetId: 'collection:ai-path-playwright-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'medium',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:run-db-query',
+    kind: 'action',
+    name: 'Run Database Query',
+    description:
+      'Executes a read-only query against a registered database provider. ' +
+      'Supports MongoDB aggregations and SQL SELECT statements.',
+    tags: ['database', 'query', 'admin', 'developer'],
+    relationships: [{ type: 'uses', targetId: 'page:database-engine' }],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:kangur-ai-tutor-chat',
+    kind: 'action',
+    name: 'Kangur AI Tutor Chat',
+    description:
+      'Runs a Kangur AI Tutor turn by resolving learner and page context through the Context Registry, ' +
+      'then passing the resulting bundle to the tutor model.',
+    tags: ['kangur', 'ai', 'tutor', 'education'],
+    relationships: [
+      { type: 'uses', targetId: 'page:kangur-lessons' },
+      { type: 'uses', targetId: 'page:kangur-tests' },
+      { type: 'uses', targetId: 'page:kangur-game' },
+      { type: 'uses', targetId: 'page:kangur-learner-profile' },
+      { type: 'uses', targetId: 'page:kangur-parent-dashboard' },
+      { type: 'reads', targetId: 'collection:kangur-progress' },
+      { type: 'reads', targetId: 'collection:kangur-scores' },
+      { type: 'reads', targetId: 'collection:kangur-assignments' },
+      { type: 'reads', targetId: 'collection:kangur-login-activity' },
+      { type: 'reads', targetId: 'collection:kangur-lessons' },
+      { type: 'reads', targetId: 'collection:kangur-test-suites' },
+      { type: 'governed_by', targetId: 'policy:kangur-ai-tutor-socratic' },
+      { type: 'governed_by', targetId: 'policy:kangur-ai-tutor-test-guardrails' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-08T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
+    id: 'action:kangur-lesson-tts',
+    kind: 'action',
+    name: 'Kangur Lesson TTS',
+    description:
+      'Generates or reuses Kangur lesson narration audio for learner playback and admin lesson-preview flows using the shared page context registry envelope.',
+    tags: ['kangur', 'tts', 'narration', 'audio', 'ai'],
+    relationships: [
+      { type: 'uses', targetId: 'page:kangur-lessons' },
+      { type: 'uses', targetId: 'page:kangur-tests' },
+      { type: 'uses', targetId: 'page:kangur-admin-lessons-manager' },
+      { type: 'uses', targetId: 'component:kangur-lesson-narrator' },
+      { type: 'uses', targetId: 'component:kangur-lesson-narration-panel' },
+      { type: 'reads', targetId: 'collection:kangur-lessons' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-09T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+];

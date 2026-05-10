@@ -623,10 +623,14 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
   const traderaData = toRecord(marketplaceRecord['tradera']);
+  const pendingExecution = toRecord(traderaData['pendingExecution']);
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
   const rawResult = toRecord(metadata['rawResult']);
+  const pendingSteps = readTraderaExecutionSteps(pendingExecution['executionSteps']);
+  const pendingAction = readString(pendingExecution['action']);
   const action =
+    (pendingSteps.length > 0 ? pendingAction : null) ??
     readString(lastExecution['action']) ??
     readString(metadata['action']) ??
     readString(rawResult['listingAction']) ??
@@ -674,7 +678,9 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
   }
 
   let steps: TraderaExecutionStep[];
-  if (quicklistAction !== null) {
+  if (pendingSteps.length > 0) {
+    steps = pendingSteps;
+  } else if (quicklistAction !== null) {
     steps = pickMostInformativeTraderaExecutionSteps([
       persistedSteps,
       rawExecutionSteps,

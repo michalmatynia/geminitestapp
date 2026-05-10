@@ -11,7 +11,7 @@ const marketplaceNav: NavItem[] = [
       {
         id: 'integrations/marketplaces/tradera/category-mapping',
         label: 'Category Mapping',
-        href: '/admin/integrations/marketplaces/category-mapper?marketplace=tradera',
+        href: '/admin/integrations/marketplaces/tradera/category-mapping',
       },
       {
         id: 'integrations/marketplaces/tradera/parameter-mapping',
@@ -49,6 +49,11 @@ const aggregatorNav: NavItem[] = [
         id: 'integrations/aggregators/base-com/import-export',
         label: 'Export',
         href: '/admin/integrations/aggregators/base-com/import-export',
+      },
+      {
+        id: 'integrations/aggregators/base-com/category-mapping',
+        label: 'Category Mapping',
+        href: '/admin/integrations/aggregators/base-com/category-mapping',
       },
     ],
   },

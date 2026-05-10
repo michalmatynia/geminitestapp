@@ -16,7 +16,11 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { useToast } from '@/shared/ui/toast';
 
-import { normalizeMarketplaceStatus } from '../product-column-utils';
+import {
+  getMarketplaceButtonClass,
+  normalizeMarketplaceStatus,
+  PROCESSING_STATUSES,
+} from '../product-column-utils';
 import { runTraderaQuickListAction } from './traderaQuickListAction';
 import {
   resolveTraderaQuickListButtonView,
@@ -34,6 +38,7 @@ export type TraderaQuickListButtonProps = {
 export type TraderaQuickListButtonModel = TraderaQuickListButtonViewModel & {
   shouldRender: boolean;
   showCheckmark: boolean;
+  isWorkerRunning: boolean;
   handleClick: () => void;
   prefetchListings: () => void;
 };
@@ -127,6 +132,9 @@ const shouldIgnoreQuickListClick = (
   feedbackStatus: string | null
 ): boolean => submitting || feedbackStatus === 'queued';
 
+const hasText = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
 const useTraderaQuickListFeedbackRuntime = ({
   productId,
   traderaStatus,
@@ -209,6 +217,17 @@ export function useTraderaQuickListButtonModel(
     customFieldValues: product.customFields,
     marketplaceLabelOrAlias: 'Tradera',
   });
+  const resolvedView = resolveTraderaQuickListButtonView({
+    normalizedTraderaStatus: runtime.feedback.normalizedTraderaStatus,
+    localFeedbackStatus: runtime.effectiveLocalFeedbackStatus,
+    localFeedback: runtime.effectiveLocalFeedback,
+    submitting,
+    hasServerStatus: runtime.feedback.hasServerStatus,
+    serverStatusInFlight: runtime.feedback.serverStatusInFlight,
+    isTraderaMarketplaceExcluded,
+    traderaStatus,
+    isClosedTraderaStatus: runtime.isClosedTraderaStatus,
+  });
   const handleClick = useTraderaQuickListClickHandler({
     productId,
     queryClient,
@@ -226,21 +245,24 @@ export function useTraderaQuickListButtonModel(
     onOpenIntegrations,
     prefetchListings,
   });
+  const serverWorkerRunning =
+    PROCESSING_STATUSES.has(runtime.feedback.normalizedTraderaStatus) &&
+    PROCESSING_STATUSES.has(resolvedView.resolvedButtonStatus);
+  const queuedWorkerRunning =
+    resolvedView.resolvedButtonStatus === 'queued' &&
+    hasText(runtime.effectiveLocalFeedback?.runId);
+  const isWorkerRunning = serverWorkerRunning || queuedWorkerRunning;
+  const resolvedToneClass =
+    isWorkerRunning && !isTraderaMarketplaceExcluded
+      ? getMarketplaceButtonClass('queued', true, 'tradera')
+      : resolvedView.resolvedToneClass;
 
   return {
-    ...resolveTraderaQuickListButtonView({
-      normalizedTraderaStatus: runtime.feedback.normalizedTraderaStatus,
-      localFeedbackStatus: runtime.effectiveLocalFeedbackStatus,
-      localFeedback: runtime.effectiveLocalFeedback,
-      submitting,
-      hasServerStatus: runtime.feedback.hasServerStatus,
-      serverStatusInFlight: runtime.feedback.serverStatusInFlight,
-      isTraderaMarketplaceExcluded,
-      traderaStatus,
-      isClosedTraderaStatus: runtime.isClosedTraderaStatus,
-    }),
+    ...resolvedView,
+    resolvedToneClass,
     shouldRender: !showTraderaBadge,
     showCheckmark,
+    isWorkerRunning,
     handleClick,
     prefetchListings,
   };

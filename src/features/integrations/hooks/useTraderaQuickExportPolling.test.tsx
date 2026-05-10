@@ -100,4 +100,64 @@ describe('useTraderaQuickExportPolling', () => {
     expect(invalidateProductListingsAndBadgesMock).toHaveBeenCalledWith(queryClient, 'product-1');
     expect(invalidateProductsMock).toHaveBeenCalledWith(queryClient);
   });
+
+  it('refreshes queued feedback with the worker run id while the listing is still queued', async () => {
+    const queryClient = createQueryClient();
+    const setFeedbackStatus = vi.fn();
+    const trackedListing = {
+      id: 'listing-1',
+      productId: 'product-1',
+      status: 'queued',
+      externalListingId: null,
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      marketplaceData: {
+        tradera: {
+          pendingExecution: {
+            requestId: 'job-tradera-1',
+            runId: 'run-tradera-live-1',
+          },
+        },
+      },
+    };
+
+    fetchQueryV2Mock.mockReturnValue(() => Promise.resolve([trackedListing]));
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(
+      () =>
+        useTraderaQuickExportPolling(
+          'product-1',
+          {
+            productId: 'product-1',
+            status: 'queued',
+            expiresAt: Date.now() + 60_000,
+            requestId: 'job-tradera-1',
+          },
+          setFeedbackStatus
+        ),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(setFeedbackStatus).toHaveBeenCalledWith(
+        'queued',
+        expect.objectContaining({
+          listingId: 'listing-1',
+          requestId: 'job-tradera-1',
+          runId: 'run-tradera-live-1',
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+        })
+      );
+    });
+
+    expect(setFeedbackStatus).not.toHaveBeenCalledWith(
+      'completed',
+      expect.anything()
+    );
+  });
 });

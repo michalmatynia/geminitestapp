@@ -7,6 +7,7 @@
 
 import path from 'path';
 import { randomUUID } from 'crypto';
+import { configurationError } from '@/shared/errors/app-error';
 import { uploadsRoot, publicRoot } from '../../server-constants';
 
 /**
@@ -45,13 +46,15 @@ export const sanitizeFilename = (filename: string): string => {
  * Resolves a safe disk path from a public path, with path traversal protection.
  */
 export const getDiskPathFromPublicPath = (publicPath: string): string => {
-  // getPublicPathFromStoredPath logic imported from file-storage-service
-  // would be needed here. For now, assume publicPath is safe to resolve.
   if (publicPath.startsWith('/uploads/')) {
     const cleaned = publicPath.replace(/^\/uploads\/+/, '');
     const resolved = path.resolve(uploadsRoot, cleaned);
     if (!resolved.startsWith(uploadsRoot + path.sep) && resolved !== uploadsRoot) {
-      throw new Error('Security Error: Invalid path traversal attempt detected.');
+      throw configurationError('Security Error: Invalid path traversal attempt detected.', {
+        publicPath,
+        resolvedPath: resolved,
+        restrictedBase: uploadsRoot,
+      });
     }
     return resolved;
   }
@@ -59,7 +62,11 @@ export const getDiskPathFromPublicPath = (publicPath: string): string => {
   const cleaned = publicPath.replace(/^\/+/, '');
   const resolved = path.resolve(publicRoot, cleaned);
   if (!resolved.startsWith(publicRoot + path.sep) && resolved !== publicRoot) {
-    throw new Error('Security Error: Invalid path traversal attempt detected.');
+    throw configurationError('Security Error: Invalid path traversal attempt detected.', {
+      publicPath,
+      resolvedPath: resolved,
+      restrictedBase: publicRoot,
+    });
   }
   return resolved;
 };

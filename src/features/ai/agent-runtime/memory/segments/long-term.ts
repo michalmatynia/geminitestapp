@@ -2,7 +2,6 @@ import {
   type AgentLongTermMemoryRecord,
   getAgentLongTermMemoryDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
-import type { InputJsonValue } from '@/shared/contracts/json';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
@@ -10,6 +9,11 @@ import {
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { DEBUG_CHATBOT, parseJsonObject } from './shared';
+import { 
+  buildLongTermMemoryData, 
+  parseValidationResponse, 
+} from './long-term-utils';
+
 async function handleMemoryError(
   error: unknown,
   params: { memoryKey: string; runId?: string | null }
@@ -59,56 +63,38 @@ export async function addAgentLongTermMemory(params: {
   if (agentLongTermMemory === null) {
     void ErrorSystem.logWarning(
       '[chatbot][agent][memory] Long-term memory table not initialized.',
-      {
-        service: 'agent-memory',
-      }
+      { service: 'agent-memory' }
     );
     return null;
   }
   try {
-    return await agentLongTermMemory.create<AgentLongTermMemoryRecord>({
-      data: {
-        memoryKey: params.memoryKey,
-        runId: params.runId ?? null,
-        personaId: params.personaId ?? null,
-        content: params.content,
-        summary: params.summary ?? null,
-        tags: params.tags ?? [],
-        topicHints: params.topicHints ?? [],
-        moodHints: params.moodHints ?? [],
-        sourceType: params.sourceType ?? null,
-        sourceId: params.sourceId ?? null,
-        sourceLabel: params.sourceLabel ?? null,
-        sourceCreatedAt:
-          params.sourceCreatedAt instanceof Date
-            ? params.sourceCreatedAt
-            : (params.sourceCreatedAt !== null ? new Date(params.sourceCreatedAt) : null),
-        ...(params.metadata !== null && {
-          metadata: params.metadata as InputJsonValue,
-        }),
-        importance: params.importance ?? null,
-        lastAccessedAt: new Date(),
-      },
-    });
+    const data = buildLongTermMemoryData(params);
+    return await agentLongTermMemory.create<AgentLongTermMemoryRecord>({ data: data as unknown as any });
   } catch (error) {
     await handleMemoryError(error, { memoryKey: params.memoryKey, runId: params.runId });
     throw error;
   }
 }
 
+interface MemoryValidationConfig {
+  config: Awaited<ReturnType<typeof resolveBrainExecutionConfigForCapability>>;
+  model: string;
+  prompt: string;
+}
+
 async function prepareMemoryValidation(params: {
   model?: string | null;
   prompt?: string | null;
-}) {
+}): Promise<MemoryValidationConfig> {
   const config = await resolveBrainExecutionConfigForCapability('agent_runtime.memory_validation', {
     defaultTemperature: 0.2,
     defaultMaxTokens: 500,
     runtimeKind: 'validation',
   });
-  const model = (params.model !== null && params.model !== undefined && params.model.trim() !== '') ? params.model.trim() : config.modelId;
+  const trimmed = params.model?.trim();
+  const model = (trimmed !== undefined && trimmed !== '') ? trimmed : config.modelId;
   const prompt = params.prompt ?? '';
-  if (model === null) {
-    // No validation model is configured in AI Brain settings
+  if (model === '') {
     throw new Error('AI Brain memory validation model is not configured.');
   }
   return { config, model, prompt };
@@ -146,18 +132,8 @@ export async function validateAgentLongTermMemory(params: {
         },
       ],
     });
-    const parsed = parseJsonObject(response.text) as {
-      valid?: unknown;
-      issues?: unknown;
-      reason?: unknown;
-    } | null;
-    const issues = Array.isArray(parsed?.issues)
-      ? (parsed.issues.filter((item: unknown): item is string => typeof item === 'string'))
-      : [];
     return {
-      valid: typeof parsed?.valid === 'boolean' ? parsed.valid : true,
-      issues,
-      reason: typeof parsed?.reason === 'string' ? parsed.reason : null,
+      ...parseValidationResponse(response.text),
       model,
     };
   } catch (error) {
@@ -171,6 +147,38 @@ export async function validateAgentLongTermMemory(params: {
       model,
     };
   }
+}
+
+async function performSummarization(args: {
+  model: string;
+  config: any;
+  prompt: string | null;
+  content: string;
+  metadata: Record<string, unknown> | null;
+}): Promise<string | null> {
+  const response = await runBrainChatCompletion({
+    modelId: args.model,
+    temperature: args.config.temperature,
+    maxTokens: args.config.maxTokens,
+    jsonMode: supportsBrainJsonMode(args.model),
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You write concise long-term memory summaries. Return only JSON with key summary (string). Keep it 1-2 sentences.',
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          prompt: args.prompt,
+          content: args.content,
+          metadata: args.metadata,
+        }),
+      },
+    ],
+  });
+  const parsed = parseJsonObject(response.text) as { summary?: unknown } | null;
+  return (typeof parsed?.summary === 'string' && parsed.summary.trim() !== '') ? parsed.summary.trim() : null;
 }
 
 async function summarizeMemory(params: {
@@ -188,35 +196,20 @@ async function summarizeMemory(params: {
       runtimeKind: 'chat',
     }
   );
-  const summaryModel = (params.summaryModel !== null && params.summaryModel !== undefined && params.summaryModel.trim() !== '') ? params.summaryModel.trim() : config.modelId;
-  if (summaryModel === null) return params.summary ?? null;
+  
+  const trimmed = params.summaryModel?.trim();
+  const summaryModel = (trimmed !== undefined && trimmed !== '') ? trimmed : config.modelId;
+  if (summaryModel === '') return params.summary ?? null;
 
   try {
-    const response = await runBrainChatCompletion({
-      modelId: summaryModel,
-      temperature: config.temperature,
-      maxTokens: config.maxTokens,
-      jsonMode: supportsBrainJsonMode(summaryModel),
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You write concise long-term memory summaries. Return only JSON with key summary (string). Keep it 1-2 sentences.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            prompt: params.prompt ?? null,
-            content: params.content,
-            metadata: params.metadata ?? null,
-          }),
-        },
-      ],
+    const summary = await performSummarization({
+      model: summaryModel,
+      config,
+      prompt: params.prompt ?? null,
+      content: params.content,
+      metadata: params.metadata ?? null,
     });
-    const parsed = parseJsonObject(response.text) as { summary?: unknown } | null;
-    if (typeof parsed?.summary === 'string' && parsed.summary.trim() !== '') {
-      return parsed.summary.trim();
-    }
+    if (summary) return summary;
   } catch (error) {
     void ErrorSystem.captureException(error);
   }
@@ -249,11 +242,11 @@ export async function validateAndAddAgentLongTermMemory(params: {
   const summary = await summarizeMemory(params);
   
   const validation = await validateAgentLongTermMemory({
-    ...(params.model !== null && params.model !== undefined && { model: params.model }),
-    ...(params.prompt !== null && params.prompt !== undefined && { prompt: params.prompt }),
+    model: params.model ?? null,
+    prompt: params.prompt ?? null,
     content: params.content,
-    ...(summary !== null && { summary }),
-    ...(params.metadata !== null && params.metadata !== undefined && { metadata: params.metadata }),
+    summary: summary ?? null,
+    metadata: params.metadata ?? undefined,
   });
 
   if (!validation.valid) {
@@ -261,20 +254,8 @@ export async function validateAndAddAgentLongTermMemory(params: {
   }
   
   const record = await addAgentLongTermMemory({
-    memoryKey: params.memoryKey,
-    runId: params.runId ?? null,
-    personaId: params.personaId ?? null,
-    content: params.content,
-    ...(summary !== null && { summary }),
-    tags: params.tags ?? [],
-    topicHints: params.topicHints ?? [],
-    moodHints: params.moodHints ?? [],
-    sourceType: params.sourceType ?? null,
-    sourceId: params.sourceId ?? null,
-    sourceLabel: params.sourceLabel ?? null,
-    sourceCreatedAt: params.sourceCreatedAt ?? null,
-    metadata: params.metadata ?? undefined,
-    importance: params.importance ?? null,
+    ...params,
+    summary: summary ?? null,
   });
   
   return { skipped: false, validation, record };
@@ -286,7 +267,7 @@ function getListFilters(params: {
   tags?: string[];
 }): Record<string, unknown> {
   const where: Record<string, unknown> = {};
-  if (params.memoryKey !== null && params.memoryKey !== undefined && params.memoryKey !== '') {
+  if (params.memoryKey !== undefined && params.memoryKey !== '') {
     where.memoryKey = params.memoryKey;
   }
   if (params.personaId !== null && params.personaId !== undefined && params.personaId !== '') {
@@ -312,16 +293,15 @@ export async function listAgentLongTermMemory(params: {
     );
     return [];
   }
-  if (
-    (params.memoryKey === null || params.memoryKey === undefined || params.memoryKey === '') &&
-    (params.personaId === null || params.personaId === undefined || params.personaId === '')
-  ) {
+  
+  const hasKey = params.memoryKey !== undefined && params.memoryKey !== '';
+  const hasPersona = params.personaId !== null && params.personaId !== undefined && params.personaId !== '';
+  if (!hasKey && !hasPersona) {
     return [];
   }
   
-  const where = getListFilters(params);
   const items = await agentLongTermMemory.findMany<AgentLongTermMemoryRecord>({
-    where,
+    where: getListFilters(params),
     orderBy: { updatedAt: 'desc' },
     take: params.limit ?? 5,
   });

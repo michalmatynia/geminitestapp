@@ -28,14 +28,9 @@ const serializeFallbackPayload = (value: unknown): string => {
 const writeServerFallback = (prefix: string, value: unknown): void => {
   try {
     // eslint-disable-next-line no-console
-    console.error(prefix, value);
+    console.error(`${prefix} ${serializeFallbackPayload(value)}`);
   } catch {
-    try {
-      // eslint-disable-next-line no-console
-      console.error(`${prefix} ${serializeFallbackPayload(value)}`);
-    } catch {
-      // No-op fallback.
-    }
+    // No-op fallback.
   }
 };
 

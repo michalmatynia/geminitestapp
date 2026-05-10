@@ -1,6 +1,7 @@
 'use client';
 
-import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { AdminPageLayout } from '@/shared/ui/AdminPageLayout';
+import { ADMIN_SETTINGS_SECTION } from '@/shared/ui/admin-section-configs';
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { useNotificationSettingsController } from './notifications/useNotificationSettingsController';
 import { NotificationsSettingsForm } from './notifications/NotificationsSettingsForm';
@@ -23,9 +24,10 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
   } = useNotificationSettingsController();
 
   return (
-    <AdminSettingsPageLayout
-      title='Notifications'
+    <AdminPageLayout
+      section={ADMIN_SETTINGS_SECTION}
       current='Notifications'
+      title='Notifications'
       description='Customize toast position, accent color, and preview behavior.'
     >
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
@@ -50,7 +52,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
           />
         </div>
       </div>
-    </AdminSettingsPageLayout>
+    </AdminPageLayout>
   );
 }
 

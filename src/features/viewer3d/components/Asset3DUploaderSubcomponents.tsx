@@ -47,7 +47,7 @@ export function FileDropZone({
       onFilesSelected={(files: File[]) => {
         /** Handle file selection from click or drop */
         const selectedFile = files[0];
-        if (selectedFile !== undefined && selectedFile !== null) {
+        if (selectedFile !== undefined) {
           onFileSelect(selectedFile);
         }
       }}

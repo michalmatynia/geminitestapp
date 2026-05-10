@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-06T11:44:17.516Z",
+  "generatedAt": "2026-05-10T01:05:02.194Z",
   "track": {
     "id": "products-parameter-integrity",
     "title": "Products parameter integrity",
@@ -234,60 +234,233 @@
     "category": "data",
     "defaultSelected": true,
     "description": "Audits missing product parameters, refreshes recovery classification, and rebuilds the remaining source-recovery workspace.",
-    "overallStatus": "attention",
-    "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-05-10T01:05:02.191Z",
     "docDir": "docs/build/improvements/products-parameter-integrity",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-05-06T11:44:17.513Z",
+        "generatedAt": "2026-05-10T01:05:02.191Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 1,
+        "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 0,
+        "passedStepCount": 1,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "outputs": [
+          "/tmp/product-missing-parameters-audit-*.json",
+          "/tmp/product-missing-parameters-audit-latest.json"
+        ],
+        "steps": [
+          {
+            "id": "products-parameter-audit",
+            "title": "Audit products with missing parameters",
+            "trackId": "products-parameter-integrity",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [
+              "/tmp/product-missing-parameters-audit-*.json",
+              "/tmp/product-missing-parameters-audit-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:audit:missing-parameters",
+            "durationMs": 3662
+          }
+        ],
+        "status": "passed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-30T09:41:39.301Z",
+        "generatedAt": "2026-05-09T23:06:53.666Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 0,
-        "automaticStepCount": 0,
+        "stepCount": 8,
+        "automaticStepCount": 8,
         "manualStepCount": 0,
         "passedStepCount": 0,
-        "failedStepCount": 0,
+        "failedStepCount": 8,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "outputs": [
+          "/tmp/product-parameter-recovery-classification-*.json",
+          "/tmp/product-parameter-recovery-classification-latest.json",
+          "/tmp/product-parameter-source-recovery-*.json",
+          "/tmp/product-parameter-source-recovery-latest.json",
+          "/tmp/product-parameter-source-recovery-summary-*.json",
+          "/tmp/product-parameter-source-recovery-summary-latest.json",
+          "/tmp/product-parameter-source-recovery-template-*.json",
+          "/tmp/product-parameter-source-recovery-template-latest.json",
+          "/tmp/product-parameter-source-recovery-batches/manifest.json",
+          "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json",
+          "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json",
+          "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
+        ],
+        "steps": [
+          {
+            "id": "products-parameter-recovery-classification",
+            "title": "Classify product parameter recovery state",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-recovery-classification-*.json",
+              "/tmp/product-parameter-recovery-classification-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:classify:parameter-recovery",
+            "durationMs": 1636
+          },
+          {
+            "id": "products-parameter-source-report",
+            "title": "Refresh source-recovery report for unresolved products",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-*.json",
+              "/tmp/product-parameter-source-recovery-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:report:parameter-source-recovery",
+            "durationMs": 1541
+          },
+          {
+            "id": "products-parameter-source-summary",
+            "title": "Summarize unresolved source-recovery products",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-summary-*.json",
+              "/tmp/product-parameter-source-recovery-summary-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:summarize:parameter-source-recovery",
+            "durationMs": 355
+          },
+          {
+            "id": "products-parameter-source-template",
+            "title": "Generate source-recovery template for unresolved products",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-template-*.json",
+              "/tmp/product-parameter-source-recovery-template-latest.json"
+            ],
+            "instructions": [],
+            "script": "products:generate:parameter-source-recovery-template",
+            "durationMs": 365
+          },
+          {
+            "id": "products-parameter-source-batch-split",
+            "title": "Split source-recovery template into family batches",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-batches/manifest.json"
+            ],
+            "instructions": [],
+            "script": "products:split:parameter-source-recovery-template",
+            "durationMs": 443
+          },
+          {
+            "id": "products-parameter-family-mapping-packs",
+            "title": "Generate family mapping packs from the latest source-recovery batches",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json"
+            ],
+            "instructions": [],
+            "script": "products:generate:parameter-family-mapping-pack",
+            "durationMs": 325
+          },
+          {
+            "id": "products-parameter-family-mapping-index",
+            "title": "Build family mapping index for unresolved products",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json"
+            ],
+            "instructions": [],
+            "script": "products:build:parameter-family-mapping-index",
+            "durationMs": 339
+          },
+          {
+            "id": "products-parameter-family-mapping-checklist",
+            "title": "Render family mapping checklist for manual curation",
+            "trackId": "products-parameter-integrity",
+            "phase": "classify",
+            "mode": "automatic",
+            "writes": false,
+            "status": "failed",
+            "outputs": [
+              "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
+            ],
+            "instructions": [],
+            "script": "products:render:parameter-family-mapping-checklist",
+            "durationMs": 322
+          }
+        ],
+        "status": "failed"
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-05-06T11:28:21.083Z",
+        "generatedAt": "2026-05-09T23:06:54.268Z",
         "reportPath": "artifacts/improvements/plan-report.json",
         "executionMode": "planned",
         "allowWrite": false,
-        "stepCount": 0,
+        "stepCount": 1,
         "automaticStepCount": 0,
-        "manualStepCount": 0,
+        "manualStepCount": 1,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": [
+          {
+            "id": "products-parameter-integrity-plan-review",
+            "title": "Review the refreshed parameter recovery workspace",
+            "trackId": "products-parameter-integrity",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Confirm the latest unresolved count from /tmp/product-parameter-source-recovery-summary-latest.json.",
+              "Review the generated batch manifest and family mapping checklist before any write-side recovery step."
+            ]
+          }
+        ],
+        "status": "manual"
       },
       {
         "phase": "dry-run",

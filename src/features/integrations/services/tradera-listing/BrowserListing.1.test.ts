@@ -368,7 +368,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
         script: 'export default async function run() {}',
-        timeoutMs: 240_000,
+        timeoutMs: 420_000,
         browserMode: 'headed',
         disableStartUrlBootstrap: true,
         failureHoldOpenMs: 30_000,

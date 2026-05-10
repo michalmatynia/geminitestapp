@@ -3,7 +3,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/ui/primitives.public', () => ({
-  Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Alert: ({ children, title }: { children?: React.ReactNode; title?: React.ReactNode }) => (
+    <div>
+      <div>{title}</div>
+      <div>{children}</div>
+    </div>
+  ),
 }));
 
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
@@ -59,6 +64,19 @@ describe('ConnectedIntegrationSelector', () => {
 
     expect(screen.getByText('No connected integrations')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Set up an integration first' })).toBeInTheDocument();
+  });
+
+  it('renders an error state when integration lookup fails', () => {
+    render(
+      <ConnectedIntegrationSelector
+        {...baseProps}
+        integrations={[]}
+        error='Unable to load integrations: Unauthorized.'
+      />
+    );
+
+    expect(screen.getByText('Integrations unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load integrations: Unauthorized.')).toBeInTheDocument();
   });
 
   it('renders integration selector when integrations are available', () => {

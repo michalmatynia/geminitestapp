@@ -60,9 +60,7 @@ function InvoicePdfSettingsShell({ children }: { children: React.ReactNode }): R
   );
 }
 
-function InvoicePdfPreview(props: {
-  settings: FilemakerInvoicePdfSettings;
-}): React.JSX.Element {
+function InvoicePdfPreview(props: { settings: FilemakerInvoicePdfSettings }): React.JSX.Element {
   const { settings } = props;
   const language = settings.defaultLanguage;
   const labels = settings.labels;
@@ -97,7 +95,43 @@ function InvoicePdfPreview(props: {
   );
 }
 
-/* eslint-disable-next-line max-lines-per-function */
+function InvoicePdfLabelRow(props: {
+  labelKey: FilemakerInvoicePdfLabelKey;
+  settings: FilemakerInvoicePdfSettings;
+  updateLabel: (
+    key: FilemakerInvoicePdfLabelKey,
+    language: FilemakerInvoicePdfLanguage,
+    value: string
+  ) => void;
+}): React.JSX.Element {
+  const { labelKey, settings, updateLabel } = props;
+  return (
+    <tr className='border-b border-border/60'>
+      <td className='py-2 pr-3 font-mono text-xs text-gray-500'>{labelKey}</td>
+      <td className='py-2 pr-3'>
+        <Input
+          value={settings.labels[labelKey].pl}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            updateLabel(labelKey, 'pl', event.target.value)
+          }
+          aria-label={`${labelKey} Polish label`}
+          title={`${labelKey} Polish label`}
+        />
+      </td>
+      <td className='py-2'>
+        <Input
+          value={settings.labels[labelKey].en}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+            updateLabel(labelKey, 'en', event.target.value)
+          }
+          aria-label={`${labelKey} English label`}
+          title={`${labelKey} English label`}
+        />
+      </td>
+    </tr>
+  );
+}
+
 function InvoicePdfLexiconEditor(props: {
   settings: FilemakerInvoicePdfSettings;
   setSettings: React.Dispatch<React.SetStateAction<FilemakerInvoicePdfSettings>>;
@@ -133,30 +167,13 @@ function InvoicePdfLexiconEditor(props: {
             </tr>
           </thead>
           <tbody>
-            {filemakerInvoicePdfLabelKeys.map((key) => (
-              <tr key={key} className='border-b border-border/60'>
-                <td className='py-2 pr-3 font-mono text-xs text-gray-500'>{key}</td>
-                <td className='py-2 pr-3'>
-                  <Input
-                    value={settings.labels[key].pl}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      updateLabel(key, 'pl', event.target.value)
-                    }
-                    aria-label={`${key} Polish label`}
-                    title={`${key} Polish label`}
-                  />
-                </td>
-                <td className='py-2'>
-                  <Input
-                    value={settings.labels[key].en}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      updateLabel(key, 'en', event.target.value)
-                    }
-                    aria-label={`${key} English label`}
-                    title={`${key} English label`}
-                  />
-                </td>
-              </tr>
+            {filemakerInvoicePdfLabelKeys.map((labelKey: FilemakerInvoicePdfLabelKey) => (
+              <InvoicePdfLabelRow
+                key={labelKey}
+                labelKey={labelKey}
+                settings={settings}
+                updateLabel={updateLabel}
+              />
             ))}
           </tbody>
         </table>
@@ -165,7 +182,47 @@ function InvoicePdfLexiconEditor(props: {
   );
 }
 
-/* eslint-disable-next-line max-lines-per-function */
+function InvoicePdfSettingsBody(props: {
+  isDirty: boolean;
+  isSaving: boolean;
+  onDefaultLanguageChange: (value: string) => void;
+  onReset: () => void;
+  onSave: () => void;
+  settings: FilemakerInvoicePdfSettings;
+  setSettings: React.Dispatch<React.SetStateAction<FilemakerInvoicePdfSettings>>;
+}): React.JSX.Element {
+  return (
+    <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
+      <div className='space-y-6 lg:col-span-2'>
+        <FormSection title='PDF Defaults' className='p-6'>
+          <FormField label='Default PDF language'>
+            <SelectSimple
+              size='sm'
+              value={props.settings.defaultLanguage}
+              onValueChange={props.onDefaultLanguageChange}
+              options={LANGUAGE_OPTIONS}
+              placeholder='Select language'
+              ariaLabel='Select default invoice PDF language'
+              title='Select default invoice PDF language'
+            />
+          </FormField>
+        </FormSection>
+        <InvoicePdfLexiconEditor settings={props.settings} setSettings={props.setSettings} />
+        <FormActions
+          onSave={props.onSave}
+          onCancel={props.onReset}
+          saveText='Save Settings'
+          cancelText='Reset'
+          isDisabled={!props.isDirty || props.isSaving}
+          isSaving={props.isSaving}
+          className='justify-start'
+        />
+      </div>
+      <InvoicePdfPreview settings={props.settings} />
+    </div>
+  );
+}
+
 export function AdminFilemakerInvoicePdfSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
@@ -175,15 +232,20 @@ export function AdminFilemakerInvoicePdfSettingsPage(): React.JSX.Element {
     () => parseFilemakerInvoicePdfSettings(settingsQuery.data?.get(FILEMAKER_INVOICE_PDF_SETTINGS_KEY)),
     [settingsQuery.data]
   );
-  const [settings, setSettings] = useState<FilemakerInvoicePdfSettings>(
-    cloneSettings(storedSettings)
-  );
+  const [settings, setSettings] = useState<FilemakerInvoicePdfSettings>(cloneSettings(storedSettings));
 
   useEffect(() => {
     setSettings(cloneSettings(storedSettings));
   }, [storedSettings]);
 
   const isDirty = !areSettingsEqual(settings, storedSettings);
+
+  const handleDefaultLanguageChange = (value: string): void => {
+    setSettings((current) => ({
+      ...current,
+      defaultLanguage: value === 'en' ? 'en' : 'pl',
+    }));
+  };
 
   const handleSave = (): void => {
     updateSetting.mutate(
@@ -215,42 +277,15 @@ export function AdminFilemakerInvoicePdfSettingsPage(): React.JSX.Element {
 
   return (
     <InvoicePdfSettingsShell>
-      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
-        <div className='space-y-6 lg:col-span-2'>
-          <FormSection title='PDF Defaults' className='p-6'>
-            <FormField label='Default PDF language'>
-              <SelectSimple
-                size='sm'
-                value={settings.defaultLanguage}
-                onValueChange={(value: string): void =>
-                  setSettings((current) => ({
-                    ...current,
-                    defaultLanguage: value === 'en' ? 'en' : 'pl',
-                  }))
-                }
-                options={LANGUAGE_OPTIONS}
-                placeholder='Select language'
-                ariaLabel='Select default invoice PDF language'
-                title='Select default invoice PDF language'
-              />
-            </FormField>
-          </FormSection>
-
-          <InvoicePdfLexiconEditor settings={settings} setSettings={setSettings} />
-
-          <FormActions
-            onSave={handleSave}
-            onCancel={(): void => setSettings(cloneSettings(storedSettings))}
-            saveText='Save Settings'
-            cancelText='Reset'
-            isDisabled={!isDirty || updateSetting.isPending}
-            isSaving={updateSetting.isPending}
-            className='justify-start'
-          />
-        </div>
-
-        <InvoicePdfPreview settings={settings} />
-      </div>
+      <InvoicePdfSettingsBody
+        isDirty={isDirty}
+        isSaving={updateSetting.isPending}
+        onDefaultLanguageChange={handleDefaultLanguageChange}
+        onReset={(): void => setSettings(cloneSettings(storedSettings))}
+        onSave={handleSave}
+        settings={settings}
+        setSettings={setSettings}
+      />
     </InvoicePdfSettingsShell>
   );
 }

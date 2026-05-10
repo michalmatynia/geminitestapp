@@ -21,13 +21,20 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { type Session } from 'next-auth';
 import { type AuthRoleSettings } from '@/shared/contracts/auth';
 
+type AuthRoleSettingsQuery = { data: AuthRoleSettings | undefined; isSuccess: boolean } | null;
+
 interface AuthComputedStateInput {
   session: Session | null;
   settingsQueryData: Map<string, string> | undefined;
-  roleSettingsQuery: { data: AuthRoleSettings | undefined; isSuccess: boolean } | null;
+  roleSettingsQuery: AuthRoleSettingsQuery;
 }
 
-const useAuthBasicInfo = (session: Session | null) => {
+const useAuthBasicInfo = (session: Session | null): {
+  permissions: string[];
+  isElevated: boolean;
+  canReadUsers: boolean;
+  canManageSecurity: boolean;
+} => {
   const permissions = useMemo(() => session?.user?.permissions ?? [], [session]);
   const isElevated = useMemo(() => session?.user?.isElevated === true, [session]);
 
@@ -46,83 +53,105 @@ const useAuthBasicInfo = (session: Session | null) => {
 
 const useAuthRolesList = (
   settingsQueryData: Map<string, string> | undefined,
-  roleSettingsQuery: { data: AuthRoleSettings | undefined; isSuccess: boolean } | null
-) => {
+  roleSettingsQuery: AuthRoleSettingsQuery
+): AuthRole[] => {
   return useMemo(() => {
-    if (roleSettingsQuery?.isSuccess === true && (roleSettingsQuery.data?.roles?.length ?? 0) > 0) {
-      return roleSettingsQuery.data?.roles ?? DEFAULT_AUTH_ROLES;
+    if (roleSettingsQuery?.isSuccess === true) {
+      const roles = roleSettingsQuery.data?.roles;
+      if (Array.isArray(roles) && roles.length > 0) return roles;
     }
     if (settingsQueryData === undefined) return DEFAULT_AUTH_ROLES;
-    return mergeDefaultRoles(
-      parseJsonSetting<AuthRole[]>(
-        settingsQueryData.get(AUTH_SETTINGS_KEYS.roles),
-        DEFAULT_AUTH_ROLES
-      )
-    );
+    const stored = settingsQueryData.get(AUTH_SETTINGS_KEYS.roles);
+    return mergeDefaultRoles(parseJsonSetting<AuthRole[]>(stored, DEFAULT_AUTH_ROLES));
   }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQueryData]);
 };
 
-export const useAuthComputedState = ({
-  session,
-  settingsQueryData,
-  roleSettingsQuery,
-}: AuthComputedStateInput) => {
-  const basicInfo = useAuthBasicInfo(session);
-  const roles = useAuthRolesList(settingsQueryData, roleSettingsQuery);
+const resolveStoredDefaultRole = (
+  settingsQueryData: Map<string, string> | undefined,
+  roleSettingsQuery: AuthRoleSettingsQuery
+): string | null => {
+  if (roleSettingsQuery?.isSuccess === true) {
+    return roleSettingsQuery.data?.defaultRoleId ?? null;
+  }
+  return settingsQueryData?.get(AUTH_SETTINGS_KEYS.defaultRole) ?? null;
+};
 
-  const permissionsLibrary = useMemo(() => {
-    if (roleSettingsQuery?.isSuccess === true && (roleSettingsQuery.data?.permissions?.length ?? 0) > 0) {
-      return roleSettingsQuery.data?.permissions ?? DEFAULT_AUTH_PERMISSIONS;
-    }
-    if (settingsQueryData === undefined) return DEFAULT_AUTH_PERMISSIONS;
-    return parseJsonSetting<AuthPermission[]>(
-      settingsQueryData.get(AUTH_SETTINGS_KEYS.permissions),
-      DEFAULT_AUTH_PERMISSIONS
-    );
-  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQueryData]);
+const resolveFallbackRoleId = (roles: AuthRole[]): string =>
+  roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer';
 
-  const userRoles = useMemo(() => {
-    if (roleSettingsQuery?.isSuccess === true) {
-      return roleSettingsQuery.data?.userRoles ?? {};
-    }
-    if (settingsQueryData === undefined) return {};
-    return parseJsonSetting<AuthUserRoleMap>(
-      settingsQueryData.get(AUTH_SETTINGS_KEYS.userRoles),
-      {}
-    );
-  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQueryData]);
-
-  const defaultRole = useMemo(() => {
-    const storedDefault = roleSettingsQuery?.isSuccess === true
-      ? (roleSettingsQuery.data?.defaultRoleId ?? null)
-      : (settingsQueryData?.get(AUTH_SETTINGS_KEYS.defaultRole) ?? null);
-    
-    if (storedDefault !== null && roles.some((role) => role.id === storedDefault)) {
-      return storedDefault;
-    }
-    return roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer';
-  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, roles, settingsQueryData]);
-
-  const securityPolicy = useMemo(() => {
+const useAuthSecurityPolicy = (settingsQueryData: Map<string, string> | undefined): AuthSecurityPolicy => {
+  return useMemo(() => {
     if (settingsQueryData === undefined) return DEFAULT_AUTH_SECURITY_POLICY;
     const storedPolicyRaw = settingsQueryData.get(AUTH_SETTINGS_KEYS.securityPolicy);
-    return storedPolicyRaw
-      ? normalizeAuthSecurityPolicy(
-        parseJsonSetting<Partial<AuthSecurityPolicy>>(
-          storedPolicyRaw,
-          DEFAULT_AUTH_SECURITY_POLICY
-        )
+    if (storedPolicyRaw === undefined || storedPolicyRaw === '') return DEFAULT_AUTH_SECURITY_POLICY;
+    
+    return normalizeAuthSecurityPolicy(
+      parseJsonSetting<Partial<AuthSecurityPolicy>>(
+        storedPolicyRaw,
+        DEFAULT_AUTH_SECURITY_POLICY
       )
-      : DEFAULT_AUTH_SECURITY_POLICY;
+    );
   }, [settingsQueryData]);
+};
 
-  const userPageSettings = useMemo(() => {
+const useAuthUserPageSettings = (settingsQueryData: Map<string, string> | undefined): AuthUserPageSettings => {
+  return useMemo(() => {
     if (settingsQueryData === undefined) return DEFAULT_AUTH_USER_PAGE_SETTINGS;
     return parseJsonSetting<AuthUserPageSettings>(
       settingsQueryData.get(AUTH_SETTINGS_KEYS.userPages),
       DEFAULT_AUTH_USER_PAGE_SETTINGS
     );
   }, [settingsQueryData]);
+};
+
+export const useAuthComputedState = ({
+  session,
+  settingsQueryData,
+  roleSettingsQuery,
+}: AuthComputedStateInput): {
+  permissions: string[];
+  isElevated: boolean;
+  canReadUsers: boolean;
+  canManageSecurity: boolean;
+  roles: AuthRole[];
+  permissionsLibrary: AuthPermission[];
+  userRoles: AuthUserRoleMap;
+  defaultRole: string;
+  securityPolicy: AuthSecurityPolicy;
+  userPageSettings: AuthUserPageSettings;
+} => {
+  const basicInfo = useAuthBasicInfo(session);
+  const roles = useAuthRolesList(settingsQueryData, roleSettingsQuery);
+
+  const permissionsLibrary = useMemo((): AuthPermission[] => {
+    if (roleSettingsQuery?.isSuccess === true) {
+      const lib = roleSettingsQuery.data?.permissions;
+      if (Array.isArray(lib) && lib.length > 0) return lib;
+    }
+    if (settingsQueryData === undefined) return DEFAULT_AUTH_PERMISSIONS;
+    const stored = settingsQueryData.get(AUTH_SETTINGS_KEYS.permissions);
+    return parseJsonSetting<AuthPermission[]>(stored, DEFAULT_AUTH_PERMISSIONS);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQueryData]);
+
+  const userRoles = useMemo((): AuthUserRoleMap => {
+    if (roleSettingsQuery?.isSuccess === true) {
+      return roleSettingsQuery.data?.userRoles ?? {};
+    }
+    if (settingsQueryData === undefined) return {};
+    const stored = settingsQueryData.get(AUTH_SETTINGS_KEYS.userRoles);
+    return parseJsonSetting<AuthUserRoleMap>(stored, {});
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, settingsQueryData]);
+
+  const defaultRole = useMemo((): string => {
+    const storedDefault = resolveStoredDefaultRole(settingsQueryData, roleSettingsQuery);
+    if (storedDefault !== null && roles.some((role) => role.id === storedDefault)) {
+      return storedDefault;
+    }
+    return resolveFallbackRoleId(roles);
+  }, [roleSettingsQuery?.data, roleSettingsQuery?.isSuccess, roles, settingsQueryData]);
+
+  const securityPolicy = useAuthSecurityPolicy(settingsQueryData);
+  const userPageSettings = useAuthUserPageSettings(settingsQueryData);
 
   return {
     ...basicInfo,

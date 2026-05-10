@@ -23,39 +23,37 @@ type UseKangurMusicSynthAudioContextResult = {
   closeAudioContext: () => Promise<void>; // Clean shutdown of audio context
 };
 
-/* eslint-disable max-lines-per-function */
-/**
- * Custom hook for managing Web Audio API context in the Kangur music synthesizer.
- * 
- * Provides:
- * - Lazy audio context initialization with browser compatibility
- * - Automatic idle suspension to conserve resources
- * - Audio processing chain setup (compressor, reverb)
- * - Autoplay policy handling
- */
-export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioContextResult {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const compressorNodeRef = useRef<DynamicsCompressorNode | null>(null);
-  const idleSuspendTimeoutRef = useRef<number | null>(null);
-  const reverbChainRef = useRef<ReverbChain | null>(null);
-  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
-  const isAudioSupported = useMemo(() => resolveAudioContextCtor() !== null, []);
+type AudioContextRefs = {
+  audioContextRef: React.MutableRefObject<AudioContext | null>;
+  compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>;
+  idleSuspendTimeoutRef: React.MutableRefObject<number | null>;
+  reverbChainRef: React.MutableRefObject<ReverbChain | null>;
+};
 
+const useAudioContextIdleSuspend = ({
+  audioContextRef,
+  idleSuspendTimeoutRef,
+}: Pick<AudioContextRefs, 'audioContextRef' | 'idleSuspendTimeoutRef'>): {
+  clearAudioContextIdleSuspend: () => void;
+  scheduleAudioContextIdleSuspend: (shouldDeferSuspend?: () => boolean) => void;
+} => {
+  const audioContext = audioContextRef;
+  const idleSuspendTimeout = idleSuspendTimeoutRef;
   const clearAudioContextIdleSuspend = useCallback((): void => {
-    if (idleSuspendTimeoutRef.current === null) {
+    if (idleSuspendTimeout.current === null) {
       return;
     }
-    safeClearTimeout(idleSuspendTimeoutRef.current);
-    idleSuspendTimeoutRef.current = null;
-  }, []);
+    safeClearTimeout(idleSuspendTimeout.current);
+    idleSuspendTimeout.current = null;
+  }, [idleSuspendTimeout]);
 
   const scheduleAudioContextIdleSuspend = useCallback(
     (shouldDeferSuspend?: () => boolean): void => {
       clearAudioContextIdleSuspend();
-      idleSuspendTimeoutRef.current = safeSetTimeout(() => {
-        idleSuspendTimeoutRef.current = null;
+      idleSuspendTimeout.current = safeSetTimeout(() => {
+        idleSuspendTimeout.current = null;
 
-        const context = audioContextRef.current;
+        const context = audioContext.current;
         if (context?.state !== 'running') {
           return;
         }
@@ -69,24 +67,40 @@ export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioConte
         void context.suspend().catch(() => undefined);
       }, KANGUR_MUSIC_SYNTH_IDLE_SUSPEND_MS);
     },
-    [clearAudioContextIdleSuspend]
+    [audioContext, clearAudioContextIdleSuspend, idleSuspendTimeout]
   );
 
-  const ensureAudioContext = useCallback(async (): Promise<AudioContext | null> => {
+  return { clearAudioContextIdleSuspend, scheduleAudioContextIdleSuspend };
+};
+
+const useEnsureAudioContext = ({
+  audioContextRef,
+  clearAudioContextIdleSuspend,
+  compressorNodeRef,
+  reverbChainRef,
+  setIsAudioBlocked,
+}: Omit<AudioContextRefs, 'idleSuspendTimeoutRef'> & {
+  clearAudioContextIdleSuspend: () => void;
+  setIsAudioBlocked: React.Dispatch<React.SetStateAction<boolean>>;
+}): (() => Promise<AudioContext | null>) => {
+  const audioContext = audioContextRef;
+  const compressorNode = compressorNodeRef;
+  const reverbChain = reverbChainRef;
+  return useCallback(async (): Promise<AudioContext | null> => {
     const AudioContextCtor = resolveAudioContextCtor();
-    if (!AudioContextCtor) {
+    if (AudioContextCtor === null) {
       setIsAudioBlocked(false);
       return null;
     }
 
     clearAudioContextIdleSuspend();
 
-    let context = audioContextRef.current;
-    if (!context || context.state === 'closed') {
+    let context = audioContext.current;
+    if (context === null || context.state === 'closed') {
       context = new AudioContextCtor();
-      audioContextRef.current = context;
-      compressorNodeRef.current = null;
-      reverbChainRef.current = null;
+      audioContext.current = context;
+      compressorNode.current = null;
+      reverbChain.current = null;
     }
 
     if (context.state === 'suspended') {
@@ -104,18 +118,69 @@ export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioConte
 
     setIsAudioBlocked(false);
     return context;
-  }, []);
+  }, [
+    audioContext,
+    clearAudioContextIdleSuspend,
+    compressorNode,
+    reverbChain,
+    setIsAudioBlocked,
+  ]);
+};
 
-  const closeAudioContext = useCallback(async (): Promise<void> => {
+const useCloseAudioContext = ({
+  audioContextRef,
+  clearAudioContextIdleSuspend,
+  compressorNodeRef,
+  reverbChainRef,
+}: Omit<AudioContextRefs, 'idleSuspendTimeoutRef'> & {
+  clearAudioContextIdleSuspend: () => void;
+}): (() => Promise<void>) => {
+  const audioContext = audioContextRef;
+  const compressorNode = compressorNodeRef;
+  const reverbChain = reverbChainRef;
+  return useCallback(async (): Promise<void> => {
     clearAudioContextIdleSuspend();
-    const context = audioContextRef.current;
-    audioContextRef.current = null;
-    compressorNodeRef.current = null;
-    reverbChainRef.current = null;
-    if (context && context.state !== 'closed') {
+    const context = audioContext.current;
+    audioContext.current = null;
+    compressorNode.current = null;
+    reverbChain.current = null;
+    if (context !== null && context.state !== 'closed') {
       await context.close().catch(() => undefined);
     }
-  }, [clearAudioContextIdleSuspend]);
+  }, [audioContext, clearAudioContextIdleSuspend, compressorNode, reverbChain]);
+};
+
+/**
+ * Custom hook for managing Web Audio API context in the Kangur music synthesizer.
+ * 
+ * Provides:
+ * - Lazy audio context initialization with browser compatibility
+ * - Automatic idle suspension to conserve resources
+ * - Audio processing chain setup (compressor, reverb)
+ * - Autoplay policy handling
+ */
+export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioContextResult {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const compressorNodeRef = useRef<DynamicsCompressorNode | null>(null);
+  const idleSuspendTimeoutRef = useRef<number | null>(null);
+  const reverbChainRef = useRef<ReverbChain | null>(null);
+  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
+  const isAudioSupported = useMemo(() => resolveAudioContextCtor() !== null, []);
+  const { clearAudioContextIdleSuspend, scheduleAudioContextIdleSuspend } =
+    useAudioContextIdleSuspend({ audioContextRef, idleSuspendTimeoutRef });
+  const ensureAudioContext = useEnsureAudioContext({
+    audioContextRef,
+    clearAudioContextIdleSuspend,
+    compressorNodeRef,
+    reverbChainRef,
+    setIsAudioBlocked,
+  });
+  const closeAudioContext = useCloseAudioContext({
+    audioContextRef,
+    clearAudioContextIdleSuspend,
+    compressorNodeRef,
+    reverbChainRef,
+  });
 
   return {
     audioContextRef,
@@ -130,4 +195,3 @@ export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioConte
     closeAudioContext,
   };
 }
-/* eslint-enable max-lines-per-function */

@@ -4,6 +4,7 @@ import React, { type Dispatch, type SetStateAction } from 'react';
 
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { IntegrationSelector } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 import { IntegrationSelectionEmptyState } from './IntegrationSelectionEmptyState';
 import { IntegrationSelectionLoadingState } from './IntegrationSelectionLoadingState';
@@ -11,6 +12,7 @@ import { IntegrationSelectionLoadingState } from './IntegrationSelectionLoadingS
 type ConnectedIntegrationSelectorProps = {
   integrations: IntegrationWithConnections[];
   loading: boolean;
+  error?: string | null;
   selectedIntegrationId: string;
   selectedConnectionId: string;
   setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
@@ -30,6 +32,7 @@ export function ConnectedIntegrationSelector(
   const {
     integrations,
     loading,
+    error,
     selectedIntegrationId,
     selectedConnectionId,
     setSelectedIntegrationId,
@@ -51,6 +54,14 @@ export function ConnectedIntegrationSelector(
         containerClassName={loadingContainerClassName}
         size={loadingSize}
       />
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant='error' title='Integrations unavailable'>
+        {error}
+      </Alert>
     );
   }
 

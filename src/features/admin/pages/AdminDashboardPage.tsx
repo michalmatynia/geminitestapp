@@ -5,9 +5,9 @@ import { type JSX, useState } from 'react';
 
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { useSystemActivity } from '@/shared/hooks/useSystemActivity';
-import { PageLayout } from '@/shared/ui/navigation-and-layout.public';
 
-import { QuickAccessPanel } from './dashboard-panels';
+import { AdminPageLayout } from '@/shared/ui/AdminPageLayout';
+import { ADMIN_DASHBOARD_SECTION } from '@/features/admin/constants/admin-menu-settings';
 
 const SystemHealthPanel = dynamic(
   () => import('./dashboard-panels').then((mod) => mod.SystemHealthPanel),
@@ -16,6 +16,11 @@ const SystemHealthPanel = dynamic(
 
 const RecentActivityPanel = dynamic(
   () => import('./dashboard-panels').then((mod) => mod.RecentActivityPanel),
+  { ssr: false }
+);
+
+const QuickAccessPanel = dynamic(
+  () => import('./dashboard-panels').then((mod) => mod.QuickAccessPanel),
   { ssr: false }
 );
 
@@ -28,7 +33,9 @@ export default function AdminDashboardPage(): JSX.Element {
   const activity = activityData?.data ?? [];
 
   return (
-    <PageLayout
+    <AdminPageLayout
+      section={ADMIN_DASHBOARD_SECTION}
+      current='Dashboard'
       title='Dashboard'
       description='System overview and quick access to administrative tools.'
     >
@@ -46,6 +53,6 @@ export default function AdminDashboardPage(): JSX.Element {
           activity={activity}
         />
       </div>
-    </PageLayout>
+    </AdminPageLayout>
   );
 }

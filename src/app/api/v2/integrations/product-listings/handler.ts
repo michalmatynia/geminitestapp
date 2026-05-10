@@ -14,7 +14,6 @@ import {
   listAllProductListingsAcrossProviders,
   listProductListingsByProductIdsAcrossProviders,
 } from '@/features/integrations/services/product-listing-repository';
-import { checkEcommerceProductsExistence } from '@/features/integrations/services/ecommerce-product-export';
 import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
@@ -154,16 +153,6 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   return null;
 };
 
-const ECOMMERCE_CHECK_TIMEOUT_MS = 2_000;
-
-const checkEcommerceWithTimeout = (productIds: string[]): Promise<Set<string>> => {
-  if (productIds.length === 0) return Promise.resolve(new Set<string>());
-  return Promise.race([
-    checkEcommerceProductsExistence(productIds),
-    new Promise<Set<string>>((resolve) => setTimeout(() => resolve(new Set<string>()), ECOMMERCE_CHECK_TIMEOUT_MS)),
-  ]);
-};
-
 const PRODUCT_IDS_PARAM_LIMIT = 250;
 const productIdsBodySchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1).max(PRODUCT_IDS_PARAM_LIMIT),
@@ -212,10 +201,9 @@ const buildPayload = async (
     normalizedRequestedProductIds.length > 0
       ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
       : listAllProductListingsAcrossProviders();
-  const [listings, integrations, ecommerceExistingIds] = await Promise.all([
+  const [listings, integrations] = await Promise.all([
     listingsPromise,
     integrationRepository.listIntegrations(),
-    checkEcommerceWithTimeout(normalizedRequestedProductIds),
   ]);
   if (timings) {
     timings['lookup'] = performance.now() - lookupStart;
@@ -265,6 +253,7 @@ const buildPayload = async (
   const assembleStart = performance.now();
   for (const listing of listings) {
     const marketplace =
+      resolveMarketplaceKey(listing.integrationId) ??
       integrationMarketplaceById.get(listing.integrationId) ??
       inferMarketplaceFromListingMetadata(
         (listing as { marketplaceData?: unknown }).marketplaceData
@@ -324,14 +313,10 @@ const buildPayload = async (
     timings['assemble'] = performance.now() - assembleStart;
   }
 
-  // Inject ecommerce badges for products found in the ecommerce DB. DB presence
-  // is the source of truth — always inject 'active', overriding any stale
-  // 'removed' listing record (e.g. product was re-exported after removal).
-  for (const productId of ecommerceExistingIds) {
+  for (const productId of normalizedRequestedProductIds) {
     const current = byProduct.get(productId);
-    if (!current?.ecommerce || current.ecommerce === 'removed') {
-      byProduct.set(productId, { ...(current ?? {}), ecommerce: 'active' });
-    }
+    if (current?.ecommerce !== undefined) continue;
+    byProduct.set(productId, { ...(current ?? {}), ecommerce: 'active' });
   }
 
   const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;

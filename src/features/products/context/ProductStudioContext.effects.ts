@@ -95,9 +95,9 @@ const useProductStudioCompletionEffect = (
   } = runState;
 
   useEffect(() => {
-    const prev = prevPlaceholderCountRef.current;
-    // eslint-disable-next-line no-param-reassign
-    prevPlaceholderCountRef.current = pendingVariantPlaceholderCount;
+    const placeholderCountRef = prevPlaceholderCountRef;
+    const prev = placeholderCountRef.current;
+    placeholderCountRef.current = pendingVariantPlaceholderCount;
     if (prev > 0 && pendingVariantPlaceholderCount === 0 && activeRunId !== null) {
       setRunStatus(null);
       setActiveRunId(null);

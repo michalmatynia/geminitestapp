@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/strict-boolean-expressions -- Relation tree service split keeps legacy optional bucket handling. */
 /**
  * Relation Tree Service
  * 
@@ -9,7 +8,6 @@
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
 import {
-  buildRelationCaseNodeId,
   buildRelationFolderPath,
   buildRelationFolderNodeId,
   RELATION_TREE_UNASSIGNED_CASE_KEY,
@@ -20,7 +18,7 @@ import type { RelationCaseBucket } from './relation-master-tree.types';
  * Resolves the lookup key for a case bucket.
  */
 export const resolveCaseBucketKey = (caseId: string | null): string =>
-  caseId?.trim() || RELATION_TREE_UNASSIGNED_CASE_KEY;
+  caseId?.trim() ?? RELATION_TREE_UNASSIGNED_CASE_KEY;
 
 /**
  * Resolves the label for a case bucket, defaulting to 'Unassigned'.
@@ -29,8 +27,9 @@ export const resolveCaseLabel = (rows: NodeFileDocumentSearchRow[], caseId: stri
   const firstSignature = rows
     .find((row) => row.signatureLabel.trim().length > 0)
     ?.signatureLabel.trim();
-  if (firstSignature) return firstSignature;
-  if (caseId?.trim()) return caseId.trim();
+  if (firstSignature !== undefined && firstSignature.length > 0) return firstSignature;
+  const trimmedCaseId = caseId?.trim() ?? '';
+  if (trimmedCaseId.length > 0) return trimmedCaseId;
   return 'Unassigned';
 };
 
@@ -40,7 +39,8 @@ export const resolveCaseLabel = (rows: NodeFileDocumentSearchRow[], caseId: stri
 export const buildCaseBuckets = (rows: NodeFileDocumentSearchRow[]): RelationCaseBucket[] => {
   const bucketByKey = new Map<string, RelationCaseBucket>();
   rows.forEach((row) => {
-    const normalizedCaseId = row.file.parentCaseId?.trim() || null;
+    const trimmedCaseId = row.file.parentCaseId?.trim() ?? '';
+    const normalizedCaseId = trimmedCaseId.length > 0 ? trimmedCaseId : null;
     const key = resolveCaseBucketKey(normalizedCaseId);
     const existing = bucketByKey.get(key);
     if (existing) {
@@ -64,8 +64,8 @@ export const buildCaseBuckets = (rows: NodeFileDocumentSearchRow[]): RelationCas
       sensitivity: 'base',
     });
     if (labelDelta !== 0) return labelDelta;
-    const leftId = left.caseId || '';
-    const rightId = right.caseId || '';
+    const leftId = left.caseId ?? '';
+    const rightId = right.caseId ?? '';
     return leftId.localeCompare(rightId);
   });
 

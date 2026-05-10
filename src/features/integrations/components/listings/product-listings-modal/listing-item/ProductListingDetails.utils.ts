@@ -545,7 +545,9 @@ export const resolveTraderaExecutionSummary = (
   const executionSteps = traderaExecutionTrace.steps;
   const logTailEntries = readStringArray(metadata['logTail']);
   const latestStage =
-    readString(metadata['latestStage']) ?? readString(rawResult['stage']);
+    readString(pendingExecution['latestStage']) ??
+    readString(metadata['latestStage']) ??
+    readString(rawResult['stage']);
   const duplicateMatchStrategy =
     readString(metadata['duplicateMatchStrategy']) ??
     readString(rawResult['duplicateMatchStrategy']);

@@ -15,7 +15,11 @@ import {
   runPlaywrightConnectionNativeTask,
 } from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import type { BrowserListingResultDto, ProductListing } from '@/shared/contracts/integrations/listings';
+import type {
+  BrowserListingResultDto,
+  ProductListing,
+  TraderaExecutionStep,
+} from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
@@ -64,6 +68,10 @@ const paymentSolutionLocatorPageSchema = z.object({
 }).passthrough();
 const paymentSolutionTextPageSchema = z.object({
   getByText: z.function(),
+}).passthrough();
+const locatorCollectionSchema = z.object({
+  count: z.function(),
+  nth: z.function(),
 }).passthrough();
 const nestedLocatorSchema = z.object({
   locator: z.function(),
@@ -122,7 +130,13 @@ const findVisiblePaymentSolutionDialog = async (page: Page): Promise<Locator | n
     page.locator(PAYMENT_SOLUTION_MODAL_CONTAINER_SELECTOR),
   ];
 
-  for (const dialogs of dialogCollections) {
+  for (const rawDialogs of dialogCollections) {
+    const parsedDialogs = locatorCollectionSchema.safeParse(rawDialogs);
+    if (!parsedDialogs.success) continue;
+    const dialogs = parsedDialogs.data as Locator & {
+      count: () => Promise<number>;
+      nth: (index: number) => Locator;
+    };
     const dialogCount = await dialogs.count().catch(() => 0);
     for (let index = 0; index < dialogCount; index += 1) {
       const candidate = dialogs.nth(index);
@@ -364,7 +378,7 @@ const acceptPaymentSolutionTermsIfPresent = async (
 
   while (Date.now() < deadline) {
     dialog = await findVisiblePaymentSolutionDialog(page);
-    if (dialog) {
+    if (dialog !== null) {
       break;
     }
     await waitBriefly(page, 150);
@@ -418,8 +432,31 @@ const buildListingFormUrlWithCategoryId = (
   return url.toString();
 };
 
-const buildStandardExecutionTracker = async (): Promise<StepTracker> =>
-  StepTracker.fromSteps(await buildResolvedActionSteps('tradera_standard_list'));
+type TraderaStandardBrowserRunOptions = {
+  onExecutionStepsUpdated?: ((steps: TraderaExecutionStep[]) => Promise<void> | void) | undefined;
+};
+
+const normalizeTrackedExecutionSteps = (
+  steps: ReturnType<StepTracker['getSteps']>
+): TraderaExecutionStep[] =>
+  steps.map((step) => ({
+    id: step.id,
+    label: step.label,
+    status: step.status,
+    message: step.message ?? null,
+  }));
+
+const buildStandardExecutionTracker = async (
+  onExecutionStepsUpdated?: TraderaStandardBrowserRunOptions['onExecutionStepsUpdated']
+): Promise<StepTracker> =>
+  StepTracker.fromSteps(
+    await buildResolvedActionSteps('tradera_standard_list'),
+    onExecutionStepsUpdated
+      ? (steps) => {
+          void onExecutionStepsUpdated(normalizeTrackedExecutionSteps(steps));
+        }
+      : undefined
+  );
 
 const resolveStandardFailedStepId = ({
   authLoginAttempted,
@@ -495,7 +532,7 @@ export const runTraderaBrowserListingStandard = async ({
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
-}): Promise<BrowserListingResultDto> => {
+}, options?: TraderaStandardBrowserRunOptions): Promise<BrowserListingResultDto> => {
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const targetListingCurrencyCode = resolveTraderaListingPriceCurrencyCode(systemSettings);
   let tracker: StepTracker | null = null;
@@ -531,7 +568,7 @@ export const runTraderaBrowserListingStandard = async ({
     requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
     execute: async (session) => {
       const { context, page } = session;
-      tracker = await buildStandardExecutionTracker();
+      tracker = await buildStandardExecutionTracker(options?.onExecutionStepsUpdated);
       tracker.succeed('browser_preparation', 'Browser settings were prepared.');
       tracker.succeed('browser_open', 'Browser was opened successfully.');
       tracker.start('auth_check', 'Checking whether the stored Tradera session is still valid.');
@@ -555,7 +592,7 @@ export const runTraderaBrowserListingStandard = async ({
         priceInput: Locator;
         submitButton: Locator;
       }> => {
-        if (formControlsPromise) {
+        if (formControlsPromise !== null) {
           return formControlsPromise;
         }
 
@@ -591,7 +628,7 @@ export const runTraderaBrowserListingStandard = async ({
       };
 
       const ensureProductLoaded = async (): Promise<ProductWithImages> => {
-        if (product) {
+        if (product !== null) {
           return product;
         }
 
@@ -806,10 +843,7 @@ export const runTraderaBrowserListingStandard = async ({
             const navigationAfterClick = waitForPublishNavigation();
             await submitButton.click();
 
-            const paymentSolutionAccepted = await Promise.race([
-              acceptPaymentSolutionTermsIfPresent(page),
-              navigationAfterClick.then(() => false),
-            ]);
+            const paymentSolutionAccepted = await acceptPaymentSolutionTermsIfPresent(page);
             if (paymentSolutionAccepted) {
               executionState.paymentSolutionTermsAccepted = true;
               executionState.retryAfterPaymentSolutionTerms = true;
@@ -880,7 +914,7 @@ export const runTraderaBrowserListingStandard = async ({
       });
     },
     buildErrorAdditional: async ({ error, session }) => {
-      const activeTracker = tracker ?? (await buildStandardExecutionTracker());
+      const activeTracker = tracker ?? (await buildStandardExecutionTracker(options?.onExecutionStepsUpdated));
       const errorId = `tradera-browser-standard-${Date.now()}`;
       const debugArtifacts = await captureTraderaListingDebugArtifacts(session.page, errorId, action);
       const authState = await readTraderaAuthState(session.page).catch(() => null);

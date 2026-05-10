@@ -7,13 +7,16 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 export type { UiElement, UiInventory };
 
-export const collectUiInventory = async (
-  page: Page,
-  runId: string,
-  label: string,
-  log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
-  activeStepId?: string | null
-): Promise<UiInventory | null> => {
+export interface CollectUiInventoryArgs {
+  page: Page;
+  runId: string;
+  label: string;
+  log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>;
+  activeStepId?: string | null;
+}
+
+export const collectUiInventory = async (args: CollectUiInventoryArgs): Promise<UiInventory | null> => {
+  const { page, runId, label, log, activeStepId } = args;
   if (!page) return null;
   const agentAuditLog = getAgentAuditLogDelegate();
   try {
@@ -122,29 +125,31 @@ export const collectUiInventory = async (
         truncated,
       };
     });
-    if (log) {
+    if (log !== undefined) {
       await log('info', 'Captured UI inventory.', {
         label,
         stepId: activeStepId ?? null,
         uiInventory,
       });
     }
-    await agentAuditLog?.create({
-      data: {
-        runId,
-        level: 'info',
-        message: 'Captured UI inventory.',
-        metadata: {
-          label,
-          stepId: activeStepId ?? null,
-          uiInventory,
+    if (agentAuditLog !== null) {
+      await agentAuditLog.create({
+        data: {
+          runId,
+          level: 'info',
+          message: 'Captured UI inventory.',
+          metadata: {
+            label,
+            stepId: activeStepId ?? null,
+            uiInventory,
+          },
         },
-      },
-    });
+      });
+    }
     return uiInventory;
   } catch (error) {
     logClientError(error);
-    if (log) {
+    if (log !== undefined) {
       await log('warning', 'Failed to capture UI inventory.', {
         label,
         stepId: activeStepId ?? null,

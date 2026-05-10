@@ -16,7 +16,12 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
-  Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Alert: ({ children, title }: { children?: React.ReactNode; title?: React.ReactNode }) => (
+    <div>
+      <div>{title}</div>
+      <div>{children}</div>
+    </div>
+  ),
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -286,5 +291,38 @@ describe('ProductListingsStartPanel', () => {
 
     expect(screen.getByText('Tradera options')).toBeInTheDocument();
     expect(screen.getByText('Continue with a Tradera account only.')).toBeInTheDocument();
+  });
+
+  it('shows an integration lookup error instead of a loading state', () => {
+    useIntegrationSelectionMock.mockReturnValue({
+      integrations: [],
+      loading: false,
+      error: 'Unable to load integrations: Unauthorized.',
+      selectedIntegrationId: '',
+      selectedConnectionId: '',
+      selectedIntegration: undefined,
+      isBaseComIntegration: false,
+      isTraderaIntegration: false,
+      setSelectedIntegrationId: vi.fn(),
+      setSelectedConnectionId: vi.fn(),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          filterIntegrationSlug: 'tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsStartPanel />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Integrations unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load integrations: Unauthorized.')).toBeInTheDocument();
+    expect(screen.queryByText('Loading integrations...')).not.toBeInTheDocument();
   });
 });

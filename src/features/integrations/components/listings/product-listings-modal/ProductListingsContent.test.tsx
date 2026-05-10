@@ -729,7 +729,7 @@ describe('ProductListingsContent', () => {
     expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+      '/admin/integrations/marketplaces/tradera/category-mapping?connectionId=conn-tradera-1'
     );
   });
 

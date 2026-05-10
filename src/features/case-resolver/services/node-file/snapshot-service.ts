@@ -4,8 +4,6 @@
  * Manages serialization, parsing, and validation of Case Resolver node 
  * file snapshots.
  */
-/* eslint-disable complexity -- Snapshot parsing validates the full persisted envelope in one pass. */
-
 import { z } from 'zod';
 import { caseResolverNodeFileSnapshotSchema } from '@/shared/contracts/case-resolver/graph';
 import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
@@ -32,18 +30,12 @@ export const createEmptyNodeFileSnapshot = (): CaseResolverNodeFileSnapshot => (
   nodeFileMeta: {},
 });
 
-/**
- * Parses and validates a JSON string into a CaseResolverNodeFileSnapshot.
- */
-export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFileSnapshot => {
-  const trimmedTextContent = textContent.trim();
-  if (trimmedTextContent.length === 0) {
-    return createEmptyNodeFileSnapshot();
-  }
-
-  let parsed: unknown;
+const parseSnapshotJson = (trimmedTextContent: string): Record<string, unknown> => {
   try {
-    parsed = JSON.parse(trimmedTextContent);
+    const parsed: unknown = JSON.parse(trimmedTextContent);
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
   } catch (error) {
     throw validationError('Invalid Case Resolver node-file snapshot payload.', {
       source: 'case_resolver.node_file_snapshot',
@@ -52,14 +44,13 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
     });
   }
 
-  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw validationError('Invalid Case Resolver node-file snapshot payload.', {
-      source: 'case_resolver.node_file_snapshot',
-      reason: 'snapshot_not_object',
-    });
-  }
+  throw validationError('Invalid Case Resolver node-file snapshot payload.', {
+    source: 'case_resolver.node_file_snapshot',
+    reason: 'snapshot_not_object',
+  });
+};
 
-  const record = parsed as Record<string, unknown>;
+const assertSnapshotEnvelopeKeys = (record: Record<string, unknown>): void => {
   const allowedKeys = new Set([
     'kind', 'source', 'nodes', 'edges', 'nodeMeta', 'edgeMeta', 'nodeFileMeta',
   ]);
@@ -70,7 +61,11 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       unexpectedKeys,
     });
   }
+};
 
+const parseSnapshotEnvelope = (
+  record: Record<string, unknown>
+): z.infer<typeof NodeFileSnapshotEnvelopeSchema> => {
   const validation = NodeFileSnapshotEnvelopeSchema.safeParse(record);
   if (!validation.success) {
     throw validationError('Invalid Case Resolver node-file snapshot payload.', {
@@ -78,10 +73,23 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       issues: validation.error.flatten(),
     });
   }
+  return validation.data;
+};
 
-  const snapshot = validation.data;
+/**
+ * Parses and validates a JSON string into a CaseResolverNodeFileSnapshot.
+ */
+export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFileSnapshot => {
+  const trimmedTextContent = textContent.trim();
+  if (trimmedTextContent.length === 0) {
+    return createEmptyNodeFileSnapshot();
+  }
+
+  const record = parseSnapshotJson(trimmedTextContent);
+  assertSnapshotEnvelopeKeys(record);
+  const snapshot = parseSnapshotEnvelope(record);
   const source = record['source'];
-  
+
   return {
     kind: 'case_resolver_node_file_snapshot_v2',
     source: source === 'auto' ? 'auto' : 'manual',

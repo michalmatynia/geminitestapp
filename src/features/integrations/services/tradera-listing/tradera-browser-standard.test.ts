@@ -363,20 +363,28 @@ describe('runTraderaBrowserListingStandard', () => {
       url.endsWith('/987654') ? '987654' : null
     );
 
-    const result = await runTraderaBrowserListingStandard({
-      listing: {
-        id: 'listing-1',
-        productId: 'product-1',
-      } as never,
-      connection: {
-        id: 'connection-1',
-      } as never,
-      systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      } as never,
-      source: 'manual',
-      action: 'list',
-    });
+    const executionStepUpdates: Array<Array<{ id: string; status: string }>> = [];
+    const result = await runTraderaBrowserListingStandard(
+      {
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+      },
+      {
+        onExecutionStepsUpdated: (steps) => {
+          executionStepUpdates.push(steps);
+        },
+      }
+    );
 
     expect(getProductByIdMock).toHaveBeenCalledWith('product-1');
     expect(ensureLoggedInMock).toHaveBeenCalledWith(
@@ -467,6 +475,13 @@ describe('runTraderaBrowserListingStandard', () => {
         expect.objectContaining({ id: 'publish_verify', status: 'success' }),
         expect.objectContaining({ id: 'browser_close', status: 'success' }),
       ]);
+    expect(executionStepUpdates.length).toBeGreaterThan(0);
+    expect(executionStepUpdates.at(-1)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'publish_verify', status: 'success' }),
+        expect.objectContaining({ id: 'browser_close', status: 'success' }),
+      ])
+    );
     expect(contextCloseMock).toHaveBeenCalled();
     expect(browserCloseMock).toHaveBeenCalled();
   });

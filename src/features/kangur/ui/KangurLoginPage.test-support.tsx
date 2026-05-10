@@ -3,12 +3,12 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
-import { render } from '@testing-library/react';
+import { render, type RenderResult } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement } from 'react';
 import { vi } from 'vitest';
+import type * as NextAuthReact from 'next-auth/react';
+import type { KangurLoginPage as KangurLoginPageComponent } from './KangurLoginPage';
 
 import plMessages from '@/i18n/messages/pl.json';
 
@@ -46,6 +46,8 @@ const {
   useTurnstileMock: vi.fn(),
 }));
 
+const readMockValue = (mock: () => unknown): unknown => mock();
+
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
   useRouter: useRouterMock,
@@ -57,12 +59,12 @@ vi.mock('nextjs-toploader/app', () => ({
 }));
 
 vi.mock('next-auth/react', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('next-auth/react')>();
+  const actual = await importOriginal<typeof NextAuthReact>();
   return {
     ...actual,
     signIn: signInMock,
     signOut: signOutMock,
-    useSession: () => sessionMock(),
+    useSession: (): unknown => readMockValue(sessionMock),
   };
 });
 
@@ -84,15 +86,15 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: useOptionalKangurAuthMock,
-  useOptionalKangurAuthActions: () => useOptionalKangurAuthMock(),
+  useOptionalKangurAuthActions: (): unknown => readMockValue(useOptionalKangurAuthMock),
 }));
 
 vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
-  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
+  useOptionalFrontendPublicOwner: (): unknown => readMockValue(frontendPublicOwnerMock),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useOptionalKangurRouting: () => useOptionalKangurRoutingMock(),
+  useOptionalKangurRouting: (): unknown => readMockValue(useOptionalKangurRoutingMock),
 }));
 
 vi.mock('@/features/kangur/services/local-kangur-platform-auth', () => ({
@@ -103,14 +105,14 @@ vi.mock('@/features/kangur/ui/login-page/use-turnstile', () => ({
   useTurnstile: useTurnstileMock,
 }));
 
-export const renderWithIntl = (element: ReactElement) =>
+export const renderWithIntl = (element: ReactElement): RenderResult =>
   render(
     <NextIntlClientProvider locale='pl' messages={plMessages}>
       {element}
     </NextIntlClientProvider>
   );
 
-export const setupKangurLoginPageTest = async () => {
+export const setupKangurLoginPageTest = async (): Promise<typeof KangurLoginPageComponent> => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();

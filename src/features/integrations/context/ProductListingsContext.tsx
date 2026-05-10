@@ -412,8 +412,11 @@ export function ProductListingsProvider({
       }),
     [filterIntegrationSlug, resolvedRecoveryContext]
   );
-  const defaultTraderaConnectionQuery = useDefaultTraderaConnection();
   const shouldScopeTraderaConnection = isTraderaIntegrationSlug(resolvedFilterIntegrationSlug);
+  const defaultTraderaConnectionQuery = useDefaultTraderaConnection({
+    enabled: shouldScopeTraderaConnection,
+    retry: false,
+  });
   const isScopedTraderaConnectionReady =
     !shouldScopeTraderaConnection ||
     (!defaultTraderaConnectionQuery.isLoading && !defaultTraderaConnectionQuery.isPending);

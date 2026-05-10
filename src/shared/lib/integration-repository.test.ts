@@ -53,12 +53,12 @@ const connection = (input: {
     updatedAt: null,
   }) as IntegrationConnectionRecord;
 
-describe('segmented mongo integration repository', () => {
+describe('mongo integration repository routing', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  it('lists product commerce integrations from Products DB and non-product integrations from main DB', async () => {
+  it('reads all integrations from the main app DB repository', async () => {
     vi.mocked(mainRepoMock.listIntegrations).mockResolvedValue([
       integration({ id: 'integration-linkedin-main', name: 'LinkedIn', slug: 'linkedin' }),
       integration({ id: 'integration-tradera-main', name: 'Tradera', slug: 'tradera' }),
@@ -73,45 +73,35 @@ describe('segmented mongo integration repository', () => {
 
     await expect(repo.listIntegrations()).resolves.toEqual([
       expect.objectContaining({ id: 'integration-linkedin-main' }),
-      expect.objectContaining({ id: 'integration-tradera-products' }),
+      expect.objectContaining({ id: 'integration-tradera-main' }),
     ]);
+    expect(productsRepoMock.listIntegrations).not.toHaveBeenCalled();
   });
 
-  it('routes upserts by integration slug', async () => {
-    vi.mocked(productsRepoMock.upsertIntegration).mockResolvedValue(
-      integration({ id: 'integration-tradera-products', name: 'Tradera', slug: 'tradera' })
-    );
+  it('upserts product-commerce integrations in the main app DB repository', async () => {
     vi.mocked(mainRepoMock.upsertIntegration).mockResolvedValue(
-      integration({ id: 'integration-linkedin-main', name: 'LinkedIn', slug: 'linkedin' })
+      integration({ id: 'integration-tradera-main', name: 'Tradera', slug: 'tradera' })
     );
 
     const { getMongoIntegrationRepository } = await import('./integration-repository');
     const repo = getMongoIntegrationRepository();
 
     await repo.upsertIntegration({ name: 'Tradera', slug: 'tradera' });
-    await repo.upsertIntegration({ name: 'LinkedIn', slug: 'linkedin' });
 
-    expect(productsRepoMock.upsertIntegration).toHaveBeenCalledWith({
+    expect(mainRepoMock.upsertIntegration).toHaveBeenCalledWith({
       name: 'Tradera',
       slug: 'tradera',
     });
-    expect(mainRepoMock.upsertIntegration).toHaveBeenCalledWith({
-      name: 'LinkedIn',
-      slug: 'linkedin',
-    });
+    expect(productsRepoMock.upsertIntegration).not.toHaveBeenCalled();
   });
 
-  it('routes connection updates through the Products DB when the connection belongs to a product integration', async () => {
+  it('updates Tradera connections through the main app DB repository', async () => {
     const traderaConnection = connection({
-      id: 'connection-tradera-products',
-      integrationId: 'integration-tradera-products',
+      id: 'connection-tradera-main',
+      integrationId: 'integration-tradera-main',
       name: 'Tradera browser',
     });
-    vi.mocked(productsRepoMock.getConnectionById).mockResolvedValue(traderaConnection);
-    vi.mocked(productsRepoMock.getIntegrationById).mockResolvedValue(
-      integration({ id: 'integration-tradera-products', name: 'Tradera', slug: 'tradera' })
-    );
-    vi.mocked(productsRepoMock.updateConnection).mockResolvedValue({
+    vi.mocked(mainRepoMock.updateConnection).mockResolvedValue({
       ...traderaConnection,
       name: 'Updated Tradera browser',
     });
@@ -119,18 +109,18 @@ describe('segmented mongo integration repository', () => {
     const { getMongoIntegrationRepository } = await import('./integration-repository');
     const repo = getMongoIntegrationRepository();
 
-    await repo.updateConnection('connection-tradera-products', {
+    await repo.updateConnection('connection-tradera-main', {
       name: 'Updated Tradera browser',
     });
 
-    expect(productsRepoMock.updateConnection).toHaveBeenCalledWith(
-      'connection-tradera-products',
+    expect(mainRepoMock.updateConnection).toHaveBeenCalledWith(
+      'connection-tradera-main',
       { name: 'Updated Tradera browser' }
     );
-    expect(mainRepoMock.updateConnection).not.toHaveBeenCalled();
+    expect(productsRepoMock.updateConnection).not.toHaveBeenCalled();
   });
 
-  it('keeps non-product connection lookups on the main DB when copied rows exist in Products DB', async () => {
+  it('ignores copied product DB rows when looking up connections', async () => {
     vi.mocked(productsRepoMock.getConnectionById).mockResolvedValue(
       connection({
         id: 'connection-linkedin',
@@ -138,15 +128,15 @@ describe('segmented mongo integration repository', () => {
         name: 'LinkedIn copied',
       })
     );
-    vi.mocked(productsRepoMock.getIntegrationById).mockResolvedValue(
-      integration({ id: 'integration-linkedin-copy', name: 'LinkedIn copy', slug: 'linkedin' })
-    );
     vi.mocked(mainRepoMock.getConnectionById).mockResolvedValue(
       connection({
         id: 'connection-linkedin',
         integrationId: 'integration-linkedin-main',
         name: 'LinkedIn main',
       })
+    );
+    vi.mocked(productsRepoMock.getIntegrationById).mockResolvedValue(
+      integration({ id: 'integration-linkedin-copy', name: 'LinkedIn copy', slug: 'linkedin' })
     );
 
     const { getMongoIntegrationRepository } = await import('./integration-repository');
@@ -158,5 +148,7 @@ describe('segmented mongo integration repository', () => {
         name: 'LinkedIn main',
       })
     );
+    expect(productsRepoMock.getConnectionById).not.toHaveBeenCalled();
+    expect(productsRepoMock.getIntegrationById).not.toHaveBeenCalled();
   });
 });

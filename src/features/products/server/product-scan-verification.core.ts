@@ -4,11 +4,11 @@ import {
   createPlaywrightVerificationReviewLoopProfile,
   type PlaywrightVerificationCaptureParamsBase,
   type PlaywrightVerificationObservationLike,
+  type PlaywrightVerificationReviewProfile,
+  type PlaywrightInjectionAttemptResult,
   type PlaywrightVerificationReviewLoopProfile,
   type PlaywrightVerificationReviewLoopProfileOptions,
-  type PlaywrightVerificationReviewProfile,
 } from '@/features/playwright/server/ai-step-service';
-import type { PlaywrightInjectionAttemptResult } from '@/features/playwright/server/ai-step-service';
 
 export type ProductScanVerificationReview = {
   status: 'analyzed' | 'capture_only' | 'failed';

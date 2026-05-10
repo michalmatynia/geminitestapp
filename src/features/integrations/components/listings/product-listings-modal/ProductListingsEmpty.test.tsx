@@ -10,6 +10,7 @@ const {
   handleOpenVintedLoginMock,
   handleSyncTraderaMock,
   onStartListingMock,
+  useTraderaLiveExecutionMock,
   useProductListingsDataMock,
   useProductListingsModalsMock,
   useProductListingsActionsMock,
@@ -19,6 +20,7 @@ const {
   handleOpenVintedLoginMock: vi.fn(),
   handleSyncTraderaMock: vi.fn(),
   onStartListingMock: vi.fn(),
+  useTraderaLiveExecutionMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
@@ -30,6 +32,10 @@ vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
   useProductListingsModals: () => useProductListingsModalsMock(),
   useProductListingsActions: () => useProductListingsActionsMock(),
   useProductListingsUIState: () => useProductListingsUIStateMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useTraderaLiveExecution', () => ({
+  useTraderaLiveExecution: () => useTraderaLiveExecutionMock(),
 }));
 
 vi.mock('./ProductListingsSyncPanel', () => ({
@@ -58,6 +64,7 @@ describe('ProductListingsEmpty', () => {
     handleOpenTraderaLoginMock.mockResolvedValue(true);
     handleOpenVintedLoginMock.mockResolvedValue(true);
     handleSyncTraderaMock.mockResolvedValue(undefined);
+    useTraderaLiveExecutionMock.mockReturnValue(null);
     useProductListingsDataMock.mockReturnValue({
       product: { id: 'product-1' },
     });
@@ -138,7 +145,7 @@ describe('ProductListingsEmpty', () => {
         source: 'tradera_quick_export_auth_required',
         integrationSlug: 'tradera',
         status: 'auth_required',
-        runId: null,
+        runId: 'run-tradera-1',
         requestId: 'job-tradera-1',
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
@@ -160,6 +167,11 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('auth_required')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-1')).toBeInTheDocument();
     expect(screen.getByText('Queue job')).toBeInTheDocument();
+    expect(screen.getByText('Browser run history')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/action-runs?query=run-tradera-1'
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();
     expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
@@ -233,7 +245,7 @@ describe('ProductListingsEmpty', () => {
     expect(screen.queryByRole('button', { name: 'Login to Tradera' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+      '/admin/integrations/marketplaces/tradera/category-mapping?connectionId=conn-tradera-1'
     );
   });
 

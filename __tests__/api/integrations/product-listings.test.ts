@@ -11,10 +11,11 @@ vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: () => ({
     listIntegrations: listIntegrationsMock,
   }),
-  getProductListingRepository: () => ({
-    getListingsByProductIds: listByProductIdsMock,
-    listAllListings: listAllListingsMock,
-  }),
+}));
+
+vi.mock('@/features/integrations/services/product-listing-repository', () => ({
+  listAllProductListingsAcrossProviders: listAllListingsMock,
+  listProductListingsByProductIdsAcrossProviders: listByProductIdsMock,
 }));
 
 const buildProductListingsPostRequest = (productIds: string[]) =>
@@ -106,6 +107,7 @@ describe('api/integrations/product-listings', () => {
     expect(payload).toEqual({
       'product-3': {
         base: 'active',
+        ecommerce: 'active',
       },
     });
   });

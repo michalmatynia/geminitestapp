@@ -29,6 +29,7 @@ export default function SelectIntegrationModal(
   const {
     integrations,
     loading,
+    error,
     selectedIntegrationId,
     selectedConnectionId,
     setSelectedIntegrationId,
@@ -55,6 +56,7 @@ export default function SelectIntegrationModal(
         <ConnectedIntegrationSelector
           integrations={integrations}
           loading={loading}
+          error={error}
           selectedIntegrationId={selectedIntegrationId}
           selectedConnectionId={selectedConnectionId}
           setSelectedIntegrationId={setSelectedIntegrationId}

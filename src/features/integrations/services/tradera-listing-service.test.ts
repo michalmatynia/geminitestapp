@@ -197,7 +197,7 @@ describe('processTraderaListingJob', () => {
     );
   });
 
-  it('uses headed browser mode for API-triggered scripted Tradera runs', async () => {
+  it('defers API-triggered scripted Tradera runs to the governing runtime action browser mode', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();
     const appendExportHistoryMock = vi.fn();
@@ -230,8 +230,8 @@ describe('processTraderaListingJob', () => {
       externalListingId: 'external-1',
       listingUrl: 'https://www.tradera.com/item/1',
       metadata: {
-        browserMode: 'headed',
-        requestedBrowserMode: 'headed',
+        browserMode: 'headless',
+        requestedBrowserMode: 'connection_default',
       },
     });
 
@@ -244,7 +244,7 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
+        browserMode: 'connection_default',
       }),
       expect.objectContaining({
         onRunStarted: expect.any(Function),
@@ -253,13 +253,13 @@ describe('processTraderaListingJob', () => {
     expect(appendExportHistoryMock).toHaveBeenCalledWith(
       'listing-1',
       expect.objectContaining({
-        fields: ['browser_mode:headed'],
+        fields: ['browser_mode:headless'],
         requestId: 'job-tradera-scripted-1',
       })
     );
   });
 
-  it('does not let connection-owned Playwright headless state override scripted Tradera defaults', async () => {
+  it('does not let connection-owned Playwright headless state override the runtime action browser mode', async () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {
         id: 'listing-1',
@@ -289,8 +289,8 @@ describe('processTraderaListingJob', () => {
       externalListingId: 'external-1',
       listingUrl: 'https://www.tradera.com/item/1',
       metadata: {
-        browserMode: 'headed',
-        requestedBrowserMode: 'headed',
+        browserMode: 'headless',
+        requestedBrowserMode: 'connection_default',
       },
     });
 
@@ -303,7 +303,7 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
+        browserMode: 'connection_default',
       }),
       expect.objectContaining({
         onRunStarted: expect.any(Function),
@@ -347,8 +347,8 @@ describe('processTraderaListingJob', () => {
         scriptSource: 'legacy-default-refresh',
         listingFormUrl: 'https://www.tradera.com/en/selling/new',
         runId: 'run-1',
-        browserMode: 'headed',
-        requestedBrowserMode: 'headed',
+        browserMode: 'headless',
+        requestedBrowserMode: 'connection_default',
         publishVerified: true,
       },
     });
@@ -362,7 +362,7 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
+        browserMode: 'connection_default',
         systemSettings: expect.objectContaining({
           listingPriceCurrencyCode: 'EUR',
         }),
@@ -415,7 +415,7 @@ describe('processTraderaListingJob', () => {
       expect.objectContaining({
         status: 'active',
         externalListingId: 'external-1',
-        fields: ['browser_mode:headed'],
+        fields: ['browser_mode:headless'],
         requestId: 'job-tradera-1',
       })
     );
@@ -502,6 +502,118 @@ describe('processTraderaListingJob', () => {
                 runId: 'run-live-123',
               }),
             }),
+          }),
+        }),
+      })
+    );
+  });
+
+  it('persists live Tradera execution steps while a standard listing run is active', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-live-steps',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'queued',
+        marketplaceData: {
+          tradera: {
+            pendingExecution: {
+              action: 'list',
+              requestedBrowserMode: 'connection_default',
+              requestId: 'job-live-steps',
+              queuedAt: '2026-04-13T10:00:00.000Z',
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockImplementation(
+      async (
+        _input: unknown,
+        options?: {
+          onExecutionStepsUpdated?: (steps: Array<{
+            id: string;
+            label: string;
+            status: 'pending' | 'running' | 'success' | 'error' | 'skipped';
+            message?: string | null;
+          }>) => Promise<void> | void;
+        }
+      ) => {
+        await options?.onExecutionStepsUpdated?.([
+          {
+            id: 'browser_open',
+            label: 'Open browser',
+            status: 'success',
+            message: 'Browser was opened successfully.',
+          },
+          {
+            id: 'sell_page_open',
+            label: 'Open listing editor',
+            status: 'running',
+            message: 'Opening the Tradera listing editor.',
+          },
+        ]);
+        return {
+          externalListingId: 'external-live-steps',
+          listingUrl: 'https://www.tradera.com/item/1000',
+          metadata: {
+            scriptMode: 'standard',
+            browserMode: 'connection_default',
+            requestedBrowserMode: 'connection_default',
+            publishVerified: true,
+          },
+        };
+      }
+    );
+
+    await processTraderaListingJob({
+      listingId: 'listing-live-steps',
+      action: 'list',
+      source: 'manual',
+      jobId: 'job-live-steps',
+    });
+
+    expect(updateListingMock).toHaveBeenNthCalledWith(
+      1,
+      'listing-live-steps',
+      expect.objectContaining({
+        status: 'running',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              action: 'list',
+              requestId: 'job-live-steps',
+              requestedBrowserMode: 'connection_default',
+              latestStage: 'sell_page_open',
+              executionSteps: expect.arrayContaining([
+                expect.objectContaining({
+                  id: 'sell_page_open',
+                  status: 'running',
+                  message: 'Opening the Tradera listing editor.',
+                }),
+              ]),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock).toHaveBeenLastCalledWith(
+      'listing-live-steps',
+      expect.objectContaining({
+        status: 'active',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: null,
           }),
         }),
       })
@@ -745,7 +857,7 @@ describe('processTraderaListingJob', () => {
       listingUrl: 'https://www.tradera.com/item/1',
       metadata: {
         checkedStatus: 'ended',
-        requestedBrowserMode: 'headed',
+        requestedBrowserMode: 'connection_default',
         runId: 'run-check-status',
         executionSteps: [
           {
@@ -779,7 +891,7 @@ describe('processTraderaListingJob', () => {
 
     expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        browserMode: 'headed',
+        browserMode: 'connection_default',
         systemSettings: expect.any(Object),
       }),
       expect.objectContaining({
@@ -1161,7 +1273,7 @@ describe('processTraderaListingJob', () => {
     });
     runTraderaBrowserCheckStatusMock.mockRejectedValue(
       internalError('AUTH_REQUIRED: Stored Tradera session expired.', {
-        requestedBrowserMode: 'headed',
+        requestedBrowserMode: 'connection_default',
         executionSteps: [
           {
             id: 'auth_check',
@@ -1204,7 +1316,7 @@ describe('processTraderaListingJob', () => {
               error: 'Tradera login requires manual verification. Open login window and retry.',
               errorCategory: 'AUTH',
               metadata: expect.objectContaining({
-                requestedBrowserMode: 'headed',
+                requestedBrowserMode: 'connection_default',
                 executionSteps: [
                   expect.objectContaining({
                     id: 'auth_check',
@@ -1251,7 +1363,7 @@ describe('processTraderaListingJob', () => {
     findProductListingByIdAcrossProvidersMock.mockResolvedValue(resolvedListing);
     runTraderaBrowserListingMock.mockRejectedValue(
       internalError('Tradera scripted listing failed.', {
-        requestedBrowserMode: 'headed',
+        requestedBrowserMode: 'connection_default',
         runId: 'run-2',
         debugArtifacts: 'Screenshot: /tmp/tradera.png',
       })
@@ -1287,7 +1399,7 @@ describe('processTraderaListingJob', () => {
               metadata: expect.objectContaining({
                 runId: 'run-2',
                 debugArtifacts: 'Screenshot: /tmp/tradera.png',
-                requestedBrowserMode: 'headed',
+                requestedBrowserMode: 'connection_default',
               }),
             }),
           }),
@@ -1299,7 +1411,7 @@ describe('processTraderaListingJob', () => {
       expect.objectContaining({
         status: 'failed',
         failureReason: 'Tradera scripted listing failed.',
-        fields: ['browser_mode:headed'],
+        fields: ['browser_mode:connection_default'],
         requestId: 'job-tradera-2',
       })
     );
@@ -1358,7 +1470,7 @@ describe('processTraderaListingJob', () => {
               ok: false,
               errorCategory: 'UNKNOWN',
               metadata: expect.objectContaining({
-                requestedBrowserMode: 'headed',
+                requestedBrowserMode: 'connection_default',
               }),
             }),
           }),
@@ -1372,7 +1484,7 @@ describe('processTraderaListingJob', () => {
         status: 'failed',
         failureReason: 'FAIL_SYNC_TARGET_NOT_FOUND: Tradera listing editor was not reachable.',
         requestId: 'job-tradera-sync-failure',
-        fields: ['browser_mode:headed', 'action:sync'],
+        fields: ['browser_mode:connection_default', 'action:sync'],
       })
     );
   });

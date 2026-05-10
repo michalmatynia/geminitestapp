@@ -8,6 +8,7 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  PROCESSING_STATUSES,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
@@ -130,16 +131,21 @@ const resolveDisableQuickListAction = ({
   submitting,
   localFeedbackStatus,
   serverStatusInFlight,
+  resolvedButtonStatus,
 }: {
   isTraderaMarketplaceExcluded: boolean;
   isFailureState: boolean;
   submitting: boolean;
   localFeedbackStatus: string | null;
   serverStatusInFlight: boolean;
+  resolvedButtonStatus: string;
 }): boolean =>
   isTraderaMarketplaceExcluded ||
   (!isFailureState &&
-    (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight));
+    (submitting ||
+      localFeedbackStatus === 'queued' ||
+      serverStatusInFlight ||
+      PROCESSING_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus))));
 
 const resolveToneClass = (
   isTraderaMarketplaceExcluded: boolean,
@@ -175,6 +181,7 @@ export const resolveTraderaQuickListButtonView = (
     submitting: input.submitting,
     localFeedbackStatus: input.localFeedbackStatus,
     serverStatusInFlight: input.serverStatusInFlight,
+    resolvedButtonStatus,
   });
   const resolvedLabel = resolveButtonLabel(
     input.isTraderaMarketplaceExcluded,
@@ -205,7 +212,8 @@ export const resolveTraderaQuickListButtonView = (
     shouldPrefetchListings: !disableQuickListAction,
     isFailureState,
     isProcessingOrQueued:
-      resolvedButtonStatus === 'processing' || resolvedButtonStatus === 'queued',
+      PROCESSING_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus)) ||
+      resolvedButtonStatus === 'queued',
     recoveryContext: resolveRecoveryContext(
       resolvedButtonStatus,
       isFailureState,

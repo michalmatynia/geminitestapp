@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/consistent-type-assertions */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductListing } from '@/shared/contracts/integrations/listings';

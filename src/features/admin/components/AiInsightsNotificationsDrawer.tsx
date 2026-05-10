@@ -13,7 +13,7 @@ import { Button } from '@/shared/ui/primitives.public';
 import { StatusBadge, DocumentationList } from '@/shared/ui/data-display.public';
 import { LoadingState, CompactEmptyState, Drawer } from '@/shared/ui/navigation-and-layout.public';
 import { useToast } from '@/shared/ui/primitives.public';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 
 function NotificationItem({ notification }: { notification: AiInsightNotification }): React.JSX.Element {
   const getVariant = (): 'success' | 'warning' | 'error' => {
@@ -100,7 +100,7 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
       await clearMutation.mutateAsync();
       toast('AI notifications cleared.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
+      void ErrorSystem.captureException(error, { service: 'admin', feature: 'ai-insights' });
       toast(error instanceof Error ? error.message : 'Failed to clear notifications.', {
         variant: 'error',
       });
@@ -119,7 +119,9 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
         <Button
           variant='outline'
           size='sm'
-          onClick={() => { handleClear().catch(logClientError); }}
+          onClick={() => { 
+            handleClear().catch((err) => ErrorSystem.captureException(err, { service: 'admin', feature: 'ai-insights' })); 
+          }}
           disabled={clearMutation.isPending || notifications.length === 0}
           className='h-7 px-2 text-[11px]'
         >

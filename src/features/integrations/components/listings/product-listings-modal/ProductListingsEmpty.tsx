@@ -66,6 +66,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
   const {
     isRecovery: isTraderaQuickExportRecovery,
     requestId: recoveryRequestId,
+    runId: recoveryRunId,
     integrationId: recoveryIntegrationId,
     connectionId: recoveryConnectionId,
   } = resolveTraderaRecoveryTarget({
@@ -140,6 +141,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
           variant='full'
           status={recoveryContext?.status}
           requestId={recoveryRequestId}
+          runId={recoveryRunId}
           failureReason={recoveryFailureReason}
           canContinue={canOpenTraderaRecoveryLogin}
           integrationId={recoveryIntegrationId}

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-06'
+last_reviewed: '2026-05-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-05-06T12:19:59.616Z
+Generated at: 2026-05-10T01:04:13.341Z
 
 ## Snapshot
 
-- Scanned UI files: 3126
-- Duplicate-name clusters: 0
+- Scanned UI files: 3139
+- Duplicate-name clusters: 1
 - Prop-signature clusters: 4
-- Token-similarity clusters: 3
-- Thin re-export wrappers ignored: 36
+- Token-similarity clusters: 2
+- Thin re-export wrappers ignored: 37
 - Total consolidation opportunities: 6
 - High-priority opportunities (score >= 2000): 0
 
@@ -24,41 +24,41 @@ Generated at: 2026-05-06T12:19:59.616Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 2518 |
-| `app` | 362 |
-| `shared-ui` | 188 |
-| `shared` | 58 |
+| `feature` | 2530 |
+| `app` | 360 |
+| `shared-ui` | 189 |
+| `shared` | 60 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 2193 |
-| `Section` | 221 |
-| `Page` | 192 |
+| `Unknown` | 2211 |
+| `Section` | 219 |
+| `Page` | 191 |
 | `Panel` | 154 |
-| `Modal` | 92 |
-| `Card` | 49 |
-| `Tab` | 45 |
+| `Modal` | 91 |
+| `Card` | 48 |
+| `Tab` | 44 |
+| `Settings` | 36 |
 | `Header` | 35 |
-| `Settings` | 34 |
 | `List` | 28 |
 | `Form` | 26 |
 | `Toolbar` | 13 |
-| `Table` | 13 |
 | `Dialog` | 12 |
-| `Picker` | 9 |
+| `Table` | 12 |
+| `Picker` | 10 |
 
 ## Ranked Backlog
 
 | Rank | Score | Family | Method | Files | Scopes | LOC | Template Coverage | Risk | Recommendation |
 | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
 | 1 | 1532 | `Section` | `prop_signature` | 3 | 1 | 480 | 0% | medium | review-for-extraction |
-| 2 | 939 | `Panel` | `prop_signature` | 3 | 1 | 207 | 0% | low | migrate-to-panel-template |
-| 3 | 634 | `Panel` | `token_similarity` | 2 | 1 | 361 | 100% | medium | migrate-to-panel-template |
-| 4 | 472 | `Picker` | `token_similarity` | 2 | 1 | 216 | 0% | low | migrate-to-generic-picker |
-| 5 | 435 | `Picker` | `prop_signature` | 2 | 1 | 216 | 0% | low | migrate-to-generic-picker |
-| 6 | 264 | `Settings` | `token_similarity` | 2 | 1 | 145 | 0% | low | review-for-extraction |
+| 2 | 1529 | `Modal` | `prop_signature` | 2 | 2 | 520 | 0% | medium | migrate-to-shared-modal-template |
+| 3 | 880 | `Panel` | `prop_signature` | 3 | 1 | 194 | 0% | low | migrate-to-panel-template |
+| 4 | 612 | `Panel` | `token_similarity` | 2 | 1 | 349 | 100% | medium | migrate-to-panel-template |
+| 5 | 264 | `Settings` | `token_similarity` | 2 | 1 | 145 | 0% | low | review-for-extraction |
+| 6 | 261 | `Picker` | `duplicate_name` | 2 | 2 | 132 | 50% | low | migrate-to-generic-picker |
 
 ## Top Opportunity Details
 
@@ -75,58 +75,45 @@ Generated at: 2026-05-06T12:19:59.616Z
   - `src/features/ai/ai-paths/components/node-config/dialog/AudioOscillatorNodeConfigSection.tsx` (164 LOC, feature:ai, no-template-import)
   - `src/features/ai/ai-paths/components/node-config/dialog/RouterNodeConfigSection.tsx` (129 LOC, feature:ai, no-template-import)
 
-### 2. Panel (prop_signature)
+### 2. Modal (prop_signature)
 
-- Score: 939
+- Score: 1529
+- Files: 2
+- Scopes: feature:filemaker, feature:products
+- Total LOC: 520
+- Recommendation: migrate-to-shared-modal-template
+- Risk: medium
+- Candidate files:
+  - `src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx` (270 LOC, feature:products, no-template-import)
+  - `src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx` (250 LOC, feature:filemaker, no-template-import)
+
+### 3. Panel (prop_signature)
+
+- Score: 880
 - Files: 3
 - Scopes: feature:filemaker
-- Total LOC: 207
+- Total LOC: 194
 - Recommendation: migrate-to-panel-template
 - Risk: low
 - Candidate files:
   - `src/features/filemaker/components/email-builder/EmailBlockSettingsPanel.tsx` (114 LOC, feature:filemaker, no-template-import)
-  - `src/features/filemaker/components/cv-builder/CvLayerPanel.tsx` (47 LOC, feature:filemaker, no-template-import)
-  - `src/features/filemaker/components/email-builder/EmailLayerPanel.tsx` (46 LOC, feature:filemaker, no-template-import)
+  - `src/features/filemaker/components/cv-builder/CvLayerPanel.tsx` (40 LOC, feature:filemaker, no-template-import)
+  - `src/features/filemaker/components/email-builder/EmailLayerPanel.tsx` (40 LOC, feature:filemaker, no-template-import)
 
-### 3. Panel (token_similarity)
+### 4. Panel (token_similarity)
 
-- Score: 634
+- Score: 612
 - Files: 2
 - Scopes: feature:filemaker
-- Total LOC: 361
+- Total LOC: 349
 - Recommendation: migrate-to-panel-template
 - Risk: medium
-- Avg token similarity: 0.739
+- Avg token similarity: 0.726
 - Candidate files:
-  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (189 LOC, feature:filemaker, template-import)
-  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (172 LOC, feature:filemaker, template-import)
+  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (183 LOC, feature:filemaker, template-import)
+  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (166 LOC, feature:filemaker, template-import)
 
-### 4. Picker (token_similarity)
-
-- Score: 472
-- Files: 2
-- Scopes: feature:filemaker
-- Total LOC: 216
-- Recommendation: migrate-to-generic-picker
-- Risk: low
-- Avg token similarity: 0.621
-- Candidate files:
-  - `src/features/filemaker/components/cv-builder/CvBlockPicker.tsx` (111 LOC, feature:filemaker, no-template-import)
-  - `src/features/filemaker/components/email-builder/EmailBlockPicker.tsx` (105 LOC, feature:filemaker, no-template-import)
-
-### 5. Picker (prop_signature)
-
-- Score: 435
-- Files: 2
-- Scopes: feature:filemaker
-- Total LOC: 216
-- Recommendation: migrate-to-generic-picker
-- Risk: low
-- Candidate files:
-  - `src/features/filemaker/components/cv-builder/CvBlockPicker.tsx` (111 LOC, feature:filemaker, no-template-import)
-  - `src/features/filemaker/components/email-builder/EmailBlockPicker.tsx` (105 LOC, feature:filemaker, no-template-import)
-
-### 6. Settings (token_similarity)
+### 5. Settings (token_similarity)
 
 - Score: 264
 - Files: 2
@@ -139,6 +126,18 @@ Generated at: 2026-05-06T12:19:59.616Z
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/GlobalKernelSettings.tsx` (78 LOC, feature:ai, no-template-import)
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/PathKernelSettings.tsx` (67 LOC, feature:ai, no-template-import)
 
+### 6. Picker (duplicate_name)
+
+- Score: 261
+- Files: 2
+- Scopes: feature:cms, feature:filemaker
+- Total LOC: 132
+- Recommendation: migrate-to-generic-picker
+- Risk: low
+- Candidate files:
+  - `src/features/filemaker/components/shared/BlockPicker.tsx` (70 LOC, feature:filemaker, no-template-import)
+  - `src/features/cms/components/page-builder/BlockPicker.tsx` (62 LOC, feature:cms, template-import)
+
 ## Execution Notes
 
 - Start with high score + low risk clusters.
@@ -149,7 +148,9 @@ Generated at: 2026-05-06T12:19:59.616Z
 
 ### Duplicate Name Clusters
 
-- None
+- `Picker` `duplicate_name` files=2 loc=132 scopes=feature:cms, feature:filemaker
+  - `src/features/filemaker/components/shared/BlockPicker.tsx` (70 LOC)
+  - `src/features/cms/components/page-builder/BlockPicker.tsx` (62 LOC)
 
 ### Prop Signature Clusters
 
@@ -157,25 +158,22 @@ Generated at: 2026-05-06T12:19:59.616Z
   - `src/features/ai/ai-paths/components/node-config/dialog/HttpNodeConfigSection.tsx` (187 LOC)
   - `src/features/ai/ai-paths/components/node-config/dialog/AudioOscillatorNodeConfigSection.tsx` (164 LOC)
   - `src/features/ai/ai-paths/components/node-config/dialog/RouterNodeConfigSection.tsx` (129 LOC)
-- `Panel` `prop_signature` files=3 loc=207 scopes=feature:filemaker
+- `Panel` `prop_signature` files=3 loc=194 scopes=feature:filemaker
   - `src/features/filemaker/components/email-builder/EmailBlockSettingsPanel.tsx` (114 LOC)
-  - `src/features/filemaker/components/cv-builder/CvLayerPanel.tsx` (47 LOC)
-  - `src/features/filemaker/components/email-builder/EmailLayerPanel.tsx` (46 LOC)
-- `Picker` `prop_signature` files=2 loc=216 scopes=feature:filemaker
-  - `src/features/filemaker/components/cv-builder/CvBlockPicker.tsx` (111 LOC)
-  - `src/features/filemaker/components/email-builder/EmailBlockPicker.tsx` (105 LOC)
+  - `src/features/filemaker/components/cv-builder/CvLayerPanel.tsx` (40 LOC)
+  - `src/features/filemaker/components/email-builder/EmailLayerPanel.tsx` (40 LOC)
+- `Modal` `prop_signature` files=2 loc=520 scopes=feature:filemaker, feature:products
+  - `src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx` (270 LOC)
+  - `src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx` (250 LOC)
 - `Panel` `prop_signature` files=2 loc=46 scopes=feature:kangur
   - `src/features/kangur/admin/settings/AiTutorSettingsPanel.tsx` (23 LOC)
   - `src/features/kangur/admin/settings/ParentVerificationPanel.tsx` (23 LOC)
 
 ### Token Similarity Clusters
 
-- `Panel` `token_similarity` files=2 loc=361 scopes=feature:filemaker
-  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (189 LOC)
-  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (172 LOC)
-- `Picker` `token_similarity` files=2 loc=216 scopes=feature:filemaker
-  - `src/features/filemaker/components/cv-builder/CvBlockPicker.tsx` (111 LOC)
-  - `src/features/filemaker/components/email-builder/EmailBlockPicker.tsx` (105 LOC)
+- `Panel` `token_similarity` files=2 loc=349 scopes=feature:filemaker
+  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (183 LOC)
+  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (166 LOC)
 - `Settings` `token_similarity` files=2 loc=145 scopes=feature:ai
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/GlobalKernelSettings.tsx` (78 LOC)
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/PathKernelSettings.tsx` (67 LOC)

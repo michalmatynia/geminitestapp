@@ -4,6 +4,7 @@ import {
   type AiPathRunQueueBaseStatus,
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
+import { internalError } from '@/shared/errors/app-error';
 
 import { computeAiPathRunQueueSlo } from '../ai-path-run-queue-slo';
 import { type GetAiPathRunQueueStatusOptions } from './status';
@@ -22,12 +23,18 @@ const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
 };
 
 export const getAiInsightsQueueStatusSnapshot = async (): Promise<AiInsightsQueueStatus> => {
-  const module = (await import('@/features/ai/insights/workers/aiInsightsQueue')) as {
-    getAiInsightsQueueStatus?: () => Promise<AiInsightsQueueStatus>;
-  };
-  const readStatus = module.getAiInsightsQueueStatus;
-  if (typeof readStatus !== 'function') return EMPTY_AI_INSIGHTS_QUEUE_STATUS;
-  return readStatus();
+  try {
+    const module = (await import('@/features/ai/insights/workers/aiInsightsQueue')) as {
+      getAiInsightsQueueStatus?: () => Promise<AiInsightsQueueStatus>;
+    };
+    const readStatus = module.getAiInsightsQueueStatus;
+    if (typeof readStatus !== 'function') return EMPTY_AI_INSIGHTS_QUEUE_STATUS;
+    return await readStatus();
+  } catch (error) {
+    throw internalError('Failed to fetch AI insights queue status.', {
+      cause: error,
+    });
+  }
 };
 
 const EMPTY_BRAIN_ANALYTICS_24H: AiPathRunQueueStatus['brainAnalytics24h'] = {

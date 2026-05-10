@@ -17,6 +17,7 @@ import {
   FAILURE_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
+  PROCESSING_STATUSES,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
@@ -90,6 +91,9 @@ const resolveTraderaStatusToneClass = (
   return getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
 };
 
+const hasText = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
 const resolveTraderaRecoveryIdentifiers = (
   persistedFeedback: PersistedTraderaQuickListFeedback | null | undefined
 ): TraderaRecoveryIdentifiers => {
@@ -137,7 +141,13 @@ export function TraderaStatusButton(props: TraderaStatusButtonProps): React.JSX.
     effectiveStatus,
   });
   const title = resolveTraderaStatusTitle({ isTraderaMarketplaceExcluded, label });
-  const resolvedToneClass = resolveTraderaStatusToneClass(disableStatusAction, effectiveStatus);
+  const isWorkerRunning =
+    PROCESSING_STATUSES.has(effectiveStatus) ||
+    (effectiveStatus === 'queued' && hasText(persistedFeedback?.runId));
+  const resolvedToneClass = resolveTraderaStatusToneClass(
+    disableStatusAction,
+    isWorkerRunning && !disableStatusAction ? 'queued' : effectiveStatus
+  );
 
   return (
     <Button
@@ -157,6 +167,7 @@ export function TraderaStatusButton(props: TraderaStatusButtonProps): React.JSX.
       title={title}
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+        isWorkerRunning && 'motion-safe:animate-pulse',
         resolvedToneClass,
         disableStatusAction && DISABLED_TRADERA_STATUS_INTERACTION_CLASS
       )}

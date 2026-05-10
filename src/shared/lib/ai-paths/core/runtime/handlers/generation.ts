@@ -4,6 +4,7 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import { externalServiceError, operationFailedError } from '@/shared/errors/app-error';
 import { aiJobsApi } from '@/shared/lib/ai-paths/api';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 
@@ -531,7 +532,11 @@ export const handleModel: NodeHandler = async ({
       await sleepWithAbort(defaultModelEnqueueRetryBackoffMs * enqueueAttempt);
     }
     if (!enqueueResult?.ok) {
-      throw new Error(enqueueErrorMessage || 'Failed to enqueue AI job.');
+      throw externalServiceError(enqueueErrorMessage || 'Failed to enqueue AI job.', {
+        action: 'enqueueAiJob',
+        nodeId: node.id,
+        errorMessage: enqueueErrorMessage,
+      });
     }
     enqueuedJobId = readEnqueuedGraphModelJobId(enqueueResult);
     toast('AI model job queued.', { variant: 'success' });
@@ -626,7 +631,11 @@ export const handleModel: NodeHandler = async ({
     toast(toastMessage, { variant: 'error', error: errorForClassification });
     executed.ai.add(node.id);
     if (isHardFailure) {
-      throw error instanceof Error ? error : new Error(errorMessage);
+      throw operationFailedError(errorMessage, {
+        nodeId: node.id,
+        jobId: enqueuedJobId,
+        cause: error,
+      });
     }
     return {
       result: '',

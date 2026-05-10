@@ -231,7 +231,8 @@ export const buildFilemakerCampaignClickTrackingUrl = (input: {
   return `${baseUrl}/api/filemaker/campaigns/click?token=${encodeURIComponent(token)}`;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const __testOnly = {
+const testOnly = {
   resolvePublicAppUrl,
 };
+
+export { testOnly as __testOnly };

@@ -56,6 +56,7 @@ describe('product-listings-recovery', () => {
     expect(matchesProductListingsIntegrationScope('tradera', 'tradera')).toBe(true);
     expect(matchesProductListingsIntegrationScope('playwright-programmable', 'tradera')).toBe(true);
     expect(matchesProductListingsIntegrationScope('baselinker', 'tradera')).toBe(false);
+    expect(matchesProductListingsIntegrationScope('tradera', 'baselinker')).toBe(false);
     expect(
       matchesProductListingsIntegrationScope(
         'playwright-programmable',

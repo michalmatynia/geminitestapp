@@ -106,6 +106,10 @@ export function useMarketplaceQuickExportFeedback(
       showBadge &&
       SUCCESS_STATUSES.has(normalizedStatus) &&
       (currentStatus === 'processing' || currentStatus === 'queued');
+    const keepInFlightTrackingContext =
+      showBadge &&
+      isServerInFlight &&
+      (currentStatus === 'processing' || currentStatus === 'queued');
     const keepCompletedSuccessContext =
       currentStatus === 'completed' &&
       (normalizedStatus === 'not_started' ||
@@ -120,6 +124,7 @@ export function useMarketplaceQuickExportFeedback(
       isServerInFlight;
 
     if (
+      keepInFlightTrackingContext ||
       keepQueuedSuccessBridge ||
       keepCompletedSuccessContext ||
       keepCompletedRecoveryBridge ||

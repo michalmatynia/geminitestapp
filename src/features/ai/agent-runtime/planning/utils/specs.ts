@@ -62,7 +62,7 @@ const resolvePromptPlanTemplate = (prompt: string): readonly string[] | null => 
 const createToolDecision = (
   reason: string,
   toolName: AgentDecision['toolName'] = 'playwright'
-) =>
+): AgentDecision =>
   ({
     action: 'tool',
     reason,
@@ -82,21 +82,20 @@ const createWaitHumanDecision = (reason: string): AgentDecision => ({
 const normalizeExplicitDecision = (
   decision: Partial<AgentDecision> | undefined
 ): AgentDecision | null => {
-  switch (decision?.action) {
-    case 'tool':
-      return createToolDecision(
-        decision.reason ?? 'LLM planner selected tool execution.',
-        decision.toolName ?? 'playwright'
-      );
-    case 'respond':
-      return createRespondDecision(decision.reason ?? 'LLM planner selected response.');
-    case 'wait_human':
-      return createWaitHumanDecision(
-        decision.reason ?? 'LLM planner requires human input.'
-      );
-    default:
-      return null;
+  const action = decision?.action;
+  if (action === 'tool') {
+    return createToolDecision(
+      decision.reason ?? 'LLM planner selected tool execution.',
+      decision.toolName ?? 'playwright'
+    );
   }
+  if (action === 'respond') {
+    return createRespondDecision(decision.reason ?? 'LLM planner selected response.');
+  }
+  if (action === 'wait_human') {
+    return createWaitHumanDecision(decision.reason ?? 'LLM planner requires human input.');
+  }
+  return null;
 };
 
 export function buildSafetyCheckSteps(
@@ -181,9 +180,10 @@ export function buildBranchStepsFromAlternatives(
   maxSteps: number
 ): PlanStep[] {
   if (!alternatives?.length) return [];
-  const specs = alternatives.flatMap((alternative: PlannerAlternative) => {
-    if (alternative.steps?.length) {
-      return alternative.steps.map((step) => ({
+  const specs = alternatives.flatMap((alternative: PlannerAlternative): any[] => {
+    const steps = alternative.steps;
+    if (Array.isArray(steps) && steps.length > 0) {
+      return steps.map((step) => ({
         title: step.title?.trim() ?? '',
         tool: step.tool ?? 'playwright',
         expectedObservation: step.expectedObservation ?? null,
@@ -193,10 +193,11 @@ export function buildBranchStepsFromAlternatives(
         dependsOn: step.dependsOn ?? null,
       }));
     }
-    if (alternative.title?.trim()) {
+    const title = alternative.title?.trim();
+    if (title !== undefined && title !== '') {
       return [
         {
-          title: alternative.title.trim(),
+          title,
           tool: 'playwright',
           phase: 'recover',
         },

@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generatedAt": "2026-05-06T12:19:55.144Z",
-    "scannedSourceFiles": 374,
-    "scannedJsxFiles": 362,
-    "componentCount": 355,
+    "generatedAt": "2026-05-10T01:04:07.916Z",
+    "scannedSourceFiles": 372,
+    "scannedJsxFiles": 360,
+    "componentCount": 353,
     "componentsWithForwarding": 1,
     "componentsWithAnyForwarding": 1,
     "resolvedTransitionCount": 4,

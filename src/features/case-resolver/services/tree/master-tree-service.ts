@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/strict-boolean-expressions -- Master tree service split keeps imported contract types during migration. */
 /**
  * Master Tree Service
  * 
@@ -6,10 +5,7 @@
  * representation of a CaseResolver workspace.
  */
 
-import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { DecodedMasterTreeNode as SharedDecodedMasterTreeNode } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 // Node ID prefixes
 export const FOLDER_NODE_PREFIX = 'folder:';
@@ -77,7 +73,7 @@ export const decodeCaseContentNodePayload = (value: string, prefix: string): [st
   if (separatorIndex <= 0) return null;
   const left = payload.slice(0, separatorIndex);
   const right = payload.slice(separatorIndex + CASE_CONTENT_NODE_SEPARATOR.length);
-  if (!left || !right) return null;
+  if (left.length === 0 || right.length === 0) return null;
   try {
     return [decodeURIComponent(left), decodeURIComponent(right)];
   } catch {

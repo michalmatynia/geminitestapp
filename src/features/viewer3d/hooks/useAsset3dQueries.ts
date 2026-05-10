@@ -46,33 +46,33 @@ const ASSET_LIST_STALE_TIME_MS = 60_000;
 const ASSET_METADATA_STALE_TIME_MS = 5 * 60 * 1000;
 const ASSET_DETAIL_STALE_TIME_MS = 2 * 60 * 1000;
 
+const normalizeOptionalString = (value: string | null | undefined): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const normalizeTagsFilter = (tags: string[] | undefined): string[] => {
+  if (!Array.isArray(tags)) return [];
+  return Array.from(new Set(tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))).sort(
+    (left, right) => left.localeCompare(right)
+  );
+};
+
 /**
  * Normalizes and sanitizes asset list filters for consistent querying
  * @param filters - Raw filter input from UI components
  * @returns Normalized filter object with trimmed strings and sorted arrays
  */
 function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFilters {
-  /** Normalize filename filter */
-  const normalizedFilename = typeof filters.filename === 'string' ? filters.filename.trim() : '';
-  /** Normalize category filter */
-  const normalizedCategory =
-    typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0
-      ? filters.categoryId.trim()
-      : '';
-  /** Normalize search filter */
-  const normalizedSearch = typeof filters.search === 'string' ? filters.search.trim() : '';
-  /** Normalize and deduplicate tags */
-  const normalizedTags = Array.isArray(filters.tags)
-    ? Array.from(
-      new Set(filters.tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0))
-    ).sort((left, right) => left.localeCompare(right))
-    : [];
+  const normalizedFilename = normalizeOptionalString(filters.filename);
+  const normalizedCategory = normalizeOptionalString(filters.categoryId);
+  const normalizedSearch = normalizeOptionalString(filters.search);
+  const normalizedTags = normalizeTagsFilter(filters.tags);
 
-  /** Return only non-empty filters */
   return {
-    ...(normalizedFilename ? { filename: normalizedFilename } : {}),
-    ...(normalizedCategory ? { categoryId: normalizedCategory } : {}),
-    ...(normalizedSearch ? { search: normalizedSearch } : {}),
+    ...(normalizedFilename !== '' ? { filename: normalizedFilename } : {}),
+    ...(normalizedCategory !== '' ? { categoryId: normalizedCategory } : {}),
+    ...(normalizedSearch !== '' ? { search: normalizedSearch } : {}),
     ...(normalizedTags.length > 0 ? { tags: normalizedTags } : {}),
     ...(typeof filters.isPublic === 'boolean' ? { isPublic: filters.isPublic } : {}),
   };
@@ -161,7 +161,7 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
     id,
     queryKey,
     queryFn: () => api.get<Asset3DRecord>(`/api/assets3d/${id}`),
-    enabled: Boolean(id),
+    enabled: id !== null && id !== '',
     staleTime: ASSET_DETAIL_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

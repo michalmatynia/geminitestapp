@@ -1,3 +1,4 @@
+import React from 'react';
 'use client';
 
 type ProbeClusterSectionProps = {
@@ -9,7 +10,7 @@ type ProbeClusterSectionProps = {
   }>;
 };
 
-export const ProbeClusterSection = ({ resolvedClusters }: ProbeClusterSectionProps) => (
+export const ProbeClusterSection = ({ resolvedClusters }: ProbeClusterSectionProps): React.ReactElement => (
   <>
     {resolvedClusters.map((cluster) => (
       <div

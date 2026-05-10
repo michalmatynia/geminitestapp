@@ -2,8 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-/* eslint-disable max-lines-per-function */
-
 import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import {
@@ -67,7 +65,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     isDisabled?: boolean;
     isSaving?: boolean;
   }) => (
-    <button type='button' disabled={isDisabled || isSaving} onClick={onSave}>
+    <button type='button' disabled={isDisabled === true || isSaving === true} onClick={onSave}>
       {isSaving ? 'Saving...' : saveText}
     </button>
   ),
@@ -439,6 +437,7 @@ describe('OrganizationJobListingsSection', () => {
       onFinished?: () => void;
       onSuccess?: (runId: string) => void;
     }) => {
+      await Promise.resolve();
       args.onSuccess?.('run-job-application-1');
       args.onFinished?.();
     });
@@ -459,6 +458,7 @@ describe('OrganizationJobListingsSection', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+        await Promise.resolve();
         const href = String(url);
         const method = init?.method ?? 'GET';
         if (href.includes('/api/filemaker/job-applications/application-1/apply')) {

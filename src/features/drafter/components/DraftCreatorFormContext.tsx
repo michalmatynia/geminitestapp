@@ -12,9 +12,12 @@ import type { ProductParameterValue } from '@/shared/contracts/products/product'
 import type { ProductTag } from '@/shared/contracts/products/tags';
 import type { ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { createStrictContext, type StrictContextResult } from '@/shared/lib/react/createStrictContext';
 
-const createDraftCreatorStrictContext = <T,>(hookName: string, displayName: string) =>
+const createDraftCreatorStrictContext = <T,>(
+  hookName: string,
+  displayName: string
+): StrictContextResult<T> =>
   createStrictContext<T>({
     hookName,
     providerName: 'a DraftCreatorFormProvider',
@@ -163,22 +166,10 @@ export const ParametersContext = parametersContextResult.Context;
 export const useDraftCreatorParameters = parametersContextResult.useStrictContext;
 
 // --- Context Aggregator ---
-export interface DraftCreatorFormContextValue
-  extends
-    DraftCreatorBasicInfo,
-    DraftCreatorProductData,
-    DraftCreatorMetadata,
-    DraftCreatorImages,
-    DraftCreatorParameters {}
+export interface DraftCreatorFormContextValue extends DraftCreatorBasicInfo, DraftCreatorProductData, DraftCreatorMetadata, DraftCreatorImages, DraftCreatorParameters {}
 
-export function DraftCreatorFormProvider({
-  value,
-  children,
-}: {
-  value: DraftCreatorFormContextValue;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  const basicInfo = useMemo(
+const useDraftCreatorBasicInfoValue = (value: DraftCreatorFormContextValue): DraftCreatorBasicInfo =>
+  useMemo(
     () => ({
       name: value.name,
       setName: value.setName,
@@ -206,7 +197,8 @@ export function DraftCreatorFormProvider({
     [value]
   );
 
-  const productData = useMemo(
+const useDraftCreatorProductDataValue = (value: DraftCreatorFormContextValue): DraftCreatorProductData =>
+  useMemo(
     () => ({
       sku: value.sku,
       setSku: value.setSku,
@@ -254,7 +246,8 @@ export function DraftCreatorFormProvider({
     [value]
   );
 
-  const metadata = useMemo(
+const useDraftCreatorMetadataValue = (value: DraftCreatorFormContextValue): DraftCreatorMetadata =>
+  useMemo(
     () => ({
       catalogs: value.catalogs,
       selectedCatalogIds: value.selectedCatalogIds,
@@ -275,7 +268,8 @@ export function DraftCreatorFormProvider({
     [value]
   );
 
-  const images = useMemo(
+const useDraftCreatorImagesValue = (value: DraftCreatorFormContextValue): DraftCreatorImages =>
+  useMemo(
     () => ({
       showFileManager: value.showFileManager,
       setShowFileManager: value.setShowFileManager,
@@ -285,7 +279,8 @@ export function DraftCreatorFormProvider({
     [value]
   );
 
-  const parameters = useMemo(
+const useDraftCreatorParametersValue = (value: DraftCreatorFormContextValue): DraftCreatorParameters =>
+  useMemo(
     () => ({
       parameters: value.parameters,
       parametersLoading: value.parametersLoading,
@@ -297,6 +292,16 @@ export function DraftCreatorFormProvider({
     }),
     [value]
   );
+
+export function DraftCreatorFormProvider({ value, children }: {
+  value: DraftCreatorFormContextValue;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const basicInfo = useDraftCreatorBasicInfoValue(value);
+  const productData = useDraftCreatorProductDataValue(value);
+  const metadata = useDraftCreatorMetadataValue(value);
+  const images = useDraftCreatorImagesValue(value);
+  const parameters = useDraftCreatorParametersValue(value);
 
   return (
     <BasicInfoContext.Provider value={basicInfo}>

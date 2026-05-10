@@ -493,6 +493,61 @@ describe('tradera-execution-steps', () => {
     expect(execution.steps).toHaveLength(3);
   });
 
+  it('prefers pending execution steps while a Tradera listing is currently running', () => {
+    const execution = resolveTraderaExecutionStepsFromMarketplaceData({
+      tradera: {
+        pendingExecution: {
+          action: 'list',
+          queuedAt: '2026-04-13T10:00:00.000Z',
+          executionSteps: [
+            {
+              id: 'browser_open',
+              label: 'Open browser',
+              status: 'success',
+              message: 'Browser was opened successfully.',
+            },
+            {
+              id: 'sell_page_open',
+              label: 'Open listing editor',
+              status: 'running',
+              message: 'Opening the Tradera listing editor.',
+            },
+          ],
+        },
+        lastExecution: {
+          action: 'list',
+          ok: true,
+          metadata: {
+            executionSteps: [
+              {
+                id: 'publish_verify',
+                label: 'Verify published listing',
+                status: 'success',
+                message: 'Old persisted completion.',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(execution.action).toBe('list');
+    expect(execution.steps).toEqual([
+      {
+        id: 'browser_open',
+        label: 'Open browser',
+        status: 'success',
+        message: 'Browser was opened successfully.',
+      },
+      {
+        id: 'sell_page_open',
+        label: 'Open listing editor',
+        status: 'running',
+        message: 'Opening the Tradera listing editor.',
+      },
+    ]);
+  });
+
   it('reads legacy emitted step payloads that still use completed statuses and info messages', () => {
     expect(
       readTraderaExecutionSteps([

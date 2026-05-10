@@ -7,6 +7,7 @@ import {
   type AiPathRunQueueBaseStatus,
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
+import { internalError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { AI_PATHS_CANONICAL_RUN_SOURCE_FILTER } from '@/shared/lib/ai-paths/run-sources';
 
@@ -71,7 +72,6 @@ const readQueueHealthSnapshot = async () => {
       timeSinceLastPoll: 0,
     };
 };
-
 const readAiPathRunQueueBaseStatus = async (
   now: number,
   options: GetAiPathRunQueueStatusOptions
@@ -79,23 +79,35 @@ const readAiPathRunQueueBaseStatus = async (
   const health = await readQueueHealthSnapshot();
   const repo = await getPathRunRepository();
   const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
-  const [stats, activeRunsSnapshot, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
-    repo.getQueueStats(
-      {
+
+  let stats, activeRunsSnapshot, insightsQueueHealth, runtimeAnalytics;
+  try {
+    [stats, activeRunsSnapshot, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
+      repo.getQueueStats(
+        {
+          ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
+          ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
+        }
+      ),
+      repo.listRuns({
         ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
+        statuses: [...ACTIVE_PERSISTED_RUN_STATUSES],
         ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
-      }
-    ),
-    repo.listRuns({
-      ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
-      statuses: [...ACTIVE_PERSISTED_RUN_STATUSES],
-      ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
-      limit: 1,
-    }),
-    getAiInsightsQueueStatusSnapshot(),
-    getRuntimeAnalyticsAvailability(),
-  ]);
+        limit: 1,
+      }),
+      getAiInsightsQueueStatusSnapshot(),
+      getRuntimeAnalyticsAvailability(),
+    ]);
+  } catch (error) {
+    throw internalError('Failed to aggregate AI Path queue base status stats.', {
+      options,
+      cause: error,
+    });
+  }
+
   const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
+  // ...
+
   const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
   const persistedActiveRuns =
     typeof activeRunsSnapshot.total === 'number' && Number.isFinite(activeRunsSnapshot.total)
@@ -142,33 +154,46 @@ const readAiPathRunQueueStatus = async (
   now: number,
   options: GetAiPathRunQueueStatusOptions
 ): Promise<AiPathRunQueueStatus> => {
-  const baseStatus = await readAiPathRunQueueBaseStatus(now, options);
-  if (!baseStatus.runtimeAnalytics?.enabled) {
-    return finalizeAiPathRunQueueStatus(baseStatus);
-  }
+  try {
+    const baseStatus = await readAiPathRunQueueBaseStatus(now, options);
+    if (!baseStatus.runtimeAnalytics?.enabled) {
+      return finalizeAiPathRunQueueStatus(baseStatus);
+    }
 
-  const runtimeAnalyticsSummary = await getRuntimeAnalyticsSummary({
-    from: new Date(now - 24 * 60 * 60 * 1000),
-    to: new Date(now),
-    range: '24h',
-    includeTraces: false,
-  });
-  return finalizeAiPathRunQueueStatus(baseStatus, runtimeAnalyticsSummary);
+    const runtimeAnalyticsSummary = await getRuntimeAnalyticsSummary({
+      from: new Date(now - 24 * 60 * 60 * 1000),
+      to: new Date(now),
+      range: '24h',
+      includeTraces: false,
+    });
+    return finalizeAiPathRunQueueStatus(baseStatus, runtimeAnalyticsSummary);
+  } catch (error) {
+    throw internalError('Failed to read AI Path run queue status.', {
+      options,
+      cause: error,
+    });
+  }
 };
 
 const readAiPathRunQueueHotStatus = async (): Promise<AiPathRunQueueHotStatus> => {
-  const health = await readQueueHealthSnapshot();
-  return {
-    running: health.running ?? false,
-    healthy: health.healthy ?? false,
-    processing: health.processing ?? false,
-    activeRuns: health.activeCount,
-    waitingRuns: health.waitingCount,
-    failedRuns: health.failedCount,
-    completedRuns: health.completedCount,
-    lastPollTime: health.lastPollTime ?? 0,
-    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
-  };
+  try {
+    const health = await readQueueHealthSnapshot();
+    return {
+      running: health.running ?? false,
+      healthy: health.healthy ?? false,
+      processing: health.processing ?? false,
+      activeRuns: health.activeCount,
+      waitingRuns: health.waitingCount,
+      failedRuns: health.failedCount,
+      completedRuns: health.completedCount,
+      lastPollTime: health.lastPollTime ?? 0,
+      timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    };
+  } catch (error) {
+    throw internalError('Failed to read AI Path run queue hot status.', {
+      cause: error,
+    });
+  }
 };
 
 export const getAiPathRunQueueStatus = async (

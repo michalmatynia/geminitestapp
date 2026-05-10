@@ -170,6 +170,7 @@ export function useJobQueueRuntime({
     rememberVisibleOptimisticRun,
     refetchQueueData,
     runsQuery,
+    serverRunIds,
     visibleRunsPayload,
   } = useJobQueueDataLayer({
     autoRefreshInterval,
@@ -265,7 +266,7 @@ export function useJobQueueRuntime({
 
   useEffect(() => {
     if (!normalizedInitialExpandedRunId) return;
-    if (!visibleRunsPayload.runs.some((run) => run.id === normalizedInitialExpandedRunId)) {
+    if (!serverRunIds.has(normalizedInitialExpandedRunId)) {
       return;
     }
 
@@ -284,7 +285,7 @@ export function useJobQueueRuntime({
     }
   }, [
     normalizedInitialExpandedRunId,
-    visibleRunsPayload.runs,
+    serverRunIds,
     runDetails,
     runDetailLoading,
     loadRunDetail,

@@ -17,6 +17,7 @@ const {
   useMassListProductModalViewContextMock,
   useListingSelectionMock,
   useListingBaseComSettingsMock,
+  useListingTraderaSettingsMock,
   onSuccessMock,
 } = vi.hoisted(() => ({
   exportToBaseMutateAsyncMock: vi.fn(),
@@ -30,12 +31,14 @@ const {
   useMassListProductModalViewContextMock: vi.fn(),
   useListingSelectionMock: vi.fn(),
   useListingBaseComSettingsMock: vi.fn(),
+  useListingTraderaSettingsMock: vi.fn(),
   onSuccessMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ListingSettingsContext', () => ({
   useListingSelection: () => useListingSelectionMock(),
   useListingBaseComSettings: () => useListingBaseComSettingsMock(),
+  useListingTraderaSettings: () => useListingTraderaSettingsMock(),
 }));
 
 vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
@@ -129,6 +132,9 @@ describe('useMassListForm', () => {
       selectedInventoryId: 'inventory-1',
       selectedTemplateId: 'template-base-1',
       allowDuplicateSku: true,
+    });
+    useListingTraderaSettingsMock.mockReturnValue({
+      selectedConcurrencyMode: null,
     });
 
     exportToBaseMutateAsyncMock.mockResolvedValue({});

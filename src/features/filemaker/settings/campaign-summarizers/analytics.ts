@@ -26,8 +26,6 @@ import { resolveFilemakerEmailCampaignAudiencePreview } from './audience';
 import {
   applyClickRates,
   buildDeliveryMetrics,
-  buildEngagementMetrics,
-  buildLatestActivityMetrics,
   buildRunCountMetrics,
   getFilemakerEmailCampaignDeliveriesForRuns,
   groupCampaignEvents,
@@ -35,6 +33,10 @@ import {
   summarizeDeliveryTotals,
   summarizeTopClickedLinks,
 } from './analytics-helpers';
+import {
+  buildEngagementMetrics,
+  buildLatestActivityMetrics,
+} from './analytics-engagement-helpers';
 import { summarizeAdvancedCampaignSegments } from './analytics-segments';
 
 const getCampaignRuns = (

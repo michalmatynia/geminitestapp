@@ -1,5 +1,6 @@
 import type { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { internalError } from '@/shared/errors/app-error';
 import {
   evaluateOutboundUrlPolicy,
   fetchWithOutboundUrlPolicy,
@@ -435,7 +436,9 @@ export const handleAdvancedApi: NodeHandler = async ({
   }
 
   if (!lastEnvelope) {
-    throw new Error('Advanced API execution failed to produce an envelope');
+    throw internalError('Advanced API execution failed to produce an envelope.', {
+      nodeId: node.id,
+    });
   }
 
   const finalEnvelope: JsonRecord = {

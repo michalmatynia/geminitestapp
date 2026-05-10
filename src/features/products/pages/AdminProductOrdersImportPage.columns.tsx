@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { StatusBadge } from '@/shared/ui/status-badge';
 
-import type { ColumnDef, Row, Table } from '@tanstack/react-table';
+import type { ColumnDef, ExpandedState, Row, Table } from '@tanstack/react-table';
 import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products/orders-import';
 import {
   formatOrderDate,
@@ -16,7 +16,7 @@ import {
 } from './AdminProductOrdersImportPage.utils';
 
 interface BuildColumnsOptions {
-  expanded: Record<string, boolean>;
+  expanded: ExpandedState;
   handleToggleExpanded: (orderId: string) => void;
   onToggleExpanded?: (orderId: string) => void;
   isPreviewStale: boolean;
@@ -43,6 +43,11 @@ const renderLastImportedAt = (lastImportedAt: string | null | undefined): string
     ? `Last import ${formatOrderDate(lastImportedAt)}`
     : 'Not imported yet';
 
+const isOrderExpanded = (expanded: ExpandedState, orderId: string): boolean => {
+  if (expanded === true) return true;
+  return expanded[orderId] === true;
+};
+
 const buildExpandColumn = ({
   expanded,
   handleToggleExpanded,
@@ -51,7 +56,7 @@ const buildExpandColumn = ({
   id: 'expand',
   header: () => null,
   cell: ({ row }: { row: OrderPreviewRow }) => {
-    const isExpanded = Boolean(expanded[row.original.baseOrderId]);
+    const isExpanded = isOrderExpanded(expanded, row.original.baseOrderId);
     return (
       <Button
         type='button'

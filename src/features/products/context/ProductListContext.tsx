@@ -230,7 +230,7 @@ const useProductListRowRuntimeStoreState = (
       value.triggerListingStatusHighlight ?? NOOP_TRIGGER_LISTING_STATUS_HIGHLIGHT,
   });
 
-  const rowRuntimeStoreState = useMemo(
+  return useMemo(
     () => ({
       integrationBadgeIds: badgeState.integrationBadgeIds,
       integrationBadgeStatuses: badgeState.integrationBadgeStatuses,
@@ -266,7 +266,6 @@ const useProductListRowRuntimeStoreState = (
       value.productScanRunStatusByProductId,
     ]
   );
-  return rowRuntimeStoreState;
 };
 
 function ProductListContextProviders({

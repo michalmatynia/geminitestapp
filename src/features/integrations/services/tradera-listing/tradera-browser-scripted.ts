@@ -103,7 +103,7 @@ import { buildTraderaMoveToUnsoldScript } from './move-to-unsold-script';
 import { ensureLoggedIn } from './tradera-browser-auth';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
-export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
+export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 420_000;
 export const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
   'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ';
 const MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME = 'Desktop Chrome';

@@ -4,9 +4,9 @@ import { logSystemError, logSystemEvent } from '@/shared/lib/observability/syste
 
 const getObservabilityLoggingControlTypeForSystemLogLevelMock = vi.hoisted(() => vi.fn());
 const isClientLoggingControlEnabledMock = vi.hoisted(() => vi.fn());
-const loggerErrorMock = vi.hoisted(() => vi.fn());
-const loggerWarnMock = vi.hoisted(() => vi.fn());
-const loggerInfoMock = vi.hoisted(() => vi.fn());
+const consoleErrorMock = vi.hoisted(() => vi.fn());
+const consoleWarnMock = vi.hoisted(() => vi.fn());
+const consoleInfoMock = vi.hoisted(() => vi.fn());
 const logClientErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/observability/logging-controls', () => ({
@@ -18,14 +18,6 @@ vi.mock('@/shared/lib/observability/logging-controls-client', () => ({
   isClientLoggingControlEnabled: isClientLoggingControlEnabledMock,
 }));
 
-vi.mock('@/shared/utils/logger', () => ({
-  logger: {
-    error: loggerErrorMock,
-    warn: loggerWarnMock,
-    info: loggerInfoMock,
-  },
-}));
-
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
@@ -34,10 +26,14 @@ describe('system-logger-client shared-lib coverage', () => {
   beforeEach(() => {
     getObservabilityLoggingControlTypeForSystemLogLevelMock.mockReset();
     isClientLoggingControlEnabledMock.mockReset();
-    loggerErrorMock.mockReset();
-    loggerWarnMock.mockReset();
-    loggerInfoMock.mockReset();
+    consoleErrorMock.mockReset();
+    consoleWarnMock.mockReset();
+    consoleInfoMock.mockReset();
     logClientErrorMock.mockReset();
+
+    vi.spyOn(console, 'error').mockImplementation(consoleErrorMock);
+    vi.spyOn(console, 'warn').mockImplementation(consoleWarnMock);
+    vi.spyOn(console, 'info').mockImplementation(consoleInfoMock);
 
     getObservabilityLoggingControlTypeForSystemLogLevelMock.mockReturnValue('info');
     isClientLoggingControlEnabledMock.mockReturnValue(true);
@@ -45,6 +41,7 @@ describe('system-logger-client shared-lib coverage', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('returns early when running on the server', async () => {
@@ -53,7 +50,7 @@ describe('system-logger-client shared-lib coverage', () => {
     await logSystemEvent({ message: 'server-only' });
 
     expect(getObservabilityLoggingControlTypeForSystemLogLevelMock).not.toHaveBeenCalled();
-    expect(loggerInfoMock).not.toHaveBeenCalled();
+    expect(consoleInfoMock).not.toHaveBeenCalled();
   });
 
   it('returns early when the client logging control is disabled', async () => {
@@ -62,7 +59,7 @@ describe('system-logger-client shared-lib coverage', () => {
     await logSystemEvent({ level: 'info', message: 'skip-me', source: 'ui' });
 
     expect(getObservabilityLoggingControlTypeForSystemLogLevelMock).toHaveBeenCalledWith('info', false);
-    expect(loggerInfoMock).not.toHaveBeenCalled();
+    expect(consoleInfoMock).not.toHaveBeenCalled();
     expect(logClientErrorMock).not.toHaveBeenCalled();
   });
 
@@ -76,7 +73,7 @@ describe('system-logger-client shared-lib coverage', () => {
       statusCode: 200,
     });
 
-    expect(loggerInfoMock).toHaveBeenCalledWith('[ui] Loaded dashboard', {
+    expect(consoleInfoMock).toHaveBeenCalledWith('[ui] Loaded dashboard', {
       requestId: 'req-1',
       source: 'ui',
       service: 'frontend',
@@ -94,7 +91,7 @@ describe('system-logger-client shared-lib coverage', () => {
       source: 'api',
       service: 'frontend',
     });
-    expect(loggerWarnMock).toHaveBeenCalledWith('[api] Slow request', {
+    expect(consoleWarnMock).toHaveBeenCalledWith('[api] Slow request', {
       source: 'api',
       service: 'frontend',
       statusCode: undefined,
@@ -106,7 +103,7 @@ describe('system-logger-client shared-lib coverage', () => {
       source: 'api',
       error: new Error('boom'),
     });
-    expect(loggerErrorMock).toHaveBeenCalledWith(
+    expect(consoleErrorMock).toHaveBeenCalledWith(
       '[api] Broken request',
       expect.any(Error),
       expect.objectContaining({
@@ -124,7 +121,7 @@ describe('system-logger-client shared-lib coverage', () => {
       source: 'system',
       service: 'frontend',
     });
-    expect(loggerErrorMock).toHaveBeenCalledWith(
+    expect(consoleErrorMock).toHaveBeenCalledWith(
       '[system] Critical wrapper',
       undefined,
       expect.objectContaining({

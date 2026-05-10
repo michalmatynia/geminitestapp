@@ -3,9 +3,9 @@ import 'server-only';
 import {
   runPlaywrightVerificationObservationLoopWithProfile,
   type PlaywrightVerificationCaptureParamsBase,
-  type PlaywrightVerificationInjectionConfig,
   type PlaywrightVerificationReviewLoopProfile,
 } from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightVerificationInjectionConfig } from '@/features/playwright/services/ai-step';
 
 import {
   buildProductScanVerificationDiagnosticsPayloadFromState,

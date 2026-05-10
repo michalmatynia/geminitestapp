@@ -8,54 +8,10 @@ import {
   PRODUCT_DRAFT_KIND_OPTIONS,
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
 } from '@/shared/contracts/products/drafts';
-import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftKind, type ProductDraftOpenFormTab, type ProductImportSource, type ProductParameterValue } from '@/shared/contracts/products';
+import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftKind, type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-type MongoDraftDoc = {
-  _id: string | ObjectId;
-  id?: string;
-  name?: string;
-  draftKind?: ProductDraftKind | null;
-  scrapeProfileId?: string | null;
-  description?: string | null;
-  sku?: string | null;
-  ean?: string | null;
-  gtin?: string | null;
-  asin?: string | null;
-  name_en?: string | null;
-  name_pl?: string | null;
-  name_de?: string | null;
-  description_en?: string | null;
-  description_pl?: string | null;
-  description_de?: string | null;
-  weight?: number | null;
-  sizeLength?: number | null;
-  sizeWidth?: number | null;
-  length?: number | null;
-  price?: number | null;
-  supplierName?: string | null;
-  supplierLink?: string | null;
-  priceComment?: string | null;
-  stock?: number | null;
-  catalogIds?: string[];
-  categoryId?: string | null;
-  tagIds?: string[];
-  producerIds?: string[];
-  parameters?: ProductParameterValue[];
-  defaultPriceGroupId?: string | null;
-  active?: boolean;
-  validatorEnabled?: boolean;
-  formatterEnabled?: boolean;
-  icon?: string | null;
-  iconColorMode?: 'theme' | 'custom' | null;
-  iconColor?: string | null;
-  openProductFormTab?: string | null;
-  imageLinks?: string[];
-  baseProductId?: string | null;
-  importSource?: ProductImportSource | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+import type { MongoDraftDoc } from './draft-repository.types';
 
 const normalizeStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
@@ -120,7 +76,11 @@ const buildDraftIdFilter = (id: string): Filter<MongoDraftDoc> => {
   return { $or: filters };
 };
 
-const mapMongoDocLocalization = (doc: MongoDraftDoc) => ({
+const nullable = <T,>(value: T | null | undefined): T | null => value ?? null;
+const optionalArray = <T,>(value: T[] | undefined): T[] => value ?? [];
+const docDateIso = (value: Date | undefined): string => (value ?? new Date()).toISOString();
+
+const mapMongoDocLocalization = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
   name_en: doc.name_en ?? null,
   name_pl: doc.name_pl ?? null,
   name_de: doc.name_de ?? null,
@@ -129,14 +89,14 @@ const mapMongoDocLocalization = (doc: MongoDraftDoc) => ({
   description_de: doc.description_de ?? null,
 });
 
-const mapMongoDocPhysical = (doc: MongoDraftDoc) => ({
+const mapMongoDocPhysical = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
   weight: doc.weight ?? null,
   sizeLength: doc.sizeLength ?? null,
   sizeWidth: doc.sizeWidth ?? null,
   length: doc.length ?? null,
 });
 
-const mapMongoDocSupplier = (doc: MongoDraftDoc) => ({
+const mapMongoDocSupplier = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
   price: doc.price ?? null,
   supplierName: doc.supplierName ?? null,
   supplierLink: doc.supplierLink ?? null,
@@ -144,39 +104,60 @@ const mapMongoDocSupplier = (doc: MongoDraftDoc) => ({
   stock: doc.stock ?? null,
 });
 
+const mapMongoDocIdentity = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+  id: String(doc.id ?? doc._id),
+  name: doc.name ?? '',
+  draftKind: normalizeDraftKind(doc.draftKind),
+  scrapeProfileId: normalizeNullableString(doc.scrapeProfileId),
+  description: nullable(doc.description),
+});
+
+const mapMongoDocIdentifiers = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+  sku: nullable(doc.sku),
+  ean: nullable(doc.ean),
+  gtin: nullable(doc.gtin),
+  asin: nullable(doc.asin),
+  defaultPriceGroupId: nullable(doc.defaultPriceGroupId),
+});
+
+const mapMongoDocRelations = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+  catalogIds: optionalArray(doc.catalogIds),
+  categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
+  tagIds: optionalArray(doc.tagIds),
+  producerIds: normalizeStringArray(doc.producerIds),
+  parameters: optionalArray(doc.parameters),
+});
+
+const mapMongoDocSettings = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+  active: doc.active ?? true,
+  validatorEnabled: doc.validatorEnabled ?? true,
+  formatterEnabled: doc.formatterEnabled ?? false,
+  icon: nullable(doc.icon),
+  iconColorMode: normalizeIconColorMode(doc.iconColorMode),
+  iconColor: normalizeIconColor(doc.iconColor),
+  openProductFormTab: normalizeOpenProductFormTab(doc.openProductFormTab),
+});
+
+const mapMongoDocAssets = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+  imageLinks: optionalArray(doc.imageLinks),
+  baseProductId: nullable(doc.baseProductId),
+  importSource: nullable(doc.importSource),
+  createdAt: docDateIso(doc.createdAt),
+  updatedAt: docDateIso(doc.updatedAt),
+});
+
 const mapMongoDocToDraft = (doc: MongoDraftDoc): ProductDraft => {
-  return {
-    id: String(doc.id ?? doc._id),
-    name: doc.name ?? '',
-    draftKind: normalizeDraftKind(doc.draftKind),
-    scrapeProfileId: normalizeNullableString(doc.scrapeProfileId),
-    description: doc.description ?? null,
-    sku: doc.sku ?? null,
-    ean: doc.ean ?? null,
-    gtin: doc.gtin ?? null,
-    asin: doc.asin ?? null,
+  const draft: ProductDraft = {
+    ...mapMongoDocIdentity(doc),
+    ...mapMongoDocIdentifiers(doc),
     ...mapMongoDocLocalization(doc),
     ...mapMongoDocPhysical(doc),
     ...mapMongoDocSupplier(doc),
-    catalogIds: Array.isArray(doc.catalogIds) ? doc.catalogIds : [],
-    categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
-    tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
-    producerIds: normalizeStringArray(doc.producerIds),
-    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
-    defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-    active: doc.active ?? true,
-    validatorEnabled: doc.validatorEnabled ?? true,
-    formatterEnabled: doc.formatterEnabled ?? false,
-    icon: doc.icon ?? null,
-    iconColorMode: normalizeIconColorMode(doc.iconColorMode),
-    iconColor: normalizeIconColor(doc.iconColor),
-    openProductFormTab: normalizeOpenProductFormTab(doc.openProductFormTab),
-    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-    baseProductId: doc.baseProductId ?? null,
-    importSource: doc.importSource ?? null,
-    createdAt: (doc.createdAt ?? new Date()).toISOString(),
-    updatedAt: (doc.updatedAt ?? new Date()).toISOString(),
+    ...mapMongoDocRelations(doc),
+    ...mapMongoDocSettings(doc),
+    ...mapMongoDocAssets(doc),
   };
+  return draft;
 };
 
 const listDraftsMongo = async (): Promise<ProductDraft[]> => {
@@ -200,7 +181,7 @@ const getDraftMongo = async (id: string): Promise<ProductDraft | null> => {
   return mapMongoDocToDraft(draft);
 };
 
-const buildCreateDraftDocLocalization = (input: CreateProductDraftInput) => ({
+const buildCreateDraftDocLocalization = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
   name_en: input.name_en ?? null,
   name_pl: input.name_pl ?? null,
   name_de: input.name_de ?? null,
@@ -209,14 +190,14 @@ const buildCreateDraftDocLocalization = (input: CreateProductDraftInput) => ({
   description_de: input.description_de ?? null,
 });
 
-const buildCreateDraftDocPhysical = (input: CreateProductDraftInput) => ({
+const buildCreateDraftDocPhysical = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
   weight: input.weight ?? null,
   sizeLength: input.sizeLength ?? null,
   sizeWidth: input.sizeWidth ?? null,
   length: input.length ?? null,
 });
 
-const buildCreateDraftDocSupplier = (input: CreateProductDraftInput) => ({
+const buildCreateDraftDocSupplier = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
   price: input.price ?? null,
   supplierName: input.supplierName ?? null,
   supplierLink: input.supplierLink ?? null,
@@ -224,38 +205,60 @@ const buildCreateDraftDocSupplier = (input: CreateProductDraftInput) => ({
   stock: input.stock ?? null,
 });
 
-const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Date): MongoDraftDoc => ({
+const buildCreateDraftDocIdentity = (
+  input: CreateProductDraftInput,
+  id: string
+): Partial<MongoDraftDoc> => ({
   _id: id,
   ...input,
   draftKind: normalizeDraftKind(input.draftKind),
   scrapeProfileId: normalizeNullableString(input.scrapeProfileId),
-  description: input.description ?? null,
-  sku: input.sku ?? null,
-  ean: input.ean ?? null,
-  gtin: input.gtin ?? null,
-  asin: input.asin ?? null,
-  ...buildCreateDraftDocLocalization(input),
-  ...buildCreateDraftDocPhysical(input),
-  ...buildCreateDraftDocSupplier(input),
-  baseProductId: input.baseProductId ?? null,
-  importSource: input.importSource ?? null,
-  defaultPriceGroupId: input.defaultPriceGroupId ?? null,
-  catalogIds: input.catalogIds ?? [],
-  categoryId: input.categoryId ?? null,
-  tagIds: input.tagIds ?? [],
+  description: nullable(input.description),
+});
+
+const buildCreateDraftDocIdentifiers = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
+  sku: nullable(input.sku),
+  ean: nullable(input.ean),
+  gtin: nullable(input.gtin),
+  asin: nullable(input.asin),
+  defaultPriceGroupId: nullable(input.defaultPriceGroupId),
+});
+
+const buildCreateDraftDocRelations = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
+  catalogIds: optionalArray(input.catalogIds),
+  categoryId: nullable(input.categoryId),
+  tagIds: optionalArray(input.tagIds),
   producerIds: normalizeStringArray(input.producerIds),
-  parameters: input.parameters ?? [],
+  parameters: optionalArray(input.parameters),
+});
+
+const buildCreateDraftDocSettings = (input: CreateProductDraftInput): Partial<MongoDraftDoc> => ({
   validatorEnabled: input.validatorEnabled ?? true,
   formatterEnabled: input.formatterEnabled ?? false,
-  icon: input.icon ?? null,
+  icon: nullable(input.icon),
   iconColorMode: normalizeIconColorMode(input.iconColorMode),
   iconColor: normalizeIconColor(input.iconColor),
   openProductFormTab: normalizeOpenProductFormTab(input.openProductFormTab),
-  imageLinks: input.imageLinks ?? [],
-  active: input.active ?? true,
-  createdAt: now,
-  updatedAt: now,
 });
+
+const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Date): MongoDraftDoc => {
+  const draft: MongoDraftDoc = {
+    ...buildCreateDraftDocIdentity(input, id),
+    ...buildCreateDraftDocIdentifiers(input),
+    ...buildCreateDraftDocLocalization(input),
+    ...buildCreateDraftDocPhysical(input),
+    ...buildCreateDraftDocSupplier(input),
+    ...buildCreateDraftDocRelations(input),
+    ...buildCreateDraftDocSettings(input),
+    baseProductId: nullable(input.baseProductId),
+    importSource: nullable(input.importSource),
+    imageLinks: optionalArray(input.imageLinks),
+    active: input.active ?? true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  return draft;
+};
 
 const createDraftMongo = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
   const mongo = await getMongoDb();
@@ -267,39 +270,31 @@ const createDraftMongo = async (input: CreateProductDraftInput): Promise<Product
   return mapMongoDocToDraft(draft);
 };
 
+const normalizeUpdateCategoryId = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+
+const updatePayloadTransforms: Partial<
+  Record<keyof UpdateProductDraftInput, (value: unknown) => unknown>
+> = {
+  categoryId: normalizeUpdateCategoryId,
+  draftKind: normalizeDraftKind,
+  scrapeProfileId: normalizeNullableString,
+  producerIds: normalizeStringArray,
+  iconColorMode: normalizeIconColorMode,
+  iconColor: normalizeIconColor,
+  openProductFormTab: normalizeOpenProductFormTab,
+};
+
 const getUpdatePayload = (
   input: UpdateProductDraftInput
 ): Record<string, unknown> => {
   const payload: Record<string, unknown> = {};
-  if ('categoryId' in input) {
-    payload['categoryId'] = (typeof input.categoryId === 'string' && input.categoryId.trim() !== '')
-      ? input.categoryId.trim()
-      : null;
-  }
-
-  if ('draftKind' in input) {
-    payload['draftKind'] = normalizeDraftKind(input.draftKind);
-  }
-
-  if ('scrapeProfileId' in input) {
-    payload['scrapeProfileId'] = normalizeNullableString(input.scrapeProfileId);
-  }
-
-  if ('producerIds' in input) {
-    payload['producerIds'] = normalizeStringArray(input.producerIds);
-  }
-
-  if ('iconColorMode' in input) {
-    payload['iconColorMode'] = normalizeIconColorMode(input.iconColorMode);
-  }
-
-  if ('iconColor' in input) {
-    payload['iconColor'] = normalizeIconColor(input.iconColor);
-  }
-
-  if ('openProductFormTab' in input) {
-    payload['openProductFormTab'] = normalizeOpenProductFormTab(input.openProductFormTab);
-  }
+  const keys = Object.keys(input) as (keyof UpdateProductDraftInput)[];
+  keys.forEach((key) => {
+    const val = input[key];
+    const transform = updatePayloadTransforms[key];
+    if (val !== undefined) payload[key] = transform !== undefined ? transform(val) : val;
+  });
   return payload;
 };
 
@@ -310,15 +305,6 @@ const updateDraftMongo = async (
   const mongo = await getMongoDb();
   const now = new Date();
   const updatePayload = getUpdatePayload(input);
-
-  (Object.keys(input) as (keyof UpdateProductDraftInput)[]).forEach(
-    (key: keyof UpdateProductDraftInput) => {
-      const val = input[key];
-      if (val !== undefined && !(key in updatePayload)) {
-        updatePayload[key] = val;
-      }
-    }
-  );
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
     buildDraftIdFilter(id),

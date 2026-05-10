@@ -27,24 +27,28 @@ type EcommerceManageModalProps = {
   onClose: () => void;
 };
 
-export function EcommerceManageModal({
-  product,
-  open,
-  onClose,
-}: EcommerceManageModalProps): React.JSX.Element {
+const getProductName = (product: ProductWithImages): string =>
+  product.name_en ?? product.name_pl ?? product.name_de ?? product.sku ?? product.id;
+
+function useEcommerceManageModalModel(product: ProductWithImages, onClose: () => void): {
+  deletePending: boolean;
+  handleDelete: () => void;
+  handleSync: () => void;
+  isPending: boolean;
+  productName: string;
+  syncPending: boolean;
+} {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const exportMutation = useExportProductToEcommerce();
   const deleteMutation = useDeleteProductFromEcommerce();
-
   const isPending = exportMutation.isPending || deleteMutation.isPending;
-
   const handleSync = useCallback((): void => {
     if (isPending) return;
     void exportMutation.mutateAsync(product.id)
       .then(() => {
         toast('Ecommerce product synced successfully.', { variant: 'success' });
-        invalidateListingBadges(queryClient);
+        void invalidateListingBadges(queryClient);
         onClose();
       })
       .catch((error: unknown) => {
@@ -61,7 +65,7 @@ export function EcommerceManageModal({
     void deleteMutation.mutateAsync(product.id)
       .then(() => {
         toast('Product removed from ecommerce store.', { variant: 'success' });
-        invalidateListingBadges(queryClient);
+        void invalidateListingBadges(queryClient);
         onClose();
       })
       .catch((error: unknown) => {
@@ -73,8 +77,44 @@ export function EcommerceManageModal({
       });
   }, [deleteMutation, isPending, onClose, product.id, queryClient, toast]);
 
-  const productName =
-    product.name_en ?? product.name_pl ?? product.name_de ?? product.sku ?? product.id;
+  return {
+    deletePending: deleteMutation.isPending,
+    handleDelete,
+    handleSync,
+    isPending,
+    productName: getProductName(product),
+    syncPending: exportMutation.isPending,
+  };
+}
+
+function EcommerceManageActions({
+  model,
+  onClose,
+}: {
+  model: ReturnType<typeof useEcommerceManageModalModel>;
+  onClose: () => void;
+}): React.JSX.Element {
+  return (
+    <DialogFooter className='flex-col gap-2 sm:flex-col'>
+      <Button type='button' onClick={model.handleSync} disabled={model.isPending} className='w-full bg-emerald-600 hover:bg-emerald-700 text-white'>
+        {model.syncPending ? 'Syncing…' : 'Sync to ecommerce'}
+      </Button>
+      <Button type='button' variant='destructive' onClick={model.handleDelete} disabled={model.isPending} className='w-full'>
+        {model.deletePending ? 'Removing…' : 'Remove from ecommerce'}
+      </Button>
+      <Button type='button' variant='ghost' onClick={onClose} disabled={model.isPending} className='w-full'>
+        Cancel
+      </Button>
+    </DialogFooter>
+  );
+}
+
+export function EcommerceManageModal({
+  product,
+  open,
+  onClose,
+}: EcommerceManageModalProps): React.JSX.Element {
+  const model = useEcommerceManageModalModel(product, onClose);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen): void => { if (!isOpen) onClose(); }}>
@@ -82,37 +122,10 @@ export function EcommerceManageModal({
         <DialogHeader>
           <DialogTitle className='text-base'>Ecommerce Store</DialogTitle>
         </DialogHeader>
-        <p className='text-sm text-muted-foreground truncate' title={productName ?? undefined}>
-          {productName}
+        <p className='text-sm text-muted-foreground truncate' title={model.productName}>
+          {model.productName}
         </p>
-        <DialogFooter className='flex-col gap-2 sm:flex-col'>
-          <Button
-            type='button'
-            onClick={handleSync}
-            disabled={isPending}
-            className='w-full bg-emerald-600 hover:bg-emerald-700 text-white'
-          >
-            {exportMutation.isPending ? 'Syncing…' : 'Sync to ecommerce'}
-          </Button>
-          <Button
-            type='button'
-            variant='destructive'
-            onClick={handleDelete}
-            disabled={isPending}
-            className='w-full'
-          >
-            {deleteMutation.isPending ? 'Removing…' : 'Remove from ecommerce'}
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
-            onClick={onClose}
-            disabled={isPending}
-            className='w-full'
-          >
-            Cancel
-          </Button>
-        </DialogFooter>
+        <EcommerceManageActions model={model} onClose={onClose} />
       </DialogContent>
     </Dialog>
   );

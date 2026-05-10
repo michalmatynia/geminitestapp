@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-06'
+last_reviewed: '2026-05-10'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Products category and schema normalization Improvement Track
 
-Generated at: 2026-05-06T11:44:17.516Z
+Generated at: 2026-05-10T01:05:02.194Z
 
 ## Snapshot
 
 - Track id: `products-category-schema-normalization`
 - Category: `data`
 - Included in default read-only bundle: yes
-- Overall status: `passed`
-- Latest report timestamp: 2026-04-15T10:54:26.139Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-10T01:05:02.191Z
 
 ## Purpose
 
@@ -38,9 +38,9 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `audit` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `failed` | 1 | 1 | 0 | 1 | 0 |
+| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `passed` | 3 | 2 | 1 | 0 | 0 |
 
@@ -48,6 +48,8 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
+| `classify` | `failed` | `automatic` | `products-category-manual-remediation-report` | `products:report:parameter-remediation` |
+| `plan` | `manual` | `manual` | `products-category-schema-plan` | manual |
 | `apply` | `manual` | `manual` | `products-category-schema-apply` | manual |
 | `apply` | `passed` | `automatic` | `products-category-schema-build-ready-curated-overrides` | `products:build:ready-parameter-curated-overrides` |
 | `apply` | `passed` | `automatic` | `products-category-schema-apply-ready-curated-overrides` | `products:apply:ready-parameter-curated-overrides` |

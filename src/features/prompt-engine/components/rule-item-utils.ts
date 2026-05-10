@@ -41,7 +41,8 @@ export const compileRegex = (
 
 export const formatAutofixOperation = (op: PromptAutofixOperation): string => {
   if (op.kind === 'params_json') return 'Convert `params` object to strict JSON';
-  const flags = op.flags?.trim() ? `/${op.flags.trim()}` : '';
+  const trimmed = op.flags?.trim();
+  const flags = (trimmed !== undefined && trimmed !== '') ? `/${trimmed}` : '';
   return `Replace ${op.pattern}${flags} → ${op.replacement}`;
 };
 

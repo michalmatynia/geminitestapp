@@ -1,11 +1,43 @@
 'use client';
 
-import { Box, Grid, List, Filter, X, Upload } from 'lucide-react';
+import { Grid, List, Filter, X, Upload } from 'lucide-react';
 import React from 'react';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Badge } from '@/shared/ui/primitives.public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+
+function Admin3DAssetsViewToggle({
+  viewMode,
+  setViewMode,
+}: {
+  viewMode: 'grid' | 'list';
+  setViewMode: (m: 'grid' | 'list') => void;
+}): React.JSX.Element {
+  return (
+    <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
+      <Button
+        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+        size='icon'
+        className='h-8 w-8 rounded-none'
+        onClick={() => setViewMode('grid')}
+        aria-label='Grid view'
+        title='Grid view'
+      >
+        <Grid className='h-4 w-4' />
+      </Button>
+      <Button
+        variant={viewMode === 'list' ? 'default' : 'ghost'}
+        size='icon'
+        className='h-8 w-8 rounded-none'
+        onClick={() => setViewMode('list')}
+        aria-label='List view'
+        title='List view'
+      >
+        <List className='h-4 w-4' />
+      </Button>
+    </div>
+  );
+}
 
 export function Admin3DAssetsFilters({
   searchQuery,
@@ -66,28 +98,7 @@ export function Admin3DAssetsFilters({
         </Button>
       )}
 
-      <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-        <Button
-          variant={viewMode === 'grid' ? 'default' : 'ghost'}
-          size='icon'
-          className='h-8 w-8 rounded-none'
-          onClick={() => setViewMode('grid')}
-          aria-label='Grid view'
-          title='Grid view'
-        >
-          <Grid className='h-4 w-4' />
-        </Button>
-        <Button
-          variant={viewMode === 'list' ? 'default' : 'ghost'}
-          size='icon'
-          className='h-8 w-8 rounded-none'
-          onClick={() => setViewMode('list')}
-          aria-label='List view'
-          title='List view'
-        >
-          <List className='h-4 w-4' />
-        </Button>
-      </div>
+      <Admin3DAssetsViewToggle viewMode={viewMode} setViewMode={setViewMode} />
     </div>
   );
 }
@@ -102,7 +113,7 @@ export function Admin3DAssetsEmptyState({
   setShowUploader: (s: boolean) => void;
   handleReindex: () => void;
   isReindexing: boolean;
-}) {
+}): React.JSX.Element {
   return (
     <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
       {!hasActiveFilters ? (

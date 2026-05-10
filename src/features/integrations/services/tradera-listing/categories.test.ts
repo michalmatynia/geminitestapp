@@ -106,7 +106,7 @@ const {
     }
 
     async run(): Promise<void> {
-      if (state.error) {
+      if (state.error !== null) {
         throw state.error;
       }
       this.result = state.listingFormResult;

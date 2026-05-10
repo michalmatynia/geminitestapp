@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-/* eslint-disable max-lines, max-lines-per-function */
 
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';

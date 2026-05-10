@@ -153,7 +153,7 @@ export function SceneLighting(props: { preset: LightingPreset; intensity: number
     },
   };
 
-  const config = lightConfigs[preset] || lightConfigs.studio;
+  const config = lightConfigs[preset];
 
   return (
     <>
@@ -189,18 +189,16 @@ export function ScreenshotCapture(props: {
 
   const { gl } = useThree();
   useEffect(() => {
-     
     captureRef.current = (): string | null => {
       try {
-        return (gl).domElement.toDataURL('image/png');
+        return gl.domElement.toDataURL('image/png');
       } catch (error) {
         logClientError(error as Error);
         return null;
       }
     };
     return (): void => {
-      if (captureRef.current) {
-         
+      if (captureRef.current !== null) {
         captureRef.current = null;
       }
     };

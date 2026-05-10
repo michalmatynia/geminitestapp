@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 
 import { useListingTraderaSettings } from '@/features/integrations/context/ListingSettingsContext';
-import { Input } from '@/shared/ui/primitives.public';
+import { Badge, Input } from '@/shared/ui/primitives.public';
 import { FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 
 import { useTraderaListingAction } from './hooks/useTraderaListingAction';
@@ -22,7 +22,22 @@ export function TraderaListingSettings(): React.JSX.Element {
     setSelectedConcurrencyMode,
   } = useListingTraderaSettings();
 
-  const { loading: actionLoading, actionName, defaultConcurrencyMode } = useTraderaListingAction();
+  const {
+    loading: actionLoading,
+    saving: actionSaving,
+    actionKey,
+    actionName,
+    actionDescription,
+    actionId,
+    browserModeLabel,
+    defaultConcurrencyMode,
+    enabledStepCount,
+    hasUnsavedChanges,
+    headless,
+    isSeedFallback,
+    setHeadless,
+    totalStepCount,
+  } = useTraderaListingAction();
 
   // When the governing action loads, initialise concurrency from its default (only once).
   useEffect(() => {
@@ -44,10 +59,44 @@ export function TraderaListingSettings(): React.JSX.Element {
           {actionLoading ? (
             <p className='mt-0.5 text-xs text-muted-foreground'>Loading…</p>
           ) : (
-            <p className='mt-0.5 text-xs text-foreground'>{actionName}</p>
+            <div className='mt-1 space-y-2'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <span className='text-xs font-medium text-foreground'>{actionName}</span>
+                  {actionKey ? <Badge variant='secondary'>{actionKey}</Badge> : null}
+                  {isSeedFallback ? <Badge variant='neutral'>Seed default</Badge> : null}
+                </div>
+                <Badge variant='secondary'>{browserModeLabel}</Badge>
+              </div>
+              {actionDescription ? (
+                <p className='text-xs text-muted-foreground'>{actionDescription}</p>
+              ) : null}
+              <div className='flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground'>
+                {actionId ? <span>Action ID: {actionId}</span> : null}
+                {enabledStepCount !== null && totalStepCount !== null ? (
+                  <span>Steps: {enabledStepCount}/{totalStepCount}</span>
+                ) : null}
+              </div>
+            </div>
           )}
         </div>
       )}
+
+      <ToggleRow
+        checked={headless}
+        onCheckedChange={setHeadless}
+        label='Action browser mode'
+        description='Quick export uses this Step Sequencer action unless a specific queue run overrides browser mode.'
+        disabled={actionKey === null || actionLoading || actionSaving}
+        loading={actionLoading || actionSaving}
+        variant='switch'
+        toggleOnRowClick
+      >
+        <div className='pt-1 text-[11px] font-medium text-foreground'>
+          Current: {headless ? 'Headless' : 'Headed'}
+          {hasUnsavedChanges ? ' · Unsaved' : ''}
+        </div>
+      </ToggleRow>
 
       {/* Concurrency mode toggle */}
       <ToggleRow

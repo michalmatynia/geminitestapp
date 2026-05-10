@@ -3,8 +3,6 @@
  * 
  * Manages signed learner session cookies for the Kangur platform.
  */
-/* eslint-disable complexity -- Signed cookie parsing performs validation and expiry checks together. */
-
 import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
@@ -60,37 +58,44 @@ export const serializePayload = (payload: KangurLearnerSessionPayload): string =
   return `${body}.${signature}`;
 };
 
+type SignedSessionParts = {
+  body: string;
+  signature: string;
+};
+
+const parseSignedSessionParts = (raw: string | undefined): SignedSessionParts | null => {
+  if (raw === undefined || raw.length === 0) return null;
+  const [body, signature] = raw.split('.');
+  if (body === undefined || body.length === 0) return null;
+  if (signature === undefined || signature.length === 0) return null;
+  return { body, signature };
+};
+
+const areSignedSessionPartsValid = ({ body, signature }: SignedSessionParts): boolean =>
+  safeEqual(signValue(body), signature);
+
+const parseSessionPayloadBody = (body: string): KangurLearnerSessionPayload | null => {
+  const parsed = JSON.parse(base64UrlDecode(body)) as Partial<KangurLearnerSessionPayload>;
+  if (typeof parsed.learnerId !== 'string') return null;
+  if (typeof parsed.ownerUserId !== 'string') return null;
+  if (typeof parsed.exp !== 'number') return null;
+  if (parsed.exp <= Date.now()) return null;
+  return {
+    learnerId: parsed.learnerId,
+    ownerUserId: parsed.ownerUserId,
+    exp: parsed.exp,
+  };
+};
+
 /**
  * Parses and verifies a signed session cookie.
  */
 export const parsePayload = (raw: string | undefined): KangurLearnerSessionPayload | null => {
-  if (raw === undefined || raw.length === 0) return null;
-  const [body, signature] = raw.split('.');
-  if (
-    body === undefined ||
-    body.length === 0 ||
-    signature === undefined ||
-    signature.length === 0 ||
-    !safeEqual(signValue(body), signature)
-  ) {
-    return null;
-  }
+  const parts = parseSignedSessionParts(raw);
+  if (parts === null || !areSignedSessionPartsValid(parts)) return null;
 
   try {
-    const parsed = JSON.parse(base64UrlDecode(body)) as Partial<KangurLearnerSessionPayload>;
-    if (
-      typeof parsed.learnerId !== 'string' ||
-      typeof parsed.ownerUserId !== 'string' ||
-      typeof parsed.exp !== 'number' ||
-      parsed.exp <= Date.now()
-    ) {
-      return null;
-    }
-    return {
-      learnerId: parsed.learnerId,
-      ownerUserId: parsed.ownerUserId,
-      exp: parsed.exp,
-    };
+    return parseSessionPayloadBody(parts.body);
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;

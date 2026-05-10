@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/consistent-type-imports */
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, type RenderResult } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -337,6 +336,7 @@ describe('TraderaQuickListButton', () => {
 
     const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
     expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).not.toContain('animate-pulse');
     expect(prefetchListings).toHaveBeenCalledTimes(1);
     expect(invalidateProductListingsAndBadgesMock).toHaveBeenCalled();
     expect(apiPostMock).toHaveBeenCalledWith('/api/v2/integrations/exports/tradera/default-connection', {
@@ -494,7 +494,7 @@ describe('TraderaQuickListButton', () => {
     );
   });
 
-  it('clears persisted queued feedback when the server-backed badge takes over', async () => {
+  it('keeps persisted queued feedback while the server-backed badge is still in flight', async () => {
     window.sessionStorage.setItem(
       'tradera-quick-list-feedback',
       JSON.stringify({
@@ -526,7 +526,9 @@ describe('TraderaQuickListButton', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
     });
-    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"status":"queued"'
+    );
   });
 
   it('clears stale queued feedback when the tracked product no longer exists', async () => {
@@ -657,6 +659,9 @@ describe('TraderaQuickListButton', () => {
 
     expect(screen.getByRole('button', { name: 'One-click export to Tradera' }).className).toContain(
       'border-amber-400/70'
+    );
+    expect(screen.getByRole('button', { name: 'One-click export to Tradera' }).className).not.toContain(
+      'animate-pulse'
     );
     expect(toastMock).toHaveBeenCalledWith('Tradera listing queued (job job-tradera-1).', {
       variant: 'success',
@@ -847,6 +852,37 @@ describe('TraderaQuickListButton', () => {
     expect(
       screen.queryByRole('button', { name: 'Open Tradera recovery options (failed).' })
     ).toBeNull();
+  });
+
+  it('animates queued quick-list feedback only after a worker run id is known', () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          runId: 'run-tradera-live-1',
+          requestId: 'job-tradera-1',
+          listingId: 'listing-tradera-1',
+          expiresAt: Date.now() + 45_000,
+        },
+      })
+    );
+
+    renderButton();
+
+    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
+    expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).toContain('motion-safe:animate-pulse');
+  });
+
+  it('animates a server running quick-list state with the queued tone', () => {
+    renderButton({ traderaStatus: 'running' });
+
+    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
+    expect(button).toBeDisabled();
+    expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).toContain('motion-safe:animate-pulse');
   });
 
   it('uses the server auth_required status for recovery even without local feedback', () => {

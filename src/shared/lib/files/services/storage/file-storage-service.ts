@@ -1,4 +1,5 @@
 import 'server-only';
+import { externalServiceError, internalError } from '@/shared/errors/app-error';
 import { type FileStorageSettings, readFileStorageSettings } from './storage-settings-service';
 import {
   deleteFromFastComet,
@@ -53,8 +54,6 @@ export const invalidateFileStorageSettingsCache = (): void => {
   settingsCache = null;
 };
 
-import { externalServiceError, internalError } from '@/shared/errors/app-error';
-// ...
 export const uploadToConfiguredStorage = async (params: {
   buffer: Buffer;
   filename: string;
@@ -163,11 +162,10 @@ export const deleteFromConfiguredStorage = async (params: {
       fastComet: settings.fastComet,
     });
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    await ErrorSystem.logWarning('FastComet delete failed; continuing.', {
-      service: 'file-storage-service',
+    throw internalError('FastComet remote deletion failed.', {
       filepath: params.filepath,
-      error: error instanceof Error ? error.message : String(error),
+      publicPath,
+      cause: error,
     });
   }
 };

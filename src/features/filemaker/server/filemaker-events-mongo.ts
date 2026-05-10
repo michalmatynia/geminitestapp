@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines-per-function */
 import 'server-only';
 
 import type { Collection, Document } from 'mongodb';
@@ -107,6 +106,24 @@ const optionalMetadataString = (value: string | undefined): string | undefined =
   return normalized.length > 0 ? normalized : undefined;
 };
 
+const optionalStringMetadata = (
+  key: string,
+  value: string | null | undefined
+): Record<string, string> => {
+  const normalized = optionalMetadataString(value ?? undefined);
+  return normalized === undefined ? {} : { [key]: normalized };
+};
+
+const optionalNumberMetadata = (
+  key: string,
+  value: number | undefined
+): Record<string, number> => (value === undefined ? {} : { [key]: value });
+
+const optionalBooleanMetadata = (
+  key: string,
+  value: boolean | undefined
+): Record<string, boolean> => (value === undefined ? {} : { [key]: value });
+
 export const getFilemakerEventsCollection = async (): Promise<
   Collection<FilemakerEventMongoDocument>
 > => {
@@ -127,6 +144,52 @@ const toOrganizationLink = (
     : {}),
 });
 
+const toMongoFilemakerEventBooleans = (
+  document: EventWithLinksDocument
+): Record<string, boolean> => ({
+  ...optionalBooleanMetadata('checked1', document.checked1),
+  ...optionalBooleanMetadata('checked2', document.checked2),
+  ...optionalBooleanMetadata('discontinued', document.discontinued),
+});
+
+const toMongoFilemakerEventNumbers = (
+  document: EventWithLinksDocument
+): Record<string, number> => ({
+  ...optionalNumberMetadata('currentWeekNumber', document.currentWeekNumber),
+  ...optionalNumberMetadata('lengthDay', document.lengthDay),
+  ...optionalNumberMetadata('moveDay', document.moveDay),
+  ...optionalNumberMetadata('organizationFilterCount', document.organizationFilterCount),
+  ...optionalNumberMetadata('websiteFilterCount', document.websiteFilterCount),
+});
+
+const toMongoFilemakerEventStrings = (
+  document: EventWithLinksDocument
+): Record<string, string> => ({
+  ...optionalStringMetadata('cooperationStatus', document.cooperationStatus),
+  ...optionalStringMetadata('currentDay', document.currentDay),
+  ...optionalStringMetadata('displayAddressId', document.displayAddressId),
+  ...optionalStringMetadata('eventStartDate', document.eventStartDate),
+  ...optionalStringMetadata('lastEventInstanceDate', document.lastEventInstanceDate),
+  ...optionalStringMetadata('legacyDefaultAddressUuid', document.legacyDefaultAddressUuid),
+  ...optionalStringMetadata('legacyDisplayAddressUuid', document.legacyDisplayAddressUuid),
+  ...optionalStringMetadata('legacyHowOftenUuid', document.legacyHowOftenUuid),
+  ...optionalStringMetadata('legacyLastEventInstanceUuid', document.legacyLastEventInstanceUuid),
+  ...optionalStringMetadata('legacyParentUuid', document.legacyParentUuid),
+  ...optionalStringMetadata('legacyUuid', document.legacyUuid),
+  ...optionalStringMetadata('organizationFilter', document.organizationFilter),
+  ...optionalStringMetadata('registrationMonth', document.registrationMonth),
+  ...optionalStringMetadata('updatedBy', document.updatedBy),
+  ...optionalStringMetadata('websiteFilter', document.websiteFilter),
+});
+
+const countUnresolvedOrganizationLinks = (
+  organizationLinks: FilemakerEventOrganizationLinkMongoDocument[]
+): number =>
+  organizationLinks.filter(
+    (link: FilemakerEventOrganizationLinkMongoDocument): boolean =>
+      optionalMetadataString(link.organizationId) === undefined
+  ).length;
+
 export function toMongoFilemakerEvent(document: EventWithLinksDocument): MongoFilemakerEvent {
   const organizationLinks = document.organizationLinks ?? [];
   return {
@@ -143,70 +206,11 @@ export function toMongoFilemakerEvent(document: EventWithLinksDocument): MongoFi
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
     }),
-    ...(document.checked1 !== undefined ? { checked1: document.checked1 } : {}),
-    ...(document.checked2 !== undefined ? { checked2: document.checked2 } : {}),
-    ...(optionalMetadataString(document.cooperationStatus) !== undefined
-      ? { cooperationStatus: optionalMetadataString(document.cooperationStatus) }
-      : {}),
-    ...(optionalMetadataString(document.currentDay) !== undefined
-      ? { currentDay: optionalMetadataString(document.currentDay) }
-      : {}),
-    ...(document.currentWeekNumber !== undefined
-      ? { currentWeekNumber: document.currentWeekNumber }
-      : {}),
-    ...(document.discontinued !== undefined ? { discontinued: document.discontinued } : {}),
-    ...(optionalMetadataString(document.displayAddressId ?? undefined) !== undefined
-      ? { displayAddressId: optionalMetadataString(document.displayAddressId ?? undefined) }
-      : {}),
-    ...(optionalMetadataString(document.eventStartDate) !== undefined
-      ? { eventStartDate: optionalMetadataString(document.eventStartDate) }
-      : {}),
-    ...(optionalMetadataString(document.lastEventInstanceDate) !== undefined
-      ? { lastEventInstanceDate: optionalMetadataString(document.lastEventInstanceDate) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDefaultAddressUuid) !== undefined
-      ? { legacyDefaultAddressUuid: optionalMetadataString(document.legacyDefaultAddressUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDisplayAddressUuid) !== undefined
-      ? { legacyDisplayAddressUuid: optionalMetadataString(document.legacyDisplayAddressUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyHowOftenUuid) !== undefined
-      ? { legacyHowOftenUuid: optionalMetadataString(document.legacyHowOftenUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyLastEventInstanceUuid) !== undefined
-      ? { legacyLastEventInstanceUuid: optionalMetadataString(document.legacyLastEventInstanceUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyParentUuid) !== undefined
-      ? { legacyParentUuid: optionalMetadataString(document.legacyParentUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyUuid) !== undefined
-      ? { legacyUuid: optionalMetadataString(document.legacyUuid) }
-      : {}),
-    ...(document.lengthDay !== undefined ? { lengthDay: document.lengthDay } : {}),
+    ...toMongoFilemakerEventBooleans(document),
+    ...toMongoFilemakerEventNumbers(document),
+    ...toMongoFilemakerEventStrings(document),
     linkedOrganizations: organizationLinks.map(toOrganizationLink),
-    ...(document.moveDay !== undefined ? { moveDay: document.moveDay } : {}),
-    ...(optionalMetadataString(document.organizationFilter) !== undefined
-      ? { organizationFilter: optionalMetadataString(document.organizationFilter) }
-      : {}),
-    ...(document.organizationFilterCount !== undefined
-      ? { organizationFilterCount: document.organizationFilterCount }
-      : {}),
     organizationLinkCount: organizationLinks.length,
-    ...(optionalMetadataString(document.registrationMonth) !== undefined
-      ? { registrationMonth: optionalMetadataString(document.registrationMonth) }
-      : {}),
-    unresolvedOrganizationLinkCount: organizationLinks.filter(
-      (link: FilemakerEventOrganizationLinkMongoDocument): boolean =>
-        optionalMetadataString(link.organizationId) === undefined
-    ).length,
-    ...(optionalMetadataString(document.updatedBy) !== undefined
-      ? { updatedBy: optionalMetadataString(document.updatedBy) }
-      : {}),
-    ...(optionalMetadataString(document.websiteFilter) !== undefined
-      ? { websiteFilter: optionalMetadataString(document.websiteFilter) }
-      : {}),
-    ...(document.websiteFilterCount !== undefined
-      ? { websiteFilterCount: document.websiteFilterCount }
-      : {}),
+    unresolvedOrganizationLinkCount: countUnresolvedOrganizationLinks(organizationLinks),
   };
 }

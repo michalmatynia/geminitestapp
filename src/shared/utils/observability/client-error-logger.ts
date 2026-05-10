@@ -227,7 +227,11 @@ const markAsLogged = (errorObj: unknown): void => {
       // eslint-disable-next-line no-param-reassign
       errorObj.__logged = true;
     } catch (e) {
-      console.debug('Failed to mark error as logged (likely frozen object):', e);
+      logClientEvent({
+        message: 'Failed to mark error as logged (likely frozen object)',
+        level: 'info',
+        context: { error: String(e) },
+      });
     }
   }
 };
@@ -241,7 +245,11 @@ const sendClientErrorPayload = (payload: ClientErrorPayload): void => {
       return;
     }
   } catch (e) {
-    console.warn('sendBeacon failed, falling back to fetch:', e);
+    logClientEvent({
+      message: 'sendBeacon failed, falling back to fetch',
+      level: 'warn',
+      context: { error: String(e) },
+    });
   }
 
   if (typeof fetch === 'function') {

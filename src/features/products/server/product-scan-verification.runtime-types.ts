@@ -3,11 +3,11 @@ import 'server-only';
 import type {
   PlaywrightObservationLoopResult,
   PlaywrightVerificationCaptureParamsBase,
-  PlaywrightVerificationInjectionConfig,
   PlaywrightVerificationObservationLoopWithProfileOptions,
   PlaywrightVerificationReviewLoopProfile,
   PlaywrightVerificationReviewLoopProfileOptions,
 } from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightVerificationInjectionConfig } from '@/features/playwright/services/ai-step';
 
 import type {
   ProductScanVerificationObservationBase,

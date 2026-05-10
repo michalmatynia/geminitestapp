@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
@@ -9,16 +9,22 @@ import { Button, Card } from '@/shared/ui/primitives.public';
 
 import { ConnectedIntegrationSelector } from '../ConnectedIntegrationSelector';
 import { resolveIntegrationSelectionEmptyStateCopy } from '../product-listings-copy';
+import { TraderaListingActionBrowserModePanel } from '../TraderaListingActionBrowserModePanel';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
   const { onStartListing, recoveryContext } = useProductListingsModals();
+  const [isTraderaActionBrowserModeBlockingStart, setIsTraderaActionBrowserModeBlockingStart] =
+    useState(false);
   const { filterIntegrationSlug, statusTargetLabel, isScopedMarketplaceFlow } =
     useProductListingsViewContext();
   const {
     integrations,
     loading: loadingIntegrations,
+    error: integrationSelectionError,
     selectedIntegrationId,
     selectedConnectionId,
+    selectedIntegration,
+    isTraderaIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useIntegrationSelection(
@@ -34,10 +40,19 @@ export function ProductListingsStartPanel(): React.JSX.Element {
     Boolean(recoveryContext?.integrationId && recoveryContext?.connectionId) &&
     recoveryContext?.integrationId === selectedIntegrationId &&
     recoveryContext?.connectionId === selectedConnectionId;
+  const handleTraderaActionBlockingStateChange = useCallback((blocking: boolean): void => {
+    setIsTraderaActionBrowserModeBlockingStart(blocking);
+  }, []);
+  const startDisabled =
+    !selectedIntegrationId ||
+    !selectedConnectionId ||
+    !onStartListing ||
+    isTraderaActionBrowserModeBlockingStart;
   const selector = (
     <ConnectedIntegrationSelector
       integrations={integrations}
       loading={loadingIntegrations}
+      error={integrationSelectionError}
       selectedIntegrationId={selectedIntegrationId}
       selectedConnectionId={selectedConnectionId}
       setSelectedIntegrationId={setSelectedIntegrationId}
@@ -67,6 +82,13 @@ export function ProductListingsStartPanel(): React.JSX.Element {
           </div>
         )}
         {selector}
+        {isTraderaIntegration && selectedIntegration && selectedConnectionId ? (
+          <TraderaListingActionBrowserModePanel
+            onBlockingStateChange={handleTraderaActionBlockingStateChange}
+            selectedConnectionId={selectedConnectionId}
+            selectedIntegration={selectedIntegration}
+          />
+        ) : null}
 
         <div className='flex justify-center'>
           <Button
@@ -77,9 +99,9 @@ export function ProductListingsStartPanel(): React.JSX.Element {
                 });
               }
             }}
-            disabled={!selectedIntegrationId || !selectedConnectionId || !onStartListing}
+            disabled={startDisabled}
           >
-            List Product
+            {isTraderaActionBrowserModeBlockingStart ? 'Saving action settings...' : 'List Product'}
           </Button>
         </div>
       </div>

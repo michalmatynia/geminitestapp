@@ -207,13 +207,36 @@ export async function handleTraderaBrowserTest(
       await acceptTraderaCookies(activePage).catch(() => undefined);
     };
     const readAuthState = (): Promise<TraderaAuthState> => readTraderaAuthState(activePage);
-    const isUserLoggedIn = async (): Promise<boolean> => (await readAuthState()).loggedIn;
+    const shouldProbeSessionCheck = (authState: TraderaAuthState): boolean => {
+      const normalizedUrl = authState.currentUrl.trim().toLowerCase();
+      return (
+        !authState.loggedIn &&
+        !authState.loginFormVisible &&
+        !authState.manualVerificationDetected &&
+        !normalizedUrl.includes('/login')
+      );
+    };
+    const isUserLoggedIn = async (options?: { probeSessionCheck?: boolean }): Promise<boolean> => {
+      const authState = await readAuthState();
+      if (authState.loggedIn) {
+        return true;
+      }
+      if (options?.probeSessionCheck !== true || !shouldProbeSessionCheck(authState)) {
+        return false;
+      }
+
+      await activePage
+        .goto(SESSION_CHECK_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+        .catch(() => undefined);
+      await acceptCookies();
+      return (await readAuthState()).loggedIn;
+    };
     const waitForManualLogin = async (timeoutMs: number): Promise<boolean> => {
       const deadline = Date.now() + timeoutMs;
 
       while (Date.now() < deadline) {
         await acceptCookies();
-        if (await isUserLoggedIn()) {
+        if (await isUserLoggedIn({ probeSessionCheck: true })) {
           return true;
         }
         await activePage.waitForTimeout(1000).catch(() => undefined);

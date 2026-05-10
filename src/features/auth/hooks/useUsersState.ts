@@ -40,6 +40,64 @@ const EMPTY_CREATE: CreateUserForm = {
   verified: false,
 };
 
+const useUserFiltering = (users: AuthUserSummary[], search: string): AuthUserSummary[] => {
+  return useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q === '') return users;
+    return users.filter(
+      (u) =>
+        (u.email?.toLowerCase().includes(q) ?? false) ||
+        (u.name?.toLowerCase().includes(q) ?? false) ||
+        u.id.toLowerCase().includes(q)
+    );
+  }, [users, search]);
+};
+
+const useUserActions = (args: {
+  localUserRoles: AuthUserRoleMap;
+  setDirtyRoles: (dirty: boolean) => void;
+  updateUserRolesMutation: ReturnType<typeof useUpdateAuthUserRoles>;
+  deleteAuthUserMutation: ReturnType<typeof useDeleteAuthUser>;
+  userToDelete: AuthUserSummary | null;
+  setUserToDelete: (user: AuthUserSummary | null) => void;
+  session: Session | null;
+}) => {
+  const { toast } = useToast();
+  const { localUserRoles, setDirtyRoles, updateUserRolesMutation, deleteAuthUserMutation, userToDelete, setUserToDelete, session } = args;
+
+  const saveRoles = async (): Promise<void> => {
+    try {
+      await updateUserRolesMutation.mutateAsync({ userRoles: localUserRoles });
+      setDirtyRoles(false);
+      toast('User roles updated', { variant: 'success' });
+    } catch (_e) {
+      logClientError(_e);
+      toast('Failed to save roles', { variant: 'error' });
+    }
+  };
+
+  const deleteUser = async (): Promise<void> => {
+    if (userToDelete === null) return;
+    const currentUserId = session?.user?.id;
+    const isSelf = currentUserId !== undefined && currentUserId !== '' && userToDelete.id === currentUserId;
+    if (isSelf) {
+      toast('You cannot delete your own account while signed in.', { variant: 'error' });
+      return;
+    }
+    try {
+      await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
+      toast('User deleted', { variant: 'success' });
+      setUserToDelete(null);
+    } catch (error) {
+      logClientError(error);
+      const errorMsg = error instanceof Error ? error.message.trim() : '';
+      toast(errorMsg !== '' ? errorMsg : 'Failed to delete user', { variant: 'error' });
+    }
+  };
+
+  return { saveRoles, deleteUser };
+};
+
 export interface UseUsersStateReturn {
   users: AuthUserSummary[];
   filteredUsers: AuthUserSummary[];
@@ -155,57 +213,27 @@ export function useUsersState(): UseUsersStateReturn {
   }, [userRoles]);
 
   const users = authUsersQuery.data?.users ?? [];
-  const filteredUsers = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      (u) =>
-        u.email?.toLowerCase().includes(q) ||
-        u.name?.toLowerCase().includes(q) ||
-        u.id.toLowerCase().includes(q)
-    );
-  }, [users, search]);
+  const filteredUsers = useUserFiltering(users, search);
 
   const handleRoleChange = useCallback((userId: string, roleId: string) => {
     setLocalUserRoles((prev) => {
       const next = { ...prev };
-      if (!roleId || roleId === 'none') delete next[userId];
+      if (roleId === '' || roleId === 'none') delete next[userId];
       else next[userId] = roleId;
       return next;
     });
     setDirtyRoles(true);
   }, []);
 
-  const saveRoles = async () => {
-    try {
-      await updateUserRolesMutation.mutateAsync({ userRoles: localUserRoles });
-      setDirtyRoles(false);
-      toast('User roles updated', { variant: 'success' });
-    } catch (_e) {
-      logClientError(_e);
-      toast('Failed to save roles', { variant: 'error' });
-    }
-  };
-
-  const deleteUser = async () => {
-    if (!userToDelete) return;
-    if (session?.user?.id && userToDelete.id === session.user.id) {
-      toast('You cannot delete your own account while signed in.', { variant: 'error' });
-      return;
-    }
-    try {
-      await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
-      toast('User deleted', { variant: 'success' });
-      setUserToDelete(null);
-    } catch (error) {
-      logClientError(error);
-      const message =
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : 'Failed to delete user';
-      toast(message, { variant: 'error' });
-    }
-  };
+  const { saveRoles, deleteUser } = useUserActions({
+    localUserRoles,
+    setDirtyRoles,
+    updateUserRolesMutation,
+    deleteAuthUserMutation,
+    userToDelete,
+    setUserToDelete,
+    session,
+  });
 
   return {
     users,

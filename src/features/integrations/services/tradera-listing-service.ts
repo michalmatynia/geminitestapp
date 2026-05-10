@@ -60,21 +60,21 @@ import {
   resolvePlaywrightListingRunContext,
   type PlaywrightServiceListingExecutionBase,
 } from '@/features/playwright/server';
-import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+import type {
+  PlaywrightRelistBrowserMode,
+  TraderaExecutionStep,
+} from '@/shared/contracts/integrations/listings';
 
 const resolveRequestedTraderaBrowserMode = ({
   requestedBrowserMode,
-  source,
-  browserMode,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: 'manual' | 'scheduler' | 'api';
   browserMode: 'builtin' | 'scripted' | null | undefined;
 }): PlaywrightRelistBrowserMode => {
   if (requestedBrowserMode) return requestedBrowserMode;
-  // No explicit override. Scripted Tradera runs still default to a real browser
-  // outside scheduler-triggered automation; otherwise defer to the Playwright action.
-  return browserMode === 'scripted' && source !== 'scheduler' ? 'headed' : 'connection_default';
+  // No explicit queue override: defer to the governing Step Sequencer action.
+  return 'connection_default';
 };
 
 const buildTraderaHistoryFields = (
@@ -95,6 +95,28 @@ const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const resolveLatestTraderaExecutionStepId = (
+  steps: readonly TraderaExecutionStep[]
+): string | null =>
+  steps.find((step) => step.status === 'running')?.id ??
+  steps.find((step) => step.status === 'error')?.id ??
+  null;
+
+const buildTraderaExecutionStepsSignature = (
+  steps: readonly TraderaExecutionStep[]
+): string =>
+  JSON.stringify(
+    steps.map((step) => [
+      step.id,
+      step.label,
+      step.status,
+      step.message ?? null,
+    ])
+  );
 
 const TRUSTED_TRADERA_CHECK_STATUS_PERSISTED_STATUSES = new Set([
   'active',
@@ -145,23 +167,36 @@ const buildPendingTraderaRunMarketplaceData = ({
   requestedSelectorProfile,
   requestId,
   runId,
+  executionSteps,
+  latestStage,
 }: {
   existingMarketplaceData: unknown;
   action: 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
   requestedBrowserMode: PlaywrightRelistBrowserMode;
   requestedSelectorProfile?: string;
   requestId: string | null;
-  runId: string;
+  runId?: string | null;
+  executionSteps?: TraderaExecutionStep[];
+  latestStage?: string | null;
 }): Record<string, unknown> => {
   const marketplaceData = toRecord(existingMarketplaceData);
   const traderaData = toRecord(marketplaceData['tradera']);
   const pendingExecution = toRecord(traderaData['pendingExecution']);
   const pendingSelectorProfile =
-    typeof pendingExecution['requestedSelectorProfile'] === 'string' &&
-    pendingExecution['requestedSelectorProfile'].trim().length > 0
-      ? pendingExecution['requestedSelectorProfile'].trim()
-      : null;
+    readString(pendingExecution['requestedSelectorProfile']);
   const pendingSkipImages = pendingExecution['skipImages'] === true;
+  const pendingRunId = readString(pendingExecution['runId']);
+  const pendingRequestId = readString(pendingExecution['requestId']);
+  const pendingQueuedAt = readString(pendingExecution['queuedAt']);
+  const pendingLatestStage = readString(pendingExecution['latestStage']);
+  const pendingExecutionSteps = Array.isArray(pendingExecution['executionSteps'])
+    ? pendingExecution['executionSteps']
+    : null;
+  const effectiveRunId = runId ?? pendingRunId;
+  const effectiveExecutionSteps =
+    executionSteps && executionSteps.length > 0 ? executionSteps : pendingExecutionSteps;
+  const effectiveLatestStage =
+    latestStage ?? pendingLatestStage ?? resolveLatestTraderaExecutionStepId(executionSteps ?? []);
 
   return {
     ...marketplaceData,
@@ -178,12 +213,11 @@ const buildPendingTraderaRunMarketplaceData = ({
             }
           : {}),
         ...(pendingSkipImages ? { skipImages: true } : {}),
-        requestId,
-        queuedAt:
-          typeof pendingExecution['queuedAt'] === 'string' && pendingExecution['queuedAt'].trim().length > 0
-            ? pendingExecution['queuedAt']
-            : new Date().toISOString(),
-        runId,
+        requestId: requestId ?? pendingRequestId,
+        queuedAt: pendingQueuedAt ?? new Date().toISOString(),
+        ...(effectiveRunId ? { runId: effectiveRunId } : {}),
+        ...(effectiveLatestStage ? { latestStage: effectiveLatestStage } : {}),
+        ...(effectiveExecutionSteps ? { executionSteps: effectiveExecutionSteps } : {}),
       },
     },
   };
@@ -309,6 +343,49 @@ export const runTraderaListing = async (
       browserMode: connection.traderaBrowserMode,
     });
     resolvedRequestedBrowserMode = requestedBrowserMode;
+    let lastExecutionStepsSignature = '';
+    let persistExecutionStepsChain: Promise<void> = Promise.resolve();
+
+    const persistPendingExecutionSteps = (
+      steps: TraderaExecutionStep[]
+    ): Promise<void> => {
+      const signature = buildTraderaExecutionStepsSignature(steps);
+      if (signature === lastExecutionStepsSignature) {
+        return persistExecutionStepsChain;
+      }
+      lastExecutionStepsSignature = signature;
+
+      persistExecutionStepsChain = persistExecutionStepsChain.then(async () => {
+        try {
+          const latestStage = resolveLatestTraderaExecutionStepId(steps);
+          const nextMarketplaceData = buildPendingTraderaRunMarketplaceData({
+            existingMarketplaceData: listing.marketplaceData,
+            action,
+            requestedBrowserMode,
+            ...(requestedSelectorProfile ? { requestedSelectorProfile } : {}),
+            requestId: input.jobId ?? null,
+            executionSteps: steps,
+            latestStage,
+          });
+          listing.marketplaceData = nextMarketplaceData as typeof listing.marketplaceData;
+          listing.status = 'running';
+          await repository.updateListing(listing.id, {
+            status: 'running',
+            marketplaceData: nextMarketplaceData,
+          });
+        } catch (error) {
+          void ErrorSystem.captureException(error, {
+            service: 'tradera-listing',
+            listingId: listing.id,
+            action,
+            source,
+            phase: 'persist-pending-execution-steps',
+          });
+        }
+      });
+      return persistExecutionStepsChain;
+    };
+
     const persistPendingRunId = async (runId: string): Promise<void> => {
       try {
         const nextMarketplaceData = buildPendingTraderaRunMarketplaceData({
@@ -437,7 +514,9 @@ export const runTraderaListing = async (
     };
     const result = await runTraderaBrowserListing(browserListingInput, {
       onRunStarted: persistPendingRunId,
+      onExecutionStepsUpdated: persistPendingExecutionSteps,
     });
+    await persistExecutionStepsChain;
 
     const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
     const expiresAt = resolveExpiry(settings.durationHours);

@@ -7,6 +7,7 @@
  */
 
 import type { AiPathRunQueueStatsOptions, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { databaseError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   buildQueueStatsFilter,
@@ -23,18 +24,24 @@ import {
  * @returns {Promise<string | null>} The run ID or null if none queued.
  */
 export const findNextQueuedRunId = async (): Promise<string | null> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const now = new Date();
-  const next = await db.collection<RunDocument>(RUNS_COLLECTION).findOne(
-    { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-    {
-      projection: { _id: 1, id: 1 },
-      sort: { createdAt: 1 },
-    }
-  );
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const now = new Date();
+    const next = await db.collection<RunDocument>(RUNS_COLLECTION).findOne(
+      { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+      {
+        projection: { _id: 1, id: 1 },
+        sort: { createdAt: 1 },
+      }
+    );
 
-  return next ? next.id ?? next._id : null;
+    return next ? next.id ?? next._id : null;
+  } catch (error) {
+    throw databaseError('Failed to find next queued run ID.', error, {
+      collection: RUNS_COLLECTION,
+    });
+  }
 };
 
 /**
@@ -44,22 +51,29 @@ export const findNextQueuedRunId = async (): Promise<string | null> => {
  * @returns {Promise<AiPathRunRecord | null>} The updated record or null if claim failed.
  */
 export const claimRunForProcessing = async (runId: string): Promise<AiPathRunRecord | null> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const now = new Date();
-  const result = await db.collection<RunDocument>(RUNS_COLLECTION).findOneAndUpdate(
-    {
-      $and: [
-        { $or: [{ _id: runId }, { id: runId }] },
-        { status: 'queued' },
-        { $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-      ],
-    },
-    { $set: { status: 'running', startedAt: now, updatedAt: now } },
-    { returnDocument: 'after' }
-  );
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const now = new Date();
+    const result = await db.collection<RunDocument>(RUNS_COLLECTION).findOneAndUpdate(
+      {
+        $and: [
+          { $or: [{ _id: runId }, { id: runId }] },
+          { status: 'queued' },
+          { $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+        ],
+      },
+      { $set: { status: 'running', startedAt: now, updatedAt: now } },
+      { returnDocument: 'after' }
+    );
 
-  return result ? toRunRecord(result) : null;
+    return result ? toRunRecord(result) : null;
+  } catch (error) {
+    throw databaseError(`Failed to claim run: ${runId}`, error, {
+      collection: RUNS_COLLECTION,
+      runId,
+    });
+  }
 };
 
 /**
@@ -71,20 +85,27 @@ export const claimRunForProcessing = async (runId: string): Promise<AiPathRunRec
 export const getQueueStats = async (
   options: AiPathRunQueueStatsOptions = {}
 ): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const filter = buildQueueStatsFilter(options);
-  const [queuedCount, oldest] = await Promise.all([
-    db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
-    db
-      .collection<RunDocument>(RUNS_COLLECTION)
-      .find(filter, { projection: { createdAt: 1 } })
-      .sort({ createdAt: 1 })
-      .limit(1)
-      .next(),
-  ]);
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const filter = buildQueueStatsFilter(options);
+    const [queuedCount, oldest] = await Promise.all([
+      db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
+      db
+        .collection<RunDocument>(RUNS_COLLECTION)
+        .find(filter, { projection: { createdAt: 1 } })
+        .sort({ createdAt: 1 })
+        .limit(1)
+        .next(),
+    ]);
 
-  return { queuedCount, oldestQueuedAt: toDate(oldest?.createdAt) };
+    return { queuedCount, oldestQueuedAt: toDate(oldest?.createdAt) };
+  } catch (error) {
+    throw databaseError('Failed to retrieve queue statistics.', error, {
+      collection: RUNS_COLLECTION,
+      options,
+    });
+  }
 };
 
 /**
@@ -93,8 +114,6 @@ export const getQueueStats = async (
  * @param {number} maxAgeMs - The maximum duration (ms) a run can remain in 'running' status.
  * @returns {Promise<{ count: number }>} The count of runs transitioned to failed.
  */
-import { databaseError } from '@/shared/errors/app-error';
-// ...
 export const markStaleRunningRuns = async (
   maxAgeMs: number
 ): Promise<{ count: number }> => {

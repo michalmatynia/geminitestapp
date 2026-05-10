@@ -1,7 +1,9 @@
+import type { StepId } from '@/shared/lib/browser-execution/step-registry';
+
 export type RuntimeStepGroup = {
   id: string;
   label: string;
-  stepIds: readonly string[];
+  stepIds: readonly StepId[];
 };
 
 export const RUNTIME_STEP_GROUPS: readonly RuntimeStepGroup[] = [

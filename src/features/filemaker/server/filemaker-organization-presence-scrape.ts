@@ -1,5 +1,4 @@
 import 'server-only';
-/* eslint-disable max-lines-per-function, complexity */
 
 import { createCustomPlaywrightInstance } from '@/features/playwright/server/instances';
 import { runPlaywrightEngineTask } from '@/features/playwright/server/runtime';
@@ -33,18 +32,26 @@ export type FilemakerOrganizationPresenceScrapeResult = {
   websites: FilemakerOrganizationPresenceWebsite[];
 };
 
-const normalizeWebsiteUrl = (website: MongoFilemakerWebsite): string | null => {
+type PresenceScrapeRun = Awaited<ReturnType<typeof runPlaywrightEngineTask>>;
+
+const getWebsiteUrlCandidate = (website: MongoFilemakerWebsite): string => {
   const normalized = website.normalizedUrl?.trim() ?? '';
-  const raw = normalized.length > 0 ? normalized : website.url;
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) return null;
+  return normalized.length > 0 ? normalized : website.url;
+};
+
+const parseHttpWebsiteUrl = (value: string): URL | null => {
   try {
-    const parsed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    return parsed.toString();
+    const parsed = new URL(value.includes('://') ? value : `https://${value}`);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed : null;
   } catch {
     return null;
   }
+};
+
+const normalizeWebsiteUrl = (website: MongoFilemakerWebsite): string | null => {
+  const trimmed = getWebsiteUrlCandidate(website).trim();
+  if (trimmed.length === 0) return null;
+  return parseHttpWebsiteUrl(trimmed)?.toString() ?? null;
 };
 
 const uniqueStrings = (values: string[]): string[] =>
@@ -128,6 +135,90 @@ const toOrganizationInput = (organization: FilemakerOrganization): Record<string
   streetNumber: organization.streetNumber,
 });
 
+const buildPresenceScrapeTask = (input: {
+  maxPages?: number;
+  maxSearchResults?: number;
+  organization: FilemakerOrganization;
+  seedWebsites: string[];
+  startUrl: string;
+}): Parameters<typeof runPlaywrightEngineTask>[0] => ({
+  request: {
+    startUrl: input.startUrl,
+    input: {
+      organization: toOrganizationInput(input.organization),
+      seedWebsites: input.seedWebsites,
+      maxPages: input.maxPages ?? 6,
+      maxSearchResults: input.maxSearchResults ?? 8,
+      runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+    },
+    actionId: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+    actionName: 'Filemaker organisation website and social scrape',
+    runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+    browserEngine: 'chromium',
+    timeoutMs: 150_000,
+    preventNewPages: true,
+  },
+  instance: createCustomPlaywrightInstance({
+    family: 'scrape',
+    label: `Filemaker organisation website/social scrape: ${input.organization.name}`,
+    tags: ['filemaker', 'organization', 'website-social-scrape', 'playwright'],
+  }),
+});
+
+const isFailedPresenceScrapeRun = (run: PresenceScrapeRun): boolean =>
+  run.status === 'failed' || run.status === 'cancelled' || run.status === 'canceled';
+
+const toFailedPresenceScrapeResult = ({
+  organization,
+  run,
+  seedWebsites,
+}: {
+  organization: FilemakerOrganization;
+  run: PresenceScrapeRun;
+  seedWebsites: string[];
+}): FilemakerOrganizationPresenceScrapeResult => ({
+  organizationId: organization.id,
+  organizationName: organization.name,
+  persisted: { linked: [], skipped: [] },
+  runId: run.runId,
+  runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+  seedWebsites,
+  socialProfiles: [],
+  visitedUrls: [],
+  warnings: [run.error ?? `Scrape run status=${run.status}`, ...normalizeStringArray(run.logs)],
+  websites: [],
+});
+
+const toSuccessfulPresenceScrapeResult = async ({
+  organization,
+  run,
+  seedWebsites,
+}: {
+  organization: FilemakerOrganization;
+  run: PresenceScrapeRun;
+  seedWebsites: string[];
+}): Promise<FilemakerOrganizationPresenceScrapeResult> => {
+  const parsed = parsePresencePayload(
+    readRunReturnValue(run.result) as FilemakerOrganizationPresenceScrapePayload | null
+  );
+  const persisted = await upsertMongoFilemakerOrganizationWebsiteDiscovery({
+    organization,
+    runId: run.runId,
+    socialProfiles: parsed.socialProfiles,
+    websites: parsed.websites,
+  });
+
+  return {
+    organizationId: organization.id,
+    organizationName: organization.name,
+    persisted,
+    runId: run.runId,
+    runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+    seedWebsites,
+    ...parsed,
+  };
+};
+
 export const runFilemakerOrganizationPresenceScrapeForOrganization = async (input: {
   existingWebsites?: MongoFilemakerWebsite[];
   maxPages?: number;
@@ -143,63 +234,28 @@ export const runFilemakerOrganizationPresenceScrapeForOrganization = async (inpu
   );
   const startUrl = seedWebsites[0] ?? buildOrganizationSearchStartUrl(input.organization);
   const run = await runPlaywrightEngineTask({
-    request: {
+    ...buildPresenceScrapeTask({
+      maxPages: input.maxPages,
+      maxSearchResults: input.maxSearchResults,
+      organization: input.organization,
+      seedWebsites,
       startUrl,
-      input: {
-        organization: toOrganizationInput(input.organization),
-        seedWebsites,
-        maxPages: input.maxPages ?? 6,
-        maxSearchResults: input.maxSearchResults ?? 8,
-        runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
-      },
-      actionId: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
-      actionName: 'Filemaker organisation website and social scrape',
-      runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
-      browserEngine: 'chromium',
-      timeoutMs: 150_000,
-      preventNewPages: true,
-    },
-    instance: createCustomPlaywrightInstance({
-      family: 'scrape',
-      label: `Filemaker organisation website/social scrape: ${input.organization.name}`,
-      tags: ['filemaker', 'organization', 'website-social-scrape', 'playwright'],
     }),
   });
 
-  if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'canceled') {
-    return {
-      organizationId: input.organization.id,
-      organizationName: input.organization.name,
-      persisted: { linked: [], skipped: [] },
-      runId: run.runId,
-      runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+  if (isFailedPresenceScrapeRun(run)) {
+    return toFailedPresenceScrapeResult({
+      organization: input.organization,
+      run,
       seedWebsites,
-      socialProfiles: [],
-      visitedUrls: [],
-      warnings: [run.error ?? `Scrape run status=${run.status}`, ...normalizeStringArray(run.logs)],
-      websites: [],
-    };
+    });
   }
 
-  const parsed = parsePresencePayload(
-    readRunReturnValue(run.result) as FilemakerOrganizationPresenceScrapePayload | null
-  );
-  const persisted = await upsertMongoFilemakerOrganizationWebsiteDiscovery({
+  return toSuccessfulPresenceScrapeResult({
     organization: input.organization,
-    runId: run.runId,
-    socialProfiles: parsed.socialProfiles,
-    websites: parsed.websites,
-  });
-
-  return {
-    organizationId: input.organization.id,
-    organizationName: input.organization.name,
-    persisted,
-    runId: run.runId,
-    runtimeKey: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+    run,
     seedWebsites,
-    ...parsed,
-  };
+  });
 };
 
 export const runFilemakerOrganizationPresenceScrape = async (input: {

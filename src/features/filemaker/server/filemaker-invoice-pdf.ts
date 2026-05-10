@@ -1,7 +1,5 @@
 import 'server-only';
 
-/* eslint-disable complexity, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/naming-convention */
-
 import { createPdfDownloadResponse, renderHtmlToPdfBuffer } from '@/features/pdf-export/server';
 import type { FilemakerOrganization } from '@/features/filemaker/types';
 import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
@@ -49,6 +47,12 @@ const EMPTY_PARTY: InvoiceParty = {
 
 const normalizeText = (value: string | null | undefined): string => value?.trim() ?? '';
 
+const firstNonEmptyText = (
+  values: Array<string | null | undefined>,
+  fallback = ''
+): string =>
+  values.map(normalizeText).find((value: string): boolean => value.length > 0) ?? fallback;
+
 const parseMoney = (value: string | null | undefined): number | null => {
   const normalized = normalizeText(value)
     .replace(/\s/g, '')
@@ -91,7 +95,7 @@ const resolveParty = (
   organization: FilemakerOrganization | null,
   fallbackName: string | undefined
 ): InvoiceParty => {
-  const name = normalizeText(organization?.name) || normalizeText(fallbackName);
+  const name = firstNonEmptyText([organization?.name, fallbackName]);
   if (name.length === 0) return EMPTY_PARTY;
   return {
     address: formatAddress(organization),
@@ -140,7 +144,7 @@ const resolveInvoiceLanguage = async (
 };
 
 const formatInvoiceNo = (invoice: MongoFilemakerInvoice): string =>
-  normalizeText(invoice.invoiceNo) || normalizeText(invoice.signature) || invoice.id;
+  firstNonEmptyText([invoice.invoiceNo, invoice.signature], invoice.id);
 
 const composeInvoiceFilename = (
   invoice: MongoFilemakerInvoice,
@@ -148,16 +152,13 @@ const composeInvoiceFilename = (
 ): string => `invoice-${formatInvoiceNo(invoice)}-${language}.pdf`;
 
 const resolvePaymentDue = (invoice: MongoFilemakerInvoice): string =>
-  normalizeText(invoice.cPaymentDue) ||
-  normalizeText(invoice.dayForPayment) ||
-  normalizeText(invoice.eventDate);
+  firstNonEmptyText([invoice.cPaymentDue, invoice.dayForPayment, invoice.eventDate]);
 
 const createFallbackServiceLine = (invoice: MongoFilemakerInvoice): InvoicePdfServiceLine => {
-  const serviceName =
-    normalizeText(invoice.servicesServiceType) ||
-    normalizeText(invoice.filesPathListName) ||
-    normalizeText(invoice.filesPathListComment) ||
-    '-';
+  const serviceName = firstNonEmptyText(
+    [invoice.servicesServiceType, invoice.filesPathListName, invoice.filesPathListComment],
+    '-'
+  );
   const serviceSum = normalizeText(invoice.servicesSum);
 
   return {
@@ -166,7 +167,7 @@ const createFallbackServiceLine = (invoice: MongoFilemakerInvoice): InvoicePdfSe
     currency: normalizeText(invoice.servicesCurrency),
     name: serviceName,
     netto: serviceSum,
-    tax: normalizeText(invoice.servicesTaxComment || invoice.servicesVatUuid),
+    tax: firstNonEmptyText([invoice.servicesTaxComment, invoice.servicesVatUuid]),
   };
 };
 
@@ -174,29 +175,26 @@ const toInvoicePdfServiceLine = (
   service: MongoFilemakerInvoiceService,
   invoice: MongoFilemakerInvoice
 ): InvoicePdfServiceLine => {
-  const name =
-    normalizeText(service.serviceName) ||
-    normalizeText(service.serviceNameRaw) ||
-    normalizeText(service.serviceNameUuid) ||
-    normalizeText(service.serviceType) ||
-    normalizeText(invoice.filesPathListName) ||
-    '-';
-  const netto = normalizeText(service.sum) || normalizeText(service.price);
-  const brutto = normalizeText(service.brutto) || netto;
+  const name = firstNonEmptyText(
+    [
+      service.serviceName,
+      service.serviceNameRaw,
+      service.serviceNameUuid,
+      service.serviceType,
+      invoice.filesPathListName,
+    ],
+    '-'
+  );
+  const netto = firstNonEmptyText([service.sum, service.price]);
+  const brutto = firstNonEmptyText([service.brutto], netto);
 
   return {
     amount: normalizeText(service.amount),
     brutto,
-    currency:
-      normalizeText(service.currency) ||
-      normalizeText(service.currencyUuid) ||
-      normalizeText(invoice.servicesCurrency),
+    currency: firstNonEmptyText([service.currency, service.currencyUuid, invoice.servicesCurrency]),
     name,
     netto,
-    tax:
-      normalizeText(service.vatNumber) ||
-      normalizeText(service.taxComment) ||
-      normalizeText(service.vatUuid),
+    tax: firstNonEmptyText([service.vatNumber, service.taxComment, service.vatUuid]),
   };
 };
 
@@ -258,9 +256,10 @@ const buildInvoiceHtml = async (
     invoice.organizationSName
   );
   const serviceLines = await resolveInvoiceServiceLines(invoice);
-  const currency =
-    normalizeText(serviceLines.find((line: InvoicePdfServiceLine): boolean => line.currency.length > 0)?.currency) ||
-    normalizeText(invoice.servicesCurrency);
+  const currency = firstNonEmptyText([
+    serviceLines.find((line: InvoicePdfServiceLine): boolean => line.currency.length > 0)?.currency,
+    invoice.servicesCurrency,
+  ]);
   const totals = resolveInvoiceTotals({ invoice, language, serviceLines });
 
   return {
@@ -302,8 +301,10 @@ export async function createFilemakerInvoicePdfResponse(
   return createPdfDownloadResponse(result);
 }
 
-export const __testOnly = {
+const testOnly = {
   buildInvoiceHtml,
   composeInvoiceFilename,
   resolvePaymentDue,
 };
+
+export { testOnly as __testOnly };

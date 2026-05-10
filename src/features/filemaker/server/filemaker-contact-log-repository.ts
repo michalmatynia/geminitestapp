@@ -1,7 +1,5 @@
 import 'server-only';
 
-/* eslint-disable complexity */
-
 import type { Collection, Document, Filter } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -86,6 +84,11 @@ const normalizePage = (page: number, totalPages: number): number =>
 const optionalString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 
+const optionalStringMetadata = (key: string, value: unknown): Record<string, string> => {
+  const normalized = optionalString(value);
+  return normalized === undefined ? {} : { [key]: normalized };
+};
+
 const optionalStringArray = (value: unknown): string[] =>
   Array.isArray(value)
     ? value.filter((entry: unknown): entry is string => typeof entry === 'string')
@@ -95,9 +98,7 @@ const toContactLogParty = (
   party: MongoContactLogPartyDocument
 ): MongoFilemakerContactLogParty => ({
   legacyOwnerUuid: party.legacyOwnerUuid,
-  ...(optionalString(party.ownerName) !== undefined
-    ? { ownerName: optionalString(party.ownerName) }
-    : {}),
+  ...optionalStringMetadata('ownerName', party.ownerName),
   partyId: party.partyId,
   partyKind: party.partyKind,
 });
@@ -106,67 +107,35 @@ const toContactLogValue = (
   value: MongoContactLogValueDocument
 ): MongoFilemakerContactLogValue => ({
   kind: value.kind,
-  ...(optionalString(value.label) !== undefined ? { label: optionalString(value.label) } : {}),
+  ...optionalStringMetadata('label', value.label),
   legacyValueUuid: value.legacyValueUuid,
   ...(value.parentId !== undefined ? { parentId: value.parentId } : {}),
-  ...(optionalString(value.valueId) !== undefined
-    ? { valueId: optionalString(value.valueId) }
-    : {}),
+  ...optionalStringMetadata('valueId', value.valueId),
 });
 
 const toMongoFilemakerContactLog = (
   document: MongoContactLogDocument
 ): MongoFilemakerContactLog => ({
-  ...(optionalString(document.comment) !== undefined
-    ? { comment: optionalString(document.comment) }
-    : {}),
-  ...(optionalString(document.contactTypeLabel) !== undefined
-    ? { contactTypeLabel: optionalString(document.contactTypeLabel) }
-    : {}),
-  ...(optionalString(document.createdAt) !== undefined
-    ? { createdAt: optionalString(document.createdAt) }
-    : {}),
-  ...(optionalString(document.dateEntered) !== undefined
-    ? { dateEntered: optionalString(document.dateEntered) }
-    : {}),
+  ...optionalStringMetadata('comment', document.comment),
+  ...optionalStringMetadata('contactTypeLabel', document.contactTypeLabel),
+  ...optionalStringMetadata('createdAt', document.createdAt),
+  ...optionalStringMetadata('dateEntered', document.dateEntered),
   id: document.id,
-  ...(optionalString(document.legacyContactTypeUuid) !== undefined
-    ? { legacyContactTypeUuid: optionalString(document.legacyContactTypeUuid) }
-    : {}),
-  ...(optionalString(document.legacyFilemakerId) !== undefined
-    ? { legacyFilemakerId: optionalString(document.legacyFilemakerId) }
-    : {}),
-  ...(optionalString(document.legacyOrganizationUuid) !== undefined
-    ? { legacyOrganizationUuid: optionalString(document.legacyOrganizationUuid) }
-    : {}),
+  ...optionalStringMetadata('legacyContactTypeUuid', document.legacyContactTypeUuid),
+  ...optionalStringMetadata('legacyFilemakerId', document.legacyFilemakerId),
+  ...optionalStringMetadata('legacyOrganizationUuid', document.legacyOrganizationUuid),
   legacyOwnerUuids: optionalStringArray(document.legacyOwnerUuids),
-  ...(optionalString(document.legacyParentUuid) !== undefined
-    ? { legacyParentUuid: optionalString(document.legacyParentUuid) }
-    : {}),
+  ...optionalStringMetadata('legacyParentUuid', document.legacyParentUuid),
   legacyUuid: document.legacyUuid,
   linkedParties: (document.linkedParties ?? []).map(toContactLogParty),
-  ...(optionalString(document.mailCampaignLabel) !== undefined
-    ? { mailCampaignLabel: optionalString(document.mailCampaignLabel) }
-    : {}),
-  ...(optionalString(document.mailServerLabel) !== undefined
-    ? { mailServerLabel: optionalString(document.mailServerLabel) }
-    : {}),
-  ...(optionalString(document.onBehalfLabel) !== undefined
-    ? { onBehalfLabel: optionalString(document.onBehalfLabel) }
-    : {}),
-  ...(optionalString(document.ownerName) !== undefined
-    ? { ownerName: optionalString(document.ownerName) }
-    : {}),
-  ...(optionalString(document.updatedAt) !== undefined
-    ? { updatedAt: optionalString(document.updatedAt) }
-    : {}),
-  ...(optionalString(document.updatedBy) !== undefined
-    ? { updatedBy: optionalString(document.updatedBy) }
-    : {}),
+  ...optionalStringMetadata('mailCampaignLabel', document.mailCampaignLabel),
+  ...optionalStringMetadata('mailServerLabel', document.mailServerLabel),
+  ...optionalStringMetadata('onBehalfLabel', document.onBehalfLabel),
+  ...optionalStringMetadata('ownerName', document.ownerName),
+  ...optionalStringMetadata('updatedAt', document.updatedAt),
+  ...optionalStringMetadata('updatedBy', document.updatedBy),
   values: (document.values ?? []).map(toContactLogValue),
-  ...(optionalString(document.yearProspectLabel) !== undefined
-    ? { yearProspectLabel: optionalString(document.yearProspectLabel) }
-    : {}),
+  ...optionalStringMetadata('yearProspectLabel', document.yearProspectLabel),
 });
 
 const buildOrganizationContactLogFilter = (

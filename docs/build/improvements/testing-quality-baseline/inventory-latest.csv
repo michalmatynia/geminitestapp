@@ -1,2 +1,1 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-audit,testing-quality-suite-inventory,Refresh the testing suite inventory,passed,automatic,false,metrics:test-suite-inventory,docs/metrics/testing-suite-inventory-latest.md|docs/metrics/testing-suite-inventory-latest.json,2026-05-06T11:44:17.513Z,artifacts/improvements/audit-report.json

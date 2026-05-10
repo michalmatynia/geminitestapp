@@ -19,21 +19,28 @@ export type FastCometUploadResponse = {
   remoteUrl?: string | undefined;
 };
 
+const isMetadataRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isBrowserFile = (value: unknown): value is File =>
+  typeof File !== 'undefined' && value instanceof File;
+
 /**
  * Checks if a file record originates from FastComet.
  */
 export const isFastCometImageFile = (imageFile: ImageFileSelection | null | undefined): boolean => {
   if (imageFile?.storageProvider === 'fastcomet') return true;
   const metadata = imageFile?.metadata;
-  return metadata !== null && typeof metadata === 'object' && !Array.isArray(metadata) && (metadata as any)['storageSource'] === 'fastcomet';
+  return isMetadataRecord(metadata) && metadata.storageSource === 'fastcomet';
 };
 
 /**
  * Resolves the upload filename for an image slot.
  */
 export const resolveFastCometUploadEventFilename = (slot: ProductImageSlotValue): string | null => {
-  if (slot?.type === 'existing') return slot.data.filename ?? null;
-  if (slot?.type === 'file' && typeof File !== 'undefined' && slot.data instanceof File) return slot.data.name || null;
+  if (slot === null) return null;
+  if (slot.type === 'existing') return slot.data.filename ?? null;
+  if (isBrowserFile(slot.data)) return slot.data.name !== '' ? slot.data.name : null;
   return null;
 };
 
@@ -41,8 +48,9 @@ export const resolveFastCometUploadEventFilename = (slot: ProductImageSlotValue)
  * Resolves an image file ID for an image slot.
  */
 export const resolveFastCometUploadEventImageFileId = (slot: ProductImageSlotValue): string => {
-  if (slot?.type === 'existing') return slot.data.id;
-  return slot?.slotId ?? 'pending-file';
+  if (slot === null) return 'pending-file';
+  if (slot.type === 'existing') return slot.data.id;
+  return slot.slotId;
 };
 
 /**
@@ -57,16 +65,9 @@ export const postFastCometUploadRequest = async (input: {
   formData.append('productId', input.productId);
   formData.append('slotIndex', input.index.toString());
   
-  if (input.slot.type === 'file' && typeof File !== 'undefined' && input.slot.data instanceof File) {
+  if (input.slot.type === 'file' && isBrowserFile(input.slot.data)) {
     formData.append('file', input.slot.data);
   }
 
-  const response = await api.post('/api/products/image-manager/fastcomet-upload', {
-    body: formData,
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Upload failed with status ${response.status}`);
-  }
-  return response.json() as Promise<FastCometUploadResponse>;
+  return await api.post<FastCometUploadResponse>('/api/products/image-manager/fastcomet-upload', formData);
 };

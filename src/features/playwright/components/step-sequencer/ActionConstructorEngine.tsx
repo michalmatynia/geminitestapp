@@ -27,10 +27,18 @@ import type { PlaywrightResolvedActionBlock } from '../../context/PlaywrightStep
 import {
   PLAYWRIGHT_STEP_TYPE_LABELS,
   type PlaywrightActionExecutionBrowserPreference,
+  type PlaywrightActionExecutionSettings,
+  type PlaywrightContextColorScheme,
+  type PlaywrightContextReducedMotion,
   type PlaywrightStep,
   type PlaywrightStepSet,
 } from '@/shared/contracts/playwright-steps';
-import { STEP_REGISTRY, type StepId } from '@/shared/lib/browser-execution/step-registry';
+import type {
+  PlaywrightIdentityProfile,
+  PlaywrightProxyProviderPreset,
+  PlaywrightProxySessionMode,
+} from '@/shared/contracts/playwright';
+import { STEP_REGISTRY } from '@/shared/lib/browser-execution/step-registry';
 import {
   playwrightDeviceOptions,
   playwrightIdentityProfileOptions,
@@ -68,16 +76,161 @@ import { StepSetCodePreviewDialog } from './StepSetCodePreviewDialog';
 import { StepTypeIcon } from './StepTypeIcon';
 
 import { RUNTIME_STEP_GROUPS } from './engine/constants';
-import type { ActionConstructorEngineProps } from './engine/types';
-
 import { toNullableInteger, toNullableFloat } from './engine/utils';
-import { useActionConstructorEngineLogic } from './engine/hooks';
 
 const toPermissionList = (value: string): string[] =>
   value
     .split(',')
     .map((permission) => permission.trim())
     .filter((permission) => permission.length > 0);
+
+const resolveTreeNodeStateClassName = (input: {
+  dropPosition: TreeNodeProps['dropPosition'];
+  isDragging: boolean;
+  isSelected: boolean;
+}): string => {
+  if (input.isSelected) {
+    return 'bg-sky-600/20 text-white ring-1 ring-inset ring-sky-400/40';
+  }
+  if (input.dropPosition === 'before' || input.dropPosition === 'after') {
+    return 'bg-sky-500/10 ring-1 ring-inset ring-sky-500/60';
+  }
+  if (input.isDragging) {
+    return 'opacity-50';
+  }
+  return 'text-gray-300 hover:bg-muted/40';
+};
+
+const resolveActionBlockDisplayName = (item: PlaywrightResolvedActionBlock): string => {
+  const { block, runtimeStepLabel, step, stepSet } = item;
+  return (
+    block.label ??
+    (block.kind === 'runtime_step' ? runtimeStepLabel : null) ??
+    step?.name ??
+    stepSet?.name ??
+    `(deleted ${block.kind}: ${block.refId})`
+  );
+};
+
+const isActionBlockMissing = (item: PlaywrightResolvedActionBlock): boolean => {
+  if (item.block.kind === 'runtime_step') {
+    return item.runtimeStepLabel === null;
+  }
+  if (item.block.kind === 'step') {
+    return item.step === null;
+  }
+  return item.stepSet === null;
+};
+
+const resolveActionBlockBadgeLabel = (item: PlaywrightResolvedActionBlock): string => {
+  if (item.block.kind === 'runtime_step') {
+    return 'Runtime step';
+  }
+  if (item.block.kind === 'step') {
+    return item.step === null ? 'Missing step' : PLAYWRIGHT_STEP_TYPE_LABELS[item.step.type];
+  }
+  return `${item.stepSet?.stepIds.length ?? 0} steps`;
+};
+
+const resolveActionBlockKindLabel = (item: PlaywrightResolvedActionBlock): string => {
+  if (item.block.kind === 'runtime_step') return 'Runtime step';
+  if (item.block.kind === 'step') return 'Direct step';
+  return 'Step set';
+};
+
+const buildRuntimePreviewStep = (
+  item: PlaywrightResolvedActionBlock,
+  index: number
+): PlaywrightStep | null => {
+  if (item.block.kind !== 'runtime_step' || item.runtimeStepLabel === null) {
+    return null;
+  }
+  return {
+    id: item.block.refId,
+    name: item.runtimeStepLabel,
+    description: 'Browser-execution runtime step module.',
+    type: 'custom_script',
+    selector: null,
+    value: null,
+    url: null,
+    key: null,
+    timeout: null,
+    script: `await runtimeSteps[${JSON.stringify(item.block.refId)}](context);`,
+    inputBindings: {},
+    websiteId: null,
+    flowId: null,
+    tags: ['runtime_step'],
+    sortOrder: index,
+    createdAt: '',
+    updatedAt: '',
+  };
+};
+
+const resolveActionBlockPreviewStep = (
+  item: PlaywrightResolvedActionBlock,
+  index: number
+): PlaywrightStep | null => item.step ?? buildRuntimePreviewStep(item, index);
+
+const renderActionBlockIcon = (item: PlaywrightResolvedActionBlock): React.JSX.Element => {
+  if (item.block.kind === 'runtime_step') {
+    return <ListChecks className='size-3.5 text-sky-300' />;
+  }
+  if (item.block.kind === 'step') {
+    return item.step === null ? (
+      <AlertTriangle className='size-3.5 text-amber-400' />
+    ) : (
+      <StepTypeIcon type={item.step.type} className='size-3.5' />
+    );
+  }
+  return <Layers className='size-3.5 text-sky-400' />;
+};
+
+const resolveHeadlessSelectValue = (
+  settings: PlaywrightActionExecutionSettings
+): '__inherit__' | 'headed' | 'headless' => {
+  if (settings.headless === null) return '__inherit__';
+  return settings.headless ? 'headless' : 'headed';
+};
+
+const resolveDeviceSelectValue = (settings: PlaywrightActionExecutionSettings): string => {
+  if (settings.emulateDevice === null) return '__inherit__';
+  if (!settings.emulateDevice) return '__disabled__';
+  return settings.deviceName ?? 'Desktop Chrome';
+};
+
+const resolveNullableBooleanSelectValue = (
+  value: boolean | null
+): '__disabled__' | '__enabled__' | '__inherit__' => {
+  if (value === null) return '__inherit__';
+  return value ? '__enabled__' : '__disabled__';
+};
+
+const toNullableIdentityProfile = (value: string): PlaywrightIdentityProfile | null => {
+  if (value === 'default' || value === 'search' || value === 'marketplace') return value;
+  return null;
+};
+
+const toNullableProxySessionMode = (value: string): PlaywrightProxySessionMode | null => {
+  if (value === 'sticky' || value === 'rotate') return value;
+  return null;
+};
+
+const toNullableProxyProviderPreset = (value: string): PlaywrightProxyProviderPreset | null => {
+  if (value === 'custom' || value === 'brightdata' || value === 'oxylabs' || value === 'decodo') {
+    return value;
+  }
+  return null;
+};
+
+const toNullableColorScheme = (value: string): PlaywrightContextColorScheme | null => {
+  if (value === 'light' || value === 'dark') return value;
+  return null;
+};
+
+const toNullableReducedMotion = (value: string): PlaywrightContextReducedMotion | null => {
+  if (value === 'reduce' || value === 'no-preference') return value;
+  return null;
+};
 
 // ---------------------------------------------------------------------------
 // Tree node renderer
@@ -104,15 +257,13 @@ const ActionConstructorTreeNode = memo((
   } = props;
 
   const decoded = decodeStepSeqNodeId(node.id);
-  const isStepSet = decoded?.entity === 'step_set';
-
-  const stateClassName = isSelected
-    ? 'bg-sky-600/20 text-white ring-1 ring-inset ring-sky-400/40'
-    : dropPosition === 'before' || dropPosition === 'after'
-      ? 'bg-sky-500/10 ring-1 ring-inset ring-sky-500/60'
-      : isDragging
-        ? 'opacity-50'
-        : 'text-gray-300 hover:bg-muted/40';
+  const stepSetId = decoded?.entity === 'step_set' ? decoded.id : null;
+  const isStepSet = stepSetId !== null;
+  const stateClassName = resolveTreeNodeStateClassName({
+    dropPosition,
+    isDragging,
+    isSelected,
+  });
 
   return (
     <div
@@ -159,12 +310,12 @@ const ActionConstructorTreeNode = memo((
       </button>
 
       {/* Quick-add button for step sets */}
-      {isStepSet && decoded !== null ? (
+      {stepSetId !== null ? (
         <button
           type='button'
           onClick={(e) => {
             e.stopPropagation();
-            onAddToAction(decoded.id);
+            onAddToAction(stepSetId);
           }}
           className='invisible ml-auto inline-flex size-5 items-center justify-center rounded text-sky-400 opacity-80 hover:bg-sky-500/20 hover:opacity-100 group-hover:visible'
           aria-label={`Add ${node.name} to action`}
@@ -199,44 +350,11 @@ function ActionSequenceItem({
   onPreviewStepSet: (stepSet: PlaywrightStepSet) => void;
 }): React.JSX.Element {
   const { handleRemoveFromAction, handleToggleActionBlockEnabled } = usePlaywrightStepSequencer();
-  const { block, runtimeStepLabel, step, stepSet } = item;
-  const isStep = block.kind === 'step';
-  const isRuntimeStep = block.kind === 'runtime_step';
-  const displayName =
-    block.label ??
-    (isRuntimeStep ? runtimeStepLabel : null) ??
-    step?.name ??
-    stepSet?.name ??
-    `(deleted ${block.kind}: ${block.refId})`;
-  const isMissing = isRuntimeStep ? runtimeStepLabel === null : isStep ? step === null : stepSet === null;
-  const badgeLabel = isRuntimeStep
-    ? 'Runtime step'
-    : isStep
-      ? (step ? PLAYWRIGHT_STEP_TYPE_LABELS[step.type] : 'Missing step')
-      : `${stepSet?.stepIds.length ?? 0} steps`;
-  const previewStep: PlaywrightStep | null = step ?? (
-    isRuntimeStep && runtimeStepLabel
-      ? {
-          id: block.refId,
-          name: runtimeStepLabel,
-          description: 'Browser-execution runtime step module.',
-          type: 'custom_script',
-          selector: null,
-          value: null,
-          url: null,
-          key: null,
-          timeout: null,
-          script: `await runtimeSteps[${JSON.stringify(block.refId)}](context);`,
-          inputBindings: {},
-          websiteId: null,
-          flowId: null,
-          tags: ['runtime_step'],
-          sortOrder: index,
-          createdAt: '',
-          updatedAt: '',
-        }
-      : null
-  );
+  const { block, stepSet } = item;
+  const displayName = resolveActionBlockDisplayName(item);
+  const isMissing = isActionBlockMissing(item);
+  const badgeLabel = resolveActionBlockBadgeLabel(item);
+  const previewStep: PlaywrightStep | null = resolveActionBlockPreviewStep(item, index);
 
   return (
     <div
@@ -264,17 +382,7 @@ function ActionSequenceItem({
       </span>
 
       <span className='inline-flex shrink-0 items-center'>
-        {isRuntimeStep ? (
-          <ListChecks className='size-3.5 text-sky-300' />
-        ) : isStep ? (
-          step ? (
-            <StepTypeIcon type={step.type} className='size-3.5' />
-          ) : (
-            <AlertTriangle className='size-3.5 text-amber-400' />
-          )
-        ) : (
-          <Layers className='size-3.5 text-sky-400' />
-        )}
+        {renderActionBlockIcon(item)}
       </span>
 
       <div className='min-w-0 flex-1'>
@@ -285,7 +393,7 @@ function ActionSequenceItem({
           {displayName}
         </div>
         <div className='flex items-center gap-1 text-[10px] text-muted-foreground'>
-          <span>{isRuntimeStep ? 'Runtime step' : isStep ? 'Direct step' : 'Step set'}</span>
+          <span>{resolveActionBlockKindLabel(item)}</span>
           {!block.enabled ? <span>• disabled</span> : null}
         </div>
       </div>
@@ -351,13 +459,6 @@ function ActionSequenceItem({
 
 export function ActionConstructorEngine(): React.JSX.Element {
   const {
-    isCodePreviewOpen,
-    setIsCodePreviewOpen,
-    selectedActionBlock,
-    setSelectedActionBlock,
-    toggleCodePreview,
-  } = useActionConstructorEngineLogic();
-  const {
     steps,
     stepSets,
     websites,
@@ -399,10 +500,13 @@ export function ActionConstructorEngine(): React.JSX.Element {
     : null;
 
   const { data: personas = [] } = usePlaywrightPersonas();
+  const [previewStep, setPreviewStep] = useState<PlaywrightStep | null>(null);
+  const [previewStepSet, setPreviewStepSet] = useState<PlaywrightStepSet | null>(null);
+  const [isActionCodePreviewOpen, setIsActionCodePreviewOpen] = useState(false);
 
   useEffect(() => {
     if (highlightedActionBlockId === null) {
-      return;
+      return undefined;
     }
 
     const rafId = window.requestAnimationFrame(() => {
@@ -643,13 +747,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               <div className='space-y-1'>
                 <Label className='text-[11px] text-muted-foreground'>Browser mode</Label>
                 <Select
-                  value={
-                    actionExecutionSettings.headless === null
-                      ? '__inherit__'
-                      : actionExecutionSettings.headless
-                        ? 'headless'
-                        : 'headed'
-                  }
+                  value={resolveHeadlessSelectValue(actionExecutionSettings)}
                   onValueChange={(value) =>
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
@@ -701,13 +799,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               <div className='space-y-1'>
                 <Label className='text-[11px] text-muted-foreground'>Device emulation</Label>
                 <Select
-                  value={
-                    actionExecutionSettings.emulateDevice === null
-                      ? '__inherit__'
-                      : actionExecutionSettings.emulateDevice
-                        ? (actionExecutionSettings.deviceName ?? 'Desktop Chrome')
-                        : '__disabled__'
-                  }
+                  value={resolveDeviceSelectValue(actionExecutionSettings)}
                   onValueChange={(value) => {
                     if (value === '__inherit__') {
                       setActionExecutionSettings({
@@ -839,13 +931,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
                       identityProfile:
-                        value === '__inherit__'
-                          ? null
-                          : value === 'default' ||
-                              value === 'search' ||
-                              value === 'marketplace'
-                            ? value
-                            : null,
+                        value === '__inherit__' ? null : toNullableIdentityProfile(value),
                     })
                   }
                 >
@@ -866,13 +952,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               <div className='space-y-1'>
                 <Label className='text-[11px] text-muted-foreground'>Humanize mouse</Label>
                 <Select
-                  value={
-                    actionExecutionSettings.humanizeMouse === null
-                      ? '__inherit__'
-                      : actionExecutionSettings.humanizeMouse
-                        ? '__enabled__'
-                        : '__disabled__'
-                  }
+                  value={resolveNullableBooleanSelectValue(actionExecutionSettings.humanizeMouse)}
                   onValueChange={(value) =>
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
@@ -913,13 +993,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
               <div className='space-y-1'>
                 <Label className='text-[11px] text-muted-foreground'>Proxy</Label>
                 <Select
-                  value={
-                    actionExecutionSettings.proxyEnabled === null
-                      ? '__inherit__'
-                      : actionExecutionSettings.proxyEnabled
-                        ? '__enabled__'
-                        : '__disabled__'
-                  }
+                  value={resolveNullableBooleanSelectValue(actionExecutionSettings.proxyEnabled)}
                   onValueChange={(value) =>
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
@@ -945,11 +1019,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 <Label className='text-[11px] text-muted-foreground'>Proxy session affinity</Label>
                 <Select
                   value={
-                    actionExecutionSettings.proxySessionAffinity === null
-                      ? '__inherit__'
-                      : actionExecutionSettings.proxySessionAffinity
-                        ? '__enabled__'
-                        : '__disabled__'
+                    resolveNullableBooleanSelectValue(actionExecutionSettings.proxySessionAffinity)
                   }
                   onValueChange={(value) =>
                     setActionExecutionSettings({
@@ -980,11 +1050,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
                       proxySessionMode:
-                        value === '__inherit__'
-                          ? null
-                          : value === 'sticky' || value === 'rotate'
-                            ? value
-                            : null,
+                        value === '__inherit__' ? null : toNullableProxySessionMode(value),
                     })
                   }
                 >
@@ -1010,14 +1076,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                     setActionExecutionSettings({
                       ...actionExecutionSettings,
                       proxyProviderPreset:
-                        value === '__inherit__'
-                          ? null
-                          : value === 'custom' ||
-                              value === 'brightdata' ||
-                              value === 'oxylabs' ||
-                              value === 'decodo'
-                            ? value
-                            : null,
+                        value === '__inherit__' ? null : toNullableProxyProviderPreset(value),
                     })
                   }
                 >
@@ -1316,11 +1375,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       onValueChange={(value) =>
                         handleUpdateActionBlockConfig(index, {
                           colorScheme:
-                            value === '__inherit__'
-                              ? null
-                              : value === 'light' || value === 'dark'
-                                ? value
-                                : null,
+                            value === '__inherit__' ? null : toNullableColorScheme(value),
                         })
                       }
                     >
@@ -1342,11 +1397,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
                       onValueChange={(value) =>
                         handleUpdateActionBlockConfig(index, {
                           reducedMotion:
-                            value === '__inherit__'
-                              ? null
-                              : value === 'reduce' || value === 'no-preference'
-                                ? value
-                                : null,
+                            value === '__inherit__' ? null : toNullableReducedMotion(value),
                         })
                       }
                     >

@@ -1,5 +1,3 @@
-/* eslint-disable complexity, consistent-return, @typescript-eslint/consistent-type-assertions */
-
 import {
   isCvContainerBlock,
   isCvContainerKindAcceptingChildKind,
@@ -44,6 +42,7 @@ const replaceContainerChildren = (
         ),
       } satisfies CvRowBlock;
   }
+  return container;
 };
 
 const collectBlockIds = (blocks: CvBlock[]): Set<string> => {
@@ -72,11 +71,15 @@ const createCopyId = (sourceId: string, usedIds: Set<string>): string => {
 
 const cloneCvBlockTree = (block: CvBlock, usedIds: Set<string>): CvBlock => {
   const id = createCopyId(block.id, usedIds);
-  if (!isCvContainerBlock(block)) return { ...block, id } as CvBlock;
+  if (!isCvContainerBlock(block)) {
+    const leafBlock: CvBlock = { ...block, id };
+    return leafBlock;
+  }
   const children = (block.children as CvBlock[]).map((child: CvBlock): CvBlock =>
     cloneCvBlockTree(child, usedIds)
   );
-  return replaceContainerChildren({ ...block, id } as CvContainerBlock, children);
+  const containerBlock: CvContainerBlock = { ...block, id };
+  return replaceContainerChildren(containerBlock, children);
 };
 
 const mapBlocks = (blocks: CvBlock[], visit: (block: CvBlock) => CvBlock): CvBlock[] =>
@@ -106,7 +109,8 @@ export const updateCvBlock = (
 ): CvBlock[] =>
   mapBlocks(blocks, (block: CvBlock): CvBlock => {
     if (block.id !== blockId) return block;
-    return { ...block, ...patch } as CvBlock;
+    const updatedBlock: CvBlock = { ...block, ...patch };
+    return updatedBlock;
   });
 
 export const removeCvBlock = (blocks: CvBlock[], blockId: string): CvBlock[] => {
@@ -188,6 +192,42 @@ export const insertCvBlock = (
   });
 };
 
+const resolveSelectedCvInsertionParent = (
+  blocks: CvBlock[],
+  selectedBlockId: string | null,
+  newKind: CvBlock['kind']
+): { parentId: string | null; index: number | undefined } | null => {
+  if (selectedBlockId === null) return null;
+  const selectedContext = findCvBlockContext(blocks, selectedBlockId);
+  if (selectedContext === null) return null;
+
+  const { block, parent } = selectedContext;
+  if (isCvContainerBlock(block) && isCvContainerKindAcceptingChildKind(block.kind, newKind)) {
+    return { parentId: block.id, index: undefined };
+  }
+  if (parent !== null && isCvContainerKindAcceptingChildKind(parent.kind, newKind)) {
+    return { parentId: parent.id, index: selectedContext.index + 1 };
+  }
+  return null;
+};
+
+const findLastCvContainerAcceptingKind = (
+  blocks: CvBlock[],
+  newKind: CvBlock['kind']
+): CvContainerBlock | null => {
+  for (let index = blocks.length - 1; index >= 0; index -= 1) {
+    const block = blocks[index];
+    if (
+      block !== undefined &&
+      isCvContainerBlock(block) &&
+      isCvContainerKindAcceptingChildKind(block.kind, newKind)
+    ) {
+      return block;
+    }
+  }
+  return null;
+};
+
 export const resolveCvInsertionParent = (
   blocks: CvBlock[],
   selectedBlockId: string | null,
@@ -195,23 +235,9 @@ export const resolveCvInsertionParent = (
 ): { parentId: string | null; index: number | undefined } => {
   if (newKind === 'section') return { parentId: null, index: undefined };
 
-  const selectedContext =
-    selectedBlockId !== null ? findCvBlockContext(blocks, selectedBlockId) : null;
-  if (selectedContext) {
-    const { block, parent } = selectedContext;
-    if (isCvContainerBlock(block) && isCvContainerKindAcceptingChildKind(block.kind, newKind)) {
-      return { parentId: block.id, index: undefined };
-    }
-    if (parent && isCvContainerKindAcceptingChildKind(parent.kind, newKind)) {
-      return { parentId: parent.id, index: selectedContext.index + 1 };
-    }
-  }
+  const selectedParent = resolveSelectedCvInsertionParent(blocks, selectedBlockId, newKind);
+  if (selectedParent !== null) return selectedParent;
 
-  for (let index = blocks.length - 1; index >= 0; index -= 1) {
-    const block = blocks[index];
-    if (block && isCvContainerBlock(block) && isCvContainerKindAcceptingChildKind(block.kind, newKind)) {
-      return { parentId: block.id, index: undefined };
-    }
-  }
-  return { parentId: null, index: undefined };
+  const fallbackParent = findLastCvContainerAcceptingKind(blocks, newKind);
+  return { parentId: fallbackParent?.id ?? null, index: undefined };
 };

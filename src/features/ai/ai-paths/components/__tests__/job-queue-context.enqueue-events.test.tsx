@@ -339,6 +339,32 @@ describe('JobQueueProvider enqueue event listeners', () => {
     expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
   });
 
+  it('does not auto-expand an optimistic-only initial run before the server confirms it', async () => {
+    rememberOptimisticAiPathRun({
+      id: 'active-run',
+      status: 'running',
+      pathId: 'path-1',
+      pathName: 'Path 1',
+      createdAt: '2026-03-09T12:00:00.000Z',
+      updatedAt: '2026-03-09T12:00:05.000Z',
+    } as AiPathRunRecord);
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='active-run' initialExpandedRunId='active-run'>
+          <ExpandedRunProbe />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('expanded-runs')).toHaveTextContent('empty');
+    });
+    expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
+    expect(eventSourceUrls).toEqual([]);
+  });
+
   it('does not open a live stream for an already terminal expanded run', async () => {
     jobQueueRunsData = {
       runs: [

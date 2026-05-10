@@ -37,7 +37,7 @@ export const execScanOutput = async ({
   cwd,
   env,
   sourceName,
-  maxBuffer = 8 * 1024 * 1024,
+  maxBuffer = 32 * 1024 * 1024,
   timeoutMs = 0,
 }) => {
   try {

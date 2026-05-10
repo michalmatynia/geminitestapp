@@ -767,10 +767,15 @@ export const shouldRunParameterDefinitionFallback = (args: {
   return isMissingCatalogIdQuery(args.query);
 };
 
+import { configurationError, internalError } from '@/shared/errors/app-error';
+
+// ... (existing constants)
+
 export const applyParameterInferenceGuard = (args: {
   dbConfig: DatabaseConfig;
   updates: Record<string, unknown>;
   templateInputs: RuntimePortValues;
+  nodeId: string;
 }): {
   updates: Record<string, unknown>;
   applied: boolean;
@@ -787,13 +792,11 @@ export const applyParameterInferenceGuard = (args: {
   if (targetPath !== 'parameters') {
     const nextUpdates: Record<string, unknown> = { ...args.updates };
     delete nextUpdates[targetPath];
-    const errorMessage =
-      'Parameter inference guard targetPath must use canonical "parameters" path.';
-    return createBlockedParameterInferenceResult({
+    const errorMessage = 'Parameter inference guard targetPath must use canonical "parameters" path.';
+    throw configurationError(errorMessage, {
+      nodeId: args.nodeId,
       targetPath,
-      updates: nextUpdates,
-      reason: 'unsupported_target_path',
-      errorMessage,
+      requiredPath: 'parameters',
     });
   }
 
@@ -818,18 +821,14 @@ export const applyParameterInferenceGuard = (args: {
     const nextUpdates: Record<string, unknown> = { ...args.updates };
     delete nextUpdates[targetPath];
     const errorMessage = 'No parameter definitions resolved for parameter inference.';
-    return createBlockedParameterInferenceResult({
-      targetPath,
+    throw configurationError(errorMessage, {
+      nodeId: args.nodeId,
       definitionsPort,
       definitionsPath,
-      candidates: candidates.length,
-      definitions: 0,
-      repairedCandidates: candidateRepairApplied,
-      updates: nextUpdates,
-      reason: 'missing_definitions',
-      errorMessage,
+      candidatesCount: candidates.length,
     });
   }
+// ...
 
   const { accepted, stats } = collectAcceptedParameterInferenceCandidates({
     allowUnknownParameterIds,

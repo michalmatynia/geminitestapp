@@ -2,9 +2,9 @@
 
 import React from 'react';
 
-import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
-import type { EmailBlock } from './block-model';
 import { useEmailLayerPanel } from './useEmailLayerPanel';
+import type { EmailBlock } from './block-model';
+import { LayerPanel } from '../shared/LayerPanel';
 
 interface EmailLayerPanelProps {
   blocks: EmailBlock[];
@@ -29,16 +29,11 @@ export function EmailLayerPanel({
   });
 
   return (
-    <div className={className ?? 'flex flex-col gap-2'}>
-      <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-        Email layers
-      </div>
-      <MasterFolderTreeViewport
-        tree={tree}
-        enableDnd
-        emptyLabel='Add a section to start.'
-        runtime={runtime}
-      />
-    </div>
+    <LayerPanel
+      label="Email layers"
+      tree={tree}
+      runtime={runtime}
+      className={className}
+    />
   );
 }

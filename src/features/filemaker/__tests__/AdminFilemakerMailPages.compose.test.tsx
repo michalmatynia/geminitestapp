@@ -21,11 +21,14 @@ describe('AdminFilemakerMail pages compose flows', () => {
     const { AdminFilemakerMailComposePage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailComposePage'
     );
-    searchParamsGetMock.mockImplementation((key: string) =>
-      key === 'accountId' ? 'account-1' : key === 'mailboxPath' ? 'INBOX' : null
-    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'INBOX';
+      return null;
+    });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -108,6 +111,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -184,6 +188,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -252,6 +257,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -364,6 +370,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     searchParamsGetMock.mockImplementation((key: string) => currentRoute[key] ?? null);
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({
@@ -471,6 +478,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({
@@ -568,6 +576,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     searchParamsGetMock.mockImplementation((key: string) => currentRoute[key] ?? null);
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -628,7 +637,6 @@ describe('AdminFilemakerMail pages compose flows', () => {
     const { AdminFilemakerMailThreadPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
     );
-    // @ts-ignore
     const { routeParamsMock } = await import('./AdminFilemakerMailPages.test-support');
     routeParamsMock.threadId = 'thread%201';
     searchParamsGetMock.mockImplementation((key: string) => {
@@ -642,6 +650,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -749,6 +758,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -783,6 +793,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });
@@ -855,7 +866,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
           button.textContent?.includes('VIP') &&
           !button.textContent?.includes('Recent Hello') &&
           !button.textContent?.includes('Compose')
-      );
+    );
 
     expect(composeTreeButton).toBeDefined();
     expect(composeTreeButton).toHaveClass('bg-sky-500/15');
@@ -876,6 +887,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      await Promise.resolve();
       const url = String(input);
       if (url === '/api/filemaker/mail/accounts' && !init?.method) {
         return jsonResponse({ accounts: mockAccounts });

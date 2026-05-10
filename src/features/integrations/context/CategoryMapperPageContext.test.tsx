@@ -237,6 +237,15 @@ describe('CategoryMapperPageContext', () => {
       expect(result.current.selectedConnectionId).toBe('conn-base-1');
     });
 
+    it('honors the initial marketplace prop for the direct Tradera route', () => {
+      const { result } = renderHook(() => useCategoryMapperPageSelection(), {
+        wrapper: createWrapper('tradera'),
+      });
+
+      expect(result.current.selectedMarketplace).toBe('tradera');
+      expect(result.current.selectedConnectionId).toBe('conn-tradera-1');
+    });
+
     it('falls back to the first connection when the requested URL connection is unknown', () => {
       useSearchParamsMock.mockReturnValue(new URLSearchParams('connectionId=missing-connection'));
 

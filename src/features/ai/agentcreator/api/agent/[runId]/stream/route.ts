@@ -43,7 +43,6 @@ async function getHandler(
         } catch (error) {
           logClientError(error);
           try {
-            const { ErrorSystem } = await import('@/shared/utils/observability/system-logger');
             void ErrorSystem.captureException(error, {
               service: buildAgentCreatorStreamSource('snapshot-failed'),
               runId,

@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines-per-function */
 import { Landmark } from 'lucide-react';
 import React from 'react';
 
@@ -6,7 +5,10 @@ import type { FilemakerBankAccount } from '../../filemaker-bank-account.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 import { Badge, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
-import { FilemakerLinkedRecordActions } from './FilemakerLinkedRecordActions';
+import {
+  FilemakerLinkedRecordActions,
+  type FilemakerLinkedRecordEditField,
+} from './FilemakerLinkedRecordActions';
 
 export interface FilemakerBankAccountsSectionProps {
   bankAccounts: FilemakerBankAccount[];
@@ -24,9 +26,9 @@ const formatOptionalValue = (value: string | null | undefined): string => {
 };
 
 const firstNonEmpty = (...values: Array<string | null | undefined>): string =>
-  values.map((value: string | null | undefined): string => value?.trim() ?? '').find(
-    (value: string): boolean => value.length > 0
-  ) ?? missingValue;
+  values
+    .map((value: string | null | undefined): string => value?.trim() ?? '')
+    .find((value: string): boolean => value.length > 0) ?? missingValue;
 
 const buildBankAndAccountTitle = (bankName: string, accountNumber: string): string => {
   if (bankName.length > 0 && accountNumber.length > 0) return `${bankName}, ${accountNumber}`;
@@ -41,11 +43,26 @@ const bankAccountTitle = (bankAccount: FilemakerBankAccount): string =>
     bankAccount.legacyUuid
   );
 
-const StatusBadges = ({
-  bankAccount,
-}: {
-  bankAccount: FilemakerBankAccount;
-}): React.JSX.Element => (
+const valueOrEmpty = (value: string | null | undefined): string => value ?? '';
+
+const buildBankAccountEditFields = (
+  bankAccount: FilemakerBankAccount
+): FilemakerLinkedRecordEditField[] => [
+  { key: 'accountNumber', label: 'Account Number', value: bankAccount.accountNumber },
+  { key: 'displayName', label: 'Display Name', value: valueOrEmpty(bankAccount.displayName) },
+  { key: 'bankName', label: 'Bank Name', value: valueOrEmpty(bankAccount.bankName) },
+  { key: 'bankAddress', label: 'Bank Address', value: valueOrEmpty(bankAccount.bankAddress) },
+  { key: 'category', label: 'Category', value: valueOrEmpty(bankAccount.category) },
+  { key: 'swift', label: 'SWIFT', value: valueOrEmpty(bankAccount.swift) },
+  { key: 'currencyLabel', label: 'Currency Label', value: valueOrEmpty(bankAccount.currencyLabel) },
+  { key: 'currencyValueId', label: 'Currency Value ID', value: valueOrEmpty(bankAccount.currencyValueId) },
+  { key: 'legacyCurrencyUuid', label: 'Legacy Currency UUID', value: valueOrEmpty(bankAccount.legacyCurrencyUuid) },
+  { key: 'isDefaultForOwner', label: 'Default for owner', type: 'checkbox', value: bankAccount.isDefaultForOwner },
+  { key: 'isDisplayForOwner', label: 'Display for owner', type: 'checkbox', value: bankAccount.isDisplayForOwner },
+  { key: 'updatedBy', label: 'Modified By', value: valueOrEmpty(bankAccount.updatedBy) },
+];
+
+const StatusBadges = ({ bankAccount }: { bankAccount: FilemakerBankAccount }): React.JSX.Element => (
   <div className='flex flex-wrap gap-2'>
     {bankAccount.isDefaultForOwner ? (
       <Badge variant='success' className='text-[10px]'>
@@ -66,7 +83,26 @@ const StatusBadges = ({
   </div>
 );
 
-const FilemakerBankAccountCard = ({
+const BankAccountTitleBlock = ({
+  bankAccount,
+}: {
+  bankAccount: FilemakerBankAccount;
+}): React.JSX.Element => (
+  <div className='flex min-w-0 items-start gap-2'>
+    <Landmark className='mt-0.5 size-3.5 shrink-0 text-emerald-300' />
+    <div className='min-w-0'>
+      <div className='truncate text-sm font-semibold text-white'>
+        {bankAccountTitle(bankAccount)}
+      </div>
+      <div className='truncate text-[10px] text-gray-600'>
+        Legacy UUID: {formatOptionalValue(bankAccount.legacyUuid)} | Owner UUID:{' '}
+        {formatOptionalValue(bankAccount.legacyOwnerUuid)}
+      </div>
+    </div>
+  </div>
+);
+
+const BankAccountActions = ({
   bankAccount,
   isSaving,
   onDelete,
@@ -77,62 +113,63 @@ const FilemakerBankAccountCard = ({
   onDelete?: (id: string) => Promise<void> | void;
   onUpdate?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
 }): React.JSX.Element => (
-  <Card key={bankAccount.id} variant='subtle-compact' className='bg-card/20'>
+  <FilemakerLinkedRecordActions
+    deleteLabel='bank account'
+    editTitle='Edit Bank Account'
+    isSaving={isSaving}
+    fields={buildBankAccountEditFields(bankAccount)}
+    onSave={
+      onUpdate === undefined
+        ? undefined
+        : (patch: Record<string, unknown>) => onUpdate(bankAccount.id, patch)
+    }
+    onDelete={onDelete === undefined ? undefined : () => onDelete(bankAccount.id)}
+  />
+);
+
+const BankAccountDetailsGrid = ({
+  bankAccount,
+}: {
+  bankAccount: FilemakerBankAccount;
+}): React.JSX.Element => (
+  <div className='grid gap-2 text-xs text-gray-300 md:grid-cols-2'>
+    <div>Account: {formatOptionalValue(bankAccount.accountNumber)}</div>
+    <div>SWIFT: {formatOptionalValue(bankAccount.swift)}</div>
+    <div>Bank: {formatOptionalValue(bankAccount.bankName)}</div>
+    <div>Address: {formatOptionalValue(bankAccount.bankAddress)}</div>
+  </div>
+);
+
+const BankAccountAuditBadges = ({
+  bankAccount,
+}: {
+  bankAccount: FilemakerBankAccount;
+}): React.JSX.Element => (
+  <div className='flex flex-wrap gap-2'>
+    <Badge variant='outline' className='text-[10px]'>
+      Modified: {formatTimestamp(bankAccount.updatedAt)}
+    </Badge>
+    <Badge variant='outline' className='text-[10px]'>
+      Modified By: {formatOptionalValue(bankAccount.updatedBy)}
+    </Badge>
+  </div>
+);
+
+const FilemakerBankAccountCard = (props: {
+  bankAccount: FilemakerBankAccount;
+  isSaving: boolean;
+  onDelete?: (id: string) => Promise<void> | void;
+  onUpdate?: (id: string, patch: Record<string, unknown>) => Promise<void> | void;
+}): React.JSX.Element => (
+  <Card key={props.bankAccount.id} variant='subtle-compact' className='bg-card/20'>
     <div className='space-y-2 p-3'>
       <div className='flex min-w-0 items-start justify-between gap-2'>
-        <div className='flex min-w-0 items-start gap-2'>
-          <Landmark className='mt-0.5 size-3.5 shrink-0 text-emerald-300' />
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-semibold text-white'>
-              {bankAccountTitle(bankAccount)}
-            </div>
-            <div className='truncate text-[10px] text-gray-600'>
-              Legacy UUID: {formatOptionalValue(bankAccount.legacyUuid)} | Owner UUID:{' '}
-              {formatOptionalValue(bankAccount.legacyOwnerUuid)}
-            </div>
-          </div>
-        </div>
-        <FilemakerLinkedRecordActions
-          deleteLabel='bank account'
-          editTitle='Edit Bank Account'
-          isSaving={isSaving}
-          fields={[
-            { key: 'accountNumber', label: 'Account Number', value: bankAccount.accountNumber },
-            { key: 'displayName', label: 'Display Name', value: bankAccount.displayName ?? '' },
-            { key: 'bankName', label: 'Bank Name', value: bankAccount.bankName ?? '' },
-            { key: 'bankAddress', label: 'Bank Address', value: bankAccount.bankAddress ?? '' },
-            { key: 'category', label: 'Category', value: bankAccount.category ?? '' },
-            { key: 'swift', label: 'SWIFT', value: bankAccount.swift ?? '' },
-            { key: 'currencyLabel', label: 'Currency Label', value: bankAccount.currencyLabel ?? '' },
-            { key: 'currencyValueId', label: 'Currency Value ID', value: bankAccount.currencyValueId ?? '' },
-            { key: 'legacyCurrencyUuid', label: 'Legacy Currency UUID', value: bankAccount.legacyCurrencyUuid ?? '' },
-            { key: 'isDefaultForOwner', label: 'Default for owner', type: 'checkbox', value: bankAccount.isDefaultForOwner },
-            { key: 'isDisplayForOwner', label: 'Display for owner', type: 'checkbox', value: bankAccount.isDisplayForOwner },
-            { key: 'updatedBy', label: 'Modified By', value: bankAccount.updatedBy ?? '' },
-          ]}
-          onSave={
-            onUpdate === undefined
-              ? undefined
-              : (patch: Record<string, unknown>) => onUpdate(bankAccount.id, patch)
-          }
-          onDelete={onDelete === undefined ? undefined : () => onDelete(bankAccount.id)}
-        />
+        <BankAccountTitleBlock bankAccount={props.bankAccount} />
+        <BankAccountActions {...props} />
       </div>
-      <div className='grid gap-2 text-xs text-gray-300 md:grid-cols-2'>
-        <div>Account: {formatOptionalValue(bankAccount.accountNumber)}</div>
-        <div>SWIFT: {formatOptionalValue(bankAccount.swift)}</div>
-        <div>Bank: {formatOptionalValue(bankAccount.bankName)}</div>
-        <div>Address: {formatOptionalValue(bankAccount.bankAddress)}</div>
-      </div>
-      <StatusBadges bankAccount={bankAccount} />
-      <div className='flex flex-wrap gap-2'>
-        <Badge variant='outline' className='text-[10px]'>
-          Modified: {formatTimestamp(bankAccount.updatedAt)}
-        </Badge>
-        <Badge variant='outline' className='text-[10px]'>
-          Modified By: {formatOptionalValue(bankAccount.updatedBy)}
-        </Badge>
-      </div>
+      <BankAccountDetailsGrid bankAccount={props.bankAccount} />
+      <StatusBadges bankAccount={props.bankAccount} />
+      <BankAccountAuditBadges bankAccount={props.bankAccount} />
     </div>
   </Card>
 );

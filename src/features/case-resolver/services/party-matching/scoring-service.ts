@@ -1,15 +1,14 @@
-/* eslint-disable complexity, max-params, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- Party matching scoring intentionally evaluates many optional evidence fields. */
 /**
  * Party Matching Scoring Service
- * 
- * Provides algorithms for scoring the compatibility of party candidates 
+ *
+ * Provides algorithms for scoring the compatibility of party candidates
  * against existing Filemaker system records.
  */
 
 import {
+  normalizeCaseResolverComparable,
   normalizeCaseResolverStreet,
   normalizeOrganizationName,
-  normalizeCaseResolverComparable,
 } from './party-matching-service';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
@@ -18,110 +17,181 @@ type ParsedStreetNumber = {
   unit: string;
 };
 
+type CurrentAddressFields = {
+  street: string;
+  streetNumber: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
+type CandidateAddressFields = Pick<
+  PromptExploderCaseResolverPartyCandidate,
+  'street' | 'streetNumber' | 'houseNumber' | 'city' | 'postalCode' | 'country'
+>;
+
+type ScoreAddressCompatibilityArgs = [
+  candidate: CandidateAddressFields,
+  current: CurrentAddressFields,
+  normalizePostalCode: (val: string) => string,
+  normalizeCountry: (val: string) => string | null,
+  isCityCompatible: (candidateCity: string, recordCity: string) => boolean,
+];
+
 const parseStreetNumber = (value: string): ParsedStreetNumber => {
   const compact = normalizeCaseResolverComparable(value).replace(/\s+/g, '');
-  if (!compact) return { main: '', unit: '' };
-  const [mainRaw, unitRaw = ''] = compact.split('/', 2);
+  if (compact.length === 0) return { main: '', unit: '' };
+  const [mainRaw = '', unitRaw = ''] = compact.split('/', 2);
   return {
-    main: mainRaw ?? '',
-    unit: unitRaw ?? '',
+    main: mainRaw,
+    unit: unitRaw,
   };
 };
 
-/**
- * Validates if two street number strings are compatible.
- */
 export const areStreetNumbersCompatible = (a: string, b: string): boolean => {
   const normalizedLeft = parseStreetNumber(a);
   const normalizedRight = parseStreetNumber(b);
-  if (!normalizedLeft.main || !normalizedRight.main) return false;
+  if (normalizedLeft.main.length === 0 || normalizedRight.main.length === 0) return false;
   if (normalizedLeft.main !== normalizedRight.main) return false;
-  if (normalizedLeft.unit && normalizedRight.unit && normalizedLeft.unit !== normalizedRight.unit) {
-    return false;
-  }
-  return true;
+  if (normalizedLeft.unit.length === 0 || normalizedRight.unit.length === 0) return true;
+  return normalizedLeft.unit === normalizedRight.unit;
 };
 
-/**
- * Scores the compatibility of a candidate's address fields against a stored address.
- * Returns null if the address explicitly contradicts; otherwise, returns the match score.
- */
-export const scoreAddressCompatibility = (
-  candidate: Pick<
-    PromptExploderCaseResolverPartyCandidate,
-    'street' | 'streetNumber' | 'houseNumber' | 'city' | 'postalCode' | 'country'
-  >,
-  current: {
-    street: string;
-    streetNumber: string;
-    city: string;
-    postalCode: string;
-    country: string;
-  },
-  normalizePostalCode: (val: string) => string,
-  normalizeCountry: (val: string) => string | null,
-  isCityCompatible: (c: string, r: string) => boolean
+const scoreStreetCompatibility = (
+  candidateStreet: string,
+  currentStreet: string
 ): number | null => {
-  let score = 0;
-  
-  const candidateStreet = normalizeCaseResolverStreet(candidate.street ?? '');
-  if (candidateStreet) {
-    const currentStreet = normalizeCaseResolverStreet(current.street);
-    if (!currentStreet) return null;
-    if (candidateStreet === currentStreet) score += 2;
-    else if (candidateStreet.includes(currentStreet) || currentStreet.includes(candidateStreet)) score += 1;
-    else return null;
+  if (candidateStreet.length === 0) return 0;
+  const normalizedCurrentStreet = normalizeCaseResolverStreet(currentStreet);
+  if (normalizedCurrentStreet.length === 0) return null;
+  if (candidateStreet === normalizedCurrentStreet) return 2;
+  if (
+    candidateStreet.includes(normalizedCurrentStreet) ||
+    normalizedCurrentStreet.includes(candidateStreet)
+  ) {
+    return 1;
   }
+  return null;
+};
 
+const composeCandidateStreetNumber = (candidate: CandidateAddressFields): string => {
   const candidateStreetNumberMain = (candidate.streetNumber ?? '').trim();
   const candidateHouse = (candidate.houseNumber ?? '').trim();
-  const candidateStreetNumber = candidateHouse
+  return candidateHouse.length > 0
     ? `${candidateStreetNumberMain}/${candidateHouse}`
     : candidateStreetNumberMain;
-  if (candidateStreetNumber) {
-    if (!current.streetNumber.trim()) return null;
-    if (!areStreetNumbersCompatible(candidateStreetNumber, current.streetNumber)) return null;
-    score += 2;
-  }
-
-  const candidatePostalCode = normalizePostalCode(candidate.postalCode ?? '');
-  if (candidatePostalCode) {
-    const currentPostalCode = normalizePostalCode(current.postalCode);
-    if (!currentPostalCode || candidatePostalCode !== currentPostalCode) return null;
-    score += 2;
-  }
-
-  const candidateCity = (candidate.city ?? '').trim();
-  if (candidateCity) {
-    if (!isCityCompatible(candidateCity, current.city)) return null;
-    score += 1.5;
-  }
-
-  const candidateCountry = normalizeCountry(candidate.country ?? '');
-  if (candidateCountry) {
-    const currentCountry = normalizeCountry(current.country);
-    if (!currentCountry || candidateCountry !== currentCountry) return null;
-    score += 1;
-  }
-
-  return score;
 };
 
-/**
- * Scores organisation name similarity.
- */
-export const scoreOrganizationNameCompatibility = (candidateName: string, currentName: string): number => {
-  const left = normalizeOrganizationName(candidateName);
-  const right = normalizeOrganizationName(currentName);
-  if (!left || !right) return 0;
-  if (left === right) return 6;
-  if (left.includes(right) || right.includes(left)) {
-    return Math.min(left.length, right.length) >= 6 ? 4 : 0;
-  }
-  const leftTokens = left.split(' ').filter(Boolean);
-  const rightTokens = new Set(right.split(' ').filter(Boolean));
+const scoreStreetNumberCompatibility = (
+  candidate: CandidateAddressFields,
+  currentStreetNumber: string
+): number | null => {
+  const candidateStreetNumber = composeCandidateStreetNumber(candidate);
+  if (candidateStreetNumber.length === 0) return 0;
+  if (currentStreetNumber.trim().length === 0) return null;
+  return areStreetNumbersCompatible(candidateStreetNumber, currentStreetNumber) ? 2 : null;
+};
+
+const scorePostalCodeCompatibility = ({
+  candidatePostalCode,
+  currentPostalCode,
+  normalizePostalCode,
+}: {
+  candidatePostalCode: string;
+  currentPostalCode: string;
+  normalizePostalCode: (val: string) => string;
+}): number | null => {
+  const normalizedCandidatePostalCode = normalizePostalCode(candidatePostalCode);
+  if (normalizedCandidatePostalCode.length === 0) return 0;
+  const normalizedCurrentPostalCode = normalizePostalCode(currentPostalCode);
+  if (normalizedCurrentPostalCode.length === 0) return null;
+  return normalizedCandidatePostalCode === normalizedCurrentPostalCode ? 2 : null;
+};
+
+const scoreCityCompatibility = ({
+  candidateCity,
+  currentCity,
+  isCityCompatible,
+}: {
+  candidateCity: string;
+  currentCity: string;
+  isCityCompatible: (candidateCity: string, recordCity: string) => boolean;
+}): number | null => {
+  if (candidateCity.trim().length === 0) return 0;
+  return isCityCompatible(candidateCity, currentCity) ? 1.5 : null;
+};
+
+const scoreCountryCompatibility = ({
+  candidateCountry,
+  currentCountry,
+  normalizeCountry,
+}: {
+  candidateCountry: string;
+  currentCountry: string;
+  normalizeCountry: (val: string) => string | null;
+}): number | null => {
+  const normalizedCandidateCountry = normalizeCountry(candidateCountry);
+  if (normalizedCandidateCountry === null) return 0;
+  const normalizedCurrentCountry = normalizeCountry(currentCountry);
+  if (normalizedCurrentCountry === null) return null;
+  return normalizedCandidateCountry === normalizedCurrentCountry ? 1 : null;
+};
+
+const sumAddressScores = (scores: Array<number | null>): number | null => {
+  if (scores.some((score) => score === null)) return null;
+  return scores.reduce((total, score) => total + (score ?? 0), 0);
+};
+
+export const scoreAddressCompatibility = (
+  ...[
+    candidate,
+    current,
+    normalizePostalCode,
+    normalizeCountry,
+    isCityCompatible,
+  ]: ScoreAddressCompatibilityArgs
+): number | null => {
+  const candidateStreet = normalizeCaseResolverStreet(candidate.street ?? '');
+  return sumAddressScores([
+    scoreStreetCompatibility(candidateStreet, current.street),
+    scoreStreetNumberCompatibility(candidate, current.streetNumber),
+    scorePostalCodeCompatibility({
+      candidatePostalCode: candidate.postalCode ?? '',
+      currentPostalCode: current.postalCode,
+      normalizePostalCode,
+    }),
+    scoreCityCompatibility({
+      candidateCity: candidate.city ?? '',
+      currentCity: current.city,
+      isCityCompatible,
+    }),
+    scoreCountryCompatibility({
+      candidateCountry: candidate.country ?? '',
+      currentCountry: current.country,
+      normalizeCountry,
+    }),
+  ]);
+};
+
+const scoreOrganizationTokenOverlap = (left: string, right: string): number => {
+  const leftTokens = left.split(' ').filter((token) => token.length > 0);
+  const rightTokens = new Set(right.split(' ').filter((token) => token.length > 0));
   if (leftTokens.length === 0 || rightTokens.size === 0) return 0;
   const overlap = leftTokens.filter((token) => rightTokens.has(token)).length;
   const overlapRatio = overlap / Math.max(leftTokens.length, rightTokens.size);
   return overlap >= 2 && overlapRatio >= 0.75 ? 3 : 0;
+};
+
+export const scoreOrganizationNameCompatibility = (
+  candidateName: string,
+  currentName: string
+): number => {
+  const left = normalizeOrganizationName(candidateName);
+  const right = normalizeOrganizationName(currentName);
+  if (left.length === 0 || right.length === 0) return 0;
+  if (left === right) return 6;
+  if (left.includes(right) || right.includes(left)) {
+    return Math.min(left.length, right.length) >= 6 ? 4 : 0;
+  }
+  return scoreOrganizationTokenOverlap(left, right);
 };

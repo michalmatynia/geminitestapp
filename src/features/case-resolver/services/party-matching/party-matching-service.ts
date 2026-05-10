@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions -- Party matching service accepts optional extracted fields. */
 /**
  * Party Matching Service
  * 
@@ -81,9 +80,9 @@ export const normalizeOrganizationName = (value: string): string => {
  */
 export const normalizeCountryCode = (value: string): string | null => {
   const normalized = normalizeCaseResolverComparable(value);
-  if (!normalized) return null;
+  if (normalized.length === 0) return null;
   const aliasCode = COUNTRY_ALIAS_TO_CODE[normalized];
-  if (aliasCode) return aliasCode;
+  if (aliasCode !== undefined) return aliasCode;
   if (/^[a-z]{2}$/.test(normalized)) return normalized.toUpperCase();
   return normalized;
 };

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion */
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';

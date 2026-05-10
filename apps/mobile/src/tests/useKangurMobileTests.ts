@@ -58,7 +58,7 @@ const getProcessedSuites = (
 
 const unusedIsLiveSuite = (
   suite: Pick<KangurTestSuite, 'enabled' | 'publicationStatus'>,
-): boolean => suite.enabled && suite.publicationStatus === 'live'; // eslint-disable-line @typescript-eslint/no-unused-vars
+): boolean => suite.enabled && suite.publicationStatus === 'live';  
 
 const isPublishedQuestion = (
   question: Pick<KangurTestQuestion, 'editorial'>,
@@ -79,7 +79,7 @@ const unusedGetPublishedQuestionsForSuite = (
       }
 
       return left.id.localeCompare(right.id);
-    }); // eslint-disable-line @typescript-eslint/no-unused-vars
+    });  
 
 
 const resolveFocusedSuiteId = (

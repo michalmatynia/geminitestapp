@@ -2,10 +2,9 @@
 
 import React from 'react';
 
-import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/public';
-
-import type { CvBlock } from './cv-block-model';
 import { useCvLayerPanel } from './useCvLayerPanel';
+import type { CvBlock } from './cv-block-model';
+import { LayerPanel } from '../shared/LayerPanel';
 
 interface CvLayerPanelProps {
   blocks: CvBlock[];
@@ -30,16 +29,11 @@ export function CvLayerPanel({
   });
 
   return (
-    <div className={className ?? 'flex flex-col gap-2'}>
-      <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-        CV layers
-      </div>
-      <MasterFolderTreeViewport
-        tree={tree}
-        enableDnd
-        emptyLabel='Add a section to start.'
-        runtime={runtime}
-      />
-    </div>
+    <LayerPanel
+      label="CV layers"
+      tree={tree}
+      runtime={runtime}
+      className={className}
+    />
   );
 }

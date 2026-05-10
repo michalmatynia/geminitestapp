@@ -6,6 +6,9 @@ import { ExternalLink, Hint } from '@/shared/ui/forms-and-actions.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { JsonViewer } from '@/shared/ui/data-display.public';
 import { TraderaExecutionSteps } from '@/features/integrations/components/listings/TraderaExecutionSteps';
+import {
+  quicklistStepTemplates,
+} from '@/features/integrations/utils/tradera-execution-steps';
 import { 
   formatTimestamp, 
   formatTraderaDuplicateMatchStrategy,
@@ -39,14 +42,51 @@ export function TraderaSection({
   usesCustomScript: boolean;
   listing: any;
 }): React.JSX.Element {
+  const pendingQuicklistAction =
+    execution.pendingAction === 'list' ||
+    execution.pendingAction === 'relist' ||
+    execution.pendingAction === 'sync'
+      ? execution.pendingAction
+      : null;
   const displayedRunId = (liveExecution?.runId ?? '') !== '' ? liveExecution.runId : execution.runId;
   const displayedLatestStage = (liveExecution?.latestStage ?? '') !== '' ? liveExecution.latestStage : execution.latestStage;
   const displayedLatestStageUrl = (liveExecution?.latestStageUrl ?? '') !== '' ? liveExecution.latestStageUrl : execution.latestStageUrl;
-  const displayedExecutionSteps = (liveExecution?.executionSteps?.length ?? 0) > 0 ? liveExecution.executionSteps : execution.executionSteps;
+  const liveExecutionSteps =
+    (liveExecution?.executionSteps?.length ?? 0) > 0 ? liveExecution.executionSteps : [];
+  const persistedExecutionSteps = execution.executionSteps;
+  const plannedQueuedExecutionSteps =
+    liveExecutionSteps.length === 0 &&
+    persistedExecutionSteps.length === 0 &&
+    pendingQuicklistAction !== null &&
+    (execution.pendingQueuedAt ?? null) !== null
+      ? quicklistStepTemplates(pendingQuicklistAction)
+      : [];
+  const displayedExecutionSteps =
+    liveExecutionSteps.length > 0
+      ? liveExecutionSteps
+      : persistedExecutionSteps.length > 0
+        ? persistedExecutionSteps
+        : plannedQueuedExecutionSteps;
+  const showingQueuedStepPlan =
+    liveExecutionSteps.length === 0 &&
+    persistedExecutionSteps.length === 0 &&
+    plannedQueuedExecutionSteps.length > 0;
+  const showingPendingExecutionSteps =
+    liveExecutionSteps.length === 0 &&
+    persistedExecutionSteps.length > 0 &&
+    pendingQuicklistAction !== null &&
+    (execution.pendingQueuedAt ?? null) !== null;
   const displayedRawResult = liveExecution?.rawResult ?? execution.rawResult;
   const displayedLogTail = (liveExecution?.logTail?.length ?? 0) > 0 ? liveExecution.logTail : execution.logTail;
   const displayedLastAction = (liveExecution?.action ?? '') !== '' ? liveExecution.action : execution.lastAction;
-  const liveStatus = liveExecution?.status === 'queued' || liveExecution?.status === 'running' ? liveExecution.status : null;
+  const liveStatus =
+    liveExecution?.status === 'queued' || liveExecution?.status === 'running'
+      ? liveExecution.status
+      : showingQueuedStepPlan
+        ? 'queued'
+        : showingPendingExecutionSteps
+          ? 'running'
+          : null;
   const livePaymentSolutionDiagnostics =
     paymentSolutionRunResultSchema.catch({}).parse(displayedRawResult);
   const paymentSolutionTermsAccepted =
@@ -416,7 +456,13 @@ export function TraderaSection({
       {(displayedExecutionSteps?.length ?? 0) > 0 && (
         <div className='mt-4'>
           <TraderaExecutionSteps
-            title={displayedLastAction === 'check_status' ? 'Status check steps' : 'Execution steps'}
+            title={
+              showingQueuedStepPlan
+                ? 'Queued listing steps'
+                : displayedLastAction === 'check_status'
+                  ? 'Status check steps'
+                  : 'Execution steps'
+            }
             steps={displayedExecutionSteps}
             live={liveStatus !== null}
             liveStatus={liveStatus}

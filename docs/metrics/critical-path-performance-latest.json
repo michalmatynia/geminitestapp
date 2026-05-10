@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-15T14:56:15.477Z",
+  "generatedAt": "2026-05-10T01:05:20.285Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -167,14 +167,14 @@
       "name": "AI Paths Run Execution (API)",
       "maxLines": 130,
       "maxBranchPoints": 11,
-      "totalLines": 2,
+      "totalLines": 8,
       "totalBranchPoints": 0,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/ai-paths/runs/handler.ts",
           "exists": true,
-          "lines": 2,
+          "lines": 8,
           "branchPoints": 0
         }
       ]
@@ -351,14 +351,14 @@
       "name": "AI Paths Run Execution (API)",
       "maxLines": 130,
       "maxBranchPoints": 11,
-      "totalLines": 2,
+      "totalLines": 8,
       "totalBranchPoints": 0,
       "status": "pass",
       "files": [
         {
           "path": "src/app/api/ai-paths/runs/handler.ts",
           "exists": true,
-          "lines": 2,
+          "lines": 8,
           "branchPoints": 0
         }
       ]
@@ -383,128 +383,128 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-04-15T14:56:15.447Z",
+    "generatedAt": "2026-05-10T01:05:20.276Z",
     "hotspots": {
       "topFilesByLines": [
         {
-          "path": "src/features/products/components/list/ProductAmazonScanModal.test.tsx",
-          "lines": 4175
+          "path": "src/features/filemaker/components/page/OrganizationJobListingsSection.tsx",
+          "lines": 4883
+        },
+        {
+          "path": "src/features/products/components/list/ProductScanModal.test.tsx",
+          "lines": 4631
+        },
+        {
+          "path": "src/features/filemaker/server/filemaker-job-board-scrape.test.ts",
+          "lines": 3676
+        },
+        {
+          "path": "src/features/playwright/server/ai-step-service.test.ts",
+          "lines": 3242
+        },
+        {
+          "path": "src/features/playwright/pages/AdminPlaywrightProgrammableIntegrationPage.test.tsx",
+          "lines": 3129
         },
         {
           "path": "src/features/products/components/form/ProductFormScans.test.tsx",
-          "lines": 3065
+          "lines": 2832
         },
         {
-          "path": "src/features/products/server/parts/product-scan-amazon-script.part1.ts",
-          "lines": 2939
+          "path": "src/shared/lib/browser-execution/__tests__/product-scan-sequencers.test.ts",
+          "lines": 2825
         },
         {
-          "path": "src/features/products/server/parts/product-scan-1688-script.part1.ts",
-          "lines": 2227
+          "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.tsx",
+          "lines": 2629
+        },
+        {
+          "path": "src/features/filemaker/__tests__/AdminFilemakerMailPages.routing.test.tsx",
+          "lines": 2451
+        },
+        {
+          "path": "src/features/playwright/server/ai-step-service.ts",
+          "lines": 2443
+        },
+        {
+          "path": "src/features/filemaker/server/filemaker-job-board-scrape.ts",
+          "lines": 2263
         },
         {
           "path": "src/features/products/server/product-scans-service.amazon.test.ts",
-          "lines": 2166
+          "lines": 2255
         },
         {
-          "path": "src/features/products/components/list/ProductAmazonScanModal.tsx",
-          "lines": 2130
+          "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+          "lines": 2224
+        },
+        {
+          "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.test.tsx",
+          "lines": 2146
+        },
+        {
+          "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
+          "lines": 2111
+        },
+        {
+          "path": "src/features/filemaker/__tests__/OrganizationJobListingsSection.test.tsx",
+          "lines": 2060
+        },
+        {
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
+          "lines": 2027
+        },
+        {
+          "path": "src/features/integrations/services/tradera-listing/OtherOperations.test.ts",
+          "lines": 2026
+        },
+        {
+          "path": "src/features/filemaker/server/job-board-scrape/offer-from-evaluation.ts",
+          "lines": 2020
         },
         {
           "path": "src/features/products/components/ProductModals.test.tsx",
           "lines": 1920
         },
         {
-          "path": "src/features/products/server/product-scan-amazon-evaluator.ts",
-          "lines": 1712
+          "path": "src/features/filemaker/server/filemaker-mail-service.ts",
+          "lines": 1916
         },
         {
-          "path": "src/features/integrations/services/tradera-listing-service.test.ts",
-          "lines": 1676
+          "path": "src/features/filemaker/__tests__/AdminFilemakerMailClientPage.test.tsx",
+          "lines": 1781
         },
         {
-          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
-          "lines": 1673
-        },
-        {
-          "path": "src/features/products/server/parts/product-scan-amazon-script.part2.ts",
-          "lines": 1665
-        },
-        {
-          "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
-          "lines": 1599
-        },
-        {
-          "path": "src/features/products/components/form/ProductFormScans.tsx",
-          "lines": 1582
-        },
-        {
-          "path": "src/features/products/pages/AdminProductScannerSettingsPage.tsx",
-          "lines": 1540
-        },
-        {
-          "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
-          "lines": 1517
-        },
-        {
-          "path": "src/features/products/server/product-scans-service.helpers.ts",
-          "lines": 1512
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/BrowserListing.3.test.ts",
-          "lines": 1498
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/BrowserListing.1.test.ts",
-          "lines": 1442
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/script-partials/part-5.ts",
-          "lines": 1417
-        },
-        {
-          "path": "src/features/products/server/product-scans-sync-amazon-handlers.ts",
-          "lines": 1377
-        },
-        {
-          "path": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.test.tsx",
-          "lines": 1351
-        },
-        {
-          "path": "src/features/products/components/list/ProductColumns.test.tsx",
-          "lines": 1341
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/script-partials/part-2.ts",
-          "lines": 1340
+          "path": "src/shared/lib/browser-execution/selectors/tradera.ts",
+          "lines": 1769
         },
         {
           "path": "src/features/product-sync/services/product-sync-processor.ts",
-          "lines": 1324
-        },
-        {
-          "path": "src/features/integrations/services/tradera-listing/BrowserListing.2.test.ts",
-          "lines": 1282
-        },
-        {
-          "path": "src/features/products/components/scans/ProductScanAmazonDetails.tsx",
-          "lines": 1256
-        },
-        {
-          "path": "src/features/ai/ai-paths/services/__tests__/playwright-node-runner.test.ts",
-          "lines": 1253
+          "lines": 1690
         },
         {
           "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
-          "lines": 1239
+          "lines": 1667
         },
         {
-          "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
-          "lines": 1200
+          "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+          "lines": 1650
         },
         {
-          "path": "src/shared/lib/products/services/productService.test.ts",
-          "lines": 1148
+          "path": "src/features/job-board/server/email-finder.ts",
+          "lines": 1628
+        },
+        {
+          "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+          "lines": 1617
+        },
+        {
+          "path": "src/shared/lib/browser-execution/sequencers/GoogleLensSearchSequencer.ts",
+          "lines": 1608
+        },
+        {
+          "path": "src/features/products/server/product-scans-service.batch.test.ts",
+          "lines": 1563
         }
       ]
     },
@@ -512,27 +512,23 @@
       "topRouteHotspots": [
         {
           "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
-          "lines": 144
+          "lines": 160
+        },
+        {
+          "path": "src/app/api/v2/products/[[...path]]/route.ts",
+          "lines": 136
         },
         {
           "path": "src/app/api/image-studio/[[...path]]/route.ts",
           "lines": 124
         },
         {
-          "path": "src/app/api/v2/products/[[...path]]/route.ts",
-          "lines": 120
-        },
-        {
-          "path": "src/app/api/ai-paths/[[...path]]/route.ts",
-          "lines": 116
-        },
-        {
           "path": "src/app/api/agentcreator/[[...path]]/route.ts",
           "lines": 115
         },
         {
-          "path": "src/app/api/databases/[[...path]]/route.ts",
-          "lines": 100
+          "path": "src/app/api/ai-paths/[[...path]]/route.ts",
+          "lines": 104
         },
         {
           "path": "src/app/api/chatbot/[[...path]]/route.ts",
@@ -547,6 +543,10 @@
           "lines": 37
         },
         {
+          "path": "src/app/api/settings/route.ts",
+          "lines": 37
+        },
+        {
           "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
           "lines": 30
         },
@@ -555,40 +555,40 @@
           "lines": 30
         },
         {
+          "path": "src/app/api/settings/google-oauth/route.ts",
+          "lines": 28
+        },
+        {
+          "path": "src/app/api/settings/lite/route.ts",
+          "lines": 27
+        },
+        {
           "path": "src/app/api/user/preferences/route.ts",
           "lines": 26
+        },
+        {
+          "path": "src/app/api/client-errors/route.ts",
+          "lines": 25
         },
         {
           "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
           "lines": 24
         },
         {
+          "path": "src/app/api/v2/metadata/[type]/route.ts",
+          "lines": 24
+        },
+        {
+          "path": "src/app/api/ai/schema/[entity]/route.ts",
+          "lines": 23
+        },
+        {
           "path": "src/app/api/cms/slugs/[id]/route.ts",
           "lines": 23
         },
         {
-          "path": "src/app/api/auth/users/[id]/route.ts",
+          "path": "src/app/api/ai-insights/generate/session/route.ts",
           "lines": 22
-        },
-        {
-          "path": "src/app/api/ai/schema/[entity]/route.ts",
-          "lines": 21
-        },
-        {
-          "path": "src/app/api/auth/roles/route.ts",
-          "lines": 21
-        },
-        {
-          "path": "src/app/api/drafts/[id]/route.ts",
-          "lines": 21
-        },
-        {
-          "path": "src/app/api/kangur/auth/me/route.ts",
-          "lines": 21
-        },
-        {
-          "path": "src/app/api/assets3d/[id]/route.ts",
-          "lines": 20
         }
       ]
     }

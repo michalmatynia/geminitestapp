@@ -29,6 +29,26 @@ const resolveSuccessMessage = (status: string): string => {
   return 'Ecommerce product is already up to date.';
 };
 
+function EcommerceExportIconButton({
+  ariaLabel,
+  handleClick,
+  isActive,
+  isPending,
+}: {
+  ariaLabel: string;
+  handleClick: () => void;
+  isActive: boolean;
+  isPending: boolean;
+}): React.JSX.Element {
+  return (
+    <Button type='button' disabled={isPending} onClick={handleClick} variant='ghost' size='icon' aria-label={ariaLabel} title={ariaLabel} className={cn('size-8 rounded-full border p-0', isActive ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25' : 'border-gray-500/60 bg-gray-500/10 text-gray-400 hover:border-gray-400/70 hover:bg-gray-500/20 hover:text-gray-300', isPending && 'cursor-not-allowed opacity-60')}>
+      <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
+        {isPending ? '...' : 'EC'}
+      </span>
+    </Button>
+  );
+}
+
 export function EcommerceExportButton({
   product,
   showEcommerceBadge = false,
@@ -50,7 +70,7 @@ export function EcommerceExportButton({
     void mutateAsync(product.id)
       .then((response) => {
         toast(resolveSuccessMessage(response.status), { variant: 'success' });
-        invalidateListingBadges(queryClient);
+        void invalidateListingBadges(queryClient);
       })
       .catch((error: unknown) => {
         logClientError(error);
@@ -65,29 +85,7 @@ export function EcommerceExportButton({
 
   return (
     <>
-      <Button
-        type='button'
-        disabled={isPending}
-        onClick={handleClick}
-        variant='ghost'
-        size='icon'
-        aria-label={ariaLabel}
-        title={ariaLabel}
-        className={cn(
-          'size-8 rounded-full border p-0',
-          isActive
-            ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25'
-            : 'border-gray-500/60 bg-gray-500/10 text-gray-400 hover:border-gray-400/70 hover:bg-gray-500/20 hover:text-gray-300',
-          isPending && 'cursor-not-allowed opacity-60'
-        )}
-      >
-        <span
-          aria-hidden='true'
-          className='text-[9px] font-black uppercase leading-none tracking-tight'
-        >
-          {isPending ? '...' : 'EC'}
-        </span>
-      </Button>
+      <EcommerceExportIconButton ariaLabel={ariaLabel} handleClick={handleClick} isActive={isActive} isPending={isPending} />
       {modalOpen && (
         <EcommerceManageModal
           product={product}

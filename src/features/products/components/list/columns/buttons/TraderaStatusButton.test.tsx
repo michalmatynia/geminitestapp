@@ -1,7 +1,6 @@
-/* eslint-disable max-lines-per-function */
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
@@ -20,6 +19,11 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
 import { TraderaStatusButton } from './TraderaStatusButton';
 
 describe('TraderaStatusButton', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+  });
+
   it('disables the Tradera status action when Market Exclusion includes Tradera', () => {
     useCustomFieldsMock.mockReturnValue({
       data: [
@@ -250,6 +254,78 @@ describe('TraderaStatusButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Manage Tradera listing (active).' }));
 
     expect(onOpenListings).toHaveBeenCalledWith(undefined);
+  });
+
+  it('animates a queued Tradera status only when a worker run id is known', () => {
+    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          expiresAt: Date.now() + 60_000,
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+        },
+      })
+    );
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='queued'
+        prefetchListings={vi.fn()}
+        onOpenListings={vi.fn()}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Manage Tradera listing (queued).',
+    });
+
+    expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).toContain('motion-safe:animate-pulse');
+  });
+
+  it('keeps a queued Tradera status static before the worker run id is known', () => {
+    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='queued'
+        prefetchListings={vi.fn()}
+        onOpenListings={vi.fn()}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Manage Tradera listing (queued).',
+    });
+
+    expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).not.toContain('animate-pulse');
+  });
+
+  it('animates a running Tradera status with the queued tone without requiring a run id', () => {
+    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='running'
+        prefetchListings={vi.fn()}
+        onOpenListings={vi.fn()}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Manage Tradera listing (running).',
+    });
+
+    expect(button.className).toContain('border-amber-400/70');
+    expect(button.className).toContain('motion-safe:animate-pulse');
   });
 
   it('suppresses stale recovery mode when persisted Tradera feedback is already completed', () => {

@@ -1,13 +1,11 @@
-import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import {
   getAgentAuditLogDelegate,
   getAgentBrowserLogDelegate,
   getAgentBrowserSnapshotDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-interface BrowserContextSummary {
+export interface BrowserContextSummary {
   url: string;
   title: string | null;
   domTextSample: string;
@@ -58,11 +56,6 @@ async function fetchLatestSnapshot(
   });
 }
 
-function getErrorPayload(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 export async function getBrowserContextSummary(runId: string): Promise<BrowserContextSummary | null> {
   const agentBrowserSnapshot = getAgentBrowserSnapshotDelegate();
   const agentBrowserLog = getAgentBrowserLogDelegate();
@@ -89,15 +82,12 @@ export async function getBrowserContextSummary(runId: string): Promise<BrowserCo
       uiInventory,
     };
   } catch (error) {
-    logClientError(error);
-    if (DEBUG_CHATBOT) {
-      await ErrorSystem.logWarning('Failed to load browser context', {
-        service: 'agent-engine',
-        action: 'get-browser-context',
-        runId,
-        error: getErrorPayload(error),
-      });
-    }
+    void ErrorSystem.captureException(error, {
+      service: 'agent-engine',
+      feature: 'agent-runtime',
+      action: 'get-browser-context',
+      runId,
+    });
     return null;
   }
 }

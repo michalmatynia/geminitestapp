@@ -1,6 +1,13 @@
 import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import {
+  badRequestError,
+  configurationError,
+  internalError,
+  operationFailedError,
+} from '@/shared/errors/app-error';
 import { entityApi } from '@/shared/lib/ai-paths/api';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { resolveEntityIdFromInputs } from '../utils';
 
@@ -98,8 +105,6 @@ export async function handleDatabaseDeleteOperation(
     node,
     nodeInputs,
     executed,
-    reportAiPathsError,
-    toast,
     simulationEntityType,
     simulationEntityId,
     dbConfig,
@@ -115,41 +120,43 @@ export async function handleDatabaseDeleteOperation(
     simulationEntityId
   );
   if (!entityId) {
-    reportMissingEntityId(node.id, reportAiPathsError, toast);
-    return buildMissingEntityIdResult(aiPrompt);
-  }
-
-  const defaultDeleteResult: Record<string, unknown> = { ok: false };
-  if (executed.updater.has(node.id)) {
-    return buildDeleteOperationResult(defaultDeleteResult, aiPrompt);
-  }
-
-  if (dryRun) {
-    executed.updater.add(node.id);
-    return buildDeleteOperationResult({ ok: true, dryRun: true, entityId, entityType }, aiPrompt);
-  }
-
-  const deleteEntity = getDeleteEntityOperation(entityType);
-  if (!deleteEntity) {
-    toast('Custom deletes are not supported yet.', { variant: 'error' });
-    executed.updater.add(node.id);
-    return buildUnsupportedDeleteResult(entityId, aiPrompt);
-  }
-
-  const deleteResult = await deleteEntity(entityId);
-  executed.updater.add(node.id);
-  if (!deleteResult.ok) {
-    reportDeleteFailure({
+    throw badRequestError('Database delete missing entity ID input.', {
       nodeId: node.id,
       entityType,
-      entityId,
-      error: deleteResult.error,
-      reportAiPathsError,
-      toast,
     });
-    return buildDeleteOperationResult(defaultDeleteResult, aiPrompt);
+  }
+// ...
+  const deleteEntity = getDeleteEntityOperation(entityType);
+  if (!deleteEntity) {
+    throw configurationError(`Custom deletes are not supported for entity type: ${entityType}`, {
+      nodeId: node.id,
+      entityType,
+    });
   }
 
-  reportDeleteSuccess(entityType, entityId, toast);
-  return buildDeleteOperationResult({ ok: true, entityId }, aiPrompt);
+  try {
+    const deleteResult = await deleteEntity(entityId);
+    executed.updater.add(node.id);
+    if (!deleteResult.ok) {
+      throw operationFailedError(`Failed to delete ${entityType}: ${entityId}`, {
+        nodeId: node.id,
+        entityType,
+        entityId,
+        reason: deleteResult.error,
+      });
+    }
+
+    return buildDeleteOperationResult({ ok: true, entityId }, aiPrompt);
+  } catch (error: unknown) {
+    if (error instanceof Error && (error as any).name !== 'AppError') {
+      logClientError(error);
+      throw internalError(`Unexpected database delete failure for ${entityType}: ${entityId}`, {
+        nodeId: node.id,
+        entityType,
+        entityId,
+        cause: error,
+      });
+    }
+    throw error;
+  }
 }

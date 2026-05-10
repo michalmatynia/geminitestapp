@@ -64,6 +64,25 @@ const setTraderaBadgeStatus = (
   );
 };
 
+const TRACKING_IDENTIFIER_KEYS = [
+  'runId',
+  'requestId',
+  'integrationId',
+  'connectionId',
+  'listingId',
+  'listingUrl',
+  'externalListingId',
+] as const;
+
+const hasUpdatedTrackingIdentifiers = (
+  current: PersistedTraderaQuickListFeedback,
+  next: TraderaFeedbackOptions
+): boolean =>
+  TRACKING_IDENTIFIER_KEYS.some((key) => {
+    const nextValue = next[key];
+    return nextValue !== undefined && nextValue !== null && nextValue !== current[key];
+  });
+
 export function useTraderaQuickExportPolling(
   productId: string,
   localFeedback: PersistedTraderaQuickListFeedback | null,
@@ -135,6 +154,13 @@ export function useTraderaQuickExportPolling(
           trackedListing,
           localFeedback
         );
+
+        if (
+          (localFeedback.status === 'processing' || localFeedback.status === 'queued') &&
+          hasUpdatedTrackingIdentifiers(localFeedback, feedbackOptions)
+        ) {
+          setFeedbackStatus(localFeedback.status, feedbackOptions);
+        }
 
         if (trackedListingSuccess || SUCCESS_STATUSES.has(normalizedListingStatus)) {
           setFeedbackStatus('completed', feedbackOptions);

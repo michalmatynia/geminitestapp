@@ -26,7 +26,7 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     const seen = new Set<string>();
 
     const pushName = (value: string | null | undefined): void => {
-      if (!value) return;
+      if (value === null || value === undefined || value === '') return;
       const cleaned = normalize(value);
       if (cleaned.length < 3 || cleaned.length > 140) return;
       if (seen.has(cleaned.toLowerCase())) return;
@@ -84,7 +84,7 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
     };
 
     const collectFromSchema = (node: unknown): void => {
-      if (!node) return;
+      if (node === null || node === undefined) return;
       if (Array.isArray(node)) {
         node.forEach(collectFromSchema);
         return;
@@ -92,11 +92,12 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
       if (typeof node !== 'object') return;
       const record = node as Record<string, unknown>;
       const typeValue = record['@type'];
-      const typeList = Array.isArray(typeValue)
-        ? typeValue.filter((value: unknown): value is string => typeof value === 'string')
-        : typeof typeValue === 'string'
-          ? [typeValue]
-          : [];
+      let typeList: string[] = [];
+      if (Array.isArray(typeValue)) {
+        typeList = typeValue.filter((v: unknown): v is string => typeof v === 'string');
+      } else if (typeof typeValue === 'string') {
+        typeList = [typeValue];
+      }
       const typeNames = typeList.map((value: string) => value.toLowerCase());
       if (
         typeNames.includes('product') ||
@@ -111,11 +112,11 @@ export const extractProductNames = async (page: Page): Promise<string[]> => {
         (record['itemListElement'] as unknown[]).forEach((entry: unknown) => {
           if (!entry || typeof entry !== 'object') return;
           const itemRecord = entry as Record<string, unknown>;
-          const item = itemRecord['item'];
           if (typeof itemRecord['name'] === 'string') {
             pushName(itemRecord['name']);
           }
-          if (item && typeof item === 'object') {
+          const item = itemRecord['item'];
+          if (item !== null && typeof item === 'object') {
             const itemObj = item as Record<string, unknown>;
             if (typeof itemObj['name'] === 'string') {
               pushName(itemObj['name']);
@@ -184,7 +185,7 @@ export const extractProductNamesFromSelectors = async (
     const seen = new Set<string>();
 
     const pushName = (value: string | null | undefined): void => {
-      if (!value) return;
+      if (value === null || value === undefined || value === '') return;
       const cleaned = normalize(value);
       if (cleaned.length < 3 || cleaned.length > 140) return;
       if (seen.has(cleaned.toLowerCase())) return;

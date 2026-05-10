@@ -56,7 +56,9 @@ export function AssetFormFields({
         />
         <datalist id='upload-categories-list'>
           {existingCategories.map((cat: string) => (
-            <option key={cat} value={cat} />
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </datalist>
       </FormField>

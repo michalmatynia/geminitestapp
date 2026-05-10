@@ -1,7 +1,5 @@
 import Papa from 'papaparse';
 
-/* eslint-disable max-lines */
-
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
 import { normalizeLegacyUuid } from './filemaker-values-import.parser';
@@ -41,42 +39,9 @@ const EVENT_FIELDS = {
   websiteFilterCountDuplicate: 'www_FILTERCount',
 } as const;
 
-const EVENT_JOIN_FIELDS = {
-  eventUuid: 'NameEvent_UUID_FK',
-  organizationUuid: 'NameOrganisation_UUID_FK',
-  legacyUuid: 'UUID',
-} as const;
+const EVENT_JOIN_FIELDS = { eventUuid: 'NameEvent_UUID_FK', legacyUuid: 'UUID', organizationUuid: 'NameOrganisation_UUID_FK' } as const;
 
-const HEADERLESS_EVENT_FIELDS = [
-  EVENT_FIELDS.lastEventInstanceDate,
-  EVENT_FIELDS.lastEventInstanceUuid,
-  EVENT_FIELDS.organizationFilterCount,
-  EVENT_FIELDS.websiteFilterCount,
-  EVENT_FIELDS.checked1,
-  EVENT_FIELDS.checked2,
-  EVENT_FIELDS.cooperationStatus,
-  EVENT_FIELDS.currentDay,
-  EVENT_FIELDS.currentWeekNumber,
-  EVENT_FIELDS.createdAt,
-  EVENT_FIELDS.updatedAt,
-  EVENT_FIELDS.defaultAddressUuid,
-  EVENT_FIELDS.discontinued,
-  EVENT_FIELDS.displayAddressUuid,
-  EVENT_FIELDS.eventStart,
-  EVENT_FIELDS.howOften,
-  EVENT_FIELDS.organizationPortalFilter,
-  EVENT_FIELDS.websitePortalFilter,
-  EVENT_FIELDS.lengthDay,
-  EVENT_FIELDS.updatedBy,
-  EVENT_FIELDS.moveDay,
-  EVENT_FIELDS.name,
-  EVENT_FIELDS.organizationFilter,
-  EVENT_FIELDS.legacyParentUuid,
-  EVENT_FIELDS.registrationMonth,
-  EVENT_FIELDS.legacyUuid,
-  EVENT_FIELDS.websiteFilter,
-  EVENT_FIELDS.websiteFilterCountDuplicate,
-] as const;
+const HEADERLESS_EVENT_FIELDS = Object.values(EVENT_FIELDS);
 
 type Delimiter = (typeof DELIMITER_CANDIDATES)[number];
 type LegacyEventRowsFormat = 'CSV/TSV' | 'XLSX';

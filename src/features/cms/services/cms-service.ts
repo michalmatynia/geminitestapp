@@ -16,8 +16,8 @@ import type {
 } from '@/shared/contracts/cms';
 import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms';
 import type { CmsTranslationStatus } from '@/shared/contracts/site-i18n';
+import { internalError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCmsRepository } from './cms-repository';
 
@@ -25,10 +25,6 @@ import { getCmsRepository } from './cms-repository';
  * Service that wraps the CMS repository with error handling and logging.
  * All CMS domain logic and repository access should go through this service.
  */
-import { internalError } from '@/shared/errors/app-error';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-// ... (existing constants)
 
 const repoCall = async <K extends keyof CmsRepository>(
   key: K,

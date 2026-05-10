@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { Button } from '@/shared/ui/primitives.public';
-
+import { BlockPicker } from '../shared/BlockPicker';
 import {
   createCvBlock,
   isCvContainerBlock,
@@ -60,51 +59,15 @@ const isInsertable = (
   );
 };
 
-export function CvBlockPicker({
-  blocks,
-  selectedBlockId,
-  onChange,
-  onSelectBlock,
-  className,
-}: CvBlockPickerProps): React.JSX.Element {
-  const enabledKinds = useMemo<Set<CvBlockKind>>(() => {
-    const set = new Set<CvBlockKind>();
-    PALETTE.forEach((entry): void => {
-      if (isInsertable(blocks, selectedBlockId, entry.kind)) set.add(entry.kind);
-    });
-    return set;
-  }, [blocks, selectedBlockId]);
-
-  const handleAdd = (kind: CvBlockKind): void => {
-    const newBlock = createCvBlock(kind);
-    const { parentId, index } = resolveCvInsertionParent(blocks, selectedBlockId, kind);
-    const next = insertCvBlock(blocks, parentId, newBlock, index);
-    if (next === blocks) return;
-    onChange(next);
-    onSelectBlock(newBlock.id);
-  };
-
+export function CvBlockPicker(props: CvBlockPickerProps): React.JSX.Element {
   return (
-    <div className={className ?? 'flex flex-col gap-1'}>
-      <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>Insert</div>
-      <div className='flex flex-wrap gap-1'>
-        {PALETTE.map((entry) => (
-          <Button
-            key={entry.kind}
-            type='button'
-            variant='outline'
-            size='sm'
-            disabled={!enabledKinds.has(entry.kind)}
-            onClick={(): void => {
-              handleAdd(entry.kind);
-            }}
-            className='h-7 text-[11px]'
-            title={enabledKinds.has(entry.kind) ? `Add ${entry.label}` : `${entry.label} cannot be inserted here`}
-          >
-            + {entry.label}
-          </Button>
-        ))}
-      </div>
-    </div>
+    <BlockPicker
+      {...props}
+      palette={PALETTE}
+      isInsertable={isInsertable}
+      createBlock={createCvBlock}
+      resolveInsertionParent={resolveCvInsertionParent}
+      insertBlock={insertCvBlock}
+    />
   );
 }

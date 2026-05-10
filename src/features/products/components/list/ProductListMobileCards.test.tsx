@@ -1,4 +1,3 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/consistent-type-assertions, @typescript-eslint/consistent-type-imports, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

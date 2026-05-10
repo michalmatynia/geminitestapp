@@ -9,7 +9,126 @@ import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-de
 import { type AgentExecutionContext, type PlanStep, type PlannerMeta } from '@/shared/contracts/agent-runtime';
 import type { InputJsonValue } from '@/shared/contracts/json';
 
-export async function evaluateApproval(args: {
+const updateRunForApproval = async (args: {
+  runId: string;
+  step: PlanStep;
+  planSteps: PlanStep[];
+  lastError: string | null;
+  taskType: PlannerMeta['taskType'] | null;
+  approvalRequestedStepId: string | null;
+  approvalGrantedStepId: string | null;
+  summaryCheckpoint: number;
+  context: AgentExecutionContext;
+}): Promise<void> => {
+  const {
+    runId,
+    step,
+    planSteps,
+    lastError,
+    taskType,
+    approvalRequestedStepId,
+    approvalGrantedStepId,
+    summaryCheckpoint,
+    context,
+  } = args;
+  const { settings, preferences, contextRegistry } = context;
+
+  const chatbotAgentRun = getChatbotAgentRunDelegate();
+  if (chatbotAgentRun) {
+    await chatbotAgentRun.update({
+      where: { id: runId },
+      data: {
+        status: 'waiting_human',
+        requiresHumanIntervention: true,
+        activeStepId: step.id,
+        planState: buildCheckpointState({
+          steps: planSteps,
+          activeStepId: step.id,
+          lastError,
+          taskType,
+          approvalRequestedStepId,
+          approvalGrantedStepId,
+          summaryCheckpoint,
+          settings,
+          preferences,
+          contextRegistry,
+        }) as InputJsonValue,
+        checkpointedAt: new Date(),
+        logLines: {
+          push: `[${new Date().toISOString()}] Approval required for step.`,
+        },
+      },
+    });
+  }
+};
+
+const evaluateApprovalHeuristicOrModel = async (args: {
+  step: PlanStep;
+  run: { prompt: string };
+  runId: string;
+  approvalGateModel: string | null | undefined;
+}): Promise<{ requiresApproval: boolean; reason: string | null; risk: string | null; source: string }> => {
+  const { step, run, runId, approvalGateModel } = args;
+  let requiresApproval = requiresHumanApprovalHeuristic(step, run.prompt);
+  let reason: string | null = null;
+  let risk: string | null = null;
+  let source = 'heuristic';
+
+  if (!requiresApproval && approvalGateModel !== null && approvalGateModel !== undefined && approvalGateModel !== '') {
+    const gateDecision = await evaluateApprovalGateWithLLM({
+      prompt: run.prompt,
+      step,
+      model: approvalGateModel,
+      browserContext: await getBrowserContextSummary(runId),
+      runId,
+    });
+
+    if (gateDecision !== null) {
+      requiresApproval = gateDecision.requiresApproval;
+      reason = gateDecision.reason ?? null;
+      risk = gateDecision.riskLevel ?? null;
+      source = 'policy-model';
+      await logAgentAudit(runId, 'info', 'Approval gate evaluated.', {
+        type: 'approval-gate-review',
+        stepId: step.id,
+        stepTitle: step.title,
+        requiresApproval,
+        reason,
+        riskLevel: risk,
+        model: approvalGateModel,
+      });
+    }
+  }
+  return { requiresApproval, reason, risk, source };
+};
+
+interface ApprovalResult {
+  requiresApproval: boolean;
+  requiresHuman: boolean;
+  approvalSource: string;
+  approvalReason: string | null;
+  approvalRisk: string | null;
+  updatedApprovalRequestedStepId: string | null;
+}
+
+const buildApprovalResult = (args: {
+  requiresApproval: boolean;
+  source: string;
+  reason: string | null;
+  risk: string | null;
+  updatedApprovalRequestedStepId: string | null;
+}): ApprovalResult => {
+  return {
+    requiresApproval: args.requiresApproval,
+    requiresHuman: args.requiresApproval,
+    approvalSource: args.source,
+    approvalReason: args.reason,
+    approvalRisk: args.risk,
+    updatedApprovalRequestedStepId: args.updatedApprovalRequestedStepId,
+  };
+};
+
+export interface EvaluateApprovalArgs {
   step: PlanStep;
   context: AgentExecutionContext;
   runId: string;
@@ -19,14 +138,9 @@ export async function evaluateApproval(args: {
   taskType: PlannerMeta['taskType'] | null;
   approvalRequestedStepId: string | null;
   summaryCheckpoint: number;
-}): Promise<{
-  requiresApproval: boolean;
-  requiresHuman: boolean;
-  approvalSource: string;
-  approvalReason: string | null;
-  approvalRisk: string | null;
-  updatedApprovalRequestedStepId: string | null;
-}> {
+}
+
+export async function evaluateApproval(args: EvaluateApprovalArgs): Promise<ApprovalResult> {
   const {
     step,
     context,
@@ -39,97 +153,55 @@ export async function evaluateApproval(args: {
     summaryCheckpoint,
   } = args;
 
-  const { preferences, approvalGateModel, run, settings, contextRegistry } = context;
+  const { preferences, approvalGateModel, run } = context;
+  const shouldCheckApproval = Boolean(preferences.requireHumanApproval) && approvalGrantedStepId !== step.id;
 
-  let requiresApproval = false;
-  let approvalReason: string | null = null;
-  let approvalRisk: string | null = null;
-  let approvalSource = 'heuristic';
-
-  if (preferences.requireHumanApproval && approvalGrantedStepId !== step.id) {
-    requiresApproval = requiresHumanApprovalHeuristic(step, run.prompt);
-    if (!requiresApproval && approvalGateModel) {
-      const gateContext = await getBrowserContextSummary(runId);
-      const gateDecision = await evaluateApprovalGateWithLLM({
-        prompt: run.prompt,
-        step,
-        model: approvalGateModel,
-        browserContext: gateContext,
-        runId,
-      });
-      if (gateDecision) {
-        requiresApproval = gateDecision.requiresApproval;
-        approvalReason = gateDecision.reason ?? null;
-        approvalRisk = gateDecision.riskLevel ?? null;
-        approvalSource = 'policy-model';
-        await logAgentAudit(runId, 'info', 'Approval gate evaluated.', {
-          type: 'approval-gate-review',
-          stepId: step.id,
-          stepTitle: step.title,
-          requiresApproval,
-          reason: approvalReason,
-          riskLevel: approvalRisk,
-          model: approvalGateModel,
-        });
-      }
-    }
-  }
-
-  let nextApprovalRequestedStepId = approvalRequestedStepId;
-
-  if (preferences.requireHumanApproval && requiresApproval && approvalGrantedStepId !== step.id) {
-    nextApprovalRequestedStepId = step.id;
-    const chatbotAgentRun = getChatbotAgentRunDelegate();
-    if (chatbotAgentRun) {
-      await chatbotAgentRun.update({
-        where: { id: runId },
-        data: {
-          status: 'waiting_human',
-          requiresHumanIntervention: true,
-          activeStepId: step.id,
-          planState: buildCheckpointState({
-            steps: planSteps,
-            activeStepId: step.id,
-          lastError,
-          taskType,
-          approvalRequestedStepId: nextApprovalRequestedStepId,
-            approvalGrantedStepId,
-            summaryCheckpoint,
-          settings,
-          preferences,
-          contextRegistry,
-          }) as InputJsonValue,
-          checkpointedAt: new Date(),
-          logLines: {
-            push: `[${new Date().toISOString()}] Approval required for step.`,
-          },
-        },
-      });
-    }
-    await logAgentAudit(runId, 'warning', 'Approval required.', {
-      type: 'approval-gate',
-      stepId: step.id,
-      stepTitle: step.title,
-      source: approvalSource,
-      reason: approvalReason,
-      riskLevel: approvalRisk,
+  if (shouldCheckApproval) {
+    const { requiresApproval, reason, risk, source } = await evaluateApprovalHeuristicOrModel({
+      step,
+      run,
+      runId,
+      approvalGateModel,
     });
-    return {
-      requiresApproval: true,
-      requiresHuman: true,
-      approvalSource,
-      approvalReason,
-      approvalRisk,
-      updatedApprovalRequestedStepId: nextApprovalRequestedStepId,
-    };
+
+    if (requiresApproval) {
+      const nextApprovalRequestedStepId = step.id;
+      await updateRunForApproval({
+        runId,
+        step,
+        planSteps,
+        lastError,
+        taskType,
+        approvalRequestedStepId: nextApprovalRequestedStepId,
+        approvalGrantedStepId,
+        summaryCheckpoint,
+        context,
+      });
+
+      await logAgentAudit(runId, 'warning', 'Approval required.', {
+        type: 'approval-gate',
+        stepId: step.id,
+        stepTitle: step.title,
+        source,
+        reason,
+        riskLevel: risk,
+      });
+
+      return buildApprovalResult({ 
+        requiresApproval: true, 
+        source, 
+        reason, 
+        risk, 
+        updatedApprovalRequestedStepId: nextApprovalRequestedStepId 
+      });
+    }
   }
 
-  return {
-    requiresApproval: false,
-    requiresHuman: false,
-    approvalSource,
-    approvalReason,
-    approvalRisk,
-    updatedApprovalRequestedStepId: nextApprovalRequestedStepId,
-  };
+  return buildApprovalResult({ 
+    requiresApproval: false, 
+    source: 'none', 
+    reason: null, 
+    risk: null, 
+    updatedApprovalRequestedStepId: approvalRequestedStepId 
+  });
 }

@@ -37,8 +37,8 @@ export function normalizePlanHierarchy(parsed: ParsedPlanHierarchy): PlanHierarc
     const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
     return {
       id: goalId,
-      title: goal.title?.trim() || 'Primary objective',
-      successCriteria: goal.successCriteria?.trim() || null,
+      title: (typeof goal.title === 'string' && goal.title.trim() !== '') ? goal.title.trim() : 'Primary objective',
+      successCriteria: (typeof goal.successCriteria === 'string' && goal.successCriteria.trim() !== '') ? goal.successCriteria.trim() : null,
       priority: typeof goal.priority === 'number' ? goal.priority : null,
       dependsOn: Array.isArray(goal.dependsOn) ? goal.dependsOn : null,
       subgoals: subgoals.map((subgoal) => {
@@ -46,15 +46,15 @@ export function normalizePlanHierarchy(parsed: ParsedPlanHierarchy): PlanHierarc
         const steps = Array.isArray(subgoal.steps) ? subgoal.steps : [];
         return {
           id: subgoalId,
-          title: subgoal.title?.trim() || 'Supporting task',
-          successCriteria: subgoal.successCriteria?.trim() || null,
+          title: (typeof subgoal.title === 'string' && subgoal.title.trim() !== '') ? subgoal.title.trim() : 'Supporting task',
+          successCriteria: (typeof subgoal.successCriteria === 'string' && subgoal.successCriteria.trim() !== '') ? subgoal.successCriteria.trim() : null,
           priority: typeof subgoal.priority === 'number' ? subgoal.priority : null,
           dependsOn: Array.isArray(subgoal.dependsOn) ? subgoal.dependsOn : null,
           steps: steps.map((step) => ({
-            title: step.title?.trim() || 'Review the page state.',
+            title: (typeof step.title === 'string' && step.title.trim() !== '') ? step.title.trim() : 'Review the page state.',
             tool: step.tool === 'none' ? 'none' : ('playwright' as const),
-            expectedObservation: step.expectedObservation?.trim() || null,
-            successCriteria: step.successCriteria?.trim() || null,
+            expectedObservation: (typeof step.expectedObservation === 'string' && step.expectedObservation.trim() !== '') ? step.expectedObservation.trim() : null,
+            successCriteria: (typeof step.successCriteria === 'string' && step.successCriteria.trim() !== '') ? step.successCriteria.trim() : null,
             phase: step.phase ?? null,
             priority: step.priority ?? null,
             dependsOn: step.dependsOn ?? null,

@@ -37,6 +37,22 @@ describe('Category mapper route guardrails', () => {
     });
   });
 
+  describe('Tradera marketplace route renders the Tradera mapper directly', () => {
+    const source = readRoute('marketplaces/tradera/category-mapping/page.tsx');
+
+    it('renders CategoryMapperPage', () => {
+      expect(source).toContain('CategoryMapperPage');
+    });
+
+    it('prefills the Tradera marketplace', () => {
+      expect(source).toMatch(/initialMarketplace=(['"])tradera\1/);
+    });
+
+    it('does not contain a redirect call', () => {
+      expect(source).not.toMatch(/\bredirect\s*\(/);
+    });
+  });
+
   describe('CATEGORY_MAPPING_MARKETPLACE_SLUGS includes tradera', () => {
     const contextSource = readFileSync(
       path.join(

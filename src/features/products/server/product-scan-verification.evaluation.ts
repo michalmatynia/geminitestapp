@@ -5,8 +5,8 @@ import type { z } from 'zod';
 import {
   createPlaywrightVisionGuidedEvaluator,
   evaluateStructuredPlaywrightScreenshotWithAI,
-  type PlaywrightVerificationInjectionConfig,
 } from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightVerificationInjectionConfig } from '@/features/playwright/services/ai-step';
 
 import {
   PRODUCT_SCAN_VERIFICATION_REVIEW_SYSTEM_PROMPT,

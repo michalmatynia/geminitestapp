@@ -83,6 +83,7 @@ interface JobQueueDataLayerResult {
   queueStatusQuery: ListQuery<QueueStatusPayload, QueueStatusPayload>;
   refetchQueueData: JobQueueRefetchData;
   runsQuery: ListQuery<AiPathRunListResult, AiPathRunListResult>;
+  serverRunIds: Set<string>;
   visibleRunsPayload: AiPathRunListResult;
 }
 
@@ -312,6 +313,11 @@ export function useJobQueueDataLayer({
     [optimisticRunsHydrated, optimisticRunsRevision, queuePreviewFilters, runsQuery.data]
   );
 
+  const serverRunIds = useMemo(
+    () => new Set((runsQuery.data?.runs ?? []).map((run) => run.id).filter(Boolean)),
+    [runsQuery.data]
+  );
+
   const rememberVisibleOptimisticRun = useCallback((run: AiPathRunRecord): void => {
     rememberOptimisticAiPathRun(run);
     setOptimisticRunsRevision((prev) => prev + 1);
@@ -401,6 +407,7 @@ export function useJobQueueDataLayer({
     queueStatusQuery,
     refetchQueueData,
     runsQuery,
+    serverRunIds,
     visibleRunsPayload,
   };
 }

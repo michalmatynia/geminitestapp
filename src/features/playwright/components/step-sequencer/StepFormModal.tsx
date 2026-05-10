@@ -3,17 +3,46 @@
 import { useEffect, useMemo } from 'react';
 import { StepFormHeader } from './StepFormHeader';
 import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
-import { type PlaywrightStepSequencerContextType } from '../../context/PlaywrightStepSequencerContext.types';
 import { useStepFormState } from './useStepFormState';
 import { StepFormInputs } from './StepFormInputs';
 import { StepFormSelectorRegistry } from './StepFormSelectorRegistry';
 import {
-  Button, Dialog, DialogContent, DialogFooter, Separator, Textarea
+  Button, Dialog, DialogContent, DialogFooter, Input, Label, Separator, Textarea
 } from '@/shared/ui/primitives.public';
 import { type SelectorRegistryEntry } from '@/shared/contracts/integrations/selector-registry';
-import { type PlaywrightWebsite, type PlaywrightFlow } from '@/shared/contracts/playwright-steps';
+import {
+  type PlaywrightStepInputBinding,
+  type PlaywrightStepType,
+} from '@/shared/contracts/playwright-steps';
+import {
+  inferSelectorRegistryNamespace,
+  SELECTOR_REGISTRY_DEFAULT_PROFILES,
+} from '@/shared/lib/browser-execution/selector-registry-metadata';
+import { isSelectorRegistryEntryCompatibleWithStepField } from '@/shared/lib/browser-execution/selector-registry-roles';
 import { StepFormScope } from './StepFormScope';
 import { TagsInput } from './TagsInput';
+import { type StepDraft, buildEmpty } from './step-form-utils';
+import { StepFormAiConfig } from './StepFormAiConfig';
+
+const SELECTOR_TYPES: readonly PlaywrightStepType[] = [
+  'click',
+  'fill',
+  'select',
+  'check',
+  'uncheck',
+  'hover',
+  'wait_for_selector',
+  'assert_text',
+  'assert_visible',
+  'scroll',
+  'upload_file',
+];
+const VALUE_TYPES: readonly PlaywrightStepType[] = ['fill', 'select', 'upload_file', 'assert_text'];
+const URL_TYPES: readonly PlaywrightStepType[] = ['navigate', 'assert_url'];
+const TIMEOUT_TYPES: readonly PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selector'];
+const SCRIPT_TYPES: readonly PlaywrightStepType[] = ['custom_script'];
+const AI_EVALUATE_TYPES: readonly PlaywrightStepType[] = ['ai_evaluate'];
+const AI_INJECT_TYPES: readonly PlaywrightStepType[] = ['ai_inject'];
 
 export function StepFormModal(): React.JSX.Element | null {
   const {
@@ -23,6 +52,8 @@ export function StepFormModal(): React.JSX.Element | null {
     isSaving,
     websites,
     flows,
+    setIsCreateStepOpen,
+    setEditingStep,
   } = usePlaywrightStepSequencer();
 
   const {
@@ -56,6 +87,7 @@ export function StepFormModal(): React.JSX.Element | null {
     }
   }, [editingStep, setDraft]);
 
+  const selectorBinding = draft.inputBindings?.['selector'];
   const selectedRegistryProfile = (draft.inputBindings?.['selector']?.selectorProfile ?? draft.selectorProfile ?? 
     SELECTOR_REGISTRY_DEFAULT_PROFILES[selectedRegistryNamespace as keyof typeof SELECTOR_REGISTRY_DEFAULT_PROFILES] ?? '');
 
@@ -90,19 +122,6 @@ export function StepFormModal(): React.JSX.Element | null {
       null,
     [registrySelectorEntries, selectedRegistryNamespace, selectedRegistryProfile, draft.inputBindings?.['selector']?.selectorKey]
   );
-  const selectorExpectedRoles = useMemo(
-    () => getCompatibleSelectorRolesForStepField(draft.type ?? 'click'),
-    [draft.type]
-  );
-  const selectorExpectedRoleLabels = useMemo(
-    () => selectorExpectedRoles.map((role) => formatSelectorRegistryRoleLabel(role) ?? role),
-    [selectorExpectedRoles]
-  );
-
-  const selectedRegistryEntryCompatible =
-    selectedRegistryEntry === null
-      ? true
-      : isSelectorRegistryEntryCompatibleWithStepField(selectedRegistryEntry, draft.type ?? 'click');
   const registryEntriesForProfile = useMemo(
     () =>
       registrySelectorEntries.filter(
@@ -171,41 +190,6 @@ export function StepFormModal(): React.JSX.Element | null {
         },
       },
     }));
-  };
-
-  const handleSaveFallbackAsRegistryOverride = async (): Promise<void> => {
-    if (selectedRegistryEntry == null) return;
-    const selector = selectorFallback.trim();
-    if (selector === '') return;
-    const valueJson = buildRegistryOverrideValueJson(selectedRegistryEntry, selector);
-    if (valueJson == null) {
-      setRegistrySaveMessage(null);
-      setRegistrySaveError('This registry entry type cannot be updated from a single selector.');
-      return;
-    }
-
-    setRegistrySaveMessage(null);
-    setRegistrySaveError(null);
-    try {
-      const result = await saveRegistryMutation.mutateAsync({
-        namespace: selectedRegistryNamespace,
-        profile: selectedRegistryProfile,
-        key: selectedRegistryEntry.key,
-        valueJson,
-      });
-      setSelectorBinding({
-        mode: 'selectorRegistry',
-        selectorNamespace: result.namespace,
-        selectorKey: result.key,
-        selectorProfile: result.profile,
-        selectorRole: selectedRegistryEntry.role,
-        fallbackSelector: result.preview[0] ?? selector,
-      });
-      set('selector', result.preview[0] ?? selector);
-      setRegistrySaveMessage(`Saved registry override for ${result.profile}/${result.key}.`);
-    } catch (error) {
-      setRegistrySaveError(error instanceof Error ? error.message : 'Failed to save registry override.');
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {

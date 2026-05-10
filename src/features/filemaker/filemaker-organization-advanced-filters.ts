@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-/* eslint-disable
-   complexity,
-   max-lines,
-   max-lines-per-function
- */
+import { validateAdvancedFilterCondition } from './filemaker-organization-advanced-filter-validation';
+
+export {
+  ORGANIZATION_ADVANCED_BOOLEAN_FIELDS,
+  ORGANIZATION_ADVANCED_DATE_FIELDS,
+  ORGANIZATION_ADVANCED_STRING_FIELDS,
+} from './filemaker-organization-advanced-filter-validation';
 
 export const organizationAdvancedFilterFieldSchema = z.enum([
   'id',
@@ -78,73 +80,6 @@ const organizationAdvancedFilterValueSchema = z.union([
   z.array(organizationAdvancedFilterScalarValueSchema),
 ]);
 
-type OrganizationAdvancedScalarValue = z.infer<
-  typeof organizationAdvancedFilterScalarValueSchema
->;
-
-export const ORGANIZATION_ADVANCED_STRING_FIELDS = new Set<OrganizationAdvancedFilterField>([
-  'id',
-  'name',
-  'tradingName',
-  'taxId',
-  'krs',
-  'cooperationStatus',
-  'city',
-  'street',
-  'postalCode',
-  'country',
-  'countryId',
-  'legacyUuid',
-  'legacyParentUuid',
-  'updatedBy',
-  'jobBoardSourceSite',
-  'jobBoardSourceLabel',
-  'jobBoardSourceUrl',
-]);
-
-export const ORGANIZATION_ADVANCED_DATE_FIELDS = new Set<OrganizationAdvancedFilterField>([
-  'createdAt',
-  'updatedAt',
-  'establishedDate',
-  'jobBoardScrapedAt',
-]);
-
-export const ORGANIZATION_ADVANCED_BOOLEAN_FIELDS = new Set<OrganizationAdvancedFilterField>([
-  'hasAddress',
-  'hasBank',
-  'hasParent',
-]);
-
-const ORGANIZATION_ADVANCED_FILTER_OPERATOR_COMPATIBILITY: Record<
-  OrganizationAdvancedFilterField,
-  readonly OrganizationAdvancedFilterOperator[]
-> = {
-  id: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  name: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  tradingName: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  taxId: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  krs: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  cooperationStatus: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  city: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  street: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  postalCode: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  country: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  countryId: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  legacyUuid: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  legacyParentUuid: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  updatedBy: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  jobBoardSourceSite: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  jobBoardSourceLabel: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  jobBoardSourceUrl: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
-  createdAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
-  updatedAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
-  establishedDate: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
-  jobBoardScrapedAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
-  hasAddress: ['eq', 'neq'],
-  hasBank: ['eq', 'neq'],
-  hasParent: ['eq', 'neq'],
-};
-
 export const organizationAdvancedFilterConditionSchema = z.object({
   type: z.literal('condition'),
   id: z.string().trim().min(1),
@@ -185,108 +120,6 @@ const organizationAdvancedFilterGroupBaseSchema: z.ZodType<OrganizationAdvancedF
 export type OrganizationAdvancedFilterRule =
   | OrganizationAdvancedFilterCondition
   | OrganizationAdvancedFilterGroup;
-
-const isAdvancedStringValue = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
-
-const isAdvancedBooleanValue = (value: unknown): value is boolean => typeof value === 'boolean';
-
-const isAdvancedDateValue = (value: unknown): value is string | number => {
-  if (typeof value === 'number') return Number.isFinite(value);
-  return typeof value === 'string' && value.trim().length > 0;
-};
-
-const validateAdvancedFilterScalarValue = (
-  field: OrganizationAdvancedFilterField,
-  value: unknown
-): value is OrganizationAdvancedScalarValue => {
-  if (ORGANIZATION_ADVANCED_STRING_FIELDS.has(field)) return isAdvancedStringValue(value);
-  if (ORGANIZATION_ADVANCED_DATE_FIELDS.has(field)) return isAdvancedDateValue(value);
-  if (ORGANIZATION_ADVANCED_BOOLEAN_FIELDS.has(field)) return isAdvancedBooleanValue(value);
-  return false;
-};
-
-const validateAdvancedFilterCondition = (
-  condition: OrganizationAdvancedFilterCondition,
-  path: Array<string | number>,
-  ctx: z.RefinementCtx
-): void => {
-  const allowedOperators = ORGANIZATION_ADVANCED_FILTER_OPERATOR_COMPATIBILITY[condition.field];
-  if (!allowedOperators.includes(condition.operator)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [...path, 'operator'],
-      message: `Operator "${condition.operator}" is not allowed for field "${condition.field}".`,
-    });
-    return;
-  }
-
-  if (condition.operator === 'isEmpty' || condition.operator === 'isNotEmpty') {
-    if (condition.value !== undefined || condition.valueTo !== undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path,
-        message: `Operator "${condition.operator}" does not accept value inputs.`,
-      });
-    }
-    return;
-  }
-
-  if (condition.operator === 'between') {
-    if (
-      Array.isArray(condition.value) ||
-      Array.isArray(condition.valueTo) ||
-      !validateAdvancedFilterScalarValue(condition.field, condition.value) ||
-      !validateAdvancedFilterScalarValue(condition.field, condition.valueTo)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path,
-        message: `Operator "between" requires valid scalar values for field "${condition.field}".`,
-      });
-    }
-    return;
-  }
-
-  if (condition.operator === 'in' || condition.operator === 'notIn') {
-    if (!Array.isArray(condition.value) || condition.value.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [...path, 'value'],
-        message: `Operator "${condition.operator}" requires at least one value.`,
-      });
-      return;
-    }
-    if (condition.value.length > ORGANIZATION_ADVANCED_FILTER_MAX_SET_ITEMS) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [...path, 'value'],
-        message: `Operator "${condition.operator}" supports up to ${ORGANIZATION_ADVANCED_FILTER_MAX_SET_ITEMS} values.`,
-      });
-      return;
-    }
-    if (
-      condition.value.some(
-        (value: unknown) => !validateAdvancedFilterScalarValue(condition.field, value)
-      )
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [...path, 'value'],
-        message: `Operator "${condition.operator}" contains invalid values for field "${condition.field}".`,
-      });
-    }
-    return;
-  }
-
-  if (!validateAdvancedFilterScalarValue(condition.field, condition.value)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [...path, 'value'],
-      message: `Operator "${condition.operator}" requires a valid value for field "${condition.field}".`,
-    });
-  }
-};
 
 type OrganizationAdvancedFilterMetrics = {
   depth: number;

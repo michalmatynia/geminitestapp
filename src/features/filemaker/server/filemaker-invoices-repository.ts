@@ -1,8 +1,6 @@
 import 'server-only';
 
-/* eslint-disable complexity */
-
-import type { Document, Filter } from 'mongodb';
+import type { Collection, Document, Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -44,6 +42,8 @@ type InvoiceAggregationResult = {
   documents?: FilemakerInvoiceMongoDocument[];
   metadata?: Array<{ totalCount?: number }>;
 };
+
+type FilemakerInvoiceCollection = Collection<FilemakerInvoiceMongoDocument>;
 
 const PAID_INVOICE_RE = /^(1|true|yes|tak|paid)$/i;
 
@@ -166,6 +166,43 @@ const buildListResult = (input: {
   totalPages: input.totalPages,
 });
 
+const getInvoiceAggregationTotalCount = (result: InvoiceAggregationResult): number => {
+  const totalCount = result.metadata?.[0]?.totalCount;
+  return typeof totalCount === 'number' ? totalCount : 0;
+};
+
+const getInvoiceAggregationDocuments = (
+  result: InvoiceAggregationResult
+): FilemakerInvoiceMongoDocument[] => result.documents ?? [];
+
+const aggregateInvoiceListPage = async (
+  collection: FilemakerInvoiceCollection,
+  input: {
+    filter: Filter<FilemakerInvoiceMongoDocument>;
+    options: FilemakerInvoicesListOptions;
+    page: number;
+  }
+): Promise<InvoiceAggregationResult> => {
+  const results = await collection
+    .aggregate<InvoiceAggregationResult>(buildAggregationPipeline(input))
+    .toArray();
+  return results[0] ?? { documents: [], metadata: [] };
+};
+
+const resolveInvoicePageDocuments = async (
+  collection: FilemakerInvoiceCollection,
+  input: {
+    filter: Filter<FilemakerInvoiceMongoDocument>;
+    first: InvoiceAggregationResult;
+    options: FilemakerInvoicesListOptions;
+    page: number;
+  }
+): Promise<FilemakerInvoiceMongoDocument[]> => {
+  if (input.page === 1) return getInvoiceAggregationDocuments(input.first);
+  const result = await aggregateInvoiceListPage(collection, input);
+  return getInvoiceAggregationDocuments(result);
+};
+
 export async function listMongoFilemakerInvoices(
   input: FilemakerInvoicesListInput
 ): Promise<FilemakerInvoicesListResult> {
@@ -174,22 +211,16 @@ export async function listMongoFilemakerInvoices(
   const db = await getMongoDb();
   const collection = db.collection<FilemakerInvoiceMongoDocument>(FILEMAKER_INVOICES_COLLECTION);
   const collectionCount = await collection.estimatedDocumentCount();
-  const firstResult = await collection
-    .aggregate<InvoiceAggregationResult>(buildAggregationPipeline({ filter, options, page: 1 }))
-    .toArray();
-  const first = firstResult[0] ?? { documents: [], metadata: [] };
-  const totalCount =
-    Array.isArray(first.metadata) && typeof first.metadata[0]?.totalCount === 'number'
-      ? first.metadata[0].totalCount
-      : 0;
+  const first = await aggregateInvoiceListPage(collection, { filter, options, page: 1 });
+  const totalCount = getInvoiceAggregationTotalCount(first);
   const totalPages = Math.max(1, Math.ceil(totalCount / options.pageSize));
   const page = normalizeInvoicePage(options.requestedPage, totalPages);
-  const documents =
-    page === 1
-      ? (first.documents ?? [])
-      : ((await collection
-          .aggregate<InvoiceAggregationResult>(buildAggregationPipeline({ filter, options, page }))
-          .toArray())[0]?.documents ?? []);
+  const documents = await resolveInvoicePageDocuments(collection, {
+    filter,
+    first,
+    options,
+    page,
+  });
 
   return buildListResult({
     collectionCount,

@@ -6,6 +6,7 @@
  */
 
 import type { Filter } from 'mongodb';
+import { databaseError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   AiPathRunRecord, 
@@ -37,14 +38,21 @@ import {
  * Finds a specific run by its internal MongoDB ID or external unique ID.
  */
 export const findRunById = async (runId: string): Promise<AiPathRunRecord | null> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const collection = db.collection<RunDocument>(RUNS_COLLECTION);
-  const filter: Filter<RunDocument> = { $or: [{ _id: runId }, { id: runId }] as any };
-  const doc = await collection.findOne(filter);
-  
-  if (doc === null) return null;
-  return toRunRecord(doc);
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const collection = db.collection<RunDocument>(RUNS_COLLECTION);
+    const filter: Filter<RunDocument> = { $or: [{ _id: runId }, { id: runId }] as any };
+    const doc = await collection.findOne(filter);
+    
+    if (doc === null) return null;
+    return toRunRecord(doc);
+  } catch (error) {
+    throw databaseError(`Failed to find run by ID: ${runId}`, error, {
+      collection: RUNS_COLLECTION,
+      runId,
+    });
+  }
 };
 
 /**
@@ -54,14 +62,21 @@ export const getRunByRequestId = async (
   pathId: string,
   requestId: string
 ): Promise<AiPathRunRecord | null> => {
-  await ensureIndexes();
-  const db = await getMongoDb();
-  const doc = await db.collection<RunDocument>(RUNS_COLLECTION).findOne({
-    pathId,
-    'meta.requestId': requestId,
-  });
-
-  return doc ? toRunRecord(doc) : null;
+  try {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const doc = await db.collection<RunDocument>(RUNS_COLLECTION).findOne({
+      pathId,
+      'meta.requestId': requestId,
+    });
+    return doc ? toRunRecord(doc) : null;
+  } catch (error) {
+    throw databaseError('Failed to get run by request ID.', error, {
+      collection: RUNS_COLLECTION,
+      pathId,
+      requestId,
+    });
+  }
 };
 
 /**

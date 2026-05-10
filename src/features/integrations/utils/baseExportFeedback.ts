@@ -12,10 +12,10 @@ export const resolveBaseExportSuccessMessage = (
   }
 ): string => {
   const label = resolveBaseExportLabel(options?.mode ?? 'default');
-  const jobId = response.jobId?.trim() || '';
+  const jobId = response.jobId?.trim() ?? '';
 
   if (response.status === 'queued') {
-    return jobId ? `${label} queued (job ${jobId}).` : `${label} queued.`;
+    return jobId !== '' ? `${label} queued (job ${jobId}).` : `${label} queued.`;
   }
 
   if (response.status === 'completed') {

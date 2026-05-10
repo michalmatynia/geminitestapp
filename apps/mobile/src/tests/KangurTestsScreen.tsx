@@ -113,7 +113,7 @@ function QuestionChoices({
     );
 }
 
- /* eslint-disable @typescript-eslint/no-unused-vars */ 
+   
  function TestControls({
     currentIndex,
     _totalQuestions,

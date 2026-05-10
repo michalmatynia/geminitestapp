@@ -95,4 +95,36 @@ describe('getIntegrationsWithConnections', () => {
     expect(result[0]?.connections[0]).not.toHaveProperty('password');
     expect(result[0]?.connections[0]).not.toHaveProperty('playwrightListingScript');
   });
+
+  it('normalizes date objects and nullable dates without throwing', async () => {
+    listIntegrationsMock.mockResolvedValue([
+      {
+        id: 'integration-base-1',
+        name: 'Base',
+        slug: 'base',
+        createdAt: new Date('2026-04-03T10:00:00.000Z'),
+        updatedAt: new Date('invalid'),
+      },
+    ]);
+    listConnectionsMock.mockResolvedValue([
+      {
+        id: 'conn-base-1',
+        integrationId: 'integration-base-1',
+        name: 'Base connection',
+        googleExpiresAt: new Date('2026-04-03T12:00:00.000Z'),
+        googleTokenUpdatedAt: null,
+      },
+    ]);
+
+    const result = await getIntegrationsWithConnections();
+
+    expect(result[0]).toMatchObject({
+      createdAt: '2026-04-03T10:00:00.000Z',
+      updatedAt: null,
+    });
+    expect(result[0]?.connections[0]).toMatchObject({
+      googleExpiresAt: '2026-04-03T12:00:00.000Z',
+      googleTokenUpdatedAt: null,
+    });
+  });
 });

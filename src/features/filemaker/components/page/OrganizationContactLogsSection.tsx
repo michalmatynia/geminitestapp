@@ -4,13 +4,11 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquareText,
-  RefreshCw,
-  Search,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
-import { Badge, Button, Card, Input } from '@/shared/ui/primitives.public';
+import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import { useAdminFilemakerOrganizationEditPageStateContext } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import type {
@@ -19,6 +17,7 @@ import type {
   MongoFilemakerContactLogValue,
 } from '../../filemaker-contact-logs.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
+import { ContactLogControls } from './OrganizationContactLogsSection.controls';
 
 const CONTACT_LOG_PAGE_SIZE = 25;
 
@@ -152,29 +151,43 @@ function ContactLogContent(props: {
   );
 }
 
-/* eslint-disable max-lines-per-function */
-export function OrganizationContactLogsSection(): React.JSX.Element | null {
-  const { organization, relationshipSummary } =
-    useAdminFilemakerOrganizationEditPageStateContext();
+type ContactLogController = {
+  error: string | null;
+  isLoading: boolean;
+  loadRequestedPage: (page: number) => void;
+  response: MongoFilemakerContactLogsResponse;
+};
+
+const buildContactLogsUrl = (input: {
+  organizationId: string;
+  page: number;
+  query: string;
+}): string => {
+  const params = new URLSearchParams({
+    page: String(input.page),
+    pageSize: String(CONTACT_LOG_PAGE_SIZE),
+  });
+  const query = input.query.trim();
+  if (query.length > 0) params.set('query', query);
+  return `/api/filemaker/organizations/${encodeURIComponent(input.organizationId)}/contact-logs?${params.toString()}`;
+};
+
+function useContactLogController(
+  organizationId: string | null,
+  query: string
+): ContactLogController {
   const [response, setResponse] = useState<MongoFilemakerContactLogsResponse>(emptyResponse);
-  const [queryDraft, setQueryDraft] = useState('');
-  const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadPage = useCallback(
     async (page: number, signal: AbortSignal): Promise<void> => {
-      if (organization === null) return;
+      if (organizationId === null) return;
       setIsLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({
-          page: String(page),
-          pageSize: String(CONTACT_LOG_PAGE_SIZE),
-        });
-        if (query.trim().length > 0) params.set('query', query.trim());
         const result = await fetchJson<MongoFilemakerContactLogsResponse>(
-          `/api/filemaker/organizations/${encodeURIComponent(organization.id)}/contact-logs?${params.toString()}`,
+          buildContactLogsUrl({ organizationId, page, query }),
           signal
         );
         setResponse(result);
@@ -185,17 +198,38 @@ export function OrganizationContactLogsSection(): React.JSX.Element | null {
         if (!signal.aborted) setIsLoading(false);
       }
     },
-    [organization, query]
+    [organizationId, query]
   );
 
   useEffect(() => {
-    if (organization === null) return undefined;
+    if (organizationId === null) return undefined;
     const controller = new AbortController();
     void loadPage(1, controller.signal);
     return () => {
       controller.abort();
     };
-  }, [loadPage, organization]);
+  }, [loadPage, organizationId]);
+
+  const loadRequestedPage = useCallback(
+    (page: number): void => {
+      const controller = new AbortController();
+      void loadPage(page, controller.signal);
+    },
+    [loadPage]
+  );
+
+  return { error, isLoading, loadRequestedPage, response };
+}
+
+export function OrganizationContactLogsSection(): React.JSX.Element | null {
+  const { organization, relationshipSummary } =
+    useAdminFilemakerOrganizationEditPageStateContext();
+  const [queryDraft, setQueryDraft] = useState('');
+  const [query, setQuery] = useState('');
+  const { error, isLoading, loadRequestedPage, response } = useContactLogController(
+    organization?.id ?? null,
+    query
+  );
 
   if (organization === null) return null;
 
@@ -203,50 +237,19 @@ export function OrganizationContactLogsSection(): React.JSX.Element | null {
 
   return (
     <FormSection title='Contact Logs' className='space-y-4 p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <Badge variant='outline' className='text-[10px]'>
-            Snapshot: {snapshotCount.toLocaleString()}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Loaded: {response.totalCount.toLocaleString()}
-          </Badge>
-        </div>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          disabled={isLoading}
-          onClick={(): void => {
-            const controller = new AbortController();
-            void loadPage(response.page, controller.signal);
-          }}
-        >
-          <RefreshCw className='mr-1.5 size-3.5' />
-          Refresh
-        </Button>
-      </div>
-      <form
-        className='flex flex-wrap gap-2'
-        onSubmit={(event: React.FormEvent<HTMLFormElement>): void => {
-          event.preventDefault();
+      <ContactLogControls
+        isLoading={isLoading}
+        loadedCount={response.totalCount}
+        onQueryDraftChange={setQueryDraft}
+        onRefresh={(): void => {
+          loadRequestedPage(response.page);
+        }}
+        onSearch={(): void => {
           setQuery(queryDraft.trim());
         }}
-      >
-        <Input
-          value={queryDraft}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            setQueryDraft(event.target.value);
-          }}
-          placeholder='Search contact logs'
-          aria-label='Search contact logs'
-          className='min-w-[220px] flex-1'
-        />
-        <Button type='submit' variant='outline' size='sm' disabled={isLoading}>
-          <Search className='mr-1.5 size-3.5' />
-          Search
-        </Button>
-      </form>
+        queryDraft={queryDraft}
+        snapshotCount={snapshotCount}
+      />
       {error !== null ? (
         <div className='rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200'>
           {error}
@@ -257,13 +260,8 @@ export function OrganizationContactLogsSection(): React.JSX.Element | null {
         isLoading={isLoading}
         page={response.page}
         totalPages={response.totalPages}
-        onPageChange={(page: number): void => {
-          const controller = new AbortController();
-          void loadPage(page, controller.signal);
-        }}
+        onPageChange={loadRequestedPage}
       />
     </FormSection>
   );
 }
-
-/* eslint-enable max-lines-per-function */

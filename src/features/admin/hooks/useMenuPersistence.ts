@@ -6,7 +6,7 @@ import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { api } from '@/shared/lib/api-client';
 import { setClientCookie } from '@/shared/lib/browser/client-cookies';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
@@ -57,7 +57,7 @@ function useMenuStorage(): {
         maxAgeSeconds: 31536000,
       });
     } catch (error) {
-      logClientError(error);
+      void ErrorSystem.captureException(error, { service: 'admin', feature: 'menu-persistence' });
     }
   }, []);
 
@@ -79,7 +79,7 @@ function useMenuStorage(): {
           normalizeUserPreferencesResponse(response) as UserPreferences
         );
       } catch (error) {
-        logClientCatch(error, { source: 'AdminLayout', action: 'persistMenuCollapsed' });
+        void ErrorSystem.captureException(error, { service: 'admin', feature: 'menu-persistence', action: 'persistMenuCollapsed' });
       }
     },
     [persistMenuCollapsedFallbacks, queryClient]
@@ -107,6 +107,8 @@ function useMenuPreferenceResolution(
     !hasInitialMenuPreference
   );
   const [remoteMenuPreferenceReady, setRemoteMenuPreferenceReady] = useState(false);
+  const preferredMenuCollapsed = preferredMenuCollapsedRef;
+  const didUserToggle = didUserToggleRef;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -114,19 +116,17 @@ function useMenuPreferenceResolution(
       const stored = window.localStorage.getItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY);
       if (stored === 'true' || stored === 'false') {
         const storedCollapsed = stored === 'true';
-        // eslint-disable-next-line no-param-reassign
-        preferredMenuCollapsedRef.current = storedCollapsed;
-        // eslint-disable-next-line no-param-reassign
-        didUserToggleRef.current = true;
+        preferredMenuCollapsed.current = storedCollapsed;
+        didUserToggle.current = true;
         setIsMenuCollapsed(storedCollapsed);
         setShouldLoadRemoteMenuPreference(false);
       }
     } catch (error) {
-      logClientError(error);
+      void ErrorSystem.captureException(error, { service: 'admin', feature: 'menu-persistence' });
     } finally {
       setHasResolvedLocalMenuPreference(true);
     }
-  }, [setIsMenuCollapsed, preferredMenuCollapsedRef, didUserToggleRef]);
+  }, [setIsMenuCollapsed, preferredMenuCollapsed, didUserToggle]);
 
   useEffect(() => {
     if (!hasResolvedLocalMenuPreference || !shouldLoadRemoteMenuPreference) {
@@ -193,7 +193,7 @@ export function useMenuPersistence(hasInitialMenuPreference: boolean): MenuPersi
     preferredMenuCollapsedRef.current = nextCollapsed;
     setIsMenuCollapsed(nextCollapsed);
     setIsProgrammaticallyCollapsed(false);
-    persistMenuCollapsed(nextCollapsed).catch(logClientError);
+    persistMenuCollapsed(nextCollapsed).catch((err) => ErrorSystem.captureException(err, { service: 'admin', feature: 'menu-persistence' }));
   }, [isMenuCollapsed, persistMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
   return { isMenuCollapsed, preferredMenuCollapsedRef, didUserToggleRef, handleToggleCollapse, hasResolvedLocalMenuPreference };
 }

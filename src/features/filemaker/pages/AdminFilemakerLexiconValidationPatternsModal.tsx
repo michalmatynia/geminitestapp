@@ -30,7 +30,45 @@ type FilemakerLexiconValidationPatternsModalProps = {
  * Editable row for a single validation pattern draft.
  * Renders label, target-type selector, regex pattern, and priority fields.
  */
-/* eslint-disable-next-line max-lines-per-function */
+function PatternDraftHeader(props: {
+  draft: FilemakerLexiconValidationPattern;
+  onRemove: FilemakerLexiconValidationPatternsModalProps['onRemove'];
+}): React.JSX.Element {
+  return (
+    <div className='mb-3 flex items-center justify-between'>
+      <span className='text-xs font-medium uppercase text-muted-foreground'>{props.draft.id}</span>
+      <button
+        type='button'
+        className='text-xs text-destructive hover:underline'
+        onClick={(): void => props.onRemove(props.draft.id)}
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+function PatternTextInput(props: {
+  ariaLabel: string;
+  draft: FilemakerLexiconValidationPattern;
+  field: 'label' | 'pattern';
+  label: string;
+  onChange: FilemakerLexiconValidationPatternsModalProps['onChange'];
+  required?: boolean;
+}): React.JSX.Element {
+  return (
+    <FormField label={props.label} required={props.required}>
+      <Input
+        aria-label={props.ariaLabel}
+        value={props.draft[props.field]}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+          props.onChange(props.draft.id, { [props.field]: e.target.value })
+        }
+      />
+    </FormField>
+  );
+}
+
 function PatternDraftSection(props: {
   draft: FilemakerLexiconValidationPattern;
   editCategoryOptions: FilemakerLexiconTypeOption[];
@@ -40,28 +78,16 @@ function PatternDraftSection(props: {
   const { draft, editCategoryOptions, onChange, onRemove } = props;
   return (
     <section className='rounded border border-border/50 p-3'>
-      <div className='mb-3 flex items-center justify-between'>
-        {/* Show the pattern's stable ID as a read-only identifier. */}
-        <span className='text-xs font-medium uppercase text-muted-foreground'>{draft.id}</span>
-        <button
-          type='button'
-          className='text-xs text-destructive hover:underline'
-          onClick={(): void => onRemove(draft.id)}
-        >
-          Remove
-        </button>
-      </div>
+      <PatternDraftHeader draft={draft} onRemove={onRemove} />
       <div className='grid gap-3 md:grid-cols-2'>
-        {/* Human-readable name shown in the admin UI. */}
-        <FormField label='Label' required>
-          <Input
-            aria-label='Pattern label'
-            value={draft.label}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              onChange(draft.id, { label: e.target.value })
-            }
-          />
-        </FormField>
+        <PatternTextInput
+          ariaLabel='Pattern label'
+          draft={draft}
+          field='label'
+          label='Label'
+          onChange={onChange}
+          required
+        />
         {/* Lexicon type this pattern should classify matched terms into. */}
         <FormField label='Target type'>
           <SelectSimple
@@ -71,16 +97,14 @@ function PatternDraftSection(props: {
             onChange={(value: string): void => onChange(draft.id, { targetTypeKey: value })}
           />
         </FormField>
-        {/* Regex applied against scraped job-listing text to detect this term. */}
-        <FormField label='Pattern' required>
-          <Input
-            aria-label='Pattern regex'
-            value={draft.pattern}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              onChange(draft.id, { pattern: e.target.value })
-            }
-          />
-        </FormField>
+        <PatternTextInput
+          ariaLabel='Pattern regex'
+          draft={draft}
+          field='pattern'
+          label='Pattern'
+          onChange={onChange}
+          required
+        />
         {/* Lower number = evaluated earlier; higher number = lower precedence. */}
         <FormField label='Priority'>
           <Input

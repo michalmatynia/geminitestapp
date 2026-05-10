@@ -56,7 +56,7 @@ const describeManualVerificationFailure = (
     (step) => step.status === 'failed' && step.detail?.trim()
   );
 
-  if (failedStep) {
+  if (failedStep !== undefined) {
     const detail = failedStep.detail!.trim();
     if (failedStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
       return TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE;
@@ -69,7 +69,7 @@ const describeManualVerificationFailure = (
     (step) => step.status === 'pending' && step.detail?.trim()
   );
 
-  if (pendingStep) {
+  if (pendingStep !== undefined) {
     const detail = pendingStep.detail!.trim();
     if (pendingStep.step === 'Captcha required' || detail.toLowerCase().includes('captcha')) {
       return TRADERA_BROWSER_MANUAL_VERIFICATION_MESSAGE;
@@ -113,7 +113,7 @@ const runTraderaBrowserSessionRequest = async ({
   } catch (error) {
     if (error instanceof ApiError && isTestConnectionResponse(error.payload)) {
       const detail = describeManualVerificationFailure(error.payload);
-      if (detail) {
+      if (detail !== null) {
         throw new Error(detail);
       }
     }
@@ -169,7 +169,7 @@ export const preflightTraderaQuickListSession = async (params: {
   } catch (error) {
     if (error instanceof ApiError && isTestConnectionResponse(error.payload)) {
       const detail = describeManualVerificationFailure(error.payload);
-      if (detail) {
+      if (detail !== null) {
         throw new Error(detail);
       }
     }

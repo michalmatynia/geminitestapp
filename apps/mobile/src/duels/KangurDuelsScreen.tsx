@@ -9,7 +9,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
   const data = useKangurDuelsScreenData();
 
   const createLoginCallToAction = useCallback((label: string) => (
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     data.supportsLearnerCredentials ? <LinkButton href={HOME_ROUTE} label={label} stretch tone='primary' /> : <ActionButton label={label} onPress={data.signIn} stretch />
   ), [data.signIn, data.supportsLearnerCredentials]);
 

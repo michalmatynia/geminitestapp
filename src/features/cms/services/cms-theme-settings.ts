@@ -49,6 +49,10 @@ const scheduleCmsThemeSettingsHotCacheInvalidation = (): void => {
   cmsThemeSettingsCacheInvalidationHandle.unref?.();
 };
 
+import { internalError } from '@/shared/errors/app-error';
+
+// ... (existing code)
+
 export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
   if (cmsThemeSettingsCacheEntry) return cmsThemeSettingsCacheEntry;
   if (cmsThemeSettingsInFlight) return cmsThemeSettingsInFlight;
@@ -59,15 +63,16 @@ export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
       scheduleCmsThemeSettingsHotCacheInvalidation();
       return value;
     })
+    .catch((error) => {
+      throw internalError('Failed to fetch CMS theme settings.', {
+        cause: error,
+      });
+    })
     .finally(() => {
       cmsThemeSettingsInFlight = null;
     });
 
-  return await awaitThemeSettingsWithinTimeout(
-    cmsThemeSettingsInFlight,
-    getCmsThemeSettingsReadTimeoutMs(),
-    cmsThemeSettingsCacheEntry ?? DEFAULT_THEME
-  );
+  return await cmsThemeSettingsInFlight;
 });
 
 export const __testOnly = {

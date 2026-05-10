@@ -50,7 +50,7 @@ export const assertTraderaCategoryMappingReady = ({
   product: ProductWithImages;
   connection: IntegrationConnectionRecord;
 }): void => {
-  if (categoryMapping.mapping) {
+  if (categoryMapping.mapping !== null) {
     return;
   }
 

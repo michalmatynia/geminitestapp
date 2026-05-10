@@ -7,10 +7,12 @@ import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
 } from '@/shared/hooks/useIntegrationQueries';
+import { resolveIntegrationSelectionErrorMessage } from '@/features/integrations/utils/integration-selection-error';
 
 type UseIntegrationSelectionResult = {
   integrations: IntegrationWithConnections[];
   isLoading: boolean;
+  error: string | null;
   selectedIntegrationId: string;
   setSelectedIntegrationId: React.Dispatch<React.SetStateAction<string>>;
   selectedConnectionId: string;
@@ -74,8 +76,12 @@ export function useIntegrationSelection(args: {
   isOpen: boolean;
 }): UseIntegrationSelectionResult {
   const { isOpen } = args;
-  const { data: integrationsData = [], isLoading } = useIntegrationsWithConnections();
-  const { data: preferredConnection } = useDefaultExportConnection();
+  const integrationsQuery = useIntegrationsWithConnections({ enabled: isOpen, retry: false });
+  const { data: integrationsData = [] } = integrationsQuery;
+  const { data: preferredConnection } = useDefaultExportConnection({
+    enabled: isOpen,
+    retry: false,
+  });
   const [selectedIntegrationId, setSelectedIntegrationId] = useState('');
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
 
@@ -86,6 +92,12 @@ export function useIntegrationSelection(args: {
       ),
     [integrationsData]
   );
+  const isLoading =
+    integrationsQuery.isLoading && integrations.length === 0 && !integrationsQuery.isError;
+  const error =
+    integrationsQuery.isError && integrations.length === 0
+      ? resolveIntegrationSelectionErrorMessage(integrationsQuery.error)
+      : null;
 
   useEffect(() => {
     if (isOpen === false) return;
@@ -124,6 +136,7 @@ export function useIntegrationSelection(args: {
   return {
     integrations,
     isLoading,
+    error,
     selectedIntegrationId,
     setSelectedIntegrationId,
     selectedConnectionId,

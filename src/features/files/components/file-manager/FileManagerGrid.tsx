@@ -25,7 +25,7 @@ export function FileManagerGrid(): React.JSX.Element {
 
   const getFileKind = useCallback((filepath: string) => {
     const clean = (filepath || '').trim();
-    if (!clean) return 'other';
+    if (clean === '') return 'other';
     if (clean.startsWith('data:')) return 'base64';
     if (/^https?:\/\//i.test(clean)) {
       try {
@@ -33,7 +33,6 @@ export function FileManagerGrid(): React.JSX.Element {
         if (url.pathname.includes('/uploads/')) return 'upload';
       } catch (error) {
         logClientError(error);
-        return 'link';
       }
       return 'link';
     }
@@ -41,8 +40,9 @@ export function FileManagerGrid(): React.JSX.Element {
       clean.includes('/uploads/') ||
       clean.startsWith('/uploads/') ||
       clean.startsWith('uploads/')
-    )
+    ) {
       return 'upload';
+    }
     return 'other';
   }, []);
 
@@ -52,7 +52,8 @@ export function FileManagerGrid(): React.JSX.Element {
       if (kind === 'base64') return 'base64';
       if (kind === 'link') {
         try {
-          return new URL(filepath).hostname || 'link';
+          const hostname = new URL(filepath).hostname;
+          return hostname !== '' ? hostname : 'link';
         } catch (error) {
           logClientError(error);
           return 'link';
@@ -61,8 +62,10 @@ export function FileManagerGrid(): React.JSX.Element {
       const clean = filepath.replace(/^\/+/, '');
       const parts = clean.split('/');
       if (parts.length === 0) return 'uploads';
-      if (parts[0] === 'uploads') return parts[1] ?? 'uploads';
-      return parts[0] || 'uploads';
+      
+      const first = parts[0];
+      if (first === 'uploads') return parts[1] ?? 'uploads';
+      return (first !== undefined && first !== '') ? first : 'uploads';
     },
     [getFileKind]
   );

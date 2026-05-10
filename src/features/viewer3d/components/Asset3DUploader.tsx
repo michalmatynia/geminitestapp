@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { validate3DFileAsync } from '@/features/viewer3d/utils/validateAsset3d';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { uploadAsset3DFile } from '../api';
@@ -11,9 +11,36 @@ interface Asset3DUploaderContainerProps {
   className?: string;
 }
 
-export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainerProps): React.JSX.Element {
-  const { handleUpload: onUpload, setShowUploader, categories = [] } = useAdmin3DAssetsContext();
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
 
+type Asset3DUploaderFormState = {
+  file: File | null;
+  setFile: Dispatch<SetStateAction<File | null>>;
+  name: string;
+  setName: Dispatch<SetStateAction<string>>;
+  description: string;
+  setDescription: Dispatch<SetStateAction<string>>;
+  category: string;
+  setCategory: Dispatch<SetStateAction<string>>;
+  tags: string[];
+  setTags: Dispatch<SetStateAction<string[]>>;
+  newTag: string;
+  setNewTag: Dispatch<SetStateAction<string>>;
+  isPublic: boolean;
+  setIsPublic: Dispatch<SetStateAction<boolean>>;
+  isUploading: boolean;
+  setIsUploading: Dispatch<SetStateAction<boolean>>;
+  error: string | null;
+  setError: Dispatch<SetStateAction<string | null>>;
+  isDragOver: boolean;
+  setIsDragOver: Dispatch<SetStateAction<boolean>>;
+};
+
+const useAsset3DUploaderFormState = (): Asset3DUploaderFormState => {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -25,6 +52,11 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
   const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  return { file, setFile, name, setName, description, setDescription, category, setCategory, tags, setTags, newTag, setNewTag, isPublic, setIsPublic, isUploading, setIsUploading, error, setError, isDragOver, setIsDragOver };
+};
+
+const useFileSelectHandler = (formState: Asset3DUploaderFormState): ((selectedFile: File) => Promise<void>) => {
+  const { name, setError, setFile, setName } = formState;
   const handleFileSelect = useCallback(async (selectedFile: File): Promise<void> => {
     const validation = await validate3DFileAsync(selectedFile);
     if (!validation.valid) {
@@ -39,20 +71,31 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
     if (name.length === 0) {
       setName(selectedFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim());
     }
-  }, [name]);
+  }, [name, setError, setFile, setName]);
+  return handleFileSelect;
+};
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>): void => {
+const useDropHandler = (
+  setIsDragOver: Dispatch<SetStateAction<boolean>>,
+  handleFileSelect: (selectedFile: File) => Promise<void>
+): ((e: React.DragEvent<HTMLDivElement>) => void) =>
+  useCallback((e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     setIsDragOver(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile !== undefined && droppedFile !== null) {
+    if (droppedFile !== undefined) {
       handleFileSelect(droppedFile).catch((err) => {
         logClientCatch(err, { source: 'Asset3DUploader', action: 'handleDrop' });
       });
     }
   }, [handleFileSelect]);
 
-  const handleUpload = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+const useUploadHandler = (
+  formState: Asset3DUploaderFormState,
+  onUpload: ReturnType<typeof useAdmin3DAssetsContext>['handleUpload']
+): ((helpers?: { reportProgress: (loaded: number, total?: number) => void }) => Promise<void>) =>
+  useCallback(async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+    const { file, name, description, category, tags, isPublic, setError, setIsUploading } = formState;
     if (file === null) return;
     setIsUploading(true);
     setError(null);
@@ -71,13 +114,14 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [formState, onUpload]);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
+export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainerProps): React.JSX.Element {
+  const { handleUpload: onUpload, setShowUploader, categories } = useAdmin3DAssetsContext();
+  const formState = useAsset3DUploaderFormState();
+  const handleFileSelect = useFileSelectHandler(formState);
+  const handleDrop = useDropHandler(formState.setIsDragOver, handleFileSelect);
+  const handleUpload = useUploadHandler(formState, onUpload);
 
   return (
     <Asset3DUploaderView
@@ -86,24 +130,7 @@ export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainer
       setShowUploader={setShowUploader}
       categories={categories}
       handleUpload={handleUpload}
-      file={file}
-      setFile={setFile}
-      name={name}
-      setName={setName}
-      description={description}
-      setDescription={setDescription}
-      category={category}
-      setCategory={setCategory}
-      tags={tags}
-      setTags={setTags}
-      newTag={newTag}
-      setNewTag={setNewTag}
-      isPublic={isPublic}
-      setIsPublic={setIsPublic}
-      isUploading={isUploading}
-      error={error}
-      isDragOver={isDragOver}
-      setIsDragOver={setIsDragOver}
+      {...formState}
       onFileSelect={handleFileSelect}
       onHandleDrop={handleDrop}
       formatFileSize={formatFileSize}

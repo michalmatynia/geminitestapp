@@ -10,6 +10,11 @@ import type {
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
+import { 
+  buildResumeBrowserContext, 
+  recordResumeAudit, 
+  persistResumeCheckpoint 
+} from './plan-utils';
 
 type CheckpointState = ReturnType<typeof parseCheckpoint>;
 
@@ -28,206 +33,284 @@ type InitializePlanInput = {
   checkpoint: CheckpointState;
 };
 
-export async function initializePlanState(
-  input: InitializePlanInput
-): Promise<PlanInitializationResult> {
-  const { context, checkpoint } = input;
+interface HandleResumeInput {
+  runId: string;
+  checkpoint: CheckpointState;
+  planSteps: PlanStep[];
+  stepIndex: number;
+  context: AgentExecutionContext;
+  summaryCheckpoint: number;
+  preferences: AgentExecutionContext['preferences'];
+}
+
+const getNextPlanState = (
+  resumeReview: Awaited<ReturnType<typeof buildResumePlanReview>>,
+  planSteps: PlanStep[],
+  stepIndex: number,
+  taskType: PlannerMeta['taskType'] | null
+): { nextPlanSteps: PlanStep[]; nextStepIndex: number; nextTaskType: PlannerMeta['taskType'] | null } => {
+  const shouldReplan = resumeReview.shouldReplan && resumeReview.steps.length > 0;
+  return {
+    nextPlanSteps: shouldReplan ? resumeReview.steps : planSteps,
+    nextStepIndex: shouldReplan ? 0 : stepIndex,
+    nextTaskType: resumeReview.meta?.taskType ?? taskType,
+  };
+};
+
+
+const handleResumeRequest = async (
+  input: HandleResumeInput
+): Promise<{ planSteps: PlanStep[]; stepIndex: number; taskType: PlannerMeta['taskType'] | null }> => {
+  const { runId, checkpoint, planSteps, stepIndex, context, summaryCheckpoint, preferences } = input;
+  const { run, memoryContext, settings, memorySummarizationModel, contextRegistry } = context;
+  
+  const rawResumeContext = await getBrowserContextSummary(runId);
+  const resumeContext = buildResumeBrowserContext(rawResumeContext);
+
+  const resumeReview = await buildResumePlanReview({
+    prompt: run.prompt,
+    memory: memoryContext,
+    model: memorySummarizationModel,
+    browserContext: resumeContext,
+    currentPlan: planSteps,
+    completedIndex: Math.max(stepIndex, 0),
+    lastError: checkpoint.lastError ?? null,
+    runId: run.id,
+    maxSteps: settings.maxSteps,
+    maxStepAttempts: settings.maxStepAttempts,
+  });
+
+  const { nextPlanSteps, nextStepIndex, nextTaskType } = getNextPlanState(
+    resumeReview, 
+    planSteps, 
+    stepIndex, 
+    checkpoint.taskType ?? null
+  );
+
+  await recordResumeAudit({
+    runId: run.id, 
+    shouldReplan: resumeReview.shouldReplan, 
+    planSteps: nextPlanSteps, 
+    reason: resumeReview.reason, 
+    meta: resumeReview.meta, 
+    hierarchy: resumeReview.hierarchy, 
+    summary: resumeReview.summary
+  });
+
+  await persistResumeCheckpoint({
+    runId: run.id,
+    planSteps: nextPlanSteps,
+    stepIndex: nextStepIndex,
+    lastError: checkpoint.lastError ?? null,
+    taskType: nextTaskType,
+    resumeRequestedAt: checkpoint.resumeRequestedAt ?? null,
+    approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
+    approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
+    summaryCheckpoint,
+    settings,
+    preferences,
+    contextRegistry,
+  });
+
+  return { planSteps: nextPlanSteps, stepIndex: nextStepIndex, taskType: nextTaskType };
+};
+
+
+const resolveStepIndex = (checkpoint: CheckpointState, planSteps: PlanStep[]): number => {
+  if (checkpoint.activeStepId !== null && checkpoint.activeStepId !== '') {
+    const activeIndex = planSteps.findIndex(
+      (step: PlanStep) => step.id === checkpoint.activeStepId
+    );
+    return activeIndex === -1 ? 0 : activeIndex;
+  }
+  const firstPending = planSteps.findIndex((step: PlanStep) => step.status !== 'completed');
+  return firstPending === -1 ? 0 : firstPending;
+};
+
+const mergeCheckpointPreferences = (
+  base: AgentExecutionContext['preferences'],
+  checkpointPrefs: CheckpointState['preferences']
+): AgentExecutionContext['preferences'] => {
+  const next = { ...base };
+  const prefs = checkpointPrefs as Record<string, unknown> | undefined;
+  if (prefs?.['ignoreRobotsTxt'] !== undefined) {
+    next.ignoreRobotsTxt = Boolean(prefs['ignoreRobotsTxt']);
+  }
+  if (prefs?.['requireHumanApproval'] !== undefined) {
+    next.requireHumanApproval = Boolean(prefs['requireHumanApproval']);
+  }
+  return next;
+};
+
+
+const checkResumeRequested = (checkpoint: CheckpointState): boolean => {
+  return (
+    checkpoint.resumeRequestedAt !== null &&
+    checkpoint.resumeRequestedAt !== undefined &&
+    checkpoint.resumeRequestedAt !== '' &&
+    checkpoint.resumeRequestedAt !== checkpoint.resumeProcessedAt
+  );
+};
+
+const initializeFromCheckpoint = async (
+  checkpoint: CheckpointState,
+  context: AgentExecutionContext,
+  basePreferences: AgentExecutionContext['preferences']
+): Promise<PlanInitializationResult> => {
+  const { run } = context;
+  let planSteps = checkpoint.steps;
+  const nextPreferences = mergeCheckpointPreferences(basePreferences, checkpoint.preferences);
+
+  let stepIndex = 0;
+  let taskType = checkpoint.taskType ?? null;
+  const summaryCheckpoint = typeof checkpoint.summaryCheckpoint === 'number' ? checkpoint.summaryCheckpoint : 0;
+
+  if (checkResumeRequested(checkpoint)) {
+    const resumeResult = await handleResumeRequest({
+      runId: run.id,
+      checkpoint,
+      planSteps,
+      stepIndex: 0,
+      context,
+      summaryCheckpoint,
+      preferences: nextPreferences
+    });
+    planSteps = resumeResult.planSteps;
+    stepIndex = resumeResult.stepIndex;
+    taskType = resumeResult.taskType;
+  } else {
+    stepIndex = resolveStepIndex(checkpoint, planSteps);
+  }
+
+
+  await logAgentAudit(run.id, 'info', 'Checkpoint loaded.', {
+    type: 'checkpoint-load',
+    activeStepId: checkpoint.activeStepId ?? null,
+    stepCount: planSteps.length,
+  });
+
+  return {
+    planSteps,
+    planHierarchy: null,
+    taskType,
+    decision: {
+      action: 'tool',
+      reason: 'Resuming from checkpoint.',
+      toolName: 'playwright',
+    },
+    stepIndex,
+    summaryCheckpoint,
+    preferences: nextPreferences,
+  };
+};
+
+const recordScratchAudit = async (args: { 
+  runId: string; 
+  planResult: { 
+    steps: PlanStep[]; 
+    hierarchy?: PlanHierarchy | null; 
+    meta?: PlannerMeta | null; 
+    source?: string 
+  }; 
+  settings: AgentExecutionContext['settings'] 
+}): Promise<void> => {
+  const { runId, planResult, settings } = args;
+  const { steps, hierarchy, meta, source } = planResult;
+  if (steps.length > 0) {
+    await logAgentAudit(runId, 'info', 'Plan created.', {
+      type: 'plan',
+      steps,
+      source,
+      hierarchy: hierarchy ?? null,
+      plannerMeta: meta ?? null,
+    });
+
+    const branchAlternatives = buildBranchStepsFromAlternatives(
+      meta?.alternatives ?? undefined,
+      settings.maxStepAttempts,
+      Math.min(6, settings.maxSteps)
+    );
+
+    if (branchAlternatives.length > 0) {
+      await logAgentAudit(runId, 'info', 'Plan branch created.', {
+        type: 'plan-branch',
+        branchSteps: branchAlternatives,
+        reason: 'planner-alternatives',
+        plannerMeta: meta ?? null,
+      });
+    }
+  }
+};
+
+const initializeFromScratch = async (
+  context: AgentExecutionContext,
+  nextPreferences: AgentExecutionContext['preferences']
+): Promise<PlanInitializationResult> => {
   const {
     run,
     memoryContext,
     browserContext,
     settings,
-    preferences,
     contextRegistry,
     plannerModel,
     loopGuardModel,
-    memorySummarizationModel,
   } = context;
 
-  let planSteps: PlanStep[];
-  let planHierarchy: PlanHierarchy | null = null;
-  let taskType: PlannerMeta['taskType'] | null;
-  let decision: AgentDecision;
-  let stepIndex = 0;
-  let summaryCheckpoint = checkpoint?.summaryCheckpoint ?? 0;
+  const planResult = await buildPlanWithLLM({
+    prompt: run.prompt,
+    memory: memoryContext,
+    model: plannerModel,
+    guardModel: loopGuardModel,
+    browserContext: buildResumeBrowserContext(browserContext),
+    maxSteps: settings.maxSteps,
+    maxStepAttempts: settings.maxStepAttempts,
+  });
+
+  const planSteps = planResult.steps;
+  const planHierarchy = planResult.hierarchy ?? null;
+  const taskType = planResult.meta?.taskType ?? null;
+
+  await recordScratchAudit({ runId: run.id, planResult, settings });
+
+  await persistCheckpoint({
+    runId: run.id,
+    steps: planSteps,
+    activeStepId: planSteps[0]?.id ?? null,
+    lastError: null,
+    taskType,
+    summaryCheckpoint: 0,
+    approvalRequestedStepId: null,
+    approvalGrantedStepId: null,
+    settings,
+    preferences: nextPreferences,
+    contextRegistry,
+  });
+
+  return {
+    planSteps,
+    planHierarchy,
+    taskType,
+    decision: planResult.decision,
+    stepIndex: 0,
+    summaryCheckpoint: 0,
+    preferences: nextPreferences,
+  };
+};
+
+export async function initializePlanState(
+  input: InitializePlanInput
+): Promise<PlanInitializationResult> {
+  const { context, checkpoint } = input;
+  const { preferences } = context;
+
   const nextPreferences: AgentExecutionContext['preferences'] = {
     ignoreRobotsTxt: Boolean(preferences.ignoreRobotsTxt),
     requireHumanApproval: Boolean(preferences.requireHumanApproval),
   };
 
   if (checkpoint !== null && checkpoint.steps.length > 0) {
-    planSteps = checkpoint.steps;
-    taskType = checkpoint.taskType ?? null;
-    const checkpointPreferences = checkpoint.preferences;
-    if (checkpointPreferences?.['ignoreRobotsTxt'] !== undefined) {
-      nextPreferences.ignoreRobotsTxt = Boolean(checkpointPreferences['ignoreRobotsTxt']);
-    }
-    if (checkpointPreferences?.requireHumanApproval !== undefined) {
-      nextPreferences.requireHumanApproval = Boolean(checkpointPreferences.requireHumanApproval);
-    }
-    if (typeof checkpoint.summaryCheckpoint === 'number') {
-      summaryCheckpoint = checkpoint.summaryCheckpoint;
-    }
-    let resumedWithNewPlan = false;
-    if (
-      checkpoint.resumeRequestedAt !== null &&
-      checkpoint.resumeRequestedAt !== undefined &&
-      checkpoint.resumeRequestedAt !== '' &&
-      checkpoint.resumeRequestedAt !== checkpoint.resumeProcessedAt
-    ) {
-      const rawResumeContext = await getBrowserContextSummary(run.id);
-      const resumeContext: AgentExecutionContext['browserContext'] = rawResumeContext
-        ? {
-          url: rawResumeContext.url ?? '',
-          title: rawResumeContext.title ?? null,
-          domTextSample: rawResumeContext.domTextSample ?? '',
-          logs: rawResumeContext.logs ?? [],
-          uiInventory: rawResumeContext.uiInventory,
-        }
-        : null;
-      const resumeReview = await buildResumePlanReview({
-        prompt: run.prompt,
-        memory: memoryContext,
-        model: memorySummarizationModel,
-        browserContext: resumeContext
-          ? {
-            url: resumeContext.url ?? '',
-            title: resumeContext.title ?? null,
-            domTextSample: resumeContext.domTextSample ?? '',
-            logs: resumeContext.logs ?? [],
-            uiInventory: resumeContext.uiInventory,
-          }
-          : null,
-        currentPlan: planSteps,
-        completedIndex: Math.max(stepIndex, 0),
-        lastError: checkpoint.lastError ?? null,
-        runId: run.id,
-        maxSteps: settings.maxSteps,
-        maxStepAttempts: settings.maxStepAttempts,
-      });
-
-      if (resumeReview.shouldReplan && resumeReview.steps.length > 0) {
-        planSteps = resumeReview.steps;
-        stepIndex = 0;
-        resumedWithNewPlan = true;
-        taskType = resumeReview.meta?.taskType ?? taskType;
-        await logAgentAudit(run.id, 'warning', 'Resume plan refreshed.', {
-          type: 'resume-plan',
-          steps: planSteps,
-          reason: resumeReview.reason,
-          plannerMeta: resumeReview.meta ?? null,
-          hierarchy: resumeReview.hierarchy ?? null,
-        });
-      } else {
-        await logAgentAudit(run.id, 'info', 'Resume summary prepared.', {
-          type: 'resume-summary',
-          summary: resumeReview.summary ?? null,
-          reason: resumeReview.reason,
-          plannerMeta: resumeReview.meta ?? null,
-        });
-      }
-      await persistCheckpoint({
-        runId: run.id,
-        steps: planSteps,
-        activeStepId: planSteps[stepIndex]?.id ?? null,
-        lastError: checkpoint.lastError ?? null,
-        taskType,
-        resumeRequestedAt: checkpoint.resumeRequestedAt,
-        resumeProcessedAt: new Date().toISOString(),
-        approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
-        approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
-        summaryCheckpoint,
-        settings,
-        preferences: nextPreferences,
-        contextRegistry,
-      });
-    }
-    if (!resumedWithNewPlan && checkpoint.activeStepId !== null && checkpoint.activeStepId !== '') {
-      const activeIndex = planSteps.findIndex(
-        (step: PlanStep) => step.id === checkpoint.activeStepId
-      );
-      stepIndex = activeIndex === -1 ? 0 : activeIndex;
-    } else {
-      const firstPending = planSteps.findIndex((step: PlanStep) => step.status !== 'completed');
-      stepIndex = firstPending === -1 ? 0 : firstPending;
-    }
-    decision = {
-      action: 'tool',
-      reason: 'Resuming from checkpoint.',
-      toolName: 'playwright',
-    };
-    await logAgentAudit(run.id, 'info', 'Checkpoint loaded.', {
-      type: 'checkpoint-load',
-      activeStepId: checkpoint.activeStepId ?? null,
-      stepCount: planSteps.length,
-    });
-  } else {
-    const planResult = await buildPlanWithLLM({
-      prompt: run.prompt,
-      memory: memoryContext,
-      model: plannerModel,
-      guardModel: loopGuardModel,
-      browserContext: browserContext
-        ? {
-          url: browserContext.url ?? '',
-          title: browserContext.title ?? null,
-          domTextSample: browserContext.domTextSample ?? '',
-          logs: browserContext.logs ?? [],
-          uiInventory: browserContext.uiInventory,
-        }
-        : null,
-      maxSteps: settings.maxSteps,
-      maxStepAttempts: settings.maxStepAttempts,
-    });
-
-    planSteps = planResult.steps;
-    planHierarchy = planResult.hierarchy ?? null;
-    taskType = planResult.meta?.taskType ?? null;
-    if (planSteps.length > 0) {
-      await logAgentAudit(run.id, 'info', 'Plan created.', {
-        type: 'plan',
-        steps: planSteps,
-        source: planResult.source,
-        hierarchy: planHierarchy,
-        plannerMeta: planResult.meta ?? null,
-      });
-      const branchAlternatives = buildBranchStepsFromAlternatives(
-        planResult.meta?.alternatives ?? undefined,
-        settings.maxStepAttempts,
-        Math.min(6, settings.maxSteps)
-      );
-      if (branchAlternatives.length > 0) {
-        await logAgentAudit(run.id, 'info', 'Plan branch created.', {
-          type: 'plan-branch',
-          branchSteps: branchAlternatives,
-          reason: 'planner-alternatives',
-          plannerMeta: planResult.meta ?? null,
-        });
-      }
-    }
-    decision = planResult.decision;
-    await persistCheckpoint({
-      runId: run.id,
-      steps: planSteps,
-      activeStepId: planSteps[0]?.id ?? null,
-      lastError: null,
-      taskType,
-      summaryCheckpoint,
-      approvalRequestedStepId: null,
-      approvalGrantedStepId: null,
-      settings,
-      preferences: nextPreferences,
-      contextRegistry,
-    });
+    return await initializeFromCheckpoint(checkpoint, context, nextPreferences);
   }
 
-  return {
-    planSteps,
-    planHierarchy,
-    taskType,
-    decision,
-    stepIndex,
-    summaryCheckpoint,
-    preferences: nextPreferences,
-  };
+  return await initializeFromScratch(context, nextPreferences);
 }

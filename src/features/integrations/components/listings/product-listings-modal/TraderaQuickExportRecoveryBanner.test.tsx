@@ -16,6 +16,14 @@ vi.mock('./TraderaRecoveryContinueButton', () => ({
   ),
 }));
 
+vi.mock('./TraderaQuickExportRecoveryDiagnostics', () => ({
+  TraderaQuickExportRecoveryDiagnostics: ({ runId }: { runId: string }) => (
+    <div data-testid='tradera-recovery-diagnostics' data-run-id={runId}>
+      Diagnostics
+    </div>
+  ),
+}));
+
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 
 describe('TraderaQuickExportRecoveryBanner', () => {
@@ -88,7 +96,7 @@ describe('TraderaQuickExportRecoveryBanner', () => {
     expect(screen.queryByText('Login to Tradera')).toBeNull();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+      '/admin/integrations/marketplaces/tradera/category-mapping?connectionId=conn-tradera-1'
     );
     expect(
       screen.getByText(

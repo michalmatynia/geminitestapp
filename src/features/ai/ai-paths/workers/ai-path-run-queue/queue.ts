@@ -122,6 +122,12 @@ const handleBlockedLease = async (
 
   if (!failed) return;
 
+  const failureError = internalError('Execution ownership could not be claimed due to lease contention.', {
+    runId: run.id,
+    blockingOwnerAgentId,
+    meta,
+  });
+
   await recordBlockedLeaseFailure({
     run,
     repo,
@@ -131,6 +137,8 @@ const handleBlockedLease = async (
     conflictingLease: leaseResult.conflictingLease ?? null,
     ownerAgentId,
   });
+
+  throw failureError;
 };
 
 const releaseExecutionLease = (
@@ -190,9 +198,6 @@ const handleQueueLeaseResult = async ({
   await processClaimedRun(run, leaseResult, ownerAgentId, signal);
 };
 
-import { configurationError, internalError } from '@/shared/errors/app-error';
-
-// ... (in runQueueJob)
 const runQueueJob = async (
   data: AiPathRunJobData,
   _jobId: string,
@@ -227,6 +232,14 @@ export const queue = createManagedQueue<AiPathRunJobData>({
     maxStalledCount: 2,
   },
   processor: runQueueJob,
+  onStalled: async (jobId, prevStatus) => {
+    void logSystemEvent({
+      level: 'warn',
+      source: LOG_SOURCE,
+      message: `Job stalled: ${jobId}`,
+      context: { jobId, prevStatus },
+    });
+  },
   onFailed: async (_jobId, err, data) => {
     try {
       void ErrorSystem.captureException(err, {

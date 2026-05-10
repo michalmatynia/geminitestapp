@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable complexity */
-
 import React, { useCallback } from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
@@ -24,24 +22,44 @@ const fallbackText = (value: string, fallback: string): string => {
   return normalized.length > 0 ? normalized : fallback;
 };
 
-const describeSelection = (block: CvBlock): string => {
+const describeContainerSelection = (block: CvBlock): string | null => {
   switch (block.kind) {
     case 'section': return fallbackText(block.label, 'Section');
     case 'stack': return `${fallbackText(block.label, 'Stack')} (${block.children.length})`;
     case 'columns': return `${fallbackText(block.label, 'Columns')} (${block.children.length})`;
     case 'row': return fallbackText(block.label, 'Row');
+    default: return null;
+  }
+};
+
+const describeNamedLeafSelection = (block: CvBlock): string | null => {
+  switch (block.kind) {
     case 'profileHeader': return fallbackText(block.name, 'Profile header');
-    case 'summary': return 'Summary';
     case 'experience': return fallbackText(block.title, 'Experience');
     case 'education': return fallbackText(block.institution, 'Education');
     case 'skills': return fallbackText(block.label, 'Skills');
     case 'techStack': return fallbackText(block.label, 'Tech stack');
     case 'languages': return fallbackText(block.label, 'Languages');
     case 'customText': return fallbackText(block.label, 'Custom text');
+    default: return null;
+  }
+};
+
+const describeStaticLeafSelection = (block: CvBlock): string | null => {
+  switch (block.kind) {
+    case 'summary': return 'Summary';
     case 'divider': return 'Divider';
     case 'spacer': return `Spacer (${block.height}px)`;
-    default: return 'Block';
+    default: return null;
   }
+};
+
+const describeSelection = (block: CvBlock): string => {
+  const containerDescription = describeContainerSelection(block);
+  if (containerDescription !== null) return containerDescription;
+  const namedDescription = describeNamedLeafSelection(block);
+  if (namedDescription !== null) return namedDescription;
+  return describeStaticLeafSelection(block) ?? 'Block';
 };
 
 function EmptyBlockSettingsPanel({

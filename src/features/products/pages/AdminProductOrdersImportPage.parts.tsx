@@ -222,7 +222,6 @@ const OrderPreviewTable = (props: {
       />
     )}
     expanded={props.state.expanded}
-    // @ts-expect-error - ExpandedState type mismatch with Record<string, boolean>
     onExpandedChange={props.state.setExpanded}
   />
 );

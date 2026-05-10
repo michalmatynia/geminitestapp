@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary, @typescript-eslint/strict-boolean-expressions -- TTS error classification accepts unknown provider error shapes. */
 /**
  * TTS generation failure stages for Kangur lessons.
  * Tracks where in the TTS pipeline the error occurred.
@@ -34,8 +33,10 @@ export const getRootCauseError = (error: unknown): unknown =>
   error instanceof KangurLessonTtsGenerationError ? error.cause : error;
 
 /** Extract error name for logging and debugging */
-export const getErrorName = (error: unknown): string =>
-  error instanceof Error ? error.name : typeof error === 'string' ? 'Error' : 'UnknownError';
+export const getErrorName = (error: unknown): string => {
+  if (error instanceof Error) return error.name;
+  return typeof error === 'string' ? 'Error' : 'UnknownError';
+};
 
 /** Extract error message for display */
 export const getErrorMessage = (error: unknown): string =>
@@ -44,7 +45,8 @@ export const getErrorMessage = (error: unknown): string =>
 /** Extract HTTP status code from error if available */
 export const getErrorStatus = (error: unknown): number | null => {
   const rootCause = getRootCauseError(error);
-  if (!rootCause || typeof rootCause !== 'object' || !('status' in rootCause)) {
+  if (rootCause === null || rootCause === undefined) return null;
+  if (typeof rootCause !== 'object' || !('status' in rootCause)) {
     return null;
   }
 
@@ -55,7 +57,8 @@ export const getErrorStatus = (error: unknown): number | null => {
 /** Extract error code from error if available */
 export const getErrorCode = (error: unknown): string | null => {
   const rootCause = getRootCauseError(error);
-  if (!rootCause || typeof rootCause !== 'object' || !('code' in rootCause)) {
+  if (rootCause === null || rootCause === undefined) return null;
+  if (typeof rootCause !== 'object' || !('code' in rootCause)) {
     return null;
   }
 

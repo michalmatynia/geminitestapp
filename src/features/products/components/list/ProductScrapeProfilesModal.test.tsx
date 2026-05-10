@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, max-lines-per-function */
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -529,7 +528,12 @@ describe('ProductScrapeProfilesModal', () => {
   });
 
   it('keeps the modal close button enabled while the Redis launch request is pending', async () => {
-    apiPostMock.mockImplementation(() => new Promise(() => undefined));
+    apiPostMock.mockImplementation(
+      () =>
+        new Promise((): void => {
+          // Keep the request pending for this interaction-state assertion.
+        })
+    );
     renderModal();
 
     await screen.findByText('BattleStock Warhammer 40k / 30k');

@@ -4,13 +4,12 @@
  * Manages the fetch and persistence logic for node file snapshots in 
  * the Case Resolver workspace.
  */
-/* eslint-disable complexity, no-await-in-loop -- This service intentionally tries several fetch strategies in order. */
-
 import { buildSettingRecordFetchAttempts, resolveSettingRecordFromSettingsPayload } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import { logCaseResolverWorkspaceEvent } from '@/features/case-resolver/workspace-observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
+const logNodeFileSnapshotError = logClientError as (error: unknown) => void;
 
 /**
  * Builds a unique key for a node file snapshot.
@@ -44,6 +43,53 @@ export const fetchSettingsPayloadWithTimeout = async (input: {
   }
 };
 
+type SettingRecordFetchAttempt = ReturnType<typeof buildSettingRecordFetchAttempts>[number];
+
+const logSettingRecordFetchFailure = ({
+  attempt,
+  error,
+  key,
+  source,
+}: {
+  attempt: SettingRecordFetchAttempt;
+  error: unknown;
+  key: string;
+  source: string;
+}): void => {
+  logNodeFileSnapshotError(error);
+  logCaseResolverWorkspaceEvent({
+    source,
+    action: 'node_file_snapshot_fetch_failed',
+    message: `key=${key} attempt=${attempt.key} ${error instanceof Error ? error.message : 'unknown_error'}`,
+  });
+};
+
+const fetchSettingRecordAttemptValue = async ({
+  attempt,
+  key,
+  source,
+  timeoutMs,
+}: {
+  attempt: SettingRecordFetchAttempt;
+  key: string;
+  source: string;
+  timeoutMs: number;
+}): Promise<string | null> => {
+  try {
+    const response = await fetchSettingsPayloadWithTimeout({
+      url: attempt.url,
+      timeoutMs,
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as unknown;
+    const record = resolveSettingRecordFromSettingsPayload(payload, key);
+    return record !== null && typeof record.value === 'string' ? record.value : null;
+  } catch (error: unknown) {
+    logSettingRecordFetchFailure({ attempt, error, key, source });
+    return null;
+  }
+};
+
 /**
  * Fetches a setting record value using multiple strategies and logging.
  */
@@ -61,27 +107,14 @@ export const fetchSettingRecordValue = async ({
   timeoutMs: number;
 }): Promise<string | null> => {
   const attempts = buildSettingRecordFetchAttempts({ key, strategy, fresh });
-  for (const attempt of attempts) {
-    try {
-      const response = await fetchSettingsPayloadWithTimeout({
-        url: attempt.url,
-        timeoutMs,
-      });
-      if (!response.ok) continue;
-      const payload = (await response.json()) as unknown;
-      const record = resolveSettingRecordFromSettingsPayload(payload, key);
-      if (record === null || typeof record.value !== 'string') continue;
-      return record.value;
-    } catch (error: unknown) {
-      logClientError(error);
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'node_file_snapshot_fetch_failed',
-        message: `key=${key} attempt=${attempt.key} ${error instanceof Error ? error.message : 'unknown_error'}`,
-      });
-    }
-  }
-  return null;
+  return attempts.reduce<Promise<string | null>>(
+    async (previousValue, attempt) => {
+      const value = await previousValue;
+      if (value !== null) return value;
+      return fetchSettingRecordAttemptValue({ attempt, key, source, timeoutMs });
+    },
+    Promise.resolve(null)
+  );
 };
 
 /**
@@ -117,7 +150,7 @@ export const persistSettingValue = async ({
     }
     return true;
   } catch (error: unknown) {
-    logClientError(error);
+    logNodeFileSnapshotError(error);
     logCaseResolverWorkspaceEvent({
       source,
       action: 'node_file_snapshot_persist_failed',

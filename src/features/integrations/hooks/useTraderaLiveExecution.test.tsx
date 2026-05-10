@@ -230,6 +230,60 @@ describe('useTraderaLiveExecution', () => {
     ]);
   });
 
+  it('derives the latest stage from live emitted steps before the run emits a result payload', async () => {
+    fetchPlaywrightRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          runId: 'run-live-steps-only-123',
+          status: 'running',
+          result: {
+            outputs: {
+              steps: [
+                {
+                  id: 'shipping_set',
+                  label: 'Configure delivery',
+                  status: 'running',
+                  info: {
+                    message: 'Selecting the delivery option.',
+                  },
+                },
+              ],
+            },
+          },
+          logs: ['[user] tradera.quicklist.delivery.save.attempt'],
+        },
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        useTraderaLiveExecution(
+          buildListing({
+            action: 'list',
+            runId: 'run-live-steps-only-123',
+          })
+        ),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current?.runId).toBe('run-live-steps-only-123');
+    });
+
+    expect(result.current?.latestStage).toBe('shipping_set');
+    expect(result.current?.executionSteps).toEqual([
+      {
+        id: 'shipping_set',
+        label: 'Configure delivery',
+        status: 'running',
+        message: 'Selecting the delivery option.',
+      },
+    ]);
+  });
+
   it('reconstructs final failed quicklist steps when emitted live steps are stale', async () => {
     const staleSteps = [
       'browser_preparation',

@@ -47,9 +47,15 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
 
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
 
-const buildTraderaPageHarness = () => {
+const buildTraderaPageHarness = (options?: {
+  hideSuccessSelectors?: boolean;
+  postVerifyUrl?: string;
+}) => {
   let phase: 'blank' | 'login' | 'send-code' | 'code-entry' | 'authenticated' = 'blank';
   let currentUrl = 'about:blank';
+  const hideSuccessSelectors = options?.hideSuccessSelectors === true;
+  const postVerifyUrl =
+    options?.postVerifyUrl ?? 'https://www.tradera.com/en/my/listings?tab=active';
 
   const selectorVisible = (selector: string): boolean => {
     if (
@@ -63,7 +69,7 @@ const buildTraderaPageHarness = () => {
       selector === 'a[href*="/profile"]' ||
       selector === 'a[href*="/my"]'
     ) {
-      return phase === 'authenticated';
+      return phase === 'authenticated' && !hideSuccessSelectors;
     }
 
     if (
@@ -144,7 +150,7 @@ const buildTraderaPageHarness = () => {
 
         if (selector === 'button:has-text("Verify")') {
           phase = 'authenticated';
-          currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+          currentUrl = postVerifyUrl;
         }
       }),
       scrollIntoViewIfNeeded: vi.fn(async () => undefined),
@@ -159,6 +165,10 @@ const buildTraderaPageHarness = () => {
       if (url.includes('/login')) {
         phase = 'login';
         currentUrl = 'https://www.tradera.com/en/login';
+        return;
+      }
+      if (phase === 'authenticated' && url.includes('/my/listings')) {
+        currentUrl = url;
       }
     }),
     locator: vi.fn((selector: string) => locator(selector)),
@@ -329,6 +339,61 @@ describe('handleTraderaBrowserTest', () => {
         page: session.page,
       })
     );
+  });
+
+  it('saves and closes a manual session refresh after Tradera redirects to a generic logged-in page', async () => {
+    const session = buildTraderaPageHarness({
+      hideSuccessSelectors: true,
+      postVerifyUrl: 'https://www.tradera.com/',
+    });
+    openPlaywrightConnectionTestSessionMock.mockResolvedValue(session);
+    const steps: Array<{ step: string; status: string; detail: string }> = [];
+    const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => {
+      steps.push({ step, status, detail });
+    };
+    const fail = async (step: string, detail: string, status = 400): Promise<never> => {
+      pushStep(step, 'failed', detail);
+      throw new Error(`${status}:${detail}`);
+    };
+
+    const response = await handleTraderaBrowserTest({
+      connection: {
+        id: 'connection-tradera',
+        username: 'user@example.com',
+        password: 'encrypted-password',
+        playwrightStorageState: 'stored-state',
+      } as never,
+      repo: {
+        updateConnection: vi.fn(),
+      } as never,
+      manualMode: false,
+      manualSessionRefreshMode: true,
+      quicklistPreflightMode: false,
+      manualLoginTimeoutMs: 60_000,
+      steps: steps as never,
+      pushStep,
+      fail,
+    });
+
+    const payload = (await response.json()) as {
+      message?: string;
+      ok: boolean;
+      sessionReady?: boolean;
+    };
+    expect(payload.ok).toBe(true);
+    expect(payload.sessionReady).toBe(true);
+    expect(session.page.goto).toHaveBeenCalledWith(
+      'https://www.tradera.com/en/my/listings?tab=active',
+      expect.objectContaining({ waitUntil: 'domcontentloaded' })
+    );
+    expect(persistPlaywrightConnectionTestSessionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connectionId: 'connection-tradera',
+        page: session.page,
+      })
+    );
+    expect(session.close).toHaveBeenCalled();
+    expect(session.page.close).toHaveBeenCalled();
   });
 
   it('does not persist the session when the Tradera email code is unavailable', async () => {

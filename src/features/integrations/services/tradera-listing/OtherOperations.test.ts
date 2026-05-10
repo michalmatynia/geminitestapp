@@ -1271,6 +1271,131 @@ describe('ensureLoggedIn', () => {
     );
   });
 
+  it('probes the session-check route after credential login lands on the Tradera home page', async () => {
+    let currentUrl = 'about:blank';
+    let phase:
+      | 'session-check'
+      | 'login'
+      | 'authenticated-home'
+      | 'authenticated-listings'
+      | 'listing-form' = 'session-check';
+
+    const usernameField = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login',
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const passwordField = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login',
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const loginButton = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login',
+      fill: vi.fn(),
+      click: vi.fn(async () => {
+        phase = 'authenticated-home';
+        currentUrl = 'https://www.tradera.com/';
+      }),
+      innerText: vi.fn(async () => ''),
+    };
+
+    const buildLocator = (selector: string) => ({
+      first: () => {
+        if (selector === '#email' || selector === 'input[name="email"]' || selector === 'input[type="email"]') {
+          return usernameField;
+        }
+        if (selector === '#password' || selector === 'input[name="password"]' || selector === 'input[type="password"]') {
+          return passwordField;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return loginButton;
+        }
+
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector === LOGIN_SUCCESS_SELECTOR) return false;
+            if (selector === '#sign-in-form' || selector === 'form[data-sign-in-form="true"]' || selector === 'form[action*="login"]') {
+              return phase === 'login';
+            }
+            return false;
+          },
+          fill: vi.fn(),
+          click: vi.fn(),
+          innerText: vi.fn(async () => ''),
+        };
+      },
+    });
+
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url;
+      if (url.includes('/my/listings')) {
+        if (phase === 'authenticated-home' || phase === 'authenticated-listings' || phase === 'listing-form') {
+          currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+          phase = 'authenticated-listings';
+          return;
+        }
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'login';
+        return;
+      }
+      if (url.includes('/login')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'login';
+        return;
+      }
+      if (url.includes('/selling/new')) {
+        currentUrl = url;
+        phase = 'listing-form';
+      }
+    });
+
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: buildLocator,
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      waitForTimeout: vi.fn(async () => undefined),
+    };
+
+    await ensureLoggedIn(
+      page as never,
+      {
+        username: 'user@example.com',
+        password: 'encrypted-password',
+      } as never,
+      'https://www.tradera.com/en/selling/new'
+    );
+
+    expect(usernameField.fill).toHaveBeenCalledWith('user@example.com');
+    expect(passwordField.fill).toHaveBeenCalledWith('decrypted:encrypted-password');
+    expect(loginButton.click).toHaveBeenCalledTimes(1);
+    expect(
+      gotoMock.mock.calls.filter(
+        ([url]) => url === 'https://www.tradera.com/en/my/listings?tab=active'
+      )
+    ).toHaveLength(2);
+    expect(gotoMock).toHaveBeenLastCalledWith(
+      'https://www.tradera.com/en/selling/new',
+      expect.objectContaining({
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      })
+    );
+  });
+
   it('submits the Tradera email verification code from the connected mailbox', async () => {
     resolveTraderaEmailVerificationCodeMock.mockResolvedValue({
       code: '343079',

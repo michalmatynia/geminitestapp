@@ -66,24 +66,24 @@ export const ensureMongoFilemakerPartySnapshotIndexes = async (
   ]);
 };
 
-// Imported snapshots are defensive because the read model can be rebuilt independently.
-// eslint-disable-next-line complexity
+const toSnapshotCountNumber = (value: unknown): number =>
+  typeof value === 'number' ? value : 0;
+
 const toSnapshotCounts = (value: unknown): FilemakerPartySnapshotCounts => {
   const fallback = createEmptyFilemakerPartySnapshotCounts();
   if (typeof value !== 'object' || value === null) return fallback;
   const record = value as Record<keyof FilemakerPartySnapshotCounts, unknown>;
   return {
-    addresses: typeof record.addresses === 'number' ? record.addresses : 0,
-    contactLogs: typeof record.contactLogs === 'number' ? record.contactLogs : 0,
-    demands: typeof record.demands === 'number' ? record.demands : 0,
-    emails: typeof record.emails === 'number' ? record.emails : 0,
-    events: typeof record.events === 'number' ? record.events : 0,
-    harvestProfiles:
-      typeof record.harvestProfiles === 'number' ? record.harvestProfiles : 0,
-    organizations: typeof record.organizations === 'number' ? record.organizations : 0,
-    persons: typeof record.persons === 'number' ? record.persons : 0,
-    total: typeof record.total === 'number' ? record.total : 0,
-    websites: typeof record.websites === 'number' ? record.websites : 0,
+    addresses: toSnapshotCountNumber(record.addresses),
+    contactLogs: toSnapshotCountNumber(record.contactLogs),
+    demands: toSnapshotCountNumber(record.demands),
+    emails: toSnapshotCountNumber(record.emails),
+    events: toSnapshotCountNumber(record.events),
+    harvestProfiles: toSnapshotCountNumber(record.harvestProfiles),
+    organizations: toSnapshotCountNumber(record.organizations),
+    persons: toSnapshotCountNumber(record.persons),
+    total: toSnapshotCountNumber(record.total),
+    websites: toSnapshotCountNumber(record.websites),
   };
 };
 

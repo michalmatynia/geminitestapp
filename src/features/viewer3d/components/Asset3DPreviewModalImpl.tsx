@@ -22,51 +22,135 @@ import { Viewer3DProvider, useViewer3DActions } from '../context/Viewer3DContext
 
 interface Asset3DPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
+function Asset3DPreviewPlaceholder({
+  title,
+  description,
+  tone = 'muted',
+}: {
+  title: string;
+  description: string;
+  tone?: 'muted' | 'error';
+}): React.JSX.Element {
+  return (
+    <div className='flex h-full items-center justify-center'>
+      <div className={cn('text-center', tone === 'error' ? 'text-red-400' : 'text-gray-400')}>
+        <p>{title}</p>
+        <p className='mt-2 text-sm text-gray-400'>{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function Asset3DPreviewViewer({
+  modelUrl,
+  modelError,
+  showSettings,
+  onError,
+}: {
+  modelUrl: string | null;
+  modelError: string | null;
+  showSettings: boolean;
+  onError: (error: Error) => void;
+}): React.JSX.Element {
+  let content: React.JSX.Element;
+
+  if (modelUrl === null) {
+    content = (
+      <Asset3DPreviewPlaceholder
+        title='Invalid asset'
+        description='The 3D asset is missing or corrupted'
+      />
+    );
+  } else if (modelError !== null && modelError !== '') {
+    content = (
+      <Asset3DPreviewPlaceholder
+        title='Failed to load 3D model'
+        description={modelError}
+        tone='error'
+      />
+    );
+  } else {
+    content = (
+      <Viewer3D
+        modelUrl={modelUrl}
+        onLoad={() => {}}
+        onError={onError}
+        className='h-full w-full'
+      />
+    );
+  }
+
+  return <div className={cn('flex-1 bg-black/40', showSettings ? 'lg:w-2/3' : 'w-full')}>{content}</div>;
+}
+
+function Asset3DPreviewFooter({
+  asset,
+  showSettings,
+  setShowSettings,
+}: {
+  asset: Asset3DRecord;
+  showSettings: boolean;
+  setShowSettings: React.Dispatch<React.SetStateAction<boolean>>;
+}): React.JSX.Element {
+  const { resetSettings } = useViewer3DActions();
+  const filename = asset.filename ?? 'asset';
+
+  return (
+    <div className='flex items-center justify-between border-t border-border/60 bg-muted/10 p-2'>
+      <div className='flex items-center gap-2'>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={resetSettings}
+          title='Reset settings'
+          className='h-8 w-8 p-0'
+          aria-label='Reset settings'
+        >
+          <RotateCcw className='h-4 w-4' />
+        </Button>
+        <Button
+          variant={showSettings ? 'secondary' : 'ghost'}
+          size='sm'
+          onClick={() => setShowSettings((value) => !value)}
+          className='h-8 text-xs'
+        >
+          <Settings2 className='mr-1.5 h-3.5 w-3.5' />
+          Settings
+          {showSettings ? (
+            <ChevronUp className='ml-1.5 h-3.5 w-3.5' />
+          ) : (
+            <ChevronDown className='ml-1.5 h-3.5 w-3.5' />
+          )}
+        </Button>
+      </div>
+      <a href={`/api/assets3d/${asset.id}/file`} download={filename}>
+        <Button variant='outline' size='sm' className='h-8 text-xs'>
+          <Download className='mr-1.5 h-3.5 w-3.5' />
+          Download
+        </Button>
+      </a>
+    </div>
+  );
+}
+
 function Asset3DPreviewModalContent(): React.JSX.Element {
   const { asset } = useAsset3DPreviewModalViewContext();
-  const { resetSettings } = useViewer3DActions();
 
-  // UI State
   const [showSettings, setShowSettings] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
 
-  // Validate asset exists and has valid file path
-  const isValidAsset = Boolean(asset?.filepath) && Boolean(asset?.id);
-  const modelUrl = isValidAsset ? `/api/assets3d/${asset.id}/file` : null;
+  const filepath = asset.filepath ?? '';
+  const modelUrl = filepath !== '' && asset.id !== '' ? `/api/assets3d/${asset.id}/file` : null;
 
   return (
-    <div className='flex flex-col min-h-0 h-[600px]'>
-      {/* Main Content */}
-      <div className='flex flex-1 min-h-0 relative'>
-        {/* Viewer */}
-        <div className={cn('flex-1 bg-black/40', showSettings ? 'lg:w-2/3' : 'w-full')}>
-          {!isValidAsset ? (
-            <div className='flex items-center justify-center h-full'>
-              <div className='text-center text-gray-400'>
-                <p>Invalid asset</p>
-                <p className='text-sm mt-2'>The 3D asset is missing or corrupted</p>
-              </div>
-            </div>
-          ) : modelError ? (
-            <div className='flex items-center justify-center h-full'>
-              <div className='text-center text-red-400'>
-                <p>Failed to load 3D model</p>
-                <p className='text-sm mt-2 text-gray-400'>{modelError}</p>
-              </div>
-            </div>
-          ) : (
-            <Viewer3D
-              modelUrl={modelUrl!}
-              onLoad={() => {}}
-              onError={(error: Error) => {
-                setModelError(error.message);
-              }}
-              className='w-full h-full'
-            />
-          )}
-        </div>
-
-        {/* Settings Panel */}
+    <div className='flex h-[600px] min-h-0 flex-col'>
+      <div className='relative flex min-h-0 flex-1'>
+        <Asset3DPreviewViewer
+          modelUrl={modelUrl}
+          modelError={modelError}
+          showSettings={showSettings}
+          onError={(error: Error) => setModelError(error.message)}
+        />
         {showSettings && (
           <div className='w-full lg:w-1/3 border-l border-border/60 bg-card/30 absolute right-0 top-0 bottom-0 z-10 lg:static'>
             <Viewer3DSettingsPanel />
@@ -74,42 +158,7 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
         )}
       </div>
 
-      {/* Footer / Status */}
-      <div className='border-t border-border/60 bg-muted/10 p-2 flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={resetSettings}
-            title='Reset settings'
-            className='h-8 w-8 p-0'
-            aria-label={'Reset settings'}>
-            <RotateCcw className='h-4 w-4' />
-          </Button>
-          <Button
-            variant={showSettings ? 'secondary' : 'ghost'}
-            size='sm'
-            onClick={() => setShowSettings(!showSettings)}
-            className='h-8 text-xs'
-          >
-            <Settings2 className='h-3.5 w-3.5 mr-1.5' />
-            Settings
-            {showSettings ? (
-              <ChevronUp className='h-3.5 w-3.5 ml-1.5' />
-            ) : (
-              <ChevronDown className='h-3.5 w-3.5 ml-1.5' />
-            )}
-          </Button>
-        </div>
-        <div className='flex items-center gap-2'>
-          <a href={`/api/assets3d/${asset.id}/file`} download={asset.filename}>
-            <Button variant='outline' size='sm' className='h-8 text-xs'>
-              <Download className='h-3.5 w-3.5 mr-1.5' />
-              Download
-            </Button>
-          </a>
-        </div>
-      </div>
+      <Asset3DPreviewFooter asset={asset} showSettings={showSettings} setShowSettings={setShowSettings} />
       <Viewer3DStatusInfo />
     </div>
   );
@@ -118,14 +167,16 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
 export function Asset3DPreviewModal(props: Asset3DPreviewModalProps): React.JSX.Element | null {
   const { isOpen, onClose, item: asset } = props;
 
-  if (!asset) return null;
+  if (asset === null) return null;
+
+  const title = asset.name !== '' ? asset.name : asset.filename ?? '3D asset';
 
   return (
     <DetailModal
       isOpen={isOpen}
       onClose={onClose}
-      title={asset.name || asset.filename}
-      subtitle={formatFileSize(asset.size || 0)}
+      title={title}
+      subtitle={formatFileSize(asset.size ?? 0)}
       size='xl'
     >
       {' '}

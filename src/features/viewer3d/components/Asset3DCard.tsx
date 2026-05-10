@@ -44,7 +44,7 @@ function useAsset3DCardModel(asset: Asset3DRecord): {
     setEditAsset(asset);
   }, [setEditAsset, asset]);
   const onDeleteAsset = useCallback((): void => {
-    Promise.resolve(handleDelete(asset)).catch(() => {});
+    handleDelete(asset);
   }, [handleDelete, asset]);
 
   const displayName = getDisplayName(asset.name, asset.filename);

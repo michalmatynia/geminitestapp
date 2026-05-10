@@ -218,6 +218,13 @@ const resolveExecutionSteps = ({
   ]);
 };
 
+const resolveLatestStageFromSteps = (
+  steps: TraderaExecutionStep[]
+): string | null =>
+  steps.find((step) => step.status === 'running')?.id ??
+  steps.find((step) => step.status === 'error')?.id ??
+  null;
+
 const buildLiveTraderaExecutionState = (
   action: LiveTraderaAction,
   snapshot: PlaywrightNodeRunSnapshot
@@ -239,7 +246,7 @@ const buildLiveTraderaExecutionState = (
     runId: snapshot.runId,
     action,
     status: snapshot.status,
-    latestStage: readString(resultValue['stage']),
+    latestStage: readString(resultValue['stage']) ?? resolveLatestStageFromSteps(executionSteps),
     latestStageUrl: readString(resultValue['currentUrl']) ?? finalUrl,
     requestedSelectorProfile:
       readString(metadata['selectorProfileRequested']) ??

@@ -37,7 +37,7 @@ export function TraderaQuickListButton(
       title={model.title}
       className={cn(
         'relative size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        model.isProcessingOrQueued && 'animate-pulse',
+        model.isWorkerRunning && 'motion-safe:animate-pulse',
         model.resolvedToneClass,
         model.disabledInteractionClass
       )}

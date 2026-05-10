@@ -621,7 +621,7 @@ describe('TraderaParameterMappingPage', () => {
       ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
-      '/admin/integrations/marketplaces/category-mapper?marketplace=tradera&connectionId=connection-1'
+      '/admin/integrations/marketplaces/tradera/category-mapping?connectionId=connection-1'
     );
   });
 

@@ -23,6 +23,7 @@ import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useTelemetrizedMultiQueryOptionsV2 } from '@/shared/lib/tanstack-factory-v2/hooks';
+import { resolveIntegrationSelectionErrorMessage } from '@/features/integrations/utils/integration-selection-error';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
@@ -80,6 +81,7 @@ export function useIntegrationSelection(
 ): {
   integrations: IntegrationWithConnections[];
   loading: boolean;
+  error: string | null;
   selectedIntegrationId: string;
   selectedConnectionId: string;
   selectedIntegration: IntegrationWithConnections | undefined;
@@ -111,6 +113,7 @@ export function useIntegrationSelection(
     queryFn: fetchPreferredBaseConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -128,6 +131,7 @@ export function useIntegrationSelection(
     queryFn: fetchPreferredTraderaConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -145,6 +149,7 @@ export function useIntegrationSelection(
     queryFn: fetchIntegrationsWithConnections,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -162,6 +167,7 @@ export function useIntegrationSelection(
     queryFn: fetchPreferredVintedConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+    retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -195,7 +201,9 @@ export function useIntegrationSelection(
   const preferredVintedConnectionData = preferredVintedConnectionQuery?.data ?? null;
   const integrationsData = integrationsQuery?.data;
 
-  const loading = Boolean(integrationsQuery?.isPending && !integrationsData);
+  const loading = Boolean(
+    integrationsQuery?.isPending && !integrationsData && !integrationsQuery?.isError
+  );
   const integrations = useMemo((): IntegrationWithConnections[] => {
     const data = integrationsData ?? [];
     return Array.isArray(data)
@@ -206,6 +214,10 @@ export function useIntegrationSelection(
         )
       : [];
   }, [integrationsData, normalizedFilterIntegrationSlug]);
+  const error =
+    integrationsQuery?.isError && integrations.length === 0
+      ? resolveIntegrationSelectionErrorMessage(integrationsQuery.error)
+      : null;
 
   const preferredBaseConnectionId = preferredBaseConnectionData?.connectionId ?? null;
   const preferredTraderaConnectionId = preferredTraderaConnectionData?.connectionId ?? null;
@@ -352,6 +364,7 @@ export function useIntegrationSelection(
   return {
     integrations,
     loading,
+    error,
     selectedIntegrationId,
     selectedConnectionId,
     selectedIntegration,

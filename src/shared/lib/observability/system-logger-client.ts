@@ -15,7 +15,6 @@ import {
   getObservabilityLoggingControlTypeForSystemLogLevel,
 } from '@/shared/lib/observability/logging-controls';
 import { isClientLoggingControlEnabled } from '@/shared/lib/observability/logging-controls-client';
-import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type SystemLogInput = {
@@ -29,54 +28,70 @@ type SystemLogInput = {
   critical?: boolean;
 };
 
-export async function logSystemEvent(input: SystemLogInput): Promise<void> {
-  if (typeof window === 'undefined') return;
+const writeClientConsoleLog = (
+  level: SystemLogLevel,
+  message: string,
+  error: unknown,
+  context: Record<string, unknown>
+): void => {
+  if (level === 'error') {
+    // eslint-disable-next-line no-console
+    console.error(message, error, context);
+    return;
+  }
+  if (level === 'warn') {
+    // eslint-disable-next-line no-console
+    console.warn(message, context);
+    return;
+  }
+  // eslint-disable-next-line no-console
+  console.info(message, context);
+};
 
+const hasErrorValue = (error: unknown): boolean => error !== undefined && error !== null;
+
+const shouldReportClientError = (input: SystemLogInput, level: SystemLogLevel): boolean =>
+  hasErrorValue(input.error) || level === 'error' || input.critical === true;
+
+const resolveClientLogSource = (source: string | undefined): string => {
+  const normalizedSource = source?.trim();
+  return normalizedSource !== undefined && normalizedSource.length > 0 ? normalizedSource : 'system';
+};
+
+const buildClientLogContext = (
+  input: SystemLogInput,
+  source: string
+): Record<string, unknown> => ({
+  ...(input.context ?? {}),
+  source,
+  service: input.service,
+  statusCode: input.statusCode,
+});
+
+export function logSystemEvent(input: SystemLogInput): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
   const level = input.level ?? 'info';
   const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
     level,
     Boolean(input.critical)
   );
   if (!isClientLoggingControlEnabled(loggingControlType)) {
-    return;
+    return Promise.resolve();
   }
-  const source = input.source || 'system';
-  const context = input.context ?? undefined;
+  const source = resolveClientLogSource(input.source);
   const consoleMessage = `[${source}] ${input.message}`;
-  const logContext = {
-    ...(context ?? {}),
-    source,
-    service: input.service,
-    statusCode: input.statusCode,
-  };
+  const logContext = buildClientLogContext(input, source);
 
-  if (level === 'error' || input.critical) {
-    logger.error(consoleMessage, input.error, {
-      ...logContext,
-      service: input.service,
-    });
-  } else if (level === 'warn') {
-    logger.warn(consoleMessage, {
-      ...logContext,
-      service: input.service,
-    });
-  } else {
-    logger.info(consoleMessage, {
-      ...logContext,
-      service: input.service,
-    });
-  }
+  writeClientConsoleLog(input.critical === true ? 'error' : level, consoleMessage, input.error, logContext);
 
-  if (input.error || level === 'error' || input.critical) {
+  if (shouldReportClientError(input, level)) {
     const err = input.error instanceof Error ? input.error : new Error(input.message);
     logClientError(err, {
-      context: {
-        ...(logContext ?? {}),
-      },
+      context: logContext,
     });
   }
+  return Promise.resolve();
 }
 
-export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Promise<void> {
-  await logSystemEvent({ ...input, level: 'error' });
-}
+export const logSystemError = (input: Omit<SystemLogInput, 'level'>): Promise<void> =>
+  logSystemEvent({ ...input, level: 'error' });

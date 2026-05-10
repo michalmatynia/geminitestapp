@@ -64,6 +64,55 @@ const queueState =
     schedulerRegistered: false,
   });
 
+type DueProductSyncProfile = Awaited<ReturnType<typeof findDueProductSyncProfiles>>[number];
+
+type SchedulerTickRunSummary = {
+  skipped: number;
+  skipReasons: Map<string, number>;
+  started: number;
+};
+
+const buildInitialSchedulerTickRunSummary = (): SchedulerTickRunSummary => ({
+  skipped: 0,
+  skipReasons: new Map<string, number>(),
+  started: 0,
+});
+
+const processDueProductSyncProfile = async (
+  summary: SchedulerTickRunSummary,
+  profile: DueProductSyncProfile
+): Promise<SchedulerTickRunSummary> => {
+  try {
+    await startProductSyncRun({
+      profileId: profile.id,
+      trigger: 'scheduled',
+    });
+    return { ...summary, started: summary.started + 1 };
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    const reason = normalizeSkipReason(error);
+    summary.skipReasons.set(reason, (summary.skipReasons.get(reason) ?? 0) + 1);
+
+    if (!isExpectedSkipReason(reason)) {
+      await ErrorSystem.captureException(error, {
+        service: buildProductSyncSource('start-sync-run-failed'),
+        profileId: profile.id,
+      });
+    }
+
+    return { ...summary, skipped: summary.skipped + 1 };
+  }
+};
+
+const processDueProductSyncProfiles = (
+  dueProfiles: DueProductSyncProfile[]
+): Promise<SchedulerTickRunSummary> =>
+  dueProfiles.reduce<Promise<SchedulerTickRunSummary>>(
+    async (previousSummary, profile) =>
+      processDueProductSyncProfile(await previousSummary, profile),
+    Promise.resolve(buildInitialSchedulerTickRunSummary())
+  );
+
 const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'product-sync-scheduler',
   concurrency: 1,
@@ -79,34 +128,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
       limit: 500,
     });
     const dueProfiles = await findDueProductSyncProfiles(new Date());
-    let started = 0;
-    let skipped = 0;
-    const skipReasons = new Map<string, number>();
-
-    for (const profile of dueProfiles) {
-      try {
-        // Keep scheduler starts sequential so queue de-duplication and logging stay deterministic.
-        // eslint-disable-next-line no-await-in-loop
-        await startProductSyncRun({
-          profileId: profile.id,
-          trigger: 'scheduled',
-        });
-        started += 1;
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-        skipped += 1;
-        const reason = normalizeSkipReason(error);
-        skipReasons.set(reason, (skipReasons.get(reason) ?? 0) + 1);
-
-        if (!isExpectedSkipReason(reason)) {
-          // eslint-disable-next-line no-await-in-loop
-          await ErrorSystem.captureException(error, {
-            service: buildProductSyncSource('start-sync-run-failed'),
-            profileId: profile.id,
-          });
-        }
-      }
-    }
+    const { skipped, skipReasons, started } = await processDueProductSyncProfiles(dueProfiles);
 
     const skippedByReason = Array.from(skipReasons.entries())
       .sort((left, right) => right[1] - left[1])

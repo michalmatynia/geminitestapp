@@ -10,33 +10,17 @@ import type {
   SelectorRegistryProbeSession,
 } from '@/shared/contracts/integrations/selector-registry';
 import {
-  applySelectorRegistryProbeCarryForwardDefaults,
   buildSelectorRegistryProbeCarryForwardDefaultKeysByRole,
-  buildSelectorRegistryProbeEntriesByRole,
-  buildSelectorRegistryProbeCarryForwardInheritedCounts,
   buildSelectorRegistryProbeCarryForwardItems,
   buildSelectorRegistryProbeCarryForwardSources,
-  isSelectorRegistryProbeCarryForwardInherited,
 } from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-badges';
-import {
-  getSelectorRegistryProbeSuggestionEvidenceText,
-  getSelectorRegistryProbeSuggestionPrimaryPageLabel,
-  getSelectorRegistryProbeSuggestionSecondaryPageLabel,
-  getSelectorRegistryProbeSuggestionTextPreview,
-} from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-formatting';
 import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
 import { useSelectorRegistryProbeSessions } from './selector-registry-probe-sessions/useSelectorRegistryProbeSessions';
 import {
   Badge,
   Button,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
 } from '@/shared/ui/primitives.public';
 import { buildSelectorRegistryProbeSessionClusters } from './selectorRegistryProbeSessionClustering';

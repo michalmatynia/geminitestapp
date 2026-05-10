@@ -134,8 +134,6 @@ function useViewerSettings(propSettings?: Viewer3DSettings): ResolvedSettings {
 }
 
 function ViewerEffects({ s }: { s: ResolvedSettings }): React.JSX.Element | null {
-  const hasPostProcessing = s.enableDithering || s.enableOrderedDithering || s.enablePixelation || s.enableBloom || s.enableToneMapping || s.enableVignette || s.enableAntiAliasing;
-  
   const effects = useMemo(() => {
     const list: React.ReactElement[] = [];
     if (s.enableAntiAliasing) list.push(<SMAA key='smaa' />);
@@ -150,7 +148,7 @@ function ViewerEffects({ s }: { s: ResolvedSettings }): React.JSX.Element | null
     return list;
   }, [s.enableAntiAliasing, s.enableToneMapping, s.enableBloom, s.bloomIntensity, s.enableVignette, s.enablePixelation, s.pixelSize, s.enableOrderedDithering, s.orderedDitheringGridSize, s.orderedDitheringPixelSizeRatio, s.orderedDitheringGrayscaleOnly, s.orderedDitheringInvertColor, s.orderedDitheringLuminanceMethod, s.enableDithering, s.ditheringIntensity]);
 
-  if (!hasPostProcessing || effects.length === 0) return null;
+  if (effects.length === 0) return null;
   return <EffectComposer multisampling={0}>{effects}</EffectComposer>;
 }
 
@@ -172,6 +170,53 @@ function SceneContent({ modelNode, autoFit, s, presentationMode, allowUserContro
   );
 }
 
+function ViewerEnvironment({ environment }: { environment: ResolvedSettings['environment'] }): React.JSX.Element | null {
+  if (environment === 'none' || environment === 'gym') return null;
+  return <Environment preset={environment as 'studio'} background={false} />;
+}
+
+function ViewerOrbitControls({
+  presentationMode,
+  allowUserControls,
+  autoRotate,
+  autoRotateSpeed,
+}: {
+  presentationMode: boolean;
+  allowUserControls: boolean;
+  autoRotate: boolean;
+  autoRotateSpeed: number;
+}): React.JSX.Element | null {
+  if (presentationMode || !allowUserControls) return null;
+
+  return (
+    <OrbitControls
+      autoRotate={autoRotate}
+      autoRotateSpeed={autoRotateSpeed}
+      enablePan={allowUserControls}
+      enableZoom={allowUserControls}
+      enableRotate={allowUserControls}
+      enableDamping
+      dampingFactor={0.05}
+      minDistance={0.5}
+      maxDistance={100}
+      minPolarAngle={0}
+      maxPolarAngle={Math.PI}
+    />
+  );
+}
+
+const resolveToneMapping = (enabled: boolean): THREE.ToneMapping =>
+  enabled ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+
+function ViewerCapture({
+  captureRef,
+}: {
+  captureRef?: React.MutableRefObject<(() => string | null) | null>;
+}): React.JSX.Element | null {
+  if (captureRef === undefined) return null;
+  return <ScreenshotCapture captureRef={captureRef} />;
+}
+
 export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
   const { modelUrl, settings: propSettings, className, onLoad, onError, autoFit = true, presentationMode = false, allowUserControls = true, captureRef } = props;
   const s = useViewerSettings(propSettings);
@@ -186,15 +231,20 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
 
   return (
     <div className={className}>
-      <Canvas camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }} shadows={s.enableShadows} gl={{ preserveDrawingBuffer: true, antialias: !(s.enableAntiAliasing), toneMapping: s.enableToneMapping ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping, toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }} dpr={[1, 2]}>
-        {captureRef !== undefined ? <ScreenshotCapture captureRef={captureRef} /> : null}
+      <Canvas camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }} shadows={s.enableShadows} gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }} dpr={[1, 2]}>
+        <ViewerCapture captureRef={captureRef} />
         <color attach='background' args={[s.backgroundColor]} />
         <SceneLighting preset={s.lighting} intensity={s.lightIntensity} />
-        {s.environment !== 'none' && s.environment !== 'gym' && <Environment preset={s.environment as 'studio'} background={false} />}
+        <ViewerEnvironment environment={s.environment} />
         <Suspense fallback={<Loader />}>
           <SceneContent modelNode={modelNode} autoFit={autoFit} s={s} presentationMode={presentationMode} allowUserControls={allowUserControls} />
         </Suspense>
-        {!presentationMode && allowUserControls && <OrbitControls autoRotate={s.autoRotate} autoRotateSpeed={s.autoRotateSpeed} enablePan={allowUserControls} enableZoom={allowUserControls} enableRotate={allowUserControls} enableDamping dampingFactor={0.05} minDistance={0.5} maxDistance={100} minPolarAngle={0} maxPolarAngle={Math.PI} />}
+        <ViewerOrbitControls
+          presentationMode={presentationMode}
+          allowUserControls={allowUserControls}
+          autoRotate={s.autoRotate}
+          autoRotateSpeed={s.autoRotateSpeed}
+        />
         <ViewerEffects s={s} />
       </Canvas>
     </div>

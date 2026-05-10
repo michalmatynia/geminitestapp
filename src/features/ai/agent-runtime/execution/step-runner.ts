@@ -1,18 +1,3 @@
-/* eslint-disable
-  @typescript-eslint/no-unsafe-assignment,
-  @typescript-eslint/no-unsafe-call,
-  @typescript-eslint/no-unsafe-member-access,
-  @typescript-eslint/no-unsafe-return,
-  @typescript-eslint/naming-convention,
-  @typescript-eslint/strict-boolean-expressions,
-  complexity,
-  max-depth,
-  max-lines,
-  max-lines-per-function,
-  max-params,
-  no-await-in-loop,
-  require-atomic-updates
-*/
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { applyAgentRuntimeContextMemory } from '@/features/ai/agent-runtime/context-registry/shared';
@@ -31,6 +16,7 @@ import {
 import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 
+import { evaluateApproval } from './step-runner/approval-logic';
 import { maybeUpdateCheckpointBrief, type CheckpointContext } from './step-runner/checkpoint-logic';
 import { executeTool } from './step-runner/tool-logic';
 import { type StepLoopInput, type StepLoopResult } from './step-runner/types';
@@ -110,20 +96,29 @@ async function logBranchAlternatives(
       continue;
     }
 
-    const approvalResult = await handleApprovalGating(
+    const approvalResult = await evaluateApproval({
       step,
       context,
-      run.id,
+      runId: run.id,
       approvalGrantedStepId,
       planSteps,
       lastError,
       taskType,
       approvalRequestedStepId,
-      summaryCheckpoint
-    );
+      summaryCheckpoint,
+    });
     approvalRequestedStepId = approvalResult.updatedApprovalRequestedStepId;
-    if (approvalResult.requiresHuman && approvalResult.stepLoopResult) {
-      return approvalResult.stepLoopResult;
+    if (approvalResult.requiresHuman) {
+      return {
+        planSteps,
+        stepIndex,
+        taskType,
+        memoryContext,
+        summaryCheckpoint,
+        overallOk,
+        lastError,
+        requiresHuman: true,
+      };
     }
 
     const attempts = (step.attempts ?? 0) + 1;

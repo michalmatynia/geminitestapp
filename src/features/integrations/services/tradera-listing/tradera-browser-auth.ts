@@ -280,14 +280,26 @@ const waitForTraderaAuthResolution = async ({
   phase,
   hasStoredSession,
   timeoutMs = TRADERA_AUTH_RESOLUTION_TIMEOUT_MS,
+  probeSessionCheckUrl,
 }: {
   page: Page;
   phase: 'session_check' | 'login' | 'post_login' | 'listing_form';
   hasStoredSession: boolean;
   timeoutMs?: number;
+  probeSessionCheckUrl?: string;
 }): Promise<TraderaAuthState> => {
   const maxAttempts = Math.max(1, Math.ceil(timeoutMs / TRADERA_AUTH_RESOLUTION_POLL_MS));
   let lastAuthState = await readTraderaAuthState(page);
+
+  if (probeSessionCheckUrl !== undefined) {
+    lastAuthState = await probeTraderaSessionCheck({
+      page,
+      authState: lastAuthState,
+      phase,
+      hasStoredSession,
+      sessionCheckUrl: probeSessionCheckUrl,
+    });
+  }
 
   if (lastAuthState.resolution !== 'unknown') {
     return lastAuthState;
@@ -300,6 +312,15 @@ const waitForTraderaAuthResolution = async ({
     }
 
     lastAuthState = await readTraderaAuthState(page);
+    if (probeSessionCheckUrl !== undefined) {
+      lastAuthState = await probeTraderaSessionCheck({
+        page,
+        authState: lastAuthState,
+        phase,
+        hasStoredSession,
+        sessionCheckUrl: probeSessionCheckUrl,
+      });
+    }
     if (lastAuthState.resolution !== 'unknown') {
       return lastAuthState;
     }
@@ -312,6 +333,46 @@ const waitForTraderaAuthResolution = async ({
     hasStoredSession,
     authState: lastAuthState,
   });
+};
+
+const shouldProbeTraderaSessionCheck = (authState: TraderaAuthState): boolean => {
+  const normalizedUrl = authState.currentUrl.trim().toLowerCase();
+  return (
+    !authState.loggedIn &&
+    !authState.loginFormVisible &&
+    !authState.manualVerificationDetected &&
+    !normalizedUrl.includes('/login')
+  );
+};
+
+const probeTraderaSessionCheck = async ({
+  page,
+  authState,
+  phase,
+  hasStoredSession,
+  sessionCheckUrl,
+}: {
+  page: Page;
+  authState: TraderaAuthState;
+  phase: 'session_check' | 'login' | 'post_login' | 'listing_form';
+  hasStoredSession: boolean;
+  sessionCheckUrl: string;
+}): Promise<TraderaAuthState> => {
+  if (!shouldProbeTraderaSessionCheck(authState)) {
+    return authState;
+  }
+
+  await page
+    .goto(sessionCheckUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    .catch(() => undefined);
+  await acceptTraderaCookies(page).catch(() => undefined);
+
+  return waitForTraderaAuthResolution({
+    page,
+    phase,
+    hasStoredSession,
+    timeoutMs: 5_000,
+  }).catch(() => authState);
 };
 
 const waitForTraderaLoginControls = async (
@@ -371,7 +432,7 @@ const waitForTraderaEmailVerificationChallenge = async (
       findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS),
     ]);
 
-    if (codeInput) {
+    if (codeInput !== null) {
       return {
         kind: 'code_entry',
         codeInput,
@@ -379,7 +440,7 @@ const waitForTraderaEmailVerificationChallenge = async (
       };
     }
 
-    if (requestButton) {
+    if (requestButton !== null) {
       return {
         kind: 'code_request',
         requestButton,
@@ -577,6 +638,7 @@ export const ensureLoggedIn = async (
           page,
           phase: 'login',
           hasStoredSession: false,
+          probeSessionCheckUrl: sessionCheckUrl,
         });
         authFlowState.currentAuthState = loginEntryAuthState;
 
@@ -647,6 +709,7 @@ export const ensureLoggedIn = async (
           page,
           phase: 'post_login',
           hasStoredSession: false,
+          probeSessionCheckUrl: sessionCheckUrl,
         });
         authFlowState.currentAuthState = postLoginAuthState;
         if (
@@ -721,6 +784,7 @@ export const ensureLoggedIn = async (
                 page,
                 phase: 'post_login',
                 hasStoredSession: false,
+                probeSessionCheckUrl: sessionCheckUrl,
               });
               authFlowState.currentAuthState = codeAuthState;
             }

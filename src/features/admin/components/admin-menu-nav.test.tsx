@@ -69,7 +69,7 @@ describe('buildAdminNav', () => {
       (entry) =>
         entry.id === 'integrations/marketplaces/tradera/category-mapping' &&
         entry.label === 'Category Mapping' &&
-        entry.href === '/admin/integrations/marketplaces/category-mapper?marketplace=tradera'
+        entry.href === '/admin/integrations/marketplaces/tradera/category-mapping'
     );
 
     expect(item).not.toBeNull();
@@ -129,9 +129,17 @@ describe('buildAdminNav', () => {
         entry.label === 'Export' &&
         entry.href === '/admin/integrations/aggregators/base-com/import-export'
     );
+    const baseCategoryMappingItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/aggregators/base-com/category-mapping' &&
+        entry.label === 'Category Mapping' &&
+        entry.href === '/admin/integrations/aggregators/base-com/category-mapping'
+    );
 
     expect(productImportItem).not.toBeNull();
     expect(baseExportItem).not.toBeNull();
+    expect(baseCategoryMappingItem).not.toBeNull();
   });
 
   it('includes the Filemaker email client and separates it from email records', () => {

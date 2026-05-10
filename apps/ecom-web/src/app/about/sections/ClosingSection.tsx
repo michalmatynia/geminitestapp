@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
 import type { AboutClosingContent } from '@/data/aboutContent';
-import { localizeHref } from '@/lib/locales';
+import { localizeHref, type EcomLocale } from '@/lib/locales';
 
 interface ClosingSectionProps {
   content: AboutClosingContent;
-  locale: string;
+  locale: EcomLocale;
 }
 
 export function ClosingSection({ content, locale }: ClosingSectionProps): JSX.Element {

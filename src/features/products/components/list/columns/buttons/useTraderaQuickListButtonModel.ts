@@ -9,9 +9,15 @@ import {
   useTraderaQuickExportFeedback,
   useTraderaQuickExportPolling,
 } from '@/features/integrations/product-integrations-adapter';
+import {
+  useTraderaListingActionForRuntimeKey,
+} from '@/features/integrations/components/listings/hooks/useTraderaListingAction';
 import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type {
+  PlaywrightRelistBrowserMode,
+  ProductListingsRecoveryContext,
+} from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { useToast } from '@/shared/ui/toast';
@@ -23,6 +29,7 @@ import {
 } from '../product-column-utils';
 import { runTraderaQuickListAction } from './traderaQuickListAction';
 import {
+  GENERIC_DISABLED_INTERACTION_CLASS,
   resolveTraderaQuickListButtonView,
   type TraderaQuickListButtonViewModel,
 } from './traderaQuickListButtonView';
@@ -62,6 +69,8 @@ type TraderaQuickListClickHandlerInput = {
   queryClient: ReturnType<typeof useQueryClient>;
   toast: ReturnType<typeof useToast>['toast'];
   createListing: ReturnType<typeof useCreateListingMutation>['mutateAsync'];
+  browserMode: PlaywrightRelistBrowserMode;
+  actionSettingsPending: boolean;
   resolveConnection: ReturnType<typeof useTraderaQuickExportConnection>['resolveConnection'];
   enableDefaultScriptedConnection: ReturnType<
     typeof useTraderaQuickExportConnection
@@ -132,6 +141,9 @@ const shouldIgnoreQuickListClick = (
   feedbackStatus: string | null
 ): boolean => submitting || feedbackStatus === 'queued';
 
+const TRADERA_ACTION_SETTINGS_PENDING_MESSAGE =
+  'Tradera listing action settings are still loading or saving. Retry in a moment.';
+
 const hasText = (value: string | null | undefined): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
@@ -174,6 +186,10 @@ const useTraderaQuickListClickHandler = (
   localFeedbackRef.current = input.localFeedback;
 
   return useCallback((): void => {
+    if (input.actionSettingsPending) {
+      input.toast(TRADERA_ACTION_SETTINGS_PENDING_MESSAGE, { variant: 'error' });
+      return;
+    }
     if (shouldIgnoreQuickListClick(input.submitting, input.feedbackStatus)) return;
     if (input.isClosedTraderaStatus) input.setTrackClosedQuickListAttempt(true);
     input.setSubmitting(true);
@@ -183,6 +199,7 @@ const useTraderaQuickListClickHandler = (
       queryClient: input.queryClient,
       toast: input.toast,
       createListing: input.createListing,
+      browserMode: input.browserMode,
       resolveConnection: input.resolveConnection,
       enableDefaultScriptedConnection: input.enableDefaultScriptedConnection,
       setFeedbackStatus: input.setFeedbackStatus,
@@ -203,6 +220,7 @@ export function useTraderaQuickListButtonModel(
   const { toast } = useToast();
   const customFieldsQuery = useCustomFields();
   const createListingMutation = useCreateListingMutation(productId);
+  const quickListAction = useTraderaListingActionForRuntimeKey('tradera_quicklist_list');
   const [submitting, setSubmitting] = useState(false);
   const { resolveConnection, enableDefaultScriptedConnection } =
     useTraderaQuickExportConnection(productId);
@@ -228,11 +246,18 @@ export function useTraderaQuickListButtonModel(
     traderaStatus,
     isClosedTraderaStatus: runtime.isClosedTraderaStatus,
   });
+  const actionSettingsPending =
+    quickListAction.loading || quickListAction.saving || quickListAction.hasUnsavedChanges;
+  const browserMode: PlaywrightRelistBrowserMode = quickListAction.headless
+    ? 'headless'
+    : 'headed';
   const handleClick = useTraderaQuickListClickHandler({
     productId,
     queryClient,
     toast,
     createListing: createListingMutation.mutateAsync,
+    browserMode,
+    actionSettingsPending,
     resolveConnection,
     enableDefaultScriptedConnection,
     setFeedbackStatus: runtime.feedback.setFeedbackStatus,
@@ -256,10 +281,24 @@ export function useTraderaQuickListButtonModel(
     isWorkerRunning && !isTraderaMarketplaceExcluded
       ? getMarketplaceButtonClass('queued', true, 'tradera')
       : resolvedView.resolvedToneClass;
+  const disableForActionSettings = actionSettingsPending && !resolvedView.isFailureState;
+  const disableQuickListAction = resolvedView.disableQuickListAction || disableForActionSettings;
+  const disabledInteractionClass =
+    resolvedView.disabledInteractionClass ||
+    (disableForActionSettings ? GENERIC_DISABLED_INTERACTION_CLASS : false);
+  const shouldPrefetchListings =
+    resolvedView.shouldPrefetchListings && !disableForActionSettings;
+  const title = disableForActionSettings
+    ? TRADERA_ACTION_SETTINGS_PENDING_MESSAGE
+    : resolvedView.title;
 
   return {
     ...resolvedView,
+    title,
     resolvedToneClass,
+    disabledInteractionClass,
+    disableQuickListAction,
+    shouldPrefetchListings,
     shouldRender: !showTraderaBadge,
     showCheckmark,
     isWorkerRunning,

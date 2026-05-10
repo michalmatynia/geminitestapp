@@ -37,6 +37,12 @@ export const resolveAppBaseUrl = (): string =>
   process.env['NEXTAUTH_URL']?.trim() ??
   'http://localhost:3000';
 
+const refreshFileStorageSettings = (): Promise<FileStorageSettings> =>
+  readFileStorageSettings().then((value) => {
+    settingsCache = { expiresAt: Date.now() + CACHE_TTL_MS, value };
+    return value;
+  });
+
 export const getFileStorageSettings = async (options?: {
   force?: boolean;
 }): Promise<FileStorageSettings> => {
@@ -45,16 +51,14 @@ export const getFileStorageSettings = async (options?: {
     return settingsCache.value;
   }
 
-  const value = await readFileStorageSettings();
-  settingsCache = { expiresAt: Date.now() + CACHE_TTL_MS, value };
-  return value;
+  return await refreshFileStorageSettings();
 };
 
 export const invalidateFileStorageSettingsCache = (): void => {
   settingsCache = null;
 };
 
-export const uploadToConfiguredStorage = async (params: {
+type ConfiguredStorageUploadParams = {
   buffer: Buffer;
   filename: string;
   mimetype: string;
@@ -63,37 +67,52 @@ export const uploadToConfiguredStorage = async (params: {
   projectId: string | null;
   folder: string | null;
   writeLocalCopy: () => Promise<void>;
-}): Promise<{ filepath: string; source: FileStorageSource; mirroredLocally: boolean }> => {
-  const settings = await getFileStorageSettings();
+};
 
-  if (settings.source === 'local') {
-    try {
-      await params.writeLocalCopy();
-    } catch (error) {
-      throw internalError('Failed to write local file copy', {
-        filepath: params.publicPath,
-        cause: error,
-      });
-    }
-    return {
+type ConfiguredStorageUploadResult = {
+  filepath: string;
+  source: FileStorageSource;
+  mirroredLocally: boolean;
+};
+
+const writeLocalUpload = async (
+  params: ConfiguredStorageUploadParams
+): Promise<ConfiguredStorageUploadResult> => {
+  try {
+    await params.writeLocalCopy();
+  } catch (error) {
+    throw internalError('Failed to write local file copy', {
       filepath: params.publicPath,
-      source: 'local',
-      mirroredLocally: true,
-    };
+      cause: error,
+    });
   }
+  return {
+    filepath: params.publicPath,
+    source: 'local',
+    mirroredLocally: true,
+  };
+};
 
-  const shouldMirrorLocal = settings.fastComet.keepLocalCopy;
-  if (shouldMirrorLocal) {
-    try {
-      await params.writeLocalCopy();
-    } catch (error) {
-      throw internalError('Failed to write local file copy during remote mirror', {
-        filepath: params.publicPath,
-        cause: error,
-      });
-    }
+const writeFastCometLocalMirror = async (
+  params: ConfiguredStorageUploadParams,
+  shouldMirrorLocal: boolean
+): Promise<void> => {
+  if (!shouldMirrorLocal) return;
+  try {
+    await params.writeLocalCopy();
+  } catch (error) {
+    throw internalError('Failed to write local file copy during remote mirror', {
+      filepath: params.publicPath,
+      cause: error,
+    });
   }
+};
 
+const uploadFastCometConfiguredStorage = async (
+  params: ConfiguredStorageUploadParams,
+  settings: FileStorageSettings,
+  mirroredLocally: boolean
+): Promise<ConfiguredStorageUploadResult> => {
   try {
     const remotePath = await uploadToFastComet({
       buffer: params.buffer,
@@ -108,7 +127,7 @@ export const uploadToConfiguredStorage = async (params: {
     return {
       filepath: remotePath,
       source: 'fastcomet',
-      mirroredLocally: shouldMirrorLocal,
+      mirroredLocally,
     };
   } catch (error) {
     throw externalServiceError('Failed to upload file to remote storage (FastComet)', {
@@ -118,6 +137,17 @@ export const uploadToConfiguredStorage = async (params: {
       cause: error,
     });
   }
+};
+
+export const uploadToConfiguredStorage = async (
+  params: ConfiguredStorageUploadParams
+): Promise<ConfiguredStorageUploadResult> => {
+  const settings = await getFileStorageSettings();
+  if (settings.source === 'local') return await writeLocalUpload(params);
+
+  const shouldMirrorLocal = settings.fastComet.keepLocalCopy;
+  await writeFastCometLocalMirror(params, shouldMirrorLocal);
+  return await uploadFastCometConfiguredStorage(params, settings, shouldMirrorLocal);
 };
 
 export const uploadBufferToFastComet = async (params: {
@@ -162,10 +192,11 @@ export const deleteFromConfiguredStorage = async (params: {
       fastComet: settings.fastComet,
     });
   } catch (error) {
-    throw internalError('FastComet remote deletion failed.', {
+    void ErrorSystem.captureException(error);
+    await ErrorSystem.logWarning('FastComet delete failed; continuing.', {
+      service: 'file-storage-service',
       filepath: params.filepath,
       publicPath,
-      cause: error,
     });
   }
 };

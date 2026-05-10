@@ -7,6 +7,7 @@ import type {
   ProductImportSource,
   ProductWithImages,
 } from '@/shared/contracts/products/product';
+import type { ProductImageStorageStatus } from './columns/product-column-utils';
 
 export type ProductListMobileCardModel = {
   nameValue: string;
@@ -18,6 +19,7 @@ export type ProductListMobileCardModel = {
   hasEnglishDescription: boolean;
   hasPolishTitle: boolean;
   hasPolishDescription: boolean;
+  imageStorageStatus: ProductImageStorageStatus;
   hasStatusIcons: boolean;
   skuLabel: string;
   duplicateSkuCount: number | null;

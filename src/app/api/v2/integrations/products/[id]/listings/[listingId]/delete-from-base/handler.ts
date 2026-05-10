@@ -165,7 +165,7 @@ export async function postHandler(
       externalListingId: normalizedExternalListingId,
     });
 
-    // Clean up ecommerce export records from both local and cloud DBs, and clear the badge record.
+    // Clean up the cloud ecommerce export record and clear the local badge record.
     void deleteProductFromEcommerceExport(productId).catch((error: unknown) => {
       void ErrorSystem.captureException(error);
     });

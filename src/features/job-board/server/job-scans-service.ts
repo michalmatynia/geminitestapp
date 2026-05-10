@@ -26,7 +26,7 @@ import {
 } from './organisation-promotion';
 
 const isAutoPromoteEnabled = (): { nipOnly: boolean; nameToo: boolean } => {
-  const value = process.env['JOB_BOARD_AUTO_PROMOTE_ON_NIP_MATCH']?.toLowerCase();
+  const value = process.env['JOB_BOARD_AUTO_PROMOTE_ON_NIP_MATCH']?.toLowerCase() ?? '';
   if (value === 'true' || value === 'nip') return { nipOnly: true, nameToo: false };
   if (value === 'name-too' || value === 'name') return { nipOnly: true, nameToo: true };
   return { nipOnly: false, nameToo: false };
@@ -87,12 +87,19 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 
 const resolveScanEmailFinderMode = (scan: JobScanRecord): JobScanEmailFinderMode | null => {
   const rawResult = asRecord(scan.rawResult);
-  const mode = rawResult?.['emailFinderMode'];
-  if (mode === 'vision_ai' || mode === 'preselected_routes') return mode;
-  const useVisionEmailFinder = rawResult?.['useVisionEmailFinder'];
-  return typeof useVisionEmailFinder === 'boolean'
-    ? resolveEmailFinderModeFromUseVision(useVisionEmailFinder)
-    : null;
+  if (rawResult === null) return null;
+
+  const mode = rawResult['emailFinderMode'];
+  if (mode === 'vision_ai' || mode === 'preselected_routes') {
+    return mode;
+  }
+
+  const useVisionEmailFinder = rawResult['useVisionEmailFinder'];
+  if (typeof useVisionEmailFinder === 'boolean') {
+    return resolveEmailFinderModeFromUseVision(useVisionEmailFinder);
+  }
+  
+  return null;
 };
 
 const describeEmailFinderMode = (mode: JobScanEmailFinderMode | null): string => {
@@ -109,9 +116,18 @@ const describeEmailFinderMode = (mode: JobScanEmailFinderMode | null): string =>
  * Creates a queued job scan from a source URL. Caller can run synchronizeJobScan() afterwards
  * (or rely on listJobScansWithSync() to drive it).
  */
+const getRawResult = (emailFinderMode: JobScanEmailFinderMode | null): Record<string, unknown> | null => {
+  if (emailFinderMode === null) return null;
+  return {
+    emailFinderMode,
+    useVisionEmailFinder: emailFinderMode === 'vision_ai',
+  };
+};
+
 export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: string | null }): Promise<JobScanRecord> => {
   const provider = input.provider ?? inferProviderFromUrl(input.sourceUrl);
-  const emailFinderMode = resolveEmailFinderModeFromUseVision(input.useVision);
+  const emailFinderMode = resolveEmailFinderModeFromUseVision(input.useVision ?? null);
+  
   return await upsertJobScan({
     id: randomUUID(),
     provider,
@@ -122,13 +138,7 @@ export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: 
     companyId: null,
     jobListingId: null,
     steps: [buildStep('queue', 'Queued', 'pending')],
-    rawResult:
-      emailFinderMode !== null
-        ? {
-            emailFinderMode,
-            useVisionEmailFinder: emailFinderMode === 'vision_ai',
-          }
-        : null,
+    rawResult: getRawResult(emailFinderMode),
     error: null,
     createdBy: input.createdBy ?? null,
     completedAt: null,

@@ -21,11 +21,11 @@ export const fromBrainCatalogNodeId = (
 
   const rawPool = payload.slice(0, separatorIndex).trim();
   const rawValue = payload.slice(separatorIndex + 2).trim();
-  if (!rawPool || !rawValue) return null;
+  if (rawPool === '' || rawValue === '') return null;
 
   const pool = decodeNodeSegment(rawPool);
   const value = decodeNodeSegment(rawValue);
-  if (!pool || !value) return null;
+  if (pool === '' || value === '') return null;
 
   return {
     pool: pool as AiBrainCatalogEntry['pool'],
@@ -65,5 +65,5 @@ export const resolveBrainCatalogOrderFromNodes = (
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .flatMap((node) => {
       const entry = entryByNodeId.get(node.id);
-      return entry ? [entry] : [];
+      return entry !== undefined ? [entry] : [];
     });

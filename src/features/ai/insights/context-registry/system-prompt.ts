@@ -43,7 +43,11 @@ const buildAiInsightsContextRegistryPrompt = (
     instruction: string;
   }
 ): string => {
-  if (!registryBundle || (!registryBundle.nodes.length && !registryBundle.documents.length)) {
+  if (
+    registryBundle === null ||
+    registryBundle === undefined ||
+    (registryBundle.nodes.length === 0 && registryBundle.documents.length === 0)
+  ) {
     return '';
   }
 

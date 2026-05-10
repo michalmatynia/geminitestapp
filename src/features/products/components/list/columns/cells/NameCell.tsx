@@ -22,9 +22,11 @@ import {
   hasEnglishProductTitle,
   hasPolishProductDescription,
   hasPolishProductTitle,
+  hasAnyProductImageStorageStatus,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
   resolveProductImportSource,
+  resolveProductImageStorageStatus,
 } from '../product-column-utils';
 import { ProductListActivityPill } from '../../ProductListActivityPill';
 import { ProductListStatusIcons } from '../../ProductListStatusIcons';
@@ -37,6 +39,7 @@ type NameCellStatusState = {
   hasEnglishDescription: boolean;
   hasPolishTitle: boolean;
   hasPolishDescription: boolean;
+  imageStorageStatus: ReturnType<typeof resolveProductImageStorageStatus>;
   hasStatusRow: boolean;
 };
 
@@ -156,6 +159,7 @@ function resolveNameCellStatusState(product: ProductWithImages, runtime: Product
   const hasEnglishDescription = hasEnglishProductDescription(product);
   const hasPolishTitle = hasPolishProductTitle(product);
   const hasPolishDescription = hasPolishProductDescription(product);
+  const imageStorageStatus = resolveProductImageStorageStatus(product);
   const hasStatusIcons = [
     importSource !== null ||
     hasMarketplaceCopy,
@@ -163,6 +167,7 @@ function resolveNameCellStatusState(product: ProductWithImages, runtime: Product
     hasEnglishDescription,
     hasPolishTitle,
     hasPolishDescription,
+    hasAnyProductImageStorageStatus(imageStorageStatus),
   ].includes(true);
   const hasActivity = runtime.productAiRunFeedback !== null || runtime.productScanRunFeedback !== null;
 
@@ -173,6 +178,7 @@ function resolveNameCellStatusState(product: ProductWithImages, runtime: Product
     hasEnglishDescription,
     hasPolishTitle,
     hasPolishDescription,
+    imageStorageStatus,
     hasStatusRow: hasStatusIcons || product.archived === true || hasActivity,
   };
 }
@@ -200,6 +206,7 @@ function NameCellSecondaryInfo({ product, runtime, categoryLabel, ship }: { prod
             hasEnglishDescription={status.hasEnglishDescription}
             hasPolishTitle={status.hasPolishTitle}
             hasPolishDescription={status.hasPolishDescription}
+            imageStorageStatus={status.imageStorageStatus}
           />
           {product.archived === true && <Badge variant='removed' icon={<Archive className='size-3' />}>Archived</Badge>}
           <NameCellActivity runtime={runtime} />

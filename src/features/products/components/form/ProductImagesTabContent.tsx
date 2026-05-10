@@ -38,7 +38,8 @@ interface ProductImagesTabModel {
   inlineFileManager: boolean;
   onSelectFiles?: OnSelectFiles | undefined;
   onShowFileManager: (show: boolean) => void;
-  productId: string | undefined;
+  productId: string | null | undefined;
+  productSku: string | null | undefined;
   sectionDescription: string;
   sectionTitle: string;
   showFileManager: boolean;
@@ -132,6 +133,7 @@ const resolveControllerOptions = ({
   onSelectFiles: resolveOnSelectFiles(actionsContext),
   onShowFileManager: resolveOnShowFileManager(actionsContext, formImages),
   productId: formImages.productId,
+  productSku: formImages.productSku,
   showFileManager: resolveShowFileManager(stateContext, formImages),
 });
 
@@ -265,6 +267,7 @@ function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): 
         <ProductImageManager
           externalBaseUrl={model.imageExternalBaseUrl}
           productId={model.productId}
+          productSku={model.productSku}
         />
       </ProductImageManagerControllerProvider>
     </div>

@@ -3,7 +3,11 @@
 import React from 'react';
 import { FormField, FormSection, Hint, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Input } from '@/shared/ui/primitives.public';
-import type { FastCometStorageConfig } from '@/shared/lib/files/constants';
+import {
+  DEFAULT_FASTCOMET_STORAGE_PORT,
+  DEFAULT_FASTCOMET_STORAGE_SERVER,
+  type FastCometStorageConfig,
+} from '@/shared/lib/files/constants';
 
 const ConfigField = ({
   label,
@@ -33,6 +37,13 @@ const ConfigField = ({
   </FormField>
 );
 
+const updateToken = (
+  setConfig: React.Dispatch<React.SetStateAction<FastCometStorageConfig>>,
+  value: string
+): void => {
+  setConfig((previous) => ({ ...previous, authToken: value, token: value }));
+};
+
 const ConfigToggleField = ({
   label,
   checked,
@@ -56,14 +67,54 @@ const ConfigToggleField = ({
   </FormField>
 );
 
-const FastCometConfigFields = ({
-  config,
-  setConfig,
-}: {
+type FastCometConfigFieldsProps = {
   config: FastCometStorageConfig;
   setConfig: React.Dispatch<React.SetStateAction<FastCometStorageConfig>>;
-}): React.JSX.Element => (
-  <div className='space-y-4'>
+};
+
+const FastCometConnectionFields = ({
+  config,
+  setConfig,
+}: FastCometConfigFieldsProps): React.JSX.Element => (
+  <div className='grid gap-4 md:grid-cols-2'>
+    <ConfigField
+      label='SERVER'
+      value={config.server ?? ''}
+      onChange={(val) => setConfig((p) => ({ ...p, server: val as string }))}
+      hint='FastComet host used for the upload connection.'
+      placeholder={DEFAULT_FASTCOMET_STORAGE_SERVER}
+    />
+    <ConfigField
+      label='PORT'
+      type='number'
+      value={config.port ?? DEFAULT_FASTCOMET_STORAGE_PORT}
+      onChange={(val) => setConfig((p) => ({ ...p, port: val as number }))}
+      hint='Connection port for the FastComet upload channel.'
+      placeholder={String(DEFAULT_FASTCOMET_STORAGE_PORT)}
+    />
+    <ConfigField
+      label='USERNAME'
+      value={config.username ?? ''}
+      onChange={(val) => setConfig((p) => ({ ...p, username: val as string }))}
+      hint='FastComet account or endpoint username for the upload channel.'
+      placeholder='FastComet username'
+    />
+    <ConfigField
+      label='TOKEN'
+      type='password'
+      value={config.token ?? config.authToken ?? ''}
+      onChange={(val) => updateToken(setConfig, val as string)}
+      hint='Required token sent as Authorization: Bearer <token>.'
+      placeholder='FastComet API token'
+    />
+  </div>
+);
+
+const FastCometEndpointFields = ({
+  config,
+  setConfig,
+}: FastCometConfigFieldsProps): React.JSX.Element => (
+  <>
     <ConfigField
       label='Base URL'
       value={config.baseUrl}
@@ -92,14 +143,14 @@ const FastCometConfigFields = ({
       hint='Optional temporary IP override used while the public domain is not resolving.'
       placeholder='209.42.31.54'
     />
-    <ConfigField
-      label='Bearer token'
-      type='password'
-      value={config.authToken ?? ''}
-      onChange={(val) => setConfig((p) => ({ ...p, authToken: val as string }))}
-      hint='Optional token sent as Authorization: Bearer <token>.'
-      placeholder='Optional API token'
-    />
+  </>
+);
+
+const FastCometRuntimeFields = ({
+  config,
+  setConfig,
+}: FastCometConfigFieldsProps): React.JSX.Element => (
+  <>
     <ConfigField
       label='Request timeout (ms)'
       type='number'
@@ -113,6 +164,14 @@ const FastCometConfigFields = ({
       onCheckedChange={(checked: boolean) => setConfig((p) => ({ ...p, keepLocalCopy: checked }))}
       hint='Recommended: preserves compatibility with server-side image operations.'
     />
+  </>
+);
+
+const FastCometConfigFields = (props: FastCometConfigFieldsProps): React.JSX.Element => (
+  <div className='space-y-4'>
+    <FastCometConnectionFields {...props} />
+    <FastCometEndpointFields {...props} />
+    <FastCometRuntimeFields {...props} />
   </div>
 );
 
@@ -125,7 +184,7 @@ export const FastCometConfigSection = ({
 }): React.JSX.Element => (
   <FormSection
     title='FastComet Configuration'
-    description='Used when source is set to FastComet. The default upload endpoint is derived from the base URL.'
+    description='Used when source is set to FastComet. Enter the connection credentials before enabling remote uploads.'
     className='p-6'
   >
     <FastCometConfigFields config={config} setConfig={setConfig} />

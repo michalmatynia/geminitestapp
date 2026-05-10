@@ -632,22 +632,6 @@ export default defineConfig([
   },
 
   {
-    files: ['src/features/ai/agentcreator/api/agent/[runId]/route.ts'],
-    rules: {
-      'max-lines': 'off',
-      'max-lines-per-function': 'off',
-      'complexity': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/strict-boolean-expressions': 'off',
-      '@typescript-eslint/no-unnecessary-condition': 'off',
-    },
-  },
-
-  {
     files: studiqWebFiles,
     languageOptions: {
       ...typedSourceLanguageOptions,

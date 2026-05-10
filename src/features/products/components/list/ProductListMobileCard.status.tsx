@@ -54,6 +54,7 @@ function ProductListStatusIconSet({
       hasEnglishDescription={model.hasEnglishDescription}
       hasPolishTitle={model.hasPolishTitle}
       hasPolishDescription={model.hasPolishDescription}
+      imageStorageStatus={model.imageStorageStatus}
     />
   );
 }

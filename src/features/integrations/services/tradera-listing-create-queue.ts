@@ -1,5 +1,8 @@
 import type { ProductListingCreateResponse } from '@/shared/contracts/integrations';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type {
+  PlaywrightRelistBrowserMode,
+  ProductListingWithDetails,
+} from '@/shared/contracts/integrations/listings';
 import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import {
   buildTraderaListingQueueJobId,
@@ -16,11 +19,13 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const buildTraderaQueuedMarketplaceData = ({
   existingMarketplaceData,
   action,
+  browserMode,
   requestId,
   queuedAt,
 }: {
   existingMarketplaceData: unknown;
   action: 'list';
+  browserMode: PlaywrightRelistBrowserMode;
   requestId: string;
   queuedAt: string;
 }): Record<string, unknown> => {
@@ -35,7 +40,7 @@ const buildTraderaQueuedMarketplaceData = ({
       pendingExecution: {
         ...toRecord(traderaData['pendingExecution']),
         action,
-        requestedBrowserMode: 'connection_default',
+        requestedBrowserMode: browserMode,
         requestId,
         queuedAt,
       },
@@ -46,23 +51,28 @@ const buildTraderaQueuedMarketplaceData = ({
 export const enqueueTraderaCreateListingResponse = async ({
   listing,
   listingRepository,
+  browserMode = 'connection_default',
   concurrencyMode,
 }: {
   listing: ProductListingWithDetails;
   listingRepository: ProductListingRepository;
+  browserMode?: PlaywrightRelistBrowserMode | null;
   concurrencyMode?: 'sequential' | 'concurrent' | null;
 }): Promise<ProductListingCreateResponse> => {
   initializeQueues();
   const enqueuedAt = new Date().toISOString();
+  const requestedBrowserMode = browserMode ?? 'connection_default';
   const traderaJobInput = {
     listingId: listing.id,
     action: 'list',
     source: 'api',
+    browserMode: requestedBrowserMode,
   } as const;
   const jobId = buildTraderaListingQueueJobId(traderaJobInput);
   const queuedMarketplaceData = buildTraderaQueuedMarketplaceData({
     existingMarketplaceData: listing.marketplaceData,
     action: 'list',
+    browserMode: requestedBrowserMode,
     requestId: jobId,
     queuedAt: enqueuedAt,
   });
@@ -74,7 +84,7 @@ export const enqueueTraderaCreateListingResponse = async ({
     const queuedJobId = await enqueueTraderaListingJob({
       ...traderaJobInput,
       jobId,
-      ...(concurrencyMode != null ? { concurrencyMode } : {}),
+      ...(concurrencyMode !== null && concurrencyMode !== undefined ? { concurrencyMode } : {}),
     });
     return {
       ...listing,

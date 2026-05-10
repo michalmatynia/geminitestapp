@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -8,7 +9,10 @@ import type { ImageFileCreateInput, ImageFileRecord } from '@/shared/contracts/f
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { MAX_IMAGE_BYTES } from '@/shared/lib/files/constants';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-service';
+import {
+  getDiskPathFromPublicPath,
+  getImageFileRepository,
+} from '@/shared/lib/files/services/image-file-service';
 import { uploadBufferToFastComet } from '@/shared/lib/files/services/storage/file-storage-service';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import type { getProductRepository } from '@/shared/lib/products/services/product-repository';
@@ -92,7 +96,8 @@ const buildUploadedFileMetadata = (input: {
   originalFilename: string;
   publicPath: string;
 }): Record<string, unknown> => ({
-  mirroredLocally: false,
+  localPublicPath: input.publicPath,
+  mirroredLocally: true,
   originalFilename: input.originalFilename,
   publicPath: input.publicPath,
   storageSource: 'fastcomet',
@@ -134,6 +139,15 @@ const resolveUploadedFileTarget = (input: {
   const filename = `${randomUUID()}${resolveUploadedFileExtension(input.file, input.filename)}`;
   const publicPath = `/uploads/products/${resolveProductUploadFolder(input.product)}/${filename}`;
   return { filename, publicPath };
+};
+
+const writeLocalImageMirror = async (input: {
+  buffer: Buffer;
+  publicPath: string;
+}): Promise<void> => {
+  const diskPath = getDiskPathFromPublicPath(input.publicPath);
+  await fs.mkdir(path.dirname(diskPath), { recursive: true });
+  await fs.writeFile(diskPath, input.buffer);
 };
 
 const clearImageSlotValue = (
@@ -203,6 +217,7 @@ export const uploadNewImageFileToFastComet = async (input: {
   const buffer = Buffer.from(await body.file.arrayBuffer());
   const trimmedMimetype = body.file.type.trim();
   const mimetype = trimmedMimetype.length > 0 ? trimmedMimetype : 'image/jpeg';
+  await writeLocalImageMirror({ buffer, publicPath });
   const remoteUrl = await uploadBufferToFastComet({
     buffer,
     category: 'products',

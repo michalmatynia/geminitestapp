@@ -16,7 +16,8 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 
 const readMongoSettingValue = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  const mongoUri = process.env['MONGODB_URI'];
+  if (mongoUri === undefined || mongoUri === '') return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>('settings')
@@ -37,7 +38,7 @@ export const parseBooleanSetting = (
   value: string | null | undefined,
   fallback: boolean
 ): boolean => {
-  if (value == null) return fallback;
+  if (value === null || value === undefined) return fallback;
   return value === 'true' || value === '1';
 };
 

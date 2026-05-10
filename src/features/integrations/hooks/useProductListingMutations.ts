@@ -601,18 +601,24 @@ export function useCreateListingMutation(productId: string): CreateMutation<
     mutationFn: ({
       integrationId,
       connectionId,
+      browserMode,
       durationHours,
       autoRelistEnabled,
       autoRelistLeadMinutes,
       templateId,
+      concurrencyMode,
     }: ProductListingCreatePayload) =>
       api.post<ProductListingCreateResponse>(`/api/v2/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
+        ...(typeof browserMode === 'string' ? { browserMode } : {}),
         ...(typeof durationHours === 'number' ? { durationHours } : {}),
         ...(typeof autoRelistEnabled === 'boolean' ? { autoRelistEnabled } : {}),
         ...(typeof autoRelistLeadMinutes === 'number' ? { autoRelistLeadMinutes } : {}),
         ...(templateId !== undefined ? { templateId } : {}),
+        ...(concurrencyMode === 'sequential' || concurrencyMode === 'concurrent'
+          ? { concurrencyMode }
+          : {}),
       }),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {

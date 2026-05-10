@@ -30,6 +30,11 @@ export const getCommerceNav = (): NavItem => ({
           label: 'Orders Import',
           href: '/admin/products/orders-import',
         },
+        {
+          id: 'commerce/products/pages',
+          label: 'Pages',
+          href: '/admin/products/pages',
+        },
         { id: 'commerce/products/import', label: 'Import', href: '/admin/products/import' },
         {
           id: 'commerce/products/preferences',

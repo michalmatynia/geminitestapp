@@ -18,7 +18,14 @@ vi.mock('@/lib/mongodb', () => ({
   hasEcommerceProductsMongoConfig: mocks.hasEcommerceProductsMongoConfig,
 }));
 
-import { getMentiosProducts } from './mentios';
+vi.mock('./mongodb', () => ({
+  getProductsDb: mocks.getProductsDb,
+  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
+  hasProductsMongoConfig: mocks.hasProductsMongoConfig,
+  hasEcommerceProductsMongoConfig: mocks.hasEcommerceProductsMongoConfig,
+}));
+
+import { getMentiosHomeStats, getMentiosProducts } from './mentios';
 
 const createCursor = <T>(docs: T[]) => {
   const cursor = {
@@ -118,5 +125,70 @@ describe('Mentios product image mapping', () => {
     const filter = productsCollection.find.mock.calls[0]?.[0];
     expect(JSON.stringify(filter)).toContain('"collectionSlug":"accessories"');
     expect(productsCollection.countDocuments).toHaveBeenCalledWith(filter);
+  });
+});
+
+describe('Mentios home stats', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.hasProductsMongoConfig.mockReturnValue(true);
+    mocks.hasEcommerceProductsMongoConfig.mockReturnValue(true);
+  });
+
+  it('counts in-stock products, used leaf child categories, and unique lores', async () => {
+    const productDocs = [
+      {
+        _id: 'product-1',
+        categoryId: 'anime-ring',
+        name_en: 'Juzo | Adjustable | Metal | Anime Ring | Tokyo Ghoul',
+        stock: 4,
+      },
+      {
+        _id: 'product-2',
+        categoryId: 'anime-keychain',
+        name_en: 'Ken | One Size | Acrylic | Anime Keychain | Tokyo Ghoul',
+        stock: 2,
+      },
+      {
+        _id: 'product-3',
+        categoryId: 'gaming-parent',
+        name_en: 'Rune | One Size | Metal | Gaming | Elden Ring',
+        stock: 1,
+      },
+    ];
+    const categoryDocs = [
+      { _id: 'anime-parent', name_en: 'Anime' },
+      { _id: 'anime-ring', parentId: 'anime-parent', name_en: 'Anime Ring' },
+      { _id: 'anime-keychain', parentId: 'anime-parent', name_en: 'Anime Keychain' },
+      { _id: 'gaming-parent', name_en: 'Gaming' },
+      { _id: 'gaming-ring', parentId: 'gaming-parent', name_en: 'Gaming Ring' },
+    ];
+    const productsCollection = {
+      find: vi.fn(() => createCursor(productDocs)),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor(categoryDocs)),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosHomeStats('en');
+
+    expect(result).toEqual({
+      itemCount: 3,
+      categoryCount: 2,
+      loreCount: 2,
+    });
+    expect(productsCollection.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $and: expect.arrayContaining([
+          expect.objectContaining({ stock: { $ne: 0 } }),
+        ]),
+      }),
+    );
   });
 });

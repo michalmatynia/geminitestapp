@@ -206,7 +206,7 @@ describe('ProductListingsContent', () => {
     expect(screen.getByText('Browser run history')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
       'href',
-      '/admin/playwright/action-runs?query=run-tradera-failed'
+      '/admin/playwright/action-runs?runId=run-tradera-failed'
     );
     expect(screen.getByText('Failed run steps')).toBeInTheDocument();
     expect(screen.getByText('Verify published listing')).toBeInTheDocument();
@@ -248,7 +248,7 @@ describe('ProductListingsContent', () => {
     expect(screen.getByText('Browser run history')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
       'href',
-      '/admin/playwright/action-runs?query=run-tradera-loading'
+      '/admin/playwright/action-runs?runId=run-tradera-loading'
     );
     expect(screen.getByText(/Run diagnostics are loading or unavailable/)).toBeInTheDocument();
   });

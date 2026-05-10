@@ -60,7 +60,8 @@ const useSearch = (): boolean => {
 };
 
 export const searchGoogle = async (query: string): Promise<GoogleSearchResult> => {
-  if (!useSearch()) {
+  const isEnabled = useSearch();
+  if (!isEnabled) {
     return {
       hits: [],
       query,
@@ -86,7 +87,8 @@ export const searchGoogle = async (query: string): Promise<GoogleSearchResult> =
     });
 
     if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'canceled') {
-      return { hits: [], query, error: run.error ?? `Search run status=${run.status}` };
+      const errorMessage = run.error !== undefined && run.error !== '' ? run.error : `Search run status=${run.status}`;
+      return { hits: [], query, error: errorMessage };
     }
 
     const result = (run.result ?? {}) as { returnValue?: { hits?: GoogleSearchHit[] } };
@@ -136,20 +138,23 @@ export const findCompanyWebsite = async (input: {
   companyName: string;
   city?: string | null;
 }): Promise<{ website: string | null; domain: string | null; error?: string }> => {
-  const baseQuery = `${input.companyName}${input.city ? ` ${input.city}` : ''} oficjalna strona`;
+  const citySuffix = (input.city !== undefined && input.city !== null && input.city !== '') ? ` ${input.city}` : '';
+  const baseQuery = `${input.companyName}${citySuffix} oficjalna strona`;
   const result = await searchGoogle(baseQuery);
-  if (result.error && result.hits.length === 0) {
+  if (result.error !== undefined && result.error !== '' && result.hits.length === 0) {
     return { website: null, domain: null, error: result.error };
   }
   const corporate = result.hits.find((hit) => isCorporateUrl(hit.url));
-  if (!corporate) return { website: null, domain: null };
+  if (corporate === undefined) return { website: null, domain: null };
   try {
     const url = new URL(corporate.url);
+    const domain = url.hostname.toLowerCase().replace(/^www\./, '');
     return {
       website: `${url.protocol}//${url.hostname}`,
-      domain: url.hostname.toLowerCase().replace(/^www\./, ''),
+      domain,
     };
-  } catch {
+  } catch (error) {
     return { website: null, domain: null };
   }
 };
+

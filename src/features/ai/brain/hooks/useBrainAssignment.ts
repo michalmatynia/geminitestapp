@@ -44,10 +44,10 @@ export function useBrainAssignment({
   }, [rawBrainSettings]);
 
   const assignment = useMemo(() => {
-    if (capability) {
+    if (capability !== undefined) {
       return resolveBrainCapabilityAssignment(brainSettings, capability);
     }
-    if (feature) {
+    if (feature !== undefined) {
       return resolveBrainAssignment(brainSettings, feature);
     }
     throw new Error('useBrainAssignment requires a feature or capability.');

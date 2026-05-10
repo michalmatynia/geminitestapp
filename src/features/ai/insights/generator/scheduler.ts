@@ -17,7 +17,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
     { key: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled, fn: generateRuntimeAnalyticsInsight, label: 'runtime analytics' }
   ];
 
-  for (const { key, fn, label } of settings) {
+  await Promise.all(settings.map(async ({ key, fn, label }) => {
     const enabled = parseBooleanSetting(await readInsightSettingValue(key), false);
     if (enabled) {
       void fn({ source: 'scheduled_job' }).catch((err: unknown) => {
@@ -29,5 +29,5 @@ export async function runInsightsAutoGeneration(): Promise<void> {
         });
       });
     }
-  }
+  }));
 }

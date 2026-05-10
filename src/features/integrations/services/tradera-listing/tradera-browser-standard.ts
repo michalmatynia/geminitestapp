@@ -17,6 +17,7 @@ import {
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type {
   BrowserListingResultDto,
+  PlaywrightRelistBrowserMode,
   ProductListing,
   TraderaExecutionStep,
 } from '@/shared/contracts/integrations/listings';
@@ -526,12 +527,14 @@ export const runTraderaBrowserListingStandard = async ({
   systemSettings,
   source: _source,
   action,
+  browserMode = STANDARD_REQUESTED_BROWSER_MODE,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist' | 'sync';
+  browserMode?: PlaywrightRelistBrowserMode;
 }, options?: TraderaStandardBrowserRunOptions): Promise<BrowserListingResultDto> => {
   const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const targetListingCurrencyCode = resolveTraderaListingPriceCurrencyCode(systemSettings);
@@ -565,7 +568,7 @@ export const runTraderaBrowserListingStandard = async ({
       integrationId: connection.integrationId,
       listingId: listing.id,
     }),
-    requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
+    requestedBrowserMode: browserMode,
     execute: async (session) => {
       const { context, page } = session;
       tracker = await buildStandardExecutionTracker(options?.onExecutionStepsUpdated);

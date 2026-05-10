@@ -61,15 +61,15 @@ The app works without these variables by using static fallback products.
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `MONGODB_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string. Also used as a product catalog fallback when dedicated product env vars are not set. |
+| `MONGODB_URI` | For runtime data | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string for auth, wishlist, orders, and CMS data. Product catalog reads use source-specific ecommerce/product variables first. |
 | `MONGODB_DB` | No | `ecom_local` | Database name used by the ecommerce Mongo client. |
 | `PRODUCTS_MONGODB_CLOUD_URI` | For deployed live catalog fallback | none | Cloud Product List MongoDB connection. Used by the storefront when `ECOM_MONGODB_CLOUD_URI` is not set. |
 | `PRODUCTS_MONGODB_CLOUD_DB` | For deployed live catalog fallback | none | Database name for `PRODUCTS_MONGODB_CLOUD_URI`. |
 | `ECOM_MONGODB_LOCAL_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Local ecommerce product catalog MongoDB connection. |
 | `ECOM_MONGODB_LOCAL_DB` | For live catalog | `ecom_local` | Local ecommerce product catalog database name. |
 | `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce product catalog MongoDB connection. |
-| `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. |
-| `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. |
+| `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. Must match the Product List ecommerce export target. |
+| `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. Use `cloud` when testing add/delete visibility against the shared ecommerce export database. |
 | `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
@@ -78,10 +78,11 @@ The app works without these variables by using static fallback products.
 | `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
 
 The Mongo client is implemented in `src/lib/mongodb.ts`. Storefront product
-catalog reads use `ECOM_MONGODB_*`; auth, wishlist, order, and CMS paths use
-the ecommerce `MONGODB_*` routing. In local development both should resolve to
-the thin `ecom_local` MongoDB file. In development, clients are cached to avoid
-reconnecting on every Next.js reload.
+catalog reads use `ECOM_MONGODB_*` first, then `PRODUCTS_MONGODB_*` as a cloud
+fallback. Generic `MONGODB_URI` is only a last-resort product catalog fallback
+when no ecommerce/product catalog variables are configured. Auth, wishlist,
+order, and CMS paths use the ecommerce `MONGODB_*` routing. In development,
+clients are cached to avoid reconnecting on every Next.js reload.
 
 ## Route Map
 

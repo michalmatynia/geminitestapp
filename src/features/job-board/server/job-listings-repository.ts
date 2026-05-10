@@ -101,9 +101,9 @@ export async function listJobListings(input: {
   return docs.map(toRecord);
 }
 
-export async function listJobListingsByCompany(companyId: string): Promise<JobListing[]> {
-  const id = companyId.trim();
-  if (!id) return [];
+export async function listJobListingsByCompany(companyId: string | null | undefined): Promise<JobListing[]> {
+  const id = companyId?.trim() ?? '';
+  if (id === '') return [];
 
   if (useMemory()) {
     return inMemory.filter((j) => j.companyId === id);
@@ -143,7 +143,7 @@ export async function upsertJobListing(input: JobListingInput): Promise<JobListi
   await ensureIndexes();
   const db = await getMongoDb();
   const collection = db.collection<JobListingDoc>(JOB_LISTINGS_COLLECTION);
-  const { createdAt: _c, updatedAt: _u, postedAt, expiresAt, ...rest } = normalized;
+  const { createdAt: createdAt, updatedAt: updatedAt, postedAt, expiresAt, ...rest } = normalized;
   const result = await collection.findOneAndUpdate(
     { sourceUrl: normalized.sourceUrl },
     {
@@ -154,16 +154,13 @@ export async function upsertJobListing(input: JobListingInput): Promise<JobListi
         updatedAt: now,
       },
       $setOnInsert: {
-        createdAt: normalized.createdAt ? new Date(normalized.createdAt) : now,
+        createdAt: createdAt ? new Date(createdAt) : now,
       },
     },
     { upsert: true, returnDocument: 'after' }
   );
-  return result
-    ? toRecord(result)
-    : {
-        ...normalized,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      };
+  if (result === null) {
+    throw new Error('Failed to upsert job listing');
+  }
+  return toRecord(result);
 }

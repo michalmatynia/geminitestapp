@@ -4,19 +4,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   createListQueryCalls: [] as Array<Record<string, unknown>>,
   fetchAiPathsSettingsByKeysCached: vi.fn(),
+  listAiPathRuns: vi.fn(),
   logClientCatch: vi.fn(),
+  mergeAiPathQueuePayloadWithOptimisticRuns: vi.fn((payload) => payload),
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
   cancelAiPathRun: vi.fn(),
   clearAiPathRuns: vi.fn(),
   getAiPathQueueStatus: vi.fn(),
-  listAiPathRuns: vi.fn(),
+  listAiPathRuns: mockState.listAiPathRuns,
+  removeAiPathRun: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
+  cancelAiPathRun: vi.fn(),
+  clearAiPathRuns: vi.fn(),
+  getAiPathQueueStatus: vi.fn(),
+  listAiPathRuns: mockState.listAiPathRuns,
   removeAiPathRun: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths/optimistic-run-queue', () => ({
-  mergeAiPathQueuePayloadWithOptimisticRuns: vi.fn((payload) => payload),
+  mergeAiPathQueuePayloadWithOptimisticRuns: mockState.mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns: vi.fn((status) => status),
   previewAiPathQueuePayloadWithOptimisticRuns: vi.fn((payload) => payload),
   rememberOptimisticAiPathRun: vi.fn(),
@@ -67,7 +77,9 @@ describe('useJobQueueDataLayer', () => {
   beforeEach(() => {
     mockState.createListQueryCalls = [];
     mockState.fetchAiPathsSettingsByKeysCached.mockReset().mockResolvedValue([]);
+    mockState.listAiPathRuns.mockReset();
     mockState.logClientCatch.mockReset();
+    mockState.mergeAiPathQueuePayloadWithOptimisticRuns.mockReset().mockImplementation((payload) => payload);
   });
 
   it('only enables the AI Paths settings query when the queue panel is active', () => {
@@ -140,5 +152,71 @@ describe('useJobQueueDataLayer', () => {
       'ai_paths_queue_lag_threshold_ms',
     ]);
     expect(mockState.logClientCatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps optimistic-only runs out of the server-confirmed run query data', async () => {
+    const serverPayload = {
+      runs: [
+        {
+          id: 'server-run-1',
+          status: 'running',
+          pathId: 'path-1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+        },
+      ],
+      total: 1,
+    };
+    mockState.listAiPathRuns.mockResolvedValueOnce({
+      ok: true,
+      data: serverPayload,
+    });
+    mockState.mergeAiPathQueuePayloadWithOptimisticRuns.mockReturnValueOnce({
+      runs: [
+        {
+          id: 'optimistic-only-run',
+          status: 'running',
+          pathId: 'path-1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+        },
+        ...serverPayload.runs,
+      ],
+      total: 2,
+    });
+
+    renderHook(() =>
+      useJobQueueDataLayer({
+        autoRefreshInterval: 30_000,
+        effectiveAutoRefreshEnabled: false,
+        isBurstRefreshActive: false,
+        isPanelActive: true,
+        markBurstRefresh: vi.fn(),
+        optimisticRunsHydrated: true,
+        normalizedPathFilter: '',
+        normalizedQuery: '',
+        normalizedSourceFilter: '',
+        normalizedVisibility: 'global',
+        offset: 0,
+        page: 1,
+        pageSize: 25,
+        setClearScope: vi.fn(),
+        setRunToDelete: vi.fn(),
+        sourceMode: 'include',
+        statusFilter: 'all',
+        toast: vi.fn(),
+      })
+    );
+
+    const runsQueryConfig = mockState.createListQueryCalls.find(
+      (call) => (call.meta as { resource?: string } | undefined)?.resource === 'ai-path-runs'
+    );
+    const runsQueryFn = runsQueryConfig?.queryFn as (() => Promise<unknown>) | undefined;
+
+    await expect(runsQueryFn?.()).resolves.toEqual(serverPayload);
+    expect(mockState.mergeAiPathQueuePayloadWithOptimisticRuns).toHaveBeenCalledWith(
+      serverPayload,
+      expect.objectContaining({ limit: 25, offset: 0 })
+    );
   });
 });

@@ -185,14 +185,12 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
       'MONGODB_ECOM_URI',
       'PRODUCTS_MONGODB_URI',
       'MONGODB_PRODUCTS_URI',
-      'MONGODB_URI',
     ],
     [
       'ECOM_MONGODB_DB',
       'MONGODB_ECOM_DB',
       'PRODUCTS_MONGODB_DB',
       'MONGODB_PRODUCTS_DB',
-      'MONGODB_DB',
     ],
   ));
   if (directConfig) return directConfig;
@@ -239,13 +237,17 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
       'MONGODB_CLOUD_DB',
     ],
   ));
+  const genericFallbackConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_URI'],
+    ['MONGODB_DB'],
+  ));
 
   if (source === 'cloud' && cloudConfig) return cloudConfig;
   if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
     return cloudConfig;
   }
 
-  return localConfig ?? cloudConfig ?? {
+  return localConfig ?? cloudConfig ?? genericFallbackConfig ?? {
     uri: DEFAULT_ECOM_MONGODB_URI,
     dbName: DEFAULT_ECOM_MONGODB_DB,
   };

@@ -211,7 +211,7 @@ export function useTraderaListingActionForRuntimeKey(
     actionName: action?.name ?? null,
     actionDescription: action?.description ?? null,
     actionId: action?.id ?? null,
-    browserModeLabel: formatBrowserModeLabel(action?.executionSettings.headless ?? null),
+    browserModeLabel: formatBrowserModeLabel(browserModeDraft.value),
     enabledStepCount,
     hasUnsavedChanges: browserModeDraft.dirty,
     headless: browserModeDraft.value,

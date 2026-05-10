@@ -45,6 +45,40 @@ interface InsightsResultPanelProps {
   runMutation: RunMutationLike;
 }
 
+function InsightsResultContent(props: {
+  emptyDescription: string;
+  query: InsightQueryLike;
+}): React.JSX.Element {
+  const { emptyDescription, query } = props;
+
+  if (query.isLoading) {
+    return <LoadingState message='Loading insights...' size='sm' className='py-4' />;
+  }
+
+  if (query.error !== null) {
+    return <div className='text-xs text-red-400'>{query.error.message}</div>;
+  }
+
+  const insights = query.data?.insights ?? [];
+  if (insights.length === 0) {
+    return (
+      <CompactEmptyState
+        title='No insights yet'
+        description={emptyDescription}
+        className='py-8'
+      />
+    );
+  }
+
+  return (
+    <>
+      {insights.map((insight: AiInsightRecord) => (
+        <InsightCard key={insight.id} insight={insight} />
+      ))}
+    </>
+  );
+}
+
 function InsightsResultPanel(props: InsightsResultPanelProps): React.JSX.Element {
   const { title, description, emptyDescription, query, runMutation } = props;
 
@@ -65,21 +99,7 @@ function InsightsResultPanel(props: InsightsResultPanelProps): React.JSX.Element
       }
     >
       <div className='mt-3 space-y-3'>
-        {query.isLoading ? (
-          <LoadingState message='Loading insights...' size='sm' className='py-4' />
-        ) : query.error ? (
-          <div className='text-xs text-red-400'>{query.error.message}</div>
-        ) : (query.data?.insights?.length ?? 0) === 0 ? (
-          <CompactEmptyState
-            title='No insights yet'
-            description={emptyDescription}
-            className='py-8'
-          />
-        ) : (
-          query.data?.insights?.map((insight: AiInsightRecord) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))
-        )}
+        <InsightsResultContent emptyDescription={emptyDescription} query={query} />
       </div>
     </FormSection>
   );

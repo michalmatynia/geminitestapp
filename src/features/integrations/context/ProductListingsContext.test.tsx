@@ -13,6 +13,7 @@ const {
   getAiPathRunMock,
   listAiPathRunsMock,
   refetchListingsMock,
+  useDefaultTraderaConnectionMock,
   useProductListingsActionsImplMock,
   useTraderaQuickExportPollingMock,
   useVintedQuickExportPollingMock,
@@ -20,6 +21,7 @@ const {
   getAiPathRunMock: vi.fn(),
   listAiPathRunsMock: vi.fn(),
   refetchListingsMock: vi.fn(),
+  useDefaultTraderaConnectionMock: vi.fn(),
   useProductListingsActionsImplMock: vi.fn(() => ({
     handleDeleteFromBase: vi.fn(),
     handlePurgeListing: vi.fn(),
@@ -45,6 +47,10 @@ vi.mock('@/features/integrations/hooks/useListingQueries', () => ({
     isFetching: false,
     refetch: refetchListingsMock,
   }),
+}));
+
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
+  useDefaultTraderaConnection: (...args: unknown[]) => useDefaultTraderaConnectionMock(...args),
 }));
 
 vi.mock('./useProductListingsActionsImpl', () => ({
@@ -125,6 +131,12 @@ describe('ProductListingsProvider', () => {
     listAiPathRunsMock.mockResolvedValue({
       ok: true,
       data: { runs: [] },
+    });
+    useDefaultTraderaConnectionMock.mockReturnValue({
+      data: { connectionId: 'conn-tradera-default' },
+      isLoading: false,
+      isPending: false,
+      isError: false,
     });
   });
 

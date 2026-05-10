@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, type ComponentType } from 'react';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import { useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFileQueries';
@@ -12,6 +12,7 @@ export interface FileManagerActionsLogic {
   applyTags: () => Promise<void>;
   deleteFile: (fileId: string) => Promise<void>;
   isPending: boolean;
+  ConfirmationModal: ComponentType;
 }
 
 export function useFileManagerActionsLogic(
@@ -24,7 +25,7 @@ export function useFileManagerActionsLogic(
   parseTagInput: (input: string) => string[]
 ): FileManagerActionsLogic {
   const { toast } = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, ConfirmationModal, isPending: confirmPending } = useConfirm();
   const deleteFileMutation = useDeleteFile();
   const updateTagsMutation = useUpdateFileTags();
 
@@ -106,6 +107,7 @@ export function useFileManagerActionsLogic(
     deleteSelected,
     applyTags,
     deleteFile,
-    isPending: updateTagsMutation.isPending || deleteFileMutation.isPending,
+    isPending: updateTagsMutation.isPending || deleteFileMutation.isPending || Boolean(confirmPending),
+    ConfirmationModal,
   };
 }

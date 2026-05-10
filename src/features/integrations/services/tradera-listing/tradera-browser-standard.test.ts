@@ -128,6 +128,12 @@ vi.mock('@/features/playwright/server', () => {
       getErrorMessage?: (error: unknown) => string;
     }) => {
       const runtimeSettings = await resolveConnectionPlaywrightSettingsMock(input.connection);
+      const effectiveHeadless =
+        input.requestedBrowserMode === 'headless'
+          ? true
+          : input.requestedBrowserMode === 'headed'
+            ? false
+            : runtimeSettings.headless;
       const browser = await chromiumLaunchMock();
       const context = await browser.newContext();
       const page = await context.newPage();
@@ -138,7 +144,7 @@ vi.mock('@/features/playwright/server', () => {
           await browser.close?.();
         },
         context,
-        effectiveBrowserMode: runtimeSettings.headless ? 'headless' : 'headed',
+        effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
         effectiveBrowserPreference: runtimeSettings.browser ?? 'chromium',
         page,
         requestedBrowserMode: input.requestedBrowserMode ?? null,

@@ -16,7 +16,7 @@ const dedupeRefs = (refs: ContextRegistryRef[]): ContextRegistryRef[] => {
   const unique: ContextRegistryRef[] = [];
 
   for (const ref of refs) {
-    if (!ref.id || seen.has(ref.id)) continue;
+    if (ref.id === '' || seen.has(ref.id)) continue;
     seen.add(ref.id);
     unique.push(ref);
   }
@@ -29,7 +29,7 @@ const dedupeDocuments = (documents: ContextRuntimeDocument[]): ContextRuntimeDoc
   const unique: ContextRuntimeDocument[] = [];
 
   for (const document of documents) {
-    if (!document.id || seen.has(document.id)) continue;
+    if (document.id === '' || seen.has(document.id)) continue;
     seen.add(document.id);
     unique.push(document);
   }
@@ -42,7 +42,7 @@ const dedupeNodes = (nodes: ContextNode[]): ContextNode[] => {
   const unique: ContextNode[] = [];
 
   for (const node of nodes) {
-    if (!node.id || seen.has(node.id)) continue;
+    if (node.id === '' || seen.has(node.id)) continue;
     seen.add(node.id);
     unique.push(node);
   }
@@ -72,11 +72,13 @@ export class ContextRegistryEngine {
       .map((provider) => `${provider.id}@${provider.getVersion()}`)
       .join(',');
 
-    return `registry:${this.backend.getVersion()}|providers:${providerVersions || 'none'}`;
+    return `registry:${this.backend.getVersion()}|providers:${
+      providerVersions === '' ? 'none' : providerVersions
+    }`;
   }
 
   inferRefs(input: Record<string, unknown> | null | undefined): ContextRegistryRef[] {
-    if (!input) return [];
+    if (input === null || input === undefined) return [];
 
     const inferred = this.runtimeProviders.flatMap((provider) => {
       if (!provider.canInferRefs(input)) return [];
@@ -109,7 +111,7 @@ export class ContextRegistryEngine {
 
     const nodeIds = new Set<string>(staticNodeIds);
     for (const document of documents) {
-      for (const nodeId of document.relatedNodeIds ?? []) {
+      for (const nodeId of document.relatedNodeIds) {
         nodeIds.add(nodeId);
       }
     }

@@ -18,6 +18,7 @@ export interface ProductFormImageContextType {
   imageLinks: string[];
   imageBase64s: string[];
   productId?: string | null;
+  productSku?: string | null;
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
@@ -41,6 +42,7 @@ export type ProductFormImageStateContextType = Pick<
   | 'imageLinks'
   | 'imageBase64s'
   | 'productId'
+  | 'productSku'
   | 'uploading'
   | 'uploadError'
   | 'uploadSuccess'
@@ -115,6 +117,7 @@ const useProductFormImageProviderValue = ({
     () => ({
       ...images,
       productId: product?.id ?? null,
+      productSku: product?.sku ?? draft?.sku ?? null,
       uploading,
       uploadError,
       uploadSuccess,
@@ -152,7 +155,7 @@ const useProductFormImageProviderValue = ({
         images.setImageBase64At(index, nextValue);
       },
     }),
-    [images, product?.id, uploading, uploadError, uploadSuccess, onInteraction]
+    [images, product?.id, product?.sku, draft?.sku, uploading, uploadError, uploadSuccess, onInteraction]
   );
 };
 
@@ -170,6 +173,7 @@ export const useProductFormImageState = (): ProductFormImageStateContextType => 
     imageLinks,
     imageBase64s,
     productId,
+    productSku,
     uploading,
     uploadError,
     uploadSuccess,
@@ -180,6 +184,7 @@ export const useProductFormImageState = (): ProductFormImageStateContextType => 
     imageLinks,
     imageBase64s,
     productId,
+    productSku,
     uploading,
     uploadError,
     uploadSuccess,

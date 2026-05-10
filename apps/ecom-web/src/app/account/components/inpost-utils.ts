@@ -34,8 +34,7 @@ export function inpostFulfillmentStatus(order: Order, locale: EcomLocale): strin
 }
 
 export function retryMessage(data: InpostFulfillResponse, locale: EcomLocale): string {
-  const hasError = data.error !== undefined && data.error.length > 0;
-  if (hasError) return data.error;
+  if (typeof data.error === 'string' && data.error.length > 0) return data.error;
   
   const created = data.created === true;
   if (created) return locale === 'pl' ? 'Przesyłka InPost została utworzona.' : 'InPost shipment created.';
@@ -57,8 +56,7 @@ export function retryMessage(data: InpostFulfillResponse, locale: EcomLocale): s
 }
 
 export function refreshMessage(data: InpostRefreshResponse, locale: EcomLocale): string {
-  const hasError = data.error !== undefined && data.error.length > 0;
-  if (hasError) return data.error;
+  if (typeof data.error === 'string' && data.error.length > 0) return data.error;
   
   const refreshed = data.refreshed === true;
   if (refreshed) return locale === 'pl' ? 'Status InPost został odświeżony.' : 'InPost status refreshed.';

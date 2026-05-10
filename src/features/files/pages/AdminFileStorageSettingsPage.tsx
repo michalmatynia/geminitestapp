@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   DEFAULT_FASTCOMET_STORAGE_BASE_URL,
+  DEFAULT_FASTCOMET_STORAGE_PORT,
   DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP,
+  DEFAULT_FASTCOMET_STORAGE_SERVER,
   DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH,
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
@@ -70,6 +72,55 @@ const normalizeOptionalConfigString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const normalizePort = (value: unknown, fallback: number | null): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const port = Math.floor(parsed);
+  return port >= 1 && port <= 65_535 ? port : fallback;
+};
+
+const resolveUrlHostname = (value: string): string | null => {
+  try {
+    const hostname = new URL(value).hostname.trim();
+    return hostname.length > 0 ? hostname : null;
+  } catch {
+    return null;
+  }
+};
+
+const resolveUrlPort = (value: string): number | null => {
+  try {
+    const url = new URL(value);
+    if (url.port.trim().length > 0) return normalizePort(url.port, null);
+    return url.protocol === 'http:' ? 80 : DEFAULT_FASTCOMET_STORAGE_PORT;
+  } catch {
+    return null;
+  }
+};
+
+const normalizeFastCometToken = (config: Partial<FastCometStorageConfig>): string | null =>
+  normalizeOptionalConfigString(config.token) ?? normalizeOptionalConfigString(config.authToken);
+
+const resolveFastCometServer = (
+  value: unknown,
+  baseUrl: string,
+  uploadEndpoint: string
+): string | null =>
+  normalizeOptionalConfigString(value) ??
+  resolveUrlHostname(uploadEndpoint) ??
+  resolveUrlHostname(baseUrl) ??
+  DEFAULT_FASTCOMET_STORAGE_SERVER;
+
+const resolveFastCometPort = (
+  value: unknown,
+  baseUrl: string,
+  uploadEndpoint: string
+): number | null =>
+  normalizePort(
+    value,
+    resolveUrlPort(uploadEndpoint) ?? resolveUrlPort(baseUrl) ?? DEFAULT_FASTCOMET_STORAGE_PORT
+  );
+
 const normalizeResolveIp = (value: unknown, baseUrl: string): string | null =>
   normalizeOptionalConfigString(value) ??
   (isDefaultFastCometBaseUrl(baseUrl) ? DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP : null);
@@ -89,12 +140,17 @@ const normalizeFastCometConfig = (raw: string | null | undefined): FastCometStor
   const parsedUploadEndpoint = normalizeFastCometUrl(parsed.uploadEndpoint);
   const uploadEndpoint =
     parsedUploadEndpoint.length > 0 ? parsedUploadEndpoint : resolveDefaultUploadEndpoint(baseUrl);
+  const token = normalizeFastCometToken(parsed);
 
   return {
     baseUrl,
     uploadEndpoint,
     deleteEndpoint: normalizeOptionalConfigString(normalizeFastCometUrl(parsed.deleteEndpoint)),
-    authToken: normalizeOptionalConfigString(parsed.authToken),
+    server: resolveFastCometServer(parsed.server, baseUrl, uploadEndpoint),
+    port: resolveFastCometPort(parsed.port, baseUrl, uploadEndpoint),
+    username: normalizeOptionalConfigString(parsed.username),
+    token,
+    authToken: token,
     keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
     timeoutMs: normalizeTimeoutMs(parsed.timeoutMs),
     resolveIp: normalizeResolveIp(parsed.resolveIp, baseUrl),
@@ -108,17 +164,32 @@ const normalizeConfigForSave = (config: FastCometStorageConfig): FastCometStorag
   const parsedUploadEndpoint = normalizeFastCometUrl(config.uploadEndpoint);
   const uploadEndpoint =
     parsedUploadEndpoint.length > 0 ? parsedUploadEndpoint : resolveDefaultUploadEndpoint(baseUrl);
+  const token = normalizeFastCometToken(config);
 
   return {
     baseUrl,
     uploadEndpoint,
     deleteEndpoint: normalizeOptionalConfigString(normalizeFastCometUrl(config.deleteEndpoint)),
-    authToken: normalizeOptionalConfigString(config.authToken),
+    server: resolveFastCometServer(config.server, baseUrl, uploadEndpoint),
+    port: resolveFastCometPort(config.port, baseUrl, uploadEndpoint),
+    username: normalizeOptionalConfigString(config.username),
+    token,
+    authToken: token,
     keepLocalCopy: config.keepLocalCopy,
     timeoutMs: normalizeTimeoutMs(config.timeoutMs),
     resolveIp: normalizeResolveIp(config.resolveIp, baseUrl),
   };
 };
+
+const hasConfigText = (value: string | null | undefined): boolean =>
+  (value?.trim() ?? '').length > 0;
+
+const hasFastCometConnectionCredentials = (config: FastCometStorageConfig): boolean =>
+  hasConfigText(config.server) &&
+  config.port !== null &&
+  config.port !== undefined &&
+  hasConfigText(config.username) &&
+  hasConfigText(config.token ?? config.authToken);
 
 const areConfigsEqual = (left: FastCometStorageConfig, right: FastCometStorageConfig): boolean =>
   JSON.stringify(normalizeConfigForSave(left)) === JSON.stringify(normalizeConfigForSave(right));
@@ -180,7 +251,10 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
   const isDirty = source !== storedSource || areConfigsEqual(normalizedDraft, normalizedStored) === false;
 
   const isFastCometMisconfigured =
-    source === 'fastcomet' && normalizedDraft.baseUrl.trim() === '';
+    source === 'fastcomet' &&
+    (normalizedDraft.baseUrl.trim() === '' ||
+      normalizedDraft.uploadEndpoint.trim() === '' ||
+      hasFastCometConnectionCredentials(normalizedDraft) === false);
 
   const resetSettings = (): void => {
     setSource(storedSource);
@@ -242,7 +316,7 @@ const FileStorageSettingsView = ({
 
       {isFastCometMisconfigured && (
         <Alert variant='warning' className='mt-6'>
-          FastComet mode requires a public base URL. The upload endpoint is derived automatically when omitted.
+          FastComet mode requires SERVER, PORT, USERNAME, TOKEN, a public base URL, and an upload endpoint.
         </Alert>
       )}
 

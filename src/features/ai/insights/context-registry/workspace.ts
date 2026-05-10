@@ -39,7 +39,7 @@ type BuildAiInsightsWorkspaceContextBundleInput = {
 const trimText = (value: string | null | undefined, maxLength: number): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
-  if (!normalized) return null;
+  if (normalized === '') return null;
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength - 1)}...`;
 };
@@ -56,10 +56,10 @@ const summarizeInsight = (
   summary: trimText(insight.summary ?? null, 240),
 });
 
-export const buildAiInsightsWorkspaceRuntimeDocument = (
+const buildCombinedInsights = (
   input: BuildAiInsightsWorkspaceContextBundleInput
-): ContextRuntimeDocument => {
-  const combinedInsights = [
+): Record<string, unknown>[] =>
+  [
     ...input.analyticsInsights.slice(0, 3).map((insight) => summarizeInsight(insight, 'analytics')),
     ...input.runtimeInsights.slice(0, 3).map((insight) => summarizeInsight(insight, 'runtime')),
     ...input.logInsights.slice(0, 3).map((insight) => summarizeInsight(insight, 'logs')),
@@ -71,22 +71,33 @@ export const buildAiInsightsWorkspaceRuntimeDocument = (
     })
     .slice(0, 8);
 
-  const sections: ContextRuntimeDocumentSection[] = [
+const buildInsightBucketSection = (
+  input: BuildAiInsightsWorkspaceContextBundleInput
+): ContextRuntimeDocumentSection => ({
+  kind: 'facts',
+  title: 'Insight buckets',
+  items: [
     {
-      kind: 'facts',
-      title: 'Insight buckets',
-      items: [
-        {
-          analyticsInsightCount: input.analyticsInsights.length,
-          runtimeInsightCount: input.runtimeInsights.length,
-          logInsightCount: input.logInsights.length,
-          analyticsRunPending: input.analyticsRunPending,
-          runtimeRunPending: input.runtimeRunPending,
-          logsRunPending: input.logsRunPending,
-        },
-      ],
+      analyticsInsightCount: input.analyticsInsights.length,
+      runtimeInsightCount: input.runtimeInsights.length,
+      logInsightCount: input.logInsights.length,
+      analyticsRunPending: input.analyticsRunPending,
+      runtimeRunPending: input.runtimeRunPending,
+      logsRunPending: input.logsRunPending,
     },
-  ];
+  ],
+});
+
+const buildWorkspaceStatus = (
+  input: BuildAiInsightsWorkspaceContextBundleInput
+): ContextRuntimeDocument['status'] =>
+  input.analyticsRunPending || input.runtimeRunPending || input.logsRunPending ? 'running' : null;
+
+export const buildAiInsightsWorkspaceRuntimeDocument = (
+  input: BuildAiInsightsWorkspaceContextBundleInput
+): ContextRuntimeDocument => {
+  const combinedInsights = buildCombinedInsights(input);
+  const sections: ContextRuntimeDocumentSection[] = [buildInsightBucketSection(input)];
 
   if (combinedInsights.length > 0) {
     sections.push({
@@ -104,7 +115,7 @@ export const buildAiInsightsWorkspaceRuntimeDocument = (
     title: 'AI insights workspace state',
     summary:
       'Live operator context for the AI Insights dashboard, including visible analytics, runtime analytics, and log insight histories and run state.',
-    status: input.analyticsRunPending || input.runtimeRunPending || input.logsRunPending ? 'running' : null,
+    status: buildWorkspaceStatus(input),
     tags: ['ai-insights', 'admin', 'dashboard', 'live-state'],
     relatedNodeIds: [...AI_INSIGHTS_CONTEXT_ROOT_IDS],
     facts: {

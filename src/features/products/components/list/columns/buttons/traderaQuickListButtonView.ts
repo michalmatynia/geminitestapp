@@ -18,7 +18,7 @@ const MARKET_EXCLUSION_DISABLED_CLASS =
 const MARKET_EXCLUSION_DISABLED_INTERACTION_CLASS =
   'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40';
 
-const GENERIC_DISABLED_INTERACTION_CLASS = 'cursor-not-allowed opacity-60';
+export const GENERIC_DISABLED_INTERACTION_CLASS = 'cursor-not-allowed opacity-60';
 
 type RecoveryIdentifiers = {
   runId: string | null;

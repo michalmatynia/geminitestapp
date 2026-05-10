@@ -170,7 +170,7 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('Browser run history')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
       'href',
-      '/admin/playwright/action-runs?query=run-tradera-1'
+      '/admin/playwright/action-runs?runId=run-tradera-1'
     );
     fireEvent.click(screen.getByRole('button', { name: 'Login to Tradera' }));
     await Promise.resolve();

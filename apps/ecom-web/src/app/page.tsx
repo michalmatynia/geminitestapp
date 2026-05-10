@@ -7,9 +7,10 @@ import { ManifestoBanner } from '@/components/ManifestoBanner';
 import { EditorialStrip } from '@/components/EditorialStrip';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SiteFooter } from '@/components/SiteFooter';
-import { getMentiosProducts, getMentiosCollectionCounts } from '@/lib/mentios';
+import { getMentiosProducts, getMentiosCollectionCounts, getMentiosHomeStats } from '@/lib/mentios';
 import { getHomeContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
+import type { EcomLocale } from '@/lib/locales';
 
 export const revalidate = 120; // ISR — revalidate every 2 minutes
 const FEATURED_PRODUCT_COUNT = 12;
@@ -38,22 +39,43 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+function formatStatValue(value: number, locale: EcomLocale): string {
+  return value.toLocaleString(locale === 'pl' ? 'pl-PL' : 'en-US');
+}
+
 export default async function HomePage() {
   const locale = await getRequestLocale();
   // Both fetches run in parallel; either can fail gracefully.
-  const [{ products: dbProducts }, collectionCounts, homeContent] = await Promise.all([
+  const [{ products: dbProducts }, collectionCounts, homeContent, homeStats] = await Promise.all([
     getMentiosProducts({ limit: FEATURED_PRODUCT_COUNT, locale }),
     getMentiosCollectionCounts(),
     getHomeContent(locale),
+    getMentiosHomeStats(locale),
   ]);
 
   const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, FEATURED_PRODUCT_COUNT) : null;
+  const liveStatValues = homeStats
+    ? [
+        formatStatValue(homeStats.itemCount, locale),
+        formatStatValue(homeStats.categoryCount, locale),
+        formatStatValue(homeStats.loreCount, locale),
+      ]
+    : [];
+  const heroContent = liveStatValues.length > 0
+    ? {
+        ...homeContent.hero,
+        stats: homeContent.hero.stats.map((stat, index) => ({
+          ...stat,
+          value: liveStatValues[index] ?? stat.value,
+        })),
+      }
+    : homeContent.hero;
 
   return (
     <>
       <SiteNav />
       <main>
-        <HeroSection content={homeContent.hero} />
+        <HeroSection content={heroContent} />
         <CategoriesGrid counts={collectionCounts} content={homeContent.categories} />
         <FeaturedProducts products={featuredProducts} content={homeContent.featured} />
         <ManifestoBanner content={homeContent.manifesto} locale={locale} />

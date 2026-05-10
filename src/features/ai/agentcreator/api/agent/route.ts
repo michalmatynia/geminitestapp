@@ -3,28 +3,25 @@ import path from 'node:path';
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
 import {
   type AgentRuntimeRunRecord,
   getChatbotAgentRunDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
 import { startAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
 import type {
-  AgentRunEnqueueResponse,
   AgentRunRecord,
   AgentRunStatusType,
   AgentRunsDeleteResponse,
   AgentRunsResponse,
 } from '@/shared/contracts/agent-runtime';
-import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type { IdDto } from '@/shared/contracts/base';
-import type { InputJsonValue } from '@/shared/contracts/json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+import { createAgentRun } from './agent-run-create';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
@@ -53,17 +50,12 @@ type AgentRunListRecord = Pick<
   };
 };
 
-type AgentRunCreateRecord = Pick<
-  AgentRuntimeRunRecord,
-  'id' | 'model' | 'searchProvider' | 'agentBrowser' | 'status'
-> & {
-  tools: string[];
-};
-
 type AgentRunIdRecord = IdDto;
 
 const toIsoString = (value: Date | string | null): string | null => {
-  if (!value) return null;
+  if (value === null) {
+    return null;
+  }
   return value instanceof Date ? value.toISOString() : value;
 };
 
@@ -129,7 +121,7 @@ async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const chatbotAgentRun = getChatbotAgentRunDelegate();
-  if (!chatbotAgentRun) {
+  if (chatbotAgentRun === null) {
     throw internalError('Agent run storage is unavailable.');
   }
   const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
@@ -138,100 +130,14 @@ async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
       'Agent Runtime is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
     );
   }
-const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
-    const numeric = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
-    if (!Number.isFinite(numeric)) return fallback;
-    return Math.min(Math.max(Math.round(numeric), min), max);
-};
-
-const normalizePlanSettings = (input: any) => {
-    if (!input) return null;
-    return {
-        maxSteps: clampInt(input.maxSteps, 1, 20, 12),
-        maxStepAttempts: clampInt(input.maxStepAttempts, 1, 5, 2),
-        maxReplanCalls: clampInt(input.maxReplanCalls, 0, 6, 2),
-        replanEverySteps: clampInt(input.replanEverySteps, 1, 10, 2),
-        maxSelfChecks: clampInt(input.maxSelfChecks, 0, 8, 4),
-        loopGuardThreshold: clampInt(input.loopGuardThreshold, 1, 5, 2),
-        loopBackoffBaseMs: clampInt(input.loopBackoffBaseMs, 250, 20000, 2000),
-        loopBackoffMaxMs: clampInt(input.loopBackoffMaxMs, 1000, 60000, 12000),
-    };
-};
-
-async function handleAgentCreate(
-    req: NextRequest, 
-    chatbotAgentRun: any, 
-    logInfo: (msg: string, data: any) => void
-): Promise<Response> {
-    const body = await req.json().catch(() => { throw badRequestError('Invalid JSON payload. The request body must be a valid JSON object with a "prompt" field.'); });
-    if (!body.prompt?.trim()) throw badRequestError('Prompt is required. Provide a non-empty prompt string in the request body.');
-
-    let contextRegistry = null;
-    if (body.contextRegistry !== undefined) {
-        const parsed = contextRegistryConsumerEnvelopeSchema.safeParse(body.contextRegistry);
-        if (!parsed.success) throw badRequestError('Invalid context registry payload. The contextRegistry field must conform to the ContextRegistryConsumerEnvelope schema.', { errors: parsed.error.format() });
-        contextRegistry = await resolveAgentRuntimeContextRegistryEnvelope(parsed.data);
-    }
-
-    const planSettings = normalizePlanSettings(body.planSettings);
-    const hasPreferenceOverrides = body.ignoreRobotsTxt !== undefined || body.requireHumanApproval !== undefined;
-    const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides || contextRegistry);
-
-    const run = await chatbotAgentRun.create<AgentRunCreateRecord>({
-        data: {
-            prompt: body.prompt.trim(),
-            model: body.model?.trim() || null,
-            personaId: body.personaId?.trim() || null,
-            tools: body.tools ?? [],
-            searchProvider: body.searchProvider?.trim() || null,
-            agentBrowser: body.agentBrowser?.trim() || null,
-            runHeadless: body.runHeadless ?? true,
-            logLines: [`[${new Date().toISOString()}] Run queued.`],
-            ...(shouldAttachPlanState
-                ? {
-                    planState: {
-                        ...(planSettings ? { settings: planSettings } : {}),
-                        preferences: {
-                            ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-                            requireHumanApproval: Boolean(body.requireHumanApproval),
-                        },
-                        ...(contextRegistry ? { contextRegistry } : {}),
-                    } as InputJsonValue,
-                }
-                : {}),
-        },
-    });
-
-    await logAgentAudit(run.id, 'info', 'Agent run queued.', {
-        model: run.model,
-        tools: run.tools,
-        searchProvider: run.searchProvider,
-        agentBrowser: run.agentBrowser,
-    });
-    startAgentQueue();
-    return NextResponse.json({ runId: run.id, status: run.status });
-}
-
-async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const requestStart = Date.now();
-  const chatbotAgentRun = getChatbotAgentRunDelegate();
-  if (!chatbotAgentRun) throw internalError('Agent run storage is unavailable.');
-  
-  const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
-  if (!agentRuntimeBrain.enabled) {
-    throw configurationError('Agent Runtime is disabled in AI Brain. Enable the Agent Runtime feature in Admin > AI Brain > Features.');
-  }
-
-  const response = await handleAgentCreate(req, chatbotAgentRun, (msg, data) => {
-      if (DEBUG_CHATBOT) void ErrorSystem.logInfo(msg, { service: 'agent-api', ...data });
-  });
-
+  const response = await createAgentRun(req, chatbotAgentRun);
   if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Queued', { service: 'agent-api', durationMs: Date.now() - requestStart });
+    void ErrorSystem.logInfo('Queued', {
+      service: 'agent-api',
+      durationMs: Date.now() - requestStart,
+    });
   }
-
-  return response;
-}
+  return NextResponse.json(response);
 }
 
 async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

@@ -39,6 +39,7 @@ export interface HomeCategoryCardContent {
   label: string;
   sublabel: string;
   tag: string;
+  visible: boolean;
   href: string;
   imageUrl: string;
   selectorType: HomeCategorySelectorType;
@@ -163,6 +164,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'All Items',
         sublabel: 'Keychains · Pins · Charms',
         tag: 'Full Catalog',
+        visible: true,
         href: '/products',
         imageUrl: '',
         selectorType: 'all',
@@ -174,6 +176,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Anime',
         sublabel: 'Pins · Keychains · Jewellery',
         tag: 'New Season',
+        visible: true,
         href: '/products?categories=Anime%20Ring,Anime%20Keychain',
         imageUrl: '',
         selectorType: 'category',
@@ -185,6 +188,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Gaming',
         sublabel: 'RPG · FPS · Strategy Drops',
         tag: 'Hot Drops',
+        visible: true,
         href: '/products?themes=Elden%20Ring,Warhammer%2040k',
         imageUrl: '',
         selectorType: 'theme',
@@ -196,6 +200,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         label: 'Film & TV',
         sublabel: 'Cinema · Series · Icons',
         tag: 'Collector',
+        visible: true,
         href: '/products?categories=Film%20Collectibles',
         imageUrl: '',
         selectorType: 'category',
@@ -309,6 +314,22 @@ function readHref(
   if (!value) return fallback;
   if (!isAllowedHref(value)) {
     errors.push(`${path} must be an internal path, anchor, or http(s) URL.`);
+    return fallback;
+  }
+  return value;
+}
+
+function readBoolean(
+  source: Record<string, unknown>,
+  key: string,
+  fallback: boolean,
+  errors: string[],
+  path: string,
+): boolean {
+  const value = source[key];
+  if (value == null) return fallback;
+  if (typeof value !== 'boolean') {
+    errors.push(`${path} must be true or false.`);
     return fallback;
   }
   return value;
@@ -461,6 +482,7 @@ function readCategoryCards(
         `categories.cards.${index}.sublabel`,
       ),
       tag: readString(item, 'tag', fallbackCard.tag, TEXT_LIMITS.short, errors, `categories.cards.${index}.tag`),
+      visible: readBoolean(item, 'visible', fallbackCard.visible, errors, `categories.cards.${index}.visible`),
       href: readHref(item, 'href', fallbackCard.href, errors, `categories.cards.${index}.href`),
       imageUrl: readHref(item, 'imageUrl', fallbackCard.imageUrl, errors, `categories.cards.${index}.imageUrl`),
       selectorType: readCategorySelectorType(

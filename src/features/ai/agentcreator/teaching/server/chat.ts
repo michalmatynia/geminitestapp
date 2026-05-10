@@ -20,8 +20,9 @@ const buildRagSystemPrompt = (params: {
   sources: AgentTeachingChatSource[];
 }): string => {
   const lines: string[] = [];
-  if (params.basePrompt.trim()) {
-    lines.push(params.basePrompt.trim());
+  const basePrompt = params.basePrompt.trim();
+  if (basePrompt.length > 0) {
+    lines.push(basePrompt);
   }
   lines.push(
     'You have access to a Knowledge Base (embedded text chunks).',
@@ -30,17 +31,88 @@ const buildRagSystemPrompt = (params: {
   );
   if (params.sources.length > 0) {
     lines.push('', 'Knowledge Base Sources:');
-    params.sources.forEach((src: AgentTeachingChatSource, _index: number) => {
-      const title = src.metadata?.title?.trim() ? ` (${src.metadata?.title?.trim()})` : '';
-      const header = `[doc:${src.documentId}]${title} score=${src.score.toFixed(3)}`;
-      const body = (src.text ?? '').trim();
-      // Keep each chunk bounded so we don't blow up the context window.
-      const snippet = body.length > 2000 ? `${body.slice(0, 2000)}…` : body;
-      lines.push('', header, snippet);
+    params.sources.forEach((src: AgentTeachingChatSource) => {
+      lines.push('', buildSourceHeader(src), buildSourceSnippet(src.text));
     });
   }
   return lines.join('\n');
 };
+
+type TeachingAgent = NonNullable<Awaited<ReturnType<typeof getTeachingAgentById>>>;
+
+const buildSourceHeader = (src: AgentTeachingChatSource): string => {
+  const title = src.metadata?.title?.trim() ?? '';
+  const titleLabel = title.length > 0 ? ` (${title})` : '';
+  return `[doc:${src.documentId}]${titleLabel} score=${src.score.toFixed(3)}`;
+};
+
+const buildSourceSnippet = (text: string): string => {
+  const body = text.trim();
+  return body.length > 2000 ? `${body.slice(0, 2000)}…` : body;
+};
+
+const readLastUserMessageText = (messages: AgentTeachingChatMessage[]): string => {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((message: AgentTeachingChatMessage): boolean => message.role === 'user');
+  return lastUserMessage?.content.trim() ?? '';
+};
+
+const normalizeEmbeddingModel = (model: string | null | undefined): string => model?.trim() ?? '';
+
+const optionalEmbeddingModel = (model: string | null | undefined): string | undefined => {
+  const trimmed = normalizeEmbeddingModel(model);
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const retrieveTeachingSources = async (
+  agent: TeachingAgent,
+  queryText: string
+): Promise<AgentTeachingChatSource[]> => {
+  const queryEmbedding = await generateOllamaEmbedding({
+    model: normalizeEmbeddingModel(agent.embeddingModel),
+    text: queryText,
+  });
+
+  return retrieveTopContext({
+    queryEmbedding,
+    collectionIds: agent.collectionIds,
+    topK: agent.retrievalTopK ?? 5,
+    minScore: agent.retrievalMinScore ?? 0,
+    embeddingModel: optionalEmbeddingModel(agent.embeddingModel),
+    maxDocsPerCollection: agent.maxDocsPerCollection ?? 400,
+  });
+};
+
+const buildSystemPrompt = (
+  brainSystemPrompt: string,
+  ragSystemPrompt: string,
+  additionalSystemPrompt: string | null | undefined
+): string => {
+  const prompts = [brainSystemPrompt.trim(), ragSystemPrompt];
+  const additionalPrompt = additionalSystemPrompt?.trim() ?? '';
+  if (additionalPrompt.length > 0) {
+    prompts.push(additionalPrompt);
+  }
+  return prompts.filter((prompt) => prompt.length > 0).join('\n\n');
+};
+
+const toBrainChatRole = (message: AgentTeachingChatMessage): BrainChatMessage['role'] => {
+  if (message.role === 'assistant' || message.role === 'system') {
+    return message.role;
+  }
+  return 'user';
+};
+
+const toBrainChatMessages = (messages: AgentTeachingChatMessage[]): BrainChatMessage[] =>
+  messages
+    .filter((message: AgentTeachingChatMessage): boolean => message.role !== 'system')
+    .map(
+      (message: AgentTeachingChatMessage): BrainChatMessage => ({
+        role: toBrainChatRole(message),
+        content: message.content,
+      })
+    );
 
 export async function runTeachingChat(params: {
   agentId: string;
@@ -52,30 +124,14 @@ export async function runTeachingChat(params: {
     throw new Error('Learner agent not found.');
   }
 
-  const lastUserMessage = [...params.messages]
-    .reverse()
-    .find((m: AgentTeachingChatMessage): boolean => m.role === 'user');
-  const queryText = lastUserMessage?.content?.trim() ?? '';
-  if (!queryText) {
+  const queryText = readLastUserMessageText(params.messages);
+  if (queryText.length === 0) {
     throw new Error('Missing user message.');
   }
 
-  const queryEmbedding = await generateOllamaEmbedding({
-    model: agent.embeddingModel?.trim() || '',
-    text: queryText,
-  });
-
-  const sources = await retrieveTopContext({
-    queryEmbedding,
-    collectionIds: agent.collectionIds,
-    topK: agent.retrievalTopK ?? 5,
-    minScore: agent.retrievalMinScore ?? 0,
-    embeddingModel: agent.embeddingModel?.trim() || undefined,
-    maxDocsPerCollection: agent.maxDocsPerCollection ?? 400,
-  });
-
+  const sources = await retrieveTeachingSources(agent, queryText);
   const ragSystemPrompt = buildRagSystemPrompt({
-    basePrompt: agent.systemPrompt ?? '',
+    basePrompt: agent.systemPrompt,
     sources,
   });
 
@@ -85,10 +141,11 @@ export async function runTeachingChat(params: {
       typeof agent.maxTokens === 'number' && agent.maxTokens > 0 ? agent.maxTokens : 1200,
     runtimeKind: 'chat',
   });
-  const systemPrompt = [brainConfig.systemPrompt.trim(), ragSystemPrompt]
-    .concat(params.additionalSystemPrompt?.trim() ? [params.additionalSystemPrompt.trim()] : [])
-    .filter(Boolean)
-    .join('\n\n');
+  const systemPrompt = buildSystemPrompt(
+    brainConfig.systemPrompt,
+    ragSystemPrompt,
+    params.additionalSystemPrompt
+  );
 
   const res = await runBrainChatCompletion({
     modelId: brainConfig.modelId,
@@ -96,12 +153,7 @@ export async function runTeachingChat(params: {
     maxTokens: brainConfig.maxTokens,
     messages: [
       { role: 'system', content: systemPrompt },
-      ...(params.messages
-        .filter((m: AgentTeachingChatMessage) => m.role !== 'system')
-        .map((m: AgentTeachingChatMessage) => ({
-          role: m.role === 'assistant' || m.role === 'system' ? m.role : 'user',
-          content: m.content,
-        })) as BrainChatMessage[]),
+      ...toBrainChatMessages(params.messages),
     ],
   });
   const message = res.text.trim();

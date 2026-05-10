@@ -26,6 +26,14 @@ const LISTING_BADGE_RECONCILIATION_STATUSES = new Set([
   'auth_required',
   'error',
 ]);
+const ECOMMERCE_LISTING_BADGE_STATUSES = new Set([
+  'active',
+  'success',
+  'completed',
+  'listed',
+  'ok',
+  'linked',
+]);
 
 type IntegrationListingBadgeState = {
   integrationBadgeIds: Set<string>;
@@ -182,7 +190,7 @@ const buildIntegrationListingBadgeState = (
 
     const ecommerceStatus =
       typeof marketplaces?.ecommerce === 'string' ? marketplaces.ecommerce.trim().toLowerCase() : '';
-    if (ecommerceStatus) {
+    if (ECOMMERCE_LISTING_BADGE_STATUSES.has(ecommerceStatus)) {
       nextEcommerceBadgeIds.add(productId);
       nextEcommerceBadgeStatuses.set(productId, ecommerceStatus);
     }

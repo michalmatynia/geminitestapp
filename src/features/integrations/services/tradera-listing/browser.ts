@@ -45,8 +45,7 @@ export const runTraderaBrowserListing = async ({
   if (
     action === 'relist' ||
     action === 'sync' ||
-    connection.traderaBrowserMode === 'scripted' ||
-    browserMode !== 'connection_default'
+    connection.traderaBrowserMode === 'scripted'
   ) {
     return runTraderaBrowserListingScripted({
       listing,
@@ -65,6 +64,7 @@ export const runTraderaBrowserListing = async ({
     systemSettings,
     source,
     action,
+    browserMode,
   }, options);
 };
 

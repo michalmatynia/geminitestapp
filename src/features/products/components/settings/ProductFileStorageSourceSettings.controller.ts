@@ -17,8 +17,10 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export type FastCometStorageStatus = Pick<
   FastCometStorageConfig,
-  'baseUrl' | 'uploadEndpoint' | 'keepLocalCopy'
->;
+  'baseUrl' | 'uploadEndpoint' | 'keepLocalCopy' | 'port' | 'server' | 'username'
+> & {
+  tokenConfigured: boolean;
+};
 
 export type ProductFileStorageSourceController = {
   controlsDisabled: boolean;
@@ -75,6 +77,57 @@ const resolveDefaultUploadEndpoint = (baseUrl: string): string => {
   }
 };
 
+const normalizeOptionalString = (value: unknown): string | null => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizePort = (value: unknown): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  const port = Math.floor(parsed);
+  return port >= 1 && port <= 65_535 ? port : null;
+};
+
+const resolveUrlPort = (value: string): number | null => {
+  try {
+    const url = new URL(value);
+    if (url.port.trim().length > 0) return normalizePort(url.port);
+    return url.protocol === 'http:' ? 80 : 443;
+  } catch {
+    return null;
+  }
+};
+
+const resolveUrlHostname = (value: string): string | null => {
+  try {
+    const hostname = new URL(value).hostname.trim();
+    return hostname.length > 0 ? hostname : null;
+  } catch {
+    return null;
+  }
+};
+
+const resolveFastCometStatusServer = (
+  parsed: Partial<FastCometStorageConfig>,
+  baseUrl: string,
+  uploadEndpoint: string
+): string | null =>
+  normalizeOptionalString(parsed.server) ??
+  resolveUrlHostname(uploadEndpoint) ??
+  resolveUrlHostname(baseUrl);
+
+const resolveFastCometStatusPort = (
+  parsed: Partial<FastCometStorageConfig>,
+  baseUrl: string,
+  uploadEndpoint: string
+): number | null =>
+  normalizePort(parsed.port) ?? resolveUrlPort(uploadEndpoint) ?? resolveUrlPort(baseUrl);
+
+const hasFastCometStatusToken = (parsed: Partial<FastCometStorageConfig>): boolean =>
+  normalizeOptionalString(parsed.token) !== null ||
+  normalizeOptionalString(parsed.authToken) !== null;
+
 const readFastCometStorageStatus = (
   raw: string | null | undefined
 ): FastCometStorageStatus => {
@@ -89,8 +142,58 @@ const readFastCometStorageStatus = (
   return {
     baseUrl,
     uploadEndpoint,
+    server: resolveFastCometStatusServer(parsed, baseUrl, uploadEndpoint),
+    port: resolveFastCometStatusPort(parsed, baseUrl, uploadEndpoint),
+    username: normalizeOptionalString(parsed.username),
+    tokenConfigured: hasFastCometStatusToken(parsed),
     keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
   };
+};
+
+const hasFastCometStatusTarget = (status: FastCometStorageStatus): boolean =>
+  status.baseUrl.length > 0 &&
+  status.uploadEndpoint.length > 0 &&
+  status.server !== null &&
+  status.server !== undefined &&
+  status.port !== null &&
+  status.port !== undefined;
+
+const hasFastCometStatusCredentials = (status: FastCometStorageStatus): boolean =>
+  status.username !== null &&
+  status.username !== undefined &&
+  status.tokenConfigured;
+
+const isFastCometStatusConfigured = (status: FastCometStorageStatus): boolean =>
+  hasFastCometStatusTarget(status) && hasFastCometStatusCredentials(status);
+
+const isFastCometSourceMisconfigured = (
+  source: FileStorageSource,
+  status: FastCometStorageStatus
+): boolean => source === 'fastcomet' && isFastCometStatusConfigured(status) === false;
+
+const saveProductFileStorageSource = async (input: {
+  nextSource: FileStorageSource;
+  refetchSettings: () => void;
+  setLastSavedSource: (source: FileStorageSource) => void;
+  toast: ReturnType<typeof useToast>['toast'];
+  updateSetting: ReturnType<typeof useUpdateSetting>;
+}): Promise<void> => {
+  try {
+    await input.updateSetting.mutateAsync({
+      key: FILE_STORAGE_SOURCE_SETTING_KEY,
+      value: input.nextSource,
+    });
+    input.setLastSavedSource(input.nextSource);
+    input.refetchSettings();
+    input.toast('Product file source saved.', { variant: 'success' });
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'ProductFileStorageSourceSettings',
+      action: 'handleSave',
+    });
+    const message = error instanceof Error ? error.message : 'Failed to save product file source.';
+    input.toast(message, { variant: 'error' });
+  }
 };
 
 function useProductFileStorageSettingsState(): ProductFileStorageSettingsState {
@@ -138,30 +241,18 @@ export function useProductFileStorageSourceController(): ProductFileStorageSourc
 
   const persistedSource = lastSavedSource ?? storedSource;
   const isDirty = source !== persistedSource;
-  const isFastCometMisconfigured =
-    source === 'fastcomet' && fastCometStatus.baseUrl.length === 0;
+  const isFastCometMisconfigured = isFastCometSourceMisconfigured(source, fastCometStatus);
   const controlsDisabled = settingsLoading || updateSetting.isPending;
   const saveDisabled = isDirty === false || controlsDisabled || isFastCometMisconfigured;
 
   const handleSave = async (): Promise<void> => {
-    try {
-      const nextSource = source;
-      await updateSetting.mutateAsync({
-        key: FILE_STORAGE_SOURCE_SETTING_KEY,
-        value: nextSource,
-      });
-      setLastSavedSource(nextSource);
-      refetchSettings();
-      toast('Product file source saved.', { variant: 'success' });
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'ProductFileStorageSourceSettings',
-        action: 'handleSave',
-      });
-      const message =
-        error instanceof Error ? error.message : 'Failed to save product file source.';
-      toast(message, { variant: 'error' });
-    }
+    await saveProductFileStorageSource({
+      nextSource: source,
+      refetchSettings,
+      setLastSavedSource,
+      toast,
+      updateSetting,
+    });
   };
 
   const handleReset = (): void => {

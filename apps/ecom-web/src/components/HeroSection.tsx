@@ -733,10 +733,21 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
         </div>
         <div className="overflow-hidden mb-8">
           <h1
-            className="hero-h1-2 type-display-xl"
+            className="hero-h1-2 hero-cache-glitch type-display-xl"
+            data-text={content.headlineLine2}
+            aria-label={content.headlineLine2}
             style={{ color: 'transparent', fontSize: 'clamp(3.1rem, 6.2vw, 5.8rem)', WebkitTextStroke: '1.5px var(--accent)', textShadow: '0 0 60px rgba(var(--accent-rgb),0.25)' }}
           >
-            {content.headlineLine2}
+            {Array.from(content.headlineLine2).map((letter, index) => (
+              <span
+                key={`${letter}-${index}`}
+                aria-hidden="true"
+                className="hero-cache-letter"
+                style={{ animationDelay: `${index * -0.28}s` }}
+              >
+                {letter === ' ' ? '\u00A0' : letter}
+              </span>
+            ))}
           </h1>
         </div>
 

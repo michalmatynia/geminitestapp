@@ -119,13 +119,13 @@ const resolveAccountActivityNodeId = (input: AccountSelectedNodeInput): string |
 };
 
 const resolveAccountSelectedNodeId = (input: AccountSelectedNodeInput): string => {
+  if (input.selectedPanel === 'compose') return toFilemakerMailAccountComposeNodeId(input.selectedAccountId);
   const recentNodeId = resolveRecentSelectedNodeId(input);
   if (recentNodeId !== null) return recentNodeId;
   const mailboxNodeId = resolveMailboxSelectedNodeId(input);
   if (mailboxNodeId !== null) return mailboxNodeId;
   const activityNodeId = resolveAccountActivityNodeId(input);
   if (activityNodeId !== null) return activityNodeId;
-  if (input.selectedPanel === 'compose') return toFilemakerMailAccountComposeNodeId(input.selectedAccountId);
   return toFilemakerMailAccountNodeId(input.selectedAccountId);
 };
 

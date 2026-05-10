@@ -162,6 +162,34 @@ describe('useIntegrationOperations listing badges query', () => {
     expect(result.current.traderaBadgeStatuses.get('product-1')).toBe('queued');
   });
 
+  it('ignores stale non-active ecommerce badge statuses', async () => {
+    apiPostMock.mockResolvedValue({
+      'product-1': {
+        ecommerce: 'removed',
+      },
+      'product-2': {
+        ecommerce: ' active ',
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(
+      () => useIntegrationListingBadges(['product-1', 'product-2']),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.ecommerceBadgeStatuses.get('product-2')).toBe('active');
+    });
+
+    expect(result.current.ecommerceBadgeIds.has('product-1')).toBe(false);
+    expect(result.current.ecommerceBadgeStatuses.has('product-1')).toBe(false);
+  });
+
   it('prefers completed persisted Tradera feedback over a stale server auth_required badge', async () => {
     window.sessionStorage.setItem(
       'tradera-quick-list-feedback',

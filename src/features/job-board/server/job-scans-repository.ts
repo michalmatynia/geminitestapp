@@ -69,22 +69,22 @@ export async function listJobScans(input: {
   companyId?: string | null;
   limit?: number | null;
 } = {}): Promise<JobScanRecord[]> {
-  const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 50;
-  const statuses = input.statuses ?? null;
-  const companyId = input.companyId?.trim() || null;
+  const limit = input.limit !== null && input.limit !== undefined ? Math.max(1, Math.trunc(input.limit)) : 50;
+  const statuses = Array.isArray(input.statuses) ? input.statuses : null;
+  const companyId = input.companyId?.trim() ?? '';
 
   if (useMemory()) {
     let filtered = inMemory;
-    if (statuses) filtered = filtered.filter((s) => statuses.includes(s.status));
-    if (companyId) filtered = filtered.filter((s) => s.companyId === companyId);
+    if (statuses !== null) filtered = filtered.filter((s) => statuses.includes(s.status));
+    if (companyId !== '') filtered = filtered.filter((s) => s.companyId === companyId);
     return sortByCreatedAtDesc(filtered).slice(0, limit);
   }
 
   await ensureIndexes();
   const db = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (statuses) filter['status'] = { $in: statuses };
-  if (companyId) filter['companyId'] = companyId;
+  if (statuses !== null) filter['status'] = { $in: statuses };
+  if (companyId !== '') filter['companyId'] = companyId;
   const docs = await db
     .collection<JobScanDoc>(JOB_SCANS_COLLECTION)
     .find(filter)
@@ -94,9 +94,9 @@ export async function listJobScans(input: {
   return docs.map(toRecord);
 }
 
-export async function getJobScanById(id: string): Promise<JobScanRecord | null> {
-  const trimmedId = id.trim();
-  if (!trimmedId) return null;
+export async function getJobScanById(id: string | null | undefined): Promise<JobScanRecord | null> {
+  const trimmedId = id?.trim() ?? '';
+  if (trimmedId === '') return null;
 
   if (useMemory()) {
     return inMemory.find((s) => s.id === trimmedId) ?? null;
@@ -107,7 +107,6 @@ export async function getJobScanById(id: string): Promise<JobScanRecord | null> 
   const doc = await db.collection<JobScanDoc>(JOB_SCANS_COLLECTION).findOne({ id: trimmedId });
   return doc ? toRecord(doc) : null;
 }
-
 export async function upsertJobScan(input: JobScanRecordInput): Promise<JobScanRecord> {
   const normalized = normalizeJobScanRecord({ ...input, id: input.id || randomUUID() });
   const now = new Date();
@@ -131,7 +130,8 @@ export async function upsertJobScan(input: JobScanRecordInput): Promise<JobScanR
   await ensureIndexes();
   const db = await getMongoDb();
   const collection = db.collection<JobScanDoc>(JOB_SCANS_COLLECTION);
-  const { createdAt: _c, updatedAt: _u, completedAt, ...rest } = normalized;
+  const { createdAt: createdAt, updatedAt: updatedAt, completedAt, ...rest } = normalized;
+
   const result = await collection.findOneAndUpdate(
     { id: normalized.id },
     {
@@ -140,18 +140,17 @@ export async function upsertJobScan(input: JobScanRecordInput): Promise<JobScanR
         completedAt: completedAt ? new Date(completedAt) : null,
         updatedAt: now,
       },
-      $setOnInsert: { createdAt: normalized.createdAt ? new Date(normalized.createdAt) : now },
+      $setOnInsert: { createdAt: createdAt ? new Date(createdAt) : now },
     },
     { upsert: true, returnDocument: 'after' }
   );
-  return result
-    ? toRecord(result)
-    : {
-        ...normalized,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      };
+
+  if (result === null) {
+      throw new Error('Failed to upsert job scan');
+  }
+  return toRecord(result);
 }
+
 
 export async function updateJobScan(
   id: string,

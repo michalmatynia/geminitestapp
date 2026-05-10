@@ -6,10 +6,7 @@ import type {
   AgentBrowserSnapshotsResponse,
 } from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
-import {
-  apiHandlerWithParams,
-  type ApiHandlerContext as _ApiHandlerContext,
-} from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 /**
@@ -36,6 +33,35 @@ type AgentBrowserSnapshotRouteRecord = {
   createdAt: Date | string;
 };
 
+const isNonEmptyString = (value: string | null): value is string =>
+  value !== null && value.length > 0;
+
+const buildSnapshotWhereClause = (
+  runId: string,
+  stepId: string | null
+): { runId: string; stepId?: string } => {
+  if (!isNonEmptyString(stepId)) {
+    return { runId };
+  }
+  return { runId, stepId };
+};
+
+const toAgentBrowserSnapshotRecord = (
+  snapshot: AgentBrowserSnapshotRouteRecord
+): AgentBrowserSnapshotRecord => ({
+  ...snapshot,
+  title: snapshot.title,
+  screenshotData: snapshot.screenshotData,
+  screenshotPath: snapshot.screenshotPath,
+  stepId: snapshot.stepId,
+  mouseX: snapshot.mouseX,
+  mouseY: snapshot.mouseY,
+  viewportWidth: snapshot.viewportWidth,
+  viewportHeight: snapshot.viewportHeight,
+  createdAt:
+    snapshot.createdAt instanceof Date ? snapshot.createdAt.toISOString() : snapshot.createdAt,
+});
+
 async function getHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
@@ -51,7 +77,7 @@ async function getHandler(
   const limit = Number(url.searchParams.get('limit') ?? '12');
   const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 50) : 12;
   const snapshots = await agentBrowserSnapshot.findMany<AgentBrowserSnapshotRouteRecord>({
-    where: { runId, ...(stepId ? { stepId } : {}) },
+    where: buildSnapshotWhereClause(runId, stepId),
     orderBy: { createdAt: 'desc' },
     take,
   });
@@ -64,21 +90,7 @@ async function getHandler(
     });
   }
   const response: AgentBrowserSnapshotsResponse = {
-    snapshots: snapshots.map(
-      (snapshot: AgentBrowserSnapshotRouteRecord): AgentBrowserSnapshotRecord => ({
-        ...snapshot,
-        title: snapshot.title ?? null,
-        screenshotData: snapshot.screenshotData ?? null,
-        screenshotPath: snapshot.screenshotPath ?? null,
-        stepId: snapshot.stepId ?? null,
-        mouseX: snapshot.mouseX ?? null,
-        mouseY: snapshot.mouseY ?? null,
-        viewportWidth: snapshot.viewportWidth ?? null,
-        viewportHeight: snapshot.viewportHeight ?? null,
-        createdAt:
-          snapshot.createdAt instanceof Date ? snapshot.createdAt.toISOString() : snapshot.createdAt,
-      })
-    ),
+    snapshots: snapshots.map(toAgentBrowserSnapshotRecord),
   };
   return NextResponse.json(response);
 }

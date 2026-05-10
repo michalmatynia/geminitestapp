@@ -308,7 +308,7 @@ function textToStats(value: string): HomeHeroStatContent[] {
 
 function categoryCardsToText(cards: HomeCategoryCardContent[]): string {
   return cards
-    .map((card) => `${card.id} | ${card.label} | ${card.sublabel} | ${card.tag} | ${card.href} | ${card.imageUrl} | ${card.selectorType} | ${card.selectorValues.join(', ')} | ${card.fallbackCount}`)
+    .map((card) => `${card.id} | ${card.label} | ${card.sublabel} | ${card.tag} | ${card.href} | ${card.imageUrl} | ${card.selectorType} | ${card.selectorValues.join(', ')} | ${card.fallbackCount} | ${card.visible ? 'visible' : 'hidden'}`)
     .join('\n');
 }
 
@@ -354,6 +354,7 @@ function textToCategoryCards(value: string): HomeCategoryCardContent[] {
         label: label.trim(),
         sublabel: sublabel.trim(),
         tag: tag.trim(),
+        visible: (parts[9] ?? 'visible').trim().toLowerCase() !== 'hidden',
         href: href.trim(),
         imageUrl: imageUrl.trim(),
         selectorType: parseCategorySelectorType(selectorType),
@@ -381,6 +382,7 @@ function makeHomeCategoryCard(index: number): HomeCategoryCardContent {
     label: 'New selector',
     sublabel: 'Category · Theme',
     tag: 'Selector',
+    visible: true,
     href: '/products',
     imageUrl: '',
     selectorType: 'custom',
@@ -3880,6 +3882,15 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                       <Field label="Label" value={card.label} onChange={(value) => updateCategoryCard(index, 'label', value)} />
                       <Field label="Sublabel" value={card.sublabel} onChange={(value) => updateCategoryCard(index, 'sublabel', value)} />
                       <Field label="Tag" value={card.tag} onChange={(value) => updateCategoryCard(index, 'tag', value)} />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', paddingTop: '1.35rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={card.visible}
+                          onChange={(event) => updateCategoryCard(index, 'visible', event.currentTarget.checked)}
+                          disabled={headerDisabled}
+                        />
+                        <span className="type-label" style={labelStyle}>Visible on home</span>
+                      </label>
                       <Field
                         label="Fallback count"
                         type="number"

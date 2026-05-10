@@ -378,14 +378,14 @@ export function CollectionPageClient({
           style={{
             background:
               collection.slug === 'womenswear'
-                ? 'linear-gradient(145deg, #21141D 0%, #2e0a28 50%, #3d0a40 100%)'
+                ? 'radial-gradient(circle at 30% 18%, rgba(216,116,50,0.18) 0%, transparent 32%), radial-gradient(circle at 82% 78%, rgba(201,60,47,0.12) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #120708 56%, #2A0A07 100%)'
                 : collection.slug === 'menswear'
-                ? 'linear-gradient(145deg, #0a1500 0%, #142200 50%, #1e3300 100%)'
+                ? 'radial-gradient(circle at 70% 22%, rgba(126,202,216,0.16) 0%, transparent 32%), radial-gradient(circle at 26% 74%, rgba(44,70,216,0.14) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #050812 56%, #0D1538 100%)'
                 : collection.slug === 'objects'
-                ? 'linear-gradient(145deg, #0B0D21 0%, #1a1040 50%, #21141D 100%)'
+                ? 'radial-gradient(circle at 50% 20%, rgba(229,183,94,0.2) 0%, transparent 30%), radial-gradient(circle at 14% 74%, rgba(234,247,238,0.08) 0%, transparent 24%), linear-gradient(145deg, #020205 0%, #060913 58%, #120708 100%)'
                 : collection.slug === 'all'
-                ? 'linear-gradient(145deg, #01000D 0%, #0B0D21 100%)'
-                : 'linear-gradient(145deg, #0f0520 0%, #1a0a35 50%, #28105a 100%)',
+                ? 'radial-gradient(circle at 50% 18%, rgba(229,183,94,0.14) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #060913 100%)'
+                : 'radial-gradient(circle at 48% 18%, rgba(234,247,238,0.12) 0%, transparent 28%), radial-gradient(circle at 82% 76%, rgba(229,183,94,0.14) 0%, transparent 34%), linear-gradient(145deg, #020205 0%, #060913 58%, #140B13 100%)',
           }}
         >
           <div ref={heroContentRef} className="will-change-transform">

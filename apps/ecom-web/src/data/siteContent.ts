@@ -266,10 +266,10 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     trendingSearches: ['Anime', 'Attack on Titan', 'Keychain', 'Elden Ring', 'Ghibli'],
     browseCollectionsLabel: 'Browse collections',
     collectionCards: [
-      { slug: 'womenswear', label: 'Anime', href: '/collections/womenswear', gradient: 'linear-gradient(135deg, #21141D 0%, #3d0a40 100%)' },
-      { slug: 'menswear', label: 'Gaming', href: '/collections/menswear', gradient: 'linear-gradient(135deg, #0a1500 0%, #1e3300 100%)' },
-      { slug: 'accessories', label: 'Film & TV', href: '/collections/accessories', gradient: 'linear-gradient(135deg, #0f0520 0%, #28105a 100%)' },
-      { slug: 'all', label: 'All Items', href: '/products', gradient: 'linear-gradient(135deg, #0B0D21 0%, #1a1040 100%)' },
+      { slug: 'womenswear', label: 'Anime', href: '/collections/womenswear', gradient: 'linear-gradient(135deg, #020205 0%, #2A0A07 100%)' },
+      { slug: 'menswear', label: 'Gaming', href: '/collections/menswear', gradient: 'linear-gradient(135deg, #020205 0%, #0D1538 100%)' },
+      { slug: 'accessories', label: 'Film & TV', href: '/collections/accessories', gradient: 'linear-gradient(135deg, #020205 0%, #140B13 100%)' },
+      { slug: 'all', label: 'All Items', href: '/products', gradient: 'linear-gradient(135deg, #020205 0%, #060913 56%, #120708 100%)' },
     ],
     noResultsPrefix: 'No results for',
     noResultsHelp: 'Try a different term or browse our collections',
@@ -570,7 +570,7 @@ function readCollectionCards(input: unknown, fallback: SiteCollectionCardContent
 
   const cards: SiteCollectionCardContent[] = [];
   for (const [index, item] of input.entries()) {
-    const fallbackCard = fallback[index] ?? { slug: '', label: '', href: '#', gradient: 'linear-gradient(135deg, #0B0D21 0%, #1a1040 100%)' };
+    const fallbackCard = fallback[index] ?? { slug: '', label: '', href: '#', gradient: 'linear-gradient(135deg, #020205 0%, #060913 56%, #120708 100%)' };
     if (!isRecord(item)) {
       errors.push('search.collectionCards items must be objects.');
       return fallback;

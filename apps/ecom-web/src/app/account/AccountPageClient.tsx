@@ -8,6 +8,7 @@ import { AuthModal } from '@/components/AuthModal';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
 import type { AccountContent } from '@/data/accountContent';
+import type { EcomLocale } from '@/lib/locales';
 import type { Order } from '@/lib/orders';
 import { toDisplayOrder } from './components/order-utils';
 import { AdminTab } from './components/AdminTab';

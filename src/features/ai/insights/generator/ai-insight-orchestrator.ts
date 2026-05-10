@@ -19,7 +19,13 @@ export async function orchestrateInsightGeneration(
   const messages = constructMessages(type, prompt);
 
   try {
-    const insight = await processInsightGeneration(type, modelId, messages, prompt, options);
+    const insight = await processInsightGeneration({
+      type,
+      modelId,
+      messages,
+      prompt,
+      options,
+    });
     
     if (type === 'runtime_analytics') {
       await recordBrainInsightAnalytics({

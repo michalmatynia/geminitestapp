@@ -25,6 +25,7 @@ const {
   invalidateProductsMock,
   logClientCatchMock,
   useCustomFieldsMock,
+  useTraderaListingActionForRuntimeKeyMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   apiGetMock: vi.fn(),
@@ -39,6 +40,7 @@ const {
   invalidateProductsMock: vi.fn(),
   logClientCatchMock: vi.fn(),
   useCustomFieldsMock: vi.fn(),
+  useTraderaListingActionForRuntimeKeyMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -92,6 +94,11 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   useCreateListingMutation: () => ({
     mutateAsync: mutateAsyncMock,
   }),
+}));
+
+vi.mock('@/features/integrations/components/listings/hooks/useTraderaListingAction', () => ({
+  useTraderaListingActionForRuntimeKey: (...args: unknown[]) =>
+    useTraderaListingActionForRuntimeKeyMock(...args),
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
@@ -165,11 +172,31 @@ const renderButton = (
   );
 };
 
+const createListingActionMock = (overrides: Record<string, unknown> = {}) => ({
+  loading: false,
+  saving: false,
+  actionKey: 'tradera_quicklist_list',
+  action: null,
+  actionName: 'Tradera Quicklist Listing',
+  actionDescription: null,
+  actionId: null,
+  browserModeLabel: 'Headless',
+  enabledStepCount: null,
+  hasUnsavedChanges: false,
+  headless: true,
+  isSeedFallback: false,
+  setHeadless: vi.fn(),
+  defaultConcurrencyMode: 'sequential',
+  totalStepCount: null,
+  ...overrides,
+});
+
 describe('TraderaQuickListButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
     window.sessionStorage.clear();
+    useTraderaListingActionForRuntimeKeyMock.mockReturnValue(createListingActionMock());
     useCustomFieldsMock.mockReturnValue({
       data: [
         {
@@ -327,6 +354,7 @@ describe('TraderaQuickListButton', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
+        browserMode: 'headless',
       });
     });
     expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
@@ -349,6 +377,51 @@ describe('TraderaQuickListButton', () => {
       '"listingId":"listing-tradera-1"'
     );
     expect(invalidateProductsMock).toHaveBeenCalled();
+  });
+
+  it('passes the headed Quicklist action browser mode when queueing from the product button', async () => {
+    useTraderaListingActionForRuntimeKeyMock.mockReturnValue(
+      createListingActionMock({
+        headless: false,
+        browserModeLabel: 'Headed',
+      })
+    );
+
+    renderButton();
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Tradera' }));
+
+    await waitFor(() => {
+      expect(useTraderaListingActionForRuntimeKeyMock).toHaveBeenCalledWith(
+        'tradera_quicklist_list'
+      );
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        browserMode: 'headed',
+      });
+    });
+  });
+
+  it('disables one-click export while Quicklist action settings are pending', () => {
+    useTraderaListingActionForRuntimeKeyMock.mockReturnValue(
+      createListingActionMock({
+        loading: true,
+      })
+    );
+
+    renderButton();
+
+    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute(
+      'title',
+      'Tradera listing action settings are still loading or saving. Retry in a moment.'
+    );
+
+    fireEvent.click(button);
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it('promotes queued feedback to completed from the created listing id and refreshes products', async () => {
@@ -633,6 +706,7 @@ describe('TraderaQuickListButton', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-2',
+        browserMode: 'headless',
       });
     });
   });
@@ -708,6 +782,7 @@ describe('TraderaQuickListButton', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
+        browserMode: 'headless',
       });
     });
     expect(apiPutMock).not.toHaveBeenCalled();
@@ -748,6 +823,7 @@ describe('TraderaQuickListButton', () => {
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
+        browserMode: 'headless',
       });
     });
   });

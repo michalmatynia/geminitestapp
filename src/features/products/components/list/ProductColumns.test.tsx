@@ -1224,6 +1224,40 @@ describe('ProductColumns queued badge', () => {
     expect(summaryRow?.nextElementSibling).toBe(statusRow);
   });
 
+  it('renders a three-segment image storage badge in the desktop product row', () => {
+    const product = createProduct({
+      imageLinks: ['https://cdn.example.test/source.jpg'],
+      images: [
+        {
+          productId: 'product-1',
+          imageFileId: 'fastcomet-image',
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          imageFile: {
+            id: 'fastcomet-image',
+            filename: 'fastcomet.jpg',
+            filepath: 'https://sparksofsindri.com/uploads/products/SKU/fastcomet.jpg',
+            mimetype: 'image/jpeg',
+            size: 1,
+            storageProvider: 'fastcomet',
+            metadata: { storageSource: 'fastcomet' },
+          },
+        },
+      ] as ProductWithImages['images'],
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByLabelText('Product image storage: FastComet, external link')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-segment="fastcomet"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-segment="local"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-segment="external-link"]')).toHaveAttribute('data-active', 'true');
+  });
+
   it('renders the imported badge for detached Base imports without sync linkage', () => {
     const product = createProduct({
       baseProductId: null,

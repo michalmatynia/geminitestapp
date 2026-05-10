@@ -107,7 +107,6 @@ describe('api/integrations/product-listings', () => {
     expect(payload).toEqual({
       'product-3': {
         base: 'active',
-        ecommerce: 'active',
       },
     });
   });

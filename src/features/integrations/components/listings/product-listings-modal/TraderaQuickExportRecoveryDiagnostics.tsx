@@ -5,6 +5,7 @@ import React from 'react';
 
 import { TraderaExecutionSteps } from '@/features/integrations/components/listings/TraderaExecutionSteps';
 import { useTraderaLiveExecution } from '@/features/integrations/hooks/useTraderaLiveExecution';
+import { resolvePlaywrightActionRunsHref } from '@/features/playwright/utils/action-runs-links';
 import { JsonViewer } from '@/shared/ui/data-display.public';
 import { Button } from '@/shared/ui/primitives.public';
 
@@ -15,7 +16,7 @@ type TraderaQuickExportRecoveryDiagnosticsProps = {
 type RecoveryExecution = NonNullable<ReturnType<typeof useTraderaLiveExecution>>;
 
 const buildActionRunHref = (runId: string): string =>
-  `/admin/playwright/action-runs?query=${encodeURIComponent(runId)}`;
+  resolvePlaywrightActionRunsHref({ runId });
 
 function TraderaRecoveryDiagnosticsUnavailable(): React.JSX.Element {
   return (

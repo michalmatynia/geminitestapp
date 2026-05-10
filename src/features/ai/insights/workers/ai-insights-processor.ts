@@ -144,39 +144,81 @@ interface TickStatus {
   logsAutoAt: string | null;
 }
 
+interface EnabledTickJobs {
+  analytics: boolean;
+  runtime: boolean;
+  logs: boolean;
+  logsAuto: boolean;
+}
+
+const hasEnabledTickJobs = (enabled: EnabledTickJobs): boolean =>
+  enabled.analytics || enabled.runtime || enabled.logs || enabled.logsAuto;
+
+const resolveEnabledTickJobs = (
+  schedule: Awaited<ReturnType<typeof getScheduleSettings>>,
+  brains: {
+    analytics: BrainStatus;
+    runtime: BrainStatus;
+    logs: BrainStatus;
+    aiPaths: BrainStatus;
+  }
+): EnabledTickJobs => ({
+  analytics: schedule.analyticsEnabled && brains.analytics.enabled,
+  runtime: schedule.runtimeAnalyticsEnabled && brains.runtime.enabled && brains.aiPaths.enabled,
+  logs: schedule.logsEnabled && brains.logs.enabled,
+  logsAuto: schedule.logsAutoOnError && brains.logs.enabled,
+});
+
+const buildTickStatus = (
+  schedule: Awaited<ReturnType<typeof getScheduleSettings>>,
+  enabled: EnabledTickJobs,
+  lastRuns: {
+    analytics: string | null;
+    runtime: string | null;
+    logs: string | null;
+  },
+  logsAuto: { shouldRun: boolean; latestAtIso: string | null }
+): TickStatus => ({
+  shouldRunAnalytics: enabled.analytics && shouldRun(parseDate(lastRuns.analytics), schedule.analyticsMinutes),
+  shouldRunRuntime: enabled.runtime && shouldRun(parseDate(lastRuns.runtime), schedule.runtimeAnalyticsMinutes),
+  shouldRunLogs: enabled.logs && shouldRun(parseDate(lastRuns.logs), schedule.logsMinutes),
+  shouldRunLogsAuto: logsAuto.shouldRun,
+  logsAutoAt: logsAuto.latestAtIso,
+});
+
 const resolveTickStatus = async (
   schedule: Awaited<ReturnType<typeof getScheduleSettings>>
 ): Promise<TickStatus | null> => {
   const [analyticsB, runtimeB, logsB, aiPathsB] = await resolveTickBrains();
+  const enabled = resolveEnabledTickJobs(schedule, {
+    analytics: analyticsB,
+    runtime: runtimeB,
+    logs: logsB,
+    aiPaths: aiPathsB,
+  });
 
-  const analyticsEnabled = schedule.analyticsEnabled && analyticsB.enabled;
-  const runtimeEnabled = schedule.runtimeAnalyticsEnabled && runtimeB.enabled && aiPathsB.enabled;
-  const logsEnabled = schedule.logsEnabled && logsB.enabled;
-  const logsAutoEnabled = schedule.logsAutoOnError && logsB.enabled;
-
-  if (!analyticsEnabled && !runtimeEnabled && !logsEnabled && !logsAutoEnabled) {
+  if (!hasEnabledTickJobs(enabled)) {
     return null;
   }
 
   const [lastAnalytics, lastRuntime, lastLogs, lastLogsAuto] = await resolveTickLastRuns({
-    analytics: analyticsEnabled,
-    runtime: runtimeEnabled,
-    logs: logsEnabled,
-    logsAuto: logsAutoEnabled,
+    analytics: enabled.analytics,
+    runtime: enabled.runtime,
+    logs: enabled.logs,
+    logsAuto: enabled.logsAuto,
   });
 
-  const { shouldRun: shouldRunLogsAuto, latestAtIso: logsAutoAt } = await resolveShouldRunLogsAuto(
-    logsAutoEnabled,
+  const logsAuto = await resolveShouldRunLogsAuto(
+    enabled.logsAuto,
     parseDate(lastLogsAuto)
   );
 
-  return {
-    shouldRunAnalytics: analyticsEnabled && shouldRun(parseDate(lastAnalytics), schedule.analyticsMinutes),
-    shouldRunRuntime: runtimeEnabled && shouldRun(parseDate(lastRuntime), schedule.runtimeAnalyticsMinutes),
-    shouldRunLogs: logsEnabled && shouldRun(parseDate(lastLogs), schedule.logsMinutes),
-    shouldRunLogsAuto,
-    logsAutoAt,
-  };
+  return buildTickStatus(
+    schedule,
+    enabled,
+    { analytics: lastAnalytics, runtime: lastRuntime, logs: lastLogs },
+    logsAuto
+  );
 };
 
 const initializeTickRun = async (
@@ -253,10 +295,11 @@ const executeAllTickJobs = async (
       await generateLogsInsight({ source: 'scheduled_job' });
     });
   }
-  if (status.shouldRunLogsAuto && status.logsAutoAt !== null) {
+  const logsAutoAt = status.logsAutoAt;
+  if (status.shouldRunLogsAuto && logsAutoAt !== null) {
     await executeInsightJob(ctx, 'logs_auto', runRepo, async () => {
       await generateLogsInsight({ source: 'system' });
-      await setAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt, status.logsAutoAt as string);
+      await setAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt, logsAutoAt);
     });
   }
 };

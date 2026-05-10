@@ -737,6 +737,40 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByLabelText('Polish title and description filled')).toHaveTextContent('PL');
   });
 
+  it('renders the image storage badge on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          images: [
+            {
+              productId: 'product-1',
+              imageFileId: 'local-image',
+              assignedAt: '2026-01-01T00:00:00.000Z',
+              imageFile: {
+                id: 'local-image',
+                filename: 'local.jpg',
+                filepath: '/uploads/products/SKU/local.jpg',
+                mimetype: 'image/jpeg',
+                size: 1,
+                storageProvider: 'local',
+                metadata: { storageSource: 'local' },
+              },
+            },
+          ] as ProductWithImages['images'],
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    const { container } = render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Product image storage: local')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-segment="fastcomet"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-segment="local"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-segment="external-link"]')).toHaveAttribute('data-active', 'false');
+  });
+
   it('renders the archived badge for archived products', () => {
     useProductListSelectionContextMock.mockReturnValue({
       data: [

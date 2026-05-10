@@ -7,19 +7,19 @@ import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 
 const REPORT_VISUALS = [
   {
-    gradient: 'linear-gradient(145deg, #0a0d1e 0%, #0d1a35 50%, #142a50 100%)',
-    accent: 'rgba(171,217,208,0.7)',
-    tagColor: 'var(--accent)',
-  },
-  {
-    gradient: 'linear-gradient(145deg, #1a0d00 0%, #2e1800 50%, #3d2200 100%)',
-    accent: 'rgba(250,229,163,0.7)',
+    gradient: 'radial-gradient(circle at 48% 18%, rgba(229,183,94,0.2) 0%, transparent 30%), radial-gradient(circle at 16% 76%, rgba(234,247,238,0.08) 0%, transparent 24%), linear-gradient(145deg, #020205 0%, #060913 58%, #120708 100%)',
+    accent: 'rgba(229,183,94,0.7)',
     tagColor: 'var(--soft-gold)',
   },
   {
-    gradient: 'linear-gradient(145deg, #150520 0%, #220a35 50%, #30105a 100%)',
-    accent: 'rgba(244,185,142,0.7)',
+    gradient: 'radial-gradient(circle at 28% 22%, rgba(216,116,50,0.18) 0%, transparent 32%), radial-gradient(circle at 82% 78%, rgba(201,60,47,0.12) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #120708 56%, #2A0A07 100%)',
+    accent: 'rgba(216,116,50,0.7)',
     tagColor: 'var(--peach-orange)',
+  },
+  {
+    gradient: 'radial-gradient(circle at 70% 22%, rgba(126,202,216,0.16) 0%, transparent 32%), radial-gradient(circle at 26% 74%, rgba(44,70,216,0.14) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #050812 56%, #0D1538 100%)',
+    accent: 'rgba(126,202,216,0.7)',
+    tagColor: 'var(--cyan-teal)',
   },
 ];
 

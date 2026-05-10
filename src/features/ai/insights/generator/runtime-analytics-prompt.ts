@@ -75,13 +75,19 @@ const resolveRuntimeKernelParityRiskLevel = (
   return mediumRiskSignals.some(Boolean) ? 'medium' : 'low';
 };
 
+const buildRuntimeKernelCoverageSignal = (
+  rates: RuntimeKernelParityRates
+): string | null => {
+  if (rates.sampledRuns <= 0) return 'no sampled runs in selected window';
+  if (rates.coverageRate < 90) {
+    return `kernel parity telemetry coverage ${formatPercent(rates.coverageRate)}`;
+  }
+  return null;
+};
+
 const buildRuntimeKernelParitySignals = (rates: RuntimeKernelParityRates): string[] => {
   const signals = [
-    rates.sampledRuns <= 0
-      ? 'no sampled runs in selected window'
-      : rates.coverageRate < 90
-        ? `kernel parity telemetry coverage ${formatPercent(rates.coverageRate)}`
-        : null,
+    buildRuntimeKernelCoverageSignal(rates),
     rates.sampledHistoryEntries <= 0 ? 'no sampled runtime history entries' : null,
     rates.sampledHistoryEntries > 0 && rates.v3Rate < 85
       ? `code_object_v3 share ${formatPercent(rates.v3Rate)}`

@@ -194,6 +194,10 @@ export const analyzeEnvContract = ({
     uploadUrl: normalizeString(env['FASTCOMET_STORAGE_UPLOAD_URL']),
     baseUrl: normalizeString(env['FASTCOMET_STORAGE_BASE_URL']),
     deleteUrl: normalizeString(env['FASTCOMET_STORAGE_DELETE_URL']),
+    server: normalizeString(env['FASTCOMET_STORAGE_SERVER']),
+    port: normalizeString(env['FASTCOMET_STORAGE_PORT']),
+    username: normalizeString(env['FASTCOMET_STORAGE_USERNAME']),
+    token: normalizeString(env['FASTCOMET_STORAGE_TOKEN']),
     authToken: normalizeString(env['FASTCOMET_STORAGE_AUTH_TOKEN']),
     keepLocalCopy: normalizeString(env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY']),
     timeoutMs: normalizeString(env['FASTCOMET_STORAGE_TIMEOUT_MS']),
@@ -250,6 +254,19 @@ export const analyzeEnvContract = ({
         message: 'FASTCOMET_STORAGE_DELETE_URL is not a valid URL.',
       })
     );
+  }
+
+  if (hasValue(fastCometValues.port)) {
+    const port = Number(fastCometValues.port);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      issues.push(
+        createIssue({
+          severity: 'error',
+          ruleId: 'fastcomet-port-invalid',
+          message: 'FASTCOMET_STORAGE_PORT must be an integer between 1 and 65535.',
+        })
+      );
+    }
   }
 
   const sortedIssues = sortIssues(issues);

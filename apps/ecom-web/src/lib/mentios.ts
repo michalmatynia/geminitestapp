@@ -679,6 +679,12 @@ export interface MentiosResult {
   total: number;
 }
 
+export interface MentiosHomeStats {
+  itemCount: number;
+  categoryCount: number;
+  loreCount: number;
+}
+
 /** Return the storefront locales enabled on the configured Mentios catalog. */
 export const getMentiosCatalogLocales = cache(async function getMentiosCatalogLocales(): Promise<EcomLocale[]> {
   if (!hasEcommerceProductsMongoConfig()) return normalizeLocaleList([]);
@@ -1032,6 +1038,96 @@ export const getMentiosThemeNames = cache(async function getMentiosThemeNames(
     return [];
   }
 });
+
+function buildLeafChildCategoryIds(docs: CategoryDoc[]): Set<string> {
+  const parentIds = new Set(
+    docs
+      .map((doc) => stringifyDocumentId(doc.parentId))
+      .filter((id) => id.length > 0),
+  );
+
+  return new Set(
+    docs
+      .filter((doc) => {
+        const id = stringifyDocumentId(doc._id);
+        const parentId = stringifyDocumentId(doc.parentId);
+        return id.length > 0 && parentId.length > 0 && !parentIds.has(id);
+      })
+      .map((doc) => stringifyDocumentId(doc._id)),
+  );
+}
+
+function countLiveChildCategories(productDocs: ProductDoc[], categoryDocs: CategoryDoc[], locale: EcomLocale): number {
+  const leafChildCategoryIds = buildLeafChildCategoryIds(categoryDocs);
+  const usedCategoryIds = new Set(
+    productDocs
+      .map((doc) => stringifyDocumentId(doc.categoryId))
+      .filter((id) => id.length > 0),
+  );
+  const liveChildCategoryCount = Array.from(leafChildCategoryIds)
+    .filter((id) => usedCategoryIds.has(id)).length;
+  if (liveChildCategoryCount > 0) return liveChildCategoryCount;
+
+  const fallbackNames = new Set<string>();
+  for (const doc of productDocs) {
+    const name = pickProductCategoryName(doc, locale).trim();
+    if (name.length > 0) fallbackNames.add(name.toLowerCase());
+  }
+  return fallbackNames.size;
+}
+
+function countLiveLores(productDocs: ProductDoc[], locale: EcomLocale): number {
+  const lores = new Set<string>();
+  for (const doc of productDocs) {
+    const lore = parsePipedName(pickProductName(doc, locale)).lore?.trim();
+    if (lore && lore.length > 0) lores.add(lore.toLowerCase());
+  }
+  return lores.size;
+}
+
+/** Return live storefront hero counts from in-stock products, child categories, and lore terms. */
+export async function getMentiosHomeStats(
+  localeInput?: EcomLocale | string | null,
+): Promise<MentiosHomeStats | null> {
+  const locale = normalizeLocale(localeInput);
+  if (!hasEcommerceProductsMongoConfig()) return null;
+
+  try {
+    const db = await getEcommerceProductsDb();
+    const [productDocs, categoryDocs] = await Promise.all([
+      db.collection<ProductDoc>(PRODUCTS_COLLECTION)
+        .find(mentiosFilter())
+        .project({
+          _id: 1,
+          categoryId: 1,
+          categoryName: 1,
+          categoryName_en: 1,
+          categoryName_pl: 1,
+          categoryName_de: 1,
+          name: 1,
+          name_en: 1,
+          name_pl: 1,
+          name_de: 1,
+        })
+        .toArray(),
+      db.collection<CategoryDoc>(CATEGORIES_COLLECTION)
+        .find(categoryCatalogFilter())
+        .project({ _id: 1, parentId: 1, name: 1, name_en: 1, name_pl: 1 })
+        .toArray(),
+    ]);
+
+    const products = productDocs as unknown as ProductDoc[];
+    const categories = categoryDocs as unknown as CategoryDoc[];
+    return {
+      itemCount: products.length,
+      categoryCount: countLiveChildCategories(products, categories, locale),
+      loreCount: countLiveLores(products, locale),
+    };
+  } catch (err) {
+    console.error('[mentios] Failed to fetch home stats:', err);
+    return null;
+  }
+}
 
 /** Fetch product count per collection slug in a single DB query. */
 export const getMentiosCollectionCounts = cache(async function getMentiosCollectionCounts(): Promise<Record<string, number>> {

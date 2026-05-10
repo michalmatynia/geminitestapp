@@ -63,6 +63,7 @@ function request_authorization_header(): string
 function require_bearer_auth(array $config): void
 {
     $expected = trim((string) ($config['auth_token'] ?? ''));
+    $expected_username = trim((string) ($config['username'] ?? ''));
     if ($expected === '') {
         send_json(500, [
             'ok' => false,
@@ -80,6 +81,16 @@ function require_bearer_auth(array $config): void
             'ok' => false,
             'error' => 'Unauthorized.',
         ]);
+    }
+
+    if ($expected_username !== '') {
+        $provided_username = trim((string) ($_SERVER['HTTP_X_FASTCOMET_USERNAME'] ?? ''));
+        if ($provided_username === '' || !hash_equals($expected_username, $provided_username)) {
+            send_json(401, [
+                'ok' => false,
+                'error' => 'Unauthorized.',
+            ]);
+        }
     }
 }
 

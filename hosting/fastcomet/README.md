@@ -54,7 +54,8 @@ domain in cPanel Application Manager.
 Create `public_html/api/uploads/config.php` from
 `config.example.php`, then set:
 
-- `auth_token`: the same value used as `FASTCOMET_STORAGE_AUTH_TOKEN`
+- `username`: the same value used as `FASTCOMET_STORAGE_USERNAME`
+- `auth_token`: the same value used as `FASTCOMET_STORAGE_TOKEN`
 - `public_base_url`: `https://sparksofsindri.com` when SSL is active, otherwise `http://sparksofsindri.com`
 
 Uploaded app files are written below `public_html/uploads/...`, so a product
@@ -74,7 +75,10 @@ npm run storage:configure:fastcomet -- \
   --base-url=https://sparksofsindri.com \
   --upload-endpoint=https://sparksofsindri.com/api/uploads/index.php \
   --delete-endpoint=https://sparksofsindri.com/api/uploads/delete/index.php \
-  --auth-token="$FASTCOMET_STORAGE_AUTH_TOKEN" \
+  --server=sparksofsindri.com \
+  --port=443 \
+  --username="$FASTCOMET_STORAGE_USERNAME" \
+  --token="$FASTCOMET_STORAGE_TOKEN" \
   --keep-local-copy=true \
   --timeout-ms=20000
 ```
@@ -100,7 +104,10 @@ curl -i https://sparksofsindri.com/api/uploads/index.php
 Expected before auth/config is complete: `application/json` with `401`, `405`,
 or a JSON configuration error. If this returns `text/html` or the old
 `Medieval Traders` page, the domain is still pointed at the wrong app or
-document root.
+document root. If it returns LiteSpeed `403 Forbidden`, the PHP scaffold is not
+readable/executable from the active `public_html` path; re-upload the
+`api/uploads/` files and `.htaccess` files, then check file permissions in
+cPanel.
 
 Uploaded product files must also return an image content type:
 

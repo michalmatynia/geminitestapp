@@ -44,6 +44,10 @@ const originalEnv = {
   FASTCOMET_STORAGE_BASE_URL: process.env['FASTCOMET_STORAGE_BASE_URL'],
   FASTCOMET_STORAGE_UPLOAD_URL: process.env['FASTCOMET_STORAGE_UPLOAD_URL'],
   FASTCOMET_STORAGE_DELETE_URL: process.env['FASTCOMET_STORAGE_DELETE_URL'],
+  FASTCOMET_STORAGE_SERVER: process.env['FASTCOMET_STORAGE_SERVER'],
+  FASTCOMET_STORAGE_PORT: process.env['FASTCOMET_STORAGE_PORT'],
+  FASTCOMET_STORAGE_USERNAME: process.env['FASTCOMET_STORAGE_USERNAME'],
+  FASTCOMET_STORAGE_TOKEN: process.env['FASTCOMET_STORAGE_TOKEN'],
   FASTCOMET_STORAGE_AUTH_TOKEN: process.env['FASTCOMET_STORAGE_AUTH_TOKEN'],
   FASTCOMET_STORAGE_KEEP_LOCAL_COPY: process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'],
   FASTCOMET_STORAGE_TIMEOUT_MS: process.env['FASTCOMET_STORAGE_TIMEOUT_MS'],
@@ -63,6 +67,10 @@ describe('file-storage-service', () => {
     delete process.env['FASTCOMET_STORAGE_BASE_URL'];
     delete process.env['FASTCOMET_STORAGE_UPLOAD_URL'];
     delete process.env['FASTCOMET_STORAGE_DELETE_URL'];
+    delete process.env['FASTCOMET_STORAGE_SERVER'];
+    delete process.env['FASTCOMET_STORAGE_PORT'];
+    delete process.env['FASTCOMET_STORAGE_USERNAME'];
+    delete process.env['FASTCOMET_STORAGE_TOKEN'];
     delete process.env['FASTCOMET_STORAGE_AUTH_TOKEN'];
     delete process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'];
     delete process.env['FASTCOMET_STORAGE_TIMEOUT_MS'];
@@ -92,7 +100,10 @@ describe('file-storage-service', () => {
           baseUrl: 'https://files.example.test/',
           uploadEndpoint: 'https://files.example.test/upload/',
           deleteEndpoint: 'https://files.example.test/delete/',
-          authToken: '  token-1  ',
+          server: 'fastcomet.example.test',
+          port: '8443',
+          username: ' storage-user ',
+          token: '  token-1  ',
           keepLocalCopy: 'false',
           timeoutMs: '999999',
         }),
@@ -107,6 +118,10 @@ describe('file-storage-service', () => {
         baseUrl: 'https://files.example.test',
         uploadEndpoint: 'https://files.example.test/upload',
         deleteEndpoint: 'https://files.example.test/delete',
+        server: 'fastcomet.example.test',
+        port: 8443,
+        username: 'storage-user',
+        token: 'token-1',
         authToken: 'token-1',
         keepLocalCopy: false,
         timeoutMs: 120000,
@@ -272,6 +287,70 @@ describe('file-storage-service', () => {
         },
       })
     ).rejects.toThrow('FastComet upload returned a non-JSON success response');
+  });
+
+  it('surfaces blocked FastComet PHP endpoints as actionable configuration errors', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      headers: new Headers({ 'content-type': 'text/html; charset=utf-8' }),
+      text: async () => '<html><title>403 Forbidden</title></html>',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      uploadBufferToFastComet({
+        buffer: Buffer.from('content'),
+        filename: 'image.png',
+        mimetype: 'image/png',
+        publicPath: '/uploads/image.png',
+        fastComet: {
+          baseUrl: 'https://sparksofsindri.com',
+          uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+          deleteEndpoint: null,
+          authToken: 'token-1',
+          keepLocalCopy: false,
+          timeoutMs: 5000,
+          resolveIp: null,
+        },
+      })
+    ).rejects.toMatchObject({
+      code: 'CONFIGURATION_ERROR',
+      expected: true,
+      message: expect.stringContaining('FastComet upload endpoint returned 403 Forbidden'),
+    });
+  });
+
+  it('surfaces FastComet auth failures as credential configuration errors', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: new Headers({ 'content-type': 'application/json; charset=utf-8' }),
+      text: async () => JSON.stringify({ ok: false, error: 'Unauthorized.' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      uploadBufferToFastComet({
+        buffer: Buffer.from('content'),
+        filename: 'image.png',
+        mimetype: 'image/png',
+        publicPath: '/uploads/image.png',
+        fastComet: {
+          baseUrl: 'https://sparksofsindri.com',
+          uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
+          deleteEndpoint: null,
+          authToken: 'bad-token',
+          keepLocalCopy: false,
+          timeoutMs: 5000,
+          resolveIp: null,
+        },
+      })
+    ).rejects.toMatchObject({
+      code: 'CONFIGURATION_ERROR',
+      expected: true,
+      message: 'FastComet rejected the upload credentials: Unauthorized.',
+    });
   });
 
   it('canonicalizes absolute upload responses to the configured fastcomet base url', async () => {

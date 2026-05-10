@@ -18,6 +18,7 @@ const {
   useListingSelectionMock,
   useListingBaseComSettingsMock,
   useListingTraderaSettingsMock,
+  useTraderaListingActionMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
@@ -31,6 +32,7 @@ const {
   useListingSelectionMock: vi.fn(),
   useListingBaseComSettingsMock: vi.fn(),
   useListingTraderaSettingsMock: vi.fn(),
+  useTraderaListingActionMock: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -63,6 +65,10 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
     mutateAsync: updateDefaultVintedConnectionMutateAsyncMock,
     isPending: false,
   }),
+}));
+
+vi.mock('./useTraderaListingAction', () => ({
+  useTraderaListingAction: () => useTraderaListingActionMock(),
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
@@ -126,6 +132,13 @@ describe('useListProductForm', () => {
       selectedTraderaAutoRelistEnabled: true,
       selectedTraderaAutoRelistLeadMinutes: 30,
       selectedTraderaTemplateId: 'template-tradera-1',
+      selectedConcurrencyMode: null,
+    });
+    useTraderaListingActionMock.mockReturnValue({
+      loading: false,
+      saving: false,
+      hasUnsavedChanges: false,
+      headless: true,
     });
     preflightTraderaQuickListSessionMock.mockResolvedValue({
       response: { ok: true, sessionReady: true, steps: [] },
@@ -228,6 +241,7 @@ describe('useListProductForm', () => {
       autoRelistEnabled: true,
       autoRelistLeadMinutes: 30,
       templateId: 'template-tradera-1',
+      browserMode: 'headless',
     });
     expect(updateDefaultTraderaConnectionMutateAsyncMock).toHaveBeenCalledWith({
       connectionId: 'conn-tradera-1',
@@ -322,6 +336,7 @@ describe('useListProductForm', () => {
       autoRelistEnabled: true,
       autoRelistLeadMinutes: 30,
       templateId: 'template-tradera-1',
+      browserMode: 'headless',
     });
     expect(onSuccess).toHaveBeenCalled();
   });
@@ -357,6 +372,53 @@ describe('useListProductForm', () => {
     expect(result.current.error).toBe(
       'Tradera login session could not be saved. Complete login verification and retry.'
     );
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('passes the selected headed Tradera action mode when queueing a browser listing', async () => {
+    useTraderaListingActionMock.mockReturnValue({
+      loading: false,
+      saving: false,
+      hasUnsavedChanges: false,
+      headless: false,
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(createListingMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        browserMode: 'headed',
+      })
+    );
+  });
+
+  it('does not queue a Tradera listing while action browser settings are still loading', async () => {
+    useTraderaListingActionMock.mockReturnValue({
+      loading: true,
+      saving: false,
+      hasUnsavedChanges: false,
+      headless: true,
+    });
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(result.current.error).toBe(
+      'Tradera listing action settings are still loading or saving. Retry in a moment.'
+    );
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
   });

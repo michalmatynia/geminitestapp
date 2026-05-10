@@ -35,12 +35,73 @@ const normalizeUnique = (values: string[]): string[] => {
   const output: string[] = [];
   values.forEach((value: string): void => {
     const normalized = value.trim();
-    if (!normalized || seen.has(normalized)) return;
+    if (normalized === '' || seen.has(normalized)) return;
     seen.add(normalized);
     output.push(normalized);
   });
   return output;
 };
+
+type BrainModelsQueryData = ReturnType<typeof useBrainModels>['data'];
+
+const readDiscoveredModels = (data: BrainModelsQueryData): string[] => {
+  const models = data?.models;
+  return Array.isArray(models) ? models : [];
+};
+
+const readSourceCatalogModels = (data: BrainModelsQueryData): string[] => {
+  if (data === undefined) return [];
+  return [
+    ...data.sources.modelPresets,
+    ...data.sources.paidModels,
+    ...data.sources.configuredOllamaModels,
+    ...data.sources.liveOllamaModels,
+  ];
+};
+
+const isCompatibleModel = (
+  modelId: string,
+  descriptors: Record<string, BrainModelDescriptor> | undefined,
+  targetFamilies: string[] | null
+): boolean => {
+  if (targetFamilies === null) return true;
+  const descriptor = descriptors?.[modelId];
+  if (descriptor === undefined) return true;
+  return targetFamilies.includes(descriptor.family);
+};
+
+const resolveTargetFamilies = (
+  capability: AiBrainCapabilityKey | undefined
+): string[] | null =>
+  capability === undefined ? null : getBrainCapabilityModelFamilies(capability);
+
+const buildModelOptions = (input: {
+  data: BrainModelsQueryData;
+  effectiveModelId: string;
+  targetFamilies: string[] | null;
+}): string[] => {
+  const discovered = readDiscoveredModels(input.data);
+  const sourceCatalogModels = readSourceCatalogModels(input.data);
+  const candidates = normalizeUnique([...discovered, ...sourceCatalogModels]);
+  const compatible = candidates.filter((modelId: string): boolean =>
+    isCompatibleModel(modelId, input.data?.descriptors, input.targetFamilies)
+  );
+  return normalizeUnique([
+    ...compatible,
+    ...(input.effectiveModelId !== '' ? [input.effectiveModelId] : []),
+  ]);
+};
+
+const resolveSourceWarnings = (message: string | undefined): string[] => {
+  const normalized = message?.trim() ?? '';
+  return normalized !== '' ? [normalized] : [];
+};
+
+const readDescriptors = (
+  data: BrainModelsQueryData
+): Record<string, BrainModelDescriptor> => data?.descriptors ?? {};
+
+const isAnyStoreLoading = (left: boolean, right: boolean): boolean => left || right;
 
 export function useBrainModelOptions({
   feature,
@@ -50,39 +111,18 @@ export function useBrainModelOptions({
   const settingsStore = useSettingsStore();
   const { assignment, effectiveModelId } = useBrainAssignment({ feature, capability });
   const modelsQuery = useBrainModels({ enabled });
-  const targetFamilies = capability ? getBrainCapabilityModelFamilies(capability) : null;
+  const targetFamilies = resolveTargetFamilies(capability);
 
-  const models = useMemo((): string[] => {
-    const discovered = Array.isArray(modelsQuery.data?.models) ? modelsQuery.data.models : [];
-    const sourceCatalogModels = [
-      ...(modelsQuery.data?.sources?.modelPresets ?? []),
-      ...(modelsQuery.data?.sources?.paidModels ?? []),
-      ...(modelsQuery.data?.sources?.configuredOllamaModels ?? []),
-      ...(modelsQuery.data?.sources?.liveOllamaModels ?? []),
-    ];
-    const candidates = normalizeUnique([...discovered, ...sourceCatalogModels]);
-    const compatible = candidates.filter((modelId: string): boolean => {
-      if (!targetFamilies) return true;
-      const descriptor = modelsQuery.data?.descriptors?.[modelId];
-      if (!descriptor?.family) {
-        // Preserve model discoverability when the catalog cannot classify a model yet.
-        return true;
-      }
-      return targetFamilies.includes(descriptor.family);
-    });
-    return normalizeUnique([...compatible, ...(effectiveModelId ? [effectiveModelId] : [])]);
-  }, [
+  const models = useMemo((): string[] => buildModelOptions({
+    data: modelsQuery.data,
     effectiveModelId,
-    modelsQuery.data?.descriptors,
-    modelsQuery.data?.models,
-    modelsQuery.data?.sources,
     targetFamilies,
-  ]);
+  }), [effectiveModelId, modelsQuery.data, targetFamilies]);
 
-  const sourceWarnings = useMemo((): string[] => {
-    const message = modelsQuery.data?.warning?.message?.trim() ?? '';
-    return message ? [message] : [];
-  }, [modelsQuery.data?.warning?.message]);
+  const sourceWarnings = useMemo(
+    (): string[] => resolveSourceWarnings(modelsQuery.data?.warning?.message),
+    [modelsQuery.data]
+  );
 
   const refresh = useCallback((): void => {
     void modelsQuery.refetch();
@@ -90,8 +130,8 @@ export function useBrainModelOptions({
 
   return {
     models,
-    descriptors: modelsQuery.data?.descriptors ?? {},
-    isLoading: modelsQuery.isLoading || settingsStore.isLoading,
+    descriptors: readDescriptors(modelsQuery.data),
+    isLoading: isAnyStoreLoading(modelsQuery.isLoading, settingsStore.isLoading),
     assignment,
     effectiveModelId,
     sourceWarnings,

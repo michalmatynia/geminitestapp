@@ -49,7 +49,7 @@ const runVision = async (input: EmailFinderInput): Promise<UnifiedEmailFinderRes
     reasoning: r.reasoning,
     steps: r.steps,
     strategy: 'vision',
-    visitedUrls: r.finalUrl ? [r.finalUrl] : [],
+    visitedUrls: (r.finalUrl !== undefined && r.finalUrl !== '') ? [r.finalUrl] : [],
   };
 };
 

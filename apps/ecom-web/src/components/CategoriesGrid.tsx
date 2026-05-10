@@ -8,30 +8,30 @@ import { useLocalizedHref } from '@/context/LocaleContext';
 const CATEGORY_VISUALS = [
   {
     id: 'objects',
-    gradient: 'linear-gradient(145deg, #0B0D21 0%, #0d1a30 50%, #122040 100%)',
-    accent: 'var(--accent)',
-    accentRgb: '171,217,208',
+    gradient: 'radial-gradient(circle at 50% 20%, rgba(229,183,94,0.22) 0%, transparent 30%), radial-gradient(circle at 14% 74%, rgba(234,247,238,0.08) 0%, transparent 24%), linear-gradient(145deg, #020205 0%, #060913 58%, #120708 100%)',
+    accent: 'var(--soft-gold)',
+    accentRgb: '229,183,94',
     aspectRatio: '2/3',
   },
   {
     id: 'womenswear',
-    gradient: 'linear-gradient(145deg, #21141D 0%, #2e1028 50%, #400a38 100%)',
-    accent: 'var(--peach-orange)',
-    accentRgb: '244,185,142',
+    gradient: 'radial-gradient(circle at 32% 18%, rgba(216,116,50,0.2) 0%, transparent 30%), radial-gradient(circle at 78% 78%, rgba(201,60,47,0.12) 0%, transparent 32%), linear-gradient(145deg, #020205 0%, #120708 58%, #2A0A07 100%)',
+    accent: 'var(--coral-red)',
+    accentRgb: '201,60,47',
     aspectRatio: '3/4',
   },
   {
     id: 'menswear',
-    gradient: 'linear-gradient(145deg, #0a1500 0%, #142200 50%, #1e3300 100%)',
-    accent: 'var(--soft-gold)',
-    accentRgb: '250,229,163',
+    gradient: 'radial-gradient(circle at 70% 22%, rgba(126,202,216,0.16) 0%, transparent 32%), radial-gradient(circle at 26% 74%, rgba(44,70,216,0.14) 0%, transparent 30%), linear-gradient(145deg, #020205 0%, #050812 56%, #0D1538 100%)',
+    accent: 'var(--cyan-teal)',
+    accentRgb: '126,202,216',
     aspectRatio: '3/4',
   },
   {
     id: 'accessories',
-    gradient: 'linear-gradient(145deg, #0f0520 0%, #1a0a35 50%, #28105a 100%)',
+    gradient: 'radial-gradient(circle at 48% 18%, rgba(234,247,238,0.13) 0%, transparent 28%), radial-gradient(circle at 82% 76%, rgba(229,183,94,0.16) 0%, transparent 34%), linear-gradient(145deg, #020205 0%, #060913 58%, #140B13 100%)',
     accent: 'var(--mint-white)',
-    accentRgb: '224,248,234',
+    accentRgb: '234,247,238',
     aspectRatio: '2/3',
   },
 ];
@@ -118,7 +118,7 @@ export function CategoriesGrid({
 
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {content.cards.map((cat, i) => {
+        {content.cards.filter((card) => card.visible).map((cat, i) => {
           const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
           const liveCount = counts[cat.id] ?? (cat.id === 'objects' ? Object.values(counts).reduce((a, b) => a + b, 0) : undefined);
           const displayCount = liveCount != null

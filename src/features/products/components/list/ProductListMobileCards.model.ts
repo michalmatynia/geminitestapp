@@ -15,9 +15,11 @@ import {
   hasFilledMarketplaceCopy,
   hasPolishProductDescription,
   hasPolishProductTitle,
+  hasAnyProductImageStorageStatus,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
   resolveProductImportSource,
+  resolveProductImageStorageStatus,
 } from './columns/product-column-utils';
 import type { ProductListMobileCardModel } from './ProductListMobileCards.types';
 import {
@@ -185,6 +187,7 @@ export const resolveProductListMobileCardModel = ({
     hasPolishTitle: hasPolishProductTitle(product),
     hasPolishDescription: hasPolishProductDescription(product),
   };
+  const imageStorageStatus = resolveProductImageStorageStatus(product);
 
   return {
     nameValue,
@@ -192,13 +195,15 @@ export const resolveProductListMobileCardModel = ({
     selectionLabel: nameValue.length > 0 ? nameValue : 'product',
     importSource,
     ...copyStatus,
+    imageStorageStatus,
     hasStatusIcons:
       importSource !== null ||
       copyStatus.hasMarketplaceCopy ||
       copyStatus.hasEnglishTitle ||
       copyStatus.hasEnglishDescription ||
       copyStatus.hasPolishTitle ||
-      copyStatus.hasPolishDescription,
+      copyStatus.hasPolishDescription ||
+      hasAnyProductImageStorageStatus(imageStorageStatus),
     ...resolveSkuModel(product),
     categoryLabel,
     categoryIsUnassigned: isUnassignedProductCategoryLabel(categoryLabel),

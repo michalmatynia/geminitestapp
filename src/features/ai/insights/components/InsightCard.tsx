@@ -5,8 +5,26 @@ import { StatusBadge, DocumentationList } from '@/shared/ui/data-display.public'
 import { ResourceCard } from '@/shared/ui/navigation-and-layout.public';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
   return value as Record<string, unknown>;
+};
+
+const resolveRuntimeRiskTone = (runtimeRiskLevel: string): string => {
+  if (runtimeRiskLevel === 'high') return 'text-red-300';
+  if (runtimeRiskLevel === 'medium') return 'text-amber-300';
+  if (runtimeRiskLevel === 'low') return 'text-emerald-300';
+  return 'text-gray-300';
+};
+
+const resolveRuntimeRiskLevel = (
+  insight: AiInsightRecord,
+  metadata: Record<string, unknown> | null
+): string => {
+  const runtimeRiskLevelRaw =
+    insight.type === 'runtime_analytics' ? metadata?.['runtimeKernelParityRiskLevel'] : null;
+  return typeof runtimeRiskLevelRaw === 'string' ? runtimeRiskLevelRaw.trim().toLowerCase() : '';
 };
 
 export function InsightCard(props: { insight: AiInsightRecord }): React.JSX.Element {
@@ -15,18 +33,8 @@ export function InsightCard(props: { insight: AiInsightRecord }): React.JSX.Elem
   const warnings = insight.warnings ?? [];
   const recommendations = insight.recommendations ?? [];
   const metadata = asRecord(insight.metadata);
-  const runtimeRiskLevelRaw =
-    insight.type === 'runtime_analytics' ? metadata?.['runtimeKernelParityRiskLevel'] : null;
-  const runtimeRiskLevel =
-    typeof runtimeRiskLevelRaw === 'string' ? runtimeRiskLevelRaw.trim().toLowerCase() : '';
-  const runtimeRiskTone =
-    runtimeRiskLevel === 'high'
-      ? 'text-red-300'
-      : runtimeRiskLevel === 'medium'
-        ? 'text-amber-300'
-        : runtimeRiskLevel === 'low'
-          ? 'text-emerald-300'
-          : 'text-gray-300';
+  const runtimeRiskLevel = resolveRuntimeRiskLevel(insight, metadata);
+  const runtimeRiskTone = resolveRuntimeRiskTone(runtimeRiskLevel);
   const runtimeSignalsRaw = metadata?.['runtimeKernelParitySignals'];
   const runtimeSignals = Array.isArray(runtimeSignalsRaw)
     ? runtimeSignalsRaw
@@ -38,13 +46,13 @@ export function InsightCard(props: { insight: AiInsightRecord }): React.JSX.Elem
 
   return (
     <ResourceCard
-      title={new Date(insight.createdAt || 0).toLocaleString()}
+      title={new Date(insight.createdAt ?? 0).toLocaleString()}
       actions={<StatusBadge status={insight.status} />}
       className='text-xs text-gray-300'
     >
       <div className='text-xs text-gray-400'>{insight.name}</div>
       <div className='text-sm text-white'>{insight.summary}</div>
-      {runtimeRiskLevel ? (
+      {runtimeRiskLevel !== '' ? (
         <div className={`mt-1 text-xs uppercase tracking-wide ${runtimeRiskTone}`}>
           Kernel parity risk: {runtimeRiskLevel}
         </div>

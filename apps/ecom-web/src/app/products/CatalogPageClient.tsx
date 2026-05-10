@@ -760,7 +760,7 @@ export function CatalogPageClient({
         <div
           className="px-6 md:px-10 py-10 md:py-14"
           style={{
-            background: 'linear-gradient(145deg, #01000D 0%, #0B0D21 100%)',
+            background: 'radial-gradient(circle at 50% 18%, rgba(229,183,94,0.13) 0%, transparent 32%), radial-gradient(circle at 86% 22%, rgba(201,60,47,0.08) 0%, transparent 28%), linear-gradient(145deg, #020205 0%, #060913 100%)',
             borderBottom: '1px solid var(--border)',
           }}
         >

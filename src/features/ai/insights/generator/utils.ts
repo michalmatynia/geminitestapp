@@ -13,9 +13,13 @@
 import type { AnalyticsEvent, AnalyticsSummary } from '@/shared/contracts/analytics';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
   return value as Record<string, unknown>;
 };
+
+const isUnknownArray = (value: unknown): value is unknown[] => Array.isArray(value);
 
 export const sanitizeEvents = (
   events: AnalyticsSummary['recent'] | undefined
@@ -43,6 +47,29 @@ export const stripCodeFence = (value: string): string => {
   return trimmed;
 };
 
+const enqueueRecordErrors = (record: Record<string, unknown>, queue: unknown[]): void => {
+  if ('error' in record) queue.push(record['error']);
+  if (isUnknownArray(record['errors'])) {
+    queue.push(...record['errors']);
+  }
+};
+
+const collectErrorMessage = (current: unknown, queue: unknown[]): string | null => {
+  if (current instanceof Error) {
+    if (current.cause !== undefined) queue.push(current.cause);
+    return current.message;
+  }
+
+  if (typeof current === 'string') return current;
+
+  const record = asRecord(current);
+  if (record === null) return null;
+
+  enqueueRecordErrors(record, queue);
+  const message = record['message'];
+  return typeof message === 'string' ? message : null;
+};
+
 export const collectErrorMessages = (error: unknown): string[] => {
   const queue: unknown[] = [error];
   const seen = new Set<unknown>();
@@ -50,27 +77,11 @@ export const collectErrorMessages = (error: unknown): string[] => {
 
   while (queue.length > 0) {
     const current = queue.shift();
-    if (!current || seen.has(current)) continue;
+    if (current === null || current === undefined || seen.has(current)) continue;
     seen.add(current);
 
-    if (current instanceof Error) {
-      messages.push(current.message);
-      if (current.cause) queue.push(current.cause);
-    } else if (typeof current === 'object') {
-      const record = asRecord(current);
-      if (!record) continue;
-      if (typeof record['message'] === 'string') {
-        messages.push(record['message']);
-      }
-      if ('error' in record) queue.push(record['error']);
-      if (Array.isArray(record['errors'])) {
-        for (const nestedError of record['errors'] as unknown[]) {
-          queue.push(nestedError);
-        }
-      }
-    } else if (typeof current === 'string') {
-      messages.push(current);
-    }
+    const message = collectErrorMessage(current, queue);
+    if (message !== null) messages.push(message);
   }
 
   return [...new Set(messages)];

@@ -21,6 +21,104 @@ export type SearchSimulatorProps = {
   error: string | null;
 };
 
+const hasCollection = (collectionId: string | null): collectionId is string =>
+  collectionId !== null && collectionId.length > 0;
+
+const canRunSearch = (collectionId: string | null, query: string): boolean =>
+  hasCollection(collectionId) && query.trim().length > 0;
+
+function SearchSimulatorControls({
+  query,
+  setQuery,
+  topK,
+  setTopK,
+  minScore,
+  setMinScore,
+  isSearching,
+  collectionId,
+}: Pick<
+  SearchSimulatorProps,
+  'query' | 'setQuery' | 'topK' | 'setTopK' | 'minScore' | 'setMinScore' | 'isSearching' | 'collectionId'
+>): React.JSX.Element {
+  const disabled = isSearching || !hasCollection(collectionId);
+  return (
+    <>
+      <FormField label='Test Query'>
+        <Textarea
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder='Ask a question...'
+          className='min-h-[80px]'
+          disabled={disabled}
+          aria-label='Ask a question...'
+          title='Ask a question...'
+        />
+      </FormField>
+      <div className='grid grid-cols-2 gap-4'>
+        <FormField label='Top K'>
+          <Input
+            type='number'
+            min={1}
+            max={50}
+            value={String(topK)}
+            onChange={(e) => setTopK(Number(e.target.value))}
+            disabled={disabled}
+            aria-label='Top K'
+            title='Top K'
+          />
+        </FormField>
+        <FormField label='Min Score'>
+          <Input
+            type='number'
+            min={-1}
+            max={1}
+            step={0.01}
+            value={String(minScore)}
+            onChange={(e) => setMinScore(Number(e.target.value))}
+            disabled={disabled}
+            aria-label='Min Score'
+            title='Min Score'
+          />
+        </FormField>
+      </div>
+    </>
+  );
+}
+
+function SearchResults({
+  results,
+  isSearching,
+}: Pick<SearchSimulatorProps, 'results' | 'isSearching'>): React.JSX.Element {
+  return (
+    <Card variant='subtle-compact' padding='none' className='border-border bg-black/20 overflow-hidden'>
+      <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>
+        Results
+      </div>
+      <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
+        {results.length === 0 ? (
+          <div className='text-center py-4 text-xs text-gray-600'>
+            {isSearching ? ' analyzing vectors...' : 'No results to display.'}
+          </div>
+        ) : (
+          results.map((src) => <SearchResultCard key={src.documentId} source={src} />)
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function SearchResultCard({ source }: { source: AgentTeachingChatSource }): React.JSX.Element {
+  return (
+    <Card variant='subtle-compact' padding='sm' className='text-xs bg-white/5 border-white/5'>
+      <div className='flex justify-between mb-1 text-gray-400'>
+        <span>Score: {source.score.toFixed(3)}</span>
+        <span>{source.metadata?.title ?? ''}</span>
+      </div>
+      <p className='text-gray-300 line-clamp-3'>{source.text}</p>
+    </Card>
+  );
+}
+
 export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element {
   const {
     query,
@@ -47,7 +145,7 @@ export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element 
           size='xs'
           onClick={onSearch}
           loading={isSearching}
-          disabled={!collectionId || !query.trim()}
+          disabled={!canRunSearch(collectionId, query)}
           className='gap-2'
         >
           <Search className='size-3' />
@@ -57,77 +155,24 @@ export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element 
       className='p-6'
     >
       <div className='space-y-4'>
-        <FormField label='Test Query'>
-          <Textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder='Ask a question...'
-            className='min-h-[80px]'
-            disabled={isSearching || !collectionId}
-           aria-label='Ask a question...' title='Ask a question...'/>
-        </FormField>
+        <SearchSimulatorControls
+          query={query}
+          setQuery={setQuery}
+          topK={topK}
+          setTopK={setTopK}
+          minScore={minScore}
+          setMinScore={setMinScore}
+          isSearching={isSearching}
+          collectionId={collectionId}
+        />
 
-        <div className='grid grid-cols-2 gap-4'>
-          <FormField label='Top K'>
-            <Input
-              type='number'
-              min={1}
-              max={50}
-              value={String(topK)}
-              onChange={(e) => setTopK(Number(e.target.value))}
-              disabled={isSearching || !collectionId}
-             aria-label='Top K' title='Top K'/>
-          </FormField>
-          <FormField label='Min Score'>
-            <Input
-              type='number'
-              min={-1}
-              max={1}
-              step={0.01}
-              value={String(minScore)}
-              onChange={(e) => setMinScore(Number(e.target.value))}
-              disabled={isSearching || !collectionId}
-             aria-label='Min Score' title='Min Score'/>
-          </FormField>
-        </div>
-
-        {error && (
+        {error !== null && error.length > 0 ? (
           <Alert variant='error' className='p-3 text-xs'>
             {error}
           </Alert>
-        )}
+        ) : null}
 
-        <Card
-          variant='subtle-compact'
-          padding='none'
-          className='border-border bg-black/20 overflow-hidden'
-        >
-          <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>
-            Results
-          </div>
-          <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
-            {results.length === 0 ? (
-              <div className='text-center py-4 text-xs text-gray-600'>
-                {isSearching ? ' analyzing vectors...' : 'No results to display.'}
-              </div>
-            ) : (
-              results.map((src) => (
-                <Card
-                  key={src.documentId}
-                  variant='subtle-compact'
-                  padding='sm'
-                  className='text-xs bg-white/5 border-white/5'
-                >
-                  <div className='flex justify-between mb-1 text-gray-400'>
-                    <span>Score: {src.score.toFixed(3)}</span>
-                    <span>{src.metadata?.title}</span>
-                  </div>
-                  <p className='text-gray-300 line-clamp-3'>{src.text}</p>
-                </Card>
-              ))
-            )}
-          </div>
-        </Card>
+        <SearchResults results={results} isSearching={isSearching} />
       </div>
     </FormSection>
   );

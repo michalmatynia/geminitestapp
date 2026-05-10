@@ -8,13 +8,21 @@ import { stripCodeFence } from './utils';
 import { callInsightChatModel } from './chat-runtime';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 
-export async function processInsightGeneration(
-  type: AiInsightType,
-  modelId: string,
-  messages: ChatMessage[],
-  prompt: { name: string; metadata?: Record<string, unknown> },
-  options?: { source?: AiInsightSource }
-): Promise<AiInsightRecord> {
+type ProcessInsightGenerationParams = {
+  type: AiInsightType;
+  modelId: string;
+  messages: ChatMessage[];
+  prompt: { name: string; metadata?: Record<string, unknown> };
+  options?: { source?: AiInsightSource };
+};
+
+export async function processInsightGeneration({
+  type,
+  modelId,
+  messages,
+  prompt,
+  options,
+}: ProcessInsightGenerationParams): Promise<AiInsightRecord> {
   const content = await callInsightChatModel({ model: modelId, messages });
   return await appendAiInsight(type, {
     name: prompt.name,

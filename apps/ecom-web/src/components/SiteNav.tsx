@@ -155,8 +155,8 @@ export function SiteNav() {
                   alt={logoAlt}
                   style={{
                     display: 'block',
-                    height: '34px',
-                    maxWidth: '180px',
+                    height: '40px',
+                    maxWidth: '210px',
                     objectFit: 'contain',
                   }}
                 />

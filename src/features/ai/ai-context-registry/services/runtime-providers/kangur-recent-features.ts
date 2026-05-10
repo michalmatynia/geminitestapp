@@ -76,7 +76,7 @@ const buildSections = (input: {
   ];
 
   const trimmedContent = input.content.trim();
-  if (trimmedContent) {
+  if (trimmedContent !== '') {
     sections.push({
       kind: 'text',
       title: 'Recent feature updates',
@@ -117,7 +117,7 @@ const createRecentFeaturesRef = (): ContextRegistryRef => ({
 const buildRecentFeaturesRuntimeDocument = async (): Promise<ContextRuntimeDocument> => {
   const { content, lastReviewed, updatedAt } = await loadRecentFeaturesDocument();
   const windowRange = parseWindowRange(content);
-  const summarySource = content || 'No recent feature updates available.';
+  const summarySource = content === '' ? 'No recent feature updates available.' : content;
 
   return {
     id: KANGUR_RECENT_FEATURES_REF_ID,
@@ -169,7 +169,7 @@ export const kangurRecentFeaturesContextProvider: RuntimeContextProvider = {
 
     const doc = await buildRecentFeaturesRuntimeDocument();
     const docs = Array.from({ length: matching.length }, () => doc);
-    if (options?.maxDocuments && docs.length > options.maxDocuments) {
+    if (options?.maxDocuments !== undefined && docs.length > options.maxDocuments) {
       return docs.slice(0, options.maxDocuments);
     }
     return docs;

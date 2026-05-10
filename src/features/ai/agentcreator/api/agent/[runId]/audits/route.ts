@@ -34,6 +34,46 @@ type AgentAuditRouteRecord = {
   createdAt: Date | string;
 };
 
+type AgentAuditMetadata = {
+  stepId?: string;
+  failedStepId?: string;
+  activeStepId?: string;
+  steps?: Array<{ id?: string }>;
+};
+
+const isNonEmptyString = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value.length > 0;
+
+const hasMatchingAuditMetadataField = (metadata: AgentAuditMetadata, stepId: string): boolean =>
+  metadata.stepId === stepId ||
+  metadata.failedStepId === stepId ||
+  metadata.activeStepId === stepId;
+
+const hasMatchingAuditMetadataStep = (metadata: AgentAuditMetadata, stepId: string): boolean => {
+  if (!Array.isArray(metadata.steps)) {
+    return false;
+  }
+  return metadata.steps.some((step: { id?: string }) => step.id === stepId);
+};
+
+const auditMatchesStepId = (audit: AgentAuditRouteRecord, stepId: string): boolean => {
+  const metadata = audit.metadata as AgentAuditMetadata | null;
+  if (metadata === null) {
+    return false;
+  }
+  return hasMatchingAuditMetadataField(metadata, stepId) || hasMatchingAuditMetadataStep(metadata, stepId);
+};
+
+const toAgentAuditLogRecordDto = (
+  audit: AgentAuditRouteRecord
+): AgentAuditLogRecordDto => ({
+  ...audit,
+  runId: audit.runId ?? null,
+  metadata: audit.metadata ?? null,
+  createdAt:
+    audit.createdAt instanceof Date ? audit.createdAt.toISOString() : audit.createdAt,
+});
+
 export const GET = apiHandlerWithParams<{ runId: string }>(
   async (_req, _ctx, params) => {
     const requestStart = Date.now();
@@ -50,26 +90,8 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
       orderBy: { createdAt: 'desc' },
       take,
     });
-    const filtered = stepId
-      ? audits.filter((audit: AgentAuditRouteRecord) => {
-        const metadata = audit.metadata as {
-          stepId?: string;
-          failedStepId?: string;
-          activeStepId?: string;
-          steps?: Array<{ id?: string }>;
-        } | null;
-        if (
-          metadata?.stepId === stepId ||
-          metadata?.failedStepId === stepId ||
-          metadata?.activeStepId === stepId
-        ) {
-          return true;
-        }
-        if (Array.isArray(metadata?.steps)) {
-          return metadata.steps.some((step: { id?: string }) => step?.id === stepId);
-        }
-        return false;
-      })
+    const filtered = isNonEmptyString(stepId)
+      ? audits.filter((audit: AgentAuditRouteRecord) => auditMatchesStepId(audit, stepId))
       : audits;
     if (DEBUG_CHATBOT) {
       void ErrorSystem.logInfo('Audits loaded', {
@@ -80,15 +102,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
       });
     }
     const response: AgentAuditLogRecordsResponse = {
-      audits: filtered.map(
-        (audit: AgentAuditRouteRecord): AgentAuditLogRecordDto => ({
-          ...audit,
-          runId: audit.runId ?? null,
-          metadata: audit.metadata ?? null,
-          createdAt:
-            audit.createdAt instanceof Date ? audit.createdAt.toISOString() : audit.createdAt,
-        })
-      ),
+      audits: filtered.map(toAgentAuditLogRecordDto),
     };
     return NextResponse.json(response);
   },

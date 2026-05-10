@@ -110,6 +110,7 @@ export const traderaSelectorProfileOverrideSchema = z.string().trim().min(1);
 export const productListingCreatePayloadSchema = z.object({
   integrationId: z.string().trim().min(1),
   connectionId: z.string().trim().min(1),
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
   durationHours: z.number().int().min(1).max(720).optional(),
   autoRelistEnabled: z.boolean().optional(),
   autoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),

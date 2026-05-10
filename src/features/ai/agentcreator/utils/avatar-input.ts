@@ -10,7 +10,7 @@ export const isImageDataUrl = (value: string): boolean =>
 
 export const dataUrlToFile = (dataUrl: string, filename: string): File => {
   const match = dataUrl.trim().match(DATA_URL_PATTERN);
-  if (!match) {
+  if (match === null) {
     throw new Error('Invalid image data URL.');
   }
 
@@ -23,7 +23,9 @@ export const dataUrlToFile = (dataUrl: string, filename: string): File => {
     bytes[index] = binary.charCodeAt(index);
   }
 
-  return new File([bytes], filename, { type: mimeType || 'application/octet-stream' });
+  return new File([bytes], filename, {
+    type: mimeType.length > 0 ? mimeType : 'application/octet-stream',
+  });
 };
 
 export const base64ToFile = (base64: string, mimeType: string, filename: string): File =>
@@ -50,8 +52,9 @@ export async function uploadPersonaAvatar(input: {
   const formData = new FormData();
   formData.set('file', input.file);
   formData.set('moodId', input.moodId);
-  if (input.personaId?.trim()) {
-    formData.set('personaId', input.personaId.trim());
+  const personaId = input.personaId?.trim() ?? '';
+  if (personaId.length > 0) {
+    formData.set('personaId', personaId);
   }
 
   return api.post<PersonaAvatarUploadResult>('/api/agentcreator/personas/avatar', formData);
@@ -59,13 +62,17 @@ export async function uploadPersonaAvatar(input: {
 
 export async function deletePersonaAvatar(fileId: string): Promise<void> {
   const normalized = fileId.trim();
-  if (!normalized) return;
+  if (normalized.length === 0) {
+    return;
+  }
   await api.delete(`/api/files/${encodeURIComponent(normalized)}`);
 }
 
 export async function deletePersonaAvatarThumbnail(thumbnailRef: string): Promise<void> {
   const normalized = thumbnailRef.trim();
-  if (!normalized) return;
+  if (normalized.length === 0) {
+    return;
+  }
   await api.delete(
     `/api/agentcreator/personas/avatar?thumbnailRef=${encodeURIComponent(normalized)}`
   );

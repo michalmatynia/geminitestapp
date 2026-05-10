@@ -6,7 +6,7 @@ import { CatalogPageClient } from '@/app/products/CatalogPageClient';
 import { getProductsContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
 
-export const revalidate = 120;
+export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 48;
 

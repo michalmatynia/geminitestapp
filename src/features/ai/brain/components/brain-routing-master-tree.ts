@@ -116,9 +116,9 @@ export const toBrainRoutingFeatureNodeId = (feature: AiBrainFeature): string =>
 export const fromBrainRoutingFeatureNodeId = (nodeId: string): AiBrainFeature | null => {
   if (!nodeId.startsWith(BRAIN_ROUTING_FEATURE_NODE_PREFIX)) return null;
   const rawFeature = nodeId.slice(BRAIN_ROUTING_FEATURE_NODE_PREFIX.length).trim();
-  if (!rawFeature) return null;
+  if (rawFeature === '') return null;
   const feature = decodeNodeSegment(rawFeature);
-  if (!feature) return null;
+  if (feature === '') return null;
   return feature as AiBrainFeature;
 };
 
@@ -128,9 +128,9 @@ export const toBrainRoutingCapabilityNodeId = (capability: AiBrainCapabilityKey)
 export const fromBrainRoutingCapabilityNodeId = (nodeId: string): AiBrainCapabilityKey | null => {
   if (!nodeId.startsWith(BRAIN_ROUTING_CAPABILITY_NODE_PREFIX)) return null;
   const rawCapability = nodeId.slice(BRAIN_ROUTING_CAPABILITY_NODE_PREFIX.length).trim();
-  if (!rawCapability) return null;
+  if (rawCapability === '') return null;
   const capability = decodeNodeSegment(rawCapability);
-  if (!capability) return null;
+  if (capability === '') return null;
   return capability as AiBrainCapabilityKey;
 };
 

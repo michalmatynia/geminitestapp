@@ -28,16 +28,25 @@ import { AI_INSIGHTS_SETTINGS_KEYS } from './settings';
 
 const SETTINGS_COLLECTION = 'settings';
 
-const getHistoryKey = (type: AiInsightType): string =>
-  type === 'analytics'
-    ? AI_INSIGHTS_SETTINGS_KEYS.analyticsHistory
-    : type === 'runtime_analytics'
-      ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsHistory
-      : AI_INSIGHTS_SETTINGS_KEYS.logsHistory;
+const getHistoryKey = (type: AiInsightType): string => {
+  if (type === 'analytics') return AI_INSIGHTS_SETTINGS_KEYS.analyticsHistory;
+  if (type === 'runtime_analytics') return AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsHistory;
+  return AI_INSIGHTS_SETTINGS_KEYS.logsHistory;
+};
+
+const hasMongoUri = (): boolean => {
+  const mongoUri = process.env['MONGODB_URI'];
+  return mongoUri !== undefined && mongoUri !== '';
+};
+
+const getCreatedAtTime = (createdAt: string | null | undefined): number => {
+  if (createdAt === null || createdAt === undefined || createdAt === '') return 0;
+  return new Date(createdAt).getTime();
+};
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   await getAppDbProvider();
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasMongoUri()) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
@@ -47,7 +56,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
 
 const upsertSettingValue = async (key: string, value: string): Promise<void> => {
   await getAppDbProvider();
-  if (!process.env['MONGODB_URI']) return;
+  if (!hasMongoUri()) return;
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo
@@ -61,10 +70,10 @@ const upsertSettingValue = async (key: string, value: string): Promise<void> => 
 
 const normalizeHistory = (input: AiInsightRecord[]): AiInsightRecord[] => {
   return input
-    .filter((entry: AiInsightRecord) => entry && typeof entry.id === 'string')
+    .filter((entry: AiInsightRecord) => entry.id !== '')
     .sort((a: AiInsightRecord, b: AiInsightRecord) => {
-      const aTime = new Date(a.createdAt || 0).getTime();
-      const bTime = new Date(b.createdAt || 0).getTime();
+      const aTime = getCreatedAtTime(a.createdAt);
+      const bTime = getCreatedAtTime(b.createdAt);
       return bTime - aTime;
     });
 };
@@ -98,10 +107,10 @@ export const appendAiInsight = async (
 
 const normalizeNotifications = (input: AiInsightNotification[]): AiInsightNotification[] => {
   return input
-    .filter((entry: AiInsightNotification) => entry && typeof entry.id === 'string')
+    .filter((entry: AiInsightNotification) => entry.id !== undefined && entry.id !== '')
     .sort((a: AiInsightNotification, b: AiInsightNotification) => {
-      const aTime = new Date(a.createdAt || 0).getTime();
-      const bTime = new Date(b.createdAt || 0).getTime();
+      const aTime = getCreatedAtTime(a.createdAt);
+      const bTime = getCreatedAtTime(b.createdAt);
       return bTime - aTime;
     });
 };

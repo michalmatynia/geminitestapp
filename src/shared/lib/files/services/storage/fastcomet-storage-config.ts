@@ -2,7 +2,9 @@ import 'server-only';
 
 import {
   DEFAULT_FASTCOMET_STORAGE_BASE_URL,
+  DEFAULT_FASTCOMET_STORAGE_PORT,
   DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP,
+  DEFAULT_FASTCOMET_STORAGE_SERVER,
   DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH,
   type FastCometStorageConfig,
 } from '@/shared/lib/files/constants';
@@ -32,6 +34,13 @@ const clampTimeout = (value: unknown): number => {
   if (!Number.isFinite(parsed)) return DEFAULT_TIMEOUT_MS;
   const int = Math.floor(parsed);
   return Math.min(Math.max(int, MIN_TIMEOUT_MS), MAX_TIMEOUT_MS);
+};
+
+const normalizePort = (value: unknown, fallback: number | null): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const port = Math.floor(parsed);
+  return port >= 1 && port <= 65_535 ? port : fallback;
 };
 
 const normalizeUrl = (value: unknown): string => {
@@ -73,6 +82,20 @@ const readStoredConfigValue = (
   envKey: string
 ): unknown => stored[key] ?? process.env[envKey];
 
+const readStoredConfigValueWithFallback = (
+  stored: Partial<FastCometStorageConfig>,
+  key: keyof FastCometStorageConfig,
+  envKeys: string[]
+): unknown => {
+  const storedValue = stored[key];
+  if (storedValue !== undefined && storedValue !== null) return storedValue;
+  for (const envKey of envKeys) {
+    const envValue = process.env[envKey];
+    if (envValue !== undefined && envValue.trim().length > 0) return envValue;
+  }
+  return undefined;
+};
+
 const resolveDefaultUploadEndpoint = (baseUrl: string): string => {
   if (baseUrl.length === 0) return '';
   try {
@@ -102,6 +125,58 @@ const resolveFastCometUploadEndpoint = (
   return configured.length > 0 ? configured : resolveDefaultUploadEndpoint(baseUrl);
 };
 
+const resolveHostnameFromUrl = (value: string): string | null => {
+  try {
+    const hostname = new URL(value).hostname.trim();
+    return hostname.length > 0 ? hostname : null;
+  } catch {
+    return null;
+  }
+};
+
+const resolvePortFromUrl = (value: string): number | null => {
+  try {
+    const url = new URL(value);
+    if (url.port.trim().length > 0) return normalizePort(url.port, null);
+    return url.protocol === 'http:' ? 80 : DEFAULT_FASTCOMET_STORAGE_PORT;
+  } catch {
+    return null;
+  }
+};
+
+const resolveFastCometServer = (
+  stored: Partial<FastCometStorageConfig>,
+  baseUrl: string,
+  uploadEndpoint: string
+): string | null =>
+  normalizeNullableString(
+    readStoredConfigValue(stored, 'server', 'FASTCOMET_STORAGE_SERVER')
+  ) ??
+  resolveHostnameFromUrl(uploadEndpoint) ??
+  resolveHostnameFromUrl(baseUrl) ??
+  DEFAULT_FASTCOMET_STORAGE_SERVER;
+
+const resolveFastCometPort = (
+  stored: Partial<FastCometStorageConfig>,
+  baseUrl: string,
+  uploadEndpoint: string
+): number | null =>
+  normalizePort(
+    readStoredConfigValue(stored, 'port', 'FASTCOMET_STORAGE_PORT'),
+    resolvePortFromUrl(uploadEndpoint) ?? resolvePortFromUrl(baseUrl) ?? DEFAULT_FASTCOMET_STORAGE_PORT
+  );
+
+const resolveFastCometToken = (stored: Partial<FastCometStorageConfig>): string | null =>
+  normalizeNullableString(
+    readStoredConfigValueWithFallback(stored, 'token', [
+      'FASTCOMET_STORAGE_TOKEN',
+      'FASTCOMET_STORAGE_AUTH_TOKEN',
+    ])
+  ) ??
+  normalizeNullableString(
+    readStoredConfigValue(stored, 'authToken', 'FASTCOMET_STORAGE_AUTH_TOKEN')
+  );
+
 const isDefaultFastCometBaseUrl = (baseUrl: string): boolean => {
   try {
     return new URL(baseUrl).hostname === new URL(DEFAULT_FASTCOMET_STORAGE_BASE_URL).hostname;
@@ -124,16 +199,22 @@ const resolveFastCometIpOverride = (
 export const resolveFastCometConfig = (raw: string | null): FastCometStorageConfig => {
   const stored = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
   const baseUrl = resolveFastCometBaseUrl(stored);
+  const uploadEndpoint = resolveFastCometUploadEndpoint(stored, baseUrl);
+  const token = resolveFastCometToken(stored);
 
   return {
     baseUrl,
-    uploadEndpoint: resolveFastCometUploadEndpoint(stored, baseUrl),
+    uploadEndpoint,
     deleteEndpoint: normalizeOptionalUrl(
       readStoredConfigValue(stored, 'deleteEndpoint', 'FASTCOMET_STORAGE_DELETE_URL')
     ),
-    authToken: normalizeNullableString(
-      readStoredConfigValue(stored, 'authToken', 'FASTCOMET_STORAGE_AUTH_TOKEN')
+    server: resolveFastCometServer(stored, baseUrl, uploadEndpoint),
+    port: resolveFastCometPort(stored, baseUrl, uploadEndpoint),
+    username: normalizeNullableString(
+      readStoredConfigValue(stored, 'username', 'FASTCOMET_STORAGE_USERNAME')
     ),
+    token,
+    authToken: token,
     keepLocalCopy: parseBoolean(
       readStoredConfigValue(stored, 'keepLocalCopy', 'FASTCOMET_STORAGE_KEEP_LOCAL_COPY'),
       true

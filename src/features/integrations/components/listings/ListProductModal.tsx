@@ -80,11 +80,11 @@ function ListProductModalContent(): React.JSX.Element {
 
   useEffect(() => {
     if (!autoSubmitOnOpen || autoSubmitAttemptedRef.current) return;
-    if (loading || !selectedConnectionId) return;
+    if (loading || submitting || !selectedConnectionId) return;
 
     autoSubmitAttemptedRef.current = true;
     void handleSubmit(onSuccess);
-  }, [autoSubmitOnOpen, handleSubmit, loading, onSuccess, selectedConnectionId]);
+  }, [autoSubmitOnOpen, handleSubmit, loading, onSuccess, selectedConnectionId, submitting]);
 
   return (
     <FormModal

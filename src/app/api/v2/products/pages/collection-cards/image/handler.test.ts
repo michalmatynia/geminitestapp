@@ -1,0 +1,66 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { NextRequest } from 'next/server';
+
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+
+const mocks = vi.hoisted(() => ({
+  uploadEcommercePagesCmsCollectionCardImage: vi.fn(),
+}));
+
+vi.mock('@/features/products/pages/ecommerce-pages-cms/ecommerce-pages-cms.server', () => ({
+  uploadEcommercePagesCmsCollectionCardImage: mocks.uploadEcommercePagesCmsCollectionCardImage,
+}));
+
+import { postHandler } from './handler';
+
+const buildContext = (userId: string | null = 'user-1'): ApiHandlerContext => ({
+  correlationId: 'correlation-1',
+  getElapsedMs: () => 0,
+  requestId: 'request-1',
+  startTime: 0,
+  traceId: 'trace-1',
+  userId,
+});
+
+const buildUploadRequest = (file?: File): NextRequest => {
+  const formData = new FormData();
+  if (file !== undefined) formData.append('file', file);
+  return new Request('http://localhost/api/v2/products/pages/collection-cards/image', {
+    method: 'POST',
+    body: formData,
+  }) as NextRequest;
+};
+
+describe('products pages CMS collection card image handler', () => {
+  beforeEach(() => {
+    mocks.uploadEcommercePagesCmsCollectionCardImage.mockReset();
+  });
+
+  it('uploads a collection card image', async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'Card.webp', { type: 'image/webp' });
+    mocks.uploadEcommercePagesCmsCollectionCardImage.mockResolvedValue({
+      filename: 'card.webp',
+      localPublicPath: '/uploads/cms/stargater/collection-cards/card.webp',
+      mimetype: 'image/webp',
+      remoteUrl: 'https://sparksofsindri.com/uploads/cms/stargater/collection-cards/card.webp',
+      size: 3,
+    });
+
+    const response = await postHandler(buildUploadRequest(file), buildContext('admin-1'));
+    const body = (await response.json()) as { image: { remoteUrl: string } };
+
+    expect(response.status).toBe(200);
+    expect(body.image.remoteUrl).toContain('/collection-cards/card.webp');
+    const [uploadInput] = mocks.uploadEcommercePagesCmsCollectionCardImage.mock.calls[0] as [
+      { file: File },
+    ];
+    expect(uploadInput.file.type).toBe('image/webp');
+  });
+
+  it('rejects unauthenticated uploads before reading multipart data', async () => {
+    await expect(postHandler(buildUploadRequest(), buildContext(null))).rejects.toThrow(
+      'Unauthorized'
+    );
+    expect(mocks.uploadEcommercePagesCmsCollectionCardImage).not.toHaveBeenCalled();
+  });
+});

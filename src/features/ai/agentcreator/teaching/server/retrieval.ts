@@ -19,7 +19,7 @@ const dot = (a: number[], b: number[]): number => {
   const len = Math.min(a.length, b.length);
   let sum = 0;
   for (let i = 0; i < len; i += 1) {
-    sum += a[i]! * b[i]!;
+    sum += (a[i] ?? 0) * (b[i] ?? 0);
   }
   return sum;
 };
@@ -46,8 +46,9 @@ export async function retrieveTopContext(params: {
   });
 
   const embeddingModel = params.embeddingModel?.trim();
+  const hasEmbeddingModel = embeddingModel !== undefined && embeddingModel.length > 0;
   type RetrievalDoc = (typeof docs)[number];
-  const filteredDocs = embeddingModel
+  const filteredDocs = hasEmbeddingModel
     ? docs.filter((doc: RetrievalDoc): boolean => doc.embeddingModel === embeddingModel)
     : docs;
 

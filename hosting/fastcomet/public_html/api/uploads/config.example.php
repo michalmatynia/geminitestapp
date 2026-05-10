@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 return [
+    'username' => 'replace-with-fastcomet-username',
     'auth_token' => 'replace-with-a-long-random-token',
     'public_base_url' => 'https://sparksofsindri.com',
     'uploads_root' => dirname(__DIR__, 2) . '/uploads',

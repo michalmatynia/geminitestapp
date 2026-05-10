@@ -269,8 +269,18 @@ const assertFastCometUploadEndpointReady = async (
 
   try {
     const headers = new Headers();
-    if (fastComet.authToken) {
-      headers.set('Authorization', `Bearer ${fastComet.authToken}`);
+    const token = fastComet.token ?? fastComet.authToken;
+    if (token !== null && token !== undefined && token.trim().length > 0) {
+      headers.set('Authorization', `Bearer ${token.trim()}`);
+    }
+    if (fastComet.username !== null && fastComet.username !== undefined) {
+      headers.set('X-FastComet-Username', fastComet.username);
+    }
+    if (fastComet.server !== null && fastComet.server !== undefined) {
+      headers.set('X-FastComet-Server', fastComet.server);
+    }
+    if (fastComet.port !== null && fastComet.port !== undefined) {
+      headers.set('X-FastComet-Port', String(fastComet.port));
     }
     const response = await fetch(fastComet.uploadEndpoint, {
       method: 'GET',

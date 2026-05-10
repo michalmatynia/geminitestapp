@@ -4,6 +4,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   hasFilledMarketplaceCopy,
+  hasAnyProductImageStorageStatus,
   hasEnglishProductDescription,
   hasEnglishProductTitle,
   hasPolishProductDescription,
@@ -11,6 +12,7 @@ import {
   getImageFilepath,
   resolveEffectiveDefaultPriceGroupId,
   resolveMarketplaceStatusWithLocalFeedback,
+  resolveProductImageStorageStatus,
 } from './product-column-utils';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
@@ -151,6 +153,100 @@ describe('resolveMarketplaceStatusWithLocalFeedback', () => {
 });
 
 describe('product list status helpers', () => {
+  it('detects FastComet, local, and external-link image storage statuses', () => {
+    const product = createProduct({
+      imageLinks: [' https://cdn.example.test/source.jpg '],
+      images: [
+        {
+          productId: 'product-1',
+          imageFileId: 'fastcomet-image',
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          imageFile: {
+            id: 'fastcomet-image',
+            filename: 'fastcomet.jpg',
+            filepath: 'https://sparksofsindri.com/uploads/products/SKU/fastcomet.jpg',
+            mimetype: 'image/jpeg',
+            size: 1,
+            storageProvider: 'fastcomet',
+            metadata: {
+              localPublicPath: '/uploads/products/SKU/fastcomet.jpg',
+              mirroredLocally: true,
+              storageSource: 'fastcomet',
+            },
+          },
+        },
+      ] as ProductWithImages['images'],
+    });
+
+    const status = resolveProductImageStorageStatus(product);
+
+    expect(status).toEqual({
+      hasFastCometImage: true,
+      hasLocalImage: true,
+      hasExternalLinkImage: true,
+    });
+    expect(hasAnyProductImageStorageStatus(status)).toBe(true);
+  });
+
+  it('treats direct FastComet uploads without a mirror as remote-only images', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        images: [
+          {
+            productId: 'product-1',
+            imageFileId: 'fastcomet-image',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+            imageFile: {
+              id: 'fastcomet-image',
+              filename: 'fastcomet.jpg',
+              filepath: 'https://sparksofsindri.com/uploads/products/SKU/fastcomet.jpg',
+              mimetype: 'image/jpeg',
+              size: 1,
+              storageProvider: 'fastcomet',
+              metadata: {
+                mirroredLocally: false,
+                storageSource: 'fastcomet',
+              },
+            },
+          },
+        ] as ProductWithImages['images'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: true,
+      hasLocalImage: false,
+      hasExternalLinkImage: false,
+    });
+  });
+
+  it('detects legacy local uploads from non-http image file paths', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        images: [
+          {
+            productId: 'product-1',
+            imageFileId: 'local-image',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+            imageFile: {
+              id: 'local-image',
+              filename: 'local.jpg',
+              filepath: '/uploads/products/SKU/local.jpg',
+              mimetype: 'image/jpeg',
+              size: 1,
+            },
+          },
+        ] as ProductWithImages['images'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: false,
+      hasLocalImage: true,
+      hasExternalLinkImage: false,
+    });
+  });
+
   it('detects marketplace copy only when an assigned override has title or description text', () => {
     expect(
       hasFilledMarketplaceCopy(

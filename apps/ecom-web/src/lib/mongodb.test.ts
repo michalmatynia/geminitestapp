@@ -123,7 +123,22 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['products_db']);
   });
 
-  it('allows generic MongoDB URI variables to feed ecommerce product reads', async () => {
+  it('prefers the selected ecommerce cloud source over generic MongoDB URI variables', async () => {
+    process.env['MONGODB_URI'] = 'mongodb+srv://generic.example.test/';
+    process.env['MONGODB_DB'] = 'generic_db';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://ecommerce.example.test/';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://ecommerce.example.test/']);
+    expect(mongoMocks.dbNames).toEqual(['products_db']);
+  });
+
+  it('allows generic MongoDB URI variables as a last-resort ecommerce product read fallback', async () => {
     process.env['MONGODB_URI'] = 'mongodb+srv://generic.example.test/';
     process.env['MONGODB_DB'] = 'catalog_db';
 

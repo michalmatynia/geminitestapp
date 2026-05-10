@@ -13,6 +13,7 @@ interface ProductImageManagerProps {
   controller?: ProductImageManagerController;
   externalBaseUrl: string;
   productId?: string | null;
+  productSku?: string | null;
   minimalUi?: boolean;
   showDragHandle?: boolean;
   minimalSingleSlotAlign?: 'left' | 'center';
@@ -50,6 +51,7 @@ export default function ProductImageManager(props: ProductImageManagerProps) {
     controller,
     externalBaseUrl,
     productId,
+    productSku,
     minimalUi,
     showDragHandle,
     minimalSingleSlotAlign,
@@ -60,6 +62,7 @@ export default function ProductImageManager(props: ProductImageManagerProps) {
       explicitController={controller}
       externalBaseUrl={externalBaseUrl}
       productId={productId}
+      productSku={productSku}
       minimalUi={minimalUi}
       showDragHandle={showDragHandle}
       minimalSingleSlotAlign={minimalSingleSlotAlign}

@@ -209,6 +209,7 @@ describe('integration product listings handler', () => {
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
+      browserMode: 'connection_default',
     });
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-1',
@@ -217,6 +218,7 @@ describe('integration product listings handler', () => {
           tradera: expect.objectContaining({
             pendingExecution: expect.objectContaining({
               requestId: 'job-tradera-1',
+              requestedBrowserMode: 'connection_default',
             }),
           }),
         }),
@@ -229,6 +231,7 @@ describe('integration product listings handler', () => {
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
+      browserMode: 'connection_default',
       jobId: 'job-tradera-1',
     });
     expect(payload.queue).toMatchObject({
@@ -339,6 +342,7 @@ describe('integration product listings handler', () => {
           tradera: expect.objectContaining({
             pendingExecution: expect.objectContaining({
               requestId: 'job-tradera-1',
+              requestedBrowserMode: 'connection_default',
             }),
           }),
         }),
@@ -392,6 +396,7 @@ describe('integration product listings handler', () => {
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
+      browserMode: 'connection_default',
       jobId: 'job-tradera-1',
     });
     expect(updateListingMock).toHaveBeenCalledWith(
@@ -403,6 +408,7 @@ describe('integration product listings handler', () => {
             pendingExecution: expect.objectContaining({
               action: 'list',
               requestId: 'job-tradera-1',
+              requestedBrowserMode: 'connection_default',
             }),
           }),
         }),
@@ -421,6 +427,68 @@ describe('integration product listings handler', () => {
           pendingExecution: {
             action: 'list',
             requestId: 'job-tradera-1',
+            requestedBrowserMode: 'connection_default',
+          },
+        },
+      },
+    });
+  });
+
+  it('queues Tradera create-listing jobs with an explicit browser mode override', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        browserMode: 'headless',
+      },
+    });
+    buildTraderaListingQueueJobIdMock.mockReturnValue('job-tradera-headless-1');
+    enqueueTraderaListingJobMock.mockResolvedValue('job-tradera-headless-1');
+
+    const response = await postHandler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(buildTraderaListingQueueJobIdMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+      browserMode: 'headless',
+    });
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-1',
+      action: 'list',
+      source: 'api',
+      browserMode: 'headless',
+      jobId: 'job-tradera-headless-1',
+    });
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            pendingExecution: expect.objectContaining({
+              requestId: 'job-tradera-headless-1',
+              requestedBrowserMode: 'headless',
+            }),
+          }),
+        }),
+      })
+    );
+    expect(payload).toMatchObject({
+      queued: true,
+      queue: {
+        jobId: 'job-tradera-headless-1',
+      },
+      marketplaceData: {
+        tradera: {
+          pendingExecution: {
+            requestedBrowserMode: 'headless',
           },
         },
       },

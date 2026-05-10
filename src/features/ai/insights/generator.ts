@@ -1,14 +1,5 @@
 import 'server-only';
 
-import {
-  getRuntimeAnalyticsSummary,
-  recordBrainInsightAnalytics,
-  resolveRuntimeAnalyticsRangeWindow,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import {
-  buildAnalyticsInsightContextRegistrySystemPrompt,
-  buildRuntimeAnalyticsInsightContextRegistrySystemPrompt,
-} from '@/features/ai/insights/context-registry/system-prompt';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {
   AiInsightRecord,
@@ -16,51 +7,17 @@ import type {
   AiInsightType,
 } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
-import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
-import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
-import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
-import { buildSystemLogsContextRegistrySystemPrompt } from '@/shared/lib/observability/runtime-context/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getSystemLogMetrics, listSystemLogs } from '@/shared/lib/observability/system-log-repository';;
 
-import { callInsightChatModel } from './generator/chat-runtime';
+import { orchestrateInsightGeneration } from './generator/ai-insight-orchestrator';
+import { generateLogInterpretation as generateLogInterpretationImpl } from './generator/log-interpreter';
 import {
-  assessRuntimeKernelParityRisk,
-  buildRuntimeKernelParityMetadata,
-  buildRuntimeKernelParityPrompt,
-} from './generator/runtime-analytics-prompt';
-import {
-  readInsightSettingValue,
   parseBooleanSetting,
   parseNumberSetting,
+  readInsightSettingValue,
 } from './generator/settings-service';
-import { sanitizeEvents, stripCodeFence } from './generator/utils';
-import { appendAiInsight } from './repository';
 import { isScheduledAiInsightsEnabled } from './scheduling';
-import {
-  AI_INSIGHTS_SETTINGS_KEYS,
-  DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-  DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
-  DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-} from './settings';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
-  0,
-  Number(process.env['AI_INSIGHTS_MODEL_MAX_RETRIES'] ?? 2)
-);
-const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
-  100,
-  Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750)
-);
-
-const sleep = async (ms: number): Promise<void> =>
-  new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, ms);
-  });
+import { AI_INSIGHTS_SETTINGS_KEYS } from './settings';
 
 export type InsightScheduleSettings = {
   analyticsEnabled: boolean;
@@ -70,6 +27,19 @@ export type InsightScheduleSettings = {
   logsEnabled: boolean;
   logsMinutes: number;
   logsAutoOnError: boolean;
+};
+
+type InsightGenerationOptions = {
+  range?: AiPathRuntimeAnalyticsRange;
+  force?: boolean;
+  source?: AiInsightSource;
+  contextRegistry?: ContextRegistryConsumerEnvelope | null;
+};
+
+type ScheduledInsightJob = {
+  enabledKey: string;
+  failureMessage: string;
+  run: () => Promise<AiInsightRecord | null>;
 };
 
 export async function getScheduleSettings(): Promise<InsightScheduleSettings> {
@@ -116,206 +86,28 @@ export async function getScheduleSettings(): Promise<InsightScheduleSettings> {
   };
 }
 
-async function callChatModel(params: {
-  model: string;
-  messages: ChatMessage[];
-  temperature?: number;
-}): Promise<string> {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt <= AI_INSIGHTS_MODEL_MAX_RETRIES; attempt += 1) {
-    try {
-      return await callInsightChatModel({
-        model: params.model,
-        messages: params.messages,
-        temperature: params.temperature ?? 0.7,
-        maxTokens: 1000,
-      });
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      lastError = error;
-      if (attempt < AI_INSIGHTS_MODEL_MAX_RETRIES) {
-        const delay = AI_INSIGHTS_MODEL_RETRY_BASE_MS * Math.pow(2, attempt);
-        await sleep(delay);
-      }
-    }
-  }
-  throw lastError;
-}
-
-const buildAnalyticsPrompt = async (options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
-  const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const summary = await getAnalyticsSummary({ from: oneDayAgo, to: now });
-  const eventsResult = await listAnalyticsEvents({ from: oneDayAgo, to: now, limit: 50, skip: 0 });
-  const events = eventsResult.events;
-  const systemPrompt = [
-    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem)) || DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-    buildAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-  ].filter(Boolean).join('\n\n');
-  const userPrompt = `Current Analytics Summary:
-${JSON.stringify(summary, null, 2)}
-
-Recent Events (Last 50):
-${JSON.stringify(sanitizeEvents(events), null, 2)}
-
-Analyze this data and provide actionable insights.`;
-  return { systemPrompt, userPrompt, name: `analytics Insight - ${now.toLocaleDateString()}` };
-};
-
-const buildLogsPrompt = async (options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
-  const logsResult = await listSystemLogs({ level: 'warn' });
-  const logs = logsResult.logs;
-  const metrics = await getSystemLogMetrics({ level: 'warn' });
-  const systemPrompt = [
-    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) || DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
-    buildSystemLogsContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-  ].filter(Boolean).join('\n\n');
-  const userPrompt = `System Log Metrics (Last 24h):
-${JSON.stringify(metrics, null, 2)}
-
-Recent Warning/Error Logs (Last 100):
-${JSON.stringify(logs.map(sanitizeSystemLogForAi), null, 2)}
-
-Identify any patterns or critical issues.`;
-  return { systemPrompt, userPrompt, name: `logs Insight - ${new Date().toLocaleDateString()}` };
-};
-
-const buildRuntimeAnalyticsPrompt = async (range: AiPathRuntimeAnalyticsRange, options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
-  const now = new Date();
-  const window = resolveRuntimeAnalyticsRangeWindow(range);
-  const summary = await getRuntimeAnalyticsSummary(window);
-  const kernelParityAssessment = assessRuntimeKernelParityRisk(summary);
-  const kernelParityPrompt = buildRuntimeKernelParityPrompt(summary, kernelParityAssessment);
-  const insightMetadata = buildRuntimeKernelParityMetadata(summary, kernelParityAssessment);
-  const systemPrompt = [
-    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) || DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-    buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-  ].filter(Boolean).join('\n\n');
-  const userPrompt = `AI Path Runtime Analytics Summary (${range}):
-${JSON.stringify(summary, null, 2)}
-
-Kernel Runtime Parity Snapshot:
-${kernelParityPrompt}
-
-Analyze performance and success rates of AI Path executions. Include migration risk commentary using kernel parity distribution and the computed parity risk level. Recommend rollout/rollback actions when parity coverage or v3 share is weak.`;
-  return {
-    systemPrompt,
-    userPrompt,
-    name: `runtime_analytics Insight [${kernelParityAssessment.riskLevel.toUpperCase()} risk] - ${now.toLocaleDateString()}`,
-    metadata: insightMetadata,
-  };
-};
-
-const INSIGHT_BUILDERS: Record<string, (options?: any) => Promise<any>> = {
-  analytics: buildAnalyticsPrompt,
-  logs: buildLogsPrompt,
-  system_logs: buildLogsPrompt,
-  runtime_analytics: (options?: any) => buildRuntimeAnalyticsPrompt(options?.range ?? '24h', options),
-};
-
 export async function generateAiInsightByType(
   type: AiInsightType,
-  options?: {
-    range?: AiPathRuntimeAnalyticsRange;
-    force?: boolean;
-    source?: AiInsightSource;
-    contextRegistry?: ContextRegistryConsumerEnvelope | null;
-  }
+  options?: InsightGenerationOptions
 ): Promise<AiInsightRecord | null> {
-  const capabilityMap: Record<AiInsightType, AiBrainCapabilityKey> = {
-    analytics: 'insights.analytics',
-    runtime_analytics: 'insights.runtime_analytics',
-    system_logs: 'insights.system_logs',
-    logs: 'insights.system_logs',
-    product_recommendation: 'insights.analytics',
-    content_optimization: 'insights.analytics',
-    anomaly_detection: 'insights.analytics',
-    trend_analysis: 'insights.analytics',
-    system_health: 'insights.system_logs',
-  };
-
-  const capability = capabilityMap[type] || 'insights.analytics';
-  const assignment = await getBrainAssignmentForCapability(capability);
-  if (!assignment?.enabled) {
-    throw new Error(`No enabled AI model assigned for ${capability} capability.`);
-  }
-
-  const builder = INSIGHT_BUILDERS[type];
-  if (!builder) return null;
-
-  const prompt = await builder(options);
-  const messages: ChatMessage[] = [
-    {
-      id: `sys_${Date.now()}`,
-      sessionId: 'insights_gen',
-      role: 'system',
-      content: prompt.systemPrompt,
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: `user_${Date.now()}`,
-      sessionId: 'insights_gen',
-      role: 'user',
-      content: prompt.userPrompt,
-      timestamp: new Date().toISOString(),
-    },
-  ];
-
-  try {
-    const content = await callChatModel({ model: assignment.modelId, messages });
-    const insight = await appendAiInsight(type, {
-      name: prompt.name,
-      source: options?.source ?? 'manual',
-      content: { text: stripCodeFence(content) },
-      status: 'new',
-      score: 0,
-      metadata: prompt.metadata,
-    });
-
-    if (type === 'runtime_analytics') {
-      await recordBrainInsightAnalytics({
-        type: 'analytics',
-        status: 'completed',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    return insight;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    if (type === 'runtime_analytics') {
-      await recordBrainInsightAnalytics({
-        type: 'analytics',
-        status: 'failed',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    throw error;
-  }
+  return orchestrateInsightGeneration(type, options);
 }
 
-export async function generateAnalyticsInsight(options?: {
-  source?: AiInsightSource;
-  force?: boolean;
-  contextRegistry?: ContextRegistryConsumerEnvelope | null;
-}): Promise<AiInsightRecord | null> {
+export async function generateAnalyticsInsight(
+  options?: Omit<InsightGenerationOptions, 'range'>
+): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('analytics', options);
 }
 
-export async function generateRuntimeAnalyticsInsight(options?: {
-  source?: AiInsightSource;
-  range?: AiPathRuntimeAnalyticsRange;
-  force?: boolean;
-  contextRegistry?: ContextRegistryConsumerEnvelope | null;
-}): Promise<AiInsightRecord | null> {
+export async function generateRuntimeAnalyticsInsight(
+  options?: InsightGenerationOptions
+): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('runtime_analytics', options);
 }
 
-export async function generateLogsInsight(options?: {
-  source?: AiInsightSource;
-  force?: boolean;
-  contextRegistry?: ContextRegistryConsumerEnvelope | null;
-}): Promise<AiInsightRecord | null> {
+export async function generateLogsInsight(
+  options?: Omit<InsightGenerationOptions, 'range'>
+): Promise<AiInsightRecord | null> {
   return generateAiInsightByType('logs', options);
 }
 
@@ -324,101 +116,41 @@ export async function generateLogInterpretation(options: {
   log: Record<string, unknown>;
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
 }): Promise<AiInsightRecord | null> {
-  const capability: AiBrainCapabilityKey = 'insights.system_logs';
-  const assignment = await getBrainAssignmentForCapability(capability);
-  if (!assignment?.enabled) {
-    throw new Error(`No enabled AI model assigned for ${capability} capability.`);
-  }
-
-  const { modelId } = assignment;
-  const source: AiInsightSource = options.source ?? 'manual';
-  const systemPrompt = [
-    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) ||
-      DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
-    buildSystemLogsContextRegistrySystemPrompt(options.contextRegistry?.resolved),
-  ]
-    .filter(Boolean)
-    .join('\n\n');
-  const userPrompt = `Interpret this specific system log entry and provide:
-1) likely root cause,
-2) impact/risk,
-3) immediate remediation steps.
-
-System log entry:
-${JSON.stringify(options.log, null, 2)}`;
-
-  const messages: ChatMessage[] = [
-    {
-      id: `sys_${Date.now()}`,
-      sessionId: 'log_interpret',
-      role: 'system',
-      content: systemPrompt,
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: `user_${Date.now()}`,
-      sessionId: 'log_interpret',
-      role: 'user',
-      content: userPrompt,
-      timestamp: new Date().toISOString(),
-    },
-  ];
-
-  const content = await callChatModel({ model: modelId, messages });
-  return appendAiInsight('logs', {
-    name: `Log Interpretation - ${new Date().toLocaleDateString()}`,
-    source,
-    content: { text: stripCodeFence(content) },
-    status: 'new',
-    score: 0,
-  });
+  return generateLogInterpretationImpl(options);
 }
+
+const runScheduledInsightJob = async (job: ScheduledInsightJob): Promise<void> => {
+  const enabled = parseBooleanSetting(await readInsightSettingValue(job.enabledKey), false);
+  if (!enabled) return;
+
+  await job.run().catch((err: unknown) => {
+    void logSystemEvent({
+      source: 'ai.insights.auto-generation',
+      message: job.failureMessage,
+      level: 'error',
+      error: err,
+    });
+  });
+};
 
 export async function runInsightsAutoGeneration(): Promise<void> {
   if (!isScheduledAiInsightsEnabled()) return;
 
-  const analyticsEnabled = parseBooleanSetting(
-    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
-    false
-  );
-  if (analyticsEnabled) {
-    await generateAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      void logSystemEvent({
-        source: 'ai.insights.auto-generation',
-        message: 'Failed to auto-generate analytics insight',
-        level: 'error',
-        error: err,
-      });
-    });
-  }
-
-  const logsEnabled = parseBooleanSetting(
-    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
-    false
-  );
-  if (logsEnabled) {
-    await generateLogsInsight({ source: 'scheduled_job' }).catch((err) => {
-      void logSystemEvent({
-        source: 'ai.insights.auto-generation',
-        message: 'Failed to auto-generate logs insight',
-        level: 'error',
-        error: err,
-      });
-    });
-  }
-
-  const runtimeEnabled = parseBooleanSetting(
-    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
-    false
-  );
-  if (runtimeEnabled) {
-    await generateRuntimeAnalyticsInsight({ source: 'scheduled_job' }).catch((err) => {
-      void logSystemEvent({
-        source: 'ai.insights.auto-generation',
-        message: 'Failed to auto-generate runtime analytics insight',
-        level: 'error',
-        error: err,
-      });
-    });
-  }
+  await Promise.all([
+    runScheduledInsightJob({
+      enabledKey: AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
+      failureMessage: 'Failed to auto-generate analytics insight',
+      run: () => generateAnalyticsInsight({ source: 'scheduled_job' }),
+    }),
+    runScheduledInsightJob({
+      enabledKey: AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
+      failureMessage: 'Failed to auto-generate logs insight',
+      run: () => generateLogsInsight({ source: 'scheduled_job' }),
+    }),
+    runScheduledInsightJob({
+      enabledKey: AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
+      failureMessage: 'Failed to auto-generate runtime analytics insight',
+      run: () => generateRuntimeAnalyticsInsight({ source: 'scheduled_job' }),
+    }),
+  ]);
 }

@@ -66,38 +66,30 @@ const { Context: RunDetailContext, useStrictContext: useAgentRunDetail } =
   });
 export { useAgentRunDetail };
 
-export function AgentRunProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
+const hasSelectedAgentRunId = (id: string | null): id is string =>
+  id !== null && id.length > 0;
+
+const resolveAgentRunError = (
+  runsError: Error | null,
+  snapshotsError: Error | null,
+  logsError: Error | null,
+  auditsError: Error | null
+): Error | null => runsError ?? snapshotsError ?? logsError ?? auditsError ?? null;
+
+const useAgentRunStreamState = (
+  selectedAgentRunId: string | null
+): [
+  AgentRunDetailData['agentStreamStatus'],
+  AgentRunDetailData['setAgentStreamStatus'],
+] => {
   const [agentStreamStatus, setAgentStreamStatus] = useState<
-    'idle' | 'connecting' | 'live' | 'error'
+    AgentRunDetailData['agentStreamStatus']
   >('idle');
 
-  const {
-    data: agentRuns = [],
-    isLoading: isLoadingRuns,
-    refetch: refetchRuns,
-    error: runsError,
-  } = useAgentRuns();
-  const { data: agentSnapshots = [], error: snapshotsError } =
-    useAgentSnapshots(selectedAgentRunId);
-  const { data: agentBrowserLogs = [], error: logsError } = useAgentLogs(selectedAgentRunId, {
-    refetchInterval: 5000,
-  });
-  const { data: agentAuditLogs = [], error: auditsError } = useAgentAudits(selectedAgentRunId, {
-    refetchInterval: 5000,
-  });
-
-  const error = runsError || snapshotsError || logsError || auditsError || null;
-
-  const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AgentRunRecord) => run.id === selectedAgentRunId) ?? null,
-    [agentRuns, selectedAgentRunId]
-  );
-
   useEffect(() => {
-    if (!selectedAgentRunId) {
+    if (!hasSelectedAgentRunId(selectedAgentRunId)) {
       setAgentStreamStatus('idle');
-      return;
+      return undefined;
     }
 
     setAgentStreamStatus('connecting');
@@ -128,6 +120,35 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
       source.close();
     };
   }, [selectedAgentRunId]);
+
+  return [agentStreamStatus, setAgentStreamStatus];
+};
+
+export function AgentRunProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
+  const [agentStreamStatus, setAgentStreamStatus] = useAgentRunStreamState(selectedAgentRunId);
+
+  const {
+    data: agentRuns = [],
+    isLoading: isLoadingRuns,
+    refetch: refetchRuns,
+    error: runsError,
+  } = useAgentRuns();
+  const { data: agentSnapshots = [], error: snapshotsError } =
+    useAgentSnapshots(selectedAgentRunId);
+  const { data: agentBrowserLogs = [], error: logsError } = useAgentLogs(selectedAgentRunId, {
+    refetchInterval: 5000,
+  });
+  const { data: agentAuditLogs = [], error: auditsError } = useAgentAudits(selectedAgentRunId, {
+    refetchInterval: 5000,
+  });
+
+  const error = resolveAgentRunError(runsError, snapshotsError, logsError, auditsError);
+
+  const selectedAgentRun = useMemo(
+    () => agentRuns.find((run: AgentRunRecord) => run.id === selectedAgentRunId) ?? null,
+    [agentRuns, selectedAgentRunId]
+  );
 
   const listValue = useMemo<AgentRunListData>(
     () => ({

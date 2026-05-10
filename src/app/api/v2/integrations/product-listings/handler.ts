@@ -63,6 +63,14 @@ const normalizeStatus = (value: string | null | undefined): string =>
 const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok', 'linked']);
 const CLOSED_STATUS = 'closed';
 
+const shouldExposeMarketplaceStatus = (
+  marketplace: MarketplaceBadgeKey,
+  status: string
+): boolean => {
+  if (marketplace !== 'ecommerce') return status.length > 0;
+  return SUCCESS_STATUSES.has(status);
+};
+
 const shouldReplaceTraderaClosedCandidate = (
   currentMeta: ListingBadgeCandidateMeta,
   nextMeta: ListingBadgeCandidateMeta
@@ -276,12 +284,15 @@ const buildPayload = async (
     }
 
     const normalizedStatus = normalizeStatus(listing.status);
+    if (!shouldExposeMarketplaceStatus(marketplace, normalizedStatus)) continue;
+
     const candidateKey = `${listing.productId}:${marketplace}`;
     const current = byProduct.get(listing.productId) ?? {};
     const currentMeta = candidateMetaByKey.get(candidateKey);
+    const parsedUpdatedAtMs = Date.parse(listing.updatedAt ?? '');
     const nextMeta = {
-      status: normalizedStatus || 'unknown',
-      updatedAtMs: Date.parse(listing.updatedAt ?? '') || 0,
+      status: normalizedStatus.length > 0 ? normalizedStatus : 'unknown',
+      updatedAtMs: Number.isFinite(parsedUpdatedAtMs) ? parsedUpdatedAtMs : 0,
       rank: statusRank[normalizedStatus] ?? -1,
       success: SUCCESS_STATUSES.has(normalizedStatus),
     };
@@ -311,12 +322,6 @@ const buildPayload = async (
   }
   if (timings) {
     timings['assemble'] = performance.now() - assembleStart;
-  }
-
-  for (const productId of normalizedRequestedProductIds) {
-    const current = byProduct.get(productId);
-    if (current?.ecommerce !== undefined) continue;
-    byProduct.set(productId, { ...(current ?? {}), ecommerce: 'active' });
   }
 
   const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;

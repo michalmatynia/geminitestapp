@@ -7,8 +7,6 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   base64ToFile,
   dataUrlToFile,
-  deletePersonaAvatar,
-  deletePersonaAvatarThumbnail,
   isImageDataUrl,
   isInlineSvgMarkup,
   uploadPersonaAvatar,
@@ -31,6 +29,10 @@ import {
 } from '@/shared/utils/observability/client-error-logger';
 
 import { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
+import {
+  deleteDraftAvatarFile,
+  deleteDraftAvatarThumbnail,
+} from './mood-editor/utils';
 
 type AgentPersonaMoodEditorProps = {
   moods?: AgentPersonaMood[] | null;
@@ -127,41 +129,16 @@ export function AgentPersonaMoodEditor({
     );
   };
 
-  const deleteDraftAvatarFile = async (fileId: string | null | undefined): Promise<void> => {
-    const normalizedFileId = typeof fileId === 'string' ? fileId.trim() : '';
-    if (!normalizedFileId || originalAvatarFileIds.has(normalizedFileId)) {
-      return;
-    }
-
-    try {
-      await deletePersonaAvatar(normalizedFileId);
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'AgentPersonaMoodEditor',
-        action: 'deleteDraftAvatarFile',
-        fileId: normalizedFileId,
-      });
-    }
+  const handleDeleteAvatar = async (fileId: string | null | undefined): Promise<void> => {
+    await deleteDraftAvatarFile(fileId, originalAvatarFileIds);
   };
 
-  const deleteDraftAvatarThumbnail = async (
-    thumbnailRef: string | null | undefined
-  ): Promise<void> => {
-    const normalizedRef = typeof thumbnailRef === 'string' ? thumbnailRef.trim() : '';
-    if (!normalizedRef || originalAvatarThumbnailRefs.has(normalizedRef)) {
-      return;
-    }
 
-    try {
-      await deletePersonaAvatarThumbnail(normalizedRef);
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'AgentPersonaMoodEditor',
-        action: 'deleteDraftAvatarThumbnail',
-        thumbnailRef: normalizedRef,
-      });
-    }
+  const handleDeleteThumbnail = async (thumbnailRef: string | null | undefined): Promise<void> => {
+    await deleteDraftAvatarThumbnail(thumbnailRef, originalAvatarThumbnailRefs);
   };
+
+
 
   const replaceMoodWithUpload = async (
     moodId: AgentPersonaMoodId,
@@ -191,54 +168,21 @@ export function AgentPersonaMoodEditor({
       avatarThumbnailHeight: uploaded.thumbnail?.height ?? null,
       useEmbeddedThumbnail: Boolean(uploaded.thumbnail?.dataUrl),
     }));
-    await deleteDraftAvatarFile(currentMood.avatarImageFileId);
-    await deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
+    await handleDeleteAvatar(currentMood.avatarImageFileId);
+    await handleDeleteThumbnail(currentMood.avatarThumbnailRef);
   };
 
-  const clearMoodImage = (moodId: AgentPersonaMoodId): void => {
+  const clearMoodImage = async (moodId: AgentPersonaMoodId): Promise<void> => {
     const currentMood = effectiveMoods.find((candidate) => candidate.id === moodId) ?? null;
-    if (!currentMood) {
-      return;
-    }
-
-    updateMood(moodId, (mood) => ({
-      ...mood,
-      avatarImageFileId: null,
-      avatarImageUrl: null,
-      avatarThumbnailRef: null,
-      avatarThumbnailDataUrl: null,
-      avatarThumbnailMimeType: null,
-      avatarThumbnailBytes: null,
-      avatarThumbnailWidth: null,
-      avatarThumbnailHeight: null,
-      useEmbeddedThumbnail: false,
-    }));
-    void deleteDraftAvatarFile(currentMood.avatarImageFileId);
-    void deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
+    await clearMoodImageUtility(moodId, currentMood, updateMood, handleDeleteAvatar, handleDeleteThumbnail);
   };
 
-  const setMoodSvgContent = (moodId: AgentPersonaMoodId, svgContent: string): void => {
+
+  const setMoodSvgContent = async (moodId: AgentPersonaMoodId, svgContent: string): Promise<void> => {
     const currentMood = effectiveMoods.find((candidate) => candidate.id === moodId) ?? null;
-    if (!currentMood) {
-      return;
-    }
-
-    updateMood(moodId, (mood) => ({
-      ...mood,
-      svgContent,
-      avatarImageFileId: null,
-      avatarImageUrl: null,
-      avatarThumbnailRef: null,
-      avatarThumbnailDataUrl: null,
-      avatarThumbnailMimeType: null,
-      avatarThumbnailBytes: null,
-      avatarThumbnailWidth: null,
-      avatarThumbnailHeight: null,
-      useEmbeddedThumbnail: false,
-    }));
-    void deleteDraftAvatarFile(currentMood.avatarImageFileId);
-    void deleteDraftAvatarThumbnail(currentMood.avatarThumbnailRef);
+    await setMoodSvgContentUtility(moodId, svgContent, currentMood, updateMood, handleDeleteAvatar, handleDeleteThumbnail);
   };
+
 
   const toggleEmbeddedThumbnail = (moodId: AgentPersonaMoodId): void => {
     updateMood(moodId, (mood) => ({
@@ -307,8 +251,8 @@ export function AgentPersonaMoodEditor({
   const handleRemoveMood = (moodId: AgentPersonaMoodId): void => {
     const currentMood = effectiveMoods.find((candidate) => candidate.id === moodId) ?? null;
     emitMoods(effectiveMoods.filter((candidate) => candidate.id !== moodId));
-    void deleteDraftAvatarFile(currentMood?.avatarImageFileId);
-    void deleteDraftAvatarThumbnail(currentMood?.avatarThumbnailRef);
+    void handleDeleteAvatar(currentMood?.avatarImageFileId);
+    void handleDeleteThumbnail(currentMood?.avatarThumbnailRef);
   };
 
   return (

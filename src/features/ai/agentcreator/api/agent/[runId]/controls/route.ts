@@ -1,43 +1,57 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { runAgentBrowserControl } from '@/features/ai/agent-runtime/tools/run-agent-browser-control';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import {
-  apiHandlerWithParams,
-  type ApiHandlerContext as _ApiHandlerContext,
-} from '@/shared/lib/api/api-handler';
-import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+const CONTROL_ACTIONS = ['goto', 'reload', 'snapshot'] as const;
+
+type ControlAction = (typeof CONTROL_ACTIONS)[number];
+
+type ControlRequestBody = {
+  action?: string;
+  url?: string;
+  stepId?: string;
+  stepLabel?: string;
+};
+
+const isControlAction = (action: string | undefined): action is ControlAction =>
+  action !== undefined && CONTROL_ACTIONS.includes(action as ControlAction);
+
+const hasRequiredControlUrl = (action: ControlAction, url: string | undefined): boolean =>
+  action !== 'goto' || (url !== undefined && url.trim().length > 0);
+
+const getControlFailureMessage = (error: string | undefined): string =>
+  error !== undefined && error.length > 0 ? error : 'Control action failed.';
+
+const parseControlRequestBody = async (req: NextRequest): Promise<ControlRequestBody> => {
+  try {
+    return (await req.json()) as ControlRequestBody;
+  } catch (error) {
+    logClientError(error);
+    throw badRequestError('Invalid JSON payload');
+  }
+};
 
 async function postHandler(
   req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
-  if (!getChatbotAgentRunDelegate()) {
+  if (getChatbotAgentRunDelegate() === null) {
     throw internalError('Agent run storage is unavailable.');
   }
   const { runId } = await params;
-  let body: {
-    action?: string;
-    url?: string;
-    stepId?: string;
-    stepLabel?: string;
-  };
-  try {
-    body = (await req.json()) as typeof body;
-  } catch (error) {
-    logClientError(error);
-    throw badRequestError('Invalid JSON payload');
-  }
-  const action = body.action as 'goto' | 'reload' | 'snapshot' | undefined;
-  if (!action || !['goto', 'reload', 'snapshot'].includes(action)) {
+  const body = await parseControlRequestBody(req);
+  const { action } = body;
+  if (!isControlAction(action)) {
     throw badRequestError('Invalid control action.');
   }
-  if (action === 'goto' && !body.url?.trim()) {
+  if (!hasRequiredControlUrl(action, body.url)) {
     throw badRequestError('URL is required for goto action.');
   }
 
@@ -59,7 +73,7 @@ async function postHandler(
   });
 
   if (!result.ok) {
-    throw internalError(result.error || 'Control action failed.', {
+    throw internalError(getControlFailureMessage(result.error), {
       controlErrorId: result.errorId,
     });
   }

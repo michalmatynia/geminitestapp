@@ -14,19 +14,23 @@ const mocks = vi.hoisted(() => ({
   createImageFile: vi.fn(),
   getDiskPathFromPublicPath: vi.fn(),
   invalidateProduct: vi.fn(),
+  mkdir: vi.fn(),
   parseJsonBody: vi.fn(),
   readFile: vi.fn(),
   replaceProductImages: vi.fn(),
   updateProduct: vi.fn(),
   updateImageFile: vi.fn(),
   uploadBufferToFastComet: vi.fn(),
+  writeFile: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
 
 vi.mock('node:fs', () => ({
   promises: {
+    mkdir: mocks.mkdir,
     readFile: mocks.readFile,
+    writeFile: mocks.writeFile,
   },
 }));
 
@@ -101,7 +105,11 @@ describe('product image upload-to-fastcomet handler', () => {
         baseUrl: 'https://sparksofsindri.com',
         uploadEndpoint: 'https://sparksofsindri.com/api/uploads/index.php',
         deleteEndpoint: null,
-        authToken: null,
+        server: 'sparksofsindri.com',
+        port: 443,
+        username: 'fastcomet-user',
+        token: 'token-1',
+        authToken: 'token-1',
         keepLocalCopy: true,
         timeoutMs: 20_000,
         resolveIp: null,
@@ -129,10 +137,12 @@ describe('product image upload-to-fastcomet handler', () => {
     mocks.getDiskPathFromPublicPath.mockReturnValue(
       '/repo/public/uploads/products/SKU/photo.webp'
     );
+    mocks.mkdir.mockResolvedValue(undefined);
     mocks.readFile.mockResolvedValue(Buffer.from('image-bytes'));
     mocks.uploadBufferToFastComet.mockResolvedValue(
       'https://sparksofsindri.com/uploads/products/SKU/photo.webp'
     );
+    mocks.writeFile.mockResolvedValue(undefined);
   });
 
   it('uploads a linked local image file to FastComet and refreshes the product image snapshot', async () => {
@@ -260,6 +270,8 @@ describe('product image upload-to-fastcomet handler', () => {
       filepath: 'https://sparksofsindri.com/uploads/products/SKU_1/generated.png',
       mimetype: 'image/png',
       metadata: {
+        localPublicPath: '/uploads/products/SKU_1/generated.png',
+        mirroredLocally: true,
         publicPath: '/uploads/products/SKU_1/generated.png',
         storageSource: 'fastcomet',
       },
@@ -311,6 +323,15 @@ describe('product image upload-to-fastcomet handler', () => {
     expect(uploadArgs.filename).toMatch(/\.png$/);
     expect(uploadArgs.mimetype).toBe('image/png');
     expect(uploadArgs.publicPath).toMatch(/^\/uploads\/products\/SKU_1\/.+\.png$/);
+    expect(mocks.getDiskPathFromPublicPath).toHaveBeenCalledWith(uploadArgs.publicPath);
+    expect(mocks.mkdir).toHaveBeenCalledWith(
+      '/repo/public/uploads/products/SKU',
+      { recursive: true }
+    );
+    expect(mocks.writeFile).toHaveBeenCalledWith(
+      '/repo/public/uploads/products/SKU/photo.webp',
+      Buffer.from('image-bytes')
+    );
     expect(mocks.createImageFile).toHaveBeenCalledWith(
       expect.objectContaining({
         filepath: uploadedImageFile.filepath,
@@ -321,6 +342,8 @@ describe('product image upload-to-fastcomet handler', () => {
     );
     expect(mocks.createImageFile.mock.calls[0]?.[0].metadata).toEqual(
       expect.objectContaining({
+        localPublicPath: uploadArgs.publicPath,
+        mirroredLocally: true,
         originalFilename: 'fresh.png',
         publicPath: uploadArgs.publicPath,
         storageSource: 'fastcomet',
@@ -368,6 +391,10 @@ describe('product image upload-to-fastcomet handler', () => {
         baseUrl: '',
         uploadEndpoint: '',
         deleteEndpoint: null,
+        server: null,
+        port: null,
+        username: null,
+        token: null,
         authToken: null,
         keepLocalCopy: false,
         timeoutMs: 20_000,

@@ -28,7 +28,10 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 type Toast = ReturnType<typeof useToast>['toast'];
 
-type RecoveryTarget = Pick<ProductListingCreatePayload, 'integrationId' | 'connectionId'>;
+type ConnectionTarget = Pick<ProductListingCreatePayload, 'integrationId' | 'connectionId'>;
+
+type RecoveryTarget = ConnectionTarget &
+  Required<Pick<ProductListingCreatePayload, 'browserMode'>>;
 
 type SetFeedbackStatus = (
   status: QuickExportFeedbackStatus | null,
@@ -48,6 +51,7 @@ type TraderaQuickListConnectionActions = {
 
 export type RunTraderaQuickListActionInput = TraderaQuickListConnectionActions & {
   productId: string;
+  browserMode: RecoveryTarget['browserMode'];
   queryClient: QueryClient;
   toast: Toast;
   createListing: CreateTraderaListing;
@@ -61,10 +65,17 @@ const readNonEmptyString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
 const resolveRecoveryTarget = (
-  connection: ResolvedTraderaBrowserConnection
+  connection: ResolvedTraderaBrowserConnection,
+  browserMode: RecoveryTarget['browserMode']
 ): RecoveryTarget => ({
   integrationId: connection.integrationId,
   connectionId: connection.connection.id,
+  browserMode,
+});
+
+const toConnectionTarget = (target: ConnectionTarget): ConnectionTarget => ({
+  integrationId: target.integrationId,
+  connectionId: target.connectionId,
 });
 
 const openAuthRecovery = (
@@ -108,12 +119,12 @@ const ensureManualSession = async (
   input: RunTraderaQuickListActionInput,
   target: RecoveryTarget
 ): Promise<boolean> => {
-  const response = await ensureTraderaBrowserSession(target);
+  const response = await ensureTraderaBrowserSession(toConnectionTarget(target));
   if (response.savedSession) {
     input.toast('Tradera login session refreshed.', { variant: 'success' });
     return true;
   }
-  input.setFeedbackStatus('failed', target);
+  input.setFeedbackStatus('failed', toConnectionTarget(target));
   input.toast(
     'Tradera login session could not be saved. Complete login verification and retry.',
     { variant: 'error' }
@@ -126,7 +137,7 @@ const ensureQuickListSession = async (
   input: RunTraderaQuickListActionInput,
   target: RecoveryTarget
 ): Promise<boolean> => {
-  const preflight = await preflightTraderaQuickListSession(target);
+  const preflight = await preflightTraderaQuickListSession(toConnectionTarget(target));
   if (preflight.ready) return true;
   return ensureManualSession(input, target);
 };
@@ -166,9 +177,10 @@ const queueTraderaListing = async (
   const response = await input.createListing(target);
   const listingId = readNonEmptyString(response.id);
   const queueJobId = readNonEmptyString(response.queue?.jobId);
+  const feedbackTarget = toConnectionTarget(target);
 
   input.setFeedbackStatus('queued', {
-    ...target,
+    ...feedbackTarget,
     listingId,
     requestId: queueJobId,
   });
@@ -206,7 +218,7 @@ const resolveFailureFeedbackOptions = (
   authRequired: boolean,
   errorMessage: string
 ): QuickExportFeedbackOptions => ({
-  ...target,
+  ...(target ? toConnectionTarget(target) : undefined),
   failureReason: authRequired ? null : errorMessage,
 });
 
@@ -251,8 +263,8 @@ export const runTraderaQuickListAction = async (
   try {
     const connection = await resolveRequiredConnection(input);
     if (connection === null) return;
-    target = resolveRecoveryTarget(connection);
-    input.setFeedbackStatus('processing', target);
+    target = resolveRecoveryTarget(connection, input.browserMode);
+    input.setFeedbackStatus('processing', toConnectionTarget(target));
     if (!(await ensureQuickListSession(input, target))) return;
     await queueTraderaListing(input, target);
   } catch (error: unknown) {

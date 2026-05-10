@@ -15,6 +15,29 @@ function normalize(s: string): string {
     .trim();
 }
 
+const tokenize = (value: string): string[] =>
+  normalize(value)
+    .split(' ')
+    .filter((token) => token !== '');
+
+const nodeMatchesFilters = (
+  node: ContextNode,
+  filters: { kinds?: ContextNodeKind[]; tags?: string[] }
+): boolean => {
+  if (filters.kinds !== undefined && filters.kinds.length > 0 && !filters.kinds.includes(node.kind)) {
+    return false;
+  }
+  if (filters.tags === undefined || filters.tags.length === 0) return true;
+
+  const nodeTags = new Set(node.tags.map(normalize));
+  return filters.tags.every((tag) => nodeTags.has(normalize(tag)));
+};
+
+const scoreNode = (node: ContextNode, tokens: string[]): number => {
+  const hay = normalize(`${node.id} ${node.name} ${node.description} ${node.tags.join(' ')}`);
+  return tokens.filter((token) => hay.includes(token)).length;
+};
+
 // ─── CodeFirstRegistryBackend ─────────────────────────────────────────────────
 
 export class CodeFirstRegistryBackend implements ContextRegistryBackend {
@@ -48,59 +71,65 @@ export class CodeFirstRegistryBackend implements ContextRegistryBackend {
   }): ContextNode[] {
     const { query, kinds, tags: filterTags, limit } = params;
 
-    if (!query) {
-      // No text query: iterate all nodes, apply kind/tag filters, stop at limit.
-      const results: ContextNode[] = [];
-      for (const node of this.byId.values()) {
-        if (kinds && kinds.length > 0 && !kinds.includes(node.kind)) continue;
-        if (filterTags && filterTags.length > 0) {
-          const nodeTags = new Set(node.tags.map(normalize));
-          if (!filterTags.every((t) => nodeTags.has(normalize(t)))) continue;
-        }
-        results.push(node);
-        if (results.length >= limit) break;
-      }
-      return results;
-    }
+    if (query === undefined || query === '') return this.searchWithoutQuery(params);
 
-    const q = normalize(query);
-    const tokens = q.split(' ').filter(Boolean);
+    const tokens = tokenize(query);
+    return this.searchCandidates(tokens, { kinds, tags: filterTags, limit });
+  }
 
-    // Build candidate set from inverted index.
+  // ─── Private ───────────────────────────────────────────────────────────────
+
+  private collectCandidateIds(tokens: string[]): Set<string> {
     const candidates = new Set<string>();
+
     for (const t of tokens) {
       const hit = this.inverted.get(t);
       if (hit) for (const id of hit) candidates.add(id);
     }
 
-    // Score candidates by token hit count, apply kind/tag filters.
+    return candidates;
+  }
+
+  private searchCandidates(
+    tokens: string[],
+    params: {
+      kinds?: ContextNodeKind[];
+      tags?: string[];
+      limit: number;
+    }
+  ): ContextNode[] {
     const scored: Array<{ node: ContextNode; score: number }> = [];
-    for (const id of candidates) {
+    for (const id of this.collectCandidateIds(tokens)) {
       const node = this.byId.get(id);
-      if (!node) continue;
-      if (kinds && kinds.length > 0 && !kinds.includes(node.kind)) continue;
-      if (filterTags && filterTags.length > 0) {
-        const nodeTags = new Set(node.tags.map(normalize));
-        if (!filterTags.every((t) => nodeTags.has(normalize(t)))) continue;
-      }
-      const hay = normalize(`${node.id} ${node.name} ${node.description} ${node.tags.join(' ')}`);
-      let score = 0;
-      for (const t of tokens) if (hay.includes(t)) score++;
-      scored.push({ node, score });
+      if (node === undefined || !nodeMatchesFilters(node, params)) continue;
+      scored.push({ node, score: scoreNode(node, tokens) });
     }
 
     scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, limit).map((x) => x.node);
+    return scored.slice(0, params.limit).map((x) => x.node);
   }
 
-  // ─── Private ───────────────────────────────────────────────────────────────
+  private searchWithoutQuery(params: {
+    kinds?: ContextNodeKind[];
+    tags?: string[];
+    limit: number;
+  }): ContextNode[] {
+    const results: ContextNode[] = [];
+    for (const node of this.byId.values()) {
+      if (!nodeMatchesFilters(node, { kinds: params.kinds, tags: params.tags })) continue;
+      results.push(node);
+      if (results.length >= params.limit) break;
+    }
+    return results;
+  }
 
   private buildIndex(nodes: ContextNode[]): void {
     for (const n of nodes) {
       const hay = normalize(`${n.id} ${n.name} ${n.description} ${n.tags.join(' ')}`);
-      for (const token of new Set(hay.split(' ').filter(Boolean))) {
-        if (!this.inverted.has(token)) this.inverted.set(token, new Set());
-        this.inverted.get(token)!.add(n.id);
+      for (const token of new Set(tokenize(hay))) {
+        const indexedIds = this.inverted.get(token) ?? new Set<string>();
+        indexedIds.add(n.id);
+        this.inverted.set(token, indexedIds);
       }
     }
   }

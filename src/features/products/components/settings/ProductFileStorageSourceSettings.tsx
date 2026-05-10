@@ -45,6 +45,22 @@ const getLocalBackupLabel = (
   return fastCometStatus.keepLocalCopy ? 'On' : 'Off';
 };
 
+const getConnectionLabel = (
+  source: FileStorageSource,
+  fastCometStatus: FastCometStorageStatus
+): string => {
+  if (source === 'local') return 'Local app';
+  if (
+    fastCometStatus.server === null ||
+    fastCometStatus.server === undefined ||
+    fastCometStatus.port === null ||
+    fastCometStatus.port === undefined
+  ) {
+    return 'Not configured';
+  }
+  return `${fastCometStatus.server}:${fastCometStatus.port}`;
+};
+
 function ProductFileSourceField({
   disabled,
   source,
@@ -89,9 +105,10 @@ function ProductFileSourceStatus({
   const publicBase =
     source === 'fastcomet' ? formatStatusValue(fastCometStatus.baseUrl) : '/public/uploads';
   const localBackup = getLocalBackupLabel(source, fastCometStatus);
+  const connection = getConnectionLabel(source, fastCometStatus);
 
   return (
-    <div className='grid gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs text-gray-300 sm:grid-cols-3'>
+    <div className='grid gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs text-gray-300 sm:grid-cols-4'>
       <div className='min-w-0 space-y-1'>
         <span className='block text-[10px] font-medium uppercase tracking-wider text-gray-500'>
           Selected source
@@ -104,6 +121,14 @@ function ProductFileSourceStatus({
         </span>
         <span className='block truncate font-medium text-gray-100' title={publicBase}>
           {publicBase}
+        </span>
+      </div>
+      <div className='min-w-0 space-y-1'>
+        <span className='block text-[10px] font-medium uppercase tracking-wider text-gray-500'>
+          Connection
+        </span>
+        <span className='block truncate font-medium text-gray-100' title={connection}>
+          {connection}
         </span>
       </div>
       <div className='min-w-0 space-y-1'>
@@ -184,7 +209,7 @@ export function ProductFileStorageSourceSettings(): React.JSX.Element {
 
       {controller.isFastCometMisconfigured && (
         <Alert variant='warning'>
-          FastComet needs a public base URL before it can be selected for product uploads.
+          FastComet needs SERVER, PORT, USERNAME, TOKEN, a public base URL, and an upload endpoint before product uploads can use it.
         </Alert>
       )}
 

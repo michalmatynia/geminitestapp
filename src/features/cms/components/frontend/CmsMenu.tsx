@@ -78,8 +78,14 @@ const getColors = (menu: MenuSettings, appMode: string | undefined): ColorScheme
 }, appMode ?? 'default');
 
 const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): React.CSSProperties => {
-  const position = isSide ? 'fixed' : (menu.stickyEnabled ?? false ? 'sticky' : 'relative');
-  const width = isSide ? (collapsed && menu.collapsible ?? false ? (menu.collapsedWidth ?? '50px') : (menu.sideWidth ?? '200px')) : '100%';
+  const isSticky = menu.stickyEnabled ?? false;
+  const isCollapsible = menu.collapsible ?? false;
+  const position = isSide ? 'fixed' : isSticky ? 'sticky' : 'relative';
+  const width = isSide
+    ? collapsed && isCollapsible
+      ? menu.collapsedWidth ?? '50px'
+      : menu.sideWidth ?? '200px'
+    : '100%';
   return {
     backgroundColor: 'inherit',
     color: 'inherit',

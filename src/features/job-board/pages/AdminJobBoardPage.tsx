@@ -20,7 +20,8 @@ import { Button } from '@/shared/ui/button';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input } from '@/shared/ui/input';
 
-import { JobScanDetailDialog } from './JobScanDetailDialog';
+import { JobScanDetailView } from './JobScanDetailView';
+import type { PromotionLogEntry } from './JobBoardUtils';
 
 const SCANS_ENDPOINT = '/api/v2/jobs/scans';
 const COMPANIES_ENDPOINT = '/api/v2/jobs/companies';
@@ -34,20 +35,7 @@ const JOB_SCAN_PROVIDER_OPTIONS = [
   { value: 'pracuj_pl', label: 'Pracuj.pl' },
   { value: 'justjoin_it', label: 'Just Join IT' },
   { value: 'nofluffjobs', label: 'No Fluff Jobs' },
-] as const;
-
-type PromotionLogEntry = {
-  scanId: string;
-  scanSourceUrl: string;
-  companyId: string | null;
-  companyName: string | null;
-  kind: 'auto' | 'manual';
-  status: 'completed' | 'skipped' | 'failed' | 'pending' | 'running';
-  message: string | null;
-  startedAt: string | null;
-  completedAt: string | null;
-  durationMs: number | null;
-};
+] as const satisfies ReadonlyArray<{ value: JobScanProviderSelection; label: string }>;
 
 const PROMOTION_STEP_KEYS: Record<string, PromotionLogEntry['kind']> = {
   auto_promote: 'auto',
@@ -60,8 +48,8 @@ const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): Prom
   for (const scan of scans) {
     for (const step of scan.steps) {
       const kind = PROMOTION_STEP_KEYS[step.key];
-      if (!kind) continue;
-      const company = scan.companyId ? companyById.get(scan.companyId) ?? null : null;
+      if (kind === undefined) continue;
+      const company = scan.companyId !== null ? companyById.get(scan.companyId) ?? null : null;
       entries.push({
         scanId: scan.id,
         scanSourceUrl: scan.sourceUrl,
@@ -73,7 +61,7 @@ const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): Prom
             | undefined) ??
           null,
         kind,
-        status: step.status,
+        status: step.status as PromotionLogEntry['status'],
         message: step.message,
         startedAt: step.startedAt,
         completedAt: step.completedAt,
@@ -82,8 +70,8 @@ const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): Prom
     }
   }
   return entries.sort((a, b) => {
-    const aTs = a.completedAt ? Date.parse(a.completedAt) : 0;
-    const bTs = b.completedAt ? Date.parse(b.completedAt) : 0;
+    const aTs = a.completedAt !== null ? Date.parse(a.completedAt) : 0;
+    const bTs = b.completedAt !== null ? Date.parse(b.completedAt) : 0;
     return bTs - aTs;
   });
 };
@@ -118,15 +106,15 @@ const statusBadge = (status: JobScanRecord['status']): string => {
 };
 
 const formatSalary = (salary: JobListing['salary']): string => {
-  if (!salary) return '—';
-  if (salary.raw) return salary.raw;
+  if (salary === null || salary === undefined) return '—';
+  if (typeof salary.raw === 'string' && salary.raw !== '') return salary.raw;
   const min = salary.min;
   const max = salary.max;
   const currency = salary.currency ?? '';
-  const period = salary.period ? ` / ${salary.period}` : '';
-  if (min != null && max != null) return `${min}–${max} ${currency}${period}`.trim();
-  if (min != null) return `from ${min} ${currency}${period}`.trim();
-  if (max != null) return `up to ${max} ${currency}${period}`.trim();
+  const period = (typeof salary.period === 'string' && salary.period !== '') ? ` / ${salary.period}` : '';
+  if (min !== null && max !== null) return `${min}–${max} ${currency}${period}`.trim();
+  if (min !== null) return `from ${min} ${currency}${period}`.trim();
+  if (max !== null) return `up to ${max} ${currency}${period}`.trim();
   return '—';
 };
 
@@ -339,18 +327,14 @@ export function AdminJobBoardPage(): React.JSX.Element {
           isLoading={isLoading}
           onSelectScan={(scanId) => {
             const scan = scans.find((s) => s.id === scanId);
-            if (scan) setSelectedScan(scan);
+            if (scan !== undefined) setSelectedScan(scan);
           }}
         />
       )}
 
-      <JobScanDetailDialog
-        scan={selectedScan}
-        company={
-          selectedScan?.companyId
-            ? companies.find((c) => c.id === selectedScan.companyId) ?? null
-            : null
-        }
+      <JobScanDetailView
+        selectedScan={selectedScan}
+        companies={companies}
         onClose={() => setSelectedScan(null)}
         onCompanyUpdated={handleCompanyUpdated}
         onPromoted={() => {
@@ -429,8 +413,9 @@ function ScansTable({
                     {typeof confidence === 'number' ? confidence.toFixed(2) : '—'}
                   </td>
                   <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
-                    {scan.createdAt ? new Date(scan.createdAt).toLocaleString() : '—'}
+                    {new Date(scan.createdAt).toLocaleString()}
                   </td>
+
                 </tr>
               );
             })

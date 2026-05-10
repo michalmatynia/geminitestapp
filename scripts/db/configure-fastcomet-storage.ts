@@ -17,6 +17,10 @@ type CliOptions = {
   uploadEndpoint: string;
   baseUrl: string;
   deleteEndpoint: string;
+  server: string;
+  port: number;
+  username: string;
+  token: string;
   authToken: string;
   keepLocalCopy: boolean;
   timeoutMs: number;
@@ -66,6 +70,10 @@ const parseArgs = (argv: string[]): CliOptions => {
     uploadEndpoint: normalizeString(process.env['FASTCOMET_STORAGE_UPLOAD_URL']),
     baseUrl: normalizeString(process.env['FASTCOMET_STORAGE_BASE_URL']),
     deleteEndpoint: normalizeString(process.env['FASTCOMET_STORAGE_DELETE_URL']),
+    server: normalizeString(process.env['FASTCOMET_STORAGE_SERVER']),
+    port: parseNumber(process.env['FASTCOMET_STORAGE_PORT'], 443, 1, 65_535),
+    username: normalizeString(process.env['FASTCOMET_STORAGE_USERNAME']),
+    token: normalizeString(process.env['FASTCOMET_STORAGE_TOKEN']),
     authToken: normalizeString(process.env['FASTCOMET_STORAGE_AUTH_TOKEN']),
     keepLocalCopy: parseBoolean(process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'], true),
     resolveIp: normalizeString(process.env['FASTCOMET_STORAGE_RESOLVE_IP']),
@@ -106,6 +114,22 @@ const parseArgs = (argv: string[]): CliOptions => {
       options.deleteEndpoint = normalizeString(arg.slice('--delete-endpoint='.length));
       return;
     }
+    if (arg.startsWith('--server=')) {
+      options.server = normalizeString(arg.slice('--server='.length));
+      return;
+    }
+    if (arg.startsWith('--port=')) {
+      options.port = parseNumber(arg.slice('--port='.length), 443, 1, 65_535);
+      return;
+    }
+    if (arg.startsWith('--username=')) {
+      options.username = normalizeString(arg.slice('--username='.length));
+      return;
+    }
+    if (arg.startsWith('--token=')) {
+      options.token = normalizeString(arg.slice('--token='.length));
+      return;
+    }
     if (arg.startsWith('--auth-token=')) {
       options.authToken = normalizeString(arg.slice('--auth-token='.length));
       return;
@@ -132,11 +156,16 @@ const parseArgs = (argv: string[]): CliOptions => {
 };
 
 const buildPayloads = (options: CliOptions): SettingPayload[] => {
+  const token = options.token || options.authToken;
   const fastCometConfig: FastCometStorageConfig = {
     baseUrl: options.baseUrl,
     uploadEndpoint: options.uploadEndpoint,
     deleteEndpoint: options.deleteEndpoint || null,
-    authToken: options.authToken || null,
+    server: options.server || null,
+    port: options.port,
+    username: options.username || null,
+    token: token || null,
+    authToken: token || null,
     keepLocalCopy: options.keepLocalCopy,
     timeoutMs: options.timeoutMs,
     resolveIp: options.resolveIp || null,
@@ -184,6 +213,18 @@ async function main(): Promise<void> {
       'FastComet source requires an upload endpoint. Set FASTCOMET_STORAGE_UPLOAD_URL or pass --upload-endpoint.'
     );
   }
+  const token = options.token || options.authToken;
+  if (
+    options.source === 'fastcomet' &&
+    (options.server.length === 0 ||
+      options.port < 1 ||
+      options.username.length === 0 ||
+      token.length === 0)
+  ) {
+    throw new Error(
+      'FastComet source requires SERVER, PORT, USERNAME and TOKEN. Set FASTCOMET_STORAGE_SERVER, FASTCOMET_STORAGE_PORT, FASTCOMET_STORAGE_USERNAME and FASTCOMET_STORAGE_TOKEN or pass --server, --port, --username and --token.'
+    );
+  }
 
   const payloads = buildPayloads(options);
 
@@ -221,6 +262,10 @@ async function main(): Promise<void> {
         uploadEndpoint: options.uploadEndpoint,
         baseUrl: options.baseUrl || null,
         deleteEndpoint: options.deleteEndpoint || null,
+        server: options.server || null,
+        port: options.port,
+        username: options.username || null,
+        tokenConfigured: Boolean(options.token || options.authToken),
         keepLocalCopy: options.keepLocalCopy,
         timeoutMs: options.timeoutMs,
         resolveIp: options.resolveIp || null,

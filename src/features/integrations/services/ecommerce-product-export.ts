@@ -18,7 +18,7 @@ import { ECOMMERCE_EXPORT_INTEGRATION_SLUG } from '@/shared/lib/integration-slug
 import {
   ECOM_CATEGORIES_COLLECTION,
   ECOM_PRODUCTS_COLLECTION,
-  getEcommerceExportDb,
+  getCloudEcommerceExportDb,
   getAllEcommerceExportDbsForCleanup,
 } from './ecommerce-product-export.config';
 import {
@@ -152,45 +152,33 @@ export const deleteProductFromEcommerceExport = async (
     };
   }
 
-  const [ecommerceDbs, productsDb] = await Promise.all([
-    getAllEcommerceExportDbsForCleanup(),
-    getMongoDb(),
-  ]);
+  const ecommerceDbs = await getAllEcommerceExportDbsForCleanup();
 
   const deleteQuery = {
     $or: [{ _id: normalizedProductId }, { sourceProductId: normalizedProductId }],
   };
 
-  const now = new Date();
-  const [ecommerceResults, listingResult] = await Promise.all([
-    Promise.allSettled(
-      ecommerceDbs.map((db) => db.collection(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery))
-    ),
-    productsDb.collection(PRODUCT_LISTINGS_COLLECTION).updateMany(
-      { productId: normalizedProductId, integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG },
-      { $set: { status: 'removed', updatedAt: now } }
-    ),
-  ]);
+  const ecommerceResults = await Promise.all(
+    ecommerceDbs.map((db) => db.collection(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery))
+  );
+  const ecommerceDeletedCount = ecommerceResults.reduce(
+    (total, result) => total + result.deletedCount,
+    0
+  );
 
-  let ecommerceDeletedCount = 0;
-  for (const result of ecommerceResults) {
-    if (result.status === 'fulfilled') {
-      ecommerceDeletedCount += result.value.deletedCount;
-    } else {
-      void logSystemEvent({
-        level: 'warn',
-        message: 'ecommerce-product-export: deleteProductFromEcommerceExport — one source failed',
-        source: 'ecommerce-product-export',
-        context: { productId: normalizedProductId, error: result.reason instanceof Error ? result.reason.message : String(result.reason) },
-      });
-    }
-  }
+  const productsDb = await getMongoDb();
+  const listingResult = await productsDb
+    .collection(PRODUCT_LISTINGS_COLLECTION)
+    .deleteMany({
+      productId: normalizedProductId,
+      integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
+    });
 
   return {
     success: true,
     productId: normalizedProductId,
     ecommerceDeletedCount,
-    listingDeletedCount: listingResult.modifiedCount,
+    listingDeletedCount: listingResult.deletedCount,
   };
 };
 
@@ -207,7 +195,7 @@ export const exportProductToEcommerce = async (
   const exportedAt = new Date().toISOString();
   const document = buildEcommerceProductExportDocument(product, exportedAt);
   const categoryDocument = buildEcommerceCategoryDocument(product, exportedAt);
-  const db = await getEcommerceExportDb();
+  const db = await getCloudEcommerceExportDb();
   await ensureEcommerceExportIndexes(db);
 
   const products = db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION);
@@ -237,22 +225,16 @@ export const checkEcommerceProductsExistence = async (
     const dbs = await getAllEcommerceExportDbsForCleanup();
     const query = { _id: { $in: productIds as unknown[] } };
     const projection = { projection: { _id: 1 } };
-    // Query all configured sources in parallel and union the results.
+    // Query the write-target ecommerce source and normalize the matching ids.
     const results = await Promise.allSettled(
       dbs.map((db) =>
         db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION).find(query, projection).toArray()
       )
     );
-    const found = new Set<string>();
-    for (const result of results) {
-      if (result.status === 'fulfilled') {
-        for (const doc of result.value) {
-          const id = String(doc._id);
-          if (id.length > 0) found.add(id);
-        }
-      }
-    }
-    return found;
+    const ids = results.flatMap((result) =>
+      result.status === 'fulfilled' ? result.value.map((doc) => String(doc._id)) : []
+    );
+    return new Set(ids.filter((id) => id.length > 0));
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

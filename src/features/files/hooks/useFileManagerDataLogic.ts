@@ -1,10 +1,8 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import { useFileQueries } from '@/features/files/hooks/useFileQueries';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
-import type { FileManagerData } from '@/features/files/contexts/FileManagerContext.types';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 function isBase64(clean: string): boolean {
   return clean.startsWith('data:');
@@ -51,8 +49,7 @@ export function useFileManagerDataLogic(options: {
   tagSearchList: string[];
   enableTagSearch: boolean;
   filepathFilter?: (filepath: string) => boolean;
-  folderFilter: string;
-}): FileManagerData {
+}): FileManagerDataLogic {
   const {
     filenameSearch,
     productNameSearch,
@@ -93,10 +90,6 @@ export function useFileManagerDataLogic(options: {
     files,
     visibleFiles,
     assets3d,
-    folderOptions: [],
-    tagOptions: [],
-    filteredFiles: visibleFiles,
-    folderFilter,
-    isPending: false,
+    getFileKind,
   };
 }

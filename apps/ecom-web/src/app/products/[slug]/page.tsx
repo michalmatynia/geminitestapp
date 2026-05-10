@@ -9,7 +9,7 @@ import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   return PRODUCTS.map((p) => ({ slug: p.slug }));

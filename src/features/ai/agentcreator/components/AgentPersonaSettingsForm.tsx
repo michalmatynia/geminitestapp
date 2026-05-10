@@ -24,6 +24,9 @@ type AgentPersonaSettingsFormProps = {
   onChange: (updates: Partial<AgentPersona>) => void;
 };
 
+type AgentPersonaSettings = ReturnType<typeof buildAgentPersonaSettings>;
+type AgentPersonaMemorySettings = NonNullable<AgentPersonaSettings['memory']>;
+
 const MODEL_FIELDS: ModelField[] = [
   {
     label: 'Executor / Main Model',
@@ -92,16 +95,19 @@ function BrainManagedModelField({
   capability: AiBrainCapabilityKey;
 }): React.JSX.Element | null {
   const field = MODEL_FIELD_BY_CAPABILITY.get(capability);
-  if (!field) return null;
+  if (field === undefined) {
+    return null;
+  }
 
   const brainModel = useBrainAssignment({
     capability,
   });
 
   const effectiveModelId = brainModel.effectiveModelId.trim();
-  const displayValue = effectiveModelId || 'Not configured in AI Brain';
+  const displayValue =
+    effectiveModelId.length > 0 ? effectiveModelId : 'Not configured in AI Brain';
   const helperText = useMemo(() => {
-    if (effectiveModelId) {
+    if (effectiveModelId.length > 0) {
       return 'Brain-managed.';
     }
     return 'Set this capability in AI Brain to make it active.';
@@ -120,6 +126,129 @@ function BrainManagedModelField({
   );
 }
 
+const parseDefaultSearchLimit = (value: string): number => {
+  const source = value.length > 0 ? value : '20';
+  const parsed = Number.parseInt(source, 10);
+  const fallback = Number.isFinite(parsed) ? parsed : 20;
+  return Math.min(50, Math.max(1, fallback));
+};
+
+function MemorySearchLimitField({
+  settings,
+  onUpdate,
+}: {
+  settings: Partial<AgentPersonaMemorySettings>;
+  onUpdate: (updates: Partial<AgentPersonaMemorySettings>) => void;
+}): React.JSX.Element {
+  return (
+    <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
+      <FormField label='Default search limit'>
+        <Input
+          type='number'
+          min={1}
+          max={50}
+          value={String(settings.defaultSearchLimit ?? 20)}
+          onChange={(event) =>
+            onUpdate({
+              defaultSearchLimit: parseDefaultSearchLimit(event.target.value),
+            })
+          }
+          aria-label='Default search limit'
+          title='Default search limit'
+        />
+      </FormField>
+      <div className='rounded-md border border-border/60 bg-card/25 px-3 py-2 text-xs text-gray-400'>
+        Memories preserve source, source time, capture time, tags, topic hints, and mood hints.
+        Chat history is stored in the same bank and can be searched alongside durable memories.
+      </div>
+    </div>
+  );
+}
+
+function MemoryToggleControls({
+  settings,
+  onUpdate,
+}: {
+  settings: Partial<AgentPersonaMemorySettings>;
+  onUpdate: (updates: Partial<AgentPersonaMemorySettings>) => void;
+}): React.JSX.Element {
+  return (
+    <div className='mt-4 flex flex-wrap gap-4'>
+      <ToggleRow
+        label='Memory enabled'
+        checked={settings.enabled !== false}
+        onCheckedChange={(checked) => onUpdate({ enabled: checked })}
+        className='border-none bg-transparent hover:bg-transparent p-0'
+      />
+      <ToggleRow
+        label='Include chat history'
+        checked={settings.includeChatHistory !== false}
+        onCheckedChange={(checked) => onUpdate({ includeChatHistory: checked })}
+        className='border-none bg-transparent hover:bg-transparent p-0'
+      />
+      <ToggleRow
+        label='Use mood signals'
+        checked={settings.useMoodSignals !== false}
+        onCheckedChange={(checked) => onUpdate({ useMoodSignals: checked })}
+        className='border-none bg-transparent hover:bg-transparent p-0'
+      />
+    </div>
+  );
+}
+
+function AgentPersonaMemoryBankSection({
+  item,
+  originalItem,
+  personaId,
+  onChange,
+}: AgentPersonaSettingsFormProps & {
+  personaId: string | null;
+}): React.JSX.Element {
+  const resolvedSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
+  const resolvedMemorySettings = resolvedSettings.memory ?? {};
+  const updateMemorySettings = (updates: Partial<AgentPersonaMemorySettings>): void => {
+    const nextSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
+    onChange({
+      settings: {
+        ...nextSettings,
+        memory: {
+          ...nextSettings.memory,
+          ...updates,
+        },
+      },
+    });
+  };
+
+  return (
+    <FormSection
+      title='Memory bank'
+      description='Each persona owns a searchable memory bank with provenance, chat history, and mood signals.'
+      variant='subtle'
+      className='p-4'
+      actions={
+        personaId !== null ? (
+          <Button variant='outline' size='sm' asChild>
+            <Link href={`/admin/agentcreator/personas/${personaId}/memory`}>Open memory</Link>
+          </Button>
+        ) : null
+      }
+    >
+      <MemorySearchLimitField settings={resolvedMemorySettings} onUpdate={updateMemorySettings} />
+      <MemoryToggleControls settings={resolvedMemorySettings} onUpdate={updateMemorySettings} />
+    </FormSection>
+  );
+}
+
+function AgentPersonaModelRoutingFields(): React.JSX.Element {
+  return (
+    <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
+      {MODEL_FIELDS.map((field: ModelField) => (
+        <BrainManagedModelField key={field.capability} capability={field.capability} />
+      ))}
+    </div>
+  );
+}
+
 export function AgentPersonaSettingsForm({
   item,
   originalItem,
@@ -130,24 +259,7 @@ export function AgentPersonaSettingsForm({
   const applyPersonaChange = (updates: Partial<AgentPersona>): void => {
     onChange(updates);
   };
-  const resolvedSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
-  const resolvedMemorySettings = resolvedSettings.memory ?? {};
   const personaId = item.id ?? originalItem?.id ?? null;
-
-  const updateMemorySettings = (
-    updates: Partial<NonNullable<typeof resolvedSettings.memory>>
-  ): void => {
-    const nextSettings = buildAgentPersonaSettings(item.settings ?? originalItem?.settings);
-    applyPersonaChange({
-      settings: {
-        ...nextSettings,
-        memory: {
-          ...nextSettings.memory,
-          ...updates,
-        },
-      },
-    });
-  };
 
   return (
     <div className='space-y-4'>
@@ -163,68 +275,14 @@ export function AgentPersonaSettingsForm({
         onChange={applyPersonaChange}
       />
 
-      <FormSection
-        title='Memory bank'
-        description='Each persona owns a searchable memory bank with provenance, chat history, and mood signals.'
-        variant='subtle'
-        className='p-4'
-        actions={
-          personaId ? (
-            <Button variant='outline' size='sm' asChild>
-              <Link href={`/admin/agentcreator/personas/${personaId}/memory`}>Open memory</Link>
-            </Button>
-          ) : null
-        }
-      >
-        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
-          <FormField label='Default search limit'>
-            <Input
-              type='number'
-              min={1}
-              max={50}
-              value={String(resolvedMemorySettings.defaultSearchLimit ?? 20)}
-              onChange={(event) =>
-                updateMemorySettings({
-                  defaultSearchLimit: Math.min(
-                    50,
-                    Math.max(1, Number.parseInt(event.target.value || '20', 10) || 20)
-                  ),
-                })
-              }
-             aria-label='Default search limit' title='Default search limit'/>
-          </FormField>
-          <div className='rounded-md border border-border/60 bg-card/25 px-3 py-2 text-xs text-gray-400'>
-            Memories preserve source, source time, capture time, tags, topic hints, and mood hints.
-            Chat history is stored in the same bank and can be searched alongside durable memories.
-          </div>
-        </div>
-        <div className='mt-4 flex flex-wrap gap-4'>
-          <ToggleRow
-            label='Memory enabled'
-            checked={resolvedMemorySettings.enabled !== false}
-            onCheckedChange={(checked) => updateMemorySettings({ enabled: checked })}
-            className='border-none bg-transparent hover:bg-transparent p-0'
-          />
-          <ToggleRow
-            label='Include chat history'
-            checked={resolvedMemorySettings.includeChatHistory !== false}
-            onCheckedChange={(checked) => updateMemorySettings({ includeChatHistory: checked })}
-            className='border-none bg-transparent hover:bg-transparent p-0'
-          />
-          <ToggleRow
-            label='Use mood signals'
-            checked={resolvedMemorySettings.useMoodSignals !== false}
-            onCheckedChange={(checked) => updateMemorySettings({ useMoodSignals: checked })}
-            className='border-none bg-transparent hover:bg-transparent p-0'
-          />
-        </div>
-      </FormSection>
+      <AgentPersonaMemoryBankSection
+        item={item}
+        originalItem={originalItem}
+        personaId={personaId}
+        onChange={applyPersonaChange}
+      />
 
-      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
-        {MODEL_FIELDS.map((field: ModelField) => (
-          <BrainManagedModelField key={field.capability} capability={field.capability} />
-        ))}
-      </div>
+      <AgentPersonaModelRoutingFields />
     </div>
   );
 }

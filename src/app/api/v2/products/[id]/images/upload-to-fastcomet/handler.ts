@@ -107,11 +107,30 @@ const loadProduct = async (
   return product;
 };
 
+const hasText = (value: string | null | undefined): boolean => (value?.trim() ?? '').length > 0;
+
+const hasFastCometConnectionTarget = (
+  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
+): boolean =>
+  fastComet.uploadEndpoint.length > 0 &&
+  hasText(fastComet.server) &&
+  fastComet.port !== null &&
+  fastComet.port !== undefined;
+
+const hasFastCometConnectionCredentials = (
+  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
+): boolean => hasText(fastComet.username) && hasText(fastComet.token ?? fastComet.authToken);
+
+const isFastCometConfigured = (
+  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
+): boolean =>
+  hasFastCometConnectionTarget(fastComet) && hasFastCometConnectionCredentials(fastComet);
+
 const requireFastCometConfigured = async (): Promise<void> => {
   const settings = await getFileStorageSettings();
-  if (settings.fastComet.uploadEndpoint.length === 0) {
+  if (isFastCometConfigured(settings.fastComet) === false) {
     throw badRequestError(
-      'FastComet storage is not configured. Set FASTCOMET_STORAGE_BASE_URL or configure fastcomet_storage_config_v1 in Settings.',
+      'FastComet storage is not configured. Enter SERVER, PORT, USERNAME and TOKEN in File Storage settings.',
       { hint: 'FASTCOMET_STORAGE_CONFIG_SETTING_KEY' }
     );
   }

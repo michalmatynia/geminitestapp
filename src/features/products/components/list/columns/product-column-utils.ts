@@ -4,6 +4,11 @@ import type {
 } from '@/shared/contracts/products/product';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
+export type ProductImageStorageStatus = {
+  hasFastCometImage: boolean;
+  hasLocalImage: boolean;
+  hasExternalLinkImage: boolean;
+};
 
 const NAME_KEY_TO_LANGUAGE_CODE: Record<ProductNameKey, string> = {
   name_en: 'en',
@@ -73,6 +78,60 @@ export const getImageFilepath = (imageFile: unknown): string | undefined => {
     if (typeof value === 'string' && value.trim().length > 0) return value;
   }
   return undefined;
+};
+
+const isHttpImagePath = (value: string | undefined): boolean =>
+  typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+
+const getProductImageFileRecords = (product: ProductWithImages): Record<string, unknown>[] =>
+  (Array.isArray(product.images) ? product.images : [])
+    .map((image) => toRecord(image)?.['imageFile'])
+    .map(toRecord)
+    .filter((record): record is Record<string, unknown> => record !== null);
+
+const isFastCometImageFileRecord = (imageFile: Record<string, unknown>): boolean => {
+  const metadata = toRecord(imageFile['metadata']);
+  return (
+    toTrimmedString(imageFile['storageProvider']) === 'fastcomet' ||
+    toTrimmedString(metadata?.['storageSource']) === 'fastcomet'
+  );
+};
+
+const hasLocalImageFileMirror = (imageFile: Record<string, unknown>): boolean => {
+  const metadata = toRecord(imageFile['metadata']);
+  return (
+    metadata?.['mirroredLocally'] === true ||
+    toTrimmedString(metadata?.['localPublicPath']) !== ''
+  );
+};
+
+const isLocalImageFileRecord = (imageFile: Record<string, unknown>): boolean => {
+  const filepath = getImageFilepath(imageFile);
+  const metadata = toRecord(imageFile['metadata']);
+
+  if (isFastCometImageFileRecord(imageFile)) return hasLocalImageFileMirror(imageFile);
+  if (toTrimmedString(imageFile['storageProvider']) === 'local') return true;
+  if (toTrimmedString(metadata?.['storageSource']) === 'local') return true;
+  return filepath !== undefined && filepath.trim() !== '' && !isHttpImagePath(filepath);
+};
+
+export const hasAnyProductImageStorageStatus = (
+  status: ProductImageStorageStatus
+): boolean =>
+  status.hasFastCometImage || status.hasLocalImage || status.hasExternalLinkImage;
+
+export const resolveProductImageStorageStatus = (
+  product: ProductWithImages
+): ProductImageStorageStatus => {
+  const imageFiles = getProductImageFileRecords(product);
+
+  return {
+    hasFastCometImage: imageFiles.some(isFastCometImageFileRecord),
+    hasLocalImage: imageFiles.some(isLocalImageFileRecord),
+    hasExternalLinkImage: Array.isArray(product.imageLinks)
+      ? product.imageLinks.some((link: string) => link.trim() !== '')
+      : false,
+  };
 };
 
 const findFirstDisplayValue = (

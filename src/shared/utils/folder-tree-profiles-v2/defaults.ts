@@ -185,6 +185,45 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  ecommerce_universe_cards: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'Image',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        ecommerce_universe_card: 'Image',
+        universe_card_group: 'Folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['ecommerce_universe_card'],
+          targetType: 'folder',
+          targetKinds: ['universe_card_group'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   filemaker_organizations: {
     version: 2,
     placeholders: {

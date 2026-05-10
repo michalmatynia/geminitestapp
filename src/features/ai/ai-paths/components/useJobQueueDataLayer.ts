@@ -199,7 +199,7 @@ export function useJobQueueDataLayer({
       };
       const response = await listAiPathRuns(options);
       if (!response.ok) throw internalError(response.error);
-      return mergeAiPathQueuePayloadWithOptimisticRuns(response.data, {
+      mergeAiPathQueuePayloadWithOptimisticRuns(response.data, {
         pathId: normalizedPathFilter || undefined,
         source: normalizedSourceFilter || undefined,
         sourceMode,
@@ -208,6 +208,7 @@ export function useJobQueueDataLayer({
         limit: pageSize,
         offset,
       });
+      return response.data;
     },
     enabled: isPanelActive,
     refetchInterval: resolveRunsRefetchInterval,

@@ -4,7 +4,12 @@ import type { LookupFunction } from 'node:net';
 import { Agent, type Dispatcher } from 'undici';
 
 import type { FastCometStorageConfig } from '@/shared/lib/files/constants';
-import { badRequestError, configurationError, externalServiceError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  configurationError,
+  createAppError,
+  externalServiceError,
+} from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { normalizeFastCometIpAddress } from './fastcomet-storage-config';
 import { readFastCometFailureBody, readFastCometJsonSuccessBody } from './fastcomet-response';
@@ -90,10 +95,95 @@ const closeFastCometDispatcher = async (dispatcher: Dispatcher | undefined): Pro
   await dispatcher.close().catch(() => undefined);
 };
 
-const createAuthHeaders = (authToken: string | null): Headers => {
+const normalizeOptionalString = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const getResponseContentType = (response: Response): string =>
+  response.headers.get('content-type')?.trim() ?? '';
+
+const isJsonContentType = (contentType: string): boolean =>
+  contentType.toLowerCase().includes('application/json');
+
+const parseFastCometFailureJsonError = (body: string): string | null => {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (!isRecord(parsed)) return null;
+    const error = parsed['error'];
+    return typeof error === 'string' && error.trim().length > 0 ? error.trim() : null;
+  } catch {
+    return null;
+  }
+};
+
+const createExpectedFastCometFailure = (input: {
+  response: Response;
+  body: string;
+  fastComet: FastCometStorageConfig;
+  filename: string;
+}): Error | null => {
+  const contentType = getResponseContentType(input.response);
+  const meta = {
+    status: input.response.status,
+    contentType,
+    uploadEndpoint: input.fastComet.uploadEndpoint,
+    filename: input.filename,
+    responseBody: input.body,
+  };
+
+  if (input.response.status === 401) {
+    const responseError = parseFastCometFailureJsonError(input.body);
+    return createAppError(
+      responseError !== null
+        ? `FastComet rejected the upload credentials: ${responseError}`
+        : 'FastComet rejected the upload credentials. Check USERNAME and TOKEN against public_html/api/uploads/config.php.',
+      {
+        code: AppErrorCodes.configurationError,
+        httpStatus: 502,
+        meta,
+        expected: true,
+        retryable: false,
+      }
+    );
+  }
+
+  if (input.response.status === 403 && !isJsonContentType(contentType)) {
+    return createAppError(
+      'FastComet upload endpoint returned 403 Forbidden before the PHP upload handler responded. Confirm hosting/fastcomet/public_html is deployed to FastComet public_html and that public_html/api/uploads/index.php is readable.',
+      {
+        code: AppErrorCodes.configurationError,
+        httpStatus: 502,
+        meta,
+        expected: true,
+        retryable: false,
+      }
+    );
+  }
+
+  return null;
+};
+
+const resolveFastCometToken = (fastComet: FastCometStorageConfig): string | null =>
+  normalizeOptionalString(fastComet.token) ?? normalizeOptionalString(fastComet.authToken);
+
+const createAuthHeaders = (fastComet: FastCometStorageConfig): Headers => {
   const headers = new Headers();
-  if (authToken !== null && authToken.length > 0) {
+  const authToken = resolveFastCometToken(fastComet);
+  const username = normalizeOptionalString(fastComet.username);
+  const server = normalizeOptionalString(fastComet.server);
+
+  if (authToken !== null) {
     headers.set('Authorization', `Bearer ${authToken}`);
+  }
+  if (username !== null) {
+    headers.set('X-FastComet-Username', username);
+  }
+  if (server !== null) {
+    headers.set('X-FastComet-Server', server);
+  }
+  if (fastComet.port !== null && fastComet.port !== undefined) {
+    headers.set('X-FastComet-Port', String(fastComet.port));
   }
   return headers;
 };
@@ -185,7 +275,7 @@ export const uploadToFastComet = async (params: {
         withFastCometDispatcher(
           {
             method: 'POST',
-            headers: createAuthHeaders(fastComet.authToken),
+            headers: createAuthHeaders(fastComet),
             body: createUploadForm(params),
             signal,
             cache: 'no-store',
@@ -197,6 +287,15 @@ export const uploadToFastComet = async (params: {
 
     if (!response.ok) {
       const body = await readFastCometFailureBody(response);
+      const expectedFailure = createExpectedFastCometFailure({
+        response,
+        body,
+        fastComet,
+        filename: params.filename,
+      });
+      if (expectedFailure !== null) {
+        throw expectedFailure;
+      }
       throw externalServiceError(
         `FastComet upload failed with status ${response.status}.`,
         {
@@ -223,7 +322,7 @@ export const deleteFromFastComet = async (params: {
   const endpoint = params.fastComet.deleteEndpoint;
   if (endpoint === null || endpoint.length === 0) return;
 
-  const headers = createAuthHeaders(params.fastComet.authToken);
+  const headers = createAuthHeaders(params.fastComet);
   headers.set('Content-Type', 'application/json');
   const dispatcher = createFastCometDispatcher(params.fastComet);
   try {

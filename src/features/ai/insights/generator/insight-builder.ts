@@ -1,11 +1,17 @@
-import type { AiInsightRecord, AiInsightType } from '@/shared/contracts/ai-insights';
+import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type {
+  AiInsightRecord,
+  AiInsightSource,
+  AiInsightType,
+} from '@/shared/contracts/ai-insights';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import { type InsightBuilderOptions } from './prompt-builders';
 import { recordBrainInsightAnalytics } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { processInsightGeneration } from './insight-manager';
 import { constructMessages } from './message-builder';
 import { INSIGHT_BUILDERS } from './prompt-builders';
-import { getModelForInsightType } from './insight-orchestrator';
+import { getModelForInsightType } from './capability-resolver';
 
 export async function orchestrateInsightGeneration(
   type: AiInsightType,
@@ -19,7 +25,13 @@ export async function orchestrateInsightGeneration(
   const messages = constructMessages(type, prompt);
 
   try {
-    const insight = await processInsightGeneration(type, modelId, messages, prompt, options);
+    const insight = await processInsightGeneration({
+      type,
+      modelId,
+      messages,
+      prompt,
+      options,
+    });
     
     if (type === 'runtime_analytics') {
       await recordBrainInsightAnalytics({

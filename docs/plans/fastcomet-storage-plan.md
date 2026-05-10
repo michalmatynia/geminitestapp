@@ -76,6 +76,10 @@ Added optional env vars in `.env.example`:
 - `FASTCOMET_STORAGE_BASE_URL`
 - `FASTCOMET_STORAGE_UPLOAD_URL`
 - `FASTCOMET_STORAGE_DELETE_URL`
+- `FASTCOMET_STORAGE_SERVER`
+- `FASTCOMET_STORAGE_PORT`
+- `FASTCOMET_STORAGE_USERNAME`
+- `FASTCOMET_STORAGE_TOKEN`
 - `FASTCOMET_STORAGE_AUTH_TOKEN`
 - `FASTCOMET_STORAGE_KEEP_LOCAL_COPY`
 - `FASTCOMET_STORAGE_TIMEOUT_MS`
@@ -84,7 +88,7 @@ Added optional env vars in `.env.example`:
 ### 7. Operational scripts
 
 - Configure storage settings:
-  - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://sparksofsindri.com/api/uploads/index.php --base-url=https://sparksofsindri.com --delete-endpoint=https://sparksofsindri.com/api/uploads/delete/index.php --auth-token=... --keep-local-copy=true --timeout-ms=20000`
+  - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://sparksofsindri.com/api/uploads/index.php --base-url=https://sparksofsindri.com --delete-endpoint=https://sparksofsindri.com/api/uploads/delete/index.php --server=sparksofsindri.com --port=443 --username=... --token=... --keep-local-copy=true --timeout-ms=20000`
 - Dry run migration:
   - `npm run storage:migrate:fastcomet`
 - Apply migration and switch source:
@@ -132,6 +136,11 @@ not serve the `sparksofsindri.com` public web root as the upload endpoint.
   - `publicPath`
   - optional: `category`, `projectId`, `folder`
 - Header (optional): `Authorization: Bearer <token>`
+- Connection settings stored by the app:
+  - `SERVER`
+  - `PORT`
+  - `USERNAME`
+  - `TOKEN`
 - Response JSON should include one of:
   - `url`
   - `publicUrl`

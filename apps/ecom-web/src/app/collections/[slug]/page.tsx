@@ -9,7 +9,7 @@ import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const revalidate = 120;
+export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 24;
 

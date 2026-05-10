@@ -39,6 +39,8 @@ import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
+import { useTraderaListingAction } from './useTraderaListingAction';
+
 type UseListProductFormResult = {
   error: string | null;
   setError: (value: string | null) => void;
@@ -76,6 +78,8 @@ export function useListProductForm(
     isBaseComIntegration,
     isTraderaIntegration,
   } = useListingSelection();
+  const isTraderaBrowserIntegration =
+    isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
 
   const { selectedInventoryId, selectedTemplateId } = useListingBaseComSettings();
 
@@ -91,12 +95,22 @@ export function useListProductForm(
   const createListingMutation = useCreateListingMutation(productId);
   const updateDefaultTraderaConnectionMutation = useUpdateDefaultTraderaConnection();
   const updateDefaultVintedConnectionMutation = useUpdateDefaultVintedConnection();
+  const traderaListingAction = useTraderaListingAction();
+  const traderaListingActionPending =
+    isTraderaBrowserIntegration &&
+    (traderaListingAction.loading ||
+      traderaListingAction.saving ||
+      traderaListingAction.hasUnsavedChanges);
+  const selectedTraderaBrowserMode = traderaListingAction.headless ? 'headless' : 'headed';
+  const hasSelectedConcurrencyMode =
+    selectedConcurrencyMode === 'sequential' || selectedConcurrencyMode === 'concurrent';
 
   const submitting =
     exportToBaseMutation.isPending ||
     createListingMutation.isPending ||
     updateDefaultTraderaConnectionMutation.isPending ||
-    updateDefaultVintedConnectionMutation.isPending;
+    updateDefaultVintedConnectionMutation.isPending ||
+    traderaListingActionPending;
 
   const createExportRequestId = (): string =>
     `base-export-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -171,9 +185,13 @@ export function useListProductForm(
         }
         onSuccess();
       } else {
-        const isTraderaBrowserIntegration =
-          isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
         const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
+        if (traderaListingActionPending) {
+          setError(
+            'Tradera listing action settings are still loading or saving. Retry in a moment.'
+          );
+          return;
+        }
         if (isTraderaBrowserIntegration && selectedConnectionId) {
           const preflightResponse = await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
@@ -202,15 +220,18 @@ export function useListProductForm(
           connectionId: selectedConnectionId,
           ...(isTraderaIntegration
             ? {
-              durationHours: selectedTraderaDurationHours,
-              autoRelistEnabled: selectedTraderaAutoRelistEnabled,
-              autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
-              templateId:
+                durationHours: selectedTraderaDurationHours,
+                autoRelistEnabled: selectedTraderaAutoRelistEnabled,
+                autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
+                templateId:
                   selectedTraderaTemplateId && selectedTraderaTemplateId !== 'none'
                     ? selectedTraderaTemplateId
                     : null,
-              ...(selectedConcurrencyMode !== null ? { concurrencyMode: selectedConcurrencyMode } : {}),
-            }
+                browserMode: selectedTraderaBrowserMode,
+                ...(hasSelectedConcurrencyMode
+                  ? { concurrencyMode: selectedConcurrencyMode }
+                  : {}),
+              }
             : {}),
         });
         if (isTraderaIntegration) {
@@ -329,8 +350,6 @@ export function useListProductForm(
   };
 
   const handleMarketplaceLogin = async (onSuccess: () => void): Promise<void> => {
-    const isTraderaBrowserIntegration =
-      isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
     const isVintedBrowserIntegration = isVintedIntegrationSlug(selectedIntegration?.slug);
     const marketplace =
       authRequiredMarketplace ??

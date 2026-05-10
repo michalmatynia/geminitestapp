@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
 import type { AboutContent, AboutArtisanContent } from '@/data/aboutContent';
-import { localizeHref } from '@/lib/locales';
+import { localizeHref, type EcomLocale } from '@/lib/locales';
 
 interface ArtisansSectionProps {
   content: AboutContent;
-  locale: string;
+  locale: EcomLocale;
   gradients: string[];
 }
 
@@ -34,7 +34,7 @@ function ArtisansGrid({ artisans, gradients }: { artisans: AboutArtisanContent[]
   return (
     <div className='grid md:grid-cols-4 gap-6'>
       {artisans.map((artisan, index) => (
-        <ArtisanCard key={artisan.name} artisan={artisan} gradient={gradients[index % gradients.length]} />
+        <ArtisanCard key={artisan.name} artisan={artisan} gradient={gradients[index % gradients.length] ?? gradients[0] ?? 'var(--surface)'} />
       ))}
     </div>
   );

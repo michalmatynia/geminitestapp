@@ -311,7 +311,7 @@ function getProcessedInputBindings(
               setSelectorBinding={setSelectorBinding}
               selectorBindingMode={selectorBindingMode}
               selectedRegistryNamespace={selectedRegistryNamespace}
-              selectedRegistryProfile={selectedRegistryProfile as string}
+              selectedRegistryProfile={selectedRegistryProfile}
               registryNamespacesForSelect={registryNamespacesForSelect}
               registryProfilesForSelect={registryProfilesForSelect}
               registrySelectorEntries={registrySelectorEntries}

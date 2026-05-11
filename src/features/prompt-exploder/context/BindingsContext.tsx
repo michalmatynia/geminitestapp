@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions */
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';

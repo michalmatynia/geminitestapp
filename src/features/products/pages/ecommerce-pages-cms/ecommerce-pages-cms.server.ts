@@ -31,6 +31,15 @@ export {
 } from './ecommerce-pages-cms.editorial-articles.server';
 
 export type {
+  EcommercePagesCmsEditorialArticleAiDraft,
+  EcommercePagesCmsEditorialArticleAiRequest,
+  EcommercePagesCmsGeneratedEditorialArticle,
+} from './ecommerce-pages-cms.editorial-article-ai.server';
+export {
+  generateEcommercePagesCmsEditorialArticleWithAiPath,
+} from './ecommerce-pages-cms.editorial-article-ai.server';
+
+export type {
   EcommercePagesCmsBackgroundFields,
   EcommercePagesCmsBackgroundSaveResult,
   EcommercePagesCmsBackgroundSnapshot,

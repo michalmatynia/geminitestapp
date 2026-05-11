@@ -3,12 +3,14 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { EditorialArticleAiPathGenerator } from './EditorialArticleAiPathGenerator';
 import { EditorialArticlePreview } from './EditorialArticlePreview';
 import {
   createBlankEditorialArticle,
   normalizeEditorialArticleDraft,
   toEditorialArticleSlug,
   type EditorialArticleState,
+  type GeneratedEditorialArticleState,
 } from './editorial-articles-cms.client';
 import { Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
 import { FormModal } from '@/shared/ui/FormModal';
@@ -17,6 +19,21 @@ type DraftUpdate = (patch: Partial<EditorialArticleState>) => void;
 
 const createInitialArticleDraft = (): EditorialArticleState =>
   createBlankEditorialArticle({ id: '', href: '', tag: 'Universe Report' });
+
+const buildTitlePatch = (
+  current: EditorialArticleState,
+  title: string
+): Pick<EditorialArticleState, 'href' | 'title'> => {
+  const currentTitleSlug = toEditorialArticleSlug(current.title);
+  const currentId = current.id.trim().length > 0 ? current.id : currentTitleSlug;
+  const currentAutoHref = `/lore-drops/${toEditorialArticleSlug(currentId)}`;
+  const nextId = current.id.trim().length > 0 ? current.id : toEditorialArticleSlug(title);
+  const shouldUpdateHref = current.href.trim().length === 0 || current.href === currentAutoHref;
+  return {
+    href: shouldUpdateHref ? `/lore-drops/${toEditorialArticleSlug(nextId)}` : current.href,
+    title,
+  };
+};
 
 export function EditorialArticleCreateModal({
   isSaving,
@@ -41,13 +58,16 @@ export function EditorialArticleCreateModal({
   };
 
   const handleTitleChange = (title: string): void => {
-    const currentTitleSlug = toEditorialArticleSlug(draft.title);
-    const currentId = draft.id.trim().length > 0 ? draft.id : currentTitleSlug;
-    const currentAutoHref = `/lore-drops/${toEditorialArticleSlug(currentId)}`;
-    const nextId = draft.id.trim().length > 0 ? draft.id : toEditorialArticleSlug(title);
-    const shouldUpdateHref = draft.href.trim().length === 0 || draft.href === currentAutoHref;
-    const nextHref = shouldUpdateHref ? `/lore-drops/${toEditorialArticleSlug(nextId)}` : draft.href;
-    updateDraft({ href: nextHref, title });
+    setDraft((current) => ({ ...current, ...buildTitlePatch(current, title) }));
+  };
+
+  const handleGeneratedArticle = (article: GeneratedEditorialArticleState): void => {
+    setDraft((current) => ({
+      ...current,
+      ...buildTitlePatch(current, article.title),
+      body: article.body,
+      excerpt: article.excerpt.trim().length > 0 ? article.excerpt : current.excerpt,
+    }));
   };
 
   const handleSave = (): void => {
@@ -71,6 +91,8 @@ export function EditorialArticleCreateModal({
         <EditorialArticlePreview article={draft} />
         <ArticleDraftFields
           draft={draft}
+          isSaving={isSaving}
+          onGeneratedArticle={handleGeneratedArticle}
           onTitleChange={handleTitleChange}
           onUpdate={updateDraft}
         />
@@ -81,15 +103,24 @@ export function EditorialArticleCreateModal({
 
 function ArticleDraftFields({
   draft,
+  isSaving,
+  onGeneratedArticle,
   onTitleChange,
   onUpdate,
 }: {
   draft: EditorialArticleState;
+  isSaving: boolean;
+  onGeneratedArticle: (article: GeneratedEditorialArticleState) => void;
   onTitleChange: (title: string) => void;
   onUpdate: DraftUpdate;
 }): React.JSX.Element {
   return (
     <div className='space-y-4'>
+      <EditorialArticleAiPathGenerator
+        disabled={isSaving}
+        draft={draft}
+        onGenerated={onGeneratedArticle}
+      />
       <div className='grid gap-3 md:grid-cols-3'>
         <DraftTextField id='new-lore-article-id' label='Article ID' value={draft.id}
           onChange={(value) => onUpdate({ id: value })} />

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+
 import React, { useCallback, useMemo } from 'react';
 
 import type {

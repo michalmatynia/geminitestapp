@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-non-null-assertion, no-param-reassign, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/strict-boolean-expressions */
+
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderBenchmarkSuggestion,
@@ -17,7 +19,16 @@ const toSlug = (value: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
-    .slice(0, 48) || 'case';
+    .slice(0, 48)
+    .trim();
+
+const toSafeSegmentType = (value: string): string => {
+  const slug = value.trim();
+  return slug.length === 0 ? 'case' : slug;
+};
+
+const coerceTemplateIdTitle = (value: string | null | undefined): string =>
+  value ?? '';
 
 export const applyBenchmarkSuggestions = (args: {
   suggestions: PromptExploderBenchmarkSuggestion[];
@@ -74,23 +85,26 @@ export const applyBenchmarkSuggestions = (args: {
     appliedRules.push(suggestedRule);
 
     if (args.shouldUpsertTemplates && templateById) {
-      const sourceText = `${suggestion.segmentTitle} ${suggestion.sampleText}`.trim();
+      const segmentTitle = suggestion.segmentTitle ?? '';
+      const sampleText = suggestion.sampleText ?? '';
+      const sourceText = `${segmentTitle} ${sampleText}`.trim();
       const now = args.nowFactory?.() ?? new Date().toISOString();
       const templateUpsert = upsertLearnedTemplate({
         templates: [...templateById.values()],
         segmentType: (suggestion.suggestedSegmentType as PromptExploderSegmentType) ?? 'static',
-        title: suggestion.segmentTitle ?? '',
+        title: segmentTitle,
         sourceText,
-        sampleText: suggestion.sampleText ?? '',
+        sampleText,
         similarityThreshold: args.templateMergeThreshold,
         minApprovalsForMatching: args.minApprovalsForMatching,
         autoActivateLearnedTemplates: args.autoActivateLearnedTemplates,
         mergeMode: 'auto',
         now,
         createTemplateId: ({ existingTemplateIds }) => {
-          const baseId = `template_benchmark_${suggestion.suggestedSegmentType}_${toSlug(
-            suggestion.segmentTitle ?? ''
-          )}_${Date.now().toString(36)}_${index + 1}`;
+          const segmentSlug = toSafeSegmentType(
+            toSlug(coerceTemplateIdTitle(suggestion.segmentTitle))
+          );
+          const baseId = `template_benchmark_${suggestion.suggestedSegmentType}_${segmentSlug}_${Date.now().toString(36)}_${index + 1}`;
           let nextId = baseId;
           while (existingTemplateIds.has(nextId)) {
             nextId = `${nextId}_x`;
@@ -99,7 +113,7 @@ export const applyBenchmarkSuggestions = (args: {
         },
       });
       if (!templateUpsert.ok) {
-        invalidSegmentTitles.push(suggestion.segmentTitle ?? '');
+        invalidSegmentTitles.push(segmentTitle);
         return;
       }
       templateById.set(templateUpsert.nextTemplate.id, templateUpsert.nextTemplate);

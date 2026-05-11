@@ -216,8 +216,19 @@ describe('live-session', () => {
       evaluate: vi.fn().mockResolvedValue(null),
     };
 
-    await expect(pickElementAt(page as never, 5, 6)).rejects.toMatchObject(
-      notFoundError('No element was found at the requested point.')
+    const error = await pickElementAt(page as never, 5, 6).catch((caught) => caught);
+    const expectedError = notFoundError('placeholder');
+
+    expect(error).toMatchObject({
+      name: 'AppError',
+      code: expectedError.code,
+      httpStatus: expectedError.httpStatus,
+      expected: true,
+    });
+
+    expect(error).toHaveProperty(
+      'message',
+      'No element was found at the requested point (x=5, y=6). The coordinates may be outside the page or no interactive element exists at that position.'
     );
   });
 

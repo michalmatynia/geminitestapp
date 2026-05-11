@@ -108,6 +108,7 @@ describe('ai-paths trigger-buttons cleanup-fixtures handler', () => {
           locations: ['product_row'],
           mode: 'click',
           display: 'icon_label',
+          contextTemplate: null,
           createdAt: '2026-03-09T00:00:00.000Z',
           updatedAt: '2026-03-09T00:00:00.000Z',
           sortIndex: 0,

@@ -15,6 +15,19 @@ export type EditorialArticleState = {
   href: string;
 };
 
+export type EditorialArticleAiGenerateInput = {
+  draft: Pick<EditorialArticleState, 'body' | 'excerpt' | 'tag' | 'title'>;
+  imageUrl?: string;
+  prompt: string;
+};
+
+export type GeneratedEditorialArticleState = {
+  body: string;
+  excerpt: string;
+  modelId: string | null;
+  title: string;
+};
+
 export type EditorialArticlesState = {
   articles: EditorialArticleState[];
   updatedAt: string | null;
@@ -26,6 +39,11 @@ export type EditorialArticlesState = {
 type EditorialArticlesResponse = {
   ok: boolean;
   editorialArticles: EditorialArticlesState;
+};
+
+type EditorialArticleAiGenerateResponse = {
+  article: GeneratedEditorialArticleState;
+  ok: boolean;
 };
 
 export type EditorialArticlesController = {
@@ -42,6 +60,7 @@ export type EditorialArticlesController = {
 };
 
 const EDITORIAL_ARTICLES_ENDPOINT = '/api/v2/products/pages/editorial-articles';
+const EDITORIAL_ARTICLE_GENERATE_ENDPOINT = `${EDITORIAL_ARTICLES_ENDPOINT}/generate`;
 const MAX_ARTICLE_COUNT = 12;
 
 const EMPTY_EDITORIAL_ARTICLES_STATE: EditorialArticlesState = {
@@ -112,6 +131,17 @@ const saveEditorialArticles = async (
     { timeout: 120_000 }
   );
   return response.editorialArticles;
+};
+
+export const generateEditorialArticleFromAiPath = async (
+  input: EditorialArticleAiGenerateInput
+): Promise<GeneratedEditorialArticleState> => {
+  const response = await api.post<EditorialArticleAiGenerateResponse>(
+    EDITORIAL_ARTICLE_GENERATE_ENDPOINT,
+    input,
+    { timeout: 180_000 }
+  );
+  return response.article;
 };
 
 type EditorialArticlesStateSetter = Dispatch<SetStateAction<EditorialArticlesState | null>>;

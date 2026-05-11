@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-non-null-assertion, @typescript-eslint/strict-boolean-expressions */
+
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import {

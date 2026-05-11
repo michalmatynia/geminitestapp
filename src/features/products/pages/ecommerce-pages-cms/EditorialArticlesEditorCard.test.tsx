@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EditorialArticlesEditorCard } from './EditorialArticlesEditorCard';
 import { normalizeEditorialArticleDraft } from './editorial-articles-cms.client';
@@ -9,6 +9,31 @@ import type {
   EditorialArticlesController,
   EditorialArticlesState,
 } from './editorial-articles-cms.client';
+
+const mocks = vi.hoisted(() => ({
+  apiGet: vi.fn(),
+  apiPost: vi.fn(),
+  apiPut: vi.fn(),
+  toast: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    get: mocks.apiGet,
+    post: mocks.apiPost,
+    put: mocks.apiPut,
+  },
+}));
+
+vi.mock('@/shared/ui/primitives.public', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/ui/primitives.public')>(
+    '@/shared/ui/primitives.public'
+  );
+  return {
+    ...actual,
+    useToast: () => ({ toast: mocks.toast }),
+  };
+});
 
 vi.mock('@/shared/ui/FolderTreePanel', () => ({
   FolderTreePanel: ({
@@ -152,6 +177,13 @@ const createController = (
 });
 
 describe('EditorialArticlesEditorCard', () => {
+  beforeEach(() => {
+    mocks.apiGet.mockReset();
+    mocks.apiPost.mockReset();
+    mocks.apiPut.mockReset();
+    mocks.toast.mockReset();
+  });
+
   it('normalizes fragment article hrefs to readable Lore & Drops paths', () => {
     expect(
       normalizeEditorialArticleDraft(
@@ -217,5 +249,45 @@ describe('EditorialArticlesEditorCard', () => {
       })
     );
     expect(screen.queryByRole('dialog', { name: 'Add Lore Article' })).not.toBeInTheDocument();
+  });
+
+  it('generates a draft lore article through the Gemma Vision AI Path button', async () => {
+    mocks.apiPost.mockResolvedValue({
+      ok: true,
+      article: {
+        body: 'Generated long-form article content.',
+        excerpt: 'Generated short article form.',
+        modelId: 'gemma3',
+        title: 'Generated Lore Drop',
+      },
+    });
+    const controller = createController([]);
+
+    render(<EditorialArticlesEditorCard controller={controller} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add article' }));
+    const dialog = screen.getByRole('dialog', { name: 'Add Lore Article' });
+
+    fireEvent.change(within(dialog).getByLabelText('AI prompt'), {
+      target: { value: 'Write a lore article from this product image.' },
+    });
+    fireEvent.change(within(dialog).getByLabelText('Context image URL'), {
+      target: { value: 'https://sparksofsindri.com/context.png' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Generate article' }));
+
+    await waitFor(() => {
+      expect(within(dialog).getByDisplayValue('Generated Lore Drop')).toBeInTheDocument();
+    });
+    expect(within(dialog).getByDisplayValue('Generated short article form.')).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue('Generated long-form article content.')).toBeInTheDocument();
+    expect(mocks.apiPost).toHaveBeenCalledWith(
+      '/api/v2/products/pages/editorial-articles/generate',
+      expect.objectContaining({
+        imageUrl: 'https://sparksofsindri.com/context.png',
+        prompt: 'Write a lore article from this product image.',
+      }),
+      { timeout: 180_000 }
+    );
   });
 });

@@ -1,4 +1,5 @@
 import path from 'path';
+import { getProducerMappingRepository } from '@/features/integrations/services/producer-mapping-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
 import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportMode } from '@/shared/contracts/integrations/base-com';
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
@@ -44,6 +45,21 @@ export const resolveProducerAndTagLookups = async (
       })
       .filter((entry): entry is readonly [string, string] => entry !== null)
   );
+  const externalProducerToInternalProducerId = new Map<string, string>();
+  try {
+    const producerMappingRepo = getProducerMappingRepository();
+    const producerMappings = await producerMappingRepo.listByConnection(connectionId);
+    producerMappings.forEach((mapping) => {
+      if (!mapping.isActive) return;
+      const externalId = mapping.externalProducer?.externalId?.trim();
+      const internalId = mapping.internalProducerId?.trim();
+      if (!externalId || !internalId) return;
+      externalProducerToInternalProducerId.set(externalId, internalId);
+      externalProducerToInternalProducerId.set(externalId.toLowerCase(), internalId);
+    });
+  } catch (error) {
+    logClientError(error);
+  }
 
   const tagRepository = await getTagRepository();
   const tags = await tagRepository.listTags({});
@@ -82,6 +98,7 @@ export const resolveProducerAndTagLookups = async (
   return {
     producerIdSet,
     producerNameToId,
+    externalProducerToInternalProducerId,
     tagIdSet,
     tagNameToId,
     externalTagToInternalTagId,
@@ -96,6 +113,13 @@ export const resolveProducerIds = (values: string[] | undefined, lookups: Produc
     if (!trimmed) return;
     if (lookups.producerIdSet.has(trimmed)) {
       unique.add(trimmed);
+      return;
+    }
+    const byExternalId =
+      lookups.externalProducerToInternalProducerId?.get(trimmed) ??
+      lookups.externalProducerToInternalProducerId?.get(trimmed.toLowerCase());
+    if (byExternalId) {
+      unique.add(byExternalId);
       return;
     }
     const byName = lookups.producerNameToId.get(trimmed.toLowerCase());

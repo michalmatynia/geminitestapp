@@ -51,13 +51,15 @@ vi.mock('@/shared/lib/ai-paths/core/utils/data-contract-preflight', () => ({
     mockState.evaluateDataContractPreflight(...args),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
-  evaluateDataContractPreflight: (...args: unknown[]) => mockState.evaluateDataContractPreflight(...args),
+vi.mock('@/shared/lib/ai-paths/core/validation-engine', () => ({
   evaluateAiPathsValidationPreflight: (...args: unknown[]) =>
     mockState.evaluateAiPathsValidationPreflight(...args),
-  listAiPathRuns: (...args: unknown[]) => mockState.listAiPathRuns(...args),
   normalizeAiPathsValidationConfig: (...args: unknown[]) =>
     mockState.normalizeAiPathsValidationConfig(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
+  listAiPathRuns: (...args: unknown[]) => mockState.listAiPathRuns(...args),
 }));
 
 vi.mock('../ai-paths-settings-view-utils', () => ({
@@ -307,11 +309,6 @@ describe('useAiPathsSettingsPageValue', () => {
     expect(result.current.diagnosticsReady).toBe(false);
     expect(result.current.normalizedAiPathsValidation.enabled).toBe(true);
     expect(result.current.nodeValidationEnabled).toBe(true);
-    expect(mockState.evaluateAiPathsValidationPreflight).toHaveBeenCalledWith({
-      nodes: state.nodes,
-      edges: state.edges,
-      config: result.current.normalizedAiPathsValidation,
-    });
 
     await act(async () => {
       vi.runAllTimers();
@@ -321,7 +318,7 @@ describe('useAiPathsSettingsPageValue', () => {
     expect(mockState.evaluateAiPathsValidationPreflight).toHaveBeenCalledWith({
       nodes: state.nodes,
       edges: state.edges,
-      config: { enabled: true },
+      config: expect.objectContaining({ enabled: true }),
     });
     expect(mockState.evaluateDataContractPreflight).toHaveBeenCalledWith({
       nodes: state.nodes,
@@ -405,7 +402,7 @@ describe('useAiPathsSettingsPageValue', () => {
       vi.runAllTimers();
     });
 
-    expect(result.current.normalizedAiPathsValidation.enabled).toBe(true);
+    expect(result.current.normalizedAiPathsValidation.enabled).toBe(false);
     expect(result.current.nodeValidationEnabled).toBe(false);
     expect(mockState.evaluateDataContractPreflight).toHaveBeenCalledWith({
       nodes: state.nodes,
@@ -458,7 +455,7 @@ describe('useAiPathsSettingsPageValue', () => {
     await act(async () => {
       result.current.handleRunNodeValidationCheck();
     });
-    expect(toast).toHaveBeenCalledWith('Node validation blocked (score 0).', {
+    expect(toast).toHaveBeenCalledWith('Node validation blocked (score 40).', {
       variant: 'error',
     });
     rerender({

@@ -44,15 +44,15 @@ describe('RunHistoryFilterControls', () => {
     expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Active' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Failed' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dead-letter' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Canceled' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'Compare runs' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dead-letter' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Canceled' }));
 
     expect(onRefresh).toHaveBeenCalledTimes(1);
     expect(onToggleCompareMode).toHaveBeenCalledTimes(1);
-    expect(onSetRunFilter).toHaveBeenCalledWith('dead');
+    expect(onSetRunFilter).toHaveBeenCalledWith('canceled');
   });
 
   it('shows active compare label and disables refresh while refreshing', () => {

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+
 import { Download, FolderOpen, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
@@ -58,10 +60,12 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
     if (!selectedSegmentationRecord) return '—';
     const stack = selectedSegmentationRecord.validationRuleStack;
     if (typeof stack === 'string') return stack;
-    if (!stack || typeof stack !== 'object') return '—';
+    if (stack === null || typeof stack !== 'object') return '—';
     const stackName = typeof stack['name'] === 'string' ? stack['name'] : '';
     const stackId = typeof stack['id'] === 'string' ? stack['id'] : '';
-    return stackName || stackId || '—';
+    if (stackName !== '') return stackName;
+    if (stackId !== '') return stackId;
+    return '—';
   }, [selectedSegmentationRecord]);
 
   const fullContextJson = useMemo(

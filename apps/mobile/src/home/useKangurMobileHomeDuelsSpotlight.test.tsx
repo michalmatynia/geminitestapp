@@ -252,7 +252,7 @@ describe('useKangurMobileHomeDuelsSpotlight', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Nie udało się pobrać aktywnych pojedynków z lobby.');
+      expect(result.current.error).toBe('Failed to fetch');
     });
   });
 });

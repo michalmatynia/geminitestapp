@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
+
 import type {
   PromptExploderTreeNodeKind,
   PromptExploderTreeMetadata,

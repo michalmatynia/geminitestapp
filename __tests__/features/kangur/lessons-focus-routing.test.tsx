@@ -15,16 +15,26 @@ const {
   settingsStoreGetMock,
   useKangurProgressStateMock,
   useKangurAuthMock,
+  useKangurAuthActionsMock,
+  useKangurAiTutorControllerMock,
   useKangurAssignmentsMock,
   useSessionMock,
+  useKangurAuthSessionStateMock,
+  useKangurOptionalAuthSessionStateMock,
+  useKangurOptionalAuthStatusStateMock,
   lessonsState,
 } = vi.hoisted(() => ({
     useKangurRoutingMock: vi.fn(),
     settingsStoreGetMock: vi.fn(),
     useKangurProgressStateMock: vi.fn(),
     useKangurAuthMock: vi.fn(),
+    useKangurAuthActionsMock: vi.fn(),
+    useKangurAiTutorControllerMock: vi.fn(),
     useKangurAssignmentsMock: vi.fn(),
     useSessionMock: vi.fn(),
+    useKangurAuthSessionStateMock: vi.fn(),
+    useKangurOptionalAuthSessionStateMock: vi.fn(),
+    useKangurOptionalAuthStatusStateMock: vi.fn(),
     lessonsState: {
       value: [] as Array<Record<string, unknown>>,
     },
@@ -119,6 +129,10 @@ vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+  useKangurAuthSessionState: useKangurAuthSessionStateMock,
+  useOptionalKangurAuthSessionState: useKangurOptionalAuthSessionStateMock,
+  useOptionalKangurAuthStatusState: useKangurOptionalAuthStatusStateMock,
+  useKangurAuthActions: useKangurAuthActionsMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
@@ -249,6 +263,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
   useOptionalKangurAiTutor: () => null,
+  useOptionalKangurAiTutorController: useKangurAiTutorControllerMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -342,6 +357,29 @@ describe('Lessons page focus query support', () => {
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     });
+    useKangurAuthSessionStateMock.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      hasResolvedAuth: true,
+      canAccessParentAssignments: false,
+    });
+    useKangurOptionalAuthSessionStateMock.mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      hasResolvedAuth: true,
+      canAccessParentAssignments: false,
+    });
+    useKangurOptionalAuthStatusStateMock.mockReturnValue({
+      isLoadingAuth: false,
+      isLoadingPublicSettings: false,
+      authError: null,
+      appPublicSettings: null,
+      isLoggingOut: false,
+    });
+    useKangurAuthActionsMock.mockReturnValue({
+      logout: vi.fn(),
+    });
+    useKangurAiTutorControllerMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
       setSubject: vi.fn(),

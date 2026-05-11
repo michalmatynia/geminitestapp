@@ -1,0 +1,648 @@
+application: products
+
+pre-sync backups:
+
+application: products
+role: source
+source: local
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/ecom-local-products-local-source-pre-sync-local-to-cloud-1778455541241.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/ecom-local-products-local-source-pre-sync-local-to-cloud-1778455541241.archive.log
+
+application: products
+role: target
+source: cloud
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive.log
+
+failed phase: restore
+
+target database dropped before restore: true
+
+dump command: mongodump --uri mongodb://127.0.0.1:27021/ecom_local --db ecom_local --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive --gzip
+
+
+
+2026-05-11T01:27:32.972+0200	writing `ecom_local.image_files` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:32.983+0200	writing `ecom_local.products` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:32.996+0200	writing `ecom_local.ecom_cms_pages` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.004+0200	writing `ecom_local.product_categories` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.058+0200	done dumping `ecom_local.ecom_cms_pages` (11 documents)
+2026-05-11T01:27:33.058+0200	writing `ecom_local.currencies` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.065+0200	done dumping `ecom_local.product_categories` (119 documents)
+2026-05-11T01:27:33.065+0200	writing `ecom_local.languages` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.080+0200	done dumping `ecom_local.languages` (5 documents)
+2026-05-11T01:27:33.080+0200	writing `ecom_local.price_groups` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.081+0200	done dumping `ecom_local.currencies` (5 documents)
+2026-05-11T01:27:33.081+0200	writing `ecom_local.countries` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.093+0200	done dumping `ecom_local.price_groups` (5 documents)
+2026-05-11T01:27:33.093+0200	writing `ecom_local.catalogs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.097+0200	done dumping `ecom_local.catalogs` (3 documents)
+2026-05-11T01:27:33.097+0200	writing `ecom_local.ecom_settings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.614+0200	done dumping `ecom_local.image_files` (7794 documents)
+2026-05-11T01:27:33.614+0200	writing `ecom_local.ecom_wishlists` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.614+0200	done dumping `ecom_local.countries` (4 documents)
+2026-05-11T01:27:33.614+0200	writing `ecom_local.ecom_orders` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.615+0200	done dumping `ecom_local.products` (1838 documents)
+2026-05-11T01:27:33.615+0200	writing `ecom_local.ecom_users` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:33.618+0200	done dumping `ecom_local.ecom_settings` (1 document)
+2026-05-11T01:27:33.619+0200	done dumping `ecom_local.ecom_users` (0 documents)
+2026-05-11T01:27:33.625+0200	done dumping `ecom_local.ecom_orders` (1 document)
+2026-05-11T01:27:33.626+0200	done dumping `ecom_local.ecom_wishlists` (1 document)
+
+
+restore command: mongorestore --uri mongodb+srv://mmatynia_db_user:***@cluster0.caatdvo.mongodb.net/?retryWrites=true&w=majority&authSource=admin --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive --gzip --drop --stopOnError --nsFrom ecom_local.* --nsTo products_db.*
+
+
+
+2026-05-11T01:27:35.934+0200	WARNING: This archive came from MongoDB `7.0.31`, but you are restoring to `8.0.23`. Cross-version dump & restore is unsupported. The restored data may be corrupted.
+2026-05-11T01:27:35.936+0200	preparing collections to restore from
+2026-05-11T01:27:35.945+0200	reading metadata for `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.948+0200	reading metadata for `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.948+0200	reading metadata for `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:36.096+0200	restoring `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:36.588+0200	finished restoring `products_db.ecom_cms_pages` (11 documents, 0 failures)
+2026-05-11T01:27:36.675+0200	restoring `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.337+0200	finished restoring `products_db.product_categories` (119 documents, 0 failures)
+2026-05-11T01:27:37.418+0200	restoring `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.495+0200	finished restoring `products_db.languages` (5 documents, 0 failures)
+2026-05-11T01:27:37.591+0200	restoring `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.661+0200	finished restoring `products_db.currencies` (5 documents, 0 failures)
+2026-05-11T01:27:37.752+0200	restoring `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.860+0200	finished restoring `products_db.price_groups` (5 documents, 0 failures)
+2026-05-11T01:27:37.993+0200	restoring `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:38.065+0200	finished restoring `products_db.catalogs` (3 documents, 0 failures)
+2026-05-11T01:27:38.154+0200	restoring `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:38.613+0200	products_db.image_files  341KB
+2026-05-11T01:27:41.611+0200	products_db.image_files  341KB
+2026-05-11T01:27:44.611+0200	products_db.image_files  679KB
+2026-05-11T01:27:47.611+0200	products_db.image_files  679KB
+2026-05-11T01:27:50.610+0200	products_db.image_files  1011KB
+2026-05-11T01:27:53.611+0200	products_db.image_files  1011KB
+2026-05-11T01:27:56.611+0200	products_db.image_files  1.33MB
+2026-05-11T01:27:59.612+0200	products_db.image_files  1.33MB
+2026-05-11T01:28:02.611+0200	products_db.image_files  1.67MB
+2026-05-11T01:28:05.611+0200	products_db.image_files  1.67MB
+2026-05-11T01:28:08.611+0200	products_db.image_files  2.01MB
+2026-05-11T01:28:11.612+0200	products_db.image_files  2.34MB
+2026-05-11T01:28:14.611+0200	products_db.image_files  2.34MB
+2026-05-11T01:28:16.935+0200	restoring `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:28:17.034+0200	restoring `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:28:17.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:17.611+0200	  products_db.countries    393B
+2026-05-11T01:28:17.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:17.611+0200	
+2026-05-11T01:28:20.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:20.611+0200	  products_db.countries    393B
+2026-05-11T01:28:20.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:20.611+0200	
+2026-05-11T01:28:23.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:23.611+0200	  products_db.countries    393B
+2026-05-11T01:28:23.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:23.611+0200	
+2026-05-11T01:28:26.610+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:26.610+0200	  products_db.countries    393B
+2026-05-11T01:28:26.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:26.611+0200	
+2026-05-11T01:28:29.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:29.611+0200	  products_db.countries    393B
+2026-05-11T01:28:29.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:29.611+0200	
+2026-05-11T01:28:32.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:32.611+0200	  products_db.countries    393B
+2026-05-11T01:28:32.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:32.611+0200	
+2026-05-11T01:28:35.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:35.611+0200	  products_db.countries    393B
+2026-05-11T01:28:35.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:35.611+0200	
+2026-05-11T01:28:38.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:38.611+0200	  products_db.countries    393B
+2026-05-11T01:28:38.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:38.611+0200	
+2026-05-11T01:28:41.614+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:41.615+0200	  products_db.countries    393B
+2026-05-11T01:28:41.615+0200	   products_db.products  4.93MB
+2026-05-11T01:28:41.615+0200	
+2026-05-11T01:28:44.612+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:44.612+0200	  products_db.countries    393B
+2026-05-11T01:28:44.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:44.612+0200	
+2026-05-11T01:28:47.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:47.611+0200	  products_db.countries    393B
+2026-05-11T01:28:47.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:47.611+0200	
+2026-05-11T01:28:50.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:50.611+0200	  products_db.countries    393B
+2026-05-11T01:28:50.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:50.611+0200	
+2026-05-11T01:28:53.612+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:53.612+0200	  products_db.countries    393B
+2026-05-11T01:28:53.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:53.612+0200	
+2026-05-11T01:28:56.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:56.612+0200	  products_db.countries    393B
+2026-05-11T01:28:56.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:56.612+0200	
+2026-05-11T01:28:59.616+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:59.616+0200	  products_db.countries    393B
+2026-05-11T01:28:59.616+0200	   products_db.products  4.93MB
+2026-05-11T01:28:59.616+0200	
+2026-05-11T01:29:02.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:02.611+0200	  products_db.countries    393B
+2026-05-11T01:29:02.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:02.611+0200	
+2026-05-11T01:29:05.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:05.611+0200	  products_db.countries    393B
+2026-05-11T01:29:05.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:05.611+0200	
+2026-05-11T01:29:08.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:08.611+0200	  products_db.countries    393B
+2026-05-11T01:29:08.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:08.611+0200	
+2026-05-11T01:29:11.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:11.611+0200	  products_db.countries    393B
+2026-05-11T01:29:11.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:11.611+0200	
+2026-05-11T01:29:14.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:14.611+0200	  products_db.countries    393B
+2026-05-11T01:29:14.611+0200	   products_db.products  9.85MB
+2026-05-11T01:29:14.611+0200	
+2026-05-11T01:29:17.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:17.611+0200	  products_db.countries    393B
+2026-05-11T01:29:17.611+0200	   products_db.products  9.85MB
+2026-05-11T01:29:17.611+0200	
+2026-05-11T01:29:18.565+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:18.565+0200	finished restoring `products_db.image_files` (7794 documents, 0 failures)
+2026-05-11T01:29:18.647+0200	products_db.countries  393B
+2026-05-11T01:29:18.647+0200	finished restoring `products_db.countries` (4 documents, 0 failures)
+2026-05-11T01:29:20.610+0200	products_db.products  9.85MB
+2026-05-11T01:29:23.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:26.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:29.618+0200	products_db.products  9.85MB
+2026-05-11T01:29:32.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:35.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:38.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:41.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:44.610+0200	products_db.products  9.85MB
+2026-05-11T01:29:47.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:50.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:53.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:56.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:59.610+0200	products_db.products  9.85MB
+2026-05-11T01:30:02.625+0200	products_db.products  9.85MB
+2026-05-11T01:30:05.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:08.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:11.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:13.558+0200	products_db.products  9.85MB
+2026-05-11T01:30:13.558+0200	finished restoring `products_db.products` (1838 documents, 0 failures)
+2026-05-11T01:30:13.652+0200	restoring `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:13.933+0200	finished restoring `products_db.ecom_settings` (1 document, 0 failures)
+2026-05-11T01:30:14.080+0200	restoring `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.096+0200	finished restoring `products_db.ecom_users` (0 documents, 0 failures)
+2026-05-11T01:30:14.182+0200	restoring `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.259+0200	finished restoring `products_db.ecom_orders` (1 document, 0 failures)
+2026-05-11T01:30:14.347+0200	restoring `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.408+0200	finished restoring `products_db.ecom_wishlists` (1 document, 0 failures)
+2026-05-11T01:30:14.410+0200	restoring indexes for collection `products_db.ecom_cms_pages` from metadata
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"name":"page_1_locale_1", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"page", Value:1}, bson.E{Key:"locale", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	restoring indexes for collection `products_db.ecom_orders` from metadata
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_event_ids", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostEventIds", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_tracking", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostShipment.trackingNumber", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_user_date", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_order_id", "sparse":true, "unique":true, "v":2}, Key:bson.D{bson.E{Key:"orderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_payu_id", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"payuOrderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.412+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_shipping_carrier_date", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"shippingCarrier", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.412+0200	restoring indexes for collection `products_db.ecom_settings` from metadata
+2026-05-11T01:30:14.412+0200	restoring indexes for collection `products_db.ecom_wishlists` from metadata
+2026-05-11T01:30:14.412+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"wishlists_user", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.413+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"ecom_settings_key", "v":2}, Key:bson.D{bson.E{Key:"key", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.612+0200	restoring indexes for collection `products_db.product_categories` from metadata
+2026-05-11T01:30:14.612+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_collection_name", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"name", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.743+0200	restoring indexes for collection `products_db.ecom_users` from metadata
+2026-05-11T01:30:14.743+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"users_email", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"email", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.languages`
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.currencies`
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.image_files`
+2026-05-11T01:30:15.031+0200	restoring indexes for collection `products_db.products` from metadata
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_desc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_baseProductId", "v":2}, Key:bson.D{bson.E{Key:"baseProductId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_createdAt_desc", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_de", "v":2}, Key:bson.D{bson.E{Key:"name_de", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_asc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_updatedAt_desc", "v":2}, Key:bson.D{bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_sku", "v":2}, Key:bson.D{bson.E{Key:"sku", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_date", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_en", "v":2}, Key:bson.D{bson.E{Key:"name_en", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_theme", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.theme", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_material", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.material", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"category_catalog", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"slug", "v":2}, Key:bson.D{bson.E{Key:"slug", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_updated", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"collection_catalog_date", "v":2}, Key:bson.D{bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_pl", "v":2}, Key:bson.D{bson.E{Key:"name_pl", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_id", "v":2}, Key:bson.D{bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_size", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.size", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalogs_active", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.catalogs`
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.countries`
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.price_groups`
+2026-05-11T01:30:15.250+0200	Failed: products_db.products: error creating indexes for products_db.products: createIndex error: (IndexOptionsConflict) Index already exists with a different name: sku
+2026-05-11T01:30:15.250+0200	9787 document(s) restored successfully. 0 document(s) failed to restore.
+
+
+automatic target recovery:
+succeeded: true
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive
+restore command: mongorestore --uri mongodb+srv://mmatynia_db_user:***@cluster0.caatdvo.mongodb.net/?retryWrites=true&w=majority&authSource=admin --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive --gzip --drop --stopOnError
+
+2026-05-11T01:30:17.393+0200	preparing collections to restore from
+2026-05-11T01:30:17.402+0200	reading metadata for `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.integrations` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.integration_connections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.product_listings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.406+0200	reading metadata for `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.407+0200	reading metadata for `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:17.559+0200	restoring `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:19.005+0200	finished restoring `products_db.product_categories` (119 documents, 0 failures)
+2026-05-11T01:30:19.098+0200	restoring `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:19.594+0200	finished restoring `products_db.ecom_cms_pages` (11 documents, 0 failures)
+2026-05-11T01:30:19.682+0200	restoring `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:19.752+0200	finished restoring `products_db.currencies` (5 documents, 0 failures)
+2026-05-11T01:30:19.847+0200	restoring `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:19.917+0200	finished restoring `products_db.languages` (5 documents, 0 failures)
+2026-05-11T01:30:19.998+0200	restoring `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.075+0200	finished restoring `products_db.price_groups` (5 documents, 0 failures)
+2026-05-11T01:30:20.158+0200	restoring `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.225+0200	finished restoring `products_db.countries` (4 documents, 0 failures)
+2026-05-11T01:30:20.373+0200	restoring `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.461+0200	finished restoring `products_db.catalogs` (3 documents, 0 failures)
+2026-05-11T01:30:20.543+0200	restoring `products_db.integrations` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.608+0200	finished restoring `products_db.integrations` (1 document, 0 failures)
+2026-05-11T01:30:20.689+0200	restoring `products_db.integration_connections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.759+0200	finished restoring `products_db.integration_connections` (1 document, 0 failures)
+2026-05-11T01:30:20.897+0200	restoring `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:20.968+0200	finished restoring `products_db.ecom_settings` (1 document, 0 failures)
+2026-05-11T01:30:21.052+0200	restoring `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:21.123+0200	finished restoring `products_db.ecom_wishlists` (1 document, 0 failures)
+2026-05-11T01:30:21.205+0200	restoring `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:21.274+0200	finished restoring `products_db.ecom_orders` (1 document, 0 failures)
+2026-05-11T01:30:21.420+0200	restoring `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:21.431+0200	finished restoring `products_db.ecom_users` (0 documents, 0 failures)
+2026-05-11T01:30:21.511+0200	restoring `products_db.product_listings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:23.086+0200	products_db.product_listings  510KB
+2026-05-11T01:30:26.084+0200	products_db.product_listings  510KB
+2026-05-11T01:30:29.084+0200	products_db.product_listings  510KB
+2026-05-11T01:30:32.084+0200	products_db.product_listings  944KB
+2026-05-11T01:30:35.084+0200	products_db.product_listings  944KB
+2026-05-11T01:30:37.583+0200	products_db.product_listings  944KB
+2026-05-11T01:30:37.583+0200	finished restoring `products_db.product_listings` (1848 documents, 0 failures)
+2026-05-11T01:30:37.761+0200	restoring `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:30:38.084+0200	products_db.image_files  342KB
+2026-05-11T01:30:41.084+0200	products_db.image_files  342KB
+2026-05-11T01:30:44.084+0200	products_db.image_files  680KB
+2026-05-11T01:30:47.084+0200	products_db.image_files  680KB
+2026-05-11T01:30:50.084+0200	products_db.image_files  1010KB
+2026-05-11T01:30:53.084+0200	products_db.image_files  1010KB
+2026-05-11T01:30:56.084+0200	products_db.image_files  1.33MB
+2026-05-11T01:30:59.084+0200	products_db.image_files  1.33MB
+2026-05-11T01:31:02.084+0200	products_db.image_files  1.67MB
+2026-05-11T01:31:05.084+0200	products_db.image_files  1.67MB
+2026-05-11T01:31:08.083+0200	products_db.image_files  1.76MB
+2026-05-11T01:31:11.084+0200	products_db.image_files  2.01MB
+2026-05-11T01:31:14.083+0200	products_db.image_files  2.01MB
+2026-05-11T01:31:17.084+0200	products_db.image_files  2.35MB
+2026-05-11T01:31:20.084+0200	products_db.image_files  2.35MB
+2026-05-11T01:31:23.084+0200	products_db.image_files  2.60MB
+2026-05-11T01:31:24.857+0200	products_db.image_files  2.60MB
+2026-05-11T01:31:24.857+0200	finished restoring `products_db.image_files` (7794 documents, 0 failures)
+2026-05-11T01:31:24.945+0200	restoring `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/products/products-db-products-cloud-target-pre-sync-local-to-cloud-1778455541241.archive`"
+2026-05-11T01:31:26.083+0200	products_db.products  4.93MB
+2026-05-11T01:31:29.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:32.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:35.083+0200	products_db.products  4.93MB
+2026-05-11T01:31:38.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:41.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:44.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:47.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:50.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:53.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:56.084+0200	products_db.products  4.93MB
+2026-05-11T01:31:59.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:02.083+0200	products_db.products  4.93MB
+2026-05-11T01:32:05.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:08.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:11.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:14.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:17.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:20.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:23.084+0200	products_db.products  4.93MB
+2026-05-11T01:32:26.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:29.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:32.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:35.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:38.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:41.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:44.083+0200	products_db.products  9.86MB
+2026-05-11T01:32:47.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:50.084+0200	products_db.products  9.86MB
+2026-05-11T01:32:53.083+0200	products_db.products  9.86MB
+2026-05-11T01:32:56.083+0200	products_db.products  9.86MB
+2026-05-11T01:32:59.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:02.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:05.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:08.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:11.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:14.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:17.084+0200	products_db.products  9.86MB
+2026-05-11T01:33:20.083+0200	products_db.products  9.86MB
+2026-05-11T01:33:20.613+0200	products_db.products  9.86MB
+2026-05-11T01:33:20.613+0200	finished restoring `products_db.products` (1844 documents, 0 failures)
+2026-05-11T01:33:20.614+0200	no indexes to restore for collection `products_db.price_groups`
+2026-05-11T01:33:20.614+0200	no indexes to restore for collection `products_db.catalogs`
+2026-05-11T01:33:20.615+0200	restoring indexes for collection `products_db.ecom_settings` from metadata
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"ecom_settings_key", "v":2}, Key:bson.D{bson.E{Key:"key", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	restoring indexes for collection `products_db.ecom_cms_pages` from metadata
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"page_1_locale_1", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"page", Value:1}, bson.E{Key:"locale", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	restoring indexes for collection `products_db.ecom_users` from metadata
+2026-05-11T01:33:20.616+0200	no indexes to restore for collection `products_db.product_listings`
+2026-05-11T01:33:20.616+0200	no indexes to restore for collection `products_db.languages`
+2026-05-11T01:33:20.616+0200	restoring indexes for collection `products_db.products` from metadata
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_pl", "v":2}, Key:bson.D{bson.E{Key:"name_pl", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"slug", "v":2}, Key:bson.D{bson.E{Key:"slug", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_de", "v":2}, Key:bson.D{bson.E{Key:"name_de", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_size", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.size", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_asc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_createdAt_desc", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_id", "v":2}, Key:bson.D{bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_sku", "v":2}, Key:bson.D{bson.E{Key:"sku", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_updated", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"category_catalog", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalogs_active", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_material", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.material", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"users_email", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"email", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_baseProductId", "v":2}, Key:bson.D{bson.E{Key:"baseProductId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_updatedAt_desc", "v":2}, Key:bson.D{bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_desc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_date", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"collection_catalog_date", "v":2}, Key:bson.D{bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_theme", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.theme", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.616+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_en", "v":2}, Key:bson.D{bson.E{Key:"name_en", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.779+0200	no indexes to restore for collection `products_db.currencies`
+2026-05-11T01:33:20.779+0200	no indexes to restore for collection `products_db.integration_connections`
+2026-05-11T01:33:20.779+0200	restoring indexes for collection `products_db.ecom_orders` from metadata
+2026-05-11T01:33:20.779+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_order_id", "sparse":true, "unique":true, "v":2}, Key:bson.D{bson.E{Key:"orderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.779+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_payu_id", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"payuOrderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.779+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_shipping_carrier_date", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"shippingCarrier", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.779+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_event_ids", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostEventIds", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.780+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_tracking", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostShipment.trackingNumber", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.780+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_user_date", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:20.885+0200	restoring indexes for collection `products_db.ecom_wishlists` from metadata
+2026-05-11T01:33:20.885+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"wishlists_user", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:21.012+0200	no indexes to restore for collection `products_db.image_files`
+2026-05-11T01:33:21.012+0200	no indexes to restore for collection `products_db.integrations`
+2026-05-11T01:33:21.012+0200	restoring indexes for collection `products_db.product_categories` from metadata
+2026-05-11T01:33:21.012+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_collection_name", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"name", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:33:21.818+0200	no indexes to restore for collection `products_db.countries`
+2026-05-11T01:33:22.041+0200	11643 document(s) restored successfully. 0 document(s) failed to restore.
+
+
+error: Command failed: mongorestore --uri mongodb+srv://mmatynia_db_user:***@cluster0.caatdvo.mongodb.net/?retryWrites=true&w=majority&authSource=admin --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive --gzip --drop --stopOnError --nsFrom ecom_local.* --nsTo products_db.*
+2026-05-11T01:27:35.934+0200	WARNING: This archive came from MongoDB `7.0.31`, but you are restoring to `8.0.23`. Cross-version dump & restore is unsupported. The restored data may be corrupted.
+2026-05-11T01:27:35.936+0200	preparing collections to restore from
+2026-05-11T01:27:35.945+0200	reading metadata for `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.947+0200	reading metadata for `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.948+0200	reading metadata for `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.948+0200	reading metadata for `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:35.949+0200	reading metadata for `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:36.096+0200	restoring `products_db.ecom_cms_pages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:36.588+0200	finished restoring `products_db.ecom_cms_pages` (11 documents, 0 failures)
+2026-05-11T01:27:36.675+0200	restoring `products_db.product_categories` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.337+0200	finished restoring `products_db.product_categories` (119 documents, 0 failures)
+2026-05-11T01:27:37.418+0200	restoring `products_db.languages` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.495+0200	finished restoring `products_db.languages` (5 documents, 0 failures)
+2026-05-11T01:27:37.591+0200	restoring `products_db.currencies` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.661+0200	finished restoring `products_db.currencies` (5 documents, 0 failures)
+2026-05-11T01:27:37.752+0200	restoring `products_db.price_groups` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:37.860+0200	finished restoring `products_db.price_groups` (5 documents, 0 failures)
+2026-05-11T01:27:37.993+0200	restoring `products_db.catalogs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:38.065+0200	finished restoring `products_db.catalogs` (3 documents, 0 failures)
+2026-05-11T01:27:38.154+0200	restoring `products_db.image_files` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:27:38.613+0200	products_db.image_files  341KB
+2026-05-11T01:27:41.611+0200	products_db.image_files  341KB
+2026-05-11T01:27:44.611+0200	products_db.image_files  679KB
+2026-05-11T01:27:47.611+0200	products_db.image_files  679KB
+2026-05-11T01:27:50.610+0200	products_db.image_files  1011KB
+2026-05-11T01:27:53.611+0200	products_db.image_files  1011KB
+2026-05-11T01:27:56.611+0200	products_db.image_files  1.33MB
+2026-05-11T01:27:59.612+0200	products_db.image_files  1.33MB
+2026-05-11T01:28:02.611+0200	products_db.image_files  1.67MB
+2026-05-11T01:28:05.611+0200	products_db.image_files  1.67MB
+2026-05-11T01:28:08.611+0200	products_db.image_files  2.01MB
+2026-05-11T01:28:11.612+0200	products_db.image_files  2.34MB
+2026-05-11T01:28:14.611+0200	products_db.image_files  2.34MB
+2026-05-11T01:28:16.935+0200	restoring `products_db.countries` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:28:17.034+0200	restoring `products_db.products` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:28:17.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:17.611+0200	  products_db.countries    393B
+2026-05-11T01:28:17.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:17.611+0200	
+2026-05-11T01:28:20.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:20.611+0200	  products_db.countries    393B
+2026-05-11T01:28:20.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:20.611+0200	
+2026-05-11T01:28:23.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:23.611+0200	  products_db.countries    393B
+2026-05-11T01:28:23.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:23.611+0200	
+2026-05-11T01:28:26.610+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:26.610+0200	  products_db.countries    393B
+2026-05-11T01:28:26.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:26.611+0200	
+2026-05-11T01:28:29.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:29.611+0200	  products_db.countries    393B
+2026-05-11T01:28:29.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:29.611+0200	
+2026-05-11T01:28:32.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:32.611+0200	  products_db.countries    393B
+2026-05-11T01:28:32.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:32.611+0200	
+2026-05-11T01:28:35.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:35.611+0200	  products_db.countries    393B
+2026-05-11T01:28:35.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:35.611+0200	
+2026-05-11T01:28:38.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:38.611+0200	  products_db.countries    393B
+2026-05-11T01:28:38.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:38.611+0200	
+2026-05-11T01:28:41.614+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:41.615+0200	  products_db.countries    393B
+2026-05-11T01:28:41.615+0200	   products_db.products  4.93MB
+2026-05-11T01:28:41.615+0200	
+2026-05-11T01:28:44.612+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:44.612+0200	  products_db.countries    393B
+2026-05-11T01:28:44.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:44.612+0200	
+2026-05-11T01:28:47.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:47.611+0200	  products_db.countries    393B
+2026-05-11T01:28:47.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:47.611+0200	
+2026-05-11T01:28:50.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:50.611+0200	  products_db.countries    393B
+2026-05-11T01:28:50.611+0200	   products_db.products  4.93MB
+2026-05-11T01:28:50.611+0200	
+2026-05-11T01:28:53.612+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:53.612+0200	  products_db.countries    393B
+2026-05-11T01:28:53.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:53.612+0200	
+2026-05-11T01:28:56.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:56.612+0200	  products_db.countries    393B
+2026-05-11T01:28:56.612+0200	   products_db.products  4.93MB
+2026-05-11T01:28:56.612+0200	
+2026-05-11T01:28:59.616+0200	products_db.image_files  2.60MB
+2026-05-11T01:28:59.616+0200	  products_db.countries    393B
+2026-05-11T01:28:59.616+0200	   products_db.products  4.93MB
+2026-05-11T01:28:59.616+0200	
+2026-05-11T01:29:02.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:02.611+0200	  products_db.countries    393B
+2026-05-11T01:29:02.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:02.611+0200	
+2026-05-11T01:29:05.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:05.611+0200	  products_db.countries    393B
+2026-05-11T01:29:05.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:05.611+0200	
+2026-05-11T01:29:08.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:08.611+0200	  products_db.countries    393B
+2026-05-11T01:29:08.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:08.611+0200	
+2026-05-11T01:29:11.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:11.611+0200	  products_db.countries    393B
+2026-05-11T01:29:11.611+0200	   products_db.products  4.93MB
+2026-05-11T01:29:11.611+0200	
+2026-05-11T01:29:14.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:14.611+0200	  products_db.countries    393B
+2026-05-11T01:29:14.611+0200	   products_db.products  9.85MB
+2026-05-11T01:29:14.611+0200	
+2026-05-11T01:29:17.611+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:17.611+0200	  products_db.countries    393B
+2026-05-11T01:29:17.611+0200	   products_db.products  9.85MB
+2026-05-11T01:29:17.611+0200	
+2026-05-11T01:29:18.565+0200	products_db.image_files  2.60MB
+2026-05-11T01:29:18.565+0200	finished restoring `products_db.image_files` (7794 documents, 0 failures)
+2026-05-11T01:29:18.647+0200	products_db.countries  393B
+2026-05-11T01:29:18.647+0200	finished restoring `products_db.countries` (4 documents, 0 failures)
+2026-05-11T01:29:20.610+0200	products_db.products  9.85MB
+2026-05-11T01:29:23.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:26.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:29.618+0200	products_db.products  9.85MB
+2026-05-11T01:29:32.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:35.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:38.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:41.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:44.610+0200	products_db.products  9.85MB
+2026-05-11T01:29:47.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:50.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:53.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:56.611+0200	products_db.products  9.85MB
+2026-05-11T01:29:59.610+0200	products_db.products  9.85MB
+2026-05-11T01:30:02.625+0200	products_db.products  9.85MB
+2026-05-11T01:30:05.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:08.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:11.611+0200	products_db.products  9.85MB
+2026-05-11T01:30:13.558+0200	products_db.products  9.85MB
+2026-05-11T01:30:13.558+0200	finished restoring `products_db.products` (1838 documents, 0 failures)
+2026-05-11T01:30:13.652+0200	restoring `products_db.ecom_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:13.933+0200	finished restoring `products_db.ecom_settings` (1 document, 0 failures)
+2026-05-11T01:30:14.080+0200	restoring `products_db.ecom_users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.096+0200	finished restoring `products_db.ecom_users` (0 documents, 0 failures)
+2026-05-11T01:30:14.182+0200	restoring `products_db.ecom_orders` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.259+0200	finished restoring `products_db.ecom_orders` (1 document, 0 failures)
+2026-05-11T01:30:14.347+0200	restoring `products_db.ecom_wishlists` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-products-local_to_cloud-1778455541241.archive`"
+2026-05-11T01:30:14.408+0200	finished restoring `products_db.ecom_wishlists` (1 document, 0 failures)
+2026-05-11T01:30:14.410+0200	restoring indexes for collection `products_db.ecom_cms_pages` from metadata
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"name":"page_1_locale_1", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"page", Value:1}, bson.E{Key:"locale", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	restoring indexes for collection `products_db.ecom_orders` from metadata
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_event_ids", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostEventIds", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_inpost_tracking", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"inpostShipment.trackingNumber", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_user_date", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_order_id", "sparse":true, "unique":true, "v":2}, Key:bson.D{bson.E{Key:"orderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.411+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_payu_id", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"payuOrderId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.412+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"orders_shipping_carrier_date", "sparse":true, "v":2}, Key:bson.D{bson.E{Key:"shippingCarrier", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.412+0200	restoring indexes for collection `products_db.ecom_settings` from metadata
+2026-05-11T01:30:14.412+0200	restoring indexes for collection `products_db.ecom_wishlists` from metadata
+2026-05-11T01:30:14.412+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"wishlists_user", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.413+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"ecom_settings_key", "v":2}, Key:bson.D{bson.E{Key:"key", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.612+0200	restoring indexes for collection `products_db.product_categories` from metadata
+2026-05-11T01:30:14.612+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_collection_name", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"name", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:14.743+0200	restoring indexes for collection `products_db.ecom_users` from metadata
+2026-05-11T01:30:14.743+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"users_email", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"email", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.languages`
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.currencies`
+2026-05-11T01:30:15.031+0200	no indexes to restore for collection `products_db.image_files`
+2026-05-11T01:30:15.031+0200	restoring indexes for collection `products_db.products` from metadata
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_desc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_baseProductId", "v":2}, Key:bson.D{bson.E{Key:"baseProductId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_createdAt_desc", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_de", "v":2}, Key:bson.D{bson.E{Key:"name_de", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_price_asc", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"price", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_categoryId", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_updatedAt_desc", "v":2}, Key:bson.D{bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_sku", "v":2}, Key:bson.D{bson.E{Key:"sku", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_catalogId_categoryId_createdAt", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"categoryId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_date", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_en", "v":2}, Key:bson.D{bson.E{Key:"name_en", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_theme", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.theme", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_material", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.material", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"category_catalog", "v":2}, Key:bson.D{bson.E{Key:"categoryId", Value:1}, bson.E{Key:"catalogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"slug", "v":2}, Key:bson.D{bson.E{Key:"slug", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalog_active_updated", "v":2}, Key:bson.D{bson.E{Key:"catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}, bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"collection_catalog_date", "v":2}, Key:bson.D{bson.E{Key:"collectionSlug", Value:1}, bson.E{Key:"catalogId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_name_pl", "v":2}, Key:bson.D{bson.E{Key:"name_pl", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_id", "v":2}, Key:bson.D{bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"name":"products_structuredTitle_size", "v":2}, Key:bson.D{bson.E{Key:"structuredTitle.size", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.031+0200	index: &idx.IndexDocument{Options:bson.M{"background":true, "name":"catalogs_active", "v":2}, Key:bson.D{bson.E{Key:"catalogs.catalogId", Value:1}, bson.E{Key:"published", Value:1}, bson.E{Key:"archived", Value:1}, bson.E{Key:"stock", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.catalogs`
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.countries`
+2026-05-11T01:30:15.129+0200	no indexes to restore for collection `products_db.price_groups`
+2026-05-11T01:30:15.250+0200	Failed: products_db.products: error creating indexes for products_db.products: createIndex error: (IndexOptionsConflict) Index already exists with a different name: sku
+2026-05-11T01:30:15.250+0200	9787 document(s) restored successfully. 0 document(s) failed to restore.

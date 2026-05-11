@@ -30,7 +30,7 @@ export function RuleItemRawEditor(): React.JSX.Element {
           aria-label='Textarea'
           title='Textarea'
         />
-        {draft.error !== undefined && draft.error !== null && draft.error !== '' ? (
+        {draft.error !== null && draft.error !== '' ? (
           <div className='text-xs text-red-300'>{draft.error}</div>
         ) : null}
       </div>

@@ -41,6 +41,7 @@ export type StartBaseImportRunInput = BaseImportRunParams;
 export type ProductLookupMaps = {
   producerIdSet: Set<string>;
   producerNameToId: Map<string, string>;
+  externalProducerToInternalProducerId?: Map<string, string>;
   tagIdSet: Set<string>;
   tagNameToId: Map<string, string>;
   externalTagToInternalTagId: Map<string, string>;

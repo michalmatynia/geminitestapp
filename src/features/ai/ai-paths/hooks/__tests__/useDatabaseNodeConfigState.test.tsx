@@ -75,6 +75,11 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
+  createPresetId: () => mocks.createPresetIdMock(),
+  extractJsonPathEntries: (...args: unknown[]) => mocks.extractJsonPathEntriesMock(...args),
+}));
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: () => ({
     data: state.settingsMapData,
@@ -85,6 +90,9 @@ vi.mock('@/shared/lib/ai-paths', () => ({
   createPresetId: () => mocks.createPresetIdMock(),
   extractJsonPathEntries: (...args: unknown[]) => mocks.extractJsonPathEntriesMock(...args),
   renderTemplate: vi.fn((template) => template),
+}));
+
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {
     schema: (...args: unknown[]) => mocks.dbSchemaMock(...args),
   },

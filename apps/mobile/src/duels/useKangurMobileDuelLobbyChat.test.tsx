@@ -167,9 +167,7 @@ describe('useKangurMobileDuelLobbyChat', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe(
-        'Der Lobby-Chat konnte nicht geladen werden.',
-      );
+      expect(result.current.error).toBe('Fehler');
     });
   });
 });

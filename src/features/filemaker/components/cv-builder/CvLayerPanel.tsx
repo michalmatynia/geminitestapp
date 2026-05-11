@@ -30,7 +30,7 @@ export function CvLayerPanel({
 
   return (
     <LayerPanel
-      label="CV layers"
+      label='CV layers'
       tree={tree}
       runtime={runtime}
       className={className}

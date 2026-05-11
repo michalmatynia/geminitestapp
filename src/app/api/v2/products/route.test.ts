@@ -27,6 +27,7 @@ describe('products route module', () => {
 
   it('registers ecommerce pages editorial articles routes', () => {
     expect(catchAllRouteSource).toContain('../pages/editorial-articles/route-handler');
+    expect(catchAllRouteSource).toContain('../pages/editorial-articles/generate/route-handler');
   });
 
   it('registers title-terms routes before the generic product id route', () => {

@@ -117,7 +117,9 @@ describe('ai-path-run queue lease contention', () => {
       throw new Error('Expected the AI Paths queue module to register a managed queue processor.');
     }
 
-    await config.processor({ runId: 'run-1' }, 'job-1');
+    await expect(config.processor({ runId: 'run-1' }, 'job-1')).rejects.toThrow(
+      'Unexpected failure processing queue job for run: run-1'
+    );
 
     expect(claimRunForProcessingMock).toHaveBeenCalledWith('run-1');
     expect(mutateAgentLeaseMock).toHaveBeenCalledWith(

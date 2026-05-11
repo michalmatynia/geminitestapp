@@ -2,10 +2,9 @@ import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
-import type { PortDataType } from '@/shared/lib/ai-paths/core/utils/port-types';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
-import { CanvasSvgNodePorts } from '../canvas/node/CanvasSvgNodePorts';
+import { CanvasSvgNode } from '../CanvasSvgNode';
 
 export const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
@@ -95,24 +94,6 @@ export const buildContextValue = (): CanvasBoardUIContextValue => {
   };
 };
 
-const buildConnectorInfo = (nodeId: string) => ({
-  direction: 'output' as 'output' | 'input',
-  nodeId,
-  port: 'result',
-  expectedTypes: ['string'] as PortDataType[],
-  expectedLabel: 'string',
-  rawValue: 'ok',
-  value: 'ok',
-  isHistory: false,
-  historyLength: 0,
-  actualType: 'string',
-  runtimeMismatch: false,
-  connectionMismatches: [],
-  hasMismatch: false,
-  nodeInputs: {},
-  nodeOutputs: { result: 'ok' },
-});
-
 export const renderNodePorts = (input?: {
   node?: AiNode;
   contextOverrides?: Partial<CanvasBoardUIContextValue>;
@@ -124,26 +105,14 @@ export const renderNodePorts = (input?: {
   if (input?.contextOverrides) {
     Object.assign(value, input.contextOverrides);
   }
-  const getConnectorInfo = vi.fn(() => buildConnectorInfo(node.id));
 
   const renderResult = render(
     <svg>
       <CanvasBoardUIProvider value={value}>
-        <CanvasSvgNodePorts
-          node={node}
-          incomingEdgePortSet={new Set<string>()}
-          connectorHitRadius={16}
-          showPortLabels={false}
-          buildConnectorKey={(
-            direction: 'input' | 'output',
-            nodeId: string,
-            port: string
-          ): string => `${direction}:${nodeId}:${port}`}
-          getConnectorInfo={getConnectorInfo}
-        />
+        <CanvasSvgNode node={node} />
       </CanvasBoardUIProvider>
     </svg>
   );
 
-  return { ...renderResult, node, value, getConnectorInfo };
+  return { ...renderResult, node, value };
 };

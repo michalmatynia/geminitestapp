@@ -37,7 +37,7 @@ export const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]
             | undefined) ??
           null,
         kind,
-        status: step.status as PromotionLogEntry['status'],
+        status: step.status,
         message: step.message,
         startedAt: step.startedAt,
         completedAt: step.completedAt,

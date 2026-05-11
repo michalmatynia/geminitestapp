@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-lines-per-function, no-nested-ternary, @typescript-eslint/explicit-function-return-type, no-param-reassign, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-shadow, @typescript-eslint/strict-boolean-expressions */
+
 import { readRegexCaptureGroup } from '@/features/prompt-exploder/helpers/capture';
 import type {
   PromptExploderSegment,

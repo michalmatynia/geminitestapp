@@ -61,39 +61,39 @@ export const normalizeRawCaptureText = (value: string): string =>
 
 export const normalizeCountryName = (value: string): string => {
   const normalized = normalizeText(value);
-  if (!normalized) return '';
+  if (normalized.length === 0) return '';
   return COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()] ?? normalized;
 };
 
 export const isCountryLine = (line: string): boolean => {
   const normalized = normalizeText(line);
-  if (!normalized || /\d/.test(normalized)) return false;
+  if (normalized.length === 0 || /\d/.test(normalized)) return false;
   return Boolean(COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()]);
 };
 
 export const isLikelyPersonNameLine = (line: string): boolean => {
   const normalized = normalizeText(line);
-  if (!normalized || normalized.length > 80 || /\d/.test(normalized)) return false;
+  if (normalized.length === 0 || normalized.length > 80 || /\d/.test(normalized)) return false;
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (tokens.length < 2 || tokens.length > 4) return false;
   return tokens.every((token) => PERSON_NAME_TOKEN_RE.test(token));
 };
 
 export const splitSegmentLines = (segment: PromptExploderSegment): string[] => {
-  const source = segment.raw || segment.text || '';
+  const source = segment.raw ?? segment.text ?? '';
   return source.split('\n').map(normalizeText).filter(Boolean);
 };
 
 export const resolveSegmentDisplayLabel = (segment: PromptExploderSegment): string => {
-  const explicitTitle = normalizeText(segment.title || '');
-  if (explicitTitle) return explicitTitle;
+  const explicitTitle = normalizeText(segment.title ?? '');
+  if (explicitTitle.length > 0) return explicitTitle;
   const firstLine = splitSegmentLines(segment)[0] ?? '';
-  return firstLine || `Segment ${segment.id}`;
+  return firstLine.length > 0 ? firstLine : `Segment ${segment.id}`;
 };
 
 export const padNumberValue = (value: string): string => {
   const trimmed = value.trim();
-  if (!trimmed) return '';
+  if (trimmed.length === 0) return '';
   return trimmed.padStart(2, '0');
 };
 
@@ -102,7 +102,7 @@ export const normalizeSegmentLabels = (labels: string[] | undefined): string[] =
   const unique = new Set<string>();
   labels.forEach((label: string): void => {
     const normalized = normalizeText(label);
-    if (!normalized) return;
+    if (normalized.length === 0) return;
     unique.add(normalized);
   });
   return [...unique];

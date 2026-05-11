@@ -190,12 +190,15 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
   useSelectionActions: () => selectionActionsMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   BUNDLE_INPUT_PORTS: ['bundle'],
   TEMPLATE_INPUT_PORTS: ['bundle'],
   CLUSTER_PRESETS_KEY: 'cluster_presets',
   DB_NODE_PRESETS_KEY: 'db_node_presets',
   DB_QUERY_PRESETS_KEY: 'db_query_presets',
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
   createPresetId: () => mocks.createPresetIdMock(),
   parsePathList: (value: string) =>
     value

@@ -30,7 +30,7 @@ export function EmailLayerPanel({
 
   return (
     <LayerPanel
-      label="Email layers"
+      label='Email layers'
       tree={tree}
       runtime={runtime}
       className={className}

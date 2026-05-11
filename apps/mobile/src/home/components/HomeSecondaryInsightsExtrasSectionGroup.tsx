@@ -1,6 +1,7 @@
 import {
-  DeferredHomeInsightsExtrasCard,
-} from '../home-screen-deferred';
+  DeferredHomeInsightsBadgesAndPlanCard,
+  DeferredHomeInsightsResultsHubCard,
+} from '../home-screen-secondary-deferred';
 import {
   useHomeScreenDeferredPanelGroup,
 } from '../useHomeScreenDeferredPanels';
@@ -32,15 +33,12 @@ export function HomeSecondaryInsightsExtrasSectionGroup({
   return (
     <>
       {!areDeferredHomeInsightBadgesAndPlanReady ? (
-        <DeferredHomeInsightsExtrasCard />
+        <DeferredHomeInsightsBadgesAndPlanCard />
       ) : (
         <HomeSecondaryInsightsBadgesAndPlanSectionGroup />
       )}
       {!areDeferredHomeInsightResultsSummaryReady ? (
-        // Re-importing DeferredHomeInsightsResultsHubCard would cause circular or redundant imports if kept here
-        // The original code used it, let's keep the logic consistent.
-        // Actually, it was DeferredHomeInsightsResultsHubCard in original.
-        <></> 
+        <DeferredHomeInsightsResultsHubCard />
       ) : (
         <HomeResultsHubSection recentResults={recentResults} />
       )}

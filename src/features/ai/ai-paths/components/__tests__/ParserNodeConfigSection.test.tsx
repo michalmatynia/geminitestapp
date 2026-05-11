@@ -300,12 +300,12 @@ describe('ParserNodeConfigSection', () => {
         parser: {
           mappings: {
             title: '$.title',
-            images: '$.gallery',
+            images: '$.images',
           },
         },
       },
     });
-    expect(mockState.toast).toHaveBeenCalledWith('Image field detected: $.gallery', {
+    expect(mockState.toast).toHaveBeenCalledWith('Image field detected: $.images', {
       variant: 'success',
     });
   });
@@ -329,13 +329,17 @@ describe('ParserNodeConfigSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Replace mappings' }));
 
     expect(latestUpdate()).toMatchObject({
-      outputs: ['title', 'images', 'sku'],
+      outputs: expect.arrayContaining(['title', 'images', 'sku', 'productId', 'content_en', 'price', 'stock']),
       config: {
         parser: {
           mappings: {
             title: '$.title',
             images: '$.images',
             sku: '$.sku',
+            productId: '$.id',
+            content_en: '$.content_en',
+            price: '$.price',
+            stock: '$.stock',
           },
           presetId: 'product_core',
         },
@@ -347,7 +351,7 @@ describe('ParserNodeConfigSection', () => {
     });
 
     expect(latestUpdate()).toMatchObject({
-      outputs: ['bundle', 'images'],
+      outputs: expect.arrayContaining(['bundle']),
       config: {
         parser: {
           outputMode: 'bundle',

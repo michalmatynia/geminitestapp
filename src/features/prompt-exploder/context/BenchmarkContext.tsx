@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+
 import React, { useCallback, useMemo, useState } from 'react';
 
 import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';

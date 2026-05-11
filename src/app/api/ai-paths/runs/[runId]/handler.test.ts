@@ -157,7 +157,12 @@ describe('ai-paths run detail handler', () => {
         { runId: 'run-alt' }
       )
     ).rejects.toMatchObject({
-      message: 'Run not found',
+      code: 'NOT_FOUND',
+      httpStatus: 404,
+      meta: {
+        action: 'findRunById',
+        runId: 'run-alt',
+      },
     });
   });
 
@@ -190,7 +195,12 @@ describe('ai-paths run detail handler', () => {
         { runId: 'run-1' }
       )
     ).rejects.toMatchObject({
-      message: 'Run not found',
+      code: 'NOT_FOUND',
+      httpStatus: 404,
+      meta: {
+        action: 'delete',
+        runId: 'run-1',
+      },
     });
   });
 });

@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, @typescript-eslint/no-shadow, @typescript-eslint/strict-boolean-expressions */
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 import {

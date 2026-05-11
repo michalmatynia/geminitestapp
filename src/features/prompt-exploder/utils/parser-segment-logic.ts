@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+
 import { buildPromptExploderBindings } from '../parser-bindings';
 import { collectReferencedParamsFromItems } from '../parser-list-items';
 import { renderPromptExploderSegment } from '../parser-segment-factory';
@@ -11,6 +13,38 @@ export const CASE_RESOLVER_LABEL_ONLY_SEGMENT_IDS = new Set<string>([
 export const CASE_RESOLVER_LABEL_ONLY_LINE_RE =
   /^\s*(?:from|od|nadawca|sender|addresser|wnioskodawca|to|do|adresat|recipient|addressee|odbiorca|organ)\s*:\s*$/iu;
 
+const isLabelOnlyCaseResolverSegment = (segment: PromptExploderSegment): boolean => {
+  const currentRaw = (segment.raw ?? segment.text ?? '').trim();
+  if (currentRaw.length === 0) return false;
+  if (!CASE_RESOLVER_LABEL_ONLY_LINE_RE.test(currentRaw)) return false;
+  return segment.matchedPatternIds.some((patternId: string): boolean =>
+    CASE_RESOLVER_LABEL_ONLY_SEGMENT_IDS.has(patternId)
+  );
+};
+
+const mergeCaseResolverLabeledPartySegment = (
+  current: PromptExploderSegment,
+  next: PromptExploderSegment
+): PromptExploderSegment => {
+  const currentRaw = (current.raw ?? current.text ?? '').trim();
+  const nextRaw = next.raw ?? next.text ?? '';
+
+  return {
+    ...next,
+    title: '',
+    raw: `${currentRaw}\n${nextRaw}`.trim(),
+    text: `${currentRaw}\n${nextRaw}`.trim(),
+    matchedPatternIds: [...new Set([...current.matchedPatternIds, ...next.matchedPatternIds])],
+    matchedPatternLabels: [
+      ...new Set([...current.matchedPatternLabels, ...next.matchedPatternLabels]),
+    ],
+    matchedSequenceLabels: [
+      ...new Set([...current.matchedSequenceLabels, ...next.matchedSequenceLabels]),
+    ],
+    confidence: Math.max(current.confidence, next.confidence),
+  };
+};
+
 export const mergeCaseResolverLabeledPartySegments = (
   segments: PromptExploderSegment[]
 ): PromptExploderSegment[] => {
@@ -21,13 +55,7 @@ export const mergeCaseResolverLabeledPartySegments = (
   for (let index = 0; index < segments.length; index += 1) {
     const current = segments[index];
     if (!current) continue;
-    const currentRaw = (current.raw || current.text || '').trim();
-    const isLabelOnlySegment =
-      currentRaw.length > 0 &&
-      CASE_RESOLVER_LABEL_ONLY_LINE_RE.test(currentRaw) &&
-      current.matchedPatternIds.some((patternId: string): boolean =>
-        CASE_RESOLVER_LABEL_ONLY_SEGMENT_IDS.has(patternId)
-      );
+    const isLabelOnlySegment = isLabelOnlyCaseResolverSegment(current);
 
     if (!isLabelOnlySegment) {
       mergedSegments.push(current);
@@ -40,33 +68,13 @@ export const mergeCaseResolverLabeledPartySegments = (
       continue;
     }
 
-    const nextRaw = next.raw || next.text || '';
-    if (!nextRaw.trim()) {
+    const nextRaw = next.raw ?? next.text ?? '';
+    if (nextRaw.trim().length === 0) {
       mergedSegments.push(current);
       continue;
     }
 
-    mergedSegments.push({
-      ...next,
-      title: '',
-      raw: `${currentRaw}
-${nextRaw}`.trim(),
-      text: `${currentRaw}
-${nextRaw}`.trim(),
-      matchedPatternIds: [
-        ...new Set([...(current.matchedPatternIds ?? []), ...next.matchedPatternIds]),
-      ],
-      matchedPatternLabels: [
-        ...new Set([...(current.matchedPatternLabels ?? []), ...(next.matchedPatternLabels ?? [])]),
-      ],
-      matchedSequenceLabels: [
-        ...new Set([
-          ...(current.matchedSequenceLabels ?? []),
-          ...(next.matchedSequenceLabels ?? []),
-        ]),
-      ],
-      confidence: Math.max(current.confidence ?? 0, next.confidence ?? 0),
-    });
+    mergedSegments.push(mergeCaseResolverLabeledPartySegment(current, next));
     index += 1;
   }
 

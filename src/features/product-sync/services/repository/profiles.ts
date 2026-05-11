@@ -1,5 +1,5 @@
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { PRODUCT_SYNC_PROFILE_SETTINGS_KEY } from "@/shared/contracts/product-sync";
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { PRODUCT_SYNC_PROFILE_SETTINGS_KEY } from '@/shared/contracts/product-sync';
 const readProfiles = async (): Promise<ProductSyncProfile[]> => {
   const raw = await readSettingValue(PROFILE_SETTINGS_KEY);
   const parsed = parseJson<unknown[]>(raw);

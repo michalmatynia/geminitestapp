@@ -34,8 +34,11 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/constants', () => ({
   CLUSTER_PRESETS_KEY: 'cluster-presets',
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
   createPresetId: () => mockState.createPresetId(),
 }));
 

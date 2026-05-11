@@ -46,6 +46,10 @@ vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () =
   sendProductImageToStudio: vi.fn(),
 }));
 
+vi.mock('@/features/ai/image-studio/product-studio/product-studio-service.generation-config', () => ({
+  assertProductStudioGenerationConfigurationReady: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('@/features/ai/server', () => ({
   linkProductImageToStudio: vi.fn(),
   getProductStudioSequencePreflight: vi.fn(),
@@ -378,6 +382,7 @@ describe('Product Studio API', () => {
       projectId: 'studio-a',
       sourceSlotId: 'slot-source',
       sourceSlot: createSlot('slot-source'),
+      activeRun: null,
       variants: [
         createSlot('variant-1'),
       ],

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions */
+
 import {
   createContext,
   useCallback,

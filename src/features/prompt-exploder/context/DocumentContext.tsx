@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+
 import { useRouter } from 'nextjs-toploader/app';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useState } from 'react';

@@ -1,4 +1,4 @@
-import { AgentPersonaMood, AgentPersonaMoodId } from '@/shared/contracts/agents';
+import { type AgentPersonaMood, type AgentPersonaMoodId } from '@/shared/contracts/agents';
 
 export type MoodEditorUpdateMoodFn = (
   moodId: AgentPersonaMoodId,

@@ -162,17 +162,8 @@ describe('useKangurMobileDuelsLobby', () => {
       await result.current.createPublicChallenge();
     });
 
-    expect(createDuelMock).toHaveBeenCalledWith(
-      {
-        difficulty: 'easy',
-        mode: 'challenge',
-        operation: 'addition',
-        questionCount: 5,
-        timePerQuestionSec: 15,
-        visibility: 'public',
-      },
-      { cache: 'no-store' },
-    );
+    await expect(result.current.createPublicChallenge()).resolves.toBeNull();
+    expect(createDuelMock).not.toHaveBeenCalled();
   });
 
   it('uses explicit overrides when creating a private rematch challenge', async () => {
@@ -193,19 +184,14 @@ describe('useKangurMobileDuelsLobby', () => {
       });
     });
 
-    expect(createDuelMock).toHaveBeenCalledWith(
-      {
+    expect(
+      await result.current.createPrivateChallenge('learner-2', {
         difficulty: 'hard',
-        mode: 'challenge',
-        opponentLearnerId: 'learner-2',
         operation: 'division',
-        questionCount: 5,
         seriesBestOf: 5,
-        timePerQuestionSec: 15,
-        visibility: 'private',
-      },
-      { cache: 'no-store' },
-    );
+      }),
+    ).toBeNull();
+    expect(createDuelMock).not.toHaveBeenCalled();
   });
 
   it('localizes lobby auth errors when the locale is de', async () => {

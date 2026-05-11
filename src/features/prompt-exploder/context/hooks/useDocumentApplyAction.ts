@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/require-await, @typescript-eslint/strict-boolean-expressions, no-nested-ternary */
+
 import { startTransition, useCallback } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui/base';

@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+
 import type {
   PromptExploderBenchmarkSuggestion,
   BenchmarkSuggestionPreparation,
@@ -13,7 +15,7 @@ export const benchmarkSuggestionRuleId = (
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     .slice(0, 64);
-  return `segment.benchmark.${suggestion.suggestedSegmentType}.${slug || 'segment'}`;
+  return `segment.benchmark.${suggestion.suggestedSegmentType}.${slug.length === 0 ? 'segment' : slug}`;
 };
 
 export const dedupeBenchmarkSuggestionsById = (
@@ -22,8 +24,8 @@ export const dedupeBenchmarkSuggestionsById = (
   const seen = new Set<string>();
   const unique: PromptExploderBenchmarkSuggestion[] = [];
   suggestions.forEach((suggestion) => {
-    const id = suggestion.id || '';
-    if (!id || seen.has(id)) return;
+    const id = suggestion.id ?? '';
+    if (id.length === 0 || seen.has(id)) return;
     seen.add(id);
     unique.push(suggestion);
   });
@@ -46,13 +48,14 @@ export const prepareBenchmarkSuggestionsForApply = (
   const uniqueSuggestions = dedupeBenchmarkSuggestionsById(suggestions);
   const invalidSegmentTitles: string[] = [];
   const validSuggestions = uniqueSuggestions.filter((suggestion) => {
-    const pattern = (suggestion.suggestedRulePattern || '').trim();
-    if (!pattern) {
-      invalidSegmentTitles.push(suggestion.segmentTitle || 'Untitled');
+    const pattern = (suggestion.suggestedRulePattern ?? '').trim();
+    const segmentTitle = suggestion.segmentTitle ?? 'Untitled';
+    if (pattern.length === 0) {
+      invalidSegmentTitles.push(segmentTitle);
       return false;
     }
     if (!isValidRegexPattern(pattern, 'mi')) {
-      invalidSegmentTitles.push(suggestion.segmentTitle || 'Untitled');
+      invalidSegmentTitles.push(segmentTitle);
       return false;
     }
     return true;

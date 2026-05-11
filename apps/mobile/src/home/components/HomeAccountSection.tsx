@@ -1,11 +1,13 @@
 import React from 'react';
 import { Text } from 'react-native';
 import {
-  DeferredHomeAccountDetails,
-  DeferredHomeAccountSummary,
   PrimaryButton,
   SectionCard,
 } from '../homeScreenPrimitives';
+import {
+  DeferredHomeAccountDetails,
+  DeferredHomeAccountSummary,
+} from '../home-screen-deferred';
 import { HomeLearnerCredentialsSignInSection } from './HomeLearnerCredentialsSignInSection';
 import { type getKangurHomeAuthBoundaryViewModel } from '../homeAuthBoundary';
 import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';

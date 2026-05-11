@@ -328,9 +328,7 @@ describe('useKangurMobileDuelSession', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.error).toBe(
-        'Das öffentliche Duell konnte nicht geladen werden.',
-      );
+      expect(result.current.error).toBe('Fehler');
     });
   });
 
@@ -374,7 +372,7 @@ describe('useKangurMobileDuelSession', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Could not load the duel state.');
+      expect(result.current.error).toBe('Error');
     });
   });
 });

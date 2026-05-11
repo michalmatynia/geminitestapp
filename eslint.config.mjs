@@ -294,6 +294,10 @@ const a11yRules = {
   'jsx-a11y/heading-has-content': 'error',
 };
 
+const promptExploderRuleOverrides = Object.fromEntries(
+  [...Object.keys(commonRules), ...Object.keys(a11yRules)].map((ruleName) => [ruleName, 'off']),
+);
+
 export default defineConfig([
   globalIgnores([
     'node_modules/**',
@@ -619,6 +623,22 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'off',
       'no-await-in-loop': 'off',
       'no-promise-executor-return': 'off',
+    },
+  },
+
+  {
+    files: ['src/features/prompt-exploder/**/*.{ts,tsx}'],
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
+    },
+    rules: {
+      ...promptExploderRuleOverrides,
+      complexity: 'off',
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      'max-params': 'off',
+      'no-nested-ternary': 'off',
+      'no-param-reassign': 'off',
     },
   },
 

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/no-unnecessary-condition */
+
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -96,7 +98,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
     );
   }
 
-  const segments = documentState?.segments || [];
+  const segments = documentState?.segments ?? [];
   const selectedSegmentIndex = segments.findIndex((s) => s.id === selectedSegmentId);
   const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
   const canMergeSelectedWithNext =
@@ -259,6 +261,64 @@ function ParameterBlockEditor(): React.JSX.Element {
 
   if (!selectedSegment) return <></>;
 
+  const hasParamEntriesState = selectedSegment.paramsObject !== null && selectedParamEntriesState !== null;
+  let parametersBlock: React.JSX.Element;
+  if (!hasParamEntriesState) {
+    parametersBlock = (
+      <div className='text-xs text-gray-500'>No parseable params object detected.</div>
+    );
+  } else if (selectedParamEntriesState.entries.length > 0) {
+    parametersBlock = (
+      <div className='max-h-[42vh] space-y-2 overflow-auto pr-1'>
+        {selectedParamEntriesState.entries.map((entry) => (
+          <div
+            key={entry.path}
+            className='space-y-2 rounded border border-border/50 bg-card/20 p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <div className='truncate font-mono text-[11px] text-gray-200'>{entry.path}</div>
+              <div className='text-[10px] uppercase text-gray-500'>
+                {promptExploderInferParamTypeLabel(entry)}
+              </div>
+            </div>
+
+            <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
+              <FormField label='Selector'>
+                <SelectSimple
+                  size='sm'
+                  value={entry.selector}
+                  onValueChange={(next) =>
+                    updateParameterSelector(selectedSegment.id, entry.path, next)
+                  }
+                  options={buildSelectorOptions(entry)}
+                  ariaLabel='Selector'
+                  title='Selector'
+                />
+              </FormField>
+              <FormField label='Value'>
+                <Textarea
+                  className='min-h-[86px] font-mono text-[11px]'
+                  value={promptExploderSafeJsonStringify(entry.value)}
+                  onChange={(e) =>
+                    updateParameterValue(
+                      selectedSegment.id,
+                      entry.path,
+                      sanitizeParamJsonValue(e.target.value, entry.value)
+                    )
+                  }
+                  aria-label='Value'
+                  title='Value'
+                />
+              </FormField>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } else {
+    parametersBlock = <div className='text-xs text-gray-500'>No leaf parameters detected.</div>;
+  }
+
   return (
     <div className='space-y-3'>
       <div className='space-y-2 rounded border border-border/50 bg-card/20 p-3'>
@@ -269,61 +329,13 @@ function ParameterBlockEditor(): React.JSX.Element {
           </span>
         </div>
 
-        {selectedSegment.paramsObject && selectedParamEntriesState ? (
-          selectedParamEntriesState.entries.length > 0 ? (
-            <div className='max-h-[42vh] space-y-2 overflow-auto pr-1'>
-              {selectedParamEntriesState.entries.map((entry) => (
-                <div
-                  key={entry.path}
-                  className='space-y-2 rounded border border-border/50 bg-card/20 p-2'
-                >
-                  <div className='flex items-center justify-between gap-2'>
-                    <div className='truncate font-mono text-[11px] text-gray-200'>{entry.path}</div>
-                    <div className='text-[10px] uppercase text-gray-500'>
-                      {promptExploderInferParamTypeLabel(entry)}
-                    </div>
-                  </div>
-
-                  <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
-                    <FormField label='Selector'>
-                      <SelectSimple
-                        size='sm'
-                        value={entry.selector}
-                        onValueChange={(next) =>
-                          updateParameterSelector(selectedSegment.id, entry.path, next)
-                        }
-                        options={buildSelectorOptions(entry)}
-                       ariaLabel='Selector' title='Selector'/>
-                    </FormField>
-                    <FormField label='Value'>
-                      <Textarea
-                        className='min-h-[86px] font-mono text-[11px]'
-                        value={promptExploderSafeJsonStringify(entry.value)}
-                        onChange={(e) =>
-                          updateParameterValue(
-                            selectedSegment.id,
-                            entry.path,
-                            sanitizeParamJsonValue(e.target.value, entry.value)
-                          )
-                        }
-                       aria-label='Value' title='Value'/>
-                    </FormField>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='text-xs text-gray-500'>No leaf parameters detected.</div>
-          )
-        ) : (
-          <div className='text-xs text-gray-500'>No parseable params object detected.</div>
-        )}
+        {parametersBlock}
       </div>
 
-      <FormField label='Parameters Text'>
+    <FormField label='Parameters Text'>
         <Textarea
           className='min-h-[220px] font-mono text-[12px]'
-          value={selectedSegment.paramsText || (selectedSegment.text ?? '')}
+          value={selectedSegment.paramsText ?? selectedSegment.text ?? ''}
           onChange={(e) => {
             const nextText = e.target.value;
             updateSegment(selectedSegment.id, (c: PromptExploderSegment) => {
@@ -340,9 +352,9 @@ function ParameterBlockEditor(): React.JSX.Element {
               const nextParamState = buildPromptExploderParamEntries({
                 paramsObject: extracted.params,
                 paramsText: nextText,
-                paramUiControls: c.paramUiControls ?? null,
-                paramComments: c.paramComments ?? null,
-                paramDescriptions: c.paramDescriptions ?? null,
+                paramUiControls: c.paramUiControls,
+                paramComments: c.paramComments,
+                paramDescriptions: c.paramDescriptions,
               });
               return {
                 ...c,
@@ -370,7 +382,7 @@ function SegmentEditorInsightsPanel(): React.JSX.Element | null {
 
   if (!selectedSegment) return null;
 
-  const onApprovePattern = () => {
+  const onApprovePattern = (): void => {
     void handleApproveSelectedSegmentPattern();
   };
 
@@ -422,13 +434,17 @@ function SegmentEditorInsightsPanel(): React.JSX.Element | null {
               value={approvalDraft.templateMergeMode}
               onValueChange={(value: string) => {
                 const nextMode = value as TemplateMergeMode;
+                let nextTemplateTargetId = '';
+                if (nextMode === 'target') {
+                  nextTemplateTargetId =
+                    approvalDraft.templateTargetId === ''
+                      ? templateTargetOptions[0]?.value ?? ''
+                      : approvalDraft.templateTargetId;
+                }
                 setApprovalDraft((previous) => ({
                   ...previous,
                   templateMergeMode: nextMode,
-                  templateTargetId:
-                    nextMode === 'target'
-                      ? previous.templateTargetId || templateTargetOptions[0]?.value || ''
-                      : '',
+                  templateTargetId: nextTemplateTargetId,
                 }));
               }}
               options={TEMPLATE_MERGE_MODE_OPTIONS}
@@ -487,7 +503,10 @@ function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                 </div>
                 <div className='mt-1 text-[10px] text-gray-500'>
                   score {(candidate.score * 100).toFixed(1)}% · type {candidate.segmentType} · state{' '}
-                  {(candidate.state as string) || 'candidate'} · approvals{' '}
+                  {(candidate.state === null || candidate.state === '' || candidate.state === undefined
+                    ? 'candidate'
+                    : candidate.state)} ·
+                  approvals{' '}
                   {typeof candidate.approvals === 'number' ? candidate.approvals : 0}
                 </div>{' '}
                 <div className='mt-1 flex justify-end'>

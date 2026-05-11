@@ -43,6 +43,7 @@ vi.mock('@/features/integrations/services/imports/base-import-provenance', () =>
 }));
 
 import { importSingleItem } from './base-import-item-processor';
+import { resolveProducerIds } from './base-import-item-processor-utils';
 
 const defaultParameterImportResult = {
   applied: false,
@@ -148,6 +149,23 @@ const buildInput = (overrides?: Record<string, unknown>) => ({
     },
   ],
   ...overrides,
+});
+
+describe('resolveProducerIds', () => {
+  it('maps Base manufacturer ids through producer mappings before import persistence', () => {
+    expect(
+      resolveProducerIds(['58074'], {
+        producerIdSet: new Set<string>(),
+        producerNameToId: new Map<string, string>(),
+        externalProducerToInternalProducerId: new Map<string, string>([
+          ['58074', '7efcaa41-3e52-4dc9-a451-8a18d319ca8b'],
+        ]),
+        tagIdSet: new Set<string>(),
+        tagNameToId: new Map<string, string>(),
+        externalTagToInternalTagId: new Map<string, string>(),
+      })
+    ).toEqual(['7efcaa41-3e52-4dc9-a451-8a18d319ca8b']);
+  });
 });
 
 describe('importSingleItem custom fields', () => {

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, no-nested-ternary */
+
 import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 

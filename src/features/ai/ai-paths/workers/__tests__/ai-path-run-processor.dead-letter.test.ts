@@ -96,10 +96,11 @@ describe('ai-path-run processor failure finalization', () => {
       'run-dead-1',
       'failed',
       expect.objectContaining({
-        errorMessage: 'retryable downstream failure',
+        errorMessage: 'AI-Paths run execution failed: run-dead-1',
+        finishedAt: '2026-04-12T10:00:00.000Z',
         event: expect.objectContaining({
           level: 'error',
-          message: 'Run failed: retryable downstream failure',
+          message: 'Run failed: AI-Paths run execution failed: run-dead-1',
         }),
       })
     );
@@ -110,11 +111,11 @@ describe('ai-path-run processor failure finalization', () => {
       timestamp: new Date('2026-04-12T10:00:00.000Z'),
     });
     expect(publishRunUpdateMock).toHaveBeenNthCalledWith(1, 'run-dead-1', 'error', {
-      error: 'retryable downstream failure',
+      error: 'AI-Paths run execution failed: run-dead-1',
       status: 'failed',
     });
     expect(publishRunUpdateMock).toHaveBeenNthCalledWith(2, 'run-dead-1', 'done', {
-      error: 'retryable downstream failure',
+      error: 'AI-Paths run execution failed: run-dead-1',
       status: 'failed',
     });
     expect(logSystemEventMock).toHaveBeenCalledWith(
@@ -124,7 +125,7 @@ describe('ai-path-run processor failure finalization', () => {
         context: expect.objectContaining({
           event: 'run.failed',
           runId: 'run-dead-1',
-          error: 'retryable downstream failure',
+          error: 'AI-Paths run execution failed: run-dead-1',
         }),
       })
     );

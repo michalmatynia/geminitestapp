@@ -86,7 +86,11 @@ describe('ai-paths run result handler', () => {
         { runId: 'run-missing' }
       )
     ).rejects.toMatchObject({
-      message: 'Run not found',
+      code: 'NOT_FOUND',
+      httpStatus: 404,
+      meta: {
+        runId: 'run-missing',
+      },
     });
   });
 });

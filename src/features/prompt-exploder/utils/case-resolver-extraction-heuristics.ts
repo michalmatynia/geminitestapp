@@ -1,3 +1,5 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
+
 import type {
   PromptExploderSegment,
   PromptExploderCaseResolverPartyRole,

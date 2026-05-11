@@ -38,6 +38,7 @@ const buildPipelineResults = (): Array<[null, number | string[]]> => [
   [null, 0],
   [null, 0],
   [null, 0],
+  [null, 0],
   [null, 6],
   [null, 5],
   [null, 1],
@@ -47,10 +48,6 @@ const buildPipelineResults = (): Array<[null, number | string[]]> => [
   [null, 1],
   [null, 0],
   [null, 4],
-  [null, 2],
-  [null, 6],
-  [null, 1],
-  [null, 1],
   [null, ['1709251200000|1200|run-1|a', '1709251201000|2400|run-2|b']],
 ];
 
@@ -372,6 +369,7 @@ describe('runtime analytics service', () => {
       strategyCounts: {
         code_object_v3: 3,
         unknown: 2,
+        compatibility: 0,
       },
       resolutionSourceCounts: {
         override: 3,

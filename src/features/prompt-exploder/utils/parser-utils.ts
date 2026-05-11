@@ -37,7 +37,7 @@ export const decodeHtmlEntities = (value: string): string => {
     const normalized = String(entity ?? '')
       .trim()
       .toLowerCase();
-    if (!normalized) return full;
+    if (normalized.length === 0) return full;
     if (normalized.startsWith('#x')) {
       const code = Number.parseInt(normalized.slice(2), 16);
       return Number.isFinite(code) ? String.fromCodePoint(code) : full;
@@ -51,7 +51,7 @@ export const decodeHtmlEntities = (value: string): string => {
 };
 
 export const normalizePromptSource = (value: string): string => {
-  const normalized = normalizeMultiline(value ?? '');
+  const normalized = normalizeMultiline(value);
   if (!containsLikelyHtmlMarkup(normalized)) {
     return normalized;
   }

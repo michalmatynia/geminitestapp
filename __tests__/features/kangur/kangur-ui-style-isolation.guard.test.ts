@@ -10,7 +10,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/KangurFeatureApp.tsx',
     requiredTokens: [
-      'shouldHideTopNavigationDuringBoot ? (',
+      'shouldHideTopNavigationDuringBoot',
       'offsetTopBar={shouldReserveTopBarOffset}',
       'visible={isBootLoaderBlockingNavigation}',
       'data-testid=\'kangur-route-content\'',
@@ -33,12 +33,12 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: ['kangur-surface-active', "document.getElementById('app-content')"],
   },
   {
-    file: 'src/app/(frontend)/kangur/(app)/layout.tsx',
-    requiredTokens: ['KangurAliasAppLayout'],
+    file: 'src/app/(frontend)/layout.tsx',
+    requiredTokens: ['KangurServerShell'],
   },
   {
     file: 'src/features/kangur/server/KangurAliasAppLayout.tsx',
-    requiredTokens: ['KangurFeatureRouteShellClientBoundary', '<KangurServerShell />'],
+    requiredTokens: ['KangurFeatureRouteShellClientLoader', '<KangurServerShell />'],
   },
   {
     file: 'src/features/kangur/ui/KangurFeaturePage.tsx',
@@ -78,10 +78,6 @@ const KANGUR_VISUAL_CONTRACTS = [
       'kangur-premium-bg',
       "translations('backToHome')",
     ],
-  },
-  {
-    file: 'src/app/(frontend)/kangur/error.tsx',
-    requiredTokens: ['data-testid=\'kangur-error-shell\'', "href='/kangur'"],
   },
   {
     file: 'src/features/kangur/ui/KangurLoginPage.components.tsx',

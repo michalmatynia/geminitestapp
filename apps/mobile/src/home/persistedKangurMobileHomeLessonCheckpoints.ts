@@ -139,7 +139,8 @@ export const resolvePersistedKangurMobileHomeLessonCheckpoints = ({
   storage,
 }: { learnerIdentity: string; limit?: number; locale: string | null | undefined; storage: KangurClientStorageAdapter }): KangurMobileHomeLessonCheckpointItem[] | null => {
   const store = parsePersistedHomeLessonCheckpointStore(storage.getItem(KANGUR_MOBILE_HOME_LESSON_CHECKPOINTS_STORAGE_KEY));
-  const persistedSnapshot = store[learnerIdentity];
+  const persistedSnapshot = store[learnerIdentity] ?? null;
+  if (persistedSnapshot === null) return null;
   const keys = Object.keys(persistedSnapshot);
   if (keys.length < 1) return null;
   const progressSnapshot = createDefaultKangurProgressState();

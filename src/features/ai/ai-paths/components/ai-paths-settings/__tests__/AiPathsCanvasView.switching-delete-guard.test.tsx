@@ -26,11 +26,14 @@ vi.mock('../../run-history-panel', () => ({
 vi.mock('../../runtime-event-log-panel', () => ({
   RuntimeEventLogPanel: () => <div data-testid='runtime-event-log-panel' />,
 }));
-vi.mock('../../runtime-analysis-panel', () => ({
-  RuntimeAnalysisPanel: () => <div data-testid='runtime-analysis-panel' />,
-}));
 vi.mock('../../live-log-panel', () => ({
   LiveLogPanel: () => <div data-testid='live-log-panel' />,
+}));
+vi.mock('../panels/AiPathsRuntimeAnalysis', () => ({
+  AiPathsRuntimeAnalysis: () => <div data-testid='ai-paths-runtime-analysis-panel' />,
+}));
+vi.mock('../sections/AiPathsLiveLog', () => ({
+  AiPathsLiveLog: () => <div data-testid='ai-paths-live-log' />,
 }));
 
 const queryClient = new QueryClient();
@@ -53,6 +56,7 @@ describe('AiPathsCanvasView switch guard', () => {
   it('defers secondary sidebar and diagnostics panels until after the idle bootstrap', async () => {
     const pageContextMock = buildCanvasPageContext({
       palette: [],
+      isInspectorVisible: true,
     });
 
     renderWithProvider(<AiPathsCanvasView />, pageContextMock);
@@ -64,12 +68,16 @@ describe('AiPathsCanvasView switch guard', () => {
     
     expect(screen.queryByTestId('cluster-presets-panel')).not.toBeInTheDocument();
     expect(screen.queryByTestId('runtime-event-log-panel')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('runtime-analysis-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ai-paths-runtime-analysis-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ai-paths-live-log')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId('cluster-presets-panel')).toBeInTheDocument();
       expect(screen.getByTestId('graph-model-debug-panel')).toBeInTheDocument();
       expect(screen.getByTestId('run-history-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('runtime-event-log-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('ai-paths-runtime-analysis-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('ai-paths-live-log')).toBeInTheDocument();
     });
   }, 60000);
 });

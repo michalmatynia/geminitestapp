@@ -149,9 +149,45 @@ interface LanguageDoc {
 
 type CategoryMapEntry = { name: string; collection: string; aliases: string[] };
 
+export type MentiosCategory = {
+  id: string;
+  name: string;
+  count: number;
+  parentName?: string;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function errorName(err: unknown): string {
+  return err instanceof Error ? err.name : '';
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return typeof err === 'string' ? err : '';
+}
+
+function isMongoConnectivityError(err: unknown): boolean {
+  const signature = `${errorName(err)} ${errorMessage(err)}`.toLowerCase();
+  return [
+    'mongoserverselectionerror',
+    'mongonetworkerror',
+    'ssl routines',
+    'tlsv1 alert',
+    'server selection timed out',
+    'econnrefused',
+    'enotfound',
+    'etimedout',
+  ].some((token) => signature.includes(token));
+}
+
+function logMentiosFallback(operation: string, err: unknown): void {
+  if (process.env.NODE_ENV === 'production' || isMongoConnectivityError(err)) return;
+  const message = errorMessage(err);
+  console.warn(`[mentios] ${operation} unavailable; using fallback${message ? `: ${message}` : '.'}`);
+}
 
 function chooseLocalized(
   locale: EcomLocale,
@@ -304,6 +340,26 @@ function buildCategoryMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, 
     map.set(id, { name, collection: categoryToCollection(name), aliases });
   }
   return map;
+}
+
+function buildCategoryParentNameMap(docs: CategoryDoc[], locale: EcomLocale): Map<string, string> {
+  const namesById = new Map<string, string>();
+  const parentNamesById = new Map<string, string>();
+
+  for (const doc of docs) {
+    const id = stringifyDocumentId(doc._id);
+    if (!id) continue;
+    namesById.set(id, pickCategoryName(doc, locale));
+  }
+
+  for (const doc of docs) {
+    const id = stringifyDocumentId(doc._id);
+    const parentId = stringifyDocumentId(doc.parentId);
+    const parentName = parentId ? namesById.get(parentId)?.trim() : '';
+    if (id && parentName) parentNamesById.set(id, parentName);
+  }
+
+  return parentNamesById;
 }
 
 function productTag(doc: ProductDoc, locale: EcomLocale): string | undefined {
@@ -955,7 +1011,7 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 
     return { products, total };
   } catch (err) {
-    console.error('[mentios] Failed to fetch products:', err);
+    logMentiosFallback('Products', err);
     return { products: [], total: 0 };
   }
 }
@@ -998,7 +1054,7 @@ export const getMentiosProduct = cache(async function getMentiosProduct(slugOrId
     const categoryMap = await fetchCategories(locale);
     return mapDoc(doc, 0, categoryMap, locale);
   } catch (err) {
-    console.error('[mentios] Failed to fetch product:', err);
+    logMentiosFallback('Product', err);
     return null;
   }
 });
@@ -1022,7 +1078,7 @@ export const getMentiosSlugs = cache(async function getMentiosSlugs(): Promise<s
 /** Return categories that have at least one in-stock product, with per-category counts, sorted alphabetically. */
 export const getMentiosCategories = cache(async function getMentiosCategories(
   localeInput?: EcomLocale | string | null,
-): Promise<Array<{ id: string; name: string; count: number }>> {
+): Promise<MentiosCategory[]> {
   const locale = normalizeLocale(localeInput);
   if (!hasEcommerceProductsMongoConfig()) return [];
   try {
@@ -1042,6 +1098,7 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
 
     const normalizedCategoryDocs = categoryDocs as unknown as CategoryDoc[];
     const categoryMap = buildCategoryMap(normalizedCategoryDocs, locale);
+    const parentNameMap = buildCategoryParentNameMap(normalizedCategoryDocs, locale);
     const leafCategoryIds = buildLeafChildCategoryIds(normalizedCategoryDocs);
     const effectiveCategoryIds = leafCategoryIds.size > 0
       ? leafCategoryIds
@@ -1055,7 +1112,12 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
 
     const categories = Array.from(categoryMap.entries())
       .filter(([id]) => effectiveCategoryIds.has(id))
-      .map(([id, { name }]) => ({ id, name, count: countMap.get(id) ?? 0 }))
+      .map(([id, { name }]) => {
+        const parentName = parentNameMap.get(id);
+        return parentName
+          ? { id, name, parentName, count: countMap.get(id) ?? 0 }
+          : { id, name, count: countMap.get(id) ?? 0 };
+      })
       .filter(({ count }) => count > 0)
       .sort((a, b) => a.name.localeCompare(b.name));
     if (categories.length > 0) return categories;
@@ -1199,7 +1261,7 @@ export async function getMentiosHomeStats(
       loreCount: countLiveLores(products, locale),
     };
   } catch (err) {
-    console.error('[mentios] Failed to fetch home stats:', err);
+    logMentiosFallback('Home stats', err);
     return null;
   }
 }

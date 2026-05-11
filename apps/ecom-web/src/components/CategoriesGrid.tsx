@@ -4,6 +4,7 @@ import { useRef, type CSSProperties, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocalizedHref } from '@/context/LocaleContext';
+import { getHomeCategoryCardHref, type CatalogCategoryOption } from '@/lib/homeCategoryLinks';
 
 const CATEGORY_VISUALS = [
   {
@@ -38,28 +39,14 @@ const CATEGORY_VISUALS = [
 
 const DEFAULT_VISUAL = CATEGORY_VISUALS[0];
 
-function getCardHref(card: HomeCategoriesContent['cards'][number]): string {
-  const values = card.selectorValues.map((value) => value.trim()).filter(Boolean);
-  if (card.selectorType === 'all') return '/products';
-  if (card.selectorType === 'category' && values.length > 0) {
-    const params = new URLSearchParams();
-    params.set('categories', values.join(','));
-    return `/products?${params.toString()}`;
-  }
-  if (card.selectorType === 'theme' && values.length > 0) {
-    const params = new URLSearchParams();
-    params.set('themes', values.join(','));
-    return `/products?${params.toString()}`;
-  }
-  return card.href || '/products';
-}
-
 export function CategoriesGrid({
   counts = {},
   content = HOME_CONTENT_DEFAULTS.categories,
+  catalogCategories = [],
 }: {
   counts?: Record<string, number>;
   content?: HomeCategoriesContent;
+  catalogCategories?: CatalogCategoryOption[];
 }): JSX.Element {
   const sectionRef = useRef<HTMLElement>(null);
   const hasLiveCounts = Object.keys(counts).length > 0;
@@ -132,7 +119,7 @@ export function CategoriesGrid({
               return (
             <a
               key={cat.id}
-              href={localizedHref(getCardHref(cat))}
+              href={localizedHref(getHomeCategoryCardHref(cat, catalogCategories))}
               className="cat-card category-card group block"
               style={{ aspectRatio: visual.aspectRatio }}
             >

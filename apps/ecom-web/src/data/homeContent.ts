@@ -1,3 +1,5 @@
+import { buildCategoryFilterHref, HOME_UNIVERSE_CATEGORY_FILTERS } from './homeCategoryFilters';
+
 export interface HomeHeroStatContent {
   value: string;
   label: string;
@@ -183,10 +185,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         sublabel: 'Pins · Keychains · Jewellery',
         tag: 'New Season',
         visible: true,
-        href: '/products?categories=Anime%20Ring,Anime%20Keychain',
+        href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Anime),
         imageUrl: '',
         selectorType: 'category',
-        selectorValues: ['Anime Ring', 'Anime Keychain'],
+        selectorValues: HOME_UNIVERSE_CATEGORY_FILTERS.Anime,
         fallbackCount: 640,
       },
       {
@@ -195,10 +197,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         sublabel: 'RPG · FPS · Strategy Drops',
         tag: 'Hot Drops',
         visible: true,
-        href: '/products?themes=Elden%20Ring,Warhammer%2040k',
+        href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Gaming),
         imageUrl: '',
-        selectorType: 'theme',
-        selectorValues: ['Elden Ring', 'Warhammer 40k'],
+        selectorType: 'category',
+        selectorValues: HOME_UNIVERSE_CATEGORY_FILTERS.Gaming,
         fallbackCount: 520,
       },
       {
@@ -207,10 +209,10 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
         sublabel: 'Cinema · Series · Icons',
         tag: 'Collector',
         visible: true,
-        href: '/products?categories=Film%20Collectibles',
+        href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Movie),
         imageUrl: '',
         selectorType: 'category',
-        selectorValues: ['Film Collectibles'],
+        selectorValues: HOME_UNIVERSE_CATEGORY_FILTERS.Movie,
         fallbackCount: 380,
       },
     ],

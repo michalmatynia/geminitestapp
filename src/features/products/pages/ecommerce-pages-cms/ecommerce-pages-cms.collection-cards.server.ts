@@ -3,6 +3,10 @@ import 'server-only';
 import type { Db } from 'mongodb';
 
 import {
+  COLLECTION_CARD_DEFAULT_FALLBACK,
+  DEFAULT_COLLECTION_CARDS,
+} from './ecommerce-pages-cms.collection-card-defaults';
+import {
   DEFAULT_LOCALE,
   ensureCmsPagesIndex,
   getCmsPagesCollection,
@@ -18,13 +22,14 @@ import {
   writeLocalImageFile,
   type CmsPageDoc,
 } from './ecommerce-pages-cms.shared.server';
-import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { resolveEcommerceMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 import { uploadBufferToFastComet } from '@/shared/lib/files/services/storage/file-storage-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const HOME_PAGE_KEY = 'home';
+const COLLECTION_CARDS_MIRROR_TIMEOUT_MS = 8_000;
 const MAX_COLLECTION_CARD_IMAGE_BYTES = 5 * 1024 * 1024;
 const COLLECTION_CARD_PUBLIC_DIR = '/uploads/cms/stargater/collection-cards';
 const COLLECTION_CARD_FASTCOMET_FOLDER = 'stargater/collection-cards';
@@ -61,59 +66,6 @@ export type EcommercePagesCmsCollectionCardImageUploadResult = {
 
 export type EcommercePagesCmsCollectionCardsSaveResult =
   EcommercePagesCmsCollectionCardsSnapshot & { cloudMirrored: boolean };
-
-const COLLECTION_CARD_DEFAULT_FALLBACK: EcommercePagesCmsCollectionCard = {
-  id: 'objects',
-  label: 'All Items',
-  sublabel: 'Keychains · Pins · Charms',
-  tag: 'Full Catalog',
-  visible: true,
-  href: '/products',
-  imageUrl: '',
-  selectorType: 'all',
-  selectorValues: [],
-  fallbackCount: 1800,
-};
-
-const DEFAULT_COLLECTION_CARDS: EcommercePagesCmsCollectionCard[] = [
-  COLLECTION_CARD_DEFAULT_FALLBACK,
-  {
-    id: 'womenswear',
-    label: 'Anime',
-    sublabel: 'Pins · Keychains · Jewellery',
-    tag: 'New Season',
-    visible: true,
-    href: '/products?categories=Anime%20Ring,Anime%20Keychain',
-    imageUrl: '',
-    selectorType: 'category',
-    selectorValues: ['Anime Ring', 'Anime Keychain'],
-    fallbackCount: 640,
-  },
-  {
-    id: 'menswear',
-    label: 'Gaming',
-    sublabel: 'RPG · FPS · Strategy Drops',
-    tag: 'Hot Drops',
-    visible: true,
-    href: '/products?themes=Elden%20Ring,Warhammer%2040k',
-    imageUrl: '',
-    selectorType: 'theme',
-    selectorValues: ['Elden Ring', 'Warhammer 40k'],
-    fallbackCount: 520,
-  },
-  {
-    id: 'accessories',
-    label: 'Film & TV',
-    sublabel: 'Cinema · Series · Icons',
-    tag: 'Collector',
-    visible: true,
-    href: '/products?categories=Film%20Collectibles',
-    imageUrl: '',
-    selectorType: 'category',
-    selectorValues: ['Film Collectibles'],
-    fallbackCount: 380,
-  },
-];
 
 const normalizeSelectorType = (value: unknown): EcommercePagesCmsCollectionCardSelectorType => {
   const normalized = readText(value).toLowerCase();
@@ -231,6 +183,62 @@ const saveCollectionCardsToDb = async (
   return { ...toCollectionCardsSnapshot(updatedDoc), updatedAt: now.toISOString(), updatedBy: userId };
 };
 
+const withMirrorTimeout = async (
+  label: string,
+  task: Promise<unknown>
+): Promise<void> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      task,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${label} timed out after ${COLLECTION_CARDS_MIRROR_TIMEOUT_MS}ms`));
+        }, COLLECTION_CARDS_MIRROR_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+};
+
+const mirrorCollectionCardsTarget = async (
+  label: string,
+  task: () => Promise<unknown>
+): Promise<boolean> => {
+  try {
+    await withMirrorTimeout(label, task());
+    return true;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'products.pages-cms',
+      action: 'mirrorCollectionCardsToEcommerceDatabases',
+      target: label,
+    });
+    return false;
+  }
+};
+
+const mirrorCollectionCardsToDatabases = async (
+  cards: EcommercePagesCmsCollectionCard[],
+  userId: string,
+  now: Date
+): Promise<boolean> => {
+  const results = await Promise.all([
+    mirrorCollectionCardsTarget('ecommerce local MongoDB', () =>
+      withEcommerceMongoDb('local', (db) => saveCollectionCardsToDb(db, cards, userId, now))
+    ),
+    mirrorCollectionCardsTarget('ecommerce cloud MongoDB', () =>
+      withEcommerceMongoDb('cloud', (db) => saveCollectionCardsToDb(db, cards, userId, now))
+    ),
+    mirrorCollectionCardsTarget('main app cloud MongoDB', () =>
+      withMainAppMongoDb('cloud', (db) => saveCollectionCardsToDb(db, cards, userId, now))
+    ),
+  ]);
+
+  return results.every(Boolean);
+};
+
 const saveCollectionCardsToLocalAndEcommerce = async (
   cards: EcommercePagesCmsCollectionCard[],
   userId: string
@@ -238,21 +246,9 @@ const saveCollectionCardsToLocalAndEcommerce = async (
   const now = new Date();
   const localDb = await getMongoDb('local');
   const localSnapshot = await saveCollectionCardsToDb(localDb, cards, userId, now);
-  try {
-    await withEcommerceMongoDb('local', (db) => saveCollectionCardsToDb(db, cards, userId, now));
-    await withEcommerceMongoDb('cloud', (db) => saveCollectionCardsToDb(db, cards, userId, now));
-    await withMainAppMongoDb('cloud', (db) => saveCollectionCardsToDb(db, cards, userId, now));
-  } catch (error) {
-    void ErrorSystem.captureException(error, {
-      service: 'products.pages-cms',
-      action: 'mirrorCollectionCardsToEcommerceDatabases',
-    });
-    throw externalServiceError(
-      'Collection cards were saved locally but could not be mirrored to the ecommerce databases.',
-      { cause: error }
-    );
-  }
-  return { ...localSnapshot, cloudConfigured: true, cloudMirrored: true };
+  const cloudConfig = resolveEcommerceMongoSourceConfig('cloud');
+  const cloudMirrored = await mirrorCollectionCardsToDatabases(cards, userId, now);
+  return { ...localSnapshot, cloudConfigured: cloudConfig.configured, cloudMirrored };
 };
 
 export const readEcommercePagesCmsCollectionCards =

@@ -8,6 +8,8 @@ import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsContent } from '@/data/productsContent';
 import { formatPrice, type EcomLocale } from '@/lib/locales';
+import { getCategorySelectorTitle, type ProductCategoryDisplayOption } from '@/lib/productFilterLabels';
+import { productMatchesThemes } from '@/lib/productThemes';
 import { useCart } from '@/context/CartContext';
 
 const LOAD_MORE_SIZE = 24;
@@ -257,7 +259,7 @@ function SidebarFilters({
   onClose?: () => void;
   totalCount: number;
   content: ProductsContent;
-  categories: Array<{ id: string; name: string; count: number }>;
+  categories: Array<{ id: string; name: string; count: number } & ProductCategoryDisplayOption>;
 }): JSX.Element {
   const col = content.collection;
 
@@ -436,16 +438,6 @@ function parseFilterList(value: string | null): string[] {
   return uniqueFilterValues(value.split(','));
 }
 
-function productMatchesThemes(product: Product, themes: string[]): boolean {
-  if (themes.length === 0) return true;
-  const lore = product.lore?.toLowerCase() ?? '';
-  const name = product.name.toLowerCase();
-  return themes.some((theme) => {
-    const query = theme.toLowerCase();
-    return lore.includes(query) || name.includes(query);
-  });
-}
-
 export function CatalogPageClient({
   products: initialProducts,
   total,
@@ -458,7 +450,7 @@ export function CatalogPageClient({
   total: number;
   source?: 'mentios' | 'static';
   content: ProductsContent;
-  categories: Array<{ id: string; name: string; count: number }>;
+  categories: Array<{ id: string; name: string; count: number } & ProductCategoryDisplayOption>;
   initialFilters?: FilterState;
 }): JSX.Element {
   const col = content.collection;
@@ -500,8 +492,9 @@ export function CatalogPageClient({
     newOnly: initialFilters?.newOnly ?? false,
   });
   const selectedCategory = selectedCategories.length === 1 ? selectedCategories[0] : '';
+  const categorySelectorTitle = getCategorySelectorTitle(selectedCategories, categories);
   const selectorTitle = selectedCategories.length > 0
-    ? selectedCategories.join(', ')
+    ? categorySelectorTitle
     : selectedThemes.length > 0
       ? selectedThemes.join(', ')
       : '';

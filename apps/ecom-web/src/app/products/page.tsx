@@ -6,6 +6,8 @@ import { CatalogPageClient } from '@/app/products/CatalogPageClient';
 import { getProductsContent } from '@/lib/cms';
 import { PRODUCTS_CONTENT_DEFAULTS } from '@/data/productsContent';
 import { getRequestLocale } from '@/lib/request-locale';
+import { getCategorySelectorTitle } from '@/lib/productFilterLabels';
+import { productMatchesThemes } from '@/lib/productThemes';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,16 +36,6 @@ function uniqueFilters(values: string[]): string[] {
   return result;
 }
 
-function productMatchesThemes(product: { lore?: string; name: string }, themes: string[]): boolean {
-  if (themes.length === 0) return true;
-  const lore = product.lore?.toLowerCase() ?? '';
-  const name = product.name.toLowerCase();
-  return themes.some((theme) => {
-    const query = theme.toLowerCase();
-    return lore.includes(query) || name.includes(query);
-  });
-}
-
 export async function generateMetadata({
   searchParams,
 }: {
@@ -58,7 +50,7 @@ export async function generateMetadata({
   const categories = uniqueFilters([...parseFilterList(params.categories), ...(category ? [category] : [])]);
   const themes = parseFilterList(params.themes);
   const selectorTitle = categories.length > 0
-    ? categories.join(', ')
+    ? getCategorySelectorTitle(categories)
     : themes.length > 0
       ? themes.join(', ')
       : '';

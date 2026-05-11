@@ -25,7 +25,7 @@ vi.mock('./mongodb', () => ({
   hasEcommerceProductsMongoConfig: mocks.hasEcommerceProductsMongoConfig,
 }));
 
-import { getMentiosHomeStats, getMentiosProducts } from './mentios';
+import { getMentiosCategories, getMentiosHomeStats, getMentiosProducts } from './mentios';
 
 const createCursor = <T>(docs: T[]) => {
   const cursor = {
@@ -190,5 +190,57 @@ describe('Mentios home stats', () => {
         ]),
       }),
     );
+  });
+
+  it('returns null without console errors when Mongo stats are unavailable', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = new Error('SSL routines:ssl3_read_bytes:tlsv1 alert internal error');
+    error.name = 'MongoServerSelectionError';
+    mocks.getEcommerceProductsDb.mockRejectedValue(error);
+
+    const result = await getMentiosHomeStats('en');
+
+    expect(result).toBeNull();
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+});
+
+describe('Mentios categories', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.hasProductsMongoConfig.mockReturnValue(true);
+    mocks.hasEcommerceProductsMongoConfig.mockReturnValue(true);
+  });
+
+  it('returns parent category names for child categories', async () => {
+    const categoryDocs = [
+      { _id: 'anime-parent', name_en: 'Anime' },
+      { _id: 'anime-ring', parentId: 'anime-parent', name_en: 'Anime Ring' },
+      { _id: 'movie-parent', name_en: 'Movie' },
+      { _id: 'movie-wallet', parentId: 'movie-parent', name_en: 'Movie Wallet' },
+    ];
+    const productsCollection = {
+      aggregate: vi.fn(() => createCursor([
+        { _id: 'movie-wallet', count: 3 },
+        { _id: 'anime-ring', count: 2 },
+      ])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor(categoryDocs)),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosCategories('en');
+
+    expect(result).toEqual([
+      { id: 'anime-ring', name: 'Anime Ring', parentName: 'Anime', count: 2 },
+      { id: 'movie-wallet', name: 'Movie Wallet', parentName: 'Movie', count: 3 },
+    ]);
   });
 });

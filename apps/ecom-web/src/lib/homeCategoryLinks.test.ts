@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+
+import { HOME_CONTENT_DEFAULTS, type HomeCategoryCardContent } from '@/data/homeContent';
+import { HOME_UNIVERSE_CATEGORY_FILTERS } from '@/data/homeCategoryFilters';
+import { FALLBACK_MOVIE_CATEGORY_FILTERS, getHomeCategoryCardHref } from './homeCategoryLinks';
+
+function cardByLabel(label: string, overrides: Partial<HomeCategoryCardContent> = {}): HomeCategoryCardContent {
+  const card = HOME_CONTENT_DEFAULTS.categories.cards.find((item) => item.label === label);
+  if (!card) throw new Error(`${label} default card missing`);
+  return { ...card, ...overrides };
+}
+
+function categoryParam(href: string): string {
+  const query = href.split('?')[1] ?? '';
+  return new URLSearchParams(query).get('categories') ?? '';
+}
+
+describe('home category links', () => {
+  it('uses live Movie categories for the Film & TV card', () => {
+    const href = getHomeCategoryCardHref(
+      cardByLabel('Film & TV', {
+        href: '/products?categories=Film%20Collectibles',
+        selectorValues: ['Film Collectibles'],
+      }),
+      [
+        { name: 'Anime Keychain' },
+        { name: 'Movie Pin' },
+        { name: 'Movie Wallet' },
+      ],
+    );
+
+    expect(categoryParam(href)).toBe('Movie Pin,Movie Wallet');
+    expect(href).not.toContain('Film');
+  });
+
+  it('falls back to Movie category filters when CMS still has Film Collectibles', () => {
+    const href = getHomeCategoryCardHref(
+      cardByLabel('Film & TV', {
+        href: '/products?categories=Film%20Collectibles',
+        selectorValues: ['Film Collectibles'],
+      }),
+    );
+    const values = categoryParam(href).split(',');
+
+    expect(values).toEqual(FALLBACK_MOVIE_CATEGORY_FILTERS);
+    expect(values.every((value) => /\bMovie\b/.test(value))).toBe(true);
+  });
+
+  it('uses live Anime categories for the Anime card', () => {
+    const href = getHomeCategoryCardHref(
+      cardByLabel('Anime', {
+        selectorValues: ['Anime Ring', 'Anime Keychain'],
+      }),
+      [
+        { name: 'Anime Cards' },
+        { name: 'Anime Ring' },
+        { name: 'Movie Wallet' },
+      ],
+    );
+
+    expect(categoryParam(href)).toBe('Anime Cards,Anime Ring');
+  });
+
+  it('uses Gaming category filters even when stale CMS still has theme values', () => {
+    const href = getHomeCategoryCardHref(
+      cardByLabel('Gaming', {
+        href: '/products?themes=Elden%20Ring,Warhammer%2040k',
+        selectorType: 'theme',
+        selectorValues: ['Elden Ring', 'Warhammer 40k'],
+      }),
+      [
+        { name: 'Gaming Pin' },
+        { name: 'Gaming Wallet' },
+        { name: 'Anime Ring' },
+      ],
+    );
+
+    expect(categoryParam(href)).toBe('Gaming Pin,Gaming Wallet');
+    expect(href).not.toContain('themes=');
+  });
+
+  it('falls back to configured universe category filters when live categories are unavailable', () => {
+    const href = getHomeCategoryCardHref(cardByLabel('Anime'));
+
+    expect(categoryParam(href).split(',')).toEqual(HOME_UNIVERSE_CATEGORY_FILTERS.Anime);
+  });
+
+  it('keeps unrelated category selectors unchanged', () => {
+    const href = getHomeCategoryCardHref({
+      id: 'dice',
+      label: 'Dice',
+      sublabel: 'Tabletop',
+      tag: 'Accessories',
+      visible: true,
+      href: '/products?categories=Set%20Of%207%20Dice',
+      imageUrl: '',
+      selectorType: 'category',
+      selectorValues: ['Set Of 7 Dice'],
+      fallbackCount: 10,
+    });
+
+    expect(categoryParam(href)).toBe('Set Of 7 Dice');
+  });
+});

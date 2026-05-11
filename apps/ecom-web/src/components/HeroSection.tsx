@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState, useEffect, type JSX } from 'react';
+import { useRef, useCallback, useState, useEffect, type CSSProperties, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeHeroContent } from '@/data/homeContent';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
@@ -71,7 +71,6 @@ const HERO_COPY = {
     hoverMiddle: '- middle ring -',
     hoverCenter: '- center gem -',
     hoverIdle: 'hover zones to explore',
-    categories: ['Keychain', 'Pendant', 'Ring'],
   },
   pl: {
     zones: {
@@ -85,7 +84,6 @@ const HERO_COPY = {
     hoverMiddle: '- środkowy krąg -',
     hoverCenter: '- rdzeń -',
     hoverIdle: 'najedź, aby odkryć',
-    categories: ['Brelok', 'Zawieszka', 'Pierścień'],
   },
 } as const;
 
@@ -93,11 +91,15 @@ type HeroCopy = {
   zones: Record<ZoneId, { label: string; short: string; items: readonly string[] }>;
   clickToExplore: string;
   allThemes: string;
-  categories: readonly string[];
 };
 
 interface HeroSectionProps {
   content?: HomeHeroContent;
+}
+
+function buildThemeCatalogHref(theme: string): string {
+  const params = new URLSearchParams({ themes: theme });
+  return `/products?${params.toString()}`;
 }
 
 /* ── Interactive + Animated Hexagon SVG ─────────────────────────── */
@@ -240,24 +242,27 @@ function HexMenu({
         <polygon
           points="100,12 176,56 176,144 100,188 24,144 24,56"
           fill="rgba(0,0,0,0)"
-          style={{ cursor: 'crosshair' }}
+          style={{ cursor: 'crosshair', pointerEvents: 'all' }}
           onMouseEnter={() => onEnter('outer')}
+          onMouseMove={() => onEnter('outer')}
           onMouseLeave={onLeave}
           onClick={() => onClick('outer')}
         />
         <polygon
           points="100,36 156,68 156,132 100,164 44,132 44,68"
           fill="rgba(0,0,0,0)"
-          style={{ cursor: 'crosshair' }}
+          style={{ cursor: 'crosshair', pointerEvents: 'all' }}
           onMouseEnter={() => onEnter('middle')}
+          onMouseMove={() => onEnter('middle')}
           onMouseLeave={onLeave}
           onClick={() => onClick('middle')}
         />
         <polygon
           points="100,60 130,88 130,118 100,140 70,118 70,88"
           fill="rgba(0,0,0,0)"
-          style={{ cursor: 'crosshair' }}
+          style={{ cursor: 'crosshair', pointerEvents: 'all' }}
           onMouseEnter={() => onEnter('inner')}
+          onMouseMove={() => onEnter('inner')}
           onMouseLeave={onLeave}
           onClick={() => onClick('inner')}
         />
@@ -273,10 +278,11 @@ function LorePanel({
   hoveredZone,
   activeZone,
   selectedLore,
-  selectedCategory,
+  engageHref,
   onZoneClick,
+  onZoneHover,
+  onZoneLeave,
   onLoreSelect,
-  onCategorySelect,
   onBack,
 }: {
   content: HomeHeroContent;
@@ -284,10 +290,11 @@ function LorePanel({
   hoveredZone: ZoneId | null;
   activeZone: ZoneId | null;
   selectedLore: string | null;
-  selectedCategory: string | null;
+  engageHref: string | null;
   onZoneClick: (z: ZoneId) => void;
+  onZoneHover: (z: ZoneId) => void;
+  onZoneLeave: () => void;
   onLoreSelect: (l: string) => void;
-  onCategorySelect: (c: string) => void;
   onBack: () => void;
 }): JSX.Element {
   const loreRef = useRef<HTMLDivElement>(null);
@@ -311,9 +318,73 @@ function LorePanel({
     : content.panelTitle;
 
   const titleColor = zoneStyle ? zoneStyle.color : 'var(--fg)';
+  const engageStyle = {
+    '--hero-engage-color': zoneStyle?.color ?? 'var(--accent)',
+    '--hero-engage-rgb': zoneStyle?.rgb ?? 'var(--accent-rgb)',
+  } as CSSProperties;
 
   return (
     <div className="hero-panel-info text-center select-none">
+      <style>{`
+        .hero-engage-cta {
+          color: var(--hero-engage-color);
+          background: linear-gradient(135deg, rgba(var(--hero-engage-rgb),0.14), rgba(var(--hero-engage-rgb),0.04));
+          border: 1px solid rgba(var(--hero-engage-rgb),0.5);
+          box-shadow: 0 0 18px rgba(var(--hero-engage-rgb),0.16), inset 0 0 18px rgba(var(--hero-engage-rgb),0.06);
+          clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+          letter-spacing: 0.18em;
+          text-decoration: none;
+          transform: translateY(0) scale(1);
+          animation: hero-engage-idle 2.6s ease-in-out infinite;
+          will-change: transform, box-shadow, background, letter-spacing;
+        }
+
+        .hero-engage-cta svg {
+          transition: transform 0.22s ease;
+        }
+
+        .hero-engage-cta:hover,
+        .hero-engage-cta:focus-visible {
+          animation: hero-engage-hover 0.72s ease-in-out infinite alternate;
+          background: linear-gradient(135deg, rgba(var(--hero-engage-rgb),0.24), rgba(var(--hero-engage-rgb),0.08));
+          box-shadow:
+            0 0 28px rgba(var(--hero-engage-rgb),0.32),
+            0 0 56px rgba(var(--hero-engage-rgb),0.14),
+            inset 0 0 22px rgba(var(--hero-engage-rgb),0.12);
+          letter-spacing: 0.22em;
+          outline: none;
+        }
+
+        .hero-engage-cta:hover svg,
+        .hero-engage-cta:focus-visible svg {
+          transform: translateX(3px);
+        }
+
+        @keyframes hero-engage-idle {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 18px rgba(var(--hero-engage-rgb),0.16), inset 0 0 18px rgba(var(--hero-engage-rgb),0.06);
+          }
+          50% {
+            transform: translateY(-1px) scale(1.018);
+            box-shadow: 0 0 24px rgba(var(--hero-engage-rgb),0.24), inset 0 0 20px rgba(var(--hero-engage-rgb),0.08);
+          }
+        }
+
+        @keyframes hero-engage-hover {
+          from { transform: translateY(-1px) scale(1.025); }
+          to { transform: translateY(-3px) scale(1.065); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-engage-cta,
+          .hero-engage-cta:hover,
+          .hero-engage-cta:focus-visible {
+            animation: none;
+            transform: none;
+          }
+        }
+      `}</style>
       {/* Zone badge */}
       <div className="flex justify-center mb-3 min-h-[1.4rem]">
         {zoneStyle && zoneText && (
@@ -359,6 +430,10 @@ function LorePanel({
             {ZONE_IDS.map((z) => (
               <button
                 key={z}
+                onMouseEnter={() => onZoneHover(z)}
+                onMouseLeave={onZoneLeave}
+                onFocus={() => onZoneHover(z)}
+                onBlur={onZoneLeave}
                 onClick={() => onZoneClick(z)}
                 title={copy.zones[z].label}
                 className="flex flex-col items-center gap-1.5"
@@ -433,57 +508,23 @@ function LorePanel({
         </button>
       )}
 
-      {/* Categories */}
-      <div
-        className="flex justify-center items-center gap-2 mt-1"
-        style={{ borderTop: '1px solid rgba(var(--accent-rgb),0.1)', paddingTop: '0.75rem' }}
-      >
-        {copy.categories.map((cat, i) => {
-          const isSelected = selectedCategory === cat;
-          const canSelect = !!selectedLore;
-          return (
-            <span key={cat} className="flex items-center gap-2">
-              <button
-                onClick={() => canSelect && onCategorySelect(cat)}
-                className="type-label transition-all duration-150"
-                style={{
-                  background: 'none', border: 'none',
-                  cursor: canSelect ? 'pointer' : 'default',
-                  color: isSelected ? (zoneStyle?.color ?? 'var(--accent)') : canSelect ? 'var(--fg)' : 'var(--muted-teal)',
-                  fontWeight: isSelected ? 700 : 400,
-                  opacity: canSelect ? 1 : 0.45,
-                  textShadow: isSelected && zoneStyle ? `0 0 8px rgba(${zoneStyle.rgb},0.5)` : 'none',
-                  letterSpacing: '0.15em',
-                }}
-              >
-                {cat}
-              </button>
-              {i < copy.categories.length - 1 && (
-                <span style={{ color: 'rgba(var(--accent-rgb),0.3)', fontSize: '0.7rem' }}>·</span>
-              )}
-            </span>
-          );
-        })}
-      </div>
-
-      {/* Price — only when lore + category both selected */}
-      <div
-        className="mt-3 transition-all duration-300"
-        style={{
-          opacity: selectedLore && selectedCategory ? 1 : 0,
-          transform: selectedLore && selectedCategory ? 'translateY(0)' : 'translateY(6px)',
-        }}
-      >
+      {selectedLore && engageHref && (
         <div
-          className="type-price"
-          style={{ color: 'var(--soft-gold)', fontSize: '1.05rem', textShadow: '0 0 12px rgba(var(--gold-rgb),0.4)' }}
+          className="mt-1 flex justify-center"
+          style={{ borderTop: '1px solid rgba(var(--accent-rgb),0.1)', paddingTop: '0.85rem' }}
         >
-          {content.panelPrice}
+          <a
+            href={engageHref}
+            className="hero-engage-cta type-label inline-flex items-center justify-center gap-2 px-4 py-2 transition-all duration-200"
+            style={engageStyle}
+          >
+            Engage
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </a>
         </div>
-        <div className="type-label mt-1" style={{ color: 'var(--muted-teal)' }}>
-          {selectedCategory} · {selectedLore}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -499,7 +540,7 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
   const [hoveredZone, setHoveredZone]           = useState<ZoneId | null>(null);
   const [activeZone, setActiveZone]             = useState<ZoneId | null>(null);
   const [selectedLore, setSelectedLore]         = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const engageHref = selectedLore ? localizedHref(buildThemeCatalogHref(selectedLore)) : null;
 
   /* Refs */
   const sectionRef     = useRef<HTMLElement>(null);
@@ -523,23 +564,16 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
     captureHeight();
     setActiveZone((prev) => (prev === z ? null : z));
     setSelectedLore(null);
-    setSelectedCategory(null);
   }, [captureHeight]);
 
   const handleLoreSelect = useCallback((lore: string) => {
     setSelectedLore((prev) => (prev === lore ? null : lore));
-    setSelectedCategory(null);
-  }, []);
-
-  const handleCategorySelect = useCallback((cat: string) => {
-    setSelectedCategory((prev) => (prev === cat ? null : cat));
   }, []);
 
   const handleBack = useCallback(() => {
     captureHeight();
     setActiveZone(null);
     setSelectedLore(null);
-    setSelectedCategory(null);
   }, [captureHeight]);
 
   /* ── Panel height animation on zone open / close ─────────────── */
@@ -874,10 +908,11 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
               hoveredZone={hoveredZone}
               activeZone={activeZone}
               selectedLore={selectedLore}
-              selectedCategory={selectedCategory}
+              engageHref={engageHref}
               onZoneClick={handleZoneClick}
+              onZoneHover={setHoveredZone}
+              onZoneLeave={() => setHoveredZone(null)}
               onLoreSelect={handleLoreSelect}
-              onCategorySelect={handleCategorySelect}
               onBack={handleBack}
             />
           </div>

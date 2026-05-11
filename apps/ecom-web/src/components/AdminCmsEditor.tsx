@@ -115,6 +115,7 @@ import {
 } from '@/data/accountContent';
 import type { Story } from '@/data/stories';
 import type { Editorial } from '@/data/lookbook';
+import { getHomeCategoryCardHref } from '@/lib/homeCategoryLinks';
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type EcomLocale } from '@/lib/locales';
 
 interface CmsResponse {
@@ -404,20 +405,11 @@ function makeHomeEditorialReport(index: number): HomeEditorialReportContent {
   };
 }
 
-function getHomeCategoryCardTarget(card: HomeCategoryCardContent): string {
-  const values = card.selectorValues.map((value) => value.trim()).filter(Boolean);
-  if (card.selectorType === 'all') return '/products';
-  if (card.selectorType === 'category' && values.length > 0) {
-    const params = new URLSearchParams();
-    params.set('categories', values.join(','));
-    return `/products?${params.toString()}`;
-  }
-  if (card.selectorType === 'theme' && values.length > 0) {
-    const params = new URLSearchParams();
-    params.set('themes', values.join(','));
-    return `/products?${params.toString()}`;
-  }
-  return card.href || '/products';
+function getHomeCategoryCardTarget(
+  card: HomeCategoryCardContent,
+  catalogCategories: CatalogOption[] = [],
+): string {
+  return getHomeCategoryCardHref(card, catalogCategories);
 }
 
 function reportsToText(reports: HomeEditorialReportContent[]): string {
@@ -4128,7 +4120,7 @@ function addEditorialReport(): void {
                     </div>
 
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', color: 'var(--muted)' }}>
-                      Target: {getHomeCategoryCardTarget(card)}
+                      Target: {getHomeCategoryCardTarget(card, catalogCategoryOptions)}
                     </div>
                         </>
                       );

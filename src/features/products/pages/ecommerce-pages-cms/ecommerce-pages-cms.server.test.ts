@@ -416,6 +416,54 @@ describe('ecommerce pages CMS server service', () => {
     expect(mocks.mongoClientClose).toHaveBeenCalledTimes(3);
   });
 
+  it('keeps collection card saves successful when a mirror target fails', async () => {
+    mocks.mongoClientConnect
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('cloud unavailable'))
+      .mockResolvedValueOnce(undefined);
+    const cards = [
+      {
+        id: 'movie',
+        label: 'Movie',
+        sublabel: 'Cinema',
+        tag: 'Universe',
+        visible: true,
+        href: '/products?categories=Movie%20Wallet',
+        imageUrl: '',
+        selectorType: 'category' as const,
+        selectorValues: ['Movie Wallet'],
+        fallbackCount: 9,
+      },
+    ];
+
+    const result = await saveEcommercePagesCmsCollectionCards({
+      cards,
+      userId: 'admin-2',
+    });
+
+    expect(result.cloudMirrored).toBe(false);
+    expect(result.cards[0]).toMatchObject({
+      id: 'movie',
+      selectorValues: ['Movie Wallet'],
+    });
+    expect(appLocalCollection.docs[0]).toMatchObject({
+      content: {
+        categories: {
+          cards: [expect.objectContaining({ id: 'movie' })],
+        },
+      },
+      locale: 'en',
+      page: 'home',
+      updatedBy: 'admin-2',
+    });
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        action: 'mirrorCollectionCardsToEcommerceDatabases',
+      })
+    );
+  });
+
   it('reads saved collection cards from the local home CMS page', async () => {
     appLocalCollection = createFakeCollection([
       {

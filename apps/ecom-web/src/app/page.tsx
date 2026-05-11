@@ -78,7 +78,7 @@ export default async function HomePage(): Promise<JSX.Element> {
       <SiteNav />
       <main>
         <HeroSection content={heroContent} />
-        <CategoriesGrid counts={collectionCounts} content={homeContent.categories} />
+        <CategoriesGrid counts={collectionCounts} content={homeContent.categories} catalogCategories={catalogCategories} />
         <FeaturedProducts products={featuredProducts} content={homeContent.featured} />
         <ManifestoBanner
           content={homeContent.manifesto}

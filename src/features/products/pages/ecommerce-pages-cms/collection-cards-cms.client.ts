@@ -220,7 +220,13 @@ const useCollectionCardsSaveAction = (input: {
     saveCollectionCards(cards)
       .then((nextCards) => {
         input.setCollectionCards(nextCards);
-        toast('Collection cards saved and mirrored.', { variant: 'success' });
+        if (nextCards.cloudMirrored === true) {
+          toast('Collection cards saved and mirrored.', { variant: 'success' });
+        } else {
+          toast('Collection cards saved locally. Cloud mirror did not complete.', {
+            variant: 'warning',
+          });
+        }
       })
       .catch((saveError: unknown) => {
         const message = toErrorMessage(saveError);

@@ -42,6 +42,11 @@ const fileUploadsRemotePatterns = fileUploadBaseUrls.reduce((patterns, baseUrl) 
   return alreadyConfigured ? patterns : [...patterns, pattern];
 }, []);
 
+const scriptSrc = [
+  "script-src 'self' 'unsafe-inline'",
+  ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
+].join(' ');
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -51,7 +56,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://qubrick.io https://sparksofsindri.com",
   "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "script-src 'self' 'unsafe-inline'",
+  scriptSrc,
   "connect-src 'self' https://secure.snd.payu.com https://qubrick.io https://sparksofsindri.com",
   "frame-src 'self' https://geowidget.inpost.pl",
 ].join('; ');

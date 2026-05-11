@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteNav } from '@/components/SiteNav';
 import { getLoreDropsArticles } from '@/lib/loreDrops';
+import { getProductImageSrc } from '@/lib/productImages';
 import { localizeHref } from '@/lib/locales';
 import { getRequestLocale } from '@/lib/request-locale';
 
@@ -27,10 +28,12 @@ const CARD_VISUALS = [
   },
 ];
 
+const IMAGE_OVERLAY = 'linear-gradient(180deg, rgba(2, 2, 5, 0.16) 0%, rgba(18, 7, 8, 0.78) 100%)';
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const { editorial } = await getLoreDropsArticles(locale);
-  const title = `${editorial.title} - ARCANA`;
+  const title = `${editorial.title} - STARGATER`;
   const description = editorial.eyebrow;
   return {
     title,
@@ -60,6 +63,8 @@ export default async function LoreDropsPage(): Promise<JSX.Element> {
         <section className='mx-auto grid max-w-screen-2xl gap-6 px-8 py-16 md:grid-cols-3 md:px-16'>
           {articles.map((article, index) => {
             const visual = CARD_VISUALS[index % CARD_VISUALS.length] ?? CARD_VISUALS[0];
+            const articleImageUrl = getProductImageSrc(article.imageUrl);
+            const hasImage = articleImageUrl !== undefined && articleImageUrl.trim().length > 0;
             return (
               <a
                 key={article.id}
@@ -67,8 +72,15 @@ export default async function LoreDropsPage(): Promise<JSX.Element> {
                 className='group relative block overflow-hidden'
                 style={{ aspectRatio: '3/4', border: '1px solid rgba(var(--accent-rgb),0.12)' }}
               >
+                {hasImage ? (
+                  <img
+                    alt=''
+                    className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105'
+                    src={articleImageUrl}
+                  />
+                ) : null}
                 <div className='absolute inset-0 transition-transform duration-700 group-hover:scale-105'
-                  style={{ background: visual.background }} />
+                  style={{ background: hasImage ? IMAGE_OVERLAY : visual.background }} />
                 <div className='absolute inset-0 dot-grid opacity-20' />
                 <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70' />
                 <div className='absolute inset-0 flex flex-col justify-end p-7'>

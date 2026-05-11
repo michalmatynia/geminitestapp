@@ -68,7 +68,7 @@ export interface AboutContentValidationResult {
 
 export const ABOUT_CONTENT_DEFAULTS: AboutContent = {
   hero: {
-    watermark: 'ARCANA',
+    watermark: 'STARGATER',
     eyebrow: 'Founded 2012 — Lyon, France',
     title: 'Objects of Enduring Beauty',
     body:
@@ -78,10 +78,10 @@ export const ABOUT_CONTENT_DEFAULTS: AboutContent = {
     eyebrow: 'The beginning',
     title: 'A linen shirt and a question',
     paragraphs: [
-      'Arcana began with a single question: why does everything fall apart? Clara Morin, then working as a textile designer in Lyon, bought a linen shirt from a market stall in Bruges in 2011. She is still wearing it.',
+      'Stargater began with a single question: why does everything fall apart? Clara Morin, then working as a textile designer in Lyon, bought a linen shirt from a market stall in Bruges in 2011. She is still wearing it.',
       'The shirt was not expensive. It was made by a weaver who had learned from his father, using techniques unchanged in three centuries. The price reflected craft, not brand. She began asking why this was so rare.',
       'With her husband Étienne — a leather goods maker with a workshop in the Périgord — she spent two years identifying the last remaining practitioners of the techniques they admired: linen weavers, vegetable tanners, stone carvers, ceramicists. The people who had not optimised for speed.',
-      'In 2012, they made 200 linen shirts from the Bruges workshop. They sold them from a table at a Paris design fair. By the end of the weekend, they were gone. Arcana began.',
+      'In 2012, they made 200 linen shirts from the Bruges workshop. They sold them from a table at a Paris design fair. By the end of the weekend, they were gone. Stargater began.',
     ],
   },
   statsEyebrow: 'By the numbers',
@@ -109,7 +109,7 @@ export const ABOUT_CONTENT_DEFAULTS: AboutContent = {
       name: 'Hélène Morin',
       role: 'Ceramicist',
       location: 'Limoges, France',
-      note: 'Makes every Arcana vessel alone, by hand, in a converted stable outside the city. Refuses to work with moulds.',
+      note: 'Makes every Stargater vessel alone, by hand, in a converted stable outside the city. Refuses to work with moulds.',
     },
     {
       name: 'Hendrik De Wolf',

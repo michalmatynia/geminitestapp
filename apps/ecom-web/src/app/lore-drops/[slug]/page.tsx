@@ -6,9 +6,11 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteNav } from '@/components/SiteNav';
 import {
   getLoreDropsArticleBySlug,
-  getLoreDropsArticleParagraphs,
   getLoreDropsArticles,
+  getLoreDropsArticleBodyBlocks,
+  type LoreDropsArticleBodyBlock,
 } from '@/lib/loreDrops';
+import { getProductImageSrc } from '@/lib/productImages';
 import { localizeHref } from '@/lib/locales';
 import { getRequestLocale } from '@/lib/request-locale';
 
@@ -32,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getRequestLocale();
   const { article } = await getLoreDropsArticleBySlug(slug, locale);
   if (article === null) return {};
-  const title = `${article.title} - ARCANA`;
+  const title = `${article.title} - STARGATER`;
   const description = article.excerpt.slice(0, 155);
   return {
     title,
@@ -48,7 +50,7 @@ export default async function LoreDropsArticlePage({ params }: Props): Promise<J
   const { article, editorial } = await getLoreDropsArticleBySlug(slug, locale);
   if (article === null) notFound();
 
-  const paragraphs = getLoreDropsArticleParagraphs(article);
+  const blocks = getLoreDropsArticleBodyBlocks(article);
   const background = HERO_BACKGROUNDS[
     Math.abs(article.slug.split('').reduce((total, char) => total + char.charCodeAt(0), 0)) %
       HERO_BACKGROUNDS.length
@@ -64,7 +66,7 @@ export default async function LoreDropsArticlePage({ params }: Props): Promise<J
           editorialTitle={editorial.title}
           locale={locale}
         />
-        <ArticleBody articleSlug={article.slug} paragraphs={paragraphs} />
+        <ArticleBody articleSlug={article.slug} blocks={blocks} />
       </main>
       <SiteFooter />
     </>
@@ -82,10 +84,27 @@ function ArticleHero({
   editorialTitle: string;
   locale: Awaited<ReturnType<typeof getRequestLocale>>;
 }): JSX.Element {
+  const articleImageUrl = getProductImageSrc(article.imageUrl);
+  const hasImage = articleImageUrl !== undefined && articleImageUrl.trim().length > 0;
   return (
     <section className='relative min-h-[62vh] overflow-hidden grain' style={{ background }}>
       <div className='absolute inset-0 dot-grid opacity-20' />
-      <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70' />
+      {hasImage ? (
+        <>
+          <img
+            alt=''
+            className='absolute inset-0 h-full w-full object-cover'
+            src={articleImageUrl}
+          />
+          <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/80' />
+          <div
+            className='absolute inset-0'
+            style={{ background }}
+          />
+        </>
+      ) : (
+        <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70' />
+      )}
       <div className='absolute inset-0 flex flex-col justify-end p-8 md:p-20'>
         <ArticleBreadcrumb articleTag={article.tag} editorialTitle={editorialTitle} locale={locale} />
         <div className='max-w-3xl'>
@@ -149,28 +168,53 @@ function ArticleBreadcrumb({
 
 function ArticleBody({
   articleSlug,
-  paragraphs,
+  blocks,
 }: {
   articleSlug: string;
-  paragraphs: string[];
+  blocks: LoreDropsArticleBodyBlock[];
 }): JSX.Element {
   return (
     <article className='mx-auto max-w-2xl px-8 py-16 md:py-24'>
-      {paragraphs.map((paragraph, index) => (
-        <p
-          key={`${articleSlug}-paragraph-${index}`}
-          style={{
-            color: 'var(--fg)',
-            fontFamily: 'var(--font-body)',
-            fontSize: '1.05rem',
-            fontWeight: 300,
-            lineHeight: 1.9,
-            marginBottom: '1.75rem',
-          }}
-        >
-          {paragraph}
-        </p>
-      ))}
+      {blocks.map((block, index) => {
+        if (block.type === 'image') {
+          return (
+            <figure
+              key={`${articleSlug}-image-${index}`}
+              className='my-10'
+            >
+              <img
+                src={block.src}
+                alt={block.alt}
+                className='w-full rounded-sm'
+              />
+              {block.alt ? (
+                <figcaption
+                  className='type-label mt-2'
+                  style={{ color: 'var(--muted)', fontSize: '0.72rem' }}
+                >
+                  {block.alt}
+                </figcaption>
+              ) : null}
+            </figure>
+          );
+        }
+
+        return (
+          <p
+            key={`${articleSlug}-paragraph-${index}`}
+            style={{
+              color: 'var(--fg)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '1.05rem',
+              fontWeight: 300,
+              lineHeight: 1.9,
+              marginBottom: '1.75rem',
+            }}
+          >
+            {block.text}
+          </p>
+        );
+      })}
     </article>
   );
 }

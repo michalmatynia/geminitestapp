@@ -110,8 +110,15 @@ const QuestionView = ({ copy, locale, item, currentIndex, currentQuestion, selec
       }}
       gameTarget='competition'
     />
-    <SectionCard title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <SectionCard title={formatQuestionProgress(currentIndex + 1, item.questions.length, locale)}>
+        <Text style={{ color: '#334155', fontSize: 13, lineHeight: 18 }}>
+          {copy({
+            de: 'Du kannst diese Frage überspringen und später darauf zurückkommen.',
+            en: 'You can skip this question and return to it later.',
+            pl: 'Możesz pominąć to pytanie i wrócić do niego później.',
+          })}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <StatusPill label={`${getCompetitionQuestionPointValue(currentQuestion)} ${copy({ de: 'Punkte', en: 'points', pl: 'punkty' })}`} tone={WARNING_TONE} />
         {currentQuestion.image !== null && <StatusPill label={copy({ de: 'Mit Illustration', en: 'Illustration included', pl: 'Z ilustracją' })} tone={BASE_TONE} />}
       </View>

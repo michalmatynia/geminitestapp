@@ -9,10 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getAccountContent(locale);
   return {
-    title: `${content.signedOut.title} - ARCANA`,
+    title: `${content.signedOut.title} - STARGATER`,
     description: locale === 'pl'
-      ? 'Zobacz konto ARCANA, zapisane produkty, zamówienia i ustawienia.'
-      : 'View your ARCANA account, saved items, orders, and settings.',
+      ? 'Zobacz konto STARGATER, zapisane produkty, zamówienia i ustawienia.'
+      : 'View your STARGATER account, saved items, orders, and settings.',
     robots: { index: false, follow: false },
   };
 }

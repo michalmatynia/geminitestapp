@@ -104,29 +104,29 @@ function HomeScreenMainContent(props: RenderHomeScreenContentProps): React.JSX.E
   const { homeDebugProof, homeHeroFocusHref, homeHeroFocusLabel, homeHeroRecentResult, recentResults } = viewModel;
 
   return (
-    <ScrollView
-      contentContainerStyle={{ gap: 16, paddingHorizontal: 24, paddingVertical: 28 }}
-      keyboardShouldPersistTaps='handled'
-    >
-      {!shouldRenderCombinedHomePrimaryStartupPlaceholder && !shouldRenderCombinedHomeHeroPlaceholder && (
-        <HomeHeroStatefulSection
-          areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
-          areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
-          copy={copy}
-          homeHeroFocusHref={homeHeroFocusHref}
-          homeHeroFocusLabel={homeHeroFocusLabel}
-          homeHeroLearnerName={homeHeroLearnerName}
-          homeHeroRecentResult={homeHeroRecentResult}
-          initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
-          isAuthenticated={sessionStatus === 'authenticated'}
-          isLoadingAuth={isLoadingAuth}
-          isLiveProgressReady={isLiveHomeProgressReady}
-          recentResultsCount={recentResults.results.length}
-        />
-      )}
-      <DebugProofSection copy={copy} homeDebugProof={homeDebugProof} />
-      <HomeStartupContent {...props} />
-      <HomeSecondaryContent {...props} />
+    <ScrollView>
+      <View style={{ gap: 16, paddingHorizontal: 24, paddingVertical: 28 }}>
+        {!shouldRenderCombinedHomePrimaryStartupPlaceholder &&
+        !shouldRenderCombinedHomeHeroPlaceholder && (
+          <HomeHeroStatefulSection
+            areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
+            areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
+            copy={copy}
+            homeHeroFocusHref={homeHeroFocusHref}
+            homeHeroFocusLabel={homeHeroFocusLabel}
+            homeHeroLearnerName={homeHeroLearnerName}
+            homeHeroRecentResult={homeHeroRecentResult}
+            initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
+            isAuthenticated={sessionStatus === 'authenticated'}
+            isLoadingAuth={isLoadingAuth}
+            isLiveProgressReady={isLiveHomeProgressReady}
+            recentResultsCount={recentResults.results.length}
+          />
+        )}
+        <DebugProofSection copy={copy} homeDebugProof={homeDebugProof} />
+        <HomeStartupContent {...props} />
+        <HomeSecondaryContent {...props} />
+      </View>
     </ScrollView>
   );
 }

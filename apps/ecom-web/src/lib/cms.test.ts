@@ -154,7 +154,7 @@ describe('site CMS shared logo', () => {
       nav: {
         ...SITE_CONTENT_DEFAULTS.nav,
         logoUrl: 'https://sparksofsindri.com/uploads/ecom/logos/arcana.png',
-        logoAlt: 'ARCANA NEXUS',
+        logoAlt: 'STARGATER NEXUS',
       },
     };
     const polishSite = {
@@ -186,7 +186,7 @@ describe('site CMS shared logo', () => {
 
     expect(snapshot.content.nav.brandSuffix).toBe('PL');
     expect(snapshot.content.nav.logoUrl).toBe('https://sparksofsindri.com/uploads/ecom/logos/arcana.png');
-    expect(snapshot.content.nav.logoAlt).toBe('ARCANA NEXUS');
+    expect(snapshot.content.nav.logoAlt).toBe('STARGATER NEXUS');
   });
 
   it('propagates a saved site logo to all locale documents', async () => {
@@ -195,7 +195,7 @@ describe('site CMS shared logo', () => {
       nav: {
         ...SITE_CONTENT_DEFAULTS.nav,
         logoUrl: 'https://sparksofsindri.com/uploads/ecom/logos/new-logo.webp',
-        logoAlt: 'Arcana mark',
+        logoAlt: 'Stargater mark',
       },
     };
 
@@ -218,7 +218,7 @@ describe('site CMS shared logo', () => {
       expect.objectContaining({
         $set: expect.objectContaining({
           'content.nav.logoUrl': 'https://sparksofsindri.com/uploads/ecom/logos/new-logo.webp',
-          'content.nav.logoAlt': 'Arcana mark',
+          'content.nav.logoAlt': 'Stargater mark',
           updatedBy: 'admin',
         }),
       }),

@@ -799,7 +799,7 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
   if (!hasEcommerceProductsMongoConfig()) return { products: [], total: 0 };
 
   try {
-    void ensureProductIndexes();
+    await ensureProductIndexes();
     const db = await getEcommerceProductsDb();
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
@@ -963,8 +963,11 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
   if (!hasEcommerceProductsMongoConfig()) return [];
   try {
     const db = await getEcommerceProductsDb();
-    const [categoryMap, countRows] = await Promise.all([
-      fetchCategories(locale),
+    const [categoryDocs, countRows] = await Promise.all([
+      db.collection<CategoryDoc>(CATEGORIES_COLLECTION)
+        .find(categoryCatalogFilter())
+        .project({ _id: 1, name: 1, name_en: 1, name_pl: 1, parentId: 1 })
+        .toArray(),
       db.collection<ProductDoc>(PRODUCTS_COLLECTION)
         .aggregate([
           { $match: mentiosFilter() },
@@ -973,6 +976,13 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
         .toArray(),
     ]);
 
+    const normalizedCategoryDocs = categoryDocs as unknown as CategoryDoc[];
+    const categoryMap = buildCategoryMap(normalizedCategoryDocs, locale);
+    const leafCategoryIds = buildLeafChildCategoryIds(normalizedCategoryDocs);
+    const effectiveCategoryIds = leafCategoryIds.size > 0
+      ? leafCategoryIds
+      : new Set<string>(categoryMap.keys());
+
     const countMap = new Map<string, number>();
     for (const row of countRows) {
       const id = row['_id'] != null ? String(row['_id']) : null;
@@ -980,6 +990,7 @@ export const getMentiosCategories = cache(async function getMentiosCategories(
     }
 
     const categories = Array.from(categoryMap.entries())
+      .filter(([id]) => effectiveCategoryIds.has(id))
       .map(([id, { name }]) => ({ id, name, count: countMap.get(id) ?? 0 }))
       .filter(({ count }) => count > 0)
       .sort((a, b) => a.name.localeCompare(b.name));

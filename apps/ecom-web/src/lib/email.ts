@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import type { Order } from '@/lib/orders';
 
-const DEFAULT_FROM = 'ARCANA <orders@arcana.store>';
+const DEFAULT_FROM = 'STARGATER <orders@arcana.store>';
 
 function escapeHtml(value: string): string {
   return value
@@ -36,7 +36,7 @@ function buildConfirmationHtml(order: Order): string {
   return `
     <div style="margin:0;padding:0;background:#090909;color:#f5f1e8;font-family:Arial,Helvetica,sans-serif;">
       <div style="max-width:640px;margin:0 auto;padding:40px 24px;">
-        <p style="letter-spacing:0.24em;text-transform:uppercase;color:#b6aa94;font-size:12px;margin:0 0 20px;">ARCANA</p>
+        <p style="letter-spacing:0.24em;text-transform:uppercase;color:#b6aa94;font-size:12px;margin:0 0 20px;">STARGATER</p>
         <h1 style="font-weight:400;font-size:28px;line-height:1.25;margin:0 0 12px;color:#f5f1e8;">Order confirmed</h1>
         <p style="color:#c8c1b5;font-size:15px;line-height:1.7;margin:0 0 28px;">
           Thank you for your order. We have received ${escapeHtml(order.orderId)} and are preparing it now.

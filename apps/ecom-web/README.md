@@ -7,9 +7,9 @@ scope: 'workspace:@app/ecom-web'
 canonical: true
 ---
 
-# ARCANA Ecommerce Web Workspace
+# STARGATER Ecommerce Web Workspace
 
-`apps/ecom-web` is a standalone Next.js storefront workspace for the ARCANA
+`apps/ecom-web` is a standalone Next.js storefront workspace for the STARGATER
 ecommerce experience. It owns the customer-facing shop, product browsing,
 product detail pages, cart drawer, wishlist, checkout flow, account mock,
 editorial content, and the read-only product API for this storefront.
@@ -20,7 +20,7 @@ and Next config, and the `@/*` alias for imports inside the ecommerce app.
 
 ## Workspace Role
 
-- Owns the ARCANA ecommerce storefront runtime.
+- Owns the STARGATER ecommerce storefront runtime.
 - Runs independently from the root platform app, StudiQ app, and CMS Builder
   app.
 - Reads exported storefront product copies from the ecommerce MongoDB when configured.
@@ -362,7 +362,7 @@ The design system is local to the ecommerce workspace.
   `Cormorant_SC`, `Jost`, and `Courier_Prime`.
 - Theme tokens live in `src/app/globals.css` as CSS custom properties. The default
   theme is `nightly`; `daily` is the light alternate and maps semantic tokens
-  back to the same ARCANA brand palette.
+  back to the same STARGATER brand palette.
 - Tailwind reads `src/**/*.{ts,tsx}` through `tailwind.config.ts`.
 - Theme mode is class-based and toggled on the document root.
 - Core reusable classes include `type-display-*`, `type-label`,

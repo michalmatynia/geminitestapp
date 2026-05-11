@@ -4,6 +4,7 @@ import { useRef, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeEditorialContent } from '@/data/homeContent';
 import { useLocalizedHref } from '@/context/LocaleContext';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
+import { getProductImageSrc } from '@/lib/productImages';
 
 const REPORT_VISUALS = [
   {
@@ -22,6 +23,8 @@ const REPORT_VISUALS = [
     tagColor: 'var(--cyan-teal)',
   },
 ];
+
+const IMAGE_OVERLAY = 'linear-gradient(180deg, rgba(2, 2, 5, 0.16) 0%, rgba(18, 7, 8, 0.78) 100%)';
 
 const DEFAULT_VISUAL = REPORT_VISUALS[0];
 
@@ -77,9 +80,11 @@ export function EditorialStrip({
         </a>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+  <div className="grid md:grid-cols-3 gap-4">
         {visibleReports.map((story, index) => {
           const visual = REPORT_VISUALS[index] ?? DEFAULT_VISUAL;
+          const storyImageUrl = getProductImageSrc(story.imageUrl);
+          const hasImage = storyImageUrl !== undefined && storyImageUrl.trim().length > 0;
           return (
           <a
             key={`${story.title}-${index}`}
@@ -99,11 +104,17 @@ export function EditorialStrip({
               (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--accent-rgb),0.1)';
               (e.currentTarget as HTMLElement).style.boxShadow = 'none';
             }}
-          >
-            {/* Background */}
+            >
+            {hasImage ? (
+              <img
+                alt=''
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                src={storyImageUrl}
+              />
+            ) : null}
             <div
               className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
-              style={{ background: visual.gradient }}
+              style={{ background: hasImage ? IMAGE_OVERLAY : visual.gradient }}
             />
 
             {/* Dot grid overlay */}

@@ -1,6 +1,11 @@
 import { View, Text } from 'react-native';
 import { Card, KangurMobileActionButton as ActionButton, KangurMobileFilterChip, KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
-import { formatKangurMobileScoreOperation, formatKangurMobileScoreDateTime } from '../mobileScoreSummary';
+import { 
+  formatKangurMobileScoreDateTime,
+  formatKangurMobileScoreFamily,
+  formatKangurMobileScoreOperation,
+  getKangurMobileScoreFamily,
+} from '../mobileScoreSummary';
 import { getAccuracyTone } from '../results-primitives';
 import { createKangurPracticeHref } from '../../practice/practiceHref';
 import { createKangurResultsHref } from '../resultsHref';
@@ -69,8 +74,18 @@ function renderFilterChips(
   if (operations.length === 0) {
     return null;
   }
+
+  const hasTimeOperation = operations.some(
+    (operation) => getKangurMobileScoreFamily({ operation }) === 'time',
+  );
+
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      {hasTimeOperation && (
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+          {formatKangurMobileScoreFamily('time', locale)}
+        </Text>
+      )}
       {operations.map((operation) => (
         <KangurMobileFilterChip
           key={operation}

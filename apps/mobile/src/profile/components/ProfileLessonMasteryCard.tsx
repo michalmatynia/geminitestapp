@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
-import { MasteryInsightRow } from '../profile-primitives';
+import { MasteryInsightRow } from './MasteryInsightRow';
 import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import type { useKangurMobileProfileLessonMastery } from '../useKangurMobileProfileLessonMastery';
 

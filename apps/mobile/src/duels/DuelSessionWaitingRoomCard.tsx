@@ -127,6 +127,13 @@ export function DuelSessionWaitingRoomCard({
   return (
     <Card>
       <WaitingRoomHeader copy={copy} duel={duel} />
+      <Text style={{ color: '#0f172a', fontSize: 14, lineHeight: 20, marginBottom: 4 }}>
+        {copy({
+          de: 'Du kannst im Wartezimmer bleiben, den Fortschritt der Spieler verfolgen und den Rundenstatus prüfen, ohne das Duell zu verlassen.',
+          en: 'You can stay in the waiting room, track player progress, and check the round state without leaving the duel.',
+          pl: 'Tutaj możesz zostać w poczekalni, śledzić postęp graczy i sprawdzać stan rundy bez wychodzenia z pojedynku.',
+        })}
+      </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
           de: `Minimale Spielerzahl zum Start: ${session.minPlayersToStart ?? 2}`,

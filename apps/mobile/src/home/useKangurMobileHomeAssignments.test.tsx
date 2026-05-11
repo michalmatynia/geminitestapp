@@ -45,7 +45,7 @@ describe('useKangurMobileHomeAssignments', () => {
       wrapper: createWrapper('pl'),
     });
 
-    expect(result.current.assignmentItems[0]?.assignment.title).toBe(
+    expect(result.current.assignmentItems[0]?.title).toBe(
       'Pierwsza lekcja startowa',
     );
     expect(result.current.assignmentItems[0]?.href).toEqual({
@@ -79,7 +79,7 @@ describe('useKangurMobileHomeAssignments', () => {
       wrapper: createWrapper('en'),
     });
 
-    expect(result.current.assignmentItems[0]?.assignment.title).toContain('Review');
+    expect(result.current.assignmentItems[0]?.title).toContain('Review');
     expect(result.current.assignmentItems[0]?.href).toEqual({
       pathname: '/lessons',
       params: {

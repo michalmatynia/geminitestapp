@@ -34,7 +34,11 @@ function LoadingCard({ duel, copy }: { duel: DuelSessionState, copy: DuelCopy })
   if (duel.isRestoringAuth) {
     description = copy({ de: 'Die Anmeldung wird wiederhergestellt.', en: 'Restoring sign-in.', pl: 'Przywracamy logowanie.' });
   } else if (duel.isSpectating) {
-    description = copy({ de: 'Status wird geladen.', en: 'Loading state.', pl: 'Pobieramy stan.' });
+    description = copy({
+      de: 'Status wird geladen.',
+      en: 'Loading state.',
+      pl: 'Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.',
+    });
   }
 
   return (
@@ -48,7 +52,13 @@ function LoadingCard({ duel, copy }: { duel: DuelSessionState, copy: DuelCopy })
 }
 
 function ErrorCard({ duel, copy, onOpenLobby }: { duel: DuelSessionState, copy: DuelCopy, onOpenLobby: () => void }): React.JSX.Element {
-  const errorMsg = duel.error ?? copy({ de: 'Es fehlen Duelldaten.', en: 'Duel data is missing.', pl: 'Brakuje danych.' });
+  const errorMsg = duel.error ?? (duel.isSpectating
+    ? copy({
+      de: 'Öffentliche Duell-Daten fehlen.',
+      en: 'Public duel data is missing.',
+      pl: 'Brakuje danych publicznego pojedynku. Wróć do lobby i spróbuj jeszcze raz.',
+    })
+    : copy({ de: 'Es fehlen Duelldaten.', en: 'Duel data is missing.', pl: 'Brakuje danych.' }));
   return (
     <Card>
       <MessageCard

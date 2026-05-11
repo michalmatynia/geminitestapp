@@ -40,7 +40,7 @@ function jsonReq(body: unknown): NextRequest {
 const validItem = {
   productId: 'prod-1',
   slug: 'arcana-pin',
-  name: 'Arcana Pin',
+  name: 'Stargater Pin',
   category: 'Pins',
   price: 15,
   priceDisplay: '€ 15',

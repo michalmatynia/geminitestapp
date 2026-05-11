@@ -8,10 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getCheckoutContent(locale);
   return {
-    title: `${content.orderSummary.title} - ARCANA`,
+    title: `${content.orderSummary.title} - STARGATER`,
     description: locale === 'pl'
-      ? 'Dokończ zamówienie ARCANA.'
-      : 'Complete your ARCANA order.',
+      ? 'Dokończ zamówienie STARGATER.'
+      : 'Complete your STARGATER order.',
     robots: { index: false, follow: false },
   };
 }

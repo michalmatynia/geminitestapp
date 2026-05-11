@@ -44,7 +44,7 @@ export const LOOKBOOK_PAGE_CONTENT_DEFAULTS: LookbookPageContent = {
   featuredLabel: 'Featured',
   masthead: {
     watermark: 'LOOKBOOK',
-    eyebrow: 'ARCANA \u00b7 Visual Archive',
+    eyebrow: 'STARGATER \u00b7 Visual Archive',
     title: 'Lookbook',
     description: 'Eight seasonal studies. Field photography, maker portraits, and the objects in their natural context.',
     issueRange: 'Issues 01\u201308',
@@ -59,7 +59,7 @@ export const LOOKBOOK_PAGE_CONTENT_DEFAULTS: LookbookPageContent = {
     href: '/stories',
   },
   archive: {
-    label: 'ARCANA Lookbook Archive \u00b7 Issues 01\u201308',
+    label: 'STARGATER Lookbook Archive \u00b7 Issues 01\u201308',
     ctaLabel: 'Return to shop',
     ctaHref: '/',
   },

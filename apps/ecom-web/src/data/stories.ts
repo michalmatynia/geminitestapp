@@ -61,7 +61,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'paragraph',
-        text: 'Arcana began working with Hendrik\'s workshop in 2022, after our founder spent three days watching him weave before asking whether he would consider a small production run. The answer, after some consideration, was yes — provided we agreed never to rush an order and never to ask him to simplify a pattern.',
+        text: 'Stargater began working with Hendrik\'s workshop in 2022, after our founder spent three days watching him weave before asking whether he would consider a small production run. The answer, after some consideration, was yes — provided we agreed never to rush an order and never to ask him to simplify a pattern.',
       },
       {
         type: 'heading',
@@ -73,7 +73,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'caption',
-        text: 'The Arcana Linen Overshirt is woven in this workshop. Each piece requires approximately fourteen hours of loom time.',
+        text: 'The Stargater Linen Overshirt is woven in this workshop. Each piece requires approximately fourteen hours of loom time.',
       },
     ],
     relatedSlugs: ['origin-of-cognac-leather', 'sand-wool-outer-hebrides'],
@@ -127,7 +127,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'caption',
-        text: 'The Arcana Cognac Tote uses full-grain leather from the Garonne tannery. Each bag is hand-stitched in Toulouse.',
+        text: 'The Stargater Cognac Tote uses full-grain leather from the Garonne tannery. Each bag is hand-stitched in Toulouse.',
       },
     ],
     relatedSlugs: ['last-weavers-of-bruges', 'a-table-stays-in-the-family'],
@@ -177,7 +177,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'caption',
-        text: 'The Arcana Walnut Serving Tray is made in collaboration with Lars Bundgaard\'s workshop. Each piece is signed and dated by its maker.',
+        text: 'The Stargater Walnut Serving Tray is made in collaboration with Lars Bundgaard\'s workshop. Each piece is signed and dated by its maker.',
       },
     ],
     relatedSlugs: ['origin-of-cognac-leather', 'clay-and-the-wheel'],
@@ -219,7 +219,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'paragraph',
-        text: 'Arcana\'s Sand Wool Scarf is woven from Shetland yarns that have been stone-washed — a process that softens the fibre without removing the lanolin — and left in their natural, undyed state. The colour is the colour of the sheep.',
+        text: 'Stargater\'s Sand Wool Scarf is woven from Shetland yarns that have been stone-washed — a process that softens the fibre without removing the lanolin — and left in their natural, undyed state. The colour is the colour of the sheep.',
       },
       {
         type: 'caption',
@@ -265,11 +265,11 @@ export const STORIES: Story[] = [
       },
       {
         type: 'paragraph',
-        text: 'Her Amphora Vessel, made for Arcana, has deliberate asymmetry at the lip. The wall thickness varies. There is a fingerprint pressed into the base — not a stamp, an actual print, left during the throwing process. "That is me," she says. "That print will exist in that piece for longer than I will exist. I find that comforting."',
+        text: 'Her Amphora Vessel, made for Stargater, has deliberate asymmetry at the lip. The wall thickness varies. There is a fingerprint pressed into the base — not a stamp, an actual print, left during the throwing process. "That is me," she says. "That print will exist in that piece for longer than I will exist. I find that comforting."',
       },
       {
         type: 'caption',
-        text: 'The Arcana Amphora Vessel is available in one edition of 40 pieces per year. Each is signed and numbered by Hélène.',
+        text: 'The Stargater Amphora Vessel is available in one edition of 40 pieces per year. Each is signed and numbered by Hélène.',
       },
     ],
     relatedSlugs: ['a-table-stays-in-the-family', 'last-weavers-of-bruges'],
@@ -311,7 +311,7 @@ export const STORIES: Story[] = [
       },
       {
         type: 'paragraph',
-        text: 'Arcana makes things for the second calculation. We make them well enough that the cost per decade looks reasonable. We design them to avoid fashion cycles so they do not require replacing simply because the aesthetic has moved on.',
+        text: 'Stargater makes things for the second calculation. We make them well enough that the cost per decade looks reasonable. We design them to avoid fashion cycles so they do not require replacing simply because the aesthetic has moved on.',
       },
       {
         type: 'pull-quote',

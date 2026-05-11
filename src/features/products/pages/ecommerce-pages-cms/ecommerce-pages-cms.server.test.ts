@@ -473,6 +473,7 @@ describe('ecommerce pages CMS server service', () => {
         excerpt: 'Short form report.',
         href: '/lore-drops/gaming-report',
         id: 'gaming-report',
+        imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/article.webp',
         tag: 'Gaming Drop',
         title: 'Gaming Report',
         visible: true,
@@ -499,6 +500,7 @@ describe('ecommerce pages CMS server service', () => {
               reports: [
                 expect.objectContaining({
                   id: 'gaming-report',
+                  imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/article.webp',
                   tag: 'Gaming Drop',
                   title: 'Gaming Report',
                 }),
@@ -524,6 +526,7 @@ describe('ecommerce pages CMS server service', () => {
                 body: 'Existing long copy',
                 excerpt: 'Existing short copy',
                 href: '/lore-drops/existing-report',
+                imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/existing.webp',
                 id: 'existing-report',
                 tag: 'Universe Report',
                 title: 'Existing Report',
@@ -546,6 +549,7 @@ describe('ecommerce pages CMS server service', () => {
       articles: [
         expect.objectContaining({
           body: 'Existing long copy',
+          imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/existing.webp',
           href: '/lore-drops/existing-report',
           id: 'existing-report',
           visible: false,

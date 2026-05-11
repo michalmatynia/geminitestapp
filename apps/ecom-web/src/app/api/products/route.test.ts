@@ -42,7 +42,7 @@ describe('GET /api/products', () => {
   });
 
   it('returns mentios products when DB has results', async () => {
-    const fakeProduct = { id: 'p1', name: 'Arcana Pin', price: 15 };
+    const fakeProduct = { id: 'p1', name: 'Stargater Pin', price: 15 };
     mocks.getMentiosProducts.mockResolvedValue({ products: [fakeProduct], total: 1 });
     const res = await GET(makeReq());
     const body = await res.json() as { products: unknown[]; source: string; total: number };

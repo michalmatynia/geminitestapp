@@ -99,7 +99,7 @@ export interface AccountContentValidationResult {
 export const ACCOUNT_CONTENT_DEFAULTS: AccountContent = {
   loadingLabel: 'Loading...',
   signedOut: {
-    brandName: 'ARCANA',
+    brandName: 'STARGATER',
     brandSuffix: 'NEXUS',
     title: 'Members area',
     body: 'Sign in to view your orders, saved items, and account settings.',

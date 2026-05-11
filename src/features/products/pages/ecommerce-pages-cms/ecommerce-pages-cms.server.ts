@@ -22,12 +22,14 @@ export {
 
 export type {
   EcommercePagesCmsEditorialArticle,
+  EcommercePagesCmsEditorialArticleImageUploadResult,
   EcommercePagesCmsEditorialArticlesSaveResult,
   EcommercePagesCmsEditorialArticlesSnapshot,
 } from './ecommerce-pages-cms.editorial-articles.server';
 export {
   readEcommercePagesCmsEditorialArticles,
   saveEcommercePagesCmsEditorialArticles,
+  uploadEcommercePagesCmsEditorialArticleImage,
 } from './ecommerce-pages-cms.editorial-articles.server';
 
 export type {

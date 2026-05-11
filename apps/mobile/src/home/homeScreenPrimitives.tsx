@@ -1,6 +1,32 @@
 import { Link, type Href } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
+function getAccessibilityHintProps(
+  hint?: string,
+): Record<string, string> | Record<string, never> {
+  if (hint === undefined) {
+    return {};
+  }
+  const hasDomHost = typeof window !== 'undefined' && typeof document !== 'undefined';
+  return hasDomHost ? { accessibilityhint: hint } : { accessibilityHint: hint };
+}
+
+function getTextInputProps(
+  textContentType?: 'username' | 'password',
+): Record<string, string> | Record<string, never> {
+  if (textContentType === undefined) {
+    return {};
+  }
+  const hasDomHost = typeof window !== 'undefined' && typeof document !== 'undefined';
+  if (hasDomHost) {
+    return {
+      autoComplete:
+        textContentType === 'username' ? 'username' : 'current-password',
+    };
+  }
+  return { textContentType };
+}
+
 export function SectionCard({
   children,
   title,
@@ -47,7 +73,7 @@ export function OutlineLink({
   return (
     <Link href={href} asChild>
       <Pressable
-        accessibilityHint={hint}
+        {...getAccessibilityHintProps(hint) as Record<string, string>}
         accessibilityLabel={label}
         accessibilityRole='button'
         style={{
@@ -87,8 +113,8 @@ export function PrimaryButton({
   onPress: () => void | Promise<void>;
 }): React.JSX.Element {
   return (
-    <Pressable
-      accessibilityHint={hint}
+      <Pressable
+      {...getAccessibilityHintProps(hint) as Record<string, string>}
       accessibilityLabel={label}
       accessibilityRole='button'
       disabled={disabled}
@@ -138,7 +164,7 @@ export function LabeledTextField(props: {
         {label}
       </Text>
       <TextInput
-        accessibilityHint={hint}
+        {...getAccessibilityHintProps(hint) as Record<string, string>}
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
         onChangeText={onChangeText}
@@ -152,7 +178,7 @@ export function LabeledTextField(props: {
           paddingHorizontal: 14,
           paddingVertical: 12,
         }}
-        textContentType={textContentType}
+        {...getTextInputProps(textContentType) as Record<string, string>}
         value={value}
       />
     </View>

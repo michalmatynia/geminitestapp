@@ -86,7 +86,15 @@ export function ResultsLessonMasterySection({
   lessonFocusSummary,
   copy,
 }: ResultsLessonMasterySectionProps): React.JSX.Element {
-  const { weakest, strongest } = lessonMastery;
+  const safeLessonMastery = lessonMastery ?? {
+    trackedLessons: 0,
+    masteredLessons: 0,
+    lessonsNeedingPractice: 0,
+    weakest: [],
+    strongest: [],
+  };
+
+  const { weakest, strongest } = safeLessonMastery;
   const weakestLesson = weakest[0] ?? null;
   const strongestLesson = strongest[0] ?? null;
 
@@ -98,9 +106,9 @@ export function ResultsLessonMasterySection({
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Verbinde die letzten Ergebnisse direkt mit lokal gespeicherten Lektionsständen.', en: 'Connect the latest results directly with saved lesson progress.', pl: 'Połącz ostatnie wyniki z zapisanym opanowaniem lekcji.' })}</Text>
       </View>
 
-      <LessonMasteryStatus mastery={lessonMastery} copy={copy} />
+      <LessonMasteryStatus mastery={safeLessonMastery} copy={copy} />
 
-      {lessonMastery.trackedLessons === 0 ? (
+      {safeLessonMastery.trackedLessons === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({ de: 'Es gibt noch keine Lektions-Checkpoints.', en: 'There are no lesson checkpoints yet.', pl: 'Nie ma jeszcze checkpointów lekcji.' })}
         </Text>

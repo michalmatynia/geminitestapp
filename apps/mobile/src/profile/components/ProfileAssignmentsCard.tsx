@@ -3,7 +3,7 @@ import {
   KangurMobileCard as Card,
   KangurMobileLinkButton as LinkButton,
 } from '../../shared/KangurMobileUi';
-import { AssignmentRow } from '../profile-primitives';
+import { AssignmentRow } from './AssignmentRow';
 import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import type { useKangurMobileProfileAssignments } from '../useKangurMobileProfileAssignments';
 import type { Href } from 'expo-router';

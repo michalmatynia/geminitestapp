@@ -8,10 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getWishlistContent(locale);
   return {
-    title: `${content.heroTitle} - ARCANA`,
+    title: `${content.heroTitle} - STARGATER`,
     description: locale === 'pl'
-      ? 'Przejrzyj zapisane produkty ARCANA i przenieś je do koszyka.'
-      : 'Review your saved ARCANA collectibles and move them to your bag.',
+      ? 'Przejrzyj zapisane produkty STARGATER i przenieś je do koszyka.'
+      : 'Review your saved STARGATER collectibles and move them to your bag.',
     robots: { index: false, follow: false },
   };
 }

@@ -40,7 +40,7 @@ export const STORIES_PAGE_CONTENT_DEFAULTS: StoriesPageContent = {
   },
   detail: {
     breadcrumbLabel: 'Stories',
-    issueLabelPrefix: 'ARCANA Stories',
+    issueLabelPrefix: 'STARGATER Stories',
     relatedEyebrow: 'Continue reading',
   },
 };

@@ -73,6 +73,7 @@ export interface HomeEditorialReportContent {
   title: string;
   excerpt: string;
   body: string;
+  imageUrl: string;
   visible: boolean;
   href: string;
 }
@@ -239,6 +240,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
           'Survey Corps insignia, crystal-cast pins and wall-break keychains from the most iconic arc in modern anime.',
         body:
           'Survey Corps insignia, crystal-cast pins and wall-break keychains anchor this edit of Attack on Titan collectibles.\n\nThe collection focuses on objects that feel like field notes from the final arc: compact, symbolic, and easy to carry every day.',
+        imageUrl: '',
         visible: true,
         href: '/lore-drops/attack-on-titan-final-collection',
       },
@@ -250,6 +252,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
           'Gilded pendants, smithing stone charms and Great Rune keychains — forged for Tarnished who survived the Lands Between.',
         body:
           'The Elden Ring talisman series leans into worn metal, rune geometry, and small relic silhouettes.\n\nIt is built for collectors who want a subtle object from the Lands Between without losing the atmosphere of the source material.',
+        imageUrl: '',
         visible: true,
         href: '/lore-drops/elden-ring-talisman-series',
       },
@@ -261,6 +264,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
           'Origami figures, spinner-craft pendants and neon-etched charms inspired by the rain-soaked skylines of New Los Angeles.',
         body:
           'The Off-World Edition pulls from rain, neon, glass, and the quiet iconography of Blade Runner 2049.\n\nEach piece is selected for its ability to read as a collectible first and a reference second.',
+        imageUrl: '',
         visible: true,
         href: '/lore-drops/blade-runner-2049-off-world-edition',
       },
@@ -279,6 +283,7 @@ const TEXT_LIMITS = {
   medium: 240,
   long: 900,
   extraLong: 12000,
+  imageUrl: 900,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -335,6 +340,33 @@ function readHref(
     return fallback;
   }
   return value;
+}
+
+function readImageUrl(
+  source: Record<string, unknown>,
+  key: string,
+  fallback: string,
+  errors: string[],
+  path: string,
+): string {
+  const imageUrl = readString(source, key, fallback, TEXT_LIMITS.imageUrl, errors, path);
+  if (imageUrl.length === 0) return fallback;
+  if (imageUrl.startsWith('//')) {
+    errors.push(`${path} must be an internal path or http(s) URL.`);
+    return fallback;
+  }
+
+  if (
+    (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) &&
+    !imageUrl.startsWith('#')
+  ) {
+    return imageUrl;
+  }
+
+  if (imageUrl.startsWith('/') && !imageUrl.startsWith('//')) return imageUrl;
+
+  errors.push(`${path} must be an internal path or http(s) URL.`);
+  return fallback;
 }
 
 function readBoolean(
@@ -606,6 +638,7 @@ function readEditorialReports(
         errors,
         `editorial.reports.${index}.body`,
       ),
+      imageUrl: readImageUrl(item, 'imageUrl', fallbackReport.imageUrl, errors, `editorial.reports.${index}.imageUrl`),
       visible: readBoolean(item, 'visible', fallbackReport.visible, errors, `editorial.reports.${index}.visible`),
       href: href === '#' || href.length === 0 ? `/lore-drops/${id}` : href,
     });

@@ -335,7 +335,7 @@ function localizeSiteContent(content: SiteContent, localeInput?: LocaleInput): S
         submitLabel: 'Zapisz się',
       },
       brandDescription: 'Licencjonowane kolekcjonalia z anime, gier i filmów, które lubisz najbardziej.',
-      copyright: '© 2026 ARCANA NEXUS. Wszelkie prawa zastrzeżone.',
+      copyright: '© 2026 STARGATER NEXUS. Wszelkie prawa zastrzeżone.',
       columns: content.footer.columns.map((column) => ({
         ...column,
         heading: ({ Shop: 'Sklep', Company: 'Firma', Support: 'Pomoc' } as Record<string, string>)[column.heading] ?? column.heading,
@@ -347,7 +347,7 @@ function localizeSiteContent(content: SiteContent, localeInput?: LocaleInput): S
             'Film Collectibles': 'Kolekcjonalia filmowe',
             'New Drops': 'Nowości',
             'All Items': 'Wszystkie produkty',
-            'About ARCANA': 'O ARCANA',
+            'About STARGATER': 'O STARGATER',
             'Sourcing & Ethics': 'Źródła i etyka',
             Contact: 'Kontakt',
             Returns: 'Zwroty',
@@ -397,7 +397,7 @@ function localizeSiteContent(content: SiteContent, localeInput?: LocaleInput): S
     },
     cookieConsent: {
       ...content.cookieConsent,
-      message: 'Używamy cookies, aby zapamiętać preferencje, zrozumieć korzystanie z ARCANA i poprawiać doświadczenie.',
+      message: 'Używamy cookies, aby zapamiętać preferencje, zrozumieć korzystanie z STARGATER i poprawiać doświadczenie.',
       policyLabel: 'Polityka prywatności',
       essentialLabel: 'Tylko niezbędne',
       acceptLabel: 'Akceptuję wszystkie',
@@ -578,10 +578,10 @@ function localizeAboutContent(content: AboutContent, localeInput?: LocaleInput):
       eyebrow: 'Początek',
       title: 'Jedno pytanie i potrzeba lepszych przedmiotów',
       paragraphs: [
-        'ARCANA powstała z prostego pytania: dlaczego tak wiele rzeczy szybko traci znaczenie? Zaczęliśmy od szukania przedmiotów tworzonych z uwagą, a nie pod presją sezonu.',
+        'STARGATER powstała z prostego pytania: dlaczego tak wiele rzeczy szybko traci znaczenie? Zaczęliśmy od szukania przedmiotów tworzonych z uwagą, a nie pod presją sezonu.',
         'Z czasem ta ciekawość zmieniła się w katalog licencjonowanych kolekcjonalii, akcesoriów i drobnych obiektów inspirowanych anime, grami oraz filmem.',
         'Wybieramy rzeczy, które dobrze wyglądają na półce, przy kluczach, na torbie albo w codziennym użyciu. Każdy drop ma być rozpoznawalny, dobrze opisany i łatwy do pokochania.',
-        'Dziś ARCANA jest miejscem dla osób, które lubią kolekcjonować świadomie: mniej przypadkowych gadżetów, więcej przedmiotów związanych z ulubionymi światami.',
+        'Dziś STARGATER jest miejscem dla osób, które lubią kolekcjonować świadomie: mniej przypadkowych gadżetów, więcej przedmiotów związanych z ulubionymi światami.',
       ],
     },
     statsEyebrow: 'W liczbach',
@@ -606,7 +606,7 @@ function localizeAboutContent(content: AboutContent, localeInput?: LocaleInput):
     artisans: content.artisans.map((artisan, index) => ({
       ...artisan,
       role: ['Selekcja anime', 'Selekcja gamingowa', 'Selekcja filmowa', 'Kontrola katalogu'][index] ?? artisan.role,
-      location: ['Katalog ARCANA', 'Dropy live', 'Archiwum marek', 'Product List'][index] ?? artisan.location,
+      location: ['Katalog STARGATER', 'Dropy live', 'Archiwum marek', 'Product List'][index] ?? artisan.location,
       note: [
         'Sprawdzamy, czy produkt dobrze oddaje charakter postaci, serii i uniwersum.',
         'Szukamy przedmiotów, które fani rozpoznają od razu i chętnie noszą na co dzień.',
@@ -640,7 +640,7 @@ function localizeAboutContent(content: AboutContent, localeInput?: LocaleInput):
     closing: {
       ...content.closing,
       quote: 'Wybierz przedmiot, który przypomina Ci o świecie, do którego chcesz wracać.',
-      attribution: '- ARCANA',
+      attribution: '- STARGATER',
       primaryCtaLabel: 'Przeglądaj kolekcję',
       secondaryCtaLabel: 'Czytaj historie',
     },
@@ -730,7 +730,7 @@ function localizeValuesContent(content: ValuesContent, localeInput?: LocaleInput
     closing: {
       ...content.closing,
       quote: 'Dobry katalog nie przeszkadza w zakupie. Prowadzi klienta prosto do produktu.',
-      primaryCtaLabel: 'Poznaj ARCANA',
+      primaryCtaLabel: 'Poznaj STARGATER',
       secondaryCtaLabel: 'Przeglądaj produkty',
     },
   };
@@ -755,7 +755,7 @@ function localizeStoriesPageContent(content: StoriesPageContent, localeInput?: L
     detail: {
       ...content.detail,
       breadcrumbLabel: 'Historie',
-      issueLabelPrefix: 'Historie ARCANA',
+      issueLabelPrefix: 'Historie STARGATER',
       relatedEyebrow: 'Czytaj dalej',
     },
   };
@@ -772,7 +772,7 @@ function localizeLookbookPageContent(content: LookbookPageContent, localeInput?:
     masthead: {
       ...content.masthead,
       watermark: 'LOOKBOOK',
-      eyebrow: 'ARCANA · Archiwum wizualne',
+      eyebrow: 'STARGATER · Archiwum wizualne',
       title: 'Lookbook',
       description: 'Selekcje wizualne, zbliżenia produktów i inspiracje dla kolekcjonerów.',
       issueRange: content.masthead.issueRange || 'Wydania 01-08',
@@ -788,7 +788,7 @@ function localizeLookbookPageContent(content: LookbookPageContent, localeInput?:
     },
     archive: {
       ...content.archive,
-      label: 'Archiwum lookbooka ARCANA',
+      label: 'Archiwum lookbooka STARGATER',
       ctaLabel: 'Wróć do sklepu',
     },
   };
@@ -845,7 +845,7 @@ function localizeContactContent(content: ContactContent, localeInput?: LocaleInp
       eyebrow: 'Wiadomość wysłana',
       titleLine1: 'Dziękujemy,',
       titleLine2: 'odezwiemy się.',
-      body: 'Odpowiedzi spodziewaj się w ciągu 2 dni roboczych. W pilnych sprawach możesz też napisać bezpośrednio na hello@arcana.com.',
+      body: 'Odpowiedzi spodziewaj się w ciągu 2 dni roboczych. W pilnych sprawach możesz też napisać bezpośrednio na hello@stargater.com.',
       resetLabel: 'Wyślij kolejną wiadomość',
     },
   };
@@ -1354,7 +1354,10 @@ export function parseSiteContentUpdate(input: unknown): { content: SiteContent |
   }
 
   const { content, errors } = validateSiteContent(candidate);
-  return { content: errors.length === 0 ? content : null, errors };
+  return {
+    content: errors.length === 0 ? normalizeSiteContent(content) : null,
+    errors,
+  };
 }
 
 export async function saveSiteContent(
@@ -1372,7 +1375,7 @@ export async function saveSiteContent(
       $set: {
         page: SITE_PAGE_KEY,
         locale: targetLocale,
-        content,
+        content: normalizeSiteContent(content),
         updatedAt: now,
         updatedBy: userId,
       },

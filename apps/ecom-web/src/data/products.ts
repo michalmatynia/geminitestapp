@@ -214,7 +214,7 @@ export const PRODUCTS: Product[] = [
     gradientAlt: 'linear-gradient(135deg, #C0A280 0%, #9C7C5A 100%)',
     imageUrl: '/uploads/products/KEYCHA682/1776864978623-1-68e47a3939c0197b860bfbc4f737aff8.png',
     description:
-      'Wheel-thrown terracotta, bisque-fired to hold its pale, porous surface. The form diffuses light in a warm amber ring. Designed by Ryo Sato for Arcana\'s Objects collection, wired with braided cotton cord.',
+      'Wheel-thrown terracotta, bisque-fired to hold its pale, porous surface. The form diffuses light in a warm amber ring. Designed by Ryo Sato for Stargater\'s Objects collection, wired with braided cotton cord.',
     details: [
       'Wheel-thrown terracotta',
       'Ø 28 cm, H 22 cm',

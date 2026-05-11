@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, type JSX } from 'react';
+import { useRef, type CSSProperties, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocalizedHref } from '@/context/LocaleContext';
@@ -64,6 +64,7 @@ export function CategoriesGrid({
   const sectionRef = useRef<HTMLElement>(null);
   const hasLiveCounts = Object.keys(counts).length > 0;
   const localizedHref = useLocalizedHref();
+  const cornerLineColorOpacity = (alpha: number, accentRgb: string): string => `rgba(${accentRgb}, ${alpha})`;
 
   useGSAP(() => {
     /* Section header reveal */
@@ -90,6 +91,7 @@ export function CategoriesGrid({
           });
       },
     });
+
   }, { scope: sectionRef, dependencies: [] });
 
   return (
@@ -119,13 +121,15 @@ export function CategoriesGrid({
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {content.cards.filter((card) => card.visible).map((cat, i) => {
-          const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
-          const liveCount = counts[cat.id] ?? (cat.id === 'objects' ? Object.values(counts).reduce((a, b) => a + b, 0) : undefined);
-          const displayCount = liveCount != null
-            ? `${liveCount.toLocaleString()} items`
-            : `${cat.fallbackCount.toLocaleString()}+ items`;
+              const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
+              const liveCount = counts[cat.id] ?? (cat.id === 'objects' ? Object.values(counts).reduce((a, b) => a + b, 0) : undefined);
+              const displayCount = liveCount != null
+                ? `${liveCount.toLocaleString()} items`
+                : `${cat.fallbackCount.toLocaleString()}+ items`;
+              const cornerStatic = cornerLineColorOpacity(0.45, visual.accentRgb);
+              const cornerTrace = cornerLineColorOpacity(0.95, visual.accentRgb);
 
-          return (
+              return (
             <a
               key={cat.id}
               href={localizedHref(getCardHref(cat))}
@@ -154,18 +158,121 @@ export function CategoriesGrid({
               <div className="absolute inset-0 dot-grid opacity-30" />
 
               {/* Scanlines */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scanline-soft) 3px, var(--scanline-soft) 4px)',
-                }}
-              />
+              <div className="absolute inset-0 pointer-events-none category-card-scanline-wrap">
+                <div className="category-card-scanline-layer" />
+              </div>
 
               {/* Corner brackets */}
-              <div className="absolute top-4 left-4 w-6 h-6 z-10 transition-opacity duration-300"
-                style={{ borderTop: `1.5px solid rgba(${visual.accentRgb},0.5)`, borderLeft: `1.5px solid rgba(${visual.accentRgb},0.5)` }} />
-              <div className="absolute bottom-4 right-4 w-6 h-6 z-10 transition-opacity duration-300"
-                style={{ borderBottom: `1.5px solid rgba(${visual.accentRgb},0.5)`, borderRight: `1.5px solid rgba(${visual.accentRgb},0.5)` }} />
+              <div
+                className="absolute z-30 pointer-events-none category-corner-marker"
+                style={{
+                  top: '0.75rem',
+                  left: '0.75rem',
+                  width: '42px',
+                  height: '42px',
+                  position: 'absolute',
+                }}
+              >
+                <span
+                  className="category-corner-frame"
+                  style={{
+                    top: 0,
+                    left: 0,
+                    borderTop: `1.5px solid ${cornerStatic}`,
+                    borderLeft: `1.5px solid ${cornerStatic}`,
+                    width: '42px',
+                    height: '42px',
+                  } as CSSProperties}
+                />
+                <span
+                  style={{
+                    background: cornerTrace,
+                    boxShadow: `0 0 10px ${cornerTrace}`,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '1.5px',
+                    width: '42px',
+                    transformOrigin: 'left center',
+                    animation: 'corner-tl-trace-top 8s ease-in-out infinite',
+                    display: 'block',
+                  } as CSSProperties}
+                />
+                <span
+                  style={{
+                    background: cornerTrace,
+                    boxShadow: `0 0 10px ${cornerTrace}`,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '1.5px',
+                    height: '42px',
+                    transformOrigin: 'top center',
+                    animation: 'corner-tl-trace-left 8s ease-in-out infinite',
+                    display: 'block',
+                  } as CSSProperties}
+                />
+              </div>
+              <div
+                className="absolute z-30 pointer-events-none category-corner-marker"
+                style={{
+                  bottom: '0.75rem',
+                  right: '0.75rem',
+                  width: '42px',
+                  height: '42px',
+                  position: 'absolute',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '42px',
+                    height: '42px',
+                    transform: 'rotate(180deg)',
+                    transformOrigin: '50% 50%',
+                  }}
+                >
+                  <span
+                    className="category-corner-frame"
+                    style={{
+                      top: 0,
+                      left: 0,
+                      borderTop: `1.5px solid ${cornerStatic}`,
+                      borderLeft: `1.5px solid ${cornerStatic}`,
+                      width: '42px',
+                      height: '42px',
+                    } as CSSProperties}
+                  />
+                  <span
+                    style={{
+                      background: cornerTrace,
+                      boxShadow: `0 0 10px ${cornerTrace}`,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      height: '1.5px',
+                      width: '42px',
+                      transformOrigin: 'left center',
+                      animation: 'corner-tl-trace-top 8s ease-in-out infinite',
+                      display: 'block',
+                    } as CSSProperties}
+                  />
+                  <span
+                    style={{
+                      background: cornerTrace,
+                      boxShadow: `0 0 10px ${cornerTrace}`,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '1.5px',
+                      height: '42px',
+                      transformOrigin: 'top center',
+                      animation: 'corner-tl-trace-left 8s ease-in-out infinite',
+                      display: 'block',
+                    } as CSSProperties}
+                  />
+                </div>
+              </div>
 
               {/* Content */}
               <div className="absolute inset-0 p-5 flex flex-col justify-between z-20">

@@ -194,7 +194,7 @@ export function AuthModal({ open, onClose }: Props): JSX.Element | null {
               textShadow: '0 0 20px rgba(var(--accent-rgb),0.4)',
               marginBottom: '0.25rem',
             }}>
-              ARCANA
+              STARGATER
             </div>
             <div style={{
               fontFamily: 'var(--font-mono)',

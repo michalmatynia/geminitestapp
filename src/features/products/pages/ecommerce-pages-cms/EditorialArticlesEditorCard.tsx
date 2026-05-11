@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -171,6 +172,48 @@ function EditorialArticlesStatus({
   );
 }
 
+function EditorialArticleImageField({
+  article,
+  index,
+  controller,
+  inputIdBase,
+  isUploading,
+}: {
+  article: EditorialArticleState;
+  controller: EditorialArticlesController;
+  index: number;
+  inputIdBase: string;
+  isUploading: boolean;
+}): React.JSX.Element {
+  return (
+    <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_18rem_auto]'>
+      <TextField id={`${inputIdBase}-image-url`} label='Image URL' value={article.imageUrl}
+        disabled={controller.isSaving || isUploading}
+        onChange={(value) => controller.updateArticle(index, { imageUrl: value })} />
+      <div className='space-y-2'>
+        <Label htmlFor={`${inputIdBase}-image-file`}>Upload image</Label>
+        <Input id={`${inputIdBase}-image-file`} type='file'
+          accept='image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
+          disabled={controller.isSaving || isUploading}
+          onChange={(event) => {
+            const input = event.currentTarget;
+            const file = input.files?.[0] ?? null;
+            if (file !== null) controller.uploadArticleImage(index, file);
+            input.value = '';
+          }} />
+      </div>
+      <div className='flex items-end'>
+        <Button type='button' variant='outline'
+          onClick={() => controller.updateArticle(index, { imageUrl: '' })}
+          disabled={controller.isSaving || article.imageUrl.length === 0}
+          aria-label='Clear lore article image' title='Clear image'>
+          {isUploading ? <RefreshCw className='size-4 animate-spin' /> : <X className='size-4' />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function StatusBox({ label, value }: { label: string; value: string }): React.JSX.Element {
   return (
     <div className='rounded-md border p-3'>
@@ -216,6 +259,13 @@ function EditorialArticleEditor({
           <TextAreaField id={`${inputIdBase}-body`} label='Long text' value={article.body}
             rows={8} disabled={controller.isSaving}
             onChange={(value) => controller.updateArticle(index, { body: value })} />
+          <EditorialArticleImageField
+            article={article}
+            index={index}
+            controller={controller}
+            inputIdBase={inputIdBase}
+            isUploading={controller.uploadingIndex === index}
+          />
         </div>
       </div>
     </div>

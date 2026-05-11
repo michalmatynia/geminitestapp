@@ -14,6 +14,8 @@ export function ResultsAssignmentsSection({
   assignmentItems,
   copy,
 }: ResultsAssignmentsSectionProps): React.JSX.Element {
+  const safeAssignmentItems = assignmentItems ?? [];
+
   return (
     <Card>
       <View style={{ gap: 4 }}>
@@ -40,7 +42,7 @@ export function ResultsAssignmentsSection({
         </Text>
       </View>
 
-      {assignmentItems.length === 0 ? (
+      {safeAssignmentItems.length === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
             de: 'Es gibt noch keine Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
@@ -50,7 +52,7 @@ export function ResultsAssignmentsSection({
         </Text>
       ) : (
         <View style={{ gap: 10 }}>
-          {assignmentItems.map((item: KangurMobileResultsAssignmentItem) => (
+          {safeAssignmentItems.map((item: KangurMobileResultsAssignmentItem) => (
             <ResultsAssignmentRow key={(item.assignment as { id: string }).id} item={item} />
           ))}
         </View>

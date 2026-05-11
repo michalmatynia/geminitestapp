@@ -38,8 +38,15 @@ export function HomeSecondaryInsightsPlanSection(): React.JSX.Element {
         </Text>
       ) : (
         <View style={{ gap: 12 }}>
-          {homeAssignments.assignmentItems.map((item) => (
-            <AssignmentCard key={item.id} item={item} />
+          {homeAssignments.assignmentItems.map((item, index) => (
+            <AssignmentCard
+              key={
+                'assignment' in item && item.assignment !== undefined
+                  ? item.assignment.id
+                  : item.id ?? index
+              }
+              item={item}
+            />
           ))}
           <OutlineLink
             href={PLAN_ROUTE}

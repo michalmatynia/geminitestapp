@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { AUTO_REFRESH_INTERVAL_MS } from './utils/duels-ui';
+import { useEffect, useRef } from 'react';
+import { AUTO_REFRESH_INTERVAL_MS } from './utils/duels-constants';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import type { UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobby';
 
@@ -7,8 +7,11 @@ export function useKangurDuelsAutoRefresh(
   lobby: UseKangurMobileDuelsLobbyResult,
   enabled: boolean,
 ): void {
+  const hasPolledRef = useRef(false);
+
   useEffect(() => {
     if (!enabled) {
+      hasPolledRef.current = false;
       return undefined;
     }
 
@@ -16,7 +19,10 @@ export function useKangurDuelsAutoRefresh(
       void lobby.refresh();
     };
 
-    handleLobbyRefresh();
+    if (!hasPolledRef.current) {
+      handleLobbyRefresh();
+      hasPolledRef.current = true;
+    }
     const intervalId = safeSetInterval(handleLobbyRefresh, AUTO_REFRESH_INTERVAL_MS as number);
 
     return () => {

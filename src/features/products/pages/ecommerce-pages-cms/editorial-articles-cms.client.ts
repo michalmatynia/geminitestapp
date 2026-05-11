@@ -11,6 +11,7 @@ export type EditorialArticleState = {
   title: string;
   excerpt: string;
   body: string;
+  imageUrl: string;
   visible: boolean;
   href: string;
 };
@@ -46,6 +47,17 @@ type EditorialArticleAiGenerateResponse = {
   ok: boolean;
 };
 
+type EditorialArticleImageUploadResponse = {
+  ok: boolean;
+  image: {
+    filename: string;
+    localPublicPath: string;
+    mimetype: string;
+    remoteUrl: string;
+    size: number;
+  };
+};
+
 export type EditorialArticlesController = {
   addArticle: (article: EditorialArticleState) => void;
   articles: EditorialArticleState[];
@@ -57,10 +69,13 @@ export type EditorialArticlesController = {
   isSaving: boolean;
   removeArticle: (index: number) => void;
   updateArticle: (index: number, patch: Partial<EditorialArticleState>) => void;
+  uploadArticleImage: (index: number, file: File) => void;
+  uploadingIndex: number | null;
 };
 
 const EDITORIAL_ARTICLES_ENDPOINT = '/api/v2/products/pages/editorial-articles';
 const EDITORIAL_ARTICLE_GENERATE_ENDPOINT = `${EDITORIAL_ARTICLES_ENDPOINT}/generate`;
+const EDITORIAL_ARTICLE_IMAGE_ENDPOINT = `${EDITORIAL_ARTICLES_ENDPOINT}/image`;
 const MAX_ARTICLE_COUNT = 12;
 
 const EMPTY_EDITORIAL_ARTICLES_STATE: EditorialArticlesState = {
@@ -92,6 +107,7 @@ export const createBlankEditorialArticle = (
     title: '',
     excerpt: '',
     body: '',
+    imageUrl: '',
     visible: true,
     href: `/lore-drops/${id}`,
     ...overrides,
@@ -110,6 +126,7 @@ export const normalizeEditorialArticleDraft = (
     ...draft,
     body: draft.body.trim(),
     excerpt: draft.excerpt.trim(),
+    imageUrl: draft.imageUrl.trim(),
     href: href.length > 0 && !href.startsWith('#') ? href : `/lore-drops/${id}`,
     id,
     tag: draft.tag.trim(),
@@ -131,6 +148,19 @@ const saveEditorialArticles = async (
     { timeout: 120_000 }
   );
   return response.editorialArticles;
+};
+
+const uploadEditorialArticleImage = async (
+  file: File
+): Promise<EditorialArticleImageUploadResponse['image']> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post<EditorialArticleImageUploadResponse>(
+    EDITORIAL_ARTICLE_IMAGE_ENDPOINT,
+    formData,
+    { timeout: 120_000 }
+  );
+  return response.image;
 };
 
 export const generateEditorialArticleFromAiPath = async (
@@ -246,14 +276,45 @@ const useEditorialArticlesSaveAction = (input: {
   return { handleSaveClick, isSaving };
 };
 
+const useEditorialArticleImageUploadAction = (input: {
+  setError: ErrorSetter;
+  updateArticle: EditorialArticlesController['updateArticle'];
+}): Pick<EditorialArticlesController, 'uploadArticleImage' | 'uploadingIndex'> => {
+  const { toast } = useToast();
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  const uploadArticleImage = useCallback((index: number, file: File): void => {
+    setUploadingIndex(index);
+    input.setError(null);
+    uploadEditorialArticleImage(file)
+      .then((image) => {
+        input.updateArticle(index, { imageUrl: image.remoteUrl });
+        toast('Lore article image uploaded. Save articles to publish the URL.', { variant: 'success' });
+      })
+      .catch((uploadError: unknown) => {
+        const message = toErrorMessage(uploadError);
+        input.setError(message);
+        toast(message, { variant: 'error' });
+      })
+      .finally(() => setUploadingIndex(null));
+  }, [input, toast]);
+
+  return { uploadArticleImage, uploadingIndex };
+};
+
 export const useEditorialArticlesController = (): EditorialArticlesController => {
   const data = useEditorialArticlesData();
   const mutators = useEditorialArticleMutators(data);
   const saveAction = useEditorialArticlesSaveAction(data);
+  const uploadAction = useEditorialArticleImageUploadAction({
+    setError: data.setError,
+    updateArticle: mutators.updateArticle,
+  });
 
   return {
     ...mutators,
     ...saveAction,
+    ...uploadAction,
     articles: data.editorialArticles?.articles ?? [],
     editorialArticles: data.editorialArticles,
     error: data.error,

@@ -1,10 +1,12 @@
-import { MongoClient, type Db } from 'mongodb';
+import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 
 const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
 const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
 
 type MongoSource = 'local' | 'cloud';
 type MongoConfig = { uri: string; dbName: string };
+type MongoContext = 'main' | 'products' | 'ecommerce';
+const insecureTlsWarnings = new Set<string>();
 
 function envValue(key: string): string | undefined {
   const value = process.env[key]?.trim();
@@ -65,6 +67,203 @@ function isLoopbackMongoUri(uri: string | undefined): boolean {
 
 function normalizeSource(value: string | undefined): MongoSource {
   return value?.toLowerCase() === 'cloud' ? 'cloud' : 'local';
+}
+
+function isTruthyEnv(value: string | undefined): boolean {
+  const parsed = parseBooleanLike(value);
+  return parsed === true;
+}
+
+function parseBooleanLike(value: string | undefined): boolean | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') return true;
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') return false;
+  return undefined;
+}
+
+function firstByPrefixes(prefixes: string[], suffix: string): string | undefined {
+  for (const prefix of prefixes) {
+    const value = envValue(`${prefix}_${suffix}`);
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+
+function readNumberFromEnv(prefixes: string[], suffix: string, fallback: number): number {
+  const value = firstByPrefixes(prefixes, suffix);
+  if (value === undefined) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function readBooleanFromEnv(prefixes: string[], suffix: string, fallback = false): boolean {
+  const value = firstByPrefixes(prefixes, suffix);
+  if (value === undefined) return fallback;
+  return isTruthyEnv(value);
+}
+
+function isProductionLike(): boolean {
+  const env = envValue('NODE_ENV');
+  const vercelEnv = envValue('VERCEL_ENV');
+  return env === 'production' || vercelEnv === 'production';
+}
+
+function getMongoOptionPrefixes(context: MongoContext): string[] {
+  if (context === 'products') {
+    return ['PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
+  }
+  if (context === 'ecommerce') {
+    return ['ECOM_MONGODB', 'MONGODB_ECOM', 'PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
+  }
+  return ['MONGODB'];
+}
+
+function normalizeClientOptionsForCache(options: MongoClientOptions): string {
+  const payload = {
+    maxPoolSize: options.maxPoolSize ?? 5,
+    minPoolSize: options.minPoolSize ?? 1,
+    serverSelectionTimeoutMS: options.serverSelectionTimeoutMS ?? 10_000,
+    connectTimeoutMS: options.connectTimeoutMS ?? 10_000,
+    socketTimeoutMS: options.socketTimeoutMS ?? undefined,
+    tls: options.tls ?? undefined,
+    tlsAllowInvalidCertificates: options.tlsAllowInvalidCertificates ?? false,
+    tlsAllowInvalidHostnames: options.tlsAllowInvalidHostnames ?? false,
+  } as Record<string, unknown>;
+
+  for (const key of Object.keys(payload)) {
+    if (payload[key] === undefined) delete payload[key];
+  }
+  return JSON.stringify(payload);
+}
+
+function buildMongoClientOptions(uri: string, context: MongoContext, allowInvalidCertificate: boolean): MongoClientOptions {
+  const prefixes = getMongoOptionPrefixes(context);
+  const options: MongoClientOptions = {
+    maxPoolSize: readNumberFromEnv(prefixes, 'MAX_POOL_SIZE', 5),
+    minPoolSize: readNumberFromEnv(prefixes, 'MIN_POOL_SIZE', 1),
+    serverSelectionTimeoutMS: readNumberFromEnv(prefixes, 'SERVER_SELECTION_TIMEOUT_MS', 12_000),
+    connectTimeoutMS: readNumberFromEnv(prefixes, 'CONNECT_TIMEOUT_MS', 12_000),
+    socketTimeoutMS: readNumberFromEnv(prefixes, 'SOCKET_TIMEOUT_MS', 20_000),
+  };
+
+  const explicitTls = firstByPrefixes(prefixes, 'TLS');
+  if (explicitTls !== undefined) {
+    options.tls = isTruthyEnv(explicitTls);
+  } else if (uri.startsWith('mongodb+srv://')) {
+    options.tls = true;
+  }
+
+  if (allowInvalidCertificate) {
+    options.tls = true;
+    options.tlsAllowInvalidCertificates = true;
+    const allowInvalidHostnames = readBooleanFromEnv(prefixes, 'TLS_ALLOW_INVALID_HOSTNAMES', false);
+    options.tlsAllowInvalidHostnames = allowInvalidHostnames || allowInvalidCertificate;
+  }
+
+  return options;
+}
+
+function uriExplicitTls(uri: string): boolean | undefined {
+  try {
+    const parsed = new URL(uri);
+    const explicitTls = parseBooleanLike(parsed.searchParams.get('tls') ?? parsed.searchParams.get('ssl') ?? undefined);
+    if (explicitTls !== undefined) return explicitTls;
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
+function isTlsEnabledForClient(uri: string, optionTls: boolean | undefined): boolean {
+  const explicitUriTls = uriExplicitTls(uri);
+  if (explicitUriTls !== undefined) return explicitUriTls;
+  return Boolean(optionTls);
+}
+
+function isTlsHandshakeError(error: unknown): boolean {
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : '';
+  if (message.length === 0) return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes('ssl routines') ||
+    normalized.includes('tlsv1 alert internal error') ||
+    normalized.includes('ssl handshake') ||
+    normalized.includes('tls handshake') ||
+    normalized.includes('alert internal error') ||
+    normalized.includes('certificate') ||
+    normalized.includes('certificate verify') ||
+    normalized.includes('x509') ||
+    normalized.includes('ca certificate') ||
+    normalized.includes('self signed') ||
+    normalized.includes('unknown ca');
+}
+
+function shouldRetryWithInsecureCertificates(context: MongoContext, tlsEnabled: boolean): boolean {
+  if (!tlsEnabled) return false;
+  const prefixes = getMongoOptionPrefixes(context);
+  const overrideEnabled = readBooleanFromEnv(prefixes, 'SECURITY_OVERRIDE_ENABLED', false);
+  if (!overrideEnabled) return false;
+  const allow = readBooleanFromEnv(prefixes, 'TLS_ALLOW_INVALID_CERTIFICATES', false);
+  if (!allow) return false;
+  if (!isProductionLike()) return true;
+  return readBooleanFromEnv(prefixes, 'TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION', false);
+}
+
+function warnInsecureTlsUsed(context: MongoContext, uri: string): void {
+  const key = `${context}::${uri}`;
+  if (insecureTlsWarnings.has(key)) return;
+  insecureTlsWarnings.add(key);
+  if (isProductionLike()) {
+    console.warn(
+      `[mongo] Using insecure TLS for ${context} MongoDB connection in production due SECURITY_OVERRIDE_ENABLED + TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION`,
+    );
+  } else {
+    console.warn(
+      `[mongo] Using insecure TLS for ${context} MongoDB connection due SECURITY_OVERRIDE_ENABLED + TLS_ALLOW_INVALID_CERTIFICATES`,
+    );
+  }
+}
+
+async function connectWithCachedClient(
+  uri: string,
+  context: MongoContext,
+  options: MongoClientOptions,
+): Promise<MongoClient> {
+  const key = `${uri}::${normalizeClientOptionsForCache(options)}::${context}`;
+  const existing = clientCache.get(key);
+  if (existing) return existing;
+
+  const client = new MongoClient(uri, options);
+  try {
+    await client.connect();
+  } catch (error) {
+    await client.close().catch(() => {});
+    throw error;
+  }
+
+  clientCache.set(key, client);
+  return client;
+}
+
+async function getClient(uri: string, context: MongoContext): Promise<MongoClient> {
+  const initial = buildMongoClientOptions(uri, context, false);
+  try {
+    return await connectWithCachedClient(uri, context, initial);
+  } catch (error) {
+    if (!shouldRetryWithInsecureCertificates(context, isTlsEnabledForClient(uri, initial.tls)) || !isTlsHandshakeError(error)) {
+      throw error;
+    }
+    const fallback = buildMongoClientOptions(uri, context, true);
+    if (normalizeClientOptionsForCache(fallback) === normalizeClientOptionsForCache(initial)) {
+      throw error;
+    }
+    warnInsecureTlsUsed(context, uri);
+    return connectWithCachedClient(uri, context, fallback);
+  }
 }
 
 /**
@@ -255,27 +454,18 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
 
 const clientCache = new Map<string, MongoClient>();
 
-function getClient(uri: string, label: string): MongoClient {
+function assertMongoUri(uri: string, label: string): void {
   if (!uri) {
     throw new Error(
       `No ${label} MongoDB URI configured. Set MONGODB_URI, MONGODB_LOCAL_URI, or ECOM_MONGODB_LOCAL_URI in apps/ecom-web/.env.local`
     );
   }
-  const existing = clientCache.get(uri);
-  if (existing) return existing;
-  const c = new MongoClient(uri, {
-    maxPoolSize: 5,
-    minPoolSize: 1,
-    serverSelectionTimeoutMS: 5_000,
-    connectTimeoutMS: 5_000,
-  });
-  clientCache.set(uri, c);
-  return c;
 }
 
 export async function getDb(): Promise<Db> {
-  const c = getClient(resolveMongoUri(), 'main');
-  await c.connect();
+  const uri = resolveMongoUri();
+  assertMongoUri(uri, 'main');
+  const c = await getClient(uri, 'main');
   return c.db(resolveMongoDb());
 }
 
@@ -284,8 +474,9 @@ export function hasProductsMongoConfig(): boolean {
 }
 
 export async function getProductsDb(): Promise<Db> {
-  const c = getClient(resolveProductsMongoUri(), 'products');
-  await c.connect();
+  const uri = resolveProductsMongoUri();
+  assertMongoUri(uri, 'products');
+  const c = await getClient(uri, 'products');
   return c.db(resolveProductsMongoDb());
 }
 
@@ -294,8 +485,9 @@ export function hasEcommerceProductsMongoConfig(): boolean {
 }
 
 export async function getEcommerceProductsDb(): Promise<Db> {
-  const c = getClient(resolveEcommerceProductsMongoUri(), 'ecommerce products');
-  await c.connect();
+  const uri = resolveEcommerceProductsMongoUri();
+  assertMongoUri(uri, 'ecommerce products');
+  const c = await getClient(uri, 'ecommerce');
   return c.db(resolveEcommerceProductsMongoDb());
 }
 

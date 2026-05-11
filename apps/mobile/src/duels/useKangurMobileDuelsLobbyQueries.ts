@@ -155,7 +155,7 @@ export function useSearchQuery(
 export function toQueryErrorMessage(error: unknown, fallback: string, copy: (value: KangurMobileLocalizedValue<string>) => string): string | null {
   if (error === null || error === undefined) return null;
   if (typeof error === 'object' && 'status' in error && (error as { status: number }).status === 401) {
-    return copy({ de: 'Melde dich an.', en: 'Sign in.', pl: 'Zaloguj się.' });
+    return copy({ de: 'Melde dich an, um Duelle zu öffnen.', en: 'Sign in.', pl: 'Zaloguj się.' });
   }
   return error instanceof Error && error.message.trim() !== '' ? error.message : fallback;
 }

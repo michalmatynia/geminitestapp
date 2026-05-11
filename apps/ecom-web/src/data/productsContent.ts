@@ -146,7 +146,7 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
   detail: {
     homeBreadcrumbLabel: 'Home',
     imageAriaPrefix: 'View image',
-    rotatedBrandLabel: 'ARCANA',
+    rotatedBrandLabel: 'STARGATER',
     sizeGuideEyebrow: 'Sizing',
     sizeGuideTitle: 'Size Guide',
     closeSizeGuideLabel: 'Close size guide',
@@ -160,7 +160,7 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
       { size: 'XL', chest: '98-104', waist: '82-88', hips: '104-110' },
     ],
     sizeGuideHelpPrefix: 'Unsure? Email us at',
-    sizeGuideHelpEmail: 'sizing@arcana.com',
+    sizeGuideHelpEmail: 'sizing@stargater.com',
     sizeRequiredLabel: 'Please select a size',
     selectSizeLabel: 'Select size',
     sizeGuideLabel: 'Size guide',

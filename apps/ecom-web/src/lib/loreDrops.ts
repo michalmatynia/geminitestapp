@@ -5,9 +5,31 @@ export type LoreDropsArticle = HomeEditorialReportContent & {
   slug: string;
 };
 
+export type LoreDropsArticleBodyBlock =
+  | { type: 'paragraph'; text: string }
+  | { type: 'image'; src: string; alt: string };
+
 type LocaleInput = string | null | undefined;
 
 const LORE_DROPS_PREFIX = '/lore-drops/';
+const ARTICLE_IMAGE_RE = /^!\[(.*?)\]\(([^)\s]+)\)$/;
+
+function readLoreDropsArticleBodyBlocks(rawBody: string): LoreDropsArticleBodyBlock[] {
+  const body = rawBody.trim();
+  if (body.length === 0) return [];
+
+  const chunks = body.split(/\n{2,}/);
+  return chunks
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => {
+      const imageMatch = chunk.match(ARTICLE_IMAGE_RE);
+      if (imageMatch) {
+        return { type: 'image', src: imageMatch[2], alt: imageMatch[1] };
+      }
+      return { type: 'paragraph', text: chunk };
+    });
+}
 
 export function slugifyLoreDropsArticle(value: string): string {
   const slug = value
@@ -69,8 +91,13 @@ export async function getLoreDropsArticleBySlug(
 
 export function getLoreDropsArticleParagraphs(article: LoreDropsArticle): string[] {
   const body = article.body.trim().length > 0 ? article.body : article.excerpt;
-  return body
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
+  return readLoreDropsArticleBodyBlocks(body)
+    .filter((block) => block.type === 'paragraph')
+    .map((block) => (block.type === 'paragraph' ? block.text : ''))
     .filter((block) => block.length > 0);
+}
+
+export function getLoreDropsArticleBodyBlocks(article: LoreDropsArticle): LoreDropsArticleBodyBlock[] {
+  const body = article.body.trim().length > 0 ? article.body : article.excerpt;
+  return readLoreDropsArticleBodyBlocks(body);
 }

@@ -69,7 +69,7 @@ export async function generateMetadata({
         ? `${content.collection.searchLabelPrefix}: "${search}"`
         : content.collection.allProductsLabel;
 
-  const fullTitle = `${title} — ARCANA`;
+  const fullTitle = `${title} — STARGATER`;
   const description = locale === 'pl'
     ? 'Odkryj kolekcjonalia, pinsy i grafiki z anime, gier i filmów.'
     : 'Discover collectibles, pins, and art prints from anime, gaming, and film.';
@@ -80,7 +80,7 @@ export async function generateMetadata({
       type: 'website',
       title: fullTitle,
       description,
-      siteName: 'ARCANA',
+      siteName: 'STARGATER',
     },
     twitter: {
       card: 'summary_large_image',
@@ -115,7 +115,7 @@ export default async function AllProductsPage({
     ? content.collection.priceRanges.find((r) => r.label === initialPriceLabel)
     : undefined;
 
-  const [{ products: dbProducts, total: dbTotal }, dbCategories] = await Promise.all([
+  const [mentiosProductsResult, mentiosCategoriesResult] = await Promise.allSettled([
     getMentiosProducts({
       limit: PAGE_SIZE,
       search,
@@ -130,6 +130,20 @@ export default async function AllProductsPage({
     }),
     getMentiosCategories(locale),
   ]);
+
+  if (mentiosProductsResult.status === 'rejected') {
+    console.error('[products] Falling back to static catalog: failed to fetch Mentios products', mentiosProductsResult.reason);
+  }
+  if (mentiosCategoriesResult.status === 'rejected') {
+    console.error('[products] Falling back to static catalog: failed to fetch Mentios categories', mentiosCategoriesResult.reason);
+  }
+
+  const { products: dbProducts, total: dbTotal } = mentiosProductsResult.status === 'fulfilled'
+    ? mentiosProductsResult.value
+    : { products: [], total: 0 };
+  const dbCategories = mentiosCategoriesResult.status === 'fulfilled'
+    ? mentiosCategoriesResult.value
+    : [];
 
   const hasDbData = dbProducts.length > 0;
   const staticInStock = PRODUCTS.filter((p) => !p.isSoldOut);

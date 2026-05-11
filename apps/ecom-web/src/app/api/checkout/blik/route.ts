@@ -166,7 +166,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const result = await createPayUBlikOrder({
       notifyUrl,
       customerIp: ip,
-      description: `Arcana order ${orderId}`,
+      description: `Stargater order ${orderId}`,
       currencyCode: 'PLN',
       totalAmount: total,
       extOrderId: orderId,

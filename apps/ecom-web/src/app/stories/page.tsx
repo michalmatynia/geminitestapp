@@ -16,7 +16,7 @@ function readTimeLabel(value: string, locale: string): string {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getStoriesPageContent(locale);
-  const title = `${content.index.title} - ARCANA`;
+  const title = `${content.index.title} - STARGATER`;
   const description = content.index.description;
   return {
     title,

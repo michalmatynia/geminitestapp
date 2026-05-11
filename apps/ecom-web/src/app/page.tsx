@@ -8,7 +8,7 @@ import { ManifestoBanner } from '@/components/ManifestoBanner';
 import { EditorialStrip } from '@/components/EditorialStrip';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SiteFooter } from '@/components/SiteFooter';
-import { getMentiosProducts, getMentiosCollectionCounts, getMentiosHomeStats } from '@/lib/mentios';
+import { getMentiosCategories, getMentiosProducts, getMentiosCollectionCounts, getMentiosHomeStats } from '@/lib/mentios';
 import { getHomeContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
 import type { EcomLocale } from '@/lib/locales';
@@ -20,8 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getHomeContent(locale);
   const title = locale === 'pl'
-    ? 'ARCANA - Anime, gaming i filmowe kolekcjonalia'
-    : 'ARCANA - Anime, Gaming, and Film Collectibles';
+    ? 'STARGATER - Anime, gaming i filmowe kolekcjonalia'
+    : 'STARGATER - Anime, Gaming, and Film Collectibles';
   const description = content.hero.description;
   return {
     title,
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       title,
       description,
-      siteName: 'ARCANA',
+      siteName: 'STARGATER',
     },
     twitter: {
       card: 'summary_large_image',
@@ -47,11 +47,12 @@ function formatStatValue(value: number, locale: EcomLocale): string {
 export default async function HomePage(): Promise<JSX.Element> {
   const locale = await getRequestLocale();
   // Both fetches run in parallel; either can fail gracefully.
-  const [{ products: dbProducts }, collectionCounts, homeContent, homeStats] = await Promise.all([
+  const [{ products: dbProducts }, collectionCounts, homeContent, homeStats, catalogCategories] = await Promise.all([
     getMentiosProducts({ limit: FEATURED_PRODUCT_COUNT, locale }),
     getMentiosCollectionCounts(),
     getHomeContent(locale),
     getMentiosHomeStats(locale),
+    getMentiosCategories(locale),
   ]);
 
   const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, FEATURED_PRODUCT_COUNT) : null;
@@ -79,7 +80,11 @@ export default async function HomePage(): Promise<JSX.Element> {
         <HeroSection content={heroContent} />
         <CategoriesGrid counts={collectionCounts} content={homeContent.categories} />
         <FeaturedProducts products={featuredProducts} content={homeContent.featured} />
-        <ManifestoBanner content={homeContent.manifesto} locale={locale} />
+        <ManifestoBanner
+          content={homeContent.manifesto}
+          locale={locale}
+          allowedCategoryNames={catalogCategories.map((category) => category.name)}
+        />
         <EditorialStrip content={homeContent.editorial} />
         <RecentlyViewed content={homeContent.recentlyViewed} />
         <SiteFooter />

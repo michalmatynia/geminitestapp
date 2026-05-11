@@ -10,8 +10,11 @@ export function resolveRoundProgress(
   const current = isSpectating
     ? session.currentQuestionIndex
     : (player?.currentQuestionIndex ?? 0);
+  const adjustedCurrent = session.status === 'in_progress'
+    ? current + 1
+    : current;
 
-  const safeCurrent = Math.min(current, total);
+  const safeCurrent = Math.min(adjustedCurrent, total);
   const percent = total > 0 ? Math.round((safeCurrent / total) * 100) : 0;
 
   return {

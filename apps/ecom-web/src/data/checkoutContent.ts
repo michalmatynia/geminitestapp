@@ -127,7 +127,7 @@ const EU_COUNTRIES = [
 ];
 
 export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
-  brandText: 'ARCANA',
+  brandText: 'STARGATER',
   stepAriaLabel: 'Checkout steps',
   steps: [
     { key: 'information', label: 'Information' },

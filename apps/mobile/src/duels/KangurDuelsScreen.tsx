@@ -4,9 +4,11 @@ import { HOME_ROUTE, LOBBY_CHAT_PREVIEW_LIMIT } from './utils/duels-ui';
 import { createKangurDuelsHref } from './duelsHref';
 import { useKangurDuelsScreenData } from './useKangurDuelsScreenData';
 import { DuelsScreenContent } from './DuelsScreenContent';
+import { useKangurDuelsAutoRefresh } from './useKangurDuelsAutoRefresh';
 
 export function KangurDuelsScreen(): React.JSX.Element {
   const data = useKangurDuelsScreenData();
+  useKangurDuelsAutoRefresh(data.lobby, data.lobbyActions.autoRefreshEnabled);
 
   const createLoginCallToAction = useCallback((label: string) => (
      

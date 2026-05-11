@@ -17,31 +17,44 @@ const getPriorityTone = (priority: string): Tone => {
   return { backgroundColor: '#eff6ff', borderColor: '#bfdbfe', textColor: '#1d4ed8' };
 };
 
-const getPriorityLabel = (priority: string, copy: ReturnType<typeof useKangurMobileI18n>['copy']): string => {
+const getPriorityLabel = (
+  priority: string,
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
+): string => {
   if (priority === 'high') return copy({ de: 'Hohe Priorität', en: 'High priority', pl: 'Priorytet wysoki' });
   if (priority === 'medium') return copy({ de: 'Mittlere Priorität', en: 'Medium priority', pl: 'Priorytet średni' });
   return copy({ de: 'Niedrige Priorität', en: 'Low priority', pl: 'Priorytet niski' });
 };
 
-function PriorityBadge({ priority, copy }: { priority: string; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
+function PriorityBadge({
+  item,
+  copy,
+}: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
+  const assignment = (item as { assignment?: KangurMobileResultsAssignmentItem }).assignment ?? item;
+  const priority = assignment.priority;
+
   return <Pill label={getPriorityLabel(priority, copy)} tone={getPriorityTone(priority)} />;
 }
 
 function AssignmentInfo({ item, copy }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
+  const assignment = (item as { assignment?: KangurMobileResultsAssignmentItem }).assignment ?? item;
   return (
     <>
-      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{item.title}</Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{item.description}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{assignment.title}</Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{assignment.description}</Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({ de: `Ziel: ${item.target}`, en: `Goal: ${item.target}`, pl: `Cel: ${item.target}` })}
+        {copy({ de: `Ziel: ${assignment.target}`, en: `Goal: ${assignment.target}`, pl: `Cel: ${assignment.target}` })}
       </Text>
     </>
   );
 }
 
 function AssignmentAction({ item, copy, locale }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: string }): React.JSX.Element {
-  const label = translateKangurMobileActionLabel(item.action.label, locale);
-  if (typeof item.href === 'string' && item.href !== '') return <LinkButton href={item.href} label={label} tone='primary' />;
+  const assignment = (item as { assignment?: KangurMobileResultsAssignmentItem }).assignment ?? item;
+  const label = translateKangurMobileActionLabel(assignment.action.label, locale);
+  if (item.href !== null && item.href !== '') {
+    return <LinkButton href={item.href} label={label} tone='primary' />;
+  }
   
   return (
     <MutedActionChip
@@ -59,7 +72,7 @@ export function ResultsAssignmentRow({
   const { copy, locale } = useKangurMobileI18n();
   return (
     <InsetPanel gap={8} padding={12} style={{ borderRadius: 18, backgroundColor: '#ffffff' }}>
-      <PriorityBadge priority={item.priority} copy={copy} />
+      <PriorityBadge item={item} copy={copy} />
       <AssignmentInfo item={item} copy={copy} />
       <AssignmentAction item={item} copy={copy} locale={locale} />
     </InsetPanel>

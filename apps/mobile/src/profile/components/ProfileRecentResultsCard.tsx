@@ -3,7 +3,7 @@ import {
   KangurMobileCard as Card,
   KangurMobileLinkButton as LinkButton,
 } from '../../shared/KangurMobileUi';
-import { SessionRow } from '../profile-primitives';
+import { SessionRow } from './SessionRow';
 import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import type { useKangurMobileProfileRecentResults } from '../useKangurMobileProfileRecentResults';
 import type { Href } from 'expo-router';

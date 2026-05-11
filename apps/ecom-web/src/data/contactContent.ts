@@ -73,10 +73,10 @@ export const CONTACT_CONTENT_DEFAULTS: ContactContent = {
   },
   info: {
     addressEyebrow: 'Atelier',
-    addressLines: ['ARCANA Objects', '12 Rue des Artisans', '75003 Paris, France'],
+    addressLines: ['STARGATER Objects', '12 Rue des Artisans', '75003 Paris, France'],
     directEyebrow: 'Direct',
     directLinks: [
-      { label: 'hello@arcana.com', href: 'mailto:hello@arcana.com' },
+      { label: 'hello@stargater.com', href: 'mailto:hello@stargater.com' },
       { label: '+33 1 40 00 00 00', href: 'tel:+33140000000' },
     ],
     hoursEyebrow: 'Hours',
@@ -117,7 +117,7 @@ export const CONTACT_CONTENT_DEFAULTS: ContactContent = {
     eyebrow: 'Message sent',
     titleLine1: 'Thank you,',
     titleLine2: "we'll be in touch.",
-    body: 'Expect a reply within 2 business days. For urgent matters you can also reach us directly at hello@arcana.com.',
+    body: 'Expect a reply within 2 business days. For urgent matters you can also reach us directly at hello@stargater.com.',
     resetLabel: 'Send another message',
   },
 };

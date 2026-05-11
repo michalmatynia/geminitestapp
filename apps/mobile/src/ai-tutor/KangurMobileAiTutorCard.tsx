@@ -3,10 +3,14 @@ import { Text, View } from 'react-native';
 
 import type {
   KangurAiTutorConversationContext,
+  KangurAiTutorNativeGuideEntry,
 } from '../../../../src/shared/contracts/kangur-ai-tutor';
-import type { KangurAiTutorNativeGuideEntry } from '../../../../src/shared/contracts/kangur-ai-tutor-native-guide';
-import { useKangurMobileI18n, type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
-import { StatusPill } from '../shared/KangurAssessmentUi';
+import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import type { useKangurMobileAiTutor } from './useKangurMobileAiTutor';
+import {
+  useKangurMobileI18n,
+} from '../i18n/kangurMobileI18n';
+import { StatusPill, OutlineLink } from '../shared/KangurAssessmentUi';
 import {
   KangurMobileActionButton,
   KangurMobileCard,
@@ -18,6 +22,16 @@ type KangurMobileAiTutorCardProps = {
   context: KangurAiTutorConversationContext;
   gameTarget?: 'competition' | 'practice';
 };
+
+type ResponseAction = ReturnType<typeof useKangurMobileAiTutor>['responseActions'][number];
+
+const resolveCopy = (locale: KangurMobileLocale): {
+  openPractice: string;
+} => ({
+  de: 'Open:',
+  en: 'Open:',
+  pl: 'Otwórz:',
+}[locale]);
 
 const TutorHeader = ({ name, availabilityLabel, availabilityTone, usageLabel }: {
   name: string;
@@ -45,7 +59,7 @@ const TutorGuide = ({ guideEntry, responseMessage, isLoading, copy }: {
   guideEntry: KangurAiTutorNativeGuideEntry | null;
   responseMessage: string | null;
   isLoading: boolean;
-  copy: (v: KangurMobileLocalizedValue<string>) => string;
+  copy: (v: { de: string; en: string; pl: string }) => string;
 }): React.JSX.Element => {
   if (guideEntry !== null) {
     return (
@@ -69,7 +83,7 @@ const TutorGuide = ({ guideEntry, responseMessage, isLoading, copy }: {
     pl: 'AI Tutor ładuje wskazówki do tego kroku.',
   });
   const waitingMsg = copy({
-    de: 'Der Tutor dopasuje wskazówki do tego kroku, sobald mehr Kontext verfügbar ist.',
+    de: 'Der Tutor passt die Hinweise für diesen Schritt an, sobald mehr Kontext verfügbar ist.',
     en: 'AI Tutor will adapt guidance for this step once more context is available.',
     pl: 'AI Tutor dopasuje wskazówki do tego kroku, gdy pojawi się więcej kontekstu.',
   });
@@ -81,6 +95,52 @@ const TutorGuide = ({ guideEntry, responseMessage, isLoading, copy }: {
   );
 };
 
+const ActionHint = ({
+  copy,
+  locale,
+}: {
+  copy: (v: { de: string; en: string; pl: string }) => string;
+  locale: KangurMobileLocale;
+}): React.JSX.Element => {
+  const prefix = resolveCopy(locale);
+  const websiteLabel = copy({ de: 'Sie haben keine weiteren Aktionen.', en: 'No actions available.', pl: 'Brak dodatkowych akcji.' });
+  return <Text style={{ color: '#64748b', fontSize: 12 }}>{`${prefix} ${websiteLabel}`}</Text>;
+};
+
+const ResponseActionsPanel = ({
+  actions,
+  locale,
+  copy,
+}: {
+  actions: ResponseAction[];
+  locale: KangurMobileLocale;
+  copy: (v: { de: string; en: string; pl: string }) => string;
+}): React.JSX.Element => {
+  if (actions.length === 0) {
+    return <ActionHint copy={copy} locale={locale} />;
+  }
+
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={{ color: '#334155', fontSize: 12, fontWeight: '700' }}>
+        {copy({
+          de: 'Weitere Wege',
+          en: 'More options',
+          pl: 'Więcej opcji',
+        })}
+      </Text>
+      {actions.map((action) => (
+        <OutlineLink
+          href={action.href}
+          hint={action.reason ?? undefined}
+          label={action.label}
+          key={action.id}
+        />
+      ))}
+    </View>
+  );
+};
+
 type AvailabilityInfo = {
   tone: { backgroundColor: string; borderColor: string; textColor: string };
   label: string;
@@ -88,7 +148,7 @@ type AvailabilityInfo = {
 
 const resolveAvailabilityInfo = (
   state: string,
-  copy: (v: KangurMobileLocalizedValue<string>) => string,
+  copy: (v: { de: string; en: string; pl: string }) => string,
 ): AvailabilityInfo => {
   if (state === 'available') {
     return {
@@ -118,11 +178,15 @@ export function KangurMobileAiTutorCard({
   context,
   gameTarget = 'practice',
 }: KangurMobileAiTutorCardProps): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
+  const { copy, locale } = useKangurMobileI18n();
   const tutor = useKangurMobileAiTutor({ context, gameTarget });
 
-  const { tone: availabilityTone, label: availabilityLabel } = resolveAvailabilityInfo(tutor.availabilityState, copy);
+  const { tone: availabilityTone, label: availabilityLabel } = resolveAvailabilityInfo(
+    tutor.availabilityState,
+    copy,
+  );
 
+  const showLocaleOpen = resolveCopy(locale);
   let usageLabel: string | null = null;
   if (tutor.usage !== null) {
     usageLabel = tutor.usage.dailyMessageLimit === null
@@ -145,6 +209,30 @@ export function KangurMobileAiTutorCard({
         isLoading={tutor.isLoading}
         copy={copy}
       />
+
+      {tutor.websiteHelpTarget !== null && (
+        <View>
+          <OutlineLink
+            href={tutor.websiteHelpTarget.href}
+            hint={copy({
+              de: 'Hilfeseite öffnen.',
+              en: 'Opens help content.',
+              pl: 'Otwiera stronę pomocy.',
+            })}
+            label={copy({
+              de: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
+              en: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
+              pl: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
+            })}
+          />
+        </View>
+      )}
+
+      {tutor.responseActions.length > 0 ? (
+        <KangurMobileInsetPanel gap={8} padding={16}>
+          <ResponseActionsPanel copy={copy} locale={locale} actions={tutor.responseActions} />
+        </KangurMobileInsetPanel>
+      ) : null}
 
       {tutor.guideEntry?.hints !== undefined && tutor.guideEntry.hints.length > 0 && (
         <KangurMobileInsetPanel gap={8} padding={16}>
@@ -170,7 +258,7 @@ export function KangurMobileAiTutorCard({
               label={action.label}
               minHeight={44}
               onPress={() => {
-                tutor.sendQuickAction(action.id).catch(() => {});
+                void tutor.sendQuickAction(action.id);
               }}
               tone='secondary'
             />

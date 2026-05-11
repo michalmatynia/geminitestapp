@@ -65,8 +65,11 @@ export const resolvePersistedKangurMobileHomeDuelPresence = ({
   storage,
 }: {
   learnerIdentity: string;
-  storage: KangurClientStorageAdapter;
+  storage?: KangurClientStorageAdapter;
 }): KangurDuelLobbyPresenceEntry[] | null => {
+  if (!storage) {
+    return null;
+  }
   const store = parsePersistedHomeDuelPresenceStore(
     storage.getItem(KANGUR_MOBILE_HOME_DUEL_PRESENCE_STORAGE_KEY),
   );
@@ -80,12 +83,11 @@ export const persistKangurMobileHomeDuelPresence = ({
 }: {
   entries: KangurDuelLobbyPresenceEntry[];
   learnerIdentity: string;
-  storage: KangurClientStorageAdapter;
+  storage?: KangurClientStorageAdapter;
 }): void => {
-  if (learnerIdentity.length === 0) {
+  if (!storage || learnerIdentity.length === 0) {
     return;
   }
-
   const currentStore = parsePersistedHomeDuelPresenceStore(
     storage.getItem(KANGUR_MOBILE_HOME_DUEL_PRESENCE_STORAGE_KEY),
   );

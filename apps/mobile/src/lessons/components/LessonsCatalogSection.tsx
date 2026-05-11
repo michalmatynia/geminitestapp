@@ -8,7 +8,7 @@ import {
   KangurMobileLinkButton as LinkButton,
 } from '../../shared/KangurMobileUi';
 import { getMasteryTone, renderLessonPracticeLink } from '../lessons-screen-primitives';
-import { getKangurMobileLocaleTag, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { getKangurMobileLocaleTag, type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 
 interface CatalogItemLesson {
   id: string;

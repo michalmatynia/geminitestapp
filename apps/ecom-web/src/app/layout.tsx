@@ -69,8 +69,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const isPl = locale === 'pl';
 
   const title = isPl
-    ? 'ARCANA - Anime, gaming i filmowe kolekcjonalia'
-    : 'ARCANA - Anime, Gaming, and Film Collectibles';
+    ? 'STARGATER - Anime, gaming i filmowe kolekcjonalia'
+    : 'STARGATER - Anime, Gaming, and Film Collectibles';
   const description = isPl
     ? 'Breloki, piny i biżuteria z ulubionych uniwersów. Kolekcjonalia anime, gamingowe i filmowe - licencjonowane i starannie wybrane.'
     : 'Keychains, pins and jewellery from the universes you love. Anime, gaming and film collectibles - officially licensed, obsessively curated.';
@@ -81,7 +81,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(siteUrl),
     openGraph: {
       type: 'website',
-      siteName: 'ARCANA',
+      siteName: 'STARGATER',
       title,
       description,
       locale: isPl ? 'pl_PL' : 'en_GB',

@@ -12,6 +12,7 @@ import { switchLocalePath } from '@/lib/locales';
 
 const BANNER_H = 38;
 const THEME_STORAGE_KEY = 'arcana-theme';
+const normalizeLegacyBrand = (value: string): string => value.replace(/\bArcana\b/gi, 'STARGATER');
 type StorefrontTheme = 'nightly' | 'daily';
 
 function applyStorefrontTheme(theme: StorefrontTheme): void {
@@ -96,8 +97,10 @@ export function SiteNav() {
   const accountLabel = nav.mobileAccountLabel || (isPolish ? 'Konto' : 'My account');
   const menuLabel = isPolish ? 'Menu' : 'Menu';
   const logoUrl = nav.logoUrl.trim();
-  const brandLabel = `${nav.brandName} ${nav.brandSuffix}`.trim();
-  const logoAlt = nav.logoAlt.trim() || brandLabel;
+  const normalizedBrandName = normalizeLegacyBrand(nav.brandName);
+  const normalizedBrandSuffix = normalizeLegacyBrand(nav.brandSuffix);
+  const brandLabel = `${normalizedBrandName} ${normalizedBrandSuffix}`.trim();
+  const logoAlt = (normalizeLegacyBrand(nav.logoAlt).trim()) || brandLabel;
 
   return (
     <>

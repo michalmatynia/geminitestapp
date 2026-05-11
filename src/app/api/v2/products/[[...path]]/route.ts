@@ -63,6 +63,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['pages', 'manifesto', 'background'], loader: () => import('../pages/manifesto/background/route-handler') },
   { pattern: ['pages', 'collection-cards'], loader: () => import('../pages/collection-cards/route-handler') },
   { pattern: ['pages', 'collection-cards', 'image'], loader: () => import('../pages/collection-cards/image/route-handler') },
+  { pattern: ['pages', 'editorial-articles', 'image'], loader: () => import('../pages/editorial-articles/image/route-handler') },
   { pattern: ['pages', 'editorial-articles', 'generate'], loader: () => import('../pages/editorial-articles/generate/route-handler') },
   { pattern: ['pages', 'editorial-articles'], loader: () => import('../pages/editorial-articles/route-handler') },
   { pattern: ['archive', 'batch'], loader: () => import('../archive/batch/route-handler') },

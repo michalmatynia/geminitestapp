@@ -123,12 +123,12 @@ export const VALUES_CONTENT_DEFAULTS: ValuesContent = {
     {
       title: 'Lifetime repair programme',
       body:
-        'We will repair any ARCANA object for the lifetime of the owner at cost price. A broken clasp, a worn sole, a chipped glaze \u2014 send it back. We will make it right.',
+        'We will repair any STARGATER object for the lifetime of the owner at cost price. A broken clasp, a worn sole, a chipped glaze \u2014 send it back. We will make it right.',
     },
     {
       title: 'No paid advertising',
       body:
-        'We do not run paid social media or influencer campaigns. Every customer who finds ARCANA does so through editorial coverage, word of mouth, or the objects themselves.',
+        'We do not run paid social media or influencer campaigns. Every customer who finds STARGATER does so through editorial coverage, word of mouth, or the objects themselves.',
     },
     {
       title: 'B-Corp certification in progress',

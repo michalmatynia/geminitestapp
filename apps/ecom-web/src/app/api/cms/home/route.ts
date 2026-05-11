@@ -41,6 +41,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     const locale = req.nextUrl.searchParams.get('locale') ?? undefined;
     const snapshot = await saveHomeContent(content, session.id, locale);
     revalidateLocalizedPath('/');
+    revalidateLocalizedPath('/lore-drops');
+    revalidateLocalizedPath('/lore-drops/[slug]', 'page');
     return NextResponse.json({ ok: true, ...snapshot });
   } catch {
     return NextResponse.json({ error: 'Failed to save CMS content' }, { status: 500 });

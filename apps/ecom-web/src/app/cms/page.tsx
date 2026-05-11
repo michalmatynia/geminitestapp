@@ -11,10 +11,10 @@ import { getRequestLocale } from '@/lib/request-locale';
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   return {
-    title: locale === 'pl' ? 'Panel CMS - ARCANA' : 'CMS Console - ARCANA',
+    title: locale === 'pl' ? 'Panel CMS - STARGATER' : 'CMS Console - STARGATER',
     description: locale === 'pl'
-      ? 'Panel zarządzania treścią sklepu ARCANA.'
-      : 'Content management console for the ARCANA storefront.',
+      ? 'Panel zarządzania treścią sklepu STARGATER.'
+      : 'Content management console for the STARGATER storefront.',
   };
 }
 

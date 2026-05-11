@@ -7,9 +7,18 @@ export function EditorialArticlePreview({
 }: {
   article: EditorialArticleState;
 }): React.JSX.Element {
+  const hasImage = article.imageUrl.trim().length > 0;
   return (
     <div className='relative min-h-72 overflow-hidden rounded-md border bg-muted/30 p-5 text-white'>
-      <div className='absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950' />
+      {hasImage ? (
+        <img
+          alt=''
+          className='absolute inset-0 h-full w-full object-cover'
+          src={article.imageUrl}
+        />
+      ) : (
+        <div className='absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950' />
+      )}
       <div className='absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/75' />
       <div className='relative z-10 flex h-full min-h-60 flex-col justify-end'>
         <span className='mb-4 w-fit rounded border border-white/25 bg-white/10 px-2 py-1 text-[10px] uppercase tracking-wide'>

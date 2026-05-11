@@ -128,10 +128,10 @@ export function resolveSeriesWins(
 
 export function formatQuestionProgress(
   session: KangurDuelSession,
-  player: KangurDuelPlayer,
+  player: KangurDuelPlayer | null,
   locale: KangurMobileLocale,
 ): string {
-  const completed = Math.min(player.currentQuestionIndex, session.questionCount);
+  const completed = Math.min(player?.currentQuestionIndex ?? 0, session.questionCount);
   return localizeSimpleDuelText(
     `${completed}/${session.questionCount} Fragen`,
     `${completed}/${session.questionCount} questions`,
@@ -244,18 +244,18 @@ export function formatSeriesSummary(
   }
 
   const progress = formatSeriesProgress(series, locale);
-  return `${progress}\u00A0·\u00A0${localizeSimpleDuelText(
+  return `${progress} · ${localizeSimpleDuelText(
     `abgeschlossene Spiele: ${series.completedGames}`,
     `completed games: ${series.completedGames}`,
     `ukończone gry: ${series.completedGames}`,
     locale,
   )}`;
-  }export function formatLobbySeriesSummary(
+}export function formatLobbySeriesSummary(
   series: KangurDuelSeries | null | undefined,
   locale: KangurMobileLocale,
 ): string | null {
   if (!series) return null;
-  return formatSeriesTitle(series, locale);
+  return formatSeriesSummary(series, locale);
 }
 
 export function resolveWinnerSummary(

@@ -98,7 +98,7 @@ function LeaderboardSnapshot({
       {copy({
         de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar.',
         en: 'Your account is not visible in this duel standing yet.',
-        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków.',
+        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
       })}
     </Text>
   );

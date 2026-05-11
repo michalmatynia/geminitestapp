@@ -58,13 +58,15 @@ export function HomeSecondaryContent({
         copy={copy}
         trainingFocus={trainingFocus}
       />
-      <HomeInsightsSection
-        areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
-        initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
-        isLiveHomeProgressReady={isLiveHomeProgressReady}
-        recentResults={recentResults}
-        trainingFocus={trainingFocus}
-      />
+      {!shouldRenderCombinedHomeStartupPlaceholder ? (
+        <HomeInsightsSection
+          areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
+          initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
+          isLiveHomeProgressReady={isLiveHomeProgressReady}
+          recentResults={recentResults}
+          trainingFocus={trainingFocus}
+        />
+      ) : null}
     </>
   );
 }

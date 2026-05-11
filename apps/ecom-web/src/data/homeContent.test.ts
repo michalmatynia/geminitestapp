@@ -48,6 +48,7 @@ describe('home editorial article content', () => {
             id: 'Gaming Report',
             tag: 'Gaming Drop',
             title: 'Gaming Report',
+            imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/report.webp',
             visible: false,
           },
         ],
@@ -58,10 +59,35 @@ describe('home editorial article content', () => {
       expect.objectContaining({
         body: 'Long article copy',
         href: '/lore-drops/gaming-report',
+        imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/report.webp',
         id: 'gaming-report',
         visible: false,
       }),
     ]);
+  });
+
+  it('falls back when editorial report image URL is invalid', () => {
+    const content = normalizeHomeContent({
+      editorial: {
+        reports: [
+          {
+            body: 'Long article copy',
+            excerpt: 'Short form',
+            href: '/lore-drops/invalid-image-report',
+            id: 'invalid-image-report',
+            tag: 'Universe Report',
+            title: 'Invalid Image',
+            imageUrl: 'javascript:alert(1)',
+            visible: true,
+          },
+        ],
+      },
+    });
+
+    expect(content.editorial.reports[0]).toMatchObject({
+      imageUrl: '',
+      id: 'invalid-image-report',
+    });
   });
 
   it('allows long editorial article bodies', () => {

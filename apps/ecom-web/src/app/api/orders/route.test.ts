@@ -46,7 +46,7 @@ function makeOrderPayload(): Record<string, unknown> {
       {
         productId: 'prod-1',
         slug: 'arcana-pin',
-        name: 'Arcana Pin',
+        name: 'Stargater Pin',
         category: 'Pins',
         size: 'OS',
         price: 15,

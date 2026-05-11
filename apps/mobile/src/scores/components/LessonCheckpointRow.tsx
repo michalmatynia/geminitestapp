@@ -18,15 +18,17 @@ function PracticeButton({
   title: string;
 }): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
+  const label = copy({
+    de: 'Danach trainieren',
+    en: 'Practice after',
+    pl: 'Potem trenuj',
+  });
+
   return (
-    <LinkButton
-      href={practiceHref}
-      label={`${copy({
-        de: 'Danach trainieren',
-        en: 'Practice after',
-        pl: 'Potem trenuj',
-      })}: ${title}`}
-    />
+    <>
+      <Text style={{ color: '#334155', fontSize: 10 }}>{label}</Text>
+      <LinkButton href={practiceHref} label={`${label}: ${title}`} />
+    </>
   );
 }
 
@@ -76,9 +78,9 @@ export function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {typeof item.practiceHref === 'string' && item.practiceHref !== '' && (
+        {(item.practiceHref !== null && item.practiceHref !== '' && (
           <PracticeButton practiceHref={item.practiceHref as Href} title={item.title} />
-        )}
+        ))}
       </View>
     </InsetPanel>
   );

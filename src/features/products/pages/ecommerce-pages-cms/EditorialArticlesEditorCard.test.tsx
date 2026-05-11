@@ -146,6 +146,7 @@ const createArticle = (
   excerpt: 'Short article copy',
   href: '/lore-drops/article',
   id: 'article',
+  imageUrl: '',
   tag: 'Universe Report',
   title: 'Article',
   visible: true,
@@ -173,6 +174,8 @@ const createController = (
   isSaving: false,
   removeArticle: vi.fn(),
   updateArticle: vi.fn(),
+  uploadArticleImage: vi.fn(),
+  uploadingIndex: null,
   ...overrides,
 });
 
@@ -235,6 +238,9 @@ describe('EditorialArticlesEditorCard', () => {
     fireEvent.change(within(dialog).getByLabelText('Long text'), {
       target: { value: 'A longer article body for the storefront page.' },
     });
+    fireEvent.change(within(dialog).getByLabelText('Image URL'), {
+      target: { value: 'https://sparksofsindri.com/uploads/cms/stargater/lore/article.webp' },
+    });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add article' }));
 
     expect(addArticle).toHaveBeenCalledWith(
@@ -243,6 +249,7 @@ describe('EditorialArticlesEditorCard', () => {
         excerpt: 'Fresh arrival note',
         href: '/lore-drops/gaming-drop',
         id: 'gaming-drop',
+        imageUrl: 'https://sparksofsindri.com/uploads/cms/stargater/lore/article.webp',
         tag: 'Universe Report',
         title: 'Gaming Drop',
         visible: true,

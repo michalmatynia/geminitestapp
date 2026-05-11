@@ -9,17 +9,19 @@ const mongoMocks = vi.hoisted(() => ({
   connect: vi.fn(),
   createdUris: [] as string[],
   dbNames: [] as string[],
+  createdOptions: [] as Array<Record<string, unknown> | undefined>,
 }));
 
 vi.mock('mongodb', () => {
   class MongoClient {
-    constructor(uri: string) {
+    constructor(uri: string, options?: Record<string, unknown>) {
       mongoMocks.createdUris.push(uri);
+      mongoMocks.createdOptions.push(options);
     }
 
     async connect(): Promise<this> {
-      mongoMocks.connect();
-      return this;
+      const result = await mongoMocks.connect();
+      return result === undefined ? this : result as this;
     }
 
     db(name: string): { name: string } {
@@ -61,6 +63,14 @@ const clearMongoEnv = (): void => {
     'ECOM_MONGODB_CLOUD_DB',
     'ECOM_MONGODB_ACTIVE_SOURCE',
     'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+    'ECOM_MONGODB_SECURITY_OVERRIDE_ENABLED',
+    'ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES',
+    'ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION',
+    'ECOM_MONGODB_TLS_ALLOW_INVALID_HOSTNAMES',
+    'MONGODB_SECURITY_OVERRIDE_ENABLED',
+    'MONGODB_TLS_ALLOW_INVALID_CERTIFICATES',
+    'MONGODB_TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION',
+    'MONGODB_TLS_ALLOW_INVALID_HOSTNAMES',
     'MONGODB_PRODUCTS_URI',
     'MONGODB_PRODUCTS_DB',
     'MONGODB_PRODUCTS_LOCAL_URI',
@@ -73,6 +83,7 @@ const clearMongoEnv = (): void => {
     'MONGODB_ECOM_LOCAL_DB',
     'MONGODB_ECOM_CLOUD_URI',
     'MONGODB_ECOM_CLOUD_DB',
+    'NODE_ENV',
     'VERCEL',
     'VERCEL_ENV',
   ]) {
@@ -86,6 +97,7 @@ describe('ecommerce MongoDB resolver', () => {
     vi.clearAllMocks();
     mongoMocks.createdUris.length = 0;
     mongoMocks.dbNames.length = 0;
+    mongoMocks.createdOptions.length = 0;
     clearMongoEnv();
   });
 
@@ -148,5 +160,99 @@ describe('ecommerce MongoDB resolver', () => {
 
     expect(mongoMocks.createdUris).toEqual(['mongodb+srv://generic.example.test/']);
     expect(mongoMocks.dbNames).toEqual(['catalog_db']);
+  });
+
+  it('falls back to insecure TLS when allowed for TLS handshake errors', async () => {
+    process.env['VERCEL'] = '1';
+    process.env['NODE_ENV'] = 'development';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['ECOM_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
+    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    mongoMocks.connect
+      .mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'))
+      .mockResolvedValue(undefined);
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual([
+      'mongodb+srv://products.example.test/',
+      'mongodb+srv://products.example.test/',
+    ]);
+    expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
+    expect(mongoMocks.createdOptions[1]?.['tlsAllowInvalidCertificates']).toBe(true);
+  });
+
+  it('falls back to insecure TLS when URI-level tls=true is set and allowed', async () => {
+    process.env['VERCEL'] = '1';
+    process.env['NODE_ENV'] = 'development';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_local?tls=true';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['ECOM_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
+    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    mongoMocks.connect
+      .mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'))
+      .mockResolvedValue(undefined);
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual([
+      'mongodb://127.0.0.1:27017/ecom_local?tls=true',
+      'mongodb://127.0.0.1:27017/ecom_local?tls=true',
+    ]);
+    expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
+    expect(mongoMocks.createdOptions[1]?.['tlsAllowInvalidCertificates']).toBe(true);
+  });
+
+  it('does not fall back to insecure TLS when the security override flag is not set', async () => {
+    process.env['VERCEL'] = '1';
+    process.env['NODE_ENV'] = 'development';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    mongoMocks.connect.mockRejectedValue(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'));
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await expect(getEcommerceProductsDb()).rejects.toThrow();
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://products.example.test/']);
+    expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
+    expect(mongoMocks.createdOptions[0]?.['tlsAllowInvalidCertificates']).toBeUndefined();
+  });
+
+  it('does not fallback to insecure TLS in production without explicit production opt-in', async () => {
+    process.env['VERCEL'] = '1';
+    process.env['NODE_ENV'] = 'production';
+    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    mongoMocks.connect.mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'));
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await expect(getEcommerceProductsDb()).rejects.toThrow();
+    expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fallback to insecure TLS for non-TLS MongoDB URIs', async () => {
+    process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:27017/ecom_local';
+    process.env['MONGODB_DB'] = 'ecom_local';
+    process.env['MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    mongoMocks.connect.mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'));
+
+    const { getDb } = await import('./mongodb');
+
+    await expect(getDb()).rejects.toThrow();
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/ecom_local']);
+    expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
+    expect(mongoMocks.createdOptions[0]?.['tls']).not.toBe(true);
   });
 });

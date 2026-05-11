@@ -10,17 +10,24 @@ import {
   isRecord,
   readBoolean,
   readText,
+  makeStoredFilename,
+  validateImageFile,
   withEcommerceMongoDb,
   withMainAppMongoDb,
   type CmsPageDoc,
+  writeLocalImageFile,
 } from './ecommerce-pages-cms.shared.server';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { resolveEcommerceMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { uploadBufferToFastComet } from '@/shared/lib/files/services/storage/file-storage-service';
 
 const HOME_PAGE_KEY = 'home';
 const MAX_EDITORIAL_ARTICLES = 12;
+const MAX_ARTICLE_IMAGE_BYTES = 5 * 1024 * 1024;
+const EDITORIAL_ARTICLE_PUBLIC_DIR = '/uploads/cms/stargater/editorial-articles';
+const EDITORIAL_ARTICLE_FASTCOMET_FOLDER = 'stargater/editorial-articles';
 
 export type EcommercePagesCmsEditorialArticle = {
   id: string;
@@ -28,6 +35,7 @@ export type EcommercePagesCmsEditorialArticle = {
   title: string;
   excerpt: string;
   body: string;
+  imageUrl: string;
   visible: boolean;
   href: string;
 };
@@ -42,6 +50,14 @@ export type EcommercePagesCmsEditorialArticlesSnapshot = {
 export type EcommercePagesCmsEditorialArticlesSaveResult =
   EcommercePagesCmsEditorialArticlesSnapshot & { cloudMirrored: boolean };
 
+export type EcommercePagesCmsEditorialArticleImageUploadResult = {
+  filename: string;
+  localPublicPath: string;
+  mimetype: string;
+  remoteUrl: string;
+  size: number;
+};
+
 const DEFAULT_EDITORIAL_ARTICLES: EcommercePagesCmsEditorialArticle[] = [
   {
     id: 'attack-on-titan-final-collection',
@@ -51,6 +67,7 @@ const DEFAULT_EDITORIAL_ARTICLES: EcommercePagesCmsEditorialArticle[] = [
       'Survey Corps insignia, crystal-cast pins and wall-break keychains from the most iconic arc in modern anime.',
     body:
       'Survey Corps insignia, crystal-cast pins and wall-break keychains anchor this edit of Attack on Titan collectibles.\n\nThe collection focuses on objects that feel like field notes from the final arc: compact, symbolic, and easy to carry every day.',
+    imageUrl: '',
     visible: true,
     href: '/lore-drops/attack-on-titan-final-collection',
   },
@@ -62,6 +79,7 @@ const DEFAULT_EDITORIAL_ARTICLES: EcommercePagesCmsEditorialArticle[] = [
       'Gilded pendants, smithing stone charms and Great Rune keychains - forged for Tarnished who survived the Lands Between.',
     body:
       'The Elden Ring talisman series leans into worn metal, rune geometry, and small relic silhouettes.\n\nIt is built for collectors who want a subtle object from the Lands Between without losing the atmosphere of the source material.',
+    imageUrl: '',
     visible: true,
     href: '/lore-drops/elden-ring-talisman-series',
   },
@@ -73,6 +91,7 @@ const DEFAULT_EDITORIAL_ARTICLES: EcommercePagesCmsEditorialArticle[] = [
       'Origami figures, spinner-craft pendants and neon-etched charms inspired by the rain-soaked skylines of New Los Angeles.',
     body:
       'The Off-World Edition pulls from rain, neon, glass, and the quiet iconography of Blade Runner 2049.\n\nEach piece is selected for its ability to read as a collectible first and a reference second.',
+    imageUrl: '',
     visible: true,
     href: '/lore-drops/blade-runner-2049-off-world-edition',
   },
@@ -90,6 +109,27 @@ const slugify = (value: string): string => {
 const readFallbackText = (value: unknown, fallback: string): string => {
   const text = readText(value);
   return text.length > 0 ? text : fallback;
+};
+
+const isAllowedImageUrl = (value: string): boolean => {
+  if (value.startsWith('//')) return false;
+  if (value.startsWith('/') && !value.startsWith('//')) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const readImageUrl = (
+  source: Record<string, unknown>,
+  fallback: string
+): string => {
+  const imageUrl = readFallbackText(source['imageUrl'], fallback);
+  if (imageUrl.length === 0) return fallback;
+  if (!isAllowedImageUrl(imageUrl)) return fallback;
+  return imageUrl;
 };
 
 const getArticleHref = (
@@ -120,6 +160,7 @@ const normalizeEditorialArticle = (
       record['body'],
       fallback.body.length > 0 ? fallback.body : excerpt
     ),
+    imageUrl: readImageUrl(record, fallback.imageUrl),
     visible: readBoolean(record['visible'], fallback.visible),
     href: getArticleHref(record, id, fallback),
   };
@@ -236,4 +277,29 @@ export const saveEcommercePagesCmsEditorialArticles = async (input: {
 }): Promise<EcommercePagesCmsEditorialArticlesSaveResult> => {
   const articles = validateEditorialArticles(input.articles);
   return saveEditorialArticlesToLocalAndEcommerce(articles, input.userId);
+};
+
+export const uploadEcommercePagesCmsEditorialArticleImage = async (input: {
+  file: File;
+}): Promise<EcommercePagesCmsEditorialArticleImageUploadResult> => {
+  const mimetype = validateImageFile(input.file, {
+    emptyMessage: 'Lore article image is empty.',
+    maxBytes: MAX_ARTICLE_IMAGE_BYTES,
+    maxMessage: 'Lore article image must be 5 MB or smaller.',
+    typeMessage: 'Lore article image must be PNG, JPG, WebP, GIF, or SVG.',
+  });
+  const filename = makeStoredFilename(input.file, mimetype, 'lore-article');
+  const localPublicPath = `${EDITORIAL_ARTICLE_PUBLIC_DIR}/${filename}`;
+  const buffer = Buffer.from(await input.file.arrayBuffer());
+
+  await writeLocalImageFile({ buffer, publicPath: localPublicPath });
+  const remoteUrl = await uploadBufferToFastComet({
+    buffer,
+    category: 'cms',
+    filename,
+    folder: EDITORIAL_ARTICLE_FASTCOMET_FOLDER,
+    mimetype,
+    publicPath: localPublicPath,
+  });
+  return { filename, localPublicPath, mimetype, remoteUrl, size: input.file.size };
 };

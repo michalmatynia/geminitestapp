@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const dbProduct = await getMentiosProduct(slug, locale);
   const product = dbProduct ?? getProduct(slug);
   if (!product) return {};
-  const title = `${product.name} — ARCANA`;
+  const title = `${product.name} — STARGATER`;
   const description = product.description.slice(0, 155);
   const images = product.imageUrl ? [{ url: product.imageUrl, alt: product.name }] : [];
   return {

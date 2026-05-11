@@ -17,7 +17,7 @@ function issueLabel(issue: string, locale: EcomLocale): string {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getLookbookPageContent(locale);
-  const title = `${content.masthead.title} - ARCANA`;
+  const title = `${content.masthead.title} - STARGATER`;
   const description = content.masthead.description;
   return {
     title,

@@ -39,7 +39,7 @@ Example:
 | Root platform app alias | repository root | `npm run dev:web` | Alias for the same root Next.js runtime as `npm run dev`. |
 | Standalone StudiQ web workspace | `apps/studiq-web` / `@app/studiq-web` | `npm run dev -w @app/studiq-web` | Runs the workspace `dev` script and starts the focused StudiQ/Kangur Next.js shell on port `3100`. |
 | Standalone CMS Builder workspace | `apps/cms-builder-web` / `@app/cms-builder-web` | `npm run dev -w @app/cms-builder-web` | Runs the workspace `dev` script and starts the focused CMS Builder Next.js shell on port `3200`. |
-| Standalone ecommerce workspace | `apps/ecom-web` / `@app/ecom-web` | `npm run dev -w @app/ecom-web` | Runs the workspace `dev` script and starts the ARCANA ecommerce Next.js storefront on port `3300`. |
+| Standalone ecommerce workspace | `apps/ecom-web` / `@app/ecom-web` | `npm run dev -w @app/ecom-web` | Runs the workspace `dev` script and starts the STARGATER ecommerce Next.js storefront on port `3300`. |
 | Standalone database admin workspace | `apps/database-engine-web` / `@app/database-engine-web` | `npm run dev -w @app/database-engine-web` | Runs the workspace `dev` script and starts the focused database admin shell on port `3400`. |
 | Kangur mobile | `apps/mobile` / `@kangur/mobile` | `npm run dev:mobile` | Delegates to `npm run dev --workspace @kangur/mobile`, which runs Expo through the shared mobile env wrapper. |
 | Kangur mobile direct workspace entry | `apps/mobile` / `@kangur/mobile` | `npm run dev -w @kangur/mobile` | Starts the same Expo development server as `npm run dev:mobile`, but by targeting the workspace directly. |
@@ -96,7 +96,7 @@ Example:
 ### `@app/ecom-web`
 
 - Owns a focused standalone ecommerce storefront under `apps/ecom-web`.
-- Serves the ARCANA storefront at `/`, product detail pages under
+- Serves the STARGATER storefront at `/`, product detail pages under
   `/products/[slug]`, collection pages under `/collections/[slug]`, checkout,
   wishlist, account, editorial, contact, and `/api/products`.
 - Uses workspace-local source through the `@/*` alias, with ecommerce data and

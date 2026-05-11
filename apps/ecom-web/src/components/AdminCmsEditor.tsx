@@ -391,6 +391,19 @@ function makeHomeCategoryCard(index: number): HomeCategoryCardContent {
   };
 }
 
+function makeHomeEditorialReport(index: number): HomeEditorialReportContent {
+  return {
+    id: `report-${index + 1}`,
+    tag: 'Universe Report',
+    title: 'New report',
+    excerpt: '',
+    body: '',
+    imageUrl: '',
+    visible: true,
+    href: '/lore-drops',
+  };
+}
+
 function getHomeCategoryCardTarget(card: HomeCategoryCardContent): string {
   const values = card.selectorValues.map((value) => value.trim()).filter(Boolean);
   if (card.selectorType === 'all') return '/products';
@@ -417,6 +430,7 @@ function reportsToText(reports: HomeEditorialReportContent[]): string {
         report.title,
         report.excerpt,
         report.href,
+        report.imageUrl,
         report.visible ? 'visible' : 'hidden',
         body,
       ].join(' | ');
@@ -440,13 +454,35 @@ function textToReports(value: string): HomeEditorialReportContent[] {
           href,
         };
       }
-      const [id = '', tag = '', title = '', excerpt = '', href = '', visible = 'visible', body = ''] =
-        parts;
+      const isLegacyVisibleField = (parts[5]?.toLowerCase() === 'visible' || parts[5]?.toLowerCase() === 'hidden');
+      const [
+        id = '',
+        tag = '',
+        title = '',
+        excerpt = '',
+        href = '',
+        imageUrl = '',
+        visible = 'visible',
+        body = '',
+      ] = parts;
+      if (isLegacyVisibleField) {
+        return {
+          id,
+          tag,
+          title,
+          excerpt,
+          imageUrl: '',
+          body: parts[6]?.replace(/\\n/g, '\n') ?? (excerpt || ''),
+          visible: parts[5]?.toLowerCase() !== 'hidden',
+          href,
+        };
+      }
       return {
         id,
         tag,
         title,
         excerpt,
+        imageUrl,
         body: body.replace(/\\n/g, '\n') || excerpt,
         visible: visible.toLowerCase() !== 'hidden',
         href,
@@ -1406,6 +1442,7 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
   const [lookbookSaving, setLookbookSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [categoryImageUploadingIndex, setCategoryImageUploadingIndex] = useState<number | null>(null);
+  const [editorialReportImageUploadingIndex, setEditorialReportImageUploadingIndex] = useState<number | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const cleanSnapshotsRef = useRef<CleanEditorSnapshots>({ page: null, story: null, lookbook: null });
@@ -1456,7 +1493,8 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
     hasStoryUnsavedChanges ? 'story draft' : null,
     hasLookbookUnsavedChanges ? 'lookbook draft' : null,
   ].filter((label): label is string => Boolean(label));
-  const headerDisabled = loading || saving || logoUploading || categoryImageUploadingIndex !== null;
+  const headerDisabled =
+    loading || saving || logoUploading || categoryImageUploadingIndex !== null || editorialReportImageUploadingIndex !== null;
   const saveMeta = useMemo<CmsSaveMeta[]>(() => [
     { label: 'Homepage', updatedAt, updatedBy },
     { label: 'Global', updatedAt: siteUpdatedAt, updatedBy: siteUpdatedBy },
@@ -1937,6 +1975,66 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
       setError(err instanceof Error ? err.message : 'Failed to upload category selector image');
     } finally {
       setCategoryImageUploadingIndex(null);
+    }
+  }
+
+function updateEditorialReport<K extends keyof HomeEditorialReportContent>(
+  index: number,
+  key: K,
+  value: HomeEditorialReportContent[K],
+): void {
+  setContent((current) => {
+    const reports = [...current.editorial.reports];
+    while (reports.length <= index) {
+      reports.push(makeHomeEditorialReport(reports.length));
+    }
+    reports[index] = { ...reports[index], [key]: value };
+    return {
+      ...current,
+      editorial: {
+        ...current.editorial,
+        reports,
+      },
+    };
+  });
+}
+
+function addEditorialReport(): void {
+  setContent((current) => ({
+    ...current,
+    editorial: {
+      ...current.editorial,
+      reports: [
+        ...current.editorial.reports,
+        makeHomeEditorialReport(current.editorial.reports.length),
+      ],
+    },
+  }));
+}
+
+  async function uploadEditorialReportImage(index: number, file: File | null): Promise<void> {
+    if (file === null) return;
+    setEditorialReportImageUploadingIndex(index);
+    setMessage('');
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/cms/uploads/category-card', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json() as LogoUploadResponse;
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? 'Failed to upload lore report image');
+      }
+      updateEditorialReport(index, 'imageUrl', data.url);
+      setMessage('Lore & Drops report image uploaded to FastComet. Save content to publish it.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload lore report image');
+    } finally {
+      setEditorialReportImageUploadingIndex(null);
     }
   }
 
@@ -4100,11 +4198,101 @@ export function AdminCmsEditor({ availableLocales = SUPPORTED_LOCALES }: AdminCm
                 <Field label="Read label" value={content.editorial.readLabel} onChange={(value) => updateEditorial('readLabel', value)} />
               </div>
               <TextArea
-                label="Reports"
+                label="Reports (use ![alt](url) blocks in body for embedded images)"
                 rows={7}
                 value={reportsToText(content.editorial.reports)}
                 onChange={(value) => updateEditorial('reports', textToReports(value))}
               />
+              <div style={{ display: 'grid', gap: '0.85rem' }}>
+                <div className="type-label" style={{ color: 'var(--muted)' }}>
+                  Upload report thumbnails (stored with CMS card uploader)
+                </div>
+                {(
+                  content.editorial.reports.length > 0
+                    ? content.editorial.reports
+                    : [makeHomeEditorialReport(0)]
+                ).map((report, reportIndex) => (
+                  <div
+                    key={`${report.id}-${reportIndex}`}
+                    style={{ border: '1px solid var(--border)', padding: '0.9rem', display: 'grid', gap: '0.85rem' }}
+                  >
+                    <div className="type-label" style={{ color: 'var(--accent)' }}>
+                      {report.title || report.id || `Report ${reportIndex + 1}`}
+                    </div>
+                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                      <Field
+                        label="Image URL"
+                        value={report.imageUrl}
+                        onChange={(value) => updateEditorialReport(reportIndex, 'imageUrl', value)}
+                      />
+                      <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                      }}>
+                        <label>
+                          <span className="type-label" style={labelStyle}>Upload report image</span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                            disabled={headerDisabled}
+                            onChange={(event) => {
+                              const file = event.currentTarget.files?.[0] ?? null;
+                              void uploadEditorialReportImage(reportIndex, file);
+                              event.currentTarget.value = '';
+                            }}
+                            style={{ ...fieldStyle, padding: '0.72rem 0.8rem' }}
+                          />
+                        </label>
+                        {report.imageUrl.trim() && (
+                          <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <img
+                              src={report.imageUrl}
+                              alt=""
+                              style={{
+                                width: '92px',
+                                height: '60px',
+                                objectFit: 'cover',
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid var(--border)',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn-ghost"
+                              onClick={() => updateEditorialReport(reportIndex, 'imageUrl', '')}
+                              disabled={headerDisabled}
+                              style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
+                            >
+                              Clear image
+                            </button>
+                          </div>
+                        )}
+                        {editorialReportImageUploadingIndex === reportIndex && (
+                          <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading...</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {content.editorial.reports.length === 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div className="type-label" style={{ color: 'var(--muted)' }}>
+                      No editorial report records found. Add one now to save report metadata.
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={addEditorialReport}
+                      disabled={headerDisabled}
+                    >
+                      Add report
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

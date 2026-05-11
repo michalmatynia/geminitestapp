@@ -1,5 +1,5 @@
-import type { KangurTestChoice } from '@kangur/contracts/kangur-tests';
-import { Text } from 'react-native';
+import type { KangurTestChoice, KangurTestQuestion, KangurTestSuiteItem } from '@kangur/contracts/kangur-tests';
+import { Text, View } from 'react-native';
 
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
@@ -13,9 +13,14 @@ import {
   WARNING_TONE,
   type Tone,
 } from '../shared/KangurAssessmentUi';
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import {
+  OutlineLink,
+  PrimaryButton,
+  SectionCard,
+  StatusPill,
+} from '../shared/KangurAssessmentUi';
+import type { KangurMobileLocale, KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import { formatKangurMobileQuestionCount } from '../shared/questionCountLabel';
-import type { KangurMobileTestSuiteItem } from './useKangurMobileTests';
 import { createKangurTestsHref } from './testsHref';
 
 export const TESTS_ROUTE = createKangurTestsHref();
@@ -33,7 +38,7 @@ export const ERROR_TONE: Tone = {
 export const formatFocusToken = (value: string): string => value.replace(/[-_]+/g, ' ').trim();
 
 export const formatSuiteMeta = (
-  suite: KangurMobileTestSuiteItem['suite'],
+  suite: KangurTestSuiteItem['suite'],
   locale: KangurMobileLocale,
 ): string[] => {
   const parts: string[] = [];
@@ -51,7 +56,7 @@ export const formatSuiteMeta = (
   if (suite.gradeLevel.trim().length > 0) {
     parts.push(
       {
-        de: `Poziom ${suite.gradeLevel}`,
+        de: `Niveau ${suite.gradeLevel}`,
         en: `Level ${suite.gradeLevel}`,
         pl: `Poziom ${suite.gradeLevel}`,
       }[locale],
@@ -61,7 +66,7 @@ export const formatSuiteMeta = (
   if (suite.category.trim().length > 0) {
     parts.push(
       {
-        de: `Kategoria ${suite.category}`,
+        de: `Kategorie ${suite.category}`,
         en: `Category ${suite.category}`,
         pl: `Kategoria ${suite.category}`,
       }[locale],
@@ -119,16 +124,16 @@ type ChoiceButtonProps = {
 };
 
 const getChoiceTone = (
-    isRevealed: boolean,
-    isCorrect: boolean,
-    isSelected: boolean
+  isRevealed: boolean,
+  isCorrect: boolean,
+  isSelected: boolean
 ): Tone => {
-    if (isRevealed) {
-        if (isCorrect) return SUCCESS_TONE;
-        if (isSelected) return ERROR_TONE;
-        return BASE_TONE;
-    }
-    return isSelected ? INDIGO_TONE : BASE_TONE;
+  if (isRevealed) {
+    if (isCorrect) return SUCCESS_TONE;
+    if (isSelected) return ERROR_TONE;
+    return BASE_TONE;
+  }
+  return isSelected ? INDIGO_TONE : BASE_TONE;
 };
 
 export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
@@ -142,12 +147,12 @@ export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
     locale,
     onPress,
   } = props;
-  
+
   const tone = getChoiceTone(isRevealed, isCorrect, isSelected);
 
   return (
     <ChoiceCardButton
-      description={typeof choice.description === 'string' && choice.description !== '' ? choice.description : undefined}
+      description={choice.description?.trim() ? choice.description : undefined}
       disabled={disabled}
       helperText={
         choice.svgContent.trim() !== '' ? (
@@ -160,7 +165,7 @@ export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
           >
             {
               {
-                de: 'Diese Antwort hat zusatzliche Illustrationen.',
+                de: 'This answer has extra graphics.',
                 en: 'This answer includes extra illustration content.',
                 pl: 'Ta odpowiedź ma dodatkową ilustrację.',
               }[locale]
@@ -175,3 +180,189 @@ export function ChoiceButton(props: ChoiceButtonProps): React.JSX.Element {
     />
   );
 }
+
+type TestExplanationViewProps = {
+  copy: KangurMobileCopy;
+  currentQuestion: KangurTestQuestion;
+  selectedChoice: KangurTestChoice | null;
+  correctChoice: KangurTestChoice | null;
+};
+
+export function TestExplanationView({
+  copy,
+  currentQuestion,
+  selectedChoice,
+  correctChoice,
+}: TestExplanationViewProps): React.JSX.Element {
+  if (selectedChoice === null || correctChoice === null) {
+    return (
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {copy({
+          de: 'Bitte wähle zuerst eine Antwort.',
+          en: 'Select an answer first.',
+          pl: 'Najpierw wybierz odpowiedź.',
+        })}
+      </Text>
+    );
+  }
+
+  const isCorrect = selectedChoice.label === correctChoice.label;
+
+  return (
+    <View style={{ gap: 6 }}>
+      <StatusPill
+        label={
+          isCorrect
+            ? copy({ de: 'Richtige Antwort', en: 'Correct answer', pl: 'Dobra odpowiedź' })
+            : copy({
+                de: 'Falsche Antwort',
+                en: 'Wrong answer',
+                pl: 'Zła odpowiedź',
+              })
+        }
+        tone={isCorrect ? SUCCESS_TONE : ERROR_TONE}
+      />
+      <Text style={{ color: '#334155', fontSize: 14, lineHeight: 20 }}>
+        {isCorrect
+          ? copy({
+              de: `Richtig: ${correctChoice.label}. ${correctChoice.text}`,
+              en: `Correct: ${correctChoice.label}. ${correctChoice.text}`,
+              pl: `Poprawnie: ${correctChoice.label}. ${correctChoice.text}`,
+            })
+          : copy({
+              de: `Richtig: ${correctChoice.label}. ${correctChoice.text}`,
+              en: `Correct: ${correctChoice.label}. ${correctChoice.text}`,
+              pl: `Poprawnie: ${correctChoice.label}. ${correctChoice.text}`,
+            })}
+      </Text>
+      {currentQuestion.explanation.trim() !== '' ? (
+        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+          {currentQuestion.explanation}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+type TestPlayerResultsViewProps = {
+  score: number;
+  maxScore: number;
+  scorePercent: number;
+  summaryTone: Tone;
+  copy: KangurMobileCopy;
+  onBackToCatalog: () => void;
+};
+
+export function TestPlayerResultsView({
+  score,
+  maxScore,
+  scorePercent,
+  summaryTone,
+  copy,
+  onBackToCatalog,
+}: TestPlayerResultsViewProps): React.JSX.Element {
+  return (
+    <SectionCard title={copy({ de: 'Testergebnis', en: 'Test result', pl: 'Wynik testu' })}>
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+          {`${score}/${maxScore} pkt · ${scorePercent}%`}
+        </Text>
+        <StatusPill
+          label={`${copy({ de: 'Wynik', en: 'Result', pl: 'Wynik' })}: ${scorePercent}%`}
+          tone={summaryTone}
+        />
+        <PrimaryButton
+          label={copy({
+            de: 'Zurück zum Katalog',
+            en: 'Back to catalog',
+            pl: 'Powrót do katalogu',
+          })}
+          onPress={onBackToCatalog}
+          tone={BASE_TONE}
+        />
+        <View style={{ gap: 8 }}>
+          <OutlineLink
+            href={RESULTS_ROUTE}
+            label={copy({
+              de: 'Ergebnisse öffnen',
+              en: 'Open results',
+              pl: 'Otwórz wyniki',
+            })}
+          />
+          <OutlineLink
+            href={PLAN_ROUTE}
+            label={copy({
+              de: 'Tagesplan öffnen',
+              en: 'Go to daily plan',
+              pl: 'Przejdź do planu dnia',
+            })}
+          />
+        </View>
+        <View style={{ gap: 8 }}>
+          <OutlineLink
+            href={RESULTS_ROUTE}
+            label={copy({
+              de: 'Ergebnisse öffnen',
+              en: 'Open results',
+              pl: 'Otwórz wyniki',
+            })}
+          />
+          <OutlineLink
+            href={PLAN_ROUTE}
+            label={copy({
+              de: 'Tagesplan öffnen',
+              en: 'Go to daily plan',
+              pl: 'Przejdź do planu dnia',
+            })}
+          />
+        </View>
+      </View>
+    </SectionCard>
+  );
+}
+
+type TestSuiteCardProps = {
+  copy: KangurMobileCopy;
+  item: KangurTestSuiteItem;
+  locale: KangurMobileLocale;
+  onOpen: (suiteId: string) => void;
+};
+
+export function TestSuiteCard({
+  copy,
+  item,
+  locale,
+  onOpen,
+}: TestSuiteCardProps): React.JSX.Element {
+  const suiteMeta = formatSuiteMeta(item.suite, locale);
+  return (
+    <SectionCard title={item.suite.title}>
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{formatQuestionCount(item.questionCount, locale)}</Text>
+        <View style={{ gap: 4 }}>
+          {suiteMeta.map((part) => (
+            <Text key={part} style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
+              {part}
+            </Text>
+          ))}
+        </View>
+        <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
+          {item.suite.description}
+        </Text>
+        <PrimaryButton
+          label={copy({
+            de: 'Test starten',
+            en: 'Start test',
+            pl: 'Uruchom test',
+          })}
+          onPress={() => {
+            onOpen(item.suite.id);
+          }}
+          tone={INDIGO_TONE}
+        />
+      </View>
+    </SectionCard>
+  );
+}
+
+export { type Tone, BASE_TONE, OutlineLink, PrimaryButton, SectionCard, StatusPill };

@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useRef, type JSX } from 'react';
+import { Fragment, useRef, useState, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeManifestoContent } from '@/data/homeContent';
 import { DEFAULT_LOCALE, localizeHref, type EcomLocale } from '@/lib/locales';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
@@ -8,6 +8,7 @@ import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 interface ManifestoBannerProps {
   content?: HomeManifestoContent;
   locale?: EcomLocale;
+  allowedCategoryNames?: string[];
 }
 
 function QuoteWords({ text }: { text: string }) {
@@ -22,12 +23,39 @@ function QuoteWords({ text }: { text: string }) {
   );
 }
 
-export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, locale = DEFAULT_LOCALE }: ManifestoBannerProps): JSX.Element {
+export function ManifestoBanner({
+  content = HOME_CONTENT_DEFAULTS.manifesto,
+  locale = DEFAULT_LOCALE,
+  allowedCategoryNames = [],
+}: ManifestoBannerProps): JSX.Element {
   const sectionRef = useRef<HTMLElement>(null);
   const backgroundImageUrl = content.backgroundImageUrl.trim();
   const backgroundImage = backgroundImageUrl.length > 0
     ? `linear-gradient(180deg, rgba(2,2,5,0.7) 0%, rgba(2,2,5,0.82) 100%), url(${JSON.stringify(backgroundImageUrl)})`
     : undefined;
+  const [isStripHovered, setIsStripHovered] = useState(false);
+
+  const normalizedMarqueeItems = content.marqueeItems.map((item) => item.trim()).filter(Boolean);
+  const knownNonCategoryItems = new Set(['official merch', 'oficjalny merch', 'rare finds', 'limited drops']);
+
+  const buildCategoryItems = (items: string[]): string[] => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const item of items) {
+      const normalized = item.trim();
+      const lower = normalized.toLowerCase();
+      if (!normalized || knownNonCategoryItems.has(lower) || seen.has(lower)) continue;
+      seen.add(lower);
+      result.push(normalized);
+    }
+    return result;
+  };
+
+  const dynamicMarqueeItems = buildCategoryItems(allowedCategoryNames);
+  const fallbackMarqueeItems = buildCategoryItems(normalizedMarqueeItems.filter((item, index) => index !== 0));
+  const childMarqueeItems = dynamicMarqueeItems.length > 0 ? dynamicMarqueeItems : fallbackMarqueeItems;
+  const stripGroupCount = Math.max(2, Math.min(12, Math.ceil(16 / Math.max(childMarqueeItems.length, 1))));
+  const stripRepeatGroups = stripGroupCount % 2 === 0 ? stripGroupCount : stripGroupCount + 1;
 
   useGSAP(() => {
     /* Eyebrow */
@@ -89,6 +117,8 @@ export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, loc
       {/* Marquee strip */}
       <div
         className="relative h-12 overflow-hidden"
+        onMouseEnter={() => setIsStripHovered(true)}
+        onMouseLeave={() => setIsStripHovered(false)}
         style={{
           background: 'rgba(var(--accent-rgb),0.07)',
           borderBottom: '1px solid rgba(var(--accent-rgb),0.12)',
@@ -110,14 +140,21 @@ export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, loc
               letterSpacing: '0.2em',
               lineHeight: 1,
               textTransform: 'uppercase',
+              animationDuration: '240s',
+              animationPlayState: isStripHovered ? 'paused' : 'running',
             }}
             aria-hidden="true"
           >
-            {[0, 1].map((group) => (
+            {Array.from({ length: stripRepeatGroups }, (_, group) => (
               <div key={group} className="flex shrink-0 items-center gap-8 pr-8">
-                {content.marqueeItems.map((item, i) => (
+                {childMarqueeItems.map((item, i) => (
                   <Fragment key={`${group}-${item}-${i}`}>
-                    <span className="shrink-0" style={{ color: 'var(--accent)' }}>{item}</span>
+                    <a
+                      href={localizeHref(`/products?categories=${encodeURIComponent(item)}`, locale)}
+                      className="shrink-0 text-[var(--accent)] transition-all duration-150 hover:text-[var(--soft-gold)] hover:scale-105 focus-visible:text-[var(--soft-gold)]"
+                    >
+                      {item}
+                    </a>
                     <span className="shrink-0" style={{ color: 'var(--soft-gold)' }}>◆</span>
                   </Fragment>
                 ))}
@@ -125,7 +162,7 @@ export function ManifestoBanner({ content = HOME_CONTENT_DEFAULTS.manifesto, loc
             ))}
           </div>
         </div>
-        <span className="sr-only">{content.marqueeItems.join(', ')}</span>
+        <span className="sr-only">{childMarqueeItems.join(', ')}</span>
       </div>
 
       {/* Manifesto block */}

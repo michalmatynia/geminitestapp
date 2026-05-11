@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getRequestLocale();
   const collection = COLLECTIONS.find((c) => c.slug === slug);
   if (!collection) return {};
-  const title = `${collectionLabel(slug, collection.label, locale)} - ARCANA`;
-  const description = `Shop the ${collection.label} collection — ARCANA`;
+  const title = `${collectionLabel(slug, collection.label, locale)} - STARGATER`;
+  const description = `Shop the ${collection.label} collection — STARGATER`;
   return {
     title,
     description,

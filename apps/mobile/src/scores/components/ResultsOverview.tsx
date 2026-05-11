@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { KangurMobileMetric as Metric } from '../../shared/KangurMobileUiDisplay';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
@@ -27,6 +27,13 @@ export function ResultsOverview({ results, copy }: ResultsOverviewProps): React.
         gap: 12,
       }}
     >
+      <Text style={{ color: '#334155', fontSize: 18, fontWeight: '700', width: '100%' }}>
+        {copy({
+          de: 'Einsichten nach Modi',
+          en: 'Insights by mode',
+          pl: 'Wnioski po trybach',
+        })}
+      </Text>
       <ResultsSummaryMetric results={results} copy={copy} />
       <ArithmeticMetrics results={results} copy={copy} />
     </View>

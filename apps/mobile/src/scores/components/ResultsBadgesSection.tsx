@@ -72,6 +72,13 @@ export function ResultsBadgesSection({
   copy,
   profileHref,
 }: ResultsBadgesSectionProps): React.JSX.Element {
+  const safeResultsBadges = {
+    unlockedBadges: resultsBadges?.unlockedBadges ?? 0,
+    totalBadges: resultsBadges?.totalBadges ?? 0,
+    remainingBadges: resultsBadges?.remainingBadges ?? 0,
+    recentBadges: resultsBadges?.recentBadges ?? [],
+  };
+
   return (
     <Card>
       <View style={{ gap: 4 }}>
@@ -90,11 +97,11 @@ export function ResultsBadgesSection({
         </Text>
       </View>
 
-      <BadgesSummarySection resultsBadges={resultsBadges} copy={copy} />
+      <BadgesSummarySection resultsBadges={safeResultsBadges} copy={copy} />
 
-      {resultsBadges.recentBadges.length === 0 
-        ? <EmptyBadgesSection copy={copy} /> 
-        : <RecentBadgesSection recentBadges={resultsBadges.recentBadges} copy={copy} />
+      {safeResultsBadges.recentBadges.length === 0
+        ? <EmptyBadgesSection copy={copy} />
+        : <RecentBadgesSection recentBadges={safeResultsBadges.recentBadges} copy={copy} />
       }
 
       <LinkButton

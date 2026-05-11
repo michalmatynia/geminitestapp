@@ -4,9 +4,17 @@ import type { JSX } from 'react';
 import { useSiteContent } from '@/context/SiteContentContext';
 import { useLocalizedHref } from '@/context/LocaleContext';
 
+function normalizeLegacyBrand(value: string): string {
+  return value.replace(/\bArcana\b/gi, 'STARGATER');
+}
+
 export function SiteFooter(): JSX.Element {
   const { footer } = useSiteContent();
   const localizedHref = useLocalizedHref();
+  const brandName = normalizeLegacyBrand(footer.brandName);
+  const brandSuffix = normalizeLegacyBrand(footer.brandSuffix);
+  const brandDescription = normalizeLegacyBrand(footer.brandDescription);
+  const copyright = normalizeLegacyBrand(footer.copyright);
 
   return (
     <footer
@@ -31,7 +39,10 @@ export function SiteFooter(): JSX.Element {
         <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row items-start md:items-end gap-8 justify-between relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)' }} />
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)', animation: 'neonPulse 2s ease-in-out infinite' }}
+              />
               <span className="type-label" style={{ color: 'var(--accent)' }}>{footer.newsletter.eyebrow}</span>
             </div>
             <h3
@@ -82,12 +93,15 @@ export function SiteFooter(): JSX.Element {
                   textShadow: '0 0 16px rgba(var(--accent-rgb),0.35)',
                 }}
               >
-                {footer.brandName}
+                    {brandName}
               </span>
-              <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.45)' }}>{footer.brandSuffix}</span>
+              <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.45)' }}>{brandSuffix}</span>
             </div>
-            <p className="type-label max-w-xs mb-6" style={{ color: 'var(--muted-teal)', lineHeight: 1.9, letterSpacing: '0.08em' }}>
-              {footer.brandDescription}
+            <p
+              className="type-label max-w-xs mb-6"
+              style={{ color: 'var(--muted-teal)', lineHeight: 1.9, letterSpacing: '0.08em' }}
+            >
+              {brandDescription}
             </p>
 
             {/* Socials */}
@@ -149,7 +163,7 @@ export function SiteFooter(): JSX.Element {
         style={{ borderTop: '1px solid rgba(var(--accent-rgb),0.08)' }}
       >
         <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.45)' }}>
-          {footer.copyright}
+          {copyright}
         </span>
         <div className="flex gap-8">
           {footer.legalLinks.map((item) => (

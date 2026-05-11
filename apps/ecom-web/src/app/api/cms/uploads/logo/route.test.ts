@@ -49,7 +49,7 @@ describe('CMS logo upload API route', () => {
     mocks.saveSiteLogo.mockResolvedValue({
       content: {
         nav: {
-          logoAlt: 'ARCANA NEXUS',
+          logoAlt: 'STARGATER NEXUS',
         },
       },
       updatedAt: '2026-05-08T12:00:00.000Z',
@@ -59,7 +59,7 @@ describe('CMS logo upload API route', () => {
   });
 
   it('uploads a validated logo to FastComet for super admins', async () => {
-    const file = new File([new Uint8Array([1, 2, 3])], 'Arcana Mark.png', { type: 'image/png' });
+    const file = new File([new Uint8Array([1, 2, 3])], 'Stargater Mark.png', { type: 'image/png' });
 
     const response = await POST(makeLogoRequest(file));
     const body = await response.json() as { ok?: boolean; url?: string };
@@ -68,7 +68,7 @@ describe('CMS logo upload API route', () => {
     expect(body).toEqual({
       ok: true,
       url: 'https://sparksofsindri.com/uploads/ecom/logos/logo.png',
-      logoAlt: 'ARCANA NEXUS',
+      logoAlt: 'STARGATER NEXUS',
       updatedAt: '2026-05-08T12:00:00.000Z',
       updatedBy: 'admin-1',
     });

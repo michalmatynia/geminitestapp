@@ -33,6 +33,7 @@ vi.mock('../providers/KangurRuntimeContext', () => ({
 }));
 
 import { useKangurMobileHomeDuelsPresence } from './useKangurMobileHomeDuelsPresence';
+import { MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT } from './homeDuelLobbyQuery';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -170,7 +171,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
     });
 
     expect(pingDuelLobbyPresenceMock).toHaveBeenCalledWith(
-      { limit: 6 },
+      { limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT },
       { cache: 'no-store' },
     );
     expect(result.current.entries.map((entry) => entry.learnerId)).toEqual([
@@ -185,12 +186,7 @@ describe('useKangurMobileHomeDuelsPresence', () => {
 
     expect(createDuelMock).toHaveBeenCalledWith(
       {
-        difficulty: 'easy',
-        mode: 'challenge',
-        operation: 'addition',
         opponentLearnerId: 'learner-2',
-        questionCount: 5,
-        timePerQuestionSec: 15,
         visibility: 'private',
       },
       { cache: 'no-store' },

@@ -274,7 +274,7 @@ export function useKangurMobileHomeDuelsPresence({
       },
     }),
     isAuthenticated,
-    isLoading: presenceQuery.isLoading && isQueryEnabled,
+    isLoading: (isLoadingAuth && !isAuthenticated) || (isQueryEnabled && presenceQuery.isLoading),
     isRestoringAuth: isLoadingAuth && !isAuthenticated,
     refresh: async () => {
       await presenceQuery.refetch();

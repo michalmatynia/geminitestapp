@@ -50,7 +50,7 @@ const STORY_PL: Record<string, Partial<Story>> = {
       { type: 'heading', text: 'Dlaczego len i dlaczego Brugia' },
       { type: 'paragraph', text: 'Rzeka Lys przez stulecia obrabiała len lepiej niż jakiekolwiek inne miejsce w Europie. Mineralna woda oddzielała włókna w sposób, który zbudował lokalny handel i reputację tkaniny.' },
       { type: 'paragraph', text: 'Dziś przemysłowe zakłady potrafią wyprodukować w dzień tyle, ile tradycyjny warsztat robi przez miesiąc. Właśnie dlatego takie miejsca mają znaczenie: nie udają maszyn, tylko zachowują gest ręki.' },
-      { type: 'caption', text: 'Tekstylia ARCANA inspirowane są tym podejściem: mniej pośpiechu, więcej uwagi dla materiału.' },
+      { type: 'caption', text: 'Tekstylia STARGATER inspirowane są tym podejściem: mniej pośpiechu, więcej uwagi dla materiału.' },
     ],
   },
   'origin-of-cognac-leather': {
@@ -64,7 +64,7 @@ const STORY_PL: Record<string, Partial<Story>> = {
       { type: 'paragraph', text: 'Rodzinne garbarnie pracują powoli: skóry przechodzą przez kolejne kąpiele, coraz bogatsze w taniny. Efekt nie jest idealnie jednolity, ale właśnie dlatego żyje razem z właścicielem.' },
       { type: 'heading', text: 'Patyna zamiast zużycia' },
       { type: 'paragraph', text: 'Dobra skóra nie powinna od razu wyglądać na skończoną. Powinna dojrzewać. Ślady dotyku, światła i codziennego noszenia stają się częścią projektu.' },
-      { type: 'caption', text: 'W ARCANA traktujemy materiał jako historię, która zaczyna się przed zakupem i trwa po nim.' },
+      { type: 'caption', text: 'W STARGATER traktujemy materiał jako historię, która zaczyna się przed zakupem i trwa po nim.' },
     ],
   },
   'a-table-stays-in-the-family': {
@@ -120,7 +120,7 @@ const STORY_PL: Record<string, Partial<Story>> = {
       { type: 'paragraph', text: 'Tanie i nowe często wygrywa, bo koszt pozbycia się rzeczy wydaje się niewidoczny. Ale każdy przedmiot ma swój dalszy ciąg: w szafie, w przeprowadzce, w odpadach albo w czyjejś kolekcji.' },
       { type: 'heading', text: 'Inny sposób liczenia' },
       { type: 'paragraph', text: 'Cena na metce to tylko początek. Liczy się koszt na rok, na użycie, na wspomnienie. Przedmiot, który nadal chcesz mieć po latach, zmienia matematykę zakupu.' },
-      { type: 'caption', text: 'ARCANA wybiera rzeczy, które mają szansę zostać z właścicielem dłużej niż jeden impuls.' },
+      { type: 'caption', text: 'STARGATER wybiera rzeczy, które mają szansę zostać z właścicielem dłużej niż jeden impuls.' },
     ],
   },
 };

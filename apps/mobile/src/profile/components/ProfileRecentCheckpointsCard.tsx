@@ -1,9 +1,9 @@
 import { Text, View } from 'react-native';
-import {
+import { 
   KangurMobileCard as Card,
   KangurMobileLinkButton as LinkButton,
 } from '../../shared/KangurMobileUi';
-import { LessonCheckpointRow } from '../profile-primitives';
+import { LessonCheckpointRow } from './LessonCheckpointRow';
 import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import type { useKangurMobileLessonCheckpoints } from '../../lessons/useKangurMobileLessonCheckpoints';
 import type { Href } from 'expo-router';

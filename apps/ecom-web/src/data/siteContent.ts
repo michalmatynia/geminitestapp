@@ -186,7 +186,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     cosmosParallaxEnabled: true,
   },
   nav: {
-    brandName: 'ARCANA',
+    brandName: 'STARGATER',
     brandSuffix: 'NEXUS',
     logoUrl: '',
     logoAlt: '',
@@ -216,7 +216,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
       emailAriaLabel: 'Email for newsletter',
       submitLabel: 'Subscribe',
     },
-    brandName: 'ARCANA',
+    brandName: 'STARGATER',
     brandSuffix: 'NEXUS',
     brandDescription: 'Officially licensed collectibles from the anime, gaming and film universes you love most.',
     socials: [
@@ -238,7 +238,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
       {
         heading: 'Company',
         links: [
-          { label: 'About ARCANA', href: '/about' },
+          { label: 'About STARGATER', href: '/about' },
           { label: 'Sourcing & Ethics', href: '/sourcing' },
           { label: 'Press', href: '/press' },
           { label: 'Affiliates', href: '/affiliates' },
@@ -256,7 +256,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
         ],
       },
     ],
-    copyright: '© 2026 ARCANA NEXUS. All rights reserved.',
+    copyright: '© 2026 STARGATER NEXUS. All rights reserved.',
     legalLinks: [
       { label: 'Privacy', href: '#' },
       { label: 'Terms', href: '#' },
@@ -292,7 +292,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
   },
   cookieConsent: {
     storageKey: 'arcana-cookie-consent',
-    message: 'We use cookies to remember your preferences, understand how you use ARCANA, and improve your experience.',
+    message: 'We use cookies to remember your preferences, understand how you use STARGATER, and improve your experience.',
     policyLabel: 'Privacy policy',
     policyHref: '/values',
     essentialLabel: 'Essential only',
@@ -335,7 +335,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
   },
   quickView: {
     addedToastTitle: 'Added to bag',
-    brandLabel: 'ARCANA',
+    brandLabel: 'STARGATER',
     closeLabel: 'Close quick view',
     selectSizeLabel: 'Select size',
     addedButtonLabel: 'Added to bag',
@@ -1351,5 +1351,21 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
 }
 
 export function normalizeSiteContent(input: unknown): SiteContent {
-  return validateSiteContent(input).content;
+  const content = validateSiteContent(input).content;
+
+  const normalizeLegacyBrand = (value: string): string => value.replace(/\bArcana\b/gi, 'STARGATER');
+  return {
+    ...content,
+    nav: {
+      ...content.nav,
+      brandName: normalizeLegacyBrand(content.nav.brandName),
+      brandSuffix: normalizeLegacyBrand(content.nav.brandSuffix),
+    },
+    footer: {
+      ...content.footer,
+      brandName: normalizeLegacyBrand(content.footer.brandName),
+      brandSuffix: normalizeLegacyBrand(content.footer.brandSuffix),
+      copyright: normalizeLegacyBrand(content.footer.copyright),
+    },
+  };
 }

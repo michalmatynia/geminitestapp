@@ -11,7 +11,7 @@ export const revalidate = 3600;
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const content = await getValuesContent(locale);
-  const title = `${content.hero.watermark} - ARCANA`;
+  const title = `${content.hero.watermark} - STARGATER`;
   const description = content.hero.body;
   return {
     title,

@@ -118,7 +118,6 @@ export function KangurMobileScrollScreen(
     children,
     contentContainerStyle,
     edges,
-    keyboardShouldPersistTaps,
     testID,
   } = props;
 
@@ -129,11 +128,8 @@ export function KangurMobileScrollScreen(
       style={{ flex: 1, backgroundColor }}
       testID={testID}
     >
-      <ScrollView
-        contentContainerStyle={contentContainerStyle}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-      >
-        {children}
+      <ScrollView>
+        <View style={contentContainerStyle}>{children}</View>
       </ScrollView>
     </SafeAreaView>
   );

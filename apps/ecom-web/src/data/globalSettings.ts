@@ -20,7 +20,7 @@ export const GLOBAL_SETTINGS_DEFAULTS: GlobalSettings = {
       { label: 'All Items', href: '/products' },
     ],
     Company: [
-      { label: 'About ARCANA', href: '/about' },
+      { label: 'About STARGATER', href: '/about' },
       { label: 'Sourcing & Ethics', href: '/sourcing' },
       { label: 'Press', href: '/press' },
       { label: 'Affiliates', href: '/affiliates' },

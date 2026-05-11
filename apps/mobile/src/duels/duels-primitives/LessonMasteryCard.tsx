@@ -107,7 +107,7 @@ export function LessonMasteryCard({ context }: { context: 'lobby' | 'session' })
       {mastery.trackedLessons === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.', en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.', pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.' })}</Text>
       ) : (
-        <LessonMasteryList lessonFocusSummary={focusSummary} strongest={strongest} weakest={weakest} />
+        <LessonMasteryList copy={copy} lessonFocusSummary={focusSummary} strongest={strongest} weakest={weakest} />
       )}
     </Card>
   );

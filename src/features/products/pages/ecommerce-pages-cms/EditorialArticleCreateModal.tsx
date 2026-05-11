@@ -115,19 +115,21 @@ function ArticleDraftFields({
   onUpdate: DraftUpdate;
 }): React.JSX.Element {
   return (
-    <div className='space-y-4'>
-      <EditorialArticleAiPathGenerator
-        disabled={isSaving}
-        draft={draft}
-        onGenerated={onGeneratedArticle}
-      />
-      <div className='grid gap-3 md:grid-cols-3'>
+      <div className='space-y-4'>
+        <EditorialArticleAiPathGenerator
+          disabled={isSaving}
+          draft={draft}
+          onGenerated={onGeneratedArticle}
+        />
+      <div className='grid gap-3 md:grid-cols-4'>
         <DraftTextField id='new-lore-article-id' label='Article ID' value={draft.id}
           onChange={(value) => onUpdate({ id: value })} />
         <DraftTextField id='new-lore-article-tag' label='Article tag' value={draft.tag}
           onChange={(value) => onUpdate({ tag: value })} />
         <DraftTextField id='new-lore-article-href' label='Article href' value={draft.href}
           onChange={(value) => onUpdate({ href: value })} />
+        <DraftTextField id='new-lore-article-image-url' label='Image URL' value={draft.imageUrl}
+          onChange={(value) => onUpdate({ imageUrl: value })} />
       </div>
       <DraftTextField id='new-lore-article-title' label='Article title' value={draft.title}
         onChange={onTitleChange} />

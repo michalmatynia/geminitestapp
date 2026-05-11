@@ -126,6 +126,43 @@ describe('Mentios product image mapping', () => {
     expect(JSON.stringify(filter)).toContain('"collectionSlug":"accessories"');
     expect(productsCollection.countDocuments).toHaveBeenCalledWith(filter);
   });
+
+  it('pushes theme filters into the fifth pipe-delimited name segment', async () => {
+    const productDoc = {
+      _id: 'product-1',
+      catalogId: 'catalog-mentios',
+      name_en: 'Spinner | One Size | Metal | Movie Pendant | Blade Runner 2049',
+      price: 10,
+      published: true,
+      sku: 'SKU_123',
+      stock: 1,
+    };
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn(() => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ themeNames: ['Blade Runner 2049'], limit: 1 });
+
+    expect(result.products[0]?.lore).toBe('Blade Runner 2049');
+    const filter = productsCollection.find.mock.calls[0]?.[0];
+    const filterText = JSON.stringify(filter);
+    expect(filterText).toContain('Blade Runner 2049');
+    expect(filterText).toContain('name_en');
+    expect(filterText).toContain('{4}');
+    expect(filterText).toContain('[^|]');
+    expect(filterText).not.toContain('description_en');
+    expect(productsCollection.countDocuments).toHaveBeenCalledWith(filter);
+  });
 });
 
 describe('Mentios home stats', () => {

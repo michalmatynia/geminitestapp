@@ -912,6 +912,23 @@ function productCategoryNameClause(values: string[]): Record<string, unknown> {
   };
 }
 
+function productThemeNameClause(values: string[]): Record<string, unknown> {
+  const clauses = values.flatMap((value) => {
+    const pattern = `^(?:[^|]*\\|){4}\\s*[^|]*${escapeRegex(value)}[^|]*$`;
+    const matcher = { $regex: pattern, $options: 'i' };
+    return [
+      { name_en: matcher },
+      { name_pl: matcher },
+      { name_de: matcher },
+      { name: matcher },
+      { 'name.en': matcher },
+      { 'name.pl': matcher },
+      { 'name.de': matcher },
+    ];
+  });
+  return clauses.length > 0 ? { $or: clauses } : {};
+}
+
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
@@ -976,7 +993,7 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     const themeNames = uniqueStrings(opts.themeNames ?? []);
     if (opts.search) queryClauses.push(productTextSearchClause(opts.search));
     if (themeNames.length > 0) {
-      queryClauses.push({ $or: themeNames.map((themeName) => productTextSearchClause(themeName)) });
+      queryClauses.push(productThemeNameClause(themeNames));
     }
 
     // Price range filter (inclusive min, exclusive max).

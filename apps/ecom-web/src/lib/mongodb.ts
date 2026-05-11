@@ -202,6 +202,30 @@ function isTlsHandshakeError(error: unknown): boolean {
     normalized.includes('unknown ca');
 }
 
+function isRetryableMongoConnectionError(error: unknown): boolean {
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : '';
+  if (message.length === 0) return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes('server selection') ||
+    normalized.includes('server selection timed out') ||
+    normalized.includes('connect timed out') ||
+    normalized.includes('connecttimeoutms') ||
+    normalized.includes('connect timeout') ||
+    normalized.includes('timed out') ||
+    normalized.includes('socket hang up') ||
+    normalized.includes('connection timed out') ||
+    normalized.includes('connection refused') ||
+    normalized.includes('econnrefused') ||
+    normalized.includes('enotfound') ||
+    normalized.includes('enetunreach') ||
+    normalized.includes('eai_again') ||
+    isTlsHandshakeError(error);
+}
+
 function shouldRetryWithInsecureCertificates(context: MongoContext, tlsEnabled: boolean): boolean {
   if (!tlsEnabled) return false;
   const prefixes = getMongoOptionPrefixes(context);
@@ -309,6 +333,58 @@ function resolveMongoDb(): string {
   }
 
   return envValue('MONGODB_LOCAL_DB') ?? DEFAULT_ECOM_MONGODB_DB;
+}
+
+function resolveMongoConfigCandidates(): MongoConfig[] {
+  const source = normalizeSource(
+    firstEnvValue(
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+  );
+
+  const directConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_URI'],
+    ['MONGODB_DB'],
+  ));
+  const localConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_LOCAL_URI'],
+    ['MONGODB_LOCAL_DB'],
+  ));
+  const cloudConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_CLOUD_URI'],
+    ['MONGODB_CLOUD_DB'],
+  ));
+
+  const primary = {
+    uri: resolveMongoUri(),
+    dbName: resolveMongoDb(),
+  };
+  const allowAlternateSourceFallback = readBooleanFromEnv(
+    getMongoOptionPrefixes('main'),
+    'FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR',
+    false,
+  );
+  const candidates: MongoConfig[] = [primary];
+
+  if (!allowAlternateSourceFallback || isProductionLike() || directConfig) {
+    return candidates;
+  }
+
+  const shouldTryLocalFallback = source === 'cloud' && localConfig !== null && localConfig.uri !== primary.uri;
+  const shouldTryCloudFallback =
+    source === 'local' && isVercelRuntime() && isLoopbackMongoUri(primary.uri) && cloudConfig !== null && cloudConfig.uri !== primary.uri;
+
+  const addUnique = (config: MongoConfig | null | undefined): void => {
+    if (!config) return;
+    const exists = candidates.some((entry) => entry.uri === config.uri && entry.dbName === config.dbName);
+    if (!exists) candidates.push(config);
+  };
+
+  if (shouldTryLocalFallback) addUnique(localConfig);
+  if (shouldTryCloudFallback) addUnique(cloudConfig);
+
+  return candidates;
 }
 
 export function hasMongoConfig(): boolean {
@@ -452,6 +528,98 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
   };
 }
 
+function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
+  const source = normalizeSource(
+    firstEnvValue(
+      'ECOM_MONGODB_ACTIVE_SOURCE',
+      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE',
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+  );
+
+  const directConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
+      'PRODUCTS_MONGODB_URI',
+      'MONGODB_PRODUCTS_URI',
+    ],
+    [
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
+      'PRODUCTS_MONGODB_DB',
+      'MONGODB_PRODUCTS_DB',
+    ],
+  ));
+  const localConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+      'PRODUCTS_MONGODB_LOCAL_URI',
+      'MONGODB_PRODUCTS_LOCAL_URI',
+      'MONGODB_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+      'PRODUCTS_MONGODB_LOCAL_DB',
+      'MONGODB_PRODUCTS_LOCAL_DB',
+      'MONGODB_LOCAL_DB',
+    ],
+  ));
+  const cloudConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
+      'PRODUCTS_MONGODB_CLOUD_URI',
+      'MONGODB_PRODUCTS_CLOUD_URI',
+      'MONGODB_CLOUD_URI',
+    ],
+    [
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
+      'PRODUCTS_MONGODB_CLOUD_DB',
+      'MONGODB_PRODUCTS_CLOUD_DB',
+      'MONGODB_CLOUD_DB',
+    ],
+  ));
+  const genericFallbackConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_URI'],
+    ['MONGODB_DB'],
+  ));
+
+  const primary = resolveEcommerceProductsMongoConfig();
+  const allowAlternateSourceFallback = readBooleanFromEnv(
+    getMongoOptionPrefixes('ecommerce'),
+    'FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR',
+    false,
+  );
+  const candidates: MongoConfig[] = [primary];
+
+  if (!allowAlternateSourceFallback || isProductionLike() || directConfig) {
+    return candidates;
+  }
+
+  const shouldTryLocalFallback = source === 'cloud' && localConfig !== null && localConfig.uri !== primary.uri;
+  const shouldTryCloudFallback =
+    source === 'local' && isVercelRuntime() && isLoopbackMongoUri(primary.uri) && cloudConfig !== null && cloudConfig.uri !== primary.uri;
+
+  const addUnique = (config: MongoConfig | null | undefined): void => {
+    if (!config) return;
+    const exists = candidates.some((entry) => entry.uri === config.uri && entry.dbName === config.dbName);
+    if (!exists) candidates.push(config);
+  };
+
+  if (shouldTryLocalFallback) addUnique(localConfig);
+  if (shouldTryCloudFallback) addUnique(cloudConfig);
+  addUnique(genericFallbackConfig);
+
+  return candidates;
+}
+
 const clientCache = new Map<string, MongoClient>();
 
 function assertMongoUri(uri: string, label: string): void {
@@ -463,10 +631,35 @@ function assertMongoUri(uri: string, label: string): void {
 }
 
 export async function getDb(): Promise<Db> {
-  const uri = resolveMongoUri();
-  assertMongoUri(uri, 'main');
-  const c = await getClient(uri, 'main');
-  return c.db(resolveMongoDb());
+  const candidates = resolveMongoConfigCandidates();
+  let lastError: unknown;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const config = candidates[i];
+    assertMongoUri(config.uri, 'main');
+    try {
+      const c = await getClient(config.uri, 'main');
+      return c.db(config.dbName);
+    } catch (error) {
+      lastError = error;
+      const hasNextCandidate = i + 1 < candidates.length;
+      if (!isRetryableMongoConnectionError(error) || !hasNextCandidate) {
+        throw error;
+      }
+
+      if (!isProductionLike()) {
+        const nextConfig = candidates[i + 1];
+        console.warn(
+          `[mongo] Main DB source ${config.uri} failed (` +
+          `${error instanceof Error ? error.message : String(error)}), ` +
+          `trying fallback source ${nextConfig.uri}.`,
+        );
+      }
+    }
+  }
+
+  if (lastError instanceof Error) throw lastError;
+  throw new Error('Unable to connect to MongoDB with configured sources.');
 }
 
 export function hasProductsMongoConfig(): boolean {
@@ -485,10 +678,35 @@ export function hasEcommerceProductsMongoConfig(): boolean {
 }
 
 export async function getEcommerceProductsDb(): Promise<Db> {
-  const uri = resolveEcommerceProductsMongoUri();
-  assertMongoUri(uri, 'ecommerce products');
-  const c = await getClient(uri, 'ecommerce');
-  return c.db(resolveEcommerceProductsMongoDb());
+  const candidates = resolveEcommerceProductsMongoConfigCandidates();
+  let lastError: unknown;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const config = candidates[i];
+    assertMongoUri(config.uri, 'ecommerce products');
+    try {
+      const c = await getClient(config.uri, 'ecommerce');
+      return c.db(config.dbName);
+    } catch (error) {
+      lastError = error;
+      const hasNextCandidate = i + 1 < candidates.length;
+      if (!isRetryableMongoConnectionError(error) || !hasNextCandidate) {
+        throw error;
+      }
+
+      if (!isProductionLike()) {
+        const nextConfig = candidates[i + 1];
+        console.warn(
+          `[mongo] Ecommerce DB source ${config.uri} failed (` +
+          `${error instanceof Error ? error.message : String(error)}), ` +
+          `trying fallback source ${nextConfig.uri}.`,
+        );
+      }
+    }
+  }
+
+  if (lastError instanceof Error) throw lastError;
+  throw new Error('Unable to connect to ecommerce MongoDB with configured sources.');
 }
 
 export async function getEcomAuthDb(): Promise<Db> {

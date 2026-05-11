@@ -4,6 +4,7 @@ import { getMentiosProducts, getMentiosCategories } from '@/lib/mentios';
 import { PRODUCTS } from '@/data/products';
 import { CatalogPageClient } from '@/app/products/CatalogPageClient';
 import { getProductsContent } from '@/lib/cms';
+import { PRODUCTS_CONTENT_DEFAULTS } from '@/data/productsContent';
 import { getRequestLocale } from '@/lib/request-locale';
 
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const params = (await (searchParams ?? Promise.resolve({}))) as RawParams;
   const locale = await getRequestLocale();
-  const content = await getProductsContent(locale);
+  const content = await getProductsContent(locale).catch(() => PRODUCTS_CONTENT_DEFAULTS);
   const search = params.q ?? undefined;
   const newOnly = params.new === '1';
   const category = params.category ?? '';
@@ -110,7 +111,7 @@ export default async function AllProductsPage({
   const initialPriceLabel = params.price ? decodeURIComponent(params.price) : '';
 
   // Content is needed before the products fetch so we can resolve the price label → range.
-  const content = await getProductsContent(locale);
+  const content = await getProductsContent(locale).catch(() => PRODUCTS_CONTENT_DEFAULTS);
   const priceRange = initialPriceLabel
     ? content.collection.priceRanges.find((r) => r.label === initialPriceLabel)
     : undefined;

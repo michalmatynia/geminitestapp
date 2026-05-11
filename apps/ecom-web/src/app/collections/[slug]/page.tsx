@@ -5,6 +5,7 @@ import { COLLECTIONS, getProductsByCollection } from '@/data/products';
 import { getMentiosProducts } from '@/lib/mentios';
 import { CollectionPageClient } from './CollectionPageClient';
 import { getProductsContent } from '@/lib/cms';
+import { PRODUCTS_CONTENT_DEFAULTS } from '@/data/productsContent';
 import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -50,8 +51,11 @@ export default async function CollectionPage({ params }: Props): Promise<JSX.Ele
 
   // Fetch first page from DB and CMS content in parallel.
   const [{ products: dbProducts, total: dbTotal }, content] = await Promise.all([
-    getMentiosProducts({ limit: PAGE_SIZE, collectionSlug: slug, locale }),
-    getProductsContent(locale),
+    getMentiosProducts({ limit: PAGE_SIZE, collectionSlug: slug, locale }).catch(() => ({
+      products: [],
+      total: 0,
+    })),
+    getProductsContent(locale).catch(() => PRODUCTS_CONTENT_DEFAULTS),
   ]);
 
   const isLive = dbProducts.length > 0;

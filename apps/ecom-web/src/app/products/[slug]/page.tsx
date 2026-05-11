@@ -5,6 +5,7 @@ import { getProduct, PRODUCTS } from '@/data/products';
 import { getMentiosProduct, getMentiosProducts, getMentiosCategoryIdByName } from '@/lib/mentios';
 import { ProductDetailClient } from './ProductDetailClient';
 import { getProductsContent } from '@/lib/cms';
+import { PRODUCTS_CONTENT_DEFAULTS } from '@/data/productsContent';
 import { getRequestLocale } from '@/lib/request-locale';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -49,7 +50,7 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
   // Try DB first, fall back to static demo data. Fetch CMS content in parallel.
   const [dbProduct, content] = await Promise.all([
     getMentiosProduct(slug, locale),
-    getProductsContent(locale),
+    getProductsContent(locale).catch(() => PRODUCTS_CONTENT_DEFAULTS),
   ]);
   const product = dbProduct ?? getProduct(slug);
   if (!product) notFound();
@@ -78,7 +79,7 @@ export default async function ProductPage({ params }: Props): Promise<JSX.Elemen
       limit: 6,
       locale,
       ...(categoryId ? { categoryId } : {}),
-    });
+    }).catch(() => ({ products: [], total: 0 }));
     const picked = pickRelated(dbPool);
     if (picked.length > 0) related = picked;
   }

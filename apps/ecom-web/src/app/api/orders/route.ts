@@ -10,6 +10,7 @@ import {
   type Order,
   type OrderItem,
 } from '@/lib/orders';
+import { getCanonicalProductPrices } from '@/lib/mentios';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { computeDiscount } from '@/lib/promo';
@@ -43,6 +44,10 @@ function readOptionalString(value: unknown): string | undefined {
 function readNonNegativeNumber(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
   return Math.round(value);
+}
+
+function calculateItemsSubtotal(items: OrderItem[]): number {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
 function sanitizeItems(value: unknown): OrderItem[] | null {
@@ -153,9 +158,42 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
   }
 
+  let pricedItems: OrderItem[];
+  let priceByProductId: Map<string, number>;
+  try {
+    priceByProductId = await getCanonicalProductPrices(items.map((item) => item.productId));
+  } catch {
+    return NextResponse.json(
+      { error: 'Unable to validate item prices at this time.' },
+      { status: 503 },
+    );
+  }
+
+  pricedItems = [];
+  for (const item of items) {
+    const canonicalPrice = priceByProductId.get(item.productId);
+    if (typeof canonicalPrice !== 'number') {
+      return NextResponse.json({ error: 'Order items are invalid.' }, { status: 400 });
+    }
+    pricedItems.push(canonicalPrice === item.price ? item : { ...item, price: canonicalPrice });
+  }
+
   // Recompute discount server-side from the promo code — never trust the client value.
   const promoCode = readOptionalString(body['promoCode']);
   const discount = computeDiscount(subtotal, promoCode);
+  const itemsSubtotal = calculateItemsSubtotal(pricedItems);
+  if (itemsSubtotal !== subtotal) {
+    return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
+  }
+
+  const expectedTotal = itemsSubtotal - discount + shippingPrice;
+  if (expectedTotal < 1) {
+    return NextResponse.json({ error: 'Order total is invalid.' }, { status: 400 });
+  }
+
+  if (total !== expectedTotal) {
+    return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
+  }
 
   const session = await getSession();
   const now = new Date().toISOString();
@@ -164,7 +202,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ...(session ? { userId: session.id } : {}),
     email,
     status: 'processing',
-    items,
+    items: pricedItems,
     shippingMethod,
     shippingPrice,
     shippingCarrier,

@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 // Read static config eagerly — these don't change at runtime.
 const PAYU_API_URL = process.env.PAYU_API_URL ?? 'https://secure.snd.payu.com';
@@ -124,12 +124,17 @@ export function verifyPayUWebhook(
   const secondKey = getSecondKey();
   if (!signatureHeader || !secondKey) return false;
 
-  const sigMatch = /signature=([a-f0-9]+)/i.exec(signatureHeader);
+  const sigMatch = /signature=([a-f0-9]{32})/i.exec(signatureHeader);
   if (!sigMatch?.[1]) return false;
 
   const expected = createHash('md5')
     .update(rawBody + secondKey)
     .digest('hex');
+  const expectedBuffer = Buffer.from(expected.toLowerCase(), 'utf8');
+  const actualBuffer = Buffer.from(sigMatch[1].toLowerCase(), 'utf8');
 
-  return sigMatch[1].toLowerCase() === expected.toLowerCase();
+  return (
+    expectedBuffer.length === actualBuffer.length
+    && timingSafeEqual(expectedBuffer, actualBuffer)
+  );
 }

@@ -59,9 +59,14 @@ function makeNotification(payuOrderId: string, status: string): string {
   });
 }
 
+function makeSignedRequest(body: string): NextRequest {
+  return makeRequest(body, makeSignature(body));
+}
+
 describe('PayU IPN webhook', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.stubEnv('PAYU_SECOND_KEY', SECOND_KEY);
     mocks.findOneAndUpdate.mockReset();
     mocks.sendOrderConfirmation.mockReset();
     mocks.fulfillInpostOrder.mockReset();
@@ -77,10 +82,8 @@ describe('PayU IPN webhook', () => {
   });
 
   it('updates order to processing and sends confirmation email on COMPLETED', async () => {
-    vi.stubEnv('NODE_ENV', 'development'); // skip sig check in dev
-
     const body = makeNotification('PAYU-123', 'COMPLETED');
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
@@ -97,10 +100,8 @@ describe('PayU IPN webhook', () => {
   });
 
   it('updates order to cancelled on CANCELED without sending email', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-
     const body = makeNotification('PAYU-456', 'CANCELED');
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
@@ -113,10 +114,8 @@ describe('PayU IPN webhook', () => {
   });
 
   it('keeps order in pending_payment on PENDING notification', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-
     const body = makeNotification('PAYU-789', 'PENDING');
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
@@ -151,10 +150,8 @@ describe('PayU IPN webhook', () => {
   });
 
   it('ignores unknown PayU statuses without erroring', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-
     const body = makeNotification('PAYU-000', 'NEW');
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();

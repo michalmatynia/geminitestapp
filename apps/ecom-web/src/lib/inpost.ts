@@ -168,7 +168,7 @@ export function isInpostShippingApiConfigured(): boolean {
 
 export function verifyInpostWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
   const secret = env('INPOST_WEBHOOK_SECRET');
-  if (!secret) return process.env.NODE_ENV !== 'production';
+  if (!secret) return false;
   if (!signatureHeader) return false;
 
   const expected = createHmac('sha256', secret)

@@ -9,6 +9,7 @@ import {
   type Order,
   type OrderItem,
 } from '@/lib/orders';
+import { getCanonicalProductPrices } from '@/lib/mentios';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { computeDiscount } from '@/lib/promo';
@@ -26,6 +27,32 @@ const REQUIRED_ADDRESS_FIELDS = [
   'country',
   'phone',
 ];
+const WEBHOOK_BASE_URL_CANDIDATES = [
+  'NEXT_PUBLIC_BASE_URL',
+  'NEXT_PUBLIC_ECOM_URL',
+  'VERCEL_PROJECT_PRODUCTION_URL',
+  'VERCEL_URL',
+];
+
+function getWebhookCallbackBaseUrl(): string | null {
+  for (const envName of WEBHOOK_BASE_URL_CANDIDATES) {
+    const raw = process.env[envName];
+    if (typeof raw !== 'string' || raw.trim().length === 0) continue;
+
+    const normalized = raw.trim();
+    const candidate = /^https?:\/\//i.test(normalized) ? normalized : `https://${normalized}`;
+
+    try {
+      const url = new URL(candidate);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
+      return url.origin;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,6 +70,10 @@ function readOptionalString(value: unknown): string | undefined {
 function readNonNegativeNumber(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
   return Math.round(value);
+}
+
+function calculateItemsSubtotal(items: OrderItem[]): number {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
 function sanitizeItems(value: unknown): OrderItem[] | null {
@@ -151,14 +182,53 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
   }
 
+  let pricedItems: OrderItem[];
+  let priceByProductId: Map<string, number>;
+  try {
+    priceByProductId = await getCanonicalProductPrices(items.map((item) => item.productId));
+  } catch {
+    return NextResponse.json(
+      { error: 'Unable to validate item prices at this time.' },
+      { status: 503 },
+    );
+  }
+
+  pricedItems = [];
+  for (const item of items) {
+    const canonicalPrice = priceByProductId.get(item.productId);
+    if (typeof canonicalPrice !== 'number') {
+      return NextResponse.json({ error: 'Order items are invalid.' }, { status: 400 });
+    }
+    pricedItems.push(canonicalPrice === item.price ? item : { ...item, price: canonicalPrice });
+  }
+
   const promoCode = readOptionalString(body['promoCode']);
   const discount = computeDiscount(subtotal, promoCode);
+  const itemsSubtotal = calculateItemsSubtotal(pricedItems);
+  if (itemsSubtotal !== subtotal) {
+    return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
+  }
+
+  const expectedTotal = itemsSubtotal - discount + shippingPrice;
+  if (expectedTotal < 1) {
+    return NextResponse.json({ error: 'Order total is invalid.' }, { status: 400 });
+  }
+
+  if (total !== expectedTotal) {
+    return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
+  }
 
   const session = await getSession();
   const orderId = generateOrderId();
   const now = new Date().toISOString();
+  const baseUrl = getWebhookCallbackBaseUrl();
+  if (!baseUrl) {
+    return NextResponse.json(
+      { error: 'Payment callback URL is not configured. Set NEXT_PUBLIC_BASE_URL or NEXT_PUBLIC_ECOM_URL.' },
+      { status: 500 },
+    );
+  }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get('host') ?? 'localhost'}`;
   const notifyUrl = `${baseUrl}/api/webhooks/payu`;
 
   let payuOrderId: string;
@@ -177,7 +247,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         phone: shippingAddress.phone,
         language: 'pl',
       },
-      products: items.map((item) => ({
+      products: pricedItems.map((item) => ({
         name: `${item.name} (${item.size})`,
         unitPrice: item.price,
         quantity: item.quantity,
@@ -200,7 +270,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     email,
     status: 'pending_payment',
     payuOrderId,
-    items,
+    items: pricedItems,
     shippingMethod,
     shippingPrice,
     shippingCarrier,

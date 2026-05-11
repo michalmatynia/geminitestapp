@@ -15,7 +15,7 @@ function QuoteWords({ text }: { text: string }) {
   return (
     <>
       {text.split(' ').map((word, i) => (
-        <span key={i} className="mfst-word inline-block" style={{ opacity: 0 }}>
+        <span key={i} className="mfst-word inline-block">
           {word}&nbsp;
         </span>
       ))}
@@ -60,25 +60,25 @@ export function ManifestoBanner({
   useGSAP(() => {
     /* Eyebrow */
     gsap.fromTo('.mfst-eyebrow',
-      { opacity: 0, y: 20 },
+      { y: 20 },
       {
-        opacity: 1, y: 0, duration: 0.8, ease: 'expo.out',
+        y: 0, duration: 0.8, ease: 'expo.out',
         scrollTrigger: { trigger: '.mfst-eyebrow', start: 'top 90%', toggleActions: 'play none none none' },
       });
 
     /* Quote words stagger */
     gsap.fromTo('.mfst-word',
-      { opacity: 0, y: 16 },
+      { y: 16 },
       {
-        opacity: 1, y: 0, duration: 0.5, ease: 'expo.out', stagger: 0.032,
+        y: 0, duration: 0.5, ease: 'expo.out', stagger: 0.032,
         scrollTrigger: { trigger: '.mfst-quote', start: 'top 86%', toggleActions: 'play none none none' },
       });
 
     /* Body */
     gsap.fromTo('.mfst-body',
-      { opacity: 0, y: 24 },
+      { y: 24 },
       {
-        opacity: 1, y: 0, duration: 0.85, ease: 'expo.out',
+        y: 0, duration: 0.85, ease: 'expo.out',
         scrollTrigger: { trigger: '.mfst-body', start: 'top 90%', toggleActions: 'play none none none' },
       });
 
@@ -92,9 +92,9 @@ export function ManifestoBanner({
 
     /* CTA */
     gsap.fromTo('.mfst-cta',
-      { opacity: 0, y: 20 },
+      { y: 20 },
       {
-        opacity: 1, y: 0, duration: 0.8, ease: 'expo.out',
+        y: 0, duration: 0.8, ease: 'expo.out',
         scrollTrigger: { trigger: '.mfst-cta', start: 'top 92%', toggleActions: 'play none none none' },
       });
 
@@ -189,7 +189,7 @@ export function ManifestoBanner({
 
         <div className="px-8 md:px-24 py-24 md:py-36 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="mfst-eyebrow type-label mb-8" style={{ color: 'rgba(var(--accent-rgb),0.55)', opacity: 0 }}>
+            <div className="mfst-eyebrow type-label mb-8" style={{ color: 'rgba(var(--accent-rgb),0.55)' }}>
               {content.eyebrow}
             </div>
 
@@ -206,7 +206,7 @@ export function ManifestoBanner({
             >
               &ldquo;<QuoteWords text={content.quotePrefix} />
               {content.quoteEmphasis && (
-                <span className="mfst-word inline-block" style={{ color: 'var(--accent)', fontStyle: 'normal', textShadow: '0 0 30px rgba(var(--accent-rgb),0.4)', opacity: 0 }}>
+                <span className="mfst-word inline-block" style={{ color: 'var(--accent)', fontStyle: 'normal', textShadow: '0 0 30px rgba(var(--accent-rgb),0.4)' }}>
                   &nbsp;{content.quoteEmphasis}&nbsp;
                 </span>
               )}
@@ -224,7 +224,6 @@ export function ManifestoBanner({
                 maxWidth: '460px',
                 margin: '0 auto 3rem',
                 lineHeight: 1.8,
-                opacity: 0,
               }}
             >
               {content.body}
@@ -237,7 +236,7 @@ export function ManifestoBanner({
               <div className="mfst-divider h-px w-16" style={{ background: 'rgba(var(--accent-rgb),0.2)', transform: 'scaleX(0)', transformOrigin: 'center' }} />
             </div>
 
-            <a href={localizeHref(content.ctaHref, locale)} className="mfst-cta btn-primary" style={{ display: 'inline-flex', opacity: 0 }}>
+            <a href={localizeHref(content.ctaHref, locale)} className="mfst-cta btn-primary" style={{ display: 'inline-flex' }}>
               {content.ctaLabel}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />

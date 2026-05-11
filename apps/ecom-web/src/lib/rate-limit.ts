@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 type RateLimitRecord = { count: number; resetAt: number };
 
 const store = new Map<string, RateLimitRecord>();
@@ -12,6 +14,24 @@ function maybeEvict() {
   for (const [key, record] of store) {
     if (now > record.resetAt) store.delete(key);
   }
+}
+
+const IP_HEADER_PRIORITY = [
+  'x-vercel-forwarded-for',
+  'cf-connecting-ip',
+  'x-real-ip',
+  'x-forwarded-for',
+];
+
+function resolveClientIp(raw: string | null): string | null {
+  if (!raw) return null;
+
+  const candidates = raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  return candidates.find((value) => isIP(value) > 0) ?? null;
 }
 
 export function checkRateLimit(
@@ -37,6 +57,10 @@ export function checkRateLimit(
 }
 
 export function getClientIp(req: Request): string {
-  const forwarded = (req.headers as Headers).get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() ?? 'unknown';
+  const headers = (req.headers as Headers);
+  for (const key of IP_HEADER_PRIORITY) {
+    const resolved = resolveClientIp(headers.get(key));
+    if (resolved) return resolved;
+  }
+  return 'unknown';
 }

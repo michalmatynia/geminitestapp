@@ -33,10 +33,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
   const signatureHeader = req.headers.get('OpenPayU-Signature');
 
-  // In production, always verify the signature. In development (no PAYU_SECOND_KEY
-  // configured) we allow unsigned notifications so local testing works.
-  const isDev = process.env.NODE_ENV !== 'production';
-  if (!isDev && !verifyPayUWebhook(rawBody, signatureHeader)) {
+  if (!verifyPayUWebhook(rawBody, signatureHeader)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 

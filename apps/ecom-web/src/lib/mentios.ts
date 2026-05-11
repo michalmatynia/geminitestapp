@@ -11,6 +11,7 @@
  */
 
 import { cache } from 'react';
+import { ObjectId } from 'mongodb';
 import type { Product } from '../data/products';
 import { ensureProductIndexes } from './db-indexes';
 import { normalizeLocale, normalizeLocaleList, type EcomLocale } from './locales';
@@ -114,6 +115,12 @@ interface ProductDoc {
   }>;
   imageLinks?: Array<string | null>;
   catalogs?: Array<{ catalogId?: string }>;
+}
+
+interface ProductPriceDoc {
+  _id: unknown;
+  sourceProductId?: string | null;
+  price?: number | null;
 }
 
 type ProductImageFileDoc = NonNullable<ProductDoc['images']>[number]['imageFile'];
@@ -652,6 +659,63 @@ const PRODUCT_PROJECTION = {
   imageUrls: 1,
   imageLinks: 1,
 };
+const PRODUCT_PRICE_PROJECTION = {
+  _id: 1,
+  sourceProductId: 1,
+  price: 1,
+} as const;
+
+function normalizeProductIdLookup(input: string): string {
+  return input.trim();
+}
+
+function dedupeProductIds(productIds: string[]): string[] {
+  return uniqueStrings(productIds.map(normalizeProductIdLookup).filter((value) => value.length > 0));
+}
+
+/**
+ * Fetch canonical prices for product ids from the configured Mentios catalog.
+ * Keys map both `_id` and `sourceProductId`, where available.
+ */
+export async function getCanonicalProductPrices(productIds: string[]): Promise<Map<string, number>> {
+  const ids = dedupeProductIds(productIds);
+  if (ids.length === 0) return new Map<string, number>();
+
+  const db = await getEcommerceProductsDb();
+  const objectIds = ids.filter(ObjectId.isValid).map((id) => new ObjectId(id));
+  const lookupClauses: Record<string, unknown>[] = [
+    { sourceProductId: { $in: ids } },
+    { _id: { $in: ids } },
+  ];
+  if (objectIds.length > 0) {
+    lookupClauses.push({ _id: { $in: objectIds } });
+  }
+
+  const docs = await db
+    .collection<ProductPriceDoc>(PRODUCTS_COLLECTION)
+    .find({
+      $and: [
+        mentiosFilter(),
+        { $or: lookupClauses },
+      ],
+    })
+    .project(PRODUCT_PRICE_PROJECTION)
+    .toArray();
+
+  const prices = new Map<string, number>();
+  for (const row of docs as unknown as ProductPriceDoc[]) {
+    const rawPrice = row.price;
+    if (typeof rawPrice !== 'number' || !Number.isFinite(rawPrice) || rawPrice < 0) continue;
+    const price = Math.round(rawPrice);
+    const id = stringifyDocumentId(row._id);
+    if (id) prices.set(id, price);
+    if (typeof row.sourceProductId === 'string' && row.sourceProductId.length > 0) {
+      prices.set(row.sourceProductId, price);
+    }
+  }
+
+  return prices;
+}
 
 // ---------------------------------------------------------------------------
 // Public API

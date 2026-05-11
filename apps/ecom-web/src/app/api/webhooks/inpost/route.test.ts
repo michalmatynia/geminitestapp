@@ -234,14 +234,14 @@ describe('InPost webhook route', () => {
     );
   });
 
-  it('allows unsigned development webhooks when no secret is configured', async () => {
+  it('rejects unsigned webhooks when the secret is missing', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('INPOST_WEBHOOK_SECRET', '');
 
     const response = await POST(makeRequest(JSON.stringify(makePayload()), false));
 
-    expect(response.status).toBe(200);
-    expect(mocks.updateOne).toHaveBeenCalled();
+    expect(response.status).toBe(401);
+    expect(mocks.updateOne).not.toHaveBeenCalled();
   });
 
   it('rejects malformed tracking events', async () => {

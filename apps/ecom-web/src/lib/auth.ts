@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const bcrypt = require('bcryptjs') as typeof import('bcryptjs');
 
 export const COOKIE_NAME = 'ecom_session';
+const MIN_AUTH_SECRET_LENGTH = 32;
 
 export interface SessionUser {
   id: string;
@@ -16,8 +17,12 @@ export interface SessionUser {
 }
 
 function getSecret(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.AUTH_SECRET?.trim();
   if (!secret) throw new Error('AUTH_SECRET env var is not set');
+  if (secret.length < MIN_AUTH_SECRET_LENGTH) {
+    throw new Error('AUTH_SECRET must be at least 32 characters');
+  }
+
   return new TextEncoder().encode(secret);
 }
 

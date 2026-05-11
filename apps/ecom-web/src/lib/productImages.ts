@@ -121,8 +121,13 @@ export function getProductImageFallbackSrc(src: string | undefined): string | un
   return fallbackBaseUrl ? `${fallbackBaseUrl}${uploadPath}` : uploadPath;
 }
 
-// All known upload hosts are listed in next.config.mjs remotePatterns, so
-// every product image URL can go through Next.js Image optimization.
-export function shouldBypassImageOptimization(_src: string | undefined): boolean {
-  return false;
+export function shouldBypassImageOptimization(src: string | undefined): boolean {
+  const raw = src?.trim();
+  if (!raw) return false;
+
+  const url = parseHttpUrl(raw);
+  if (!url) return false;
+
+  const uploadPath = normalizeProductUploadPath(uploadPathWithSuffix(url));
+  return shouldRewriteUploadHost(url, uploadPath);
 }

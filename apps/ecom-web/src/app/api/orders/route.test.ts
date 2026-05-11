@@ -16,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   sort: vi.fn(),
   toArray: vi.fn(),
+  getEcommerceProductsDb: vi.fn(),
+  findOrderProducts: vi.fn(),
+  productProject: vi.fn(),
+  productToArray: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -37,6 +41,7 @@ vi.mock('@/lib/mongodb', () => ({
       find: mocks.find,
     }),
   })),
+  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
 }));
 
 function makeOrderPayload(): Record<string, unknown> {
@@ -90,6 +95,10 @@ describe('orders API', () => {
     mocks.find.mockReset();
     mocks.sort.mockReset();
     mocks.toArray.mockReset();
+    mocks.getEcommerceProductsDb.mockReset();
+    mocks.findOrderProducts.mockReset();
+    mocks.productProject.mockReset();
+    mocks.productToArray.mockReset();
     mocks.getSession.mockResolvedValue(null);
     mocks.sendOrderConfirmation.mockResolvedValue(undefined);
     mocks.fulfillInpostOrder.mockResolvedValue(null);
@@ -97,6 +106,16 @@ describe('orders API', () => {
     mocks.sort.mockReturnValue({ toArray: mocks.toArray });
     mocks.find.mockReturnValue({ sort: mocks.sort });
     mocks.toArray.mockResolvedValue([]);
+    mocks.findOrderProducts.mockReturnValue({ project: mocks.productProject });
+    mocks.productProject.mockReturnValue({ toArray: mocks.productToArray });
+    mocks.productToArray.mockResolvedValue([
+      { _id: 'prod-1', price: 15 },
+    ]);
+    mocks.getEcommerceProductsDb.mockResolvedValue({
+      collection: () => ({
+        find: mocks.findOrderProducts,
+      }),
+    });
   });
 
   it('creates an order, persists it, and queues confirmation email', async () => {
@@ -123,6 +142,19 @@ describe('orders API', () => {
     expect(mocks.fulfillInpostOrder).toHaveBeenCalledWith(expect.objectContaining({
       shippingCarrier: 'manual',
     }));
+  });
+
+  it('rejects an order when client item price is manipulated', async () => {
+    const payload = makeOrderPayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 10 };
+
+    const response = await POST(makeJsonRequest({ ...payload, items }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Order items are invalid.' });
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
   });
 
   it('requires a pickup point for InPost orders', async () => {

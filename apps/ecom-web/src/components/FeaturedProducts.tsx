@@ -178,26 +178,26 @@ export function FeaturedProducts({
   useGSAP(() => {
     /* Section header */
     gsap.fromTo('.feat-header',
-      { opacity: 0, y: 40 },
+      { y: 40 },
       {
-        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        y: 0, duration: 0.9, ease: 'expo.out',
         scrollTrigger: { trigger: '.feat-header', start: 'top 88%', toggleActions: 'play none none none' },
       });
 
     /* Product grid */
     gsap.fromTo('.feat-grid',
-      { opacity: 0, y: 52, scale: 0.985 },
+      { y: 52, scale: 0.985 },
       {
-        opacity: 1, y: 0, scale: 1, duration: 1.15, ease: 'power3.out', force3D: true,
-        clearProps: 'transform,opacity',
+        y: 0, scale: 1, duration: 1.15, ease: 'power3.out', force3D: true,
+        clearProps: 'transform',
         scrollTrigger: { trigger: '.feat-grid', start: 'top 92%', toggleActions: 'play none none none' },
       });
 
     /* CTA button */
     gsap.fromTo('.feat-cta',
-      { opacity: 0, y: 24 },
+      { y: 24 },
       {
-        opacity: 1, y: 0, duration: 0.8, ease: 'expo.out',
+        y: 0, duration: 0.8, ease: 'expo.out',
         scrollTrigger: { trigger: '.feat-cta', start: 'top 92%', toggleActions: 'play none none none' },
       });
   }, { scope: sectionRef, dependencies: [] });
@@ -210,7 +210,7 @@ export function FeaturedProducts({
       />
 
       {/* Section header */}
-      <div className="feat-header relative z-10 flex items-end justify-between mb-12" style={{ opacity: 0 }}>
+      <div className="feat-header relative z-10 flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {isLive ? content.liveEyebrow : content.fallbackEyebrow}
@@ -238,7 +238,7 @@ export function FeaturedProducts({
       </div>
 
       {/* Grid */}
-      <div className="feat-grid relative z-10 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 md:gap-4" style={{ opacity: 0 }}>
+      <div className="feat-grid relative z-10 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 md:gap-4">
         {featured.map((product, index) => (
           <div key={product.id} className="feat-card">
             <ProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 8} />
@@ -247,7 +247,7 @@ export function FeaturedProducts({
       </div>
 
       {/* View all CTA */}
-      <div className="feat-cta relative z-30 flex justify-center mt-10" style={{ opacity: 0 }}>
+      <div className="feat-cta relative z-30 flex justify-center mt-10">
         <a href={localizedHref(content.ctaHref)} className="btn-primary px-16">
           {isLive ? content.ctaLiveLabel : content.ctaFallbackLabel}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

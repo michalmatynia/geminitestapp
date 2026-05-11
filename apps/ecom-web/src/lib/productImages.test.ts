@@ -92,8 +92,10 @@ describe('ecom product image helpers', () => {
     ).toBe('https://cdn.example.test/assets/uploads/products/SKU_123/stored.png');
   });
 
-  it('keeps product images on the configured Next Image path', () => {
+  it('bypasses Vercel image optimization for known product upload hosts', () => {
     expect(shouldBypassImageOptimization('/public/uploads/products/SKU_123/stored.png')).toBe(false);
+    expect(shouldBypassImageOptimization('https://sparksofsindri.com/uploads/products/SKU_123/stored.png')).toBe(true);
+    expect(shouldBypassImageOptimization('https://qubrick.io/uploads/products/SKU_123/stored.png')).toBe(true);
     expect(shouldBypassImageOptimization('https://sparksofsindri.com/remote/image.png')).toBe(false);
     expect(shouldBypassImageOptimization('https://images.example.com/remote/image.png')).toBe(false);
   });

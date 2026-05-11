@@ -39,9 +39,9 @@ export function EditorialStrip({
 
   useGSAP(() => {
     gsap.fromTo('.ed-header',
-      { opacity: 0, y: 40 },
+      { y: 40 },
       {
-        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        y: 0, duration: 0.9, ease: 'expo.out',
         scrollTrigger: { trigger: '.ed-header', start: 'top 88%', toggleActions: 'play none none none' },
       });
 
@@ -49,8 +49,8 @@ export function EditorialStrip({
       start: 'top 92%',
       onEnter: (batch) => {
         gsap.fromTo(batch,
-          { opacity: 0, y: 50, clipPath: 'inset(0 0 20% 0)' },
-          { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 1.0, ease: 'expo.out', stagger: 0.12 });
+          { y: 50, clipPath: 'inset(0 0 20% 0)' },
+          { y: 0, clipPath: 'inset(0 0 0% 0)', duration: 1.0, ease: 'expo.out', stagger: 0.12 });
       },
     });
   }, { scope: sectionRef, dependencies: [] });
@@ -59,7 +59,7 @@ export function EditorialStrip({
 
   return (
     <section ref={sectionRef} className="px-6 md:px-10 pt-16 pb-24 max-w-screen-2xl mx-auto">
-      <div className="ed-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
+      <div className="ed-header flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
@@ -94,7 +94,6 @@ export function EditorialStrip({
               aspectRatio: '3/4',
               border: '1px solid rgba(var(--accent-rgb),0.1)',
               transition: 'border-color 0.35s ease, box-shadow 0.35s ease',
-              opacity: 0,
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = visual.accent;

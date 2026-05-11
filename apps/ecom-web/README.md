@@ -70,6 +70,8 @@ The app works without these variables by using static fallback products.
 | `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce product catalog MongoDB connection. |
 | `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. Must match the Product List ecommerce export target. |
 | `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. Use `cloud` when testing add/delete visibility against the shared ecommerce export database. |
+| `ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if connecting to the selected ecommerce/product source fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. |
+| `MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if CMS/auth/runtime DB connection fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. Skipped when `MONGODB_URI` is explicitly set. |
 | `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |

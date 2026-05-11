@@ -13,7 +13,6 @@ const LOGO_MIME_TO_EXTENSION = new Map<string, string>([
   ['image/jpeg', 'jpg'],
   ['image/webp', 'webp'],
   ['image/gif', 'gif'],
-  ['image/svg+xml', 'svg'],
 ]);
 const EXTENSION_TO_MIME = new Map<string, string>([
   ['png', 'image/png'],
@@ -21,7 +20,6 @@ const EXTENSION_TO_MIME = new Map<string, string>([
   ['jpeg', 'image/jpeg'],
   ['webp', 'image/webp'],
   ['gif', 'image/gif'],
-  ['svg', 'image/svg+xml'],
 ]);
 
 function forbidden(): NextResponse {
@@ -86,7 +84,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const mimetype = getLogoMime(entry);
   if (mimetype === null) {
-    return NextResponse.json({ error: 'Logo must be PNG, JPG, WebP, GIF, or SVG.' }, { status: 400 });
+    return NextResponse.json({ error: 'Logo must be PNG, JPG, WebP, or GIF.' }, { status: 400 });
   }
 
   try {

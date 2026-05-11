@@ -179,7 +179,7 @@ function HexMenu({
             fill="none"
             stroke={outerStroke}
             strokeWidth={zone === 'outer' ? 1.6 : 1}
-            style={{ opacity: 0, transition: 'stroke 0.25s, stroke-width 0.25s' }}
+            style={{ transition: 'stroke 0.25s, stroke-width 0.25s' }}
           />
           {([[100,12],[176,56],[176,144],[100,188],[24,144],[24,56]] as [number,number][]).map(([cx,cy],i) => (
             <circle
@@ -187,7 +187,7 @@ function HexMenu({
               className="hero-svg-el"
               cx={cx} cy={cy} r="3"
               fill={nodeFill}
-              style={{ opacity: 0, transition: 'fill 0.3s' }}
+              style={{ transition: 'fill 0.3s' }}
             />
           ))}
         </g>
@@ -200,7 +200,7 @@ function HexMenu({
             fill="none"
             stroke={middleStroke}
             strokeWidth={zone === 'middle' ? 1.6 : 1}
-            style={{ opacity: 0, transition: 'stroke 0.25s, stroke-width 0.25s' }}
+            style={{ transition: 'stroke 0.25s, stroke-width 0.25s' }}
           />
         </g>
 
@@ -212,7 +212,7 @@ function HexMenu({
             fill="none"
             stroke={innerStroke}
             strokeWidth={zone === 'inner' ? 2 : 1.5}
-            style={{ opacity: 0, transition: 'stroke 0.25s' }}
+            style={{ transition: 'stroke 0.25s' }}
           />
           {(['100,60,100,100','130,88,100,100','130,118,100,100',
              '100,140,100,100','70,118,100,100','70,88,100,100'] as const).map((c, i) => {
@@ -224,7 +224,7 @@ function HexMenu({
                 x1={x1} y1={y1} x2={x2} y2={y2}
                 stroke={lineStroke}
                 strokeWidth="0.8"
-                style={{ opacity: 0, transition: 'stroke 0.3s' }}
+                style={{ transition: 'stroke 0.3s' }}
               />
             );
           })}
@@ -232,7 +232,7 @@ function HexMenu({
             className="hero-svg-el"
             cx="100" cy="100" r={zone ? 7 : 5}
             fill={centerFill}
-            style={{ opacity: 0, filter: centerGlow, transition: 'r 0.3s, fill 0.3s, filter 0.3s' }}
+            style={{ filter: centerGlow, transition: 'r 0.3s, fill 0.3s, filter 0.3s' }}
           />
         </g>
 
@@ -296,8 +296,8 @@ function LorePanel({
     if (!activeZone || !loreRef.current) return;
     const items = loreRef.current.querySelectorAll<HTMLElement>('.lore-item');
     gsap.fromTo(items,
-      { opacity: 0, x: -14 },
-      { opacity: 1, x: 0, duration: 0.38, ease: 'expo.out', stagger: 0.045 });
+      { x: -14 },
+      { x: 0, duration: 0.38, ease: 'expo.out', stagger: 0.045 });
   }, [activeZone]);
 
   const zoneStyle = displayZone ? ZONES[displayZone] : null;
@@ -313,7 +313,7 @@ function LorePanel({
   const titleColor = zoneStyle ? zoneStyle.color : 'var(--fg)';
 
   return (
-    <div className="hero-panel-info text-center select-none" style={{ opacity: 0 }}>
+    <div className="hero-panel-info text-center select-none">
       {/* Zone badge */}
       <div className="flex justify-center mb-3 min-h-[1.4rem]">
         {zoneStyle && zoneText && (
@@ -407,7 +407,7 @@ function LorePanel({
                   color: isSelected ? ZONES[activeZone].color : 'var(--fg)',
                   borderLeft: isSelected ? `2px solid ${ZONES[activeZone].color}` : '2px solid transparent',
                   letterSpacing: '0.03em',
-                  opacity: 0,
+                  opacity: 1,
                 }}
                 onClick={() => onLoreSelect(lore)}
               >
@@ -654,30 +654,30 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
 
     tl.fromTo('.hero-right',
-      { clipPath: 'inset(0 100% 0 0)' },
-      { clipPath: 'inset(0 0% 0 0)', duration: 1.5, ease: 'expo.inOut' }, 0.05);
+      { x: 40 },
+      { x: 0, duration: 1.2, ease: 'expo.out' }, 0.05);
 
     tl.fromTo('.hero-beacon',
-      { opacity: 0, x: -24 },
-      { opacity: 1, x: 0, duration: 0.7 }, 0.15);
+      { x: -24 },
+      { x: 0, duration: 0.7 }, 0.15);
 
     tl.fromTo('.hero-h1-1', { yPercent: 115 }, { yPercent: 0, duration: 1.1 }, 0.3);
     tl.fromTo('.hero-h1-2', { yPercent: 115 }, { yPercent: 0, duration: 1.1 }, 0.45);
 
     tl.fromTo('.hero-tag',
-      { opacity: 0, y: 14, scale: 0.92 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.06 }, 0.62);
+      { y: 14, scale: 0.92 },
+      { y: 0, scale: 1, duration: 0.55, stagger: 0.06 }, 0.62);
 
-    tl.fromTo('.hero-desc',  { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.75 }, 0.78);
-    tl.fromTo('.hero-cta',   { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.65, stagger: 0.1 }, 0.9);
-    tl.fromTo('.hero-stat',  { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.7,  stagger: 0.12 }, 1.05);
+    tl.fromTo('.hero-desc',  { y: 22 }, { y: 0, duration: 0.75 }, 0.78);
+    tl.fromTo('.hero-cta',   { y: 18 }, { y: 0, duration: 0.65, stagger: 0.1 }, 0.9);
+    tl.fromTo('.hero-stat',  { y: 28 }, { y: 0, duration: 0.7,  stagger: 0.12 }, 1.05);
 
     tl.fromTo('.hero-svg-el',
-      { opacity: 0, scale: 0.7, transformOrigin: '100px 100px' },
-      { opacity: 1, scale: 1,   duration: 0.9, stagger: 0.04 }, 0.9);
+      { scale: 0.7, transformOrigin: '100px 100px' },
+      { scale: 1,   duration: 0.9, stagger: 0.04 }, 0.9);
 
-    tl.fromTo('.hero-panel-bar',  { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.6 }, 1.1);
-    tl.fromTo('.hero-panel-info', { opacity: 0, y: 16  }, { opacity: 1, y: 0, duration: 0.7 }, 1.2);
+    tl.fromTo('.hero-panel-bar',  { y: -10 }, { y: 0, duration: 0.6 }, 1.1);
+    tl.fromTo('.hero-panel-info', { y: 16  }, { y: 0, duration: 0.7 }, 1.2);
 
     ScrollTrigger.create({
       trigger: sectionRef.current,
@@ -718,7 +718,7 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
         ref={leftRef}
         className="relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-16 xl:px-20 w-full lg:w-[55%] py-20 lg:py-28 will-change-transform"
       >
-        <div className="hero-beacon flex items-center gap-3 mb-10" style={{ opacity: 0 }}>
+        <div className="hero-beacon flex items-center gap-3 mb-10">
           <span
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)', animation: 'neonPulse 2s ease-in-out infinite' }}
@@ -753,25 +753,25 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
 
         <div className="flex flex-wrap gap-2 mb-8">
           {content.tags.map((tag) => (
-            <span key={tag} className="hero-tag neon-tag-cyan" style={{ opacity: 0 }}>{tag}</span>
+            <span key={tag} className="hero-tag neon-tag-cyan">{tag}</span>
           ))}
         </div>
 
         <p
           className="hero-desc max-w-md mb-8 leading-relaxed"
-          style={{ color: 'var(--muted-teal)', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 400, opacity: 0 }}
+          style={{ color: 'var(--muted-teal)', fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 400 }}
         >
           {content.description}
         </p>
 
         <div className="flex flex-wrap gap-4">
-          <a href={localizedHref(content.primaryCtaHref)} className="hero-cta btn-primary" style={{ opacity: 0 }}>
+          <a href={localizedHref(content.primaryCtaHref)} className="hero-cta btn-primary">
             {content.primaryCtaLabel}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </a>
-          <a href={localizedHref(content.secondaryCtaHref)} className="hero-cta btn-ghost" style={{ opacity: 0 }}>
+          <a href={localizedHref(content.secondaryCtaHref)} className="hero-cta btn-ghost">
             {content.secondaryCtaLabel}
           </a>
         </div>
@@ -780,7 +780,7 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
           {content.stats.map(({ value, label }, index) => {
             const color = STAT_COLORS[index % STAT_COLORS.length];
             return (
-              <div key={`${label}-${index}`} className="hero-stat" style={{ opacity: 0 }}>
+              <div key={`${label}-${index}`} className="hero-stat">
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 2.8vw, 2.5rem)', fontWeight: 800, color, lineHeight: 1, textShadow: `0 0 20px ${color}66` }}>
                   {value}
                 </div>
@@ -795,7 +795,7 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
       <div
         ref={rightRef}
         className="hero-right hidden lg:block absolute right-0 top-0 bottom-0 w-[47%] will-change-transform"
-        style={{ background: 'var(--hero-visual-bg)', clipPath: 'inset(0 100% 0 0)' }}
+        style={{ background: 'var(--hero-visual-bg)', clipPath: 'inset(0 0 0 0)' }}
       >
         <div className="absolute inset-0 dot-grid opacity-40" />
         <div
@@ -830,7 +830,7 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
             onMouseLeave={onPanelMouseLeave}
           >
             {/* Header bar */}
-            <div className="hero-panel-bar flex items-center gap-2 mb-5" style={{ opacity: 0 }}>
+            <div className="hero-panel-bar flex items-center gap-2 mb-5">
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--coral-red)', boxShadow: '0 0 6px var(--coral-red)' }} />
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--soft-gold)', boxShadow: '0 0 6px var(--soft-gold)' }} />
               <div className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)' }} />

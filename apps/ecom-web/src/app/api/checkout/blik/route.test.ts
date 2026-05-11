@@ -12,6 +12,10 @@ const mocks = vi.hoisted(() => ({
   insertOne: vi.fn(),
   createPayUBlikOrder: vi.fn(),
   computeDiscount: vi.fn(),
+  getEcommerceProductsDb: vi.fn(),
+  findOrderProducts: vi.fn(),
+  productProject: vi.fn(),
+  productToArray: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({ getSession: mocks.getSession }));
@@ -20,6 +24,7 @@ vi.mock('@/lib/mongodb', () => ({
   getDb: vi.fn(async () => ({
     collection: () => ({ insertOne: mocks.insertOne }),
   })),
+  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
 }));
 
 vi.mock('@/lib/payu', () => ({
@@ -83,11 +88,30 @@ describe('BLIK checkout route', () => {
     mocks.insertOne.mockReset();
     mocks.createPayUBlikOrder.mockReset();
     mocks.computeDiscount.mockReset();
+    mocks.getEcommerceProductsDb.mockReset();
+    mocks.findOrderProducts.mockReset();
+    mocks.productProject.mockReset();
+    mocks.productToArray.mockReset();
 
     mocks.getSession.mockResolvedValue(null);
     mocks.insertOne.mockResolvedValue({ insertedId: { toString: () => 'mongo-blik-id' } });
     mocks.createPayUBlikOrder.mockResolvedValue({ payuOrderId: 'PAYU-ORDER-123', statusCode: 'PENDING' });
     mocks.computeDiscount.mockReturnValue(0);
+    mocks.findOrderProducts.mockReturnValue({ project: mocks.productProject });
+    mocks.productProject.mockReturnValue({ toArray: mocks.productToArray });
+    mocks.productToArray.mockResolvedValue([
+      { _id: 'prod-1', price: 1500 },
+    ]);
+    mocks.getEcommerceProductsDb.mockResolvedValue({
+      collection: () => ({
+        find: mocks.findOrderProducts,
+      }),
+    });
+
+    process.env.NEXT_PUBLIC_BASE_URL = 'https://shop.example.test';
+    delete process.env.NEXT_PUBLIC_ECOM_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    delete process.env.VERCEL_URL;
   });
 
   it('creates order via PayU and persists with pending_payment status', async () => {
@@ -203,5 +227,60 @@ describe('BLIK checkout route', () => {
     expect(mocks.insertOne).toHaveBeenCalledWith(
       expect.objectContaining({ discount: 150, promoCode: 'ARCANA10' }),
     );
+  });
+
+  it('requires webhook callback base URL configuration', async () => {
+    const previousEnv = {
+      NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+      NEXT_PUBLIC_ECOM_URL: process.env.NEXT_PUBLIC_ECOM_URL,
+      VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+      VERCEL_URL: process.env.VERCEL_URL,
+    };
+
+    delete process.env.NEXT_PUBLIC_BASE_URL;
+    delete process.env.NEXT_PUBLIC_ECOM_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    delete process.env.VERCEL_URL;
+
+    try {
+      const res = await POST(makeJsonRequest(makePayload()));
+      const body = await res.json() as { error?: string };
+
+      expect(res.status).toBe(500);
+      expect(body.error).toContain('Payment callback URL is not configured');
+      expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+      expect(mocks.insertOne).not.toHaveBeenCalled();
+    } finally {
+      if (previousEnv.NEXT_PUBLIC_BASE_URL === undefined) {
+        delete process.env.NEXT_PUBLIC_BASE_URL;
+      } else {
+        process.env.NEXT_PUBLIC_BASE_URL = previousEnv.NEXT_PUBLIC_BASE_URL;
+      }
+      if (previousEnv.NEXT_PUBLIC_ECOM_URL === undefined) {
+        delete process.env.NEXT_PUBLIC_ECOM_URL;
+      } else {
+        process.env.NEXT_PUBLIC_ECOM_URL = previousEnv.NEXT_PUBLIC_ECOM_URL;
+      }
+      if (previousEnv.VERCEL_PROJECT_PRODUCTION_URL === undefined) {
+        delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+      } else {
+        process.env.VERCEL_PROJECT_PRODUCTION_URL = previousEnv.VERCEL_PROJECT_PRODUCTION_URL;
+      }
+      if (previousEnv.VERCEL_URL === undefined) {
+        delete process.env.VERCEL_URL;
+      } else {
+        process.env.VERCEL_URL = previousEnv.VERCEL_URL;
+      }
+    }
+  });
+
+  it('rejects an order when client item price does not match catalog price', async () => {
+    const res = await POST(makeJsonRequest(makePayload({ items: [{ ...makePayload().items?.[0], price: 1200 }] }));
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Order items are invalid.');
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 });

@@ -69,9 +69,9 @@ export function CategoriesGrid({
   useGSAP(() => {
     /* Section header reveal */
     gsap.fromTo('.cat-header',
-      { opacity: 0, y: 40 },
+      { y: 40 },
       {
-        opacity: 1, y: 0, duration: 0.9, ease: 'expo.out',
+        y: 0, duration: 0.9, ease: 'expo.out',
         scrollTrigger: {
           trigger: '.cat-header',
           start: 'top 88%',
@@ -84,9 +84,9 @@ export function CategoriesGrid({
       start: 'top 90%',
       onEnter: (batch) => {
         gsap.fromTo(batch,
-          { opacity: 0, y: 60, clipPath: 'inset(0 0 30% 0)' },
+          { y: 60, clipPath: 'inset(0 0 30% 0)' },
           {
-            opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)',
+            y: 0, clipPath: 'inset(0 0 0% 0)',
             duration: 1.0, ease: 'expo.out', stagger: 0.1,
           });
       },
@@ -97,7 +97,7 @@ export function CategoriesGrid({
   return (
     <section ref={sectionRef} className="px-6 md:px-10 pt-20 pb-16 max-w-screen-2xl mx-auto">
       {/* Section header */}
-      <div className="cat-header flex items-end justify-between mb-12" style={{ opacity: 0 }}>
+      <div className="cat-header flex items-end justify-between mb-12">
         <div>
           <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
@@ -134,7 +134,7 @@ export function CategoriesGrid({
               key={cat.id}
               href={localizedHref(getCardHref(cat))}
               className="cat-card category-card group block"
-              style={{ aspectRatio: visual.aspectRatio, opacity: 0 }}
+              style={{ aspectRatio: visual.aspectRatio }}
             >
               {/* Background */}
               {cat.imageUrl.trim() ? (

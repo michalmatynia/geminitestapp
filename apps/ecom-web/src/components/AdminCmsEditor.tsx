@@ -450,6 +450,7 @@ function textToReports(value: string): HomeEditorialReportContent[] {
           title,
           excerpt,
           body: excerpt,
+          imageUrl: '',
           visible: true,
           href,
         };

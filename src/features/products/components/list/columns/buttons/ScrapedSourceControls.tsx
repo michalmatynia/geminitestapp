@@ -8,12 +8,14 @@ import type { ProductScrapedSourceActionResponse } from '@/shared/contracts/prod
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
-import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
-import { cn } from '@/shared/utils/ui-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
+import {
+  PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
+  ProductListMarketplaceIconButton,
+} from './ProductListMarketplaceButton';
 
 type ScrapedSourceAction = 'link' | 'check-status' | 'run-purchase';
 
@@ -83,7 +85,7 @@ const useScrapedSourceActions = (
   return { pendingAction, runAction };
 };
 
-function ScrapedSourceIconButton({
+function ScrapedSourceActionButton({
   label,
   status,
   pending,
@@ -101,30 +103,21 @@ function ScrapedSourceIconButton({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <Button
+    <ProductListMarketplaceIconButton
       type='button'
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onFocus={onFocus}
-      variant='ghost'
-      size='icon'
       disabled={pending}
-      aria-label={label}
-      title={label}
-      className={cn(
-        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        pending && 'cursor-not-allowed opacity-60',
-        getMarketplaceButtonClass(status, true, 'scraped')
-      )}
+      disabledInteractionClass={
+        pending && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS
+      }
+      toneClass={getMarketplaceButtonClass(status, true, 'scraped')}
+      isPending={pending}
+      label={label}
     >
-      {pending ? (
-        <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none'>
-          ...
-        </span>
-      ) : (
-        children
-      )}
-    </Button>
+      {children}
+    </ProductListMarketplaceIconButton>
   );
 }
 
@@ -151,7 +144,7 @@ function ScrapedSourceControlsInner({
   return (
     <>
       {!showScrapedSourceBadge ? (
-        <ScrapedSourceIconButton
+        <ScrapedSourceActionButton
           label='Link scraped source'
           status='linked'
           pending={pendingAction === 'link'}
@@ -160,9 +153,9 @@ function ScrapedSourceControlsInner({
           onFocus={prefetchListings}
         >
           <Link2 className='size-3.5' aria-hidden='true' />
-        </ScrapedSourceIconButton>
+        </ScrapedSourceActionButton>
       ) : (
-        <ScrapedSourceIconButton
+        <ScrapedSourceActionButton
           label={`Check scraped source status (${effectiveStatus})`}
           status={effectiveStatus}
           pending={pendingAction === 'check-status'}
@@ -171,9 +164,9 @@ function ScrapedSourceControlsInner({
           onFocus={prefetchListings}
         >
           <RefreshCw className='size-3.5' aria-hidden='true' />
-        </ScrapedSourceIconButton>
+        </ScrapedSourceActionButton>
       )}
-      <ScrapedSourceIconButton
+      <ScrapedSourceActionButton
         label='Buy scraped item'
         status='purchase_review_required'
         pending={pendingAction === 'run-purchase'}
@@ -182,7 +175,7 @@ function ScrapedSourceControlsInner({
         onFocus={prefetchListings}
       >
         <ShoppingCart className='size-3.5' aria-hidden='true' />
-      </ScrapedSourceIconButton>
+      </ScrapedSourceActionButton>
     </>
   );
 }

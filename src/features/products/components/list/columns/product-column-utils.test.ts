@@ -10,6 +10,7 @@ import {
   hasPolishProductDescription,
   hasPolishProductTitle,
   getImageFilepath,
+  getMarketplaceButtonClass,
   resolveEffectiveDefaultPriceGroupId,
   resolveMarketplaceStatusWithLocalFeedback,
   resolveProductImageStorageStatus,
@@ -152,8 +153,26 @@ describe('resolveMarketplaceStatusWithLocalFeedback', () => {
   });
 });
 
+describe('getMarketplaceButtonClass', () => {
+  it('uses the shared neutral tone for idle ecommerce exports', () => {
+    const className = getMarketplaceButtonClass('not_started', false, 'ecommerce');
+
+    expect(className).toContain('border-gray-500/50');
+    expect(className).toContain('text-gray-300');
+    expect(className).not.toContain('bg-emerald-500/15');
+  });
+
+  it('uses the managed success tone for active ecommerce exports', () => {
+    const className = getMarketplaceButtonClass('active', true, 'ecommerce');
+
+    expect(className).toContain('border-emerald-400/70');
+    expect(className).toContain('bg-emerald-500/15');
+    expect(className).toContain('text-emerald-100');
+  });
+});
+
 describe('product list status helpers', () => {
-  it('detects FastComet, local, and external-link image storage statuses', () => {
+  it('detects FastComet, upload, and external-link image storage statuses', () => {
     const product = createProduct({
       imageLinks: [' https://cdn.example.test/source.jpg '],
       images: [
@@ -184,11 +203,12 @@ describe('product list status helpers', () => {
       hasFastCometImage: true,
       hasLocalImage: true,
       hasExternalLinkImage: true,
+      hasBase64Image: false,
     });
     expect(hasAnyProductImageStorageStatus(status)).toBe(true);
   });
 
-  it('treats direct FastComet uploads without a mirror as remote-only images', () => {
+  it('matches Product Slot by treating direct FastComet image files as uploaded images', () => {
     const status = resolveProductImageStorageStatus(
       createProduct({
         images: [
@@ -215,8 +235,9 @@ describe('product list status helpers', () => {
 
     expect(status).toEqual({
       hasFastCometImage: true,
-      hasLocalImage: false,
+      hasLocalImage: true,
       hasExternalLinkImage: false,
+      hasBase64Image: false,
     });
   });
 
@@ -244,6 +265,22 @@ describe('product list status helpers', () => {
       hasFastCometImage: false,
       hasLocalImage: true,
       hasExternalLinkImage: false,
+      hasBase64Image: false,
+    });
+  });
+
+  it('detects base64 image storage status', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        imageBase64s: ['data:image/png;base64,abc'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: false,
+      hasLocalImage: false,
+      hasExternalLinkImage: false,
+      hasBase64Image: true,
     });
   });
 

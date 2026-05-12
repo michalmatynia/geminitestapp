@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   startFilemakerSocialSchedulerQueue: vi.fn(),
   startPlaywrightListingQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
+  startProductFastCometImageUploadQueue: vi.fn(),
   startProductMarketplaceCopyDebrandBatchQueue: vi.fn(),
   startProductScrapeProfileQueue: vi.fn(),
   startProductSyncSchedulerQueue: vi.fn(),
@@ -85,6 +86,8 @@ vi.mock('@/server/queues/product-ai', () => ({
 }));
 
 vi.mock('@/server/queues/products', () => ({
+  startProductFastCometImageUploadQueue:
+    mocks.startProductFastCometImageUploadQueue,
   startProductMarketplaceCopyDebrandBatchQueue:
     mocks.startProductMarketplaceCopyDebrandBatchQueue,
 }));

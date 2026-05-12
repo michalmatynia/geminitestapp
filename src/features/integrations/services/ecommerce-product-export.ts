@@ -18,8 +18,10 @@ import { ECOMMERCE_EXPORT_INTEGRATION_SLUG } from '@/shared/lib/integration-slug
 import {
   ECOM_CATEGORIES_COLLECTION,
   ECOM_PRODUCTS_COLLECTION,
-  getCloudEcommerceExportDb,
+  getAllEcommerceExportDbTargetsForWrite,
   getAllEcommerceExportDbsForCleanup,
+  toEcommerceExportDbError,
+  type EcommerceExportDbTarget,
 } from './ecommerce-product-export.config';
 import {
   buildEcommerceCategoryDocument,
@@ -85,11 +87,13 @@ const tryCreateIndex = async (
   }
 };
 
-const ecommerceIndexesEnsuredByNamespace = new Map<string, Promise<void>>();
+const ecommerceIndexesEnsuredByTargetKey = new Map<string, Promise<void>>();
 
-const ensureEcommerceExportIndexes = async (db: Db): Promise<void> => {
-  const key = db.namespace;
-  const existing = ecommerceIndexesEnsuredByNamespace.get(key);
+const ensureEcommerceExportIndexes = async (
+  targetKey: string,
+  db: Db
+): Promise<void> => {
+  const existing = ecommerceIndexesEnsuredByTargetKey.get(targetKey);
   if (existing !== undefined) return existing;
   const promise = Promise.all([
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { sourceProductId: 1 }, { unique: true, name: 'source_product_id_unique' }),
@@ -97,7 +101,7 @@ const ensureEcommerceExportIndexes = async (db: Db): Promise<void> => {
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { catalogId: 1, published: 1, archived: 1, stock: 1, updatedAt: -1 }, { name: 'catalog_active_updated' }),
     tryCreateIndex(db, ECOM_CATEGORIES_COLLECTION, { catalogId: 1, collectionSlug: 1, name: 1 }, { name: 'catalog_collection_name' }),
   ]).then(() => undefined);
-  ecommerceIndexesEnsuredByNamespace.set(key, promise);
+  ecommerceIndexesEnsuredByTargetKey.set(targetKey, promise);
   return promise;
 };
 
@@ -136,6 +140,37 @@ const toExportResponse = (
   slug: document.slug,
   exportedAt: document.exportedAt,
 });
+
+const persistEcommerceProductExport = async (
+  target: EcommerceExportDbTarget,
+  document: EcommerceProductDocument,
+  categoryDocument: EcommerceCategoryDocument | null
+): Promise<EcommerceProductExportStatus> => {
+  try {
+    await ensureEcommerceExportIndexes(target.key, target.db);
+
+    const products = target.db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION);
+    const updateResult = await products.updateOne(
+      { _id: document._id },
+      {
+        $set: toDocumentUpdate(document),
+        $setOnInsert: {
+          createdAt: document.createdAt,
+        },
+      },
+      { upsert: true }
+    );
+
+    await persistEcommerceCategory(target.db, categoryDocument);
+    return updateResult.upsertedCount > 0 ? 'created' : 'updated';
+  } catch (error) {
+    throw toEcommerceExportDbError(target, error);
+  }
+};
+
+const resolveAggregateExportStatus = (
+  statuses: EcommerceProductExportStatus[]
+): EcommerceProductExportStatus => (statuses.includes('created') ? 'created' : 'updated');
 
 export type { EcommerceProductDeleteResponse } from '@/shared/contracts/integrations/ecommerce-export';
 
@@ -195,24 +230,12 @@ export const exportProductToEcommerce = async (
   const exportedAt = new Date().toISOString();
   const document = buildEcommerceProductExportDocument(product, exportedAt);
   const categoryDocument = buildEcommerceCategoryDocument(product, exportedAt);
-  const db = await getCloudEcommerceExportDb();
-  await ensureEcommerceExportIndexes(db);
-
-  const products = db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION);
-  const updateResult = await products.updateOne(
-    { _id: document._id },
-    {
-      $set: toDocumentUpdate(document),
-      $setOnInsert: {
-        createdAt: document.createdAt,
-      },
-    },
-    { upsert: true }
+  const targets = await getAllEcommerceExportDbTargetsForWrite();
+  const statuses = await Promise.all(
+    targets.map((target) => persistEcommerceProductExport(target, document, categoryDocument))
   );
-  const status: EcommerceProductExportStatus =
-    updateResult.upsertedCount > 0 ? 'created' : 'updated';
+  const status = resolveAggregateExportStatus(statuses);
 
-  await persistEcommerceCategory(db, categoryDocument);
   await upsertEcommerceProductListing(normalizedProductId);
   return toExportResponse(normalizedProductId, document, status);
 };
@@ -225,7 +248,7 @@ export const checkEcommerceProductsExistence = async (
     const dbs = await getAllEcommerceExportDbsForCleanup();
     const query = { _id: { $in: productIds as unknown[] } };
     const projection = { projection: { _id: 1 } };
-    // Query the write-target ecommerce source and normalize the matching ids.
+    // Query every ecommerce export source and normalize the matching ids.
     const results = await Promise.allSettled(
       dbs.map((db) =>
         db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION).find(query, projection).toArray()

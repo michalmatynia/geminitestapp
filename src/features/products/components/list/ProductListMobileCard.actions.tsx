@@ -7,8 +7,9 @@ import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-t
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 
+import { PRODUCT_LIST_TRIGGER_BUTTON_BAR_CLASSNAME } from './columns/buttons/ProductListMarketplaceButton';
+import { ProductListOpenIntegrationsButton } from './columns/buttons/ProductListOpenIntegrationsButton';
 import { TraderaQuickListButton } from './columns/buttons/TraderaQuickListButton';
-import { CircleIconButton } from './ProductListMobileCard.circle-button';
 import type { ProductListMobileCardViewProps } from './ProductListMobileCards.types';
 
 type ProductListMobileCardActionsProps = Pick<
@@ -89,20 +90,11 @@ function OpenIntegrationsButton({
   prefetchProductListings: () => void;
 }): React.JSX.Element {
   return (
-    <CircleIconButton
+    <ProductListOpenIntegrationsButton
       onClick={(): void => rowActions.onIntegrationsClick(product)}
       onMouseEnter={prefetchProductListings}
       onFocus={prefetchProductListings}
-      ariaLabel='View integrations'
-      className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'
-    >
-      <span
-        aria-hidden='true'
-        className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'
-      >
-        +
-      </span>
-    </CircleIconButton>
+    />
   );
 }
 
@@ -223,7 +215,7 @@ function TriggerActions({
         })
       }
       showRunFeedback={rowVisuals.showTriggerRunFeedback}
-      className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+      className={PRODUCT_LIST_TRIGGER_BUTTON_BAR_CLASSNAME}
     />
   );
 }

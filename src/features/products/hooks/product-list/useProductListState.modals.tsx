@@ -16,14 +16,14 @@ import { useCreateFromDraft } from '../useCreateFromDraft';
 import { useProductOperations } from '../useProductOperations';
 
 type ProductListModalStateInput = {
-  queuedProductIds: Set<string>;
+  queuedProductOperationIds: Set<string>;
   setRefreshTrigger: Dispatch<SetStateAction<number>>;
   visibleData: ProductWithImages[];
   visibleProductIdSet: Set<string>;
 };
 
 export const useProductListModalState = ({
-  queuedProductIds,
+  queuedProductOperationIds,
   setRefreshTrigger,
   visibleData,
   visibleProductIdSet,
@@ -66,7 +66,7 @@ export const useProductListModalState = ({
   });
   const highlights = useProductListHighlights();
   useProductListQueueStatus({
-    queuedProductIds,
+    queuedProductIds: queuedProductOperationIds,
     visibleProductIdSet,
     triggerJobCompletionHighlight: highlights.triggerJobCompletionHighlight,
   });

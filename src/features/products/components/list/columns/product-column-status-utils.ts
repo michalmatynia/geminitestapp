@@ -16,7 +16,13 @@ export {
   normalizeMarketplaceStatus,
 };
 
-type MarketplaceButtonKind = 'base' | 'tradera' | 'playwright' | 'vinted' | 'scraped';
+type MarketplaceButtonKind =
+  | 'base'
+  | 'ecommerce'
+  | 'tradera'
+  | 'playwright'
+  | 'vinted'
+  | 'scraped';
 
 type MarketplaceStatusInput = {
   serverStatus: string;
@@ -57,16 +63,21 @@ const MANAGED_STATUS_CLASS_BY_GROUP = {
     'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25',
 } as const;
 
+const MANAGED_SKY_MARKETPLACE_CLASS =
+  'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
+
+const MANAGED_EMERALD_MARKETPLACE_CLASS =
+  'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
+
 const MANAGED_MARKETPLACE_CLASS: Record<MarketplaceButtonKind, string> = {
-  base: 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25',
-  tradera:
-    'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25',
+  base: MANAGED_SKY_MARKETPLACE_CLASS,
+  ecommerce: MANAGED_EMERALD_MARKETPLACE_CLASS,
+  tradera: MANAGED_SKY_MARKETPLACE_CLASS,
   playwright:
     'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-100 hover:border-fuchsia-300/80 hover:bg-fuchsia-500/25',
   vinted:
     'border-teal-400/70 bg-teal-500/15 text-teal-100 hover:border-teal-300/80 hover:bg-teal-500/25',
-  scraped:
-    'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25',
+  scraped: MANAGED_EMERALD_MARKETPLACE_CLASS,
 };
 
 const resolveStatusGroupClass = (

@@ -5,9 +5,12 @@ import React from 'react';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { InsetPanel } from '@/shared/ui/InsetPanel';
-import { cn } from '@/shared/utils/ui-utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
+import {
+  PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
+  ProductListMarketplacePendingTextButton,
+} from './ProductListMarketplaceButton';
 import type { BaseQuickExportButtonModel } from './useBaseQuickExportButtonModel';
 
 type BaseQuickExportActionButtonProps = {
@@ -24,33 +27,27 @@ const hasExistingProductId = (existingProductId: string | null | undefined): boo
 const BaseQuickExportActionButton = ({
   model,
 }: BaseQuickExportActionButtonProps): React.JSX.Element => (
-  <Button
+  <ProductListMarketplacePendingTextButton
     type='button'
     disabled={model.quickExportPending}
     onClick={model.handleButtonClick}
     onMouseEnter={model.prefetchListings}
     onFocus={model.prefetchListings}
-    variant='ghost'
-    size='icon'
     aria-label={model.resolvedLabel}
     title={model.resolvedLabel}
-    className={cn(
-      'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-      model.showMarketplaceBadge === false && model.quickExportPending && 'cursor-not-allowed opacity-60',
-      getMarketplaceButtonClass(
-        model.resolvedButtonStatus,
-        model.shouldUseFilledMarketplaceTone,
-        'base'
-      )
+    disabledInteractionClass={
+      model.showMarketplaceBadge === false && model.quickExportPending
+        ? PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS
+        : false
+    }
+    toneClass={getMarketplaceButtonClass(
+      model.resolvedButtonStatus,
+      model.shouldUseFilledMarketplaceTone,
+      'base'
     )}
-  >
-    <span
-      aria-hidden='true'
-      className='text-[9px] font-black uppercase leading-none tracking-tight'
-    >
-      {model.quickExportPending ? '...' : 'BL'}
-    </span>
-  </Button>
+    isPending={model.quickExportPending}
+    label='BL'
+  />
 );
 
 const ExistingSkuSummary = ({ model }: ExistingSkuDecisionModalProps): React.JSX.Element => (

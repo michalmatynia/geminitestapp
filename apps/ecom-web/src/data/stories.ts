@@ -17,7 +17,7 @@ export type Story = {
   relatedSlugs: string[];
 };
 
-export const STORIES = STORIES_DATA as Story[];
+export const STORIES = STORIES_DATA;
 
 export function getStory(slug: string): Story | undefined {
   return STORIES.find((s) => s.slug === slug);

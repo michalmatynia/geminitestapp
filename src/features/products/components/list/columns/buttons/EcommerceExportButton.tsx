@@ -7,10 +7,14 @@ import dynamic from 'next/dynamic';
 import { useExportProductToEcommerce } from '@/features/products/hooks/useProductEcommerceExportMutations';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
-import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { cn } from '@/shared/utils/ui-utils';
+
+import { getMarketplaceButtonClass } from '../product-column-utils';
+import {
+  PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
+  ProductListMarketplacePendingTextButton,
+} from './ProductListMarketplaceButton';
 
 const EcommerceManageModal = dynamic(
   () => import('./EcommerceManageModal').then((mod) => mod.EcommerceManageModal),
@@ -28,26 +32,6 @@ const resolveSuccessMessage = (status: string): string => {
   if (status === 'updated') return 'Ecommerce product updated.';
   return 'Ecommerce product is already up to date.';
 };
-
-function EcommerceExportIconButton({
-  ariaLabel,
-  handleClick,
-  isActive,
-  isPending,
-}: {
-  ariaLabel: string;
-  handleClick: () => void;
-  isActive: boolean;
-  isPending: boolean;
-}): React.JSX.Element {
-  return (
-    <Button type='button' disabled={isPending} onClick={handleClick} variant='ghost' size='icon' aria-label={ariaLabel} title={ariaLabel} className={cn('size-8 rounded-full border p-0', isActive ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25' : 'border-gray-500/60 bg-gray-500/10 text-gray-400 hover:border-gray-400/70 hover:bg-gray-500/20 hover:text-gray-300', isPending && 'cursor-not-allowed opacity-60')}>
-      <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
-        {isPending ? '...' : 'EC'}
-      </span>
-    </Button>
-  );
-}
 
 export function EcommerceExportButton({
   product,
@@ -82,10 +66,27 @@ export function EcommerceExportButton({
   }, [isPending, isActive, mutateAsync, product.id, queryClient, toast]);
 
   const ariaLabel = isActive ? 'Manage ecommerce product' : 'Export to ecommerce';
+  const toneClass = getMarketplaceButtonClass(
+    isActive ? 'active' : 'not_started',
+    isActive,
+    'ecommerce'
+  );
 
   return (
     <>
-      <EcommerceExportIconButton ariaLabel={ariaLabel} handleClick={handleClick} isActive={isActive} isPending={isPending} />
+      <ProductListMarketplacePendingTextButton
+        type='button'
+        disabled={isPending}
+        onClick={handleClick}
+        aria-label={ariaLabel}
+        title={ariaLabel}
+        disabledInteractionClass={
+          isPending && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS
+        }
+        toneClass={toneClass}
+        isPending={isPending}
+        label='EC'
+      />
       {modalOpen && (
         <EcommerceManageModal
           product={product}

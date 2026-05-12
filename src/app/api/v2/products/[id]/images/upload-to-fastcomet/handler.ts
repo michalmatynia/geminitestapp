@@ -3,21 +3,29 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import { parseJsonBody } from '@/features/products/server';
-import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  assertProductFastCometImageUploadRedisRuntime,
+  enqueueProductFastCometImageUploadJob,
+  PRODUCT_FASTCOMET_IMAGE_UPLOAD_QUEUE_NAME,
+} from '@/features/products/workers/productFastCometImageUploadQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
-import { getFileStorageSettings } from '@/shared/lib/files/services/storage/file-storage-service';
+import { validationError } from '@/shared/errors/app-error';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import {
   isMultipartFastCometUploadRequest,
   parseMultipartFastCometUploadBody,
-  uploadNewImageFileToFastComet,
+  stageNewImageFileForFastCometUpload,
   type FastCometFileUploadBody,
 } from './handler.file-upload';
-import { uploadLinkedImageFileToFastComet } from './handler.linked-upload';
+import {
+  isFastCometImageFile,
+  loadProduct,
+  requireFastCometConfigured,
+  resolveLinkedImageFile,
+  toImageFileSelection,
+} from './handler.execution';
 
 const paramsSchema = z.object({
   id: z.string().trim().min(1, 'Product id is required'),
@@ -28,49 +36,12 @@ const uploadToFastCometSchema = z.object({
   imageSlotIndex: z.number().int().min(0).max(DEFAULT_IMAGE_SLOT_COUNT - 1).optional(),
 });
 
-type ProductRepository = Awaited<ReturnType<typeof getProductRepository>>;
 type UploadToFastCometBody = z.infer<typeof uploadToFastCometSchema>;
 type ParsedUploadBody =
   | ({ kind: 'existing' } & UploadToFastCometBody)
   | FastCometFileUploadBody;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const isFastCometImageFile = (imageFile: ImageFileRecord): boolean => {
-  if (imageFile.storageProvider === 'fastcomet') return true;
-  const metadata = imageFile.metadata;
-  return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
-};
-
-const resolveLinkedImageFile = (
-  product: ProductWithImages,
-  imageFileId: string,
-  imageSlotIndex: number | undefined
-): ImageFileRecord => {
-  if (imageSlotIndex !== undefined) {
-    const imageAtSlot = product.images[imageSlotIndex];
-    if (imageAtSlot?.imageFileId !== imageFileId) {
-      throw badRequestError('Image file is not linked at the requested product image slot.', {
-        imageFileId,
-        imageSlotIndex,
-        productId: product.id,
-      });
-    }
-    return imageAtSlot.imageFile;
-  }
-
-  const linkedImage = product.images.find((image) => image.imageFileId === imageFileId);
-  if (linkedImage === undefined) {
-    throw badRequestError('Image file is not linked to this product.', {
-      imageFileId,
-      productId: product.id,
-    });
-  }
-  return linkedImage.imageFile;
-};
-
-const toImageFileSelection = (imageFile: ImageFileRecord): ImageFileSelection => imageFile;
+type ProductRepository = Awaited<ReturnType<typeof getProductRepository>>;
+type ProductWithImages = Awaited<ReturnType<typeof loadProduct>>;
 
 const parseProductId = (params: { id: string }): string => {
   const parsedParams = paramsSchema.safeParse(params);
@@ -96,44 +67,64 @@ const parseUploadBody = async (
   return { ok: true, data: { ...parsed.data, kind: 'existing' } };
 };
 
-const loadProduct = async (
-  productRepo: ProductRepository,
-  productId: string
-): Promise<ProductWithImages> => {
-  const product = await productRepo.getProductById(productId);
-  if (product === null) {
-    throw notFoundError('Product not found', { productId });
-  }
-  return product;
-};
+const enqueueFastCometUpload = async (input: {
+  imageFileId: string;
+  imageSlotIndex?: number | undefined;
+  productId: string;
+}): Promise<string> =>
+  enqueueProductFastCometImageUploadJob({
+    imageFileId: input.imageFileId,
+    imageSlotIndex: input.imageSlotIndex,
+    productId: input.productId,
+    requestedAt: new Date().toISOString(),
+    userId: null,
+  });
 
-const hasText = (value: string | null | undefined): boolean => (value?.trim() ?? '').length > 0;
+const buildQueuedResponse = (input: {
+  imageFile: ReturnType<typeof toImageFileSelection>;
+  imageFileId: string;
+  imageSlotIndex?: number | undefined;
+  jobId: string;
+  product: Awaited<ReturnType<typeof loadProduct>>;
+  publicPath?: string | undefined;
+}): Response =>
+  NextResponse.json(
+    {
+      status: 'queued',
+      imageFile: input.imageFile,
+      imageFileId: input.imageFileId,
+      imageSlotIndex: input.imageSlotIndex,
+      jobId: input.jobId,
+      product: input.product,
+      publicPath: input.publicPath,
+      queueName: PRODUCT_FASTCOMET_IMAGE_UPLOAD_QUEUE_NAME,
+    },
+    { status: 202 }
+  );
 
-const hasFastCometConnectionTarget = (
-  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
-): boolean =>
-  fastComet.uploadEndpoint.length > 0 &&
-  hasText(fastComet.server) &&
-  fastComet.port !== null &&
-  fastComet.port !== undefined;
-
-const hasFastCometConnectionCredentials = (
-  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
-): boolean => hasText(fastComet.username) && hasText(fastComet.token ?? fastComet.authToken);
-
-const isFastCometConfigured = (
-  fastComet: Awaited<ReturnType<typeof getFileStorageSettings>>['fastComet']
-): boolean =>
-  hasFastCometConnectionTarget(fastComet) && hasFastCometConnectionCredentials(fastComet);
-
-const requireFastCometConfigured = async (): Promise<void> => {
-  const settings = await getFileStorageSettings();
-  if (isFastCometConfigured(settings.fastComet) === false) {
-    throw badRequestError(
-      'FastComet storage is not configured. Enter SERVER, PORT, USERNAME and TOKEN in File Storage settings.',
-      { hint: 'FASTCOMET_STORAGE_CONFIG_SETTING_KEY' }
-    );
-  }
+const handleFileUploadRequest = async (input: {
+  body: FastCometFileUploadBody;
+  product: ProductWithImages;
+  productId: string;
+  productRepo: ProductRepository;
+}): Promise<Response> => {
+  await requireFastCometConfigured();
+  await assertProductFastCometImageUploadRedisRuntime();
+  const result = await stageNewImageFileForFastCometUpload(input);
+  CachedProductService.invalidateProduct(input.productId);
+  const jobId = await enqueueFastCometUpload({
+    imageFileId: result.imageFile.id,
+    imageSlotIndex: input.body.imageSlotIndex,
+    productId: input.productId,
+  });
+  return buildQueuedResponse({
+    imageFile: toImageFileSelection(result.imageFile),
+    imageFileId: result.imageFile.id,
+    imageSlotIndex: input.body.imageSlotIndex,
+    jobId,
+    product: result.product,
+    publicPath: result.publicPath,
+  });
 };
 
 export async function postHandler(
@@ -148,20 +139,11 @@ export async function postHandler(
   const productRepo = await getProductRepository();
   const product = await loadProduct(productRepo, productId);
   if (parsed.data.kind === 'file') {
-    await requireFastCometConfigured();
-    const result = await uploadNewImageFileToFastComet({
+    return handleFileUploadRequest({
       body: parsed.data,
       product,
       productId,
       productRepo,
-    });
-    CachedProductService.invalidateProduct(productId);
-    return NextResponse.json({
-      status: 'ok',
-      imageFile: toImageFileSelection(result.imageFile),
-      product: result.product,
-      publicPath: result.publicPath,
-      remoteUrl: result.remoteUrl,
     });
   }
 
@@ -180,19 +162,17 @@ export async function postHandler(
   }
 
   await requireFastCometConfigured();
-  const result = await uploadLinkedImageFileToFastComet({
-    linkedImageFile,
-    product,
+  const jobId = await enqueueFastCometUpload({
+    imageFileId: linkedImageFile.id,
+    imageSlotIndex: parsed.data.imageSlotIndex,
     productId,
-    productRepo,
   });
-  CachedProductService.invalidateProduct(productId);
 
-  return NextResponse.json({
-    status: 'ok',
-    imageFile: toImageFileSelection(result.imageFile),
-    product: result.product,
-    publicPath: result.publicPath,
-    remoteUrl: result.remoteUrl,
+  return buildQueuedResponse({
+    imageFile: toImageFileSelection(linkedImageFile),
+    imageFileId: linkedImageFile.id,
+    imageSlotIndex: parsed.data.imageSlotIndex,
+    jobId,
+    product,
   });
 }

@@ -249,13 +249,13 @@ describe('ProductImageManagerUIContext', () => {
     expect(setImageLinkAt).not.toHaveBeenCalled();
   });
 
-  it('uploads existing image slots to FastComet through the product route', async () => {
+  it('queues existing image slots for FastComet upload through the product route', async () => {
     const imageFile = {
       id: 'image-file-1',
-      filepath: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
+      filepath: '/uploads/products/SKU/photo.webp',
       filename: 'photo.webp',
-      metadata: { storageSource: 'fastcomet' },
-      storageProvider: 'fastcomet' as const,
+      metadata: { fastCometUploadStatus: 'queued', storageSource: 'local' },
+      storageProvider: 'local' as const,
     };
   const handleSlotFileSelect = vi.fn();
   const setImageBase64At = vi.fn();
@@ -263,11 +263,13 @@ describe('ProductImageManagerUIContext', () => {
   const onFastCometUploadSuccess = vi.fn();
   const onFastCometUploadError = vi.fn();
     mocks.apiPost.mockResolvedValueOnce({
-      alreadyUploaded: false,
       imageFile,
+      imageFileId: 'image-file-1',
+      imageSlotIndex: 0,
+      jobId: 'fastcomet-job-1',
       publicPath: '/uploads/products/SKU/photo.webp',
-      remoteUrl: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
-      status: 'ok',
+      queueName: 'product-fastcomet-image-upload',
+      status: 'queued',
     });
     const controller = buildController({
       handleSlotFileSelect,
@@ -330,28 +332,19 @@ describe('ProductImageManagerUIContext', () => {
       imageSlotIndex: 0,
       productId: 'product-1',
     });
-    expect(onFastCometUploadSuccess).toHaveBeenCalledWith({
-      alreadyUploaded: false,
-      filename: 'photo.webp',
-      imageFile,
-      imageFileId: 'image-file-1',
-      imageSlotIndex: 0,
-      productId: 'product-1',
-      publicPath: '/uploads/products/SKU/photo.webp',
-      remoteUrl: 'https://sparksofsindri.com/uploads/products/SKU/photo.webp',
-    });
+    expect(onFastCometUploadSuccess).not.toHaveBeenCalled();
     expect(onFastCometUploadError).not.toHaveBeenCalled();
-    expect(result.current.state.slotViewModes[0]).toBe('fastcomet');
+    expect(result.current.state.slotViewModes[0]).toBe('upload');
   });
 
-  it('uploads local file image slots to FastComet through multipart product route', async () => {
+  it('queues local file image slots for FastComet upload through multipart product route', async () => {
     const file = new File(['image'], 'fresh.png', { type: 'image/png' });
     const imageFile = {
       id: 'image-file-2',
-      filepath: 'https://sparksofsindri.com/uploads/products/SKU/fresh.png',
+      filepath: '/uploads/products/SKU/fresh.png',
       filename: 'fresh.png',
-      metadata: { storageSource: 'fastcomet' },
-      storageProvider: 'fastcomet' as const,
+      metadata: { fastCometUploadStatus: 'queued', storageSource: 'local' },
+      storageProvider: 'local' as const,
     };
     const handleSlotFileSelect = vi.fn();
     const onFastCometUploadStart = vi.fn();
@@ -359,9 +352,12 @@ describe('ProductImageManagerUIContext', () => {
     const onFastCometUploadError = vi.fn();
     mocks.apiPost.mockResolvedValueOnce({
       imageFile,
+      imageFileId: 'image-file-2',
+      imageSlotIndex: 0,
+      jobId: 'fastcomet-job-1',
       publicPath: '/uploads/products/SKU/fresh.png',
-      remoteUrl: 'https://sparksofsindri.com/uploads/products/SKU/fresh.png',
-      status: 'ok',
+      queueName: 'product-fastcomet-image-upload',
+      status: 'queued',
     });
     const controller = buildController({
       handleSlotFileSelect,
@@ -415,18 +411,9 @@ describe('ProductImageManagerUIContext', () => {
       imageSlotIndex: 0,
       productId: 'product-1',
     });
-    expect(onFastCometUploadSuccess).toHaveBeenCalledWith({
-      alreadyUploaded: undefined,
-      filename: 'fresh.png',
-      imageFile,
-      imageFileId: 'slot-file-1',
-      imageSlotIndex: 0,
-      productId: 'product-1',
-      publicPath: '/uploads/products/SKU/fresh.png',
-      remoteUrl: 'https://sparksofsindri.com/uploads/products/SKU/fresh.png',
-    });
+    expect(onFastCometUploadSuccess).not.toHaveBeenCalled();
     expect(onFastCometUploadError).not.toHaveBeenCalled();
-    expect(result.current.state.slotViewModes[0]).toBe('fastcomet');
+    expect(result.current.state.slotViewModes[0]).toBe('upload');
   });
 
   it('notifies FastComet upload errors from existing image slots', async () => {

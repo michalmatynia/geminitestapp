@@ -7,9 +7,6 @@ import {
   readPersistedVintedQuickListFeedback,
 } from '@/features/integrations/product-integrations-adapter';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
-import { Button } from '@/shared/ui/button';
-
-import { cn } from '@/shared/utils/ui-utils';
 
 import {
   FAILURE_STATUSES,
@@ -17,6 +14,7 @@ import {
   normalizeMarketplaceStatus,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
+import { ProductListMarketplaceTextButton } from './ProductListMarketplaceButton';
 
 const buildVintedRecoveryContext = ({
   effectiveStatus,
@@ -69,26 +67,15 @@ export function VintedStatusButton(props: {
   const label = resolveVintedStatusLabel(effectiveStatus);
 
   return (
-    <Button
+    <ProductListMarketplaceTextButton
       type='button'
       onClick={() => onOpenListings(recoveryContext)}
       onMouseEnter={prefetchListings}
       onFocus={prefetchListings}
-      variant='ghost'
-      size='icon'
       aria-label={label}
       title={label}
-      className={cn(
-        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        getMarketplaceButtonClass(effectiveStatus, true, 'vinted')
-      )}
-    >
-      <span
-        aria-hidden='true'
-        className='text-[10px] font-black uppercase leading-none tracking-tight'
-      >
-        V
-      </span>
-    </Button>
+      toneClass={getMarketplaceButtonClass(effectiveStatus, true, 'vinted')}
+      label='V'
+    />
   );
 }

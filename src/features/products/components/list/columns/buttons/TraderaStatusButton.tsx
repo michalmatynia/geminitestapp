@@ -9,9 +9,6 @@ import {
 import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
-import { Button } from '@/shared/ui/button';
-
-import { cn } from '@/shared/utils/ui-utils';
 
 import {
   FAILURE_STATUSES,
@@ -20,6 +17,11 @@ import {
   PROCESSING_STATUSES,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
+import {
+  PRODUCT_LIST_MARKETPLACE_EXCLUDED_INTERACTION_CLASS,
+  PRODUCT_LIST_MARKETPLACE_EXCLUDED_TONE_CLASS,
+  ProductListMarketplaceTextButton,
+} from './ProductListMarketplaceButton';
 
 type TraderaStatusButtonProps = {
   productId: string;
@@ -30,6 +32,7 @@ type TraderaStatusButtonProps = {
 };
 
 type PersistedTraderaQuickListFeedback = {
+  status?: string | null;
   runId?: string | null;
   requestId?: string | null;
   integrationId?: string | null;
@@ -42,12 +45,6 @@ type TraderaRecoveryIdentifiers = {
   integrationId: string | null;
   connectionId: string | null;
 };
-
-const DISABLED_TRADERA_STATUS_CLASS =
-  'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500';
-
-const DISABLED_TRADERA_STATUS_INTERACTION_CLASS =
-  'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40';
 
 const EMPTY_TRADERA_RECOVERY_IDENTIFIERS: TraderaRecoveryIdentifiers = {
   runId: null,
@@ -87,7 +84,7 @@ const resolveTraderaStatusToneClass = (
   disableStatusAction: boolean,
   effectiveStatus: string
 ): string => {
-  if (disableStatusAction) return DISABLED_TRADERA_STATUS_CLASS;
+  if (disableStatusAction) return PRODUCT_LIST_MARKETPLACE_EXCLUDED_TONE_CLASS;
   return getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
 };
 
@@ -118,15 +115,58 @@ const createEffectiveRecoveryContext = (
   });
 };
 
+const resolveEffectiveTraderaStatus = (
+  status: string,
+  persistedFeedback: PersistedTraderaQuickListFeedback | null
+): string =>
+  resolveMarketplaceStatusWithLocalFeedback({
+    serverStatus: normalizeMarketplaceStatus(status),
+    localFeedbackStatus: persistedFeedback?.status ?? null,
+  });
+
+const isTraderaStatusWorkerRunning = (
+  effectiveStatus: string,
+  persistedFeedback: PersistedTraderaQuickListFeedback | null
+): boolean =>
+  PROCESSING_STATUSES.has(effectiveStatus) ||
+  (effectiveStatus === 'queued' && hasText(persistedFeedback?.runId));
+
+const resolveTraderaStatusToneStatus = ({
+  disableStatusAction,
+  effectiveStatus,
+  isWorkerRunning,
+}: {
+  disableStatusAction: boolean;
+  effectiveStatus: string;
+  isWorkerRunning: boolean;
+}): string => {
+  if (disableStatusAction || !isWorkerRunning) return effectiveStatus;
+  return 'queued';
+};
+
+const getEnabledPrefetchHandler = (
+  disableStatusAction: boolean,
+  prefetchListings: () => void
+): (() => void) | undefined => (disableStatusAction ? undefined : prefetchListings);
+
+const openTraderaStatusListings = ({
+  disableStatusAction,
+  onOpenListings,
+  recoveryContext,
+}: {
+  disableStatusAction: boolean;
+  onOpenListings: (recoveryContext?: ProductListingsRecoveryContext) => void;
+  recoveryContext?: ProductListingsRecoveryContext;
+}): void => {
+  if (disableStatusAction) return;
+  onOpenListings(recoveryContext);
+};
+
 export function TraderaStatusButton(props: TraderaStatusButtonProps): React.JSX.Element {
   const { productId, status, prefetchListings, onOpenListings, customFieldValues } = props;
   const customFieldsQuery = useCustomFields();
-  const normalizedStatus = normalizeMarketplaceStatus(status);
   const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
-  const effectiveStatus = resolveMarketplaceStatusWithLocalFeedback({
-    serverStatus: normalizedStatus,
-    localFeedbackStatus: persistedFeedback?.status ?? null,
-  });
+  const effectiveStatus = resolveEffectiveTraderaStatus(status, persistedFeedback);
   const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
     customFieldDefinitions: customFieldsQuery.data,
     customFieldValues,
@@ -141,43 +181,39 @@ export function TraderaStatusButton(props: TraderaStatusButtonProps): React.JSX.
     effectiveStatus,
   });
   const title = resolveTraderaStatusTitle({ isTraderaMarketplaceExcluded, label });
-  const isWorkerRunning =
-    PROCESSING_STATUSES.has(effectiveStatus) ||
-    (effectiveStatus === 'queued' && hasText(persistedFeedback?.runId));
+  const isWorkerRunning = isTraderaStatusWorkerRunning(effectiveStatus, persistedFeedback);
+  const toneStatus = resolveTraderaStatusToneStatus({
+    disableStatusAction,
+    effectiveStatus,
+    isWorkerRunning,
+  });
   const resolvedToneClass = resolveTraderaStatusToneClass(
     disableStatusAction,
-    isWorkerRunning && !disableStatusAction ? 'queued' : effectiveStatus
+    toneStatus
   );
+  const prefetchHandler = getEnabledPrefetchHandler(disableStatusAction, prefetchListings);
 
   return (
-    <Button
+    <ProductListMarketplaceTextButton
       type='button'
-      onClick={() => {
-        if (disableStatusAction) {
-          return;
-        }
-        onOpenListings(recoveryContext);
-      }}
-      onMouseEnter={disableStatusAction ? undefined : prefetchListings}
-      onFocus={disableStatusAction ? undefined : prefetchListings}
-      variant='ghost'
-      size='icon'
+      onClick={() =>
+        openTraderaStatusListings({
+          disableStatusAction,
+          onOpenListings,
+          recoveryContext,
+        })
+      }
+      onMouseEnter={prefetchHandler}
+      onFocus={prefetchHandler}
       disabled={disableStatusAction}
       aria-label={label}
       title={title}
-      className={cn(
-        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        isWorkerRunning && 'motion-safe:animate-pulse',
-        resolvedToneClass,
-        disableStatusAction && DISABLED_TRADERA_STATUS_INTERACTION_CLASS
-      )}
-    >
-      <span
-        aria-hidden='true'
-        className='text-[10px] font-black uppercase leading-none tracking-tight'
-      >
-        T
-      </span>
-    </Button>
+      disabledInteractionClass={
+        disableStatusAction && PRODUCT_LIST_MARKETPLACE_EXCLUDED_INTERACTION_CLASS
+      }
+      isPulsing={isWorkerRunning}
+      toneClass={resolvedToneClass}
+      label='T'
+    />
   );
 }

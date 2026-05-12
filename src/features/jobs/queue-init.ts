@@ -27,6 +27,7 @@ import {
 } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 import { startProductAiJobQueue } from '@/server/queues/product-ai';
 import {
+  startProductFastCometImageUploadQueue,
   startProductMarketplaceCopyDebrandBatchQueue,
 } from '@/server/queues/products';
 import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
@@ -53,6 +54,7 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'ai-insights',
   'tradera-relist-scheduler',
   'product-marketplace-copy-debrand-batch',
+  'product-fastcomet-image-upload',
 ] as const;
 const SOCIAL_PUBLISHING_QUEUE_NAMES = [
   'social-publishing-scheduler',
@@ -100,6 +102,7 @@ const FEATURE_AWARE_STARTERS = [
   startCaseResolverOcrQueue,
   startFilemakerJobBoardScrapeQueue,
   startProductMarketplaceCopyDebrandBatchQueue,
+  startProductFastCometImageUploadQueue,
   startProductScrapeProfileQueueRuntime,
 ] as const satisfies readonly QueueStarter[];
 

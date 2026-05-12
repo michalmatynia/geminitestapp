@@ -11,14 +11,11 @@ import {
   PROCESSING_STATUSES,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
-
-const MARKET_EXCLUSION_DISABLED_CLASS =
-  'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500';
-
-const MARKET_EXCLUSION_DISABLED_INTERACTION_CLASS =
-  'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40';
-
-export const GENERIC_DISABLED_INTERACTION_CLASS = 'cursor-not-allowed opacity-60';
+import {
+  PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
+  PRODUCT_LIST_MARKETPLACE_EXCLUDED_INTERACTION_CLASS,
+  PRODUCT_LIST_MARKETPLACE_EXCLUDED_TONE_CLASS,
+} from './ProductListMarketplaceButton';
 
 type RecoveryIdentifiers = {
   runId: string | null;
@@ -152,7 +149,7 @@ const resolveToneClass = (
   status: string,
   shouldUseFilledMarketplaceTone: boolean
 ): string => {
-  if (isTraderaMarketplaceExcluded) return MARKET_EXCLUSION_DISABLED_CLASS;
+  if (isTraderaMarketplaceExcluded) return PRODUCT_LIST_MARKETPLACE_EXCLUDED_TONE_CLASS;
   return getMarketplaceButtonClass(status, shouldUseFilledMarketplaceTone, 'tradera');
 };
 
@@ -160,8 +157,8 @@ const resolveDisabledInteractionClass = (
   isTraderaMarketplaceExcluded: boolean,
   disableQuickListAction: boolean
 ): string | false => {
-  if (isTraderaMarketplaceExcluded) return MARKET_EXCLUSION_DISABLED_INTERACTION_CLASS;
-  return disableQuickListAction && GENERIC_DISABLED_INTERACTION_CLASS;
+  if (isTraderaMarketplaceExcluded) return PRODUCT_LIST_MARKETPLACE_EXCLUDED_INTERACTION_CLASS;
+  return disableQuickListAction && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS;
 };
 
 export const resolveTraderaQuickListButtonView = (

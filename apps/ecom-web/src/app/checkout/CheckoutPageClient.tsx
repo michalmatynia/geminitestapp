@@ -25,6 +25,7 @@ import type {
 } from '@/data/checkoutContent';
 
 type Step = CheckoutStepKey | 'confirmation';
+type FreshCartProduct = Pick<Product, 'id' | 'name' | 'category' | 'price' | 'priceDisplay' | 'gradient' | 'imageUrl'>;
 
 const calculatePromoDiscount = (
   subtotal: number,
@@ -257,7 +258,7 @@ function FieldRows({
   onChange,
 }: {
   fields: CheckoutFieldContent[];
-  values: Record<string, string>;
+  values: Partial<Record<string, string>>;
   errors: Record<string, string>;
   locale: EcomLocale;
   onChange: (id: string, v: string) => void;
@@ -572,7 +573,7 @@ function OrderSummary({
   const [promoError, setPromoError] = useState(false);
   const [promoApplying, setPromoApplying] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
-  const [freshData, setFreshData] = useState<Partial<Record<string, Product>>>({});
+  const [freshData, setFreshData] = useState<Partial<Record<string, FreshCartProduct>>>({});
   const idKey = items.map((item) => item.productId).join(',');
 
   useEffect(() => {
@@ -585,7 +586,7 @@ function OrderSummary({
       try {
         const response = await fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`);
         const data = (await response.json()) as unknown;
-        const next: Partial<Record<string, Product>> = {};
+        const next: Partial<Record<string, FreshCartProduct>> = {};
         const rawProducts = isPlainRecord(data) && Array.isArray(data.products) ? data.products : [];
         for (const product of rawProducts) {
           if (!isPlainRecord(product)) continue;

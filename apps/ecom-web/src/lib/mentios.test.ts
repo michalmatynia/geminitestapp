@@ -69,7 +69,7 @@ describe('Mentios product image mapping', () => {
     };
     const productsCollection = {
       countDocuments: vi.fn().mockResolvedValue(1),
-      find: vi.fn(() => createCursor([productDoc])),
+      find: vi.fn((_filter?: unknown) => createCursor([productDoc])),
     };
     const categoriesCollection = {
       find: vi.fn(() => createCursor([])),
@@ -106,7 +106,7 @@ describe('Mentios product image mapping', () => {
     };
     const productsCollection = {
       countDocuments: vi.fn().mockResolvedValue(1),
-      find: vi.fn(() => createCursor([productDoc])),
+      find: vi.fn((_filter?: unknown) => createCursor([productDoc])),
     };
     const categoriesCollection = {
       find: vi.fn(() => createCursor([])),
@@ -139,7 +139,7 @@ describe('Mentios product image mapping', () => {
     };
     const productsCollection = {
       countDocuments: vi.fn().mockResolvedValue(1),
-      find: vi.fn(() => createCursor([productDoc])),
+      find: vi.fn((_filter?: unknown) => createCursor([productDoc])),
     };
     const categoriesCollection = {
       find: vi.fn(() => createCursor([])),

@@ -62,6 +62,7 @@ const buildUpdatedImageMetadata = (input: {
   sourcePath: string;
 }): Record<string, unknown> => ({
   ...(isRecord(input.imageFile.metadata) ? input.imageFile.metadata : {}),
+  fastCometUploadStatus: 'completed',
   localPublicPath: input.publicPath,
   mirroredLocally: true,
   previousFilepath: input.sourcePath,

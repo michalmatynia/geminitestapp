@@ -34,7 +34,7 @@ export function useProductListState(): ProductListStateReturn {
     searchParams: runtime.searchParams,
   });
   const modal = useProductListModalState({
-    queuedProductIds: data.queuedProductIds,
+    queuedProductOperationIds: data.queuedProductOperationIds,
     setRefreshTrigger: runtime.setRefreshTrigger,
     visibleData: data.visibleData,
     visibleProductIdSet: data.visibleProductIdSet,

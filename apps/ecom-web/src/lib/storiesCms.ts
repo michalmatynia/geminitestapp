@@ -141,7 +141,7 @@ function localizeStory(story: Story, localeInput?: string | null): Story {
   let category = STORY_CATEGORY_PL[story.category] ?? story.category;
   const localizedCategory = localized.category;
   if (typeof localizedCategory === 'string') {
-    category = localized.category;
+    category = localizedCategory;
   }
   return {
     ...story,

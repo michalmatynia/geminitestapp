@@ -309,7 +309,7 @@ function parsePipedName(raw: string): {
 }
 
 function formatPrice(price: number | null | undefined): string {
-  if (price === null) return '—';
+  if (price === null || price === undefined) return '—';
   const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
   return `${price.toLocaleString('pl-PL', {
     minimumFractionDigits,
@@ -365,8 +365,9 @@ function buildCategoryParentNameMap(docs: CategoryDoc[], locale: EcomLocale): Ma
 
 function productTag(doc: ProductDoc, locale: EcomLocale): string | undefined {
   if (doc.isNew) return locale === 'pl' ? 'Nowość' : 'New';
-  if (doc.stock !== null && doc.stock > 0 && doc.stock <= 3) return locale === 'pl' ? 'Ostatnie sztuki' : 'Last pieces';
-  if (doc.stock !== null && doc.stock === 0) return locale === 'pl' ? 'Wyprzedane' : 'Sold out';
+  const stock = doc.stock;
+  if (typeof stock === 'number' && stock > 0 && stock <= 3) return locale === 'pl' ? 'Ostatnie sztuki' : 'Last pieces';
+  if (stock === 0) return locale === 'pl' ? 'Wyprzedane' : 'Sold out';
   return undefined;
 }
 
@@ -998,10 +999,10 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     }
 
     // Price range filter (inclusive min, exclusive max).
-    if (opts.priceMin !== null || opts.priceMax !== null) {
+    if (typeof opts.priceMin === 'number' || typeof opts.priceMax === 'number') {
       const priceClause: Record<string, number> = {};
-      if (opts.priceMin !== null) priceClause['$gte'] = opts.priceMin;
-      if (opts.priceMax !== null) priceClause['$lt'] = opts.priceMax;
+      if (typeof opts.priceMin === 'number') priceClause['$gte'] = opts.priceMin;
+      if (typeof opts.priceMax === 'number') priceClause['$lt'] = opts.priceMax;
       queryClauses.push({ price: priceClause });
     }
 

@@ -1,6 +1,8 @@
+/* eslint-disable max-lines */
+
 import { getDb, getEcommerceProductsDb } from '@/lib/mongodb';
 import { ORDERS_COLLECTION } from '@/lib/orders';
-import { getRedisConnection as getRedisConnectionUnsafe } from '../../../src/shared/lib/queue';
+import { getRedisConnection as getRedisConnectionUnsafe } from '@/shared/lib/queue';
 
 import type { Db } from 'mongodb';
 
@@ -25,6 +27,11 @@ type DiscountCouponDoc = {
   minOrderAmount?: unknown;
   usageLimit?: unknown;
   singleUse?: unknown;
+};
+
+type PromoLookupResult = {
+  found: boolean;
+  evaluation: PromoEvaluation | null;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -241,35 +248,41 @@ const collectActivePromoFromDb = async (
   code: string,
   subtotal: number,
   email?: string
-): Promise<PromoEvaluation | null> => {
+): Promise<PromoLookupResult> => {
   const db: Db = await getEcommerceProductsDb();
   const doc = await db.collection<DiscountCouponDoc>(PROMO_COLLECTION).findOne({ code });
-  if (doc === null) return null;
-  return collectActivePromoFromRecord(code, subtotal, readPromoEmail(email), doc);
+  if (doc === null) return { found: false, evaluation: null };
+  return {
+    found: true,
+    evaluation: await collectActivePromoFromRecord(code, subtotal, readPromoEmail(email), doc),
+  };
 };
 
 const collectActivePromoFromRedis = async (
   code: string,
   subtotal: number,
   email: string
-): Promise<PromoEvaluation | null> => {
+): Promise<PromoLookupResult> => {
   const redisClient = getRedisConnection();
-  if (redisClient === null) return null;
+  if (redisClient === null) return { found: false, evaluation: null };
 
   try {
     const cached = await redisClient.get(getDiscountCouponRedisKey(code));
-    if (cached === null) return null;
+    if (cached === null) return { found: false, evaluation: null };
 
     const parsed = parseCachedPromoRecord(cached);
-    if (parsed === null) return null;
-    return collectActivePromoFromRecord(
-      code,
-      subtotal,
-      readPromoEmail(email),
-      parsed
-    );
+    if (parsed === null) return { found: false, evaluation: null };
+    return {
+      found: true,
+      evaluation: await collectActivePromoFromRecord(
+        code,
+        subtotal,
+        readPromoEmail(email),
+        parsed
+      ),
+    };
   } catch {
-    return null;
+    return { found: false, evaluation: null };
   }
 };
 
@@ -332,7 +345,7 @@ export async function lookupPromoDiscount(
     subtotal,
     normalizedEmail
   );
-  if (fromRedis !== null) return fromRedis;
+  if (fromRedis.found) return fromRedis.evaluation;
 
   try {
     const fromDb = await collectActivePromoFromDb(
@@ -340,7 +353,7 @@ export async function lookupPromoDiscount(
       subtotal,
       normalizedEmail
     );
-    if (fromDb !== null) return fromDb;
+    if (fromDb.found) return fromDb.evaluation;
   } catch {
     // Fallback to local static list when ecommerce DB is unavailable.
   }

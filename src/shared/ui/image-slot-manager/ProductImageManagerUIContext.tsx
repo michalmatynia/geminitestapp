@@ -59,13 +59,26 @@ const isFastCometImageFile = (imageFile: ImageFileSelection | null | undefined):
 
 type ProductImageSlotValue = ProductImageManagerController['imageSlots'][number];
 
-type FastCometUploadResponse = {
+type FastCometUploadOkResponse = {
   status: 'ok';
   imageFile: ImageFileSelection;
   alreadyUploaded?: boolean | undefined;
   publicPath?: string | undefined;
   remoteUrl?: string | undefined;
 };
+
+type FastCometUploadQueuedResponse = {
+  status: 'queued';
+  imageFile?: ImageFileSelection | undefined;
+  imageFileId: string;
+  imageSlotIndex?: number | undefined;
+  jobId: string;
+  product?: unknown;
+  publicPath?: string | undefined;
+  queueName: string;
+};
+
+type FastCometUploadResponse = FastCometUploadOkResponse | FastCometUploadQueuedResponse;
 
 type ProductImagesUploadResponse = {
   success: boolean;
@@ -84,9 +97,14 @@ type ImmediateFileUploadEvent = {
 type FastCometUploadStartHandler = ProductImageManagerController['onFastCometUploadStart'];
 type FastCometUploadSuccessHandler = ProductImageManagerController['onFastCometUploadSuccess'];
 type FastCometUploadErrorHandler = ProductImageManagerController['onFastCometUploadError'];
+type SlotFileSelectHandler = NonNullable<ProductImageManagerController['handleSlotFileSelect']>;
 
 const isBrowserFile = (value: unknown): value is File =>
   typeof File !== 'undefined' && value instanceof File;
+
+const isFastCometUploadQueuedResponse = (
+  value: FastCometUploadResponse
+): value is FastCometUploadQueuedResponse => value.status === 'queued';
 
 const getExistingImageFileFromSlot = (
   slot: ProductImageSlotValue | undefined
@@ -221,7 +239,7 @@ const notifyImmediateUploadStart = (
 
 const notifyImmediateUploadSuccess = (input: {
   onSuccess: FastCometUploadSuccessHandler;
-  result: FastCometUploadResponse;
+  result: FastCometUploadOkResponse;
   uploadEvent: ImmediateFileUploadEvent | null;
 }): void => {
   if (input.uploadEvent === null) return;
@@ -232,6 +250,25 @@ const notifyImmediateUploadSuccess = (input: {
     publicPath: input.result.publicPath,
     remoteUrl: input.result.remoteUrl,
   });
+};
+
+const applyQueuedFastCometUploadResult = (input: {
+  handleSlotFileSelect: SlotFileSelectHandler;
+  index: number;
+  result: FastCometUploadResponse;
+  setImageBase64At: (index: number, value: string) => void;
+  setImageLinkAt: (index: number, value: string) => void;
+  setSlotViewMode: (index: number, mode: SlotViewMode) => void;
+}): boolean => {
+  if (!isFastCometUploadQueuedResponse(input.result)) return false;
+  const imageFile = input.result.imageFile;
+  if (imageFile !== undefined) {
+    input.handleSlotFileSelect(imageFile, input.index);
+    input.setSlotViewMode(input.index, resolveSlotViewModeForImageFile(imageFile));
+  }
+  input.setImageLinkAt(input.index, '');
+  input.setImageBase64At(input.index, '');
+  return true;
 };
 
 const toErrorMessage = (error: unknown): string =>
@@ -392,6 +429,14 @@ export function ProductImageManagerUIProvider({
           productSku: productSku ?? null,
           uploadEvent,
         });
+        if (applyQueuedFastCometUploadResult({
+          handleSlotFileSelect,
+          index,
+          result,
+          setImageBase64At,
+          setImageLinkAt,
+          setSlotViewMode,
+        })) return;
         handleSlotFileSelect(result.imageFile, index);
         setImageLinkAt(index, '');
         setImageBase64At(index, '');
@@ -592,6 +637,14 @@ export function ProductImageManagerUIProvider({
         setFastCometLoadingSlots((prev) => ({ ...prev, [index]: true }));
         onFastCometUploadStart?.(uploadEvent);
         const result = await postFastCometUploadRequest({ index, productId, slot });
+        if (applyQueuedFastCometUploadResult({
+          handleSlotFileSelect,
+          index,
+          result,
+          setImageBase64At,
+          setImageLinkAt,
+          setSlotViewMode,
+        })) return;
         handleSlotFileSelect(result.imageFile, index);
         setImageLinkAt(index, '');
         setImageBase64At(index, '');

@@ -18,10 +18,10 @@ import {
 } from '@/features/products/lib/product-integrations-adapter-loader';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Button } from '@/shared/ui/button';
-import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+import { PRODUCT_LIST_TRIGGER_BUTTON_BAR_CLASSNAME } from '../buttons/ProductListMarketplaceButton';
+import { ProductListOpenIntegrationsButton } from '../buttons/ProductListOpenIntegrationsButton';
 import { TraderaQuickListButton } from '../buttons/TraderaQuickListButton';
 
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
@@ -36,15 +36,6 @@ const ScrapedSourceControls = dynamic(() => import('../buttons/ScrapedSourceCont
 const TraderaStatusButton = dynamic(() => import('../buttons/TraderaStatusButton').then((mod) => mod.TraderaStatusButton), { ssr: false, loading: () => null });
 const VintedStatusButton = dynamic(() => import('../buttons/VintedStatusButton').then((mod) => mod.VintedStatusButton), { ssr: false, loading: () => null });
 const PlaywrightStatusButton = dynamic(() => import('../buttons/PlaywrightStatusButton').then((mod) => mod.PlaywrightStatusButton), { ssr: false, loading: () => null });
-
-const CircleIconButton = (props: {
-  onClick?: () => void, onMouseEnter?: () => void, onFocus?: () => void, 
-  disabled?: boolean, ariaLabel: string, title?: string, className?: string, children: React.ReactNode;
-}): React.JSX.Element => (
-  <Button type='button' disabled={props.disabled} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onFocus={props.onFocus} variant='ghost' size='icon' aria-label={props.ariaLabel} title={props.title} className={cn('size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent', props.disabled === true && 'cursor-not-allowed opacity-60', props.className)}>
-    {props.children}
-  </Button>
-);
 
 function usePrefetchListings(productId: string, queryClient: QueryClient): () => void {
   return useCallback((): void => {
@@ -80,9 +71,11 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
 
   return (
     <div className='inline-flex items-center gap-1'>
-      <CircleIconButton onClick={(): void => onIntegrationsClick(product)} onMouseEnter={prefetchListings} onFocus={prefetchListings} ariaLabel='View integrations' className='border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-white transition-colors'>
-        <span aria-hidden='true' className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'>+</span>
-      </CircleIconButton>
+      <ProductListOpenIntegrationsButton
+        onClick={(): void => onIntegrationsClick(product)}
+        onMouseEnter={prefetchListings}
+        onFocus={prefetchListings}
+      />
       <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'baselinker')} />
       <EcommerceExportButton product={product} showEcommerceBadge={runtime.showEcommerceBadge} ecommerceStatus={runtime.ecommerceStatus} />
       <ScrapedSourceControls product={product} showScrapedSourceBadge={runtime.showScrapedSourceBadge} scrapedSourceStatus={runtime.scrapedSourceStatus} prefetchListings={prefetchListings} />
@@ -91,7 +84,7 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
       <VintedQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'vinted')} showVintedBadge={runtime.showVintedBadge} vintedStatus={runtime.vintedStatus} />
       {runtime.showVintedBadge && <VintedStatusButton productId={product.id} status={runtime.vintedStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'vinted')} />}
       {visuals.triggerButtonsReady === true && (
-        <TriggerButtonBar location='product_row' entityType='product' entityId={product.id} getEntityJson={(): Record<string, unknown> => buildTriggeredProductEntityJson({ product, values: {} })} showRunFeedback={visuals.showTriggerRunFeedback} className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight' />
+        <TriggerButtonBar location='product_row' entityType='product' entityId={product.id} getEntityJson={(): Record<string, unknown> => buildTriggeredProductEntityJson({ product, values: {} })} showRunFeedback={visuals.showTriggerRunFeedback} className={PRODUCT_LIST_TRIGGER_BUTTON_BAR_CLASSNAME} />
       )}
       {runtime.showPlaywrightProgrammableBadge && <PlaywrightStatusButton status={runtime.playwrightProgrammableStatus} prefetchListings={prefetchListings} onOpenListings={(): void => onIntegrationsClick(product, undefined, 'playwright-programmable')} />}
     </div>

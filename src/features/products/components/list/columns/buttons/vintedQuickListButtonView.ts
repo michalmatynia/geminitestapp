@@ -8,8 +8,7 @@ import {
   normalizeMarketplaceStatus,
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
-
-const GENERIC_DISABLED_INTERACTION_CLASS = 'cursor-not-allowed opacity-60';
+import { PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS } from './ProductListMarketplaceButton';
 
 type RecoveryIdentifiers = {
   runId: string | null;
@@ -99,7 +98,7 @@ const resolveDisableQuickListAction = ({
   !isFailureState && (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight);
 
 const resolveDisabledInteractionClass = (disableQuickListAction: boolean): string | false =>
-  disableQuickListAction && GENERIC_DISABLED_INTERACTION_CLASS;
+  disableQuickListAction && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS;
 
 export const resolveVintedQuickListButtonView = (
   input: VintedQuickListButtonViewInput

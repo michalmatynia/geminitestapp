@@ -52,6 +52,7 @@ type ProductListQueryState = {
   productAiRunStatusByProductId: ReturnType<typeof useProductAiPathsRunSync>;
   productData: ReturnType<typeof useProductData>;
   productScanRunStatusByProductId: ReturnType<typeof useProductListScanRunSync>;
+  queuedProductOperationIds: Set<string>;
   queuedProductIds: Set<string>;
   shouldEnableListBackgroundSync: boolean;
   visibleData: ProductWithImages[];
@@ -236,6 +237,7 @@ const useProductListQueryState = (
   input: ProductListRuntimeDataInput,
   userCatalog: ProductListUserCatalogState
 ): ProductListQueryState => {
+  const queuedProductOperationIds = queuedProductOps.useQueuedProductIds();
   const queuedProductIds = queuedProductOps.useQueuedAiRunProductIds();
   useProductSync({ enabled: input.rowRuntimeReady });
   const productAiRunStatusByProductId = useProductAiPathsRunSync({
@@ -254,20 +256,21 @@ const useProductListQueryState = (
   const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSyncRuntime({
     rowRuntimeReady: input.rowRuntimeReady,
     isLoading: productData.isLoading,
-    queuedProductIdsCount: queuedProductIds.size,
+    queuedProductIdsCount: queuedProductOperationIds.size,
     activeTrackedProductAiRunsCount: productAiRunStatusByProductId.size,
   });
   useProductListBackgroundSyncLogging({
     enabled: shouldEnableListBackgroundSync,
     productAiRunStatusByProductId,
     productData,
-    queuedProductIds,
+    queuedProductIds: queuedProductOperationIds,
   });
   return {
     categoryNameById,
     productAiRunStatusByProductId,
     productData,
     productScanRunStatusByProductId,
+    queuedProductOperationIds,
     queuedProductIds,
     shouldEnableListBackgroundSync,
     visibleData,

@@ -12,10 +12,14 @@ import { api } from '@/shared/lib/api-client';
 export type ProductImageSlotValue = ProductImageManagerController['imageSlots'][number];
 
 export type FastCometUploadResponse = {
-  status: 'ok';
-  imageFile: ImageFileSelection;
+  status: 'ok' | 'queued';
+  imageFile?: ImageFileSelection | undefined;
   alreadyUploaded?: boolean | undefined;
+  imageFileId?: string | undefined;
+  imageSlotIndex?: number | undefined;
+  jobId?: string | undefined;
   publicPath?: string | undefined;
+  queueName?: string | undefined;
   remoteUrl?: string | undefined;
 };
 

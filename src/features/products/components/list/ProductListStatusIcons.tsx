@@ -117,41 +117,59 @@ const hasAnyProductListStatusIcon = ({
   hasPolishDescription,
   imageStorageStatus,
 }: ProductListStatusIconsProps): boolean =>
-  importSource !== null ||
-  hasMarketplaceCopy ||
-  hasEnglishTitle ||
-  hasEnglishDescription ||
-  hasPolishTitle ||
-  hasPolishDescription ||
-  imageStorageStatus.hasFastCometImage ||
-  imageStorageStatus.hasLocalImage ||
-  imageStorageStatus.hasExternalLinkImage;
+  [
+    importSource !== null,
+    hasMarketplaceCopy,
+    hasEnglishTitle,
+    hasEnglishDescription,
+    hasPolishTitle,
+    hasPolishDescription,
+    imageStorageStatus.hasFastCometImage,
+    imageStorageStatus.hasLocalImage,
+    imageStorageStatus.hasExternalLinkImage,
+    imageStorageStatus.hasBase64Image,
+  ].includes(true);
+
+type ImageStorageKind = 'fastcomet' | 'local' | 'external-link' | 'base64';
+type ImageStorageShapeName = 'circle' | 'square' | 'triangle' | 'trapezoid';
 
 const getImageStorageLabels = (status: ProductImageStorageStatus): string[] => {
   const labels: string[] = [];
+  if (status.hasLocalImage) labels.push('upload');
+  if (status.hasExternalLinkImage) labels.push('link');
+  if (status.hasBase64Image) labels.push('base64');
   if (status.hasFastCometImage) labels.push('FastComet');
-  if (status.hasLocalImage) labels.push('local');
-  if (status.hasExternalLinkImage) labels.push('external link');
   return labels;
 };
 
-function ImageStorageSegment({
+const IMAGE_STORAGE_SHAPE_ACTIVE_CLASSNAME = 'bg-sky-300';
+
+const IMAGE_STORAGE_SHAPE_CLASSNAME: Record<ImageStorageShapeName, string> = {
+  circle: 'rounded-full',
+  square: 'rounded-[1px]',
+  triangle: '[clip-path:polygon(50%_0,100%_100%,0_100%)]',
+  trapezoid: '[clip-path:polygon(20%_0,80%_0,100%_100%,0_100%)]',
+};
+
+function ImageStorageShape({
   active,
-  segment,
-  activeClassName,
+  storage,
+  shape,
 }: {
   active: boolean;
-  segment: 'fastcomet' | 'local' | 'external-link';
-  activeClassName: string;
+  storage: ImageStorageKind;
+  shape: ImageStorageShapeName;
 }): React.JSX.Element {
   return (
     <span
       aria-hidden='true'
       data-active={active ? 'true' : 'false'}
-      data-product-image-storage-segment={segment}
+      data-product-image-storage-kind={storage}
+      data-product-image-storage-shape={shape}
       className={cn(
-        'block min-h-0 flex-1 border-b border-slate-950/70 last:border-b-0',
-        active ? activeClassName : 'bg-slate-700/45'
+        'block size-[5px]',
+        IMAGE_STORAGE_SHAPE_CLASSNAME[shape],
+        active ? IMAGE_STORAGE_SHAPE_ACTIVE_CLASSNAME : 'invisible'
       )}
     />
   );
@@ -171,23 +189,31 @@ function ImageStorageStatusIcon({
     <ProductListStatusIcon
       label={tooltip}
       tooltip={tooltip}
-      className='h-4 w-4 min-w-4 overflow-hidden rounded-[2px] border border-slate-500/70 bg-slate-950 p-0'
+      className='size-4 min-w-4 rounded-[2px] bg-transparent p-0'
     >
-      <span aria-hidden='true' className='flex h-full w-full flex-col'>
-        <ImageStorageSegment
+      <span
+        aria-hidden='true'
+        className='grid size-4 grid-cols-2 place-items-center gap-[1px]'
+      >
+        <ImageStorageShape
           active={status.hasFastCometImage}
-          segment='fastcomet'
-          activeClassName='bg-emerald-400'
+          storage='fastcomet'
+          shape='circle'
         />
-        <ImageStorageSegment
+        <ImageStorageShape
           active={status.hasLocalImage}
-          segment='local'
-          activeClassName='bg-sky-400'
+          storage='local'
+          shape='square'
         />
-        <ImageStorageSegment
+        <ImageStorageShape
           active={status.hasExternalLinkImage}
-          segment='external-link'
-          activeClassName='bg-violet-400'
+          storage='external-link'
+          shape='triangle'
+        />
+        <ImageStorageShape
+          active={status.hasBase64Image}
+          storage='base64'
+          shape='trapezoid'
         />
       </span>
     </ProductListStatusIcon>

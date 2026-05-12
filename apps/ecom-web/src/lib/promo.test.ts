@@ -27,7 +27,8 @@ vi.mock('@/shared/lib/queue', () => ({
 
 describe('promo code helpers', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    mocks.getRedisConnection.mockReturnValue(null);
   });
 
   describe('validatePromoCode', () => {

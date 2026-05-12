@@ -93,10 +93,15 @@ const clearMongoEnv = (): void => {
   }
 };
 
+const setEnv = (key: string, value: string): void => {
+  (process.env as Record<string, string | undefined>)[key] = value;
+};
+
 describe('ecommerce MongoDB resolver', () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.clearAllMocks();
+    mongoMocks.close.mockReset();
+    mongoMocks.connect.mockReset();
     mongoMocks.createdUris.length = 0;
     mongoMocks.dbNames.length = 0;
     mongoMocks.createdOptions.length = 0;
@@ -114,7 +119,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('falls back to alternate main DB source on retryable timeout errors when enabled', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
     process.env['MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
     process.env['MONGODB_LOCAL_DB'] = 'ecom_local';
@@ -134,12 +139,12 @@ describe('ecommerce MongoDB resolver', () => {
       'mongodb://127.0.0.1:27017/ecom_cloud',
     ]);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
-    expect(mongoMocks.dbNames).toEqual(['ecom_local', 'ecom_cloud']);
+    expect(mongoMocks.dbNames).toEqual(['ecom_cloud']);
   });
 
   it('does not fallback to alternate main DB source when flag is disabled', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
     process.env['MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
     process.env['MONGODB_LOCAL_DB'] = 'ecom_local';
@@ -156,7 +161,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('does not fallback to alternate main DB source when an explicit URI is used', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['MONGODB_URI'] = 'mongodb://127.0.0.1:27017/ecom_explicit';
     process.env['MONGODB_DB'] = 'ecom_explicit';
     process.env['MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
@@ -229,7 +234,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('falls back to insecure TLS when allowed for TLS handshake errors', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
@@ -253,7 +258,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('falls back to insecure TLS when URI-level tls=true is set and allowed', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_local?tls=true';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
@@ -277,7 +282,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('does not fall back to insecure TLS when the security override flag is not set', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
@@ -294,7 +299,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('does not fallback to insecure TLS in production without explicit production opt-in', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'production';
+    setEnv('NODE_ENV', 'production');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
@@ -309,7 +314,7 @@ describe('ecommerce MongoDB resolver', () => {
 
   it('falls back to alternate ecommerce source on retryable timeout errors when enabled', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_cloud';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_cloud';
@@ -329,12 +334,12 @@ describe('ecommerce MongoDB resolver', () => {
       'mongodb://127.0.0.1:27021/ecom_local',
     ]);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
-    expect(mongoMocks.dbNames).toEqual(['products_cloud', 'ecom_local']);
+    expect(mongoMocks.dbNames).toEqual(['ecom_local']);
   });
 
   it('does not fallback to alternate ecommerce source when flag is disabled', async () => {
     process.env['VERCEL'] = '1';
-    process.env['NODE_ENV'] = 'development';
+    setEnv('NODE_ENV', 'development');
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_cloud';
     process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_cloud';

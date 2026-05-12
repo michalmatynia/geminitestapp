@@ -3,11 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
+  cloudEcommerceDbMock,
   ecommerceCollectionMock,
   ecommerceDeleteManyMock,
   ecommerceDbMock,
+  getAllEcommerceExportDbTargetsForWriteMock,
   getAllEcommerceExportDbsForCleanupMock,
   getCloudEcommerceExportDbMock,
+  localEcommerceDbMock,
   getProductsMongoDbMock,
   getProductRepositoryMock,
   listingDeleteManyMock,
@@ -18,11 +21,14 @@ const {
   productUpdateOneMock,
   productsDbMock,
 } = vi.hoisted(() => ({
+  cloudEcommerceDbMock: { namespace: 'ecom_cloud' },
   ecommerceDeleteManyMock: vi.fn(),
   ecommerceCollectionMock: vi.fn(),
   ecommerceDbMock: {},
+  getAllEcommerceExportDbTargetsForWriteMock: vi.fn(),
   getAllEcommerceExportDbsForCleanupMock: vi.fn(),
   getCloudEcommerceExportDbMock: vi.fn(),
+  localEcommerceDbMock: { namespace: 'ecom_local' },
   getProductsMongoDbMock: vi.fn(),
   getProductRepositoryMock: vi.fn(),
   listingDeleteManyMock: vi.fn(),
@@ -50,7 +56,31 @@ vi.mock('./ecommerce-product-export.config', () => ({
   ECOM_CATEGORIES_COLLECTION: 'product_categories',
   ECOM_PRODUCTS_COLLECTION: 'products',
   getCloudEcommerceExportDb: getCloudEcommerceExportDbMock,
+  getAllEcommerceExportDbTargetsForWrite: getAllEcommerceExportDbTargetsForWriteMock,
   getAllEcommerceExportDbsForCleanup: getAllEcommerceExportDbsForCleanupMock,
+  toEcommerceExportDbError: (
+    target: { dbName: string; source: string },
+    error: unknown
+  ): unknown => {
+    if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+      return Object.assign(
+        new Error(
+          'Local ecommerce database is not reachable. Start the local ecommerce MongoDB service and try the export again.'
+        ),
+        {
+          code: 'DATABASE_ERROR',
+          expected: true,
+          httpStatus: 503,
+          meta: {
+            ecommerceMongoDbName: target.dbName,
+            ecommerceMongoSource: target.source,
+          },
+          retryable: true,
+        }
+      );
+    }
+    return error;
+  },
 }));
 
 import { buildEcommerceProductExportDocument } from './ecommerce-product-export.mapper';
@@ -210,6 +240,30 @@ describe('deleteProductFromEcommerceExport', () => {
     });
   });
 
+  it('counts ecommerce product deletes across every export database target', async () => {
+    const localDeleteManyMock = vi.fn().mockResolvedValue({ deletedCount: 1 });
+    const cloudDeleteManyMock = vi.fn().mockResolvedValue({ deletedCount: 2 });
+    getAllEcommerceExportDbsForCleanupMock.mockResolvedValue([
+      {
+        collection: vi.fn().mockReturnValue({ deleteMany: localDeleteManyMock }),
+      },
+      {
+        collection: vi.fn().mockReturnValue({ deleteMany: cloudDeleteManyMock }),
+      },
+    ]);
+
+    const result = await deleteProductFromEcommerceExport(' product-12345678 ');
+
+    expect(localDeleteManyMock).toHaveBeenCalledWith({
+      $or: [{ _id: 'product-12345678' }, { sourceProductId: 'product-12345678' }],
+    });
+    expect(cloudDeleteManyMock).toHaveBeenCalledWith({
+      $or: [{ _id: 'product-12345678' }, { sourceProductId: 'product-12345678' }],
+    });
+    expect(result.ecommerceDeletedCount).toBe(3);
+    expect(result.listingDeletedCount).toBe(1);
+  });
+
   it('does not clear the local ecommerce badge when the cloud delete fails', async () => {
     const error = new Error('cloud delete failed');
     ecommerceDeleteManyMock.mockRejectedValue(error);
@@ -233,6 +287,10 @@ describe('exportProductToEcommerce', () => {
       getProductById: vi.fn().mockResolvedValue(buildProduct()),
     });
     getCloudEcommerceExportDbMock.mockResolvedValue(ecommerceDbMock);
+    getAllEcommerceExportDbTargetsForWriteMock.mockResolvedValue([
+      { dbName: 'ecom_local', key: 'local:ecom_local', db: localEcommerceDbMock, source: 'local' },
+      { dbName: 'ecom_cloud', key: 'cloud:ecom_cloud', db: cloudEcommerceDbMock, source: 'cloud' },
+    ]);
     getProductsMongoDbMock.mockResolvedValue(productsDbMock);
     productCreateIndexMock.mockResolvedValue('index');
     productUpdateOneMock.mockResolvedValue({ upsertedCount: 1 });
@@ -251,16 +309,19 @@ describe('exportProductToEcommerce', () => {
       };
     });
     listingCollectionMock.mockReturnValue({ updateOne: listingUpdateOneMock });
-    (ecommerceDbMock as { collection?: typeof ecommerceCollectionMock }).collection =
+    (localEcommerceDbMock as { collection?: typeof ecommerceCollectionMock }).collection =
+      ecommerceCollectionMock;
+    (cloudEcommerceDbMock as { collection?: typeof ecommerceCollectionMock }).collection =
       ecommerceCollectionMock;
     (productsDbMock as { collection?: typeof listingCollectionMock }).collection =
       listingCollectionMock;
   });
 
-  it('writes exports to the cloud ecommerce database and records a local listing badge', async () => {
+  it('writes exports to local and cloud ecommerce databases and records a local listing badge', async () => {
     const result = await exportProductToEcommerce(' product-12345678 ');
 
-    expect(getCloudEcommerceExportDbMock).toHaveBeenCalledTimes(1);
+    expect(getAllEcommerceExportDbTargetsForWriteMock).toHaveBeenCalledTimes(1);
+    expect(productUpdateOneMock).toHaveBeenCalledTimes(2);
     expect(productUpdateOneMock).toHaveBeenCalledWith(
       { _id: 'product-12345678' },
       expect.objectContaining({
@@ -271,6 +332,7 @@ describe('exportProductToEcommerce', () => {
       }),
       { upsert: true }
     );
+    expect(productCategoryUpdateOneMock).toHaveBeenCalledTimes(2);
     expect(listingUpdateOneMock).toHaveBeenCalledWith(
       { _id: 'ecom:product-12345678' },
       expect.objectContaining({
@@ -282,6 +344,49 @@ describe('exportProductToEcommerce', () => {
       }),
       { upsert: true }
     );
+    expect(result.status).toBe('created');
+  });
+
+  it('does not record the local listing badge when any ecommerce database write fails', async () => {
+    productUpdateOneMock
+      .mockResolvedValueOnce({ upsertedCount: 1 })
+      .mockRejectedValueOnce(new Error('cloud write failed'));
+
+    await expect(exportProductToEcommerce(' product-12345678 ')).rejects.toThrow(
+      'cloud write failed'
+    );
+
+    expect(productUpdateOneMock).toHaveBeenCalledTimes(2);
+    expect(listingUpdateOneMock).not.toHaveBeenCalled();
+  });
+
+  it('reports a local ecommerce database outage when the local write loses its connection', async () => {
+    const error = new Error('connect ECONNREFUSED 127.0.0.1:27021');
+    productUpdateOneMock.mockRejectedValueOnce(error);
+
+    await expect(exportProductToEcommerce(' product-12345678 ')).rejects.toMatchObject({
+      code: 'DATABASE_ERROR',
+      expected: true,
+      httpStatus: 503,
+      message:
+        'Local ecommerce database is not reachable. Start the local ecommerce MongoDB service and try the export again.',
+      meta: {
+        ecommerceMongoDbName: 'ecom_local',
+        ecommerceMongoSource: 'local',
+      },
+      retryable: true,
+    });
+
+    expect(listingUpdateOneMock).not.toHaveBeenCalled();
+  });
+
+  it('reports created when at least one ecommerce database target inserted a new product', async () => {
+    productUpdateOneMock
+      .mockResolvedValueOnce({ upsertedCount: 0 })
+      .mockResolvedValueOnce({ upsertedCount: 1 });
+
+    const result = await exportProductToEcommerce(' product-12345678 ');
+
     expect(result.status).toBe('created');
   });
 });

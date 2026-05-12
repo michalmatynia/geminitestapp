@@ -104,6 +104,19 @@ const buildUploadedFileMetadata = (input: {
   uploadedToFastCometAt: new Date().toISOString(),
 });
 
+const buildStagedFileMetadata = (input: {
+  originalFilename: string;
+  publicPath: string;
+}): Record<string, unknown> => ({
+  fastCometUploadStatus: 'queued',
+  localPublicPath: input.publicPath,
+  mirroredLocally: true,
+  originalFilename: input.originalFilename,
+  publicPath: input.publicPath,
+  queuedForFastCometAt: new Date().toISOString(),
+  storageSource: 'local',
+});
+
 const sanitizePathSegment = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
@@ -253,5 +266,51 @@ export const uploadNewImageFileToFastComet = async (input: {
     product: updatedProduct,
     publicPath,
     remoteUrl,
+  };
+};
+
+export const stageNewImageFileForFastCometUpload = async (input: {
+  body: FastCometFileUploadBody;
+  product: ProductWithImages;
+  productId: string;
+  productRepo: ProductRepository;
+}): Promise<{ imageFile: ImageFileRecord; product: ProductWithImages; publicPath: string }> => {
+  const { body, product, productId, productRepo } = input;
+  const { filename, publicPath } = resolveUploadedFileTarget({
+    file: body.file,
+    filename: body.filename,
+    product,
+  });
+  const buffer = Buffer.from(await body.file.arrayBuffer());
+  const trimmedMimetype = body.file.type.trim();
+  const mimetype = trimmedMimetype.length > 0 ? trimmedMimetype : 'image/jpeg';
+  await writeLocalImageMirror({ buffer, publicPath });
+  const recordInput: ImageFileCreateInput = {
+    filename,
+    filepath: publicPath,
+    metadata: buildStagedFileMetadata({
+      originalFilename: body.file.name,
+      publicPath,
+    }),
+    mimetype,
+    publicUrl: publicPath,
+    size: body.file.size,
+    storageProvider: 'local',
+    url: publicPath,
+  };
+  const imageFileRepo = await getImageFileRepository();
+  const imageFile = await imageFileRepo.createImageFile(recordInput);
+  const updatedProduct = await persistUploadedImageSlot({
+    imageFile,
+    imageSlotIndex: body.imageSlotIndex,
+    product,
+    productId,
+    productRepo,
+  });
+
+  return {
+    imageFile,
+    product: updatedProduct,
+    publicPath,
   };
 };

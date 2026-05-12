@@ -40,17 +40,21 @@ const CATEGORY_VISUALS = [
 
 const DEFAULT_VISUAL = CATEGORY_VISUALS[0];
 
+type CategoryCounts = Partial<Record<string, number | null>>;
+
+function isValidCount(value: number | null | undefined): value is number { return typeof value === 'number' && Number.isFinite(value); }
+
 export function CategoriesGrid({
   counts = {},
   content = HOME_CONTENT_DEFAULTS.categories,
   catalogCategories = [],
 }: {
-  counts?: Record<string, number>;
+  counts?: CategoryCounts;
   content?: HomeCategoriesContent;
   catalogCategories?: CatalogCategoryOption[];
 }): JSX.Element {
   const sectionRef = useRef<HTMLElement>(null);
-  const hasLiveCounts = Object.keys(counts).length > 0;
+  const hasLiveCounts = Object.values(counts).some(isValidCount);
   const localizedHref = useLocalizedHref();
   const cornerLineColorOpacity = (alpha: number, accentRgb: string): string => `rgba(${accentRgb}, ${alpha})`;
 
@@ -110,10 +114,12 @@ export function CategoriesGrid({
       <div className='grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4'>
         {content.cards.filter((card) => card.visible).map((cat, i) => {
               const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
-              const liveCount = counts[cat.id] ?? (cat.id === 'objects' ? Object.values(counts).reduce((a, b) => a + b, 0) : undefined);
-              const displayCount = liveCount !== null
-                ? `${liveCount.toLocaleString()} items`
-                : `${cat.fallbackCount.toLocaleString()}+ items`;
+              const categoryCount = counts[cat.id];
+              const totalCount = cat.id === 'objects' && hasLiveCounts
+                ? Object.values(counts).reduce<number>((total, count) => (isValidCount(count) ? total + count : total), 0)
+                : undefined;
+              const liveCount = isValidCount(categoryCount) ? categoryCount : totalCount;
+              const displayCount = isValidCount(liveCount) ? `${liveCount.toLocaleString()} items` : `${cat.fallbackCount.toLocaleString()}+ items`;
               const cornerStatic = cornerLineColorOpacity(0.45, visual.accentRgb);
               const cornerTrace = cornerLineColorOpacity(0.95, visual.accentRgb);
 
@@ -299,7 +305,7 @@ export function CategoriesGrid({
                   </p>
                   <p className='type-label' style={{ color: `rgba(${visual.accentRgb},0.4)` }}>
                     {displayCount}
-                    {hasLiveCounts && liveCount !== null && (
+                    {isValidCount(liveCount) && (
                       <span style={{ color: visual.accent, opacity: 0.6 }}> · live</span>
                     )}
                   </p>

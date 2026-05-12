@@ -1224,8 +1224,9 @@ describe('ProductColumns queued badge', () => {
     expect(summaryRow?.nextElementSibling).toBe(statusRow);
   });
 
-  it('renders a three-segment image storage badge in the desktop product row', () => {
+  it('renders the shape-based image storage badge in the desktop product row', () => {
     const product = createProduct({
+      imageBase64s: ['data:image/png;base64,abc'],
       imageLinks: ['https://cdn.example.test/source.jpg'],
       images: [
         {
@@ -1252,10 +1253,16 @@ describe('ProductColumns queued badge', () => {
 
     const { container } = render(nameColumn.cell({ row: { original: product } } as never));
 
-    expect(screen.getByLabelText('Product image storage: FastComet, external link')).toBeInTheDocument();
-    expect(container.querySelector('[data-product-image-storage-segment="fastcomet"]')).toHaveAttribute('data-active', 'true');
-    expect(container.querySelector('[data-product-image-storage-segment="local"]')).toHaveAttribute('data-active', 'false');
-    expect(container.querySelector('[data-product-image-storage-segment="external-link"]')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByLabelText('Product image storage: upload, link, base64, FastComet')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-product-image-storage-shape', 'circle');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-product-image-storage-shape', 'square');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).not.toHaveClass('invisible');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveAttribute('data-product-image-storage-shape', 'triangle');
+    expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-product-image-storage-shape', 'trapezoid');
   });
 
   it('renders the imported badge for detached Base imports without sync linkage', () => {

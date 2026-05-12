@@ -765,10 +765,18 @@ describe('ProductListMobileCards', () => {
 
     const { container } = render(<ProductListMobileCards />);
 
-    expect(screen.getByLabelText('Product image storage: local')).toBeInTheDocument();
-    expect(container.querySelector('[data-product-image-storage-segment="fastcomet"]')).toHaveAttribute('data-active', 'false');
-    expect(container.querySelector('[data-product-image-storage-segment="local"]')).toHaveAttribute('data-active', 'true');
-    expect(container.querySelector('[data-product-image-storage-segment="external-link"]')).toHaveAttribute('data-active', 'false');
+    expect(screen.getByLabelText('Product image storage: upload')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-product-image-storage-shape', 'circle');
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveClass('invisible');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-product-image-storage-shape', 'square');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveAttribute('data-product-image-storage-shape', 'triangle');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveClass('invisible');
+    expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-product-image-storage-shape', 'trapezoid');
+    expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveClass('invisible');
   });
 
   it('renders the archived badge for archived products', () => {

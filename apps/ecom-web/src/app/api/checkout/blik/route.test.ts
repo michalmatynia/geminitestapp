@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   findOrderProducts: vi.fn(),
   productProject: vi.fn(),
   productToArray: vi.fn(),
+  checkRateLimit: vi.fn(),
+  getClientIp: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({ getSession: mocks.getSession }));
@@ -37,6 +39,11 @@ vi.mock('@/lib/promo', () => ({
 
 vi.mock('@/lib/db-indexes', () => ({
   ensureAppIndexes: vi.fn(),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  getClientIp: mocks.getClientIp,
 }));
 
 function makePayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -92,11 +99,15 @@ describe('BLIK checkout route', () => {
     mocks.findOrderProducts.mockReset();
     mocks.productProject.mockReset();
     mocks.productToArray.mockReset();
+    mocks.checkRateLimit.mockReset();
+    mocks.getClientIp.mockReset();
 
     mocks.getSession.mockResolvedValue(null);
     mocks.insertOne.mockResolvedValue({ insertedId: { toString: () => 'mongo-blik-id' } });
     mocks.createPayUBlikOrder.mockResolvedValue({ payuOrderId: 'PAYU-ORDER-123', statusCode: 'PENDING' });
     mocks.computeDiscount.mockReturnValue(0);
+    mocks.checkRateLimit.mockReturnValue({ allowed: true, retryAfterSec: 0 });
+    mocks.getClientIp.mockReturnValue('127.0.0.1');
     mocks.findOrderProducts.mockReturnValue({ project: mocks.productProject });
     mocks.productProject.mockReturnValue({ toArray: mocks.productToArray });
     mocks.productToArray.mockResolvedValue([
@@ -221,7 +232,7 @@ describe('BLIK checkout route', () => {
   it('applies server-side promo discount, ignoring any client-supplied discount', async () => {
     mocks.computeDiscount.mockReturnValue(150);
 
-    const res = await POST(makeJsonRequest(makePayload({ promoCode: 'ARCANA10', discount: 9999 })));
+    const res = await POST(makeJsonRequest(makePayload({ promoCode: 'ARCANA10', discount: 9999, total: 1350 })));
 
     expect(res.status).toBe(201);
     expect(mocks.insertOne).toHaveBeenCalledWith(
@@ -321,12 +332,13 @@ describe('BLIK checkout route', () => {
     }
   });
 
-  it('rejects an order when client item price does not match catalog price', async () => {
-    const res = await POST(makeJsonRequest(makePayload({ items: [{ ...makePayload().items?.[0], price: 1200 }] }));
+  it('rejects an order when client totals follow a manipulated item price', async () => {
+    const [item] = makePayload().items as [Record<string, unknown>];
+    const res = await POST(makeJsonRequest(makePayload({ items: [{ ...item, price: 1200 }], subtotal: 1200, total: 1200 })));
     const body = await res.json() as { error?: string };
 
     expect(res.status).toBe(400);
-    expect(body.error).toBe('Order items are invalid.');
+    expect(body.error).toBe('Order totals are invalid.');
     expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
     expect(mocks.insertOne).not.toHaveBeenCalled();
   });

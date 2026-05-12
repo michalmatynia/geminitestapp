@@ -65,11 +65,9 @@ function resolveUniverseCategoryValues(
 function selectorValuesHref(selectorType: HomeCategoryCardContent['selectorType'], values: string[]): string | null {
   if (values.length === 0) return null;
 
-  const selectorParam = selectorType === 'category'
-    ? 'categories'
-    : selectorType === 'theme'
-      ? 'themes'
-      : null;
+  let selectorParam: string | null = null;
+  if (selectorType === 'category') selectorParam = 'categories';
+  if (selectorType === 'theme') selectorParam = 'themes';
   if (selectorParam === null) return null;
 
   const params = new URLSearchParams();

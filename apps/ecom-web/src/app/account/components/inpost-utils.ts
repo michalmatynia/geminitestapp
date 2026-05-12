@@ -38,7 +38,6 @@ const INPOST_FULFILLMENT_MESSAGES_BY_LOCALE: Record<
   },
 };
 
-// eslint-disable-next-line complexity
 export function inpostFulfillmentStatus(order: Order, locale: EcomLocale): string {
   const messages = INPOST_FULFILLMENT_MESSAGES_BY_LOCALE[locale];
   const inpostShipment = order.inpostShipment;

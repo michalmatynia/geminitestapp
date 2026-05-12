@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getDb } from '@/lib/mongodb';
 import {
@@ -64,7 +64,14 @@ function readString(value: unknown): string {
 
 function readOptionalString(value: unknown): string | undefined {
   const text = readString(value);
-  return text ? text : undefined;
+  if (text.length === 0) return undefined;
+  return text;
+}
+
+function normalizePromoCode(value: unknown): string | undefined {
+  const text = readString(value);
+  if (text.length === 0) return undefined;
+  return text.toUpperCase().replace(/\s+/g, '');
 }
 
 function readNonNegativeNumber(value: unknown): number | null {
@@ -76,6 +83,7 @@ function calculateItemsSubtotal(items: OrderItem[]): number {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
+// eslint-disable-next-line complexity
 function sanitizeItems(value: unknown): OrderItem[] | null {
   if (!Array.isArray(value)) return null;
   const items: OrderItem[] = [];
@@ -88,12 +96,21 @@ function sanitizeItems(value: unknown): OrderItem[] | null {
     const size = readString(item['size']);
     const price = readNonNegativeNumber(item['price']);
     const quantity =
-      typeof item['quantity'] === 'number' && Number.isInteger(item['quantity'])
+      typeof item['quantity'] === 'number' && Number.isInteger(item['quantity']) && item['quantity'] > 0
         ? item['quantity']
         : null;
-    if (!productId || !slug || !name || !category || !size || price == null || !quantity || quantity < 1) {
+    if (
+      productId.length === 0 ||
+      slug.length === 0 ||
+      name.length === 0 ||
+      category.length === 0 ||
+      size.length === 0 ||
+      price === null ||
+      quantity === null
+    ) {
       return null;
     }
+    const priceDisplay = readString(item['priceDisplay']);
     items.push({
       productId,
       slug,
@@ -101,7 +118,7 @@ function sanitizeItems(value: unknown): OrderItem[] | null {
       category,
       size,
       price,
-      priceDisplay: readString(item['priceDisplay']) || `EUR ${price}`,
+      priceDisplay: priceDisplay.length === 0 ? `EUR ${price}` : priceDisplay,
       quantity,
       imageUrl: readOptionalString(item['imageUrl']),
     });
@@ -116,11 +133,13 @@ function sanitizeAddress(value: unknown): Record<string, string> | null {
     if (typeof raw === 'string') address[key] = raw.trim();
   }
   for (const field of REQUIRED_ADDRESS_FIELDS) {
-    if (!address[field]) return null;
+    const fieldValue = address[field];
+    if (fieldValue.length === 0) return null;
   }
   return address;
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export async function POST(req: NextRequest): Promise<NextResponse> {
   void ensureAppIndexes();
   const ip = getClientIp(req);
@@ -144,26 +163,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const blikCode = readString(body['blikCode']);
+  if (blikCode.length !== 6) {
+    return NextResponse.json({ error: 'Enter a valid 6-digit BLIK code.' }, { status: 400 });
+  }
   if (!BLIK_RE.test(blikCode)) {
     return NextResponse.json({ error: 'Enter a valid 6-digit BLIK code.' }, { status: 400 });
   }
 
   const email = readString(body['email']).toLowerCase();
-  if (!email || !EMAIL_RE.test(email)) {
+  if (email.length === 0 || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
   }
 
   const items = sanitizeItems(body['items']);
-  if (!items || items.length === 0) {
+  if (items === null || items.length === 0) {
     return NextResponse.json({ error: 'Order items are required' }, { status: 400 });
   }
 
   const shippingAddress = sanitizeAddress(body['shippingAddress']);
-  if (!shippingAddress || shippingAddress.email.toLowerCase() !== email) {
+  if (shippingAddress?.email.toLowerCase() !== email) {
     return NextResponse.json({ error: 'A complete shipping address is required' }, { status: 400 });
   }
 
-  const shippingMethod = readString(body['shippingMethod']) || 'Standard';
+  const customShippingMethod = readString(body['shippingMethod']);
+  const shippingMethod = customShippingMethod.length === 0 ? 'Standard' : customShippingMethod;
   const shippingCarrier = sanitizeShippingCarrier(body['shippingCarrier']);
   const shippingService = readOptionalString(body['shippingService']);
   const inpostPoint = sanitizeInpostPoint(body['inpostPoint']);
@@ -178,11 +201,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'InPost parcel locker delivery is available only in Poland' }, { status: 400 });
   }
 
-  if (shippingPrice == null || subtotal == null || total == null || total < 1) {
+  if (shippingPrice === null || subtotal === null || total === null || total < 1) {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
   }
 
-  let pricedItems: OrderItem[];
   let priceByProductId: Map<string, number>;
   try {
     priceByProductId = await getCanonicalProductPrices(items.map((item) => item.productId));
@@ -193,7 +215,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  pricedItems = [];
+  const pricedItems: OrderItem[] = [];
   for (const item of items) {
     const canonicalPrice = priceByProductId.get(item.productId);
     if (typeof canonicalPrice !== 'number') {
@@ -202,8 +224,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     pricedItems.push(canonicalPrice === item.price ? item : { ...item, price: canonicalPrice });
   }
 
-  const promoCode = readOptionalString(body['promoCode']);
-  const discount = computeDiscount(subtotal, promoCode);
+  const promoCode = normalizePromoCode(body['promoCode']);
+  const discount = await computeDiscount(subtotal, promoCode, email);
   const itemsSubtotal = calculateItemsSubtotal(pricedItems);
   if (itemsSubtotal !== subtotal) {
     return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
@@ -222,7 +244,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const orderId = generateOrderId();
   const now = new Date().toISOString();
   const baseUrl = getWebhookCallbackBaseUrl();
-  if (!baseUrl) {
+  if (baseUrl === null) {
     return NextResponse.json(
       { error: 'Payment callback URL is not configured. Set NEXT_PUBLIC_BASE_URL or NEXT_PUBLIC_ECOM_URL.' },
       { status: 500 },

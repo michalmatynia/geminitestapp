@@ -19,7 +19,7 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
     throw forbiddenError('Registration is disabled.');
   }
 
-  if (!process.env['MONGODB_URI']) {
+  if (process.env['MONGODB_URI'] === undefined) {
     throw badRequestError('MongoDB is not configured.');
   }
 

@@ -229,6 +229,53 @@ describe('BLIK checkout route', () => {
     );
   });
 
+  it('uses a server-side fixed discount and validates BLIK totals', async () => {
+    const payload = makePayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 1500, quantity: 2 };
+
+    mocks.computeDiscount.mockReturnValue(500);
+    const res = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 3000,
+      promoCode: 'fixed15',
+      total: 2500,
+    }));
+
+    expect(res.status).toBe(201);
+    expect(mocks.createPayUBlikOrder).toHaveBeenCalled();
+    expect(mocks.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discount: 500,
+        promoCode: 'FIXED15',
+        subtotal: 3000,
+        total: 2500,
+      }),
+    );
+  });
+
+  it('rejects BLIK checkout when a fixed discount total is invalid', async () => {
+    const payload = makePayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 1500, quantity: 2 };
+
+    mocks.computeDiscount.mockReturnValue(500);
+    const res = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 3000,
+      promoCode: 'fixed15',
+      total: 2600,
+    }));
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(400);
+    expect(body).toEqual({ error: 'Order totals are invalid.' });
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+  });
+
   it('requires webhook callback base URL configuration', async () => {
     const previousEnv = {
       NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,

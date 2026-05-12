@@ -4,13 +4,24 @@ import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
+type DatabaseEngineProvider = 'mongodb' | 'redis';
 
-export function useDatabaseEngineController() {
+type DatabaseEngineControllerState = {
+  policy: { provider: DatabaseEngineProvider };
+  isLoading: boolean;
+  provider: DatabaseEngineProvider;
+  setProvider: React.Dispatch<React.SetStateAction<DatabaseEngineProvider>>;
+  handleSave: () => Promise<void>;
+  isSaving: boolean;
+};
+
+export function useDatabaseEngineController(): DatabaseEngineControllerState {
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const persistedProvider = settingsQuery.data?.get(APP_DB_PROVIDER_SETTING_KEY) === 'redis' ? 'redis' : 'mongodb';
-  const [provider, setProvider] = useState<'mongodb' | 'redis'>(persistedProvider);
+  const persistedProvider: DatabaseEngineProvider =
+    settingsQuery.data?.get(APP_DB_PROVIDER_SETTING_KEY) === 'redis' ? 'redis' : 'mongodb';
+  const [provider, setProvider] = useState<DatabaseEngineProvider>(persistedProvider);
   const [isSaving, setIsSaving] = useState(false);
   const policy = useMemo(() => ({ provider }), [provider]);
 
@@ -18,7 +29,7 @@ export function useDatabaseEngineController() {
     setProvider(persistedProvider);
   }, [persistedProvider]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     setIsSaving(true);
     try {
       await updateSetting.mutateAsync({ key: APP_DB_PROVIDER_SETTING_KEY, value: provider });

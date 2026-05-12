@@ -1,10 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import type * as bcryptTypes from 'bcryptjs';
 import { createRequire } from 'module';
 
 // bcryptjs needs createRequire in ESM context
 const require = createRequire(import.meta.url);
-const bcrypt = require('bcryptjs') as typeof import('bcryptjs');
+const bcrypt = require('bcryptjs') as typeof bcryptTypes;
 
 export const COOKIE_NAME = 'ecom_session';
 const MIN_AUTH_SECRET_LENGTH = 32;
@@ -18,7 +19,9 @@ export interface SessionUser {
 
 function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET?.trim();
-  if (!secret) throw new Error('AUTH_SECRET env var is not set');
+  if (secret === '' || secret === undefined) {
+    throw new Error('AUTH_SECRET env var is not set');
+  }
   if (secret.length < MIN_AUTH_SECRET_LENGTH) {
     throw new Error('AUTH_SECRET must be at least 32 characters');
   }
@@ -70,7 +73,7 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  if (token === '' || token === undefined) return null;
   return verifySessionToken(token);
 }
 

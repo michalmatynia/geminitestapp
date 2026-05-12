@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { getDb } from '@/lib/mongodb';
@@ -12,7 +12,7 @@ function readLimit(value: string | null): number {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

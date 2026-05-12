@@ -12,6 +12,7 @@
 
 'use client';
 
+/* eslint-disable max-lines */
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { startTransition, useState, useMemo, useCallback, useEffect, useRef } from 'react';
@@ -127,8 +128,17 @@ const didMongoSyncCompleteAfterRequestStarted = (
   direction: DatabaseEngineMongoSyncDirection,
   requestStartedAtMs: number
 ): boolean => {
-  const syncedAt = state?.lastSync?.syncedAt;
-  if (syncedAt == null || syncedAt === '' || state?.lastSync?.direction !== direction) {
+  const lastSync = state?.lastSync;
+  if (lastSync === undefined) {
+    return false;
+  }
+
+  if (lastSync.direction !== direction) {
+    return false;
+  }
+
+  const syncedAt = lastSync.syncedAt;
+  if (syncedAt === '') {
     return false;
   }
 
@@ -150,6 +160,7 @@ const getMongoSyncInProgressMessage = (
   return `MongoDB sync is still running for ${applicationLabel}: ${syncInProgress.source} -> ${syncInProgress.target}. Started at ${syncInProgress.acquiredAt}.`;
 };
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const router = useRouter();
   const pathname = usePathname();
@@ -208,6 +219,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     useState<DatabaseEngineMongoPendingSyncRequest | null>(null);
   const lastValidationErrorSignatureRef = useRef<string | null>(null);
 
+  /* eslint-disable complexity */
   const resolveMongoSyncToast = useCallback(
     async (
       error: unknown,
@@ -264,6 +276,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     [mongoSourceQuery]
   );
+  /* eslint-enable complexity */
 
   const parsedPersistedSettings = useMemo(() => {
     const errors: string[] = [];
@@ -368,10 +381,10 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   useEffect(() => {
     const shouldPollActiveJobs =
       pendingMongoSourceSync !== null ||
-      mongoSourceQuery.data?.syncInProgress != null ||
+      mongoSourceQuery.data?.syncInProgress !== null ||
       hasActiveOperationJobs;
 
-    if (!shouldPollActiveJobs) return;
+    if (!shouldPollActiveJobs) return undefined;
 
     const intervalId = window.setInterval(() => {
       void mongoSourceQuery.refetch();
@@ -409,7 +422,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [collectionRouteMap, schemaQuery.data]);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     try {
       await updateSettingsBulk.mutateAsync([
         { key: DATABASE_ENGINE_POLICY_KEY, value: JSON.stringify(policy) },

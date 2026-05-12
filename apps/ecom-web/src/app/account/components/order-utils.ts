@@ -1,6 +1,5 @@
-import { type JSX } from 'react';
 import type { Order } from '@/lib/orders';
-import { formatPrice, type EcomLocale } from '@/lib/locales';
+import { formatPrice } from '@/lib/locales';
 
 export interface DisplayOrder {
   id: string;
@@ -22,7 +21,7 @@ export function toDisplayOrder(order: Order, locale: string): DisplayOrder {
     }),
     status: order.status,
     total: formatPrice(order.total, locale === 'pl' ? 'pl' : 'en'),
-    shippingLine: [order.shippingMethod, order.inpostPoint?.name ?? ''].filter(s => s !== null && s !== undefined && s.length > 0).join(' / '),
+    shippingLine: [order.shippingMethod, order.inpostPoint?.name ?? ''].filter((line) => line.length > 0).join(' / '),
     trackingNumber: order.inpostShipment?.trackingNumber,
     items: order.items.map((item) => ({
       name: item.name,

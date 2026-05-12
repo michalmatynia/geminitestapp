@@ -17,7 +17,7 @@ function parseFilterList(searchParams: URLSearchParams, key: string): string[] {
   for (const raw of searchParams.getAll(key)) {
     for (const item of raw.split(',')) {
       const normalized = item.trim();
-      if (!normalized || seen.has(normalized)) continue;
+      if (normalized.length === 0 || seen.has(normalized)) continue;
       seen.add(normalized);
       result.push(normalized);
     }
@@ -38,7 +38,7 @@ function parseSkip(value: string | null): number {
 }
 
 function sanitizeIds(raw: string | null): string[] {
-  if (!raw) return [];
+  if (raw === null || raw.length === 0) return [];
   return raw
     .split(',')
     .map((value) => value.trim())
@@ -47,14 +47,14 @@ function sanitizeIds(raw: string | null): string[] {
 }
 
 function clampText(value: string | null | undefined): string | undefined {
-  if (!value) return undefined;
+  if (value === null || value === undefined) return undefined;
   const normalized = value.trim();
-  if (!normalized) return undefined;
+  if (normalized.length === 0) return undefined;
   return normalized.slice(0, MAX_QUERY_TEXT_LENGTH);
 }
 
 function isValidSort(value: string | null | undefined): boolean {
-  if (!value) return true;
+  if (value === null || value === undefined || value.length === 0) return true;
   return value === 'featured' || value === 'price-asc' || value === 'price-desc' || value === 'newest';
 }
 
@@ -68,7 +68,8 @@ function productMatchesThemes(product: { lore?: string; name: string }, themes: 
   });
 }
 
-export async function GET(req: NextRequest) {
+// eslint-disable-next-line max-lines-per-function, complexity
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const ip = getClientIp(req);
   const { allowed, retryAfterSec } = checkRateLimit(`products-api:${ip}`, 60, 60_000);
   if (!allowed) {
@@ -82,16 +83,16 @@ export async function GET(req: NextRequest) {
   const categoryName = searchParams.get('category') ?? undefined;
   const rawCollectionSlug = collectionSlug?.trim();
   const rawCategoryName = categoryName?.trim();
-  if (rawCollectionSlug && rawCollectionSlug.length > MAX_QUERY_TEXT_LENGTH) {
+  if (rawCollectionSlug !== undefined && rawCollectionSlug.length > MAX_QUERY_TEXT_LENGTH) {
     return NextResponse.json({ error: 'Invalid collection filter' }, { status: 400 });
   }
-  if (rawCategoryName && rawCategoryName.length > MAX_QUERY_TEXT_LENGTH) {
+  if (rawCategoryName !== undefined && rawCategoryName.length > MAX_QUERY_TEXT_LENGTH) {
     return NextResponse.json({ error: 'Invalid category filter' }, { status: 400 });
   }
 
   const categoryNames = [
     ...parseFilterList(searchParams, 'categories'),
-    ...(rawCategoryName ? [rawCategoryName] : []),
+    ...(rawCategoryName === undefined ? [] : [rawCategoryName]),
   ];
   const themeNames = parseFilterList(searchParams, 'themes');
   const search = searchParams.get('q') ?? undefined;
@@ -99,17 +100,18 @@ export async function GET(req: NextRequest) {
   const skip = parseSkip(searchParams.get('skip'));
   const ids = sanitizeIds(searchParams.get('ids'));
   const newOnly = searchParams.get('new') === '1';
-  const locale = normalizeLocale(clampText(searchParams.get('locale') ?? req.headers.get('x-ecom-locale')) ?? null);
-  const sort = clampText(searchParams.get('sort')) ?? undefined;
+  const localeValue = clampText(searchParams.get('locale') ?? req.headers.get('x-ecom-locale'));
+  const locale = normalizeLocale(localeValue ?? null);
+  const sort = clampText(searchParams.get('sort'));
   const priceMinRaw = clampText(searchParams.get('priceMin'));
   const priceMaxRaw = clampText(searchParams.get('priceMax'));
-  const priceMin = priceMinRaw != null ? Number(priceMinRaw) : undefined;
-  const priceMax = priceMaxRaw != null ? Number(priceMaxRaw) : undefined;
+  const priceMin = priceMinRaw === undefined ? undefined : Number(priceMinRaw);
+  const priceMax = priceMaxRaw === undefined ? undefined : Number(priceMaxRaw);
 
   const safeCategoryName = clampText(rawCategoryName);
   const safeCollectionSlug = clampText(rawCollectionSlug);
 
-  if (search && search.length > MAX_QUERY_TEXT_LENGTH) {
+  if (search !== undefined && search.length > MAX_QUERY_TEXT_LENGTH) {
     return NextResponse.json({ error: 'Search query is too long' }, { status: 400 });
   }
   if (!isValidSort(sort)) {
@@ -123,11 +125,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid filter value length' }, { status: 400 });
     }
   }
-  if ((priceMin != null && (!Number.isFinite(priceMin) || priceMin < 0)) ||
-      (priceMax != null && (!Number.isFinite(priceMax) || priceMax < 0))) {
+  if ((priceMin !== undefined && (!Number.isFinite(priceMin) || priceMin < 0)) ||
+      (priceMax !== undefined && (!Number.isFinite(priceMax) || priceMax < 0))) {
     return NextResponse.json({ error: 'Invalid price filters' }, { status: 400 });
   }
-  if (priceMin != null && priceMax != null && priceMin > priceMax) {
+  if (priceMin !== undefined && priceMax !== undefined && priceMin > priceMax) {
     return NextResponse.json({ error: 'Invalid price range' }, { status: 400 });
   }
 
@@ -138,7 +140,7 @@ export async function GET(req: NextRequest) {
     categoryName: safeCategoryName,
     categoryNames,
     themeNames,
-    search: search ? search.slice(0, MAX_QUERY_TEXT_LENGTH) : undefined,
+    search: search?.slice(0, MAX_QUERY_TEXT_LENGTH),
     ids,
     newOnly,
     locale,
@@ -149,10 +151,10 @@ export async function GET(req: NextRequest) {
 
   // Fall back to static demo products when DB is not configured or empty.
   if (products.length === 0) {
-    let staticProducts = (collectionSlug
-      ? PRODUCTS.filter((p) => p.collectionSlug === collectionSlug)
-      : PRODUCTS
-    ).filter((p) => !p.isSoldOut);
+    let staticProducts = (collectionSlug === undefined
+      ? PRODUCTS
+      : PRODUCTS.filter((p) => p.collectionSlug === collectionSlug)
+    ).filter((p) => p.isSoldOut !== true);
 
     if (categoryNames.length > 0) {
       const selected = new Set(categoryNames);
@@ -163,7 +165,7 @@ export async function GET(req: NextRequest) {
       staticProducts = staticProducts.filter((p) => productMatchesThemes(p, themeNames));
     }
 
-    if (search) {
+    if (search !== undefined) {
       const q = search.toLowerCase();
       staticProducts = staticProducts.filter(
         (p) =>
@@ -173,13 +175,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (ids && ids.length > 0) {
+    if (ids.length > 0) {
       const requested = new Set(ids);
       staticProducts = staticProducts.filter((p) => requested.has(p.id));
     }
 
-    if (priceMin != null) staticProducts = staticProducts.filter((p) => p.price >= priceMin);
-    if (priceMax != null) staticProducts = staticProducts.filter((p) => p.price < priceMax);
+    if (priceMin !== undefined) staticProducts = staticProducts.filter((p) => p.price >= priceMin);
+    if (priceMax !== undefined) staticProducts = staticProducts.filter((p) => p.price < priceMax);
 
     if (sort === 'price-asc') staticProducts = [...staticProducts].sort((a, b) => a.price - b.price);
     else if (sort === 'price-desc') staticProducts = [...staticProducts].sort((a, b) => b.price - a.price);

@@ -32,7 +32,13 @@ export function useRowForm(
   initialData: Record<string, unknown> | undefined,
   mode: 'add' | 'edit',
   onSubmit: (data: Record<string, unknown>) => void
-) {
+): {
+  formRef: React.RefObject<HTMLFormElement | null>;
+  formData: Record<string, string>;
+  handleSubmit: (e: React.FormEvent) => void;
+  setFieldValue: (key: string, value: string) => void;
+  getPlaceholder: (col: DatabaseColumnInfo) => string;
+} {
   const formRef = useRef<HTMLFormElement>(null);
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -55,7 +61,7 @@ export function useRowForm(
     onSubmit(parsed);
   };
 
-  const setFieldValue = (key: string, value: string) => {
+  const setFieldValue = (key: string, value: string): void => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 

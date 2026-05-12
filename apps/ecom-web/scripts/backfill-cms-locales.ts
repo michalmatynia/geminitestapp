@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +55,6 @@ type CmsPageDoc = {
   _id?: unknown;
   page: string;
   locale?: string | null;
-  content?: unknown;
 };
 
 type LocalizedContentDoc = {
@@ -67,10 +68,31 @@ type PageBackfillDefinition = {
   write: (content: unknown, locale: EcomLocale, updatedBy: string) => Promise<unknown>;
 };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const appRoot = path.resolve(__dirname, '..');
+const SCRIPT_FILE_PATH = fileURLToPath(import.meta.url);
+const SCRIPT_DIRECTORY = path.dirname(SCRIPT_FILE_PATH);
+const appRoot = path.resolve(SCRIPT_DIRECTORY, '..');
 const repoRoot = path.resolve(appRoot, '../..');
+
+function hasDocumentId(document: { _id?: unknown } | null): document is { _id: unknown } {
+  return document?._id !== null && document?._id !== undefined;
+}
+
+function statusFor<TDoc>(
+  exactDoc: TDoc | null,
+  legacyDoc: TDoc | null,
+  force: boolean,
+): BackfillStatus {
+  if (exactDoc !== null) {
+    return force ? 'update' : 'exists';
+  }
+  return legacyDoc !== null ? 'migrate-legacy' : 'create';
+}
+
+function willWrite(status: BackfillStatus, force: boolean): boolean {
+  if (status === 'exists') return false;
+  if (status === 'update') return force;
+  return true;
+}
 
 function loadEnvFiles(): void {
   for (const envPath of [
@@ -96,7 +118,7 @@ Options:
   --force              Update existing localized records from the computed source content.
   --locales=en,pl      Comma-separated locales to process. Defaults to all supported locales.
   --updated-by=value   Metadata user id for new page CMS saves. Defaults to ecom-cms-locale-backfill.
-  --help              Show this help text.
+  --help               Show this help text.
 `);
 }
 
@@ -107,30 +129,45 @@ function parseArgs(argv: string[]): CliOptions | null {
     locales: [...SUPPORTED_LOCALES],
     updatedBy: 'ecom-cms-locale-backfill',
   };
+  const booleanHandlers: Partial<Record<string, () => void>> = {
+    '--apply': () => {
+      options.apply = true;
+    },
+    '--dry-run': () => {
+      options.apply = false;
+    },
+    '--force': () => {
+      options.force = true;
+    },
+  };
+  const localArgPrefix = '--locales=';
+  const updatedByArgPrefix = '--updated-by=';
 
   for (const arg of argv) {
-    if (arg === '--help' || arg === '-h') return null;
-    if (arg === '--apply') {
-      options.apply = true;
+    if (arg === '--help' || arg === '-h') {
+      return null;
+    }
+
+    const booleanHandler = booleanHandlers[arg];
+    if (booleanHandler) {
+      booleanHandler();
       continue;
     }
-    if (arg === '--dry-run') {
-      options.apply = false;
+
+    if (arg.startsWith(localArgPrefix)) {
+      const localeValue = arg.slice(localArgPrefix.length).split(',');
+      options.locales = normalizeLocaleList(localeValue, SUPPORTED_LOCALES);
       continue;
     }
-    if (arg === '--force') {
-      options.force = true;
+
+    if (arg.startsWith(updatedByArgPrefix)) {
+      const updatedBy = arg.slice(updatedByArgPrefix.length).trim();
+      if (updatedBy !== '') {
+        options.updatedBy = updatedBy;
+      }
       continue;
     }
-    if (arg.startsWith('--locales=')) {
-      options.locales = normalizeLocaleList(arg.slice('--locales='.length).split(','), SUPPORTED_LOCALES);
-      continue;
-    }
-    if (arg.startsWith('--updated-by=')) {
-      const updatedBy = arg.slice('--updated-by='.length).trim();
-      if (updatedBy) options.updatedBy = updatedBy;
-      continue;
-    }
+
     throw new Error(`Unknown option: ${arg}`);
   }
 
@@ -163,56 +200,94 @@ const PAGE_DEFINITIONS: PageBackfillDefinition[] = [
   definePage('account', getAccountContent, saveAccountContent),
 ];
 
-function statusFor(exactDoc: unknown, legacyDoc: unknown, force: boolean): BackfillStatus {
-  if (exactDoc) return force ? 'update' : 'exists';
-  return legacyDoc ? 'migrate-legacy' : 'create';
-}
+async function backfillPageForLocale(
+  collection: Collection<CmsPageDoc>,
+  locale: EcomLocale,
+  definition: PageBackfillDefinition,
+  options: CliOptions,
+): Promise<BackfillResult> {
+  const exactDoc = await collection.findOne({ page: definition.key, locale });
+  const legacyDoc =
+    locale === DEFAULT_LOCALE && exactDoc === null
+      ? await collection.findOne({ page: definition.key, locale: { $exists: false } })
+      : null;
+  const status = statusFor(exactDoc, legacyDoc, options.force);
+  const willWriteResult = willWrite(status, options.force);
+  const result: BackfillResult = {
+    area: 'pages',
+    key: definition.key,
+    locale,
+    status,
+    willWrite: willWriteResult,
+  };
 
-function shouldWrite(status: BackfillStatus, options: CliOptions): boolean {
-  if (status === 'exists') return false;
-  if (status === 'update') return options.force;
-  return true;
+  if (!options.apply || !willWriteResult) return result;
+
+  if (status === 'migrate-legacy' && hasDocumentId(legacyDoc)) {
+    await collection.updateOne({ _id: legacyDoc._id }, { $set: { locale: DEFAULT_LOCALE } });
+    return result;
+  }
+
+  const content = await definition.resolveContent(locale);
+  await definition.write(content, locale, options.updatedBy);
+  return result;
 }
 
 async function backfillPages(
   collection: Collection<CmsPageDoc>,
   options: CliOptions,
 ): Promise<BackfillResult[]> {
-  const results: BackfillResult[] = [];
+  const localeResults = await Promise.all(
+    options.locales.map((locale) =>
+      Promise.all(
+        PAGE_DEFINITIONS.map((definition) =>
+          backfillPageForLocale(collection, locale, definition, options),
+        ),
+      ),
+    ),
+  );
+  return localeResults.flat();
+}
 
-  for (const locale of options.locales) {
-    for (const definition of PAGE_DEFINITIONS) {
-      const exactDoc = await collection.findOne({ page: definition.key, locale });
-      const legacyDoc = locale === DEFAULT_LOCALE && !exactDoc
-        ? await collection.findOne({ page: definition.key, locale: { $exists: false } })
-        : null;
-      const status = statusFor(exactDoc, legacyDoc, options.force);
-      const willWrite = shouldWrite(status, options);
+async function backfillCollectionItem<TItem>(
+  params: {
+    area: 'stories' | 'lookbook';
+    collection: Collection<LocalizedContentDoc>;
+    locale: EcomLocale;
+    force: boolean;
+    apply: boolean;
+    item: TItem;
+    keyField: 'slug' | 'id';
+    getKey: (item: TItem) => string;
+    saveItem: (item: TItem, locale: EcomLocale) => Promise<void>;
+  },
+): Promise<BackfillResult> {
+  const { area, collection, locale, force, apply, item, keyField, getKey, saveItem } = params;
+  const key = getKey(item);
+  const exactDoc = await collection.findOne({ [keyField]: key, locale });
+  const legacyDoc =
+    locale === DEFAULT_LOCALE && exactDoc === null
+      ? await collection.findOne({ [keyField]: key, locale: { $exists: false } })
+      : null;
+  const status = statusFor(exactDoc, legacyDoc, force);
+  const willWriteResult = willWrite(status, force);
+  const result: BackfillResult = {
+    area,
+    key,
+    locale,
+    status,
+    willWrite: willWriteResult,
+  };
 
-      results.push({
-        area: 'pages',
-        key: definition.key,
-        locale,
-        status,
-        willWrite,
-      });
+  if (!apply || !willWriteResult) return result;
 
-      if (!options.apply || !willWrite) continue;
-
-      if (status === 'migrate-legacy' && legacyDoc?._id) {
-        await collection.updateOne(
-          { _id: legacyDoc._id },
-          { $set: { locale: DEFAULT_LOCALE } },
-        );
-        continue;
-      }
-
-      const content = await definition.resolveContent(locale);
-      await definition.write(content, locale, options.updatedBy);
-    }
+  if (status === 'migrate-legacy' && hasDocumentId(legacyDoc)) {
+    await collection.updateOne({ _id: legacyDoc._id }, { $set: { locale: DEFAULT_LOCALE } });
+    return result;
   }
 
-  return results;
+  await saveItem(item, locale);
+  return result;
 }
 
 async function backfillCollectionItems<TItem extends object>({
@@ -236,40 +311,46 @@ async function backfillCollectionItems<TItem extends object>({
   keyField: 'slug' | 'id';
   saveItem: (item: TItem, locale: EcomLocale) => Promise<void>;
 }): Promise<BackfillResult[]> {
-  const results: BackfillResult[] = [];
+  const localeResults = await Promise.all(
+    locales.map(async (locale) => {
+      const items = await getItems(locale);
+      return Promise.all(
+        items.map((item) =>
+          backfillCollectionItem({
+            area,
+            collection,
+            locale,
+            force,
+            apply,
+            item,
+            keyField,
+            getKey,
+            saveItem,
+          }),
+        ),
+      );
+    }),
+  );
+  return localeResults.flat();
+}
 
-  for (const locale of locales) {
-    const items = await getItems(locale);
-
-    for (const item of items) {
-      const key = getKey(item);
-      const exactDoc = await collection.findOne({ [keyField]: key, locale });
-      const legacyDoc = locale === DEFAULT_LOCALE && !exactDoc
-        ? await collection.findOne({ [keyField]: key, locale: { $exists: false } })
-        : null;
-      const status = statusFor(exactDoc, legacyDoc, force);
-      const willWrite = status === 'exists' ? false : status === 'update' ? force : true;
-
-      results.push({
-        area,
-        key,
-        locale,
-        status,
-        willWrite,
-      });
-
-      if (!apply || !willWrite) continue;
-
-      if (status === 'migrate-legacy' && legacyDoc?._id) {
-        await collection.updateOne({ _id: legacyDoc._id }, { $set: { locale: DEFAULT_LOCALE } });
-        continue;
-      }
-
-      await saveItem(item, locale);
-    }
-  }
-
-  return results;
+function createSummary(results: BackfillResult[]): {
+  total: number;
+  willWrite: number;
+  pages: number;
+  stories: number;
+  lookbook: number;
+} {
+  const pages = results.filter((result) => result.area === 'pages' && result.willWrite).length;
+  const stories = results.filter((result) => result.area === 'stories' && result.willWrite).length;
+  const lookbook = results.filter((result) => result.area === 'lookbook' && result.willWrite).length;
+  return {
+    total: results.length,
+    willWrite: results.filter((result) => result.willWrite).length,
+    pages,
+    stories,
+    lookbook,
+  };
 }
 
 async function main(): Promise<void> {
@@ -280,8 +361,8 @@ async function main(): Promise<void> {
   }
 
   loadEnvFiles();
-
   const db = await getDb();
+
   try {
     const [pages, stories, lookbook] = await Promise.all([
       backfillPages(db.collection<CmsPageDoc>('ecom_cms_pages'), options),
@@ -292,9 +373,12 @@ async function main(): Promise<void> {
         force: options.force,
         apply: options.apply,
         getItems: getAllStories,
-        getKey: (story) => String(story['slug'] ?? ''),
+        getKey: (story) => {
+          const slug = (story as { slug?: string }).slug;
+          return typeof slug === 'string' ? slug : '';
+        },
         keyField: 'slug',
-        saveItem: (story, locale) => saveStory(story as Parameters<typeof saveStory>[0], locale),
+        saveItem: (story, locale) => saveStory(story, locale),
       }),
       backfillCollectionItems({
         area: 'lookbook',
@@ -303,29 +387,26 @@ async function main(): Promise<void> {
         force: options.force,
         apply: options.apply,
         getItems: getAllLookbookEntries,
-        getKey: (entry) => String(entry['id'] ?? ''),
+        getKey: (entry) => {
+          const id = (entry as { id?: string }).id;
+          return typeof id === 'string' ? id : '';
+        },
         keyField: 'id',
-        saveItem: (entry, locale) => saveLookbookEntry(entry as Parameters<typeof saveLookbookEntry>[0], locale),
+        saveItem: (entry, locale) => saveLookbookEntry(entry, locale),
       }),
     ]);
 
     const results = [...pages, ...stories, ...lookbook];
     process.stdout.write(
       `${JSON.stringify(
-        {
-          ok: true,
-          apply: options.apply,
-          force: options.force,
-          locales: options.locales,
-          counts: {
-            total: results.length,
-            willWrite: results.filter((result) => result.willWrite).length,
-            pages: pages.filter((result) => result.willWrite).length,
-            stories: stories.filter((result) => result.willWrite).length,
-            lookbook: lookbook.filter((result) => result.willWrite).length,
+          {
+            ok: true,
+            apply: options.apply,
+            force: options.force,
+            locales: options.locales,
+            counts: createSummary(results),
+            results,
           },
-          results,
-        },
         null,
         2,
       )}\n`,

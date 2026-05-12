@@ -18,6 +18,22 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const isValidDate = (value: unknown): value is Date =>
   value instanceof Date && Number.isFinite(value.getTime());
 
+const selectBackupDate = (value: { birthtime: Date; ctime: Date; mtime: Date }): Date => {
+  if (isValidDate(value.birthtime) && value.birthtime.getTime() > 0) {
+    return value.birthtime;
+  }
+
+  if (isValidDate(value.ctime)) {
+    return value.ctime;
+  }
+
+  if (isValidDate(value.mtime)) {
+    return value.mtime;
+  }
+
+  return new Date();
+};
+
 export const querySchema = z.object({
   type: z.preprocess(
     (value: unknown) => normalizeOptionalQueryString(value),
@@ -48,14 +64,7 @@ async function getBackups(): Promise<DatabaseInfo[]> {
     backupFiles.map(async (file) => {
       const filePath = join(mongoBackupsDir, file);
       const stats = await fs.stat(filePath);
-      const createdAt =
-        isValidDate(stats.birthtime) && stats.birthtime.getTime() > 0
-          ? stats.birthtime
-          : isValidDate(stats.ctime)
-            ? stats.ctime
-            : isValidDate(stats.mtime)
-              ? stats.mtime
-              : new Date();
+      const createdAt = selectBackupDate(stats);
       const lastModifiedAt = isValidDate(stats.mtime) ? stats.mtime : createdAt;
       return {
         name: file,

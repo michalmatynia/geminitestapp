@@ -91,6 +91,11 @@ function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
+function readOptionalString(value: unknown, maxLength = 160): string | undefined {
+  const text = readString(value, maxLength);
+  return text === '' ? undefined : text;
+}
+
 export function sanitizeShippingCarrier(value: unknown): ShippingCarrier {
   return value === 'inpost' ? 'inpost' : 'manual';
 }
@@ -100,7 +105,7 @@ export function sanitizeInpostPoint(value: unknown): InpostPoint | null {
 
   const id = readString(value['id'] ?? value['name'], 80);
   const name = readString(value['name'] ?? id, 120);
-  if (!id || !name) return null;
+  if (id === '' || name === '') return null;
 
   const latitude = readOptionalNumber(value['latitude']);
   const longitude = readOptionalNumber(value['longitude']);
@@ -108,11 +113,11 @@ export function sanitizeInpostPoint(value: unknown): InpostPoint | null {
   return {
     id,
     name,
-    description: readString(value['description'], 180) || undefined,
-    addressLine1: readString(value['addressLine1'], 180) || undefined,
-    addressLine2: readString(value['addressLine2'], 180) || undefined,
-    city: readString(value['city'], 100) || undefined,
-    postCode: readString(value['postCode'], 20) || undefined,
+    description: readOptionalString(value['description'], 180),
+    addressLine1: readOptionalString(value['addressLine1'], 180),
+    addressLine2: readOptionalString(value['addressLine2'], 180),
+    city: readOptionalString(value['city'], 100),
+    postCode: readOptionalString(value['postCode'], 20),
     latitude,
     longitude,
   };
@@ -125,10 +130,10 @@ export function generateOrderId(): string {
 }
 
 export function serializeOrder(doc: WithId<Document>): Order {
-  const { _id, ...order } = doc;
+  const { _id: mongoId, ...order } = doc;
   return {
     ...(order as Omit<Order, '_id'>),
-    _id: _id.toString(),
+    _id: mongoId.toString(),
   };
 }
 

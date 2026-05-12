@@ -32,6 +32,73 @@ const isIgnorableProcessFailure = (reason: unknown): boolean => {
   return false;
 };
 
+type LogContext = Record<string, unknown> | undefined;
+type ErrorLogger = {
+  captureException: (error: Error, context?: Record<string, unknown>) => void | Promise<void>;
+  logWarning: (message: unknown, context?: Record<string, unknown>) => void | Promise<void>;
+  logInfo: (message: unknown, context?: Record<string, unknown>) => void | Promise<void>;
+};
+
+const getLoggerService = (context: LogContext): string => {
+  const contextService = context?.['service'];
+  if (typeof contextService === 'string' && contextService.trim() !== '') {
+    return contextService;
+  }
+
+  return 'database-engine-web';
+};
+
+const toErrorInstance = (error: unknown, message: unknown): Error => {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new Error(typeof message === 'string' ? message : 'database-engine-node error');
+};
+
+const logDatabaseEngineNodeEvent = async ({
+  level,
+  message,
+  error,
+  context,
+  logger,
+}: {
+  level: string;
+  message: unknown;
+  error: unknown;
+  context: LogContext;
+  logger: ErrorLogger;
+}): Promise<void> => {
+  try {
+    const service = getLoggerService(context);
+    const eventContext = context ?? {};
+
+    if (level === 'error') {
+      await logger.captureException(toErrorInstance(error, message), {
+        service,
+        message,
+        ...eventContext,
+      });
+      return;
+    }
+
+    if (level === 'warn') {
+      await logger.logWarning(message, {
+        service,
+        ...eventContext,
+      });
+      return;
+    }
+
+    await logger.logInfo(message, {
+      service,
+      ...eventContext,
+    });
+  } catch (loggingError) {
+    logClientError(loggingError);
+  }
+};
+
 export async function prepareDatabaseEngineNodeEnvironment(): Promise<void> {
   const { applyActiveMongoSourceEnv } = await import('@/shared/lib/db/mongo-source');
   await applyActiveMongoSourceEnv();
@@ -39,39 +106,24 @@ export async function prepareDatabaseEngineNodeEnvironment(): Promise<void> {
 
 export async function registerDatabaseEngineNodeInstrumentation(): Promise<void> {
   const globalScope = globalThis as InstrumentationGlobal;
-  if (globalScope.__databaseEngineNodeInstrumentationRegistered) return;
+  if (globalScope.__databaseEngineNodeInstrumentationRegistered === true) return;
   globalScope.__databaseEngineNodeInstrumentationRegistered = true;
 
   await prepareDatabaseEngineNodeEnvironment();
 
   const { registerLogHandler } = await import('@/shared/utils/logger');
-  const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+  const { ErrorSystem } = (await import('@/shared/lib/observability/system-logger')) as {
+    ErrorSystem: ErrorLogger;
+  };
 
   registerLogHandler((level, message, error, context) => {
-    void (async () => {
-      try {
-        const service = (context?.['service'] as string) || 'database-engine-web';
-        if (level === 'error') {
-          await ErrorSystem.captureException(error || message, {
-            service,
-            message,
-            ...context,
-          });
-        } else if (level === 'warn') {
-          await ErrorSystem.logWarning(message, {
-            service,
-            ...context,
-          });
-        } else {
-          await ErrorSystem.logInfo(message, {
-            service,
-            ...context,
-          });
-        }
-      } catch (loggingError) {
-        logClientError(loggingError);
-      }
-    })();
+    void logDatabaseEngineNodeEvent({
+      level,
+      message,
+      error,
+      context,
+      logger: ErrorSystem,
+    });
   });
 
   process.on('unhandledRejection', (reason: unknown) => {

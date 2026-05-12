@@ -20,7 +20,7 @@ export async function deleteLocalizedCmsRouteContent({
   revalidate: readonly LocalizedRevalidationTarget[];
 }): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

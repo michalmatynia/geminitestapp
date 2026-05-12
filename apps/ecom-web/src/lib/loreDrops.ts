@@ -93,7 +93,7 @@ export function getLoreDropsArticleParagraphs(article: LoreDropsArticle): string
   const body = article.body.trim().length > 0 ? article.body : article.excerpt;
   return readLoreDropsArticleBodyBlocks(body)
     .filter((block) => block.type === 'paragraph')
-    .map((block) => (block.type === 'paragraph' ? block.text : ''))
+    .map((block) => block.text)
     .filter((block) => block.length > 0);
 }
 

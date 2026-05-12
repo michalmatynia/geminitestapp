@@ -21,7 +21,7 @@ export function DatabaseTableSelector(): React.JSX.Element {
       tableDetails.map((table) => ({
         value: table.name,
         label: `${table.name} (${table.rowEstimate.toLocaleString()} rows${
-          table.sizeFormatted ? `, ${table.sizeFormatted}` : ''
+          table.sizeFormatted === '' ? '' : `, ${table.sizeFormatted}`
         })`,
       })),
     [tableDetails]
@@ -41,7 +41,7 @@ export function DatabaseTableSelector(): React.JSX.Element {
         className='min-w-[280px]'
       />
 
-      {selectedTable && (
+      {selectedTable !== '' ? (
         <>
           <div className='h-4 w-px bg-border/60 mx-1' />
           <Button
@@ -59,7 +59,7 @@ export function DatabaseTableSelector(): React.JSX.Element {
             Add Row
           </Button>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

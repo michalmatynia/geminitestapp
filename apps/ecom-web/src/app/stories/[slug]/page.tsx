@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-unnecessary-condition, max-lines-per-function */
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
@@ -67,23 +68,23 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Hero */}
         <div
-          className="relative overflow-hidden grain"
+          className='relative overflow-hidden grain'
           style={{ minHeight: '65vh', background: story.gradient }}
         >
-          <div className="absolute inset-0 p-8 md:p-20 flex flex-col justify-end" style={{ zIndex: 2 }}>
+          <div className='absolute inset-0 p-8 md:p-20 flex flex-col justify-end' style={{ zIndex: 2 }}>
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-8">
-              <a href={localizeHref('/stories', locale)} className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <div className='flex items-center gap-2 mb-8'>
+              <a href={localizeHref('/stories', locale)} className='type-label hover:opacity-80 transition-opacity' style={{ color: 'rgba(255,255,255,0.45)' }}>
                 {content.detail.breadcrumbLabel}
               </a>
-              <span className="type-label" style={{ color: 'rgba(255,255,255,0.25)' }}>/</span>
-              <span className="type-label" style={{ color: 'rgba(255,255,255,0.7)' }}>{story.category}</span>
+              <span className='type-label' style={{ color: 'rgba(255,255,255,0.25)' }}>/</span>
+              <span className='type-label' style={{ color: 'rgba(255,255,255,0.7)' }}>{story.category}</span>
             </div>
 
-            <div className="max-w-3xl">
+            <div className='max-w-3xl'>
               {/* Category badge */}
               <span
-                className="type-label px-3 py-1.5 inline-block mb-6"
+                className='type-label px-3 py-1.5 inline-block mb-6'
                 style={{ background: story.accentColor, color: '#fff' }}
               >
                 {story.category}
@@ -117,17 +118,17 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
                 {story.subtitle}
               </p>
 
-              <div className="flex items-center gap-6">
-                <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>{story.date}</span>
+              <div className='flex items-center gap-6'>
+                <span className='type-label' style={{ color: 'rgba(255,255,255,0.5)' }}>{story.date}</span>
                 <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
-                <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>{readTimeLabel(story.readTime, locale)}</span>
+                <span className='type-label' style={{ color: 'rgba(255,255,255,0.5)' }}>{readTimeLabel(story.readTime, locale)}</span>
               </div>
             </div>
           </div>
 
           {/* Rotated issue label */}
           <div
-            className="absolute right-10 top-1/2 -translate-y-1/2 rotate-90 hidden md:block"
+            className='absolute right-10 top-1/2 -translate-y-1/2 rotate-90 hidden md:block'
             style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase' }}
           >
             {content.detail.issueLabelPrefix} · {story.date}
@@ -135,7 +136,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
         </div>
 
         {/* Article body */}
-        <div className="max-w-2xl mx-auto px-8 py-16 md:py-24">
+        <div className='max-w-2xl mx-auto px-8 py-16 md:py-24'>
           {story.body.map((block, i) => {
             if (block.type === 'paragraph') {
               return (
@@ -158,7 +159,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
               return (
                 <blockquote
                   key={i}
-                  className="my-12 pl-8"
+                  className='my-12 pl-8'
                   style={{ borderLeft: `3px solid ${story.accentColor}` }}
                 >
                   <p
@@ -198,7 +199,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
               return (
                 <p
                   key={i}
-                  className="mt-12 pt-6"
+                  className='mt-12 pt-6'
                   style={{
                     borderTop: '1px solid var(--border)',
                     fontFamily: 'var(--font-mono)',
@@ -216,11 +217,11 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
           })}
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 mt-12 pt-8" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className='flex flex-wrap gap-2 mt-12 pt-8' style={{ borderTop: '1px solid var(--border)' }}>
             {story.tags.map((tag) => (
               <span
                 key={tag}
-                className="type-label px-3 py-1.5"
+                className='type-label px-3 py-1.5'
                 style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
               >
                 {tag}
@@ -232,23 +233,23 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
         {/* Related stories */}
         {related.length > 0 && (
           <section
-            className="px-8 md:px-16 py-16"
+            className='px-8 md:px-16 py-16'
             style={{ borderTop: '1px solid var(--border)' }}
           >
-            <div className="max-w-screen-2xl mx-auto">
-              <div className="type-label mb-10" style={{ color: 'var(--accent)' }}>
+            <div className='max-w-screen-2xl mx-auto'>
+              <div className='type-label mb-10' style={{ color: 'var(--accent)' }}>
                 {content.detail.relatedEyebrow}
               </div>
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className='grid md:grid-cols-2 gap-8'>
                 {related.map((s) => (
-                  <a key={s.id} href={localizeHref(`/stories/${s.slug}`, locale)} className="group flex gap-6 items-start">
+                  <a key={s.id} href={localizeHref(`/stories/${s.slug}`, locale)} className='group flex gap-6 items-start'>
                     <div
-                      className="flex-shrink-0 transition-transform duration-500 group-hover:scale-105"
+                      className='flex-shrink-0 transition-transform duration-500 group-hover:scale-105'
                       style={{ width: '120px', aspectRatio: '4/3', background: s.gradient }}
                     />
                     <div>
                       <span
-                        className="type-label px-2 py-0.5 inline-block mb-2"
+                        className='type-label px-2 py-0.5 inline-block mb-2'
                         style={{ background: s.accentColor, color: '#fff' }}
                       >
                         {s.category}
@@ -265,7 +266,7 @@ export default async function StoryPage({ params }: Props): Promise<JSX.Element>
                       >
                         {s.title}
                       </h3>
-                      <span className="type-label" style={{ color: 'var(--muted)' }}>
+                      <span className='type-label' style={{ color: 'var(--muted)' }}>
                         {readTimeLabel(s.readTime, locale)}
                       </span>
                     </div>

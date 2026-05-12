@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 const siteUrl =
   process.env.NEXT_PUBLIC_ECOM_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL !== undefined && process.env.VERCEL_PROJECT_PRODUCTION_URL !== ''
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : 'http://localhost:3001');
 

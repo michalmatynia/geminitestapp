@@ -34,6 +34,12 @@ const isoDateStringSchema = z
 
 const nullableIsoDateStringSchema = isoDateStringSchema.nullable();
 
+const isRecordObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  value.constructor === Object;
+
 const databaseEnginePolicyStrictSchema = databaseEnginePolicySchema.strict();
 const databaseEngineOperationControlsStrictSchema = databaseEngineOperationControlsSchema.strict();
 const databaseEngineBackupTargetScheduleStrictSchema = databaseEngineBackupTargetScheduleSchema
@@ -62,7 +68,7 @@ const parseNonEmptyJsonObject = (
 ): Record<string, unknown> | null => {
   if (typeof raw !== 'string') return null;
   const trimmedRaw = raw.trim();
-  if (!trimmedRaw) return null;
+  if (trimmedRaw === '') return null;
 
   let parsed: unknown;
   try {
@@ -77,7 +83,7 @@ const parseNonEmptyJsonObject = (
     });
   }
 
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+  if (!isRecordObject(parsed)) {
     throw validationError(`Invalid ${key} settings payload.`, {
       source: 'database_engine.settings',
       key,
@@ -85,7 +91,7 @@ const parseNonEmptyJsonObject = (
     });
   }
 
-  return parsed as Record<string, unknown>;
+  return parsed;
 };
 
 const parseWithSchema = <T>(
@@ -95,7 +101,7 @@ const parseWithSchema = <T>(
   fallback: T
 ): T => {
   const parsed = parseNonEmptyJsonObject(raw, key);
-  if (!parsed) return fallback;
+  if (parsed === null) return fallback;
 
   const result = schema.safeParse(parsed);
   if (!result.success) {
@@ -144,7 +150,7 @@ export const parseDatabaseEngineServiceRouteMapSetting = (
   raw: string | null | undefined
 ): Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> => {
   const parsed = parseNonEmptyJsonObject(raw, 'database engine service route map');
-  if (!parsed) return {};
+  if (parsed === null) return {};
 
   const result: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> = {};
   Object.entries(parsed).forEach(([service, provider]: [string, unknown]): void => {
@@ -182,7 +188,7 @@ export const parseDatabaseEngineCollectionRouteMapSetting = (
   const result: Record<string, DatabaseEngineProvider> = {};
   Object.entries(parsed).forEach(([collection, provider]: [string, unknown]): void => {
     const normalizedCollection = collection.trim();
-    if (!normalizedCollection) {
+    if (normalizedCollection === '') {
       throw validationError('Invalid database engine collection route map payload.', {
         source: 'database_engine.settings',
         key: 'database engine collection route map',

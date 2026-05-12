@@ -52,19 +52,74 @@ const TEXT_LIMITS = {
   medium: 240,
 };
 
+const STRING_FIELD_SPECS: {
+  key: keyof WishlistContent;
+  fallback: string;
+  maxLength: number;
+}[] = [
+  { key: 'heroEyebrow', fallback: WISHLIST_CONTENT_DEFAULTS.heroEyebrow, maxLength: TEXT_LIMITS.short },
+  { key: 'heroTitle', fallback: WISHLIST_CONTENT_DEFAULTS.heroTitle, maxLength: TEXT_LIMITS.short },
+  { key: 'pieceSingular', fallback: WISHLIST_CONTENT_DEFAULTS.pieceSingular, maxLength: TEXT_LIMITS.short },
+  { key: 'piecePlural', fallback: WISHLIST_CONTENT_DEFAULTS.piecePlural, maxLength: TEXT_LIMITS.short },
+  { key: 'savedLabel', fallback: WISHLIST_CONTENT_DEFAULTS.savedLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'refreshingLabel', fallback: WISHLIST_CONTENT_DEFAULTS.refreshingLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'emptyTitle', fallback: WISHLIST_CONTENT_DEFAULTS.emptyTitle, maxLength: TEXT_LIMITS.short },
+  { key: 'emptyBody', fallback: WISHLIST_CONTENT_DEFAULTS.emptyBody, maxLength: TEXT_LIMITS.medium },
+  { key: 'emptyCtaLabel', fallback: WISHLIST_CONTENT_DEFAULTS.emptyCtaLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'currentCatalogLabel', fallback: WISHLIST_CONTENT_DEFAULTS.currentCatalogLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'savedItemsLabel', fallback: WISHLIST_CONTENT_DEFAULTS.savedItemsLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'moveAllLabel', fallback: WISHLIST_CONTENT_DEFAULTS.moveAllLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'moveToBagLabel', fallback: WISHLIST_CONTENT_DEFAULTS.moveToBagLabel, maxLength: TEXT_LIMITS.short },
+  { key: 'movedToastTitle', fallback: WISHLIST_CONTENT_DEFAULTS.movedToastTitle, maxLength: TEXT_LIMITS.short },
+  { key: 'removedToastTitle', fallback: WISHLIST_CONTENT_DEFAULTS.removedToastTitle, maxLength: TEXT_LIMITS.short },
+  { key: 'removeItemAriaPrefix', fallback: WISHLIST_CONTENT_DEFAULTS.removeItemAriaPrefix, maxLength: TEXT_LIMITS.short },
+  { key: 'removeItemAriaSuffix', fallback: WISHLIST_CONTENT_DEFAULTS.removeItemAriaSuffix, maxLength: TEXT_LIMITS.short },
+  { key: 'liveBadgeLabel', fallback: WISHLIST_CONTENT_DEFAULTS.liveBadgeLabel, maxLength: TEXT_LIMITS.short },
+];
+
+function buildWishlistContent(
+  root: Record<string, unknown>,
+  errors: string[],
+): WishlistContent {
+  const content: WishlistContent = { ...WISHLIST_CONTENT_DEFAULTS };
+
+  for (const spec of STRING_FIELD_SPECS) {
+    content[spec.key] = readString({
+      source: root,
+      key: spec.key,
+      fallback: spec.fallback,
+      maxLength: spec.maxLength,
+      errors,
+    });
+  }
+
+  content.emptyCtaHref = readHref({
+    source: root,
+    key: 'emptyCtaHref',
+    fallback: WISHLIST_CONTENT_DEFAULTS.emptyCtaHref,
+    errors,
+  });
+
+  return content;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+type ReadStringParams = {
+  source: Record<string, unknown>;
+  key: keyof WishlistContent;
+  fallback: string;
+  maxLength: number;
+  errors: string[];
+};
+
 function readString(
-  source: Record<string, unknown>,
-  key: keyof WishlistContent,
-  fallback: string,
-  maxLength: number,
-  errors: string[],
+  { source, key, fallback, maxLength, errors }: ReadStringParams,
 ): string {
   const value = source[key];
-  if (value == null) return fallback;
+  if (value === null) return fallback;
   if (typeof value !== 'string') {
     errors.push(`${String(key)} must be text.`);
     return fallback;
@@ -92,13 +147,16 @@ function isAllowedHref(value: string): boolean {
 }
 
 function readHref(
-  source: Record<string, unknown>,
-  key: keyof WishlistContent,
-  fallback: string,
-  errors: string[],
+  { source, key, fallback, errors }: Omit<ReadStringParams, 'maxLength'>,
 ): string {
-  const value = readString(source, key, fallback, TEXT_LIMITS.medium, errors);
-  if (!value) return fallback;
+  const value = readString({
+    source,
+    key,
+    fallback,
+    maxLength: TEXT_LIMITS.medium,
+    errors,
+  });
+  if (value === '') return fallback;
   if (!isAllowedHref(value)) {
     errors.push(`${String(key)} must be an internal path, anchor, or http(s) URL.`);
     return fallback;
@@ -109,52 +167,7 @@ function readHref(
 export function validateWishlistContent(input: unknown): WishlistContentValidationResult {
   const errors: string[] = [];
   const root = isRecord(input) ? input : {};
-
-  const content: WishlistContent = {
-    heroEyebrow: readString(root, 'heroEyebrow', WISHLIST_CONTENT_DEFAULTS.heroEyebrow, TEXT_LIMITS.short, errors),
-    heroTitle: readString(root, 'heroTitle', WISHLIST_CONTENT_DEFAULTS.heroTitle, TEXT_LIMITS.short, errors),
-    pieceSingular: readString(root, 'pieceSingular', WISHLIST_CONTENT_DEFAULTS.pieceSingular, TEXT_LIMITS.short, errors),
-    piecePlural: readString(root, 'piecePlural', WISHLIST_CONTENT_DEFAULTS.piecePlural, TEXT_LIMITS.short, errors),
-    savedLabel: readString(root, 'savedLabel', WISHLIST_CONTENT_DEFAULTS.savedLabel, TEXT_LIMITS.short, errors),
-    refreshingLabel: readString(root, 'refreshingLabel', WISHLIST_CONTENT_DEFAULTS.refreshingLabel, TEXT_LIMITS.short, errors),
-    emptyTitle: readString(root, 'emptyTitle', WISHLIST_CONTENT_DEFAULTS.emptyTitle, TEXT_LIMITS.short, errors),
-    emptyBody: readString(root, 'emptyBody', WISHLIST_CONTENT_DEFAULTS.emptyBody, TEXT_LIMITS.medium, errors),
-    emptyCtaLabel: readString(root, 'emptyCtaLabel', WISHLIST_CONTENT_DEFAULTS.emptyCtaLabel, TEXT_LIMITS.short, errors),
-    emptyCtaHref: readHref(root, 'emptyCtaHref', WISHLIST_CONTENT_DEFAULTS.emptyCtaHref, errors),
-    currentCatalogLabel: readString(
-      root,
-      'currentCatalogLabel',
-      WISHLIST_CONTENT_DEFAULTS.currentCatalogLabel,
-      TEXT_LIMITS.short,
-      errors,
-    ),
-    savedItemsLabel: readString(root, 'savedItemsLabel', WISHLIST_CONTENT_DEFAULTS.savedItemsLabel, TEXT_LIMITS.short, errors),
-    moveAllLabel: readString(root, 'moveAllLabel', WISHLIST_CONTENT_DEFAULTS.moveAllLabel, TEXT_LIMITS.short, errors),
-    moveToBagLabel: readString(root, 'moveToBagLabel', WISHLIST_CONTENT_DEFAULTS.moveToBagLabel, TEXT_LIMITS.short, errors),
-    movedToastTitle: readString(root, 'movedToastTitle', WISHLIST_CONTENT_DEFAULTS.movedToastTitle, TEXT_LIMITS.short, errors),
-    removedToastTitle: readString(
-      root,
-      'removedToastTitle',
-      WISHLIST_CONTENT_DEFAULTS.removedToastTitle,
-      TEXT_LIMITS.short,
-      errors,
-    ),
-    removeItemAriaPrefix: readString(
-      root,
-      'removeItemAriaPrefix',
-      WISHLIST_CONTENT_DEFAULTS.removeItemAriaPrefix,
-      TEXT_LIMITS.short,
-      errors,
-    ),
-    removeItemAriaSuffix: readString(
-      root,
-      'removeItemAriaSuffix',
-      WISHLIST_CONTENT_DEFAULTS.removeItemAriaSuffix,
-      TEXT_LIMITS.short,
-      errors,
-    ),
-    liveBadgeLabel: readString(root, 'liveBadgeLabel', WISHLIST_CONTENT_DEFAULTS.liveBadgeLabel, TEXT_LIMITS.short, errors),
-  };
+  const content = buildWishlistContent(root, errors);
 
   return { content, errors };
 }

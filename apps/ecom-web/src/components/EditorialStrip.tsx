@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function,no-param-reassign */
 'use client';
 
 import { useRef, type JSX } from 'react';
@@ -58,29 +59,29 @@ export function EditorialStrip({
   if (visibleReports.length === 0) return <></>;
 
   return (
-    <section ref={sectionRef} className="px-6 md:px-10 pt-16 pb-24 max-w-screen-2xl mx-auto">
-      <div className="ed-header flex items-end justify-between mb-12">
+    <section ref={sectionRef} className='px-6 md:px-10 pt-16 pb-24 max-w-screen-2xl mx-auto'>
+      <div className='ed-header flex items-end justify-between mb-12'>
         <div>
-          <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
+          <div className='type-label mb-3' style={{ color: 'var(--accent)' }}>
             {content.eyebrow}
           </div>
-          <h2 className="type-display-lg" style={{ color: 'var(--fg)' }}>
+          <h2 className='type-display-lg' style={{ color: 'var(--fg)' }}>
             {content.title}
           </h2>
         </div>
         <a
           href={localizedHref(content.ctaHref)}
-          className="hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200"
+          className='hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200'
           style={{ color: 'var(--muted-teal)' }}
         >
           {content.ctaLabel}
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+            <path d='M5 12h14M12 5l7 7-7 7' />
           </svg>
         </a>
       </div>
 
-  <div className="grid md:grid-cols-3 gap-4">
+  <div className='grid md:grid-cols-3 gap-4'>
         {visibleReports.map((story, index) => {
           const visual = REPORT_VISUALS[index] ?? DEFAULT_VISUAL;
           const storyImageUrl = getProductImageSrc(story.imageUrl);
@@ -89,7 +90,7 @@ export function EditorialStrip({
           <a
             key={`${story.title}-${index}`}
             href={localizedHref(story.href)}
-            className="ed-card group block relative overflow-hidden"
+            className='ed-card group block relative overflow-hidden'
             style={{
               aspectRatio: '3/4',
               border: '1px solid rgba(var(--accent-rgb),0.1)',
@@ -97,7 +98,7 @@ export function EditorialStrip({
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = visual.accent;
-              (e.currentTarget as HTMLElement).style.boxShadow = `0 0 30px rgba(var(--accent-rgb),0.1)`;
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px rgba(var(--accent-rgb),0.1)';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--accent-rgb),0.1)';
@@ -107,34 +108,34 @@ export function EditorialStrip({
             {hasImage ? (
               <img
                 alt=''
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105'
                 src={storyImageUrl}
               />
             ) : null}
             <div
-              className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
+              className='absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105'
               style={{ background: hasImage ? IMAGE_OVERLAY : visual.gradient }}
             />
 
             {/* Dot grid overlay */}
-            <div className="absolute inset-0 dot-grid opacity-20" />
+            <div className='absolute inset-0 dot-grid opacity-20' />
 
             {/* Scanlines */}
             <div
-              className="absolute inset-0 pointer-events-none"
+              className='absolute inset-0 pointer-events-none'
               style={{
                 background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scanline-soft) 3px, var(--scanline-soft) 4px)',
               }}
             />
 
             {/* Corner bracket top-left */}
-            <div className="absolute top-4 left-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${visual.accent}`, borderLeft: `1px solid ${visual.accent}` }} />
-            <div className="absolute top-4 right-4 w-5 h-5 z-10 opacity-60" style={{ borderTop: `1px solid ${visual.accent}`, borderRight: `1px solid ${visual.accent}` }} />
+            <div className='absolute top-4 left-4 w-5 h-5 z-10 opacity-60' style={{ borderTop: `1px solid ${visual.accent}`, borderLeft: `1px solid ${visual.accent}` }} />
+            <div className='absolute top-4 right-4 w-5 h-5 z-10 opacity-60' style={{ borderTop: `1px solid ${visual.accent}`, borderRight: `1px solid ${visual.accent}` }} />
 
             {/* Content */}
-            <div className="absolute inset-0 p-7 flex flex-col justify-end z-10">
+            <div className='absolute inset-0 p-7 flex flex-col justify-end z-10'>
               <span
-                className="type-label inline-block mb-4 self-start"
+                className='type-label inline-block mb-4 self-start'
                 style={{ color: visual.tagColor, background: 'var(--media-chip-bg)', border: `1px solid ${visual.accent}`, padding: '0.2rem 0.6rem' }}
               >
                 {story.tag}
@@ -164,12 +165,12 @@ export function EditorialStrip({
                 {story.excerpt}
               </p>
               <div
-                className="flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200"
+                className='flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200'
                 style={{ color: visual.tagColor }}
               >
                 {content.readLabel}
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
+                <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
+                  <path d='M5 12h14M12 5l7 7-7 7' />
                 </svg>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { downloadInpostLabel } from '@/lib/inpost';
 import { getDb } from '@/lib/mongodb';
@@ -10,17 +10,18 @@ function acceptForFormat(format: string | null): string {
     : 'application/pdf;format=A6';
 }
 
+// eslint-disable-next-line complexity
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
 ): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const { orderId } = await params;
-  if (!orderId || typeof orderId !== 'string') {
+  if (orderId.length === 0) {
     return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
   }
 
@@ -31,7 +32,8 @@ export async function GET(
   }
 
   const order = serializeOrder(doc);
-  if (order.shippingCarrier !== 'inpost' || !order.inpostShipment?.trackingNumber) {
+  const trackingNumber = order.inpostShipment?.trackingNumber;
+  if (order.shippingCarrier !== 'inpost' || trackingNumber === undefined || trackingNumber === '') {
     return NextResponse.json({ error: 'InPost tracking number is required' }, { status: 400 });
   }
 

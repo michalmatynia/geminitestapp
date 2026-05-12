@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { useRouter } from 'nextjs-toploader/app';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -33,6 +35,30 @@ import {
   useUploadBackupMutation,
 } from '../hooks/useDatabaseQueries';
 
+const hasText = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value !== '';
+
+const buildRestoreMeta = (payload: DatabaseRestoreResponse): string => {
+  const lines: string[] = [];
+
+  if (hasText(payload.errorId)) {
+    lines.push(`Error ID: ${payload.errorId}`);
+  }
+
+  if (hasText(payload.stage)) {
+    lines.push(`Stage: ${payload.stage}`);
+  }
+
+  if (hasText(payload.backupName)) {
+    lines.push(`Backup: ${payload.backupName}`);
+  }
+
+  return lines.join('\n');
+};
+
+const readPayload = <T,>(result: { payload: T }): T => result.payload;
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, max-lines-per-function
 export function useDatabaseBackupsState() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DatabaseType>('mongodb');
@@ -59,8 +85,6 @@ export function useDatabaseBackupsState() {
   const restoreBackup = useRestoreBackupMutation();
   const uploadBackup = useUploadBackupMutation();
   const deleteBackup = useDeleteBackupMutation();
-
-  const readPayload = <T,>(result: { payload: T | unknown }): T => result.payload as T;
 
   const parsedSettings = useMemo(() => {
     const errors: string[] = [];
@@ -185,12 +209,13 @@ export function useDatabaseBackupsState() {
     setIsRestoreModalOpen(true);
   }, []);
 
+  // eslint-disable-next-line complexity
   const handleRestoreConfirm = async (truncate: boolean): Promise<void> => {
     const backupName = selectedBackupForRestore;
     setIsRestoreModalOpen(false);
     setSelectedBackupForRestore(null);
 
-    if (!backupName) return;
+    if (backupName === '' || backupName === null) return;
 
     try {
       const result = await restoreBackup.mutateAsync({
@@ -202,35 +227,24 @@ export function useDatabaseBackupsState() {
       const payload = readPayload<DatabaseRestoreResponse>(result);
       const log = String(payload.log ?? 'No log available.');
 
-      if (ok) {
+      if (!ok) {
+        const restoreMeta = buildRestoreMeta(payload);
+        const metaLine = restoreMeta === '' ? '' : `\n\n${restoreMeta}`;
         openLogModal(
-          `${payload.message ?? 'Backup restored successfully.'}
+          `${payload.error ?? 'Failed to restore backup.'}${metaLine}
 
 ---LOG---
 ${log}`
         );
-      } else {
-        const meta = [
-          payload.errorId ? `Error ID: ${payload.errorId}` : null,
-          payload.stage ? `Stage: ${payload.stage}` : null,
-          payload.backupName ? `Backup: ${payload.backupName}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n');
-
-        openLogModal(
-          `${payload.error ?? 'Failed to restore backup.'}${
-            meta
-              ? `
-
-${meta}`
-              : ''
-          }
-
----LOG---
-${log}`
-        );
+        return;
       }
+
+      openLogModal(
+        `${payload.message ?? 'Backup restored successfully.'}
+
+---LOG---
+${log}`
+      );
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'DatabaseBackupsPanel',
@@ -244,37 +258,41 @@ ${String(error)}`);
     }
   };
 
+  // eslint-disable-next-line complexity
   const handleBackup = async (): Promise<void> => {
     try {
       const result = await createBackup.mutateAsync(activeTab);
       const { ok } = result;
       const payload = readPayload<DatabaseBackupResponse>(result);
       const log = String(payload.log ?? 'No log available.');
-      if (ok) {
-        if (payload.jobId) {
-          toast(payload.message ?? `Database backup job queued (job: ${payload.jobId}).`, {
-            variant: 'success',
-          });
-          return;
-        }
 
-        if (payload.warning) {
-          openLogModal(`${payload.message ?? 'Backup created'}: ${payload.warning}
-
----LOG---
-${log}`);
-        } else {
-          openLogModal(`${payload.message ?? 'Backup created successfully.'}
-
----LOG---
-${log}`);
-        }
-      } else {
+      if (!ok) {
         openLogModal(`${payload.error ?? 'Failed to create backup.'}
 
 ---LOG---
 ${log}`);
+        return;
       }
+
+      if (hasText(payload.jobId)) {
+        toast(payload.message ?? `Database backup job queued (job: ${payload.jobId}).`, {
+          variant: 'success',
+        });
+        return;
+      }
+
+      if (hasText(payload.warning)) {
+        openLogModal(`${payload.message ?? 'Backup created'}: ${payload.warning}
+
+---LOG---
+${log}`);
+        return;
+      }
+
+      openLogModal(`${payload.message ?? 'Backup created successfully.'}
+
+---LOG---
+${log}`);
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'DatabaseBackupsPanel',
@@ -292,7 +310,7 @@ ${String(error)}`);
   }, []);
 
   const handleConfirmDelete = async (): Promise<void> => {
-    if (!backupToDelete) return;
+    if (backupToDelete === '' || backupToDelete === null) return;
     try {
       const result = await deleteBackup.mutateAsync({
         dbType: activeTab,
@@ -318,7 +336,7 @@ ${String(error)}`);
 
   const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
     const file = files[0];
-    if (!file) return;
+    if (file === undefined) return;
 
     try {
       const result = await uploadBackup.mutateAsync({
@@ -378,7 +396,7 @@ ${String(error)}`);
     }
 
     const nextTimeUtc = localHmToUtcHm(activeTargetTimeLocalDraft);
-    if (!nextTimeUtc) {
+    if (nextTimeUtc === null || nextTimeUtc === '') {
       toast('Failed to convert local backup time to UTC.', { variant: 'error' });
       return;
     }

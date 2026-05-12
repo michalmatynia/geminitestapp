@@ -1,21 +1,26 @@
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
+type DatabaseMetricsProps = {
+  databaseSize: string | null;
+  tablesCount: number;
+  enumsCount: number;
+  totalIndexes: number;
+  totalFks: number;
+};
+
 export const DatabaseMetrics = ({
   databaseSize,
   tablesCount,
   enumsCount,
   totalIndexes,
   totalFks,
-}: {
-  databaseSize: string | null;
-  tablesCount: number;
-  enumsCount: number;
-  totalIndexes: number;
-  totalFks: number;
-}) => (
+}: DatabaseMetricsProps): JSX.Element => {
+  const showDatabaseSize = databaseSize !== null && databaseSize !== '';
+
+  return (
   <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-5`}>
-    {databaseSize && (
+    {showDatabaseSize && (
       <MetadataItem
         label='Total Size'
         value={databaseSize}
@@ -53,4 +58,5 @@ export const DatabaseMetrics = ({
       className='p-4'
     />
   </div>
-);
+  );
+};

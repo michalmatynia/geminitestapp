@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ObjectId } from 'mongodb';
+import type { ObjectId } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -32,20 +32,24 @@ const toRecord = (doc: MongoUserDoc & { _id: ObjectId }): AuthUserRecord => ({
   name: doc.name ?? null,
   image: doc.image ?? null,
   passwordHash: doc.passwordHash ?? null,
-  emailVerified:
-    typeof doc.emailVerified === 'boolean'
-      ? doc.emailVerified
-      : doc.emailVerified instanceof Date
-        ? true
-        : null,
+  emailVerified: getEmailVerifiedFlag(doc.emailVerified),
 });
+
+function getEmailVerifiedFlag(emailVerified: Date | boolean | null | undefined): boolean | null {
+  if (typeof emailVerified === 'boolean') {
+    return emailVerified;
+  }
+  return emailVerified instanceof Date ? true : null;
+}
 
 export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord | null> => {
   const db = await getMongoDb();
   const normalized = normalizeAuthEmail(email);
-  const doc = await db.collection<MongoUserDoc>('users').findOne({ email: normalized });
+  const doc = await db
+    .collection<MongoUserDoc & { _id: ObjectId }>('users')
+    .findOne({ email: normalized });
   if (!doc?._id) return null;
-  return toRecord(doc as MongoUserDoc & { _id: ObjectId });
+  return toRecord(doc);
 };
 
 export const createAuthUser = async (input: {
@@ -56,12 +60,13 @@ export const createAuthUser = async (input: {
 }): Promise<AuthUserRecord> => {
   const db = await getMongoDb();
   const now = new Date();
+  const verifiedNow = input.emailVerified === true;
   const doc: MongoUserDoc = {
     email: normalizeAuthEmail(input.email),
     name: input.name ?? null,
     image: null,
     passwordHash: input.passwordHash,
-    emailVerified: input.emailVerified ? now : null,
+    emailVerified: verifiedNow ? now : null,
     createdAt: now,
     updatedAt: now,
   };
@@ -72,6 +77,6 @@ export const createAuthUser = async (input: {
     name: doc.name ?? null,
     image: null,
     passwordHash: doc.passwordHash ?? null,
-    emailVerified: input.emailVerified ? true : null,
+    emailVerified: verifiedNow,
   };
 };

@@ -29,7 +29,7 @@ export function normalizeLocaleList(
 
   for (const value of values) {
     const locale = toSupportedLocale(value);
-    if (!locale || seen.has(locale)) continue;
+    if (locale === null || seen.has(locale)) continue;
     seen.add(locale);
     locales.push(locale);
   }
@@ -41,9 +41,10 @@ export function stripLocalePrefix(pathname: string): string {
   if (!pathname.startsWith('/')) return pathname;
   const [firstSegment = '', secondSegment = '', ...rest] = pathname.split('/');
   void firstSegment;
-  if (!isSupportedLocale(secondSegment)) return pathname || '/';
+  if (!isSupportedLocale(secondSegment)) return pathname.length === 0 ? '/' : pathname;
   const stripped = `/${rest.join('/')}`;
-  return stripped === '/' ? '/' : stripped.replace(/\/+$/, '') || '/';
+  const cleaned = stripped.replace(/\/+$/, '');
+  return cleaned === '' ? '/' : cleaned;
 }
 
 function splitPathQueryHash(href: string): { pathname: string; query: string; hash: string } {
@@ -58,9 +59,10 @@ function splitPathQueryHash(href: string): { pathname: string; query: string; ha
   };
 }
 
+// eslint-disable-next-line complexity
 export function localizeHref(href: string, locale: EcomLocale): string {
   if (
-    !href ||
+    href.length === 0 ||
     href.startsWith('#') ||
     href.startsWith('mailto:') ||
     href.startsWith('tel:') ||
@@ -73,7 +75,7 @@ export function localizeHref(href: string, locale: EcomLocale): string {
   if (!href.startsWith('/')) return href;
 
   const { pathname, query, hash } = splitPathQueryHash(href);
-  const stripped = stripLocalePrefix(pathname || '/');
+  const stripped = stripLocalePrefix(pathname.length === 0 ? '/' : pathname);
   const localizedPath = locale === DEFAULT_LOCALE
     ? stripped
     : `/${locale}${stripped === '/' ? '' : stripped}`;
@@ -82,7 +84,7 @@ export function localizeHref(href: string, locale: EcomLocale): string {
 }
 
 export function switchLocalePath(pathname: string, locale: EcomLocale, search = ''): string {
-  const stripped = stripLocalePrefix(pathname || '/');
+  const stripped = stripLocalePrefix(pathname.length === 0 ? '/' : pathname);
   return localizeHref(`${stripped}${search}`, locale);
 }
 

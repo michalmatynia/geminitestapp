@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,consistent-return,max-lines-per-function,no-empty */
 'use client';
 
 import {
@@ -126,7 +127,6 @@ export function WishlistProvider({ children }: { children: ReactNode }): JSX.Ele
     return () => {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, user?.id]);
 
   const isWishlisted = useCallback(

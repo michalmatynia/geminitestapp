@@ -15,60 +15,93 @@ export interface InpostRefreshResponse {
   error?: string;
 }
 
+const INPOST_FULFILLMENT_MESSAGES_BY_LOCALE: Record<
+  EcomLocale,
+  {
+    shipped: string;
+    error: string;
+    waiting: string;
+    ready: string;
+  }
+> = {
+  pl: {
+    shipped: 'Etykieta utworzona',
+    error: 'Błąd InPost',
+    waiting: 'Czeka na płatność',
+    ready: 'Gotowe do nadania',
+  },
+  en: {
+    shipped: 'Shipment created',
+    error: 'InPost error',
+    waiting: 'Waiting for payment',
+    ready: 'Ready to fulfill',
+  },
+};
+
+// eslint-disable-next-line complexity
 export function inpostFulfillmentStatus(order: Order, locale: EcomLocale): string {
-  const hasTracking = order.inpostShipment?.trackingNumber !== undefined && order.inpostShipment.trackingNumber.length > 0;
-  const hasShipmentId = order.inpostShipment?.shipmentId !== undefined && order.inpostShipment.shipmentId.length > 0;
-  
-  if (hasTracking || hasShipmentId) {
-    return locale === 'pl' ? 'Etykieta utworzona' : 'Shipment created';
+  const messages = INPOST_FULFILLMENT_MESSAGES_BY_LOCALE[locale];
+  const inpostShipment = order.inpostShipment;
+  const hasShipmentLabel = Boolean(inpostShipment?.trackingNumber) || Boolean(inpostShipment?.shipmentId);
+
+  if (hasShipmentLabel) {
+    return messages.shipped;
   }
-  
-  const hasError = order.inpostShipment?.error !== undefined && order.inpostShipment.error.length > 0;
-  if (hasError) {
-    return locale === 'pl' ? 'Błąd InPost' : 'InPost error';
+  if (inpostShipment?.error !== undefined) {
+    return messages.error;
   }
-  if (order.status !== 'processing') {
-    return locale === 'pl' ? 'Czeka na płatność' : 'Waiting for payment';
+  if (order.status === 'processing') {
+    return messages.ready;
   }
-  return locale === 'pl' ? 'Gotowe do nadania' : 'Ready to fulfill';
+  return messages.waiting;
 }
 
 export function retryMessage(data: InpostFulfillResponse, locale: EcomLocale): string {
   if (typeof data.error === 'string' && data.error.length > 0) return data.error;
-  
-  const created = data.created === true;
-  if (created) return locale === 'pl' ? 'Przesyłka InPost została utworzona.' : 'InPost shipment created.';
+  if (data.created === true) return locale === 'pl' ? 'Przesyłka InPost została utworzona.' : 'InPost shipment created.';
 
-  switch (data.skippedReason) {
-    case 'already_fulfilled':
-      return locale === 'pl' ? 'Przesyłka już istnieje.' : 'Shipment already exists.';
-    case 'not_configured':
-      return locale === 'pl' ? 'Brakuje konfiguracji InPost.' : 'InPost is not configured.';
-    case 'not_ready':
-      return locale === 'pl' ? 'Zamówienie nie jest jeszcze opłacone.' : 'Order is not ready for fulfillment.';
-    case 'missing_point':
-      return locale === 'pl' ? 'Brakuje wybranego paczkomatu.' : 'Pickup point is missing.';
-    case 'not_inpost':
-      return locale === 'pl' ? 'To nie jest zamówienie InPost.' : 'This is not an InPost order.';
-    default:
-      return locale === 'pl' ? 'Bez zmian.' : 'No changes.';
-  }
+  const reason = data.skippedReason;
+  const messages: Record<string, string> = locale === 'pl'
+    ? {
+      already_fulfilled: 'Przesyłka już istnieje.',
+      not_configured: 'Brakuje konfiguracji InPost.',
+      not_ready: 'Zamówienie nie jest jeszcze opłacone.',
+      missing_point: 'Brakuje wybranego paczkomatu.',
+      not_inpost: 'To nie jest zamówienie InPost.',
+      default: 'Bez zmian.',
+    }
+    : {
+      already_fulfilled: 'Shipment already exists.',
+      not_configured: 'InPost is not configured.',
+      not_ready: 'Order is not ready for fulfillment.',
+      missing_point: 'Pickup point is missing.',
+      not_inpost: 'This is not an InPost order.',
+      default: 'No changes.',
+    };
+
+  if (reason === undefined) return messages.default;
+  return messages[reason];
 }
 
 export function refreshMessage(data: InpostRefreshResponse, locale: EcomLocale): string {
   if (typeof data.error === 'string' && data.error.length > 0) return data.error;
-  
-  const refreshed = data.refreshed === true;
-  if (refreshed) return locale === 'pl' ? 'Status InPost został odświeżony.' : 'InPost status refreshed.';
+  if (data.refreshed === true) return locale === 'pl' ? 'Status InPost został odświeżony.' : 'InPost status refreshed.';
 
-  switch (data.skippedReason) {
-    case 'not_configured':
-      return locale === 'pl' ? 'Brakuje konfiguracji InPost.' : 'InPost is not configured.';
-    case 'missing_tracking':
-      return locale === 'pl' ? 'Brakuje numeru trackingowego.' : 'Tracking number is missing.';
-    case 'not_inpost':
-      return locale === 'pl' ? 'To nie jest zamówienie InPost.' : 'This is not an InPost order.';
-    default:
-      return locale === 'pl' ? 'Bez zmian.' : 'No changes.';
-  }
+  const reason = data.skippedReason;
+  const messages: Record<string, string> = locale === 'pl'
+    ? {
+      not_configured: 'Brakuje konfiguracji InPost.',
+      missing_tracking: 'Brakuje numeru trackingowego.',
+      not_inpost: 'To nie jest zamówienie InPost.',
+      default: 'Bez zmian.',
+    }
+    : {
+      not_configured: 'InPost is not configured.',
+      missing_tracking: 'Tracking number is missing.',
+      not_inpost: 'This is not an InPost order.',
+      default: 'No changes.',
+    };
+
+  if (reason === undefined) return messages.default;
+  return messages[reason];
 }

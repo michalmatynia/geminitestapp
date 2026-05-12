@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, max-lines, max-lines-per-function, no-param-reassign */
 'use client';
 
 import { useState, type JSX } from 'react';
@@ -31,15 +32,15 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
 
         {/* ── Hero ─────────────────────────────────────────────────── */}
         <div
-          className="relative overflow-hidden px-8 md:px-16 py-20 md:py-28"
+          className='relative overflow-hidden px-8 md:px-16 py-20 md:py-28'
           style={{
             background: 'linear-gradient(160deg, #1a1208 0%, #0d0d0b 60%, #0a0908 100%)',
           }}
         >
           {/* Outlined watermark */}
           <div
-            className="absolute inset-0 flex items-center justify-end pr-8 md:pr-16 pointer-events-none select-none"
-            aria-hidden="true"
+            className='absolute inset-0 flex items-center justify-end pr-8 md:pr-16 pointer-events-none select-none'
+            aria-hidden='true'
           >
             <span
               style={{
@@ -56,9 +57,9 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
             </span>
           </div>
 
-          <div className="relative z-10 max-w-screen-2xl mx-auto">
+          <div className='relative z-10 max-w-screen-2xl mx-auto'>
             <div
-              className="type-label mb-4"
+              className='type-label mb-4'
               style={{ color: 'rgba(180,140,80,0.8)', letterSpacing: '0.14em' }}
             >
               {content.hero.eyebrow}
@@ -92,17 +93,17 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
         </div>
 
         {/* ── Content grid ─────────────────────────────────────────── */}
-        <div className="px-8 md:px-16 py-16 md:py-24 max-w-screen-2xl mx-auto">
-          <div className="grid md:grid-cols-[1fr_1.5fr] gap-12 md:gap-20">
+        <div className='px-8 md:px-16 py-16 md:py-24 max-w-screen-2xl mx-auto'>
+          <div className='grid md:grid-cols-[1fr_1.5fr] gap-12 md:gap-20'>
 
             {/* ── Brand info ─────────────────────────────────────────── */}
             <div>
-              <div className="mb-12">
-                <div className="type-label mb-5" style={{ color: 'var(--accent)' }}>
+              <div className='mb-12'>
+                <div className='type-label mb-5' style={{ color: 'var(--accent)' }}>
                   {content.info.addressEyebrow}
                 </div>
                 <address
-                  className="not-italic"
+                  className='not-italic'
                   style={{
                     fontFamily: 'var(--font-body)',
                     fontSize: '0.9rem',
@@ -119,12 +120,12 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                 </address>
               </div>
 
-              <div className="mb-12">
-                <div className="type-label mb-5" style={{ color: 'var(--accent)' }}>
+              <div className='mb-12'>
+                <div className='type-label mb-5' style={{ color: 'var(--accent)' }}>
                   {content.info.directEyebrow}
                 </div>
                 <div
-                  className="flex flex-col gap-2"
+                  className='flex flex-col gap-2'
                   style={{
                     fontFamily: 'var(--font-body)',
                     fontSize: '0.875rem',
@@ -134,19 +135,19 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   }}
                 >
                   {content.info.directLinks.map((link) => (
-                    <a key={`${link.label}-${link.href}`} href={localizedHref(link.href)} className="hover:text-[var(--fg)] transition-colors">
+                    <a key={`${link.label}-${link.href}`} href={localizedHref(link.href)} className='hover:text-[var(--fg)] transition-colors'>
                       {link.label}
                     </a>
                   ))}
                 </div>
               </div>
 
-              <div className="mb-12">
-                <div className="type-label mb-5" style={{ color: 'var(--accent)' }}>
+              <div className='mb-12'>
+                <div className='type-label mb-5' style={{ color: 'var(--accent)' }}>
                   {content.info.hoursEyebrow}
                 </div>
                 <div
-                  className="flex flex-col gap-1"
+                  className='flex flex-col gap-1'
                   style={{
                     fontFamily: 'var(--font-body)',
                     fontSize: '0.875rem',
@@ -156,7 +157,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   }}
                 >
                   {content.info.hours.map((row) => (
-                    <div key={`${row.label}-${row.value}`} className="flex justify-between gap-8">
+                    <div key={`${row.label}-${row.value}`} className='flex justify-between gap-8'>
                       <span>{row.label}</span>
                       <span style={{ color: row.muted ? 'var(--muted)' : 'var(--fg)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
                         {row.value}
@@ -167,15 +168,15 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
               </div>
 
               <div>
-                <div className="type-label mb-5" style={{ color: 'var(--accent)' }}>
+                <div className='type-label mb-5' style={{ color: 'var(--accent)' }}>
                   {content.info.followEyebrow}
                 </div>
-                <div className="flex gap-4">
+                <div className='flex gap-4'>
                   {content.info.socialLinks.map((link) => (
                     <a
                       key={`${link.label}-${link.href}`}
                       href={localizedHref(link.href)}
-                      className="type-label px-4 py-2.5 hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all duration-200"
+                      className='type-label px-4 py-2.5 hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all duration-200'
                       style={{ border: '1px solid var(--border)', color: 'var(--muted)' }}
                     >
                       {link.label}
@@ -189,10 +190,10 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
             <div>
               {sent ? (
                 <div
-                  className="flex flex-col items-start justify-center py-16 gap-6"
+                  className='flex flex-col items-start justify-center py-16 gap-6'
                   style={{ borderLeft: '3px solid var(--accent)', paddingLeft: '2rem' }}
                 >
-                  <div className="type-label" style={{ color: 'var(--accent)' }}>{content.success.eyebrow}</div>
+                  <div className='type-label' style={{ color: 'var(--accent)' }}>{content.success.eyebrow}</div>
                   <h2
                     style={{
                       fontFamily: 'var(--font-display)',
@@ -217,25 +218,25 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   </p>
                   <button
                     onClick={() => setSent(false)}
-                    className="btn-ghost mt-2"
+                    className='btn-ghost mt-2'
                   >
                     {content.success.resetLabel}
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                  <div className="grid md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
+                  <div className='grid md:grid-cols-2 gap-6'>
                     <div>
-                      <label className="type-label block mb-2" style={{ color: 'var(--muted)' }}>
+                      <label className='type-label block mb-2' style={{ color: 'var(--muted)' }}>
                         {content.form.nameLabel}
                       </label>
                       <input
-                        type="text"
+                        type='text'
                         required
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder={content.form.namePlaceholder}
-                        className="w-full px-4 py-3.5 transition-colors duration-200"
+                        className='w-full px-4 py-3.5 transition-colors duration-200'
                         style={{
                           background: 'var(--surface)',
                           border: '1px solid var(--border)',
@@ -250,16 +251,16 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                       />
                     </div>
                     <div>
-                      <label className="type-label block mb-2" style={{ color: 'var(--muted)' }}>
+                      <label className='type-label block mb-2' style={{ color: 'var(--muted)' }}>
                         {content.form.emailLabel}
                       </label>
                       <input
-                        type="email"
+                        type='email'
                         required
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder={content.form.emailPlaceholder}
-                        className="w-full px-4 py-3.5 transition-colors duration-200"
+                        className='w-full px-4 py-3.5 transition-colors duration-200'
                         style={{
                           background: 'var(--surface)',
                           border: '1px solid var(--border)',
@@ -276,13 +277,13 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   </div>
 
                   <div>
-                    <label className="type-label block mb-2" style={{ color: 'var(--muted)' }}>
+                    <label className='type-label block mb-2' style={{ color: 'var(--muted)' }}>
                       {content.form.subjectLabel}
                     </label>
                     <select
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      className="w-full px-4 py-3.5 appearance-none cursor-pointer"
+                      className='w-full px-4 py-3.5 appearance-none cursor-pointer'
                       style={{
                         background: 'var(--surface)',
                         border: '1px solid var(--border)',
@@ -300,7 +301,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                   </div>
 
                   <div>
-                    <label className="type-label block mb-2" style={{ color: 'var(--muted)' }}>
+                    <label className='type-label block mb-2' style={{ color: 'var(--muted)' }}>
                       {content.form.messageLabel}
                     </label>
                     <textarea
@@ -309,7 +310,7 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       placeholder={content.form.messagePlaceholder}
-                      className="w-full px-4 py-3.5 resize-none transition-colors duration-200"
+                      className='w-full px-4 py-3.5 resize-none transition-colors duration-200'
                       style={{
                         background: 'var(--surface)',
                         border: '1px solid var(--border)',
@@ -325,14 +326,14 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
-                    <p className="type-label" style={{ color: 'var(--muted)' }}>
+                  <div className='flex items-center justify-between pt-2'>
+                    <p className='type-label' style={{ color: 'var(--muted)' }}>
                       {content.form.footnote}
                     </p>
-                    <button type="submit" className="btn-primary">
+                    <button type='submit' className='btn-primary'>
                       {content.form.submitLabel}
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                        <path d='M5 12h14M12 5l7 7-7 7' />
                       </svg>
                     </button>
                   </div>

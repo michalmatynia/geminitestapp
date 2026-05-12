@@ -48,7 +48,7 @@ function normalizeNullableString(value: unknown): string | null {
 
 function normalizeUrl(value: unknown): string {
   const normalized = normalizeString(value);
-  if (!normalized) return '';
+  if (normalized === '') return '';
 
   try {
     const url = new URL(normalized);
@@ -70,9 +70,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function firstNonEmpty(values: string[]): string {
+  for (const value of values) {
+    if (value !== '') return value;
+  }
+  return '';
+}
+
 function parseStoredConfig(value: unknown): StoredFastCometConfig | null {
   if (isRecord(value)) return value;
-  if (typeof value !== 'string' || !value.trim()) return null;
+  if (typeof value !== 'string' || value.trim() === '') return null;
 
   try {
     const parsed: unknown = JSON.parse(value);
@@ -99,13 +106,15 @@ async function resolveFastCometUploadConfig(): Promise<FastCometUploadConfig> {
   const readStored = (key: keyof StoredFastCometConfig): unknown => stored?.[key];
 
   return {
-    baseUrl:
-      normalizeUrl(readStored('baseUrl')) ||
-      normalizeUrl(process.env.FASTCOMET_STORAGE_BASE_URL) ||
+    baseUrl: firstNonEmpty([
+      normalizeUrl(readStored('baseUrl')),
+      normalizeUrl(process.env.FASTCOMET_STORAGE_BASE_URL),
       normalizeUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL),
-    uploadEndpoint:
-      normalizeUrl(readStored('uploadEndpoint')) ||
+    ]),
+    uploadEndpoint: firstNonEmpty([
+      normalizeUrl(readStored('uploadEndpoint')),
       normalizeUrl(process.env.FASTCOMET_STORAGE_UPLOAD_URL),
+    ]),
     authToken:
       normalizeNullableString(readStored('authToken')) ??
       normalizeNullableString(process.env.FASTCOMET_STORAGE_AUTH_TOKEN),
@@ -114,18 +123,18 @@ async function resolveFastCometUploadConfig(): Promise<FastCometUploadConfig> {
 }
 
 function buildUploadUrl(value: string, baseUrl: string, publicPath: string): string {
-  if (value) {
+  if (value !== '') {
     try {
       const candidate = new URL(value);
       if (candidate.protocol === 'http:' || candidate.protocol === 'https:') return candidate.toString();
     } catch {
-      if (baseUrl) {
+      if (baseUrl !== '') {
         return new URL(value.startsWith('/') ? value : `/${value}`, `${baseUrl}/`).toString();
       }
     }
   }
 
-  if (baseUrl) return new URL(publicPath, `${baseUrl}/`).toString();
+  if (baseUrl !== '') return new URL(publicPath, `${baseUrl}/`).toString();
   throw new Error('FastComet upload succeeded but no public URL was returned.');
 }
 
@@ -142,7 +151,7 @@ function resolveUploadResponseUrl(body: unknown, baseUrl: string, publicPath: st
 
     for (const candidate of candidates) {
       const normalized = normalizeString(candidate);
-      if (normalized) return buildUploadUrl(normalized, baseUrl, publicPath);
+      if (normalized !== '') return buildUploadUrl(normalized, baseUrl, publicPath);
     }
   }
 
@@ -154,14 +163,14 @@ function createUploadForm(params: FastCometUploadParams): FormData {
   form.append(
     'file',
     new Blob([new Uint8Array(params.buffer)], {
-      type: params.mimetype || 'application/octet-stream',
+      type: params.mimetype === '' ? 'application/octet-stream' : params.mimetype,
     }),
     params.filename,
   );
   form.append('filename', params.filename);
   form.append('publicPath', params.publicPath);
-  if (params.category) form.append('category', params.category);
-  if (params.folder) form.append('folder', params.folder);
+  if (params.category !== undefined && params.category !== '') form.append('category', params.category);
+  if (params.folder !== undefined && params.folder !== '') form.append('folder', params.folder);
   return form;
 }
 
@@ -172,7 +181,7 @@ async function readFailureBody(response: Response): Promise<string> {
 
 async function readSuccessBody(response: Response): Promise<unknown> {
   const body = await response.text().catch(() => '');
-  if (!body.trim()) return {};
+  if (body.trim() === '') return {};
 
   try {
     return JSON.parse(body) as unknown;
@@ -183,7 +192,7 @@ async function readSuccessBody(response: Response): Promise<unknown> {
 
 export async function uploadToFastComet(params: FastCometUploadParams): Promise<string> {
   const config = await resolveFastCometUploadConfig();
-  if (!config.uploadEndpoint) {
+  if (config.uploadEndpoint === '') {
     throw new Error('FastComet upload is not configured. Set FASTCOMET_STORAGE_UPLOAD_URL.');
   }
 
@@ -192,7 +201,9 @@ export async function uploadToFastComet(params: FastCometUploadParams): Promise<
 
   try {
     const headers = new Headers();
-    if (config.authToken) headers.set('Authorization', `Bearer ${config.authToken}`);
+    if (config.authToken !== null && config.authToken !== '') {
+      headers.set('Authorization', `Bearer ${config.authToken}`);
+    }
 
     const response = await fetch(config.uploadEndpoint, {
       method: 'POST',

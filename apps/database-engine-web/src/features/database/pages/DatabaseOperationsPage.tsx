@@ -19,34 +19,90 @@ const DB_TYPE_OPTIONS = [
   { value: 'mongodb', label: 'MongoDB' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<DatabaseType>>;
 
+type DatabaseOperationsContentProps = {
+  defaultTab: DatabaseOperationsTab;
+};
+
+type DatabaseOperationsHeaderActionsProps = {
+  dbType: DatabaseType;
+  setDbType: (value: DatabaseType) => void;
+};
+
+type DatabaseOperationsWorkspaceProps = {
+  defaultTab: DatabaseOperationsTab;
+  isProduction: boolean;
+  isLoading: boolean;
+  hasTables: boolean;
+  tableCount: number;
+};
+
+const getNoTablesMessage = (): string => 'No tables found in the database.';
+
+const DatabaseOperationsHeaderActions = ({
+  dbType,
+  setDbType,
+}: DatabaseOperationsHeaderActionsProps): React.JSX.Element => (
+  <div className='flex items-center gap-2'>
+    <SelectSimple
+      size='sm'
+      value={dbType}
+      onValueChange={(value: string): void => setDbType(value as DatabaseType)}
+      options={DB_TYPE_OPTIONS}
+      triggerClassName='h-8 text-xs w-[120px]'
+      ariaLabel='Select option'
+      title='Select option'
+    />
+    <Button asChild variant='outline' size='sm'>
+      <Link href='/admin/databases'>Back to Databases</Link>
+    </Button>
+  </div>
+);
+
+const DatabaseOperationsWorkspace = ({
+  defaultTab,
+  isLoading,
+  hasTables,
+  tableCount,
+}: DatabaseOperationsWorkspaceProps): React.JSX.Element => (
+  <Tabs defaultValue={defaultTab} className='w-full'>
+    <TabsList className='mb-4' aria-label='Database workspace tabs'>
+      <TabsTrigger value='sql' className='text-xs'>
+        Command Console
+      </TabsTrigger>
+      <TabsTrigger value='crud' className='text-xs'>
+        Table Manager {hasTables ? `(${tableCount})` : ''}
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value='sql'>
+      <FormSection title='Command Console' className='p-5'>
+        <SqlQueryConsole />
+      </FormSection>
+    </TabsContent>
+
+    <TabsContent value='crud'>
+      {isLoading && <LoadingState message='Loading table metadata...' className='py-12' />}
+      {!isLoading && !hasTables && <EmptyState title='No tables found' description={getNoTablesMessage()} />}
+      {!isLoading && hasTables && <CrudPanel />}
+    </TabsContent>
+  </Tabs>
+);
+
 function DatabaseOperationsContent({
   defaultTab,
-}: {
-  defaultTab: DatabaseOperationsTab;
-}): React.JSX.Element {
+}: DatabaseOperationsContentProps): React.JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
-  const { tableDetails, isLoading: previewLoading } = useDatabaseData();
+  const { tableDetails, isLoading } = useDatabaseData();
   const isProduction = process.env['NODE_ENV'] === 'production';
+  const tableCount = tableDetails.length;
+  const hasTables = tableCount > 0;
 
   return (
     <AdminDatabasePageLayout
       title='Database Operations'
       current='Operations'
       description='Run MongoDB-backed operations from the admin workspace.'
-      headerActions={
-        <div className='flex items-center gap-2'>
-          <SelectSimple
-            size='sm'
-            value={dbType}
-            onValueChange={(value: string): void => setDbType(value as DatabaseType)}
-            options={DB_TYPE_OPTIONS}
-            triggerClassName='h-8 text-xs w-[120px]'
-           ariaLabel='Select option' title='Select option'/>
-          <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/databases'>Back to Databases</Link>
-          </Button>
-        </div>
-      }
+      headerActions={<DatabaseOperationsHeaderActions dbType={dbType} setDbType={setDbType} />}
     >
       {isProduction && (
         <Card variant='warning' padding='md' className='mb-6 flex items-center gap-2 text-xs'>
@@ -54,38 +110,13 @@ function DatabaseOperationsContent({
           Database operations are disabled in production environments.
         </Card>
       )}
-
-      <Tabs defaultValue={defaultTab} className='w-full'>
-        <TabsList className='mb-4' aria-label='Database workspace tabs'>
-          <TabsTrigger value='sql' className='text-xs'>
-            Command Console
-          </TabsTrigger>
-          <TabsTrigger value='crud' className='text-xs'>
-            Table Manager {tableDetails.length > 0 && `(${tableDetails.length})`}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='sql'>
-          <FormSection title='Command Console' className='p-5'>
-            <SqlQueryConsole />
-          </FormSection>
-        </TabsContent>
-
-        <TabsContent value='crud'>
-          {previewLoading && <LoadingState message='Loading table metadata...' className='py-12' />}
-          {!previewLoading && tableDetails.length === 0 && (
-            <EmptyState
-              title='No tables found'
-              description={
-                dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the command console tab for MongoDB operations.'
-                  : 'No tables found in the database.'
-              }
-            />
-          )}
-          {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
-        </TabsContent>
-      </Tabs>
+      <DatabaseOperationsWorkspace
+        defaultTab={defaultTab}
+        isProduction={isProduction}
+        isLoading={isLoading}
+        hasTables={hasTables}
+        tableCount={tableCount}
+      />
     </AdminDatabasePageLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { ORDERS_COLLECTION } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
@@ -14,7 +14,7 @@ export async function GET(
   }
 
   const { orderId } = await params;
-  if (!orderId || typeof orderId !== 'string') {
+  if (orderId.length === 0) {
     return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
   }
 

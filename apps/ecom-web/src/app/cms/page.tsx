@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CmsPage(): Promise<JSX.Element> {
   const locale = await getRequestLocale();
   const session = await getSession();
-  if (!session?.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     redirect(localizeHref('/account', locale));
   }
 
@@ -36,18 +36,18 @@ export default async function CmsPage(): Promise<JSX.Element> {
       <SiteNav />
       <main style={{ paddingTop: 'var(--nav-h)', minHeight: '100vh' }}>
         <section
-          className="px-8 md:px-16 py-14"
+          className='px-8 md:px-16 py-14'
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <div className="max-w-screen-2xl mx-auto">
-            <div className="type-label mb-3" style={{ color: 'var(--coral-red)' }}>
+          <div className='max-w-screen-2xl mx-auto'>
+            <div className='type-label mb-3' style={{ color: 'var(--coral-red)' }}>
               {eyebrow}
             </div>
-            <h1 className="type-display-lg" style={{ color: 'var(--fg)' }}>
+            <h1 className='type-display-lg' style={{ color: 'var(--fg)' }}>
               {title}
             </h1>
             <p
-              className="mt-4 max-w-2xl"
+              className='mt-4 max-w-2xl'
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: '0.95rem',
@@ -60,7 +60,7 @@ export default async function CmsPage(): Promise<JSX.Element> {
             </p>
           </div>
         </section>
-        <section className="max-w-screen-2xl mx-auto px-8 md:px-16 py-12">
+        <section className='max-w-screen-2xl mx-auto px-8 md:px-16 py-12'>
           <AdminCmsEditor />
         </section>
       </main>

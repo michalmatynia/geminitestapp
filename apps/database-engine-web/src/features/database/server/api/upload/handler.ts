@@ -28,7 +28,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError('No file provided');
   }
 
-  if (type && type !== 'mongodb') {
+  if (type !== null && type !== 'mongodb') {
     throw badRequestError('Only MongoDB backup uploads are supported.');
   }
   assertValidMongoBackupName(file.name);

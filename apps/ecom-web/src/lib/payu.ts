@@ -6,7 +6,7 @@ const PAYU_POS_ID = process.env.PAYU_POS_ID ?? '';
 const PAYU_CLIENT_ID = process.env.PAYU_CLIENT_ID ?? '';
 const PAYU_CLIENT_SECRET = process.env.PAYU_CLIENT_SECRET ?? '';
 // Read lazily in verifyPayUWebhook so tests can stub it with vi.stubEnv.
-const getSecondKey = () => process.env.PAYU_SECOND_KEY ?? '';
+const getSecondKey = (): string => process.env.PAYU_SECOND_KEY ?? '';
 
 async function getPayUToken(): Promise<string> {
   const res = await fetch(`${PAYU_API_URL}/pl/standard/user/oauth/authorize`, {
@@ -19,7 +19,7 @@ async function getPayUToken(): Promise<string> {
     }).toString(),
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`PayU auth failed: ${res.status}`);
+  if (res.ok === false) throw new Error(`PayU auth failed: ${res.status}`);
   const data = (await res.json()) as { access_token: string };
   return data.access_token;
 }
@@ -55,6 +55,77 @@ export interface PayUOrderResult {
   statusCode: string;
 }
 
+type PayUOrderBody = {
+  notifyUrl: string;
+  customerIp: string;
+  merchantPosId: string;
+  description: string;
+  currencyCode: string;
+  totalAmount: number;
+  buyer: PayUBuyer;
+  products: PayUProduct[];
+  payMethods: {
+    payMethod: {
+      type: 'PBL';
+      value: 'BLIK';
+      authorizationCode: string;
+    };
+  };
+  extOrderId?: string;
+};
+
+function buildPayUOrderBody(params: CreatePayUBlikParams): PayUOrderBody {
+  const body: PayUOrderBody = {
+    notifyUrl: params.notifyUrl,
+    customerIp: params.customerIp,
+    merchantPosId: PAYU_POS_ID,
+    description: params.description,
+    currencyCode: params.currencyCode,
+    totalAmount: params.totalAmount,
+    buyer: params.buyer,
+    products: params.products,
+    payMethods: {
+      payMethod: {
+        type: 'PBL',
+        value: 'BLIK',
+        authorizationCode: params.blikCode,
+      },
+    },
+  };
+
+  const extOrderId = params.extOrderId;
+  if (extOrderId !== undefined && extOrderId !== '') {
+    body.extOrderId = extOrderId;
+  }
+  return body;
+}
+
+function isPayUSuccessStatus(status: number, statusCode: string): boolean {
+  if (status === 302) return true;
+  if (status === 201) return true;
+  return statusCode === 'SUCCESS';
+}
+
+function normalizePayUStatusCode(statusCode: string): string {
+  return statusCode === '' ? 'PENDING' : statusCode;
+}
+
+function parsePayUOrderResponse(body: string): {
+  orderId?: string;
+  status?: { statusCode: string; statusDesc?: string };
+  redirectUri?: string;
+} {
+  try {
+    return JSON.parse(body) as {
+      orderId?: string;
+      status?: { statusCode: string; statusDesc?: string };
+      redirectUri?: string;
+    };
+  } catch {
+    throw new Error('PayU returned invalid JSON');
+  }
+}
+
 export async function createPayUBlikOrder(
   params: CreatePayUBlikParams,
 ): Promise<PayUOrderResult> {
@@ -67,52 +138,25 @@ export async function createPayUBlikOrder(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      notifyUrl: params.notifyUrl,
-      customerIp: params.customerIp,
-      merchantPosId: PAYU_POS_ID,
-      description: params.description,
-      currencyCode: params.currencyCode,
-      totalAmount: params.totalAmount,
-      ...(params.extOrderId ? { extOrderId: params.extOrderId } : {}),
-      buyer: params.buyer,
-      products: params.products,
-      payMethods: {
-        payMethod: {
-          type: 'PBL',
-          value: 'BLIK',
-          authorizationCode: params.blikCode,
-        },
-      },
-    }),
+    body: JSON.stringify(buildPayUOrderBody(params)),
     cache: 'no-store',
   });
 
   // PayU returns 302 on success (follow manually) or 201 in sandbox
   const body = await res.text();
-  if (!body) throw new Error(`PayU returned empty body: ${res.status}`);
+  if (body === '') throw new Error(`PayU returned empty body: ${res.status}`);
 
-  let data: {
-    orderId?: string;
-    status?: { statusCode: string; statusDesc?: string };
-    redirectUri?: string;
-  };
-  try {
-    data = JSON.parse(body) as typeof data;
-  } catch {
-    throw new Error(`PayU returned non-JSON: ${res.status}`);
-  }
+  const data = parsePayUOrderResponse(body);
 
   const statusCode = data.status?.statusCode ?? '';
-
-  if (res.status === 302 || res.status === 201 || statusCode === 'SUCCESS') {
-    return {
-      payuOrderId: data.orderId ?? '',
-      statusCode: statusCode || 'PENDING',
-    };
+  if (!isPayUSuccessStatus(res.status, statusCode)) {
+    throw new Error(data.status?.statusDesc ?? `PayU order failed: ${res.status} ${statusCode}`);
   }
 
-  throw new Error(data.status?.statusDesc ?? `PayU order failed: ${res.status} ${statusCode}`);
+  return {
+    payuOrderId: data.orderId ?? '',
+    statusCode: normalizePayUStatusCode(statusCode),
+  };
 }
 
 // Verifies the OpenPayU-Signature header for incoming IPN webhooks.
@@ -122,16 +166,18 @@ export function verifyPayUWebhook(
   signatureHeader: string | null,
 ): boolean {
   const secondKey = getSecondKey();
-  if (!signatureHeader || !secondKey) return false;
+  if (signatureHeader === null || secondKey === '') return false;
 
   const sigMatch = /signature=([a-f0-9]{32})/i.exec(signatureHeader);
-  if (!sigMatch?.[1]) return false;
+  if (sigMatch === null) return false;
+  const signature = sigMatch[1];
+  if (signature === '') return false;
 
   const expected = createHash('md5')
     .update(rawBody + secondKey)
     .digest('hex');
   const expectedBuffer = Buffer.from(expected.toLowerCase(), 'utf8');
-  const actualBuffer = Buffer.from(sigMatch[1].toLowerCase(), 'utf8');
+  const actualBuffer = Buffer.from(signature.toLowerCase(), 'utf8');
 
   return (
     expectedBuffer.length === actualBuffer.length

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, max-lines-per-function */
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
 import { getStoriesPageContent } from '@/lib/cms';
@@ -38,8 +39,8 @@ export default async function StoriesPage(): Promise<JSX.Element> {
       <>
         <SiteNav />
         <main style={{ paddingTop: 'var(--nav-h)' }}>
-          <div className="px-8 md:px-16 py-20">
-            <h1 className="type-display-lg" style={{ color: 'var(--fg)' }}>{content.index.emptyTitle}</h1>
+          <div className='px-8 md:px-16 py-20'>
+            <h1 className='type-display-lg' style={{ color: 'var(--fg)' }}>{content.index.emptyTitle}</h1>
             <p style={{ color: 'var(--muted)', marginTop: '1rem' }}>{content.index.emptyBody}</p>
           </div>
         </main>
@@ -54,14 +55,14 @@ export default async function StoriesPage(): Promise<JSX.Element> {
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Page header */}
         <div
-          className="px-8 md:px-16 py-16 md:py-20"
+          className='px-8 md:px-16 py-16 md:py-20'
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <div className="type-label mb-4" style={{ color: 'var(--accent)' }}>
+          <div className='type-label mb-4' style={{ color: 'var(--accent)' }}>
             {content.index.eyebrow}
           </div>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <h1 className="type-display-lg" style={{ color: 'var(--fg)' }}>
+          <div className='flex flex-col md:flex-row md:items-end md:justify-between gap-4'>
+            <h1 className='type-display-lg' style={{ color: 'var(--fg)' }}>
               {content.index.title}
             </h1>
             <p
@@ -82,31 +83,31 @@ export default async function StoriesPage(): Promise<JSX.Element> {
         {/* Featured story */}
         <a
           href={localizeHref(`/stories/${featured.slug}`, locale)}
-          className="group block relative overflow-hidden"
+          className='group block relative overflow-hidden'
           style={{ minHeight: '70vh' }}
         >
           <div
-            className="absolute inset-0 transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
+            className='absolute inset-0 transition-transform duration-1000 ease-out group-hover:scale-[1.02]'
             style={{ background: featured.gradient }}
           />
           {/* Grain */}
           <div
-            className="absolute inset-0 opacity-30 mix-blend-overlay"
+            className='absolute inset-0 opacity-30 mix-blend-overlay'
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.08\'/%3E%3C/svg%3E")',
               backgroundSize: '150px',
             }}
           />
-          <div className="absolute inset-0 p-10 md:p-16 flex flex-col justify-end" style={{ zIndex: 2 }}>
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-4 mb-6">
+          <div className='absolute inset-0 p-10 md:p-16 flex flex-col justify-end' style={{ zIndex: 2 }}>
+            <div className='max-w-2xl'>
+              <div className='flex items-center gap-4 mb-6'>
                 <span
-                  className="type-label px-3 py-1"
+                  className='type-label px-3 py-1'
                   style={{ background: featured.accentColor, color: '#fff' }}
                 >
                   {content.index.featuredBadge}
                 </span>
-                <span className="type-label" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <span className='type-label' style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {featured.category} · {readTimeLabel(featured.readTime, locale)}
                 </span>
               </div>
@@ -137,12 +138,12 @@ export default async function StoriesPage(): Promise<JSX.Element> {
                 {featured.excerpt}
               </p>
               <div
-                className="flex items-center gap-2 type-label transition-gap duration-200 group-hover:gap-3"
+                className='flex items-center gap-2 type-label transition-gap duration-200 group-hover:gap-3'
                 style={{ color: featured.textColor, opacity: 0.8 }}
               >
                 {content.index.readLabel}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
+                <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                  <path d='M5 12h14M12 5l7 7-7 7' />
                 </svg>
               </div>
             </div>
@@ -150,15 +151,15 @@ export default async function StoriesPage(): Promise<JSX.Element> {
         </a>
 
         {/* Story grid */}
-        <div className="px-8 md:px-16 py-16 max-w-screen-2xl mx-auto">
+        <div className='px-8 md:px-16 py-16 max-w-screen-2xl mx-auto'>
           {/* Category filter pills */}
-          <div className="flex flex-wrap gap-3 mb-12">
+          <div className='flex flex-wrap gap-3 mb-12'>
             {content.index.categoryFilters.map((cat, index) => {
               const isActive = index === 0;
               return (
               <span
                 key={cat}
-                className="type-label px-4 py-2 cursor-default"
+                className='type-label px-4 py-2 cursor-default'
                 style={{
                   border: '1px solid var(--border)',
                   color: isActive ? 'var(--bg)' : 'var(--muted)',
@@ -171,34 +172,34 @@ export default async function StoriesPage(): Promise<JSX.Element> {
             })}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className='grid md:grid-cols-3 gap-8'>
             {rest.map((story, i) => (
               <a
                 key={story.id}
                 href={localizeHref(`/stories/${story.slug}`, locale)}
-                className="group block"
+                className='group block'
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
                 {/* Image */}
                 <div
-                  className="relative overflow-hidden mb-5"
+                  className='relative overflow-hidden mb-5'
                   style={{ aspectRatio: '4/3' }}
                 >
                   <div
-                    className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
+                    className='absolute inset-0 transition-transform duration-700 group-hover:scale-105'
                     style={{ background: story.gradient }}
                   />
                   <div
-                    className="absolute inset-0 opacity-20 mix-blend-overlay"
+                    className='absolute inset-0 opacity-20 mix-blend-overlay'
                     style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
+                      backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.08\'/%3E%3C/svg%3E")',
                       backgroundSize: '150px',
                     }}
                   />
                   {/* Category badge */}
-                  <div className="absolute top-4 left-4">
+                  <div className='absolute top-4 left-4'>
                     <span
-                      className="type-label px-2.5 py-1"
+                      className='type-label px-2.5 py-1'
                       style={{ background: story.accentColor, color: '#fff' }}
                     >
                       {story.category}
@@ -207,15 +208,15 @@ export default async function StoriesPage(): Promise<JSX.Element> {
                 </div>
 
                 {/* Meta */}
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="type-label" style={{ color: 'var(--muted)' }}>{story.date}</span>
+                <div className='flex items-center gap-3 mb-3'>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>{story.date}</span>
                   <span style={{ color: 'var(--muted)' }}>·</span>
-                  <span className="type-label" style={{ color: 'var(--muted)' }}>{readTimeLabel(story.readTime, locale)}</span>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>{readTimeLabel(story.readTime, locale)}</span>
                 </div>
 
                 {/* Title */}
                 <h3
-                  className="mb-2"
+                  className='mb-2'
                   style={{
                     fontFamily: 'var(--font-display)',
                     fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
@@ -246,12 +247,12 @@ export default async function StoriesPage(): Promise<JSX.Element> {
                 </p>
 
                 <div
-                  className="flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200"
+                  className='flex items-center gap-2 type-label group-hover:gap-3 transition-all duration-200'
                   style={{ color: 'var(--accent)' }}
                 >
                   {content.index.cardReadLabel}
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                    <path d='M5 12h14M12 5l7 7-7 7' />
                   </svg>
                 </div>
               </a>

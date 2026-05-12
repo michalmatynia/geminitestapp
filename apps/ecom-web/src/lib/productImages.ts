@@ -5,10 +5,10 @@ const DEFAULT_FILE_HOSTS = new Set([new URL(DEFAULT_FILE_BASE_URL).hostname]);
 
 function normalizeFileBaseUrl(value: string | undefined): string {
   const raw = value?.trim().replace(/\/$/, '');
-  if (!raw) return '';
+  if (raw === '' || raw === undefined) return '';
 
   const url = parseHttpUrl(raw);
-  if (!url) return raw;
+  if (url === null) return raw;
   if (LEGACY_FILE_HOSTS.has(url.hostname.toLowerCase())) {
     const defaultUrl = new URL(DEFAULT_FILE_BASE_URL);
     url.protocol = defaultUrl.protocol;
@@ -20,15 +20,15 @@ function normalizeFileBaseUrl(value: string | undefined): string {
 
 function getFileBaseUrl(): string {
   const configured = normalizeFileBaseUrl(process.env.NEXT_PUBLIC_FILE_BASE_URL);
-  return configured || DEFAULT_FILE_BASE_URL;
+  return configured === '' ? DEFAULT_FILE_BASE_URL : configured;
 }
 
 function getFallbackFileBaseUrl(): string {
   const configured = normalizeFileBaseUrl(process.env.NEXT_PUBLIC_FILE_FALLBACK_BASE_URL);
-  if (configured) return configured;
+  if (configured !== '') return configured;
 
   const mainAppUrl = normalizeFileBaseUrl(process.env.NEXT_PUBLIC_MAIN_APP_URL);
-  if (mainAppUrl) return mainAppUrl;
+  if (mainAppUrl !== '') return mainAppUrl;
 
   return process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000';
 }
@@ -83,13 +83,35 @@ function shouldRewriteUploadHost(url: URL, uploadPath: string | undefined): uplo
   return uploadPath !== undefined && isKnownFileHost(url);
 }
 
+function getProductImageSrcFromUrl(raw: string): string {
+  const url = parseHttpUrl(raw);
+  if (url === null) return raw;
+
+  const uploadPath = normalizeProductUploadPath(uploadPathWithSuffix(url));
+  if (uploadPath === undefined) return raw;
+
+  if (shouldRewriteUploadHost(url, uploadPath)) {
+    return `${getFileBaseUrl()}${uploadPath}`;
+  }
+
+  return raw;
+}
+
+function getProductImageSrcFromPath(raw: string): string {
+  const uploadPath = normalizeProductUploadPath(raw);
+  if (uploadPath === undefined) return raw;
+
+  return `${getFileBaseUrl()}${uploadPath}`;
+}
+
 export function getProductUploadPath(src: string | undefined): string | undefined {
   const raw = src?.trim();
-  if (!raw) return undefined;
+  if (raw === '' || raw === undefined) return undefined;
 
   if (/^https?:\/\//i.test(raw)) {
     const url = parseHttpUrl(raw);
-    return url ? normalizeProductUploadPath(uploadPathWithSuffix(url)) : undefined;
+    if (url === null) return undefined;
+    return normalizeProductUploadPath(uploadPathWithSuffix(url));
   }
 
   return normalizeProductUploadPath(raw);
@@ -97,20 +119,12 @@ export function getProductUploadPath(src: string | undefined): string | undefine
 
 export function getProductImageSrc(src: string | undefined): string | undefined {
   const raw = src?.trim();
-  if (!raw) return undefined;
+  if (raw === '' || raw === undefined) return undefined;
 
-  if (/^https?:\/\//i.test(raw)) {
-    const url = parseHttpUrl(raw);
-    const uploadPath = url ? normalizeProductUploadPath(uploadPathWithSuffix(url)) : undefined;
-    if (url && shouldRewriteUploadHost(url, uploadPath)) {
-      return `${getFileBaseUrl()}${uploadPath}`;
-    }
-    return raw;
-  }
+  const isRemoteUrl = /^https?:\/\//i.test(raw);
+  if (isRemoteUrl) return getProductImageSrcFromUrl(raw);
 
-  const uploadPath = normalizeProductUploadPath(raw);
-  if (uploadPath !== undefined) return `${getFileBaseUrl()}${uploadPath}`;
-  return raw;
+  return getProductImageSrcFromPath(raw);
 }
 
 export function getProductImageFallbackSrc(src: string | undefined): string | undefined {
@@ -118,15 +132,15 @@ export function getProductImageFallbackSrc(src: string | undefined): string | un
   if (uploadPath === undefined) return undefined;
 
   const fallbackBaseUrl = getFallbackFileBaseUrl();
-  return fallbackBaseUrl ? `${fallbackBaseUrl}${uploadPath}` : uploadPath;
+  return fallbackBaseUrl !== '' ? `${fallbackBaseUrl}${uploadPath}` : uploadPath;
 }
 
 export function shouldBypassImageOptimization(src: string | undefined): boolean {
   const raw = src?.trim();
-  if (!raw) return false;
+  if (raw === '' || raw === undefined) return false;
 
   const url = parseHttpUrl(raw);
-  if (!url) return false;
+  if (url === null) return false;
 
   const uploadPath = normalizeProductUploadPath(uploadPathWithSuffix(url));
   return shouldRewriteUploadHost(url, uploadPath);

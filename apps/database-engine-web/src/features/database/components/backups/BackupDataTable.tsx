@@ -17,16 +17,20 @@ export function BackupDataTable(): JSX.Element {
   const isRunBackupDisabled = isProd || !backupRunNowAllowed;
   const isUploadDisabled = isProd || !backupMaintenanceAllowed;
 
-  const runBackupTitle = isRunBackupDisabled
-    ? isProd
-      ? 'Disabled in production'
-      : 'Disabled by Database Engine operation controls'
-    : undefined;
-  const uploadTitle = isUploadDisabled
-    ? isProd
-      ? 'Disabled in production'
-      : 'Disabled by Database Engine operation controls'
-    : undefined;
+  const getDisabledTitle = (isDisabled: boolean): string | undefined => {
+    if (!isDisabled) {
+      return undefined;
+    }
+
+    if (isProd) {
+      return 'Disabled in production';
+    }
+
+    return 'Disabled by Database Engine operation controls';
+  };
+
+  const runBackupTitle = getDisabledTitle(isRunBackupDisabled);
+  const uploadTitle = getDisabledTitle(isUploadDisabled);
 
   return (
     <StandardDataTablePanel<DatabaseInfo>

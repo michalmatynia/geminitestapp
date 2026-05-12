@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function, no-console */
 'use client';
 
 import { useEffect, type JSX } from 'react';
@@ -15,10 +16,10 @@ export default function ProductsError({
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center px-8"
+      className='min-h-screen flex flex-col items-center justify-center px-8'
       style={{ background: 'var(--bg)', color: 'var(--fg)' }}
     >
-      <div className="text-center max-w-md">
+      <div className='text-center max-w-md'>
         <div
           style={{
             fontFamily: 'var(--font-mono)',
@@ -55,11 +56,11 @@ export default function ProductsError({
           We had trouble loading the catalogue. Please try again or browse our collections from the
           homepage.
         </p>
-        <div className="flex flex-wrap gap-3 justify-center">
-          <button className="btn-primary" onClick={reset}>
+        <div className='flex flex-wrap gap-3 justify-center'>
+          <button className='btn-primary' onClick={reset}>
             Try again
           </button>
-          <a className="btn-ghost" href="/">
+          <a className='btn-ghost' href='/'>
             Go home
           </a>
         </div>

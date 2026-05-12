@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { deleteStory, getStoryBySlug, saveStory, validateStory } from '@/lib/storiesCms';
 import { normalizeLocale } from '@/lib/locales';
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteContext): Promise<N
 
 export async function PUT(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
   const { slug } = await params;
   const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
@@ -64,7 +64,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
 
 export async function DELETE(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
   const { slug } = await params;
   const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 

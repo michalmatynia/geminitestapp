@@ -34,7 +34,11 @@ function ArtisansGrid({ artisans, gradients }: { artisans: AboutArtisanContent[]
   return (
     <div className='grid md:grid-cols-4 gap-6'>
       {artisans.map((artisan, index) => (
-        <ArtisanCard key={artisan.name} artisan={artisan} gradient={gradients[index % gradients.length] ?? gradients[0] ?? 'var(--surface)'} />
+        <ArtisanCard
+          key={artisan.name}
+          artisan={artisan}
+          gradient={gradients.length > 0 ? gradients[index % gradients.length] : 'var(--surface)'}
+        />
       ))}
     </div>
   );

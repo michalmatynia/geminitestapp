@@ -11,6 +11,7 @@
  */
 
 import { type QueryClient } from '@tanstack/react-query';
+/* eslint-disable max-lines */
 
 import type {
   DatabaseBackupFile as DatabaseInfoResponse,
@@ -208,6 +209,7 @@ export function useDeleteBackupMutation(): MutationResult<
   });
 }
 
+// eslint-disable-next-line complexity
 export function useDatabasePreview(input: {
   backupName?: string | undefined;
   mode?: DatabasePreviewMode;

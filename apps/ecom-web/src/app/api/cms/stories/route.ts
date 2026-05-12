@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getAllStories, saveStory, validateStory } from '@/lib/storiesCms';
 import { normalizeLocale } from '@/lib/locales';
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
   const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
   let body: unknown;

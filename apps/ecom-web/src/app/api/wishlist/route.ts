@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getEcomAuthDb } from '@/lib/mongodb';
 import { getSession } from '@/lib/auth';
 import { ensureAppIndexes } from '@/lib/db-indexes';
@@ -6,14 +6,15 @@ import type { WishlistItem } from '@/context/WishlistContext';
 
 const MAX_WISHLIST_ITEMS = 200;
 
+// eslint-disable-next-line complexity
 function sanitizeItem(raw: unknown): WishlistItem | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const item = raw as Record<string, unknown>;
   const productId = typeof item['productId'] === 'string' ? item['productId'].trim() : '';
   const slug = typeof item['slug'] === 'string' ? item['slug'].trim() : '';
   const name = typeof item['name'] === 'string' ? item['name'].trim() : '';
-  if (!productId || !slug || !name) return null;
-  return {
+  if (productId.length === 0 || slug.length === 0 || name.length === 0) return null;
+  const wishlistItem: WishlistItem = {
     productId,
     slug,
     name,
@@ -22,7 +23,8 @@ function sanitizeItem(raw: unknown): WishlistItem | null {
     priceDisplay: typeof item['priceDisplay'] === 'string' ? item['priceDisplay'].trim() : '',
     gradient: typeof item['gradient'] === 'string' ? item['gradient'].trim() : '',
     imageUrl: typeof item['imageUrl'] === 'string' ? item['imageUrl'].trim() : undefined,
-  } as WishlistItem;
+  };
+  return wishlistItem;
 }
 
 // GET — return the logged-in user's saved wishlist
@@ -33,10 +35,12 @@ export async function GET(): Promise<NextResponse> {
 
   const db = await getEcomAuthDb();
   const doc = await db.collection('ecom_wishlists').findOne({ userId: user.id });
-  return NextResponse.json({ items: (doc?.items as WishlistItem[]) ?? [] });
+  const items = Array.isArray(doc?.items) ? doc.items : [];
+  return NextResponse.json({ items });
 }
 
 // POST — replace the wishlist for the logged-in user
+// eslint-disable-next-line complexity
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

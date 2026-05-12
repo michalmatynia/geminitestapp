@@ -32,6 +32,7 @@ const JSON_BACKUP_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   label: '-- Select --',
 };
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export default function DatabaseControlPanelPage(): React.JSX.Element {
   const { toast } = useToast();
   const schemaQuery = useAllCollectionsSchema();
@@ -47,7 +48,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   // Parse per-collection provider map from settings
   const providerMap = useMemo<Record<string, 'mongodb' | 'redis'>>(() => {
     const raw = settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
-    if (!raw) return {};
+    if (raw === undefined || raw === '') return {};
     try {
       return JSON.parse(raw) as Record<string, 'mongodb' | 'redis'>;
     } catch (error) {
@@ -110,7 +111,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   }, [createJsonBackup, toast]);
 
   const handleRestoreJsonBackup = useCallback(async () => {
-    if (!selectedJsonBackup) return;
+    if (selectedJsonBackup === '') return;
 
     try {
       const result = await restoreJsonBackup.mutateAsync(selectedJsonBackup);
@@ -176,7 +177,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         emptyState={
           schemaQuery.isError ? (
             <p className='py-4 text-center text-red-300 text-sm'>
-              {schemaQuery.error?.message ?? 'Failed to load collections.'}
+              {schemaQuery.error instanceof Error ? schemaQuery.error.message : 'Failed to load collections.'}
             </p>
           ) : undefined
         }
@@ -214,7 +215,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
               onClick={(): void => {
                 void handleRestoreJsonBackup();
               }}
-              disabled={!selectedJsonBackup || restoreJsonBackup.isPending}
+              disabled={selectedJsonBackup === '' || restoreJsonBackup.isPending}
               className='h-9'
             >
               {restoreJsonBackup.isPending ? 'Restoring...' : 'Restore'}

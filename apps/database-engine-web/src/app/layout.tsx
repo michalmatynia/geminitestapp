@@ -35,10 +35,8 @@ export default async function RootLayout({
   children: ReactNode;
 }): Promise<React.JSX.Element> {
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
-  const [messages, liteSettings] = await Promise.all([
-    loadDatabaseEngineMessages(locale),
-    getLiteSettingsForHydration(),
-  ]);
+  const messages = loadDatabaseEngineMessages(locale);
+  const liteSettings = await getLiteSettingsForHydration();
 
   const sanitizedLiteSettingsScript =
     liteSettings.length > 0

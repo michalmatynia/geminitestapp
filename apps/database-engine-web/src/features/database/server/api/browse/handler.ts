@@ -27,13 +27,14 @@ export const querySchema = z.object({
 
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();
-  const { collection, limit = 20, skip = 0, query } = params;
+  const { collection, limit = 20, skip = 0 } = params;
+  const query = params.query;
 
   const coll = db.collection(collection);
 
   // Parse query filter if provided
   let filter: Record<string, unknown> = {};
-  if (query) {
+  if (query !== undefined && query.length > 0) {
     try {
       filter = JSON.parse(query) as Record<string, unknown>;
     } catch (error) {
@@ -88,28 +89,40 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   };
 }
 
+const normalizeProvider = (provider: string | undefined): string => {
+  if (provider === undefined) return '';
+
+  const trimmed = provider.trim();
+  return trimmed.length === 0 ? '' : trimmed.toLowerCase();
+};
+
+const buildBrowseParams = (query: z.infer<typeof querySchema>): BrowseParams => {
+  const collection = query.collection ?? '';
+  if (collection.length === 0) {
+    throw badRequestError('Collection parameter is required');
+  }
+
+  const provider = normalizeProvider(query.provider);
+  if (provider.length > 0 && provider !== 'mongodb' && provider !== 'auto') {
+    throw badRequestError('Only MongoDB browsing is supported.');
+  }
+
+  const params: BrowseParams = { collection, limit: query.limit, skip: query.skip };
+  if (query.query !== undefined && query.query.length > 0) {
+    params.query = query.query;
+  }
+
+  return params;
+};
+
 export async function getHandler(
   request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const collection = query.collection ?? null;
-  const providerParam = query.provider?.toLowerCase() ?? '';
+  const params = buildBrowseParams(query);
 
-  if (!collection) {
-    throw badRequestError('Collection parameter is required');
-  }
-
-  await assertDatabaseEngineManageAccessOrAiPathsInternal(request, { collection });
-
-  if (providerParam && providerParam !== 'mongodb' && providerParam !== 'auto') {
-    throw badRequestError('Only MongoDB browsing is supported.');
-  }
-
-  const params: BrowseParams = { collection, limit: query.limit, skip: query.skip };
-  if (query.query !== undefined) {
-    params.query = query.query;
-  }
+  await assertDatabaseEngineManageAccessOrAiPathsInternal(request, { collection: params.collection });
 
   const result = await browseMongoCollection(params);
   return NextResponse.json(result, {

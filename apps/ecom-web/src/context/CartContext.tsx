@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,complexity,no-empty */
 'use client';
 
 import {

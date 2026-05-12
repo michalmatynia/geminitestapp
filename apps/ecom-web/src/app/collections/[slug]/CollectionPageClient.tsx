@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-misused-promises, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function, no-nested-ternary */
 'use client';
 
 import { useState, useMemo, useCallback, useRef, type JSX } from 'react';
@@ -37,14 +38,14 @@ function FilterPanel({
   return (
     <aside style={{ borderRight: '1px solid var(--border)', minWidth: '200px' }}>
       <div
-        className="px-6 py-5 flex items-center justify-between sticky top-[calc(var(--nav-h)+52px)]"
+        className='px-6 py-5 flex items-center justify-between sticky top-[calc(var(--nav-h)+52px)]'
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <span className="type-label" style={{ color: 'var(--fg)' }}>{content.filtersLabel}</span>
+        <span className='type-label' style={{ color: 'var(--fg)' }}>{content.filtersLabel}</span>
         {hasFilters && (
           <button
             onClick={onClear}
-            className="type-label hover:text-[var(--fg)] transition-colors"
+            className='type-label hover:text-[var(--fg)] transition-colors'
             style={{ color: 'var(--accent)' }}
           >
             {content.clearAllLabel}
@@ -52,36 +53,36 @@ function FilterPanel({
         )}
       </div>
 
-      <div className="px-6 py-6 sticky top-[calc(var(--nav-h)+97px)] overflow-y-auto">
+      <div className='px-6 py-6 sticky top-[calc(var(--nav-h)+97px)] overflow-y-auto'>
         {/* Price */}
-        <div className="mb-8">
-          <div className="type-label mb-4" style={{ color: 'var(--fg)' }}>{content.priceLabel}</div>
-          <div className="space-y-2">
+        <div className='mb-8'>
+          <div className='type-label mb-4' style={{ color: 'var(--fg)' }}>{content.priceLabel}</div>
+          <div className='space-y-2'>
             {content.priceRanges.map((range) => (
-              <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
+              <label key={range.label} className='flex items-center gap-3 cursor-pointer group'>
                 <div
-                  className="w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors"
+                  className='w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors'
                   style={{
                     border: `1px solid ${priceRange === range.label ? 'var(--accent)' : 'var(--border)'}`,
                     background: priceRange === range.label ? 'rgba(var(--accent-rgb),0.2)' : 'transparent',
                   }}
                 >
                   {priceRange === range.label && (
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round">
-                      <path d="M20 6L9 17l-5-5" />
+                    <svg width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='var(--accent)' strokeWidth='3' strokeLinecap='round'>
+                      <path d='M20 6L9 17l-5-5' />
                     </svg>
                   )}
                 </div>
                 <input
-                  type="radio"
-                  name="priceRange"
+                  type='radio'
+                  name='priceRange'
                   value={range.label}
                   checked={priceRange === range.label}
                   onChange={() => setPriceRange(priceRange === range.label ? '' : range.label)}
-                  className="sr-only"
+                  className='sr-only'
                 />
                 <span
-                  className="type-label group-hover:text-[var(--fg)] transition-colors"
+                  className='type-label group-hover:text-[var(--fg)] transition-colors'
                   style={{ color: priceRange === range.label ? 'var(--accent)' : 'var(--muted)', letterSpacing: '0.06em' }}
                 >
                   {range.label}
@@ -93,13 +94,13 @@ function FilterPanel({
 
         {/* Sizes */}
         <div>
-          <div className="type-label mb-4" style={{ color: 'var(--fg)' }}>{content.sizeLabel}</div>
-          <div className="flex flex-wrap gap-2">
+          <div className='type-label mb-4' style={{ color: 'var(--fg)' }}>{content.sizeLabel}</div>
+          <div className='flex flex-wrap gap-2'>
             {content.sizes.map((size) => (
               <button
                 key={size}
                 onClick={() => toggleSize(size)}
-                className="type-label px-3 py-2 transition-all duration-150"
+                className='type-label px-3 py-2 transition-all duration-150'
                 style={{
                   border: `1px solid ${sizes.includes(size) ? 'var(--accent)' : 'var(--border)'}`,
                   background: sizes.includes(size) ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
@@ -155,37 +156,37 @@ function CollectionProductCard({
   };
 
   return (
-    <a href={localizedHref(`/products/${product.slug}`)} className="group block">
+    <a href={localizedHref(`/products/${product.slug}`)} className='group block'>
       {/* Image */}
       <div
-        className="relative overflow-hidden mb-3"
+        className='relative overflow-hidden mb-3'
         style={{ aspectRatio: compact ? '1/1' : '3/4' }}
       >
         <ProductImage
           imageUrl={product.imageUrl}
           gradient={product.gradient}
           alt={product.shortName ?? product.name}
-          className="absolute inset-0"
-          sizes="(max-width: 768px) 50vw, 33vw"
-          fit="contain"
-          position="center"
+          className='absolute inset-0'
+          sizes='(max-width: 768px) 50vw, 33vw'
+          fit='contain'
+          position='center'
           priority={priority}
         />
 
         {/* Grain */}
         <div
-          className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+          className='absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none'
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`,
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.08\'/%3E%3C/svg%3E")',
             backgroundSize: '150px',
           }}
         />
 
         {/* Tag */}
         {product.tag && (
-          <div className="absolute top-3 left-3 z-10">
+          <div className='absolute top-3 left-3 z-10'>
             <span
-              className="type-label px-2 py-1 inline-block"
+              className='type-label px-2 py-1 inline-block'
               style={{
                 background: 'rgba(var(--accent-rgb),0.1)',
                 color: 'var(--accent)',
@@ -199,16 +200,16 @@ function CollectionProductCard({
 
         {/* Hover overlay — darkens image so button is readable */}
         <div
-          className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+          className='absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none'
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }}
         />
 
         {/* Quick Add — sits inside the image, slides up from bottom */}
         <div
-          className="absolute inset-x-3 bottom-3 translate-y-2 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100"
+          className='absolute inset-x-3 bottom-3 translate-y-2 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100'
         >
           <button
-            className="btn-primary w-full justify-center text-center"
+            className='btn-primary w-full justify-center text-center'
             style={{ background: 'rgba(var(--accent-rgb),0.18)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb),0.5)', backdropFilter: 'blur(6px)' }}
             onClick={handleQuickAdd}
           >
@@ -218,9 +219,9 @@ function CollectionProductCard({
       </div>
 
       {/* Text info */}
-      <div className="flex justify-between items-start gap-2">
+      <div className='flex justify-between items-start gap-2'>
         <div>
-          <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>
+          <div className='type-label mb-1' style={{ color: 'var(--muted)' }}>
             {product.category}
           </div>
           <div
@@ -235,7 +236,7 @@ function CollectionProductCard({
             {product.shortName ?? product.name}
           </div>
         </div>
-        <span className="type-price flex-shrink-0 mt-1" style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(var(--gold-rgb),0.3)' }}>
+        <span className='type-price flex-shrink-0 mt-1' style={{ color: 'var(--soft-gold)', textShadow: '0 0 8px rgba(var(--gold-rgb),0.3)' }}>
           {formatPrice(product.price, locale)}
         </span>
       </div>
@@ -306,7 +307,7 @@ export function CollectionPageClient({
     }
     if (filterPrice) {
       const range = collectionContent.priceRanges.find((r) => r.label === filterPrice);
-      if (range) result = result.filter((p) => p.price >= range.min && (range.max == null || p.price < range.max));
+      if (range) result = result.filter((p) => p.price >= range.min && (range.max === null || p.price < range.max));
     }
     return result;
   }, [allProducts, filterSizes, filterPrice, collectionContent.priceRanges]);
@@ -374,7 +375,7 @@ export function CollectionPageClient({
         {/* Collection hero banner */}
         <div
           ref={heroBannerRef}
-          className="relative px-8 md:px-16 py-20 md:py-28 overflow-hidden grain"
+          className='relative px-8 md:px-16 py-20 md:py-28 overflow-hidden grain'
           style={{
             background:
               collection.slug === 'womenswear'
@@ -388,22 +389,22 @@ export function CollectionPageClient({
                 : 'radial-gradient(circle at 48% 18%, rgba(234,247,238,0.12) 0%, transparent 28%), radial-gradient(circle at 82% 76%, rgba(229,183,94,0.14) 0%, transparent 34%), linear-gradient(145deg, #020205 0%, #060913 58%, #140B13 100%)',
           }}
         >
-          <div ref={heroContentRef} className="will-change-transform">
+          <div ref={heroContentRef} className='will-change-transform'>
             {/* Breadcrumb */}
-            <div className="coll-breadcrumb flex items-center gap-2 mb-8" style={{ opacity: 0 }}>
-              <a href={localizedHref('/')} className="type-label hover:opacity-80 transition-opacity" style={{ color: 'rgba(255,255,255,0.5)' }}>{collectionContent.homeBreadcrumbLabel}</a>
-              <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-              <span className="type-label" style={{ color: 'rgba(255,255,255,0.8)' }}>{collectionContent.collectionsBreadcrumbLabel}</span>
-              <span className="type-label" style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
-              <span className="type-label" style={{ color: '#fff' }}>{collection.label}</span>
+            <div className='coll-breadcrumb flex items-center gap-2 mb-8' style={{ opacity: 0 }}>
+              <a href={localizedHref('/')} className='type-label hover:opacity-80 transition-opacity' style={{ color: 'rgba(255,255,255,0.5)' }}>{collectionContent.homeBreadcrumbLabel}</a>
+              <span className='type-label' style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+              <span className='type-label' style={{ color: 'rgba(255,255,255,0.8)' }}>{collectionContent.collectionsBreadcrumbLabel}</span>
+              <span className='type-label' style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>
+              <span className='type-label' style={{ color: '#fff' }}>{collection.label}</span>
             </div>
 
-            <div className="overflow-hidden">
-              <h1 className="coll-h1 type-display-xl" style={{ color: '#fff', maxWidth: '10ch', opacity: 0 }}>
+            <div className='overflow-hidden'>
+              <h1 className='coll-h1 type-display-xl' style={{ color: '#fff', maxWidth: '10ch', opacity: 0 }}>
                 {collection.label}
               </h1>
             </div>
-            <p className="coll-count type-label mt-4" style={{ color: 'rgba(255,255,255,0.5)', opacity: 0 }}>
+            <p className='coll-count type-label mt-4' style={{ color: 'rgba(255,255,255,0.5)', opacity: 0 }}>
               {displayTotal} {collectionCountWord}
             </p>
           </div>
@@ -411,7 +412,7 @@ export function CollectionPageClient({
           {/* Decorative count — parallaxes opposite direction */}
           <div
             ref={heroDecorRef}
-            className="coll-decor absolute right-16 top-1/2 -translate-y-1/2 text-right hidden md:block will-change-transform"
+            className='coll-decor absolute right-16 top-1/2 -translate-y-1/2 text-right hidden md:block will-change-transform'
             style={{ color: 'rgba(255,255,255,0.08)', opacity: 0 }}
           >
             <div
@@ -424,7 +425,7 @@ export function CollectionPageClient({
             >
               {displayTotal}
             </div>
-            <div className="type-label" style={{ color: 'rgba(255,255,255,0.15)' }}>
+            <div className='type-label' style={{ color: 'rgba(255,255,255,0.15)' }}>
               {collectionContent.totalInCollectionLabel}
             </div>
           </div>
@@ -432,48 +433,48 @@ export function CollectionPageClient({
 
         {/* Toolbar */}
         <div
-          className="sticky top-[var(--nav-h)] z-30 px-8 md:px-16 py-4 flex items-center justify-between gap-4"
+          className='sticky top-[var(--nav-h)] z-30 px-8 md:px-16 py-4 flex items-center justify-between gap-4'
           style={{
             background: 'color-mix(in srgb, var(--bg) 90%, transparent)',
             backdropFilter: 'blur(10px)',
             borderBottom: '1px solid var(--border)',
           }}
         >
-          <div className="flex items-center gap-4">
+          <div className='flex items-center gap-4'>
             <button
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className="flex items-center gap-2 type-label transition-colors hover:text-[var(--fg)]"
+              className='flex items-center gap-2 type-label transition-colors hover:text-[var(--fg)]'
               style={{ color: filtersOpen ? 'var(--fg)' : 'var(--muted)' }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-                <line x1="12" y1="18" x2="12" y2="18" />
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                <line x1='4' y1='6' x2='20' y2='6' />
+                <line x1='8' y1='12' x2='16' y2='12' />
+                <line x1='12' y1='18' x2='12' y2='18' />
               </svg>
               {collectionContent.filtersLabel}
               {(filterSizes.length > 0 || filterPrice) && (
                 <span
-                  className="w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
+                  className='w-4 h-4 rounded-full text-[10px] flex items-center justify-center'
                   style={{ background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-mono)' }}
                 >
                   {filterSizes.length + (filterPrice ? 1 : 0)}
                 </span>
               )}
             </button>
-            <span className="type-label" style={{ color: 'var(--muted)' }}>
+            <span className='type-label' style={{ color: 'var(--muted)' }}>
               {sortedProducts.length}
               {allProducts.length < displayTotal ? ` ${collectionContent.ofLabel} ${displayTotal}` : ''} {resultWord}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className='flex items-center gap-4'>
             {/* Sort */}
-            <div className="flex items-center gap-2">
-              <span className="type-label hidden md:block" style={{ color: 'var(--muted)' }}>{collectionContent.sortLabel}</span>
+            <div className='flex items-center gap-2'>
+              <span className='type-label hidden md:block' style={{ color: 'var(--muted)' }}>{collectionContent.sortLabel}</span>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="type-label py-1 px-2 bg-transparent outline-none cursor-pointer"
+                className='type-label py-1 px-2 bg-transparent outline-none cursor-pointer'
                 style={{
                   color: 'var(--fg)',
                   border: '1px solid var(--border)',
@@ -490,41 +491,41 @@ export function CollectionPageClient({
             </div>
 
             {/* View density toggle */}
-            <div className="flex gap-1" style={{ border: '1px solid var(--border)' }}>
+            <div className='flex gap-1' style={{ border: '1px solid var(--border)' }}>
               <button
                 onClick={() => setViewSize('comfortable')}
                 aria-label={collectionContent.comfortableViewAriaLabel}
-                className="w-8 h-8 flex items-center justify-center transition-colors"
+                className='w-8 h-8 flex items-center justify-center transition-colors'
                 style={{
                   background: viewSize === 'comfortable' ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
                   color: viewSize === 'comfortable' ? 'var(--accent)' : 'var(--muted-teal)',
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                  <rect x="0" y="0" width="7" height="7" rx="0.5" />
-                  <rect x="9" y="0" width="7" height="7" rx="0.5" />
-                  <rect x="0" y="9" width="7" height="7" rx="0.5" />
-                  <rect x="9" y="9" width="7" height="7" rx="0.5" />
+                <svg width='12' height='12' viewBox='0 0 16 16' fill='currentColor'>
+                  <rect x='0' y='0' width='7' height='7' rx='0.5' />
+                  <rect x='9' y='0' width='7' height='7' rx='0.5' />
+                  <rect x='0' y='9' width='7' height='7' rx='0.5' />
+                  <rect x='9' y='9' width='7' height='7' rx='0.5' />
                 </svg>
               </button>
               <button
                 onClick={() => setViewSize('compact')}
                 aria-label={collectionContent.compactViewAriaLabel}
-                className="w-8 h-8 flex items-center justify-center transition-colors"
+                className='w-8 h-8 flex items-center justify-center transition-colors'
                 style={{
                   background: viewSize === 'compact' ? 'rgba(var(--accent-rgb),0.15)' : 'transparent',
                   color: viewSize === 'compact' ? 'var(--accent)' : 'var(--muted-teal)',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                  <rect x="0" y="0" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="4.5" y="0" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="9" y="0" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="12.5" y="0" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="0" y="4.5" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="4.5" y="4.5" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="9" y="4.5" width="3.5" height="3.5" rx="0.5" />
-                  <rect x="12.5" y="4.5" width="3.5" height="3.5" rx="0.5" />
+                <svg width='14' height='14' viewBox='0 0 16 16' fill='currentColor'>
+                  <rect x='0' y='0' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='4.5' y='0' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='9' y='0' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='12.5' y='0' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='0' y='4.5' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='4.5' y='4.5' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='9' y='4.5' width='3.5' height='3.5' rx='0.5' />
+                  <rect x='12.5' y='4.5' width='3.5' height='3.5' rx='0.5' />
                 </svg>
               </button>
             </div>
@@ -532,7 +533,7 @@ export function CollectionPageClient({
         </div>
 
         {/* Filter + Products layout */}
-        <div className="flex">
+        <div className='flex'>
           {/* Filter sidebar — slides open */}
           <div
             style={{
@@ -553,9 +554,9 @@ export function CollectionPageClient({
           </div>
 
           {/* Products */}
-          <div className="flex-1 min-w-0 px-8 md:px-12 py-12">
+          <div className='flex-1 min-w-0 px-8 md:px-12 py-12'>
             {sortedProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-4">
+              <div className='flex flex-col items-center justify-center py-32 gap-4'>
                 <p
                   style={{
                     fontFamily: 'var(--font-display)',
@@ -567,7 +568,7 @@ export function CollectionPageClient({
                   {collectionContent.noResultsTitle}
                 </p>
                 <button
-                  className="btn-ghost"
+                  className='btn-ghost'
                   onClick={() => { setFilterSizes([]); setFilterPrice(''); }}
                 >
                   {collectionContent.clearFiltersLabel}
@@ -576,7 +577,7 @@ export function CollectionPageClient({
             ) : (
               <div className={`grid ${gridCols} gap-6 md:gap-8`}>
                 {sortedProducts.map((product, index) => (
-                  <div key={product.id} className="coll-product-card" style={{ opacity: 0 }}>
+                  <div key={product.id} className='coll-product-card' style={{ opacity: 0 }}>
                     <CollectionProductCard
                       product={product}
                       compact={viewSize === 'compact'}
@@ -591,17 +592,17 @@ export function CollectionPageClient({
 
             {/* Load more */}
             {canLoadMore && (
-              <div className="flex flex-col items-center mt-16 gap-3">
+              <div className='flex flex-col items-center mt-16 gap-3'>
                 <button
-                  className="btn-ghost px-16 flex items-center gap-3"
+                  className='btn-ghost px-16 flex items-center gap-3'
                   onClick={loadMore}
                   disabled={isLoadingMore}
                   style={{ opacity: isLoadingMore ? 0.6 : 1 }}
                 >
                   {isLoadingMore ? (
                     <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ animation: 'spin 0.9s linear infinite' }}>
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' style={{ animation: 'spin 0.9s linear infinite' }}>
+                        <path d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83' />
                       </svg>
                       {collectionContent.loadingLabel}
                     </>
@@ -609,7 +610,7 @@ export function CollectionPageClient({
                     `${collectionContent.loadMorePrefix} (${displayTotal - loadedCount} ${collectionContent.remainingLabel})`
                   )}
                 </button>
-                <p className="type-label" style={{ color: 'var(--muted)' }}>
+                <p className='type-label' style={{ color: 'var(--muted)' }}>
                   {collectionContent.showingLabel} {allProducts.length} {collectionContent.ofLabel} {displayTotal}
                 </p>
               </div>

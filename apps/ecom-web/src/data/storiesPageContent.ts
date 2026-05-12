@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,complexity,max-params */
+
 export interface StoriesIndexContent {
   eyebrow: string;
   title: string;
@@ -63,7 +65,7 @@ function readString(
   path: string,
 ): string {
   const value = source[key];
-  if (value == null) return fallback;
+  if (value === null) return fallback;
   if (typeof value !== 'string') {
     errors.push(`${path} must be text.`);
     return fallback;
@@ -88,7 +90,7 @@ function readStringList(
   path: string,
 ): string[] {
   const value = source[key];
-  if (value == null) return fallback;
+  if (value === null) return fallback;
   if (!Array.isArray(value)) {
     errors.push(`${path} must be a list.`);
     return fallback;

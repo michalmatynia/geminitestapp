@@ -1,5 +1,8 @@
 import 'server-only';
 
+/* eslint-disable max-lines */
+
+import type { Session } from 'next-auth';
 import type { AuthRole, AuthUserAccessDetail, AuthUserPageSettings, AuthUserRoleMap } from '@/shared/contracts/auth';
 import type { MongoSettingRecord } from '@/shared/contracts/base';
 import { authError } from '@/shared/errors/app-error';
@@ -59,6 +62,10 @@ const DEFAULT_AUTH_ROLES: AuthRole[] = [
   },
 ];
 
+type NormalizedAuthRole = AuthRole & {
+  deniedPermissions: string[];
+};
+
 type MongoSettingDoc = Partial<MongoSettingRecord> & {
   updatedAt?: Date | string | null;
 };
@@ -83,35 +90,46 @@ const getUpdatedAtMs = (value: Date | string | null | undefined): number | null 
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const pickPreferredSettingDoc = (docs: MongoSettingDoc[]): MongoSettingDoc | null => {
-  let selected: MongoSettingDoc | null = null;
-  for (const doc of docs) {
-    if (doc === undefined || typeof doc.value !== 'string') continue;
-    if (selected === null) {
-      selected = doc;
-      continue;
-    }
-    const docHasKey = typeof doc.key === 'string' && doc.key.trim().length > 0;
-    const selectedHasKey = typeof selected.key === 'string' && selected.key.trim().length > 0;
-    if (docHasKey && !selectedHasKey) {
-      selected = doc;
-      continue;
-    }
-    if (selectedHasKey && !docHasKey) continue;
+const hasSettingValue = (doc: MongoSettingDoc): doc is MongoSettingDoc & { value: string } =>
+  typeof doc.value === 'string';
 
-    const docUpdated = getUpdatedAtMs(doc.updatedAt);
-    const selectedUpdated = getUpdatedAtMs(selected.updatedAt);
-    if (docUpdated !== null && (selectedUpdated === null || docUpdated > selectedUpdated)) {
-      selected = doc;
+const hasDocumentKey = (doc: MongoSettingDoc): boolean => {
+  return typeof doc.key === 'string' && doc.key.trim() !== '';
+};
+
+const isMoreRecentSettingDoc = (
+  candidate: MongoSettingDoc,
+  selected: MongoSettingDoc
+): boolean => {
+  const candidateUpdated = getUpdatedAtMs(candidate.updatedAt);
+  if (candidateUpdated === null) return false;
+
+  const selectedUpdated = getUpdatedAtMs(selected.updatedAt);
+  return selectedUpdated === null || candidateUpdated > selectedUpdated;
+};
+
+const pickPreferredSettingDoc = (docs: MongoSettingDoc[]): MongoSettingDoc | null => {
+  return docs.filter(hasSettingValue).reduce<MongoSettingDoc | null>((selected, candidate) => {
+    if (selected === null) {
+      return candidate;
     }
-  }
-  return selected;
+
+    const candidateHasKey = hasDocumentKey(candidate);
+    if (!candidateHasKey) return selected;
+
+    if (hasDocumentKey(selected)) {
+      return isMoreRecentSettingDoc(candidate, selected) ? candidate : selected;
+    }
+
+    return candidate;
+  }, null);
 };
 
 const readMongoSettings = async (
   keys: readonly string[]
 ): Promise<Record<string, string | null>> => {
-  if (!process.env['MONGODB_URI']) {
+  const mongoDbUri = process.env['MONGODB_URI'];
+  if (mongoDbUri === undefined || mongoDbUri === '') {
     return Object.fromEntries(keys.map((key) => [key, null]));
   }
 
@@ -140,8 +158,9 @@ let authSettingsSnapshotInflight: Promise<AuthSettingsSnapshot> | null = null;
 const getAuthSettingsSnapshot = async (): Promise<AuthSettingsSnapshot> => {
   const now = Date.now();
   const ttl = parseCacheTtl(AUTH_SETTINGS_CACHE_TTL_MS, 60_000);
-  if (authSettingsSnapshotCache !== null && now - authSettingsSnapshotCache.ts < ttl) {
-    return authSettingsSnapshotCache.value;
+  const currentSnapshot = authSettingsSnapshotCache;
+  if (currentSnapshot !== null && now - currentSnapshot.ts < ttl) {
+    return currentSnapshot.value;
   }
   if (authSettingsSnapshotInflight !== null) return authSettingsSnapshotInflight;
 
@@ -164,28 +183,46 @@ const getAuthSettingsSnapshot = async (): Promise<AuthSettingsSnapshot> => {
   authSettingsSnapshotInflight = promise;
   try {
     const value = await promise;
-    authSettingsSnapshotCache = { value, ts: Date.now() };
+    if (
+      authSettingsSnapshotInflight === promise &&
+      authSettingsSnapshotCache === currentSnapshot
+    ) {
+      authSettingsSnapshotCache = { value, ts: Date.now() };
+    }
     return value;
   } finally {
-    authSettingsSnapshotInflight = null;
+    if (authSettingsSnapshotInflight === promise) {
+      authSettingsSnapshotInflight = null;
+    }
   }
+};
+
+const getDeniedPermissions = (fallback: AuthRole, role: AuthRole): string[] => {
+  if (Array.isArray(role.deniedPermissions)) return role.deniedPermissions;
+  if (Array.isArray(fallback.deniedPermissions)) return fallback.deniedPermissions;
+  return [];
 };
 
 const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRole[] => {
   const incoming = Array.isArray(roles) ? roles : [];
   const defaults = new Map<string, AuthRole>(DEFAULT_AUTH_ROLES.map((role) => [role.id, role]));
-  const merged = incoming.map((role) => {
+  const merged: NormalizedAuthRole[] = incoming.map((role) => {
     const fallback = defaults.get(role.id);
-    if (!fallback) return role;
+    if (!fallback) {
+      return {
+        ...role,
+        permissions: Array.isArray(role.permissions) ? role.permissions : [],
+        deniedPermissions: Array.isArray(role.deniedPermissions) ? role.deniedPermissions : [],
+      } satisfies NormalizedAuthRole;
+    }
+    const deniedPermissions = getDeniedPermissions(fallback, role);
     return {
       ...fallback,
       ...role,
       permissions: Array.isArray(role.permissions) ? role.permissions : fallback.permissions,
-      deniedPermissions: Array.isArray(role.deniedPermissions)
-        ? role.deniedPermissions
-        : fallback.deniedPermissions ?? [],
+      deniedPermissions,
       level: typeof role.level === 'number' ? role.level : fallback.level,
-    };
+    } satisfies NormalizedAuthRole;
   });
 
   const known = new Set(merged.map((role) => role.id));
@@ -207,7 +244,8 @@ const getAuthUserRoles = async (): Promise<AuthUserRoleMap> => {
 
 const getAuthDefaultRoleId = async (): Promise<string | null> => {
   const snapshot = await getAuthSettingsSnapshot();
-  return snapshot.defaultRole?.trim() || null;
+  const defaultRole = snapshot.defaultRole?.trim();
+  return defaultRole === '' || defaultRole === undefined ? null : defaultRole;
 };
 
 export const getAuthUserPageSettings = async (): Promise<AuthUserPageSettings> => {
@@ -234,7 +272,7 @@ const resolveEffectiveRole = (
     defaultRole ??
     roleList.find((role) => role.id === 'viewer') ??
     roleList[0] ??
-    DEFAULT_AUTH_ROLES[0]!;
+    DEFAULT_AUTH_ROLES[0];
 
   return { role: fallbackRole, roleAssigned: false };
 };
@@ -268,9 +306,14 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
       getAuthUserRoles(),
       getAuthDefaultRoleId(),
     ]);
-    const { role, roleAssigned } = resolveEffectiveRole(roles, userRoles, userId, defaultRoleId);
-    const deniedPermissions = role.deniedPermissions ?? [];
-    const permissions = (role.permissions ?? []).filter(
+    const { role, roleAssigned } = resolveEffectiveRole(
+      roles as Array<NormalizedAuthRole>,
+      userRoles,
+      userId,
+      defaultRoleId
+    );
+    const deniedPermissions = (role as NormalizedAuthRole).deniedPermissions;
+    const permissions = (role as NormalizedAuthRole).permissions.filter(
       (permission) => !deniedPermissions.includes(permission)
     );
     const level = role.level ?? 0;
@@ -295,15 +338,21 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
   }
 };
 
-export async function readOptionalServerAuthSession() {
-  const { auth } = await import('./auth');
-  return auth();
+export async function readOptionalServerAuthSession(): Promise<Session | null> {
+  const authModule = (await import('./auth')) as { auth: () => Promise<Session | null> };
+  return authModule.auth();
 }
 
 export async function assertSettingsManageAccess(): Promise<void> {
   const session = await readOptionalServerAuthSession();
-  const user = session?.user;
-  if (user?.isElevated === true || user?.permissions?.includes('settings.manage')) return;
+  const user = session?.user as
+    | ({ isElevated?: boolean | null; permissions?: string[] | null } & Record<string, unknown>)
+    | null
+    | undefined;
+  const userPermissions = user?.permissions ?? [];
+  if (user?.isElevated === true || userPermissions.includes('settings.manage')) {
+    return;
+  }
 
   throw authError('Unauthorized.');
 }

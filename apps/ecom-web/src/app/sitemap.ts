@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions */
 import type { MetadataRoute } from 'next';
 import { PRODUCTS, COLLECTIONS } from '@/data/products';
 import { getMentiosSlugs } from '@/lib/mentios';

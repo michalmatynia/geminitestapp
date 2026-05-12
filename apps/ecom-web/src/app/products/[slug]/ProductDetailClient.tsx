@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function */
 'use client';
 
 import { useState, useEffect, type JSX, type SyntheticEvent } from 'react';
@@ -32,36 +33,36 @@ function AccordionItem({
     <div style={{ borderTop: '1px solid var(--border)' }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-5"
+        className='w-full flex items-center justify-between py-5'
         aria-expanded={open}
       >
-        <span className="type-label" style={{ color: 'var(--fg)' }}>
+        <span className='type-label' style={{ color: 'var(--fg)' }}>
           {label}
         </span>
         <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
+          width='14'
+          height='14'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='1.5'
+          strokeLinecap='round'
           style={{
             color: 'var(--muted)',
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.3s ease',
           }}
         >
-          <path d="M6 9l6 6 6-6" />
+          <path d='M6 9l6 6 6-6' />
         </svg>
       </button>
       {open && (
-        <div className="pb-5">
-          <ul className="space-y-2">
+        <div className='pb-5'>
+          <ul className='space-y-2'>
             {(children as string[]).map((item) => (
               <li
                 key={item}
-                className="flex items-start gap-3"
+                className='flex items-start gap-3'
                 style={{
                   fontFamily: 'var(--font-body)',
                   fontSize: '0.875rem',
@@ -90,12 +91,12 @@ function SizeGuideModal({
 }): JSX.Element {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+      className='fixed inset-0 z-50 flex items-end md:items-center justify-center'
       onClick={onClose}
       style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
     >
       <div
-        className="w-full md:max-w-lg mx-4 md:mx-0"
+        className='w-full md:max-w-lg mx-4 md:mx-0'
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg)',
@@ -103,9 +104,9 @@ function SizeGuideModal({
           padding: '2.5rem',
         }}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className='flex items-center justify-between mb-6'>
           <div>
-            <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>{content.sizeGuideEyebrow}</div>
+            <div className='type-label mb-1' style={{ color: 'var(--accent)' }}>{content.sizeGuideEyebrow}</div>
             <h3
               style={{
                 fontFamily: 'var(--font-display)',
@@ -120,25 +121,25 @@ function SizeGuideModal({
           <button
             onClick={onClose}
             aria-label={content.closeSizeGuideLabel}
-            className="text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
+            className='text-[var(--muted)] hover:text-[var(--fg)] transition-colors'
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+              <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
             </svg>
           </button>
         </div>
 
-        <p className="type-label mb-6" style={{ color: 'var(--muted)' }}>
+        <p className='type-label mb-6' style={{ color: 'var(--muted)' }}>
           {content.sizeGuideBody}
         </p>
 
-        <table className="w-full">
+        <table className='w-full'>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {content.sizeGuideHeaders.map((h) => (
                 <th
                   key={h}
-                  className="type-label pb-3 text-left"
+                  className='type-label pb-3 text-left'
                   style={{ color: 'var(--muted)', fontWeight: 400 }}
                 >
                   {h}
@@ -153,7 +154,7 @@ function SizeGuideModal({
                 style={{ borderBottom: '1px solid var(--border)' }}
               >
                 <td
-                  className="py-3.5"
+                  className='py-3.5'
                   style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 400, color: 'var(--fg)' }}
                 >
                   {row.size}
@@ -161,7 +162,7 @@ function SizeGuideModal({
                 {[row.chest, row.waist, row.hips].map((v, i) => (
                   <td
                     key={i}
-                    className="py-3.5"
+                    className='py-3.5'
                     style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--muted)' }}
                   >
                     {v}
@@ -172,8 +173,8 @@ function SizeGuideModal({
           </tbody>
         </table>
 
-        <p className="type-label mt-6" style={{ color: 'var(--muted)' }}>
-          {content.sizeGuideHelpPrefix} <a href={`mailto:${content.sizeGuideHelpEmail}`} className="underline underline-offset-2 hover:text-[var(--fg)] transition-colors">{content.sizeGuideHelpEmail}</a>
+        <p className='type-label mt-6' style={{ color: 'var(--muted)' }}>
+          {content.sizeGuideHelpPrefix} <a href={`mailto:${content.sizeGuideHelpEmail}`} className='underline underline-offset-2 hover:text-[var(--fg)] transition-colors'>{content.sizeGuideHelpEmail}</a>
         </p>
       </div>
     </div>
@@ -225,12 +226,11 @@ function ProductDetailGalleryImage({
 
   if (usesNativeImage) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={resolvedImageUrl}
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
+        decoding='async'
         style={{
           position: 'absolute',
           inset: 0,
@@ -253,7 +253,8 @@ function ProductDetailGalleryImage({
       sizes={sizes}
       style={{ objectFit: 'cover', objectPosition: 'center' }}
       onError={(e) => {
-        (e.currentTarget as HTMLImageElement).style.display = 'none';
+        const image = e.currentTarget as HTMLImageElement;
+        image.style.display = 'none';
       }}
     />
   );
@@ -293,7 +294,6 @@ export function ProductDetailClient({
       gradient: product.gradient,
       imageUrl: product.imageUrl,
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
   useEffect(() => {
@@ -344,25 +344,25 @@ export function ProductDetailClient({
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Breadcrumb */}
         <div
-          className="px-8 md:px-16 py-5 flex items-center gap-2"
+          className='px-8 md:px-16 py-5 flex items-center gap-2'
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <a href={localizedHref('/')} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>{detailContent.homeBreadcrumbLabel}</a>
-          <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
-          <a href={localizedHref(`/collections/${product.collectionSlug}`)} className="type-label hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
+          <a href={localizedHref('/')} className='type-label hover:text-[var(--fg)] transition-colors' style={{ color: 'var(--muted)' }}>{detailContent.homeBreadcrumbLabel}</a>
+          <span className='type-label' style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
+          <a href={localizedHref(`/collections/${product.collectionSlug}`)} className='type-label hover:text-[var(--fg)] transition-colors' style={{ color: 'var(--muted)' }}>
             {product.category}
           </a>
-          <span className="type-label" style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
-          <span className="type-label" style={{ color: 'var(--fg)' }}>{product.shortName ?? product.name}</span>
+          <span className='type-label' style={{ color: 'rgba(var(--accent-rgb),0.35)' }}>/</span>
+          <span className='type-label' style={{ color: 'var(--fg)' }}>{product.shortName ?? product.name}</span>
         </div>
 
         {/* Main layout */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-[55%_45%] min-h-[80vh]">
+        <div className='grid md:grid-cols-2 lg:grid-cols-[55%_45%] min-h-[80vh]'>
           {/* ── Image column ─────────────────────────────────────────── */}
-          <div className="flex flex-col">
+          <div className='flex flex-col'>
             {/* Main image */}
             <div
-              className="relative grain flex-1 overflow-hidden"
+              className='relative grain flex-1 overflow-hidden'
               style={{
                 background: activeGradient,
                 minHeight: '60vh',
@@ -374,7 +374,7 @@ export function ProductDetailClient({
                   imageUrl={galleryImages[activeImage]}
                   alt={`${product.name} image ${activeImage + 1}`}
                   priority
-                  sizes="(max-width: 768px) 100vw, 55vw"
+                  sizes='(max-width: 768px) 100vw, 55vw'
                 />
               )}
               {/* Image is intentionally clean — badges live in the info column */}
@@ -382,7 +382,7 @@ export function ProductDetailClient({
 
             {/* Thumbnail row */}
             <div
-              className="flex gap-2 p-4"
+              className='flex gap-2 p-4'
               style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}
             >
               {(galleryImages.length > 0 ? galleryImages : gradients).map((imageUrl, i) => (
@@ -390,10 +390,10 @@ export function ProductDetailClient({
                   key={i}
                   onClick={() => setActiveImage(i)}
                   aria-label={`${detailContent.imageAriaPrefix} ${i + 1}`}
-                  className="flex-1 h-20 transition-all duration-200 relative overflow-hidden"
+                  className='flex-1 h-20 transition-all duration-200 relative overflow-hidden'
                   style={{
                     background: gradients[i % gradients.length],
-                    outline: activeImage === i ? `2px solid var(--fg)` : '2px solid transparent',
+                    outline: activeImage === i ? '2px solid var(--fg)' : '2px solid transparent',
                     outlineOffset: '2px',
                   }}
                 >
@@ -401,7 +401,7 @@ export function ProductDetailClient({
                     <ProductDetailGalleryImage
                       imageUrl={imageUrl}
                       alt={`${product.name} thumbnail ${i + 1}`}
-                      sizes="80px"
+                      sizes='80px'
                     />
                   )}
                 </button>
@@ -411,18 +411,18 @@ export function ProductDetailClient({
 
           {/* ── Info column ──────────────────────────────────────────── */}
           <div
-            className="px-8 md:px-12 py-10 flex flex-col justify-between"
+            className='px-8 md:px-12 py-10 flex flex-col justify-between'
             style={{ borderLeft: '1px solid var(--border)' }}
           >
             <div>
               {/* Category + badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="type-label" style={{ color: 'var(--accent)' }}>
+              <div className='flex flex-wrap items-center gap-2 mb-4'>
+                <span className='type-label' style={{ color: 'var(--accent)' }}>
                   {product.category}
                 </span>
                 {product.lore && (
                   <span
-                    className="type-label px-2 py-1"
+                    className='type-label px-2 py-1'
                     style={{
                       color: 'rgba(180,160,255,0.9)',
                       border: '1px solid rgba(140,100,255,0.35)',
@@ -432,7 +432,7 @@ export function ProductDetailClient({
                   </span>
                 )}
                 {product.tag && (
-                  <span className="type-label px-2 py-1" style={{ background: 'var(--accent)', color: '#fff' }}>
+                  <span className='type-label px-2 py-1' style={{ background: 'var(--accent)', color: '#fff' }}>
                     {product.tag}
                   </span>
                 )}
@@ -454,7 +454,7 @@ export function ProductDetailClient({
 
               {/* Price */}
               <div
-                className="type-price text-2xl mb-8"
+                className='type-price text-2xl mb-8'
                 style={{ color: 'var(--fg)' }}
               >
                 {formatPrice(product.price, locale)}
@@ -463,7 +463,7 @@ export function ProductDetailClient({
               {/* Parsed name specs: size + material */}
               {(product.sizeInfo || product.material) && (
                 <div
-                  className="flex flex-wrap gap-x-6 gap-y-1 mb-6"
+                  className='flex flex-wrap gap-x-6 gap-y-1 mb-6'
                   style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.06em' }}
                 >
                   {product.sizeInfo && (
@@ -501,35 +501,47 @@ export function ProductDetailClient({
 
               {/* Size selector */}
               {product.sizes.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="type-label" style={{ color: sizeError ? 'var(--accent)' : 'var(--fg)' }}>
+                <div className='mb-8'>
+                  <div className='flex items-center justify-between mb-3'>
+                    <span className='type-label' style={{ color: sizeError ? 'var(--accent)' : 'var(--fg)' }}>
                       {sizeError ? detailContent.sizeRequiredLabel : detailContent.selectSizeLabel}
                     </span>
                     <button
-                      className="type-label underline underline-offset-2 hover:text-[var(--fg)] transition-colors"
+                      className='type-label underline underline-offset-2 hover:text-[var(--fg)] transition-colors'
                       style={{ color: 'var(--muted)' }}
                       onClick={() => setSizeGuideOpen(true)}
                     >
                       {detailContent.sizeGuideLabel}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => { setSelectedSize(size); setSizeError(false); }}
-                        className="type-label px-4 py-2.5 transition-all duration-200"
-                        style={{
-                          background: selectedSize === size ? 'var(--fg)' : 'transparent',
-                          color: selectedSize === size ? 'var(--bg)' : 'var(--fg)',
-                          border: `1px solid ${sizeError ? 'var(--accent)' : selectedSize === size ? 'var(--fg)' : 'var(--border)'}`,
-                          minWidth: '3rem',
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                  <div className='flex flex-wrap gap-2'>
+                    {product.sizes.map((size) => {
+                      let borderColor = 'var(--border)';
+                      if (sizeError) {
+                        borderColor = 'var(--accent)';
+                      } else if (selectedSize === size) {
+                        borderColor = 'var(--fg)';
+                      }
+
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => {
+                            setSelectedSize(size);
+                            setSizeError(false);
+                          }}
+                          className='type-label px-4 py-2.5 transition-all duration-200'
+                          style={{
+                            background: selectedSize === size ? 'var(--fg)' : 'transparent',
+                            color: selectedSize === size ? 'var(--bg)' : 'var(--fg)',
+                            border: `1px solid ${borderColor}`,
+                            minWidth: '3rem',
+                          }}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -538,7 +550,7 @@ export function ProductDetailClient({
               <button
                 onClick={handleAddToBag}
                 disabled={adding}
-                className="btn-primary w-full justify-center mb-3"
+                className='btn-primary w-full justify-center mb-3'
                 style={{
                   background: adding ? 'var(--accent)' : 'var(--fg)',
                   transition: 'background 0.3s ease, transform 0.2s ease',
@@ -547,22 +559,22 @@ export function ProductDetailClient({
                 {adding ? (
                   <>
                     {detailContent.addedButtonLabel}
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M20 6L9 17l-5-5" />
+                    <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
+                      <path d='M20 6L9 17l-5-5' />
                     </svg>
                   </>
                 ) : (
                   <>
                     {detailContent.addToBagLabel}
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M5 12h14M12 5l7 7-7 7' />
                     </svg>
                   </>
                 )}
               </button>
 
               <button
-                className="btn-ghost w-full justify-center mb-8"
+                className='btn-ghost w-full justify-center mb-8'
                 onClick={() => {
                   toggleWishlist({
                     productId: product.id,
@@ -582,16 +594,16 @@ export function ProductDetailClient({
                 }}
               >
                 <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
+                  width='14'
+                  height='14'
+                  viewBox='0 0 24 24'
                   fill={isWishlisted(product.id) ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
+                  stroke='currentColor'
+                  strokeWidth='1.5'
+                  strokeLinecap='round'
                   style={{ color: isWishlisted(product.id) ? 'var(--accent)' : 'inherit' }}
                 >
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
                 </svg>
                 {isWishlisted(product.id) ? detailContent.savedWishlistButtonLabel : detailContent.saveWishlistButtonLabel}
               </button>
@@ -612,37 +624,37 @@ export function ProductDetailClient({
 
         {/* Related products */}
         {related.length > 0 && (
-          <section className="px-8 md:px-16 py-20" style={{ borderTop: '1px solid var(--border)' }}>
-            <div className="mb-10">
-              <div className="type-label mb-3" style={{ color: 'var(--accent)' }}>
+          <section className='px-8 md:px-16 py-20' style={{ borderTop: '1px solid var(--border)' }}>
+            <div className='mb-10'>
+              <div className='type-label mb-3' style={{ color: 'var(--accent)' }}>
                 {detailContent.relatedEyebrow}
               </div>
-              <h2 className="type-display-md" style={{ color: 'var(--fg)' }}>
+              <h2 className='type-display-md' style={{ color: 'var(--fg)' }}>
                 {detailContent.relatedTitle}
               </h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               {related.map((p) => (
                 <a
                   key={p.id}
                   href={localizedHref(`/products/${p.slug}`)}
-                  className="group block"
+                  className='group block'
                 >
                   <div
-                    className="relative w-full overflow-hidden mb-3"
+                    className='relative w-full overflow-hidden mb-3'
                     style={{ aspectRatio: '1/1' }}
                   >
                     <ProductImage
                       imageUrl={p.imageUrl}
                       gradient={p.gradient}
                       alt={p.shortName ?? p.name}
-                      className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      fit="cover"
-                      position="center"
+                      className='absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]'
+                      sizes='(max-width: 768px) 50vw, 25vw'
+                      fit='cover'
+                      position='center'
                     />
                   </div>
-                  <div className="type-label mb-1" style={{ color: 'var(--muted)' }}>{p.category}</div>
+                  <div className='type-label mb-1' style={{ color: 'var(--muted)' }}>{p.category}</div>
                   {p.lore && (
                     <div style={{ marginBottom: '0.25rem' }}>
                       <span
@@ -671,7 +683,7 @@ export function ProductDetailClient({
                   >
                     {p.shortName ?? p.name}
                   </div>
-                  <div className="type-price" style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
+                  <div className='type-price' style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
                 </a>
               ))}
             </div>

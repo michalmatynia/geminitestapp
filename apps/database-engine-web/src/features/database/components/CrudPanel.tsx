@@ -91,8 +91,7 @@ const inferColumnType = (value: unknown): string => {
   if (value instanceof Date) return 'date';
   if (
     typeof value === 'object' &&
-    value !== null &&
-    (value as { constructor?: { name?: string } }).constructor?.name === 'ObjectId'
+    (value as { constructor?: { name?: string } })?.constructor?.name === 'ObjectId'
   ) {
     return 'ObjectId';
   }
@@ -146,6 +145,70 @@ const getVisibleColumnKeys = (
   return [...keys];
 };
 
+function DataTableAlerts({
+  errorMessage,
+  successMessage,
+}: {
+  errorMessage: string | null;
+  successMessage: string | null;
+}): React.JSX.Element {
+  const hasErrorMessage = errorMessage !== null && errorMessage !== '';
+  const hasSuccessMessage = successMessage !== null && successMessage !== '';
+
+  if (!hasErrorMessage && !hasSuccessMessage) {
+    return <></>;
+  }
+
+  return (
+    <>
+      {hasErrorMessage ? (
+        <div className='px-3 py-2 text-xs bg-red-500/10 text-red-500'>{errorMessage}</div>
+      ) : null}
+      {hasSuccessMessage ? (
+        <div className='px-3 py-2 text-xs bg-emerald-500/10 text-emerald-500'>
+          {successMessage}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function DataTableFooter({
+  page,
+  pageSize,
+  totalRows,
+  isLoadingRows,
+  showFooter,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  pageSize: number;
+  totalRows: number;
+  isLoadingRows: boolean;
+  showFooter: boolean;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}): React.JSX.Element | null {
+  if (!showFooter) {
+    return null;
+  }
+
+  return (
+    <div className='px-4 pb-2'>
+      <Pagination
+        variant='panel'
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalRows}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        isLoading={isLoadingRows}
+      />
+    </div>
+  );
+}
+
 const DataTable = ({
   columnDefs,
   rows,
@@ -167,12 +230,27 @@ const DataTable = ({
 }): React.JSX.Element => {
   const { selectedTable } = useCrudPanelStateContext();
   const { setPage, setPageSize } = useCrudPanelActionsContext();
+  const hasFooter = selectedTable !== '' && !isLoadingRows && rows.length > 0;
+  const handlePageSizeChange = (size: number): void => {
+    setPage(1);
+    setPageSize(size);
+  };
 
   if (selectedTable === '') {
     return (
       <div className='space-y-4'>
-        <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'><DatabaseTableSelector /></Card>
-        <CompactEmptyState title='No table selected' description='Please select a table.' className='bg-card/40 border-dashed border-border/60 py-20' />
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'
+        >
+          <DatabaseTableSelector />
+        </Card>
+        <CompactEmptyState
+          title='No table selected'
+          description='Please select a table.'
+          className='bg-card/40 border-dashed border-border/60 py-20'
+        />
       </div>
     );
   }
@@ -184,24 +262,95 @@ const DataTable = ({
       isLoading={isLoadingRows}
       maxHeight='50vh'
       stickyHeader
-      alerts={
-        <>
-          {errorMessage !== null && errorMessage !== '' && <div className='px-3 py-2 text-xs bg-red-500/10 text-red-500'>{errorMessage}</div>}
-          {successMessage !== null && successMessage !== '' && <div className='px-3 py-2 text-xs bg-emerald-500/10 text-emerald-500'>{successMessage}</div>}
-        </>
-      }
+      alerts={<DataTableAlerts errorMessage={errorMessage} successMessage={successMessage} />}
       filters={<DatabaseTableSelector />}
       footer={
-        selectedTable !== '' && !isLoadingRows && rows.length > 0 ? (
-          <div className='px-4 pb-2'>
-            <Pagination variant='panel' page={page} pageSize={pageSize} totalCount={totalRows} onPageChange={setPage} onPageSizeChange={(size: number) => { setPage(1); setPageSize(size); }} isLoading={isLoadingRows} />
-          </div>
-        ) : null
+        <DataTableFooter
+          page={page}
+          pageSize={pageSize}
+          totalRows={totalRows}
+          isLoadingRows={isLoadingRows}
+          showFooter={hasFooter}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+        />
       }
       variant='flat'
     />
   );
 };
+
+function CrudPanelModals({
+  showAddModal,
+  tableDetail,
+  modalColumns,
+  handleAdd,
+  setShowAddModal,
+  editingRow,
+  handleEdit,
+  setEditingRow,
+  deletingRow,
+  setDeletingRow,
+  handleDelete,
+  isPending,
+}: {
+  showAddModal: boolean;
+  tableDetail: DatabaseTableDetail | null;
+  modalColumns: DatabaseColumnInfo[];
+  handleAdd: (data: Record<string, unknown>) => Promise<unknown>;
+  setShowAddModal: (value: boolean) => void;
+  editingRow: RowData | null;
+  handleEdit: (data: Record<string, unknown>) => Promise<unknown>;
+  setEditingRow: (row: RowData | null) => void;
+  deletingRow: RowData | null;
+  setDeletingRow: (row: RowData | null) => void;
+  handleDelete: () => Promise<unknown>;
+  isPending: boolean;
+}): React.JSX.Element {
+  const addModal = showAddModal && tableDetail !== null ? (
+    <RowFormModal
+      columns={modalColumns}
+      mode='add'
+      onSubmit={handleAdd}
+      onClose={() => {
+        setShowAddModal(false);
+      }}
+      isPending={isPending}
+    />
+  ) : null;
+
+  const editModal = editingRow && tableDetail !== null ? (
+    <RowFormModal
+      columns={modalColumns}
+      initialData={editingRow}
+      mode='edit'
+      onSubmit={handleEdit}
+      onClose={() => {
+        setEditingRow(null);
+      }}
+      isPending={isPending}
+    />
+  ) : null;
+
+  return (
+    <>
+      {addModal}
+      {editModal}
+      <ConfirmModal
+        isOpen={deletingRow !== null}
+        onClose={() => {
+          setDeletingRow(null);
+        }}
+        onConfirm={handleDelete}
+        title='Delete Row'
+        message='Are you sure?'
+        confirmText='Delete'
+        isDangerous={true}
+        loading={isPending}
+      />
+    </>
+  );
+}
 
 export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
   const { application, source } = useDatabaseConfig();
@@ -237,7 +386,9 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     rowsQuery,
   } = useCrudPanelState(props);
 
-  const errorMessage = mutationError ?? (rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null);
+  const queryErrorMessage =
+    rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null;
+  const errorMessage = mutationError ?? queryErrorMessage;
   const databaseLabel = useMemo(
     () => buildDatabaseLabel(application, source),
     [application, source]
@@ -254,12 +405,12 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
   );
 
   const columnDefs = useMemo<ColumnDef<RowData>[]>(() => {
-    if (columns.length === 0 && rows.length === 0) return [];
-    
+    if (columns.length === 0 && rows.length === 0) {
+      return [];
+    }
     const actionCol = createActionColumn(setEditingRow, setDeletingRow);
     const keys = getVisibleColumnKeys(columns, rows);
     const dataCols = createDataColumns(keys);
-
     return [actionCol, ...dataCols];
   }, [columns, rows, setEditingRow, setDeletingRow]);
   const modalColumns = useMemo(
@@ -267,11 +418,25 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     [rows, tableDetail?.columns]
   );
 
+  const stateValue = {
+    selectedTable,
+    tableDetails,
+    isFetching: rowsQuery.isFetching,
+  };
+  const actionsValue = {
+    setSelectedTable,
+    onRefresh: fetchRows,
+    onAddRow: () => {
+      setShowAddModal(true);
+    },
+    setPage,
+    setPageSize,
+    setMutationError,
+    setSuccessMessage,
+  };
+
   return (
-    <CrudPanelProvider 
-        stateValue={{ selectedTable, tableDetails, isFetching: rowsQuery.isFetching }} 
-        actionsValue={{ setSelectedTable, onRefresh: fetchRows, onAddRow: () => setShowAddModal(true), setPage, setPageSize, setMutationError, setSuccessMessage }}
-    >
+    <CrudPanelProvider stateValue={stateValue} actionsValue={actionsValue}>
       <div className='space-y-4'>
         <div className='grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]'>
           <DatabaseTreePanel
@@ -293,9 +458,20 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
             totalRows={totalRows}
           />
         </div>
-        {showAddModal && tableDetail && <RowFormModal columns={modalColumns} mode='add' onSubmit={handleAdd} onClose={() => setShowAddModal(false)} isPending={crudMutation.isPending} />}
-        {editingRow && tableDetail && <RowFormModal columns={modalColumns} initialData={editingRow} mode='edit' onSubmit={handleEdit} onClose={() => setEditingRow(null)} isPending={crudMutation.isPending} />}
-        <ConfirmModal isOpen={deletingRow !== null} onClose={() => setDeletingRow(null)} onConfirm={handleDelete} title='Delete Row' message='Are you sure?' confirmText='Delete' isDangerous={true} loading={crudMutation.isPending} />
+        <CrudPanelModals
+          showAddModal={showAddModal}
+          tableDetail={tableDetail}
+          modalColumns={modalColumns}
+          handleAdd={handleAdd}
+          setShowAddModal={setShowAddModal}
+          editingRow={editingRow}
+          handleEdit={handleEdit}
+          setEditingRow={setEditingRow}
+          deletingRow={deletingRow}
+          setDeletingRow={setDeletingRow}
+          handleDelete={handleDelete}
+          isPending={crudMutation.isPending}
+        />
       </div>
     </CrudPanelProvider>
   );

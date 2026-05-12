@@ -27,7 +27,7 @@ export const filterDatabasePreviewGroups = (
   groupQuery: string
 ): DatabasePreviewGroup[] => {
   const query = groupQuery.trim().toLowerCase();
-  if (!query) {
+  if (query.length === 0) {
     return groups;
   }
 
@@ -49,7 +49,7 @@ export const filterDatabasePreviewTableDetails = (
   tableQuery: string
 ): DatabaseTableDetail[] => {
   const query = tableQuery.trim().toLowerCase();
-  if (!query) {
+  if (query.length === 0) {
     return tableDetails;
   }
 

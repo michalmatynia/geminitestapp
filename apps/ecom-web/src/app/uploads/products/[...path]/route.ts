@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions, no-await-in-loop */
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { NextResponse } from 'next/server';

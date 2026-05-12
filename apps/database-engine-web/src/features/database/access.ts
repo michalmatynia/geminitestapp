@@ -109,9 +109,12 @@ const buildAllowlist = (): AllowlistConfig => {
 const allowlistConfig = buildAllowlist();
 
 const getExpectedInternalHeaderValue = (): string | null => {
-  if (process.env['AI_PATHS_INTERNAL_TOKEN']) return process.env['AI_PATHS_INTERNAL_TOKEN'];
-  if (process.env['AUTH_SECRET']) return process.env['AUTH_SECRET'];
-  if (process.env['NEXTAUTH_SECRET']) return process.env['NEXTAUTH_SECRET'];
+  const internalToken = process.env['AI_PATHS_INTERNAL_TOKEN'];
+  if (internalToken !== undefined && internalToken.length > 0) return internalToken;
+  const authSecret = process.env['AUTH_SECRET'];
+  if (authSecret !== undefined && authSecret.length > 0) return authSecret;
+  const nextAuthSecret = process.env['NEXTAUTH_SECRET'];
+  if (nextAuthSecret !== undefined && nextAuthSecret.length > 0) return nextAuthSecret;
   if (process.env['NODE_ENV'] === 'development') return DEV_INTERNAL_HEADER_VALUE;
   return null;
 };
@@ -129,9 +132,9 @@ export const getCollectionAllowlist = (): string[] => {
 
 export const isDatabaseEngineInternalRequest = (request: NextRequest): boolean => {
   const expectedHeaderValue = getExpectedInternalHeaderValue();
-  if (!expectedHeaderValue) return false;
+  if (expectedHeaderValue === null) return false;
   const header = request.headers.get('x-ai-paths-internal');
-  return Boolean(header && header === expectedHeaderValue);
+  return header !== null && header === expectedHeaderValue;
 };
 
 /**
@@ -161,7 +164,7 @@ export async function assertDatabaseEngineManageAccessOrAiPathsInternal(
   if (isDatabaseEngineInternalRequest(request)) {
     const collection = options?.collection?.trim() ?? '';
     // Validate collection is in allowed list
-    if (collection !== '' && isCollectionAllowed(collection) === false) {
+    if (collection.length > 0 && isCollectionAllowed(collection) === false) {
       throw forbiddenError('Forbidden.');
     }
     return { isInternal: true };

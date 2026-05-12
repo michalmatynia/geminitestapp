@@ -31,7 +31,7 @@ function formatRangeDate(date: Date, locale: EcomLocale, includeMonth: boolean):
 
 export function getZoneForCountry(zones: ShippingZone[], country: string): ShippingZone | null {
   const normalizedCountry = normalizeCountry(country);
-  if (!normalizedCountry) return null;
+  if (normalizedCountry.length === 0) return null;
 
   let catchAll: ShippingZone | null = null;
 

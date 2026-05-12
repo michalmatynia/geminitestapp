@@ -1,10 +1,13 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import type {
   DatabaseEngineManagedMongoApplication,
   DatabaseEngineMongoLastSync,
   DatabaseEngineMongoSyncApplicationTransfer,
   DatabaseEngineMongoSyncBackup,
+  DatabaseEngineMongoSyncVerification,
   DatabaseEngineMongoSourceEntry,
   DatabaseEngineMongoSourceState,
   MongoSource,
@@ -108,18 +111,18 @@ const resolveMongoSourceOverviewModel = (
   };
 };
 
-const resolveLastTransferMetrics = (
-  lastSync: DatabaseEngineMongoLastSync
-): string[] => {
+const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): string[] => {
+  const hasValue = (value: string | null): value is string =>
+    value !== null && value !== '';
   const metrics = [`Synced at: ${lastSync.syncedAt}`, `Direction: ${lastSync.direction}`];
 
-  if (lastSync.archivePath !== null && lastSync.archivePath !== '') {
+  if (hasValue(lastSync.archivePath)) {
     metrics.push(`Transfer archive: ${lastSync.archivePath}`);
   }
-  if (lastSync.logPath !== null && lastSync.logPath !== '') {
+  if (hasValue(lastSync.logPath)) {
     metrics.push(`Transfer log: ${lastSync.logPath}`);
   }
-  if (lastSync.verification !== null && lastSync.verification !== undefined) {
+  if (lastSync.verification !== null) {
     metrics.push(
       `Verification: ${lastSync.verification.status} at ${lastSync.verification.verifiedAt}`
     );
@@ -130,9 +133,8 @@ const resolveLastTransferMetrics = (
     metrics.push(verificationSummary);
   }
 
-  const applicationTransferCount = lastSync.applicationTransfers?.length ?? 0;
-  if (applicationTransferCount > 0) {
-    metrics.push(`Application databases synced: ${applicationTransferCount}`);
+  if (lastSync.applicationTransfers.length > 0) {
+    metrics.push(`Application databases synced: ${lastSync.applicationTransfers.length}`);
   }
 
   metrics.push(`Pre-sync backups: ${lastSync.preSyncBackups.length}`);
@@ -151,29 +153,62 @@ export type MongoApplicationTransferSummary = {
 
 const getBackupApplication = (
   backup: DatabaseEngineMongoSyncBackup
-): DatabaseEngineManagedMongoApplication => backup.application ?? 'geminitestapp';
+): DatabaseEngineManagedMongoApplication => backup.application;
+
+const resolveTransferFromVerification = (
+  application: DatabaseEngineManagedMongoApplication,
+  verification: DatabaseEngineMongoSyncVerification,
+  archivePath: string | null,
+  logPath: string | null
+): DatabaseEngineMongoSyncApplicationTransfer | null => {
+  const { sourceDbName, targetDbName } = verification;
+
+  return {
+    application,
+    sourceDbName,
+    targetDbName,
+    archivePath: archivePath ?? '',
+    logPath: logPath ?? '',
+    verification,
+  };
+};
+
+const resolveApplicationTransfer = (
+  lastSync: DatabaseEngineMongoLastSync,
+  application: DatabaseEngineManagedMongoApplication
+): DatabaseEngineMongoSyncApplicationTransfer | null => {
+  const transferFromList = lastSync.applicationTransfers.find(
+    (item) => item.application === application
+  );
+  if (transferFromList !== undefined) {
+    return transferFromList;
+  }
+
+  if (application !== 'geminitestapp') {
+    return null;
+  }
+  if (lastSync.applicationTransfers.length !== 0) {
+    return null;
+  }
+
+  const verification = lastSync.verification;
+  if (verification === null) {
+    return null;
+  }
+
+  return resolveTransferFromVerification(
+    application,
+    verification,
+    lastSync.archivePath,
+    lastSync.logPath
+  );
+};
 
 export const buildMongoApplicationTransferSummaries = (
   lastSync: DatabaseEngineMongoLastSync
 ): MongoApplicationTransferSummary[] =>
   MANAGED_APPLICATIONS.map(({ application, label }) => {
-    const transfer =
-      (lastSync.applicationTransfers ?? []).find(
-        (item) => item.application === application
-      ) ??
-      (application === 'geminitestapp' &&
-      (lastSync.applicationTransfers ?? []).length === 0 &&
-      lastSync.verification !== null &&
-      lastSync.verification !== undefined
-        ? {
-            application,
-            sourceDbName: lastSync.verification.sourceDbName,
-            targetDbName: lastSync.verification.targetDbName,
-            archivePath: lastSync.archivePath ?? '',
-            logPath: lastSync.logPath ?? '',
-            verification: lastSync.verification,
-          }
-        : null);
+    const transfer = resolveApplicationTransfer(lastSync, application);
     const backups = lastSync.preSyncBackups.filter(
       (backup) => getBackupApplication(backup) === application
     );
@@ -187,6 +222,151 @@ export const buildMongoApplicationTransferSummaries = (
       backupCount: backups.length,
     };
   });
+
+const buildTransferStatus = (
+  transfer: DatabaseEngineMongoSyncApplicationTransfer | null
+): 'Verified' | 'No Transfer' | 'Mismatch' => {
+  if (transfer === null) {
+    return 'No Transfer';
+  }
+  if (transfer.verification.status === 'passed') {
+    return 'Verified';
+  }
+  return 'Mismatch';
+};
+
+const buildTransferVariant = (
+  transfer: DatabaseEngineMongoSyncApplicationTransfer | null
+): 'active' | 'pending' | 'error' => {
+  if (transfer === null) {
+    return 'pending';
+  }
+  if (transfer.verification.status === 'passed') {
+    return 'active';
+  }
+  return 'error';
+};
+
+const fallbackStringValue = (value: string | null, fallback: string): string =>
+  value === null || value === '' ? fallback : value;
+
+const MongoTransferSummaryBackupInfo = ({
+  backupCount,
+  sourceBackupName,
+  targetBackupName,
+}: {
+  backupCount: string;
+  sourceBackupName: string;
+  targetBackupName: string;
+}): JSX.Element => (
+  <div className='space-y-1 border-t border-white/10 pt-2 text-xs text-gray-400'>
+    <p>Pre-sync backups: {backupCount}</p>
+    <p className='truncate font-mono' title={sourceBackupName}>
+      Source: {sourceBackupName}
+    </p>
+    <p className='truncate font-mono' title={targetBackupName}>
+      Target: {targetBackupName}
+    </p>
+  </div>
+);
+
+const MongoTransferSummaryNoTransferCard = ({
+  summary,
+}: {
+  summary: MongoApplicationTransferSummary;
+}): JSX.Element => (
+  <MongoTransferSummaryNoTransferCardBody
+    summary={summary}
+    backupCount={summary.backupCount.toLocaleString()}
+    sourceBackupName={summary.sourceBackup?.backupName ?? 'n/a'}
+    targetBackupName={summary.targetBackup?.backupName ?? 'n/a'}
+  />
+);
+
+const MongoTransferSummaryNoTransferCardBody = ({
+  summary,
+  backupCount,
+  sourceBackupName,
+  targetBackupName,
+}: {
+  summary: MongoApplicationTransferSummary;
+  backupCount: string;
+  sourceBackupName: string;
+  targetBackupName: string;
+}): JSX.Element => (
+  <div
+    key={summary.application}
+    className='space-y-2 rounded-md border border-white/10 bg-black/20 p-3'
+  >
+    <div className='flex items-start justify-between gap-2'>
+      <div className='min-w-0 space-y-1'>
+        <p className='truncate text-sm font-semibold text-white'>{summary.label}</p>
+        <p className='text-[11px] uppercase text-gray-500'>{summary.application}</p>
+      </div>
+      <StatusBadge status='No Transfer' variant='pending' size='sm' />
+    </div>
+    <p className='text-xs text-gray-400'>No transfer recorded for this database.</p>
+    <MongoTransferSummaryBackupInfo
+      backupCount={backupCount}
+      sourceBackupName={sourceBackupName}
+      targetBackupName={targetBackupName}
+    />
+  </div>
+);
+
+const MongoTransferSummaryTransferCard = ({
+  summary,
+  transfer,
+}: {
+  summary: MongoApplicationTransferSummary;
+  transfer: DatabaseEngineMongoSyncApplicationTransfer;
+}): JSX.Element => (
+  <div
+    key={summary.application}
+    className='space-y-2 rounded-md border border-white/10 bg-black/20 p-3'
+  >
+    <div className='flex items-start justify-between gap-2'>
+      <div className='min-w-0 space-y-1'>
+        <p className='truncate text-sm font-semibold text-white'>{summary.label}</p>
+        <p className='text-[11px] uppercase text-gray-500'>{summary.application}</p>
+      </div>
+      <StatusBadge
+        status={buildTransferStatus(transfer)}
+        variant={buildTransferVariant(transfer)}
+        size='sm'
+      />
+    </div>
+    <div className='space-y-1 text-xs text-gray-300'>
+      <p>
+        {transfer.sourceDbName} -&gt; {transfer.targetDbName}
+      </p>
+      <p>Collections compared: {transfer.verification.collectionsCompared.toLocaleString()}</p>
+      <p className='truncate font-mono text-gray-500' title={transfer.archivePath}>
+        {fallbackStringValue(transfer.archivePath, 'No archive path')}
+      </p>
+      <p className='truncate font-mono text-gray-500' title={transfer.logPath}>
+        {fallbackStringValue(transfer.logPath, 'No log path')}
+      </p>
+    </div>
+    <MongoTransferSummaryBackupInfo
+      backupCount={summary.backupCount.toLocaleString()}
+      sourceBackupName={summary.sourceBackup?.backupName ?? 'n/a'}
+      targetBackupName={summary.targetBackup?.backupName ?? 'n/a'}
+    />
+  </div>
+);
+
+const MongoTransferSummaryCard = ({
+  summary,
+}: {
+  summary: MongoApplicationTransferSummary;
+}): JSX.Element => {
+  if (summary.transfer === null) {
+    return <MongoTransferSummaryNoTransferCard summary={summary} />;
+  }
+
+  return <MongoTransferSummaryTransferCard summary={summary} transfer={summary.transfer} />;
+};
 
 export function MongoSourceEntryCard({
   entry,
@@ -266,6 +446,43 @@ MONGODB_ACTIVE_SOURCE_DEFAULT=${viewModel.envSwitchTarget}`}
   );
 }
 
+const MongoTransferHistory = ({
+  lastSync,
+}: {
+  lastSync: DatabaseEngineMongoLastSync;
+}): JSX.Element => (
+  <div className='space-y-2 text-xs leading-relaxed text-gray-300'>
+    {resolveLastTransferMetrics(lastSync).map((metric) => (
+      <p key={metric}>{metric}</p>
+    ))}
+    <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
+      {buildMongoApplicationTransferSummaries(lastSync).map((summary) => (
+        <MongoTransferSummaryCard key={summary.application} summary={summary} />
+      ))}
+    </div>
+    {lastSync.applicationTransfers.map((transfer) => (
+      <div key={`${transfer.application}-${transfer.archivePath}`} className='space-y-1'>
+        <p>{`Application transfer (${transfer.application}): ${transfer.sourceDbName} -> ${transfer.targetDbName}`}</p>
+        <p>{`Transfer archive: ${transfer.archivePath}`}</p>
+        <p>{`Transfer log: ${transfer.logPath}`}</p>
+        <p>{`Verification: ${transfer.verification.status} at ${transfer.verification.verifiedAt}`}</p>
+      </div>
+    ))}
+    {lastSync.preSyncBackups.map((backup) => (
+      <div key={`${backup.role}-${backup.source}-${backup.backupName}`} className='space-y-1'>
+        <p>
+          {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.application} ${backup.source}): ${backup.backupName}`}
+        </p>
+        <p>{`Backup file: ${backup.backupPath}`}</p>
+        <p>{`Backup log: ${backup.logPath}`}</p>
+        {backup.warning !== null && backup.warning !== '' ? (
+          <p>{`Backup warning: ${backup.warning}`}</p>
+        ) : null}
+      </div>
+    ))}
+  </div>
+);
+
 export function MongoLastTransferCard({
   lastSync,
 }: {
@@ -284,107 +501,7 @@ export function MongoLastTransferCard({
           </p>
         </div>
       ) : (
-        <div className='space-y-2 text-xs leading-relaxed text-gray-300'>
-          {resolveLastTransferMetrics(lastSync).map((metric) => (
-            <p key={metric}>{metric}</p>
-          ))}
-          <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
-            {buildMongoApplicationTransferSummaries(lastSync).map((summary) => (
-              <div
-                key={summary.application}
-                className='space-y-2 rounded-md border border-white/10 bg-black/20 p-3'
-              >
-                <div className='flex items-start justify-between gap-2'>
-                  <div className='min-w-0 space-y-1'>
-                    <p className='truncate text-sm font-semibold text-white'>{summary.label}</p>
-                    <p className='text-[11px] uppercase text-gray-500'>
-                      {summary.application}
-                    </p>
-                  </div>
-                  <StatusBadge
-                    status={
-                      summary.transfer?.verification.status === 'passed'
-                        ? 'Verified'
-                        : summary.transfer === null
-                          ? 'No Transfer'
-                          : 'Mismatch'
-                    }
-                    variant={
-                      summary.transfer?.verification.status === 'passed'
-                        ? 'active'
-                        : summary.transfer === null
-                          ? 'pending'
-                          : 'error'
-                    }
-                    size='sm'
-                  />
-                </div>
-
-                {summary.transfer === null ? (
-                  <p className='text-xs text-gray-400'>No transfer recorded for this database.</p>
-                ) : (
-                  <div className='space-y-1 text-xs text-gray-300'>
-                    <p>
-                      {summary.transfer.sourceDbName} -&gt; {summary.transfer.targetDbName}
-                    </p>
-                    <p>
-                      Collections compared:{' '}
-                      {summary.transfer.verification.collectionsCompared.toLocaleString()}
-                    </p>
-                    <p
-                      className='truncate font-mono text-gray-500'
-                      title={summary.transfer.archivePath}
-                    >
-                      {summary.transfer.archivePath || 'No archive path'}
-                    </p>
-                    <p
-                      className='truncate font-mono text-gray-500'
-                      title={summary.transfer.logPath}
-                    >
-                      {summary.transfer.logPath || 'No log path'}
-                    </p>
-                  </div>
-                )}
-
-                <div className='space-y-1 border-t border-white/10 pt-2 text-xs text-gray-400'>
-                  <p>Pre-sync backups: {summary.backupCount.toLocaleString()}</p>
-                  <p
-                    className='truncate font-mono'
-                    title={summary.sourceBackup?.backupName ?? ''}
-                  >
-                    Source: {summary.sourceBackup?.backupName ?? 'n/a'}
-                  </p>
-                  <p
-                    className='truncate font-mono'
-                    title={summary.targetBackup?.backupName ?? ''}
-                  >
-                    Target: {summary.targetBackup?.backupName ?? 'n/a'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          {(lastSync.applicationTransfers ?? []).map((transfer) => (
-            <div key={`${transfer.application}-${transfer.archivePath}`} className='space-y-1'>
-              <p>{`Application transfer (${transfer.application}): ${transfer.sourceDbName} -> ${transfer.targetDbName}`}</p>
-              <p>{`Transfer archive: ${transfer.archivePath}`}</p>
-              <p>{`Transfer log: ${transfer.logPath}`}</p>
-              <p>{`Verification: ${transfer.verification.status} at ${transfer.verification.verifiedAt}`}</p>
-            </div>
-          ))}
-          {lastSync.preSyncBackups.map((backup) => (
-            <div key={`${backup.role}-${backup.source}-${backup.backupName}`} className='space-y-1'>
-              <p>
-                {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.application ?? 'geminitestapp'} ${backup.source}): ${backup.backupName}`}
-              </p>
-              <p>{`Backup file: ${backup.backupPath}`}</p>
-              <p>{`Backup log: ${backup.logPath}`}</p>
-              {backup.warning !== null && backup.warning !== '' ? (
-                <p>{`Backup warning: ${backup.warning}`}</p>
-              ) : null}
-            </div>
-          ))}
-        </div>
+        <MongoTransferHistory lastSync={lastSync} />
       )}
     </Card>
   );

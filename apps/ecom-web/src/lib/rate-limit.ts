@@ -7,7 +7,7 @@ const store = new Map<string, RateLimitRecord>();
 // Periodically evict expired entries so the Map doesn't grow unbounded.
 // Runs at most once per minute.
 let lastEvict = 0;
-function maybeEvict() {
+function maybeEvict(): void {
   const now = Date.now();
   if (now - lastEvict < 60_000) return;
   lastEvict = now;
@@ -24,7 +24,7 @@ const IP_HEADER_PRIORITY = [
 ];
 
 function resolveClientIp(raw: string | null): string | null {
-  if (!raw) return null;
+  if (raw === null || raw === '') return null;
 
   const candidates = raw
     .split(',')
@@ -57,10 +57,10 @@ export function checkRateLimit(
 }
 
 export function getClientIp(req: Request): string {
-  const headers = (req.headers as Headers);
+  const headers = (req.headers);
   for (const key of IP_HEADER_PRIORITY) {
     const resolved = resolveClientIp(headers.get(key));
-    if (resolved) return resolved;
+    if (resolved !== null) return resolved;
   }
   return 'unknown';
 }

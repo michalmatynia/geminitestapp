@@ -10,15 +10,25 @@ import { useDatabasePreviewState } from '../../hooks/useDatabasePreviewState';
 import type { DatabaseTableDetail, DatabaseTablePreviewData, DatabaseColumnInfo, DatabaseIndexInfo, DatabaseForeignKeyInfo } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
+type TableDetailCardProps = {
+  detail: DatabaseTableDetail;
+  onQueryTable?: (tableName: string) => void;
+  onManageTable?: (tableName: string) => void;
+};
+
+type DataTableTabProps = {
+  detail: DatabaseTableDetail;
+};
+
+type DataRowTabProps = {
+  tableRow?: DatabaseTablePreviewData;
+};
+
 export const TableDetailCard = ({
   detail,
   onQueryTable,
   onManageTable,
-}: {
-  detail: DatabaseTableDetail;
-  onQueryTable?: (tableName: string) => void;
-  onManageTable?: (tableName: string) => void;
-}) => {
+}: TableDetailCardProps): JSX.Element => {
   const [expanded, setExpanded] = useState(false);
   const { tableRows } = useDatabasePreviewState();
   const tableRow = useMemo(() => tableRows.find((r) => r.name === detail.name), [tableRows, detail.name]);
@@ -72,7 +82,7 @@ export const TableDetailCard = ({
   );
 };
 
-const ColumnsTab = ({ detail }: { detail: DatabaseTableDetail }) => {
+const ColumnsTab = ({ detail }: DataTableTabProps): JSX.Element => {
   const cols: ColumnDef<DatabaseColumnInfo>[] = [
     { accessorKey: 'name', header: 'Column', cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span> },
     { accessorKey: 'type', header: 'Type', cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span> },
@@ -83,7 +93,7 @@ const ColumnsTab = ({ detail }: { detail: DatabaseTableDetail }) => {
   return <div className='p-2'><StandardDataTablePanel<DatabaseColumnInfo> columns={cols} data={detail.columns} variant='flat' /></div>;
 };
 
-const IndexesTab = ({ detail }: { detail: DatabaseTableDetail }) => {
+const IndexesTab = ({ detail }: DataTableTabProps): JSX.Element => {
   const cols: ColumnDef<DatabaseIndexInfo>[] = [
     { accessorKey: 'name', header: 'Index', cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span> },
     { accessorKey: 'columns', header: 'Columns', cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span> },
@@ -92,7 +102,7 @@ const IndexesTab = ({ detail }: { detail: DatabaseTableDetail }) => {
   return <div className='p-2'><StandardDataTablePanel<DatabaseIndexInfo> columns={cols} data={detail.indexes} variant='flat' /></div>;
 };
 
-const ForeignKeysTab = ({ detail }: { detail: DatabaseTableDetail }) => {
+const ForeignKeysTab = ({ detail }: DataTableTabProps): JSX.Element => {
   const cols: ColumnDef<DatabaseForeignKeyInfo>[] = [
     { accessorKey: 'name', header: 'Constraint', cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span> },
     { accessorKey: 'referencedTable', header: 'References', cell: ({ row }) => <span className='font-mono'><span className='text-emerald-300'>{row.original.referencedTable}</span>.<span className='text-blue-300'>{row.original.referencedColumn}</span></span> },
@@ -100,7 +110,7 @@ const ForeignKeysTab = ({ detail }: { detail: DatabaseTableDetail }) => {
   return <div className='p-2'><StandardDataTablePanel<DatabaseForeignKeyInfo> columns={cols} data={detail.foreignKeys} variant='flat' /></div>;
 };
 
-const DataTab = ({ tableRow }: { tableRow?: DatabaseTablePreviewData }) => {
+const DataTab = ({ tableRow }: DataRowTabProps): JSX.Element => {
   const columns = useMemo<ColumnDef<Record<string, unknown>, unknown>[]>(() => {
     if (!tableRow?.rows[0]) return [];
     return Object.keys(tableRow.rows[0]).map((col) => ({
@@ -110,6 +120,8 @@ const DataTab = ({ tableRow }: { tableRow?: DatabaseTablePreviewData }) => {
     }));
   }, [tableRow]);
 
-  if (!tableRow?.rows.length) return <div className='p-8 text-center text-gray-500 text-sm'>No data available</div>;
+  if (tableRow === undefined || tableRow.rows.length === 0) {
+    return <div className='p-8 text-center text-gray-500 text-sm'>No data available</div>;
+  }
   return <div className='p-2'><StandardDataTablePanel<Record<string, unknown>> columns={columns} data={tableRow.rows} variant='flat' maxHeight='40vh' enableVirtualization /></div>;
 };

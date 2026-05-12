@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { useState, useEffect, useMemo, useCallback, useRef, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
@@ -24,6 +26,51 @@ import type {
 
 type Step = CheckoutStepKey | 'confirmation';
 
+const calculatePromoDiscount = (
+  subtotal: number,
+  promoDiscountType: 'percentage' | 'fixed' | null,
+  promoDiscountValue: number
+): number => {
+  if (promoDiscountType === 'fixed') {
+    return Math.min(subtotal, Math.round(promoDiscountValue));
+  }
+  if (promoDiscountType === 'percentage') {
+    return Math.round(subtotal * promoDiscountValue);
+  }
+  return 0;
+};
+
+const normalizePromoCode = (value: string): string => value.replace(/\s+/g, '').trim().toUpperCase();
+
+const isNonEmptyString = (value: string | null | undefined): value is string => value !== null && value !== undefined && value !== '';
+const isTruthyBoolean = (value: boolean | null | undefined): value is true => value === true;
+
+const firstNonEmptyString = (items: readonly string[]): string => {
+  for (const item of items) {
+    if (item !== '') return item;
+  }
+  return '';
+};
+
+const toOptionalText = (value: string): string | undefined => (value === '' ? undefined : value);
+
+type PromoValidateResponse = {
+  valid: boolean;
+  discountType?: 'percentage' | 'fixed';
+  discountValue?: number;
+};
+
+function isPromoValidateResponse(value: unknown): value is PromoValidateResponse {
+  if (!isPlainRecord(value)) return false;
+  const valid = value.valid;
+  if (typeof valid !== 'boolean') return false;
+  const discountType = value.discountType;
+  if (discountType !== undefined && discountType !== 'percentage' && discountType !== 'fixed') return false;
+  const discountValue = value.discountValue;
+  if (discountValue !== undefined && typeof discountValue !== 'number') return false;
+  return true;
+}
+
 function StepProgress({
   current,
   steps,
@@ -34,90 +81,100 @@ function StepProgress({
   ariaLabel: string;
 }): JSX.Element {
   const currentIdx = steps.findIndex((s) => s.key === current);
-  return (
-    <nav aria-label={ariaLabel} className="flex items-center gap-3">
-      {steps.map((step, i) => {
-        const done = i < currentIdx;
-        const active = step.key === current;
-        return (
-          <div key={step.key} className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0"
-                style={{
-                  background: done || active ? 'var(--fg)' : 'transparent',
-                  border: `1px solid ${done || active ? 'var(--fg)' : 'var(--border)'}`,
-                  color: done || active ? 'var(--bg)' : 'var(--muted)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                {done ? (
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                ) : (
-                  i + 1
-                )}
-              </div>
-              <span
-                className="type-label hidden md:block"
-                style={{ color: active ? 'var(--fg)' : 'var(--muted)' }}
-              >
-                {step.label}
-              </span>
-            </div>
-            {i < steps.length - 1 && (
-              <div className="w-8 h-px" style={{ background: 'var(--border)' }} />
+  const renderStep = (step: CheckoutStepContent, index: number): JSX.Element => {
+    const isDone = index < currentIdx;
+    const isActive = step.key === current;
+    const isCompleted = isDone || isActive;
+    return (
+      <div key={step.key} className='flex items-center gap-3'>
+        <div className='flex items-center gap-2'>
+          <div
+            className='w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0'
+            style={{
+              background: isCompleted ? 'var(--fg)' : 'transparent',
+              border: `1px solid ${isCompleted ? 'var(--fg)' : 'var(--border)'}`,
+              color: isCompleted ? 'var(--bg)' : 'var(--muted)',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            {isDone ? (
+              <svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
+                <path d='M20 6L9 17l-5-5' />
+              </svg>
+            ) : (
+              index + 1
             )}
           </div>
-        );
-      })}
-    </nav>
-  );
+          <span
+            className='type-label hidden md:block'
+            style={{ color: isActive ? 'var(--fg)' : 'var(--muted)' }}
+          >
+            {step.label}
+          </span>
+        </div>
+        {index < steps.length - 1 && (
+          <div className='w-8 h-px' style={{ background: 'var(--border)' }} />
+        )}
+      </div>
+    );
+  };
+
+  return <nav aria-label={ariaLabel} className='flex items-center gap-3'>{steps.map(renderStep)}</nav>;
 }
 
+// eslint-disable-next-line complexity
 function FormInput({ field, value, error, onChange }: {
   field: CheckoutFieldContent;
   value: string;
   error?: string;
   onChange: (id: string, v: string) => void;
 }): JSX.Element {
-  const describedBy = error ? `${field.id}-error` : undefined;
+  const hasError = isNonEmptyString(error);
+  const hasMonospace = isTruthyBoolean(field.monospace);
+  const isHalf = isTruthyBoolean(field.half);
+  const inputType = field.type ?? 'text';
+  const describedBy = hasError ? `${field.id}-error` : undefined;
   const label = field.id === 'phone'
     ? field.label.replace(/\s*\((optional|opcjonalnie)\)\s*$/i, '')
     : field.label;
   return (
-    <div className={field.half ? 'flex-1 min-w-0' : 'w-full'}>
-      <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+    <div className={isHalf ? 'flex-1 min-w-0' : 'w-full'}>
+      <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
         {label}
       </label>
       <input
-        type={field.type ?? 'text'}
+        type={inputType}
         id={field.id}
         value={value}
         onChange={(e) => onChange(field.id, e.target.value)}
         placeholder={field.placeholder}
         maxLength={field.maxLength}
-        aria-invalid={Boolean(error)}
+        aria-invalid={hasError}
         aria-describedby={describedBy}
         style={{
           width: '100%',
           padding: '0.75rem 1rem',
           background: 'transparent',
-          border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+          border: `1px solid ${hasError ? 'var(--accent)' : 'var(--border)'}`,
           outline: 'none',
-          fontFamily: field.monospace ? 'var(--font-mono)' : 'var(--font-body)',
+          fontFamily: hasMonospace ? 'var(--font-mono)' : 'var(--font-body)',
           fontSize: '0.875rem',
           fontWeight: 300,
           color: 'var(--fg)',
-          letterSpacing: field.monospace ? '0.08em' : undefined,
+          letterSpacing: hasMonospace ? '0.08em' : undefined,
           transition: 'border-color 0.2s ease',
         }}
-        onFocus={(e) => { e.target.style.borderColor = 'var(--fg)'; }}
-        onBlur={(e) => { e.target.style.borderColor = error ? 'var(--accent)' : 'var(--border)'; }}
+        onFocus={(event) => {
+          const target = event.currentTarget;
+          target.style.borderColor = 'var(--fg)';
+        }}
+        onBlur={(event) => {
+          const target = event.currentTarget;
+          target.style.borderColor = hasError ? 'var(--accent)' : 'var(--border)';
+        }}
       />
-      {error && (
-        <p id={describedBy} className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+      {hasError && (
+        <p id={describedBy} className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
           {error}
         </p>
       )}
@@ -125,6 +182,7 @@ function FormInput({ field, value, error, onChange }: {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 function CountrySelect({
   field,
   value,
@@ -138,10 +196,13 @@ function CountrySelect({
   locale: EcomLocale;
   onChange: (id: string, v: string) => void;
 }): JSX.Element {
-  const describedBy = error ? `${field.id}-error` : undefined;
+  const hasError = isNonEmptyString(error);
+  const isHalf = isTruthyBoolean(field.half);
+  const describedBy = hasError ? `${field.id}-error` : undefined;
+  const hasValue = value !== '';
   return (
-    <div className={field.half ? 'flex-1 min-w-0' : 'w-full'}>
-      <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+    <div className={isHalf ? 'flex-1 min-w-0' : 'w-full'}>
+      <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
         {field.label}
       </label>
       <select
@@ -154,27 +215,33 @@ function CountrySelect({
           width: '100%',
           padding: '0.75rem 1rem',
           background: 'var(--bg)',
-          border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
+          border: `1px solid ${hasError ? 'var(--accent)' : 'var(--border)'}`,
           outline: 'none',
           fontFamily: 'var(--font-body)',
           fontSize: '0.875rem',
           fontWeight: 300,
-          color: value ? 'var(--fg)' : 'var(--muted)',
+          color: hasValue ? 'var(--fg)' : 'var(--muted)',
           transition: 'border-color 0.2s ease',
           appearance: 'none',
         }}
-        onFocus={(event) => { event.target.style.borderColor = 'var(--fg)'; }}
-        onBlur={(event) => { event.target.style.borderColor = error ? 'var(--accent)' : 'var(--border)'; }}
+        onFocus={(event) => {
+          const target = event.currentTarget;
+          target.style.borderColor = 'var(--fg)';
+        }}
+        onBlur={(event) => {
+          const target = event.currentTarget;
+          target.style.borderColor = hasError ? 'var(--accent)' : 'var(--border)';
+        }}
       >
-        <option value="">{locale === 'pl' ? 'Wybierz kraj' : 'Select country'}</option>
+        <option value=''>{locale === 'pl' ? 'Wybierz kraj' : 'Select country'}</option>
         {COUNTRIES.map((country) => (
           <option key={country.code} value={country.name}>
             {locale === 'pl' ? country.namePl : country.name}
           </option>
         ))}
       </select>
-      {error && (
-        <p id={describedBy} className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+      {hasError && (
+        <p id={describedBy} className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
           {error}
         </p>
       )}
@@ -204,15 +271,18 @@ function FieldRows({
   return (
     <>
       {fields.map((field, i) => {
-        const prevHalf = i > 0 && fields[i - 1].half;
-        const isFirstOfPair = field.half && !prevHalf;
-        const isSecondOfPair = field.half && prevHalf;
+        const prevField = i > 0 ? fields[i - 1] : null;
+        const prevHalf = prevField !== null && isTruthyBoolean(prevField.half);
+        const isHalf = isTruthyBoolean(field.half);
+        const isFirstOfPair = isHalf && !prevHalf;
+        const isSecondOfPair = isHalf && prevHalf;
         if (isFirstOfPair) {
-          const next = fields[i + 1];
+          const nextIndex = i + 1;
+          const hasNext = nextIndex < fields.length;
           return (
-            <div key={field.id} className="flex gap-4">
+            <div key={field.id} className='flex gap-4'>
               {renderField(field)}
-              {next && renderField(next)}
+              {hasNext && renderField(fields[nextIndex])}
             </div>
           );
         }
@@ -280,32 +350,37 @@ function normalizeGeowidgetPoint(value: unknown): InpostPoint | null {
   if (!isPlainRecord(value)) return null;
 
   const name = readPointString(value, 'name');
-  if (!name) return null;
+  if (name === '') return null;
 
   const address = readNestedRecord(value, 'address');
   const addressDetails = readNestedRecord(value, 'address_details');
   const location = readNestedRecord(value, 'location');
-  const addressLine1 = readPointString(address, 'line1')
-    || readPointString(value, 'address')
-    || [
-      readPointString(addressDetails, 'street'),
-      readPointString(addressDetails, 'building_number'),
-    ].filter(Boolean).join(' ');
+  const addressStreet = firstNonEmptyString([
+    readPointString(addressDetails, 'street'),
+    readPointString(addressDetails, 'building_number'),
+  ]);
+  const addressLine1 = firstNonEmptyString([
+    readPointString(address, 'line1'),
+    readPointString(value, 'address'),
+    addressStreet,
+  ]);
   const addressLine2 = readPointString(address, 'line2');
 
   return {
     id: name,
     name,
-    description: readPointString(value, 'description') || undefined,
-    addressLine1: addressLine1 || undefined,
-    addressLine2: addressLine2 || undefined,
-    city: readPointString(addressDetails, 'city') || undefined,
-    postCode: readPointString(addressDetails, 'post_code') || undefined,
+    description: toOptionalText(readPointString(value, 'description')),
+    addressLine1: toOptionalText(addressLine1),
+    addressLine2: toOptionalText(addressLine2),
+    city: toOptionalText(readPointString(addressDetails, 'city')),
+    postCode: toOptionalText(readPointString(addressDetails, 'post_code')),
     latitude: typeof location['latitude'] === 'number' ? location['latitude'] : undefined,
     longitude: typeof location['longitude'] === 'number' ? location['longitude'] : undefined,
   };
 }
 
+
+// eslint-disable-next-line max-lines-per-function, complexity
 function InpostPointSelector({
   locale,
   point,
@@ -323,12 +398,12 @@ function InpostPointSelector({
   const hasWidgetToken = Boolean(token);
 
   useEffect(() => {
-    if (!hasWidgetToken || !widgetRef.current) return;
+    if (!hasWidgetToken || !widgetRef.current) return undefined;
 
     let active = true;
     const container = widgetRef.current;
     const eventName = 'onpointselect';
-    const handleSelect = (event: Event) => {
+    const handleSelect = (event: Event): void => {
       const customEvent = event as CustomEvent<unknown>;
       const payload = customEvent.detail ?? (event as unknown as { details?: unknown }).details;
       const normalized = normalizeGeowidgetPoint(payload);
@@ -354,7 +429,7 @@ function InpostPointSelector({
         if (active) setLoadError(locale === 'pl' ? 'Mapa InPost jest chwilowo niedostępna.' : 'InPost map is temporarily unavailable.');
       });
 
-    return () => {
+    return (): void => {
       active = false;
       document.removeEventListener(eventName, handleSelect);
       container.replaceChildren();
@@ -364,32 +439,32 @@ function InpostPointSelector({
   const selectedAddress = [
     point?.addressLine1,
     point?.addressLine2,
-    [point?.postCode, point?.city].filter(Boolean).join(' '),
-  ].filter(Boolean).join(', ');
+    `${point?.postCode ?? ''} ${point?.city ?? ''}`.trim(),
+  ].filter((value): value is string => value !== '').join(', ');
 
   return (
-    <div
-      className="mt-4 p-4"
-      style={{
-        border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
-        background: 'var(--surface)',
-      }}
-    >
-      <div className="flex items-start justify-between gap-4 mb-3">
+      <div
+        className='mt-4 p-4'
+        style={{
+          border: `1px solid ${error !== '' ? 'var(--accent)' : 'var(--border)'}`,
+          background: 'var(--surface)',
+        }}
+      >
+      <div className='flex items-start justify-between gap-4 mb-3'>
         <div>
-          <div className="type-label mb-1" style={{ color: 'var(--accent)' }}>
+          <div className='type-label mb-1' style={{ color: 'var(--accent)' }}>
             {locale === 'pl' ? 'Paczkomat InPost' : 'InPost pickup point'}
           </div>
-          <p className="type-label" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+          <p className='type-label' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
             {locale === 'pl'
               ? 'Wybierz paczkomat dla tej przesyłki.'
               : 'Choose the parcel locker for this shipment.'}
           </p>
         </div>
-        {point && (
+        {point !== null && (
           <button
-            type="button"
-            className="type-label hover:text-[var(--fg)] transition-colors"
+            type='button'
+            className='type-label hover:text-[var(--fg)] transition-colors'
             style={{ color: 'var(--muted)', flexShrink: 0 }}
             onClick={() => onSelect(null)}
           >
@@ -399,12 +474,12 @@ function InpostPointSelector({
       </div>
 
       {point && (
-        <div className="mb-4 p-3" style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}>
+        <div className='mb-4 p-3' style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--fg)', letterSpacing: '0.08em' }}>
             {point.name}
           </div>
-          {selectedAddress && (
-            <div className="type-label mt-1" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+          {selectedAddress !== '' && (
+            <div className='type-label mt-1' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
               {selectedAddress}
             </div>
           )}
@@ -413,39 +488,39 @@ function InpostPointSelector({
 
       {hasWidgetToken ? (
         <>
-          <div ref={widgetRef} style={{ minHeight: 420 }} />
-          {loadError && (
-            <p className="type-label mt-3" style={{ color: 'var(--accent)' }}>
+        <div ref={widgetRef} style={{ minHeight: 420 }} />
+          {loadError !== '' && (
+            <p className='type-label mt-3' style={{ color: 'var(--accent)' }}>
               {loadError}
             </p>
           )}
         </>
       ) : (
         <div>
-          <label className="type-label block mb-1.5" style={{ color: 'var(--fg)' }}>
+          <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
             {locale === 'pl' ? 'Kod paczkomatu' : 'Parcel locker code'}
           </label>
           <input
-            type="text"
+            type='text'
             value={point?.name ?? ''}
             onChange={(event) => {
               const value = event.target.value.trim().toUpperCase();
-              onSelect(value ? { id: value, name: value } : null);
+              onSelect(value === '' ? null : { id: value, name: value });
             }}
             placeholder={locale === 'pl' ? 'np. WAW01A' : 'e.g. WAW01A'}
             style={{
               width: '100%',
               padding: '0.75rem 1rem',
               background: 'var(--bg)',
-              border: `1px solid ${error ? 'var(--accent)' : 'var(--border)'}`,
-              outline: 'none',
+            border: `1px solid ${error !== '' ? 'var(--accent)' : 'var(--border)'}`,
+            outline: 'none',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.875rem',
               color: 'var(--fg)',
               letterSpacing: '0.08em',
             }}
           />
-          <p className="type-label mt-2" style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+          <p className='type-label mt-2' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
             {locale === 'pl'
               ? 'Dodaj NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN, aby włączyć mapę wyboru.'
               : 'Set NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN to enable the map selector.'}
@@ -453,8 +528,8 @@ function InpostPointSelector({
         </div>
       )}
 
-      {error && (
-        <p className="type-label mt-3" style={{ color: 'var(--accent)' }}>
+      {error !== '' && (
+        <p className='type-label mt-3' style={{ color: 'var(--accent)' }}>
           {error}
         </p>
       )}
@@ -463,6 +538,7 @@ function InpostPointSelector({
 }
 
 
+// eslint-disable-next-line max-lines-per-function, complexity
 function OrderSummary({
   content,
   shippingPrice,
@@ -472,8 +548,10 @@ function OrderSummary({
   freeShippingThreshold,
   freeShippingBannerLabel,
   promoCode,
-  promoDiscountPct,
+  promoDiscountType,
+  promoDiscountValue,
   onPromoCodeChange,
+  customerEmail,
 }: {
   content: CheckoutSummaryContent;
   shippingPrice: number;
@@ -483,8 +561,10 @@ function OrderSummary({
   freeShippingThreshold: number;
   freeShippingBannerLabel: string;
   promoCode: string | null;
-  promoDiscountPct: number;
-  onPromoCodeChange: (code: string | null, discountPct: number) => void;
+  promoDiscountType: 'percentage' | 'fixed' | null;
+  promoDiscountValue: number;
+  customerEmail: string;
+  onPromoCodeChange: (code: string | null, type: 'percentage' | 'fixed' | null, value: number) => void;
 }): JSX.Element {
   const { items } = useCart();
   const locale = useLocale();
@@ -492,58 +572,97 @@ function OrderSummary({
   const [promoError, setPromoError] = useState(false);
   const [promoApplying, setPromoApplying] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
-  const [freshData, setFreshData] = useState<Record<string, Product>>({});
+  const [freshData, setFreshData] = useState<Partial<Record<string, Product>>>({});
   const idKey = items.map((item) => item.productId).join(',');
 
   useEffect(() => {
-    if (!idKey) {
+    if (idKey.length === 0) {
       setFreshData({});
       return;
     }
-    fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`)
-      .then((r) => r.json())
-      .then((data: { products?: Product[] }) => {
-        const next: Record<string, Product> = {};
-        for (const product of data.products ?? []) next[product.id] = product;
+    // eslint-disable-next-line complexity
+    const loadProducts = async (): Promise<void> => {
+      try {
+        const response = await fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`);
+        const data = (await response.json()) as unknown;
+        const next: Partial<Record<string, Product>> = {};
+        const rawProducts = isPlainRecord(data) && Array.isArray(data.products) ? data.products : [];
+        for (const product of rawProducts) {
+          if (!isPlainRecord(product)) continue;
+          const id = product.id;
+          const name = product.name;
+          const category = product.category;
+          const price = product.price;
+          const priceDisplay = product.priceDisplay;
+          const gradient = product.gradient;
+          const imageUrl = product.imageUrl;
+          if (typeof id === 'string') {
+            next[id] = {
+              id,
+              name: typeof name === 'string' ? name : '',
+              category: typeof category === 'string' ? category : '',
+              price: typeof price === 'number' ? price : 0,
+              priceDisplay: typeof priceDisplay === 'string' ? priceDisplay : '',
+              gradient: typeof gradient === 'string' ? gradient : '',
+              imageUrl: typeof imageUrl === 'string' ? imageUrl : '',
+            };
+          }
+        }
         setFreshData(next);
-      })
-      .catch(() => {});
+      } catch {
+        // leave existing data for summary and retry logic unchanged on next render
+      }
+    };
+
+    void loadProducts();
   }, [idKey, locale]);
 
   const displayItems: CartItem[] = items.map((item) => {
     const fresh = freshData[item.productId];
-    if (!fresh) return item;
+    if (fresh === undefined) return item;
     return {
       ...item,
-      name: fresh.name || item.name,
-      category: fresh.category || item.category,
-      price: fresh.price || item.price,
-      priceDisplay: fresh.priceDisplay || item.priceDisplay,
-      gradient: fresh.gradient || item.gradient,
+      name: fresh.name !== '' ? fresh.name : item.name,
+      category: fresh.category !== '' ? fresh.category : item.category,
+      price: fresh.price !== 0 ? fresh.price : item.price,
+      priceDisplay: fresh.priceDisplay !== '' ? fresh.priceDisplay : item.priceDisplay,
+      gradient: fresh.gradient !== '' ? fresh.gradient : item.gradient,
       imageUrl: fresh.imageUrl ?? item.imageUrl,
     };
   });
-  const discountPct = promoDiscountPct;
   const freeShippingEnabled = freeShippingThreshold > 0;
   const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
   const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
+  const freeShippingUnlockedMessage = locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!';
   const freeShippingMessage = freeShippingUnlocked
-    ? (locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!')
+    ? freeShippingUnlockedMessage
     : freeShippingBannerLabel.replace('{amount}', formatPrice(freeShippingRemaining, locale));
+  const discountRate = promoDiscountType === 'percentage'
+    ? Math.round(promoDiscountValue * 100)
+    : 0;
+  const discountLabelSuffix = promoDiscountType === 'fixed'
+    ? formatPrice(Math.round(promoDiscountValue), locale)
+    : `${discountRate}%`;
 
-  const applyPromo = async () => {
-    const upper = promoInput.trim().toUpperCase();
-    if (!upper) return;
+  const applyPromo = async (): Promise<void> => {
+    const normalizedCode = normalizePromoCode(promoInput);
+    if (normalizedCode === '') return;
     setPromoApplying(true);
     try {
       const res = await fetch('/api/checkout/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: upper }),
+        body: JSON.stringify({ code: normalizedCode, subtotal, email: customerEmail }),
       });
-      const data = await res.json() as { valid: boolean; discountPct?: number };
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      if (!isPromoValidateResponse(data)) {
+        setPromoError(true);
+        return;
+      }
       if (data.valid) {
-        onPromoCodeChange(upper, data.discountPct ?? 0);
+        const resolvedType = data.discountType ?? 'percentage';
+        const resolvedValue = data.discountValue ?? 0;
+        onPromoCodeChange(normalizedCode, resolvedType, resolvedValue);
         setPromoError(false);
         setPromoOpen(false);
       } else {
@@ -558,7 +677,7 @@ function OrderSummary({
 
   return (
     <div
-      className="sticky top-24 p-8"
+      className='sticky top-24 p-8'
       style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
     >
       <h2
@@ -574,34 +693,34 @@ function OrderSummary({
       </h2>
 
       {/* Items */}
-      <div className="space-y-4 mb-6">
+      <div className='space-y-4 mb-6'>
         {items.length === 0 ? (
-          <p className="type-label" style={{ color: 'var(--muted)' }}>{content.emptyBagLabel}</p>
+          <p className='type-label' style={{ color: 'var(--muted)' }}>{content.emptyBagLabel}</p>
         ) : (
           displayItems.map((item) => (
-            <div key={`${item.productId}::${item.size}`} className="flex gap-3">
-              <div className="relative flex-shrink-0">
+            <div key={`${item.productId}::${item.size}`} className='flex gap-3'>
+              <div className='relative flex-shrink-0'>
                 <div
-                  className="w-14 h-16"
+                  className='w-14 h-16'
                   style={{ background: item.gradient }}
                 />
                 <span
-                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center"
+                  className='absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center'
                   style={{ background: 'var(--fg)', color: 'var(--bg)', fontFamily: 'var(--font-mono)' }}
                 >
                   {item.quantity}
                 </span>
               </div>
-              <div className="flex-1 min-w-0 flex justify-between gap-2">
+              <div className='flex-1 min-w-0 flex justify-between gap-2'>
                 <div>
                   <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.9rem', fontWeight: 300, color: 'var(--fg)' }}>
                     {item.name}
                   </p>
-                  {item.size && (
-                    <p className="type-label" style={{ color: 'var(--muted)' }}>{item.size}</p>
+                  {item.size !== '' && (
+                    <p className='type-label' style={{ color: 'var(--muted)' }}>{item.size}</p>
                   )}
                 </div>
-                <span className="type-price flex-shrink-0" style={{ color: 'var(--fg)' }}>
+                <span className='type-price flex-shrink-0' style={{ color: 'var(--fg)' }}>
                   {formatPrice(item.price * item.quantity, locale)}
                 </span>
               </div>
@@ -611,20 +730,23 @@ function OrderSummary({
       </div>
 
       {/* Promo code */}
-      <div className="mb-6" style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-        {promoCode ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: '#4A7C5A' }}>
-                <path d="M20 6L9 17l-5-5" />
+      <div className='mb-6' style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+        {promoCode !== null ? (
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' style={{ color: '#4A7C5A' }}>
+                <path d='M20 6L9 17l-5-5' />
               </svg>
-              <span className="type-label" style={{ color: '#4A7C5A' }}>
+              <span className='type-label' style={{ color: '#4A7C5A' }}>
                 {promoCode} {content.promoAppliedSuffix}
               </span>
             </div>
             <button
-              onClick={() => { onPromoCodeChange(null, 0); setPromoInput(''); }}
-              className="type-label hover:text-[var(--fg)] transition-colors"
+              onClick={() => {
+                onPromoCodeChange(null, null, 0);
+                setPromoInput('');
+              }}
+              className='type-label hover:text-[var(--fg)] transition-colors'
               style={{ color: 'var(--muted)' }}
             >
               {content.removePromoLabel}
@@ -634,30 +756,37 @@ function OrderSummary({
           <>
             <button
               onClick={() => setPromoOpen(!promoOpen)}
-              className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+              className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors'
               style={{ color: 'var(--muted)' }}
             >
               {content.promoToggleLabel}
               <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
+                width='11'
+                height='11'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='1.5'
+                strokeLinecap='round'
                 style={{ transform: promoOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
               >
-                <path d="M6 9l6 6 6-6" />
+                <path d='M6 9l6 6 6-6' />
               </svg>
             </button>
             {promoOpen && (
-              <div className="flex gap-2 mt-3">
+              <div className='flex gap-2 mt-3'>
                 <input
-                  type="text"
+                  type='text'
                   value={promoInput}
-                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(false); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') applyPromo(); }}
+                  onChange={(event) => {
+                    setPromoInput(event.target.value);
+                    setPromoError(false);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      void applyPromo();
+                    }
+                  }}
                   placeholder={content.promoPlaceholder}
                   style={{
                     flex: 1,
@@ -673,9 +802,11 @@ function OrderSummary({
                   }}
                 />
                 <button
-                  onClick={applyPromo}
+                  onClick={() => {
+                    void applyPromo();
+                  }}
                   disabled={promoApplying}
-                  className="type-label px-4 py-2 transition-colors hover:opacity-80 disabled:opacity-50"
+                  className='type-label px-4 py-2 transition-colors hover:opacity-80 disabled:opacity-50'
                   style={{ background: 'var(--fg)', color: 'var(--bg)', flexShrink: 0 }}
                 >
                   {promoApplying ? '…' : content.promoApplyLabel}
@@ -683,7 +814,7 @@ function OrderSummary({
               </div>
             )}
             {promoError && (
-              <p className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+              <p className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
                 {content.promoInvalidLabel}
               </p>
             )}
@@ -691,27 +822,27 @@ function OrderSummary({
         )}
       </div>
 
-      <div className="divider mb-4" />
+      <div className='divider mb-4' />
 
       {/* Totals */}
-      <div className="space-y-2 mb-4">
-        <div className="flex justify-between">
-          <span className="type-label" style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
-          <span className="type-price" style={{ color: 'var(--fg)' }}>{formatPrice(subtotal, locale)}</span>
+      <div className='space-y-2 mb-4'>
+        <div className='flex justify-between'>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
+          <span className='type-price' style={{ color: 'var(--fg)' }}>{formatPrice(subtotal, locale)}</span>
         </div>
         {discount > 0 && (
-          <div className="flex justify-between">
-            <span className="type-label" style={{ color: '#4A7C5A' }}>
-              {content.discountLabel} ({Math.round(discountPct * 100)}%)
+          <div className='flex justify-between'>
+            <span className='type-label' style={{ color: '#4A7C5A' }}>
+              {content.discountLabel} ({discountLabelSuffix})
             </span>
-            <span className="type-price" style={{ color: '#4A7C5A' }}>
+            <span className='type-price' style={{ color: '#4A7C5A' }}>
               − {formatPrice(discount, locale)}
             </span>
           </div>
         )}
         {freeShippingEnabled && (
           <div
-            className="type-label"
+            className='type-label'
             style={{
               color: freeShippingUnlocked ? '#4A7C5A' : 'var(--muted)',
               paddingTop: '0.25rem',
@@ -721,17 +852,17 @@ function OrderSummary({
             {freeShippingMessage}
           </div>
         )}
-        <div className="flex justify-between">
-          <span className="type-label" style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
-          <span className="type-price" style={{ color: shippingPrice === 0 ? '#4A7C5A' : 'var(--fg)' }}>
+        <div className='flex justify-between'>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
+          <span className='type-price' style={{ color: shippingPrice === 0 ? '#4A7C5A' : 'var(--fg)' }}>
             {shippingPrice === 0 ? content.freeLabel : formatPrice(shippingPrice, locale)}
           </span>
         </div>
       </div>
 
-      <div className="divider mb-4" />
+      <div className='divider mb-4' />
 
-      <div className="flex justify-between items-center">
+      <div className='flex justify-between items-center'>
         <span
           style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, color: 'var(--fg)' }}
         >
@@ -747,6 +878,7 @@ function OrderSummary({
   );
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function CheckoutPageClient({ content }: { content: CheckoutContent }): JSX.Element {
   const { items, clearCart } = useCart();
   const { toast } = useToast();
@@ -755,13 +887,15 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const localizedHref = useLocalizedHref();
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
-  const [form, setForm] = useState<Record<string, string>>({});
+  const [form, setForm] = useState<Partial<Record<string, string>>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [promoCode, setPromoCode] = useState<string | null>(null);
-  const [promoDiscountPct, setPromoDiscountPct] = useState(0);
-  const handlePromoCodeChange = useCallback((code: string | null, pct: number) => {
+  const [promoDiscountType, setPromoDiscountType] = useState<'percentage' | 'fixed' | null>(null);
+  const [promoDiscountValue, setPromoDiscountValue] = useState(0);
+  const handlePromoCodeChange = useCallback((code: string | null, type: 'percentage' | 'fixed' | null, value: number) => {
     setPromoCode(code);
-    setPromoDiscountPct(pct);
+    setPromoDiscountType(type);
+    setPromoDiscountValue(Math.max(0, value));
   }, []);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [confirmedOrderId, setConfirmedOrderId] = useState('');
@@ -776,7 +910,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const zoneMethods = useMemo(() => {
     const zone = getZoneForCountry(content.shippingZones, form.country ?? '');
-    const rawMethods = zone && zone.methods.length > 0 ? zone.methods : content.shippingMethods;
+    const rawMethods = zone !== null
+      ? zone.methods
+      : content.shippingMethods;
     return applyFreeThreshold(
       rawMethods,
       subtotal,
@@ -791,11 +927,24 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     form.country,
     subtotal,
   ]);
-  const selectedShipping: CheckoutShippingMethodContent = zoneMethods.find((method) => method.id === shipping)
-    ?? zoneMethods[0]
-    ?? { id: 'standard', label: 'Standard', detail: '', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 };
+  const defaultShipping: CheckoutShippingMethodContent = {
+    id: 'standard',
+    label: 'Standard',
+    detail: '',
+    price: 0,
+    priceLabel: 'Free',
+    businessDaysMin: 3,
+    businessDaysMax: 5,
+  };
+  const selectedShipping: CheckoutShippingMethodContent = (() => {
+    const method = zoneMethods.find((methodCandidate) => methodCandidate.id === shipping);
+    if (method !== undefined) {
+      return method;
+    }
+    return zoneMethods.length > 0 ? zoneMethods[0] : defaultShipping;
+  })();
   const requiresInpostPoint = selectedShipping.carrier === 'inpost' && Boolean(selectedShipping.requiresPickupPoint);
-  const discount = Math.round(subtotal * promoDiscountPct);
+  const discount = calculatePromoDiscount(subtotal, promoDiscountType, promoDiscountValue);
   const total = subtotal - discount + selectedShipping.price;
   const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
   const invalidEmailMessage = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
@@ -814,7 +963,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   useEffect(() => {
     if (zoneMethods.some((method) => method.id === shipping)) return;
-    setShipping(zoneMethods[0]?.id ?? 'standard');
+    const firstMethodId = zoneMethods.at(0)?.id ?? 'standard';
+    setShipping(firstMethodId);
   }, [shipping, zoneMethods]);
 
   useEffect(() => {
@@ -830,16 +980,16 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     const lastName = nameParts.slice(1).join(' ');
     setForm((f) => ({
       ...f,
-      email: f.email || user.email,
-      firstName: f.firstName || firstName,
-      lastName: f.lastName || lastName,
+      email: f.email !== '' ? f.email : user.email,
+      firstName: f.firstName !== '' ? f.firstName : firstName,
+      lastName: f.lastName !== '' ? f.lastName : lastName,
     }));
   }, [user]);
 
-  const setField = (id: string, v: string) => {
+  const setField = (id: string, v: string): void => {
     setForm((f) => ({ ...f, [id]: v }));
     setErrors((current) => {
-      if (!current[id]) return current;
+      if (current[id] === '') return current;
       const next = { ...current };
       delete next[id];
       return next;
@@ -856,9 +1006,11 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     const requiredFields = ['email', 'firstName', 'lastName', 'address', 'city', 'postcode', 'country', 'phone'];
 
     for (const field of requiredFields) {
-      if (!(form[field] ?? '').trim()) nextErrors[field] = requiredMessage;
+      const fieldValue = form[field] ?? '';
+      if (fieldValue.trim() === '') nextErrors[field] = requiredMessage;
     }
-    if ((form.email ?? '').trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    const emailValue = form.email ?? '';
+    if (emailValue.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue.trim())) {
       nextErrors.email = invalidEmailMessage;
     }
 
@@ -867,7 +1019,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   };
 
   const validateShippingStep = (): boolean => {
-    if (requiresInpostPoint && !inpostPoint) {
+    if (requiresInpostPoint && inpostPoint === null) {
       setInpostPointError(inpostPointRequiredMessage);
       return false;
     }
@@ -875,7 +1027,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     return true;
   };
 
-  const handlePlaceOrder = async () => {
+  // eslint-disable-next-line complexity
+  const handlePlaceOrder = async (): Promise<void> => {
     if (items.length === 0 || placingOrder) return;
     if (!validateInformationForm()) {
       setStep('information');
@@ -898,7 +1051,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: form.email,
+          email: form.email ?? '',
           items,
           shippingMethod: selectedShipping.label,
           shippingPrice: selectedShipping.price,
@@ -913,15 +1066,22 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           blikCode,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { orderId?: string; error?: string };
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      const orderId = isPlainRecord(data) && typeof data.orderId === 'string' ? data.orderId : '';
+      const orderError = isPlainRecord(data) && typeof data.error === 'string' ? data.error : '';
 
-      if (!res.ok || typeof data.orderId !== 'string') {
-        setBlikError(data.error ?? (locale === 'pl' ? 'Błąd płatności. Spróbuj ponownie.' : 'Payment failed. Please try again.'));
+      const orderFailedMessage = locale === 'pl'
+        ? 'Błąd płatności. Spróbuj ponownie.'
+        : 'Payment failed. Please try again.';
+      if (!res.ok || orderId === '') {
+        setBlikError(orderError !== ''
+          ? orderError
+          : orderFailedMessage);
         return;
       }
 
-      setConfirmedOrderId(data.orderId);
-      setBlikPendingOrderId(data.orderId);
+      setConfirmedOrderId(orderId);
+      setBlikPendingOrderId(orderId);
       setBlikSecondsLeft(120);
       setBlikPending(true);
     } catch {
@@ -933,7 +1093,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   // Poll for BLIK payment confirmation after the push notification is sent.
   useEffect(() => {
-    if (!blikPending || !blikPendingOrderId) return;
+    if (!blikPending || blikPendingOrderId === '') return undefined;
 
     let active = true;
 
@@ -950,32 +1110,33 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       setBlikError(locale === 'pl' ? 'Czas oczekiwania na potwierdzenie minął. Spróbuj ponownie.' : 'BLIK confirmation timed out. Please try again.');
     }, 2 * 60 * 1000);
 
-    const intervalId = setInterval(async () => {
+    const intervalId = setInterval(() => {
       if (!active) return;
-      try {
-        const res = await fetch(`/api/orders/${encodeURIComponent(blikPendingOrderId)}/status`);
-        const data = (await res.json()) as { status?: string };
-        if (!active) return;
-
-        if (data.status === 'processing') {
+      const checkStatus = async (): Promise<void> => {
+        try {
+          const res = await fetch(`/api/orders/${encodeURIComponent(blikPendingOrderId)}/status`);
+          const data = (await res.json().catch(() => undefined)) as unknown;
+          const status = isPlainRecord(data) ? data.status : undefined;
+          if (status !== 'processing' && status !== 'cancelled') return;
+          if (!active) return;
           clearInterval(intervalId);
           clearInterval(tickId);
           clearTimeout(timeoutId);
           setBlikPending(false);
-          setStep('confirmation');
-          clearCart();
-          toast({ type: 'success', title: content.orderPlacedToastTitle, message: blikPendingOrderId });
-        } else if (data.status === 'cancelled') {
-          clearInterval(intervalId);
-          clearInterval(tickId);
-          clearTimeout(timeoutId);
-          setBlikPending(false);
-          setBlikSecondsLeft(0);
-          setBlikError(locale === 'pl' ? 'Płatność BLIK odrzucona.' : 'BLIK payment was declined.');
+          if (status === 'processing') {
+            setStep('confirmation');
+            clearCart();
+            toast({ type: 'success', title: content.orderPlacedToastTitle, message: blikPendingOrderId });
+          } else {
+            setBlikSecondsLeft(0);
+            setBlikError(locale === 'pl' ? 'Płatność BLIK odrzucona.' : 'BLIK payment was declined.');
+          }
+        } catch {
+          // Transient error — keep polling
         }
-      } catch {
-        // Transient error — keep polling
-      }
+      };
+
+      void checkStatus();
     }, 2000);
 
     return () => {
@@ -991,19 +1152,19 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       <>
         <SiteNav />
         <main
-          className="min-h-screen flex flex-col items-center justify-center px-8 text-center"
+          className='min-h-screen flex flex-col items-center justify-center px-8 text-center'
           style={{ paddingTop: 'var(--nav-h)' }}
         >
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mb-8"
+            className='w-16 h-16 rounded-full flex items-center justify-center mb-8'
             style={{ background: 'var(--fg)', color: 'var(--bg)' }}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M20 6L9 17l-5-5" />
+            <svg width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+              <path d='M20 6L9 17l-5-5' />
             </svg>
           </div>
           <h1
-            className="type-display-lg mb-4"
+            className='type-display-lg mb-4'
             style={{ color: 'var(--fg)' }}
           >
             {content.confirmationTitle}
@@ -1020,22 +1181,22 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             }}
           >
             {content.confirmationBodyPrefix}{' '}
-            <strong style={{ color: 'var(--fg)' }}>{form.email || content.confirmationEmailFallback}</strong>
+          <strong style={{ color: 'var(--fg)' }}>{(form.email ?? '') !== '' ? form.email : content.confirmationEmailFallback}</strong>
             {content.confirmationBodySuffix}
           </p>
-          {confirmedOrderId && (
-            <p className="type-label mb-8" style={{ color: 'var(--accent)' }}>
+          {confirmedOrderId !== '' && (
+            <p className='type-label mb-8' style={{ color: 'var(--accent)' }}>
               {confirmedOrderId}
             </p>
           )}
-          <div className="flex gap-3">
-            <a href={localizedHref(content.continueShoppingHref)} className="btn-primary">{content.continueShoppingLabel}</a>
-            <a href={localizedHref('/account')} className="btn-ghost">{content.trackOrderLabel}</a>
+          <div className='flex gap-3'>
+            <a href={localizedHref(content.continueShoppingHref)} className='btn-primary'>{content.continueShoppingLabel}</a>
+            <a href={localizedHref('/account')} className='btn-ghost'>{content.trackOrderLabel}</a>
           </div>
 
           {/* Manifesto quote */}
           <p
-            className="mt-20"
+            className='mt-20'
             style={{
               fontFamily: 'var(--font-display)',
               fontSize: '1.1rem',
@@ -1057,7 +1218,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       <main style={{ paddingTop: 'var(--nav-h)' }}>
         {/* Header bar */}
         <div
-          className="px-8 md:px-16 py-5 flex items-center justify-between"
+          className='px-8 md:px-16 py-5 flex items-center justify-between'
           style={{ borderBottom: '1px solid var(--border)' }}
         >
           <a
@@ -1071,35 +1232,35 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
         </div>
 
         {/* Two-column layout */}
-        <div className="grid md:grid-cols-[1fr_400px] lg:grid-cols-[1fr_440px] min-h-[calc(100vh-var(--nav-h)-64px)]">
+        <div className='grid md:grid-cols-[1fr_400px] lg:grid-cols-[1fr_440px] min-h-[calc(100vh-var(--nav-h)-64px)]'>
           {/* Form column */}
-          <div className="px-8 md:px-16 py-12" style={{ borderRight: '1px solid var(--border)' }}>
+          <div className='px-8 md:px-16 py-12' style={{ borderRight: '1px solid var(--border)' }}>
             {/* ── Step: Information ─── */}
             {step === 'information' && (
               <div>
-                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                <h2 className='type-display-md mb-8' style={{ color: 'var(--fg)' }}>
                   {content.informationTitle}
                 </h2>
-                <div className="space-y-4">
-                  <FieldRows fields={content.informationFields} values={form} errors={errors} locale={locale} onChange={setField} />
+                <div className='space-y-4'>
+            <FieldRows fields={content.informationFields} values={form} errors={errors} locale={locale} onChange={setField} />
                 </div>
 
-                <div className="flex items-center justify-between mt-10">
-                  <a href={localizedHref(content.returnToBagHref)} className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors" style={{ color: 'var(--muted)' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                <div className='flex items-center justify-between mt-10'>
+                  <a href={localizedHref(content.returnToBagHref)} className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors' style={{ color: 'var(--muted)' }}>
+                    <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M19 12H5M12 5l-7 7 7 7' />
                     </svg>
                     {content.returnToBagLabel}
                   </a>
                   <button
-                    className="btn-primary"
+                    className='btn-primary'
                     onClick={() => {
                       if (validateInformationForm()) setStep('shipping');
                     }}
                   >
                     {content.continueToShippingLabel}
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M5 12h14M12 5l7 7-7 7' />
                     </svg>
                   </button>
                 </div>
@@ -1109,23 +1270,26 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             {/* ── Step: Shipping ─── */}
             {step === 'shipping' && (
               <div>
-                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                <h2 className='type-display-md mb-8' style={{ color: 'var(--fg)' }}>
                   {content.shippingTitle}
                 </h2>
 
                 {/* Delivery address recap */}
                 <div
-                  className="p-4 mb-8 flex justify-between items-start gap-4"
+                  className='p-4 mb-8 flex justify-between items-start gap-4'
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
                   <div>
-                    <div className="type-label mb-0.5" style={{ color: 'var(--muted)' }}>{content.deliveryRecapLabel}</div>
+                    <div className='type-label mb-0.5' style={{ color: 'var(--muted)' }}>{content.deliveryRecapLabel}</div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 300, color: 'var(--fg)' }}>
-                      {form.address || content.deliveryAddressFallback}, {form.city || content.deliveryAddressFallback} {form.postcode || content.deliveryAddressFallback}, {form.country || content.deliveryAddressFallback}
+                      {form.address !== undefined && form.address !== '' ? form.address : content.deliveryAddressFallback},
+                      {` ${form.city !== undefined && form.city !== '' ? form.city : content.deliveryAddressFallback}`}
+                      {` ${form.postcode !== undefined && form.postcode !== '' ? form.postcode : content.deliveryAddressFallback}`}
+                      , {form.country !== undefined && form.country !== '' ? form.country : content.deliveryAddressFallback}
                     </div>
                   </div>
                   <button
-                    className="type-label hover:text-[var(--fg)] transition-colors"
+                    className='type-label hover:text-[var(--fg)] transition-colors'
                     style={{ color: 'var(--accent)', flexShrink: 0 }}
                     onClick={() => setStep('information')}
                   >
@@ -1134,45 +1298,45 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                 </div>
 
                 {/* Shipping options */}
-                <div className="space-y-3 mb-10">
+                <div className='space-y-3 mb-10'>
                   {zoneMethods.map((method) => (
                     <label
                       key={method.id}
-                      className="flex items-center gap-4 p-4 cursor-pointer transition-colors"
+                      className='flex items-center gap-4 p-4 cursor-pointer transition-colors'
                       style={{
                         border: `1px solid ${shipping === method.id ? 'var(--fg)' : 'var(--border)'}`,
                         background: shipping === method.id ? 'var(--surface)' : 'transparent',
                       }}
                     >
                       <input
-                        type="radio"
-                        name="shipping"
+                        type='radio'
+                        name='shipping'
                         value={method.id}
                         checked={shipping === method.id}
                         onChange={() => {
                           setShipping(method.id);
                           if (method.carrier !== 'inpost') setInpostPointError('');
                         }}
-                        className="sr-only"
+                        className='sr-only'
                       />
                       <div
-                        className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                        className='w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0'
                         style={{ borderColor: shipping === method.id ? 'var(--fg)' : 'var(--border)' }}
                       >
                         {shipping === method.id && (
-                          <div className="w-2 h-2 rounded-full" style={{ background: 'var(--fg)' }} />
+                          <div className='w-2 h-2 rounded-full' style={{ background: 'var(--fg)' }} />
                         )}
                       </div>
-                      <div className="flex-1">
+                      <div className='flex-1'>
                         <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--fg)' }}>
                           {method.label}
                         </div>
-                        <div className="type-label" style={{ color: 'var(--muted)' }}>{method.detail}</div>
-                        <div className="type-label" style={{ color: 'var(--accent)', marginTop: '0.3rem' }}>
+                        <div className='type-label' style={{ color: 'var(--muted)' }}>{method.detail}</div>
+                        <div className='type-label' style={{ color: 'var(--accent)', marginTop: '0.3rem' }}>
                           {estimatedDeliveryLabel} {calcDeliveryRange(method.businessDaysMin, method.businessDaysMax, locale)}
                         </div>
                       </div>
-                      <span className="type-price" style={{ color: method.price === 0 ? '#4A7C5A' : 'var(--fg)' }}>
+                      <span className='type-price' style={{ color: method.price === 0 ? '#4A7C5A' : 'var(--fg)' }}>
                         {method.price === 0 ? content.orderSummary.freeLabel : method.priceLabel}
                       </span>
                     </label>
@@ -1187,26 +1351,26 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className='flex items-center justify-between'>
                   <button
-                    className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+                    className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors'
                     style={{ color: 'var(--muted)' }}
                     onClick={() => setStep('information')}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M19 12H5M12 5l-7 7 7 7' />
                     </svg>
                     {content.backLabel}
                   </button>
                   <button
-                    className="btn-primary"
+                    className='btn-primary'
                     onClick={() => {
                       if (validateShippingStep()) setStep('payment');
                     }}
                   >
                     {content.continueToPaymentLabel}
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M5 12h14M12 5l7 7-7 7' />
                     </svg>
                   </button>
                 </div>
@@ -1216,39 +1380,39 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             {/* ── Step: Payment ─── */}
             {step === 'payment' && (
               <div>
-                <h2 className="type-display-md mb-8" style={{ color: 'var(--fg)' }}>
+                <h2 className='type-display-md mb-8' style={{ color: 'var(--fg)' }}>
                   {content.paymentTitle}
                 </h2>
 
                 {/* Security note */}
                 <div
-                  className="flex items-center gap-3 p-4 mb-8"
+                  className='flex items-center gap-3 p-4 mb-8'
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: '#4A7C5A', flexShrink: 0 }}>
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' style={{ color: '#4A7C5A', flexShrink: 0 }}>
+                    <rect x='3' y='11' width='18' height='11' rx='2' />
+                    <path d='M7 11V7a5 5 0 0 1 10 0v4' />
                   </svg>
-                  <span className="type-label" style={{ color: 'var(--muted)' }}>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>
                     {content.securityNote}
                   </span>
                 </div>
 
                 {blikPending ? (
                   /* ── BLIK pending: customer is confirming in banking app ── */
-                  <div className="flex flex-col items-center text-center py-8 gap-6">
+                  <div className='flex flex-col items-center text-center py-8 gap-6'>
                     <svg
-                      className="animate-spin"
-                      width="36"
-                      height="36"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
+                      className='animate-spin'
+                      width='36'
+                      height='36'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='1.5'
+                      strokeLinecap='round'
                       style={{ color: 'var(--fg)' }}
                     >
-                      <path d="M12 3a9 9 0 1 1-9 9" />
+                      <path d='M12 3a9 9 0 1 1-9 9' />
                     </svg>
                     <div>
                       <p
@@ -1262,12 +1426,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       >
                         {blikPendingTitle}
                       </p>
-                      <p className="type-label" style={{ color: 'var(--muted)', maxWidth: '320px' }}>
+                      <p className='type-label' style={{ color: 'var(--muted)', maxWidth: '320px' }}>
                         {blikPendingBody}
                       </p>
                       {blikSecondsLeft > 0 && (
                         <p
-                          className="type-label mt-3"
+                          className='type-label mt-3'
                           style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}
                         >
                           {String(Math.floor(blikSecondsLeft / 60)).padStart(2, '0')}
@@ -1276,7 +1440,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       )}
                     </div>
                     <button
-                      className="type-label hover:text-[var(--fg)] transition-colors"
+                      className='type-label hover:text-[var(--fg)] transition-colors'
                       style={{ color: 'var(--muted)' }}
                       onClick={() => {
                         setBlikPending(false);
@@ -1292,9 +1456,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   /* ── BLIK code input ── */
                   <div>
                     {/* BLIK logo badge */}
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className='flex items-center gap-3 mb-6'>
                       <div
-                        className="flex items-center justify-center px-3 py-1"
+                        className='flex items-center justify-center px-3 py-1'
                         style={{
                           background: 'var(--fg)',
                           color: 'var(--bg)',
@@ -1306,41 +1470,43 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       >
                         BLIK
                       </div>
-                      <span className="type-label" style={{ color: 'var(--muted)' }}>
+                      <span className='type-label' style={{ color: 'var(--muted)' }}>
                         {locale === 'pl' ? 'Płatność mobilna' : 'Mobile payment'}
                       </span>
                     </div>
 
-                    <div className="mb-2">
+                    <div className='mb-2'>
                       <label
-                        htmlFor="blik-code"
-                        className="type-label block mb-1.5"
+                        htmlFor='blik-code'
+                        className='type-label block mb-1.5'
                         style={{ color: 'var(--fg)' }}
                       >
                         {blikLabel}
                       </label>
                       <input
-                        id="blik-code"
-                        type="text"
-                        inputMode="numeric"
-                        pattern="\d{6}"
+                        id='blik-code'
+                        type='text'
+                        inputMode='numeric'
+                        pattern='\d{6}'
                         maxLength={6}
                         value={blikCode}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
                           setBlikCode(digits);
-                          if (blikError) setBlikError('');
+                          if (blikError !== '') {
+                            setBlikError('');
+                          }
                         }}
                         onKeyDown={(e) => { if (e.key === 'Enter') void handlePlaceOrder(); }}
                         placeholder={blikPlaceholder}
-                        autoComplete="one-time-code"
-                        aria-invalid={Boolean(blikError)}
-                        aria-describedby={blikError ? 'blik-error' : 'blik-hint'}
+                        autoComplete='one-time-code'
+                        aria-invalid={blikError !== ''}
+                        aria-describedby={blikError !== '' ? 'blik-error' : 'blik-hint'}
                         style={{
                           width: '100%',
                           padding: '1rem 1.25rem',
                           background: 'transparent',
-                          border: `1px solid ${blikError ? 'var(--accent)' : 'var(--border)'}`,
+                          border: `1px solid ${blikError !== '' ? 'var(--accent)' : 'var(--border)'}`,
                           outline: 'none',
                           fontFamily: 'var(--font-mono)',
                           fontSize: '1.75rem',
@@ -1349,15 +1515,21 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                           textAlign: 'center',
                           transition: 'border-color 0.2s ease',
                         }}
-                        onFocus={(e) => { e.target.style.borderColor = 'var(--fg)'; }}
-                        onBlur={(e) => { e.target.style.borderColor = blikError ? 'var(--accent)' : 'var(--border)'; }}
+                        onFocus={(event) => {
+                          const target = event.currentTarget;
+                          target.style.borderColor = 'var(--fg)';
+                        }}
+                        onBlur={(event) => {
+                          const target = event.currentTarget;
+                          target.style.borderColor = blikError !== '' ? 'var(--accent)' : 'var(--border)';
+                        }}
                       />
-                      {blikError ? (
-                        <p id="blik-error" className="type-label mt-1.5" style={{ color: 'var(--accent)' }}>
+                      {blikError !== '' ? (
+                        <p id='blik-error' className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
                           {blikError}
                         </p>
                       ) : (
-                        <p id="blik-hint" className="type-label mt-1.5" style={{ color: 'var(--muted)' }}>
+                        <p id='blik-hint' className='type-label mt-1.5' style={{ color: 'var(--muted)' }}>
                           {blikHint}
                         </p>
                       )}
@@ -1365,36 +1537,38 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mt-10">
+                <div className='flex items-center justify-between mt-10'>
                   <button
-                    className="type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors"
+                    className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors'
                     style={{ color: 'var(--muted)' }}
                     onClick={() => { if (!blikPending) setStep('shipping'); }}
                     disabled={blikPending}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M19 12H5M12 5l-7 7 7 7" />
+                    <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                      <path d='M19 12H5M12 5l-7 7 7 7' />
                     </svg>
                     {content.backLabel}
                   </button>
                   {!blikPending && (
                     <button
-                      className="btn-primary"
-                      onClick={handlePlaceOrder}
+                      className='btn-primary'
+                      onClick={() => {
+                        void handlePlaceOrder();
+                      }}
                       disabled={items.length === 0 || placingOrder}
                       style={{ opacity: items.length === 0 || placingOrder ? 0.5 : 1 }}
                     >
                       {placingOrder && (
-                        <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                          <path d="M12 3a9 9 0 1 1-9 9" />
+                        <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M12 3a9 9 0 1 1-9 9' />
                         </svg>
                       )}
                       {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
-                      {items.length > 0 && !placingOrder && (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
+                      {items.length > 0 && !placingOrder ? (
+                        <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M5 12h14M12 5l7 7-7 7' />
                         </svg>
-                      )}
+                      ) : null}
                     </button>
                   )}
                 </div>
@@ -1403,7 +1577,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           </div>
 
           {/* Order summary column */}
-          <div className="px-8 md:px-10 py-12" style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
+          <div className='px-8 md:px-10 py-12' style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
             <OrderSummary
               content={content.orderSummary}
               shippingPrice={selectedShipping.price}
@@ -1413,7 +1587,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
               freeShippingThreshold={content.freeShippingThreshold}
               freeShippingBannerLabel={content.freeShippingBannerLabel}
               promoCode={promoCode}
-              promoDiscountPct={promoDiscountPct}
+              promoDiscountType={promoDiscountType}
+              promoDiscountValue={promoDiscountValue}
+              customerEmail={form.email ?? ''}
               onPromoCodeChange={handlePromoCodeChange}
             />
           </div>

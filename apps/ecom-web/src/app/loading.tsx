@@ -3,8 +3,8 @@ import type { JSX } from 'react';
 export default function Loading(): JSX.Element {
   return (
     <div
-      aria-label="Loading"
-      aria-live="polite"
+      aria-label='Loading'
+      aria-live='polite'
       style={{
         position: 'fixed',
         top: 0,

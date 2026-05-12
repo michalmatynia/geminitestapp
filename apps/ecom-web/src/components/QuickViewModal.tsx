@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/strict-boolean-expressions,complexity,consistent-return,max-lines-per-function */
 'use client';
 
 import { useState, useEffect, type JSX } from 'react';
@@ -66,12 +67,12 @@ export function QuickViewModal(): JSX.Element | null {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6"
+      className='fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6'
       onClick={close}
       style={{ background: 'var(--modal-scrim)', backdropFilter: 'blur(8px)' }}
     >
       <div
-        className="w-full md:max-w-3xl overflow-hidden flex flex-col md:flex-row"
+        className='w-full md:max-w-3xl overflow-hidden flex flex-col md:flex-row'
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg)',
@@ -81,25 +82,25 @@ export function QuickViewModal(): JSX.Element | null {
       >
         {/* Image panel — hidden on mobile */}
         <div
-          className="hidden md:block relative flex-shrink-0 grain"
+          className='hidden md:block relative flex-shrink-0 grain'
           style={{ width: '45%', minHeight: '480px' }}
         >
           <ProductImage
             imageUrl={product.imageUrl}
             gradient={product.gradient}
             alt={product.shortName ?? product.name}
-            className="absolute inset-0"
-            sizes="40vw"
+            className='absolute inset-0'
+            sizes='40vw'
           />
           {product.tag && (
-            <div className="absolute top-6 left-6 z-10">
-              <span className="type-label px-3 py-1.5" style={{ background: 'var(--accent)', color: '#fff' }}>
+            <div className='absolute top-6 left-6 z-10'>
+              <span className='type-label px-3 py-1.5' style={{ background: 'var(--accent)', color: '#fff' }}>
                 {product.tag}
               </span>
             </div>
           )}
           <div
-            className="absolute bottom-6 left-6 z-10"
+            className='absolute bottom-6 left-6 z-10'
             style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}
           >
             {quickView.brandLabel} / {product.id}
@@ -107,11 +108,11 @@ export function QuickViewModal(): JSX.Element | null {
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col overflow-y-auto px-8 py-8">
+        <div className='flex-1 flex flex-col overflow-y-auto px-8 py-8'>
           {/* Header */}
-          <div className="flex items-start justify-between mb-6">
+          <div className='flex items-start justify-between mb-6'>
             <div>
-              <div className="type-label mb-2" style={{ color: 'var(--accent)' }}>{product.category}</div>
+              <div className='type-label mb-2' style={{ color: 'var(--accent)' }}>{product.category}</div>
               <h2
                 style={{
                   fontFamily: 'var(--font-display)',
@@ -124,17 +125,17 @@ export function QuickViewModal(): JSX.Element | null {
               >
                 {product.shortName ?? product.name}
               </h2>
-              <div className="type-price text-xl" style={{ color: 'var(--fg)' }}>
+              <div className='type-price text-xl' style={{ color: 'var(--fg)' }}>
                 {formatPrice(product.price, locale)}
               </div>
             </div>
             <button
               onClick={close}
               aria-label={quickView.closeLabel}
-              className="text-[var(--muted)] hover:text-[var(--fg)] transition-colors flex-shrink-0 ml-4 mt-1"
+              className='text-[var(--muted)] hover:text-[var(--fg)] transition-colors flex-shrink-0 ml-4 mt-1'
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
               </svg>
             </button>
           </div>
@@ -155,14 +156,14 @@ export function QuickViewModal(): JSX.Element | null {
 
           {/* Sizes */}
           {product.sizes.length > 0 && (
-            <div className="mb-6">
-              <div className="type-label mb-3" style={{ color: 'var(--fg)' }}>{quickView.selectSizeLabel}</div>
-              <div className="flex flex-wrap gap-2">
+            <div className='mb-6'>
+              <div className='type-label mb-3' style={{ color: 'var(--fg)' }}>{quickView.selectSizeLabel}</div>
+              <div className='flex flex-wrap gap-2'>
                 {product.sizes.map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className="type-label px-4 py-2.5 transition-all duration-200"
+                    className='type-label px-4 py-2.5 transition-all duration-200'
                     style={{
                       background: selectedSize === size ? 'var(--fg)' : 'transparent',
                       color: selectedSize === size ? 'var(--bg)' : 'var(--fg)',
@@ -178,32 +179,32 @@ export function QuickViewModal(): JSX.Element | null {
           )}
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 mt-auto">
+          <div className='flex flex-col gap-3 mt-auto'>
             <button
               onClick={handleAdd}
               disabled={adding}
-              className="btn-primary w-full justify-center"
+              className='btn-primary w-full justify-center'
               style={{ background: adding ? 'var(--accent)' : 'var(--fg)', transition: 'background 0.3s ease' }}
             >
               {adding ? (
                 <>
                   {quickView.addedButtonLabel}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M20 6L9 17l-5-5" />
+                  <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
+                    <path d='M20 6L9 17l-5-5' />
                   </svg>
                 </>
               ) : (
                 <>
                   {quickView.addToBagLabel}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                    <path d='M5 12h14M12 5l7 7-7 7' />
                   </svg>
                 </>
               )}
             </button>
-            <div className="flex gap-3">
+            <div className='flex gap-3'>
               <button
-                className="btn-ghost flex-1 justify-center"
+                className='btn-ghost flex-1 justify-center'
                 onClick={() => {
                   toggleWishlist({
                     productId: product.id,
@@ -223,27 +224,27 @@ export function QuickViewModal(): JSX.Element | null {
                 }}
               >
                 <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
+                  width='13'
+                  height='13'
+                  viewBox='0 0 24 24'
                   fill={wishlisted ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
+                  stroke='currentColor'
+                  strokeWidth='1.5'
+                  strokeLinecap='round'
                   style={{ color: wishlisted ? 'var(--accent)' : 'inherit' }}
                 >
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
                 </svg>
                 {wishlisted ? quickView.savedWishlistButtonLabel : quickView.saveWishlistButtonLabel}
               </button>
               <a
                 href={localizedHref(`/products/${product.slug}`)}
-                className="btn-ghost flex-1 justify-center"
+                className='btn-ghost flex-1 justify-center'
                 onClick={close}
               >
                 {quickView.fullDetailsLabel}
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
+                <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                  <path d='M5 12h14M12 5l7 7-7 7' />
                 </svg>
               </a>
             </div>

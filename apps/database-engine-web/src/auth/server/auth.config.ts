@@ -41,11 +41,22 @@ const isElevatedUser = (authUser: AuthUserInfo): boolean => {
   return (authUser.isElevated ?? false) || elevatedRoles.has(role) || isPlaywrightRuntime;
 };
 
+const isRoleDeniedForAdminRoute = (authUser: AuthUserInfo): boolean =>
+  (authUser.accountBanned ?? false) || (authUser.accountDisabled ?? false);
+
+const isAdminDatabaseRoute = (pathname: string): boolean => pathname.startsWith('/admin/databases');
+
+const hasAdminPermissionForDatabases = (authUser: AuthUserInfo): boolean => {
+  if (isElevatedUser(authUser)) return true;
+  const permissions = authUser.permissions ?? [];
+  return permissions.includes('settings.manage');
+};
+
 const checkDatabaseAdminAccess = (
   pathname: string,
   authUser: AuthUserInfo
 ): boolean | { redirect: string; error?: string; denied?: boolean } => {
-  if (authUser.accountBanned === true || authUser.accountDisabled === true) {
+  if (isRoleDeniedForAdminRoute(authUser)) {
     return { redirect: '/auth/signin', error: 'AccountDisabled' };
   }
 
@@ -54,28 +65,54 @@ const checkDatabaseAdminAccess = (
     return { redirect: '/auth/signin', error: 'AccessDenied' };
   }
 
-  if (pathname.startsWith('/admin/databases')) {
-    const permissions = authUser.permissions ?? [];
-    if (!isElevatedUser(authUser) && !permissions.includes('settings.manage')) {
-      return { redirect: '/admin', denied: true };
-    }
+  if (isAdminDatabaseRoute(pathname) && !hasAdminPermissionForDatabases(authUser)) {
+    return { redirect: '/admin', denied: true };
   }
 
   return true;
+};
+
+type TokenDefaults = {
+  role: string | null;
+  permissions: string[];
+  roleLevel: number | null;
+  isElevated: boolean;
+  roleAssigned: boolean;
+  accountDisabled: boolean;
+  accountBanned: boolean;
+};
+
+const getResolvedUserId = (tokenSub: string | undefined, userId: string | undefined): string =>
+  tokenSub ?? userId ?? '';
+
+const getTokenUserData = (token: TokenData): TokenDefaults => {
+  const {
+    role = null,
+    permissions = [],
+    roleLevel = null,
+    isElevated = false,
+    roleAssigned = false,
+    accountDisabled = false,
+    accountBanned = false,
+  } = token;
+
+  return {
+    role,
+    permissions,
+    roleLevel,
+    isElevated,
+    roleAssigned,
+    accountDisabled,
+    accountBanned,
+  };
 };
 
 const getUpdatedUser = (user: User, token: JWT): NonNullable<Session['user']> => {
   const t = token as TokenData;
   return {
     ...user,
-    id: String(token.sub ?? user.id ?? ''),
-    role: t.role ?? null,
-    permissions: t.permissions ?? [],
-    roleLevel: t.roleLevel ?? null,
-    isElevated: t.isElevated ?? false,
-    roleAssigned: t.roleAssigned ?? false,
-    accountDisabled: t.accountDisabled ?? false,
-    accountBanned: t.accountBanned ?? false,
+    id: getResolvedUserId(token.sub, user.id),
+    ...getTokenUserData(t),
   };
 };
 

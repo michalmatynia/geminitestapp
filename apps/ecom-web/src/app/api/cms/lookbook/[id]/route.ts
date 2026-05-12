@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import {
   deleteLookbookEntry,
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest, { params }: RouteContext): Promise<N
 
 export async function PUT(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
   const { id } = await params;
   const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 
@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext): Promise<N
 
 export async function DELETE(req: NextRequest, { params }: RouteContext): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
   const { id } = await params;
   const locale = normalizeLocale(req.nextUrl.searchParams.get('locale'));
 

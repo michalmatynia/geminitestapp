@@ -8,12 +8,12 @@ export function BackToTop(): JSX.Element {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 600);
+    const onScroll = (): void => setVisible(window.scrollY > 600);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToTop = (): void => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
     <button
@@ -39,8 +39,8 @@ export function BackToTop(): JSX.Element {
         pointerEvents: visible ? 'auto' : 'none',
       }}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M12 19V5M5 12l7-7 7 7" />
+      <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+        <path d='M12 19V5M5 12l7-7 7 7' />
       </svg>
     </button>
   );

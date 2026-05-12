@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clearSessionCookieOptions } from '@/lib/auth';
 
-export async function POST(): Promise<NextResponse> {
+export function POST(): NextResponse {
   const opts = clearSessionCookieOptions();
   const response = NextResponse.json({ ok: true });
   response.cookies.set(opts.name, opts.value, {

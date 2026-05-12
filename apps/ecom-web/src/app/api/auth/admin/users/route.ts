@@ -4,7 +4,7 @@ import { getEcomAuthDb } from '@/lib/mongodb';
 
 export async function GET(): Promise<NextResponse> {
   const session = await getSession();
-  if (!session || !session.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

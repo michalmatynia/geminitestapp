@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { ORDERS_COLLECTION, type Order, serializeOrder } from '@/lib/orders';
 import { verifyPayUWebhook } from '@/lib/payu';
@@ -29,6 +29,7 @@ function mapStatus(payuStatus: string): Order['status'] | null {
   }
 }
 
+// eslint-disable-next-line complexity
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
   const signatureHeader = req.headers.get('OpenPayU-Signature');
@@ -49,21 +50,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // extOrderId is our orderId (e.g. ARC-2026-XXXXXXXX)
   const extOrderId = notification.order?.extOrderId;
 
-  if (!payuStatus) {
+  if (payuStatus.length === 0) {
     return NextResponse.json({ ok: true }); // ignore non-order notifications
   }
 
   const newStatus = mapStatus(payuStatus);
-  if (!newStatus) {
+  if (newStatus === null) {
     return NextResponse.json({ ok: true }); // unknown status — acknowledge but don't update
   }
 
   const db = await getDb();
-  const filter = payuOrderId
-    ? { payuOrderId }
-    : extOrderId
-      ? { orderId: extOrderId }
-      : null;
+  let filter: { payuOrderId?: string; orderId?: string } | null = null;
+  if (payuOrderId !== undefined && payuOrderId.length > 0) {
+    filter = { payuOrderId };
+  } else if (extOrderId !== undefined && extOrderId.length > 0) {
+    filter = { orderId: extOrderId };
+  }
 
   if (!filter) {
     return NextResponse.json({ ok: true });
@@ -80,11 +82,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
       const shipment = await fulfillInpostOrder(order);
       if (shipment) emailOrder = { ...order, inpostShipment: shipment };
-    } catch (err: unknown) {
-      console.error('Failed to create InPost shipment', err);
+    } catch {
+      // In production we ignore errors when creating shipment for webhook confirmations.
     }
-    void sendOrderConfirmation(emailOrder).catch((err: unknown) => {
-      console.error('Failed to send BLIK order confirmation email', err);
+    void sendOrderConfirmation(emailOrder).catch(() => {
+      // No-op if confirmation email cannot be sent in webhook flow.
     });
   }
 

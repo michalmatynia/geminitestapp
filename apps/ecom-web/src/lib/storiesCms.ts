@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import type { Collection } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 import { STORIES, type Story } from '@/data/stories';
 import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/locales';
@@ -126,8 +127,8 @@ const STORY_PL: Record<string, Partial<Story>> = {
 };
 
 function docToStory(doc: Record<string, unknown>): Story {
-  const { _id, locale, createdAt, updatedAt, ...rest } = doc;
-  void _id;
+  const { _id: documentId, locale, createdAt, updatedAt, ...rest } = doc;
+  void documentId;
   void locale;
   void createdAt;
   void updatedAt;
@@ -136,27 +137,50 @@ function docToStory(doc: Record<string, unknown>): Story {
 
 function localizeStory(story: Story, localeInput?: string | null): Story {
   if (normalizeLocale(localeInput) !== 'pl') return story;
-  const localized = STORY_PL[story.slug];
+  const localized = STORY_PL[story.slug] ?? {};
+  let category = STORY_CATEGORY_PL[story.category] ?? story.category;
+  const localizedCategory = localized.category;
+  if (typeof localizedCategory === 'string') {
+    category = localized.category;
+  }
   return {
     ...story,
     ...localized,
-    category: STORY_CATEGORY_PL[story.category] ?? localized?.category ?? story.category,
+    category,
     tags: story.tags.map((tag) => TAG_PL[tag] ?? tag),
   };
 }
 
-export const getAllStories = cache(async function getAllStories(locale?: string | null): Promise<Story[]> {
+async function getStoryFallbackStories(collection: Collection<Record<string, unknown>>): Promise<Story[]> {
+  const defaultDocs = await collection.find({ locale: DEFAULT_LOCALE }).sort({ date: -1 }).toArray();
+  if (defaultDocs.length !== 0) {
+    return defaultDocs.map((d) => docToStory(d as Record<string, unknown>));
+  }
+
+  const legacyDocs = await collection.find({ locale: { $exists: false } }).sort({ date: -1 }).toArray();
+  return legacyDocs.map((d) => docToStory(d as Record<string, unknown>));
+}
+
+function validateRequiredStrings(
+  values: readonly string[],
+  src: Record<string, unknown>,
+  errors: string[],
+): void {
+  for (const key of values) {
+    const value = src[key];
+    if (typeof value !== 'string' || value.trim() === '') {
+      errors.push(`${key} is required.`);
+    }
+  }
+}
+
+export const getAllStories = cache(async (locale?: string | null): Promise<Story[]> => {
   const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
     const collection = db.collection(COLLECTION);
-    const defaultDocs = await collection.find({ locale: DEFAULT_LOCALE }).sort({ date: -1 }).toArray();
-    const legacyDocs = defaultDocs.length === 0
-      ? await collection.find({ locale: { $exists: false } }).sort({ date: -1 }).toArray()
-      : [];
-    const baseStories = (defaultDocs.length > 0 ? defaultDocs : legacyDocs)
-      .map((d) => docToStory(d as Record<string, unknown>));
-    const fallbackStories = baseStories.length > 0 ? baseStories : STORIES;
+    const baseStories = await getStoryFallbackStories(collection);
+    const fallbackStories = baseStories.length === 0 ? STORIES : baseStories;
 
     if (requestedLocale === DEFAULT_LOCALE) return fallbackStories;
 
@@ -175,7 +199,24 @@ export const getAllStories = cache(async function getAllStories(locale?: string 
   }
 });
 
-export const getStoryBySlug = cache(async function getStoryBySlug(slug: string, locale?: string | null): Promise<Story | null> {
+async function readStoryFallbackEntry(
+  collection: Collection<Record<string, unknown>>,
+  slug: string,
+): Promise<Story | null> {
+  const defaultDoc = await collection.findOne({ slug, locale: DEFAULT_LOCALE });
+  if (defaultDoc !== null) {
+    return docToStory(defaultDoc as Record<string, unknown>);
+  }
+
+  const legacyDoc = await collection.findOne({ slug, locale: { $exists: false } });
+  if (legacyDoc !== null) {
+    return docToStory(legacyDoc as Record<string, unknown>);
+  }
+
+  return STORIES.find((entry) => entry.slug === slug) ?? null;
+}
+
+export const getStoryBySlug = cache(async (slug: string, locale?: string | null): Promise<Story | null> => {
   const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
@@ -185,14 +226,10 @@ export const getStoryBySlug = cache(async function getStoryBySlug(slug: string, 
       return docToStory(localizedDoc as Record<string, unknown>);
     }
 
-    const defaultDoc = await collection.findOne({ slug, locale: DEFAULT_LOCALE });
-    const legacyDoc = defaultDoc ? null : await collection.findOne({ slug, locale: { $exists: false } });
-    const fallback = defaultDoc ?? legacyDoc;
-    const fallbackStory = fallback
-      ? docToStory(fallback as Record<string, unknown>)
-      : STORIES.find((s) => s.slug === slug) ?? null;
+    const fallbackStory = await readStoryFallbackEntry(collection, slug);
+    if (fallbackStory === null) return null;
 
-    return fallbackStory ? localizeStory(fallbackStory, requestedLocale) : null;
+    return localizeStory(fallbackStory, requestedLocale);
   } catch {
     const fallback = STORIES.find((s) => s.slug === slug) ?? null;
     return fallback ? localizeStory(fallback, requestedLocale) : null;
@@ -231,11 +268,7 @@ export function validateStory(input: unknown): { story: Story | null; errors: st
   const src = input as Record<string, unknown>;
 
   const required = ['id', 'slug', 'category', 'title', 'subtitle', 'excerpt', 'readTime', 'date', 'gradient', 'accentColor', 'textColor'];
-  for (const key of required) {
-    if (typeof src[key] !== 'string' || !(src[key] as string).trim()) {
-      errors.push(`${key} is required.`);
-    }
-  }
+  validateRequiredStrings(required, src, errors);
 
   if (!Array.isArray(src['tags'])) errors.push('tags must be an array.');
   if (!Array.isArray(src['body'])) errors.push('body must be an array.');

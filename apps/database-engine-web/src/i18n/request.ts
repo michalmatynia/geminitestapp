@@ -5,15 +5,18 @@ import { isSupportedSiteLocale, normalizeSiteLocale } from '@/shared/lib/i18n/si
 
 import { loadDatabaseEngineMessages } from './messages';
 
-export default getRequestConfig(async ({ requestLocale }) => {
-  const localeCandidate = await requestLocale;
+export default getRequestConfig(({ requestLocale }) => {
+  const localeCandidate = requestLocale;
   const locale = isSupportedSiteLocale(localeCandidate)
     ? normalizeSiteLocale(localeCandidate)
     : DEFAULT_SITE_I18N_CONFIG.defaultLocale;
+  const configuredTimeZone = process.env['NEXT_INTL_TIME_ZONE'];
+  const normalizedTimeZone = configuredTimeZone?.trim();
+  const timeZone = normalizedTimeZone === '' ? 'Europe/Warsaw' : normalizedTimeZone ?? 'Europe/Warsaw';
 
   return {
     locale,
-    timeZone: process.env['NEXT_INTL_TIME_ZONE']?.trim() || 'Europe/Warsaw',
-    messages: await loadDatabaseEngineMessages(locale),
+    timeZone,
+    messages: loadDatabaseEngineMessages(locale),
   };
 });

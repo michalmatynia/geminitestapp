@@ -8,6 +8,8 @@
     "build": "next build --webpack && node scripts/prepare-vercel-output.mjs",
     "start": "next start --port 3300",
     "test": "vitest run --config vitest.config.mjs",
+    "lint": "cd ../.. && cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint \"apps/ecom-web/src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 --no-error-on-unmatched-pattern",
+    "lint:fix": "cd ../.. && cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint \"apps/ecom-web/src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 --fix --no-error-on-unmatched-pattern",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit --pretty false",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
     "cms:locales:backfill": "tsx scripts/backfill-cms-locales.ts",

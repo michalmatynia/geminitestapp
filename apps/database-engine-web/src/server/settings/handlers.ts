@@ -1,6 +1,8 @@
 import 'server-only';
 
-import { type WithId } from 'mongodb';
+/* eslint-disable max-lines */
+
+import { type Collection, type Filter, type WithId } from 'mongodb';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -56,16 +58,16 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 
-import type { Filter } from 'mongodb';
-
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';
 const HEAVY_PREFIX_REGEX = /^(ai_|agent_|case_resolver_|product_validator_|ai_insights_)/;
 const AI_PATHS_PREFIX_REGEX = /^ai_paths:/;
 const AUTH_PROVIDER_SETTING_KEY = 'auth_provider';
+const MINIMUM_SETTINGS_CACHE_TTL_MS = 60_000;
 
 let settingsIndexesEnsured: Promise<void> | null = null;
 let liteSettingsCache: { data: SettingRecord[]; ts: number } | null = null;
+let liteSettingsCacheInflight: Promise<SettingRecord[]> | null = null;
 
 export const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
 
@@ -81,9 +83,135 @@ export const liteQuerySchema = z.object({
   fresh: z.preprocess((value) => value === '1', z.boolean()).default(false),
 });
 
-const normalizeProvider = (value?: string | null): AppProviderValue | null => {
-  if (!value) return null;
-  return value.trim().toLowerCase() === 'mongodb' ? 'mongodb' : null;
+const trimNullable = (value: string | undefined): string | null => {
+  const trimmed = value?.trim();
+  return trimmed === undefined || trimmed.length === 0 ? null : trimmed;
+};
+
+const hasMongoDatabaseUrl = (): boolean => {
+  const mongoUri = process.env['MONGODB_URI'];
+  return typeof mongoUri === 'string' && mongoUri.length > 0;
+};
+
+const normalizeProvider = (value: string | null): AppProviderValue | null => {
+  if (value === null) return null;
+  return value.toLowerCase() === 'mongodb' ? 'mongodb' : null;
+};
+
+const getProviderSource = (
+  envProvider: AppProviderValue | null,
+  mongoProvider: AppProviderValue | null,
+  fallback: AppProviderSource | null
+): AppProviderSource | null => {
+  if (envProvider !== null) {
+    return 'env';
+  }
+  if (mongoProvider !== null) {
+    return 'mongo-setting';
+  }
+  return fallback;
+};
+
+const buildProviderServiceStatuses = ({
+  appConfigured,
+  appConfiguredSource,
+  appEffective,
+  authConfigured,
+  authConfiguredSource,
+}: {
+  appConfigured: AppProviderValue | null;
+  appConfiguredSource: AppProviderSource | null;
+  appEffective: AppProviderValue;
+  authConfigured: AppProviderValue;
+  authConfiguredSource: AppProviderSource;
+}): AppProviderServiceStatus[] => [
+  {
+    service: 'app',
+    configured: appConfigured,
+    configuredSource: appConfiguredSource,
+    effective: appEffective,
+    driftFromApp: false,
+    notes: [],
+  },
+  {
+    service: 'auth',
+    configured: authConfigured,
+    configuredSource: authConfiguredSource,
+    effective: 'mongodb',
+    driftFromApp: false,
+    notes: [],
+  },
+  {
+    service: 'product',
+    configured: appEffective,
+    configuredSource: 'derived',
+    effective: appEffective,
+    driftFromApp: false,
+    notes: ['Database Engine standalone app does not own product data.'],
+  },
+  {
+    service: 'integrations',
+    configured: appEffective,
+    configuredSource: 'derived',
+    effective: appEffective,
+    driftFromApp: false,
+    notes: ['Database Engine standalone app does not own integration data.'],
+  },
+  {
+    service: 'cms',
+    configured: appEffective,
+    configuredSource: 'derived',
+    effective: appEffective,
+    driftFromApp: false,
+    notes: ['Database Engine standalone app does not own CMS data.'],
+  },
+];
+
+const runBackfillDryRun = async (
+  collection: Collection<{ _id: string; key?: string | null }>,
+  filter: Filter<{ _id: string; key?: string | null }>
+): Promise<SettingsBackfillResult> => {
+  const matched = await collection.countDocuments(filter);
+  const sample = await collection.find(filter, { projection: { _id: 1 } }).limit(5).toArray();
+  return {
+    matched,
+    modified: 0,
+    remaining: matched,
+    sampleIds: sample.map((doc) => doc._id),
+  };
+};
+
+const runBackfillUpdate = async (
+  collection: Collection<{ _id: string; key?: string | null }>,
+  filter: Filter<{ _id: string; key?: string | null }>,
+  limit: number
+): Promise<SettingsBackfillResult> => {
+  const docs = await collection.find(filter, { projection: { _id: 1 } }).limit(limit).toArray();
+
+  if (docs.length === 0) {
+    return {
+      matched: 0,
+      modified: 0,
+      remaining: 0,
+    };
+  }
+
+  const result = await collection.bulkWrite(
+    docs.map((doc) => ({
+      updateOne: {
+        filter: { _id: doc._id },
+        update: { $set: { key: doc._id } },
+      },
+    })),
+    { ordered: false }
+  );
+
+  const remaining = await collection.countDocuments(filter);
+  return {
+    matched: docs.length,
+    modified: result.modifiedCount,
+    remaining,
+  };
 };
 
 const normalizeScope = (scope?: string | null): SettingsScope => {
@@ -112,7 +240,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
 
 const ensureSettingsIndexes = async (): Promise<void> => {
   await applyActiveMongoSourceEnv();
-  if (!process.env['MONGODB_URI']) return;
+  if (!hasMongoDatabaseUrl()) return;
   settingsIndexesEnsured ??= (async (): Promise<void> => {
     try {
       const mongo = await getMongoDb();
@@ -132,7 +260,7 @@ const ensureSettingsIndexes = async (): Promise<void> => {
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
   await applyActiveMongoSourceEnv();
-  if (!process.env['MONGODB_URI']) return null;
+  if (!hasMongoDatabaseUrl()) return null;
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
   const doc = await mongo
@@ -143,7 +271,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   await applyActiveMongoSourceEnv();
-  if (!process.env['MONGODB_URI']) return [];
+  if (!hasMongoDatabaseUrl()) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
   const docs = await mongo
@@ -152,13 +280,11 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     .toArray();
   return docs
     .map((doc: WithId<MongoPersistedStringSettingDocument>) => ({
-      key: doc.key ?? String(doc._id),
+      key: doc.key,
       value: doc.value,
     }))
     .filter(
       (doc): doc is SettingRecord =>
-        typeof doc.key === 'string' &&
-        typeof doc.value === 'string' &&
         !isSecretSettingKey(doc.key)
     )
     .map((doc) => ({
@@ -169,7 +295,7 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
 
 const upsertMongoSetting = async (key: string, value: string): Promise<SettingRecord> => {
   await applyActiveMongoSourceEnv();
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoDatabaseUrl()) {
     throw internalError('MongoDB is not configured.');
   }
   await ensureSettingsIndexes();
@@ -191,7 +317,7 @@ const clearLocalSettingsCaches = (): void => {
   liteSettingsCache = null;
 };
 
-const invalidateSettingSideEffects = async (key: string): Promise<void> => {
+const invalidateSettingSideEffects = (key: string): void => {
   clearLocalSettingsCaches();
   if (key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
@@ -206,15 +332,32 @@ const invalidateSettingSideEffects = async (key: string): Promise<void> => {
 };
 
 export const readDatabaseEngineLiteSettings = async (): Promise<SettingRecord[]> => {
+  const now = Date.now();
   const cached = liteSettingsCache;
-  if (cached && Date.now() - cached.ts < 60_000) {
+  if (cached !== null && now - cached.ts < MINIMUM_SETTINGS_CACHE_TTL_MS) {
     return cached.data.map((setting) => ({ ...setting }));
   }
+  if (liteSettingsCacheInflight !== null) {
+    const inFlightData = await liteSettingsCacheInflight;
+    return inFlightData.map((setting) => ({ ...setting }));
+  }
 
-  const value = await readMongoSetting(APP_FONT_SET_SETTING_KEY);
-  const data = value === null ? [] : [{ key: APP_FONT_SET_SETTING_KEY, value }];
-  liteSettingsCache = { data, ts: Date.now() };
-  return data.map((setting) => ({ ...setting }));
+  const loadSettings = async (): Promise<SettingRecord[]> => {
+    const value = await readMongoSetting(APP_FONT_SET_SETTING_KEY);
+    return value === null ? [] : [{ key: APP_FONT_SET_SETTING_KEY, value }];
+  };
+
+  const loadPromise = loadSettings();
+  liteSettingsCacheInflight = loadPromise;
+  try {
+    const data = await loadPromise;
+    // eslint-disable-next-line require-atomic-updates -- cache state may be updated by concurrent readers
+    liteSettingsCache = { data, ts: now };
+    return data.map((setting) => ({ ...setting }));
+  } finally {
+    // eslint-disable-next-line require-atomic-updates -- in-flight cache token is shared module state
+    liteSettingsCacheInflight = null;
+  }
 };
 
 export async function getHandler(
@@ -271,7 +414,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const setting = await upsertMongoSetting(key, value);
-  await invalidateSettingSideEffects(key);
+  invalidateSettingSideEffects(key);
   return NextResponse.json(setting);
 }
 
@@ -282,70 +425,31 @@ export async function getProvidersHandler(
   await assertDatabaseEngineManageAccess();
   await applyActiveMongoSourceEnv();
 
-  const hasMongoUri = Boolean(process.env['MONGODB_URI']);
-  const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;
-  const authDbProviderEnv = process.env['AUTH_DB_PROVIDER']?.trim() || null;
+  const hasMongoUri = hasMongoDatabaseUrl();
+  const appDbProviderEnv = trimNullable(process.env['APP_DB_PROVIDER']);
+  const authDbProviderEnv = trimNullable(process.env['AUTH_DB_PROVIDER']);
   const envAppProvider = normalizeProvider(appDbProviderEnv);
   const mongoAppProvider = normalizeProvider(await readMongoSetting(APP_DB_PROVIDER_SETTING_KEY));
   const appConfigured = envAppProvider ?? mongoAppProvider;
-  const appConfiguredSource: AppProviderSource | null = envAppProvider
-    ? 'env'
-    : mongoAppProvider
-      ? 'mongo-setting'
-      : null;
+  const appConfiguredSource = getProviderSource(envAppProvider, mongoAppProvider, null);
   const appEffective = await getAppDbProvider();
 
   const envAuthProvider = normalizeProvider(authDbProviderEnv);
   const mongoAuthProvider = normalizeProvider(await readMongoSetting(AUTH_PROVIDER_SETTING_KEY));
   const authConfigured = envAuthProvider ?? mongoAuthProvider ?? appEffective;
-  const authConfiguredSource: AppProviderSource = envAuthProvider
-    ? 'env'
-    : mongoAuthProvider
-      ? 'mongo-setting'
-      : 'derived';
+  const authConfiguredSource = getProviderSource(
+    envAuthProvider,
+    mongoAuthProvider,
+    'derived'
+  ) ?? 'derived';
 
-  const services: AppProviderServiceStatus[] = [
-    {
-      service: 'app',
-      configured: appConfigured,
-      configuredSource: appConfiguredSource,
-      effective: appEffective,
-      driftFromApp: false,
-      notes: [],
-    },
-    {
-      service: 'auth',
-      configured: authConfigured,
-      configuredSource: authConfiguredSource,
-      effective: 'mongodb',
-      driftFromApp: false,
-      notes: [],
-    },
-    {
-      service: 'product',
-      configured: appEffective,
-      configuredSource: 'derived',
-      effective: appEffective,
-      driftFromApp: false,
-      notes: ['Database Engine standalone app does not own product data.'],
-    },
-    {
-      service: 'integrations',
-      configured: appEffective,
-      configuredSource: 'derived',
-      effective: appEffective,
-      driftFromApp: false,
-      notes: ['Database Engine standalone app does not own integration data.'],
-    },
-    {
-      service: 'cms',
-      configured: appEffective,
-      configuredSource: 'derived',
-      effective: appEffective,
-      driftFromApp: false,
-      notes: ['Database Engine standalone app does not own CMS data.'],
-    },
-  ];
+  const services = buildProviderServiceStatuses({
+    appConfigured,
+    appConfiguredSource,
+    appEffective,
+    authConfigured,
+    authConfiguredSource,
+  });
 
   const warnings = hasMongoUri ? [] : ['MONGODB_URI is missing.'];
   const payload: AppProviderDiagnostics = {
@@ -392,17 +496,19 @@ export async function postBackfillKeysHandler(
   await assertDatabaseEngineOperationEnabled('allowManualBackfill');
 
   const enginePolicy = await getDatabaseEnginePolicy();
-  if (!enginePolicy.allowAutomaticBackfill && parsed.data.manual !== true) {
+  const isManual = parsed.data.manual === true;
+  if (!enginePolicy.allowAutomaticBackfill && !isManual) {
     throw badRequestError(
       'Automatic backfill is disabled by Database Engine policy. Run backfill manually from Database Engine.'
     );
   }
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoDatabaseUrl()) {
     throw internalError('MongoDB is not configured.');
   }
 
   const limit = parsed.data.limit ?? 500;
+  const isDryRun = parsed.data.dryRun === true;
   const filter: Filter<{ _id: string; key?: string | null }> = {
     $and: [
       { _id: { $type: 'string' as const } },
@@ -415,47 +521,9 @@ export async function postBackfillKeysHandler(
   const mongo = await getMongoDb();
   const collection = mongo.collection<{ _id: string; key?: string | null }>(SETTINGS_COLLECTION);
 
-  if (parsed.data.dryRun) {
-    const total = await collection.countDocuments(filter);
-    const sample = await collection
-      .find(filter, { projection: { _id: 1 } })
-      .limit(5)
-      .toArray();
-    return NextResponse.json({
-      matched: total,
-      modified: 0,
-      remaining: total,
-      sampleIds: sample.map((doc) => doc._id),
-    } satisfies SettingsBackfillResult);
-  }
+  const result = isDryRun
+    ? await runBackfillDryRun(collection, filter)
+    : await runBackfillUpdate(collection, filter, limit);
 
-  const docs = await collection
-    .find(filter, { projection: { _id: 1 } })
-    .limit(limit)
-    .toArray();
-
-  if (docs.length === 0) {
-    return NextResponse.json({
-      matched: 0,
-      modified: 0,
-      remaining: 0,
-    } satisfies SettingsBackfillResult);
-  }
-
-  const result = await collection.bulkWrite(
-    docs.map((doc) => ({
-      updateOne: {
-        filter: { _id: doc._id },
-        update: { $set: { key: doc._id } },
-      },
-    })),
-    { ordered: false }
-  );
-
-  const remaining = await collection.countDocuments(filter);
-  return NextResponse.json({
-    matched: docs.length,
-    modified: result.modifiedCount ?? 0,
-    remaining,
-  } satisfies SettingsBackfillResult);
+  return NextResponse.json(result satisfies SettingsBackfillResult);
 }

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { DEFAULT_LOCALE, isSupportedLocale } from '@/lib/locales';
 
 // Keep the standalone ecommerce workspace isolated from the root platform proxy.
-export function proxy(request: NextRequest) {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const [, possibleLocale, ...rest] = pathname.split('/');
   const locale = isSupportedLocale(possibleLocale) ? possibleLocale : DEFAULT_LOCALE;

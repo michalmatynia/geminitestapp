@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   toArray: vi.fn(),
   getEcommerceProductsDb: vi.fn(),
   findOrderProducts: vi.fn(),
+  findDiscount: vi.fn(),
   productProject: vi.fn(),
   productToArray: vi.fn(),
 }));
@@ -86,6 +87,16 @@ function makeJsonRequest(body: unknown): NextRequest {
   }) as NextRequest;
 }
 
+const mockEcommerceDiscountLookup = (
+  code: string,
+  doc: Record<string, unknown> | null
+): void => {
+  mocks.findDiscount.mockImplementation(async ({ code: query }: { code: string }) => {
+    if (query === code) return doc;
+    return null;
+  });
+};
+
 describe('orders API', () => {
   beforeEach(() => {
     mocks.getSession.mockReset();
@@ -97,6 +108,7 @@ describe('orders API', () => {
     mocks.toArray.mockReset();
     mocks.getEcommerceProductsDb.mockReset();
     mocks.findOrderProducts.mockReset();
+    mocks.findDiscount.mockReset();
     mocks.productProject.mockReset();
     mocks.productToArray.mockReset();
     mocks.getSession.mockResolvedValue(null);
@@ -108,6 +120,7 @@ describe('orders API', () => {
     mocks.toArray.mockResolvedValue([]);
     mocks.findOrderProducts.mockReturnValue({ project: mocks.productProject });
     mocks.productProject.mockReturnValue({ toArray: mocks.productToArray });
+    mocks.findDiscount.mockResolvedValue(null);
     mocks.productToArray.mockResolvedValue([
       { _id: 'prod-1', price: 15 },
     ]);
@@ -116,6 +129,139 @@ describe('orders API', () => {
         find: mocks.findOrderProducts,
       }),
     });
+  });
+
+  it('uses a fixed discount from the ecommerce database when creating an order', async () => {
+    mockEcommerceDiscountLookup('FIXED15', {
+      code: 'FIXED15',
+      enabled: true,
+      discountType: 'fixed',
+      value: 500,
+      startsAt: null,
+      endsAt: null,
+      minOrderAmount: null,
+      usageLimit: null,
+      singleUse: false,
+    });
+
+    mocks.getEcommerceProductsDb.mockResolvedValue({
+      collection: (name: string) => {
+        if (name === 'ecom_discounts') return { findOne: mocks.findDiscount };
+        return {
+          find: mocks.findOrderProducts,
+        };
+      },
+    });
+
+    mocks.productToArray.mockResolvedValueOnce([{ _id: 'prod-1', price: 1500 }]);
+    const payload = makeOrderPayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 1500, quantity: 2 };
+
+    const response = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 3000,
+      promoCode: 'fixed15',
+      discount: 999,
+      total: 2500,
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.findDiscount).toHaveBeenCalledWith({ code: 'FIXED15' });
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      promoCode: 'FIXED15',
+      discount: 500,
+      subtotal: 3000,
+      total: 2500,
+    }));
+  });
+
+  it('normalizes and uppercases a spaced fixed discount code during checkout validation', async () => {
+    mockEcommerceDiscountLookup('FIXED15', {
+      code: 'FIXED15',
+      enabled: true,
+      discountType: 'fixed',
+      value: 500,
+      startsAt: null,
+      endsAt: null,
+      minOrderAmount: null,
+      usageLimit: null,
+      singleUse: false,
+    });
+
+    mocks.getEcommerceProductsDb.mockResolvedValue({
+      collection: (name: string) => {
+        if (name === 'ecom_discounts') return { findOne: mocks.findDiscount };
+        return {
+          find: mocks.findOrderProducts,
+        };
+      },
+    });
+
+    mocks.productToArray.mockResolvedValueOnce([{ _id: 'prod-1', price: 1500 }]);
+    const payload = makeOrderPayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 1500, quantity: 2 };
+
+    const response = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 3000,
+      promoCode: 'FIX ED15',
+      discount: 999,
+      total: 2500,
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.findDiscount).toHaveBeenCalledWith({ code: 'FIXED15' });
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      promoCode: 'FIXED15',
+      discount: 500,
+      subtotal: 3000,
+      total: 2500,
+    }));
+  });
+
+  it('rejects order totals that do not match a DB-backed fixed discount', async () => {
+    mockEcommerceDiscountLookup('FIXED15', {
+      code: 'FIXED15',
+      enabled: true,
+      discountType: 'fixed',
+      value: 500,
+      startsAt: null,
+      endsAt: null,
+      minOrderAmount: null,
+      usageLimit: null,
+      singleUse: false,
+    });
+
+    mocks.getEcommerceProductsDb.mockResolvedValue({
+      collection: (name: string) => {
+        if (name === 'ecom_discounts') return { findOne: mocks.findDiscount };
+        return {
+          find: mocks.findOrderProducts,
+        };
+      },
+    });
+
+    mocks.productToArray.mockResolvedValueOnce([{ _id: 'prod-1', price: 1500 }]);
+    const payload = makeOrderPayload();
+    const items = [...payload.items as Array<Record<string, unknown>>];
+    items[0] = { ...items[0], price: 1500, quantity: 2 };
+
+    const response = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 3000,
+      promoCode: 'FIXED15',
+      discount: 0,
+      total: 2600,
+    }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Order totals are invalid.' });
+    expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 
   it('creates an order, persists it, and queues confirmation email', async () => {

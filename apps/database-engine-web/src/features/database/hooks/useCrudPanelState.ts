@@ -61,6 +61,7 @@ export interface UseCrudPanelStateReturn
   rowsQuery: ListQuery<CrudRowsResult, CrudRowsResult>;
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function useCrudPanelState(props: {
   tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
@@ -110,7 +111,6 @@ export function useCrudPanelState(props: {
     enabled: selectedTable !== '',
     queryFn: async () => {
       if (selectedTable === '') return { rows: [], totalRows: 0 };
-      if (dbType !== 'mongodb') throw new ApiError('Only MongoDB CRUD operations are supported.', 400);
 
       const mongoResult = await executeSqlQuery({
         type: 'mongodb',
@@ -124,11 +124,17 @@ export function useCrudPanelState(props: {
         sort: { _id: 1 },
       });
 
-      if (mongoResult.error) throw new ApiError(mongoResult.error, 400);
+      if (mongoResult.error !== undefined && mongoResult.error !== null) {
+        throw new ApiError(mongoResult.error, 400);
+      }
+
+      const totalRows = Number.isInteger(mongoResult.rowCount)
+        ? Number(mongoResult.rowCount)
+        : mongoResult.rows.length;
 
       return {
         rows: mongoResult.rows,
-        totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
+        totalRows,
       };
     },
     meta: {
@@ -149,7 +155,7 @@ export function useCrudPanelState(props: {
     refreshDatabasePreview();
   }, [refreshDatabasePreview, rowsQuery, selectedTable, mutations]);
 
-  const handleAdd = (data: Record<string, unknown>) => {
+  const handleAdd = (data: Record<string, unknown>): void => {
     mutations.handleAdd(selectedTable, data, () => {
       setShowAddModal(false);
       void rowsQuery.refetch();
@@ -157,7 +163,7 @@ export function useCrudPanelState(props: {
     });
   };
 
-  const handleEdit = (data: Record<string, unknown>) => {
+  const handleEdit = (data: Record<string, unknown>): void => {
     if (!editingRow) return;
     mutations.handleEdit(selectedTable, editingRow, data, () => {
       setEditingRow(null);
@@ -166,7 +172,7 @@ export function useCrudPanelState(props: {
     });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     if (!deletingRow) return;
     mutations.handleDelete(selectedTable, deletingRow, () => {
       setDeletingRow(null);

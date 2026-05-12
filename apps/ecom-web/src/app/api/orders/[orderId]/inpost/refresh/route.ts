@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { refreshInpostShipmentByOrderId } from '@/lib/inpost';
 
@@ -19,12 +19,12 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> },
 ): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) {
+  if (session?.isSuperAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const { orderId } = await params;
-  if (!orderId || typeof orderId !== 'string') {
+  if (orderId === '') {
     return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
   }
 

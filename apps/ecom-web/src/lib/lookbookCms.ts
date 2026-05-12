@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import type { Collection } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 import { EDITORIALS, type Editorial } from '@/data/lookbook';
 import { DEFAULT_LOCALE, normalizeLocale } from '@/lib/locales';
@@ -49,8 +50,8 @@ const EDITORIAL_PL: Record<string, Partial<Editorial>> = {
 };
 
 function docToEditorial(doc: Record<string, unknown>): Editorial {
-  const { _id, locale, createdAt, updatedAt, ...rest } = doc;
-  void _id;
+  const { _id: documentId, locale, createdAt, updatedAt, ...rest } = doc;
+  void documentId;
   void locale;
   void createdAt;
   void updatedAt;
@@ -65,18 +66,18 @@ function localizeEditorial(entry: Editorial, localeInput?: string | null): Edito
   };
 }
 
-export const getAllLookbookEntries = cache(async function getAllLookbookEntries(locale?: string | null): Promise<Editorial[]> {
+export const getAllLookbookEntries = cache(async (locale?: string | null): Promise<Editorial[]> => {
   const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
     const collection = db.collection(COLLECTION);
     const defaultDocs = await collection.find({ locale: DEFAULT_LOCALE }).sort({ issue: 1 }).toArray();
-    const legacyDocs = defaultDocs.length === 0
-      ? await collection.find({ locale: { $exists: false } }).sort({ issue: 1 }).toArray()
-      : [];
-    const baseEntries = (defaultDocs.length > 0 ? defaultDocs : legacyDocs)
-      .map((d) => docToEditorial(d as Record<string, unknown>));
-    const fallbackEntries = baseEntries.length > 0 ? baseEntries : EDITORIALS;
+    const baseDocs =
+      defaultDocs.length === 0
+        ? await collection.find({ locale: { $exists: false } }).sort({ issue: 1 }).toArray()
+        : defaultDocs;
+    const baseEntries = baseDocs.map((document) => docToEditorial(document as Record<string, unknown>));
+    const fallbackEntries = baseEntries.length === 0 ? EDITORIALS : baseEntries;
 
     if (requestedLocale === DEFAULT_LOCALE) return fallbackEntries;
 
@@ -95,27 +96,45 @@ export const getAllLookbookEntries = cache(async function getAllLookbookEntries(
   }
 });
 
-export const getLookbookEntry = cache(async function getLookbookEntry(id: string, locale?: string | null): Promise<Editorial | null> {
+async function readLookbookFallbackEntry(
+  collection: Collection<Record<string, unknown>>,
+  id: string,
+): Promise<Editorial | null> {
+  const defaultDoc = await collection.findOne({ id, locale: DEFAULT_LOCALE });
+  if (defaultDoc !== null) {
+    return docToEditorial(defaultDoc as Record<string, unknown>);
+  }
+
+  const legacyDoc = await collection.findOne({ id, locale: { $exists: false } });
+  if (legacyDoc !== null) {
+    return docToEditorial(legacyDoc as Record<string, unknown>);
+  }
+
+  return EDITORIALS.find((entry) => entry.id === id) ?? null;
+}
+
+export const getLookbookEntry = cache(async (id: string, locale?: string | null): Promise<Editorial | null> => {
   const requestedLocale = normalizeLocale(locale);
   try {
     const db = await getDb();
     const collection = db.collection(COLLECTION);
     const localizedDoc = await collection.findOne({ id, locale: requestedLocale });
-    if (localizedDoc) {
+    if (localizedDoc !== null) {
       return docToEditorial(localizedDoc as Record<string, unknown>);
     }
 
-    const defaultDoc = await collection.findOne({ id, locale: DEFAULT_LOCALE });
-    const legacyDoc = defaultDoc ? null : await collection.findOne({ id, locale: { $exists: false } });
-    const fallback = defaultDoc ?? legacyDoc;
-    const fallbackEntry = fallback
-      ? docToEditorial(fallback as Record<string, unknown>)
-      : EDITORIALS.find((e) => e.id === id) ?? null;
+    const fallbackEntry = await readLookbookFallbackEntry(collection, id);
+    if (fallbackEntry === null) {
+      return null;
+    }
 
-    return fallbackEntry ? localizeEditorial(fallbackEntry, requestedLocale) : null;
+    return localizeEditorial(fallbackEntry, requestedLocale);
   } catch {
     const fallback = EDITORIALS.find((e) => e.id === id) ?? null;
-    return fallback ? localizeEditorial(fallback, requestedLocale) : null;
+    if (fallback === null) {
+      return null;
+    }
+    return localizeEditorial(fallback, requestedLocale);
   }
 });
 
@@ -152,7 +171,8 @@ export function validateEditorial(input: unknown): { editorial: Editorial | null
 
   const required = ['id', 'issue', 'title', 'subtitle', 'season', 'gradient', 'textColor', 'productSlug'];
   for (const key of required) {
-    if (typeof src[key] !== 'string' || !(src[key] as string).trim()) {
+    const value = src[key];
+    if (typeof value !== 'string' || value.trim() === '') {
       errors.push(`${key} is required.`);
     }
   }

@@ -13,6 +13,6 @@ export default async function SearchPage({
   const params: { q?: string } = await (searchParams ?? Promise.resolve({}));
   const locale = await getRequestLocale();
   const q = typeof params.q === 'string' ? params.q.trim() : '';
-  const target = localizeHref(q ? `/products?q=${encodeURIComponent(q)}` : '/products', locale);
+  const target = localizeHref(q.length > 0 ? `/products?q=${encodeURIComponent(q)}` : '/products', locale);
   redirect(target);
 }

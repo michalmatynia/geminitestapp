@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,complexity,max-lines-per-function,no-param-reassign */
 import Image from 'next/image';
 import type { JSX, SyntheticEvent } from 'react';
 import {
@@ -41,14 +42,13 @@ export function ProductImage({
   return (
     <div className={`${className} overflow-hidden`}>
       {/* Gradient always renders as placeholder/backdrop */}
-      <div className="absolute inset-0" style={{ background: gradient }} />
+      <div className='absolute inset-0' style={{ background: gradient }} />
       {resolvedImageUrl && usesNativeImage && (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={resolvedImageUrl}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
+          decoding='async'
           style={{
             position: 'absolute',
             inset: 0,

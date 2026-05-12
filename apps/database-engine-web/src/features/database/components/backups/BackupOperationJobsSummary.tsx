@@ -36,6 +36,37 @@ const getJobTarget = (
   return isManagedMongoApplicationTarget(application) ? application : 'all';
 };
 
+const hasValue = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value !== '';
+
+const getJobCreatedAt = (job: DatabaseEngineOperationJob): string => {
+  if (hasValue(job.createdAt)) {
+    return job.createdAt;
+  }
+
+  if (hasValue(job.startedAt)) {
+    return job.startedAt;
+  }
+
+  if (hasValue(job.finishedAt)) {
+    return job.finishedAt;
+  }
+
+  return 'unknown';
+};
+
+const getResultSummary = (resultSummary: unknown): string | null => {
+  if (typeof resultSummary === 'string') {
+    return resultSummary;
+  }
+
+  if (resultSummary === null || resultSummary === undefined) {
+    return null;
+  }
+
+  return JSON.stringify(resultSummary);
+};
+
 const formatTimestamp = (value: string): string => {
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString() : value;
@@ -53,13 +84,8 @@ export const buildBackupJobSummaries = (
       status: job.status,
       target: getJobTarget(job.payload),
       source: job.source ?? 'db_backup',
-      createdAt: job.createdAt ?? job.startedAt ?? job.finishedAt ?? 'unknown',
-      resultSummary:
-        typeof job.resultSummary === 'string'
-          ? job.resultSummary
-          : job.resultSummary === null || job.resultSummary === undefined
-            ? null
-            : JSON.stringify(job.resultSummary),
+      createdAt: getJobCreatedAt(job),
+      resultSummary: getResultSummary(job.resultSummary),
       errorMessage: job.errorMessage ?? null,
     }));
 
@@ -110,12 +136,12 @@ export function BackupOperationJobsSummary(): JSX.Element {
               <div className='mt-2 space-y-1 text-xs text-gray-300'>
                 <p>Target: {job.target}</p>
                 <p>Source: {job.source}</p>
-                {job.resultSummary ? (
+                {job.resultSummary !== null && job.resultSummary !== '' ? (
                   <p className='line-clamp-2 text-gray-400' title={job.resultSummary}>
                     {job.resultSummary}
                   </p>
                 ) : null}
-                {job.errorMessage ? (
+                {job.errorMessage !== null && job.errorMessage !== '' ? (
                   <p className='line-clamp-2 text-rose-200' title={job.errorMessage}>
                     {job.errorMessage}
                   </p>

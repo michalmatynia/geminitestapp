@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getEcomAuthDb } from '@/lib/mongodb';
 import {
   verifyPassword,

@@ -9,7 +9,7 @@ type MongoIndexDescription = {
 
 const isSingleKeyIndex = (index: MongoIndexDescription): boolean => {
   const key = index.key;
-  return key != null && Object.keys(key).length === 1 && key['key'] === 1;
+  return key !== undefined && Object.keys(key).length === 1 && key['key'] === 1;
 };
 
 /**

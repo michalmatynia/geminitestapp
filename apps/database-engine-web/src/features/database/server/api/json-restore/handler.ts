@@ -23,7 +23,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   z.unknown().parse(body);
   const backupName = body.backupName;
 
-  if (!backupName) {
+  if (backupName === undefined || backupName.length === 0) {
     throw badRequestError('Backup name is required');
   }
 

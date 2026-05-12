@@ -42,13 +42,16 @@ export function normalizeGlobalSettings(input: unknown): GlobalSettings {
     return GLOBAL_SETTINGS_DEFAULTS;
   }
   const src = input as Record<string, unknown>;
+  const announcementBannerRaw = typeof src['announcementBanner'] === 'string'
+    ? src['announcementBanner'].trim().slice(0, 240)
+    : '';
   return {
     announcementBanner:
-      typeof src['announcementBanner'] === 'string'
-        ? src['announcementBanner'].trim().slice(0, 240) || GLOBAL_SETTINGS_DEFAULTS.announcementBanner
+      announcementBannerRaw.length > 0
+        ? announcementBannerRaw
         : GLOBAL_SETTINGS_DEFAULTS.announcementBanner,
     footerLinks: isValidFooterLinks(src['footerLinks'])
-      ? (src['footerLinks'] as Record<string, FooterLink[]>)
+      ? (src['footerLinks'])
       : GLOBAL_SETTINGS_DEFAULTS.footerLinks,
     trendingSearches: Array.isArray(src['trendingSearches'])
       ? (src['trendingSearches'] as unknown[])

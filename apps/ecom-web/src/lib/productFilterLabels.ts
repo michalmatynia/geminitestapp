@@ -11,7 +11,7 @@ function uniqueTrimmed(values: string[]): string[] {
 
   for (const value of values) {
     const normalized = value.trim();
-    if (!normalized || seen.has(normalized)) continue;
+    if (normalized === '' || seen.has(normalized)) continue;
     seen.add(normalized);
     result.push(normalized);
   }
@@ -39,18 +39,22 @@ export function getCategoryDisplayNames(
 
   for (const category of selected) {
     const prefix = firstWord(category);
-    if (!prefix) continue;
+    if (prefix === '') continue;
     fallbackPrefixCounts.set(prefix, (fallbackPrefixCounts.get(prefix) ?? 0) + 1);
   }
 
   return uniqueTrimmed(
     selected.map((category) => {
       const prefix = firstWord(category);
-      if (prefix && shouldUsePrefixAsParent(prefix, fallbackPrefixCounts.get(prefix) ?? 0)) {
+      if (
+        prefix !== '' &&
+        shouldUsePrefixAsParent(prefix, fallbackPrefixCounts.get(prefix) ?? 0)
+      ) {
         return prefix;
       }
 
-      return categoryByName.get(category)?.parentName?.trim() || category;
+      const parentName = categoryByName.get(category)?.parentName?.trim();
+      return parentName === undefined || parentName === '' ? category : parentName;
     }),
   );
 }

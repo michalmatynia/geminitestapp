@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { uploadToFastComet } from '@/lib/fastcometUpload';
 
@@ -44,7 +44,10 @@ function sanitizeName(filename: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
-  return normalized || 'category-card';
+  if (normalized.length > 0) {
+    return normalized;
+  }
+  return 'category-card';
 }
 
 function makeStoredFilename(file: File, mimetype: string): string {
@@ -52,9 +55,10 @@ function makeStoredFilename(file: File, mimetype: string): string {
   return `${Date.now()}-${randomUUID().slice(0, 8)}-${sanitizeName(file.name)}.${extension}`;
 }
 
+// eslint-disable-next-line complexity
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession();
-  if (!session?.isSuperAdmin) return forbidden();
+  if (session?.isSuperAdmin !== true) return forbidden();
 
   let form: FormData;
   try {
@@ -95,9 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     return NextResponse.json({ ok: true, url });
-  } catch (error) {
-    console.error('Failed to upload CMS category card image to FastComet.', error);
-    const message = error instanceof Error ? error.message : 'Failed to upload category card image.';
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Failed to upload category card image.' }, { status: 500 });
   }
 }

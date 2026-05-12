@@ -6,7 +6,7 @@ export type RevalidatePathType = 'page' | 'layout';
 export function revalidateLocalizedPath(path: string, type?: RevalidatePathType): void {
   for (const locale of SUPPORTED_LOCALES) {
     const localizedPath = localizeHref(path, locale);
-    if (type) {
+    if (type !== undefined) {
       revalidatePath(localizedPath, type);
     } else {
       revalidatePath(localizedPath);

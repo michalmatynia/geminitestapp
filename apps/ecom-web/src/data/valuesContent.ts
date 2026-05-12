@@ -1,3 +1,8 @@
+import {
+  buildValuesContent,
+  isValuesRecord,
+} from './valuesContentHelpers';
+
 export interface ValuesHeroContent {
   watermark: string;
   eyebrow: string;
@@ -87,7 +92,7 @@ export const VALUES_CONTENT_DEFAULTS: ValuesContent = {
       name: 'Stoneware Clay',
       origin: 'Limoges, France',
       desc:
-        "Hand-thrown by three ceramicists working in independent studios. Natural ash glazes only. No two pieces are identical \u2014 each carries the maker's touch in the clay.",
+        'Hand-thrown by three ceramicists working in independent studios. Natural ash glazes only. No two pieces are identical \u2014 each carries the maker\'s touch in the clay.',
     },
     {
       name: 'Carrara Marble',
@@ -145,251 +150,18 @@ export const VALUES_CONTENT_DEFAULTS: ValuesContent = {
   },
 };
 
-const TEXT_LIMITS = {
-  short: 120,
-  medium: 300,
-  long: 1000,
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function readString(
-  source: Record<string, unknown>,
-  key: string,
-  fallback: string,
-  maxLength: number,
-  errors: string[],
-  path: string,
-): string {
-  const value = source[key];
-  if (value == null) return fallback;
-  if (typeof value !== 'string') {
-    errors.push(`${path} must be text.`);
-    return fallback;
-  }
-
-  const trimmed = value.trim();
-  if (trimmed.length > maxLength) {
-    errors.push(`${path} must be ${maxLength} characters or fewer.`);
-    return fallback;
-  }
-
-  return trimmed;
-}
-
-function isAllowedHref(value: string): boolean {
-  if (value.startsWith('/') && !value.startsWith('//')) return true;
-  if (value.startsWith('#')) return true;
-
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function readHref(
-  source: Record<string, unknown>,
-  key: string,
-  fallback: string,
-  errors: string[],
-  path: string,
-): string {
-  const value = readString(source, key, fallback, TEXT_LIMITS.medium, errors, path);
-  if (!value) return fallback;
-  if (!isAllowedHref(value)) {
-    errors.push(`${path} must be an internal path, anchor, or http(s) URL.`);
-    return fallback;
-  }
-  return value;
-}
-
-function readStats(source: Record<string, unknown>, key: string, fallback: ValuesStatContent[], errors: string[]): ValuesStatContent[] {
-  const value = source[key];
-  if (value == null) return fallback;
-  if (!Array.isArray(value)) {
-    errors.push('values.stats must be a list.');
-    return fallback;
-  }
-
-  const stats: ValuesStatContent[] = [];
-  for (const [index, item] of value.entries()) {
-    const fallbackStat = fallback[index] ?? fallback[0];
-    if (!isRecord(item)) {
-      errors.push('values.stats items must be objects.');
-      return fallback;
-    }
-    stats.push({
-      value: readString(item, 'value', fallbackStat.value, TEXT_LIMITS.short, errors, `values.stats.${index}.value`),
-      label: readString(item, 'label', fallbackStat.label, TEXT_LIMITS.short, errors, `values.stats.${index}.label`),
-    });
-  }
-
-  if (stats.length > 8) {
-    errors.push('values.stats can contain at most 8 items.');
-    return fallback;
-  }
-
-  return stats.length > 0 ? stats : fallback;
-}
-
-function readMaterials(
-  source: Record<string, unknown>,
-  key: string,
-  fallback: ValuesMaterialContent[],
-  errors: string[],
-): ValuesMaterialContent[] {
-  const value = source[key];
-  if (value == null) return fallback;
-  if (!Array.isArray(value)) {
-    errors.push('values.materials must be a list.');
-    return fallback;
-  }
-
-  const materials: ValuesMaterialContent[] = [];
-  for (const [index, item] of value.entries()) {
-    const fallbackMaterial = fallback[index] ?? fallback[0];
-    if (!isRecord(item)) {
-      errors.push('values.materials items must be objects.');
-      return fallback;
-    }
-    materials.push({
-      name: readString(item, 'name', fallbackMaterial.name, TEXT_LIMITS.short, errors, `values.materials.${index}.name`),
-      origin: readString(item, 'origin', fallbackMaterial.origin, TEXT_LIMITS.short, errors, `values.materials.${index}.origin`),
-      desc: readString(item, 'desc', fallbackMaterial.desc, TEXT_LIMITS.long, errors, `values.materials.${index}.desc`),
-    });
-  }
-
-  if (materials.length > 12) {
-    errors.push('values.materials can contain at most 12 items.');
-    return fallback;
-  }
-
-  return materials.length > 0 ? materials : fallback;
-}
-
-function readCommitments(
-  source: Record<string, unknown>,
-  key: string,
-  fallback: ValuesCommitmentContent[],
-  errors: string[],
-): ValuesCommitmentContent[] {
-  const value = source[key];
-  if (value == null) return fallback;
-  if (!Array.isArray(value)) {
-    errors.push('values.commitments must be a list.');
-    return fallback;
-  }
-
-  const commitments: ValuesCommitmentContent[] = [];
-  for (const [index, item] of value.entries()) {
-    const fallbackCommitment = fallback[index] ?? fallback[0];
-    if (!isRecord(item)) {
-      errors.push('values.commitments items must be objects.');
-      return fallback;
-    }
-    commitments.push({
-      title: readString(item, 'title', fallbackCommitment.title, TEXT_LIMITS.short, errors, `values.commitments.${index}.title`),
-      body: readString(item, 'body', fallbackCommitment.body, TEXT_LIMITS.long, errors, `values.commitments.${index}.body`),
-    });
-  }
-
-  if (commitments.length > 12) {
-    errors.push('values.commitments can contain at most 12 items.');
-    return fallback;
-  }
-
-  return commitments.length > 0 ? commitments : fallback;
-}
-
 export function validateValuesContent(input: unknown): ValuesContentValidationResult {
   const errors: string[] = [];
-  const root = isRecord(input) ? input : {};
-  const hero = isRecord(root['hero']) ? root['hero'] : {};
-  const closing = isRecord(root['closing']) ? root['closing'] : {};
+  const content = buildValuesContent(
+    isValuesRecord(input) ? input : {},
+    VALUES_CONTENT_DEFAULTS,
+    errors,
+  );
 
-  const content: ValuesContent = {
-    hero: {
-      watermark: readString(hero, 'watermark', VALUES_CONTENT_DEFAULTS.hero.watermark, TEXT_LIMITS.short, errors, 'values.hero.watermark'),
-      eyebrow: readString(hero, 'eyebrow', VALUES_CONTENT_DEFAULTS.hero.eyebrow, TEXT_LIMITS.short, errors, 'values.hero.eyebrow'),
-      titleLine1: readString(hero, 'titleLine1', VALUES_CONTENT_DEFAULTS.hero.titleLine1, TEXT_LIMITS.short, errors, 'values.hero.titleLine1'),
-      titleLine2: readString(hero, 'titleLine2', VALUES_CONTENT_DEFAULTS.hero.titleLine2, TEXT_LIMITS.short, errors, 'values.hero.titleLine2'),
-      body: readString(hero, 'body', VALUES_CONTENT_DEFAULTS.hero.body, TEXT_LIMITS.long, errors, 'values.hero.body'),
-    },
-    stats: readStats(root, 'stats', VALUES_CONTENT_DEFAULTS.stats, errors),
-    materialsEyebrow: readString(
-      root,
-      'materialsEyebrow',
-      VALUES_CONTENT_DEFAULTS.materialsEyebrow,
-      TEXT_LIMITS.short,
-      errors,
-      'values.materialsEyebrow',
-    ),
-    materialsTitle: readString(
-      root,
-      'materialsTitle',
-      VALUES_CONTENT_DEFAULTS.materialsTitle,
-      TEXT_LIMITS.short,
-      errors,
-      'values.materialsTitle',
-    ),
-    materials: readMaterials(root, 'materials', VALUES_CONTENT_DEFAULTS.materials, errors),
-    commitmentsEyebrow: readString(
-      root,
-      'commitmentsEyebrow',
-      VALUES_CONTENT_DEFAULTS.commitmentsEyebrow,
-      TEXT_LIMITS.short,
-      errors,
-      'values.commitmentsEyebrow',
-    ),
-    commitmentsTitle: readString(
-      root,
-      'commitmentsTitle',
-      VALUES_CONTENT_DEFAULTS.commitmentsTitle,
-      TEXT_LIMITS.short,
-      errors,
-      'values.commitmentsTitle',
-    ),
-    commitments: readCommitments(root, 'commitments', VALUES_CONTENT_DEFAULTS.commitments, errors),
-    closing: {
-      quote: readString(closing, 'quote', VALUES_CONTENT_DEFAULTS.closing.quote, TEXT_LIMITS.long, errors, 'values.closing.quote'),
-      primaryCtaLabel: readString(
-        closing,
-        'primaryCtaLabel',
-        VALUES_CONTENT_DEFAULTS.closing.primaryCtaLabel,
-        TEXT_LIMITS.short,
-        errors,
-        'values.closing.primaryCtaLabel',
-      ),
-      primaryCtaHref: readHref(
-        closing,
-        'primaryCtaHref',
-        VALUES_CONTENT_DEFAULTS.closing.primaryCtaHref,
-        errors,
-        'values.closing.primaryCtaHref',
-      ),
-      secondaryCtaLabel: readString(
-        closing,
-        'secondaryCtaLabel',
-        VALUES_CONTENT_DEFAULTS.closing.secondaryCtaLabel,
-        TEXT_LIMITS.short,
-        errors,
-        'values.closing.secondaryCtaLabel',
-      ),
-      secondaryCtaHref: readHref(
-        closing,
-        'secondaryCtaHref',
-        VALUES_CONTENT_DEFAULTS.closing.secondaryCtaHref,
-        errors,
-        'values.closing.secondaryCtaHref',
-      ),
-    },
+  return {
+    content,
+    errors,
   };
-
-  return { content, errors };
 }
 
 export function normalizeValuesContent(input: unknown): ValuesContent {

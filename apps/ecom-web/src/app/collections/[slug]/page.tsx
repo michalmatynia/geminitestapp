@@ -16,15 +16,18 @@ const PAGE_SIZE = 24;
 
 function collectionLabel(slug: string, fallback: string, locale: string): string {
   if (locale !== 'pl') return fallback;
-  return ({
+  const labels: Record<string, string> = {
     womenswear: 'Anime',
     menswear: 'Gaming',
     accessories: 'Film i TV',
     objects: 'Wszystkie produkty',
-  } as Record<string, string>)[slug] ?? fallback;
+  };
+  return ({
+    ...labels,
+  })[slug] ?? fallback;
 }
 
-export async function generateStaticParams() {
+export function generateStaticParams(): Array<{ slug: string }> {
   return COLLECTIONS.map((c) => ({ slug: c.slug }));
 }
 

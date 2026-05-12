@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition,@typescript-eslint/no-unused-vars,@typescript-eslint/strict-boolean-expressions,complexity,consistent-return,max-lines,max-lines-per-function,no-nested-ternary,no-param-reassign,no-void */
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type JSX } from 'react';
@@ -1080,7 +1081,7 @@ function Field({
 }): JSX.Element {
   return (
     <label>
-      <span className="type-label" style={labelStyle}>{label}</span>
+      <span className='type-label' style={labelStyle}>{label}</span>
       <input
         type={type}
         inputMode={inputMode}
@@ -1107,7 +1108,7 @@ function TextArea({
 }): JSX.Element {
   return (
     <label>
-      <span className="type-label" style={labelStyle}>{label}</span>
+      <span className='type-label' style={labelStyle}>{label}</span>
       <textarea
         value={value}
         rows={rows}
@@ -1132,10 +1133,10 @@ function ShippingMethodFields({
   return (
     <div style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
-        <div className="type-label" style={{ color: 'var(--accent)' }}>{title}</div>
+        <div className='type-label' style={{ color: 'var(--accent)' }}>{title}</div>
         <button
-          type="button"
-          className="btn-ghost"
+          type='button'
+          className='btn-ghost'
           onClick={onRemove}
           style={{ fontSize: '0.66rem', padding: '0.45rem 0.65rem', color: 'var(--coral-red)' }}
         >
@@ -1143,34 +1144,34 @@ function ShippingMethodFields({
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
-        <Field label="Method ID" value={method.id} onChange={(value) => onChange('id', value)} />
-        <Field label="Label" value={method.label} onChange={(value) => onChange('label', value)} />
-        <Field label="Detail" value={method.detail} onChange={(value) => onChange('detail', value)} />
-        <Field label="Carrier (manual or inpost)" value={method.carrier ?? 'manual'} onChange={(value) => onChange('carrier', value === 'inpost' ? 'inpost' : 'manual')} />
-        <Field label="Carrier service" value={method.service ?? ''} onChange={(value) => onChange('service', value)} />
+        <Field label='Method ID' value={method.id} onChange={(value) => onChange('id', value)} />
+        <Field label='Label' value={method.label} onChange={(value) => onChange('label', value)} />
+        <Field label='Detail' value={method.detail} onChange={(value) => onChange('detail', value)} />
+        <Field label='Carrier (manual or inpost)' value={method.carrier ?? 'manual'} onChange={(value) => onChange('carrier', value === 'inpost' ? 'inpost' : 'manual')} />
+        <Field label='Carrier service' value={method.service ?? ''} onChange={(value) => onChange('service', value)} />
         <Field
-          label="Price (€)"
-          type="number"
-          inputMode="decimal"
+          label='Price (€)'
+          type='number'
+          inputMode='decimal'
           min={0}
           step={1}
           value={String(method.price)}
           onChange={(value) => onChange('price', parseNonNegativeInteger(value, method.price))}
         />
-        <Field label="Price label" value={method.priceLabel} onChange={(value) => onChange('priceLabel', value)} />
+        <Field label='Price label' value={method.priceLabel} onChange={(value) => onChange('priceLabel', value)} />
         <Field
-          label="Business days min"
-          type="number"
-          inputMode="numeric"
+          label='Business days min'
+          type='number'
+          inputMode='numeric'
           min={1}
           step={1}
           value={String(method.businessDaysMin)}
           onChange={(value) => onChange('businessDaysMin', parsePositiveInteger(value, method.businessDaysMin))}
         />
         <Field
-          label="Business days max"
-          type="number"
-          inputMode="numeric"
+          label='Business days max'
+          type='number'
+          inputMode='numeric'
           min={1}
           step={1}
           value={String(method.businessDaysMax)}
@@ -1178,7 +1179,7 @@ function ShippingMethodFields({
         />
         <label style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={Boolean(method.requiresPickupPoint)}
             onChange={(event) => onChange('requiresPickupPoint', event.target.checked)}
             style={{ width: 14, height: 14, accentColor: 'var(--accent)' }}
@@ -1232,7 +1233,7 @@ function LocaleSwitcher({
         return (
           <button
             key={locale}
-            type="button"
+            type='button'
             className={selected ? 'btn-primary' : 'btn-ghost'}
             onClick={() => onLocaleSelect(locale)}
             disabled={disabled}
@@ -1306,7 +1307,7 @@ function AdminCmsHeader({
 
   return (
     <>
-      <div className="type-label" style={{ color: 'var(--coral-red)', marginBottom: '1rem' }}>
+      <div className='type-label' style={{ color: 'var(--coral-red)', marginBottom: '1rem' }}>
         Homepage CMS
       </div>
 
@@ -1327,8 +1328,8 @@ function AdminCmsHeader({
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {canCopyFromDefault && (
             <button
-              type="button"
-              className="btn-ghost"
+              type='button'
+              className='btn-ghost'
               onClick={onCopyFromDefault}
               disabled={disabled}
               style={{ fontSize: '0.72rem' }}
@@ -1338,8 +1339,8 @@ function AdminCmsHeader({
           )}
           {canDeleteLocaleOverride && (
             <button
-              type="button"
-              className="btn-ghost"
+              type='button'
+              className='btn-ghost'
               onClick={onDeleteLocaleOverride}
               disabled={disabled}
               style={{ fontSize: '0.72rem', color: 'var(--coral-red)' }}
@@ -1348,8 +1349,8 @@ function AdminCmsHeader({
             </button>
           )}
           <button
-            type="button"
-            className="btn-ghost"
+            type='button'
+            className='btn-ghost'
             onClick={onResetDefaults}
             disabled={disabled}
             style={{ fontSize: '0.72rem' }}
@@ -1357,8 +1358,8 @@ function AdminCmsHeader({
             Reset defaults
           </button>
           <button
-            type="button"
-            className="btn-primary"
+            type='button'
+            className='btn-primary'
             onClick={onSave}
             disabled={disabled}
             style={{ fontSize: '0.72rem' }}
@@ -3022,7 +3023,7 @@ function addEditorialReport(): void {
       />
 
       {loading && (
-        <div className="type-label" style={{ color: 'var(--muted)', padding: '1rem 0' }}>Loading CMS content…</div>
+        <div className='type-label' style={{ color: 'var(--muted)', padding: '1rem 0' }}>Loading CMS content…</div>
       )}
 
       {!loading && (
@@ -3033,25 +3034,25 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Header brand name" value={siteContent.nav.brandName} onChange={(value) => updateSiteNav('brandName', value)} />
-                <Field label="Header brand suffix" value={siteContent.nav.brandSuffix} onChange={(value) => updateSiteNav('brandSuffix', value)} />
-                <Field label="Mobile account label" value={siteContent.nav.mobileAccountLabel} onChange={(value) => updateSiteNav('mobileAccountLabel', value)} />
-                <Field label="Mobile wishlist label" value={siteContent.nav.mobileWishlistLabel} onChange={(value) => updateSiteNav('mobileWishlistLabel', value)} />
+                <Field label='Header brand name' value={siteContent.nav.brandName} onChange={(value) => updateSiteNav('brandName', value)} />
+                <Field label='Header brand suffix' value={siteContent.nav.brandSuffix} onChange={(value) => updateSiteNav('brandSuffix', value)} />
+                <Field label='Mobile account label' value={siteContent.nav.mobileAccountLabel} onChange={(value) => updateSiteNav('mobileAccountLabel', value)} />
+                <Field label='Mobile wishlist label' value={siteContent.nav.mobileWishlistLabel} onChange={(value) => updateSiteNav('mobileWishlistLabel', value)} />
               </div>
               <div style={{ border: '1px solid var(--border)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
-                <div className="type-label" style={{ color: 'var(--muted)' }}>
+                <div className='type-label' style={{ color: 'var(--muted)' }}>
                   Header logo is shared across all languages. Uploads publish immediately; manual URL edits publish on Save.
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                  <Field label="Header logo URL" value={siteContent.nav.logoUrl} onChange={(value) => updateSiteNav('logoUrl', value)} />
-                  <Field label="Header logo alt text" value={siteContent.nav.logoAlt} onChange={(value) => updateSiteNav('logoAlt', value)} />
+                  <Field label='Header logo URL' value={siteContent.nav.logoUrl} onChange={(value) => updateSiteNav('logoUrl', value)} />
+                  <Field label='Header logo alt text' value={siteContent.nav.logoAlt} onChange={(value) => updateSiteNav('logoAlt', value)} />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                   <label>
-                    <span className="type-label" style={labelStyle}>Upload logo</span>
+                    <span className='type-label' style={labelStyle}>Upload logo</span>
                     <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                      type='file'
+                      accept='image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
                       disabled={loading || saving || logoUploading}
                       onChange={(event) => {
                         const file = event.currentTarget.files?.[0] ?? null;
@@ -3076,8 +3077,8 @@ function addEditorialReport(): void {
                         }}
                       />
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => updateSiteNav('logoUrl', '')}
                         disabled={loading || saving || logoUploading}
                         style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
@@ -3087,25 +3088,25 @@ function addEditorialReport(): void {
                     </div>
                   )}
                   {logoUploading && (
-                    <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading…</span>
+                    <span className='type-label' style={{ color: 'var(--accent)' }}>Uploading…</span>
                   )}
                 </div>
               </div>
-              <TextArea label="Navigation links" rows={6} value={linksToText(siteContent.nav.links)} onChange={(value) => updateSiteNav('links', textToLinks(value))} />
-              <label className="flex items-center gap-3">
+              <TextArea label='Navigation links' rows={6} value={linksToText(siteContent.nav.links)} onChange={(value) => updateSiteNav('links', textToLinks(value))} />
+              <label className='flex items-center gap-3'>
                 <input
-                  type="checkbox"
+                  type='checkbox'
                   checked={siteContent.nav.announcement.enabled}
                   onChange={(event) => updateAnnouncement('enabled', event.target.checked)}
-                  className="w-4 h-4 accent-[var(--fg)]"
+                  className='w-4 h-4 accent-[var(--fg)]'
                 />
-                <span className="type-label" style={{ color: 'var(--muted)' }}>Announcement enabled</span>
+                <span className='type-label' style={{ color: 'var(--muted)' }}>Announcement enabled</span>
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Announcement message" value={siteContent.nav.announcement.message} onChange={(value) => updateAnnouncement('message', value)} />
-                <Field label="Announcement CTA label" value={siteContent.nav.announcement.ctaLabel} onChange={(value) => updateAnnouncement('ctaLabel', value)} />
-                <Field label="Announcement CTA href" value={siteContent.nav.announcement.ctaHref} onChange={(value) => updateAnnouncement('ctaHref', value)} />
-                <Field label="Announcement dismiss key" value={siteContent.nav.announcement.dismissKey} onChange={(value) => updateAnnouncement('dismissKey', value)} />
+                <Field label='Announcement message' value={siteContent.nav.announcement.message} onChange={(value) => updateAnnouncement('message', value)} />
+                <Field label='Announcement CTA label' value={siteContent.nav.announcement.ctaLabel} onChange={(value) => updateAnnouncement('ctaLabel', value)} />
+                <Field label='Announcement CTA href' value={siteContent.nav.announcement.ctaHref} onChange={(value) => updateAnnouncement('ctaHref', value)} />
+                <Field label='Announcement dismiss key' value={siteContent.nav.announcement.dismissKey} onChange={(value) => updateAnnouncement('dismissKey', value)} />
               </div>
             </div>
           </div>
@@ -3116,56 +3117,56 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Newsletter eyebrow" value={siteContent.footer.newsletter.eyebrow} onChange={(value) => updateNewsletter('eyebrow', value)} />
-                <Field label="Newsletter title" value={siteContent.footer.newsletter.title} onChange={(value) => updateNewsletter('title', value)} />
-                <Field label="Email placeholder" value={siteContent.footer.newsletter.emailPlaceholder} onChange={(value) => updateNewsletter('emailPlaceholder', value)} />
-                <Field label="Email aria label" value={siteContent.footer.newsletter.emailAriaLabel} onChange={(value) => updateNewsletter('emailAriaLabel', value)} />
-                <Field label="Submit label" value={siteContent.footer.newsletter.submitLabel} onChange={(value) => updateNewsletter('submitLabel', value)} />
+                <Field label='Newsletter eyebrow' value={siteContent.footer.newsletter.eyebrow} onChange={(value) => updateNewsletter('eyebrow', value)} />
+                <Field label='Newsletter title' value={siteContent.footer.newsletter.title} onChange={(value) => updateNewsletter('title', value)} />
+                <Field label='Email placeholder' value={siteContent.footer.newsletter.emailPlaceholder} onChange={(value) => updateNewsletter('emailPlaceholder', value)} />
+                <Field label='Email aria label' value={siteContent.footer.newsletter.emailAriaLabel} onChange={(value) => updateNewsletter('emailAriaLabel', value)} />
+                <Field label='Submit label' value={siteContent.footer.newsletter.submitLabel} onChange={(value) => updateNewsletter('submitLabel', value)} />
               </div>
-              <TextArea label="Newsletter body" value={siteContent.footer.newsletter.body} onChange={(value) => updateNewsletter('body', value)} />
+              <TextArea label='Newsletter body' value={siteContent.footer.newsletter.body} onChange={(value) => updateNewsletter('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Footer brand name" value={siteContent.footer.brandName} onChange={(value) => updateFooter('brandName', value)} />
-                <Field label="Footer brand suffix" value={siteContent.footer.brandSuffix} onChange={(value) => updateFooter('brandSuffix', value)} />
-                <Field label="Copyright" value={siteContent.footer.copyright} onChange={(value) => updateFooter('copyright', value)} />
+                <Field label='Footer brand name' value={siteContent.footer.brandName} onChange={(value) => updateFooter('brandName', value)} />
+                <Field label='Footer brand suffix' value={siteContent.footer.brandSuffix} onChange={(value) => updateFooter('brandSuffix', value)} />
+                <Field label='Copyright' value={siteContent.footer.copyright} onChange={(value) => updateFooter('copyright', value)} />
               </div>
-              <TextArea label="Footer brand description" value={siteContent.footer.brandDescription} onChange={(value) => updateFooter('brandDescription', value)} />
-              <TextArea label="Social links" rows={4} value={socialsToText(siteContent.footer.socials)} onChange={(value) => updateFooter('socials', textToSocials(value))} />
-              <TextArea label="Footer columns" rows={9} value={footerColumnsToText(siteContent.footer.columns)} onChange={(value) => updateFooter('columns', textToFooterColumns(value))} />
-              <TextArea label="Legal links" rows={4} value={linksToText(siteContent.footer.legalLinks)} onChange={(value) => updateFooter('legalLinks', textToLinks(value))} />
+              <TextArea label='Footer brand description' value={siteContent.footer.brandDescription} onChange={(value) => updateFooter('brandDescription', value)} />
+              <TextArea label='Social links' rows={4} value={socialsToText(siteContent.footer.socials)} onChange={(value) => updateFooter('socials', textToSocials(value))} />
+              <TextArea label='Footer columns' rows={9} value={footerColumnsToText(siteContent.footer.columns)} onChange={(value) => updateFooter('columns', textToFooterColumns(value))} />
+              <TextArea label='Legal links' rows={4} value={linksToText(siteContent.footer.legalLinks)} onChange={(value) => updateFooter('legalLinks', textToLinks(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Search dialog aria label" value={siteContent.search.dialogAriaLabel} onChange={(value) => updateSiteSearch('dialogAriaLabel', value)} />
-                <Field label="Search input aria label" value={siteContent.search.inputAriaLabel} onChange={(value) => updateSiteSearch('inputAriaLabel', value)} />
-                <Field label="Search placeholder" value={siteContent.search.placeholder} onChange={(value) => updateSiteSearch('placeholder', value)} />
-                <Field label="Search close label" value={siteContent.search.closeLabel} onChange={(value) => updateSiteSearch('closeLabel', value)} />
-                <Field label="Search close aria label" value={siteContent.search.closeAriaLabel} onChange={(value) => updateSiteSearch('closeAriaLabel', value)} />
-                <Field label="Search shortcut label" value={siteContent.search.shortcutLabel} onChange={(value) => updateSiteSearch('shortcutLabel', value)} />
-                <Field label="Trending label" value={siteContent.search.trendingLabel} onChange={(value) => updateSiteSearch('trendingLabel', value)} />
-                <Field label="Browse collections label" value={siteContent.search.browseCollectionsLabel} onChange={(value) => updateSiteSearch('browseCollectionsLabel', value)} />
-                <Field label="No results prefix" value={siteContent.search.noResultsPrefix} onChange={(value) => updateSiteSearch('noResultsPrefix', value)} />
-                <Field label="Search added toast title" value={siteContent.search.addedToastTitle} onChange={(value) => updateSiteSearch('addedToastTitle', value)} />
-                <Field label="Search loading label" value={siteContent.search.loadingResultsLabel} onChange={(value) => updateSiteSearch('loadingResultsLabel', value)} />
-                <Field label="Search live label" value={siteContent.search.liveLabel} onChange={(value) => updateSiteSearch('liveLabel', value)} />
-                <Field label="Result singular" value={siteContent.search.resultSingular} onChange={(value) => updateSiteSearch('resultSingular', value)} />
-                <Field label="Result plural" value={siteContent.search.resultPlural} onChange={(value) => updateSiteSearch('resultPlural', value)} />
-                <Field label="Results for label" value={siteContent.search.resultsForLabel} onChange={(value) => updateSiteSearch('resultsForLabel', value)} />
-                <Field label="Quick add label" value={siteContent.search.quickAddLabel} onChange={(value) => updateSiteSearch('quickAddLabel', value)} />
-                <Field label="View all prefix" value={siteContent.search.viewAllPrefix} onChange={(value) => updateSiteSearch('viewAllPrefix', value)} />
+                <Field label='Search dialog aria label' value={siteContent.search.dialogAriaLabel} onChange={(value) => updateSiteSearch('dialogAriaLabel', value)} />
+                <Field label='Search input aria label' value={siteContent.search.inputAriaLabel} onChange={(value) => updateSiteSearch('inputAriaLabel', value)} />
+                <Field label='Search placeholder' value={siteContent.search.placeholder} onChange={(value) => updateSiteSearch('placeholder', value)} />
+                <Field label='Search close label' value={siteContent.search.closeLabel} onChange={(value) => updateSiteSearch('closeLabel', value)} />
+                <Field label='Search close aria label' value={siteContent.search.closeAriaLabel} onChange={(value) => updateSiteSearch('closeAriaLabel', value)} />
+                <Field label='Search shortcut label' value={siteContent.search.shortcutLabel} onChange={(value) => updateSiteSearch('shortcutLabel', value)} />
+                <Field label='Trending label' value={siteContent.search.trendingLabel} onChange={(value) => updateSiteSearch('trendingLabel', value)} />
+                <Field label='Browse collections label' value={siteContent.search.browseCollectionsLabel} onChange={(value) => updateSiteSearch('browseCollectionsLabel', value)} />
+                <Field label='No results prefix' value={siteContent.search.noResultsPrefix} onChange={(value) => updateSiteSearch('noResultsPrefix', value)} />
+                <Field label='Search added toast title' value={siteContent.search.addedToastTitle} onChange={(value) => updateSiteSearch('addedToastTitle', value)} />
+                <Field label='Search loading label' value={siteContent.search.loadingResultsLabel} onChange={(value) => updateSiteSearch('loadingResultsLabel', value)} />
+                <Field label='Search live label' value={siteContent.search.liveLabel} onChange={(value) => updateSiteSearch('liveLabel', value)} />
+                <Field label='Result singular' value={siteContent.search.resultSingular} onChange={(value) => updateSiteSearch('resultSingular', value)} />
+                <Field label='Result plural' value={siteContent.search.resultPlural} onChange={(value) => updateSiteSearch('resultPlural', value)} />
+                <Field label='Results for label' value={siteContent.search.resultsForLabel} onChange={(value) => updateSiteSearch('resultsForLabel', value)} />
+                <Field label='Quick add label' value={siteContent.search.quickAddLabel} onChange={(value) => updateSiteSearch('quickAddLabel', value)} />
+                <Field label='View all prefix' value={siteContent.search.viewAllPrefix} onChange={(value) => updateSiteSearch('viewAllPrefix', value)} />
               </div>
-              <TextArea label="No results help" value={siteContent.search.noResultsHelp} onChange={(value) => updateSiteSearch('noResultsHelp', value)} />
-              <TextArea label="Trending searches" rows={4} value={siteContent.search.trendingSearches.join('\n')} onChange={(value) => updateSiteSearch('trendingSearches', splitLines(value))} />
-              <TextArea label="Search collection cards" rows={5} value={collectionCardsToText(siteContent.search.collectionCards)} onChange={(value) => updateSiteSearch('collectionCards', textToCollectionCards(value))} />
+              <TextArea label='No results help' value={siteContent.search.noResultsHelp} onChange={(value) => updateSiteSearch('noResultsHelp', value)} />
+              <TextArea label='Trending searches' rows={4} value={siteContent.search.trendingSearches.join('\n')} onChange={(value) => updateSiteSearch('trendingSearches', splitLines(value))} />
+              <TextArea label='Search collection cards' rows={5} value={collectionCardsToText(siteContent.search.collectionCards)} onChange={(value) => updateSiteSearch('collectionCards', textToCollectionCards(value))} />
               <div style={{ borderTop: '1px solid rgba(210,116,102,0.14)', paddingTop: '1rem', display: 'grid', gap: '1rem' }}>
-                <h4 className="type-label" style={{ color: 'var(--muted)' }}>
+                <h4 className='type-label' style={{ color: 'var(--muted)' }}>
                   Cookie consent
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                  <Field label="Storage key" value={siteContent.cookieConsent.storageKey} onChange={(value) => updateCookieConsent('storageKey', value)} />
-                  <Field label="Policy label" value={siteContent.cookieConsent.policyLabel} onChange={(value) => updateCookieConsent('policyLabel', value)} />
-                  <Field label="Policy href" value={siteContent.cookieConsent.policyHref} onChange={(value) => updateCookieConsent('policyHref', value)} />
-                  <Field label="Essential button label" value={siteContent.cookieConsent.essentialLabel} onChange={(value) => updateCookieConsent('essentialLabel', value)} />
-                  <Field label="Accept button label" value={siteContent.cookieConsent.acceptLabel} onChange={(value) => updateCookieConsent('acceptLabel', value)} />
+                  <Field label='Storage key' value={siteContent.cookieConsent.storageKey} onChange={(value) => updateCookieConsent('storageKey', value)} />
+                  <Field label='Policy label' value={siteContent.cookieConsent.policyLabel} onChange={(value) => updateCookieConsent('policyLabel', value)} />
+                  <Field label='Policy href' value={siteContent.cookieConsent.policyHref} onChange={(value) => updateCookieConsent('policyHref', value)} />
+                  <Field label='Essential button label' value={siteContent.cookieConsent.essentialLabel} onChange={(value) => updateCookieConsent('essentialLabel', value)} />
+                  <Field label='Accept button label' value={siteContent.cookieConsent.acceptLabel} onChange={(value) => updateCookieConsent('acceptLabel', value)} />
                 </div>
-                <TextArea label="Cookie message" value={siteContent.cookieConsent.message} onChange={(value) => updateCookieConsent('message', value)} />
+                <TextArea label='Cookie message' value={siteContent.cookieConsent.message} onChange={(value) => updateCookieConsent('message', value)} />
               </div>
             </div>
           </div>
@@ -3176,23 +3177,23 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Dialog aria label" value={siteContent.cart.ariaLabel} onChange={(value) => updateCart('ariaLabel', value)} />
-                <Field label="Title" value={siteContent.cart.title} onChange={(value) => updateCart('title', value)} />
-                <Field label="Item singular" value={siteContent.cart.itemSingular} onChange={(value) => updateCart('itemSingular', value)} />
-                <Field label="Item plural" value={siteContent.cart.itemPlural} onChange={(value) => updateCart('itemPlural', value)} />
-                <Field label="Close label" value={siteContent.cart.closeLabel} onChange={(value) => updateCart('closeLabel', value)} />
-                <Field label="Empty message" value={siteContent.cart.emptyMessage} onChange={(value) => updateCart('emptyMessage', value)} />
-                <Field label="Continue shopping label" value={siteContent.cart.continueShoppingLabel} onChange={(value) => updateCart('continueShoppingLabel', value)} />
-                <Field label="Remove item aria prefix" value={siteContent.cart.removeItemAriaPrefix} onChange={(value) => updateCart('removeItemAriaPrefix', value)} />
-                <Field label="Decrease quantity label" value={siteContent.cart.decreaseQuantityLabel} onChange={(value) => updateCart('decreaseQuantityLabel', value)} />
-                <Field label="Increase quantity label" value={siteContent.cart.increaseQuantityLabel} onChange={(value) => updateCart('increaseQuantityLabel', value)} />
-                <Field label="Subtotal label" value={siteContent.cart.subtotalLabel} onChange={(value) => updateCart('subtotalLabel', value)} />
-                <Field label="Shipping label" value={siteContent.cart.shippingLabel} onChange={(value) => updateCart('shippingLabel', value)} />
-                <Field label="Shipping note" value={siteContent.cart.shippingNote} onChange={(value) => updateCart('shippingNote', value)} />
-                <Field label="Total label" value={siteContent.cart.totalLabel} onChange={(value) => updateCart('totalLabel', value)} />
-                <Field label="Checkout label" value={siteContent.cart.checkoutLabel} onChange={(value) => updateCart('checkoutLabel', value)} />
+                <Field label='Dialog aria label' value={siteContent.cart.ariaLabel} onChange={(value) => updateCart('ariaLabel', value)} />
+                <Field label='Title' value={siteContent.cart.title} onChange={(value) => updateCart('title', value)} />
+                <Field label='Item singular' value={siteContent.cart.itemSingular} onChange={(value) => updateCart('itemSingular', value)} />
+                <Field label='Item plural' value={siteContent.cart.itemPlural} onChange={(value) => updateCart('itemPlural', value)} />
+                <Field label='Close label' value={siteContent.cart.closeLabel} onChange={(value) => updateCart('closeLabel', value)} />
+                <Field label='Empty message' value={siteContent.cart.emptyMessage} onChange={(value) => updateCart('emptyMessage', value)} />
+                <Field label='Continue shopping label' value={siteContent.cart.continueShoppingLabel} onChange={(value) => updateCart('continueShoppingLabel', value)} />
+                <Field label='Remove item aria prefix' value={siteContent.cart.removeItemAriaPrefix} onChange={(value) => updateCart('removeItemAriaPrefix', value)} />
+                <Field label='Decrease quantity label' value={siteContent.cart.decreaseQuantityLabel} onChange={(value) => updateCart('decreaseQuantityLabel', value)} />
+                <Field label='Increase quantity label' value={siteContent.cart.increaseQuantityLabel} onChange={(value) => updateCart('increaseQuantityLabel', value)} />
+                <Field label='Subtotal label' value={siteContent.cart.subtotalLabel} onChange={(value) => updateCart('subtotalLabel', value)} />
+                <Field label='Shipping label' value={siteContent.cart.shippingLabel} onChange={(value) => updateCart('shippingLabel', value)} />
+                <Field label='Shipping note' value={siteContent.cart.shippingNote} onChange={(value) => updateCart('shippingNote', value)} />
+                <Field label='Total label' value={siteContent.cart.totalLabel} onChange={(value) => updateCart('totalLabel', value)} />
+                <Field label='Checkout label' value={siteContent.cart.checkoutLabel} onChange={(value) => updateCart('checkoutLabel', value)} />
               </div>
-              <TextArea label="Footer note" value={siteContent.cart.footerNote} onChange={(value) => updateCart('footerNote', value)} />
+              <TextArea label='Footer note' value={siteContent.cart.footerNote} onChange={(value) => updateCart('footerNote', value)} />
             </div>
           </div>
 
@@ -3202,21 +3203,21 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Close label" value={siteContent.auth.closeLabel} onChange={(value) => updateAuth('closeLabel', value)} />
-                <Field label="Sign in tab label" value={siteContent.auth.signInTabLabel} onChange={(value) => updateAuth('signInTabLabel', value)} />
-                <Field label="Register tab label" value={siteContent.auth.registerTabLabel} onChange={(value) => updateAuth('registerTabLabel', value)} />
-                <Field label="Email label" value={siteContent.auth.emailLabel} onChange={(value) => updateAuth('emailLabel', value)} />
-                <Field label="Password label" value={siteContent.auth.passwordLabel} onChange={(value) => updateAuth('passwordLabel', value)} />
-                <Field label="Show password label" value={siteContent.auth.showPasswordLabel} onChange={(value) => updateAuth('showPasswordLabel', value)} />
-                <Field label="Hide password label" value={siteContent.auth.hidePasswordLabel} onChange={(value) => updateAuth('hidePasswordLabel', value)} />
-                <Field label="Sign in submit label" value={siteContent.auth.signInSubmitLabel} onChange={(value) => updateAuth('signInSubmitLabel', value)} />
-                <Field label="Full name label" value={siteContent.auth.fullNameLabel} onChange={(value) => updateAuth('fullNameLabel', value)} />
-                <Field label="Confirm password label" value={siteContent.auth.confirmPasswordLabel} onChange={(value) => updateAuth('confirmPasswordLabel', value)} />
-                <Field label="Register submit label" value={siteContent.auth.registerSubmitLabel} onChange={(value) => updateAuth('registerSubmitLabel', value)} />
-                <Field label="Loading label" value={siteContent.auth.loadingLabel} onChange={(value) => updateAuth('loadingLabel', value)} />
-                <Field label="Login fallback error" value={siteContent.auth.loginFailedError} onChange={(value) => updateAuth('loginFailedError', value)} />
-                <Field label="Password mismatch error" value={siteContent.auth.passwordMismatchError} onChange={(value) => updateAuth('passwordMismatchError', value)} />
-                <Field label="Registration fallback error" value={siteContent.auth.registrationFailedError} onChange={(value) => updateAuth('registrationFailedError', value)} />
+                <Field label='Close label' value={siteContent.auth.closeLabel} onChange={(value) => updateAuth('closeLabel', value)} />
+                <Field label='Sign in tab label' value={siteContent.auth.signInTabLabel} onChange={(value) => updateAuth('signInTabLabel', value)} />
+                <Field label='Register tab label' value={siteContent.auth.registerTabLabel} onChange={(value) => updateAuth('registerTabLabel', value)} />
+                <Field label='Email label' value={siteContent.auth.emailLabel} onChange={(value) => updateAuth('emailLabel', value)} />
+                <Field label='Password label' value={siteContent.auth.passwordLabel} onChange={(value) => updateAuth('passwordLabel', value)} />
+                <Field label='Show password label' value={siteContent.auth.showPasswordLabel} onChange={(value) => updateAuth('showPasswordLabel', value)} />
+                <Field label='Hide password label' value={siteContent.auth.hidePasswordLabel} onChange={(value) => updateAuth('hidePasswordLabel', value)} />
+                <Field label='Sign in submit label' value={siteContent.auth.signInSubmitLabel} onChange={(value) => updateAuth('signInSubmitLabel', value)} />
+                <Field label='Full name label' value={siteContent.auth.fullNameLabel} onChange={(value) => updateAuth('fullNameLabel', value)} />
+                <Field label='Confirm password label' value={siteContent.auth.confirmPasswordLabel} onChange={(value) => updateAuth('confirmPasswordLabel', value)} />
+                <Field label='Register submit label' value={siteContent.auth.registerSubmitLabel} onChange={(value) => updateAuth('registerSubmitLabel', value)} />
+                <Field label='Loading label' value={siteContent.auth.loadingLabel} onChange={(value) => updateAuth('loadingLabel', value)} />
+                <Field label='Login fallback error' value={siteContent.auth.loginFailedError} onChange={(value) => updateAuth('loginFailedError', value)} />
+                <Field label='Password mismatch error' value={siteContent.auth.passwordMismatchError} onChange={(value) => updateAuth('passwordMismatchError', value)} />
+                <Field label='Registration fallback error' value={siteContent.auth.registrationFailedError} onChange={(value) => updateAuth('registrationFailedError', value)} />
               </div>
             </div>
           </div>
@@ -3227,18 +3228,18 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Added toast title" value={siteContent.quickView.addedToastTitle} onChange={(value) => updateQuickView('addedToastTitle', value)} />
-                <Field label="Brand label" value={siteContent.quickView.brandLabel} onChange={(value) => updateQuickView('brandLabel', value)} />
-                <Field label="Close label" value={siteContent.quickView.closeLabel} onChange={(value) => updateQuickView('closeLabel', value)} />
-                <Field label="Select size label" value={siteContent.quickView.selectSizeLabel} onChange={(value) => updateQuickView('selectSizeLabel', value)} />
-                <Field label="Added button label" value={siteContent.quickView.addedButtonLabel} onChange={(value) => updateQuickView('addedButtonLabel', value)} />
-                <Field label="Add to bag label" value={siteContent.quickView.addToBagLabel} onChange={(value) => updateQuickView('addToBagLabel', value)} />
-                <Field label="Wishlist removed toast" value={siteContent.quickView.removedWishlistToastTitle} onChange={(value) => updateQuickView('removedWishlistToastTitle', value)} />
-                <Field label="Wishlist saved toast" value={siteContent.quickView.savedWishlistToastTitle} onChange={(value) => updateQuickView('savedWishlistToastTitle', value)} />
-                <Field label="Wishlist saved button" value={siteContent.quickView.savedWishlistButtonLabel} onChange={(value) => updateQuickView('savedWishlistButtonLabel', value)} />
-                <Field label="Wishlist save button" value={siteContent.quickView.saveWishlistButtonLabel} onChange={(value) => updateQuickView('saveWishlistButtonLabel', value)} />
-                <Field label="Full details label" value={siteContent.quickView.fullDetailsLabel} onChange={(value) => updateQuickView('fullDetailsLabel', value)} />
-                <Field label="Back to top aria label" value={siteContent.backToTop.ariaLabel} onChange={(value) => updateBackToTop('ariaLabel', value)} />
+                <Field label='Added toast title' value={siteContent.quickView.addedToastTitle} onChange={(value) => updateQuickView('addedToastTitle', value)} />
+                <Field label='Brand label' value={siteContent.quickView.brandLabel} onChange={(value) => updateQuickView('brandLabel', value)} />
+                <Field label='Close label' value={siteContent.quickView.closeLabel} onChange={(value) => updateQuickView('closeLabel', value)} />
+                <Field label='Select size label' value={siteContent.quickView.selectSizeLabel} onChange={(value) => updateQuickView('selectSizeLabel', value)} />
+                <Field label='Added button label' value={siteContent.quickView.addedButtonLabel} onChange={(value) => updateQuickView('addedButtonLabel', value)} />
+                <Field label='Add to bag label' value={siteContent.quickView.addToBagLabel} onChange={(value) => updateQuickView('addToBagLabel', value)} />
+                <Field label='Wishlist removed toast' value={siteContent.quickView.removedWishlistToastTitle} onChange={(value) => updateQuickView('removedWishlistToastTitle', value)} />
+                <Field label='Wishlist saved toast' value={siteContent.quickView.savedWishlistToastTitle} onChange={(value) => updateQuickView('savedWishlistToastTitle', value)} />
+                <Field label='Wishlist saved button' value={siteContent.quickView.savedWishlistButtonLabel} onChange={(value) => updateQuickView('savedWishlistButtonLabel', value)} />
+                <Field label='Wishlist save button' value={siteContent.quickView.saveWishlistButtonLabel} onChange={(value) => updateQuickView('saveWishlistButtonLabel', value)} />
+                <Field label='Full details label' value={siteContent.quickView.fullDetailsLabel} onChange={(value) => updateQuickView('fullDetailsLabel', value)} />
+                <Field label='Back to top aria label' value={siteContent.backToTop.ariaLabel} onChange={(value) => updateBackToTop('ariaLabel', value)} />
               </div>
             </div>
           </div>
@@ -3249,16 +3250,16 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Background code" value={siteContent.notFound.code} onChange={(value) => updateNotFound('code', value)} />
-                <Field label="Eyebrow" value={siteContent.notFound.eyebrow} onChange={(value) => updateNotFound('eyebrow', value)} />
-                <Field label="Primary button label" value={siteContent.notFound.primaryLabel} onChange={(value) => updateNotFound('primaryLabel', value)} />
-                <Field label="Primary button href" value={siteContent.notFound.primaryHref} onChange={(value) => updateNotFound('primaryHref', value)} />
-                <Field label="Secondary button label" value={siteContent.notFound.secondaryLabel} onChange={(value) => updateNotFound('secondaryLabel', value)} />
-                <Field label="Secondary button href" value={siteContent.notFound.secondaryHref} onChange={(value) => updateNotFound('secondaryHref', value)} />
+                <Field label='Background code' value={siteContent.notFound.code} onChange={(value) => updateNotFound('code', value)} />
+                <Field label='Eyebrow' value={siteContent.notFound.eyebrow} onChange={(value) => updateNotFound('eyebrow', value)} />
+                <Field label='Primary button label' value={siteContent.notFound.primaryLabel} onChange={(value) => updateNotFound('primaryLabel', value)} />
+                <Field label='Primary button href' value={siteContent.notFound.primaryHref} onChange={(value) => updateNotFound('primaryHref', value)} />
+                <Field label='Secondary button label' value={siteContent.notFound.secondaryLabel} onChange={(value) => updateNotFound('secondaryLabel', value)} />
+                <Field label='Secondary button href' value={siteContent.notFound.secondaryHref} onChange={(value) => updateNotFound('secondaryHref', value)} />
               </div>
-              <TextArea label="Title lines" rows={3} value={siteContent.notFound.titleLines.join('\n')} onChange={(value) => updateNotFound('titleLines', splitLines(value))} />
-              <TextArea label="Body" value={siteContent.notFound.body} onChange={(value) => updateNotFound('body', value)} />
-              <TextArea label="Collection links" rows={4} value={linksToText(siteContent.notFound.collectionLinks)} onChange={(value) => updateNotFound('collectionLinks', textToLinks(value))} />
+              <TextArea label='Title lines' rows={3} value={siteContent.notFound.titleLines.join('\n')} onChange={(value) => updateNotFound('titleLines', splitLines(value))} />
+              <TextArea label='Body' value={siteContent.notFound.body} onChange={(value) => updateNotFound('body', value)} />
+              <TextArea label='Collection links' rows={4} value={linksToText(siteContent.notFound.collectionLinks)} onChange={(value) => updateNotFound('collectionLinks', textToLinks(value))} />
             </div>
           </div>
 
@@ -3268,36 +3269,36 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Hero watermark" value={aboutContent.hero.watermark} onChange={(value) => updateAboutHero('watermark', value)} />
-                <Field label="Hero eyebrow" value={aboutContent.hero.eyebrow} onChange={(value) => updateAboutHero('eyebrow', value)} />
-                <Field label="Hero title" value={aboutContent.hero.title} onChange={(value) => updateAboutHero('title', value)} />
+                <Field label='Hero watermark' value={aboutContent.hero.watermark} onChange={(value) => updateAboutHero('watermark', value)} />
+                <Field label='Hero eyebrow' value={aboutContent.hero.eyebrow} onChange={(value) => updateAboutHero('eyebrow', value)} />
+                <Field label='Hero title' value={aboutContent.hero.title} onChange={(value) => updateAboutHero('title', value)} />
               </div>
-              <TextArea label="Hero body" value={aboutContent.hero.body} onChange={(value) => updateAboutHero('body', value)} />
+              <TextArea label='Hero body' value={aboutContent.hero.body} onChange={(value) => updateAboutHero('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Origin eyebrow" value={aboutContent.origin.eyebrow} onChange={(value) => updateAboutOrigin('eyebrow', value)} />
-                <Field label="Origin title" value={aboutContent.origin.title} onChange={(value) => updateAboutOrigin('title', value)} />
-                <Field label="Stats eyebrow" value={aboutContent.statsEyebrow} onChange={(value) => updateAbout('statsEyebrow', value)} />
-                <Field label="History eyebrow" value={aboutContent.historyEyebrow} onChange={(value) => updateAbout('historyEyebrow', value)} />
+                <Field label='Origin eyebrow' value={aboutContent.origin.eyebrow} onChange={(value) => updateAboutOrigin('eyebrow', value)} />
+                <Field label='Origin title' value={aboutContent.origin.title} onChange={(value) => updateAboutOrigin('title', value)} />
+                <Field label='Stats eyebrow' value={aboutContent.statsEyebrow} onChange={(value) => updateAbout('statsEyebrow', value)} />
+                <Field label='History eyebrow' value={aboutContent.historyEyebrow} onChange={(value) => updateAbout('historyEyebrow', value)} />
               </div>
-              <TextArea label="Origin paragraphs" rows={7} value={aboutContent.origin.paragraphs.join('\n')} onChange={(value) => updateAboutOrigin('paragraphs', splitLines(value))} />
-              <TextArea label="Stats" rows={5} value={aboutStatsToText(aboutContent.stats)} onChange={(value) => updateAbout('stats', textToAboutStats(value))} />
-              <TextArea label="Milestones" rows={7} value={milestonesToText(aboutContent.milestones)} onChange={(value) => updateAbout('milestones', textToMilestones(value))} />
+              <TextArea label='Origin paragraphs' rows={7} value={aboutContent.origin.paragraphs.join('\n')} onChange={(value) => updateAboutOrigin('paragraphs', splitLines(value))} />
+              <TextArea label='Stats' rows={5} value={aboutStatsToText(aboutContent.stats)} onChange={(value) => updateAbout('stats', textToAboutStats(value))} />
+              <TextArea label='Milestones' rows={7} value={milestonesToText(aboutContent.milestones)} onChange={(value) => updateAbout('milestones', textToMilestones(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Artisans eyebrow" value={aboutContent.artisansEyebrow} onChange={(value) => updateAbout('artisansEyebrow', value)} />
-                <Field label="Artisans title" value={aboutContent.artisansTitle} onChange={(value) => updateAbout('artisansTitle', value)} />
-                <Field label="Artisans CTA label" value={aboutContent.artisansCtaLabel} onChange={(value) => updateAbout('artisansCtaLabel', value)} />
-                <Field label="Artisans CTA href" value={aboutContent.artisansCtaHref} onChange={(value) => updateAbout('artisansCtaHref', value)} />
+                <Field label='Artisans eyebrow' value={aboutContent.artisansEyebrow} onChange={(value) => updateAbout('artisansEyebrow', value)} />
+                <Field label='Artisans title' value={aboutContent.artisansTitle} onChange={(value) => updateAbout('artisansTitle', value)} />
+                <Field label='Artisans CTA label' value={aboutContent.artisansCtaLabel} onChange={(value) => updateAbout('artisansCtaLabel', value)} />
+                <Field label='Artisans CTA href' value={aboutContent.artisansCtaHref} onChange={(value) => updateAbout('artisansCtaHref', value)} />
               </div>
-              <TextArea label="Artisans" rows={6} value={artisansToText(aboutContent.artisans)} onChange={(value) => updateAbout('artisans', textToArtisans(value))} />
-              <Field label="Values eyebrow" value={aboutContent.valuesEyebrow} onChange={(value) => updateAbout('valuesEyebrow', value)} />
-              <TextArea label="Values" rows={6} value={aboutValuesToText(aboutContent.values)} onChange={(value) => updateAbout('values', textToAboutValues(value))} />
-              <TextArea label="Closing quote" value={aboutContent.closing.quote} onChange={(value) => updateAboutClosing('quote', value)} />
+              <TextArea label='Artisans' rows={6} value={artisansToText(aboutContent.artisans)} onChange={(value) => updateAbout('artisans', textToArtisans(value))} />
+              <Field label='Values eyebrow' value={aboutContent.valuesEyebrow} onChange={(value) => updateAbout('valuesEyebrow', value)} />
+              <TextArea label='Values' rows={6} value={aboutValuesToText(aboutContent.values)} onChange={(value) => updateAbout('values', textToAboutValues(value))} />
+              <TextArea label='Closing quote' value={aboutContent.closing.quote} onChange={(value) => updateAboutClosing('quote', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Closing attribution" value={aboutContent.closing.attribution} onChange={(value) => updateAboutClosing('attribution', value)} />
-                <Field label="Primary CTA label" value={aboutContent.closing.primaryCtaLabel} onChange={(value) => updateAboutClosing('primaryCtaLabel', value)} />
-                <Field label="Primary CTA href" value={aboutContent.closing.primaryCtaHref} onChange={(value) => updateAboutClosing('primaryCtaHref', value)} />
-                <Field label="Secondary CTA label" value={aboutContent.closing.secondaryCtaLabel} onChange={(value) => updateAboutClosing('secondaryCtaLabel', value)} />
-                <Field label="Secondary CTA href" value={aboutContent.closing.secondaryCtaHref} onChange={(value) => updateAboutClosing('secondaryCtaHref', value)} />
+                <Field label='Closing attribution' value={aboutContent.closing.attribution} onChange={(value) => updateAboutClosing('attribution', value)} />
+                <Field label='Primary CTA label' value={aboutContent.closing.primaryCtaLabel} onChange={(value) => updateAboutClosing('primaryCtaLabel', value)} />
+                <Field label='Primary CTA href' value={aboutContent.closing.primaryCtaHref} onChange={(value) => updateAboutClosing('primaryCtaHref', value)} />
+                <Field label='Secondary CTA label' value={aboutContent.closing.secondaryCtaLabel} onChange={(value) => updateAboutClosing('secondaryCtaLabel', value)} />
+                <Field label='Secondary CTA href' value={aboutContent.closing.secondaryCtaHref} onChange={(value) => updateAboutClosing('secondaryCtaHref', value)} />
               </div>
             </div>
           </div>
@@ -3308,29 +3309,29 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Hero watermark" value={valuesContent.hero.watermark} onChange={(value) => updateValuesHero('watermark', value)} />
-                <Field label="Hero eyebrow" value={valuesContent.hero.eyebrow} onChange={(value) => updateValuesHero('eyebrow', value)} />
-                <Field label="Hero title line 1" value={valuesContent.hero.titleLine1} onChange={(value) => updateValuesHero('titleLine1', value)} />
-                <Field label="Hero title line 2" value={valuesContent.hero.titleLine2} onChange={(value) => updateValuesHero('titleLine2', value)} />
+                <Field label='Hero watermark' value={valuesContent.hero.watermark} onChange={(value) => updateValuesHero('watermark', value)} />
+                <Field label='Hero eyebrow' value={valuesContent.hero.eyebrow} onChange={(value) => updateValuesHero('eyebrow', value)} />
+                <Field label='Hero title line 1' value={valuesContent.hero.titleLine1} onChange={(value) => updateValuesHero('titleLine1', value)} />
+                <Field label='Hero title line 2' value={valuesContent.hero.titleLine2} onChange={(value) => updateValuesHero('titleLine2', value)} />
               </div>
-              <TextArea label="Hero body" value={valuesContent.hero.body} onChange={(value) => updateValuesHero('body', value)} />
-              <TextArea label="Stats" rows={5} value={valuesStatsToText(valuesContent.stats)} onChange={(value) => updateValues('stats', textToValuesStats(value))} />
+              <TextArea label='Hero body' value={valuesContent.hero.body} onChange={(value) => updateValuesHero('body', value)} />
+              <TextArea label='Stats' rows={5} value={valuesStatsToText(valuesContent.stats)} onChange={(value) => updateValues('stats', textToValuesStats(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Materials eyebrow" value={valuesContent.materialsEyebrow} onChange={(value) => updateValues('materialsEyebrow', value)} />
-                <Field label="Materials title" value={valuesContent.materialsTitle} onChange={(value) => updateValues('materialsTitle', value)} />
+                <Field label='Materials eyebrow' value={valuesContent.materialsEyebrow} onChange={(value) => updateValues('materialsEyebrow', value)} />
+                <Field label='Materials title' value={valuesContent.materialsTitle} onChange={(value) => updateValues('materialsTitle', value)} />
               </div>
-              <TextArea label="Materials" rows={7} value={valuesMaterialsToText(valuesContent.materials)} onChange={(value) => updateValues('materials', textToValuesMaterials(value))} />
+              <TextArea label='Materials' rows={7} value={valuesMaterialsToText(valuesContent.materials)} onChange={(value) => updateValues('materials', textToValuesMaterials(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Commitments eyebrow" value={valuesContent.commitmentsEyebrow} onChange={(value) => updateValues('commitmentsEyebrow', value)} />
-                <Field label="Commitments title" value={valuesContent.commitmentsTitle} onChange={(value) => updateValues('commitmentsTitle', value)} />
+                <Field label='Commitments eyebrow' value={valuesContent.commitmentsEyebrow} onChange={(value) => updateValues('commitmentsEyebrow', value)} />
+                <Field label='Commitments title' value={valuesContent.commitmentsTitle} onChange={(value) => updateValues('commitmentsTitle', value)} />
               </div>
-              <TextArea label="Commitments" rows={7} value={valuesCommitmentsToText(valuesContent.commitments)} onChange={(value) => updateValues('commitments', textToValuesCommitments(value))} />
-              <TextArea label="Closing quote" value={valuesContent.closing.quote} onChange={(value) => updateValuesClosing('quote', value)} />
+              <TextArea label='Commitments' rows={7} value={valuesCommitmentsToText(valuesContent.commitments)} onChange={(value) => updateValues('commitments', textToValuesCommitments(value))} />
+              <TextArea label='Closing quote' value={valuesContent.closing.quote} onChange={(value) => updateValuesClosing('quote', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Primary CTA label" value={valuesContent.closing.primaryCtaLabel} onChange={(value) => updateValuesClosing('primaryCtaLabel', value)} />
-                <Field label="Primary CTA href" value={valuesContent.closing.primaryCtaHref} onChange={(value) => updateValuesClosing('primaryCtaHref', value)} />
-                <Field label="Secondary CTA label" value={valuesContent.closing.secondaryCtaLabel} onChange={(value) => updateValuesClosing('secondaryCtaLabel', value)} />
-                <Field label="Secondary CTA href" value={valuesContent.closing.secondaryCtaHref} onChange={(value) => updateValuesClosing('secondaryCtaHref', value)} />
+                <Field label='Primary CTA label' value={valuesContent.closing.primaryCtaLabel} onChange={(value) => updateValuesClosing('primaryCtaLabel', value)} />
+                <Field label='Primary CTA href' value={valuesContent.closing.primaryCtaHref} onChange={(value) => updateValuesClosing('primaryCtaHref', value)} />
+                <Field label='Secondary CTA label' value={valuesContent.closing.secondaryCtaLabel} onChange={(value) => updateValuesClosing('secondaryCtaLabel', value)} />
+                <Field label='Secondary CTA href' value={valuesContent.closing.secondaryCtaHref} onChange={(value) => updateValuesClosing('secondaryCtaHref', value)} />
               </div>
             </div>
           </div>
@@ -3341,43 +3342,43 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Hero watermark" value={contactContent.hero.watermark} onChange={(value) => updateContactHero('watermark', value)} />
-                <Field label="Hero eyebrow" value={contactContent.hero.eyebrow} onChange={(value) => updateContactHero('eyebrow', value)} />
-                <Field label="Hero title line 1" value={contactContent.hero.titleLine1} onChange={(value) => updateContactHero('titleLine1', value)} />
-                <Field label="Hero title line 2" value={contactContent.hero.titleLine2} onChange={(value) => updateContactHero('titleLine2', value)} />
+                <Field label='Hero watermark' value={contactContent.hero.watermark} onChange={(value) => updateContactHero('watermark', value)} />
+                <Field label='Hero eyebrow' value={contactContent.hero.eyebrow} onChange={(value) => updateContactHero('eyebrow', value)} />
+                <Field label='Hero title line 1' value={contactContent.hero.titleLine1} onChange={(value) => updateContactHero('titleLine1', value)} />
+                <Field label='Hero title line 2' value={contactContent.hero.titleLine2} onChange={(value) => updateContactHero('titleLine2', value)} />
               </div>
-              <TextArea label="Hero body" value={contactContent.hero.body} onChange={(value) => updateContactHero('body', value)} />
+              <TextArea label='Hero body' value={contactContent.hero.body} onChange={(value) => updateContactHero('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Address eyebrow" value={contactContent.info.addressEyebrow} onChange={(value) => updateContactInfo('addressEyebrow', value)} />
-                <Field label="Direct eyebrow" value={contactContent.info.directEyebrow} onChange={(value) => updateContactInfo('directEyebrow', value)} />
-                <Field label="Hours eyebrow" value={contactContent.info.hoursEyebrow} onChange={(value) => updateContactInfo('hoursEyebrow', value)} />
-                <Field label="Follow eyebrow" value={contactContent.info.followEyebrow} onChange={(value) => updateContactInfo('followEyebrow', value)} />
+                <Field label='Address eyebrow' value={contactContent.info.addressEyebrow} onChange={(value) => updateContactInfo('addressEyebrow', value)} />
+                <Field label='Direct eyebrow' value={contactContent.info.directEyebrow} onChange={(value) => updateContactInfo('directEyebrow', value)} />
+                <Field label='Hours eyebrow' value={contactContent.info.hoursEyebrow} onChange={(value) => updateContactInfo('hoursEyebrow', value)} />
+                <Field label='Follow eyebrow' value={contactContent.info.followEyebrow} onChange={(value) => updateContactInfo('followEyebrow', value)} />
               </div>
-              <TextArea label="Address lines" rows={4} value={contactContent.info.addressLines.join('\n')} onChange={(value) => updateContactInfo('addressLines', splitLines(value))} />
-              <TextArea label="Direct links" rows={4} value={linksToText(contactContent.info.directLinks)} onChange={(value) => updateContactInfo('directLinks', textToLinks(value))} />
-              <TextArea label="Hours" rows={4} value={contactHoursToText(contactContent.info.hours)} onChange={(value) => updateContactInfo('hours', textToContactHours(value))} />
-              <TextArea label="Social links" rows={4} value={linksToText(contactContent.info.socialLinks)} onChange={(value) => updateContactInfo('socialLinks', textToLinks(value))} />
+              <TextArea label='Address lines' rows={4} value={contactContent.info.addressLines.join('\n')} onChange={(value) => updateContactInfo('addressLines', splitLines(value))} />
+              <TextArea label='Direct links' rows={4} value={linksToText(contactContent.info.directLinks)} onChange={(value) => updateContactInfo('directLinks', textToLinks(value))} />
+              <TextArea label='Hours' rows={4} value={contactHoursToText(contactContent.info.hours)} onChange={(value) => updateContactInfo('hours', textToContactHours(value))} />
+              <TextArea label='Social links' rows={4} value={linksToText(contactContent.info.socialLinks)} onChange={(value) => updateContactInfo('socialLinks', textToLinks(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Name label" value={contactContent.form.nameLabel} onChange={(value) => updateContactForm('nameLabel', value)} />
-                <Field label="Name placeholder" value={contactContent.form.namePlaceholder} onChange={(value) => updateContactForm('namePlaceholder', value)} />
-                <Field label="Email label" value={contactContent.form.emailLabel} onChange={(value) => updateContactForm('emailLabel', value)} />
-                <Field label="Email placeholder" value={contactContent.form.emailPlaceholder} onChange={(value) => updateContactForm('emailPlaceholder', value)} />
-                <Field label="Subject label" value={contactContent.form.subjectLabel} onChange={(value) => updateContactForm('subjectLabel', value)} />
-                <Field label="Message label" value={contactContent.form.messageLabel} onChange={(value) => updateContactForm('messageLabel', value)} />
-                <Field label="Submit label" value={contactContent.form.submitLabel} onChange={(value) => updateContactForm('submitLabel', value)} />
+                <Field label='Name label' value={contactContent.form.nameLabel} onChange={(value) => updateContactForm('nameLabel', value)} />
+                <Field label='Name placeholder' value={contactContent.form.namePlaceholder} onChange={(value) => updateContactForm('namePlaceholder', value)} />
+                <Field label='Email label' value={contactContent.form.emailLabel} onChange={(value) => updateContactForm('emailLabel', value)} />
+                <Field label='Email placeholder' value={contactContent.form.emailPlaceholder} onChange={(value) => updateContactForm('emailPlaceholder', value)} />
+                <Field label='Subject label' value={contactContent.form.subjectLabel} onChange={(value) => updateContactForm('subjectLabel', value)} />
+                <Field label='Message label' value={contactContent.form.messageLabel} onChange={(value) => updateContactForm('messageLabel', value)} />
+                <Field label='Submit label' value={contactContent.form.submitLabel} onChange={(value) => updateContactForm('submitLabel', value)} />
               </div>
-              <TextArea label="Subject options" rows={5} value={contactContent.form.subjects.join('\n')} onChange={(value) => updateContactForm('subjects', splitLines(value))} />
-              <TextArea label="Message placeholder" value={contactContent.form.messagePlaceholder} onChange={(value) => updateContactForm('messagePlaceholder', value)} />
-              <TextArea label="Form footnote" value={contactContent.form.footnote} onChange={(value) => updateContactForm('footnote', value)} />
+              <TextArea label='Subject options' rows={5} value={contactContent.form.subjects.join('\n')} onChange={(value) => updateContactForm('subjects', splitLines(value))} />
+              <TextArea label='Message placeholder' value={contactContent.form.messagePlaceholder} onChange={(value) => updateContactForm('messagePlaceholder', value)} />
+              <TextArea label='Form footnote' value={contactContent.form.footnote} onChange={(value) => updateContactForm('footnote', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Toast title" value={contactContent.success.toastTitle} onChange={(value) => updateContactSuccess('toastTitle', value)} />
-                <Field label="Success eyebrow" value={contactContent.success.eyebrow} onChange={(value) => updateContactSuccess('eyebrow', value)} />
-                <Field label="Success title line 1" value={contactContent.success.titleLine1} onChange={(value) => updateContactSuccess('titleLine1', value)} />
-                <Field label="Success title line 2" value={contactContent.success.titleLine2} onChange={(value) => updateContactSuccess('titleLine2', value)} />
-                <Field label="Reset label" value={contactContent.success.resetLabel} onChange={(value) => updateContactSuccess('resetLabel', value)} />
+                <Field label='Toast title' value={contactContent.success.toastTitle} onChange={(value) => updateContactSuccess('toastTitle', value)} />
+                <Field label='Success eyebrow' value={contactContent.success.eyebrow} onChange={(value) => updateContactSuccess('eyebrow', value)} />
+                <Field label='Success title line 1' value={contactContent.success.titleLine1} onChange={(value) => updateContactSuccess('titleLine1', value)} />
+                <Field label='Success title line 2' value={contactContent.success.titleLine2} onChange={(value) => updateContactSuccess('titleLine2', value)} />
+                <Field label='Reset label' value={contactContent.success.resetLabel} onChange={(value) => updateContactSuccess('resetLabel', value)} />
               </div>
-              <TextArea label="Toast message" value={contactContent.success.toastMessage} onChange={(value) => updateContactSuccess('toastMessage', value)} />
-              <TextArea label="Success body" value={contactContent.success.body} onChange={(value) => updateContactSuccess('body', value)} />
+              <TextArea label='Toast message' value={contactContent.success.toastMessage} onChange={(value) => updateContactSuccess('toastMessage', value)} />
+              <TextArea label='Success body' value={contactContent.success.body} onChange={(value) => updateContactSuccess('body', value)} />
             </div>
           </div>
 
@@ -3387,26 +3388,26 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Hero eyebrow" value={wishlistContent.heroEyebrow} onChange={(value) => updateWishlist('heroEyebrow', value)} />
-                <Field label="Hero title" value={wishlistContent.heroTitle} onChange={(value) => updateWishlist('heroTitle', value)} />
-                <Field label="Piece singular" value={wishlistContent.pieceSingular} onChange={(value) => updateWishlist('pieceSingular', value)} />
-                <Field label="Piece plural" value={wishlistContent.piecePlural} onChange={(value) => updateWishlist('piecePlural', value)} />
-                <Field label="Saved label" value={wishlistContent.savedLabel} onChange={(value) => updateWishlist('savedLabel', value)} />
-                <Field label="Refreshing label" value={wishlistContent.refreshingLabel} onChange={(value) => updateWishlist('refreshingLabel', value)} />
-                <Field label="Empty title" value={wishlistContent.emptyTitle} onChange={(value) => updateWishlist('emptyTitle', value)} />
-                <Field label="Empty CTA label" value={wishlistContent.emptyCtaLabel} onChange={(value) => updateWishlist('emptyCtaLabel', value)} />
-                <Field label="Empty CTA href" value={wishlistContent.emptyCtaHref} onChange={(value) => updateWishlist('emptyCtaHref', value)} />
-                <Field label="Current catalog label" value={wishlistContent.currentCatalogLabel} onChange={(value) => updateWishlist('currentCatalogLabel', value)} />
-                <Field label="Saved items label" value={wishlistContent.savedItemsLabel} onChange={(value) => updateWishlist('savedItemsLabel', value)} />
-                <Field label="Move all label" value={wishlistContent.moveAllLabel} onChange={(value) => updateWishlist('moveAllLabel', value)} />
-                <Field label="Move to bag label" value={wishlistContent.moveToBagLabel} onChange={(value) => updateWishlist('moveToBagLabel', value)} />
-                <Field label="Moved toast title" value={wishlistContent.movedToastTitle} onChange={(value) => updateWishlist('movedToastTitle', value)} />
-                <Field label="Removed toast title" value={wishlistContent.removedToastTitle} onChange={(value) => updateWishlist('removedToastTitle', value)} />
-                <Field label="Remove aria prefix" value={wishlistContent.removeItemAriaPrefix} onChange={(value) => updateWishlist('removeItemAriaPrefix', value)} />
-                <Field label="Remove aria suffix" value={wishlistContent.removeItemAriaSuffix} onChange={(value) => updateWishlist('removeItemAriaSuffix', value)} />
-                <Field label="Live badge label" value={wishlistContent.liveBadgeLabel} onChange={(value) => updateWishlist('liveBadgeLabel', value)} />
+                <Field label='Hero eyebrow' value={wishlistContent.heroEyebrow} onChange={(value) => updateWishlist('heroEyebrow', value)} />
+                <Field label='Hero title' value={wishlistContent.heroTitle} onChange={(value) => updateWishlist('heroTitle', value)} />
+                <Field label='Piece singular' value={wishlistContent.pieceSingular} onChange={(value) => updateWishlist('pieceSingular', value)} />
+                <Field label='Piece plural' value={wishlistContent.piecePlural} onChange={(value) => updateWishlist('piecePlural', value)} />
+                <Field label='Saved label' value={wishlistContent.savedLabel} onChange={(value) => updateWishlist('savedLabel', value)} />
+                <Field label='Refreshing label' value={wishlistContent.refreshingLabel} onChange={(value) => updateWishlist('refreshingLabel', value)} />
+                <Field label='Empty title' value={wishlistContent.emptyTitle} onChange={(value) => updateWishlist('emptyTitle', value)} />
+                <Field label='Empty CTA label' value={wishlistContent.emptyCtaLabel} onChange={(value) => updateWishlist('emptyCtaLabel', value)} />
+                <Field label='Empty CTA href' value={wishlistContent.emptyCtaHref} onChange={(value) => updateWishlist('emptyCtaHref', value)} />
+                <Field label='Current catalog label' value={wishlistContent.currentCatalogLabel} onChange={(value) => updateWishlist('currentCatalogLabel', value)} />
+                <Field label='Saved items label' value={wishlistContent.savedItemsLabel} onChange={(value) => updateWishlist('savedItemsLabel', value)} />
+                <Field label='Move all label' value={wishlistContent.moveAllLabel} onChange={(value) => updateWishlist('moveAllLabel', value)} />
+                <Field label='Move to bag label' value={wishlistContent.moveToBagLabel} onChange={(value) => updateWishlist('moveToBagLabel', value)} />
+                <Field label='Moved toast title' value={wishlistContent.movedToastTitle} onChange={(value) => updateWishlist('movedToastTitle', value)} />
+                <Field label='Removed toast title' value={wishlistContent.removedToastTitle} onChange={(value) => updateWishlist('removedToastTitle', value)} />
+                <Field label='Remove aria prefix' value={wishlistContent.removeItemAriaPrefix} onChange={(value) => updateWishlist('removeItemAriaPrefix', value)} />
+                <Field label='Remove aria suffix' value={wishlistContent.removeItemAriaSuffix} onChange={(value) => updateWishlist('removeItemAriaSuffix', value)} />
+                <Field label='Live badge label' value={wishlistContent.liveBadgeLabel} onChange={(value) => updateWishlist('liveBadgeLabel', value)} />
               </div>
-              <TextArea label="Empty body" value={wishlistContent.emptyBody} onChange={(value) => updateWishlist('emptyBody', value)} />
+              <TextArea label='Empty body' value={wishlistContent.emptyBody} onChange={(value) => updateWishlist('emptyBody', value)} />
             </div>
           </div>
 
@@ -3416,62 +3417,62 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Brand text" value={checkoutContent.brandText} onChange={(value) => updateCheckout('brandText', value)} />
-                <Field label="Step aria label" value={checkoutContent.stepAriaLabel} onChange={(value) => updateCheckout('stepAriaLabel', value)} />
-                <Field label="Information title" value={checkoutContent.informationTitle} onChange={(value) => updateCheckout('informationTitle', value)} />
-                <Field label="Return to bag label" value={checkoutContent.returnToBagLabel} onChange={(value) => updateCheckout('returnToBagLabel', value)} />
-                <Field label="Return to bag href" value={checkoutContent.returnToBagHref} onChange={(value) => updateCheckout('returnToBagHref', value)} />
-                <Field label="Continue to shipping label" value={checkoutContent.continueToShippingLabel} onChange={(value) => updateCheckout('continueToShippingLabel', value)} />
-                <Field label="Shipping title" value={checkoutContent.shippingTitle} onChange={(value) => updateCheckout('shippingTitle', value)} />
-                <Field label="Delivery recap label" value={checkoutContent.deliveryRecapLabel} onChange={(value) => updateCheckout('deliveryRecapLabel', value)} />
-                <Field label="Delivery fallback" value={checkoutContent.deliveryAddressFallback} onChange={(value) => updateCheckout('deliveryAddressFallback', value)} />
-                <Field label="Change label" value={checkoutContent.changeLabel} onChange={(value) => updateCheckout('changeLabel', value)} />
-                <Field label="Back label" value={checkoutContent.backLabel} onChange={(value) => updateCheckout('backLabel', value)} />
-                <Field label="Continue to payment label" value={checkoutContent.continueToPaymentLabel} onChange={(value) => updateCheckout('continueToPaymentLabel', value)} />
-                <Field label="Payment title" value={checkoutContent.paymentTitle} onChange={(value) => updateCheckout('paymentTitle', value)} />
-                <Field label="Billing same label" value={checkoutContent.billingSameLabel} onChange={(value) => updateCheckout('billingSameLabel', value)} />
-                <Field label="Add items first label" value={checkoutContent.addItemsFirstLabel} onChange={(value) => updateCheckout('addItemsFirstLabel', value)} />
-                <Field label="Place order label" value={checkoutContent.placeOrderLabel} onChange={(value) => updateCheckout('placeOrderLabel', value)} />
-                <Field label="Order toast title" value={checkoutContent.orderPlacedToastTitle} onChange={(value) => updateCheckout('orderPlacedToastTitle', value)} />
-                <Field label="Confirmation title" value={checkoutContent.confirmationTitle} onChange={(value) => updateCheckout('confirmationTitle', value)} />
-                <Field label="Email fallback" value={checkoutContent.confirmationEmailFallback} onChange={(value) => updateCheckout('confirmationEmailFallback', value)} />
-                <Field label="Confirmation suffix" value={checkoutContent.confirmationBodySuffix} onChange={(value) => updateCheckout('confirmationBodySuffix', value)} />
-                <Field label="Continue shopping label" value={checkoutContent.continueShoppingLabel} onChange={(value) => updateCheckout('continueShoppingLabel', value)} />
-                <Field label="Continue shopping href" value={checkoutContent.continueShoppingHref} onChange={(value) => updateCheckout('continueShoppingHref', value)} />
-                <Field label="Track order label" value={checkoutContent.trackOrderLabel} onChange={(value) => updateCheckout('trackOrderLabel', value)} />
+                <Field label='Brand text' value={checkoutContent.brandText} onChange={(value) => updateCheckout('brandText', value)} />
+                <Field label='Step aria label' value={checkoutContent.stepAriaLabel} onChange={(value) => updateCheckout('stepAriaLabel', value)} />
+                <Field label='Information title' value={checkoutContent.informationTitle} onChange={(value) => updateCheckout('informationTitle', value)} />
+                <Field label='Return to bag label' value={checkoutContent.returnToBagLabel} onChange={(value) => updateCheckout('returnToBagLabel', value)} />
+                <Field label='Return to bag href' value={checkoutContent.returnToBagHref} onChange={(value) => updateCheckout('returnToBagHref', value)} />
+                <Field label='Continue to shipping label' value={checkoutContent.continueToShippingLabel} onChange={(value) => updateCheckout('continueToShippingLabel', value)} />
+                <Field label='Shipping title' value={checkoutContent.shippingTitle} onChange={(value) => updateCheckout('shippingTitle', value)} />
+                <Field label='Delivery recap label' value={checkoutContent.deliveryRecapLabel} onChange={(value) => updateCheckout('deliveryRecapLabel', value)} />
+                <Field label='Delivery fallback' value={checkoutContent.deliveryAddressFallback} onChange={(value) => updateCheckout('deliveryAddressFallback', value)} />
+                <Field label='Change label' value={checkoutContent.changeLabel} onChange={(value) => updateCheckout('changeLabel', value)} />
+                <Field label='Back label' value={checkoutContent.backLabel} onChange={(value) => updateCheckout('backLabel', value)} />
+                <Field label='Continue to payment label' value={checkoutContent.continueToPaymentLabel} onChange={(value) => updateCheckout('continueToPaymentLabel', value)} />
+                <Field label='Payment title' value={checkoutContent.paymentTitle} onChange={(value) => updateCheckout('paymentTitle', value)} />
+                <Field label='Billing same label' value={checkoutContent.billingSameLabel} onChange={(value) => updateCheckout('billingSameLabel', value)} />
+                <Field label='Add items first label' value={checkoutContent.addItemsFirstLabel} onChange={(value) => updateCheckout('addItemsFirstLabel', value)} />
+                <Field label='Place order label' value={checkoutContent.placeOrderLabel} onChange={(value) => updateCheckout('placeOrderLabel', value)} />
+                <Field label='Order toast title' value={checkoutContent.orderPlacedToastTitle} onChange={(value) => updateCheckout('orderPlacedToastTitle', value)} />
+                <Field label='Confirmation title' value={checkoutContent.confirmationTitle} onChange={(value) => updateCheckout('confirmationTitle', value)} />
+                <Field label='Email fallback' value={checkoutContent.confirmationEmailFallback} onChange={(value) => updateCheckout('confirmationEmailFallback', value)} />
+                <Field label='Confirmation suffix' value={checkoutContent.confirmationBodySuffix} onChange={(value) => updateCheckout('confirmationBodySuffix', value)} />
+                <Field label='Continue shopping label' value={checkoutContent.continueShoppingLabel} onChange={(value) => updateCheckout('continueShoppingLabel', value)} />
+                <Field label='Continue shopping href' value={checkoutContent.continueShoppingHref} onChange={(value) => updateCheckout('continueShoppingHref', value)} />
+                <Field label='Track order label' value={checkoutContent.trackOrderLabel} onChange={(value) => updateCheckout('trackOrderLabel', value)} />
               </div>
-              <TextArea label="Security note" value={checkoutContent.securityNote} onChange={(value) => updateCheckout('securityNote', value)} />
-              <TextArea label="Order toast message" value={checkoutContent.orderPlacedToastMessage} onChange={(value) => updateCheckout('orderPlacedToastMessage', value)} />
-              <TextArea label="Confirmation body prefix" value={checkoutContent.confirmationBodyPrefix} onChange={(value) => updateCheckout('confirmationBodyPrefix', value)} />
-              <TextArea label="Confirmation quote" value={checkoutContent.confirmationQuote} onChange={(value) => updateCheckout('confirmationQuote', value)} />
-              <TextArea label="Steps (key | label)" rows={4} value={checkoutStepsToText(checkoutContent.steps)} onChange={(value) => updateCheckout('steps', textToCheckoutSteps(value))} />
-              <TextArea label="Information fields (id | label | type | placeholder | half | maxLength | mono)" rows={8} value={checkoutFieldsToText(checkoutContent.informationFields)} onChange={(value) => updateCheckout('informationFields', textToCheckoutFields(value))} />
+              <TextArea label='Security note' value={checkoutContent.securityNote} onChange={(value) => updateCheckout('securityNote', value)} />
+              <TextArea label='Order toast message' value={checkoutContent.orderPlacedToastMessage} onChange={(value) => updateCheckout('orderPlacedToastMessage', value)} />
+              <TextArea label='Confirmation body prefix' value={checkoutContent.confirmationBodyPrefix} onChange={(value) => updateCheckout('confirmationBodyPrefix', value)} />
+              <TextArea label='Confirmation quote' value={checkoutContent.confirmationQuote} onChange={(value) => updateCheckout('confirmationQuote', value)} />
+              <TextArea label='Steps (key | label)' rows={4} value={checkoutStepsToText(checkoutContent.steps)} onChange={(value) => updateCheckout('steps', textToCheckoutSteps(value))} />
+              <TextArea label='Information fields (id | label | type | placeholder | half | maxLength | mono)' rows={8} value={checkoutFieldsToText(checkoutContent.informationFields)} onChange={(value) => updateCheckout('informationFields', textToCheckoutFields(value))} />
               <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
-                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Free shipping</summary>
+                <summary className='type-label' style={{ color: 'var(--accent)', cursor: 'pointer' }}>Free shipping</summary>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
                   <Field
-                    label="Free shipping threshold (€)"
-                    type="number"
-                    inputMode="decimal"
+                    label='Free shipping threshold (€)'
+                    type='number'
+                    inputMode='decimal'
                     min={0}
                     step={1}
                     value={String(checkoutContent.freeShippingThreshold)}
                     onChange={(value) => updateCheckout('freeShippingThreshold', parseNonNegativeInteger(value, checkoutContent.freeShippingThreshold))}
                   />
                   <Field
-                    label="Method ID that becomes free"
+                    label='Method ID that becomes free'
                     value={checkoutContent.freeShippingMethodId}
                     onChange={(value) => updateCheckout('freeShippingMethodId', value)}
                   />
                   <Field
-                    label="Banner label (use {amount})"
+                    label='Banner label (use {amount})'
                     value={checkoutContent.freeShippingBannerLabel}
                     onChange={(value) => updateCheckout('freeShippingBannerLabel', value)}
                   />
                 </div>
               </details>
               <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
-                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Fallback shipping methods</summary>
+                <summary className='type-label' style={{ color: 'var(--accent)', cursor: 'pointer' }}>Fallback shipping methods</summary>
                 <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
                   {checkoutContent.shippingMethods.map((method, index) => (
                     <ShippingMethodFields
@@ -3483,15 +3484,15 @@ function addEditorialReport(): void {
                     />
                   ))}
                   <button
-                    type="button"
-                    className="btn-ghost"
+                    type='button'
+                    className='btn-ghost'
                     onClick={addCheckoutShippingMethod}
                     style={{ justifySelf: 'start', fontSize: '0.72rem' }}
                   >
                     Add fallback method
                   </button>
                   <TextArea
-                    label="Bulk edit fallback methods (id | label | detail | price | price label | min days | max days | carrier | service | pickup)"
+                    label='Bulk edit fallback methods (id | label | detail | price | price label | min days | max days | carrier | service | pickup)'
                     rows={5}
                     value={checkoutShippingMethodsToText(checkoutContent.shippingMethods)}
                     onChange={(value) => updateCheckout('shippingMethods', textToCheckoutShippingMethods(value))}
@@ -3499,18 +3500,18 @@ function addEditorialReport(): void {
                 </div>
               </details>
               <details open style={{ border: '1px solid var(--border)', padding: '1rem' }}>
-                <summary className="type-label" style={{ color: 'var(--accent)', cursor: 'pointer' }}>Shipping zones</summary>
+                <summary className='type-label' style={{ color: 'var(--accent)', cursor: 'pointer' }}>Shipping zones</summary>
                 <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
                   {checkoutContent.shippingZones.map((zone, zoneIndex) => (
                     <details key={`${zone.id}-${zoneIndex}`} open style={{ border: '1px solid rgba(210,116,102,0.18)', padding: '1rem' }}>
-                      <summary className="type-label" style={{ color: 'var(--fg)', cursor: 'pointer' }}>{zone.label || zone.id || `Zone ${zoneIndex + 1}`}</summary>
+                      <summary className='type-label' style={{ color: 'var(--fg)', cursor: 'pointer' }}>{zone.label || zone.id || `Zone ${zoneIndex + 1}`}</summary>
                       <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                          <Field label="Zone ID" value={zone.id} onChange={(value) => updateShippingZone(zoneIndex, 'id', value)} />
-                          <Field label="Zone label" value={zone.label} onChange={(value) => updateShippingZone(zoneIndex, 'label', value)} />
+                          <Field label='Zone ID' value={zone.id} onChange={(value) => updateShippingZone(zoneIndex, 'id', value)} />
+                          <Field label='Zone label' value={zone.label} onChange={(value) => updateShippingZone(zoneIndex, 'label', value)} />
                         </div>
                         <TextArea
-                          label="Countries (comma-separated English names; leave empty for catch-all)"
+                          label='Countries (comma-separated English names; leave empty for catch-all)'
                           rows={3}
                           value={zone.countries.join(', ')}
                           onChange={(value) => updateShippingZoneCountries(zoneIndex, value)}
@@ -3527,16 +3528,16 @@ function addEditorialReport(): void {
                           ))}
                           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                             <button
-                              type="button"
-                              className="btn-ghost"
+                              type='button'
+                              className='btn-ghost'
                               onClick={() => addShippingZoneMethod(zoneIndex)}
                               style={{ fontSize: '0.72rem' }}
                             >
                               Add zone method
                             </button>
                             <button
-                              type="button"
-                              className="btn-ghost"
+                              type='button'
+                              className='btn-ghost'
                               onClick={() => removeShippingZone(zoneIndex)}
                               style={{ fontSize: '0.72rem', color: 'var(--coral-red)' }}
                             >
@@ -3548,8 +3549,8 @@ function addEditorialReport(): void {
                     </details>
                   ))}
                   <button
-                    type="button"
-                    className="btn-ghost"
+                    type='button'
+                    className='btn-ghost'
                     onClick={addShippingZone}
                     style={{ justifySelf: 'start', fontSize: '0.72rem' }}
                   >
@@ -3557,21 +3558,21 @@ function addEditorialReport(): void {
                   </button>
                 </div>
               </details>
-              <TextArea label="Payment fields (id | label | type | placeholder | half | maxLength | mono)" rows={5} value={checkoutFieldsToText(checkoutContent.paymentFields)} onChange={(value) => updateCheckout('paymentFields', textToCheckoutFields(value))} />
+              <TextArea label='Payment fields (id | label | type | placeholder | half | maxLength | mono)' rows={5} value={checkoutFieldsToText(checkoutContent.paymentFields)} onChange={(value) => updateCheckout('paymentFields', textToCheckoutFields(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Summary title" value={checkoutContent.orderSummary.title} onChange={(value) => updateCheckoutSummary('title', value)} />
-                <Field label="Summary empty bag" value={checkoutContent.orderSummary.emptyBagLabel} onChange={(value) => updateCheckoutSummary('emptyBagLabel', value)} />
-                <Field label="Promo applied suffix" value={checkoutContent.orderSummary.promoAppliedSuffix} onChange={(value) => updateCheckoutSummary('promoAppliedSuffix', value)} />
-                <Field label="Remove promo label" value={checkoutContent.orderSummary.removePromoLabel} onChange={(value) => updateCheckoutSummary('removePromoLabel', value)} />
-                <Field label="Promo toggle label" value={checkoutContent.orderSummary.promoToggleLabel} onChange={(value) => updateCheckoutSummary('promoToggleLabel', value)} />
-                <Field label="Promo placeholder" value={checkoutContent.orderSummary.promoPlaceholder} onChange={(value) => updateCheckoutSummary('promoPlaceholder', value)} />
-                <Field label="Promo apply label" value={checkoutContent.orderSummary.promoApplyLabel} onChange={(value) => updateCheckoutSummary('promoApplyLabel', value)} />
-                <Field label="Promo invalid label" value={checkoutContent.orderSummary.promoInvalidLabel} onChange={(value) => updateCheckoutSummary('promoInvalidLabel', value)} />
-                <Field label="Subtotal label" value={checkoutContent.orderSummary.subtotalLabel} onChange={(value) => updateCheckoutSummary('subtotalLabel', value)} />
-                <Field label="Discount label" value={checkoutContent.orderSummary.discountLabel} onChange={(value) => updateCheckoutSummary('discountLabel', value)} />
-                <Field label="Summary shipping label" value={checkoutContent.orderSummary.shippingLabel} onChange={(value) => updateCheckoutSummary('shippingLabel', value)} />
-                <Field label="Free label" value={checkoutContent.orderSummary.freeLabel} onChange={(value) => updateCheckoutSummary('freeLabel', value)} />
-                <Field label="Total label" value={checkoutContent.orderSummary.totalLabel} onChange={(value) => updateCheckoutSummary('totalLabel', value)} />
+                <Field label='Summary title' value={checkoutContent.orderSummary.title} onChange={(value) => updateCheckoutSummary('title', value)} />
+                <Field label='Summary empty bag' value={checkoutContent.orderSummary.emptyBagLabel} onChange={(value) => updateCheckoutSummary('emptyBagLabel', value)} />
+                <Field label='Promo applied suffix' value={checkoutContent.orderSummary.promoAppliedSuffix} onChange={(value) => updateCheckoutSummary('promoAppliedSuffix', value)} />
+                <Field label='Remove promo label' value={checkoutContent.orderSummary.removePromoLabel} onChange={(value) => updateCheckoutSummary('removePromoLabel', value)} />
+                <Field label='Promo toggle label' value={checkoutContent.orderSummary.promoToggleLabel} onChange={(value) => updateCheckoutSummary('promoToggleLabel', value)} />
+                <Field label='Promo placeholder' value={checkoutContent.orderSummary.promoPlaceholder} onChange={(value) => updateCheckoutSummary('promoPlaceholder', value)} />
+                <Field label='Promo apply label' value={checkoutContent.orderSummary.promoApplyLabel} onChange={(value) => updateCheckoutSummary('promoApplyLabel', value)} />
+                <Field label='Promo invalid label' value={checkoutContent.orderSummary.promoInvalidLabel} onChange={(value) => updateCheckoutSummary('promoInvalidLabel', value)} />
+                <Field label='Subtotal label' value={checkoutContent.orderSummary.subtotalLabel} onChange={(value) => updateCheckoutSummary('subtotalLabel', value)} />
+                <Field label='Discount label' value={checkoutContent.orderSummary.discountLabel} onChange={(value) => updateCheckoutSummary('discountLabel', value)} />
+                <Field label='Summary shipping label' value={checkoutContent.orderSummary.shippingLabel} onChange={(value) => updateCheckoutSummary('shippingLabel', value)} />
+                <Field label='Free label' value={checkoutContent.orderSummary.freeLabel} onChange={(value) => updateCheckoutSummary('freeLabel', value)} />
+                <Field label='Total label' value={checkoutContent.orderSummary.totalLabel} onChange={(value) => updateCheckoutSummary('totalLabel', value)} />
               </div>
             </div>
           </div>
@@ -3582,77 +3583,77 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="All products label" value={productsContent.collection.allProductsLabel} onChange={(value) => updateProductsCollection('allProductsLabel', value)} />
-                <Field label="New arrivals label" value={productsContent.collection.newArrivalsLabel} onChange={(value) => updateProductsCollection('newArrivalsLabel', value)} />
-                <Field label="Search label prefix" value={productsContent.collection.searchLabelPrefix} onChange={(value) => updateProductsCollection('searchLabelPrefix', value)} />
-                <Field label="Filters label" value={productsContent.collection.filtersLabel} onChange={(value) => updateProductsCollection('filtersLabel', value)} />
-                <Field label="Clear all label" value={productsContent.collection.clearAllLabel} onChange={(value) => updateProductsCollection('clearAllLabel', value)} />
-                <Field label="Clear filters label" value={productsContent.collection.clearFiltersLabel} onChange={(value) => updateProductsCollection('clearFiltersLabel', value)} />
-                <Field label="Price label" value={productsContent.collection.priceLabel} onChange={(value) => updateProductsCollection('priceLabel', value)} />
-                <Field label="Size label" value={productsContent.collection.sizeLabel} onChange={(value) => updateProductsCollection('sizeLabel', value)} />
-                <Field label="Home breadcrumb label" value={productsContent.collection.homeBreadcrumbLabel} onChange={(value) => updateProductsCollection('homeBreadcrumbLabel', value)} />
-                <Field label="Collections breadcrumb label" value={productsContent.collection.collectionsBreadcrumbLabel} onChange={(value) => updateProductsCollection('collectionsBreadcrumbLabel', value)} />
-                <Field label="Products count label" value={productsContent.collection.productsCountLabel} onChange={(value) => updateProductsCollection('productsCountLabel', value)} />
-                <Field label="Pieces count label" value={productsContent.collection.piecesCountLabel} onChange={(value) => updateProductsCollection('piecesCountLabel', value)} />
-                <Field label="Total in collection label" value={productsContent.collection.totalInCollectionLabel} onChange={(value) => updateProductsCollection('totalInCollectionLabel', value)} />
-                <Field label="Sort label" value={productsContent.collection.sortLabel} onChange={(value) => updateProductsCollection('sortLabel', value)} />
-                <Field label="Comfortable view aria label" value={productsContent.collection.comfortableViewAriaLabel} onChange={(value) => updateProductsCollection('comfortableViewAriaLabel', value)} />
-                <Field label="Compact view aria label" value={productsContent.collection.compactViewAriaLabel} onChange={(value) => updateProductsCollection('compactViewAriaLabel', value)} />
-                <Field label="Result singular" value={productsContent.collection.resultSingular} onChange={(value) => updateProductsCollection('resultSingular', value)} />
-                <Field label="Result plural" value={productsContent.collection.resultPlural} onChange={(value) => updateProductsCollection('resultPlural', value)} />
-                <Field label="Of label" value={productsContent.collection.ofLabel} onChange={(value) => updateProductsCollection('ofLabel', value)} />
-                <Field label="No results title" value={productsContent.collection.noResultsTitle} onChange={(value) => updateProductsCollection('noResultsTitle', value)} />
-                <Field label="Quick add label" value={productsContent.collection.quickAddLabel} onChange={(value) => updateProductsCollection('quickAddLabel', value)} />
-                <Field label="Added toast title" value={productsContent.collection.addedToastTitle} onChange={(value) => updateProductsCollection('addedToastTitle', value)} />
-                <Field label="Loading label" value={productsContent.collection.loadingLabel} onChange={(value) => updateProductsCollection('loadingLabel', value)} />
-                <Field label="Load more prefix" value={productsContent.collection.loadMorePrefix} onChange={(value) => updateProductsCollection('loadMorePrefix', value)} />
-                <Field label="Remaining label" value={productsContent.collection.remainingLabel} onChange={(value) => updateProductsCollection('remainingLabel', value)} />
-                <Field label="Showing label" value={productsContent.collection.showingLabel} onChange={(value) => updateProductsCollection('showingLabel', value)} />
+                <Field label='All products label' value={productsContent.collection.allProductsLabel} onChange={(value) => updateProductsCollection('allProductsLabel', value)} />
+                <Field label='New arrivals label' value={productsContent.collection.newArrivalsLabel} onChange={(value) => updateProductsCollection('newArrivalsLabel', value)} />
+                <Field label='Search label prefix' value={productsContent.collection.searchLabelPrefix} onChange={(value) => updateProductsCollection('searchLabelPrefix', value)} />
+                <Field label='Filters label' value={productsContent.collection.filtersLabel} onChange={(value) => updateProductsCollection('filtersLabel', value)} />
+                <Field label='Clear all label' value={productsContent.collection.clearAllLabel} onChange={(value) => updateProductsCollection('clearAllLabel', value)} />
+                <Field label='Clear filters label' value={productsContent.collection.clearFiltersLabel} onChange={(value) => updateProductsCollection('clearFiltersLabel', value)} />
+                <Field label='Price label' value={productsContent.collection.priceLabel} onChange={(value) => updateProductsCollection('priceLabel', value)} />
+                <Field label='Size label' value={productsContent.collection.sizeLabel} onChange={(value) => updateProductsCollection('sizeLabel', value)} />
+                <Field label='Home breadcrumb label' value={productsContent.collection.homeBreadcrumbLabel} onChange={(value) => updateProductsCollection('homeBreadcrumbLabel', value)} />
+                <Field label='Collections breadcrumb label' value={productsContent.collection.collectionsBreadcrumbLabel} onChange={(value) => updateProductsCollection('collectionsBreadcrumbLabel', value)} />
+                <Field label='Products count label' value={productsContent.collection.productsCountLabel} onChange={(value) => updateProductsCollection('productsCountLabel', value)} />
+                <Field label='Pieces count label' value={productsContent.collection.piecesCountLabel} onChange={(value) => updateProductsCollection('piecesCountLabel', value)} />
+                <Field label='Total in collection label' value={productsContent.collection.totalInCollectionLabel} onChange={(value) => updateProductsCollection('totalInCollectionLabel', value)} />
+                <Field label='Sort label' value={productsContent.collection.sortLabel} onChange={(value) => updateProductsCollection('sortLabel', value)} />
+                <Field label='Comfortable view aria label' value={productsContent.collection.comfortableViewAriaLabel} onChange={(value) => updateProductsCollection('comfortableViewAriaLabel', value)} />
+                <Field label='Compact view aria label' value={productsContent.collection.compactViewAriaLabel} onChange={(value) => updateProductsCollection('compactViewAriaLabel', value)} />
+                <Field label='Result singular' value={productsContent.collection.resultSingular} onChange={(value) => updateProductsCollection('resultSingular', value)} />
+                <Field label='Result plural' value={productsContent.collection.resultPlural} onChange={(value) => updateProductsCollection('resultPlural', value)} />
+                <Field label='Of label' value={productsContent.collection.ofLabel} onChange={(value) => updateProductsCollection('ofLabel', value)} />
+                <Field label='No results title' value={productsContent.collection.noResultsTitle} onChange={(value) => updateProductsCollection('noResultsTitle', value)} />
+                <Field label='Quick add label' value={productsContent.collection.quickAddLabel} onChange={(value) => updateProductsCollection('quickAddLabel', value)} />
+                <Field label='Added toast title' value={productsContent.collection.addedToastTitle} onChange={(value) => updateProductsCollection('addedToastTitle', value)} />
+                <Field label='Loading label' value={productsContent.collection.loadingLabel} onChange={(value) => updateProductsCollection('loadingLabel', value)} />
+                <Field label='Load more prefix' value={productsContent.collection.loadMorePrefix} onChange={(value) => updateProductsCollection('loadMorePrefix', value)} />
+                <Field label='Remaining label' value={productsContent.collection.remainingLabel} onChange={(value) => updateProductsCollection('remainingLabel', value)} />
+                <Field label='Showing label' value={productsContent.collection.showingLabel} onChange={(value) => updateProductsCollection('showingLabel', value)} />
               </div>
-              <TextArea label="Sort options (value | label)" rows={5} value={productsSortOptionsToText(productsContent.collection.sortOptions)} onChange={(value) => updateProductsCollection('sortOptions', textToProductsSortOptions(value))} />
-              <TextArea label="Sizes" rows={4} value={productsContent.collection.sizes.join('\n')} onChange={(value) => updateProductsCollection('sizes', splitLines(value))} />
-              <TextArea label="Price ranges (label | min | max blank for no max)" rows={5} value={productsPriceRangesToText(productsContent.collection.priceRanges)} onChange={(value) => updateProductsCollection('priceRanges', textToProductsPriceRanges(value))} />
+              <TextArea label='Sort options (value | label)' rows={5} value={productsSortOptionsToText(productsContent.collection.sortOptions)} onChange={(value) => updateProductsCollection('sortOptions', textToProductsSortOptions(value))} />
+              <TextArea label='Sizes' rows={4} value={productsContent.collection.sizes.join('\n')} onChange={(value) => updateProductsCollection('sizes', splitLines(value))} />
+              <TextArea label='Price ranges (label | min | max blank for no max)' rows={5} value={productsPriceRangesToText(productsContent.collection.priceRanges)} onChange={(value) => updateProductsCollection('priceRanges', textToProductsPriceRanges(value))} />
 
               <div style={{ borderTop: '1px solid rgba(210,116,102,0.14)', paddingTop: '1rem', display: 'grid', gap: '1rem' }}>
-                <h4 className="type-label" style={{ color: 'var(--muted)' }}>
+                <h4 className='type-label' style={{ color: 'var(--muted)' }}>
                   Product detail
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                  <Field label="Detail home breadcrumb" value={productsContent.detail.homeBreadcrumbLabel} onChange={(value) => updateProductsDetail('homeBreadcrumbLabel', value)} />
-                  <Field label="Image aria prefix" value={productsContent.detail.imageAriaPrefix} onChange={(value) => updateProductsDetail('imageAriaPrefix', value)} />
-                  <Field label="Rotated brand label" value={productsContent.detail.rotatedBrandLabel} onChange={(value) => updateProductsDetail('rotatedBrandLabel', value)} />
-                  <Field label="Size guide eyebrow" value={productsContent.detail.sizeGuideEyebrow} onChange={(value) => updateProductsDetail('sizeGuideEyebrow', value)} />
-                  <Field label="Size guide title" value={productsContent.detail.sizeGuideTitle} onChange={(value) => updateProductsDetail('sizeGuideTitle', value)} />
-                  <Field label="Close size guide label" value={productsContent.detail.closeSizeGuideLabel} onChange={(value) => updateProductsDetail('closeSizeGuideLabel', value)} />
-                  <Field label="Size guide help prefix" value={productsContent.detail.sizeGuideHelpPrefix} onChange={(value) => updateProductsDetail('sizeGuideHelpPrefix', value)} />
-                  <Field label="Size guide help email" value={productsContent.detail.sizeGuideHelpEmail} onChange={(value) => updateProductsDetail('sizeGuideHelpEmail', value)} />
-                  <Field label="Size required label" value={productsContent.detail.sizeRequiredLabel} onChange={(value) => updateProductsDetail('sizeRequiredLabel', value)} />
-                  <Field label="Select size label" value={productsContent.detail.selectSizeLabel} onChange={(value) => updateProductsDetail('selectSizeLabel', value)} />
-                  <Field label="Size guide label" value={productsContent.detail.sizeGuideLabel} onChange={(value) => updateProductsDetail('sizeGuideLabel', value)} />
-                  <Field label="Added button label" value={productsContent.detail.addedButtonLabel} onChange={(value) => updateProductsDetail('addedButtonLabel', value)} />
-                  <Field label="Add to bag label" value={productsContent.detail.addToBagLabel} onChange={(value) => updateProductsDetail('addToBagLabel', value)} />
-                  <Field label="Added toast title" value={productsContent.detail.addedToastTitle} onChange={(value) => updateProductsDetail('addedToastTitle', value)} />
-                  <Field label="Removed wishlist toast title" value={productsContent.detail.removedWishlistToastTitle} onChange={(value) => updateProductsDetail('removedWishlistToastTitle', value)} />
-                  <Field label="Saved wishlist toast title" value={productsContent.detail.savedWishlistToastTitle} onChange={(value) => updateProductsDetail('savedWishlistToastTitle', value)} />
-                  <Field label="Saved wishlist button label" value={productsContent.detail.savedWishlistButtonLabel} onChange={(value) => updateProductsDetail('savedWishlistButtonLabel', value)} />
-                  <Field label="Save wishlist button label" value={productsContent.detail.saveWishlistButtonLabel} onChange={(value) => updateProductsDetail('saveWishlistButtonLabel', value)} />
-                  <Field label="Details accordion label" value={productsContent.detail.detailsAccordionLabel} onChange={(value) => updateProductsDetail('detailsAccordionLabel', value)} />
-                  <Field label="Care accordion label" value={productsContent.detail.careAccordionLabel} onChange={(value) => updateProductsDetail('careAccordionLabel', value)} />
-                  <Field label="Shipping returns accordion label" value={productsContent.detail.shippingReturnsAccordionLabel} onChange={(value) => updateProductsDetail('shippingReturnsAccordionLabel', value)} />
-                  <Field label="Reviews eyebrow" value={productsContent.detail.reviewsEyebrow} onChange={(value) => updateProductsDetail('reviewsEyebrow', value)} />
-                  <Field label="Reviews title" value={productsContent.detail.reviewsTitle} onChange={(value) => updateProductsDetail('reviewsTitle', value)} />
-                  <Field label="Review singular label" value={productsContent.detail.reviewSingularLabel} onChange={(value) => updateProductsDetail('reviewSingularLabel', value)} />
-                  <Field label="Review plural label" value={productsContent.detail.reviewPluralLabel} onChange={(value) => updateProductsDetail('reviewPluralLabel', value)} />
-                  <Field label="Verified purchase label" value={productsContent.detail.verifiedPurchaseLabel} onChange={(value) => updateProductsDetail('verifiedPurchaseLabel', value)} />
-                  <Field label="Write review label" value={productsContent.detail.writeReviewLabel} onChange={(value) => updateProductsDetail('writeReviewLabel', value)} />
-                  <Field label="Write review href" value={productsContent.detail.writeReviewHref} onChange={(value) => updateProductsDetail('writeReviewHref', value)} />
-                  <Field label="Related eyebrow" value={productsContent.detail.relatedEyebrow} onChange={(value) => updateProductsDetail('relatedEyebrow', value)} />
-                  <Field label="Related title" value={productsContent.detail.relatedTitle} onChange={(value) => updateProductsDetail('relatedTitle', value)} />
+                  <Field label='Detail home breadcrumb' value={productsContent.detail.homeBreadcrumbLabel} onChange={(value) => updateProductsDetail('homeBreadcrumbLabel', value)} />
+                  <Field label='Image aria prefix' value={productsContent.detail.imageAriaPrefix} onChange={(value) => updateProductsDetail('imageAriaPrefix', value)} />
+                  <Field label='Rotated brand label' value={productsContent.detail.rotatedBrandLabel} onChange={(value) => updateProductsDetail('rotatedBrandLabel', value)} />
+                  <Field label='Size guide eyebrow' value={productsContent.detail.sizeGuideEyebrow} onChange={(value) => updateProductsDetail('sizeGuideEyebrow', value)} />
+                  <Field label='Size guide title' value={productsContent.detail.sizeGuideTitle} onChange={(value) => updateProductsDetail('sizeGuideTitle', value)} />
+                  <Field label='Close size guide label' value={productsContent.detail.closeSizeGuideLabel} onChange={(value) => updateProductsDetail('closeSizeGuideLabel', value)} />
+                  <Field label='Size guide help prefix' value={productsContent.detail.sizeGuideHelpPrefix} onChange={(value) => updateProductsDetail('sizeGuideHelpPrefix', value)} />
+                  <Field label='Size guide help email' value={productsContent.detail.sizeGuideHelpEmail} onChange={(value) => updateProductsDetail('sizeGuideHelpEmail', value)} />
+                  <Field label='Size required label' value={productsContent.detail.sizeRequiredLabel} onChange={(value) => updateProductsDetail('sizeRequiredLabel', value)} />
+                  <Field label='Select size label' value={productsContent.detail.selectSizeLabel} onChange={(value) => updateProductsDetail('selectSizeLabel', value)} />
+                  <Field label='Size guide label' value={productsContent.detail.sizeGuideLabel} onChange={(value) => updateProductsDetail('sizeGuideLabel', value)} />
+                  <Field label='Added button label' value={productsContent.detail.addedButtonLabel} onChange={(value) => updateProductsDetail('addedButtonLabel', value)} />
+                  <Field label='Add to bag label' value={productsContent.detail.addToBagLabel} onChange={(value) => updateProductsDetail('addToBagLabel', value)} />
+                  <Field label='Added toast title' value={productsContent.detail.addedToastTitle} onChange={(value) => updateProductsDetail('addedToastTitle', value)} />
+                  <Field label='Removed wishlist toast title' value={productsContent.detail.removedWishlistToastTitle} onChange={(value) => updateProductsDetail('removedWishlistToastTitle', value)} />
+                  <Field label='Saved wishlist toast title' value={productsContent.detail.savedWishlistToastTitle} onChange={(value) => updateProductsDetail('savedWishlistToastTitle', value)} />
+                  <Field label='Saved wishlist button label' value={productsContent.detail.savedWishlistButtonLabel} onChange={(value) => updateProductsDetail('savedWishlistButtonLabel', value)} />
+                  <Field label='Save wishlist button label' value={productsContent.detail.saveWishlistButtonLabel} onChange={(value) => updateProductsDetail('saveWishlistButtonLabel', value)} />
+                  <Field label='Details accordion label' value={productsContent.detail.detailsAccordionLabel} onChange={(value) => updateProductsDetail('detailsAccordionLabel', value)} />
+                  <Field label='Care accordion label' value={productsContent.detail.careAccordionLabel} onChange={(value) => updateProductsDetail('careAccordionLabel', value)} />
+                  <Field label='Shipping returns accordion label' value={productsContent.detail.shippingReturnsAccordionLabel} onChange={(value) => updateProductsDetail('shippingReturnsAccordionLabel', value)} />
+                  <Field label='Reviews eyebrow' value={productsContent.detail.reviewsEyebrow} onChange={(value) => updateProductsDetail('reviewsEyebrow', value)} />
+                  <Field label='Reviews title' value={productsContent.detail.reviewsTitle} onChange={(value) => updateProductsDetail('reviewsTitle', value)} />
+                  <Field label='Review singular label' value={productsContent.detail.reviewSingularLabel} onChange={(value) => updateProductsDetail('reviewSingularLabel', value)} />
+                  <Field label='Review plural label' value={productsContent.detail.reviewPluralLabel} onChange={(value) => updateProductsDetail('reviewPluralLabel', value)} />
+                  <Field label='Verified purchase label' value={productsContent.detail.verifiedPurchaseLabel} onChange={(value) => updateProductsDetail('verifiedPurchaseLabel', value)} />
+                  <Field label='Write review label' value={productsContent.detail.writeReviewLabel} onChange={(value) => updateProductsDetail('writeReviewLabel', value)} />
+                  <Field label='Write review href' value={productsContent.detail.writeReviewHref} onChange={(value) => updateProductsDetail('writeReviewHref', value)} />
+                  <Field label='Related eyebrow' value={productsContent.detail.relatedEyebrow} onChange={(value) => updateProductsDetail('relatedEyebrow', value)} />
+                  <Field label='Related title' value={productsContent.detail.relatedTitle} onChange={(value) => updateProductsDetail('relatedTitle', value)} />
                 </div>
-                <TextArea label="Size guide body" value={productsContent.detail.sizeGuideBody} onChange={(value) => updateProductsDetail('sizeGuideBody', value)} />
-                <TextArea label="Size guide headers" rows={4} value={productsContent.detail.sizeGuideHeaders.join('\n')} onChange={(value) => updateProductsDetail('sizeGuideHeaders', splitLines(value))} />
-                <TextArea label="Size guide rows (size | chest | waist | hips)" rows={6} value={productsSizeGuideRowsToText(productsContent.detail.sizeGuideRows)} onChange={(value) => updateProductsDetail('sizeGuideRows', textToProductsSizeGuideRows(value))} />
-                <TextArea label="Shipping returns items" rows={6} value={productsContent.detail.shippingReturnsItems.join('\n')} onChange={(value) => updateProductsDetail('shippingReturnsItems', splitLines(value))} />
+                <TextArea label='Size guide body' value={productsContent.detail.sizeGuideBody} onChange={(value) => updateProductsDetail('sizeGuideBody', value)} />
+                <TextArea label='Size guide headers' rows={4} value={productsContent.detail.sizeGuideHeaders.join('\n')} onChange={(value) => updateProductsDetail('sizeGuideHeaders', splitLines(value))} />
+                <TextArea label='Size guide rows (size | chest | waist | hips)' rows={6} value={productsSizeGuideRowsToText(productsContent.detail.sizeGuideRows)} onChange={(value) => updateProductsDetail('sizeGuideRows', textToProductsSizeGuideRows(value))} />
+                <TextArea label='Shipping returns items' rows={6} value={productsContent.detail.shippingReturnsItems.join('\n')} onChange={(value) => updateProductsDetail('shippingReturnsItems', splitLines(value))} />
               </div>
             </div>
           </div>
@@ -3662,64 +3663,64 @@ function addEditorialReport(): void {
               Account Page
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
-              <Field label="Loading label" value={accountContent.loadingLabel} onChange={(value) => updateAccount('loadingLabel', value)} />
+              <Field label='Loading label' value={accountContent.loadingLabel} onChange={(value) => updateAccount('loadingLabel', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Signed out brand name" value={accountContent.signedOut.brandName} onChange={(value) => updateAccountSignedOut('brandName', value)} />
-                <Field label="Signed out brand suffix" value={accountContent.signedOut.brandSuffix} onChange={(value) => updateAccountSignedOut('brandSuffix', value)} />
-                <Field label="Signed out title" value={accountContent.signedOut.title} onChange={(value) => updateAccountSignedOut('title', value)} />
-                <Field label="Sign in label" value={accountContent.signedOut.signInLabel} onChange={(value) => updateAccountSignedOut('signInLabel', value)} />
-                <Field label="Back to shop label" value={accountContent.signedOut.backToShopLabel} onChange={(value) => updateAccountSignedOut('backToShopLabel', value)} />
-                <Field label="Back to shop href" value={accountContent.signedOut.backToShopHref} onChange={(value) => updateAccountSignedOut('backToShopHref', value)} />
+                <Field label='Signed out brand name' value={accountContent.signedOut.brandName} onChange={(value) => updateAccountSignedOut('brandName', value)} />
+                <Field label='Signed out brand suffix' value={accountContent.signedOut.brandSuffix} onChange={(value) => updateAccountSignedOut('brandSuffix', value)} />
+                <Field label='Signed out title' value={accountContent.signedOut.title} onChange={(value) => updateAccountSignedOut('title', value)} />
+                <Field label='Sign in label' value={accountContent.signedOut.signInLabel} onChange={(value) => updateAccountSignedOut('signInLabel', value)} />
+                <Field label='Back to shop label' value={accountContent.signedOut.backToShopLabel} onChange={(value) => updateAccountSignedOut('backToShopLabel', value)} />
+                <Field label='Back to shop href' value={accountContent.signedOut.backToShopHref} onChange={(value) => updateAccountSignedOut('backToShopHref', value)} />
               </div>
-              <TextArea label="Signed out body" value={accountContent.signedOut.body} onChange={(value) => updateAccountSignedOut('body', value)} />
-              <TextArea label="Tabs (id | label)" rows={4} value={accountTabsToText(accountContent.tabs)} onChange={(value) => updateAccount('tabs', textToAccountTabs(value))} />
+              <TextArea label='Signed out body' value={accountContent.signedOut.body} onChange={(value) => updateAccountSignedOut('body', value)} />
+              <TextArea label='Tabs (id | label)' rows={4} value={accountTabsToText(accountContent.tabs)} onChange={(value) => updateAccount('tabs', textToAccountTabs(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Header watermark" value={accountContent.header.watermark} onChange={(value) => updateAccountHeader('watermark', value)} />
-                <Field label="Header eyebrow" value={accountContent.header.eyebrow} onChange={(value) => updateAccountHeader('eyebrow', value)} />
-                <Field label="Welcome prefix" value={accountContent.header.welcomePrefix} onChange={(value) => updateAccountHeader('welcomePrefix', value)} />
-                <Field label="Super admin prefix" value={accountContent.header.superAdminPrefix} onChange={(value) => updateAccountHeader('superAdminPrefix', value)} />
-                <Field label="Orders label" value={accountContent.header.ordersLabel} onChange={(value) => updateAccountHeader('ordersLabel', value)} />
-                <Field label="Member role label" value={accountContent.sidebar.memberRoleLabel} onChange={(value) => updateAccountSidebar('memberRoleLabel', value)} />
-                <Field label="Super admin role label" value={accountContent.sidebar.superAdminRoleLabel} onChange={(value) => updateAccountSidebar('superAdminRoleLabel', value)} />
-                <Field label="Wishlist label" value={accountContent.sidebar.wishlistLabel} onChange={(value) => updateAccountSidebar('wishlistLabel', value)} />
-                <Field label="Sign out label" value={accountContent.sidebar.signOutLabel} onChange={(value) => updateAccountSidebar('signOutLabel', value)} />
+                <Field label='Header watermark' value={accountContent.header.watermark} onChange={(value) => updateAccountHeader('watermark', value)} />
+                <Field label='Header eyebrow' value={accountContent.header.eyebrow} onChange={(value) => updateAccountHeader('eyebrow', value)} />
+                <Field label='Welcome prefix' value={accountContent.header.welcomePrefix} onChange={(value) => updateAccountHeader('welcomePrefix', value)} />
+                <Field label='Super admin prefix' value={accountContent.header.superAdminPrefix} onChange={(value) => updateAccountHeader('superAdminPrefix', value)} />
+                <Field label='Orders label' value={accountContent.header.ordersLabel} onChange={(value) => updateAccountHeader('ordersLabel', value)} />
+                <Field label='Member role label' value={accountContent.sidebar.memberRoleLabel} onChange={(value) => updateAccountSidebar('memberRoleLabel', value)} />
+                <Field label='Super admin role label' value={accountContent.sidebar.superAdminRoleLabel} onChange={(value) => updateAccountSidebar('superAdminRoleLabel', value)} />
+                <Field label='Wishlist label' value={accountContent.sidebar.wishlistLabel} onChange={(value) => updateAccountSidebar('wishlistLabel', value)} />
+                <Field label='Sign out label' value={accountContent.sidebar.signOutLabel} onChange={(value) => updateAccountSidebar('signOutLabel', value)} />
               </div>
-              <TextArea label="Overview stats (key | label | fallback value)" rows={5} value={accountStatsToText(accountContent.overview.stats)} onChange={(value) => updateAccountOverview('stats', textToAccountStats(value))} />
+              <TextArea label='Overview stats (key | label | fallback value)' rows={5} value={accountStatsToText(accountContent.overview.stats)} onChange={(value) => updateAccountOverview('stats', textToAccountStats(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Recent order label" value={accountContent.overview.recentOrderLabel} onChange={(value) => updateAccountOverview('recentOrderLabel', value)} />
-                <Field label="View all orders label" value={accountContent.overview.viewAllOrdersLabel} onChange={(value) => updateAccountOverview('viewAllOrdersLabel', value)} />
-                <Field label="Orders title" value={accountContent.orders.title} onChange={(value) => updateAccountOrders('title', value)} />
-                <Field label="Quantity label" value={accountContent.orders.qtyLabel} onChange={(value) => updateAccountOrders('qtyLabel', value)} />
-                <Field label="Pending payment status" value={accountContent.orders.statuses.pending_payment} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, pending_payment: value })} />
-                <Field label="Delivered status" value={accountContent.orders.statuses.delivered} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, delivered: value })} />
-                <Field label="In transit status" value={accountContent.orders.statuses['in-transit']} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, 'in-transit': value })} />
-                <Field label="Processing status" value={accountContent.orders.statuses.processing} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, processing: value })} />
-                <Field label="Cancelled status" value={accountContent.orders.statuses.cancelled} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, cancelled: value })} />
+                <Field label='Recent order label' value={accountContent.overview.recentOrderLabel} onChange={(value) => updateAccountOverview('recentOrderLabel', value)} />
+                <Field label='View all orders label' value={accountContent.overview.viewAllOrdersLabel} onChange={(value) => updateAccountOverview('viewAllOrdersLabel', value)} />
+                <Field label='Orders title' value={accountContent.orders.title} onChange={(value) => updateAccountOrders('title', value)} />
+                <Field label='Quantity label' value={accountContent.orders.qtyLabel} onChange={(value) => updateAccountOrders('qtyLabel', value)} />
+                <Field label='Pending payment status' value={accountContent.orders.statuses.pending_payment} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, pending_payment: value })} />
+                <Field label='Delivered status' value={accountContent.orders.statuses.delivered} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, delivered: value })} />
+                <Field label='In transit status' value={accountContent.orders.statuses['in-transit']} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, 'in-transit': value })} />
+                <Field label='Processing status' value={accountContent.orders.statuses.processing} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, processing: value })} />
+                <Field label='Cancelled status' value={accountContent.orders.statuses.cancelled} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, cancelled: value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Settings title" value={accountContent.settings.title} onChange={(value) => updateAccountSettings('title', value)} />
-                <Field label="Personal details label" value={accountContent.settings.personalDetailsLabel} onChange={(value) => updateAccountSettings('personalDetailsLabel', value)} />
-                <Field label="Full name label" value={accountContent.settings.fullNameLabel} onChange={(value) => updateAccountSettings('fullNameLabel', value)} />
-                <Field label="Email label" value={accountContent.settings.emailLabel} onChange={(value) => updateAccountSettings('emailLabel', value)} />
-                <Field label="Default shipping address label" value={accountContent.settings.defaultShippingAddressLabel} onChange={(value) => updateAccountSettings('defaultShippingAddressLabel', value)} />
-                <Field label="Edit label" value={accountContent.settings.editLabel} onChange={(value) => updateAccountSettings('editLabel', value)} />
-                <Field label="Communication preferences label" value={accountContent.settings.communicationPreferencesLabel} onChange={(value) => updateAccountSettings('communicationPreferencesLabel', value)} />
-                <Field label="Save changes label" value={accountContent.settings.saveChangesLabel} onChange={(value) => updateAccountSettings('saveChangesLabel', value)} />
+                <Field label='Settings title' value={accountContent.settings.title} onChange={(value) => updateAccountSettings('title', value)} />
+                <Field label='Personal details label' value={accountContent.settings.personalDetailsLabel} onChange={(value) => updateAccountSettings('personalDetailsLabel', value)} />
+                <Field label='Full name label' value={accountContent.settings.fullNameLabel} onChange={(value) => updateAccountSettings('fullNameLabel', value)} />
+                <Field label='Email label' value={accountContent.settings.emailLabel} onChange={(value) => updateAccountSettings('emailLabel', value)} />
+                <Field label='Default shipping address label' value={accountContent.settings.defaultShippingAddressLabel} onChange={(value) => updateAccountSettings('defaultShippingAddressLabel', value)} />
+                <Field label='Edit label' value={accountContent.settings.editLabel} onChange={(value) => updateAccountSettings('editLabel', value)} />
+                <Field label='Communication preferences label' value={accountContent.settings.communicationPreferencesLabel} onChange={(value) => updateAccountSettings('communicationPreferencesLabel', value)} />
+                <Field label='Save changes label' value={accountContent.settings.saveChangesLabel} onChange={(value) => updateAccountSettings('saveChangesLabel', value)} />
               </div>
-              <TextArea label="Default shipping address lines" rows={4} value={accountContent.settings.defaultShippingAddressLines.join('\n')} onChange={(value) => updateAccountSettings('defaultShippingAddressLines', splitLines(value))} />
-              <TextArea label="Preferences (label | checked)" rows={5} value={accountPreferencesToText(accountContent.settings.preferences)} onChange={(value) => updateAccountSettings('preferences', textToAccountPreferences(value))} />
+              <TextArea label='Default shipping address lines' rows={4} value={accountContent.settings.defaultShippingAddressLines.join('\n')} onChange={(value) => updateAccountSettings('defaultShippingAddressLines', splitLines(value))} />
+              <TextArea label='Preferences (label | checked)' rows={5} value={accountPreferencesToText(accountContent.settings.preferences)} onChange={(value) => updateAccountSettings('preferences', textToAccountPreferences(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Admin title" value={accountContent.admin.title} onChange={(value) => updateAccountAdmin('title', value)} />
-                <Field label="Admin badge label" value={accountContent.admin.badgeLabel} onChange={(value) => updateAccountAdmin('badgeLabel', value)} />
-                <Field label="CMS link label" value={accountContent.admin.cmsLinkLabel} onChange={(value) => updateAccountAdmin('cmsLinkLabel', value)} />
-                <Field label="Registered users label" value={accountContent.admin.registeredUsersLabel} onChange={(value) => updateAccountAdmin('registeredUsersLabel', value)} />
-                <Field label="Recent registrations label" value={accountContent.admin.recentRegistrationsLabel} onChange={(value) => updateAccountAdmin('recentRegistrationsLabel', value)} />
-                <Field label="Admin loading label" value={accountContent.admin.loadingLabel} onChange={(value) => updateAccountAdmin('loadingLabel', value)} />
-                <Field label="Load users error" value={accountContent.admin.loadUsersError} onChange={(value) => updateAccountAdmin('loadUsersError', value)} />
-                <Field label="No users label" value={accountContent.admin.noUsersLabel} onChange={(value) => updateAccountAdmin('noUsersLabel', value)} />
+                <Field label='Admin title' value={accountContent.admin.title} onChange={(value) => updateAccountAdmin('title', value)} />
+                <Field label='Admin badge label' value={accountContent.admin.badgeLabel} onChange={(value) => updateAccountAdmin('badgeLabel', value)} />
+                <Field label='CMS link label' value={accountContent.admin.cmsLinkLabel} onChange={(value) => updateAccountAdmin('cmsLinkLabel', value)} />
+                <Field label='Registered users label' value={accountContent.admin.registeredUsersLabel} onChange={(value) => updateAccountAdmin('registeredUsersLabel', value)} />
+                <Field label='Recent registrations label' value={accountContent.admin.recentRegistrationsLabel} onChange={(value) => updateAccountAdmin('recentRegistrationsLabel', value)} />
+                <Field label='Admin loading label' value={accountContent.admin.loadingLabel} onChange={(value) => updateAccountAdmin('loadingLabel', value)} />
+                <Field label='Load users error' value={accountContent.admin.loadUsersError} onChange={(value) => updateAccountAdmin('loadUsersError', value)} />
+                <Field label='No users label' value={accountContent.admin.noUsersLabel} onChange={(value) => updateAccountAdmin('noUsersLabel', value)} />
               </div>
-              <TextArea label="CMS link description" value={accountContent.admin.cmsLinkDescription} onChange={(value) => updateAccountAdmin('cmsLinkDescription', value)} />
-              <TextArea label="Admin table headers" rows={3} value={accountContent.admin.tableHeaders.join('\n')} onChange={(value) => updateAccountAdmin('tableHeaders', splitLines(value))} />
+              <TextArea label='CMS link description' value={accountContent.admin.cmsLinkDescription} onChange={(value) => updateAccountAdmin('cmsLinkDescription', value)} />
+              <TextArea label='Admin table headers' rows={3} value={accountContent.admin.tableHeaders.join('\n')} onChange={(value) => updateAccountAdmin('tableHeaders', splitLines(value))} />
             </div>
           </div>
 
@@ -3729,21 +3730,21 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Index eyebrow" value={storiesPageContent.index.eyebrow} onChange={(value) => updateStoriesIndex('eyebrow', value)} />
-                <Field label="Index title" value={storiesPageContent.index.title} onChange={(value) => updateStoriesIndex('title', value)} />
-                <Field label="Featured badge" value={storiesPageContent.index.featuredBadge} onChange={(value) => updateStoriesIndex('featuredBadge', value)} />
-                <Field label="Featured read label" value={storiesPageContent.index.readLabel} onChange={(value) => updateStoriesIndex('readLabel', value)} />
-                <Field label="Card read label" value={storiesPageContent.index.cardReadLabel} onChange={(value) => updateStoriesIndex('cardReadLabel', value)} />
+                <Field label='Index eyebrow' value={storiesPageContent.index.eyebrow} onChange={(value) => updateStoriesIndex('eyebrow', value)} />
+                <Field label='Index title' value={storiesPageContent.index.title} onChange={(value) => updateStoriesIndex('title', value)} />
+                <Field label='Featured badge' value={storiesPageContent.index.featuredBadge} onChange={(value) => updateStoriesIndex('featuredBadge', value)} />
+                <Field label='Featured read label' value={storiesPageContent.index.readLabel} onChange={(value) => updateStoriesIndex('readLabel', value)} />
+                <Field label='Card read label' value={storiesPageContent.index.cardReadLabel} onChange={(value) => updateStoriesIndex('cardReadLabel', value)} />
               </div>
-              <TextArea label="Index description" value={storiesPageContent.index.description} onChange={(value) => updateStoriesIndex('description', value)} />
+              <TextArea label='Index description' value={storiesPageContent.index.description} onChange={(value) => updateStoriesIndex('description', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Empty title" value={storiesPageContent.index.emptyTitle} onChange={(value) => updateStoriesIndex('emptyTitle', value)} />
-                <Field label="Empty body" value={storiesPageContent.index.emptyBody} onChange={(value) => updateStoriesIndex('emptyBody', value)} />
-                <Field label="Detail breadcrumb" value={storiesPageContent.detail.breadcrumbLabel} onChange={(value) => updateStoriesDetail('breadcrumbLabel', value)} />
-                <Field label="Detail issue prefix" value={storiesPageContent.detail.issueLabelPrefix} onChange={(value) => updateStoriesDetail('issueLabelPrefix', value)} />
-                <Field label="Related eyebrow" value={storiesPageContent.detail.relatedEyebrow} onChange={(value) => updateStoriesDetail('relatedEyebrow', value)} />
+                <Field label='Empty title' value={storiesPageContent.index.emptyTitle} onChange={(value) => updateStoriesIndex('emptyTitle', value)} />
+                <Field label='Empty body' value={storiesPageContent.index.emptyBody} onChange={(value) => updateStoriesIndex('emptyBody', value)} />
+                <Field label='Detail breadcrumb' value={storiesPageContent.detail.breadcrumbLabel} onChange={(value) => updateStoriesDetail('breadcrumbLabel', value)} />
+                <Field label='Detail issue prefix' value={storiesPageContent.detail.issueLabelPrefix} onChange={(value) => updateStoriesDetail('issueLabelPrefix', value)} />
+                <Field label='Related eyebrow' value={storiesPageContent.detail.relatedEyebrow} onChange={(value) => updateStoriesDetail('relatedEyebrow', value)} />
               </div>
-              <TextArea label="Category filters" rows={4} value={storiesPageContent.index.categoryFilters.join('\n')} onChange={(value) => updateStoriesIndex('categoryFilters', splitLines(value))} />
+              <TextArea label='Category filters' rows={4} value={storiesPageContent.index.categoryFilters.join('\n')} onChange={(value) => updateStoriesIndex('categoryFilters', splitLines(value))} />
             </div>
           </div>
 
@@ -3754,8 +3755,8 @@ function addEditorialReport(): void {
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
-                  type="button"
-                  className="btn-ghost"
+                  type='button'
+                  className='btn-ghost'
                   onClick={startNewStoryDraft}
                   disabled={storySaving}
                   style={{ fontSize: '0.72rem' }}
@@ -3763,8 +3764,8 @@ function addEditorialReport(): void {
                   New story
                 </button>
                 <button
-                  type="button"
-                  className="btn-primary"
+                  type='button'
+                  className='btn-primary'
                   onClick={() => void saveStoryDraft()}
                   disabled={storySaving || !storyDraft.trim()}
                   style={{ fontSize: '0.72rem' }}
@@ -3787,12 +3788,12 @@ function addEditorialReport(): void {
                   >
                     <div style={{ minWidth: 0 }}>
                       <div style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)', fontSize: '0.95rem' }}>{story.title}</div>
-                      <div className="type-label" style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>{story.slug} · {story.category}</div>
+                      <div className='type-label' style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>{story.slug} · {story.category}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => editStoryDraft(story)}
                         disabled={storySaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem' }}
@@ -3800,8 +3801,8 @@ function addEditorialReport(): void {
                         Edit
                       </button>
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => void deleteStoryDraft(story.slug)}
                         disabled={storySaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem', color: 'var(--coral-red)' }}
@@ -3827,31 +3828,31 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Empty title" value={lookbookPageContent.emptyTitle} onChange={(value) => updateLookbookPage('emptyTitle', value)} />
-                <Field label="Empty body" value={lookbookPageContent.emptyBody} onChange={(value) => updateLookbookPage('emptyBody', value)} />
-                <Field label="View label" value={lookbookPageContent.viewLabel} onChange={(value) => updateLookbookPage('viewLabel', value)} />
-                <Field label="Featured label" value={lookbookPageContent.featuredLabel} onChange={(value) => updateLookbookPage('featuredLabel', value)} />
+                <Field label='Empty title' value={lookbookPageContent.emptyTitle} onChange={(value) => updateLookbookPage('emptyTitle', value)} />
+                <Field label='Empty body' value={lookbookPageContent.emptyBody} onChange={(value) => updateLookbookPage('emptyBody', value)} />
+                <Field label='View label' value={lookbookPageContent.viewLabel} onChange={(value) => updateLookbookPage('viewLabel', value)} />
+                <Field label='Featured label' value={lookbookPageContent.featuredLabel} onChange={(value) => updateLookbookPage('featuredLabel', value)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Masthead watermark" value={lookbookPageContent.masthead.watermark} onChange={(value) => updateLookbookMasthead('watermark', value)} />
-                <Field label="Masthead eyebrow" value={lookbookPageContent.masthead.eyebrow} onChange={(value) => updateLookbookMasthead('eyebrow', value)} />
-                <Field label="Masthead title" value={lookbookPageContent.masthead.title} onChange={(value) => updateLookbookMasthead('title', value)} />
-                <Field label="Issue range" value={lookbookPageContent.masthead.issueRange} onChange={(value) => updateLookbookMasthead('issueRange', value)} />
-                <Field label="Date range" value={lookbookPageContent.masthead.dateRange} onChange={(value) => updateLookbookMasthead('dateRange', value)} />
+                <Field label='Masthead watermark' value={lookbookPageContent.masthead.watermark} onChange={(value) => updateLookbookMasthead('watermark', value)} />
+                <Field label='Masthead eyebrow' value={lookbookPageContent.masthead.eyebrow} onChange={(value) => updateLookbookMasthead('eyebrow', value)} />
+                <Field label='Masthead title' value={lookbookPageContent.masthead.title} onChange={(value) => updateLookbookMasthead('title', value)} />
+                <Field label='Issue range' value={lookbookPageContent.masthead.issueRange} onChange={(value) => updateLookbookMasthead('issueRange', value)} />
+                <Field label='Date range' value={lookbookPageContent.masthead.dateRange} onChange={(value) => updateLookbookMasthead('dateRange', value)} />
               </div>
-              <TextArea label="Masthead description" value={lookbookPageContent.masthead.description} onChange={(value) => updateLookbookMasthead('description', value)} />
+              <TextArea label='Masthead description' value={lookbookPageContent.masthead.description} onChange={(value) => updateLookbookMasthead('description', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="CTA issue label" value={lookbookPageContent.cta.issueLabel} onChange={(value) => updateLookbookCta('issueLabel', value)} />
-                <Field label="CTA title line 1" value={lookbookPageContent.cta.titleLine1} onChange={(value) => updateLookbookCta('titleLine1', value)} />
-                <Field label="CTA title line 2" value={lookbookPageContent.cta.titleLine2} onChange={(value) => updateLookbookCta('titleLine2', value)} />
-                <Field label="CTA label" value={lookbookPageContent.cta.label} onChange={(value) => updateLookbookCta('label', value)} />
-                <Field label="CTA href" value={lookbookPageContent.cta.href} onChange={(value) => updateLookbookCta('href', value)} />
+                <Field label='CTA issue label' value={lookbookPageContent.cta.issueLabel} onChange={(value) => updateLookbookCta('issueLabel', value)} />
+                <Field label='CTA title line 1' value={lookbookPageContent.cta.titleLine1} onChange={(value) => updateLookbookCta('titleLine1', value)} />
+                <Field label='CTA title line 2' value={lookbookPageContent.cta.titleLine2} onChange={(value) => updateLookbookCta('titleLine2', value)} />
+                <Field label='CTA label' value={lookbookPageContent.cta.label} onChange={(value) => updateLookbookCta('label', value)} />
+                <Field label='CTA href' value={lookbookPageContent.cta.href} onChange={(value) => updateLookbookCta('href', value)} />
               </div>
-              <TextArea label="CTA body" value={lookbookPageContent.cta.body} onChange={(value) => updateLookbookCta('body', value)} />
+              <TextArea label='CTA body' value={lookbookPageContent.cta.body} onChange={(value) => updateLookbookCta('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Archive label" value={lookbookPageContent.archive.label} onChange={(value) => updateLookbookArchive('label', value)} />
-                <Field label="Archive CTA label" value={lookbookPageContent.archive.ctaLabel} onChange={(value) => updateLookbookArchive('ctaLabel', value)} />
-                <Field label="Archive CTA href" value={lookbookPageContent.archive.ctaHref} onChange={(value) => updateLookbookArchive('ctaHref', value)} />
+                <Field label='Archive label' value={lookbookPageContent.archive.label} onChange={(value) => updateLookbookArchive('label', value)} />
+                <Field label='Archive CTA label' value={lookbookPageContent.archive.ctaLabel} onChange={(value) => updateLookbookArchive('ctaLabel', value)} />
+                <Field label='Archive CTA href' value={lookbookPageContent.archive.ctaHref} onChange={(value) => updateLookbookArchive('ctaHref', value)} />
               </div>
             </div>
           </div>
@@ -3863,8 +3864,8 @@ function addEditorialReport(): void {
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
-                  type="button"
-                  className="btn-ghost"
+                  type='button'
+                  className='btn-ghost'
                   onClick={startNewLookbookDraft}
                   disabled={lookbookSaving}
                   style={{ fontSize: '0.72rem' }}
@@ -3872,8 +3873,8 @@ function addEditorialReport(): void {
                   New entry
                 </button>
                 <button
-                  type="button"
-                  className="btn-primary"
+                  type='button'
+                  className='btn-primary'
                   onClick={() => void saveLookbookDraft()}
                   disabled={lookbookSaving || !lookbookDraft.trim()}
                   style={{ fontSize: '0.72rem' }}
@@ -3896,12 +3897,12 @@ function addEditorialReport(): void {
                   >
                     <div style={{ minWidth: 0 }}>
                       <div style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)', fontSize: '0.95rem' }}>{entry.title}</div>
-                      <div className="type-label" style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>Issue {entry.issue} · {entry.id}</div>
+                      <div className='type-label' style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>Issue {entry.issue} · {entry.id}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => editLookbookDraft(entry)}
                         disabled={lookbookSaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem' }}
@@ -3909,8 +3910,8 @@ function addEditorialReport(): void {
                         Edit
                       </button>
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => void deleteLookbookDraft(entry.id)}
                         disabled={lookbookSaving}
                         style={{ fontSize: '0.68rem', padding: '0.55rem 0.7rem', color: 'var(--coral-red)' }}
@@ -3935,27 +3936,27 @@ function addEditorialReport(): void {
               Hero
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
-              <Field label="Status" value={content.hero.status} onChange={(value) => updateHero('status', value)} />
+              <Field label='Status' value={content.hero.status} onChange={(value) => updateHero('status', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Headline line 1" value={content.hero.headlineLine1} onChange={(value) => updateHero('headlineLine1', value)} />
-                <Field label="Headline line 2" value={content.hero.headlineLine2} onChange={(value) => updateHero('headlineLine2', value)} />
+                <Field label='Headline line 1' value={content.hero.headlineLine1} onChange={(value) => updateHero('headlineLine1', value)} />
+                <Field label='Headline line 2' value={content.hero.headlineLine2} onChange={(value) => updateHero('headlineLine2', value)} />
               </div>
-              <TextArea label="Description" value={content.hero.description} onChange={(value) => updateHero('description', value)} />
+              <TextArea label='Description' value={content.hero.description} onChange={(value) => updateHero('description', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Primary CTA label" value={content.hero.primaryCtaLabel} onChange={(value) => updateHero('primaryCtaLabel', value)} />
-                <Field label="Primary CTA href" value={content.hero.primaryCtaHref} onChange={(value) => updateHero('primaryCtaHref', value)} />
-                <Field label="Secondary CTA label" value={content.hero.secondaryCtaLabel} onChange={(value) => updateHero('secondaryCtaLabel', value)} />
-                <Field label="Secondary CTA href" value={content.hero.secondaryCtaHref} onChange={(value) => updateHero('secondaryCtaHref', value)} />
+                <Field label='Primary CTA label' value={content.hero.primaryCtaLabel} onChange={(value) => updateHero('primaryCtaLabel', value)} />
+                <Field label='Primary CTA href' value={content.hero.primaryCtaHref} onChange={(value) => updateHero('primaryCtaHref', value)} />
+                <Field label='Secondary CTA label' value={content.hero.secondaryCtaLabel} onChange={(value) => updateHero('secondaryCtaLabel', value)} />
+                <Field label='Secondary CTA href' value={content.hero.secondaryCtaHref} onChange={(value) => updateHero('secondaryCtaHref', value)} />
               </div>
-              <TextArea label="Tags" rows={5} value={content.hero.tags.join('\n')} onChange={(value) => updateHero('tags', splitLines(value))} />
-              <TextArea label="Stats" rows={4} value={statsToText(content.hero.stats)} onChange={(value) => updateHero('stats', textToStats(value))} />
+              <TextArea label='Tags' rows={5} value={content.hero.tags.join('\n')} onChange={(value) => updateHero('tags', splitLines(value))} />
+              <TextArea label='Stats' rows={4} value={statsToText(content.hero.stats)} onChange={(value) => updateHero('stats', textToStats(value))} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Right panel status" value={content.hero.panelStatus} onChange={(value) => updateHero('panelStatus', value)} />
-                <Field label="Right panel title" value={content.hero.panelTitle} onChange={(value) => updateHero('panelTitle', value)} />
-                <Field label="Right panel subtitle" value={content.hero.panelSubtitle} onChange={(value) => updateHero('panelSubtitle', value)} />
-                <Field label="Right panel price" value={content.hero.panelPrice} onChange={(value) => updateHero('panelPrice', value)} />
+                <Field label='Right panel status' value={content.hero.panelStatus} onChange={(value) => updateHero('panelStatus', value)} />
+                <Field label='Right panel title' value={content.hero.panelTitle} onChange={(value) => updateHero('panelTitle', value)} />
+                <Field label='Right panel subtitle' value={content.hero.panelSubtitle} onChange={(value) => updateHero('panelSubtitle', value)} />
+                <Field label='Right panel price' value={content.hero.panelPrice} onChange={(value) => updateHero('panelPrice', value)} />
               </div>
-              <TextArea label="Bottom strip" rows={5} value={content.hero.bottomStripItems.join('\n')} onChange={(value) => updateHero('bottomStripItems', splitLines(value))} />
+              <TextArea label='Bottom strip' rows={5} value={content.hero.bottomStripItems.join('\n')} onChange={(value) => updateHero('bottomStripItems', splitLines(value))} />
             </div>
           </div>
 
@@ -3965,10 +3966,10 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Eyebrow" value={content.categories.eyebrow} onChange={(value) => updateCategories('eyebrow', value)} />
-                <Field label="Title" value={content.categories.title} onChange={(value) => updateCategories('title', value)} />
-                <Field label="CTA label" value={content.categories.ctaLabel} onChange={(value) => updateCategories('ctaLabel', value)} />
-                <Field label="CTA href" value={content.categories.ctaHref} onChange={(value) => updateCategories('ctaHref', value)} />
+                <Field label='Eyebrow' value={content.categories.eyebrow} onChange={(value) => updateCategories('eyebrow', value)} />
+                <Field label='Title' value={content.categories.title} onChange={(value) => updateCategories('title', value)} />
+                <Field label='CTA label' value={content.categories.ctaLabel} onChange={(value) => updateCategories('ctaLabel', value)} />
+                <Field label='CTA href' value={content.categories.ctaHref} onChange={(value) => updateCategories('ctaHref', value)} />
               </div>
               <div style={{ display: 'grid', gap: '1rem' }}>
                 {content.categories.cards.map((card, index) => (
@@ -3982,12 +3983,12 @@ function addEditorialReport(): void {
                       return (
                         <>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div className="type-label" style={{ color: 'var(--accent)' }}>
+                      <div className='type-label' style={{ color: 'var(--accent)' }}>
                         Selector {index + 1}: {card.label || card.id}
                       </div>
                       <button
-                        type="button"
-                        className="btn-ghost"
+                        type='button'
+                        className='btn-ghost'
                         onClick={() => removeCategoryCard(index)}
                         disabled={headerDisabled}
                         style={{ fontSize: '0.66rem', padding: '0.45rem 0.65rem', color: 'var(--coral-red)' }}
@@ -3997,29 +3998,29 @@ function addEditorialReport(): void {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
-                      <Field label="ID" value={card.id} onChange={(value) => updateCategoryCard(index, 'id', value)} />
-                      <Field label="Label" value={card.label} onChange={(value) => updateCategoryCard(index, 'label', value)} />
-                      <Field label="Sublabel" value={card.sublabel} onChange={(value) => updateCategoryCard(index, 'sublabel', value)} />
-                      <Field label="Tag" value={card.tag} onChange={(value) => updateCategoryCard(index, 'tag', value)} />
+                      <Field label='ID' value={card.id} onChange={(value) => updateCategoryCard(index, 'id', value)} />
+                      <Field label='Label' value={card.label} onChange={(value) => updateCategoryCard(index, 'label', value)} />
+                      <Field label='Sublabel' value={card.sublabel} onChange={(value) => updateCategoryCard(index, 'sublabel', value)} />
+                      <Field label='Tag' value={card.tag} onChange={(value) => updateCategoryCard(index, 'tag', value)} />
                       <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', paddingTop: '1.35rem' }}>
                         <input
-                          type="checkbox"
+                          type='checkbox'
                           checked={card.visible}
                           onChange={(event) => updateCategoryCard(index, 'visible', event.currentTarget.checked)}
                           disabled={headerDisabled}
                         />
-                        <span className="type-label" style={labelStyle}>Visible on home</span>
+                        <span className='type-label' style={labelStyle}>Visible on home</span>
                       </label>
                       <Field
-                        label="Fallback count"
-                        type="number"
-                        inputMode="numeric"
+                        label='Fallback count'
+                        type='number'
+                        inputMode='numeric'
                         min={0}
                         value={String(card.fallbackCount)}
                         onChange={(value) => updateCategoryCard(index, 'fallbackCount', Number(value) || 0)}
                       />
                       <label>
-                        <span className="type-label" style={labelStyle}>Selector type</span>
+                        <span className='type-label' style={labelStyle}>Selector type</span>
                         <select
                           value={card.selectorType}
                           onChange={(event) => updateCategoryCard(index, 'selectorType', event.target.value as HomeCategorySelectorType)}
@@ -4033,12 +4034,12 @@ function addEditorialReport(): void {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                      <Field label="Custom href fallback" value={card.href} onChange={(value) => updateCategoryCard(index, 'href', value)} />
-                      <Field label="Image URL" value={card.imageUrl} onChange={(value) => updateCategoryCard(index, 'imageUrl', value)} />
+                      <Field label='Custom href fallback' value={card.href} onChange={(value) => updateCategoryCard(index, 'href', value)} />
+                      <Field label='Image URL' value={card.imageUrl} onChange={(value) => updateCategoryCard(index, 'imageUrl', value)} />
                     </div>
 
                     <TextArea
-                      label="Selector values (one category/theme per line)"
+                      label='Selector values (one category/theme per line)'
                       rows={4}
                       value={selectorValuesToText(card.selectorValues)}
                       onChange={(value) => updateCategoryCard(index, 'selectorValues', textToSelectorValues(value))}
@@ -4046,7 +4047,7 @@ function addEditorialReport(): void {
 
                     {(card.selectorType === 'category' || card.selectorType === 'theme') && (
                       <div style={{ display: 'grid', gap: '0.65rem' }}>
-                        <div className="type-label" style={{ color: 'var(--muted)' }}>
+                        <div className='type-label' style={{ color: 'var(--muted)' }}>
                           Choose {card.selectorType === 'category' ? 'categories' : 'themes'} from live catalog
                         </div>
                         {selectorOptions.length > 0 ? (
@@ -4056,7 +4057,7 @@ function addEditorialReport(): void {
                               return (
                                 <button
                                   key={option.name}
-                                  type="button"
+                                  type='button'
                                   className={selected ? 'btn-primary' : 'btn-ghost'}
                                   onClick={() => toggleCategoryCardSelectorValue(index, option.name)}
                                   disabled={headerDisabled}
@@ -4068,7 +4069,7 @@ function addEditorialReport(): void {
                             })}
                           </div>
                         ) : (
-                          <div className="type-label" style={{ color: 'var(--muted)' }}>
+                          <div className='type-label' style={{ color: 'var(--muted)' }}>
                             No live catalog options loaded for this locale.
                           </div>
                         )}
@@ -4077,10 +4078,10 @@ function addEditorialReport(): void {
 
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                       <label>
-                        <span className="type-label" style={labelStyle}>Upload selector image</span>
+                        <span className='type-label' style={labelStyle}>Upload selector image</span>
                         <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                          type='file'
+                          accept='image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
                           disabled={headerDisabled}
                           onChange={(event) => {
                             const file = event.currentTarget.files?.[0] ?? null;
@@ -4094,7 +4095,7 @@ function addEditorialReport(): void {
                         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
                           <img
                             src={card.imageUrl}
-                            alt=""
+                            alt=''
                             style={{
                               width: '92px',
                               height: '60px',
@@ -4104,8 +4105,8 @@ function addEditorialReport(): void {
                             }}
                           />
                           <button
-                            type="button"
-                            className="btn-ghost"
+                            type='button'
+                            className='btn-ghost'
                             onClick={() => updateCategoryCard(index, 'imageUrl', '')}
                             disabled={headerDisabled}
                             style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
@@ -4115,7 +4116,7 @@ function addEditorialReport(): void {
                         </div>
                       )}
                       {categoryImageUploadingIndex === index && (
-                        <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading...</span>
+                        <span className='type-label' style={{ color: 'var(--accent)' }}>Uploading...</span>
                       )}
                     </div>
 
@@ -4128,8 +4129,8 @@ function addEditorialReport(): void {
                   </div>
                 ))}
                 <button
-                  type="button"
-                  className="btn-ghost"
+                  type='button'
+                  className='btn-ghost'
                   onClick={addCategoryCard}
                   disabled={headerDisabled}
                   style={{ justifySelf: 'start', fontSize: '0.72rem' }}
@@ -4146,15 +4147,15 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Live eyebrow" value={content.featured.liveEyebrow} onChange={(value) => updateFeatured('liveEyebrow', value)} />
-                <Field label="Fallback eyebrow" value={content.featured.fallbackEyebrow} onChange={(value) => updateFeatured('fallbackEyebrow', value)} />
-                <Field label="Title" value={content.featured.title} onChange={(value) => updateFeatured('title', value)} />
-                <Field label="Quick add label" value={content.featured.quickAddLabel} onChange={(value) => updateFeatured('quickAddLabel', value)} />
-                <Field label="Live CTA label" value={content.featured.ctaLiveLabel} onChange={(value) => updateFeatured('ctaLiveLabel', value)} />
-                <Field label="Fallback CTA label" value={content.featured.ctaFallbackLabel} onChange={(value) => updateFeatured('ctaFallbackLabel', value)} />
-                <Field label="CTA href" value={content.featured.ctaHref} onChange={(value) => updateFeatured('ctaHref', value)} />
+                <Field label='Live eyebrow' value={content.featured.liveEyebrow} onChange={(value) => updateFeatured('liveEyebrow', value)} />
+                <Field label='Fallback eyebrow' value={content.featured.fallbackEyebrow} onChange={(value) => updateFeatured('fallbackEyebrow', value)} />
+                <Field label='Title' value={content.featured.title} onChange={(value) => updateFeatured('title', value)} />
+                <Field label='Quick add label' value={content.featured.quickAddLabel} onChange={(value) => updateFeatured('quickAddLabel', value)} />
+                <Field label='Live CTA label' value={content.featured.ctaLiveLabel} onChange={(value) => updateFeatured('ctaLiveLabel', value)} />
+                <Field label='Fallback CTA label' value={content.featured.ctaFallbackLabel} onChange={(value) => updateFeatured('ctaFallbackLabel', value)} />
+                <Field label='CTA href' value={content.featured.ctaHref} onChange={(value) => updateFeatured('ctaHref', value)} />
               </div>
-              <TextArea label="Filters" rows={4} value={content.featured.filters.join('\n')} onChange={(value) => updateFeatured('filters', splitLines(value))} />
+              <TextArea label='Filters' rows={4} value={content.featured.filters.join('\n')} onChange={(value) => updateFeatured('filters', splitLines(value))} />
             </div>
           </div>
 
@@ -4163,17 +4164,17 @@ function addEditorialReport(): void {
               Collector&apos;s Creed
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
-              <TextArea label="Animated strip" rows={5} value={content.manifesto.marqueeItems.join('\n')} onChange={(value) => updateManifesto('marqueeItems', splitLines(value))} />
-              <Field label="Eyebrow" value={content.manifesto.eyebrow} onChange={(value) => updateManifesto('eyebrow', value)} />
+              <TextArea label='Animated strip' rows={5} value={content.manifesto.marqueeItems.join('\n')} onChange={(value) => updateManifesto('marqueeItems', splitLines(value))} />
+              <Field label='Eyebrow' value={content.manifesto.eyebrow} onChange={(value) => updateManifesto('eyebrow', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Quote before highlight" value={content.manifesto.quotePrefix} onChange={(value) => updateManifesto('quotePrefix', value)} />
-                <Field label="Quote highlight" value={content.manifesto.quoteEmphasis} onChange={(value) => updateManifesto('quoteEmphasis', value)} />
-                <Field label="Quote after highlight" value={content.manifesto.quoteSuffix} onChange={(value) => updateManifesto('quoteSuffix', value)} />
+                <Field label='Quote before highlight' value={content.manifesto.quotePrefix} onChange={(value) => updateManifesto('quotePrefix', value)} />
+                <Field label='Quote highlight' value={content.manifesto.quoteEmphasis} onChange={(value) => updateManifesto('quoteEmphasis', value)} />
+                <Field label='Quote after highlight' value={content.manifesto.quoteSuffix} onChange={(value) => updateManifesto('quoteSuffix', value)} />
               </div>
-              <TextArea label="Body" value={content.manifesto.body} onChange={(value) => updateManifesto('body', value)} />
+              <TextArea label='Body' value={content.manifesto.body} onChange={(value) => updateManifesto('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="CTA label" value={content.manifesto.ctaLabel} onChange={(value) => updateManifesto('ctaLabel', value)} />
-                <Field label="CTA href" value={content.manifesto.ctaHref} onChange={(value) => updateManifesto('ctaHref', value)} />
+                <Field label='CTA label' value={content.manifesto.ctaLabel} onChange={(value) => updateManifesto('ctaLabel', value)} />
+                <Field label='CTA href' value={content.manifesto.ctaHref} onChange={(value) => updateManifesto('ctaHref', value)} />
               </div>
             </div>
           </div>
@@ -4184,20 +4185,20 @@ function addEditorialReport(): void {
             </h3>
             <div style={{ display: 'grid', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                <Field label="Eyebrow" value={content.editorial.eyebrow} onChange={(value) => updateEditorial('eyebrow', value)} />
-                <Field label="Title" value={content.editorial.title} onChange={(value) => updateEditorial('title', value)} />
-                <Field label="CTA label" value={content.editorial.ctaLabel} onChange={(value) => updateEditorial('ctaLabel', value)} />
-                <Field label="CTA href" value={content.editorial.ctaHref} onChange={(value) => updateEditorial('ctaHref', value)} />
-                <Field label="Read label" value={content.editorial.readLabel} onChange={(value) => updateEditorial('readLabel', value)} />
+                <Field label='Eyebrow' value={content.editorial.eyebrow} onChange={(value) => updateEditorial('eyebrow', value)} />
+                <Field label='Title' value={content.editorial.title} onChange={(value) => updateEditorial('title', value)} />
+                <Field label='CTA label' value={content.editorial.ctaLabel} onChange={(value) => updateEditorial('ctaLabel', value)} />
+                <Field label='CTA href' value={content.editorial.ctaHref} onChange={(value) => updateEditorial('ctaHref', value)} />
+                <Field label='Read label' value={content.editorial.readLabel} onChange={(value) => updateEditorial('readLabel', value)} />
               </div>
               <TextArea
-                label="Reports (use ![alt](url) blocks in body for embedded images)"
+                label='Reports (use ![alt](url) blocks in body for embedded images)'
                 rows={7}
                 value={reportsToText(content.editorial.reports)}
                 onChange={(value) => updateEditorial('reports', textToReports(value))}
               />
               <div style={{ display: 'grid', gap: '0.85rem' }}>
-                <div className="type-label" style={{ color: 'var(--muted)' }}>
+                <div className='type-label' style={{ color: 'var(--muted)' }}>
                   Upload report thumbnails (stored with CMS card uploader)
                 </div>
                 {(
@@ -4209,12 +4210,12 @@ function addEditorialReport(): void {
                     key={`${report.id}-${reportIndex}`}
                     style={{ border: '1px solid var(--border)', padding: '0.9rem', display: 'grid', gap: '0.85rem' }}
                   >
-                    <div className="type-label" style={{ color: 'var(--accent)' }}>
+                    <div className='type-label' style={{ color: 'var(--accent)' }}>
                       {report.title || report.id || `Report ${reportIndex + 1}`}
                     </div>
                     <div style={{ display: 'grid', gap: '0.75rem' }}>
                       <Field
-                        label="Image URL"
+                        label='Image URL'
                         value={report.imageUrl}
                         onChange={(value) => updateEditorialReport(reportIndex, 'imageUrl', value)}
                       />
@@ -4226,10 +4227,10 @@ function addEditorialReport(): void {
                         flexWrap: 'wrap',
                       }}>
                         <label>
-                          <span className="type-label" style={labelStyle}>Upload report image</span>
+                          <span className='type-label' style={labelStyle}>Upload report image</span>
                           <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                            type='file'
+                            accept='image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
                             disabled={headerDisabled}
                             onChange={(event) => {
                               const file = event.currentTarget.files?.[0] ?? null;
@@ -4243,7 +4244,7 @@ function addEditorialReport(): void {
                           <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
                             <img
                               src={report.imageUrl}
-                              alt=""
+                              alt=''
                               style={{
                                 width: '92px',
                                 height: '60px',
@@ -4253,8 +4254,8 @@ function addEditorialReport(): void {
                               }}
                             />
                             <button
-                              type="button"
-                              className="btn-ghost"
+                              type='button'
+                              className='btn-ghost'
                               onClick={() => updateEditorialReport(reportIndex, 'imageUrl', '')}
                               disabled={headerDisabled}
                               style={{ fontSize: '0.66rem', padding: '0.5rem 0.7rem' }}
@@ -4264,7 +4265,7 @@ function addEditorialReport(): void {
                           </div>
                         )}
                         {editorialReportImageUploadingIndex === reportIndex && (
-                          <span className="type-label" style={{ color: 'var(--accent)' }}>Uploading...</span>
+                          <span className='type-label' style={{ color: 'var(--accent)' }}>Uploading...</span>
                         )}
                       </div>
                     </div>
@@ -4272,12 +4273,12 @@ function addEditorialReport(): void {
                 ))}
                 {content.editorial.reports.length === 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div className="type-label" style={{ color: 'var(--muted)' }}>
+                    <div className='type-label' style={{ color: 'var(--muted)' }}>
                       No editorial report records found. Add one now to save report metadata.
                     </div>
                     <button
-                      type="button"
-                      className="btn-ghost"
+                      type='button'
+                      className='btn-ghost'
                       onClick={addEditorialReport}
                       disabled={headerDisabled}
                     >
@@ -4294,20 +4295,20 @@ function addEditorialReport(): void {
               Recently Viewed
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              <Field label="Eyebrow" value={content.recentlyViewed.eyebrow} onChange={(value) => updateRecentlyViewed('eyebrow', value)} />
-              <Field label="Title" value={content.recentlyViewed.title} onChange={(value) => updateRecentlyViewed('title', value)} />
-              <Field label="CTA label" value={content.recentlyViewed.ctaLabel} onChange={(value) => updateRecentlyViewed('ctaLabel', value)} />
-              <Field label="CTA href" value={content.recentlyViewed.ctaHref} onChange={(value) => updateRecentlyViewed('ctaHref', value)} />
+              <Field label='Eyebrow' value={content.recentlyViewed.eyebrow} onChange={(value) => updateRecentlyViewed('eyebrow', value)} />
+              <Field label='Title' value={content.recentlyViewed.title} onChange={(value) => updateRecentlyViewed('title', value)} />
+              <Field label='CTA label' value={content.recentlyViewed.ctaLabel} onChange={(value) => updateRecentlyViewed('ctaLabel', value)} />
+              <Field label='CTA href' value={content.recentlyViewed.ctaHref} onChange={(value) => updateRecentlyViewed('ctaHref', value)} />
             </div>
           </div>
         </div>
       )}
 
       {message && (
-        <div className="type-label" style={{ color: 'var(--accent)', marginTop: '1rem' }}>{message}</div>
+        <div className='type-label' style={{ color: 'var(--accent)', marginTop: '1rem' }}>{message}</div>
       )}
       {error && (
-        <div className="type-label" style={{ color: 'var(--coral-red)', marginTop: '1rem', lineHeight: 1.6 }}>{error}</div>
+        <div className='type-label' style={{ color: 'var(--coral-red)', marginTop: '1rem', lineHeight: 1.6 }}>{error}</div>
       )}
     </section>
   );

@@ -10,7 +10,6 @@ import { SiteFooter } from '@/components/SiteFooter';
 import type { AccountContent } from '@/data/accountContent';
 import type { EcomLocale } from '@/lib/locales';
 import type { Order } from '@/lib/orders';
-import { toDisplayOrder } from './components/order-utils';
 import { AdminTab } from './components/AdminTab';
 
 type Tab = 'overview' | 'orders' | 'settings' | 'admin';
@@ -32,6 +31,18 @@ function renderTabs(
     adminCmsLabel: string;
   },
 ): JSX.Element[] {
+  const getTabColor = (tabId: Tab): string => {
+    if (activeTab === tabId) return 'var(--fg)';
+    if (tabId === 'admin') return 'var(--coral-red)';
+    return 'var(--muted)';
+  };
+
+  const getTabBorderColor = (tabId: Tab): string => {
+    if (activeTab !== tabId) return 'transparent';
+    if (tabId === 'admin') return 'var(--coral-red)';
+    return 'var(--fg)';
+  };
+
   return [
     ...tabs.map((tab) => (
       <button
@@ -39,9 +50,9 @@ function renderTabs(
         onClick={() => setActiveTab(tab.id)}
         className='w-full text-left py-3 px-4 type-label transition-all duration-200'
         style={{
-          color: activeTab === tab.id ? 'var(--fg)' : tab.id === 'admin' ? 'var(--coral-red)' : 'var(--muted)',
+          color: getTabColor(tab.id),
           background: activeTab === tab.id ? 'var(--surface)' : 'transparent',
-          borderLeft: `2px solid ${activeTab === tab.id ? (tab.id === 'admin' ? 'var(--coral-red)' : 'var(--fg)') : 'transparent'}`,
+          borderLeft: `2px solid ${getTabBorderColor(tab.id)}`,
         }}
       >
         {tab.label}
@@ -65,6 +76,7 @@ function renderTabs(
   ];
 }
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function AccountPageClient({
   content,
   availableLocales,
@@ -79,19 +91,16 @@ export function AccountPageClient({
   const { total: wishlistCount } = useWishlist();
   const { user, loading, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     if (user === null) {
       setOrders([]);
-      setOrdersLoading(false);
       return () => {
         cancelled = true;
       };
     }
 
-    setOrdersLoading(true);
     fetch('/api/orders/me')
       .then((res) => (res.ok ? res.json() : []))
       .then((data: unknown) => {
@@ -99,9 +108,6 @@ export function AccountPageClient({
       })
       .catch(() => {
         if (!cancelled) setOrders([]);
-      })
-      .finally(() => {
-        if (!cancelled) setOrdersLoading(false);
       });
 
     return () => {
@@ -109,15 +115,8 @@ export function AccountPageClient({
     };
   }, [user]);
 
-  const displayOrders = orders.map((order) => toDisplayOrder(order, locale));
-  const purchasedItemCount = orders.reduce(
-    (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
-    0,
-  );
-  const noOrdersLabel = locale === 'pl' ? 'Brak zamowien.' : 'No orders yet.';
-
   const tabs: { id: Tab; label: string }[] = content.tabs
-    .filter((tab) => tab.id !== 'admin' || user?.isSuperAdmin)
+    .filter((tab) => tab.id !== 'admin' || Boolean(user?.isSuperAdmin))
     .map((tab) => ({ id: tab.id as Tab, label: tab.label }));
 
   const displayName = user?.name ?? (locale === 'pl' ? 'Gość' : 'Guest');
@@ -282,7 +281,9 @@ export function AccountPageClient({
                     )}
                   </a>
                   <button
-                    onClick={() => logout()}
+                    onClick={() => {
+                      void logout();
+                    }}
                     className='block w-full text-left py-3 px-4 type-label transition-colors hover:text-[var(--fg)]'
                     style={{ color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
                   >

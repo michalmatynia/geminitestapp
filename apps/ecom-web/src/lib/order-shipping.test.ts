@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Order } from '@/lib/orders';
-import { getOrderShippingDetails, getOrderShippingSummary, getOrderTrackingNumber } from './order-shipping';
+import { getOrderShippingDetails, getOrderShippingSummary, getOrderTrackingNumber, getOrderTrackingUrl } from './order-shipping';
 
 function makeOrder(overrides: Partial<Order> = {}): Order {
   return {
@@ -56,6 +56,7 @@ describe('order shipping display helpers', () => {
       },
       inpostShipment: {
         trackingNumber: 'TRACK123',
+        shipmentUrl: 'https://inpost.example.test/shipments/TRACK123',
       },
     });
     const details = getOrderShippingDetails(order, 'en');
@@ -69,6 +70,7 @@ describe('order shipping display helpers', () => {
     expect(getOrderShippingSummary(order, 'en', { includeTracking: false })).toBe(
       'InPost Parcel Locker / Paczkomat WAW01A / ul. Testowa 1, 00-001 Warsaw',
     );
+    expect(getOrderTrackingUrl(order)).toBe('https://inpost.example.test/shipments/TRACK123');
   });
 
   it('uses generic courier shipment tracking when present', () => {
@@ -77,10 +79,30 @@ describe('order shipping display helpers', () => {
       shippingCarrier: 'dpd',
       shipment: {
         trackingNumber: 'DPD123',
+        trackingUrl: 'https://track.example.test/DPD123',
       },
     });
 
     expect(getOrderShippingSummary(order, 'en')).toBe('DPD Courier / Tracking: DPD123');
     expect(getOrderTrackingNumber(order)).toBe('DPD123');
+    expect(getOrderTrackingUrl(order)).toBe('https://track.example.test/DPD123');
+  });
+
+  it('does not expose unsafe tracking URLs', () => {
+    const order = makeOrder({
+      shippingMethod: 'DPD Courier',
+      shippingCarrier: 'dpd',
+      shipment: {
+        trackingNumber: 'DPD123',
+        trackingUrl: 'javascript:alert(1)',
+      },
+      inpostShipment: {
+        trackingNumber: 'TRACK123',
+        shipmentUrl: 'ftp://inpost.example.test/shipments/TRACK123',
+      },
+    });
+
+    expect(getOrderTrackingNumber(order)).toBe('DPD123');
+    expect(getOrderTrackingUrl(order)).toBeUndefined();
   });
 });

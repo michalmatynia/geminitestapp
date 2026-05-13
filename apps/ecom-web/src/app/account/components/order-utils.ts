@@ -1,6 +1,6 @@
 import type { Order } from '@/lib/orders';
 import { formatPrice } from '@/lib/locales';
-import { getOrderShippingSummary, getOrderTrackingNumber } from '@/lib/order-shipping';
+import { getOrderShippingSummary, getOrderTrackingNumber, getOrderTrackingUrl } from '@/lib/order-shipping';
 
 export interface DisplayOrder {
   id: string;
@@ -9,6 +9,7 @@ export interface DisplayOrder {
   total: string;
   shippingLine: string;
   trackingNumber?: string;
+  trackingUrl?: string;
   items: { id: string; name: string; qty: number; price: string; imageUrl?: string }[];
 }
 
@@ -29,6 +30,7 @@ export function toDisplayOrder(order: Order, locale: string): DisplayOrder {
     total: formatPrice(order.total, displayLocale, currencyCode),
     shippingLine: getOrderShippingSummary(order, displayLocale, { includeTracking: false }),
     trackingNumber: getOrderTrackingNumber(order),
+    trackingUrl: getOrderTrackingUrl(order),
     items: order.items.map((item) => ({
       id: `${item.productId}-${item.slug}-${item.size}`,
       name: item.name,

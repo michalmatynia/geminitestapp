@@ -103,6 +103,80 @@ describe('POST /api/orders/[orderId]/fulfillment', () => {
     expect(body.order).toMatchObject({ orderId: 'ARC-2026-ABCD1234', shipment: { trackingNumber: 'DPD123' } });
   });
 
+  it('infers DPD tracking links when only a tracking number is provided', async () => {
+    mocks.findOne
+      .mockResolvedValueOnce(makeOrder())
+      .mockResolvedValueOnce(makeOrder({
+        status: 'in-transit',
+        shipment: {
+          carrier: 'dpd',
+          service: 'dpd_courier_standard',
+          trackingNumber: 'DPD123',
+          trackingUrl: 'https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1',
+          status: 'in-transit',
+        },
+      }));
+
+    const response = await POST(makeRequest({
+      status: 'in-transit',
+      trackingNumber: 'DPD123',
+    }), makeParams());
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: 'ARC-2026-ABCD1234' },
+      {
+        $set: expect.objectContaining({
+          shipment: expect.objectContaining({
+            trackingNumber: 'DPD123',
+            trackingUrl: 'https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1',
+          }),
+        }),
+      },
+    );
+  });
+
+  it('infers Poczta Polska tracking links when only a tracking number is provided', async () => {
+    mocks.findOne
+      .mockResolvedValueOnce(makeOrder({
+        shippingMethod: 'Poczta Polska',
+        shippingCarrier: 'poczta_polska',
+        shippingService: 'poczta_polska_tracked',
+      }))
+      .mockResolvedValueOnce(makeOrder({
+        status: 'in-transit',
+        shippingMethod: 'Poczta Polska',
+        shippingCarrier: 'poczta_polska',
+        shippingService: 'poczta_polska_tracked',
+        shipment: {
+          carrier: 'poczta_polska',
+          service: 'poczta_polska_tracked',
+          trackingNumber: 'RR123456789PL',
+          trackingUrl: 'https://emonitoring.poczta-polska.pl/?numer=RR123456789PL',
+          status: 'in-transit',
+        },
+      }));
+
+    const response = await POST(makeRequest({
+      status: 'in-transit',
+      trackingNumber: 'RR123456789PL',
+    }), makeParams());
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: 'ARC-2026-ABCD1234' },
+      {
+        $set: expect.objectContaining({
+          shipment: expect.objectContaining({
+            carrier: 'poczta_polska',
+            trackingNumber: 'RR123456789PL',
+            trackingUrl: 'https://emonitoring.poczta-polska.pl/?numer=RR123456789PL',
+          }),
+        }),
+      },
+    );
+  });
+
   it('allows status-only updates without creating a shipment object', async () => {
     mocks.findOne
       .mockResolvedValueOnce(makeOrder({ shippingCarrier: 'poczta_polska' }))

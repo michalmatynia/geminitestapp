@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
+import { buildCarrierTrackingUrl } from '@/lib/carrier-tracking';
 import { getDb } from '@/lib/mongodb';
 import { ORDERS_COLLECTION, serializeOrder, type Order, type OrderShipment } from '@/lib/orders';
 
@@ -52,7 +53,10 @@ function buildShipment(
   if (order.shipment?.createdAt !== undefined) shipment.createdAt = order.shipment.createdAt;
   else shipment.createdAt = now;
   if (trackingNumber.length > 0) shipment.trackingNumber = trackingNumber;
-  if (trackingUrl.length > 0) shipment.trackingUrl = trackingUrl;
+  const resolvedTrackingUrl = trackingUrl.length > 0
+    ? trackingUrl
+    : buildCarrierTrackingUrl(order.shippingCarrier, trackingNumber);
+  if (resolvedTrackingUrl !== undefined) shipment.trackingUrl = resolvedTrackingUrl;
   if (note.length > 0) shipment.note = note;
   return shipment;
 }

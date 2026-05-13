@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { normalizeLocale } from '@/lib/locales';
-import { getOrderShippingSummary, getOrderTrackingNumber, type OrderShippingDisplayInput } from '@/lib/order-shipping';
+import { getOrderShippingSummary, getOrderTrackingNumber, getOrderTrackingUrl, type OrderShippingDisplayInput } from '@/lib/order-shipping';
 import { ORDERS_COLLECTION, type InpostPoint, type InpostShipment, type Order, type OrderShipment, type ShippingCarrier } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
@@ -59,7 +59,11 @@ function readInpostPoint(value: unknown): InpostPoint | undefined {
 function readInpostShipment(value: unknown): InpostShipment | undefined {
   if (!isRecord(value)) return undefined;
   const trackingNumber = readString(value['trackingNumber'], 80);
-  return trackingNumber.length > 0 ? { trackingNumber } : undefined;
+  const shipmentUrl = readString(value['shipmentUrl'], 320);
+  const shipment: InpostShipment = {};
+  if (trackingNumber.length > 0) shipment.trackingNumber = trackingNumber;
+  if (shipmentUrl.length > 0) shipment.shipmentUrl = shipmentUrl;
+  return Object.keys(shipment).length > 0 ? shipment : undefined;
 }
 
 function readShipment(value: unknown): OrderShipment | undefined {
@@ -76,7 +80,6 @@ function readShipment(value: unknown): OrderShipment | undefined {
   return Object.keys(shipment).length > 0 ? shipment : undefined;
 }
 
-// eslint-disable-next-line complexity
 function publicOrderStatusPayload(order: Record<string, unknown>, localeInput: string | null): Record<string, unknown> {
   const status = readStatus(order['status']);
   const savedShippingMethod = readString(order['shippingMethod']);
@@ -101,7 +104,7 @@ function publicOrderStatusPayload(order: Record<string, unknown>, localeInput: s
     shippingSummary: getOrderShippingSummary(shippingInput, normalizeLocale(localeInput)),
     inpostPointName: inpostPoint?.name,
     trackingNumber: getOrderTrackingNumber(shippingInput),
-    trackingUrl: shipment?.trackingUrl,
+    trackingUrl: getOrderTrackingUrl(shippingInput),
   };
 }
 
@@ -116,7 +119,7 @@ export async function GET(
   }
 
   const { orderId } = await params;
-  const normalizedOrderId = orderId.trim();
+  const normalizedOrderId = orderId.trim().toUpperCase();
   if (normalizedOrderId.length === 0) {
     return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
   }

@@ -29,6 +29,20 @@ function mapStatus(payuStatus: string): Order['status'] | null {
   }
 }
 
+function cleanOrderLookupId(value: string | undefined): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function buildOrderLookupFilter(payuOrderId: string | undefined, extOrderId: string | undefined): Record<string, unknown> | null {
+  const payuId = cleanOrderLookupId(payuOrderId);
+  const localOrderId = cleanOrderLookupId(extOrderId);
+  const candidates: Record<string, string>[] = [];
+  if (payuId.length > 0) candidates.push({ payuOrderId: payuId });
+  if (localOrderId.length > 0) candidates.push({ orderId: localOrderId });
+  if (candidates.length === 0) return null;
+  return candidates.length === 1 ? candidates[0] : { $or: candidates };
+}
+
 // eslint-disable-next-line complexity
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
@@ -60,20 +74,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const db = await getDb();
-  let filter: { payuOrderId?: string; orderId?: string } | null = null;
-  if (payuOrderId !== undefined && payuOrderId.length > 0) {
-    filter = { payuOrderId };
-  } else if (extOrderId !== undefined && extOrderId.length > 0) {
-    filter = { orderId: extOrderId };
-  }
-
+  const filter = buildOrderLookupFilter(payuOrderId, extOrderId);
   if (!filter) {
     return NextResponse.json({ ok: true });
   }
 
+  const update: Record<string, unknown> = { status: newStatus };
+  if (newStatus === 'processing') {
+    filter['status'] = 'pending_payment';
+    filter['confirmationEmailQueuedAt'] = { $exists: false };
+    update['confirmationEmailQueuedAt'] = new Date().toISOString();
+  } else if (newStatus === 'cancelled' || newStatus === 'pending_payment') {
+    filter['status'] = 'pending_payment';
+  }
+
   const updatedDoc = await db
     .collection(ORDERS_COLLECTION)
-    .findOneAndUpdate(filter, { $set: { status: newStatus } }, { returnDocument: 'after' });
+    .findOneAndUpdate(filter, { $set: update }, { returnDocument: 'after' });
 
   // Send confirmation email only once, when the payment is confirmed by the bank.
   if (newStatus === 'processing' && updatedDoc) {

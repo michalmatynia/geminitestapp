@@ -218,6 +218,26 @@ function isTerminalOrderStatus(value: unknown): boolean {
   return value === 'delivered' || value === 'cancelled';
 }
 
+function statusTransitionGuard(orderStatus: Order['status'] | null): Filter<Order> {
+  if (orderStatus === 'in-transit') {
+    return { status: { $nin: ['delivered', 'cancelled'] } };
+  }
+  if (orderStatus === 'delivered') {
+    return { status: { $ne: 'cancelled' } };
+  }
+  if (orderStatus === 'cancelled') {
+    return { status: { $ne: 'delivered' } };
+  }
+  return {};
+}
+
+function isStaleInpostStatus(existingStatus: unknown, incomingStatus: Order['status'] | null): boolean {
+  if (incomingStatus === 'in-transit') return isTerminalOrderStatus(existingStatus);
+  if (incomingStatus === 'delivered') return existingStatus === 'cancelled';
+  if (incomingStatus === 'cancelled') return existingStatus === 'delivered';
+  return false;
+}
+
 function hasRecordedInpostEvent(doc: unknown, eventId: string): boolean {
   if (!isRecord(doc)) return false;
   const eventIds = doc['inpostEventIds'];
@@ -496,7 +516,7 @@ export async function applyInpostTrackingEvent(event: InpostTrackingEvent): Prom
     {
       ...lookupFilter,
       inpostEventIds: { $ne: event.eventId },
-      ...(orderStatus === 'in-transit' ? { status: { $nin: ['delivered', 'cancelled'] } } : {}),
+      ...statusTransitionGuard(orderStatus),
     },
     update,
   );
@@ -507,7 +527,7 @@ export async function applyInpostTrackingEvent(event: InpostTrackingEvent): Prom
       { projection: { _id: 1, status: 1, inpostEventIds: 1 } },
     );
     const duplicate = hasRecordedInpostEvent(existing, event.eventId);
-    const stale = orderStatus === 'in-transit' && isTerminalOrderStatus(existing?.status);
+    const stale = isStaleInpostStatus(existing?.status, orderStatus);
 
     if (stale && !duplicate) {
       const staleResult = await collection.updateOne(

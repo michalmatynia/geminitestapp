@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { normalizeInpostPointCode } from '@/lib/inpost-point-code';
 import { formatPrice } from '@/lib/locales';
 import {
   applyFreeThreshold,
@@ -17,6 +18,11 @@ import {
 } from '@/lib/shipping';
 import { SiteNav } from '@/components/SiteNav';
 import { COUNTRIES } from '@/data/countries';
+import {
+  normalizeGeowidgetEventPoint,
+  normalizeGeowidgetPoint,
+  readGeowidgetPointSelectedRegistrar,
+} from './inpost-geowidget';
 import type { CartItem } from '@/context/CartContext';
 import type { Product } from '@/data/products';
 import type { EcomLocale } from '@/lib/locales';
@@ -55,18 +61,13 @@ const normalizePromoCode = (value: string): string => value.replace(/\s+/g, '').
 const isNonEmptyString = (value: string | null | undefined): value is string => value !== null && value !== undefined && value !== '';
 const isTruthyBoolean = (value: boolean | null | undefined): value is true => value === true;
 
-const firstNonEmptyString = (items: readonly string[]): string => {
-  for (const item of items) {
-    if (item !== '') return item;
-  }
-  return '';
-};
-
 const toOptionalText = (value: string): string | undefined => (value === '' ? undefined : value);
 const firstCartCurrencyCode = (items: CartItem[]): string =>
   items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
 const freshText = (next: string, current: string): string => (next === '' ? current : next);
 const freshPrice = (next: number, current: number): number => (next === 0 ? current : next);
+const prefillText = (current: string | undefined, fallback: string): string =>
+  current !== undefined && current.trim() !== '' ? current : fallback;
 
 const mergeFreshCartItem = (
   item: CartItem,
@@ -364,6 +365,15 @@ function FieldRows({
 
 const INPOST_GEO_WIDGET_SCRIPT_ID = 'inpost-geowidget-script';
 const INPOST_GEO_WIDGET_STYLE_ID = 'inpost-geowidget-style';
+const SUCCESSFUL_PAYMENT_STATUSES = new Set(['processing', 'in-transit', 'delivered']);
+
+function isSuccessfulPaymentStatus(value: unknown): boolean {
+  return typeof value === 'string' && SUCCESSFUL_PAYMENT_STATUSES.has(value);
+}
+
+function isFinishedPaymentStatus(value: unknown): boolean {
+  return isSuccessfulPaymentStatus(value) || value === 'cancelled';
+}
 
 let inpostGeowidgetPromise: Promise<void> | null = null;
 
@@ -405,47 +415,62 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function readPointString(source: Record<string, unknown>, key: string): string {
-  const value = source[key];
-  return typeof value === 'string' ? value.trim() : '';
-}
+function ManualInpostPointInput({
+  locale,
+  value,
+  error,
+  invalid,
+  onChange,
+}: {
+  locale: EcomLocale;
+  value: string;
+  error: string;
+  invalid: boolean;
+  onChange: (value: string) => void;
+}): JSX.Element {
+  const inputId = 'inpost-locker-code';
+  const hintId = `${inputId}-hint`;
+  const hasError = error !== '' || invalid;
 
-function readNestedRecord(source: Record<string, unknown>, key: string): Record<string, unknown> {
-  const value = source[key];
-  return isPlainRecord(value) ? value : {};
-}
-
-function normalizeGeowidgetPoint(value: unknown): InpostPoint | null {
-  if (!isPlainRecord(value)) return null;
-
-  const name = readPointString(value, 'name');
-  if (name === '') return null;
-
-  const address = readNestedRecord(value, 'address');
-  const addressDetails = readNestedRecord(value, 'address_details');
-  const location = readNestedRecord(value, 'location');
-  const addressStreet = firstNonEmptyString([
-    readPointString(addressDetails, 'street'),
-    readPointString(addressDetails, 'building_number'),
-  ]);
-  const addressLine1 = firstNonEmptyString([
-    readPointString(address, 'line1'),
-    readPointString(value, 'address'),
-    addressStreet,
-  ]);
-  const addressLine2 = readPointString(address, 'line2');
-
-  return {
-    id: name,
-    name,
-    description: toOptionalText(readPointString(value, 'description')),
-    addressLine1: toOptionalText(addressLine1),
-    addressLine2: toOptionalText(addressLine2),
-    city: toOptionalText(readPointString(addressDetails, 'city')),
-    postCode: toOptionalText(readPointString(addressDetails, 'post_code')),
-    latitude: typeof location['latitude'] === 'number' ? location['latitude'] : undefined,
-    longitude: typeof location['longitude'] === 'number' ? location['longitude'] : undefined,
-  };
+  return (
+    <div>
+      <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }} htmlFor={inputId}>
+        {locale === 'pl' ? 'Kod paczkomatu' : 'Parcel locker code'}
+      </label>
+      <input
+        id={inputId}
+        type='text'
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value.toUpperCase());
+        }}
+        placeholder={locale === 'pl' ? 'np. WAW01A' : 'e.g. WAW01A'}
+        aria-invalid={hasError}
+        aria-describedby={hintId}
+        style={{
+          width: '100%',
+          padding: '0.75rem 1rem',
+          background: 'var(--bg)',
+          border: `1px solid ${hasError ? 'var(--accent)' : 'var(--border)'}`,
+          outline: 'none',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.875rem',
+          color: 'var(--fg)',
+          letterSpacing: '0.08em',
+        }}
+      />
+      <p id={hintId} className='type-label mt-2' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+        {locale === 'pl'
+          ? 'Wpisz kod paczkomatu, aby kontynuować bez mapy.'
+          : 'Enter the parcel locker code to continue without the map.'}
+      </p>
+      {invalid && (
+        <p className='type-label mt-2' style={{ color: 'var(--accent)' }}>
+          {locale === 'pl' ? 'Wpisz prawidłowy kod paczkomatu.' : 'Enter a valid parcel locker code.'}
+        </p>
+      )}
+    </div>
+  );
 }
 
 
@@ -453,13 +478,19 @@ function normalizeGeowidgetPoint(value: unknown): InpostPoint | null {
 function InpostPointSelector({
   locale,
   point,
+  manualValue,
   error,
+  manualInvalid,
   onSelect,
+  onManualValueChange,
 }: {
   locale: EcomLocale;
   point: InpostPoint | null;
+  manualValue: string;
   error: string;
+  manualInvalid: boolean;
   onSelect: (point: InpostPoint | null) => void;
+  onManualValueChange: (value: string) => void;
 }): JSX.Element {
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -472,27 +503,36 @@ function InpostPointSelector({
     let active = true;
     const container = widgetRef.current;
     const eventName = 'onpointselect';
-    const handleSelect = (event: Event): void => {
-      const customEvent = event as CustomEvent<unknown>;
-      const payload = customEvent.detail ?? (event as unknown as { details?: unknown }).details;
+    const initEventName = 'inpost.geowidget.init';
+    let widget: HTMLElement | null = null;
+    const handlePointPayload = (payload: unknown): void => {
       const normalized = normalizeGeowidgetPoint(payload);
       if (normalized) onSelect(normalized);
+    };
+    const handleSelect = (event: Event): void => {
+      const normalized = normalizeGeowidgetEventPoint(event);
+      if (normalized) onSelect(normalized);
+    };
+    const handleInit = (event: Event): void => {
+      const registerPointSelected = readGeowidgetPointSelectedRegistrar(event);
+      if (registerPointSelected !== null) registerPointSelected(handlePointPayload);
     };
 
     setLoadError('');
     ensureInpostGeowidgetAssets()
       .then(() => {
         if (!active) return;
-        const widget = document.createElement('inpost-geowidget');
+        widget = document.createElement('inpost-geowidget');
         widget.setAttribute('token', token);
         widget.setAttribute('language', locale);
         widget.setAttribute('config', 'parcelCollect');
         widget.setAttribute('onpoint', eventName);
         widget.style.display = 'block';
         widget.style.minHeight = '420px';
+        widget.addEventListener(initEventName, handleInit, { once: true });
+        widget.addEventListener(eventName, handleSelect);
         container.replaceChildren(widget);
         document.addEventListener(eventName, handleSelect);
-        widget.addEventListener(eventName, handleSelect);
       })
       .catch(() => {
         if (active) setLoadError(locale === 'pl' ? 'Mapa InPost jest chwilowo niedostępna.' : 'InPost map is temporarily unavailable.');
@@ -501,6 +541,8 @@ function InpostPointSelector({
     return (): void => {
       active = false;
       document.removeEventListener(eventName, handleSelect);
+      widget?.removeEventListener(initEventName, handleInit);
+      widget?.removeEventListener(eventName, handleSelect);
       container.replaceChildren();
     };
   }, [hasWidgetToken, locale, onSelect, token]);
@@ -512,13 +554,13 @@ function InpostPointSelector({
   ].filter((value): value is string => value !== '').join(', ');
 
   return (
-      <div
-        className='mt-4 p-4'
-        style={{
-          border: `1px solid ${error !== '' ? 'var(--accent)' : 'var(--border)'}`,
-          background: 'var(--surface)',
-        }}
-      >
+    <div
+      className='mt-4 p-4'
+      style={{
+        border: `1px solid ${error !== '' ? 'var(--accent)' : 'var(--border)'}`,
+        background: 'var(--surface)',
+      }}
+    >
       <div className='flex items-start justify-between gap-4 mb-3'>
         <div>
           <div className='type-label mb-1' style={{ color: 'var(--accent)' }}>
@@ -557,44 +599,31 @@ function InpostPointSelector({
 
       {hasWidgetToken ? (
         <>
-        <div ref={widgetRef} style={{ minHeight: 420 }} />
-          {loadError !== '' && (
-            <p className='type-label mt-3' style={{ color: 'var(--accent)' }}>
-              {loadError}
-            </p>
+          {loadError === '' ? (
+            <div ref={widgetRef} style={{ minHeight: 420 }} />
+          ) : (
+            <div className='space-y-3'>
+              <p className='type-label' style={{ color: 'var(--accent)' }}>
+                {loadError}
+              </p>
+              <ManualInpostPointInput
+                locale={locale}
+                value={manualValue}
+                error={error}
+                invalid={manualInvalid}
+                onChange={onManualValueChange}
+              />
+            </div>
           )}
         </>
       ) : (
-        <div>
-          <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
-            {locale === 'pl' ? 'Kod paczkomatu' : 'Parcel locker code'}
-          </label>
-          <input
-            type='text'
-            value={point?.name ?? ''}
-            onChange={(event) => {
-              const value = event.target.value.trim().toUpperCase();
-              onSelect(value === '' ? null : { id: value, name: value });
-            }}
-            placeholder={locale === 'pl' ? 'np. WAW01A' : 'e.g. WAW01A'}
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem',
-              background: 'var(--bg)',
-            border: `1px solid ${error !== '' ? 'var(--accent)' : 'var(--border)'}`,
-            outline: 'none',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.875rem',
-              color: 'var(--fg)',
-              letterSpacing: '0.08em',
-            }}
-          />
-          <p className='type-label mt-2' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
-            {locale === 'pl'
-              ? 'Dodaj NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN, aby włączyć mapę wyboru.'
-              : 'Set NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN to enable the map selector.'}
-          </p>
-        </div>
+        <ManualInpostPointInput
+          locale={locale}
+          value={manualValue}
+          error={error}
+          invalid={manualInvalid}
+          onChange={onManualValueChange}
+        />
       )}
 
       {error !== '' && (
@@ -921,6 +950,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [blikPendingOrderId, setBlikPendingOrderId] = useState('');
   const [blikSecondsLeft, setBlikSecondsLeft] = useState(0);
   const [inpostPoint, setInpostPoint] = useState<InpostPoint | null>(null);
+  const [inpostPointManualValue, setInpostPointManualValue] = useState('');
   const [inpostPointError, setInpostPointError] = useState('');
   const [freshCartProducts, setFreshCartProducts] = useState<Partial<Record<string, FreshCartProduct>>>({});
   const [cartRefreshPending, setCartRefreshPending] = useState(false);
@@ -1001,6 +1031,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const requiresInpostPoint = isInpostShippingCountry
     && selectedShipping.carrier === 'inpost'
     && Boolean(selectedShipping.requiresPickupPoint);
+  const manualInpostPointInvalid = inpostPointManualValue.trim() !== ''
+    && normalizeInpostPointCode(inpostPointManualValue) === null;
   const discount = calculatePromoDiscount(subtotal, promoDiscountType, promoDiscountValue);
   const total = subtotal - discount + selectedShipping.price;
   const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
@@ -1017,6 +1049,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     : 'Open your banking app and approve the BLIK payment. Waiting for confirmation…';
   const blikInvalidMessage = locale === 'pl' ? 'Wpisz poprawny 6-cyfrowy kod BLIK.' : 'Enter a valid 6-digit BLIK code.';
   const inpostPointRequiredMessage = locale === 'pl' ? 'Wybierz paczkomat InPost.' : 'Choose an InPost pickup point.';
+  const inpostPointInvalidMessage = locale === 'pl' ? 'Wpisz prawidłowy kod paczkomatu.' : 'Enter a valid parcel locker code.';
 
   useEffect(() => {
     if (zoneMethods.some((method) => method.id === shipping)) return;
@@ -1027,6 +1060,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   useEffect(() => {
     if (requiresInpostPoint) return;
     setInpostPoint(null);
+    setInpostPointManualValue('');
     setInpostPointError('');
   }, [requiresInpostPoint]);
 
@@ -1038,9 +1072,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     const lastName = nameParts.slice(1).join(' ');
     setForm((f) => ({
       ...f,
-      email: f.email !== '' ? f.email : user.email,
-      firstName: f.firstName !== '' ? f.firstName : firstName,
-      lastName: f.lastName !== '' ? f.lastName : lastName,
+      email: prefillText(f.email, user.email),
+      firstName: prefillText(f.firstName, firstName),
+      lastName: prefillText(f.lastName, lastName),
     }));
   }, [user]);
 
@@ -1056,7 +1090,19 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   const handleInpostPointSelect = useCallback((point: InpostPoint | null) => {
     setInpostPoint(point);
+    setInpostPointManualValue(point?.name ?? '');
     if (point) setInpostPointError('');
+  }, []);
+
+  const handleManualInpostPointChange = useCallback((value: string) => {
+    setInpostPointManualValue(value);
+    const normalized = normalizeInpostPointCode(value);
+    if (normalized === null) {
+      setInpostPoint(null);
+      return;
+    }
+    setInpostPoint({ id: normalized, name: normalized });
+    setInpostPointError('');
   }, []);
 
   const validateInformationForm = (): boolean => {
@@ -1078,7 +1124,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   const validateShippingStep = (): boolean => {
     if (requiresInpostPoint && inpostPoint === null) {
-      setInpostPointError(inpostPointRequiredMessage);
+      setInpostPointError(inpostPointManualValue.trim() === '' ? inpostPointRequiredMessage : inpostPointInvalidMessage);
       return false;
     }
     setInpostPointError('');
@@ -1176,13 +1222,13 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           const res = await fetch(`/api/orders/${encodeURIComponent(blikPendingOrderId)}/status`);
           const data = (await res.json().catch(() => undefined)) as unknown;
           const status = isPlainRecord(data) ? data.status : undefined;
-          if (status !== 'processing' && status !== 'cancelled') return;
+          if (!isFinishedPaymentStatus(status)) return;
           if (!active) return;
           clearInterval(intervalId);
           clearInterval(tickId);
           clearTimeout(timeoutId);
           setBlikPending(false);
-          if (status === 'processing') {
+          if (isSuccessfulPaymentStatus(status)) {
             setStep('confirmation');
             clearCart();
             toast({ type: 'success', title: content.orderPlacedToastTitle, message: blikPendingOrderId });
@@ -1410,8 +1456,11 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                     <InpostPointSelector
                       locale={locale}
                       point={inpostPoint}
+                      manualValue={inpostPointManualValue}
                       error={inpostPointError}
+                      manualInvalid={manualInpostPointInvalid}
                       onSelect={handleInpostPointSelect}
+                      onManualValueChange={handleManualInpostPointChange}
                     />
                   )}
                 </div>

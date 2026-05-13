@@ -927,6 +927,12 @@ export function localizeCheckoutContent(content: CheckoutContent, localeInput?: 
     express: 'Dostawa ekspresowa',
     overnight: 'Dostawa następnego dnia',
     'inpost-locker': 'InPost Paczkomat',
+    'poczta-polska': 'Poczta Polska',
+    'poczta-polska-eu': 'Poczta Polska Międzynarodowa',
+    'poczta-polska-world': 'Poczta Polska Międzynarodowa',
+    'dpd-courier': 'Kurier DPD',
+    'dpd-eu': 'DPD Międzynarodowy',
+    'dpd-world': 'DPD Międzynarodowy',
   };
   const zoneLabels: Record<string, string> = {
     domestic: 'Polska',

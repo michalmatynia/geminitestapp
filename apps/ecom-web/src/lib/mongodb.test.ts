@@ -68,11 +68,15 @@ const clearMongoEnv = (): void => {
     'ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION',
     'ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR',
     'ECOM_MONGODB_TLS_ALLOW_INVALID_HOSTNAMES',
+    'ECOM_MONGODB_SERVER_SELECTION_TIMEOUT_MS',
+    'ECOM_MONGODB_CONNECT_TIMEOUT_MS',
     'MONGODB_SECURITY_OVERRIDE_ENABLED',
     'MONGODB_TLS_ALLOW_INVALID_CERTIFICATES',
     'MONGODB_TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION',
     'MONGODB_TLS_ALLOW_INVALID_HOSTNAMES',
     'MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR',
+    'MONGODB_SERVER_SELECTION_TIMEOUT_MS',
+    'MONGODB_CONNECT_TIMEOUT_MS',
     'MONGODB_PRODUCTS_URI',
     'MONGODB_PRODUCTS_DB',
     'MONGODB_PRODUCTS_LOCAL_URI',
@@ -115,6 +119,44 @@ describe('ecommerce MongoDB resolver', () => {
 
     expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
     expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+  });
+
+  it('uses fast local connection timeouts for loopback runtime MongoDB in development', async () => {
+    const { getDb } = await import('./mongodb');
+
+    await getDb();
+
+    expect(mongoMocks.createdOptions[0]).toMatchObject({
+      serverSelectionTimeoutMS: 1500,
+      connectTimeoutMS: 1500,
+    });
+  });
+
+  it('keeps longer default connection timeouts for cloud runtime MongoDB sources', async () => {
+    process.env['MONGODB_URI'] = 'mongodb+srv://runtime.example.test/ecom';
+
+    const { getDb } = await import('./mongodb');
+
+    await getDb();
+
+    expect(mongoMocks.createdOptions[0]).toMatchObject({
+      serverSelectionTimeoutMS: 12000,
+      connectTimeoutMS: 12000,
+    });
+  });
+
+  it('allows env overrides for runtime MongoDB connection timeouts', async () => {
+    process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'] = '4500';
+    process.env['MONGODB_CONNECT_TIMEOUT_MS'] = '5000';
+
+    const { getDb } = await import('./mongodb');
+
+    await getDb();
+
+    expect(mongoMocks.createdOptions[0]).toMatchObject({
+      serverSelectionTimeoutMS: 4500,
+      connectTimeoutMS: 5000,
+    });
   });
 
   it('falls back to alternate main DB source on retryable timeout errors when enabled', async () => {

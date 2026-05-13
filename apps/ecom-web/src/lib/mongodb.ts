@@ -143,11 +143,12 @@ function normalizeClientOptionsForCache(options: MongoClientOptions): string {
 
 function buildMongoClientOptions(uri: string, context: MongoContext, allowInvalidCertificate: boolean): MongoClientOptions {
   const prefixes = getMongoOptionPrefixes(context);
+  const defaultConnectionTimeout = !isProductionLike() && isLoopbackMongoUri(uri) ? 1_500 : 12_000;
   const options: MongoClientOptions = {
     maxPoolSize: readNumberFromEnv(prefixes, 'MAX_POOL_SIZE', 5),
     minPoolSize: readNumberFromEnv(prefixes, 'MIN_POOL_SIZE', 1),
-    serverSelectionTimeoutMS: readNumberFromEnv(prefixes, 'SERVER_SELECTION_TIMEOUT_MS', 12_000),
-    connectTimeoutMS: readNumberFromEnv(prefixes, 'CONNECT_TIMEOUT_MS', 12_000),
+    serverSelectionTimeoutMS: readNumberFromEnv(prefixes, 'SERVER_SELECTION_TIMEOUT_MS', defaultConnectionTimeout),
+    connectTimeoutMS: readNumberFromEnv(prefixes, 'CONNECT_TIMEOUT_MS', defaultConnectionTimeout),
     socketTimeoutMS: readNumberFromEnv(prefixes, 'SOCKET_TIMEOUT_MS', 20_000),
   };
 

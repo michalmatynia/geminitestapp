@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { formatPrice } from '@/lib/locales';
-import { getOrderShippingDetails } from '@/lib/order-shipping';
+import { getOrderShippingDetails, getOrderTrackingUrl } from '@/lib/order-shipping';
 import { isPolandShippingCountry } from '@/lib/shipping';
 import type { Order } from '@/lib/orders';
 
@@ -59,10 +59,19 @@ function buildShippingDetailsHtml(order: Order): string {
   return `<br><br><strong style="color:#f5f1e8;">Delivery:</strong><br>${detailRows.map(escapeHtml).join('<br>')}`;
 }
 
-function buildOrderStatusLinkHtml(order: Order): string {
+function actionLink(label: string, href: string): string {
+  return `<a href="${escapeHtml(href)}" style="display:inline-block;border:1px solid #f5f1e8;color:#f5f1e8;text-decoration:none;padding:12px 18px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;margin:0 8px 8px 0;">${escapeHtml(label)}</a>`;
+}
+
+function buildTrackingActionsHtml(order: Order): string {
   const orderStatusUrl = buildOrderStatusUrl(order);
-  if (orderStatusUrl.length === 0) return '';
-  return `<p style="margin:0 0 28px;"><a href="${escapeHtml(orderStatusUrl)}" style="display:inline-block;border:1px solid #f5f1e8;color:#f5f1e8;text-decoration:none;padding:12px 18px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">Track order</a></p>`;
+  const carrierTrackingUrl = getOrderTrackingUrl(order) ?? '';
+  const actions = [
+    orderStatusUrl.length > 0 ? actionLink('Track order', orderStatusUrl) : '',
+    carrierTrackingUrl.length > 0 ? actionLink('Track shipment', carrierTrackingUrl) : '',
+  ].filter((html) => html.length > 0);
+  if (actions.length === 0) return '';
+  return `<p style="margin:0 0 20px;">${actions.join('')}</p>`;
 }
 
 function buildDiscountHtml(order: Order, currencyCode: string): string {
@@ -77,7 +86,7 @@ function buildDiscountHtml(order: Order, currencyCode: string): string {
 function buildConfirmationHtml(order: Order): string {
   const currencyCode = orderCurrencyCode(order);
   const shippingDetailsHtml = buildShippingDetailsHtml(order);
-  const orderStatusLinkHtml = buildOrderStatusLinkHtml(order);
+  const trackingActionsHtml = buildTrackingActionsHtml(order);
   const discountHtml = buildDiscountHtml(order, currencyCode);
   const itemRows = order.items
     .map(
@@ -103,7 +112,7 @@ function buildConfirmationHtml(order: Order): string {
         <p style="color:#c8c1b5;font-size:15px;line-height:1.7;margin:0 0 28px;">
           Thank you for your order. We have received ${escapeHtml(order.orderId)} and are preparing it now.
         </p>
-        ${orderStatusLinkHtml}
+        ${trackingActionsHtml}
 
         <div style="border:1px solid #2b2b2b;background:#111;padding:24px;margin-bottom:24px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">

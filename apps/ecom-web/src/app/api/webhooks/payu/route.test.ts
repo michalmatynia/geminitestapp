@@ -53,9 +53,13 @@ function makeRequest(body: string, signature: string | null = null): NextRequest
   }) as NextRequest;
 }
 
-function makeNotification(payuOrderId: string, status: string): string {
+function makeNotification(payuOrderId: string, status: string, extOrderId = ''): string {
   return JSON.stringify({
-    order: { orderId: payuOrderId, extOrderId: 'ARC-2026-ABCD1234', status },
+    order: {
+      orderId: payuOrderId,
+      ...(extOrderId.length > 0 ? { extOrderId } : {}),
+      status,
+    },
   });
 }
 
@@ -65,6 +69,7 @@ function makeSignedRequest(body: string): NextRequest {
 
 describe('PayU IPN webhook', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.unstubAllEnvs();
     vi.stubEnv('PAYU_SECOND_KEY', SECOND_KEY);
     mocks.findOneAndUpdate.mockReset();
@@ -82,13 +87,24 @@ describe('PayU IPN webhook', () => {
   });
 
   it('updates order to processing and sends confirmation email on COMPLETED', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-13T12:00:00.000Z'));
     const body = makeNotification('PAYU-123', 'COMPLETED');
     const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
-      { payuOrderId: 'PAYU-123' },
-      { $set: { status: 'processing' } },
+      {
+        payuOrderId: 'PAYU-123',
+        status: 'pending_payment',
+        confirmationEmailQueuedAt: { $exists: false },
+      },
+      {
+        $set: {
+          status: 'processing',
+          confirmationEmailQueuedAt: '2026-05-13T12:00:00.000Z',
+        },
+      },
       { returnDocument: 'after' },
     );
     expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(
@@ -99,13 +115,83 @@ describe('PayU IPN webhook', () => {
     );
   });
 
+  it('can confirm a precreated BLIK order by extOrderId before payuOrderId is attached', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-13T12:00:00.000Z'));
+    const body = makeNotification('PAYU-123', 'COMPLETED', 'ARC-2026-ABCD1234');
+    const res = await POST(makeSignedRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        $or: [
+          { payuOrderId: 'PAYU-123' },
+          { orderId: 'ARC-2026-ABCD1234' },
+        ],
+        status: 'pending_payment',
+        confirmationEmailQueuedAt: { $exists: false },
+      },
+      {
+        $set: {
+          status: 'processing',
+          confirmationEmailQueuedAt: '2026-05-13T12:00:00.000Z',
+        },
+      },
+      { returnDocument: 'after' },
+    );
+    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'serialized-id' }),
+    );
+  });
+
+  it('does not send duplicate confirmation emails for repeated COMPLETED notifications', async () => {
+    mocks.findOneAndUpdate.mockResolvedValueOnce(null);
+
+    const body = makeNotification('PAYU-123', 'COMPLETED');
+    const res = await POST(makeSignedRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        payuOrderId: 'PAYU-123',
+        status: 'pending_payment',
+        confirmationEmailQueuedAt: { $exists: false },
+      },
+      {
+        $set: expect.objectContaining({
+          status: 'processing',
+          confirmationEmailQueuedAt: expect.any(String),
+        }),
+      },
+      { returnDocument: 'after' },
+    );
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
+  });
+
   it('updates order to cancelled on CANCELED without sending email', async () => {
     const body = makeNotification('PAYU-456', 'CANCELED');
     const res = await POST(makeSignedRequest(body));
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
-      { payuOrderId: 'PAYU-456' },
+      { payuOrderId: 'PAYU-456', status: 'pending_payment' },
+      { $set: { status: 'cancelled' } },
+      { returnDocument: 'after' },
+    );
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
+  });
+
+  it('does not downgrade completed orders on late CANCELED notifications', async () => {
+    mocks.findOneAndUpdate.mockResolvedValueOnce(null);
+
+    const body = makeNotification('PAYU-456', 'CANCELED');
+    const res = await POST(makeSignedRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      { payuOrderId: 'PAYU-456', status: 'pending_payment' },
       { $set: { status: 'cancelled' } },
       { returnDocument: 'after' },
     );
@@ -119,7 +205,7 @@ describe('PayU IPN webhook', () => {
 
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.any(Object),
+      { payuOrderId: 'PAYU-789', status: 'pending_payment' },
       { $set: { status: 'pending_payment' } },
       { returnDocument: 'after' },
     );

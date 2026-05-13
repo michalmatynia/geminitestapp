@@ -89,7 +89,12 @@ function OrderShippingBlock({ content, order }: OrderCardProps): JSX.Element {
       </p>
       {order.trackingNumber !== undefined && (
         <p className='type-label mt-2' style={{ color: 'var(--accent)' }}>
-          {content.trackingLabel}: {order.trackingNumber}
+          {content.trackingLabel}:{' '}
+          {order.trackingUrl !== undefined ? (
+            <a href={order.trackingUrl} target='_blank' rel='noreferrer' style={{ color: 'var(--accent)' }}>
+              {order.trackingNumber}
+            </a>
+          ) : order.trackingNumber}
         </p>
       )}
     </div>

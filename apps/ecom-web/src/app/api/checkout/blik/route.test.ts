@@ -10,6 +10,7 @@ import { POST } from './route';
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   insertOne: vi.fn(),
+  updateOne: vi.fn(),
   createPayUBlikOrder: vi.fn(),
   computeDiscount: vi.fn(),
   getEcommerceProductsDb: vi.fn(),
@@ -24,7 +25,7 @@ vi.mock('@/lib/auth', () => ({ getSession: mocks.getSession }));
 
 vi.mock('@/lib/mongodb', () => ({
   getDb: vi.fn(async () => ({
-    collection: () => ({ insertOne: mocks.insertOne }),
+    collection: () => ({ insertOne: mocks.insertOne, updateOne: mocks.updateOne }),
   })),
   getEcommerceProductsDb: mocks.getEcommerceProductsDb,
 }));
@@ -103,6 +104,7 @@ describe('BLIK checkout route', () => {
   beforeEach(() => {
     mocks.getSession.mockReset();
     mocks.insertOne.mockReset();
+    mocks.updateOne.mockReset();
     mocks.createPayUBlikOrder.mockReset();
     mocks.computeDiscount.mockReset();
     mocks.getEcommerceProductsDb.mockReset();
@@ -114,6 +116,7 @@ describe('BLIK checkout route', () => {
 
     mocks.getSession.mockResolvedValue(null);
     mocks.insertOne.mockResolvedValue({ insertedId: { toString: () => 'mongo-blik-id' } });
+    mocks.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     mocks.createPayUBlikOrder.mockResolvedValue({ payuOrderId: 'PAYU-ORDER-123', statusCode: 'PENDING' });
     mocks.computeDiscount.mockReturnValue(0);
     mocks.checkRateLimit.mockReturnValue({ allowed: true, retryAfterSec: 0 });
@@ -146,16 +149,41 @@ describe('BLIK checkout route', () => {
     expect(body.payuOrderId).toBe('PAYU-ORDER-123');
     expect(body.orderId).toMatch(/^ARC-\d{4}-[0-9A-F]{8}$/);
 
-    expect(mocks.createPayUBlikOrder).toHaveBeenCalledWith(
-      expect.objectContaining({ blikCode: '123456', totalAmount: 1500 }),
+    expect(mocks.insertOne.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.createPayUBlikOrder.mock.invocationCallOrder[0],
     );
     expect(mocks.insertOne).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'pending_payment',
-        payuOrderId: 'PAYU-ORDER-123',
         userId: 'user-1',
         email: 'buyer@example.com',
       }),
+    );
+    expect(mocks.createPayUBlikOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ blikCode: '123456', totalAmount: 1500, extOrderId: body.orderId }),
+    );
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: body.orderId },
+      { $set: { payuOrderId: 'PAYU-ORDER-123' } },
+    );
+  });
+
+  it('returns the local order when attaching payuOrderId fails after PayU accepts', async () => {
+    mocks.updateOne.mockRejectedValueOnce(new Error('temporary write failure'));
+
+    const res = await POST(makeJsonRequest(makePayload()));
+    const body = await res.json() as { orderId?: string; payuOrderId?: string; _id?: string };
+
+    expect(res.status).toBe(201);
+    expect(body._id).toBe('mongo-blik-id');
+    expect(body.payuOrderId).toBe('PAYU-ORDER-123');
+    expect(body.orderId).toMatch(/^ARC-\d{4}-[0-9A-F]{8}$/);
+    expect(mocks.createPayUBlikOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ extOrderId: body.orderId }),
+    );
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: body.orderId },
+      { $set: { payuOrderId: 'PAYU-ORDER-123' } },
     );
   });
 
@@ -181,6 +209,20 @@ describe('BLIK checkout route', () => {
     expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
   });
 
+  it('rejects incomplete shipping addresses without throwing', async () => {
+    const payload = makePayload();
+    const shippingAddress = { ...payload.shippingAddress as Record<string, unknown> };
+    delete shippingAddress.phone;
+
+    const res = await POST(makeJsonRequest(makePayload({ shippingAddress })));
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('A complete shipping address is required');
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+  });
+
   it('rejects empty item list', async () => {
     const res = await POST(makeJsonRequest(makePayload({ items: [] })));
 
@@ -196,6 +238,22 @@ describe('BLIK checkout route', () => {
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
       total: 1504,
+    })));
+
+    expect(res.status).toBe(400);
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsafe InPost pickup point codes', async () => {
+    const res = await POST(makeJsonRequest(makePayload({
+      shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
+      shippingCarrier: 'inpost',
+      shippingService: 'inpost_locker_standard',
+      total: 1504,
+      inpostPoint: { id: '<script>', name: '<script>' },
     })));
 
     expect(res.status).toBe(400);
@@ -281,7 +339,11 @@ describe('BLIK checkout route', () => {
 
     expect(res.status).toBe(422);
     expect(body.error).toMatch(/BLIK/i);
-    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending_payment' }));
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: expect.stringMatching(/^ARC-\d{4}-[0-9A-F]{8}$/), status: 'pending_payment' },
+      { $set: { status: 'cancelled' } },
+    );
   });
 
   it('returns 502 on PayU gateway error', async () => {
@@ -290,7 +352,11 @@ describe('BLIK checkout route', () => {
     const res = await POST(makeJsonRequest(makePayload()));
 
     expect(res.status).toBe(502);
-    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending_payment' }));
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: expect.stringMatching(/^ARC-\d{4}-[0-9A-F]{8}$/), status: 'pending_payment' },
+      { $set: { status: 'cancelled' } },
+    );
   });
 
   it('applies server-side promo discount, ignoring any client-supplied discount', async () => {

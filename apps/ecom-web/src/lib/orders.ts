@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import type { Document, WithId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
+import { normalizeInpostPointCode } from '@/lib/inpost-point-code';
 
 export type OrderItem = {
   productId: string;
@@ -89,6 +90,7 @@ export type Order = {
   promoCode?: string;
   total: number;
   createdAt: string;
+  confirmationEmailQueuedAt?: string;
 };
 
 export const ORDERS_COLLECTION = 'ecom_orders';
@@ -121,9 +123,9 @@ export function sanitizeShippingCarrier(value: unknown): ShippingCarrier {
 export function sanitizeInpostPoint(value: unknown): InpostPoint | null {
   if (!isRecord(value)) return null;
 
-  const id = readString(value['id'] ?? value['name'], 80);
-  const name = readString(value['name'] ?? id, 120);
-  if (id === '' || name === '') return null;
+  const id = normalizeInpostPointCode(readString(value['id'] ?? value['name'], 80));
+  if (id === null) return null;
+  const name = normalizeInpostPointCode(readString(value['name'] ?? id, 120)) ?? id;
 
   const latitude = readOptionalNumber(value['latitude']);
   const longitude = readOptionalNumber(value['longitude']);

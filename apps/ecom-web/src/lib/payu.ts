@@ -126,6 +126,42 @@ function parsePayUOrderResponse(body: string): {
   }
 }
 
+function parseNonEmptyPayUOrderResponse(body: string, status: number): ReturnType<typeof parsePayUOrderResponse> {
+  if (body === '') throw new Error(`PayU returned empty body: ${status}`);
+  return parsePayUOrderResponse(body);
+}
+
+function payuStatusCode(data: ReturnType<typeof parsePayUOrderResponse>): string {
+  return data.status?.statusCode ?? '';
+}
+
+function assertPayUSuccess(status: number, statusCode: string, statusDesc: string | undefined): void {
+  if (!isPayUSuccessStatus(status, statusCode)) {
+    throw new Error(statusDesc ?? `PayU order failed: ${status} ${statusCode}`);
+  }
+}
+
+function readPayUOrderId(data: ReturnType<typeof parsePayUOrderResponse>, status: number, statusCode: string): string {
+  const payuOrderId = data.orderId?.trim() ?? '';
+  if (payuOrderId.length === 0) {
+    throw new Error(`PayU returned success without order ID: ${status} ${normalizePayUStatusCode(statusCode)}`);
+  }
+  return payuOrderId;
+}
+
+function getSuccessfulPayUOrderResult(
+  status: number,
+  data: ReturnType<typeof parsePayUOrderResponse>,
+): PayUOrderResult {
+  const statusCode = payuStatusCode(data);
+  assertPayUSuccess(status, statusCode, data.status?.statusDesc);
+
+  return {
+    payuOrderId: readPayUOrderId(data, status, statusCode),
+    statusCode: normalizePayUStatusCode(statusCode),
+  };
+}
+
 export async function createPayUBlikOrder(
   params: CreatePayUBlikParams,
 ): Promise<PayUOrderResult> {
@@ -144,19 +180,8 @@ export async function createPayUBlikOrder(
 
   // PayU returns 302 on success (follow manually) or 201 in sandbox
   const body = await res.text();
-  if (body === '') throw new Error(`PayU returned empty body: ${res.status}`);
-
-  const data = parsePayUOrderResponse(body);
-
-  const statusCode = data.status?.statusCode ?? '';
-  if (!isPayUSuccessStatus(res.status, statusCode)) {
-    throw new Error(data.status?.statusDesc ?? `PayU order failed: ${res.status} ${statusCode}`);
-  }
-
-  return {
-    payuOrderId: data.orderId ?? '',
-    statusCode: normalizePayUStatusCode(statusCode),
-  };
+  const data = parseNonEmptyPayUOrderResponse(body, res.status);
+  return getSuccessfulPayUOrderResult(res.status, data);
 }
 
 // Verifies the OpenPayU-Signature header for incoming IPN webhooks.

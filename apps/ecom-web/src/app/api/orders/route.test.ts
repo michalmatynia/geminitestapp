@@ -315,6 +315,20 @@ describe('orders API', () => {
     }));
   });
 
+  it('rejects incomplete shipping addresses without throwing', async () => {
+    const payload = makeOrderPayload();
+    const shippingAddress = { ...payload.shippingAddress as Record<string, unknown> };
+    delete shippingAddress.phone;
+
+    const response = await POST(makeJsonRequest({ ...payload, shippingAddress }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'A complete shipping address is required' });
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['Poczta Polska', 'poczta-polska', 'poczta_polska', 'poczta_polska_tracked', 0, 30],
     ['DPD Courier', 'dpd-courier', 'dpd', 'dpd_courier_standard', 10, 40],
@@ -412,6 +426,23 @@ describe('orders API', () => {
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
       total: 34,
+    }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsafe InPost pickup point codes', async () => {
+    const response = await POST(makeJsonRequest({
+      ...makeOrderPayload(),
+      shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
+      shippingCarrier: 'inpost',
+      shippingService: 'inpost_locker_standard',
+      total: 34,
+      inpostPoint: { id: '<script>', name: '<script>' },
     }));
 
     expect(response.status).toBe(400);

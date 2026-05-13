@@ -55,6 +55,21 @@ describe('GET /api/orders/[orderId]/status', () => {
     expect(body.shippingService).toBe('dpd_courier_standard');
   });
 
+  it('normalizes lowercase order IDs before querying', async () => {
+    mocks.findOne.mockResolvedValue({
+      status: 'processing',
+      shippingMethod: 'DPD Courier',
+    });
+
+    const res = await GET(makeRequest('arc-2026-abcd1234'), makeParams('arc-2026-abcd1234'));
+
+    expect(res.status).toBe(200);
+    expect(mocks.findOne).toHaveBeenCalledWith(
+      { orderId: 'ARC-2026-ABCD1234' },
+      expect.any(Object),
+    );
+  });
+
   it('returns safe InPost pickup and tracking details', async () => {
     mocks.findOne.mockResolvedValue({
       status: 'in-transit',
@@ -66,7 +81,10 @@ describe('GET /api/orders/[orderId]/status', () => {
         postCode: '00-001',
         city: 'Warsaw',
       },
-      inpostShipment: { trackingNumber: 'TRACK123' },
+      inpostShipment: {
+        trackingNumber: 'TRACK123',
+        shipmentUrl: 'https://inpost.example.test/shipments/TRACK123',
+      },
       shippingAddress: { address: 'Private customer address' },
       email: 'buyer@example.com',
     });
@@ -75,12 +93,19 @@ describe('GET /api/orders/[orderId]/status', () => {
       new Request('http://localhost/api/orders/ARC-2026-ABCD1234/status?locale=pl') as NextRequest,
       makeParams('ARC-2026-ABCD1234'),
     );
-    const body = await res.json() as { shippingSummary?: string; inpostPointName?: string; trackingNumber?: string; email?: string };
+    const body = await res.json() as {
+      shippingSummary?: string;
+      inpostPointName?: string;
+      trackingNumber?: string;
+      trackingUrl?: string;
+      email?: string;
+    };
 
     expect(res.status).toBe(200);
     expect(body.shippingSummary).toBe('InPost Parcel Locker / Paczkomat WAW01A / ul. Testowa 1, 00-001 Warsaw / Tracking: TRACK123');
     expect(body.inpostPointName).toBe('WAW01A');
     expect(body.trackingNumber).toBe('TRACK123');
+    expect(body.trackingUrl).toBe('https://inpost.example.test/shipments/TRACK123');
     expect(body.email).toBeUndefined();
     expect(JSON.stringify(body)).not.toContain('Private customer address');
   });
@@ -103,6 +128,25 @@ describe('GET /api/orders/[orderId]/status', () => {
     expect(body.shippingSummary).toBe('DPD Courier / Tracking: DPD123');
     expect(body.trackingNumber).toBe('DPD123');
     expect(body.trackingUrl).toBe('https://track.example.test/DPD123');
+  });
+
+  it('does not expose unsafe tracking URLs', async () => {
+    mocks.findOne.mockResolvedValue({
+      status: 'in-transit',
+      shippingMethod: 'DPD Courier',
+      shippingCarrier: 'dpd',
+      shipment: {
+        trackingNumber: 'DPD123',
+        trackingUrl: 'javascript:alert(1)',
+      },
+    });
+
+    const res = await GET(makeRequest('ARC-2026-ABCD1234'), makeParams('ARC-2026-ABCD1234'));
+    const body = await res.json() as { trackingNumber?: string; trackingUrl?: string };
+
+    expect(res.status).toBe(200);
+    expect(body.trackingNumber).toBe('DPD123');
+    expect(body.trackingUrl).toBeUndefined();
   });
 
   it('returns 404 for an unknown order', async () => {

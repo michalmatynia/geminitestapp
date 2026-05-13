@@ -93,6 +93,22 @@ export function getOrderTrackingNumber(order: OrderShippingDisplayInput): string
   return order.shipment?.trackingNumber ?? order.inpostShipment?.trackingNumber;
 }
 
+function safeTrackingUrl(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const text = value.trim();
+  if (text.length === 0) return undefined;
+  try {
+    const url = new URL(text);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getOrderTrackingUrl(order: OrderShippingDisplayInput): string | undefined {
+  return safeTrackingUrl(order.shipment?.trackingUrl) ?? safeTrackingUrl(order.inpostShipment?.shipmentUrl);
+}
+
 export function getOrderShippingSummary(
   order: OrderShippingDisplayInput,
   locale: EcomLocale,

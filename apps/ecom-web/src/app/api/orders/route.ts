@@ -146,17 +146,17 @@ function sanitizeItems(value: unknown): OrderItem[] | null {
 function sanitizeAddress(value: unknown): Record<string, string> | null {
   if (!isRecord(value)) return null;
 
-  const address: Record<string, string> = {};
+  const address: Partial<Record<string, string>> = {};
   for (const [key, raw] of Object.entries(value)) {
     if (typeof raw === 'string') address[key] = raw.trim();
   }
 
   for (const field of REQUIRED_ADDRESS_FIELDS) {
     const fieldValue = address[field];
-    if (fieldValue.length === 0) return null;
+    if (typeof fieldValue !== 'string' || fieldValue.length === 0) return null;
   }
 
-  return address;
+  return address as Record<string, string>;
 }
 
 // eslint-disable-next-line max-lines-per-function, complexity

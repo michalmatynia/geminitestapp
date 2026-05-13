@@ -234,6 +234,78 @@ describe('InPost webhook route', () => {
     );
   });
 
+  it('records conflicting terminal events without changing the existing terminal status', async () => {
+    mocks.updateOne
+      .mockResolvedValueOnce({ matchedCount: 0, modifiedCount: 0 })
+      .mockResolvedValueOnce({ matchedCount: 1, modifiedCount: 1 });
+    mocks.findOne.mockResolvedValueOnce({
+      _id: 'order-id',
+      status: 'delivered',
+      inpostEventIds: ['event-2#EOL.1002'],
+    });
+
+    const body = JSON.stringify(makePayload({
+      eventId: 'event-cancelled#EOL.9004',
+      eventCode: 'EOL.9004',
+    }));
+    const response = await POST(makeRequest(body));
+    const json = await response.json() as {
+      matched?: boolean;
+      modified?: boolean;
+      stale?: boolean;
+      orderStatus?: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(json).toMatchObject({
+      matched: true,
+      modified: true,
+      stale: true,
+      orderStatus: 'cancelled',
+    });
+    expect(mocks.updateOne).toHaveBeenNthCalledWith(
+      1,
+      {
+        $or: [
+          { orderId: 'ARC-2026-ABCD1234' },
+          { 'inpostShipment.trackingNumber': 'TRACK123' },
+        ],
+        inpostEventIds: { $ne: 'event-cancelled#EOL.9004' },
+        status: { $ne: 'delivered' },
+      },
+      expect.objectContaining({
+        $set: expect.objectContaining({ status: 'cancelled' }),
+      }),
+    );
+    expect(mocks.updateOne).toHaveBeenNthCalledWith(
+      2,
+      {
+        $or: [
+          { orderId: 'ARC-2026-ABCD1234' },
+          { 'inpostShipment.trackingNumber': 'TRACK123' },
+        ],
+        inpostEventIds: { $ne: 'event-cancelled#EOL.9004' },
+      },
+      {
+        $addToSet: {
+          inpostEventIds: 'event-cancelled#EOL.9004',
+        },
+        $push: {
+          inpostTrackingEvents: {
+            $each: [
+              expect.objectContaining({
+                eventId: 'event-cancelled#EOL.9004',
+                eventCode: 'EOL.9004',
+                stale: true,
+              }),
+            ],
+            $slice: -25,
+          },
+        },
+      },
+    );
+  });
+
   it('rejects unsigned webhooks when the secret is missing', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('INPOST_WEBHOOK_SECRET', '');

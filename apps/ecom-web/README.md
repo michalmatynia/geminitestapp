@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-07'
+last_reviewed: '2026-05-13'
 status: 'active'
 doc_type: 'overview'
 scope: 'workspace:@app/ecom-web'
@@ -11,7 +11,7 @@ canonical: true
 
 `apps/ecom-web` is a standalone Next.js storefront workspace for the STARGATER
 ecommerce experience. It owns the customer-facing shop, product browsing,
-product detail pages, cart drawer, wishlist, checkout flow, account mock,
+product detail pages, cart drawer, wishlist, checkout flow, account orders,
 editorial content, and the read-only product API for this storefront.
 
 The app is intentionally isolated from the repository-root platform runtime. It
@@ -86,6 +86,9 @@ The script uses the local `mongod` binary, stores data in
 ecommerce database is not reachable, run `npm run mongo:ecom:status` first and
 then `npm run mongo:ecom:up` if it is not running.
 
+In development, local loopback MongoDB connections fail fast when the service is
+down so public pages can fall back without waiting on the full cloud timeout.
+
 ## Product Pricing Sync
 
 Product List is the source of truth for ecommerce product prices and pricing
@@ -122,11 +125,21 @@ The app works without these variables by using static fallback products.
 | `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. Use `cloud` when testing add/delete visibility against the shared ecommerce export database. |
 | `ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if connecting to the selected ecommerce/product source fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. |
 | `MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if CMS/auth/runtime DB connection fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. Skipped when `MONGODB_URI` is explicitly set. |
+| `MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Runtime MongoDB timeout overrides for auth, wishlist, orders, and CMS data. |
+| `ECOM_MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `ECOM_MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Ecommerce product catalog MongoDB timeout overrides. |
 | `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_ECOM_URL` | Recommended for production | local fallback | Public storefront origin used for sitemap/robots and transactional order tracking links. |
+| `NEXT_PUBLIC_BASE_URL` | For PayU BLIK webhooks | `NEXT_PUBLIC_ECOM_URL` / Vercel URL fallback | Public storefront origin used to build the PayU `notifyUrl`. Must be reachable by PayU. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
 | `NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN` | For InPost map selector | none | Public InPost Geowidget token used by checkout to show the Paczkomat map selector for Poland-only InPost delivery. |
+| `PAYU_API_URL` | For BLIK payments | `https://secure.snd.payu.com` | PayU API origin. Use sandbox for development and `https://secure.payu.com` for production. |
+| `PAYU_POS_ID` / `PAYU_CLIENT_ID` / `PAYU_CLIENT_SECRET` | For BLIK payments | none | PayU POS and OAuth credentials used when creating BLIK orders. |
+| `PAYU_SECOND_KEY` | For PayU webhooks | none | Verifies `OpenPayU-Signature` for `/api/webhooks/payu`. |
+| `RESEND_API_KEY` | For order emails | none | Sends order confirmation emails. Without it, order creation still works but confirmation email delivery is skipped. |
+| `INPOST_API_URL` / `INPOST_API_TOKEN` / `INPOST_ORGANIZATION_ID` | For InPost fulfillment | sandbox URL / none | ShipX settings used to create InPost parcel-locker shipments after payment confirmation. |
+| `INPOST_GROUP_API_URL` / `INPOST_OAUTH_TOKEN_URL` / `INPOST_OAUTH_CLIENT_ID` / `INPOST_OAUTH_CLIENT_SECRET` | For InPost labels/status refresh | stage URL / none | InPost Group Shipping API v2 settings for label downloads and manual status refresh. If OAuth credentials are omitted, `INPOST_API_TOKEN` is reused as a bearer token. |
+| `INPOST_WEBHOOK_SECRET` | For InPost tracking webhooks | none | Shared HMAC secret for `/api/webhooks/inpost`. Unsigned events are rejected. |
 | `FASTCOMET_STORAGE_UPLOAD_URL` | For CMS image uploads | none | FastComet PHP upload endpoint used by admin CMS image uploaders. |
 | `FASTCOMET_STORAGE_AUTH_TOKEN` | For CMS image uploads | none | Bearer token expected by the FastComet upload endpoint. |
 | `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
@@ -148,7 +161,7 @@ clients are cached to avoid reconnecting on every Next.js reload.
 | `/checkout` | `src/app/checkout/page.tsx` | CMS-backed checkout UI with information, shipping, payment, and confirmation steps. Clears local cart after confirmed payment. |
 | `/order-status` | `src/app/order-status/page.tsx` | Guest order status lookup. Confirmation and email links can pass `?order=ARC-...` to prefill and check status. |
 | `/wishlist` | `src/app/wishlist/page.tsx` | CMS-backed local wishlist page. Supports static and live products by using the saved product snapshot. |
-| `/account` | `src/app/account/page.tsx` | CMS-backed mock customer account dashboard with order history, settings, and Super Admin CMS editor access. |
+| `/account` | `src/app/account/page.tsx` | CMS-backed customer account dashboard with real order history, settings UI, and Super Admin CMS/order tools. |
 | `/about` | `src/app/about/page.tsx` | CMS-backed brand story page. |
 | `/values` | `src/app/values/page.tsx` | CMS-backed sustainability and values page. |
 | `/lookbook` | `src/app/lookbook/page.tsx` | CMS-backed editorial lookbook page with database-backed lookbook entries and static fallback. |
@@ -280,6 +293,31 @@ Product detail:
 3. If no live product is found, `getProduct(slug)` resolves static data.
 4. Related products come from live products in the same collection when
    possible, otherwise static products.
+
+Checkout and orders:
+
+1. `/checkout` refreshes cart item prices from `/api/products` before payment.
+2. Shipping methods come from checkout CMS zones. InPost is shown only for
+   Poland addresses and requires a Paczkomat from the geowidget or manual code
+   fallback. Poczta Polska and DPD are regular tracked carrier methods.
+3. The BLIK route validates canonical product prices, currency, discounts, and
+   shipping price server-side before any payment request.
+4. A `pending_payment` order is inserted before the PayU order is created. PayU
+   receives the local `orderId` as `extOrderId`, so early IPN webhooks can
+   confirm the order even before `payuOrderId` is attached locally.
+5. If PayU rejects the BLIK code or the gateway call fails after the local order
+   is created, that order is marked `cancelled`. If PayU accepts the request,
+   the route stores `payuOrderId` and the client polls `/api/orders/[orderId]/status`.
+6. The PayU webhook only promotes `pending_payment` orders to `processing` on
+   `COMPLETED`, queues the confirmation email once, and creates an InPost
+   shipment when applicable. Late `PENDING`, `CANCELED`, or repeated
+   `COMPLETED` events do not downgrade completed orders.
+7. InPost tracking webhooks update order status to `in-transit`, `delivered`,
+   or `cancelled`. Late conflicting terminal events are recorded as stale
+   tracking history without flipping a delivered/cancelled order.
+8. Signed-in customers see orders under `/account?tab=orders`; guests can use
+   `/order-status?order=ARC-...`. Public tracking output exposes only safe
+   `http`/`https` tracking links.
 
 Wishlist:
 
@@ -441,17 +479,24 @@ Completed or working locally:
 - Live Mentios product listing, collection, and product-detail resolution.
 - Product cards, quick add, quick view, cart drawer, wishlist, and recently
   viewed products.
-- Multi-step checkout UI with promo-code handling and local confirmation state.
-- Account, contact, about, values, lookbook, and stories surfaces.
+- Multi-step checkout UI with server-validated promo-code handling, PayU BLIK
+  payment creation, local order persistence, order-status polling, and
+  confirmation state.
+- Poczta Polska, DPD, and Poland-only InPost shipping methods, including
+  Paczkomat selection, manual carrier tracking, InPost shipment creation,
+  label download, status refresh, and webhook-based tracking updates.
+- Account order history, guest order-status lookup, contact, about, values,
+  lookbook, and stories surfaces.
 - Read-only product API.
 - Super Admin content CMS for home, global site content, about, values,
   contact, account, wishlist, checkout, products, stories, and lookbook.
 
 Partial or mocked:
 
-- Checkout does not create orders, charge cards, calculate tax, or call a
-  payment provider.
-- Account data and order history are mock UI only.
+- Card payments and tax calculation are not implemented; checkout currently
+  supports PayU BLIK only.
+- Account profile/settings data is still mostly static outside real order
+  history and Super Admin tools.
 - Contact form shows a local success state but does not send messages.
 - Reviews are static and only exist for fallback product slugs.
 - Search overlay currently searches only `src/data/products.ts`, not live
@@ -460,7 +505,8 @@ Partial or mocked:
 - Product image rendering uses local upload folders and CSS fallback visuals,
   but still needs a permanent asset/CDN strategy.
 - There is no admin product-catalog mutation surface in this workspace.
-- There is no ecommerce-specific test script yet.
+- The ecommerce workspace has a Vitest script; run targeted tests with
+  `npm run test --workspace @app/ecom-web -- <path>`.
 
 Quality notes:
 
@@ -470,8 +516,9 @@ Quality notes:
 - `npm run dev:ecom` currently uses the webpack dev bundler because Turbopack
   dev compilation hangs on the first page in this workspace. Production builds
   still use the default Next.js build path.
-- Before production deployment, wire the checkout backend and add focused tests
-  for catalog fallback, wishlist/cart behavior, and `/api/products`.
+- Before production deployment, complete live payment-provider credential
+  configuration, production webhook URLs, tax handling, and focused tests for
+  catalog fallback, wishlist/cart behavior, and `/api/products`.
 
 ## Development Workflow
 

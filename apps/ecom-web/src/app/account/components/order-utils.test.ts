@@ -36,6 +36,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
     },
     inpostShipment: {
       trackingNumber: 'TRACK123',
+      shipmentUrl: 'https://inpost.example.test/shipments/TRACK123',
     },
     shippingAddress: {},
     subtotal: 90,
@@ -54,6 +55,7 @@ describe('account order display mapper', () => {
     expect(display.total).toBe('98 zł');
     expect(display.shippingLine).toBe('InPost Parcel Locker / Paczkomat WAW01A / ul. Testowa 1, 00-001 Warsaw');
     expect(display.trackingNumber).toBe('TRACK123');
+    expect(display.trackingUrl).toBe('https://inpost.example.test/shipments/TRACK123');
     expect(display.items).toEqual([{
       id: 'product-1-keycha1453-One Size',
       name: 'KEYCHA1453',
@@ -70,10 +72,17 @@ describe('account order display mapper', () => {
       shippingService: 'dpd_courier_standard',
       inpostPoint: undefined,
       inpostShipment: undefined,
+      shipment: {
+        carrier: 'dpd',
+        service: 'dpd_courier_standard',
+        trackingNumber: 'DPD123',
+        trackingUrl: 'https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1',
+      },
     }), 'pl');
 
     expect(display.shippingLine).toBe('DPD Courier');
-    expect(display.trackingNumber).toBeUndefined();
+    expect(display.trackingNumber).toBe('DPD123');
+    expect(display.trackingUrl).toBe('https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1');
     expect(display.total).toBe('98 zł');
   });
 });

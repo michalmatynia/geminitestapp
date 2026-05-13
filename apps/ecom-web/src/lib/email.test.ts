@@ -120,6 +120,7 @@ describe('sendOrderConfirmation', () => {
       },
       inpostShipment: {
         trackingNumber: 'TRACK123',
+        shipmentUrl: 'https://inpost.example.test/shipments/TRACK123',
       },
     }));
 
@@ -129,5 +130,25 @@ describe('sendOrderConfirmation', () => {
     expect(html).toContain('Paczkomat WAW01A');
     expect(html).toContain('ul. Testowa 1, 00-001 Warsaw');
     expect(html).toContain('Tracking: TRACK123');
+    expect(html).toContain('Track shipment');
+    expect(html).toContain('https://inpost.example.test/shipments/TRACK123');
+  });
+
+  it('includes carrier tracking links for manual courier fulfillment data', async () => {
+    await sendOrderConfirmation(makeOrder({
+      shippingMethod: 'DPD Courier',
+      shippingCarrier: 'dpd',
+      shippingService: 'dpd_courier_standard',
+      shipment: {
+        carrier: 'dpd',
+        service: 'dpd_courier_standard',
+        trackingNumber: 'DPD123',
+        trackingUrl: 'https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1',
+      },
+    }));
+
+    const html = (mocks.send.mock.calls[0]?.[0] as { html?: string } | undefined)?.html ?? '';
+    expect(html).toContain('Track shipment');
+    expect(html).toContain('https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&amp;typ=1');
   });
 });

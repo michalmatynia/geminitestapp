@@ -61,21 +61,21 @@ describe('checkout CMS localization', () => {
   it('localizes shipping zones and methods for Polish checkout content', () => {
     const localized = localizeCheckoutContent(CHECKOUT_CONTENT_DEFAULTS, 'pl');
     const euZone = localized.shippingZones.find((zone) => zone.id === 'eu');
-    const standardMethod = euZone?.methods.find((method) => method.id === 'standard');
-    const expressMethod = euZone?.methods.find((method) => method.id === 'express');
+    const postalMethod = euZone?.methods.find((method) => method.id === 'poczta-polska-eu');
+    const dpdMethod = euZone?.methods.find((method) => method.id === 'dpd-eu');
 
     expect(euZone?.label).toBe('Unia Europejska');
     expect(euZone?.countries).toContain('France');
-    expect(standardMethod).toMatchObject({
-      label: 'Dostawa standardowa',
-      detail: '3-5 dni roboczych',
+    expect(postalMethod).toMatchObject({
+      label: 'Poczta Polska Międzynarodowa',
+      detail: '4-7 dni roboczych',
       priceLabel: 'Darmowa',
-      businessDaysMin: 3,
-      businessDaysMax: 5,
+      businessDaysMin: 4,
+      businessDaysMax: 7,
     });
-    expect(expressMethod).toMatchObject({
-      label: 'Dostawa ekspresowa',
-      detail: '2-3 dni roboczych',
+    expect(dpdMethod).toMatchObject({
+      label: 'DPD Międzynarodowy',
+      detail: '2-4 dni roboczych',
       priceLabel: '€ 18',
     });
   });

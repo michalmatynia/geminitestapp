@@ -150,15 +150,15 @@ function resolveOrderCurrencyCode(items: OrderItem[]): string | null {
 
 function sanitizeAddress(value: unknown): Record<string, string> | null {
   if (!isRecord(value)) return null;
-  const address: Record<string, string> = {};
+  const address: Partial<Record<string, string>> = {};
   for (const [key, raw] of Object.entries(value)) {
     if (typeof raw === 'string') address[key] = raw.trim();
   }
   for (const field of REQUIRED_ADDRESS_FIELDS) {
     const fieldValue = address[field];
-    if (fieldValue.length === 0) return null;
+    if (typeof fieldValue !== 'string' || fieldValue.length === 0) return null;
   }
-  return address;
+  return address as Record<string, string>;
 }
 
 // eslint-disable-next-line max-lines-per-function, complexity
@@ -290,10 +290,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const notifyUrl = `${baseUrl}/api/webhooks/payu`;
+  const order: Omit<Order, '_id'> = {
+    orderId,
+    ...(session ? { userId: session.id } : {}),
+    email,
+    status: 'pending_payment',
+    items: pricedItems,
+    shippingMethod: shippingSelection.shippingMethod,
+    shippingPrice: shippingSelection.shippingPrice,
+    shippingCarrier: shippingSelection.shippingCarrier,
+    shippingService: shippingSelection.shippingService,
+    ...(inpostPoint ? { inpostPoint } : {}),
+    shippingAddress,
+    subtotal,
+    discount,
+    promoCode,
+    total,
+    createdAt: now,
+  };
+
+  const db = await getDb();
+  const collection = db.collection(ORDERS_COLLECTION);
+  const result = await collection.insertOne(order);
 
   let payuOrderId: string;
   try {
-    const result = await createPayUBlikOrder({
+    const payuResult = await createPayUBlikOrder({
       notifyUrl,
       customerIp: ip,
       description: `Stargater order ${orderId}`,
@@ -314,8 +336,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       })),
       blikCode,
     });
-    payuOrderId = result.payuOrderId;
+    payuOrderId = payuResult.payuOrderId;
   } catch (err: unknown) {
+    await collection.updateOne(
+      { orderId, status: 'pending_payment' },
+      { $set: { status: 'cancelled' } },
+    ).catch(() => undefined);
     const msg = err instanceof Error ? err.message : 'BLIK payment failed';
     const isBadCode = msg.includes('BLIK') || msg.includes('authorization') || msg.includes('ERROR_VALUE_INVALID');
     return NextResponse.json(
@@ -324,28 +350,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const order: Omit<Order, '_id'> = {
-    orderId,
-    ...(session ? { userId: session.id } : {}),
-    email,
-    status: 'pending_payment',
-    payuOrderId,
-    items: pricedItems,
-    shippingMethod: shippingSelection.shippingMethod,
-    shippingPrice: shippingSelection.shippingPrice,
-    shippingCarrier: shippingSelection.shippingCarrier,
-    shippingService: shippingSelection.shippingService,
-    ...(inpostPoint ? { inpostPoint } : {}),
-    shippingAddress,
-    subtotal,
-    discount,
-    promoCode,
-    total,
-    createdAt: now,
-  };
-
-  const db = await getDb();
-  const result = await db.collection(ORDERS_COLLECTION).insertOne(order);
+  await collection.updateOne(
+    { orderId },
+    { $set: { payuOrderId } },
+  ).catch(() => undefined);
 
   return NextResponse.json(
     { orderId: order.orderId, payuOrderId, _id: result.insertedId.toString() },

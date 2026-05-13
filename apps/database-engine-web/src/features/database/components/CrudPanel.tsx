@@ -2,6 +2,10 @@
 
 import React, { useCallback, useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import type {
+  DatabaseTableDetail,
+  DatabaseType,
+} from '@/shared/contracts/database';
 import {
   CrudPanelProvider,
 } from '../context/CrudPanelContext';
@@ -19,9 +23,9 @@ import {
 import { DataTable, CrudPanelModals } from './CrudPanel.primitives';
 
 export interface CrudPanelProps {
-  tableDetails?: import('@/shared/contracts/database').DatabaseTableDetail[];
+  tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
-  dbType?: import('@/shared/contracts/database').DatabaseType;
+  dbType?: DatabaseType;
 }
 
 export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
@@ -49,10 +53,7 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
 
   const columnDefs = useMemo<ColumnDef<RowData>[]>(() => {
     if (columns.length === 0 && rows.length === 0) return [];
-    const actionCol = createActionColumn(setEditingRow, setDeletingRow);
-    const keys = getVisibleColumnKeys(columns, rows);
-    const dataCols = createDataColumns(keys);
-    return [actionCol, ...dataCols];
+    return [createActionColumn(setEditingRow, setDeletingRow), ...createDataColumns(getVisibleColumnKeys(columns, rows))];
   }, [columns, rows, setEditingRow, setDeletingRow]);
 
   const modalColumns = useMemo(
@@ -60,14 +61,13 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     [rows, tableDetail?.columns]
   );
 
-  const stateValue = { selectedTable, tableDetails, isFetching: rowsQuery.isFetching };
   const actionsValue = {
     setSelectedTable, onRefresh: fetchRows, onAddRow: () => setShowAddModal(true),
     setPage, setPageSize, setMutationError, setSuccessMessage,
   };
 
   return (
-    <CrudPanelProvider stateValue={stateValue} actionsValue={actionsValue}>
+    <CrudPanelProvider stateValue={{ selectedTable, tableDetails, isFetching: rowsQuery.isFetching }} actionsValue={actionsValue}>
       <div className='space-y-4'>
         <div className='grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]'>
           <DatabaseTreePanel

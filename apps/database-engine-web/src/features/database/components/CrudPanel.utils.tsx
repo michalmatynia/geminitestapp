@@ -4,7 +4,6 @@ import React from 'react';
 import type {
   DatabaseColumnInfo,
   DatabaseEngineManagedMongoApplication,
-  DatabaseTableDetail,
   MongoSource,
 } from '@/shared/contracts/database';
 import { Button } from '@/shared/ui/primitives.public';

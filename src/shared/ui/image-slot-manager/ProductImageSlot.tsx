@@ -35,6 +35,38 @@ const readTrimmedText = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+type ImageSlotStatusTone = 'success' | 'pending' | 'failure';
+
+const imageSlotStatusToneClass: Record<ImageSlotStatusTone, string> = {
+  success: 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100',
+  pending: 'border-amber-400/70 bg-amber-500/15 text-amber-100',
+  failure: 'border-rose-400/70 bg-rose-500/15 text-rose-100',
+};
+
+const fastCometPendingUploadStatuses = new Set(['pending', 'processing', 'queued', 'uploading']);
+const fastCometFailedUploadStatuses = new Set(['error', 'failed', 'failure']);
+
+const readFastCometUploadStatus = (slot: ProductImageSlotValue | undefined): string | null => {
+  if (slot?.type !== 'existing') return null;
+  const metadata = slot.data.metadata;
+  if (!isRecord(metadata)) return null;
+  const status = readTrimmedText(metadata['fastCometUploadStatus']);
+  return status === null ? null : status.toLowerCase();
+};
+
+const resolveFastCometIndicatorTone = (input: {
+  hasFastCometUrl: boolean;
+  isUploading: boolean;
+  status: string | null;
+}): ImageSlotStatusTone => {
+  if (input.isUploading || fastCometPendingUploadStatuses.has(input.status ?? '')) {
+    return 'pending';
+  }
+  if (fastCometFailedUploadStatuses.has(input.status ?? '')) return 'failure';
+  if (input.status === 'completed' || input.hasFastCometUrl) return 'success';
+  return 'pending';
+};
+
 const readMetadataText = (
   metadata: Record<string, unknown> | null,
   key: string
@@ -124,6 +156,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const fastCometUrl = resolveFastCometImageSlotUrl(slot);
   const hasFastCometUrl = Boolean(fastCometUrl);
   const isFastCometUpload = isFastCometImageSlot(slot);
+  const fastCometUploadStatus = readFastCometUploadStatus(slot);
+  const isFastCometUploading = Boolean(fastCometLoadingSlots[index]);
 
   const uploadUrl = slot
     ? slot.type === 'existing'
@@ -161,23 +195,32 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     label: string;
   }> = [
     {
-      colorClass: 'border-emerald-400 text-emerald-300',
+      colorClass: imageSlotStatusToneClass.success,
       hasValue: hasUpload,
       label: 'U',
     },
     {
-      colorClass: 'border-sky-400 text-sky-300',
+      colorClass: imageSlotStatusToneClass.pending,
       hasValue: Boolean(linkValue.trim()),
       label: 'L',
     },
     {
-      colorClass: 'border-purple-400 text-purple-300',
+      colorClass: imageSlotStatusToneClass.pending,
       hasValue: Boolean(base64Value.trim()),
       label: 'B',
     },
     {
-      colorClass: 'border-amber-400 text-amber-300',
-      hasValue: hasFastCometUrl,
+      colorClass: imageSlotStatusToneClass[
+        resolveFastCometIndicatorTone({
+          hasFastCometUrl,
+          isUploading: isFastCometUploading,
+          status: fastCometUploadStatus,
+        })
+      ],
+      hasValue:
+        hasFastCometUrl ||
+        isFastCometUploading ||
+        fastCometUploadStatus !== null,
       label: 'F',
     },
   ];
@@ -188,6 +231,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
       size={minimalUi ? 'sm' : 'icon'}
       triggerClassName={minimalUi ? 'h-6 w-full px-2 text-[10px]' : 'h-6 w-6'}
       trigger={minimalUi ? 'Actions' : <MoreVertical className='h-3.5 w-3.5' />}
+      ariaLabel={`Open image slot ${index + 1} actions menu`}
       className='min-w-[160px]'
     >
       <div data-preserve-slot-selection='true'>
@@ -222,11 +266,11 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
             (slot.type !== 'existing' && slot.type !== 'file') ||
             imageLocked ||
             isFastCometUpload ||
-            Boolean(fastCometLoadingSlots[index])
+            isFastCometUploading
           }
           onClick={() => void uploadSlotToFastComet(index)}
         >
-          {fastCometLoadingSlots[index] ? 'Uploading to FastComet...' : 'Upload to FastComet'}
+          {isFastCometUploading ? 'Uploading to FastComet...' : 'Upload to FastComet'}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={!base64Value.trim() || imageLocked}
@@ -419,40 +463,39 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         </div>
       ) : (
         <>
-          <div className='flex w-full items-center justify-between gap-2'>
-            <div className='flex items-center gap-1 text-[10px] text-gray-400'>
-              {slotSourceIndicators.map((indicator) => {
-                return (
-                  <span
-                    key={indicator.label}
-                    className={`rounded-full border px-1 ${indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'}`}
-                  >
-                    {indicator.label}
-                  </span>
-                );
-              })}
-            </div>
-            <div className='flex items-center gap-1'>
-              <ActionMenu
-                variant='outline'
-                size='sm'
-                triggerClassName='h-6 px-2 text-[10px]'
-                trigger={`View: ${resolveSlotViewModeLabel(mode)}`}
-              >
-                {slotViewModeOptions.map((m) => (
-                  <DropdownMenuItem
-                    key={m}
-                    disabled={isViewModeDisabled(m)}
-                    onClick={() => setSlotViewMode(index, m)}
-                  >
-                    {slotViewModeLabels[m]}
-                  </DropdownMenuItem>
-                ))}
-              </ActionMenu>
-              {actionsMenu}
-            </div>
+          <div className='flex w-full items-center justify-center gap-1'>
+            <ActionMenu
+              variant='outline'
+              size='sm'
+              triggerClassName='h-6 px-2 text-[10px]'
+              trigger={`View: ${resolveSlotViewModeLabel(mode)}`}
+              ariaLabel={`Select image slot ${index + 1} view`}
+            >
+              {slotViewModeOptions.map((m) => (
+                <DropdownMenuItem
+                  key={m}
+                  disabled={isViewModeDisabled(m)}
+                  onClick={() => setSlotViewMode(index, m)}
+                >
+                  {slotViewModeLabels[m]}
+                </DropdownMenuItem>
+              ))}
+            </ActionMenu>
+            {actionsMenu}
           </div>
           {thumbnailFrame}
+          <div className='flex w-full items-center justify-center gap-1 text-[10px] text-gray-400'>
+            {slotSourceIndicators.map((indicator) => {
+              return (
+                <span
+                  key={indicator.label}
+                  className={`rounded-full border px-1 ${indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'}`}
+                >
+                  {indicator.label}
+                </span>
+              );
+            })}
+          </div>
         </>
       )}
 

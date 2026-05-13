@@ -156,8 +156,8 @@ export const toEcommerceExportDbError = (
   return createAppError(
     `${label} is not reachable. ${
       target.source === 'local'
-        ? 'Start the local ecommerce MongoDB service and try the export again.'
-        : 'Check the cloud ecommerce MongoDB connection and try the export again.'
+        ? 'Start the local ecommerce MongoDB service and try again.'
+        : 'Check the cloud ecommerce MongoDB connection and try again.'
     }`,
     {
       code: AppErrorCodes.databaseError,

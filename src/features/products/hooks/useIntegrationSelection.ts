@@ -72,18 +72,13 @@ const resolveSelectedConnectionId = ({
   return connectionIds[0] ?? '';
 };
 
-export function useIntegrationSelection(args: {
-  isOpen: boolean;
-}): UseIntegrationSelectionResult {
-  const { isOpen } = args;
+function useIntegrationsData(isOpen: boolean): {
+  integrations: IntegrationWithConnections[];
+  isLoading: boolean;
+  error: string | null;
+} {
   const integrationsQuery = useIntegrationsWithConnections({ enabled: isOpen, retry: false });
   const { data: integrationsData = [] } = integrationsQuery;
-  const { data: preferredConnection } = useDefaultExportConnection({
-    enabled: isOpen,
-    retry: false,
-  });
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState('');
-  const [selectedConnectionId, setSelectedConnectionId] = useState('');
 
   const integrations = React.useMemo(
     (): IntegrationWithConnections[] =>
@@ -98,6 +93,21 @@ export function useIntegrationSelection(args: {
     integrationsQuery.isError && integrations.length === 0
       ? resolveIntegrationSelectionErrorMessage(integrationsQuery.error)
       : null;
+
+  return { integrations, isLoading, error };
+}
+
+export function useIntegrationSelection(args: {
+  isOpen: boolean;
+}): UseIntegrationSelectionResult {
+  const { isOpen } = args;
+  const { integrations, isLoading, error } = useIntegrationsData(isOpen);
+  const { data: preferredConnection } = useDefaultExportConnection({
+    enabled: isOpen,
+    retry: false,
+  });
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState('');
+  const [selectedConnectionId, setSelectedConnectionId] = useState('');
 
   useEffect(() => {
     if (isOpen === false) return;

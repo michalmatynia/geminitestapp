@@ -79,7 +79,7 @@ export function LessonCheckpointRow({
           tone='primary'
         />
         {(item.practiceHref !== null && item.practiceHref !== '' && (
-          <PracticeButton practiceHref={item.practiceHref as Href} title={item.title} />
+          <PracticeButton practiceHref={item.practiceHref} title={item.title} />
         ))}
       </View>
     </InsetPanel>

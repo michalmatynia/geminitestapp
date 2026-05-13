@@ -41,6 +41,9 @@ and Next config, and the `@/*` alias for imports inside the ecommerce app.
 | `npm run build:ecom` | Builds the ecommerce workspace. |
 | `npm run start:ecom` | Starts the built ecommerce workspace on port `3300`. |
 | `npm run typecheck:ecom` | Runs TypeScript checks for the ecommerce workspace. |
+| `npm run mongo:ecom:up` | Starts the local ecommerce MongoDB on `127.0.0.1:27021`. |
+| `npm run mongo:ecom:status` | Prints the local ecommerce MongoDB pid, port, data dir, and log path. |
+| `npm run mongo:ecom:down` | Stops the local ecommerce MongoDB. |
 
 Direct workspace commands are equivalent:
 
@@ -53,6 +56,53 @@ Direct workspace commands are equivalent:
 
 Port `3300` is reserved for this workspace so it can run beside
 `@app/studiq-web` on `3100` and `@app/cms-builder-web` on `3200`.
+
+## Local Ecommerce MongoDB
+
+Product List EC quick export and the ecommerce storefront local catalog both
+use the local ecommerce MongoDB at `mongodb://127.0.0.1:27021/ecom_local`.
+Start it from the repository root before exporting products locally:
+
+```sh
+npm run mongo:ecom:up
+```
+
+Check whether it is running:
+
+```sh
+npm run mongo:ecom:status
+mongosh "mongodb://127.0.0.1:27021/ecom_local" --quiet --eval 'db.runCommand({ ping: 1 })'
+```
+
+Stop it when it is no longer needed:
+
+```sh
+npm run mongo:ecom:down
+```
+
+The script uses the local `mongod` binary, stores data in
+`../database/ecom-mongo-data`, and writes runtime files/logs under
+`../database/ecom-mongo-runtime`. If EC quick export reports that the local
+ecommerce database is not reachable, run `npm run mongo:ecom:status` first and
+then `npm run mongo:ecom:up` if it is not running.
+
+## Product Pricing Sync
+
+Product List is the source of truth for ecommerce product prices and pricing
+rules. EC quick export writes the product copy with its base price,
+`sourcePrice`, source currency metadata, and default price group id. It does not
+push price group multipliers or currency records on every product export.
+
+Push currencies and price groups from Products through:
+
+```text
+Products -> Pages -> Ecommerce -> Data Synchronisation -> Push pricing system
+```
+
+The storefront reads the synced `price_groups` collection and recalculates
+catalog, cart, checkout, and PayU BLIK prices from that pricing system. After
+changing Product List currencies or price groups, push the pricing system before
+checking local or cloud ecommerce storefront prices.
 
 ## Environment
 
@@ -74,7 +124,9 @@ The app works without these variables by using static fallback products.
 | `MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if CMS/auth/runtime DB connection fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. Skipped when `MONGODB_URI` is explicitly set. |
 | `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
+| `NEXT_PUBLIC_ECOM_URL` | Recommended for production | local fallback | Public storefront origin used for sitemap/robots and transactional order tracking links. |
 | `NEXT_PUBLIC_MAIN_APP_URL` | No | none | Main Products app origin used only for legacy `/api/files/preview` image fallback and local upload URL rewrites. |
+| `NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN` | For InPost map selector | none | Public InPost Geowidget token used by checkout to show the Paczkomat map selector for Poland-only InPost delivery. |
 | `FASTCOMET_STORAGE_UPLOAD_URL` | For CMS image uploads | none | FastComet PHP upload endpoint used by admin CMS image uploaders. |
 | `FASTCOMET_STORAGE_AUTH_TOKEN` | For CMS image uploads | none | Bearer token expected by the FastComet upload endpoint. |
 | `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
@@ -93,7 +145,8 @@ clients are cached to avoid reconnecting on every Next.js reload.
 | `/` | `src/app/page.tsx` | Home page. Fetches up to 6 live Mentios products, then falls back to static featured products. |
 | `/collections/[slug]` | `src/app/collections/[slug]/page.tsx` | CMS-labeled collection page for `womenswear`, `menswear`, `objects`, or `accessories`. Fetches live products first, static collection fallback second. |
 | `/products/[slug]` | `src/app/products/[slug]/page.tsx` | CMS-labeled product detail page. Resolves live Mentios product first, static product fallback second. |
-| `/checkout` | `src/app/checkout/page.tsx` | CMS-backed checkout UI with information, shipping, payment, and confirmation steps. Clears local cart on mock order placement. |
+| `/checkout` | `src/app/checkout/page.tsx` | CMS-backed checkout UI with information, shipping, payment, and confirmation steps. Clears local cart after confirmed payment. |
+| `/order-status` | `src/app/order-status/page.tsx` | Guest order status lookup. Confirmation and email links can pass `?order=ARC-...` to prefill and check status. |
 | `/wishlist` | `src/app/wishlist/page.tsx` | CMS-backed local wishlist page. Supports static and live products by using the saved product snapshot. |
 | `/account` | `src/app/account/page.tsx` | CMS-backed mock customer account dashboard with order history, settings, and Super Admin CMS editor access. |
 | `/about` | `src/app/about/page.tsx` | CMS-backed brand story page. |

@@ -41,6 +41,13 @@ vi.mock('@/lib/db-indexes', () => ({
   ensureAppIndexes: vi.fn(),
 }));
 
+vi.mock('@/lib/cms', async () => {
+  const checkoutContent = await vi.importActual<typeof import('@/data/checkoutContent')>('@/data/checkoutContent');
+  return {
+    getCheckoutContent: vi.fn(async () => checkoutContent.CHECKOUT_CONTENT_DEFAULTS),
+  };
+});
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: mocks.checkRateLimit,
   getClientIp: mocks.getClientIp,
@@ -63,8 +70,11 @@ function makePayload(overrides: Record<string, unknown> = {}): Record<string, un
         imageUrl: '/pin.jpg',
       },
     ],
-    shippingMethod: 'Standard',
+    shippingMethod: 'Poczta Polska',
+    shippingMethodId: 'poczta-polska',
     shippingPrice: 0,
+    shippingCarrier: 'poczta_polska',
+    shippingService: 'poczta_polska_tracked',
     shippingAddress: {
       email: 'buyer@example.com',
       firstName: 'Ada',
@@ -180,8 +190,12 @@ describe('BLIK checkout route', () => {
 
   it('requires a pickup point for InPost locker checkout', async () => {
     const res = await POST(makeJsonRequest(makePayload({
+      shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
+      total: 1504,
     })));
 
     expect(res.status).toBe(400);
@@ -192,8 +206,11 @@ describe('BLIK checkout route', () => {
   it('persists InPost pickup point with pending payment order', async () => {
     const res = await POST(makeJsonRequest(makePayload({
       shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
+      total: 1504,
       inpostPoint: {
         id: 'WAW01A',
         name: 'WAW01A',
@@ -207,6 +224,53 @@ describe('BLIK checkout route', () => {
       shippingService: 'inpost_locker_standard',
       inpostPoint: expect.objectContaining({ id: 'WAW01A', name: 'WAW01A' }),
     }));
+  });
+
+  it.each([
+    ['Poczta Polska', 'poczta-polska', 'poczta_polska', 'poczta_polska_tracked', 0, 1500],
+    ['DPD Courier', 'dpd-courier', 'dpd', 'dpd_courier_standard', 10, 1510],
+  ])('persists %s carrier metadata for BLIK checkout', async (
+    shippingMethod,
+    shippingMethodId,
+    shippingCarrier,
+    shippingService,
+    shippingPrice,
+    total,
+  ) => {
+    const res = await POST(makeJsonRequest(makePayload({
+      shippingMethod,
+      shippingMethodId,
+      shippingCarrier,
+      shippingService,
+      shippingPrice,
+      total,
+    })));
+
+    expect(res.status).toBe(201);
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      shippingMethod,
+      shippingCarrier,
+      shippingService,
+      shippingPrice,
+      total,
+    }));
+  });
+
+  it('rejects manipulated BLIK shipping prices before PayU order creation', async () => {
+    const res = await POST(makeJsonRequest(makePayload({
+      shippingMethod: 'DPD Courier',
+      shippingMethodId: 'dpd-courier',
+      shippingCarrier: 'dpd',
+      shippingService: 'dpd_courier_standard',
+      shippingPrice: 0,
+      total: 1500,
+    })));
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Shipping price is invalid.');
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 
   it('returns 422 when PayU rejects the BLIK code', async () => {
@@ -339,6 +403,34 @@ describe('BLIK checkout route', () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBe('Order totals are invalid.');
+    expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+  });
+
+  it('rejects BLIK checkout when canonical item currencies are mixed', async () => {
+    mocks.productToArray.mockResolvedValueOnce([
+      { _id: 'prod-1', price: 1500, priceCurrencyCode: 'EUR' },
+      { _id: 'prod-2', price: 500, priceCurrencyCode: 'PLN' },
+    ]);
+
+    const payload = makePayload();
+    const [baseItem] = payload.items as Array<Record<string, unknown>>;
+    const items = [
+      { ...baseItem, productId: 'prod-1', price: 1500, quantity: 1 },
+      { ...baseItem, productId: 'prod-2', slug: 'moon-pin', name: 'Moon Pin', price: 500, quantity: 1 },
+    ];
+
+    const res = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 2000,
+      total: 2000,
+    }));
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe('Order item currencies are invalid.');
+    expect(mocks.computeDiscount).not.toHaveBeenCalled();
     expect(mocks.createPayUBlikOrder).not.toHaveBeenCalled();
     expect(mocks.insertOne).not.toHaveBeenCalled();
   });

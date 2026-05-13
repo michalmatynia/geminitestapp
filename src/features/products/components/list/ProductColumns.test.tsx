@@ -146,6 +146,7 @@ describe('ProductColumns queued badge', () => {
       onProductNameClick: vi.fn(),
       onIntegrationsClick: vi.fn(),
       onExportSettingsClick: vi.fn(),
+      onPrefetchProductDetail: vi.fn(),
     });
     useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
     useProductListRowVisualsContextMock.mockReturnValue(createRowVisualsContext());
@@ -702,6 +703,97 @@ describe('ProductColumns queued badge', () => {
     expect(productButton.parentElement?.className).toContain('select-text');
   });
 
+  it('truncates category and shipping labels inside the fixed-width name column', async () => {
+    const longCategory =
+      'Very Long Category Name For Handmade Collectible Keychains And Accessories';
+    const longShipping =
+      'International Tracked Shipping For Fragile Collectibles And Small Accessories';
+    const product = createProduct({
+      shippingGroupSource: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: longShipping,
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-1'],
+      },
+    });
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock,
+      { categoryNameById: new Map([['category-1', longCategory]]) }
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    const summaryRow = container.querySelector('[data-product-list-summary-row]');
+    const categoryButton = screen.getByRole('button', { name: longCategory });
+    const shippingButton = screen.getByRole('button', {
+      name: `Auto ship: ${longShipping}`,
+    });
+    const shippingTooltipTrigger = shippingButton.parentElement as HTMLElement;
+
+    fireEvent.mouseEnter(shippingTooltipTrigger);
+    await waitFor(() =>
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        `Auto shipping group: ${longShipping} via ${longCategory}`
+      )
+    );
+
+    expect(summaryRow?.className).toContain('overflow-hidden');
+    expect(categoryButton.className).toContain('truncate');
+    expect(categoryButton.parentElement?.className).toContain('min-w-0');
+    expect(categoryButton.parentElement?.className).toContain('max-w-[14rem]');
+    expect(shippingButton.className).toContain('truncate');
+    expect(shippingButton.parentElement?.className).toContain('min-w-0');
+    expect(shippingButton.parentElement?.className).toContain('max-w-[12rem]');
+  });
+
+  it('shows hover tooltips for abbreviated SKU and product id values', async () => {
+    const longSku = 'KEYCHA1453-SPECIAL-LONG-SKU-VARIANT';
+    const longProductId = 'product-identifier-with-a-long-runtime-source-id-1453';
+    const product = createProduct({
+      id: longProductId,
+      sku: longSku,
+      baseProductId: null,
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
+      onPrefetchProductDetail: vi.fn(),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    const skuText = screen.getByText(longSku);
+    const productIdText = screen.getByText(longProductId);
+
+    expect(skuText.parentElement?.className).toContain('max-w-[10rem]');
+    expect(productIdText.parentElement?.className).toContain('max-w-[10rem]');
+
+    fireEvent.mouseEnter(skuText.parentElement as HTMLElement);
+    await waitFor(() => expect(screen.getByRole('tooltip')).toHaveTextContent(longSku));
+    fireEvent.mouseLeave(skuText.parentElement as HTMLElement);
+
+    fireEvent.mouseEnter(productIdText.parentElement as HTMLElement);
+    await waitFor(() => expect(screen.getByRole('tooltip')).toHaveTextContent(longProductId));
+  });
+
   it('falls back to English parameter values when the preferred locale is empty', () => {
     const product = createProduct({
       name_pl: 'Brelok',
@@ -1073,7 +1165,13 @@ describe('ProductColumns queued badge', () => {
     render(nameColumn.cell({ row: { original: product } } as never));
 
     expect(screen.getByText('Auto ship: Jewellery 7 EUR')).toBeInTheDocument();
-    expect(screen.getByTitle('Auto shipping group: Jewellery 7 EUR via Keychains')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Auto ship: Jewellery 7 EUR' });
+    fireEvent.mouseEnter(button.parentElement as HTMLElement);
+    return waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Auto shipping group: Jewellery 7 EUR via Keychains'
+      );
+    });
   });
 
   it('shows a shipping-rule conflict summary when multiple automatic rules match', () => {
@@ -1097,9 +1195,13 @@ describe('ProductColumns queued badge', () => {
     render(nameColumn.cell({ row: { original: product } } as never));
 
     expect(screen.getByText('Ship conflict')).toBeInTheDocument();
-    expect(
-      screen.getByTitle('Shipping rule conflict: Jewellery 7 EUR, Rings 5 EUR')
-    ).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Ship conflict' });
+    fireEvent.mouseEnter(button.parentElement as HTMLElement);
+    return waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Shipping rule conflict: Jewellery 7 EUR, Rings 5 EUR'
+      );
+    });
   });
 
   it('shows a missing manual shipping-group summary when the assigned group no longer exists', () => {
@@ -1122,7 +1224,13 @@ describe('ProductColumns queued badge', () => {
     render(nameColumn.cell({ row: { original: product } } as never));
 
     expect(screen.getByText('Ship missing')).toBeInTheDocument();
-    expect(screen.getByTitle('Manual shipping group is missing: missing-group')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Ship missing' });
+    fireEvent.mouseEnter(button.parentElement as HTMLElement);
+    return waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Manual shipping group is missing: missing-group'
+      );
+    });
   });
 
   it('does not render the imported badge when a product is only linked by Base id', () => {

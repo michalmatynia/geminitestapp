@@ -20,6 +20,7 @@ import { useToast } from '@/shared/ui/toast';
 import {
   executeProductFormSubmit,
   hasTemporaryProductImages,
+  type ProductFormSubmitExecutionResult,
 } from './useProductFormSubmit.execution';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductDataMutations';
 
@@ -114,7 +115,18 @@ type LockedSubmitArgs = {
   setIsSubmitting: (value: boolean) => void;
   setUploadError: (message: string | null) => void;
   setUploadSuccess: (value: boolean) => void;
-  operation: () => Promise<void>;
+  operation: () => Promise<ProductFormSubmitExecutionResult | void>;
+};
+
+const releaseSubmitLockAfterBackgroundTask = (
+  submitInFlightRef: MutableRefObject<boolean>,
+  backgroundTask: Promise<void>
+): void => {
+  void backgroundTask
+    .finally((): void => {
+      releaseSubmitLock(submitInFlightRef);
+    })
+    .catch((): void => undefined);
 };
 
 const runSubmitWithLock = async ({
@@ -129,11 +141,17 @@ const runSubmitWithLock = async ({
   setUploadError(null);
   setUploadSuccess(false);
 
+  let releaseLockImmediately = true;
   try {
-    await operation();
+    const result = await operation();
+    if (result?.backgroundTask !== undefined) {
+      releaseLockImmediately = false;
+      releaseSubmitLockAfterBackgroundTask(submitInFlightRef, result.backgroundTask);
+      return;
+    }
   } finally {
-    releaseSubmitLock(submitInFlightRef);
     setIsSubmitting(false);
+    if (releaseLockImmediately) releaseSubmitLock(submitInFlightRef);
   }
 };
 
@@ -212,8 +230,8 @@ const useProductFormSubmitCallback = ({
           setIsSubmitting,
           setUploadError,
           setUploadSuccess,
-          operation: async (): Promise<void> => {
-            await executeProductFormSubmit({
+          operation: async (): Promise<ProductFormSubmitExecutionResult> => {
+            return await executeProductFormSubmit({
               ...input,
               data,
               createProduct: latestRefs.createMutationRef.current.mutateAsync,

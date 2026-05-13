@@ -291,6 +291,7 @@ export function ProductDetailClient({
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       gradient: product.gradient,
       imageUrl: product.imageUrl,
     });
@@ -321,6 +322,7 @@ export function ProductDetailClient({
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       size: selectedSize,
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -457,7 +459,7 @@ export function ProductDetailClient({
                 className='type-price text-2xl mb-8'
                 style={{ color: 'var(--fg)' }}
               >
-                {formatPrice(product.price, locale)}
+                {formatPrice(product.price, locale, product.currencyCode)}
               </div>
 
               {/* Parsed name specs: size + material */}
@@ -583,6 +585,7 @@ export function ProductDetailClient({
                     category: product.category,
                     price: product.price,
                     priceDisplay: product.priceDisplay,
+                    currencyCode: product.currencyCode,
                     gradient: product.gradient,
                     imageUrl: product.imageUrl,
                   });
@@ -683,7 +686,7 @@ export function ProductDetailClient({
                   >
                     {p.shortName ?? p.name}
                   </div>
-                  <div className='type-price' style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
+                  <div className='type-price' style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale, p.currencyCode)}</div>
                 </a>
               ))}
             </div>

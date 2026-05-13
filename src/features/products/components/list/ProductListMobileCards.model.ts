@@ -10,8 +10,8 @@ import {
 
 import {
   getProductListDisplayName,
-  hasEnglishProductDescription,
   hasEnglishProductTitle,
+  hasEnglishProductDescription,
   hasFilledMarketplaceCopy,
   hasPolishProductDescription,
   hasPolishProductTitle,
@@ -20,7 +20,9 @@ import {
   resolveProductCategoryLabel,
   resolveProductImportSource,
   resolveProductImageStorageStatus,
-} from './columns/product-column-utils';
+  type ProductImageStorageStatus,
+  } from './columns/product-column-utils';
+
 import type { ProductListMobileCardModel } from './ProductListMobileCards.types';
 import {
   EMPTY_PRODUCT_LIST_VALUE,
@@ -169,6 +171,25 @@ const resolvePriceModel = ({
   };
 };
 
+const hasProductListStatusIcons = (
+  importSource: string | null,
+  copyStatus: {
+    hasMarketplaceCopy: boolean;
+    hasEnglishTitle: boolean;
+    hasEnglishDescription: boolean;
+    hasPolishTitle: boolean;
+    hasPolishDescription: boolean;
+  },
+  imageStorageStatus: ProductImageStorageStatus
+): boolean =>
+  importSource !== null ||
+  copyStatus.hasMarketplaceCopy ||
+  copyStatus.hasEnglishTitle ||
+  copyStatus.hasEnglishDescription ||
+  copyStatus.hasPolishTitle ||
+  copyStatus.hasPolishDescription ||
+  hasAnyProductImageStorageStatus(imageStorageStatus);
+
 export const resolveProductListMobileCardModel = ({
   product,
   rowVisuals,
@@ -196,14 +217,7 @@ export const resolveProductListMobileCardModel = ({
     importSource,
     ...copyStatus,
     imageStorageStatus,
-    hasStatusIcons:
-      importSource !== null ||
-      copyStatus.hasMarketplaceCopy ||
-      copyStatus.hasEnglishTitle ||
-      copyStatus.hasEnglishDescription ||
-      copyStatus.hasPolishTitle ||
-      copyStatus.hasPolishDescription ||
-      hasAnyProductImageStorageStatus(imageStorageStatus),
+    hasStatusIcons: hasProductListStatusIcons(importSource, copyStatus, imageStorageStatus),
     ...resolveSkuModel(product),
     categoryLabel,
     categoryIsUnassigned: isUnassignedProductCategoryLabel(categoryLabel),

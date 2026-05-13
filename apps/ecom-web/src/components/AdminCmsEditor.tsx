@@ -760,6 +760,18 @@ function checkoutShippingMethodsToText(methods: CheckoutShippingMethodContent[])
   ].join(' | ')).join('\n');
 }
 
+const CHECKOUT_SHIPPING_CARRIERS = new Set<CheckoutShippingCarrier>([
+  'manual',
+  'inpost',
+  'poczta_polska',
+  'dpd',
+]);
+
+function normalizeCheckoutShippingCarrier(value: string): CheckoutShippingCarrier {
+  const normalized = value.trim() as CheckoutShippingCarrier;
+  return CHECKOUT_SHIPPING_CARRIERS.has(normalized) ? normalized : 'manual';
+}
+
 function textToCheckoutShippingMethods(value: string): CheckoutShippingMethodContent[] {
   return splitLines(value)
     .map((line) => {
@@ -780,7 +792,7 @@ function textToCheckoutShippingMethods(value: string): CheckoutShippingMethodCon
       const parsedMax = Number(businessDaysMax.trim());
       const minDays = Number.isFinite(parsedMin) && Number.isInteger(parsedMin) && parsedMin > 0 ? parsedMin : 3;
       const maxDays = Number.isFinite(parsedMax) && Number.isInteger(parsedMax) && parsedMax > 0 ? parsedMax : minDays;
-      const normalizedCarrier: CheckoutShippingCarrier = carrier.trim() === 'inpost' ? 'inpost' : 'manual';
+      const normalizedCarrier = normalizeCheckoutShippingCarrier(carrier);
       return {
         id: id.trim(),
         label: label.trim(),
@@ -1147,7 +1159,11 @@ function ShippingMethodFields({
         <Field label='Method ID' value={method.id} onChange={(value) => onChange('id', value)} />
         <Field label='Label' value={method.label} onChange={(value) => onChange('label', value)} />
         <Field label='Detail' value={method.detail} onChange={(value) => onChange('detail', value)} />
-        <Field label='Carrier (manual or inpost)' value={method.carrier ?? 'manual'} onChange={(value) => onChange('carrier', value === 'inpost' ? 'inpost' : 'manual')} />
+        <Field
+          label='Carrier (manual, inpost, poczta_polska, dpd)'
+          value={method.carrier ?? 'manual'}
+          onChange={(value) => onChange('carrier', normalizeCheckoutShippingCarrier(value))}
+        />
         <Field label='Carrier service' value={method.service ?? ''} onChange={(value) => onChange('service', value)} />
         <Field
           label='Price (€)'
@@ -3492,7 +3508,7 @@ function addEditorialReport(): void {
                     Add fallback method
                   </button>
                   <TextArea
-                    label='Bulk edit fallback methods (id | label | detail | price | price label | min days | max days | carrier | service | pickup)'
+                    label='Bulk edit fallback methods (id | label | detail | price | price label | min days | max days | carrier: manual/inpost/poczta_polska/dpd | service | pickup)'
                     rows={5}
                     value={checkoutShippingMethodsToText(checkoutContent.shippingMethods)}
                     onChange={(value) => updateCheckout('shippingMethods', textToCheckoutShippingMethods(value))}
@@ -3690,6 +3706,11 @@ function addEditorialReport(): void {
                 <Field label='Recent order label' value={accountContent.overview.recentOrderLabel} onChange={(value) => updateAccountOverview('recentOrderLabel', value)} />
                 <Field label='View all orders label' value={accountContent.overview.viewAllOrdersLabel} onChange={(value) => updateAccountOverview('viewAllOrdersLabel', value)} />
                 <Field label='Orders title' value={accountContent.orders.title} onChange={(value) => updateAccountOrders('title', value)} />
+                <Field label='Empty orders label' value={accountContent.orders.emptyLabel} onChange={(value) => updateAccountOrders('emptyLabel', value)} />
+                <Field label='Order number label' value={accountContent.orders.orderNumberLabel} onChange={(value) => updateAccountOrders('orderNumberLabel', value)} />
+                <Field label='Shipping label' value={accountContent.orders.shippingLabel} onChange={(value) => updateAccountOrders('shippingLabel', value)} />
+                <Field label='Tracking label' value={accountContent.orders.trackingLabel} onChange={(value) => updateAccountOrders('trackingLabel', value)} />
+                <Field label='Items label' value={accountContent.orders.itemsLabel} onChange={(value) => updateAccountOrders('itemsLabel', value)} />
                 <Field label='Quantity label' value={accountContent.orders.qtyLabel} onChange={(value) => updateAccountOrders('qtyLabel', value)} />
                 <Field label='Pending payment status' value={accountContent.orders.statuses.pending_payment} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, pending_payment: value })} />
                 <Field label='Delivered status' value={accountContent.orders.statuses.delivered} onChange={(value) => updateAccountOrders('statuses', { ...accountContent.orders.statuses, delivered: value })} />

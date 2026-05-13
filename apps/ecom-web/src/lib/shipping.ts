@@ -1,11 +1,26 @@
 import type {
+  CheckoutContent,
   CheckoutShippingMethodContent,
   ShippingZone,
 } from '@/data/checkoutContent';
 import type { EcomLocale } from '@/lib/locales';
+import type { InpostPoint, ShippingCarrier } from '@/lib/orders';
 
 function normalizeCountry(value: string): string {
   return value.trim().toLowerCase();
+}
+
+export function isPolandShippingCountry(country: string): boolean {
+  const normalized = normalizeCountry(country);
+  return normalized === 'poland' || normalized === 'pl' || normalized === 'polska';
+}
+
+export function filterShippingMethodsForCountry(
+  methods: CheckoutShippingMethodContent[],
+  country: string,
+): CheckoutShippingMethodContent[] {
+  if (isPolandShippingCountry(country)) return methods;
+  return methods.filter((method) => method.carrier !== 'inpost');
 }
 
 function addBusinessDays(start: Date, days: number): Date {
@@ -82,4 +97,145 @@ export function applyFreeThreshold(
       ? { ...method, price: 0 }
       : method
   ));
+}
+
+export type CheckoutShippingSelectionInput = {
+  content: CheckoutContent;
+  country: string;
+  subtotal: number;
+  methodId?: string;
+  methodLabel: string;
+  service?: string;
+  carrier: ShippingCarrier;
+  price: number;
+  inpostPoint: InpostPoint | null;
+};
+
+export type CheckoutShippingSelection = {
+  method: CheckoutShippingMethodContent;
+  shippingMethod: string;
+  shippingPrice: number;
+  shippingCarrier: ShippingCarrier;
+  shippingService: string;
+};
+
+export type CheckoutShippingSelectionResult =
+  | { ok: true; selection: CheckoutShippingSelection }
+  | { ok: false; error: string };
+
+function checkoutShippingService(method: CheckoutShippingMethodContent): string {
+  return method.service ?? method.id;
+}
+
+function normalizeSelectionToken(value: string | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+function findCheckoutShippingMethod(
+  methods: CheckoutShippingMethodContent[],
+  input: CheckoutShippingSelectionInput,
+): CheckoutShippingMethodContent | undefined {
+  const methodId = normalizeSelectionToken(input.methodId);
+  const service = normalizeSelectionToken(input.service);
+  const label = normalizeSelectionToken(input.methodLabel);
+
+  return methods.find((method) => {
+    const candidateId = normalizeSelectionToken(method.id);
+    const candidateService = normalizeSelectionToken(checkoutShippingService(method));
+    const candidateLabel = normalizeSelectionToken(method.label);
+    return (methodId !== '' && candidateId === methodId)
+      || (service !== '' && candidateService === service)
+      || (label !== '' && candidateLabel === label);
+  });
+}
+
+type ShippingSelectionValidator = (
+  method: CheckoutShippingMethodContent,
+  input: CheckoutShippingSelectionInput,
+) => string | null;
+
+const validateShippingCarrier: ShippingSelectionValidator = (method, input) => {
+  const shippingCarrier = method.carrier ?? 'manual';
+  if (input.carrier !== shippingCarrier) return 'Selected shipping method is invalid.';
+  return null;
+};
+
+const validateShippingService: ShippingSelectionValidator = (method, input) => {
+  const submittedService = input.service?.trim() ?? '';
+  if (submittedService !== '' && submittedService !== checkoutShippingService(method)) {
+    return 'Selected shipping service is invalid.';
+  }
+  return null;
+};
+
+const validateInpostPoint: ShippingSelectionValidator = (method, input) => {
+  const shippingCarrier = method.carrier ?? 'manual';
+  if (shippingCarrier === 'inpost' && input.inpostPoint === null) return 'An InPost pickup point is required';
+  return null;
+};
+
+const validateInpostCountry: ShippingSelectionValidator = (method, input) => {
+  const shippingCarrier = method.carrier ?? 'manual';
+  if (shippingCarrier === 'inpost' && !isPolandShippingCountry(input.country)) {
+    return 'InPost parcel locker delivery is available only in Poland';
+  }
+  return null;
+};
+
+const validateShippingPrice: ShippingSelectionValidator = (method, input) => {
+  if (input.price !== method.price) return 'Shipping price is invalid.';
+  return null;
+};
+
+const SHIPPING_SELECTION_VALIDATORS: ShippingSelectionValidator[] = [
+  validateShippingCarrier,
+  validateShippingService,
+  validateInpostPoint,
+  validateInpostCountry,
+  validateShippingPrice,
+];
+
+function shippingSelectionValidationError(
+  method: CheckoutShippingMethodContent,
+  input: CheckoutShippingSelectionInput,
+): string | null {
+  for (const validate of SHIPPING_SELECTION_VALIDATORS) {
+    const error = validate(method, input);
+    if (error !== null) return error;
+  }
+  return null;
+}
+
+export function resolveCheckoutShippingSelection(
+  input: CheckoutShippingSelectionInput,
+): CheckoutShippingSelectionResult {
+  const zone = getZoneForCountry(input.content.shippingZones, input.country);
+  const rawMethods = zone !== null ? zone.methods : input.content.shippingMethods;
+  const countryMethods = filterShippingMethodsForCountry(rawMethods, input.country);
+  const methods = applyFreeThreshold(
+    countryMethods,
+    input.subtotal,
+    input.content.freeShippingThreshold,
+    input.content.freeShippingMethodId,
+  );
+  const method = findCheckoutShippingMethod(methods, input);
+  if (method === undefined) {
+    return { ok: false, error: 'Selected shipping method is not available for this address.' };
+  }
+
+  const validationError = shippingSelectionValidationError(method, input);
+  if (validationError !== null) return { ok: false, error: validationError };
+
+  const shippingCarrier = method.carrier ?? 'manual';
+  const shippingService = checkoutShippingService(method);
+  return {
+    ok: true,
+    selection: {
+      method,
+      shippingMethod: method.label,
+      shippingPrice: method.price,
+      shippingCarrier,
+      shippingService,
+    },
+  };
 }

@@ -1,10 +1,17 @@
 import { createHash } from 'crypto';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { EcommerceProductExportEnrichment } from './ecommerce-product-export.enrichment';
+import {
+  buildPricingSnapshot,
+  buildShippingGroupSnapshot,
+  type EcommerceProductPricingFields,
+  type EcommerceProductShippingFields,
+} from './ecommerce-product-export.snapshot';
 
-const ECOMMERCE_PRODUCT_SOURCE = 'geminitestapp-products';
+export const ECOMMERCE_PRODUCT_SOURCE = 'geminitestapp-products';
 
-export type EcommerceProductDocument = {
+type EcommerceProductCoreFields = {
   _id: string;
   sourceProductId: string;
   source: typeof ECOMMERCE_PRODUCT_SOURCE;
@@ -30,13 +37,17 @@ export type EcommerceProductDocument = {
   imageUrl: string | null;
   imageUrls: string[];
   imageLinks: string[];
-  exportedAt: string;
+  exportedAt: string | Date;
   sourceCreatedAt: string | null;
   sourceUpdatedAt: string | null;
   sourceChecksum: string;
-  createdAt: string;
-  updatedAt: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date | null;
 };
+
+export type EcommerceProductDocument = EcommerceProductCoreFields &
+  EcommerceProductPricingFields &
+  EcommerceProductShippingFields;
 
 export type EcommerceCategoryDocument = {
   _id: string;
@@ -48,8 +59,8 @@ export type EcommerceCategoryDocument = {
   catalogId: string;
   collectionSlug: string;
   source: typeof ECOMMERCE_PRODUCT_SOURCE;
-  exportedAt: string;
-  updatedAt: string;
+  exportedAt: string | Date;
+  updatedAt: string | Date;
 };
 
 type ProductSourceSnapshot = Omit<
@@ -142,11 +153,15 @@ const resolveCategoryName = (category: ProductCategory | undefined): string | nu
   return name.length > 0 ? name : null;
 };
 
-const categoryToCollectionSlug = (categoryName: string | null): string => {
+export const categoryToCollectionSlug = (categoryName: string | null): string => {
   const normalized = (categoryName ?? '').toLowerCase();
   if (/women|dam[eę]|femm|ladies|girl|female/i.test(normalized)) return 'womenswear';
   if (/\bmen\b|heren|herr|homme|uomini|male/i.test(normalized)) return 'menswear';
-  if (/bag|accessor|jewel|belt|scarf|wallet|purse|hat|cap|shoes?|boots?/i.test(normalized)) {
+  if (
+    /bag|accessor|jewel|key\s*chain|keychain|charm|pin|ring|necklace|pendant|belt|scarf|wallet|purse|hat|cap|shoes?|boots?/i.test(
+      normalized
+    )
+  ) {
     return 'accessories';
   }
   return 'objects';
@@ -198,7 +213,10 @@ const resolveCategoryExportInput = (product: ProductWithImages): CategoryExportI
   };
 };
 
-const buildProductSourceSnapshot = (product: ProductWithImages): ProductSourceSnapshot => {
+const buildProductSourceSnapshot = (
+  product: ProductWithImages,
+  enrichment?: EcommerceProductExportEnrichment
+): ProductSourceSnapshot => {
   const category = product.category;
   const categoryName = resolveCategoryName(category);
   const imageUrls = collectProductImageUrls(product);
@@ -213,7 +231,7 @@ const buildProductSourceSnapshot = (product: ProductWithImages): ProductSourceSn
     description_en: nullableString(product.description_en),
     description_pl: nullableString(product.description_pl),
     description_de: nullableString(product.description_de),
-    price: nullableNumber(product.price),
+    ...buildPricingSnapshot(product),
     stock: nullableNumber(product.stock),
     published: product.published !== false,
     archived: product.archived === true,
@@ -227,6 +245,7 @@ const buildProductSourceSnapshot = (product: ProductWithImages): ProductSourceSn
     imageUrl: imageUrls[0] ?? null,
     imageUrls,
     imageLinks: imageUrls,
+    ...buildShippingGroupSnapshot(product, enrichment?.shippingGroup),
     sourceCreatedAt: nullableString(product.createdAt),
     sourceUpdatedAt: nullableString(product.updatedAt),
   };
@@ -234,9 +253,10 @@ const buildProductSourceSnapshot = (product: ProductWithImages): ProductSourceSn
 
 export const buildEcommerceProductExportDocument = (
   product: ProductWithImages,
-  exportedAt: string
+  exportedAt: string,
+  enrichment?: EcommerceProductExportEnrichment
 ): EcommerceProductDocument => {
-  const sourceSnapshot = buildProductSourceSnapshot(product);
+  const sourceSnapshot = buildProductSourceSnapshot(product, enrichment);
   return {
     _id: product.id,
     source: ECOMMERCE_PRODUCT_SOURCE,

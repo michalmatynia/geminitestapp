@@ -35,6 +35,12 @@ The platform is built as a monorepo supporting multiple deployment targets and u
 - `npm run typecheck:mobile`: run the mobile workspace TypeScript check.
 - `npm run lint`: run the main ESLint lane.
 - `npm run test:unit`: run the main unit Vitest project.
+- `npm run mongo:ecom:up`: start the local ecommerce MongoDB on
+  `127.0.0.1:27021` for Product List EC quick export and the ecommerce
+  storefront local catalog.
+- `npm run mongo:ecom:status`: check the local ecommerce MongoDB pid, port,
+  data dir, and log path.
+- `npm run mongo:ecom:down`: stop the local ecommerce MongoDB.
 - `npm run docs:structure:check`: validate docs structure, hubs, and canonical metadata.
 - `npm run repair:kangur:content`: backfill built-in Kangur lessons/content into MongoDB and verify the result strictly.
 

@@ -18,6 +18,7 @@ export interface RecentlyViewedItem {
   category: string;
   price: number;
   priceDisplay: string;
+  currencyCode?: string;
   gradient: string;
   imageUrl?: string;
 }

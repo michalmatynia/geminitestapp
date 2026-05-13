@@ -115,6 +115,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       size: product.sizes[1] ?? '',
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -350,7 +351,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps): JSX.Elemen
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 300, color: 'var(--fg)' }}>
                       {p.shortName ?? p.name}
                     </div>
-                    <div className='type-price mt-0.5' style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale)}</div>
+                    <div className='type-price mt-0.5' style={{ color: 'var(--muted)' }}>{formatPrice(p.price, locale, p.currencyCode)}</div>
                   </a>
                 ))}
               </div>

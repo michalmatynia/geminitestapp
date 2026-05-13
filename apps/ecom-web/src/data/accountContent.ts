@@ -51,6 +51,11 @@ export type AccountOrderStatus = 'pending_payment' | 'processing' | 'in-transit'
 
 export interface AccountOrdersContent {
   title: string;
+  emptyLabel: string;
+  orderNumberLabel: string;
+  shippingLabel: string;
+  trackingLabel: string;
+  itemsLabel: string;
   qtyLabel: string;
   statuses: Record<AccountOrderStatus, string>;
 }
@@ -140,6 +145,11 @@ export const ACCOUNT_CONTENT_DEFAULTS: AccountContent = {
   },
   orders: {
     title: 'Order History',
+    emptyLabel: 'No orders yet.',
+    orderNumberLabel: 'Order',
+    shippingLabel: 'Delivery',
+    trackingLabel: 'Tracking',
+    itemsLabel: 'Items',
     qtyLabel: 'Qty',
     statuses: {
       pending_payment: 'Pending payment',
@@ -402,6 +412,11 @@ export function validateAccountContent(input: unknown): AccountContentValidation
     },
     orders: {
       title: readString(orders, 'title', ACCOUNT_CONTENT_DEFAULTS.orders.title, TEXT_LIMITS.short, errors, 'orders.title'),
+      emptyLabel: readString(orders, 'emptyLabel', ACCOUNT_CONTENT_DEFAULTS.orders.emptyLabel, TEXT_LIMITS.short, errors, 'orders.emptyLabel'),
+      orderNumberLabel: readString(orders, 'orderNumberLabel', ACCOUNT_CONTENT_DEFAULTS.orders.orderNumberLabel, TEXT_LIMITS.short, errors, 'orders.orderNumberLabel'),
+      shippingLabel: readString(orders, 'shippingLabel', ACCOUNT_CONTENT_DEFAULTS.orders.shippingLabel, TEXT_LIMITS.short, errors, 'orders.shippingLabel'),
+      trackingLabel: readString(orders, 'trackingLabel', ACCOUNT_CONTENT_DEFAULTS.orders.trackingLabel, TEXT_LIMITS.short, errors, 'orders.trackingLabel'),
+      itemsLabel: readString(orders, 'itemsLabel', ACCOUNT_CONTENT_DEFAULTS.orders.itemsLabel, TEXT_LIMITS.short, errors, 'orders.itemsLabel'),
       qtyLabel: readString(orders, 'qtyLabel', ACCOUNT_CONTENT_DEFAULTS.orders.qtyLabel, TEXT_LIMITS.short, errors, 'orders.qtyLabel'),
       statuses: {
         pending_payment: readString(statuses, 'pending_payment', ACCOUNT_CONTENT_DEFAULTS.orders.statuses.pending_payment, TEXT_LIMITS.short, errors, 'orders.statuses.pending_payment'),

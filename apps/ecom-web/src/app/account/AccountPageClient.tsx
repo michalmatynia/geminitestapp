@@ -1,9 +1,11 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { useState, useEffect, type JSX } from 'react';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
-import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { useLocale, useLocaleLocation, useLocalizedHref } from '@/context/LocaleContext';
 import { AuthModal } from '@/components/AuthModal';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -11,8 +13,18 @@ import type { AccountContent } from '@/data/accountContent';
 import type { EcomLocale } from '@/lib/locales';
 import type { Order } from '@/lib/orders';
 import { AdminTab } from './components/AdminTab';
+import { OrdersTab } from './components/OrdersTab';
 
 type Tab = 'overview' | 'orders' | 'settings' | 'admin';
+
+function readAccountTab(search: string): Tab {
+  const tab = new URLSearchParams(search).get('tab');
+  return tab === 'orders' || tab === 'settings' || tab === 'admin' ? tab : 'overview';
+}
+
+function readHighlightedOrderId(search: string): string {
+  return new URLSearchParams(search).get('order')?.trim() ?? '';
+}
 
 function renderTabs(
   {
@@ -84,13 +96,18 @@ export function AccountPageClient({
   content: AccountContent;
   availableLocales: EcomLocale[];
 }): JSX.Element {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const { search } = useLocaleLocation();
+  const [activeTab, setActiveTab] = useState<Tab>(() => readAccountTab(search));
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
   const { total: wishlistCount } = useWishlist();
   const { user, loading, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    setActiveTab(readAccountTab(search));
+  }, [search]);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +141,7 @@ export function AccountPageClient({
   const firstLastInitial = displayName.split(' ').length > 1
     ? `${displayName.split(' ')[0]} ${displayName.split(' ').slice(-1)[0][0]}.`
     : displayName;
+  const highlightedOrderId = activeTab === 'orders' ? readHighlightedOrderId(search) : '';
 
   if (loading) {
     return (
@@ -298,7 +316,7 @@ export function AccountPageClient({
                 <div /> // Placeholder for brevity
               )}
               {activeTab === 'orders' && (
-                <div /> // Placeholder for brevity
+                <OrdersTab content={content.orders} locale={locale} orders={orders} highlightedOrderId={highlightedOrderId} />
               )}
               {activeTab === 'settings' && (
                 <div /> // Placeholder for brevity

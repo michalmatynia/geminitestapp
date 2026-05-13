@@ -95,6 +95,7 @@ export const setupProductListMocks = (
   });
   rowActionsMock.mockReturnValue({
     onProductNameClick: () => {},
+    onPrefetchProductDetail: () => {},
   });
   visualsMock.mockReturnValue(
     createRowVisualsContext({

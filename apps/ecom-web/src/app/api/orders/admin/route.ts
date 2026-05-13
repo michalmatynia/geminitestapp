@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { getDb } from '@/lib/mongodb';
-import { ORDERS_COLLECTION, serializeOrder } from '@/lib/orders';
+import { ORDERS_COLLECTION, serializeOrder, type ShippingCarrier } from '@/lib/orders';
+
+const ORDER_FILTER_CARRIERS = new Set<ShippingCarrier>(['manual', 'inpost', 'poczta_polska', 'dpd']);
 
 function readLimit(value: string | null): number {
   const parsed = Number(value);
@@ -20,7 +22,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const limit = readLimit(req.nextUrl.searchParams.get('limit'));
   const carrier = req.nextUrl.searchParams.get('carrier')?.trim();
-  const filter = carrier === 'inpost' ? { shippingCarrier: 'inpost' } : {};
+  const filter = ORDER_FILTER_CARRIERS.has(carrier as ShippingCarrier)
+    ? { shippingCarrier: carrier as ShippingCarrier }
+    : {};
 
   const db = await getDb();
   const docs = await db

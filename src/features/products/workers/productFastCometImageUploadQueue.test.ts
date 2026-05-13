@@ -186,8 +186,13 @@ describe('productFastCometImageUploadQueue', () => {
         requestedAt: '2026-05-12T00:00:00.000Z',
         userId: 'user-1',
       },
-      { jobId: expect.stringMatching(/^product-fastcomet-image-upload:/) }
+      {
+        jobId: expect.not.stringContaining(':'),
+      }
     );
+    expect(mocks.queueMock.enqueue.mock.calls[0]?.[1]).toEqual({
+      jobId: expect.stringMatching(/^product-fastcomet-image-upload__/),
+    });
   });
 
   it('processes a queued local image upload and invalidates the product cache', async () => {

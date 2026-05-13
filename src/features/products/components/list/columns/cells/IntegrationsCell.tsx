@@ -77,7 +77,11 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
         onFocus={prefetchListings}
       />
       <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'baselinker')} />
-      <EcommerceExportButton product={product} showEcommerceBadge={runtime.showEcommerceBadge} ecommerceStatus={runtime.ecommerceStatus} />
+      <EcommerceExportButton
+        product={product}
+        showEcommerceBadge={runtime.showEcommerceBadge}
+        ecommerceStatus={runtime.ecommerceStatus}
+      />
       <ScrapedSourceControls product={product} showScrapedSourceBadge={runtime.showScrapedSourceBadge} scrapedSourceStatus={runtime.scrapedSourceStatus} prefetchListings={prefetchListings} />
       <TraderaQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'tradera')} showTraderaBadge={runtime.showTraderaBadge} traderaStatus={runtime.traderaStatus} />
       {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'tradera')} customFieldValues={product.customFields} />}

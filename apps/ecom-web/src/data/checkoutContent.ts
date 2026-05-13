@@ -17,7 +17,7 @@ export interface CheckoutFieldContent {
   monospace?: boolean;
 }
 
-export type CheckoutShippingCarrier = 'manual' | 'inpost';
+export type CheckoutShippingCarrier = 'manual' | 'inpost' | 'poczta_polska' | 'dpd';
 
 export interface CheckoutShippingMethodContent {
   id: string;
@@ -166,7 +166,17 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
       label: 'Poland',
       countries: ['Poland'],
       methods: [
-        { id: 'standard', label: 'Standard', detail: '2-3 business days', price: 0, priceLabel: 'Free', businessDaysMin: 2, businessDaysMax: 3 },
+        {
+          id: 'poczta-polska',
+          label: 'Poczta Polska',
+          detail: 'Tracked postal delivery, 2-4 business days',
+          price: 0,
+          priceLabel: 'Free',
+          businessDaysMin: 2,
+          businessDaysMax: 4,
+          carrier: 'poczta_polska',
+          service: 'poczta_polska_tracked',
+        },
         {
           id: 'inpost-locker',
           label: 'InPost Parcel Locker',
@@ -179,7 +189,17 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
           service: 'inpost_locker_standard',
           requiresPickupPoint: true,
         },
-        { id: 'express', label: 'Express', detail: 'Next business day', price: 12, priceLabel: '€ 12', businessDaysMin: 1, businessDaysMax: 1 },
+        {
+          id: 'dpd-courier',
+          label: 'DPD Courier',
+          detail: 'Door delivery, 1-2 business days',
+          price: 10,
+          priceLabel: '€ 10',
+          businessDaysMin: 1,
+          businessDaysMax: 2,
+          carrier: 'dpd',
+          service: 'dpd_courier_standard',
+        },
       ],
     },
     {
@@ -187,8 +207,28 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
       label: 'European Union',
       countries: EU_COUNTRIES,
       methods: [
-        { id: 'standard', label: 'Standard', detail: '3-5 business days', price: 0, priceLabel: 'Free', businessDaysMin: 3, businessDaysMax: 5 },
-        { id: 'express', label: 'Express', detail: '2-3 business days', price: 18, priceLabel: '€ 18', businessDaysMin: 2, businessDaysMax: 3 },
+        {
+          id: 'poczta-polska-eu',
+          label: 'Poczta Polska International',
+          detail: 'Tracked EU postal delivery, 4-7 business days',
+          price: 0,
+          priceLabel: 'Free',
+          businessDaysMin: 4,
+          businessDaysMax: 7,
+          carrier: 'poczta_polska',
+          service: 'poczta_polska_international_tracked',
+        },
+        {
+          id: 'dpd-eu',
+          label: 'DPD International',
+          detail: 'Courier delivery, 2-4 business days',
+          price: 18,
+          priceLabel: '€ 18',
+          businessDaysMin: 2,
+          businessDaysMax: 4,
+          carrier: 'dpd',
+          service: 'dpd_international_standard',
+        },
       ],
     },
     {
@@ -196,8 +236,28 @@ export const CHECKOUT_CONTENT_DEFAULTS: CheckoutContent = {
       label: 'International',
       countries: [],
       methods: [
-        { id: 'standard', label: 'Standard', detail: '7-14 business days', price: 15, priceLabel: '€ 15', businessDaysMin: 7, businessDaysMax: 14 },
-        { id: 'express', label: 'Express', detail: '3-5 business days', price: 35, priceLabel: '€ 35', businessDaysMin: 3, businessDaysMax: 5 },
+        {
+          id: 'poczta-polska-world',
+          label: 'Poczta Polska International',
+          detail: 'Tracked postal delivery, 7-14 business days',
+          price: 15,
+          priceLabel: '€ 15',
+          businessDaysMin: 7,
+          businessDaysMax: 14,
+          carrier: 'poczta_polska',
+          service: 'poczta_polska_world_tracked',
+        },
+        {
+          id: 'dpd-world',
+          label: 'DPD International',
+          detail: 'Courier delivery where available, 3-6 business days',
+          price: 35,
+          priceLabel: '€ 35',
+          businessDaysMin: 3,
+          businessDaysMax: 6,
+          carrier: 'dpd',
+          service: 'dpd_world_standard',
+        },
       ],
     },
   ],
@@ -251,6 +311,12 @@ const TEXT_LIMITS = {
 };
 
 const ALLOWED_STEP_KEYS = new Set<CheckoutStepKey>(['information', 'shipping', 'payment']);
+const ALLOWED_SHIPPING_CARRIERS = new Set<CheckoutShippingCarrier>([
+  'manual',
+  'inpost',
+  'poczta_polska',
+  'dpd',
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -265,7 +331,7 @@ function readString(
   path: string,
 ): string {
   const value = source[key];
-  if (value === null) return fallback;
+  if (value === undefined || value === null) return fallback;
   if (typeof value !== 'string') {
     errors.push(`${path} must be text.`);
     return fallback;
@@ -282,7 +348,7 @@ function readString(
 
 function readBoolean(source: Record<string, unknown>, key: string, fallback: boolean, errors: string[], path: string): boolean {
   const value = source[key];
-  if (value === null) return fallback;
+  if (value === undefined || value === null) return fallback;
   if (typeof value !== 'boolean') {
     errors.push(`${path} must be true or false.`);
     return fallback;
@@ -298,7 +364,7 @@ function readOptionalNumber(
   path: string,
 ): number | undefined {
   const value = source[key];
-  if (value === null) return fallback;
+  if (value === undefined || value === null) return fallback;
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
     errors.push(`${path} must be a non-negative number.`);
     return fallback;
@@ -312,7 +378,7 @@ function readNumber(source: Record<string, unknown>, key: string, fallback: numb
 
 function readPositiveInteger(source: Record<string, unknown>, key: string, fallback: number, errors: string[], path: string): number {
   const value = source[key];
-  if (value === null) return fallback;
+  if (value === undefined || value === null) return fallback;
   if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 1) {
     errors.push(`${path} must be a positive integer.`);
     return fallback;
@@ -321,7 +387,7 @@ function readPositiveInteger(source: Record<string, unknown>, key: string, fallb
 }
 
 function readStringList(input: unknown, fallback: string[], maxItems: number, errors: string[], path: string): string[] {
-  if (input === null) return fallback;
+  if (input === undefined || input === null) return fallback;
   if (!Array.isArray(input)) {
     errors.push(`${path} must be a list.`);
     return fallback;
@@ -351,9 +417,11 @@ function readShippingCarrier(
   path: string,
 ): CheckoutShippingCarrier {
   const value = source['carrier'];
-  if (value === null) return fallback;
-  if (value === 'manual' || value === 'inpost') return value;
-  errors.push(`${path} must be manual or inpost.`);
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === 'string' && ALLOWED_SHIPPING_CARRIERS.has(value as CheckoutShippingCarrier)) {
+    return value as CheckoutShippingCarrier;
+  }
+  errors.push(`${path} must be manual, inpost, poczta_polska, or dpd.`);
   return fallback;
 }
 
@@ -380,7 +448,7 @@ function readHref(source: Record<string, unknown>, key: string, fallback: string
 }
 
 function readSteps(input: unknown, fallback: CheckoutStepContent[], errors: string[]): CheckoutStepContent[] {
-  if (input === null) return fallback;
+  if (input === undefined || input === null) return fallback;
   if (!Array.isArray(input)) {
     errors.push('steps must be a list.');
     return fallback;
@@ -408,7 +476,7 @@ function readSteps(input: unknown, fallback: CheckoutStepContent[], errors: stri
 }
 
 function readFields(input: unknown, fallback: CheckoutFieldContent[], maxItems: number, errors: string[], path: string): CheckoutFieldContent[] {
-  if (input === null) return fallback;
+  if (input === undefined || input === null) return fallback;
   if (!Array.isArray(input)) {
     errors.push(`${path} must be a list.`);
     return fallback;
@@ -446,7 +514,7 @@ function readShippingMethods(
   errors: string[],
   path = 'shippingMethods',
 ): CheckoutShippingMethodContent[] {
-  if (input === null) return fallback;
+  if (input === undefined || input === null) return fallback;
   if (!Array.isArray(input)) {
     errors.push(`${path} must be a list.`);
     return fallback;
@@ -485,12 +553,12 @@ function readShippingMethods(
       errors.push(`${path}.${index}.businessDaysMax must be greater than or equal to businessDaysMin.`);
       return fallback;
     }
-    const carrier = readShippingCarrier(item, fallbackMethod.carrier ?? 'manual', errors, `${path}.${index}.carrier`);
-    const service = readString(item, 'service', fallbackMethod.service ?? '', TEXT_LIMITS.short, errors, `${path}.${index}.service`);
+    const carrier = readShippingCarrier(item, 'manual', errors, `${path}.${index}.carrier`);
+    const service = readString(item, 'service', '', TEXT_LIMITS.short, errors, `${path}.${index}.service`);
     const requiresPickupPoint = readBoolean(
       item,
       'requiresPickupPoint',
-      fallbackMethod.requiresPickupPoint ?? false,
+      false,
       errors,
       `${path}.${index}.requiresPickupPoint`,
     );
@@ -503,9 +571,9 @@ function readShippingMethods(
       businessDaysMin,
       businessDaysMax,
     };
-    if (carrier !== 'manual' || fallbackMethod.carrier) method.carrier = carrier;
+    if (carrier !== 'manual') method.carrier = carrier;
     if (service) method.service = service;
-    if (requiresPickupPoint || fallbackMethod.requiresPickupPoint) method.requiresPickupPoint = requiresPickupPoint;
+    if (requiresPickupPoint) method.requiresPickupPoint = requiresPickupPoint;
     methods.push(method);
   }
 
@@ -518,7 +586,7 @@ function readShippingMethods(
 }
 
 function readShippingZones(input: unknown, fallback: ShippingZone[], errors: string[]): ShippingZone[] {
-  if (input === null) return fallback;
+  if (input === undefined || input === null) return fallback;
   if (!Array.isArray(input)) {
     errors.push('shippingZones must be a list.');
     return fallback;

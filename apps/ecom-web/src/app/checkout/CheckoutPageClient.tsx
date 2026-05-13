@@ -8,7 +8,13 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { formatPrice } from '@/lib/locales';
-import { applyFreeThreshold, calcDeliveryRange, getZoneForCountry } from '@/lib/shipping';
+import {
+  applyFreeThreshold,
+  calcDeliveryRange,
+  filterShippingMethodsForCountry,
+  getZoneForCountry,
+  isPolandShippingCountry,
+} from '@/lib/shipping';
 import { SiteNav } from '@/components/SiteNav';
 import { COUNTRIES } from '@/data/countries';
 import type { CartItem } from '@/context/CartContext';
@@ -25,7 +31,10 @@ import type {
 } from '@/data/checkoutContent';
 
 type Step = CheckoutStepKey | 'confirmation';
-type FreshCartProduct = Pick<Product, 'id' | 'name' | 'category' | 'price' | 'priceDisplay' | 'gradient' | 'imageUrl'>;
+type FreshCartProduct = Pick<
+  Product,
+  'id' | 'name' | 'category' | 'price' | 'priceDisplay' | 'currencyCode' | 'gradient' | 'imageUrl'
+>;
 
 const calculatePromoDiscount = (
   subtotal: number,
@@ -54,6 +63,65 @@ const firstNonEmptyString = (items: readonly string[]): string => {
 };
 
 const toOptionalText = (value: string): string | undefined => (value === '' ? undefined : value);
+const firstCartCurrencyCode = (items: CartItem[]): string =>
+  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
+const freshText = (next: string, current: string): string => (next === '' ? current : next);
+const freshPrice = (next: number, current: number): number => (next === 0 ? current : next);
+
+const mergeFreshCartItem = (
+  item: CartItem,
+  fresh: FreshCartProduct | undefined
+): CartItem => {
+  if (fresh === undefined) return item;
+  return {
+    ...item,
+    name: freshText(fresh.name, item.name),
+    category: freshText(fresh.category, item.category),
+    price: freshPrice(fresh.price, item.price),
+    priceDisplay: freshText(fresh.priceDisplay, item.priceDisplay),
+    currencyCode: fresh.currencyCode ?? item.currencyCode,
+    gradient: freshText(fresh.gradient, item.gradient),
+    imageUrl: fresh.imageUrl ?? item.imageUrl,
+  };
+};
+
+const readFreshProductString = (product: Record<string, unknown>, key: string): string => {
+  const value = product[key];
+  return typeof value === 'string' ? value : '';
+};
+
+const readFreshProductNumber = (product: Record<string, unknown>, key: string): number => {
+  const value = product[key];
+  return typeof value === 'number' ? value : 0;
+};
+
+const productToFreshCartProduct = (product: Record<string, unknown>): FreshCartProduct | null => {
+  const id = product.id;
+  if (typeof id !== 'string') return null;
+  return {
+    id,
+    name: readFreshProductString(product, 'name'),
+    category: readFreshProductString(product, 'category'),
+    price: readFreshProductNumber(product, 'price'),
+    priceDisplay: readFreshProductString(product, 'priceDisplay'),
+    currencyCode: toOptionalText(readFreshProductString(product, 'currencyCode')),
+    gradient: readFreshProductString(product, 'gradient'),
+    imageUrl: readFreshProductString(product, 'imageUrl'),
+  };
+};
+
+const readFreshCartProductsResponse = (
+  data: unknown
+): Partial<Record<string, FreshCartProduct>> => {
+  const rawProducts = isPlainRecord(data) && Array.isArray(data.products) ? data.products : [];
+  const next: Partial<Record<string, FreshCartProduct>> = {};
+  for (const product of rawProducts) {
+    if (!isPlainRecord(product)) continue;
+    const freshProduct = productToFreshCartProduct(product);
+    if (freshProduct !== null) next[freshProduct.id] = freshProduct;
+  }
+  return next;
+};
 
 type PromoValidateResponse = {
   valid: boolean;
@@ -542,6 +610,8 @@ function InpostPointSelector({
 // eslint-disable-next-line max-lines-per-function, complexity
 function OrderSummary({
   content,
+  displayItems,
+  pricingRefreshPending,
   shippingPrice,
   subtotal,
   discount,
@@ -555,6 +625,8 @@ function OrderSummary({
   customerEmail,
 }: {
   content: CheckoutSummaryContent;
+  displayItems: CartItem[];
+  pricingRefreshPending: boolean;
   shippingPrice: number;
   subtotal: number;
   discount: number;
@@ -567,85 +639,28 @@ function OrderSummary({
   customerEmail: string;
   onPromoCodeChange: (code: string | null, type: 'percentage' | 'fixed' | null, value: number) => void;
 }): JSX.Element {
-  const { items } = useCart();
   const locale = useLocale();
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState(false);
   const [promoApplying, setPromoApplying] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
-  const [freshData, setFreshData] = useState<Partial<Record<string, FreshCartProduct>>>({});
-  const idKey = items.map((item) => item.productId).join(',');
-
-  useEffect(() => {
-    if (idKey.length === 0) {
-      setFreshData({});
-      return;
-    }
-    // eslint-disable-next-line complexity
-    const loadProducts = async (): Promise<void> => {
-      try {
-        const response = await fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`);
-        const data = (await response.json()) as unknown;
-        const next: Partial<Record<string, FreshCartProduct>> = {};
-        const rawProducts = isPlainRecord(data) && Array.isArray(data.products) ? data.products : [];
-        for (const product of rawProducts) {
-          if (!isPlainRecord(product)) continue;
-          const id = product.id;
-          const name = product.name;
-          const category = product.category;
-          const price = product.price;
-          const priceDisplay = product.priceDisplay;
-          const gradient = product.gradient;
-          const imageUrl = product.imageUrl;
-          if (typeof id === 'string') {
-            next[id] = {
-              id,
-              name: typeof name === 'string' ? name : '',
-              category: typeof category === 'string' ? category : '',
-              price: typeof price === 'number' ? price : 0,
-              priceDisplay: typeof priceDisplay === 'string' ? priceDisplay : '',
-              gradient: typeof gradient === 'string' ? gradient : '',
-              imageUrl: typeof imageUrl === 'string' ? imageUrl : '',
-            };
-          }
-        }
-        setFreshData(next);
-      } catch {
-        // leave existing data for summary and retry logic unchanged on next render
-      }
-    };
-
-    void loadProducts();
-  }, [idKey, locale]);
-
-  const displayItems: CartItem[] = items.map((item) => {
-    const fresh = freshData[item.productId];
-    if (fresh === undefined) return item;
-    return {
-      ...item,
-      name: fresh.name !== '' ? fresh.name : item.name,
-      category: fresh.category !== '' ? fresh.category : item.category,
-      price: fresh.price !== 0 ? fresh.price : item.price,
-      priceDisplay: fresh.priceDisplay !== '' ? fresh.priceDisplay : item.priceDisplay,
-      gradient: fresh.gradient !== '' ? fresh.gradient : item.gradient,
-      imageUrl: fresh.imageUrl ?? item.imageUrl,
-    };
-  });
+  const summaryCurrencyCode = firstCartCurrencyCode(displayItems);
   const freeShippingEnabled = freeShippingThreshold > 0;
   const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
   const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
   const freeShippingUnlockedMessage = locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!';
   const freeShippingMessage = freeShippingUnlocked
     ? freeShippingUnlockedMessage
-    : freeShippingBannerLabel.replace('{amount}', formatPrice(freeShippingRemaining, locale));
+    : freeShippingBannerLabel.replace('{amount}', formatPrice(freeShippingRemaining, locale, summaryCurrencyCode));
   const discountRate = promoDiscountType === 'percentage'
     ? Math.round(promoDiscountValue * 100)
     : 0;
   const discountLabelSuffix = promoDiscountType === 'fixed'
-    ? formatPrice(Math.round(promoDiscountValue), locale)
+    ? formatPrice(Math.round(promoDiscountValue), locale, summaryCurrencyCode)
     : `${discountRate}%`;
 
   const applyPromo = async (): Promise<void> => {
+    if (pricingRefreshPending) return;
     const normalizedCode = normalizePromoCode(promoInput);
     if (normalizedCode === '') return;
     setPromoApplying(true);
@@ -695,7 +710,7 @@ function OrderSummary({
 
       {/* Items */}
       <div className='space-y-4 mb-6'>
-        {items.length === 0 ? (
+        {displayItems.length === 0 ? (
           <p className='type-label' style={{ color: 'var(--muted)' }}>{content.emptyBagLabel}</p>
         ) : (
           displayItems.map((item) => (
@@ -722,7 +737,7 @@ function OrderSummary({
                   )}
                 </div>
                 <span className='type-price flex-shrink-0' style={{ color: 'var(--fg)' }}>
-                  {formatPrice(item.price * item.quantity, locale)}
+                  {formatPrice(item.price * item.quantity, locale, item.currencyCode)}
                 </span>
               </div>
             </div>
@@ -784,7 +799,7 @@ function OrderSummary({
                     setPromoError(false);
                   }}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
+                    if (event.key === 'Enter' && !pricingRefreshPending) {
                       void applyPromo();
                     }
                   }}
@@ -806,7 +821,7 @@ function OrderSummary({
                   onClick={() => {
                     void applyPromo();
                   }}
-                  disabled={promoApplying}
+                  disabled={promoApplying || pricingRefreshPending}
                   className='type-label px-4 py-2 transition-colors hover:opacity-80 disabled:opacity-50'
                   style={{ background: 'var(--fg)', color: 'var(--bg)', flexShrink: 0 }}
                 >
@@ -829,7 +844,7 @@ function OrderSummary({
       <div className='space-y-2 mb-4'>
         <div className='flex justify-between'>
           <span className='type-label' style={{ color: 'var(--muted)' }}>{content.subtotalLabel}</span>
-          <span className='type-price' style={{ color: 'var(--fg)' }}>{formatPrice(subtotal, locale)}</span>
+          <span className='type-price' style={{ color: 'var(--fg)' }}>{formatPrice(subtotal, locale, summaryCurrencyCode)}</span>
         </div>
         {discount > 0 && (
           <div className='flex justify-between'>
@@ -837,7 +852,7 @@ function OrderSummary({
               {content.discountLabel} ({discountLabelSuffix})
             </span>
             <span className='type-price' style={{ color: '#4A7C5A' }}>
-              − {formatPrice(discount, locale)}
+              − {formatPrice(discount, locale, summaryCurrencyCode)}
             </span>
           </div>
         )}
@@ -856,7 +871,7 @@ function OrderSummary({
         <div className='flex justify-between'>
           <span className='type-label' style={{ color: 'var(--muted)' }}>{content.shippingLabel}</span>
           <span className='type-price' style={{ color: shippingPrice === 0 ? '#4A7C5A' : 'var(--fg)' }}>
-            {shippingPrice === 0 ? content.freeLabel : formatPrice(shippingPrice, locale)}
+            {shippingPrice === 0 ? content.freeLabel : formatPrice(shippingPrice, locale, summaryCurrencyCode)}
           </span>
         </div>
       </div>
@@ -872,7 +887,7 @@ function OrderSummary({
         <span
           style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--fg)' }}
         >
-          {formatPrice(total, locale)}
+          {formatPrice(total, locale, summaryCurrencyCode)}
         </span>
       </div>
     </div>
@@ -907,15 +922,53 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [blikSecondsLeft, setBlikSecondsLeft] = useState(0);
   const [inpostPoint, setInpostPoint] = useState<InpostPoint | null>(null);
   const [inpostPointError, setInpostPointError] = useState('');
+  const [freshCartProducts, setFreshCartProducts] = useState<Partial<Record<string, FreshCartProduct>>>({});
+  const [cartRefreshPending, setCartRefreshPending] = useState(false);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const idKey = items.map((item) => item.productId).join(',');
+  useEffect(() => {
+    if (idKey.length === 0) {
+      setFreshCartProducts({});
+      setCartRefreshPending(false);
+      return undefined;
+    }
+
+    let active = true;
+    const loadProducts = async (): Promise<void> => {
+      setCartRefreshPending(true);
+      try {
+        const response = await fetch(`/api/products?ids=${encodeURIComponent(idKey)}&locale=${locale}`);
+        const data = (await response.json()) as unknown;
+        const next = readFreshCartProductsResponse(data);
+        if (active) setFreshCartProducts(next);
+      } catch {
+        if (active) setFreshCartProducts({});
+      } finally {
+        if (active) setCartRefreshPending(false);
+      }
+    };
+
+    void loadProducts();
+    return () => {
+      active = false;
+    };
+  }, [idKey, locale]);
+
+  const checkoutItems = useMemo(
+    () => items.map((item) => mergeFreshCartItem(item, freshCartProducts[item.productId])),
+    [freshCartProducts, items]
+  );
+  const checkoutCurrencyCode = firstCartCurrencyCode(checkoutItems);
+  const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const zoneMethods = useMemo(() => {
-    const zone = getZoneForCountry(content.shippingZones, form.country ?? '');
+    const shippingCountry = form.country ?? '';
+    const zone = getZoneForCountry(content.shippingZones, shippingCountry);
     const rawMethods = zone !== null
       ? zone.methods
       : content.shippingMethods;
+    const countryMethods = filterShippingMethodsForCountry(rawMethods, shippingCountry);
     return applyFreeThreshold(
-      rawMethods,
+      countryMethods,
       subtotal,
       content.freeShippingThreshold,
       content.freeShippingMethodId,
@@ -944,7 +997,10 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     }
     return zoneMethods.length > 0 ? zoneMethods[0] : defaultShipping;
   })();
-  const requiresInpostPoint = selectedShipping.carrier === 'inpost' && Boolean(selectedShipping.requiresPickupPoint);
+  const isInpostShippingCountry = isPolandShippingCountry(form.country ?? '');
+  const requiresInpostPoint = isInpostShippingCountry
+    && selectedShipping.carrier === 'inpost'
+    && Boolean(selectedShipping.requiresPickupPoint);
   const discount = calculatePromoDiscount(subtotal, promoDiscountType, promoDiscountValue);
   const total = subtotal - discount + selectedShipping.price;
   const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
@@ -970,6 +1026,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   useEffect(() => {
     if (requiresInpostPoint) return;
+    setInpostPoint(null);
     setInpostPointError('');
   }, [requiresInpostPoint]);
 
@@ -1030,7 +1087,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
 
   // eslint-disable-next-line complexity
   const handlePlaceOrder = async (): Promise<void> => {
-    if (items.length === 0 || placingOrder) return;
+    if (checkoutItems.length === 0 || placingOrder || cartRefreshPending) return;
     if (!validateInformationForm()) {
       setStep('information');
       return;
@@ -1053,8 +1110,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: form.email ?? '',
-          items,
+          items: checkoutItems,
           shippingMethod: selectedShipping.label,
+          shippingMethodId: selectedShipping.id,
           shippingPrice: selectedShipping.price,
           shippingCarrier: selectedShipping.carrier ?? 'manual',
           shippingService: selectedShipping.service ?? selectedShipping.id,
@@ -1149,6 +1207,10 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   }, [blikPending, blikPendingOrderId, clearCart, content.orderPlacedToastTitle, locale, toast]);
 
   if (step === 'confirmation') {
+    const orderQuery = confirmedOrderId !== '' ? `&order=${encodeURIComponent(confirmedOrderId)}` : '';
+    const trackOrderHref = user === null
+      ? `/order-status?order=${encodeURIComponent(confirmedOrderId)}`
+      : `/account?tab=orders${orderQuery}`;
     return (
       <>
         <SiteNav />
@@ -1192,7 +1254,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           )}
           <div className='flex gap-3'>
             <a href={localizedHref(content.continueShoppingHref)} className='btn-primary'>{content.continueShoppingLabel}</a>
-            <a href={localizedHref('/account')} className='btn-ghost'>{content.trackOrderLabel}</a>
+            <a href={localizedHref(trackOrderHref)} className='btn-ghost'>{content.trackOrderLabel}</a>
           </div>
 
           {/* Manifesto quote */}
@@ -1338,7 +1400,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                         </div>
                       </div>
                       <span className='type-price' style={{ color: method.price === 0 ? '#4A7C5A' : 'var(--fg)' }}>
-                        {method.price === 0 ? content.orderSummary.freeLabel : method.priceLabel}
+                        {method.price === 0
+                          ? content.orderSummary.freeLabel
+                          : formatPrice(method.price, locale, checkoutCurrencyCode)}
                       </span>
                     </label>
                   ))}
@@ -1556,16 +1620,16 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       onClick={() => {
                         void handlePlaceOrder();
                       }}
-                      disabled={items.length === 0 || placingOrder}
-                      style={{ opacity: items.length === 0 || placingOrder ? 0.5 : 1 }}
+                      disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending}
+                      style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending ? 0.5 : 1 }}
                     >
                       {placingOrder && (
                         <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
                           <path d='M12 3a9 9 0 1 1-9 9' />
                         </svg>
                       )}
-                      {items.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
-                      {items.length > 0 && !placingOrder ? (
+                      {checkoutItems.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
+                      {checkoutItems.length > 0 && !placingOrder ? (
                         <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
                           <path d='M5 12h14M12 5l7 7-7 7' />
                         </svg>
@@ -1581,6 +1645,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           <div className='px-8 md:px-10 py-12' style={{ background: 'var(--surface)', borderLeft: '1px solid var(--border)' }}>
             <OrderSummary
               content={content.orderSummary}
+              displayItems={checkoutItems}
+              pricingRefreshPending={cartRefreshPending}
               shippingPrice={selectedShipping.price}
               subtotal={subtotal}
               discount={discount}

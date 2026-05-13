@@ -37,6 +37,22 @@ function uniqueFilters(values: string[]): string[] {
   return result;
 }
 
+function hasActiveResultFilters(input: {
+  categories: string[];
+  newOnly: boolean;
+  priceLabel: string;
+  search: string | undefined;
+  themes: string[];
+}): boolean {
+  return (
+    input.search !== undefined ||
+    input.newOnly ||
+    input.categories.length > 0 ||
+    input.themes.length > 0 ||
+    input.priceLabel !== ''
+  );
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -139,7 +155,15 @@ export default async function AllProductsPage({
     ? mentiosCategoriesResult.value
     : [];
 
-  const hasDbData = dbProducts.length > 0;
+  const activeResultFilters = hasActiveResultFilters({
+    categories: initialCategories,
+    newOnly,
+    priceLabel: initialPriceLabel,
+    search,
+    themes: initialThemes,
+  });
+  const hasDbData = mentiosProductsResult.status === 'fulfilled' &&
+    (dbProducts.length > 0 || dbTotal > 0 || activeResultFilters);
   const staticInStock = PRODUCTS.filter((p) => !p.isSoldOut);
   let products = hasDbData ? dbProducts : staticInStock.slice(0, PAGE_SIZE);
   let total = hasDbData ? dbTotal : staticInStock.length;

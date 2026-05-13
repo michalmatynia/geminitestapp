@@ -38,6 +38,7 @@ export type ProductFastCometImageUploadJobResult = {
 
 const QUEUE_UNAVAILABLE_RETRY_AFTER_MS = 3_000;
 const LOG_SERVICE = 'product-fastcomet-image-upload-queue';
+const JOB_ID_SEPARATOR = '__';
 
 const buildJobId = (data: Pick<ProductFastCometImageUploadJobData, 'productId' | 'imageFileId'>): string =>
   [
@@ -45,7 +46,7 @@ const buildJobId = (data: Pick<ProductFastCometImageUploadJobData, 'productId' |
     encodeURIComponent(data.productId),
     encodeURIComponent(data.imageFileId),
     randomUUID(),
-  ].join(':');
+  ].join(JOB_ID_SEPARATOR);
 
 const isWorkerHealthReady = (health: QueueHealthStatus): boolean =>
   health.deliveryMode === 'queue' &&

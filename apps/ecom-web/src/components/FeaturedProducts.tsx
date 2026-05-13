@@ -40,6 +40,7 @@ function ProductCard({ product, quickAddLabel, priority = false }: { product: Pr
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       size: product.sizes[1] ?? '',
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -157,7 +158,7 @@ function ProductCard({ product, quickAddLabel, priority = false }: { product: Pr
           className='type-price'
           style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.4)' }}
         >
-          {formatPrice(product.price, locale)}
+          {formatPrice(product.price, locale, product.currencyCode)}
         </span>
       </div>
     </a>

@@ -94,6 +94,15 @@ describe('admin orders API', () => {
     expect(mocks.limit).toHaveBeenCalledWith(100);
   });
 
+  it('can filter courier orders by carrier', async () => {
+    const response = await GET(makeRequest('http://localhost/api/orders/admin?carrier=dpd&limit=50'));
+
+    expect(response.status).toBe(200);
+    expect(mocks.find).toHaveBeenCalledWith({ shippingCarrier: 'dpd' });
+    expect(mocks.countDocuments).toHaveBeenCalledWith({ shippingCarrier: 'dpd' });
+    expect(mocks.limit).toHaveBeenCalledWith(50);
+  });
+
   it('rejects non-admin access before querying orders', async () => {
     mocks.getSession.mockResolvedValue({ id: 'user-1', isSuperAdmin: false });
 

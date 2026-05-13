@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';
@@ -12,6 +14,9 @@ export type { ProductImageManagerController };
 interface ProductImageManagerProps {
   controller?: ProductImageManagerController;
   externalBaseUrl: string;
+  chooseFileManagerButtonAriaLabel?: string;
+  chooseFileManagerButtonLabel?: string;
+  onChooseFromFileManager?: (() => void) | undefined;
   productId?: string | null;
   productSku?: string | null;
   minimalUi?: boolean;
@@ -19,24 +24,57 @@ interface ProductImageManagerProps {
   minimalSingleSlotAlign?: 'left' | 'center';
 }
 
+type ProductImageManagerGridProps = Pick<
+  ProductImageManagerProps,
+  | 'chooseFileManagerButtonAriaLabel'
+  | 'chooseFileManagerButtonLabel'
+  | 'onChooseFromFileManager'
+>;
+
 const resolveImageSlotKey = (
   slot: ProductImageManagerController['imageSlots'][number],
   index: number
 ): string => slot?.slotId ?? `slot-${index}`;
 
-function ProductImageManagerGrid() {
+const resolveGridClass = ({
+  imageSlotCount,
+  minimalSingleSlotAlign,
+  minimalUi,
+}: {
+  imageSlotCount: number;
+  minimalSingleSlotAlign: 'left' | 'center';
+  minimalUi: boolean;
+}): string => {
+  if (!minimalUi) return 'grid grid-cols-5 gap-2';
+  if (imageSlotCount === 1) {
+    return `flex w-full overflow-x-hidden ${minimalSingleSlotAlign === 'left' ? 'justify-start' : 'justify-center'}`;
+  }
+  return 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden';
+};
+
+function ProductImageManagerGrid(props: ProductImageManagerGridProps): JSX.Element {
+  const {
+    chooseFileManagerButtonAriaLabel,
+    chooseFileManagerButtonLabel,
+    onChooseFromFileManager,
+  } = props;
   const { controller, minimalUi, minimalSingleSlotAlign } = useProductImageManagerUIState();
   const { imageSlots } = controller;
 
-  const gridClass = minimalUi
-    ? imageSlots.length === 1
-      ? `flex w-full overflow-x-hidden ${minimalSingleSlotAlign === 'left' ? 'justify-start' : 'justify-center'}`
-      : 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden'
-    : 'grid grid-cols-5 gap-2';
+  const gridClass = resolveGridClass({
+    imageSlotCount: imageSlots.length,
+    minimalSingleSlotAlign,
+    minimalUi,
+  });
 
   return (
     <div data-preserve-slot-selection='true'>
-      <ProductImageManagerHeader />
+      <ProductImageManagerHeader
+        chooseFileManagerButtonAriaLabel={chooseFileManagerButtonAriaLabel}
+        chooseFileManagerButtonLabel={chooseFileManagerButtonLabel}
+        onChooseFromFileManager={onChooseFromFileManager}
+        showChooseFromFileManagerButton={onChooseFromFileManager !== undefined}
+      />
       <div className={gridClass}>
         {imageSlots.map((slot, index: number) => (
           <ProductImageSlot key={resolveImageSlotKey(slot, index)} index={index} />
@@ -46,10 +84,13 @@ function ProductImageManagerGrid() {
   );
 }
 
-export default function ProductImageManager(props: ProductImageManagerProps) {
+export default function ProductImageManager(props: ProductImageManagerProps): JSX.Element {
   const {
     controller,
     externalBaseUrl,
+    chooseFileManagerButtonAriaLabel,
+    chooseFileManagerButtonLabel,
+    onChooseFromFileManager,
     productId,
     productSku,
     minimalUi,
@@ -67,7 +108,11 @@ export default function ProductImageManager(props: ProductImageManagerProps) {
       showDragHandle={showDragHandle}
       minimalSingleSlotAlign={minimalSingleSlotAlign}
     >
-      <ProductImageManagerGrid />
+      <ProductImageManagerGrid
+        chooseFileManagerButtonAriaLabel={chooseFileManagerButtonAriaLabel}
+        chooseFileManagerButtonLabel={chooseFileManagerButtonLabel}
+        onChooseFromFileManager={onChooseFromFileManager}
+      />
     </ProductImageManagerUIProvider>
   );
 }

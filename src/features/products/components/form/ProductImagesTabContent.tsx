@@ -9,7 +9,6 @@ import { useProductSettings } from '@/features/products/hooks/useProductSettings
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Alert } from '@/shared/ui/primitives.public';
 import { Button } from '@/shared/ui/button';
-import { FormSection } from '@/shared/ui/form-section';
 import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/image-slot-manager';
 import type { ProductImageManagerController } from '@/shared/ui/image-slot-manager';
 
@@ -230,27 +229,6 @@ function InlineFileManagerView({
   );
 }
 
-function ImageSourceSection({
-  model,
-}: {
-  model: ProductImagesTabModel;
-}): React.JSX.Element {
-  return (
-    <FormSection title={model.sectionTitle} description={model.sectionDescription}>
-      <div className='flex space-x-4'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={(): void => model.onShowFileManager(true)}
-          aria-label={model.chooseButtonAriaLabel}
-        >
-          {model.chooseButtonLabel}
-        </Button>
-      </div>
-    </FormSection>
-  );
-}
-
 function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): React.JSX.Element {
   return (
     <div className='space-y-6'>
@@ -262,10 +240,12 @@ function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): 
           </Link>
         </Alert>
       )}
-      <ImageSourceSection model={model} />
       <ProductImageManagerControllerProvider value={model.imageManagerController}>
         <ProductImageManager
           externalBaseUrl={model.imageExternalBaseUrl}
+          chooseFileManagerButtonAriaLabel={model.chooseButtonAriaLabel}
+          chooseFileManagerButtonLabel={model.chooseButtonLabel}
+          onChooseFromFileManager={(): void => model.onShowFileManager(true)}
           productId={model.productId}
           productSku={model.productSku}
         />

@@ -108,8 +108,14 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
-  const instructionsId = React.useId();
-  const statusId = React.useId();
+  const generatedInstructionsId = React.useId();
+  const generatedStatusId = React.useId();
+  const stableIdPrefix = typeof buttonProps.id === 'string' ? buttonProps.id.trim() : '';
+  const hasStableIdPrefix = stableIdPrefix.length > 0;
+  const instructionsId = hasStableIdPrefix
+    ? `${stableIdPrefix}-instructions`
+    : generatedInstructionsId;
+  const statusId = hasStableIdPrefix ? `${stableIdPrefix}-status` : generatedStatusId;
   const instructions = React.useMemo(
     () => getUploadInstructions({ multiple, enableDrop, enablePaste }),
     [multiple, enableDrop, enablePaste]

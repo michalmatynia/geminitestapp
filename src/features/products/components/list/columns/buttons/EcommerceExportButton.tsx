@@ -15,6 +15,10 @@ import {
   PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
   ProductListMarketplacePendingTextButton,
 } from './ProductListMarketplaceButton';
+import {
+  getEcommerceExportToastVariant,
+  isMissingEcommerceCategoryError,
+} from './ecommerce-export-warning';
 
 const EcommerceManageModal = dynamic(
   () => import('./EcommerceManageModal').then((mod) => mod.EcommerceManageModal),
@@ -57,20 +61,16 @@ export function EcommerceExportButton({
         void invalidateListingBadges(queryClient);
       })
       .catch((error: unknown) => {
-        logClientError(error);
+        if (!isMissingEcommerceCategoryError(error)) logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to export product to ecommerce.',
-          { variant: 'error' }
+          { variant: getEcommerceExportToastVariant(error) }
         );
       });
   }, [isPending, isActive, mutateAsync, product.id, queryClient, toast]);
 
   const ariaLabel = isActive ? 'Manage ecommerce product' : 'Export to ecommerce';
-  const toneClass = getMarketplaceButtonClass(
-    isActive ? 'active' : 'not_started',
-    isActive,
-    'ecommerce'
-  );
+  const toneClass = getMarketplaceButtonClass(isActive ? 'active' : 'not_started', isActive, 'ecommerce');
 
   return (
     <>
@@ -80,20 +80,12 @@ export function EcommerceExportButton({
         onClick={handleClick}
         aria-label={ariaLabel}
         title={ariaLabel}
-        disabledInteractionClass={
-          isPending && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS
-        }
+        disabledInteractionClass={isPending && PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS}
         toneClass={toneClass}
         isPending={isPending}
         label='EC'
       />
-      {modalOpen && (
-        <EcommerceManageModal
-          product={product}
-          open={modalOpen}
-          onClose={(): void => setModalOpen(false)}
-        />
-      )}
+      {modalOpen && <EcommerceManageModal product={product} open={modalOpen} onClose={(): void => setModalOpen(false)} />}
     </>
   );
 }

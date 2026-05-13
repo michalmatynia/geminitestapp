@@ -18,6 +18,7 @@ export type CartItem = {
   category: string;
   price: number;
   priceDisplay: string;
+  currencyCode?: string;
   size: string;
   gradient: string;
   imageUrl?: string;

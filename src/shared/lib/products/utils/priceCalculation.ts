@@ -62,25 +62,6 @@ const findPriceGroupById = (
   );
 };
 
-const isSamePriceGroup = (
-  left: PriceGroupForCalculation | undefined,
-  right: PriceGroupForCalculation | undefined
-): boolean => {
-  if (left === undefined || right === undefined) {
-    return false;
-  }
-
-  const leftId = normalizePriceGroupIdentifier(left.id);
-  const rightId = normalizePriceGroupIdentifier(right.id);
-  if (leftId.length > 0 && rightId.length > 0 && leftId === rightId) {
-    return true;
-  }
-
-  const leftGroupId = normalizePriceGroupIdentifier(left.groupId);
-  const rightGroupId = normalizePriceGroupIdentifier(right.groupId);
-  return leftGroupId.length > 0 && rightGroupId.length > 0 && leftGroupId === rightGroupId;
-};
-
 const resolvePriceGroupAdjustment = (
   group: PriceGroupForCalculation
 ): { multiplier: number; addToPrice: number } => ({
@@ -188,13 +169,6 @@ const resolveVisitedPriceForGroup = (
   group: PriceGroupForCalculation,
   visited: Set<string>
 ): number | null => {
-  if (
-    isSamePriceGroup(group, input.defaultGroup) &&
-    group.type !== 'dependent' &&
-    group.basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
-  ) {
-    return resolveProductFieldPrice(group, input.prices);
-  }
   if (group.type === 'standard') return resolveStandardPriceForGroup(group, input.prices);
   if (group.type !== 'dependent') return null;
 

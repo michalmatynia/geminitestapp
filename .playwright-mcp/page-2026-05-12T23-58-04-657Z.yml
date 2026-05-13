@@ -1,0 +1,394 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]: Initialising AI Systems
+    - generic [ref=e6]: NaN%
+  - navigation [ref=e7]:
+    - generic [ref=e8]:
+      - link "Milk Bar Designers AI Architecture Studio" [ref=e9] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e10]: Milk Bar Designers
+        - generic [ref=e11]: AI Architecture Studio
+      - generic [ref=e12]: Systems Operational
+      - list [ref=e14]:
+        - listitem [ref=e15]:
+          - link "Philosophy" [ref=e16] [cursor=pointer]:
+            - /url: "#philosophy"
+        - listitem [ref=e17]:
+          - link "Services" [ref=e18] [cursor=pointer]:
+            - /url: "#services"
+        - listitem [ref=e19]:
+          - link "Projects" [ref=e20] [cursor=pointer]:
+            - /url: "#viewer"
+        - listitem [ref=e21]:
+          - link "Work" [ref=e22] [cursor=pointer]:
+            - /url: "#work"
+      - button "Toggle theme" [ref=e23]:
+        - generic [ref=e24]: Daily
+      - link "Request Access" [ref=e27]:
+        - /url: "#cta"
+  - generic [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e30]: "01"
+      - generic [ref=e31]:
+        - paragraph [ref=e32]: AI for the Built Environment
+        - heading "Architecture reimagined through intelligence." [level=1] [ref=e33]:
+          - text: Architecture
+          - emphasis [ref=e34]: reimagined
+          - text: through intelligence.
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - paragraph [ref=e37]: We automate the repetitive. We accelerate the creative. Our AI integrates seamlessly into architectural workflows — from code compliance to generative massing — processing thousands of drawings in hours, not months.
+            - generic [ref=e38]:
+              - link "Explore systems" [ref=e39]:
+                - /url: "#services"
+                - generic [ref=e40]: Explore systems
+                - img [ref=e41]
+              - link "View projects" [ref=e43]:
+                - /url: "#viewer"
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - generic [ref=e46]: 0+
+              - generic [ref=e47]: Projects automated
+            - generic [ref=e48]:
+              - generic [ref=e49]: 0%
+              - generic [ref=e50]: Time reduction
+            - generic [ref=e51]:
+              - generic [ref=e52]: "0.4"
+              - generic [ref=e53]: Accuracy %
+    - generic [ref=e54]:
+      - generic [ref=e55]: Amsterdam · London · Berlin · Zurich
+      - generic [ref=e56]:
+        - text: Scroll to explore
+        - img [ref=e57]
+  - generic [ref=e61]:
+    - generic [ref=e62]: "02"
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - paragraph [ref=e65]: Computational Design
+        - heading "Every line drawn by intelligence." [level=2] [ref=e66]:
+          - text: Every line drawn
+          - text: by
+          - emphasis [ref=e67]: intelligence.
+        - paragraph [ref=e68]: Our AI parses architectural intent from natural language, existing drawings, and spatial constraints — generating precise, code-compliant building documentation at speed.
+        - link "See how it works" [ref=e69]:
+          - /url: "#services"
+          - text: See how it works
+          - img [ref=e70]
+      - img "Architectural floor plan" [ref=e73]:
+        - generic [ref=e77]: 18 000
+        - generic [ref=e78]: 12 000
+        - generic [ref=e79]: LIVING
+        - generic [ref=e80]: BEDROOM
+        - generic [ref=e81]: STUDIO
+        - generic [ref=e82]: AMENITY
+        - generic [ref=e91]: "N"
+        - generic [ref=e93]: MILK BAR DESIGNERS
+        - generic [ref=e94]: SHEET A-001 · GROUND FLOOR
+  - generic [ref=e97]:
+    - generic [ref=e98]:
+      - paragraph [ref=e99]: Philosophy
+      - heading "The philosophy of negative space." [level=2] [ref=e100]:
+        - text: The philosophy
+        - text: of
+        - emphasis [ref=e101]: negative space.
+      - paragraph [ref=e102]: In architecture, the most powerful element is often what is absent. The void between walls defines a room. The pause between columns creates rhythm. Our AI applies the same principle to your practice — identifying and eliminating every unnecessary step, every wasted hour.
+      - paragraph [ref=e103]: We don't add complexity. We subtract it.
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: "01"
+          - generic [ref=e107]:
+            - generic [ref=e108]: Reduce, then refine
+            - paragraph [ref=e109]: Remove every redundant process before optimising what remains. Complexity is never a solution.
+        - generic [ref=e110]:
+          - generic [ref=e111]: "02"
+          - generic [ref=e112]:
+            - generic [ref=e113]: Precision over speed
+            - paragraph [ref=e114]: Trained on 14 million building code clauses across 38 jurisdictions. Accuracy is non-negotiable.
+        - generic [ref=e115]:
+          - generic [ref=e116]: "03"
+          - generic [ref=e117]:
+            - generic [ref=e118]: Augment, never replace
+            - paragraph [ref=e119]: The architect's eye is irreplaceable. We automate the administrative so creativity operates unencumbered.
+    - generic [ref=e122]:
+      - text: Negative Space
+      - text: The productive void
+  - generic [ref=e124]:
+    - generic [ref=e125]:
+      - generic [ref=e126]: "03"
+      - generic [ref=e127]:
+        - paragraph [ref=e128]: AI Systems
+        - heading "What we automate." [level=2] [ref=e129]:
+          - text: What we
+          - emphasis [ref=e130]: automate.
+    - generic [ref=e133]:
+      - generic [ref=e134]:
+        - paragraph [ref=e135]: S — 01
+        - img [ref=e136]
+        - heading "Compliance Intelligence" [level=3] [ref=e138]:
+          - text: Compliance
+          - text: Intelligence
+        - paragraph [ref=e139]: Automated cross-referencing against regulations in any European or international jurisdiction. Upload drawings, receive a full compliance report in minutes.
+        - link "Learn more" [ref=e140] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e141]
+      - generic [ref=e143]:
+        - paragraph [ref=e144]: S — 02
+        - img [ref=e145]
+        - heading "Generative Massing" [level=3] [ref=e147]:
+          - text: Generative
+          - text: Massing
+        - paragraph [ref=e148]: Input site constraints and programme. Receive thousands of optimised massing options, ranked by buildability and cost efficiency.
+        - link "Learn more" [ref=e149] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e150]
+      - generic [ref=e152]:
+        - paragraph [ref=e153]: S — 03
+        - img [ref=e154]
+        - heading "Document Automation" [level=3] [ref=e157]:
+          - text: Document
+          - text: Automation
+        - paragraph [ref=e158]: Transform concept sketches into production drawing sets. AI drafts plans, sections and elevations with correct weights and annotations.
+        - link "Learn more" [ref=e159] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e160]
+      - generic [ref=e162]:
+        - paragraph [ref=e163]: S — 04
+        - img [ref=e164]
+        - heading "Project Intelligence" [level=3] [ref=e168]:
+          - text: Project
+          - text: Intelligence
+        - paragraph [ref=e169]: Real-time budget forecasting and risk identification. An AI project manager that never sleeps and never misses a deadline.
+        - link "Learn more" [ref=e170] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e171]
+  - generic [ref=e174]:
+    - generic [ref=e175]:
+      - generic [ref=e176]:
+        - generic [ref=e177]: "04"
+        - paragraph [ref=e178]: 3D Project Viewer
+        - heading "Selected projects." [level=2] [ref=e179]:
+          - text: Selected
+          - emphasis [ref=e180]: projects.
+      - generic [ref=e181]:
+        - button "MBD — 001 Helios Tower Zurich · Mixed-Use Tower" [ref=e182]:
+          - generic [ref=e183]: MBD — 001
+          - generic [ref=e184]: Helios Tower
+          - generic [ref=e185]: Zurich · Mixed-Use Tower
+        - button "MBD — 002 Kulturhaus Amsterdam · Cultural Centre" [ref=e186]:
+          - generic [ref=e187]: MBD — 002
+          - generic [ref=e188]: Kulturhaus
+          - generic [ref=e189]: Amsterdam · Cultural Centre
+        - button "MBD — 003 South Quarter Berlin · Residential Ensemble" [ref=e190]:
+          - generic [ref=e191]: MBD — 003
+          - generic [ref=e192]: South Quarter
+          - generic [ref=e193]: Berlin · Residential Ensemble
+      - generic [ref=e194]:
+        - generic [ref=e195]: Render mode
+        - generic [ref=e196]:
+          - button "Wireframe" [ref=e197]
+          - button "Solid" [ref=e198]
+    - generic [ref=e199]:
+      - generic "Interactive 3D architectural model" [ref=e200]
+      - generic [ref=e201]:
+        - generic [ref=e202]: MBD-001
+        - generic [ref=e203]: 32 Floors · 42,000 m²
+        - generic [ref=e204]: Mixed-Use · Zurich, CH
+      - generic [ref=e205]:
+        - img [ref=e206]
+        - text: Drag to orbit · Scroll to zoom
+  - generic [ref=e210]:
+    - generic [ref=e211]:
+      - generic [ref=e212]: "05"
+      - generic [ref=e213]:
+        - paragraph [ref=e214]: Integration
+        - heading "How it works." [level=2] [ref=e215]:
+          - text: How it
+          - emphasis [ref=e216]: works.
+    - generic [ref=e219]:
+      - generic [ref=e220]:
+        - paragraph [ref=e221]: "01"
+        - heading "Audit" [level=3] [ref=e222]
+        - paragraph [ref=e223]: We map your current workflow. Every touchpoint, tool, and hour of manual effort. The picture is usually striking.
+      - generic [ref=e224]:
+        - paragraph [ref=e225]: "02"
+        - heading "Configure" [level=3] [ref=e226]
+        - paragraph [ref=e227]: Our models are trained on your project typology, preferred standards, and jurisdictional requirements.
+      - generic [ref=e228]:
+        - paragraph [ref=e229]: "03"
+        - heading "Integrate" [level=3] [ref=e230]
+        - paragraph [ref=e231]: Plugs directly into Revit, AutoCAD, ArchiCAD, Rhino. No workflow disruption. Just new capability.
+      - generic [ref=e232]:
+        - paragraph [ref=e233]: "04"
+        - heading "Optimise" [level=3] [ref=e234]
+        - paragraph [ref=e235]: Each project cycle the system learns your preferences and standards. Performance improves continuously.
+  - generic [ref=e240]:
+    - generic [ref=e241]:
+      - generic [ref=e242]:
+        - generic [ref=e243]: "0"
+        - generic [ref=e244]: +
+      - generic [ref=e245]:
+        - text: Projects processed
+        - text: through AI
+    - generic [ref=e246]:
+      - generic [ref=e247]:
+        - generic [ref=e248]: "0"
+        - generic [ref=e249]: "%"
+      - generic [ref=e250]:
+        - text: Average reduction
+        - text: in documentation time
+    - generic [ref=e251]:
+      - generic [ref=e252]:
+        - generic [ref=e253]: "0"
+        - generic [ref=e254]: .4%
+      - generic [ref=e255]:
+        - text: Compliance check
+        - text: accuracy rate
+    - generic [ref=e256]:
+      - generic [ref=e258]: "0"
+      - generic [ref=e259]:
+        - text: Jurisdictions with
+        - text: active regulation models
+  - generic [ref=e261]:
+    - generic [ref=e262]:
+      - generic [ref=e263]: "06"
+      - generic [ref=e264]:
+        - paragraph [ref=e265]: Case Studies
+        - heading "Selected work." [level=2] [ref=e266]:
+          - text: Selected
+          - emphasis [ref=e267]: work.
+    - generic [ref=e270]:
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - paragraph [ref=e273]: Mixed-Use Development
+          - heading "Helios Tower, Zurich — Compliance at Scale" [level=3] [ref=e274]
+          - paragraph [ref=e275]: A 32-storey mixed-use development in Zurich required simultaneous compliance with Swiss federal, cantonal, and municipal building codes. Our AI processed 6,400 drawings in 3 hours — a task that would have taken a team of 5 two months.
+        - generic [ref=e276]:
+          - img "Tower elevation" [ref=e278]:
+            - generic [ref=e281]: 32F
+            - generic [ref=e282]: GL±0
+          - generic [ref=e283]:
+            - generic [ref=e284]:
+              - generic [ref=e285]: Location
+              - generic [ref=e286]: Zurich, CH
+            - generic [ref=e287]:
+              - generic [ref=e288]: Time saved
+              - generic [ref=e289]: ~280 hrs
+            - generic [ref=e290]:
+              - generic [ref=e291]: Drawings
+              - generic [ref=e292]: 6,400
+            - generic [ref=e293]:
+              - generic [ref=e294]: System
+              - generic [ref=e295]: Compliance AI
+      - generic [ref=e296]:
+        - generic [ref=e297]:
+          - paragraph [ref=e298]: Cultural Institution
+          - heading "Kulturhaus Amsterdam — Generative Design" [level=3] [ref=e299]
+          - paragraph [ref=e300]: Generating 3,600 massing options for a new cultural centre on the IJ waterfront — each optimised against acoustic performance, heritage viewing corridors, and Amsterdam's strict envelope controls.
+        - generic [ref=e301]:
+          - img "Site plan" [ref=e303]:
+            - generic [ref=e308]: MAIN HALL
+            - generic [ref=e309]: STUDIO
+            - generic [ref=e310]: NEW
+            - generic [ref=e315]: "N"
+          - generic [ref=e316]:
+            - generic [ref=e317]:
+              - generic [ref=e318]: Location
+              - generic [ref=e319]: Amsterdam, NL
+            - generic [ref=e320]:
+              - generic [ref=e321]: Options gen.
+              - generic [ref=e322]: 3,600
+            - generic [ref=e323]:
+              - generic [ref=e324]: Area
+              - generic [ref=e325]: 4,200 m²
+            - generic [ref=e326]:
+              - generic [ref=e327]: System
+              - generic [ref=e328]: Gen. Massing
+  - generic [ref=e331]:
+    - generic [ref=e332]: "\""
+    - generic [ref=e333]:
+      - blockquote [ref=e334]: The measure of a great building is not what it shows, but what it eliminates. Our AI holds that same standard.
+      - paragraph [ref=e335]: Milk Bar Designers — Design Principles, 2024
+  - generic [ref=e340]:
+    - generic [ref=e341]: MBD
+    - heading "Ready to eliminate the unnecessary?" [level=2] [ref=e342]:
+      - text: Ready to eliminate
+      - text: the
+      - emphasis [ref=e343]: unnecessary?
+    - generic [ref=e344]:
+      - textbox "Email address" [ref=e345]:
+        - /placeholder: your@practice.com
+      - button "Request access" [ref=e346]
+    - paragraph [ref=e347]: No obligation. Pilot programme places limited to 12 practices per quarter.
+  - contentinfo [ref=e348]:
+    - generic [ref=e349]:
+      - generic [ref=e350]:
+        - generic [ref=e351]:
+          - generic [ref=e352]:
+            - text: Milk Bar
+            - text: Designers
+          - paragraph [ref=e354]: AI Architecture Studio
+          - paragraph [ref=e355]:
+            - text: Herengracht 44
+            - text: 1017 Amsterdam, Netherlands
+            - text: milkbardesigners.com
+        - generic [ref=e356]:
+          - paragraph [ref=e357]: Systems
+          - list [ref=e358]:
+            - listitem [ref=e359]:
+              - link "Compliance Intelligence" [ref=e360] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e361]:
+              - link "Generative Massing" [ref=e362] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e363]:
+              - link "Document Automation" [ref=e364] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e365]:
+              - link "Project Intelligence" [ref=e366] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e367]:
+              - link "API Access" [ref=e368] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e369]:
+          - paragraph [ref=e370]: Studio
+          - list [ref=e371]:
+            - listitem [ref=e372]:
+              - link "Philosophy" [ref=e373] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e374]:
+              - link "Case Studies" [ref=e375] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e376]:
+              - link "Research" [ref=e377] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e378]:
+              - link "Careers" [ref=e379] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e380]:
+          - paragraph [ref=e381]: Contact
+          - list [ref=e382]:
+            - listitem [ref=e383]:
+              - link "hello@milkbardesigners.com" [ref=e384] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e385]:
+              - link "Amsterdam Office" [ref=e386] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e387]:
+              - link "London Studio" [ref=e388] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e389]:
+              - link "Berlin Lab" [ref=e390] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e391]:
+        - paragraph [ref=e392]: © 2025 Milk Bar Designers B.V. — Amsterdam, Netherlands
+        - generic [ref=e393]:
+          - link "Privacy" [ref=e394] [cursor=pointer]:
+            - /url: "#"
+          - link "Terms" [ref=e395] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=e396] [cursor=pointer]:
+            - /url: "#"

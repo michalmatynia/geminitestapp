@@ -56,7 +56,8 @@ const getProcessedSuites = (
     return []; 
 };
 
-const unusedIsLiveSuite = (
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const _unusedIsLiveSuite = (
   suite: Pick<KangurTestSuite, 'enabled' | 'publicationStatus'>,
 ): boolean => suite.enabled && suite.publicationStatus === 'live';  
 
@@ -64,7 +65,8 @@ const isPublishedQuestion = (
   question: Pick<KangurTestQuestion, 'editorial'>,
 ): boolean => question.editorial.workflowStatus === 'published';
 
-const unusedGetPublishedQuestionsForSuite = (
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const _unusedGetPublishedQuestionsForSuite = (
   questionStore: KangurTestQuestionStore,
   suiteId: string,
 ): KangurTestQuestion[] =>
@@ -137,7 +139,7 @@ export const useKangurMobileTests = (
         credentials: 'include',
       });
       if (!response.ok) throw new Error(`Failed to fetch lite settings (${response.status})`);
-      const payload = await response.json();
+      const payload = (await response.json()) as unknown;
       if (!Array.isArray(payload)) return [];
       
       return payload.filter(

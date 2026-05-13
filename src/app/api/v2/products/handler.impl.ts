@@ -3,13 +3,23 @@ import { z } from 'zod';
 
 import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
+import {
+  createQueuedProductCreateRuntimeStatus,
+  markProductCreateRuntimeCompleted,
+  markProductCreateRuntimeFailed,
+  markProductCreateRuntimeProcessing,
+} from '@/features/products/server/product-create-runtime-status';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
 import { type productCreateInputSchema } from '@/shared/contracts/products/io';
-import { type ProductWithImages } from '@/shared/contracts/products';
+import {
+  type ProductCreateRuntimeQueuedResponse,
+  type ProductWithImages,
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {
   productService,
   productFilterSchema,
@@ -76,6 +86,24 @@ const resolveProductCreateOptions = (userId: string | null | undefined): { userI
   return normalizedUserId.length > 0 ? { userId: normalizedUserId } : {};
 };
 
+const shouldCreateProductInRuntime = (req: NextRequest): boolean => {
+  const queryValue = req.nextUrl.searchParams.get('runtime');
+  if (queryValue !== null) {
+    return ['1', 'true', 'yes', 'runtime'].includes(queryValue.trim().toLowerCase());
+  }
+  return req.headers.get('x-product-create-runtime')?.trim() === '1';
+};
+
+const resolveRuntimeCreateSku = (
+  payload: z.infer<typeof productCreateInputSchema>
+): string | null => {
+  const normalizedSku = typeof payload.sku === 'string' ? payload.sku.trim() : '';
+  if (normalizedSku.length === 0 || normalizedSku === PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER) {
+    return null;
+  }
+  return normalizedSku;
+};
+
 const findIdempotentProductResponse = async (
   req: NextRequest,
   payload: z.infer<typeof productCreateInputSchema>
@@ -99,6 +127,63 @@ const findIdempotentProductResponse = async (
     ...existing,
     idempotent: true,
   });
+};
+
+const startProductCreateRuntimeTask = ({
+  formData,
+  requestId,
+  sku,
+  userId,
+}: {
+  formData: FormData;
+  requestId: string;
+  sku: string | null;
+  userId: string | null | undefined;
+}): ProductCreateRuntimeQueuedResponse => {
+  const response = createQueuedProductCreateRuntimeStatus({ requestId, sku });
+
+  void Promise.resolve().then(async (): Promise<void> => {
+    markProductCreateRuntimeProcessing(requestId);
+    try {
+      const product: ProductWithImages | null = await productService.createProduct(
+        formData,
+        resolveProductCreateOptions(userId)
+      );
+      CachedProductService.invalidateAll();
+      markProductCreateRuntimeCompleted({ requestId, product });
+      await logSystemEvent({
+        level: 'info',
+        message: '[runtime] products.POST completed',
+        service: 'products',
+        context: {
+          requestId,
+          productId: product.id,
+          sku,
+          productSku: product.sku,
+        },
+      });
+    } catch (error) {
+      markProductCreateRuntimeFailed({ requestId, error });
+      void ErrorSystem.captureException(error, {
+        service: 'products',
+        action: 'runtimeCreateProduct',
+        requestId,
+        sku,
+      });
+      await logSystemEvent({
+        level: 'error',
+        message: '[runtime] products.POST failed',
+        service: 'products',
+        context: {
+          requestId,
+          sku,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
+  });
+
+  return response;
 };
 
 export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -165,6 +250,16 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const idempotentResponse = await findIdempotentProductResponse(req, validatedPayload);
   if (idempotentResponse) {
     return idempotentResponse;
+  }
+
+  if (shouldCreateProductInRuntime(req)) {
+    const queued = startProductCreateRuntimeTask({
+      formData,
+      requestId: _ctx.requestId,
+      sku: resolveRuntimeCreateSku(validatedPayload),
+      userId: _ctx.userId,
+    });
+    return NextResponse.json(queued, { status: 202 });
   }
 
   const product: ProductWithImages | null = await productService.createProduct(

@@ -137,15 +137,43 @@ export function savedProductStateWord(count: number, locale: EcomLocale, savedLa
   return 'zapisanych';
 }
 
-export function formatPrice(price: number, locale: EcomLocale): string {
-  const localeTag = locale === 'pl' ? 'pl-PL' : 'en-US';
-  const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
-  return `${price.toLocaleString(localeTag, {
-    minimumFractionDigits,
-    maximumFractionDigits: 2,
-  })} zł`;
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€',
+  GBP: '£',
+  PLN: 'zł',
+  SEK: 'kr',
+  USD: '$',
+};
+
+const PREFIX_CURRENCIES = new Set(['EUR', 'GBP', 'USD']);
+
+function normalizeCurrencyCode(currencyCode: string | null | undefined): string {
+  const normalized = (currencyCode ?? 'PLN').trim().toUpperCase();
+  return normalized.length > 0 ? normalized : 'PLN';
 }
 
-export function formatPriceTotal(total: number, locale: EcomLocale): string {
-  return formatPrice(total, locale);
+export function formatPrice(
+  price: number,
+  locale: EcomLocale,
+  currencyCode: string | null | undefined = 'PLN',
+): string {
+  const localeTag = locale === 'pl' ? 'pl-PL' : 'en-US';
+  const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
+  const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
+  const symbol = CURRENCY_SYMBOLS[normalizedCurrencyCode] ?? normalizedCurrencyCode;
+  const amount = price.toLocaleString(localeTag, {
+    minimumFractionDigits,
+    maximumFractionDigits: 2,
+  });
+  return PREFIX_CURRENCIES.has(normalizedCurrencyCode)
+    ? `${symbol} ${amount}`
+    : `${amount} ${symbol}`;
+}
+
+export function formatPriceTotal(
+  total: number,
+  locale: EcomLocale,
+  currencyCode: string | null | undefined = 'PLN',
+): string {
+  return formatPrice(total, locale, currencyCode);
 }

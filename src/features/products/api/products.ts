@@ -24,6 +24,8 @@ import {
   type ProductMarketplaceCopyDebrandRunResponse,
   type ProductParseActionsMarkTraderaClosedRequest,
   type ProductParseActionsMarkTraderaClosedResponse,
+  type ProductCreateRuntimeQueuedResponse,
+  type ProductCreateRuntimeStatusResponse,
   type ProductParseActionsMatchRequest,
   type ProductParseActionsMatchResponse,
   type ProductWithImages,
@@ -103,6 +105,29 @@ export async function createProduct(formData: FormData): Promise<ProductWithImag
     headers: {}, // Let browser set multipart/form-data with boundary
     timeout: PRODUCT_WRITE_TIMEOUT_MS, // Product creation involves many DB ops + image uploads
   });
+}
+
+export async function createProductInRuntime(
+  formData: FormData
+): Promise<ProductCreateRuntimeQueuedResponse> {
+  return api.post<ProductCreateRuntimeQueuedResponse>('/api/v2/products?runtime=1', formData, {
+    headers: {}, // Let browser set multipart/form-data with boundary
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function getProductCreateRuntimeStatus(
+  requestId: string,
+  signal?: AbortSignal
+): Promise<ProductCreateRuntimeStatusResponse> {
+  return api.get<ProductCreateRuntimeStatusResponse>(
+    `/api/v2/products/runtime-create/${encodeURIComponent(requestId)}`,
+    {
+      cache: 'no-store',
+      signal,
+      timeout: PRODUCT_READ_TIMEOUT_MS,
+    }
+  );
 }
 
 export async function updateProduct(
@@ -193,8 +218,12 @@ export async function markParsedTraderaMatchesClosed(
   );
 }
 
-export async function getProductById(id: string): Promise<ProductWithImages> {
+export async function getProductById(
+  id: string,
+  options?: { fresh?: boolean | undefined }
+): Promise<ProductWithImages> {
   return api.get<ProductWithImages>(`/api/v2/products/${id}`, {
+    ...(options?.fresh === true ? { params: { fresh: 1 } } : {}),
     timeout: PRODUCT_READ_TIMEOUT_MS,
   });
 }

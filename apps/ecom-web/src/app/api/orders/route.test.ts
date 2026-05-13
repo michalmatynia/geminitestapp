@@ -19,9 +19,13 @@ const mocks = vi.hoisted(() => ({
   getEcommerceProductsDb: vi.fn(),
   findOrderProducts: vi.fn(),
   findDiscount: vi.fn(),
+  checkRateLimit: vi.fn(),
+  getClientIp: vi.fn(),
   productProject: vi.fn(),
   productToArray: vi.fn(),
 }));
+
+vi.mock('server-only', () => ({}));
 
 vi.mock('@/lib/auth', () => ({
   getSession: mocks.getSession,
@@ -35,6 +39,13 @@ vi.mock('@/lib/inpost', () => ({
   fulfillInpostOrder: mocks.fulfillInpostOrder,
 }));
 
+vi.mock('@/lib/cms', async () => {
+  const checkoutContent = await vi.importActual<typeof import('@/data/checkoutContent')>('@/data/checkoutContent');
+  return {
+    getCheckoutContent: vi.fn(async () => checkoutContent.CHECKOUT_CONTENT_DEFAULTS),
+  };
+});
+
 vi.mock('@/lib/mongodb', () => ({
   getDb: vi.fn(async () => ({
     collection: () => ({
@@ -43,6 +54,11 @@ vi.mock('@/lib/mongodb', () => ({
     }),
   })),
   getEcommerceProductsDb: mocks.getEcommerceProductsDb,
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: mocks.checkRateLimit,
+  getClientIp: mocks.getClientIp,
 }));
 
 function makeOrderPayload(): Record<string, unknown> {
@@ -61,8 +77,11 @@ function makeOrderPayload(): Record<string, unknown> {
         imageUrl: '/pin.jpg',
       },
     ],
-    shippingMethod: 'Standard',
+    shippingMethod: 'Poczta Polska',
+    shippingMethodId: 'poczta-polska',
     shippingPrice: 0,
+    shippingCarrier: 'poczta_polska',
+    shippingService: 'poczta_polska_tracked',
     shippingAddress: {
       email: 'buyer@example.com',
       firstName: 'Ada',
@@ -109,6 +128,8 @@ describe('orders API', () => {
     mocks.getEcommerceProductsDb.mockReset();
     mocks.findOrderProducts.mockReset();
     mocks.findDiscount.mockReset();
+    mocks.checkRateLimit.mockReset();
+    mocks.getClientIp.mockReset();
     mocks.productProject.mockReset();
     mocks.productToArray.mockReset();
     mocks.getSession.mockResolvedValue(null);
@@ -118,6 +139,8 @@ describe('orders API', () => {
     mocks.sort.mockReturnValue({ toArray: mocks.toArray });
     mocks.find.mockReturnValue({ sort: mocks.sort });
     mocks.toArray.mockResolvedValue([]);
+    mocks.checkRateLimit.mockReturnValue({ allowed: true, retryAfterSec: 0 });
+    mocks.getClientIp.mockReturnValue('127.0.0.1');
     mocks.findOrderProducts.mockReturnValue({ project: mocks.productProject });
     mocks.productProject.mockReturnValue({ toArray: mocks.productToArray });
     mocks.findDiscount.mockResolvedValue(null);
@@ -277,7 +300,9 @@ describe('orders API', () => {
       userId: 'user-1',
       email: 'buyer@example.com',
       status: 'processing',
-      shippingMethod: 'Standard',
+      shippingMethod: 'Poczta Polska',
+      shippingCarrier: 'poczta_polska',
+      shippingService: 'poczta_polska_tracked',
       subtotal: 30,
       total: 30,
     }));
@@ -286,19 +311,94 @@ describe('orders API', () => {
       email: 'buyer@example.com',
     }));
     expect(mocks.fulfillInpostOrder).toHaveBeenCalledWith(expect.objectContaining({
-      shippingCarrier: 'manual',
+      shippingCarrier: 'poczta_polska',
     }));
   });
 
-  it('rejects an order when client item price is manipulated', async () => {
+  it.each([
+    ['Poczta Polska', 'poczta-polska', 'poczta_polska', 'poczta_polska_tracked', 0, 30],
+    ['DPD Courier', 'dpd-courier', 'dpd', 'dpd_courier_standard', 10, 40],
+  ])('persists %s carrier metadata without requiring a pickup point', async (
+    shippingMethod,
+    shippingMethodId,
+    shippingCarrier,
+    shippingService,
+    shippingPrice,
+    total,
+  ) => {
+    const response = await POST(makeJsonRequest({
+      ...makeOrderPayload(),
+      shippingMethod,
+      shippingMethodId,
+      shippingCarrier,
+      shippingService,
+      shippingPrice,
+      total,
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      shippingMethod,
+      shippingCarrier,
+      shippingService,
+      shippingPrice,
+      total,
+    }));
+  });
+
+  it('rejects manipulated shipping prices before persistence', async () => {
+    const response = await POST(makeJsonRequest({
+      ...makeOrderPayload(),
+      shippingMethod: 'DPD Courier',
+      shippingMethodId: 'dpd-courier',
+      shippingCarrier: 'dpd',
+      shippingService: 'dpd_courier_standard',
+      shippingPrice: 0,
+      total: 30,
+    }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Shipping price is invalid.' });
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+  });
+
+  it('uses canonical product prices when client item price is manipulated', async () => {
     const payload = makeOrderPayload();
     const items = [...payload.items as Array<Record<string, unknown>>];
     items[0] = { ...items[0], price: 10 };
 
     const response = await POST(makeJsonRequest({ ...payload, items }));
 
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ _id: 'mongo-order-id' });
+    expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
+      items: [expect.objectContaining({ price: 15 })],
+    }));
+  });
+
+  it('rejects orders when canonical item currencies are mixed', async () => {
+    mocks.productToArray.mockResolvedValueOnce([
+      { _id: 'prod-1', price: 1500, priceCurrencyCode: 'EUR' },
+      { _id: 'prod-2', price: 500, priceCurrencyCode: 'PLN' },
+    ]);
+
+    const payload = makeOrderPayload();
+    const [baseItem] = payload.items as Array<Record<string, unknown>>;
+    const items = [
+      { ...baseItem, productId: 'prod-1', price: 1500, quantity: 1 },
+      { ...baseItem, productId: 'prod-2', slug: 'moon-pin', name: 'Moon Pin', price: 500, quantity: 1 },
+    ];
+
+    const response = await POST(makeJsonRequest({
+      ...payload,
+      items,
+      subtotal: 2000,
+      total: 2000,
+    }));
+
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: 'Order items are invalid.' });
+    expect(await response.json()).toEqual({ error: 'Order item currencies are invalid.' });
     expect(mocks.insertOne).not.toHaveBeenCalled();
     expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
   });
@@ -306,8 +406,12 @@ describe('orders API', () => {
   it('requires a pickup point for InPost orders', async () => {
     const response = await POST(makeJsonRequest({
       ...makeOrderPayload(),
+      shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
+      total: 34,
     }));
 
     expect(response.status).toBe(400);
@@ -319,8 +423,11 @@ describe('orders API', () => {
     const response = await POST(makeJsonRequest({
       ...makeOrderPayload(),
       shippingMethod: 'InPost Parcel Locker',
+      shippingMethodId: 'inpost-locker',
+      shippingPrice: 4,
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
+      total: 34,
       inpostPoint: {
         id: 'WAW01A',
         name: 'WAW01A',
@@ -335,6 +442,7 @@ describe('orders API', () => {
     expect(mocks.insertOne).toHaveBeenCalledWith(expect.objectContaining({
       shippingCarrier: 'inpost',
       shippingService: 'inpost_locker_standard',
+      shippingPrice: 4,
       inpostPoint: {
         id: 'WAW01A',
         name: 'WAW01A',

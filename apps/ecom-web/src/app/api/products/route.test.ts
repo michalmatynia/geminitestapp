@@ -51,6 +51,24 @@ describe('GET /api/products', () => {
     expect(body.products[0]).toEqual(fakeProduct);
   });
 
+  it('returns an empty mentios page instead of static products when pagination is past the DB total', async () => {
+    mocks.getMentiosProducts.mockResolvedValue({ products: [], total: 12 });
+    const res = await GET(makeReq('skip=200'));
+    const body = await res.json() as { products: unknown[]; source: string; total: number };
+    expect(body.source).toBe('mentios');
+    expect(body.total).toBe(12);
+    expect(body.products).toEqual([]);
+  });
+
+  it('returns filtered mentios empties instead of static products', async () => {
+    mocks.getMentiosProducts.mockResolvedValue({ products: [], total: 0 });
+    const res = await GET(makeReq('priceMin=99999'));
+    const body = await res.json() as { products: unknown[]; source: string; total: number };
+    expect(body.source).toBe('mentios');
+    expect(body.total).toBe(0);
+    expect(body.products).toEqual([]);
+  });
+
   it('returns 429 when rate limited', async () => {
     mocks.checkRateLimit.mockReturnValue({ allowed: false, retryAfterSec: 60 });
     const res = await GET(makeReq());

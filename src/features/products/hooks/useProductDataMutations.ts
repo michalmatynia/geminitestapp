@@ -7,12 +7,13 @@
 
 import { type UseMutationResult } from '@tanstack/react-query';
 
-import { createProduct, deleteProduct } from '@/features/products/api';
+import { createProductInRuntime, deleteProduct } from '@/features/products/api';
 import {
   addQueuedProductSource,
   buildQueuedProductOfflineMutationSource,
   removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
+import type { ProductCreateMutationResult } from '@/shared/contracts/products';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
@@ -38,26 +39,34 @@ import {
 
 const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('delete');
 
-export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
-  return useOfflineMutation((formData: FormData) => createProduct(formData), {
-    queryKey: productsAllQueryKey,
-    meta: {
-      source: 'products.hooks.useCreateProductMutation',
-      operation: 'create',
-      resource: 'products',
-      domain: 'products',
-      tags: ['products', 'create'],
-    },
-    extraInvalidateKeys: [productsCountsQueryKey],
-    invalidate: async (queryClient) => {
-      await Promise.all([
-        invalidateProductsAndCounts(queryClient),
-        invalidateProductTitleTerms(queryClient),
-      ]);
-    },
-    queuedMessage: 'Product creation queued in runtime queue.',
-    processedMessage: 'Queued product creation completed.',
-  });
+export function useCreateProductMutation(): UseMutationResult<
+  ProductCreateMutationResult | null,
+  Error,
+  FormData,
+  unknown
+> {
+  return useOfflineMutation<ProductCreateMutationResult | null, Error, FormData, unknown>(
+    (formData: FormData) => createProductInRuntime(formData),
+    {
+      queryKey: productsAllQueryKey,
+      meta: {
+        source: 'products.hooks.useCreateProductMutation',
+        operation: 'create',
+        resource: 'products',
+        domain: 'products',
+        tags: ['products', 'create'],
+      },
+      extraInvalidateKeys: [productsCountsQueryKey],
+      invalidate: async (queryClient) => {
+        await Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateProductTitleTerms(queryClient),
+        ]);
+      },
+      queuedMessage: 'Product creation queued in runtime queue.',
+      processedMessage: 'Queued product creation completed.',
+    }
+  );
 }
 
 export function useUpdateProductMutation(): UseMutationResult<

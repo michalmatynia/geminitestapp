@@ -63,6 +63,27 @@ describe('products priceCalculation utils', () => {
     });
   });
 
+  it('applies the default price group adjustment when the target currency matches', () => {
+    const groups = [
+      createGroup({
+        id: 'group-pln',
+        groupId: 'PLN',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        isDefault: true,
+        priceMultiplier: 1.5,
+        addToPrice: 10,
+      }),
+    ];
+
+    expect(calculatePriceForCurrency(100, 'group-pln', 'PLN', groups)).toEqual({
+      price: 160,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+  });
+
   it('calculates standard and dependent group prices recursively', () => {
     const groups = [
       createGroup({

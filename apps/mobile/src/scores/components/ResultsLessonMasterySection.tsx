@@ -16,7 +16,7 @@ interface ResultsLessonMasterySectionProps {
   copy: KangurMobileCopy;
 }
 
-function LessonMasteryStatus({ mastery, copy }: { mastery: ResultsLessonMasterySectionProps['lessonMastery']; copy: ResultsLessonMasterySectionProps['copy'] }) {
+function LessonMasteryStatus({ mastery, copy }: { mastery: ResultsLessonMasterySectionProps['lessonMastery']; copy: ResultsLessonMasterySectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <KangurMobileSummaryChip
@@ -50,7 +50,7 @@ function LessonMasteryStatus({ mastery, copy }: { mastery: ResultsLessonMasteryS
   );
 }
 
-function MasteryButtons({ weakestLesson, strongestLesson, copy }: { weakestLesson: KangurMobileHomeLessonMasteryItem | null; strongestLesson: KangurMobileHomeLessonMasteryItem | null; copy: ResultsLessonMasterySectionProps['copy'] }) {
+function MasteryButtons({ weakestLesson, strongestLesson, copy }: { weakestLesson: KangurMobileHomeLessonMasteryItem | null; strongestLesson: KangurMobileHomeLessonMasteryItem | null; copy: ResultsLessonMasterySectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ alignSelf: 'stretch', gap: 10 }}>
       {weakestLesson && (
@@ -72,7 +72,7 @@ function MasteryButtons({ weakestLesson, strongestLesson, copy }: { weakestLesso
   );
 }
 
-function MasteryRows({ weakest, strongest, copy }: { weakest: KangurMobileHomeLessonMasteryItem[]; strongest: KangurMobileHomeLessonMasteryItem[]; copy: ResultsLessonMasterySectionProps['copy'] }) {
+function MasteryRows({ weakest, strongest, copy }: { weakest: KangurMobileHomeLessonMasteryItem[]; strongest: KangurMobileHomeLessonMasteryItem[]; copy: ResultsLessonMasterySectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
       {weakest[0] && <LessonMasteryRow insight={weakest[0]} title={copy({ de: 'Zum Wiederholen', en: 'Needs review', pl: 'Do powtórki' })} />}
@@ -86,13 +86,7 @@ export function ResultsLessonMasterySection({
   lessonFocusSummary,
   copy,
 }: ResultsLessonMasterySectionProps): React.JSX.Element {
-  const safeLessonMastery = lessonMastery ?? {
-    trackedLessons: 0,
-    masteredLessons: 0,
-    lessonsNeedingPractice: 0,
-    weakest: [],
-    strongest: [],
-  };
+  const safeLessonMastery = lessonMastery;
 
   const { weakest, strongest } = safeLessonMastery;
   const weakestLesson = weakest[0] ?? null;
@@ -114,7 +108,7 @@ export function ResultsLessonMasterySection({
         </Text>
       ) : (
         <View style={{ gap: 10 }}>
-          {lessonFocusSummary && <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>}
+          {lessonFocusSummary !== null && lessonFocusSummary !== '' && <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>}
           <MasteryButtons weakestLesson={weakestLesson} strongestLesson={strongestLesson} copy={copy} />
           <MasteryRows weakest={weakest} strongest={strongest} copy={copy} />
         </View>

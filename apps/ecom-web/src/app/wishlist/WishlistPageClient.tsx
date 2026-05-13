@@ -21,6 +21,7 @@ function mergeWithFresh(item: WishlistItem, fresh: Product): WishlistItem {
     category: fresh.category || item.category,
     price: fresh.price,
     priceDisplay: fresh.priceDisplay || item.priceDisplay,
+    currencyCode: fresh.currencyCode ?? item.currencyCode,
     gradient: fresh.gradient || item.gradient,
     imageUrl: fresh.imageUrl ?? item.imageUrl,
   };
@@ -70,6 +71,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
       category: item.category,
       price: item.price ?? 0,
       priceDisplay: item.priceDisplay,
+      currencyCode: item.currencyCode,
       size: '',
       gradient: item.gradient,
       imageUrl: item.imageUrl,
@@ -242,7 +244,7 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
                       {item.name}
                     </a>
                     <div className='flex items-center gap-2'>
-                      <span className='type-price' style={{ color: 'var(--muted)' }}>{formatPrice(item.price ?? 0, locale)}</span>
+                      <span className='type-price' style={{ color: 'var(--muted)' }}>{formatPrice(item.price ?? 0, locale, item.currencyCode)}</span>
                       {hasFresh && (
                         <span
                           className='type-label px-1.5 py-0.5'

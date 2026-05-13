@@ -10,11 +10,14 @@ export type OrderItem = {
   size: string;
   price: number;
   priceDisplay: string;
+  currencyCode?: string;
   quantity: number;
   imageUrl?: string;
 };
 
-export type ShippingCarrier = 'manual' | 'inpost';
+export type ShippingCarrier = 'manual' | 'inpost' | 'poczta_polska' | 'dpd';
+
+const SHIPPING_CARRIERS = new Set<ShippingCarrier>(['manual', 'inpost', 'poczta_polska', 'dpd']);
 
 export type InpostPoint = {
   id: string;
@@ -38,6 +41,17 @@ export type InpostShipment = {
   shipmentUrl?: string;
   service?: string;
   error?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type OrderShipment = {
+  carrier?: ShippingCarrier;
+  service?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  status?: string;
+  note?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -66,6 +80,7 @@ export type Order = {
   shippingService?: string;
   inpostPoint?: InpostPoint;
   inpostShipment?: InpostShipment;
+  shipment?: OrderShipment;
   inpostEventIds?: string[];
   inpostTrackingEvents?: InpostTrackingEventRecord[];
   shippingAddress: Record<string, string>;
@@ -97,7 +112,10 @@ function readOptionalString(value: unknown, maxLength = 160): string | undefined
 }
 
 export function sanitizeShippingCarrier(value: unknown): ShippingCarrier {
-  return value === 'inpost' ? 'inpost' : 'manual';
+  if (typeof value === 'string' && SHIPPING_CARRIERS.has(value as ShippingCarrier)) {
+    return value as ShippingCarrier;
+  }
+  return 'manual';
 }
 
 export function sanitizeInpostPoint(value: unknown): InpostPoint | null {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +11,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 const mocks = vi.hoisted(() => ({
   createMutationMock: vi.fn(),
   updateMutationMock: vi.fn(),
+  getProductCreateRuntimeStatusMock: vi.fn(),
   toastMock: vi.fn(),
   confirmMock: vi.fn(),
 }));
@@ -35,6 +36,11 @@ vi.mock('./useProductDataMutations', () => ({
   useUpdateProductMutation: () => ({
     mutateAsync: mocks.updateMutationMock,
   }),
+}));
+
+vi.mock('@/features/products/api/products', () => ({
+  getProductCreateRuntimeStatus: (...args: unknown[]) =>
+    mocks.getProductCreateRuntimeStatusMock(...args),
 }));
 
 import { useProductFormSubmit } from './useProductFormSubmit';
@@ -67,6 +73,14 @@ describe('useProductFormSubmit', () => {
     vi.clearAllMocks();
     mocks.createMutationMock.mockResolvedValue({ id: 'created-product-id' });
     mocks.updateMutationMock.mockResolvedValue({ id: 'resolved-product-id' });
+    mocks.getProductCreateRuntimeStatusMock.mockResolvedValue({
+      requestId: 'runtime-request',
+      status: 'completed',
+      queuedAt: '2026-05-13T00:00:00.000Z',
+      sku: 'SKU-RUNTIME',
+      productId: 'created-product-id',
+      productSku: 'SKU-RUNTIME',
+    });
   });
 
   it('passes the original persisted product identity to the update mutation for stale-id recovery', async () => {
@@ -194,7 +208,7 @@ describe('useProductFormSubmit', () => {
     expect(submittedFormData.getAll('parameters')).toHaveLength(1);
   });
 
-  it('surfaces create mutation errors from structured title validation', async () => {
+  it('surfaces background create mutation errors from structured title validation', async () => {
     mocks.createMutationMock.mockRejectedValue(
       new Error('Structured product name category must match the selected category.')
     );
@@ -229,9 +243,11 @@ describe('useProductFormSubmit', () => {
     });
 
     expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
-    expect(result.current.uploadError).toBe(
-      'Structured product name category must match the selected category.'
-    );
+    await waitFor(() => {
+      expect(result.current.uploadError).toBe(
+        'Structured product name category must match the selected category.'
+      );
+    });
   });
 
   it('serializes linked title-term parameters into the create payload FormData', async () => {
@@ -273,7 +289,9 @@ describe('useProductFormSubmit', () => {
       await result.current.handleSubmit();
     });
 
-    expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
+    });
     const submittedFormData = mocks.createMutationMock.mock.calls[0]?.[0] as FormData;
     expect(submittedFormData).toBeInstanceOf(FormData);
     expect(JSON.parse(String(submittedFormData.get('parameters')))).toEqual([
@@ -335,5 +353,107 @@ describe('useProductFormSubmit', () => {
     });
 
     expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes create modal immediately while product creation continues in runtime', async () => {
+    const deferredCreate = createDeferred<{ id: string }>();
+    const onSuccess = vi.fn();
+    mocks.createMutationMock.mockImplementation(() => deferredCreate.promise);
+
+    const { result } = renderHook(() => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          sku: 'SKU-RUNTIME',
+          name_en: 'Runtime product',
+        } as ProductFormData,
+      });
+
+      return useProductFormSubmit({
+        methods,
+        imageSlots: [],
+        imageLinks: [],
+        imageBase64s: [],
+        selectedCatalogIds: [],
+        selectedCategoryId: null,
+        selectedTagIds: [],
+        selectedProducerIds: [],
+        selectedNoteIds: [],
+        customFieldValues: [],
+        parameterValues: [],
+        studioProjectId: null,
+        refreshImages: vi.fn(),
+        onSuccess,
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(result.current.uploading).toBe(false);
+    expect(onSuccess).toHaveBeenCalledWith({ queued: true });
+    expect(mocks.toastMock).toHaveBeenCalledWith('Product creation is running in runtime.', {
+      variant: 'info',
+    });
+
+    await act(async () => {
+      deferredCreate.resolve({ id: 'created-product-id' });
+      await deferredCreate.promise;
+    });
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledTimes(2);
+    });
+    expect(onSuccess).toHaveBeenLastCalledWith();
+  });
+
+  it('polls runtime create status before refreshing the product list', async () => {
+    const onSuccess = vi.fn();
+    mocks.createMutationMock.mockResolvedValue({
+      queued: true,
+      requestId: 'runtime-request',
+      status: 'queued',
+      queuedAt: '2026-05-13T00:00:00.000Z',
+      sku: 'SKU-RUNTIME',
+      message: 'Product creation queued in runtime.',
+    });
+
+    const { result } = renderHook(() => {
+      const methods = useForm<ProductFormData>({
+        defaultValues: {
+          sku: 'SKU-RUNTIME',
+          name_en: 'Runtime product',
+        } as ProductFormData,
+      });
+
+      return useProductFormSubmit({
+        methods,
+        imageSlots: [],
+        imageLinks: [],
+        imageBase64s: [],
+        selectedCatalogIds: [],
+        selectedCategoryId: null,
+        selectedTagIds: [],
+        selectedProducerIds: [],
+        selectedNoteIds: [],
+        customFieldValues: [],
+        parameterValues: [],
+        studioProjectId: null,
+        refreshImages: vi.fn(),
+        onSuccess,
+      });
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onSuccess).toHaveBeenCalledWith({ queued: true });
+
+    await waitFor(() => {
+      expect(mocks.getProductCreateRuntimeStatusMock).toHaveBeenCalledWith('runtime-request');
+      expect(onSuccess).toHaveBeenCalledTimes(2);
+    });
+    expect(onSuccess).toHaveBeenLastCalledWith();
   });
 });

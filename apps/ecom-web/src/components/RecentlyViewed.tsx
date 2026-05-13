@@ -9,6 +9,8 @@ import { ProductImage } from '@/components/ProductImage';
 import { HOME_CONTENT_DEFAULTS, type HomeRecentlyViewedContent } from '@/data/homeContent';
 import { formatPrice } from '@/lib/locales';
 
+const freshText = (next: string, current: string): string => (next === '' ? current : next);
+
 export function RecentlyViewed({
   content = HOME_CONTENT_DEFAULTS.recentlyViewed,
 }: {
@@ -40,11 +42,12 @@ export function RecentlyViewed({
     if (!fresh) return item;
     return {
       ...item,
-      name: fresh.name || item.name,
-      category: fresh.category || item.category,
+      name: freshText(fresh.name, item.name),
+      category: freshText(fresh.category, item.category),
       price: fresh.price ?? item.price,
-      priceDisplay: fresh.priceDisplay || item.priceDisplay,
-      gradient: fresh.gradient || item.gradient,
+      priceDisplay: freshText(fresh.priceDisplay, item.priceDisplay),
+      currencyCode: fresh.currencyCode ?? item.currencyCode,
+      gradient: freshText(fresh.gradient, item.gradient),
       imageUrl: fresh.imageUrl ?? item.imageUrl,
     };
   };
@@ -131,7 +134,7 @@ export function RecentlyViewed({
                   className='type-price'
                   style={{ color: 'var(--muted)', fontSize: '0.78rem' }}
                 >
-                  {formatPrice(item.price ?? 0, locale)}
+                  {formatPrice(item.price ?? 0, locale, item.currencyCode)}
                 </div>
               </a>
             );

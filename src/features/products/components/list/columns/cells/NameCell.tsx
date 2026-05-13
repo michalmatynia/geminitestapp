@@ -32,6 +32,10 @@ import { ProductListActivityPill } from '../../ProductListActivityPill';
 import { ProductListStatusIcons } from '../../ProductListStatusIcons';
 
 type ShippingInfo = { autoLabel: string, autoRuleLabel: string, conflictLabel: string, manualMissingLabel: string };
+const SECONDARY_SEPARATOR_CLASSNAME = 'shrink-0 text-gray-600';
+const SECONDARY_TEXT_BUTTON_CLASSNAME =
+  'block w-full min-w-0 truncate text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1';
+
 type NameCellStatusState = {
   importSource: ProductImportSource | null;
   hasMarketplaceCopy: boolean;
@@ -98,25 +102,25 @@ function NameCellShipping({ ship }: { ship: ShippingInfo }): React.JSX.Element {
     <>
       {ship.autoLabel !== '' && (
         <>
-          <span aria-hidden='true' className='text-gray-600'>|</span>
-          <Tooltip content={autoShipTooltip}>
-            <button type='button' className='max-w-[12rem] truncate text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1' title={autoShipTooltip}>Auto ship: {ship.autoLabel}</button>
+          <span aria-hidden='true' className={SECONDARY_SEPARATOR_CLASSNAME}>|</span>
+          <Tooltip content={autoShipTooltip} className='min-w-0 max-w-[12rem] shrink'>
+            <button type='button' className={SECONDARY_TEXT_BUTTON_CLASSNAME}>Auto ship: {ship.autoLabel}</button>
           </Tooltip>
         </>
       )}
       {ship.conflictLabel !== '' && (
         <>
-          <span aria-hidden='true' className='text-gray-600'>|</span>
-          <Tooltip content={conflictTooltip}>
-            <button type='button' className='max-w-[12rem] truncate text-left text-amber-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1' title={conflictTooltip}>Ship conflict</button>
+          <span aria-hidden='true' className={SECONDARY_SEPARATOR_CLASSNAME}>|</span>
+          <Tooltip content={conflictTooltip} className='min-w-0 max-w-[12rem] shrink'>
+            <button type='button' className={`${SECONDARY_TEXT_BUTTON_CLASSNAME} text-amber-300`}>Ship conflict</button>
           </Tooltip>
         </>
       )}
       {ship.manualMissingLabel !== '' && (
         <>
-          <span aria-hidden='true' className='text-gray-600'>|</span>
-          <Tooltip content={missingTooltip}>
-            <button type='button' className='max-w-[12rem] truncate text-left text-amber-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1' title={missingTooltip}>Ship missing</button>
+          <span aria-hidden='true' className={SECONDARY_SEPARATOR_CLASSNAME}>|</span>
+          <Tooltip content={missingTooltip} className='min-w-0 max-w-[12rem] shrink'>
+            <button type='button' className={`${SECONDARY_TEXT_BUTTON_CLASSNAME} text-amber-300`}>Ship missing</button>
           </Tooltip>
         </>
       )}
@@ -136,18 +140,33 @@ function NameCellActivity({ runtime }: { runtime: ProductListRowRuntimeContextTy
   );
 }
 
+function NameCellTooltipText({
+  value,
+}: {
+  value: string;
+}): React.JSX.Element {
+  return (
+    <Tooltip content={value} className='min-w-0 max-w-[10rem] shrink'>
+      <span className='block w-full min-w-0 truncate select-text cursor-text'>
+        {value}
+      </span>
+    </Tooltip>
+  );
+}
+
 function NameCellBasicInfo({ product }: { product: ProductWithImages }): React.JSX.Element {
   const sku = (product.sku ?? '').trim();
+  const skuLabel = sku !== '' ? sku : 'No SKU';
   const pid = (product.baseProductId ?? product.id).trim();
 
   return (
     <>
-      <span className='max-w-[10rem] truncate select-text cursor-text' title={sku !== '' ? sku : 'No SKU'}>{sku !== '' ? sku : 'No SKU'}</span>
+      <NameCellTooltipText value={skuLabel} />
       {typeof product.duplicateSkuCount === 'number' && product.duplicateSkuCount > 1 && (
-        <span className='rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[11px] font-medium text-amber-300' title={`SKU used by ${product.duplicateSkuCount} products`}>Duplicate SKU</span>
+        <span className='shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[11px] font-medium text-amber-300' title={`SKU used by ${product.duplicateSkuCount} products`}>Duplicate SKU</span>
       )}
-      <span aria-hidden='true' className='text-gray-600'>|</span>
-      <span className='max-w-[10rem] truncate select-text cursor-text' title={pid}>{pid}</span>
+      <span aria-hidden='true' className={SECONDARY_SEPARATOR_CLASSNAME}>|</span>
+      <NameCellTooltipText value={pid} />
     </>
   );
 }
@@ -191,10 +210,12 @@ function NameCellSecondaryInfo({ product, runtime, categoryLabel, ship }: { prod
 
   return (
     <div className='mt-1 min-w-0 space-y-1'>
-      <div data-product-list-summary-row className='flex min-w-0 items-center gap-1.5 text-sm text-gray-500'>
+      <div data-product-list-summary-row className='flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden text-sm text-gray-500'>
         <NameCellBasicInfo product={product} />
-        <span aria-hidden='true' className='text-gray-600'>|</span>
-        <Tooltip content={categoryLabel}><button type='button' className={`max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${categoryToneClass}`} aria-label={categoryLabel} title={categoryLabel}>{categoryLabel}</button></Tooltip>
+        <span aria-hidden='true' className={SECONDARY_SEPARATOR_CLASSNAME}>|</span>
+        <Tooltip content={categoryLabel} className='min-w-0 max-w-[14rem] shrink'>
+          <button type='button' className={`block w-full min-w-0 truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${categoryToneClass}`} aria-label={categoryLabel}>{categoryLabel}</button>
+        </Tooltip>
         <NameCellShipping ship={ship} />
       </div>
       {status.hasStatusRow ? (

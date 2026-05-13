@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { type ImageFileSelection } from '@/shared/contracts/files';
 import { type ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { type DebugInfo } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -63,6 +64,7 @@ type FastCometUploadOkResponse = {
   status: 'ok';
   imageFile: ImageFileSelection;
   alreadyUploaded?: boolean | undefined;
+  product?: ProductWithImages | undefined;
   publicPath?: string | undefined;
   remoteUrl?: string | undefined;
 };
@@ -73,7 +75,7 @@ type FastCometUploadQueuedResponse = {
   imageFileId: string;
   imageSlotIndex?: number | undefined;
   jobId: string;
-  product?: unknown;
+  product?: ProductWithImages | undefined;
   publicPath?: string | undefined;
   queueName: string;
 };
@@ -247,6 +249,7 @@ const notifyImmediateUploadSuccess = (input: {
     ...input.uploadEvent,
     alreadyUploaded: input.result.alreadyUploaded,
     imageFile: input.result.imageFile,
+    product: input.result.product,
     publicPath: input.result.publicPath,
     remoteUrl: input.result.remoteUrl,
   });
@@ -653,6 +656,7 @@ export function ProductImageManagerUIProvider({
           ...uploadEvent,
           alreadyUploaded: result.alreadyUploaded,
           imageFile: result.imageFile,
+          product: result.product,
           publicPath: result.publicPath,
           remoteUrl: result.remoteUrl,
         });

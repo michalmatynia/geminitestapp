@@ -61,6 +61,29 @@ describe('ProductImageSlot', () => {
     expect(uploadIcon).toHaveClass('group-hover/upload-hover:text-emerald-300');
   });
 
+  it('keeps view controls above the thumbnail while source indicators stay below it', () => {
+    render(
+      <ProductImageManagerUIProvider externalBaseUrl='http://localhost' explicitController={buildController()}>
+        <ProductImageSlot index={0} />
+      </ProductImageManagerUIProvider>
+    );
+
+    const viewControl = screen.getByText('View: Upload');
+    const actionsMenu = screen.getByRole('button', { name: 'Open image slot 1 actions menu' });
+    const uploadLabel = screen.getByText('Upload');
+    const uploadIndicator = screen.getByText('U');
+
+    expect(
+      viewControl.compareDocumentPosition(uploadLabel) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      actionsMenu.compareDocumentPosition(uploadLabel) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      uploadLabel.compareDocumentPosition(uploadIndicator) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it('clears the slot in one click even when link fallback data also exists', async () => {
     const user = userEvent.setup();
 
@@ -147,6 +170,11 @@ describe('ProductImageSlot', () => {
       </ProductImageManagerUIProvider>
     );
 
+    expect(screen.getByText('F')).toHaveClass('border-emerald-400/70');
+    expect(screen.getByText('F')).toHaveClass('bg-emerald-500/15');
+    expect(screen.getByText('F')).toHaveClass('text-emerald-100');
+    expect(screen.getByText('F')).not.toHaveClass('border-amber-400/70');
+
     await user.click(screen.getByText('View: Upload'));
     await user.click(screen.getByRole('menuitem', { name: 'FastComet' }));
     await user.click(
@@ -160,5 +188,40 @@ describe('ProductImageSlot', () => {
       'noopener,noreferrer'
     );
     openSpy.mockRestore();
+  });
+
+  it('uses pending and failure tones for unresolved FastComet upload status', () => {
+    const renderFastCometStatus = (fastCometUploadStatus: string): HTMLElement => {
+      const controller = buildController();
+      controller.imageSlots = [
+        {
+          type: 'existing',
+          data: {
+            id: `image-file-${fastCometUploadStatus}`,
+            filepath: '/uploads/products/SKU/photo.webp',
+            filename: 'photo.webp',
+            metadata: { fastCometUploadStatus, storageSource: 'local' },
+            storageProvider: 'local',
+          },
+          previewUrl: '/uploads/products/SKU/photo.webp',
+          slotId: `image-file-${fastCometUploadStatus}`,
+        },
+      ];
+
+      const { unmount } = render(
+        <ProductImageManagerUIProvider externalBaseUrl='http://localhost:3000' explicitController={controller}>
+          <ProductImageSlot index={0} />
+        </ProductImageManagerUIProvider>
+      );
+      const indicator = screen.getByText('F');
+      const clone = indicator.cloneNode() as HTMLElement;
+      unmount();
+      return clone;
+    };
+
+    expect(renderFastCometStatus('queued')).toHaveClass('border-amber-400/70');
+    expect(renderFastCometStatus('queued')).toHaveClass('bg-amber-500/15');
+    expect(renderFastCometStatus('failed')).toHaveClass('border-rose-400/70');
+    expect(renderFastCometStatus('failed')).toHaveClass('bg-rose-500/15');
   });
 });

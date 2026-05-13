@@ -23,6 +23,7 @@ import {
 import type { useProductListDataState } from './useProductListState.data';
 import type { useProductListModalState } from './useProductListState.modals';
 import type { useProductListRuntimeState } from './useProductListState.runtime';
+import type { ProductOperationInfo } from '../useProductOperations.helpers';
 
 type ProductListDataState = ReturnType<typeof useProductListDataState>;
 type ProductListModalState = ReturnType<typeof useProductListModalState>;
@@ -169,7 +170,7 @@ const useProductListModalCallbacks = (
   handleCloseCreateModal: () => void;
   handleCloseExportSettingsModal: () => void;
   handleCreateFromDraftOpen: (draftId: string) => void;
-  handleCreateSuccessWithDraftReset: () => void;
+  handleCreateSuccessWithDraftReset: (info?: ProductOperationInfo) => void;
   handleListingsUpdated: () => void;
 } => {
   const handleCreateFromDraftOpen = useCallback((draftId: string): void => {
@@ -179,8 +180,8 @@ const useProductListModalCallbacks = (
     modal.operations.setIsCreateOpen(false);
     modal.modals.setCreateDraft(null);
   }, [modal.modals, modal.operations]);
-  const handleCreateSuccessWithDraftReset = useCallback((): void => {
-    modal.operations.handleCreateSuccess();
+  const handleCreateSuccessWithDraftReset = useCallback((info?: ProductOperationInfo): void => {
+    modal.operations.handleCreateSuccess(info);
     modal.modals.setCreateDraft(null);
   }, [modal.modals, modal.operations]);
   const handleCloseExportSettingsModal = useCallback((): void => {

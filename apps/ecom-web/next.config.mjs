@@ -43,7 +43,7 @@ const fileUploadsRemotePatterns = fileUploadBaseUrls.reduce((patterns, baseUrl) 
 }, []);
 
 const scriptSrc = [
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' https://geowidget.inpost.pl",
   ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
 ].join(' ');
 
@@ -53,11 +53,11 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://qubrick.io https://sparksofsindri.com",
+  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://geowidget.inpost.pl https://qubrick.io https://sparksofsindri.com",
   "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://geowidget.inpost.pl",
   scriptSrc,
-  "connect-src 'self' https://secure.snd.payu.com https://qubrick.io https://sparksofsindri.com",
+  "connect-src 'self' https://secure.snd.payu.com https://geowidget.inpost.pl https://qubrick.io https://sparksofsindri.com",
   "frame-src 'self' https://geowidget.inpost.pl",
 ].join('; ');
 

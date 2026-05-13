@@ -21,9 +21,9 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const resolveTargets = (
-  dbType: DatabaseEngineBackupRunNowRequest['dbType']
+  _dbType: DatabaseEngineBackupRunNowRequest['dbType']
 ): Array<'mongodb'> => {
-  return dbType === 'all' || dbType === 'mongodb' ? ['mongodb'] : [];
+  return ['mongodb'];
 };
 
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';

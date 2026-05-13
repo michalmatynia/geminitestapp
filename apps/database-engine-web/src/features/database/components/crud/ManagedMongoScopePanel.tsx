@@ -101,7 +101,7 @@ function ManagedMongoDatabaseScopeCard({
         </Badge>
       </div>
 
-      {database.syncIssue ? (
+      {database.syncIssue !== null && database.syncIssue !== '' ? (
         <p className='mt-2 line-clamp-2 text-xs text-amber-100' title={database.syncIssue}>
           {database.syncIssue}
         </p>

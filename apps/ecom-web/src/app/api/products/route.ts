@@ -68,6 +68,28 @@ function productMatchesThemes(product: { lore?: string; name: string }, themes: 
   });
 }
 
+function hasResultFilters(input: {
+  categoryNames: string[];
+  collectionSlug: string | undefined;
+  ids: string[];
+  newOnly: boolean;
+  priceMax: number | undefined;
+  priceMin: number | undefined;
+  search: string | undefined;
+  themeNames: string[];
+}): boolean {
+  return (
+    input.collectionSlug !== undefined ||
+    input.categoryNames.length > 0 ||
+    input.themeNames.length > 0 ||
+    input.search !== undefined ||
+    input.ids.length > 0 ||
+    input.newOnly ||
+    input.priceMin !== undefined ||
+    input.priceMax !== undefined
+  );
+}
+
 // eslint-disable-next-line max-lines-per-function, complexity
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const ip = getClientIp(req);
@@ -148,9 +170,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     priceMin,
     priceMax,
   });
+  const hasFilters = hasResultFilters({
+    categoryNames,
+    collectionSlug: safeCollectionSlug,
+    ids,
+    newOnly,
+    priceMax,
+    priceMin,
+    search: search?.slice(0, MAX_QUERY_TEXT_LENGTH),
+    themeNames,
+  });
 
   // Fall back to static demo products when DB is not configured or empty.
-  if (products.length === 0) {
+  if (products.length === 0 && total === 0 && !hasFilters) {
     let staticProducts = (collectionSlug === undefined
       ? PRODUCTS
       : PRODUCTS.filter((p) => p.collectionSlug === collectionSlug)

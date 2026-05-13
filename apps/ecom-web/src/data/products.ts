@@ -15,6 +15,7 @@ export type Product = {
   collectionSlug: string;
   price: number;
   priceDisplay: string;
+  currencyCode?: string;
   tag?: string;
   gradient: string;
   gradientAlt?: string;

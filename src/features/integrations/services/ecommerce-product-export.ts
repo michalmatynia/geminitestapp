@@ -29,45 +29,23 @@ import {
   type EcommerceCategoryDocument,
   type EcommerceProductDocument,
 } from './ecommerce-product-export.mapper';
+import { upsertEcommerceProductListing } from './ecommerce-product-export.listings';
+import {
+  ECOMMERCE_PRODUCT_DEPRECATED_PRICING_UNSET,
+  toEcommerceCategoryDocumentUpdate,
+  toEcommerceProductDocumentUpdate,
+} from './ecommerce-product-export.documents';
+import { toIsoString } from './ecommerce-product-export.timestamps';
+import { assertProductHasExportableCategory } from './ecommerce-product-export.validation';
+import { hydrateProductCategoryForExport } from './ecommerce-product-export.category-hydration';
+import { hydrateProductPricingForExport } from './ecommerce-product-export.pricing-hydration';
+import { resolveEcommerceProductExportEnrichment } from './ecommerce-product-export.enrichment';
 
 export { buildEcommerceProductExportDocument } from './ecommerce-product-export.mapper';
 
 const trimProductId = (productId: string): string => productId.trim();
 
 const PRODUCT_LISTINGS_COLLECTION = 'product_listings';
-
-const upsertEcommerceProductListing = async (productId: string): Promise<void> => {
-  try {
-    const db = await getMongoDb();
-    const now = new Date();
-    // Query by _id (primary key) to avoid duplicate key conflicts on concurrent upserts
-    await db.collection(PRODUCT_LISTINGS_COLLECTION).updateOne(
-      { _id: `ecom:${productId}` as unknown },
-      {
-        $set: {
-          status: 'active',
-          integrationId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
-          connectionId: ECOMMERCE_EXPORT_INTEGRATION_SLUG,
-          updatedAt: now,
-        },
-        $setOnInsert: {
-          productId,
-          externalListingId: null,
-          inventoryId: null,
-          createdAt: now,
-        },
-      },
-      { upsert: true }
-    );
-  } catch (error) {
-    void logSystemEvent({
-      level: 'warn',
-      message: 'ecommerce-product-export: failed to upsert product_listing badge record',
-      source: 'ecommerce-product-export',
-      context: { productId, error: error instanceof Error ? error.message : String(error) },
-    });
-  }
-};
 
 const tryCreateIndex = async (
   db: Db,
@@ -96,7 +74,16 @@ const ensureEcommerceExportIndexes = async (
   const existing = ecommerceIndexesEnsuredByTargetKey.get(targetKey);
   if (existing !== undefined) return existing;
   const promise = Promise.all([
-    tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { sourceProductId: 1 }, { unique: true, name: 'source_product_id_unique' }),
+    tryCreateIndex(
+      db,
+      ECOM_PRODUCTS_COLLECTION,
+      { sourceProductId: 1 },
+      {
+        unique: true,
+        name: 'source_product_id_unique',
+        partialFilterExpression: { sourceProductId: { $type: 'string' } },
+      }
+    ),
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { slug: 1 }, { name: 'slug' }),
     tryCreateIndex(db, ECOM_PRODUCTS_COLLECTION, { catalogId: 1, published: 1, archived: 1, stock: 1, updatedAt: -1 }, { name: 'catalog_active_updated' }),
     tryCreateIndex(db, ECOM_CATEGORIES_COLLECTION, { catalogId: 1, collectionSlug: 1, name: 1 }, { name: 'catalog_collection_name' }),
@@ -113,19 +100,10 @@ const persistEcommerceCategory = async (
   await db.collection<EcommerceCategoryDocument>(ECOM_CATEGORIES_COLLECTION).updateOne(
     { _id: document._id },
     {
-      $set: document,
+      $set: toEcommerceCategoryDocumentUpdate(document),
     },
     { upsert: true }
   );
-};
-
-const toDocumentUpdate = (
-  document: EcommerceProductDocument
-): Partial<EcommerceProductDocument> => {
-  const documentForSet: Partial<EcommerceProductDocument> = { ...document };
-  delete documentForSet._id;
-  delete documentForSet.createdAt;
-  return documentForSet;
 };
 
 const toExportResponse = (
@@ -138,7 +116,7 @@ const toExportResponse = (
   status,
   ecommerceProductId: document._id,
   slug: document.slug,
-  exportedAt: document.exportedAt,
+  exportedAt: toIsoString(document.exportedAt),
 });
 
 const persistEcommerceProductExport = async (
@@ -153,10 +131,8 @@ const persistEcommerceProductExport = async (
     const updateResult = await products.updateOne(
       { _id: document._id },
       {
-        $set: toDocumentUpdate(document),
-        $setOnInsert: {
-          createdAt: document.createdAt,
-        },
+        $set: toEcommerceProductDocumentUpdate(document),
+        $unset: ECOMMERCE_PRODUCT_DEPRECATED_PRICING_UNSET,
       },
       { upsert: true }
     );
@@ -194,7 +170,9 @@ export const deleteProductFromEcommerceExport = async (
   };
 
   const ecommerceResults = await Promise.all(
-    ecommerceDbs.map((db) => db.collection(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery))
+    ecommerceDbs.map((db) =>
+      db.collection<EcommerceProductDocument>(ECOM_PRODUCTS_COLLECTION).deleteMany(deleteQuery)
+    )
   );
   const ecommerceDeletedCount = ecommerceResults.reduce(
     (total, result) => total + result.deletedCount,
@@ -226,10 +204,14 @@ export const exportProductToEcommerce = async (
   if (product === null) {
     throw notFoundError('Product not found.', { productId: normalizedProductId });
   }
+  const productWithCategory = await hydrateProductCategoryForExport(product);
+  assertProductHasExportableCategory(productWithCategory);
+  const exportableProduct = await hydrateProductPricingForExport(productWithCategory);
 
   const exportedAt = new Date().toISOString();
-  const document = buildEcommerceProductExportDocument(product, exportedAt);
-  const categoryDocument = buildEcommerceCategoryDocument(product, exportedAt);
+  const enrichment = await resolveEcommerceProductExportEnrichment(exportableProduct);
+  const document = buildEcommerceProductExportDocument(exportableProduct, exportedAt, enrichment);
+  const categoryDocument = buildEcommerceCategoryDocument(exportableProduct, exportedAt);
   const targets = await getAllEcommerceExportDbTargetsForWrite();
   const statuses = await Promise.all(
     targets.map((target) => persistEcommerceProductExport(target, document, categoryDocument))
@@ -246,7 +228,7 @@ export const checkEcommerceProductsExistence = async (
   if (productIds.length === 0) return new Set<string>();
   try {
     const dbs = await getAllEcommerceExportDbsForCleanup();
-    const query = { _id: { $in: productIds as unknown[] } };
+    const query = { _id: { $in: productIds } };
     const projection = { projection: { _id: 1 } };
     // Query every ecommerce export source and normalize the matching ids.
     const results = await Promise.allSettled(
@@ -291,9 +273,7 @@ const toFailedBulkItem = (
     error instanceof Error ? error.message : 'Failed to export product to ecommerce.',
 });
 
-const exportProductToBulkItem = async (
-  productId: string
-): Promise<EcommerceProductExportItem> => {
+const exportProductToBulkItem = async (productId: string): Promise<EcommerceProductExportItem> => {
   try {
     const response = await exportProductToEcommerce(productId);
     return toBulkItem(response);
@@ -319,7 +299,9 @@ export const exportProductsToEcommerce = async (
     throw new Error('At least one product ID is required.');
   }
 
-  const items = await Promise.all(normalizedProductIds.map(exportProductToBulkItem));
+  const items = await Promise.all(
+    normalizedProductIds.map((productId) => exportProductToBulkItem(productId))
+  );
   const failed = items.filter((item) => item.status === 'failed').length;
   return {
     success: true,

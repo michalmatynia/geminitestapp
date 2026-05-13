@@ -20,6 +20,10 @@ import {
   useDeleteProductFromEcommerce,
   useExportProductToEcommerce,
 } from '@/features/products/hooks/useProductEcommerceExportMutations';
+import {
+  getEcommerceExportToastVariant,
+  isMissingEcommerceCategoryError,
+} from './ecommerce-export-warning';
 
 type EcommerceManageModalProps = {
   product: ProductWithImages;
@@ -30,7 +34,10 @@ type EcommerceManageModalProps = {
 const getProductName = (product: ProductWithImages): string =>
   product.name_en ?? product.name_pl ?? product.name_de ?? product.sku ?? product.id;
 
-function useEcommerceManageModalModel(product: ProductWithImages, onClose: () => void): {
+function useEcommerceManageModalModel(
+  product: ProductWithImages,
+  onClose: () => void
+): {
   deletePending: boolean;
   handleDelete: () => void;
   handleSync: () => void;
@@ -52,10 +59,10 @@ function useEcommerceManageModalModel(product: ProductWithImages, onClose: () =>
         onClose();
       })
       .catch((error: unknown) => {
-        logClientError(error);
+        if (!isMissingEcommerceCategoryError(error)) logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to sync product to ecommerce.',
-          { variant: 'error' }
+          { variant: getEcommerceExportToastVariant(error) }
         );
       });
   }, [exportMutation, isPending, onClose, product.id, queryClient, toast]);

@@ -241,6 +241,38 @@ describe('product list status helpers', () => {
     });
   });
 
+  it('activates the FastComet badge circle when all four uploaded slots completed FastComet upload', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        images: Array.from({ length: 4 }, (_, index) => ({
+          productId: 'product-1',
+          imageFileId: `completed-fastcomet-image-${index}`,
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          imageFile: {
+            id: `completed-fastcomet-image-${index}`,
+            filename: `completed-fastcomet-${index}.jpg`,
+            filepath: `/uploads/products/SKU/completed-fastcomet-${index}.jpg`,
+            mimetype: 'image/jpeg',
+            size: 1,
+            storageProvider: 'local',
+            metadata: {
+              fastCometUploadStatus: 'completed',
+              localPublicPath: `/uploads/products/SKU/completed-fastcomet-${index}.jpg`,
+              storageSource: 'local',
+            },
+          },
+        })) as ProductWithImages['images'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: true,
+      hasLocalImage: true,
+      hasExternalLinkImage: false,
+      hasBase64Image: false,
+    });
+  });
+
   it('detects legacy local uploads from non-http image file paths', () => {
     const status = resolveProductImageStorageStatus(
       createProduct({

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/no-unnecessary-condition,@typescript-eslint/strict-boolean-expressions,max-lines,max-lines-per-function */
+/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/strict-boolean-expressions,max-lines,max-lines-per-function */
 'use client';
 
 import { useEffect, useState, type JSX } from 'react';
@@ -8,6 +8,26 @@ import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import { productCountWord, formatPrice } from '@/lib/locales';
+
+const firstCartCurrencyCode = (items: CartItem[]): string =>
+  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
+
+const freshText = (next: string, current: string): string => (next === '' ? current : next);
+const freshPrice = (next: number, current: number): number => (next === 0 ? current : next);
+
+const mergeFreshCartItem = (item: CartItem, fresh: Product | undefined): CartItem => {
+  if (fresh === undefined) return item;
+  return {
+    ...item,
+    name: freshText(fresh.name, item.name),
+    category: freshText(fresh.category, item.category),
+    price: freshPrice(fresh.price, item.price),
+    priceDisplay: freshText(fresh.priceDisplay, item.priceDisplay),
+    currencyCode: fresh.currencyCode ?? item.currencyCode,
+    gradient: freshText(fresh.gradient, item.gradient),
+    imageUrl: fresh.imageUrl ?? item.imageUrl,
+  };
+};
 
 function QtyControl({
   productId,
@@ -77,20 +97,9 @@ export function CartDrawer(): JSX.Element {
       .catch(() => {});
   }, [idKey, locale]);
 
-  const displayItems: CartItem[] = items.map((item) => {
-    const fresh = freshData[item.productId];
-    if (!fresh) return item;
-    return {
-      ...item,
-      name: fresh.name || item.name,
-      category: fresh.category || item.category,
-      price: fresh.price || item.price,
-      priceDisplay: fresh.priceDisplay || item.priceDisplay,
-      gradient: fresh.gradient || item.gradient,
-      imageUrl: fresh.imageUrl ?? item.imageUrl,
-    };
-  });
+  const displayItems: CartItem[] = items.map((item) => mergeFreshCartItem(item, freshData[item.productId]));
   const displayTotalPrice = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartCurrencyCode = firstCartCurrencyCode(displayItems);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -254,7 +263,7 @@ export function CartDrawer(): JSX.Element {
                         increaseLabel={cart.increaseQuantityLabel}
                       />
                       <span className='type-price' style={{ color: 'var(--fg)' }}>
-                        {formatPrice(item.price * item.quantity, locale)}
+                        {formatPrice(item.price * item.quantity, locale, item.currencyCode)}
                       </span>
                     </div>
                   </div>
@@ -274,7 +283,7 @@ export function CartDrawer(): JSX.Element {
             <div className='flex justify-between items-center mb-2'>
               <span className='type-label' style={{ color: 'var(--muted)' }}>{cart.subtotalLabel}</span>
               <span className='type-price' style={{ color: 'var(--fg)' }}>
-                {formatPrice(displayTotalPrice, locale)}
+                {formatPrice(displayTotalPrice, locale, cartCurrencyCode)}
               </span>
             </div>
             <div className='flex justify-between items-center mb-6'>
@@ -302,7 +311,7 @@ export function CartDrawer(): JSX.Element {
                   color: 'var(--fg)',
                 }}
               >
-                {formatPrice(displayTotalPrice, locale)}
+                {formatPrice(displayTotalPrice, locale, cartCurrencyCode)}
               </span>
             </div>
 

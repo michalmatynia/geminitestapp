@@ -124,7 +124,13 @@ function EndpointIndicator({
   configured: boolean;
   reachable: boolean | null;
 }): JSX.Element {
-  const status = !configured ? 'Missing' : reachable === true ? 'Reachable' : 'Unreachable';
+  const getStatus = (): string => {
+    if (!configured) return 'Missing';
+    if (reachable === true) return 'Reachable';
+    return 'Unreachable';
+  };
+
+  const status = getStatus();
   const colorClass =
     status === 'Reachable'
       ? 'bg-emerald-400/15 text-emerald-200'
@@ -281,14 +287,21 @@ export function MongoSyncCard({
   const buttonsDisabled = shouldShowSyncingState || isSyncingMongoSources;
   const pendingEndpoints =
     pendingMongoSourceSync !== null ? resolveSyncEndpoints(pendingMongoSourceSync.direction) : null;
-  const syncProgressMessage =
-    syncInProgress !== null
-      ? `Sync in progress for ${APPLICATION_TARGET_LABELS[syncInProgress.application]}: ${syncInProgress.source} -> ${syncInProgress.target} since ${syncInProgress.acquiredAt}`
-      : pendingMongoSourceSync !== null && pendingEndpoints !== null
-        ? `${formatSyncAction(pendingMongoSourceSync.direction)} ${APPLICATION_TARGET_LABELS[pendingMongoSourceSync.application]}: ${pendingEndpoints.source} -> ${pendingEndpoints.target}. Started at ${pendingMongoSourceSync.startedAt}.`
-        : isSyncingMongoSources
-          ? 'MongoDB sync request is running.'
-          : allAppsUnavailableMessage;
+
+  const getSyncProgressMessage = (): string | null => {
+    if (syncInProgress !== null) {
+      return `Sync in progress for ${APPLICATION_TARGET_LABELS[syncInProgress.application]}: ${syncInProgress.source} -> ${syncInProgress.target} since ${syncInProgress.acquiredAt}`;
+    }
+    if (pendingMongoSourceSync !== null && pendingEndpoints !== null) {
+      return `${formatSyncAction(pendingMongoSourceSync.direction)} ${APPLICATION_TARGET_LABELS[pendingMongoSourceSync.application]}: ${pendingEndpoints.source} -> ${pendingEndpoints.target}. Started at ${pendingMongoSourceSync.startedAt}.`;
+    }
+    if (isSyncingMongoSources) {
+      return 'MongoDB sync request is running.';
+    }
+    return allAppsUnavailableMessage;
+  };
+
+  const syncProgressMessage = getSyncProgressMessage();
   const allButtonsDisabled = buttonsDisabled || allAppsUnavailableMessage !== null || !allAppsCanSync;
 
   return (

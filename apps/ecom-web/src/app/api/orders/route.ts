@@ -10,11 +10,13 @@ import {
   type Order,
   type OrderItem,
 } from '@/lib/orders';
-import { getCanonicalProductPrices } from '@/lib/mentios';
+import { getCanonicalProductPricing, type CanonicalProductPricing } from '@/lib/mentios';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { computeDiscount } from '@/lib/promo';
 import { fulfillInpostOrder } from '@/lib/inpost';
+import { getCheckoutContent } from '@/lib/cms';
+import { resolveCheckoutShippingSelection } from '@/lib/shipping';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REQUIRED_ADDRESS_FIELDS = [
@@ -42,6 +44,12 @@ function readOptionalString(value: unknown): string | undefined {
   return text;
 }
 
+function normalizeCurrencyCode(value: unknown): string | undefined {
+  const text = readString(value).toUpperCase();
+  if (text.length === 0) return undefined;
+  return text;
+}
+
 function normalizePromoCode(value: unknown): string | undefined {
   const text = readString(value);
   if (text.length === 0) return undefined;
@@ -56,6 +64,34 @@ function readNonNegativeNumber(value: unknown): number | null {
 function calculateItemsSubtotal(items: OrderItem[]): number {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
+
+function resolveOrderCurrencyCode(items: OrderItem[]): string | null {
+  const currencyCodes = new Set<string>();
+  for (const item of items) {
+    const currencyCode = normalizeCurrencyCode(item.currencyCode);
+    if (currencyCode === undefined) continue;
+    currencyCodes.add(currencyCode);
+    if (currencyCodes.size > 1) return null;
+  }
+  const [currencyCode = 'PLN'] = Array.from(currencyCodes);
+  return currencyCode;
+}
+
+const canonicalPriceDisplay = (pricing: CanonicalProductPricing): string =>
+  `${pricing.currencyCode} ${pricing.price}`;
+
+const applyCanonicalPricing = (
+  item: OrderItem,
+  pricing: CanonicalProductPricing
+): OrderItem => {
+  if (item.price === pricing.price && item.currencyCode === pricing.currencyCode) return item;
+  return {
+    ...item,
+    price: pricing.price,
+    priceDisplay: canonicalPriceDisplay(pricing),
+    currencyCode: pricing.currencyCode,
+  };
+};
 
 // eslint-disable-next-line complexity
 function sanitizeItems(value: unknown): OrderItem[] | null {
@@ -88,6 +124,7 @@ function sanitizeItems(value: unknown): OrderItem[] | null {
       return null;
     }
     const priceDisplay = readString(item['priceDisplay']);
+    const currencyCode = normalizeCurrencyCode(item['currencyCode']);
 
     items.push({
       productId,
@@ -96,7 +133,8 @@ function sanitizeItems(value: unknown): OrderItem[] | null {
       category,
       size,
       price,
-      priceDisplay: priceDisplay.length === 0 ? `EUR ${price}` : priceDisplay,
+      priceDisplay: priceDisplay.length === 0 ? `${currencyCode ?? 'PLN'} ${price}` : priceDisplay,
+      currencyCode,
       quantity,
       imageUrl: readOptionalString(item['imageUrl']),
     });
@@ -161,6 +199,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const customShippingMethod = readString(body['shippingMethod']);
   const shippingMethod = customShippingMethod.length === 0 ? 'Standard' : customShippingMethod;
+  const shippingMethodId = readOptionalString(body['shippingMethodId']);
   const shippingCarrier = sanitizeShippingCarrier(body['shippingCarrier']);
   const shippingService = readOptionalString(body['shippingService']);
   const inpostPoint = sanitizeInpostPoint(body['inpostPoint']);
@@ -168,25 +207,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const subtotal = readNonNegativeNumber(body['subtotal']);
   const total = readNonNegativeNumber(body['total']);
 
-  if (shippingCarrier === 'inpost' && !inpostPoint) {
-    return NextResponse.json({ error: 'An InPost pickup point is required' }, { status: 400 });
-  }
-  if (shippingCarrier === 'inpost' && shippingAddress.country !== 'Poland') {
-    return NextResponse.json({ error: 'InPost parcel locker delivery is available only in Poland' }, { status: 400 });
-  }
-
   if (shippingPrice === null || subtotal === null || total === null || total < 1) {
     return NextResponse.json({ error: 'Valid order totals are required' }, { status: 400 });
   }
 
-  const priceByProductId = await (async () => {
+  const pricingByProductId = await (async () => {
     try {
-      return await getCanonicalProductPrices(items.map((item) => item.productId));
+      return await getCanonicalProductPricing(items.map((item) => item.productId));
     } catch {
       return null;
     }
   })();
-  if (priceByProductId === null) {
+  if (pricingByProductId === null) {
     return NextResponse.json(
       { error: 'Unable to validate item prices at this time.' },
       { status: 503 },
@@ -195,22 +227,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const pricedItems: OrderItem[] = [];
   for (const item of items) {
-    const canonicalPrice = priceByProductId.get(item.productId);
-    if (typeof canonicalPrice !== 'number') {
+    const canonicalPricing = pricingByProductId.get(item.productId);
+    if (canonicalPricing === undefined) {
       return NextResponse.json({ error: 'Order items are invalid.' }, { status: 400 });
     }
-    pricedItems.push(canonicalPrice === item.price ? item : { ...item, price: canonicalPrice });
+    pricedItems.push(applyCanonicalPricing(item, canonicalPricing));
   }
 
-  // Recompute discount server-side from the promo code — never trust the client value.
-  const promoCode = normalizePromoCode(body['promoCode']);
-  const discount = await computeDiscount(subtotal, promoCode, email);
   const itemsSubtotal = calculateItemsSubtotal(pricedItems);
   if (itemsSubtotal !== subtotal) {
     return NextResponse.json({ error: 'Order totals are invalid.' }, { status: 400 });
   }
+  if (resolveOrderCurrencyCode(pricedItems) === null) {
+    return NextResponse.json({ error: 'Order item currencies are invalid.' }, { status: 400 });
+  }
 
-  const expectedTotal = itemsSubtotal - discount + shippingPrice;
+  const checkoutContent = await getCheckoutContent('en');
+  const shippingSelectionResult = resolveCheckoutShippingSelection({
+    content: checkoutContent,
+    country: shippingAddress.country,
+    subtotal: itemsSubtotal,
+    methodId: shippingMethodId,
+    methodLabel: shippingMethod,
+    service: shippingService,
+    carrier: shippingCarrier,
+    price: shippingPrice,
+    inpostPoint,
+  });
+  if (!shippingSelectionResult.ok) {
+    return NextResponse.json({ error: shippingSelectionResult.error }, { status: 400 });
+  }
+  const shippingSelection = shippingSelectionResult.selection;
+
+  // Recompute discount server-side from the canonical subtotal and promo code.
+  const promoCode = normalizePromoCode(body['promoCode']);
+  const discount = await computeDiscount(itemsSubtotal, promoCode, email);
+
+  const expectedTotal = itemsSubtotal - discount + shippingSelection.shippingPrice;
   if (expectedTotal < 1) {
     return NextResponse.json({ error: 'Order total is invalid.' }, { status: 400 });
   }
@@ -227,10 +280,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     email,
     status: 'processing',
     items: pricedItems,
-    shippingMethod,
-    shippingPrice,
-    shippingCarrier,
-    shippingService,
+    shippingMethod: shippingSelection.shippingMethod,
+    shippingPrice: shippingSelection.shippingPrice,
+    shippingCarrier: shippingSelection.shippingCarrier,
+    shippingService: shippingSelection.shippingService,
     ...(inpostPoint ? { inpostPoint } : {}),
     shippingAddress,
     subtotal,

@@ -1,3 +1,10 @@
+import { getProductCreateRuntimeStatus } from '@/features/products/api/products';
+import {
+  isProductCreateRuntimeQueuedResponse,
+  type ProductCreateMutationResult,
+  type ProductCreateRuntimeQueuedResponse,
+  type ProductCreateRuntimeStatusResponse,
+} from '@/shared/contracts/products';
 import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { Toast } from '@/shared/ui/toast';
@@ -8,13 +15,19 @@ import { buildProductFormData, type BuildProductFormDataInput } from './useProdu
 
 type ProductFormSubmitSuccess = (info?: { queued?: boolean }) => void;
 type ProductFormEditSave = (saved: ProductWithImages) => void;
-type CreateProductMutation = (formData: FormData) => Promise<ProductWithImages | null | undefined>;
+type CreateProductMutation = (
+  formData: FormData
+) => Promise<ProductCreateMutationResult | null | undefined>;
 type UpdateProductMutation = (input: {
   id: string;
   data: FormData;
   originalSku?: string | undefined;
   originalNameEn?: string | undefined;
 }) => Promise<ProductWithImages | null | undefined>;
+
+export type ProductFormSubmitExecutionResult = {
+  backgroundTask?: Promise<void> | undefined;
+};
 
 export type ProductFormSubmitExecutionInput = BuildProductFormDataInput & {
   product?: ProductWithImages | undefined;
@@ -29,6 +42,9 @@ export type ProductFormSubmitExecutionInput = BuildProductFormDataInput & {
   successTimerRef: { current: ReturnType<typeof setTimeout> | null };
   toast: Toast;
 };
+
+const PRODUCT_CREATE_RUNTIME_POLL_TIMEOUT_MS = 180_000;
+const PRODUCT_CREATE_RUNTIME_POLL_INTERVAL_MS = 1000;
 
 export const hasTemporaryProductImages = (imageSlots: (ProductImageSlot | null)[]): boolean =>
   imageSlots.some((slot: ProductImageSlot | null): boolean => {
@@ -64,7 +80,7 @@ const guardHydratedEditProduct = ({
 const saveProductForm = async (
   input: ProductFormSubmitExecutionInput,
   formData: FormData
-): Promise<ProductWithImages | null | undefined> => {
+): Promise<ProductCreateMutationResult | null | undefined> => {
   if (input.product === undefined) {
     return await input.createProduct(formData);
   }
@@ -104,10 +120,89 @@ const handleUpdatedProductSave = (
   input.onSuccess?.();
 };
 
-const handleSavedProduct = (
-  savedProduct: ProductWithImages | null | undefined,
+const handleCreatedProductSave = (
+  savedProduct: ProductCreateMutationResult | null | undefined,
   input: ProductFormSubmitExecutionInput
 ): void => {
+  if (isProductCreateRuntimeQueuedResponse(savedProduct)) return;
+  if (savedProduct === null || savedProduct === undefined) return;
+  input.onSuccess?.();
+};
+
+const delayRuntimePoll = (): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, PRODUCT_CREATE_RUNTIME_POLL_INTERVAL_MS);
+  });
+
+const pollRuntimeCreateStatus = async (
+  requestId: string,
+  deadlineMs: number
+): Promise<ProductCreateRuntimeStatusResponse | null> => {
+  const status = await getProductCreateRuntimeStatus(requestId);
+  if (status.status === 'completed' || status.status === 'failed') {
+    return status;
+  }
+  if (Date.now() >= deadlineMs) {
+    return null;
+  }
+  await delayRuntimePoll();
+  return pollRuntimeCreateStatus(requestId, deadlineMs);
+};
+
+const waitForRuntimeCreateCompletion = async (
+  response: ProductCreateRuntimeQueuedResponse,
+  input: ProductFormSubmitExecutionInput
+): Promise<void> => {
+  const status = await pollRuntimeCreateStatus(
+    response.requestId,
+    Date.now() + PRODUCT_CREATE_RUNTIME_POLL_TIMEOUT_MS
+  );
+  if (status?.status === 'completed') {
+    input.onSuccess?.();
+    return;
+  }
+  if (status?.status === 'failed') {
+    const message = status.errorMessage ?? 'Product creation failed in runtime.';
+    input.setUploadError(message);
+    input.toast(message, { variant: 'error' });
+    return;
+  }
+
+  input.toast('Product creation is still running. The product list will update after completion.', {
+    variant: 'warning',
+  });
+};
+
+const startCreateProductInRuntime = (
+  input: ProductFormSubmitExecutionInput,
+  formData: FormData
+): ProductFormSubmitExecutionResult => {
+  const backgroundTask = Promise.resolve()
+    .then(() => input.createProduct(formData))
+    .then(async (savedProduct: ProductCreateMutationResult | null | undefined): Promise<void> => {
+      if (isProductCreateRuntimeQueuedResponse(savedProduct)) {
+        await waitForRuntimeCreateCompletion(savedProduct, input);
+        return;
+      }
+      handleCreatedProductSave(savedProduct, input);
+    })
+    .catch((error: unknown): void => {
+      handleSubmitError(error, input);
+    });
+
+  input.onSuccess?.({ queued: true });
+  input.toast('Product creation is running in runtime.', { variant: 'info' });
+  return { backgroundTask };
+};
+
+const handleSavedProduct = (
+  savedProduct: ProductCreateMutationResult | null | undefined,
+  input: ProductFormSubmitExecutionInput
+): void => {
+  if (isProductCreateRuntimeQueuedResponse(savedProduct)) {
+    input.onSuccess?.({ queued: true });
+    return;
+  }
   if (savedProduct === null || savedProduct === undefined) {
     input.onSuccess?.({ queued: true });
     return;
@@ -130,12 +225,19 @@ const handleSubmitError = (error: unknown, input: ProductFormSubmitExecutionInpu
 
 export const executeProductFormSubmit = async (
   input: ProductFormSubmitExecutionInput
-): Promise<void> => {
+): Promise<ProductFormSubmitExecutionResult> => {
   try {
-    if (!guardHydratedEditProduct(input)) return;
-    const savedProduct = await saveProductForm(input, buildProductFormData(input));
+    if (!guardHydratedEditProduct(input)) return {};
+    const formData = buildProductFormData(input);
+    if (input.product === undefined) {
+      return startCreateProductInRuntime(input, formData);
+    }
+
+    const savedProduct = await saveProductForm(input, formData);
     handleSavedProduct(savedProduct, input);
+    return {};
   } catch (error: unknown) {
     handleSubmitError(error, input);
+    return {};
   }
 };

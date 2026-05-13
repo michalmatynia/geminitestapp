@@ -65,4 +65,41 @@ describe('useProductOperations', () => {
     expect(result.current.initialSku).toBe(PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER);
     expect(result.current.isCreateOpen).toBe(true);
   });
+
+  it('closes create modal without refreshing immediately for queued runtime creation', () => {
+    const setRefreshTrigger = vi.fn();
+    const toast = vi.fn();
+    useToastMock.mockReturnValue({ toast });
+
+    const { result } = renderHook(() => useProductOperations(setRefreshTrigger));
+
+    act(() => {
+      result.current.setIsCreateOpen(true);
+      result.current.setInitialSku('SKU-RUNTIME');
+    });
+
+    act(() => {
+      result.current.handleCreateSuccess({ queued: true });
+    });
+
+    expect(result.current.isCreateOpen).toBe(false);
+    expect(result.current.initialSku).toBe('');
+    expect(setRefreshTrigger).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('refreshes and toasts when runtime product creation completes', () => {
+    const setRefreshTrigger = vi.fn();
+    const toast = vi.fn();
+    useToastMock.mockReturnValue({ toast });
+
+    const { result } = renderHook(() => useProductOperations(setRefreshTrigger));
+
+    act(() => {
+      result.current.handleCreateSuccess();
+    });
+
+    expect(setRefreshTrigger).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith('Product created successfully.', { variant: 'success' });
+  });
 });

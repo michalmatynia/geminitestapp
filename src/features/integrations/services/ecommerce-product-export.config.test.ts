@@ -156,7 +156,7 @@ describe('ecommerce-product-export.config', () => {
       expected: true,
       httpStatus: 503,
       message:
-        'Local ecommerce database is not reachable. Start the local ecommerce MongoDB service and try the export again.',
+        'Local ecommerce database is not reachable. Start the local ecommerce MongoDB service and try again.',
       meta: {
         ecommerceMongoDbName: 'ecom_local',
         ecommerceMongoSource: 'local',

@@ -1,5 +1,6 @@
 import type { ImageFileSelection } from './files';
 import type { ManagedImageSlot as ProductImageSlot } from './image-slots';
+import type { ProductWithImages } from './products/product';
 
 export type ProductImageManagerFastCometUploadEvent = {
   productId: string;
@@ -12,6 +13,7 @@ export type ProductImageManagerFastCometUploadSuccessEvent =
   ProductImageManagerFastCometUploadEvent & {
     alreadyUploaded?: boolean | undefined;
     imageFile: ImageFileSelection;
+    product?: ProductWithImages | undefined;
     publicPath?: string | undefined;
     remoteUrl?: string | undefined;
   };

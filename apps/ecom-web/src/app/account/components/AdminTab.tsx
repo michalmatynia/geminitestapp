@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { useState, useEffect, type JSX } from 'react';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { AdminCmsEditor } from '@/components/AdminCmsEditor';
@@ -8,6 +10,7 @@ import type { AccountAdminContent, AccountOrdersContent } from '@/data/accountCo
 import type { Order } from '@/lib/orders';
 import { retryMessage, refreshMessage, type InpostFulfillResponse, type InpostRefreshResponse } from './inpost-utils';
 import { AdminInpostOrdersPanel } from './AdminInpostOrdersPanel';
+import { AdminShippingOrdersPanel } from './AdminShippingOrdersPanel';
 import { AdminUsersPanel } from './AdminUsersPanel';
 
 interface AdminUser {
@@ -20,6 +23,11 @@ interface AdminUser {
 interface AdminOrdersResponse {
   orders?: Order[];
   total?: number;
+  error?: string;
+}
+
+interface FulfillmentResponse {
+  order?: Order;
   error?: string;
 }
 
@@ -41,6 +49,11 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
   const [adminOrderTotal, setAdminOrderTotal] = useState(0);
   const [adminOrdersLoading, setAdminOrdersLoading] = useState(true);
   const [adminOrdersError, setAdminOrdersError] = useState('');
+  const [shippingOrders, setShippingOrders] = useState<Order[]>([]);
+  const [shippingOrdersLoading, setShippingOrdersLoading] = useState(true);
+  const [shippingOrdersError, setShippingOrdersError] = useState('');
+  const [savingFulfillmentOrderId, setSavingFulfillmentOrderId] = useState('');
+  const [fulfillmentNotice, setFulfillmentNotice] = useState('');
   const [retryingOrderId, setRetryingOrderId] = useState('');
   const [refreshingOrderId, setRefreshingOrderId] = useState('');
   const [retryNotice, setRetryNotice] = useState('');
@@ -87,6 +100,33 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
         if (!cancelled) {
           setAdminOrdersLoading(false);
         }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setShippingOrdersLoading(true);
+    fetch('/api/orders/admin?limit=24')
+      .then((res) => res.json())
+      .then((data: AdminOrdersResponse) => {
+        if (cancelled) return;
+        if (data.error !== undefined && data.error.length > 0) {
+          setShippingOrdersError(data.error);
+          return;
+        }
+        setShippingOrders(data.orders ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setShippingOrdersError(locale === 'pl' ? 'Nie można wczytać zamówień do wysyłki.' : 'Could not load fulfillment orders.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setShippingOrdersLoading(false);
       });
 
     return () => {
@@ -150,6 +190,32 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
     refreshInpostStatus(orderId).catch(() => {
       setRetryNotice(locale === 'pl' ? 'Nie udało się odświeżyć statusu InPost.' : 'Could not refresh the InPost status.');
     });
+  };
+
+  const handleFulfillmentSave = (orderId: string, payload: { status: Order['status']; trackingNumber: string; trackingUrl: string }): void => {
+    setSavingFulfillmentOrderId(orderId);
+    setFulfillmentNotice('');
+    fetch(`/api/orders/${encodeURIComponent(orderId)}/fulfillment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(async (response) => {
+        const data = (await response.json().catch(() => ({}))) as FulfillmentResponse;
+        if (!response.ok || data.order === undefined) {
+          throw new Error(data.error ?? 'Fulfillment update failed');
+        }
+        setShippingOrders((orders) => orders.map((order) => (order.orderId === orderId ? data.order as Order : order)));
+        setAdminOrders((orders) => orders.map((order) => (order.orderId === orderId ? data.order as Order : order)));
+        setFulfillmentNotice(locale === 'pl' ? 'Zapisano dane wysyłki.' : 'Fulfillment details saved.');
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Fulfillment update failed';
+        setFulfillmentNotice(message);
+      })
+      .finally(() => {
+        setSavingFulfillmentOrderId('');
+      });
   };
 
   return (
@@ -237,6 +303,18 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
         refreshingOrderId={refreshingOrderId}
         onRetry={handleRetry}
         onRefresh={handleRefresh}
+      />
+
+      <AdminShippingOrdersPanel
+        content={content}
+        locale={locale}
+        orderStatuses={orderStatuses}
+        orders={shippingOrders}
+        loading={shippingOrdersLoading}
+        error={shippingOrdersError}
+        notice={fulfillmentNotice}
+        savingOrderId={savingFulfillmentOrderId}
+        onSave={handleFulfillmentSave}
       />
 
       <AdminCmsEditor availableLocales={availableLocales} />

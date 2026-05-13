@@ -123,7 +123,7 @@ function EndpointPanel({
         <p>Database size: {formatBytes(endpoint.databaseSizeBytes)}</p>
         <p>Collections: {endpoint.collectionCount.toLocaleString()}</p>
         <p>Collection storage: {formatBytes(endpoint.collectionsSizeBytes)}</p>
-        {endpoint.healthError ? <p className='text-rose-200'>{endpoint.healthError}</p> : null}
+        {endpoint.healthError !== null && endpoint.healthError !== '' ? <p className='text-rose-200'>{endpoint.healthError}</p> : null}
       </div>
 
       <CollectionSizeList collections={endpoint.collections} />
@@ -157,7 +157,7 @@ function ManagedDatabaseCard({
             <DatabaseIcon className='size-4 text-emerald-200' />
             {database.label}
           </h3>
-          {database.syncIssue ? (
+          {database.syncIssue !== null && database.syncIssue !== '' ? (
             <p className='text-xs leading-relaxed text-amber-100'>{database.syncIssue}</p>
           ) : null}
         </div>
@@ -253,7 +253,7 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
     isSyncingManagedMongo ||
     isSyncingMongoSources ||
     pendingMongoSourceSync !== null ||
-    mongoSourceState?.syncInProgress != null;
+    mongoSourceState?.syncInProgress !== null;
   const syncDisabled =
     isMongoSyncBusy ||
     !operationControls.allowManualFullSync ||

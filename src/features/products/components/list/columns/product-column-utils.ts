@@ -89,15 +89,16 @@ const getProductImageFileRecords = (product: ProductWithImages): Record<string, 
 
 const isFastCometImageFileRecord = (imageFile: Record<string, unknown>): boolean => {
   const metadata = toRecord(imageFile['metadata']);
+  const fastCometUploadStatus = toTrimmedString(metadata?.['fastCometUploadStatus']).toLowerCase();
   return (
-    toTrimmedString(imageFile['storageProvider']) === 'fastcomet' ||
-    toTrimmedString(metadata?.['storageSource']) === 'fastcomet'
+    toTrimmedString(imageFile['storageProvider']).toLowerCase() === 'fastcomet' ||
+    toTrimmedString(metadata?.['storageSource']).toLowerCase() === 'fastcomet' ||
+    ['completed', 'complete', 'success', 'uploaded'].includes(fastCometUploadStatus) ||
+    toTrimmedString(metadata?.['uploadedToFastCometAt']).length > 0
   );
 };
 
-export const hasAnyProductImageStorageStatus = (
-  status: ProductImageStorageStatus
-): boolean =>
+export const hasAnyProductImageStorageStatus = (status: ProductImageStorageStatus): boolean =>
   status.hasFastCometImage ||
   status.hasLocalImage ||
   status.hasExternalLinkImage ||

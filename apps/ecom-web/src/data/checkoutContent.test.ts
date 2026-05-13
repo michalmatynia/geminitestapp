@@ -98,6 +98,38 @@ describe('checkout content validation', () => {
     });
   });
 
+  it('accepts Poczta Polska and DPD carrier metadata on shipping methods', () => {
+    const { content, errors } = validateCheckoutContent({
+      shippingMethods: [
+        {
+          id: 'poczta-polska',
+          label: 'Poczta Polska',
+          detail: 'Tracked postal delivery',
+          price: 0,
+          priceLabel: 'Free',
+          businessDaysMin: 2,
+          businessDaysMax: 4,
+          carrier: 'poczta_polska',
+          service: 'poczta_polska_tracked',
+        },
+        {
+          id: 'dpd-courier',
+          label: 'DPD Courier',
+          detail: 'Door delivery',
+          price: 10,
+          priceLabel: '€ 10',
+          businessDaysMin: 1,
+          businessDaysMax: 2,
+          carrier: 'dpd',
+          service: 'dpd_courier_standard',
+        },
+      ],
+    });
+
+    expect(errors).toEqual([]);
+    expect(content.shippingMethods.map((method) => method.carrier)).toEqual(['poczta_polska', 'dpd']);
+  });
+
   it('rejects unsupported carrier metadata', () => {
     const { errors } = validateCheckoutContent({
       shippingMethods: [
@@ -108,7 +140,7 @@ describe('checkout content validation', () => {
       ],
     });
 
-    expect(errors).toContain('shippingMethods.0.carrier must be manual or inpost.');
+    expect(errors).toContain('shippingMethods.0.carrier must be manual, inpost, poczta_polska, or dpd.');
   });
 
   it('rejects invalid free-shipping CMS settings', () => {
@@ -185,5 +217,22 @@ describe('default checkout shipping configuration', () => {
       service: 'inpost_locker_standard',
       requiresPickupPoint: true,
     });
+  });
+
+  it('includes Poczta Polska and DPD delivery in the Poland default zone', () => {
+    const domesticZone = CHECKOUT_CONTENT_DEFAULTS.shippingZones.find((zone) => zone.id === 'domestic');
+
+    expect(domesticZone?.methods).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'poczta-polska',
+        carrier: 'poczta_polska',
+        service: 'poczta_polska_tracked',
+      }),
+      expect.objectContaining({
+        id: 'dpd-courier',
+        carrier: 'dpd',
+        service: 'dpd_courier_standard',
+      }),
+    ]));
   });
 });

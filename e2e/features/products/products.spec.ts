@@ -473,8 +473,7 @@ test.describe('Products Management', () => {
     await expect(modal.locator('label:has-text("Stock")')).toBeVisible();
 
     await modal.getByRole('tab', { name: 'Images' }).click();
-    // Use a more generic locator that exists in ProductImageManager
-    await expect(modal.locator('text=Image slots')).toBeVisible();
+    await expect(modal.getByText('View: Upload').first()).toBeVisible();
   });
 
   test('should paginate products', async ({ page }) => {

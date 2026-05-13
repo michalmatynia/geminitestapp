@@ -46,6 +46,7 @@ export function QuickViewModal(): JSX.Element | null {
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       size: selectedSize,
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -126,7 +127,7 @@ export function QuickViewModal(): JSX.Element | null {
                 {product.shortName ?? product.name}
               </h2>
               <div className='type-price text-xl' style={{ color: 'var(--fg)' }}>
-                {formatPrice(product.price, locale)}
+                {formatPrice(product.price, locale, product.currencyCode)}
               </div>
             </div>
             <button
@@ -213,6 +214,7 @@ export function QuickViewModal(): JSX.Element | null {
                     category: product.category,
                     price: product.price,
                     priceDisplay: product.priceDisplay,
+                    currencyCode: product.currencyCode,
                     gradient: product.gradient,
                     imageUrl: product.imageUrl,
                   });

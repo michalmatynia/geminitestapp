@@ -21,6 +21,7 @@ function sanitizeItem(raw: unknown): WishlistItem | null {
     category: typeof item['category'] === 'string' ? item['category'].trim() : '',
     price: typeof item['price'] === 'number' && item['price'] >= 0 ? item['price'] : 0,
     priceDisplay: typeof item['priceDisplay'] === 'string' ? item['priceDisplay'].trim() : '',
+    currencyCode: typeof item['currencyCode'] === 'string' ? item['currencyCode'].trim().toUpperCase() : undefined,
     gradient: typeof item['gradient'] === 'string' ? item['gradient'].trim() : '',
     imageUrl: typeof item['imageUrl'] === 'string' ? item['imageUrl'].trim() : undefined,
   };

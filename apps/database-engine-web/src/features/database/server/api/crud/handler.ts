@@ -79,7 +79,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   return handleMongoCrud(table, operation, data, primaryKey, application, source);
 }
 
-function toObjectId(value: unknown): ObjectId | unknown {
+function toObjectId(value: unknown): unknown {
   if (typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)) {
     try {
       return new ObjectId(value);
@@ -94,7 +94,7 @@ function toObjectId(value: unknown): ObjectId | unknown {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const toDate = (value: unknown): Date | unknown => {
+const toDate = (value: unknown): unknown => {
   if (typeof value !== 'string') return value;
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? value : new Date(timestamp);
@@ -156,7 +156,7 @@ async function handleMongoCrud(
   application?: z.infer<typeof databaseEngineManagedMongoApplicationSchema>,
   source?: z.infer<typeof mongoSourceSchema>
 ): Promise<Response> {
-  const managedMongo = application
+  const managedMongo = application !== undefined
     ? await createManagedMongoClient(application, source ?? 'local')
     : null;
   const mongoClient = managedMongo?.client ?? (await getMongoClient());

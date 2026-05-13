@@ -16,8 +16,7 @@ export function useExportProductToEcommerce(): UpdateMutation<
   return createUpdateMutationV2({
     mutationFn: async (productId: string): Promise<EcommerceProductExportResponse> =>
       api.post<EcommerceProductExportResponse>(
-        `/api/v2/integrations/products/${productId}/export-to-ecommerce`,
-        {}
+        `/api/v2/integrations/products/${productId}/export-to-ecommerce`
       ),
     mutationKey: QUERY_KEYS.products.all,
     meta: {

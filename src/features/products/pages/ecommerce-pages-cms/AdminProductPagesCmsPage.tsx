@@ -5,6 +5,8 @@ import { ImageIcon } from 'lucide-react';
 
 import { BackgroundSettingsCard } from './BackgroundSettingsCard';
 import { CollectionCardsEditorCard } from './CollectionCardsEditorCard';
+import { EcommerceDataSyncPanel } from './EcommerceDataSyncPanel';
+import { EcommerceDiscountCouponsPanel } from './EcommerceDiscountCouponsPanel';
 import { EditorialArticlesEditorCard } from './EditorialArticlesEditorCard';
 import { LogoPreviewCard, LogoUploadCard, type LogoController } from './LogoCmsCards';
 import { ManifestoCmsCard } from './ManifestoCmsCard';
@@ -33,9 +35,28 @@ type LogoResponse = {
 };
 
 const LOGO_ENDPOINT = '/api/v2/products/pages/logo';
+const ECOMMERCE_PAGE_TABS = [
+  { label: 'CMS Content', value: 'content' },
+  { label: 'Discount Coupons', value: 'discount-coupons' },
+  { label: 'Data Synchronisation', value: 'data-sync' },
+] as const;
+
+type EcommercePageTab = (typeof ECOMMERCE_PAGE_TABS)[number]['value'];
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
+
+const getPageTitle = (activeTab: EcommercePageTab): string => {
+  if (activeTab === 'data-sync') return 'Data Synchronisation';
+  if (activeTab === 'discount-coupons') return 'Discount Coupons';
+  return 'Pages';
+};
+
+const getPageDescription = (activeTab: EcommercePageTab): string => {
+  if (activeTab === 'data-sync') return 'Push Products source data into ecommerce databases.';
+  if (activeTab === 'discount-coupons') return 'Manage ecommerce discount coupons for checkout.';
+  return 'Manage ecommerce storefront CMS content from Products.';
+};
 
 const fetchLogo = async (): Promise<LogoState> => {
   const response = await api.get<LogoResponse>(LOGO_ENDPOINT);
@@ -128,31 +149,70 @@ const usePagesCmsLogoController = (): LogoController => {
 };
 
 export function AdminProductPagesCmsPage(): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<EcommercePageTab>('content');
   const logoController = usePagesCmsLogoController();
   const backgroundController = useBackgroundSettingsController();
   const manifestoController = useManifestoController();
   const collectionCardsController = useCollectionCardsController();
   const editorialArticlesController = useEditorialArticlesController();
+  const handleTabChange = useCallback((value: string): void => {
+    if (value === 'content' || value === 'discount-coupons' || value === 'data-sync') {
+      setActiveTab(value);
+    }
+  }, []);
 
   return (
     <AdminProductsPageLayout
-      title='Pages'
+      title={getPageTitle(activeTab)}
       current='Pages'
-      description='Manage ecommerce storefront CMS content from Products.'
+      description={getPageDescription(activeTab)}
       icon={<ImageIcon className='size-4' />}
+      tabs={{
+        activeTab,
+        onTabChange: handleTabChange,
+        tabsList: [...ECOMMERCE_PAGE_TABS],
+      }}
     >
-      <div className='space-y-4'>
-        <div className='grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]'>
-          <LogoUploadCard controller={logoController} />
-          <LogoPreviewCard controller={logoController} />
-        </div>
-        <BackgroundSettingsCard controller={backgroundController} />
-        <ManifestoCmsCard controller={manifestoController} />
-        <CollectionCardsEditorCard controller={collectionCardsController} />
-        <EditorialArticlesEditorCard controller={editorialArticlesController} />
-      </div>
+      {activeTab === 'data-sync' && <EcommerceDataSyncPanel />}
+      {activeTab === 'discount-coupons' && <EcommerceDiscountCouponsPanel />}
+      {activeTab === 'content' && (
+        <PagesCmsContentTab
+          backgroundController={backgroundController}
+          collectionCardsController={collectionCardsController}
+          editorialArticlesController={editorialArticlesController}
+          logoController={logoController}
+          manifestoController={manifestoController}
+        />
+      )}
     </AdminProductsPageLayout>
   );
 }
 
 export default AdminProductPagesCmsPage;
+
+function PagesCmsContentTab({
+  backgroundController,
+  collectionCardsController,
+  editorialArticlesController,
+  logoController,
+  manifestoController,
+}: {
+  backgroundController: ReturnType<typeof useBackgroundSettingsController>;
+  collectionCardsController: ReturnType<typeof useCollectionCardsController>;
+  editorialArticlesController: ReturnType<typeof useEditorialArticlesController>;
+  logoController: LogoController;
+  manifestoController: ReturnType<typeof useManifestoController>;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-4'>
+      <div className='grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]'>
+        <LogoUploadCard controller={logoController} />
+        <LogoPreviewCard controller={logoController} />
+      </div>
+      <BackgroundSettingsCard controller={backgroundController} />
+      <ManifestoCmsCard controller={manifestoController} />
+      <CollectionCardsEditorCard controller={collectionCardsController} />
+      <EditorialArticlesEditorCard controller={editorialArticlesController} />
+    </div>
+  );
+}

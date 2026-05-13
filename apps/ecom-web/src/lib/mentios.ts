@@ -12,10 +12,15 @@
  */
 
 import { cache } from 'react';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Db } from 'mongodb';
 import type { Product } from '../data/products';
 import { ensureProductIndexes } from './db-indexes';
-import { normalizeLocale, normalizeLocaleList, type EcomLocale } from './locales';
+import {
+  formatPrice as formatLocalizedPrice,
+  normalizeLocale,
+  normalizeLocaleList,
+  type EcomLocale,
+} from './locales';
 import { getEcommerceProductsDb, hasEcommerceProductsMongoConfig } from './mongodb';
 
 // ---------------------------------------------------------------------------
@@ -25,8 +30,10 @@ import { getEcommerceProductsDb, hasEcommerceProductsMongoConfig } from './mongo
 const CATALOG_ID = process.env['MENTIOS_CATALOG_ID']?.trim() ?? '';
 const PRODUCTS_COLLECTION = 'products';
 const CATEGORIES_COLLECTION = 'product_categories';
+const PRICE_GROUPS_COLLECTION = 'price_groups';
 const CATALOGS_COLLECTION = 'catalogs';
 const LANGUAGES_COLLECTION = 'languages';
+const PRICE_GROUP_SOURCE_PRICE_FIELD = 'sourcePrice';
 
 /** Products created within this window are treated as "new arrivals". */
 const NEW_ARRIVALS_DAYS = 60;
@@ -83,10 +90,15 @@ interface ProductDoc {
   description_en?: string | null;
   description_pl?: string | null;
   description_de?: string | null;
-  // Legacy nested format (kept for cross-env compatibility)
+  // Nested localized fields from alternate catalog documents.
   name?: string | LocalizedField | null;
   description?: string | LocalizedField | null;
+  defaultPriceGroupId?: string | null;
   price?: number | null;
+  priceCurrencyCode?: string | null;
+  currencyCode?: string | null;
+  sourcePrice?: number | null;
+  sourcePriceCurrencyCode?: string | null;
   sku?: string | null;
   stock?: number | null;
   published?: boolean;
@@ -101,6 +113,7 @@ interface ProductDoc {
   isNew?: boolean;
   createdAt?: string | Date;
   exportedAt?: string | Date;
+  updatedAt?: string | Date;
   imageUrl?: string | null;
   imageUrls?: Array<string | null>;
   images?: Array<{
@@ -122,7 +135,45 @@ interface ProductPriceDoc {
   _id: unknown;
   sourceProductId?: string | null;
   price?: number | null;
+  priceCurrencyCode?: string | null;
+  currencyCode?: string | null;
+  sourcePrice?: number | null;
+  sourcePriceCurrencyCode?: string | null;
 }
+
+type PriceGroupDoc = {
+  _id?: unknown;
+  addToPrice?: number | null;
+  basePriceField?: string | null;
+  currencyCode?: string | null;
+  id?: string | null;
+  isDefault?: boolean | null;
+  priceMultiplier?: number | null;
+  sourceGroupId?: string | null;
+  type?: string | null;
+};
+
+type PriceGroup = {
+  addToPrice: number;
+  basePriceField: string;
+  currencyCode: string;
+  id: string;
+  isDefault: boolean;
+  priceMultiplier: number;
+  sourceGroupId: string | null;
+  type: string;
+};
+
+type PricingContext = {
+  defaultCurrencyCode: string | null;
+  groups: PriceGroup[];
+};
+
+type ProductMapContext = {
+  categoryMap: Map<string, CategoryMapEntry>;
+  locale: EcomLocale;
+  pricing: PricingContext;
+};
 
 type ProductImageFileDoc = NonNullable<ProductDoc['images']>[number]['imageFile'];
 
@@ -292,6 +343,7 @@ function parsePipedName(raw: string): {
   shortName: string;
   sizeInfo?: string;
   material?: string;
+  categoryName?: string;
   lore?: string;
 } {
   const parts = raw.split('|').map((s) => s.trim());
@@ -303,25 +355,140 @@ function parsePipedName(raw: string): {
     shortName: seg(0) ?? raw,
     sizeInfo:  seg(1),
     material:  seg(2),
-    // seg(3) is category — already in product.category, skip
+    categoryName: seg(3),
     lore:      seg(4),
   };
 }
 
-function formatPrice(price: number | null | undefined): string {
+function formatProductPrice(
+  price: number | null | undefined,
+  locale: EcomLocale,
+  currencyCode: string,
+): string {
   if (price === null || price === undefined) return '—';
-  const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
-  return `${price.toLocaleString('pl-PL', {
-    minimumFractionDigits,
-    maximumFractionDigits: 2,
-  })} zł`;
+  return formatLocalizedPrice(price, locale, currencyCode);
+}
+
+function normalizeProductCurrencyCode(doc: ProductDoc): string {
+  const code = (doc.priceCurrencyCode ?? doc.currencyCode ?? doc.sourcePriceCurrencyCode ?? '').trim().toUpperCase();
+  return code.length > 0 ? code : 'PLN';
+}
+
+function resolveFallbackProductPricing(doc: ProductDoc): { currencyCode: string; price: number } {
+  const price = toFinitePrice(doc.price);
+  if (price !== null) {
+    const currencyCode = firstNonEmptyString(
+      normalizeCurrencyCode(doc.priceCurrencyCode),
+      normalizeCurrencyCode(doc.currencyCode),
+      normalizeCurrencyCode(doc.sourcePriceCurrencyCode),
+      'PLN',
+    );
+    return { currencyCode, price };
+  }
+  return {
+    currencyCode: normalizeProductCurrencyCode(doc),
+    price: toFinitePrice(doc.sourcePrice) ?? 0,
+  };
+}
+
+function normalizeCurrencyCode(value: string | null | undefined): string {
+  return (value ?? '').trim().toUpperCase();
+}
+
+function toFinitePrice(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function toPriceGroup(doc: PriceGroupDoc): PriceGroup | null {
+  const id = firstNonEmptyString(typeof doc.id === 'string' ? doc.id : '');
+  const currencyCode = normalizeCurrencyCode(doc.currencyCode ?? '');
+  if (id.length === 0 || currencyCode.length === 0) return null;
+  return {
+    addToPrice: toFinitePrice(doc.addToPrice) ?? 0,
+    basePriceField: firstNonEmptyString(doc.basePriceField ?? '', 'price'),
+    currencyCode,
+    id,
+    isDefault: doc.isDefault === true,
+    priceMultiplier: toFinitePrice(doc.priceMultiplier) ?? 1,
+    sourceGroupId: doc.sourceGroupId?.trim() || null,
+    type: firstNonEmptyString(doc.type ?? '', 'standard'),
+  };
+}
+
+function groupKeyMatches(group: PriceGroup, id: string | null | undefined): boolean {
+  const normalized = (id ?? '').trim();
+  return normalized.length > 0 && group.id === normalized;
+}
+
+function findPriceGroup(groups: PriceGroup[], id: string | null | undefined): PriceGroup | undefined {
+  return groups.find((group) => groupKeyMatches(group, id));
+}
+
+function groupCurrencyMatches(group: PriceGroup, currencyCode: string): boolean {
+  const normalized = normalizeCurrencyCode(currencyCode);
+  return normalized.length > 0 && group.currencyCode === normalized;
+}
+
+function productFieldPrice(doc: ProductDoc, group: PriceGroup): number | null {
+  const sourcePrice = toFinitePrice(doc.sourcePrice);
+  const sourceCurrencyCode = normalizeCurrencyCode(doc.sourcePriceCurrencyCode);
+  if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return toFinitePrice(doc.sourcePrice);
+  const price = toFinitePrice(doc.price);
+  if (price !== null) return price;
+  return sourcePrice !== null && sourceCurrencyCode === group.currencyCode ? sourcePrice : null;
+}
+
+function resolveGroupPrice(
+  doc: ProductDoc,
+  group: PriceGroup | undefined,
+  groups: PriceGroup[],
+  visited = new Set<string>(),
+): number | null {
+  if (group === undefined || visited.has(group.id)) return null;
+  visited.add(group.id);
+  const basePrice = group.type === 'dependent'
+    ? group.sourceGroupId === null
+      ? productFieldPrice(doc, group)
+      : resolveGroupPrice(doc, findPriceGroup(groups, group.sourceGroupId), groups, visited)
+    : group.type === 'standard'
+      ? productFieldPrice(doc, group)
+      : null;
+  if (basePrice === null) return null;
+  return basePrice * group.priceMultiplier + group.addToPrice;
+}
+
+function resolveProductDisplayPricing(
+  doc: ProductDoc,
+  pricing: PricingContext,
+): { currencyCode: string; price: number } {
+  const fallback = resolveFallbackProductPricing(doc);
+  const groups = pricing.groups;
+  const baseGroup = findPriceGroup(groups, doc.defaultPriceGroupId) ?? groups.find((group) => group.isDefault) ?? groups[0];
+  if (baseGroup === undefined) return fallback;
+
+  const targetCurrencyCode = pricing.defaultCurrencyCode ?? baseGroup.currencyCode;
+  if (groupCurrencyMatches(baseGroup, targetCurrencyCode)) {
+    const price = resolveGroupPrice(doc, baseGroup, groups);
+    return price === null ? fallback : { currencyCode: targetCurrencyCode, price };
+  }
+
+  const targetGroups = groups.filter((group) => groupCurrencyMatches(group, targetCurrencyCode));
+  for (const targetGroup of targetGroups) {
+    const price = resolveGroupPrice(doc, targetGroup, groups);
+    if (price !== null) return { currencyCode: targetCurrencyCode, price };
+  }
+  return fallback;
 }
 
 function categoryToCollection(name: string): string {
   const l = name.toLowerCase();
   if (/women|dam[eę]|femm|ladies|girl|female/i.test(l)) return 'womenswear';
   if (/\bmen\b|heren|herr|homme|uomini|male/i.test(l)) return 'menswear';
-  if (/bag|accessor|jewel|belt|scarf|wallet|purse|hat|cap|shoes?|boots?/i.test(l)) return 'accessories';
+  if (
+    /bag|accessor|jewel|key\s*chain|keychain|charm|pin|ring|necklace|pendant|belt|scarf|wallet|purse|hat|cap|shoes?|boots?/i.test(
+      l,
+    )
+  ) return 'accessories';
   return 'objects';
 }
 
@@ -586,19 +753,22 @@ function buildImageUrls(doc: ProductDoc): string[] {
 function mapDoc(
   doc: ProductDoc,
   index: number,
-  categoryMap: Map<string, CategoryMapEntry>,
-  locale: EcomLocale,
+  context: ProductMapContext,
 ): Product {
+  const { categoryMap, locale, pricing } = context;
   const id = stringifyDocumentId(doc._id);
   const categoryId = stringifyDocumentId(doc.categoryId);
   const category = categoryId ? categoryMap.get(categoryId) : undefined;
   const productCategoryName = pickProductCategoryName(doc, locale);
   const name = pickProductName(doc, locale);
-  const { shortName, sizeInfo, material, lore } = parsePipedName(name);
+  const { shortName, sizeInfo, material, categoryName: pipedCategoryName, lore } = parsePipedName(name);
   const description = pickProductDescription(doc, locale);
-  const price = doc.price ?? 0;
+  const displayPricing = resolveProductDisplayPricing(doc, pricing);
+  const price = displayPricing.price;
+  const currencyCode = displayPricing.currencyCode;
   const imageUrls = buildImageUrls(doc);
   const exportedCollectionSlug = doc.collectionSlug?.trim() ?? '';
+  const fallbackCategoryName = productCategoryName || pipedCategoryName || '';
 
   return {
     id,
@@ -608,11 +778,12 @@ function mapDoc(
     sizeInfo,
     material,
     lore,
-    category: category?.name ?? (productCategoryName || (locale === 'pl' ? 'Wszystkie produkty' : 'Objects')),
+    category: category?.name ?? (fallbackCategoryName || (locale === 'pl' ? 'Wszystkie produkty' : 'Objects')),
     collectionSlug:
-      exportedCollectionSlug || (category?.collection ?? categoryToCollection(productCategoryName)),
+      exportedCollectionSlug || (category?.collection ?? categoryToCollection(fallbackCategoryName)),
     price,
-    priceDisplay: formatPrice(doc.price),
+    priceDisplay: formatProductPrice(price, locale, currencyCode),
+    currencyCode,
     description,
     gradient: gradient(index),
     gradientAlt: gradientAlt(index),
@@ -696,9 +867,14 @@ const PRODUCT_PROJECTION = {
   // Flat localized fields (local DB)
   name_en: 1, name_pl: 1, name_de: 1,
   description_en: 1, description_pl: 1, description_de: 1,
-  // Nested localized fields (cloud / legacy)
+  // Nested localized fields from alternate catalog documents.
   name: 1, description: 1,
+  defaultPriceGroupId: 1,
   price: 1,
+  priceCurrencyCode: 1,
+  currencyCode: 1,
+  sourcePrice: 1,
+  sourcePriceCurrencyCode: 1,
   stock: 1,
   published: 1,
   archived: 1,
@@ -712,6 +888,7 @@ const PRODUCT_PROJECTION = {
   isNew: 1,
   createdAt: 1,
   exportedAt: 1,
+  updatedAt: 1,
   images: 1,
   imageUrl: 1,
   imageUrls: 1,
@@ -720,8 +897,18 @@ const PRODUCT_PROJECTION = {
 const PRODUCT_PRICE_PROJECTION = {
   _id: 1,
   sourceProductId: 1,
+  defaultPriceGroupId: 1,
   price: 1,
+  priceCurrencyCode: 1,
+  currencyCode: 1,
+  sourcePrice: 1,
+  sourcePriceCurrencyCode: 1,
 } as const;
+
+export type CanonicalProductPricing = {
+  currencyCode: string;
+  price: number;
+};
 
 function normalizeProductIdLookup(input: string): string {
   return input.trim();
@@ -732,12 +919,14 @@ function dedupeProductIds(productIds: string[]): string[] {
 }
 
 /**
- * Fetch canonical prices for product ids from the configured Mentios catalog.
+ * Fetch canonical pricing for product ids from the configured Mentios catalog.
  * Keys map both `_id` and `sourceProductId`, where available.
  */
-export async function getCanonicalProductPrices(productIds: string[]): Promise<Map<string, number>> {
+export async function getCanonicalProductPricing(
+  productIds: string[]
+): Promise<Map<string, CanonicalProductPricing>> {
   const ids = dedupeProductIds(productIds);
-  if (ids.length === 0) return new Map<string, number>();
+  if (ids.length === 0) return new Map<string, CanonicalProductPricing>();
 
   const db = await getEcommerceProductsDb();
   const objectIds = ids.filter(ObjectId.isValid).map((id) => new ObjectId(id));
@@ -749,30 +938,38 @@ export async function getCanonicalProductPrices(productIds: string[]): Promise<M
     lookupClauses.push({ _id: { $in: objectIds } });
   }
 
-  const docs = await db
-    .collection<ProductPriceDoc>(PRODUCTS_COLLECTION)
-    .find({
-      $and: [
-        mentiosFilter(),
-        { $or: lookupClauses },
-      ],
-    })
-    .project(PRODUCT_PRICE_PROJECTION)
-    .toArray();
+  const [docs, pricingContext] = await Promise.all([
+    db
+      .collection<ProductPriceDoc>(PRODUCTS_COLLECTION)
+      .find({
+        $and: [
+          mentiosFilter(),
+          { $or: lookupClauses },
+        ],
+      })
+      .project(PRODUCT_PRICE_PROJECTION)
+      .toArray(),
+    fetchPricingContextFromDb(db),
+  ]);
 
-  const prices = new Map<string, number>();
+  const prices = new Map<string, CanonicalProductPricing>();
   for (const row of docs as unknown as ProductPriceDoc[]) {
-    const rawPrice = row.price;
-    if (typeof rawPrice !== 'number' || !Number.isFinite(rawPrice) || rawPrice < 0) continue;
-    const price = Math.round(rawPrice);
+    const displayPricing = resolveProductDisplayPricing(row, pricingContext);
+    if (displayPricing.price < 0) continue;
+    const pricing = { ...displayPricing, price: Math.round(displayPricing.price) };
     const id = stringifyDocumentId(row._id);
-    if (id) prices.set(id, price);
+    if (id) prices.set(id, pricing);
     if (typeof row.sourceProductId === 'string' && row.sourceProductId.length > 0) {
-      prices.set(row.sourceProductId, price);
+      prices.set(row.sourceProductId, pricing);
     }
   }
 
   return prices;
+}
+
+export async function getCanonicalProductPrices(productIds: string[]): Promise<Map<string, number>> {
+  const pricing = await getCanonicalProductPricing(productIds);
+  return new Map(Array.from(pricing, ([key, value]) => [key, value.price]));
 }
 
 // ---------------------------------------------------------------------------
@@ -848,6 +1045,24 @@ async function fetchCategories(locale: EcomLocale): Promise<Map<string, Category
   }
 }
 
+async function fetchPricingContextFromDb(db: Db): Promise<PricingContext> {
+  try {
+    const docs = await db
+      .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
+      .find({})
+      .toArray();
+    const groups = (docs as PriceGroupDoc[])
+      .map(toPriceGroup)
+      .filter((group): group is PriceGroup => group !== null);
+    const configuredDefault = normalizeCurrencyCode(process.env['ECOM_DISPLAY_CURRENCY_CODE']);
+    const defaultCurrencyCode =
+      configuredDefault.length > 0 ? configuredDefault : groups.find((group) => group.isDefault)?.currencyCode ?? null;
+    return { defaultCurrencyCode, groups };
+  } catch {
+    return { defaultCurrencyCode: null, groups: [] };
+  }
+}
+
 /** Reverse-lookup: resolve a category display name to its raw DB _id. */
 export const getMentiosCategoryIdByName = cache(async (
   categoryName: string,
@@ -876,6 +1091,14 @@ function uniqueStrings(values: Array<string | undefined | null>): string[] {
     result.push(normalized);
   }
   return result;
+}
+
+function firstNonEmptyString(...values: string[]): string {
+  for (const value of values) {
+    const normalized = value.trim();
+    if (normalized.length > 0) return normalized;
+  }
+  return '';
 }
 
 function escapeRegex(value: string): string {
@@ -931,6 +1154,31 @@ function productThemeNameClause(values: string[]): Record<string, unknown> {
   return clauses.length > 0 ? { $or: clauses } : {};
 }
 
+function usesResolvedPricePipeline(opts: FetchProductsOptions): boolean {
+  return (
+    opts.sort === 'price-asc' ||
+    opts.sort === 'price-desc' ||
+    typeof opts.priceMin === 'number' ||
+    typeof opts.priceMax === 'number'
+  );
+}
+
+function productMatchesResolvedPriceRange(product: Product, opts: FetchProductsOptions): boolean {
+  if (typeof opts.priceMin === 'number' && product.price < opts.priceMin) return false;
+  if (typeof opts.priceMax === 'number' && product.price >= opts.priceMax) return false;
+  return true;
+}
+
+function applyResolvedPriceOrdering(products: Product[], sort: string | undefined): Product[] {
+  if (sort !== 'price-asc' && sort !== 'price-desc') return products;
+  const direction = sort === 'price-asc' ? 1 : -1;
+  return [...products].sort((left, right) => (left.price - right.price) * direction);
+}
+
+function paginateProducts(products: Product[], skip: number, limit: number): Product[] {
+  return products.slice(skip, skip + limit);
+}
+
 /** Fetch products from the Mentios catalog. Returns empty array on DB error. */
 export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promise<MentiosResult> {
   const { limit = 100, skip = 0 } = opts;
@@ -943,7 +1191,10 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     const col = db.collection<ProductDoc>(PRODUCTS_COLLECTION);
 
     // Fetch category map once — used for both categoryName→id resolution and product mapping.
-    const categoryMap = await fetchCategories(locale);
+    const [categoryMap, pricing] = await Promise.all([
+      fetchCategories(locale),
+      fetchPricingContextFromDb(db),
+    ]);
 
     const requestedCategoryNames = uniqueStrings([
       ...(opts.categoryNames ?? []),
@@ -980,7 +1231,8 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
         .find(idFilter)
         .project(PRODUCT_PROJECTION)
         .toArray();
-      const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, categoryMap, locale));
+      const mapContext = { categoryMap, locale, pricing };
+      const products = (docs as unknown as ProductDoc[]).map((doc, i) => mapDoc(doc, i, mapContext));
       return { products, total: products.length };
     }
 
@@ -998,21 +1250,35 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
       queryClauses.push(productThemeNameClause(themeNames));
     }
 
-    // Price range filter (inclusive min, exclusive max).
-    if (typeof opts.priceMin === 'number' || typeof opts.priceMax === 'number') {
-      const priceClause: Record<string, number> = {};
-      if (typeof opts.priceMin === 'number') priceClause['$gte'] = opts.priceMin;
-      if (typeof opts.priceMax === 'number') priceClause['$lt'] = opts.priceMax;
-      queryClauses.push({ price: priceClause });
-    }
-
     const filter = mentiosFilterWithClauses(queryClauses);
+    const mapContext = { categoryMap, locale, pricing };
+    const resolvedPricePipeline = usesResolvedPricePipeline(opts);
 
     // Sort order — default is newest-first (editorial feel for "featured").
-    const mongoSort: Record<string, 1 | -1> =
-      opts.sort === 'price-asc'  ? { price: 1 } :
-      opts.sort === 'price-desc' ? { price: -1 } :
-      { createdAt: -1 };
+    const mongoSort: Record<string, 1 | -1> = {
+      updatedAt: -1,
+      exportedAt: -1,
+      createdAt: -1,
+    };
+
+    if (resolvedPricePipeline) {
+      const docs = await col.find(filter)
+        .project(PRODUCT_PROJECTION)
+        .sort(mongoSort)
+        .toArray();
+      const mappedProducts = (docs as unknown as ProductDoc[]).map((doc, i) =>
+        mapDoc(doc, i, mapContext),
+      );
+      const filteredProducts = mappedProducts.filter((product) =>
+        productMatchesResolvedPriceRange(product, opts)
+      );
+      const products = paginateProducts(
+        applyResolvedPriceOrdering(filteredProducts, opts.sort),
+        skip,
+        limit,
+      );
+      return { products, total: filteredProducts.length };
+    }
 
     const [docs, total] = await Promise.all([
       col.find(filter)
@@ -1025,7 +1291,7 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
     ]);
 
     const products = (docs as unknown as ProductDoc[]).map((doc, i) =>
-      mapDoc(doc, skip + i, categoryMap, locale),
+      mapDoc(doc, skip + i, mapContext),
     );
 
     return { products, total };
@@ -1070,8 +1336,11 @@ export const getMentiosProduct = cache(async (slugOrId: string, localeInput?: Ec
     }
 
     if (!doc) return null;
-    const categoryMap = await fetchCategories(locale);
-    return mapDoc(doc, 0, categoryMap, locale);
+    const [categoryMap, pricing] = await Promise.all([
+      fetchCategories(locale),
+      fetchPricingContextFromDb(db),
+    ]);
+    return mapDoc(doc, 0, { categoryMap, locale, pricing });
   } catch (err) {
     logMentiosFallback('Product', err);
     return null;

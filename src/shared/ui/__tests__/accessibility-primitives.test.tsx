@@ -9,7 +9,7 @@ import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { JsonViewer } from '@/shared/ui/JsonViewer';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
-import { FileUploadTrigger } from '@/shared/ui/file-upload';
+import { FileUploadButton, FileUploadTrigger } from '@/shared/ui/file-upload';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { StatusToggle } from '@/shared/ui/status-toggle';
 import { DocumentSearchPage } from '@/shared/ui/templates/DocumentSearchPage';
@@ -348,6 +348,20 @@ describe('shared accessibility primitives', () => {
     render(<FileUploadTrigger onFilesSelected={vi.fn()}>Upload files</FileUploadTrigger>);
 
     expect(screen.getByRole('button', { name: 'Upload files' })).toHaveAccessibleDescription(
+      'Choose, drag and drop files, or paste files.'
+    );
+  });
+
+  it('uses explicit FileUploadButton ids for stable upload description references', () => {
+    render(
+      <FileUploadButton id='backup-upload' onFilesSelected={vi.fn()}>
+        Upload files
+      </FileUploadButton>
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Upload files' });
+    expect(trigger).toHaveAttribute('aria-describedby', 'backup-upload-instructions');
+    expect(document.getElementById('backup-upload-instructions')).toHaveTextContent(
       'Choose, drag and drop files, or paste files.'
     );
   });

@@ -48,10 +48,7 @@ describe('bulk product export-to-ecommerce handler', () => {
       },
     } as ApiHandlerContext);
 
-    expect(mocks.exportProductsToEcommerceMock).toHaveBeenCalledWith([
-      'product-1',
-      'product-2',
-    ]);
+    expect(mocks.exportProductsToEcommerceMock).toHaveBeenCalledWith(['product-1', 'product-2']);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     await expect(response.json()).resolves.toEqual({
       success: true,

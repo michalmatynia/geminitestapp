@@ -119,12 +119,57 @@ type ContentLocalizer<TContent> = (content: TContent, locale?: LocaleInput) => T
 
 let cmsPagesIndexPromise: Promise<string> | null = null;
 
+function getErrorName(error: unknown): string {
+  return error instanceof Error ? error.name : '';
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return typeof error === 'string' ? error : '';
+}
+
+function isMongoConnectivityError(error: unknown): boolean {
+  const signature = `${getErrorName(error)} ${getErrorMessage(error)}`.toLowerCase();
+  return [
+    'mongoserverselectionerror',
+    'mongonetworkerror',
+    'server selection timed out',
+    'connection refused',
+    'econnrefused',
+    'enotfound',
+    'etimedout',
+    'enetunreach',
+    'eai_again',
+  ].some((token) => signature.includes(token));
+}
+
+function logCmsFallback(label: string, error: unknown): void {
+  if (isMongoConnectivityError(error)) {
+    const message = getErrorMessage(error);
+    console.warn(
+      `[cms] ${label} CMS content unavailable because the ecommerce MongoDB is not reachable; using defaults. Start the local ecommerce database with \`npm run mongo:ecom:up\` when local CMS content is needed.${message.length > 0 ? ` ${message}` : ''}`
+    );
+    return;
+  }
+
+  console.error(`Failed to load ${label} CMS content, using defaults.`, error);
+}
+
+function logCmsIndexFailure(error: unknown): void {
+  if (isMongoConnectivityError(error)) {
+    console.warn('[cms] CMS page locale index was not ensured because the ecommerce MongoDB is not reachable.');
+    return;
+  }
+
+  console.error('Failed to ensure CMS page locale index.', error);
+}
+
 async function getCmsPagesCollection(): Promise<Collection<CmsPageDoc>> {
   const db = await getDb();
   const collection = db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION);
   cmsPagesIndexPromise ??= collection.createIndex({ page: 1, locale: 1 }, { unique: true }).catch((error) => {
     cmsPagesIndexPromise = null;
-    console.error('Failed to ensure CMS page locale index.', error);
+    logCmsIndexFailure(error);
     return '';
   });
   await cmsPagesIndexPromise;
@@ -157,7 +202,7 @@ async function getLocalizedCmsContent<TContent, TSnapshot extends CmsSnapshot<TC
       : await collection.findOne({ page, locale: DEFAULT_LOCALE });
     return localize(toSnapshot(enDoc).content, requestedLocale);
   } catch (error) {
-    console.error(`Failed to load ${label} CMS content, using defaults.`, error);
+    logCmsFallback(label, error);
     return localize(defaults, requestedLocale);
   }
 }
@@ -1051,6 +1096,11 @@ function localizeAccountContent(content: AccountContent, localeInput?: LocaleInp
     orders: {
       ...content.orders,
       title: 'Historia zamówień',
+      emptyLabel: 'Brak zamówień.',
+      orderNumberLabel: 'Zamówienie',
+      shippingLabel: 'Dostawa',
+      trackingLabel: 'Tracking',
+      itemsLabel: 'Produkty',
       qtyLabel: 'Ilość',
       statuses: {
         pending_payment: 'Oczekuje na płatność',
@@ -1322,7 +1372,7 @@ export const getSiteContent = cache(async (locale?: LocaleInput): Promise<SiteCo
     const collection = await getCmsPagesCollection();
     content = applySharedSiteLogo(content, await readSharedSiteLogo(collection));
   } catch (error) {
-    console.error('Failed to load shared site logo CMS content.', error);
+    logCmsFallback('shared site logo', error);
   }
   return ensureCatalogNavLink(content, locale);
 });

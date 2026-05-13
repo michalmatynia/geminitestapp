@@ -68,6 +68,7 @@ const DatabaseHeaderActions = ({
       Create Backup
     </Button>
     <FileUploadButton
+      id='database-backup-upload'
       onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => {
         handleUpload(files, helpers).catch(() => {});
       }}

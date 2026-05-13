@@ -58,6 +58,7 @@ function CatalogCard({
       category: product.category,
       price: product.price,
       priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
       size: '',
       gradient: product.gradient,
       imageUrl: product.imageUrl,
@@ -165,7 +166,7 @@ function CatalogCard({
         {product.shortName ?? product.name}
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--muted)' }}>
-        {formatPrice(product.price, locale)}
+        {formatPrice(product.price, locale, product.currencyCode)}
       </div>
     </a>
   );

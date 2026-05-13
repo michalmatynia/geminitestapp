@@ -1,5 +1,6 @@
 import type { Order } from '@/lib/orders';
 import { formatPrice } from '@/lib/locales';
+import { getOrderShippingSummary, getOrderTrackingNumber } from '@/lib/order-shipping';
 
 export interface DisplayOrder {
   id: string;
@@ -8,10 +9,15 @@ export interface DisplayOrder {
   total: string;
   shippingLine: string;
   trackingNumber?: string;
-  items: { name: string; qty: number; price: string; imageUrl?: string }[];
+  items: { id: string; name: string; qty: number; price: string; imageUrl?: string }[];
 }
 
+const orderCurrencyCode = (order: Order): string =>
+  order.items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
+
 export function toDisplayOrder(order: Order, locale: string): DisplayOrder {
+  const currencyCode = orderCurrencyCode(order);
+  const displayLocale = locale === 'pl' ? 'pl' : 'en';
   return {
     id: order.orderId,
     date: new Date(order.createdAt).toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
@@ -20,13 +26,14 @@ export function toDisplayOrder(order: Order, locale: string): DisplayOrder {
       year: 'numeric',
     }),
     status: order.status,
-    total: formatPrice(order.total, locale === 'pl' ? 'pl' : 'en'),
-    shippingLine: [order.shippingMethod, order.inpostPoint?.name ?? ''].filter((line) => line.length > 0).join(' / '),
-    trackingNumber: order.inpostShipment?.trackingNumber,
+    total: formatPrice(order.total, displayLocale, currencyCode),
+    shippingLine: getOrderShippingSummary(order, displayLocale, { includeTracking: false }),
+    trackingNumber: getOrderTrackingNumber(order),
     items: order.items.map((item) => ({
+      id: `${item.productId}-${item.slug}-${item.size}`,
       name: item.name,
       qty: item.quantity,
-      price: formatPrice(item.price * item.quantity, locale === 'pl' ? 'pl' : 'en'),
+      price: formatPrice(item.price * item.quantity, displayLocale, item.currencyCode),
       imageUrl: item.imageUrl,
     })),
   };

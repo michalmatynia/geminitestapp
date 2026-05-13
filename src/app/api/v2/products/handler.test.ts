@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  clearProductCreateRuntimeStatuses,
+  getProductCreateRuntimeStatus,
+} from '@/features/products/server/product-create-runtime-status';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import type * as ZodModule from 'zod';
 
@@ -62,6 +66,26 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 
 import { postHandler } from './handler';
 
+const createDeferred = <T,>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (error?: unknown) => void;
+} => {
+  let resolve!: (value: T) => void;
+  let reject!: (error?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+};
+
+const flushRuntimeTasks = (): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+
 const createContext = (userId: string | null = null): ApiHandlerContext => ({
   requestId: 'test-request',
   traceId: 'test-trace',
@@ -78,6 +102,7 @@ describe('products postHandler', () => {
     createProductMock.mockReset();
     formDataToObjectMock.mockReset();
     validateProductCreateMiddlewareMock.mockReset();
+    clearProductCreateRuntimeStatuses();
   });
 
   it('creates the product and invalidates cached product list state', async () => {
@@ -119,5 +144,58 @@ describe('products postHandler', () => {
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(createdProduct);
+  });
+
+  it('queues runtime product creation and exposes completion status', async () => {
+    const createdProduct = {
+      id: 'product-runtime-1',
+      sku: 'KEYCHA9998',
+      catalogId: 'catalog-mentios',
+      catalogs: [{ catalogId: 'catalog-mentios' }],
+    };
+    const deferredCreate = createDeferred<typeof createdProduct>();
+
+    validateProductCreateMiddlewareMock.mockResolvedValue({
+      success: true,
+      data: { sku: 'KEYCHA9998' },
+    });
+    createProductMock.mockReturnValue(deferredCreate.promise);
+
+    const formData = new FormData();
+    formData.append('sku', 'KEYCHA9998');
+    formData.append('catalogIds', 'catalog-mentios');
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products?runtime=1', {
+        method: 'POST',
+        body: formData,
+      }),
+      createContext('user-1')
+    );
+
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toMatchObject({
+      queued: true,
+      requestId: 'test-request',
+      sku: 'KEYCHA9998',
+      status: 'queued',
+    });
+    expect(invalidateAllMock).not.toHaveBeenCalled();
+
+    await flushRuntimeTasks();
+    expect(createProductMock).toHaveBeenCalledTimes(1);
+    const [, submittedOptions]: [FormData, { userId: string }] = createProductMock.mock.calls[0];
+    expect(submittedOptions).toEqual({ userId: 'user-1' });
+
+    deferredCreate.resolve(createdProduct);
+    await deferredCreate.promise;
+    await flushRuntimeTasks();
+
+    expect(invalidateAllMock).toHaveBeenCalledTimes(1);
+    expect(getProductCreateRuntimeStatus('test-request')).toMatchObject({
+      status: 'completed',
+      productId: 'product-runtime-1',
+      productSku: 'KEYCHA9998',
+    });
   });
 });

@@ -271,8 +271,8 @@ export async function postDatabasesPreviewHandler(
     await ensureMongoBackupsDir();
   }
 
-  const requestedApplication = body.application as DatabaseEngineManagedMongoApplication | undefined;
-  const requestedSource = (body.source ?? 'local') as MongoSource;
+  const requestedApplication = body.application;
+  const requestedSource = (body.source ?? 'local');
   const usesManagedCurrent = previewMode === 'current' && requestedApplication !== undefined;
   const target = usesManagedCurrent ? null : resolvePreviewTarget(previewMode, backupName);
   const mongoUri = target?.mongoUri ?? '';

@@ -162,6 +162,9 @@ Example:
 | Start the standalone ecommerce workspace | `npm run dev:ecom` | `npm run dev -w @app/ecom-web` |
 | Build the standalone ecommerce workspace | `npm run build:ecom` | `npm run build -w @app/ecom-web` |
 | Typecheck the standalone ecommerce workspace | `npm run typecheck:ecom` | `npm run typecheck -w @app/ecom-web` |
+| Start the local ecommerce MongoDB | `npm run mongo:ecom:up` | `npm run mongo:ecom:up -w @app/ecom-web` |
+| Check the local ecommerce MongoDB | `npm run mongo:ecom:status` | `npm run mongo:ecom:status -w @app/ecom-web` |
+| Stop the local ecommerce MongoDB | `npm run mongo:ecom:down` | `npm run mongo:ecom:down -w @app/ecom-web` |
 | Start the standalone Database Engine workspace | `npm run dev:database-engine` | `npm run dev -w @app/database-engine-web` |
 | Build the standalone Database Engine workspace | `npm run build:database-engine` | `npm run build -w @app/database-engine-web` |
 | Test the standalone Database Engine workspace | `npm run test:database-engine` | `npm run test -w @app/database-engine-web` |

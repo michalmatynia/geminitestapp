@@ -397,7 +397,7 @@ test.describe('Products Management - Advanced', () => {
     // Then assert the preview appears:
     // await expect(modal.locator('.image-preview').first()).toBeVisible({ timeout: 10000 });
 
-    await expect(modal.locator('text=Image slots')).toBeVisible({ timeout: 10000 });
+    await expect(modal.getByText('View: Upload').first()).toBeVisible({ timeout: 10000 });
     await expect(imageUploadButton).toBeVisible();
 
     // Close modal

@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CHECKOUT_CONTENT_DEFAULTS } from '@/data/checkoutContent';
 import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
+import { getDb } from '@/lib/mongodb';
 import {
   deleteCheckoutContent,
   getCheckoutCmsSnapshot,
@@ -32,7 +33,13 @@ vi.mock('@/lib/mongodb', () => ({
   })),
 }));
 
+const getDbMock = vi.mocked(getDb);
+
 beforeEach(() => {
+  getDbMock.mockReset();
+  getDbMock.mockResolvedValue({
+    collection: () => cmsDbMocks,
+  } as unknown as Awaited<ReturnType<typeof getDb>>);
   cmsDbMocks.find.mockReset();
   cmsDbMocks.findOne.mockReset();
   cmsDbMocks.updateOne.mockReset();
@@ -97,6 +104,25 @@ describe('checkout CMS localization', () => {
     expect(content.shippingTitle).toBe('Własny tytuł dostawy');
     expect(cmsDbMocks.findOne).toHaveBeenCalledWith({ page: 'checkout', locale: 'pl' });
     expect(cmsDbMocks.findOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to default checkout content without console.error when ecommerce MongoDB is offline', async () => {
+    const error = new Error('connect ECONNREFUSED 127.0.0.1:27021');
+    error.name = 'MongoServerSelectionError';
+    getDbMock.mockRejectedValueOnce(error);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      const content = await getCheckoutContent();
+
+      expect(content).toBe(CHECKOUT_CONTENT_DEFAULTS);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('npm run mongo:ecom:up'));
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
   });
 
   it('pre-populates missing Polish snapshots from the localized English fallback', async () => {

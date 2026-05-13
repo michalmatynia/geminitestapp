@@ -32,7 +32,7 @@ type KangurMobileDevelopmentStorageMode =
 
 type CreateMobileDevelopmentKangurStorageOptions = {
   mode?: KangurMobileDevelopmentStorageMode;
-  nativeFileSystem?: any;
+  nativeFileSystem?: unknown;
   nativeStorageNamespace?: string;
 };
 
@@ -45,8 +45,7 @@ const getSharedMemoryStorage = (): KangurClientStorageAdapter => {
 
 const isBrowserStorageAvailable = (): boolean =>
   typeof globalThis !== 'undefined' &&
-  'localStorage' in globalThis &&
-  globalThis.localStorage !== null;
+  'localStorage' in globalThis;
 
 const createBrowserBackedMobileStorage = (): KangurClientStorageAdapter => {
   const listeners = new Set<(change: { key: string | null; value: string | null }) => void>();
@@ -183,7 +182,7 @@ const createNativeFileBackedMobileStorage = (
 
 const loadExpoFileSystem = (): KangurNativeFileSystemLike | null => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const expoFileSystem = require('expo-file-system');
     const normalizedModule =
       expoFileSystem?.default ?? expoFileSystem?.FileSystem ?? expoFileSystem;

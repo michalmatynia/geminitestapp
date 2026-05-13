@@ -1,0 +1,368 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]: Initialising — 建築知能
+    - generic [ref=e6]: NaN%
+  - navigation [ref=e7]:
+    - generic [ref=e8]:
+      - link "架構 ARCHI · AI" [ref=e9] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e10]: 架構
+        - generic [ref=e12]: ARCHI · AI
+      - generic [ref=e13]: Systems Operational
+      - list [ref=e15]:
+        - listitem [ref=e16]:
+          - link "Philosophy" [ref=e17] [cursor=pointer]:
+            - /url: "#philosophy"
+        - listitem [ref=e18]:
+          - link "Services" [ref=e19] [cursor=pointer]:
+            - /url: "#services"
+        - listitem [ref=e20]:
+          - link "Process" [ref=e21] [cursor=pointer]:
+            - /url: "#process"
+        - listitem [ref=e22]:
+          - link "Work" [ref=e23] [cursor=pointer]:
+            - /url: "#work"
+      - button "Toggle theme" [ref=e24]:
+        - generic [ref=e25]: Daily
+      - link "Request Access" [ref=e28]:
+        - /url: "#cta"
+  - generic [ref=e29]:
+    - img
+    - generic: 建築
+    - generic [ref=e30]:
+      - generic [ref=e31]: "01"
+      - generic [ref=e32]:
+        - paragraph [ref=e33]: AI for the Built Environment
+        - heading "Architecture reimagined through intelligence." [level=1] [ref=e34]:
+          - text: Architecture
+          - emphasis [ref=e35]: reimagined
+          - text: through intelligence.
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - paragraph [ref=e38]: We automate the repetitive. We accelerate the creative. Our AI integrates seamlessly into architectural workflows — from code compliance to generative massing — processing thousands of drawings in hours, not months.
+            - generic [ref=e39]:
+              - link "Explore systems" [ref=e40]:
+                - /url: "#services"
+                - generic [ref=e41]: Explore systems
+                - img [ref=e42]
+              - link "Case studies" [ref=e44]:
+                - /url: "#work"
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - generic [ref=e47]: 0+
+              - generic [ref=e48]: Projects automated
+            - generic [ref=e49]:
+              - generic [ref=e50]: 0%
+              - generic [ref=e51]: Time reduction
+            - generic [ref=e52]:
+              - generic [ref=e53]: "0.4"
+              - generic [ref=e54]: Accuracy %
+    - generic [ref=e55]:
+      - generic [ref=e56]: Tokyo · London · New York · Berlin
+      - generic [ref=e57]:
+        - text: Scroll to explore
+        - img [ref=e58]
+  - generic [ref=e62]:
+    - generic [ref=e63]: "02"
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - paragraph [ref=e66]: Computational Design
+        - heading "Every line drawn by intelligence." [level=2] [ref=e67]:
+          - text: Every line drawn
+          - text: by
+          - emphasis [ref=e68]: intelligence.
+        - paragraph [ref=e69]: Our AI parses architectural intent from natural language, existing drawings, and spatial constraints — generating precise, code-compliant building documentation at a speed no human drafter can match.
+        - link "See how it works" [ref=e70]:
+          - /url: "#services"
+          - text: See how it works
+          - img [ref=e71]
+      - img "Architectural floor plan" [ref=e74]:
+        - generic [ref=e78]: 18 000
+        - generic [ref=e79]: 12 000
+        - generic [ref=e80]: LIVING
+        - generic [ref=e81]: BEDROOM
+        - generic [ref=e82]: STUDIO
+        - generic [ref=e83]: AMENITY
+        - generic [ref=e92]: "N"
+        - generic [ref=e94]: ARCHI.AI SYSTEMS
+        - generic [ref=e95]: SHEET A-001 · GROUND FLOOR
+  - generic [ref=e98]:
+    - generic [ref=e99]:
+      - paragraph [ref=e100]: Philosophy
+      - heading "The philosophy of negative space." [level=2] [ref=e101]:
+        - text: The philosophy
+        - text: of
+        - emphasis [ref=e102]: negative space.
+      - paragraph [ref=e103]:
+        - text: In Japanese aesthetics,
+        - emphasis [ref=e104]: ma
+        - text: (間) is the meaningful pause — the void that gives form its power. Our AI finds the
+        - emphasis [ref=e105]: ma
+        - text: "buried in every practice: the inefficiencies, the gaps, the invisible friction."
+      - paragraph [ref=e106]: We eliminate what should not exist. What remains is pure design.
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - generic [ref=e109]: "01"
+          - generic [ref=e110]:
+            - generic [ref=e111]: Reduce, then refine
+            - paragraph [ref=e112]: Remove every redundant process before optimising what remains. Complexity is never a solution.
+        - generic [ref=e113]:
+          - generic [ref=e114]: "02"
+          - generic [ref=e115]:
+            - generic [ref=e116]: Precision over speed
+            - paragraph [ref=e117]: Trained on 14 million building code clauses across 38 jurisdictions. Accuracy is non-negotiable.
+        - generic [ref=e118]:
+          - generic [ref=e119]: "03"
+          - generic [ref=e120]:
+            - generic [ref=e121]: Augment, never replace
+            - paragraph [ref=e122]: The architect's eye is irreplaceable. We automate the administrative so creativity operates unencumbered.
+    - generic [ref=e123]:
+      - generic [ref=e124]: 間
+      - generic [ref=e125]: MA / Negative Space
+  - generic [ref=e127]:
+    - generic [ref=e128]:
+      - generic [ref=e129]: "03"
+      - generic [ref=e130]:
+        - paragraph [ref=e131]: AI Systems
+        - heading "What we automate." [level=2] [ref=e132]:
+          - text: What we
+          - emphasis [ref=e133]: automate.
+    - generic [ref=e136]:
+      - generic [ref=e137]:
+        - paragraph [ref=e138]: S — 01
+        - img [ref=e139]
+        - heading "Compliance Intelligence" [level=3] [ref=e142]:
+          - text: Compliance
+          - text: Intelligence
+        - paragraph [ref=e143]: Automated cross-referencing against regulations in any jurisdiction. Upload drawings, receive a full compliance report in minutes.
+        - link "Learn more" [ref=e144] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e145]
+      - generic [ref=e147]:
+        - paragraph [ref=e148]: S — 02
+        - img [ref=e149]
+        - heading "Generative Massing" [level=3] [ref=e151]:
+          - text: Generative
+          - text: Massing
+        - paragraph [ref=e152]: Input site constraints and programme. Receive thousands of optimised massing options, ranked by buildability and cost efficiency.
+        - link "Learn more" [ref=e153] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e154]
+      - generic [ref=e156]:
+        - paragraph [ref=e157]: S — 03
+        - img [ref=e158]
+        - heading "Document Automation" [level=3] [ref=e161]:
+          - text: Document
+          - text: Automation
+        - paragraph [ref=e162]: Transform concept sketches into production drawing sets. AI drafts plans, sections and elevations with correct weights and annotations.
+        - link "Learn more" [ref=e163] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e164]
+      - generic [ref=e166]:
+        - paragraph [ref=e167]: S — 04
+        - img [ref=e168]
+        - heading "Project Intelligence" [level=3] [ref=e172]:
+          - text: Project
+          - text: Intelligence
+        - paragraph [ref=e173]: Real-time budget forecasting and risk identification. An AI project manager that never sleeps and never misses a deadline.
+        - link "Learn more" [ref=e174] [cursor=pointer]:
+          - /url: "#"
+          - text: Learn more
+          - img [ref=e175]
+  - generic [ref=e178]:
+    - generic [ref=e179]:
+      - generic [ref=e180]: "04"
+      - generic [ref=e181]:
+        - paragraph [ref=e182]: Integration
+        - heading "How it works." [level=2] [ref=e183]:
+          - text: How it
+          - emphasis [ref=e184]: works.
+    - generic [ref=e187]:
+      - generic [ref=e188]:
+        - paragraph [ref=e189]: "01"
+        - heading "Audit" [level=3] [ref=e190]
+        - paragraph [ref=e191]: We map your current workflow. Every touchpoint, tool, and hour of manual effort. The picture is usually striking.
+      - generic [ref=e192]:
+        - paragraph [ref=e193]: "02"
+        - heading "Configure" [level=3] [ref=e194]
+        - paragraph [ref=e195]: Our models are trained on your project typology, preferred standards, and jurisdictional requirements. Custom, not generic.
+      - generic [ref=e196]:
+        - paragraph [ref=e197]: "03"
+        - heading "Integrate" [level=3] [ref=e198]
+        - paragraph [ref=e199]: Plugs directly into Revit, AutoCAD, ArchiCAD, Rhino. No workflow disruption. No retraining. Just new capability.
+      - generic [ref=e200]:
+        - paragraph [ref=e201]: "04"
+        - heading "Optimise" [level=3] [ref=e202]
+        - paragraph [ref=e203]: Each project cycle the system learns your preferences and standards. Performance improves continuously.
+  - generic [ref=e208]:
+    - generic [ref=e209]:
+      - generic [ref=e210]:
+        - generic [ref=e211]: "0"
+        - generic [ref=e212]: +
+      - generic [ref=e213]:
+        - text: Projects processed
+        - text: through AI systems
+    - generic [ref=e214]:
+      - generic [ref=e215]:
+        - generic [ref=e216]: "0"
+        - generic [ref=e217]: "%"
+      - generic [ref=e218]:
+        - text: Average reduction
+        - text: in documentation time
+    - generic [ref=e219]:
+      - generic [ref=e220]:
+        - generic [ref=e221]: "0"
+        - generic [ref=e222]: .4%
+      - generic [ref=e223]:
+        - text: Compliance check
+        - text: accuracy rate
+    - generic [ref=e224]:
+      - generic [ref=e226]: "0"
+      - generic [ref=e227]:
+        - text: Jurisdictions with
+        - text: active regulation models
+  - generic [ref=e229]:
+    - generic [ref=e230]:
+      - generic [ref=e231]: "05"
+      - generic [ref=e232]:
+        - paragraph [ref=e233]: Case Studies
+        - heading "Selected work." [level=2] [ref=e234]:
+          - text: Selected
+          - emphasis [ref=e235]: work.
+    - generic [ref=e238]:
+      - generic [ref=e239]:
+        - generic [ref=e240]:
+          - paragraph [ref=e241]: Mixed-Use Development
+          - heading "Shibuya Crossing Tower — Compliance at Scale" [level=3] [ref=e242]
+          - paragraph [ref=e243]: A 42-storey mixed-use development in Tokyo required simultaneous compliance with 14 overlapping regulatory frameworks. Our AI processed 8,000 drawings in 4 hours — a task that would have taken a team of 6 two months.
+        - generic [ref=e244]:
+          - img "Tower elevation" [ref=e246]:
+            - generic [ref=e249]: 42F
+            - generic [ref=e250]: GL±0
+            - generic [ref=e251]: 168 000
+          - generic [ref=e252]:
+            - generic [ref=e253]:
+              - generic [ref=e254]: Location
+              - generic [ref=e255]: Tokyo, JP
+            - generic [ref=e256]:
+              - generic [ref=e257]: Time saved
+              - generic [ref=e258]: ~320 hrs
+            - generic [ref=e259]:
+              - generic [ref=e260]: Drawings
+              - generic [ref=e261]: 8,000
+            - generic [ref=e262]:
+              - generic [ref=e263]: System
+              - generic [ref=e264]: Compliance AI
+      - generic [ref=e265]:
+        - generic [ref=e266]:
+          - paragraph [ref=e267]: Cultural Institution
+          - heading "Barbican Arts Centre — Generative Refurbishment" [level=3] [ref=e268]
+          - paragraph [ref=e269]: Mapping 1,200 existing units and generating 4,000 refurbishment massing options — optimised against acoustic performance, listed building constraints, and energy modelling targets.
+        - generic [ref=e270]:
+          - img "Site plan" [ref=e272]:
+            - generic [ref=e279]: COURT
+            - generic [ref=e280]: TOWER A
+            - generic [ref=e281]: TOWER B
+            - generic [ref=e282]: PROPOSED
+            - generic [ref=e287]: "N"
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - generic [ref=e290]: Location
+              - generic [ref=e291]: London, UK
+            - generic [ref=e292]:
+              - generic [ref=e293]: Options
+              - generic [ref=e294]: 4,000
+            - generic [ref=e295]:
+              - generic [ref=e296]: Units mapped
+              - generic [ref=e297]: 1,200
+            - generic [ref=e298]:
+              - generic [ref=e299]: System
+              - generic [ref=e300]: Gen. Massing
+  - generic [ref=e303]:
+    - generic [ref=e304]: "\""
+    - generic [ref=e305]:
+      - blockquote [ref=e306]: The measure of a great building is not what it shows, but what it eliminates. Our AI holds that same standard.
+      - paragraph [ref=e307]: Archi.AI Design Principles, 2024
+  - generic [ref=e312]:
+    - generic [ref=e313]: 開始
+    - heading "Ready to eliminate the unnecessary?" [level=2] [ref=e314]:
+      - text: Ready to eliminate
+      - text: the
+      - emphasis [ref=e315]: unnecessary?
+    - generic [ref=e316]:
+      - textbox "Email address" [ref=e317]:
+        - /placeholder: your@practice.com
+      - button "Request access" [ref=e318]
+    - paragraph [ref=e319]: No obligation. Pilot programme places limited to 12 practices per quarter.
+  - contentinfo [ref=e320]:
+    - generic [ref=e321]:
+      - generic [ref=e322]:
+        - generic [ref=e323]:
+          - generic [ref=e324]:
+            - text: 架構
+            - text: AI
+          - paragraph [ref=e326]: Computational Architecture Intelligence
+          - paragraph [ref=e327]:
+            - text: Marunouchi Building, Level 12
+            - text: 2-4-1 Marunouchi, Chiyoda
+            - text: Tokyo, 100-6312, Japan
+        - generic [ref=e328]:
+          - paragraph [ref=e329]: Systems
+          - list [ref=e330]:
+            - listitem [ref=e331]:
+              - link "Compliance Intelligence" [ref=e332] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e333]:
+              - link "Generative Massing" [ref=e334] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e335]:
+              - link "Document Automation" [ref=e336] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e337]:
+              - link "Project Intelligence" [ref=e338] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e339]:
+              - link "API Access" [ref=e340] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e341]:
+          - paragraph [ref=e342]: Studio
+          - list [ref=e343]:
+            - listitem [ref=e344]:
+              - link "Philosophy" [ref=e345] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e346]:
+              - link "Case Studies" [ref=e347] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e348]:
+              - link "Research" [ref=e349] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e350]:
+              - link "Careers" [ref=e351] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e352]:
+          - paragraph [ref=e353]: Contact
+          - list [ref=e354]:
+            - listitem [ref=e355]:
+              - link "hello@archi.ai" [ref=e356] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e357]:
+              - link "+81 3 0000 0000" [ref=e358] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e359]:
+              - link "Tokyo Office" [ref=e360] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e361]:
+              - link "London Studio" [ref=e362] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e363]:
+        - paragraph [ref=e364]: © 2025 ARCHI.AI — 建築知能株式会社
+        - generic [ref=e365]:
+          - link "Privacy" [ref=e366] [cursor=pointer]:
+            - /url: "#"
+          - link "Terms" [ref=e367] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=e368] [cursor=pointer]:
+            - /url: "#"

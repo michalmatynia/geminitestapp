@@ -308,14 +308,16 @@ Checkout and orders:
 5. If PayU rejects the BLIK code or the gateway call fails after the local order
    is created, that order is marked `cancelled`. If PayU accepts the request,
    the route stores `payuOrderId` and the client polls `/api/orders/[orderId]/status`.
-6. The PayU webhook only promotes `pending_payment` orders to `processing` on
+6. Direct customer order creation through `POST /api/orders` is retired and
+   returns `410`; customer orders must be created through the BLIK payment route.
+7. The PayU webhook only promotes `pending_payment` orders to `processing` on
    `COMPLETED`, queues the confirmation email once, and creates an InPost
    shipment when applicable. Late `PENDING`, `CANCELED`, or repeated
    `COMPLETED` events do not downgrade completed orders.
-7. InPost tracking webhooks update order status to `in-transit`, `delivered`,
+8. InPost tracking webhooks update order status to `in-transit`, `delivered`,
    or `cancelled`. Late conflicting terminal events are recorded as stale
    tracking history without flipping a delivered/cancelled order.
-8. Signed-in customers see orders under `/account?tab=orders`; guests can use
+9. Signed-in customers see orders under `/account?tab=orders`; guests can use
    `/order-status?order=ARC-...`. Public tracking output exposes only safe
    `http`/`https` tracking links.
 

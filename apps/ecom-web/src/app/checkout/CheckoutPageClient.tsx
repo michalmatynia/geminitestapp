@@ -404,7 +404,10 @@ function ensureInpostGeowidgetAssets(): Promise<void> {
     script.src = 'https://geowidget.inpost.pl/inpost-geowidget.js';
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('InPost Geowidget failed to load.'));
+    script.onerror = () => {
+      inpostGeowidgetPromise = null;
+      reject(new Error('InPost Geowidget failed to load.'));
+    };
     document.body.appendChild(script);
   });
 

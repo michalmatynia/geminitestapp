@@ -50,13 +50,16 @@ export const deleteDraftAvatarThumbnail = async (
   }
 };
 
-export const clearMoodImage = async (
-  moodId: AgentPersonaMoodId,
-  currentMood: AgentPersonaMood | null,
-  updateMood: MoodEditorUpdateMoodFn,
-  handleDeleteAvatar: MoodEditorDeleteAvatarFileFn,
-  handleDeleteThumbnail: MoodEditorDeleteAvatarThumbnailFn
-): Promise<void> => {
+export type ClearMoodImageInput = {
+  moodId: AgentPersonaMoodId;
+  currentMood: AgentPersonaMood | null;
+  updateMood: MoodEditorUpdateMoodFn;
+  handleDeleteAvatar: MoodEditorDeleteAvatarFileFn;
+  handleDeleteThumbnail: MoodEditorDeleteAvatarThumbnailFn;
+};
+
+export const clearMoodImage = async (input: ClearMoodImageInput): Promise<void> => {
+  const { moodId, currentMood, updateMood, handleDeleteAvatar, handleDeleteThumbnail } = input;
   if (currentMood === null) {
     return;
   }
@@ -77,14 +80,18 @@ export const clearMoodImage = async (
   await handleDeleteThumbnail(currentMood.avatarThumbnailRef);
 };
 
-export const setMoodSvgContent = async (
-  moodId: AgentPersonaMoodId,
-  svgContent: string,
-  currentMood: AgentPersonaMood | null,
-  updateMood: MoodEditorUpdateMoodFn,
-  handleDeleteAvatar: MoodEditorDeleteAvatarFileFn,
-  handleDeleteThumbnail: MoodEditorDeleteAvatarThumbnailFn
-): Promise<void> => {
+export type SetMoodSvgContentInput = {
+  moodId: AgentPersonaMoodId;
+  svgContent: string;
+  currentMood: AgentPersonaMood | null;
+  updateMood: MoodEditorUpdateMoodFn;
+  handleDeleteAvatar: MoodEditorDeleteAvatarFileFn;
+  handleDeleteThumbnail: MoodEditorDeleteAvatarThumbnailFn;
+};
+
+export const setMoodSvgContent = async (input: SetMoodSvgContentInput): Promise<void> => {
+  const { moodId, svgContent, currentMood, updateMood, handleDeleteAvatar, handleDeleteThumbnail } =
+    input;
   if (currentMood === null) {
     return;
   }

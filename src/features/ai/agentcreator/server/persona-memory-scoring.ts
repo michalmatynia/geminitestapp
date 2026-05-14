@@ -64,11 +64,14 @@ function resolveMatchScore(
     mood: AgentPersonaMoodId | null;
   }
 ): number {
-  let score = 0;
-  if (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) score += 8;
-  if (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) score += 12;
-  if (filters.mood !== null && item.moodHints.includes(filters.mood)) score += 10;
-  return score;
+  const tagScore = (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) ? 8 : 0;
+  const topicScore = (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) ? 12 : 0;
+  const moodScore = (filters.mood !== null && item.moodHints.includes(filters.mood)) ? 10 : 0;
+  return tagScore + topicScore + moodScore;
+}
+
+function resolveTermScore(item: PersonaMemoryRecord, searchTerms: string[]): number {
+  return countMatchingSearchTerms(item, searchTerms) * 10;
 }
 
 export const scorePersonaMemoryRecord = (
@@ -80,7 +83,7 @@ export const scorePersonaMemoryRecord = (
     searchTerms: string[];
   }
 ): number => {
-  const termScore = countMatchingSearchTerms(item, filters.searchTerms) * 10;
+  const termScore = resolveTermScore(item, filters.searchTerms);
   const matchScore = resolveMatchScore(item, filters);
   const typeScore = item.recordType === 'memory_entry' ? 1 : 0;
 

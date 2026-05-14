@@ -3,15 +3,15 @@
 import { createContext, useContext } from 'react';
 import type { useLiveScripterPanelModel } from './useLiveScripterPanelModel';
 
-type Model = ReturnType<typeof useLiveScripterPanelModel>;
+export type LiveScripterPanelModel = ReturnType<typeof useLiveScripterPanelModel>;
 
-const LiveScripterPanelContext = createContext<Model | undefined>(undefined);
+const LiveScripterPanelContext = createContext<LiveScripterPanelModel | undefined>(undefined);
 
 export function LiveScripterPanelProvider({
   model,
   children,
 }: {
-  model: Model;
+  model: LiveScripterPanelModel;
   children: React.ReactNode;
 }) {
   return (
@@ -21,7 +21,7 @@ export function LiveScripterPanelProvider({
   );
 }
 
-export function useLiveScripterPanelContext(): Model {
+export function useLiveScripterPanelContext(): LiveScripterPanelModel {
   const context = useContext(LiveScripterPanelContext);
   if (!context) {
     throw new Error(

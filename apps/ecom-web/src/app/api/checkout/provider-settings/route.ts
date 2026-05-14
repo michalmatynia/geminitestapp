@@ -25,6 +25,18 @@ function envPayPalMode(): 'sandbox' | 'live' {
   return process.env['PAYPAL_MODE']?.trim() === 'live' ? 'live' : 'sandbox';
 }
 
+function envBankTransferDetails(): { enabled: boolean; accountName: string; iban: string; bic: string; bankName: string } {
+  const iban = process.env['BANK_TRANSFER_IBAN']?.trim() ?? '';
+  const accountName = process.env['BANK_TRANSFER_ACCOUNT_NAME']?.trim() ?? '';
+  return {
+    enabled: process.env['BANK_TRANSFER_ENABLED']?.trim() === 'true' || (iban !== '' && accountName !== ''),
+    accountName,
+    iban,
+    bic: process.env['BANK_TRANSFER_BIC']?.trim() ?? '',
+    bankName: process.env['BANK_TRANSFER_BANK_NAME']?.trim() ?? '',
+  };
+}
+
 function publicInpostSettings(settings: ProviderSettings | null): PublicInpostSettings {
   if (settings === null) return { enabled: true, geowidgetToken: envGeowidgetToken() };
   const inpost = settings.shipping.inpost;
@@ -40,20 +52,24 @@ export async function GET(): Promise<NextResponse> {
   const settings = await readEcommerceProviderSettings();
   const inpost = publicInpostSettings(settings);
 
+  const envStripeKey = envStripePublishableKey();
   const stripeEnabled = settings !== null
     ? settings.payment.stripe.enabled
-    : false;
+    : envStripeKey !== '';
   const stripePublishableKey = stripeEnabled
-    ? (settings?.payment.stripe.publishableKey.trim() || envStripePublishableKey())
+    ? (settings?.payment.stripe.publishableKey.trim() || envStripeKey)
     : '';
 
+  const envPayPalId = envPayPalClientId();
   const paypalEnabled = settings !== null
     ? settings.payment.paypal.enabled
-    : false;
+    : envPayPalId !== '';
   const paypalClientId = paypalEnabled
-    ? (settings?.payment.paypal.clientId.trim() || envPayPalClientId())
+    ? (settings?.payment.paypal.clientId.trim() || envPayPalId)
     : '';
   const paypalMode: 'sandbox' | 'live' = settings?.payment.paypal.mode ?? envPayPalMode();
+
+  const bankTransfer = envBankTransferDetails();
 
   return NextResponse.json(
     {
@@ -69,6 +85,13 @@ export async function GET(): Promise<NextResponse> {
           enabled: paypalEnabled,
           clientId: paypalClientId,
           mode: paypalMode,
+        },
+        bankTransfer: {
+          enabled: bankTransfer.enabled,
+          accountName: bankTransfer.accountName,
+          iban: bankTransfer.iban,
+          bic: bankTransfer.bic,
+          bankName: bankTransfer.bankName,
         },
       },
       shipping: {

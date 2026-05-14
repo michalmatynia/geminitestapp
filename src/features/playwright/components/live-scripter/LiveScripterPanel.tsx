@@ -7,7 +7,7 @@ import { LiveScripterPreview } from './LiveScripterPreview';
 import { LiveScripterScopeControls } from './LiveScripterScopeControls';
 import { LiveScripterUrlBar } from './LiveScripterUrlBar';
 import { useLiveScripterPanelModel } from './useLiveScripterPanelModel';
-import { LiveScripterPanelProvider } from './LiveScripterPanelContext';
+import { LiveScripterPanelProvider, useLiveScripterPanelContext } from './LiveScripterPanelContext';
 
 type Props = {
   initialUrl?: string | null;

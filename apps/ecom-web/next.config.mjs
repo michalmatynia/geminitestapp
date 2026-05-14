@@ -123,6 +123,8 @@ const nextConfig = {
       // Main app served locally in development
       { protocol: 'http',  hostname: 'localhost', port: '3000', pathname: '/api/files/**' },
       { protocol: 'http',  hostname: 'localhost', port: '3001', pathname: '/api/files/**' },
+      // BaseLinker CDN image URLs are used by older synced product records.
+      { protocol: 'https', hostname: 'upload.cdn.baselinker.com', pathname: '/products/**' },
       // Any HTTPS host (covers staging / production deployments)
       { protocol: 'https', hostname: '**',        pathname: '/api/files/**' },
     ],

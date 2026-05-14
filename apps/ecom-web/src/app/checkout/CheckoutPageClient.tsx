@@ -49,6 +49,15 @@ type PaymentProviderAvailability = {
   payu?: boolean;
   stripe?: boolean;
   paypal?: boolean;
+  bankTransfer?: boolean;
+};
+
+type BankTransferPublicSettings = {
+  enabled: boolean;
+  accountName: string;
+  iban: string;
+  bic: string;
+  bankName: string;
 };
 
 type StripePublicSettings = {
@@ -62,7 +71,7 @@ type PayPalPublicSettings = {
   mode: 'sandbox' | 'live';
 };
 
-type ActivePaymentMethod = 'blik' | 'stripe' | 'paypal';
+type ActivePaymentMethod = 'blik' | 'stripe' | 'paypal' | 'bank_transfer';
 
 const roundMoneyAmount = (value: number): number => {
   if (!Number.isFinite(value)) return 0;
@@ -222,24 +231,32 @@ function StepProgress({
 }
 
 // eslint-disable-next-line complexity
-function FormInput({ field, value, error, onChange }: {
+function FormInput({ field, value, error, onChange, locale }: {
   field: CheckoutFieldContent;
   value: string;
   error?: string;
   onChange: (id: string, v: string) => void;
+  locale?: EcomLocale;
 }): JSX.Element {
   const hasError = isNonEmptyString(error);
   const hasMonospace = isTruthyBoolean(field.monospace);
   const isHalf = isTruthyBoolean(field.half);
   const inputType = field.type ?? 'text';
   const describedBy = hasError ? `${field.id}-error` : undefined;
-  const label = field.id === 'phone'
+  const isPhone = field.id === 'phone';
+  const label = isPhone
     ? field.label.replace(/\s*\((optional|opcjonalnie)\)\s*$/i, '')
     : field.label;
+  const optionalSuffix = locale === 'pl' ? 'opcjonalnie' : 'optional';
   return (
     <div className={isHalf ? 'flex-1 min-w-0' : 'w-full'}>
       <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
         {label}
+        {isPhone && (
+          <span style={{ color: 'var(--muted)', fontWeight: 300, marginLeft: '0.4em' }}>
+            ({optionalSuffix})
+          </span>
+        )}
       </label>
       <input
         type={inputType}
@@ -364,7 +381,7 @@ function FieldRows({
   const renderField = (field: CheckoutFieldContent): JSX.Element => (
     field.id === 'country'
       ? <CountrySelect field={field} value={values[field.id] ?? ''} error={errors[field.id]} locale={locale} onChange={onChange} />
-      : <FormInput field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} />
+      : <FormInput field={field} value={values[field.id] ?? ''} error={errors[field.id]} onChange={onChange} locale={locale} />
   );
 
   return (
@@ -495,6 +512,23 @@ function readPublicPaymentProviderAvailability(data: unknown): PaymentProviderAv
     payu: readPaymentProviderBool(payment, 'payu'),
     stripe: readPaymentProviderBool(payment, 'stripe'),
     paypal: readPaymentProviderBool(payment, 'paypal'),
+    bankTransfer: readPaymentProviderBool(payment, 'bankTransfer'),
+  };
+}
+
+function readPublicBankTransferSettings(data: unknown): BankTransferPublicSettings {
+  const empty: BankTransferPublicSettings = { enabled: false, accountName: '', iban: '', bic: '', bankName: '' };
+  if (!isPlainRecord(data)) return empty;
+  const payment = data['payment'];
+  if (!isPlainRecord(payment)) return empty;
+  const bt = payment['bankTransfer'];
+  if (!isPlainRecord(bt)) return empty;
+  return {
+    enabled: bt['enabled'] === true,
+    accountName: typeof bt['accountName'] === 'string' ? bt['accountName'] : '',
+    iban: typeof bt['iban'] === 'string' ? bt['iban'] : '',
+    bic: typeof bt['bic'] === 'string' ? bt['bic'] : '',
+    bankName: typeof bt['bankName'] === 'string' ? bt['bankName'] : '',
   };
 }
 
@@ -608,11 +642,13 @@ function InpostPointSelector({
 }): JSX.Element {
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const [loadError, setLoadError] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
   const token = geowidgetToken.trim();
   const hasWidgetToken = Boolean(token);
 
   useEffect(() => {
-    if (!hasWidgetToken || !widgetRef.current) return undefined;
+    // widgetRef.current is only set when the modal is open and the div is in the DOM.
+    if (!hasWidgetToken || !modalOpen || !widgetRef.current) return undefined;
 
     let active = true;
     const container = widgetRef.current;
@@ -621,33 +657,32 @@ function InpostPointSelector({
     let widget: HTMLElement | null = null;
     const handlePointPayload = (payload: unknown): void => {
       const normalized = normalizeGeowidgetPoint(payload);
-      if (normalized) onSelect(normalized);
+      if (normalized) { onSelect(normalized); setModalOpen(false); }
     };
     const handleSelect = (event: Event): void => {
       const normalized = normalizeGeowidgetEventPoint(event);
-      if (normalized) onSelect(normalized);
+      if (normalized) { onSelect(normalized); setModalOpen(false); }
     };
     const handleInit = (event: Event): void => {
       const registerPointSelected = readGeowidgetPointSelectedRegistrar(event);
       if (registerPointSelected !== null) registerPointSelected(handlePointPayload);
+    };
 
-      // Inject CSS into the widget's shadow DOM to prevent the Leaflet gesture
-      // overlay from blocking pointer events. The overlay shows ⌘+scroll hint
-      // during page scroll and sits on top of the map with pointer-events: auto,
-      // which intercepts clicks on locker markers.
-      if (widget) {
-        const shadow = widget.shadowRoot;
-        if (shadow && !shadow.getElementById('gesture-overlay-fix')) {
-          const style = document.createElement('style');
-          style.id = 'gesture-overlay-fix';
-          style.textContent = [
-            '.leaflet-gesture-handling-warning { pointer-events: none !important; }',
-            '.leaflet-gesture-handling-warning::after { pointer-events: none !important; }',
-          ].join(' ');
-          shadow.appendChild(style);
-        }
+    // Intercept wheel events in the capture phase on the container div.
+    // The wheel event is composed:true, so it always bubbles from inside the
+    // shadow DOM (or custom element internals) to the light DOM. The capture
+    // phase here fires before any listener inside the widget — including
+    // Leaflet's gesture-handling overlay. When no modifier key is held the
+    // user wants to scroll the page, so we stop the event and forward it.
+    // Ctrl/Meta+wheel falls through so map zoom still works.
+    const handleContainerWheel = (e: Event): void => {
+      const we = e as WheelEvent;
+      if (!we.ctrlKey && !we.metaKey) {
+        we.stopImmediatePropagation();
+        window.scrollBy({ top: we.deltaY, left: we.deltaX, behavior: 'instant' });
       }
     };
+    container.addEventListener('wheel', handleContainerWheel, { capture: true });
 
     setLoadError('');
     ensureInpostGeowidgetAssets()
@@ -666,7 +701,7 @@ function InpostPointSelector({
         const origin = [postcode, city].filter(Boolean).join(' ');
         if (origin) widget.setAttribute('origin', origin);
         widget.style.display = 'block';
-        widget.style.height = '560px';
+        widget.style.height = '100%';
         widget.style.width = '100%';
         widget.addEventListener(initEventName, handleInit, { once: true });
         widget.addEventListener(eventName, handleSelect);
@@ -679,18 +714,24 @@ function InpostPointSelector({
 
     return (): void => {
       active = false;
+      container.removeEventListener('wheel', handleContainerWheel, { capture: true });
       document.removeEventListener(eventName, handleSelect);
       widget?.removeEventListener(initEventName, handleInit);
       widget?.removeEventListener(eventName, handleSelect);
       container.replaceChildren();
     };
-  }, [hasWidgetToken, locale, onSelect, token, city, postcode]);
+  }, [hasWidgetToken, modalOpen, locale, onSelect, token, city, postcode]);
 
   const selectedAddress = [
     point?.addressLine1,
     point?.addressLine2,
     `${point?.postCode ?? ''} ${point?.city ?? ''}`.trim(),
   ].filter((value): value is string => value !== '').join(', ');
+
+  const handleModalSelect = (selected: InpostPoint | null): void => {
+    onSelect(selected);
+    if (selected !== null) setModalOpen(false);
+  };
 
   return (
     <div
@@ -700,61 +741,58 @@ function InpostPointSelector({
         background: 'var(--surface)',
       }}
     >
-      <div className='flex items-start justify-between gap-4 mb-3'>
-        <div>
-          <div className='type-label mb-1' style={{ color: 'var(--accent)' }}>
-            {locale === 'pl' ? 'Paczkomat InPost' : 'InPost pickup point'}
-          </div>
-          <p className='type-label' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
-            {locale === 'pl'
-              ? 'Wybierz paczkomat dla tej przesyłki.'
-              : 'Choose the parcel locker for this shipment.'}
-          </p>
-        </div>
-        {point !== null && (
-          <button
-            type='button'
-            className='type-label hover:text-[var(--fg)] transition-colors'
-            style={{ color: 'var(--muted)', flexShrink: 0 }}
-            onClick={() => onSelect(null)}
-          >
-            {locale === 'pl' ? 'Zmień' : 'Change'}
-          </button>
-        )}
+      <div className='type-label mb-1' style={{ color: 'var(--accent)' }}>
+        {locale === 'pl' ? 'Paczkomat InPost' : 'InPost pickup point'}
       </div>
 
-      {point && (
-        <div className='mb-4 p-3' style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--fg)', letterSpacing: '0.08em' }}>
-            {point.name}
-          </div>
-          {selectedAddress !== '' && (
-            <div className='type-label mt-1' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
-              {selectedAddress}
+      {point ? (
+        <div className='mt-3'>
+          <div className='p-3 mb-3' style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--fg)', letterSpacing: '0.08em' }}>
+              {point.name}
             </div>
-          )}
+            {selectedAddress !== '' && (
+              <div className='type-label mt-1' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+                {selectedAddress}
+              </div>
+            )}
+          </div>
+          <button
+            type='button'
+            className='btn-ghost w-full'
+            onClick={() => setModalOpen(true)}
+          >
+            {locale === 'pl' ? 'Zmień paczkomat' : 'Change pickup point'}
+          </button>
         </div>
-      )}
-
-      {hasWidgetToken ? (
-        <>
-          {loadError === '' ? (
-            <>
-              <p className='type-label mb-2' style={{ color: 'var(--muted)' }}>
-                {locale === 'pl'
-                  ? 'Kliknij paczkomat na mapie, aby go wybrać.'
-                  : 'Click a parcel locker on the map to select it.'}
-              </p>
-              <div
-                ref={widgetRef}
-                style={{ height: 560, width: '100%', overscrollBehavior: 'contain' }}
-              />
-            </>
+      ) : (
+        <div className='mt-3 space-y-3'>
+          {hasWidgetToken && loadError === '' ? (
+            <button
+              type='button'
+              className='btn-primary w-full'
+              onClick={() => setModalOpen(true)}
+            >
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
+                <path d='M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z' />
+                <circle cx='12' cy='10' r='3' />
+              </svg>
+              {locale === 'pl' ? 'Wybierz paczkomat' : 'Choose pickup point'}
+            </button>
           ) : (
             <div className='space-y-3'>
-              <p className='type-label' style={{ color: 'var(--accent)' }}>
-                {loadError}
-              </p>
+              {loadError !== '' && (
+                <p className='type-label' style={{ color: 'var(--accent)' }}>
+                  {loadError}
+                </p>
+              )}
+              {!hasWidgetToken && (
+                <p className='type-label' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+                  {locale === 'pl'
+                    ? 'Mapa paczkomatu jest chwilowo niedostępna. Wpisz kod paczkomatu poniżej.'
+                    : 'The parcel locker map is temporarily unavailable. Enter the locker code below.'}
+                </p>
+              )}
               <ManualInpostPointInput
                 locale={locale}
                 value={manualValue}
@@ -764,33 +802,6 @@ function InpostPointSelector({
               />
             </div>
           )}
-        </>
-      ) : (
-        <div className='space-y-3'>
-          <div
-            className='p-3'
-            style={{
-              border: '1px dashed var(--border)',
-              background: 'var(--surface)',
-              minHeight: 80,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <p className='type-label text-center' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
-              {locale === 'pl'
-                ? 'Mapa paczkomatu jest chwilowo niedostępna. Wpisz kod paczkomatu poniżej.'
-                : 'The parcel locker map is temporarily unavailable. Enter the locker code below.'}
-            </p>
-          </div>
-          <ManualInpostPointInput
-            locale={locale}
-            value={manualValue}
-            error={error}
-            invalid={manualInvalid}
-            onChange={onManualValueChange}
-          />
         </div>
       )}
 
@@ -798,6 +809,51 @@ function InpostPointSelector({
         <p className='type-label mt-3' style={{ color: 'var(--accent)' }}>
           {error}
         </p>
+      )}
+
+      {/* Map modal */}
+      {modalOpen && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center'
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <div
+            className='relative flex flex-col'
+            style={{
+              width: 'min(96vw, 960px)',
+              height: 'min(90vh, 720px)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {/* Modal header */}
+            <div
+              className='flex items-center justify-between px-5 py-3 shrink-0'
+              style={{ borderBottom: '1px solid var(--border)' }}
+            >
+              <span className='type-label' style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>
+                {locale === 'pl' ? 'Wybierz paczkomat' : 'Choose pickup point'}
+              </span>
+              <button
+                type='button'
+                aria-label={locale === 'pl' ? 'Zamknij' : 'Close'}
+                className='type-label transition-colors hover:text-[var(--fg)]'
+                style={{ color: 'var(--muted)', lineHeight: 1, fontSize: '1.2rem' }}
+                onClick={() => setModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Map fills the modal */}
+            <div
+              ref={widgetRef}
+              className='flex-1 min-h-0'
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1469,6 +1525,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     useState<ShippingProviderAvailability>({});
   const [stripeSettings, setStripeSettings] = useState<StripePublicSettings>({ enabled: false, publishableKey: '' });
   const [paypalSettings, setPaypalSettings] = useState<PayPalPublicSettings>({ enabled: false, clientId: '', mode: 'sandbox' });
+  const [bankTransferSettings, setBankTransferSettings] = useState<BankTransferPublicSettings>({ enabled: false, accountName: '', iban: '', bic: '', bankName: '' });
   const [activePaymentMethod, setActivePaymentMethod] = useState<ActivePaymentMethod>('blik');
   // Stripe state
   const [stripeClientSecret, setStripeClientSecret] = useState('');
@@ -1479,6 +1536,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   // PayPal state
   const [paypalInitiating, setPaypalInitiating] = useState(false);
   const [paypalError, setPaypalError] = useState('');
+  // Bank transfer state
+  const [bankTransferError, setBankTransferError] = useState('');
+  const [bankTransferOrderId, setBankTransferOrderId] = useState('');
 
   const idKey = items.map((item) => item.productId).join(',');
   useEffect(() => {
@@ -1521,6 +1581,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
           setShippingProviderAvailability(readPublicShippingProviderAvailability(data));
           setStripeSettings(readPublicStripeSettings(data));
           setPaypalSettings(readPublicPayPalSettings(data));
+          setBankTransferSettings(readPublicBankTransferSettings(data));
         } else if (active) {
           setInpostGeowidgetToken(fallbackInpostGeowidgetToken());
         }
@@ -1607,10 +1668,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const isPayuPaymentAvailable = paymentProviderAvailability.payu !== false;
   const isStripePaymentAvailable = paymentProviderAvailability.stripe === true && stripeSettings.publishableKey !== '';
   const isPayPalPaymentAvailable = paymentProviderAvailability.paypal === true && paypalSettings.clientId !== '';
+  const isBankTransferAvailable = paymentProviderAvailability.bankTransfer === true && bankTransferSettings.iban !== '';
   const availablePaymentMethods: ActivePaymentMethod[] = [
     ...(isPayuPaymentAvailable ? ['blik' as const] : []),
     ...(isStripePaymentAvailable ? ['stripe' as const] : []),
     ...(isPayPalPaymentAvailable ? ['paypal' as const] : []),
+    ...(isBankTransferAvailable ? ['bank_transfer' as const] : []),
   ];
   const paymentUnavailableMessage = locale === 'pl'
     ? 'Płatność BLIK jest chwilowo niedostępna.'
@@ -1625,10 +1688,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   }, [shipping, zoneMethods]);
 
   useEffect(() => {
-    if (requiresInpostPoint) return;
-    setInpostPoint(null);
-    setInpostPointManualValue('');
-    setInpostPointError('');
+    // Clear only the validation error when the user switches away from InPost
+    // so the previously chosen Paczkomat is retained if they switch back.
+    if (!requiresInpostPoint) setInpostPointError('');
   }, [requiresInpostPoint]);
 
   // Pre-fill contact info from the logged-in user's session
@@ -1887,6 +1949,50 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     }
   };
 
+  const handlePlaceBankTransferOrder = async (): Promise<void> => {
+    if (!validateInformationForm()) { setStep('information'); return; }
+    if (!validateShippingStep()) { setStep('shipping'); return; }
+    setBankTransferError('');
+    setPlacingOrder(true);
+    try {
+      const res = await fetch('/api/checkout/bank-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email ?? '',
+          items: checkoutItems,
+          shippingMethod: selectedShipping.label,
+          shippingMethodId: selectedShipping.id,
+          shippingPrice: selectedShipping.price,
+          shippingCarrier: selectedShipping.carrier ?? 'manual',
+          shippingService: selectedShipping.service ?? selectedShipping.id,
+          inpostPoint: requiresInpostPoint ? inpostPoint ?? undefined : undefined,
+          shippingAddress: { ...form },
+          subtotal,
+          discount,
+          promoCode: promoCode ?? undefined,
+          total,
+        }),
+      });
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      if (!res.ok || !isPlainRecord(data)) {
+        const msg = isPlainRecord(data) && typeof data.error === 'string' ? data.error : 'Order failed. Please try again.';
+        setBankTransferError(msg);
+        return;
+      }
+      const oid = typeof data.orderId === 'string' ? data.orderId : '';
+      setConfirmedOrderId(oid);
+      setBankTransferOrderId(oid);
+      setStep('confirmation');
+      clearCart();
+      toast({ type: 'success', title: content.orderPlacedToastTitle, message: oid });
+    } catch {
+      setBankTransferError('Order failed. Please try again.');
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
   // Poll for BLIK payment confirmation after the push notification is sent.
   useEffect(() => {
     if (!blikPending || blikPendingOrderId === '') return undefined;
@@ -1988,6 +2094,43 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
             <p className='type-label mb-8' style={{ color: 'var(--accent)' }}>
               {confirmedOrderId}
             </p>
+          )}
+          {/* Bank transfer instructions shown on the confirmation page */}
+          {bankTransferOrderId !== '' && bankTransferSettings.iban !== '' && (
+            <div
+              className='mb-8 px-6 py-5 text-left'
+              style={{ border: '1px solid var(--border)', background: 'var(--surface)', maxWidth: '420px', width: '100%' }}
+            >
+              <p className='type-label mb-4' style={{ color: 'var(--accent)', letterSpacing: '0.12em' }}>
+                {locale === 'pl' ? 'Dane do przelewu' : 'Bank transfer details'}
+              </p>
+              <div className='space-y-2'>
+                {bankTransferSettings.bankName !== '' && (
+                  <div className='flex justify-between gap-4'>
+                    <span className='type-label' style={{ color: 'var(--muted)' }}>{locale === 'pl' ? 'Bank' : 'Bank'}</span>
+                    <span className='type-label' style={{ color: 'var(--fg)' }}>{bankTransferSettings.bankName}</span>
+                  </div>
+                )}
+                <div className='flex justify-between gap-4'>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>{locale === 'pl' ? 'Odbiorca' : 'Recipient'}</span>
+                  <span className='type-label' style={{ color: 'var(--fg)' }}>{bankTransferSettings.accountName}</span>
+                </div>
+                <div className='flex justify-between gap-4'>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>IBAN</span>
+                  <span className='type-label' style={{ color: 'var(--fg)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{bankTransferSettings.iban}</span>
+                </div>
+                {bankTransferSettings.bic !== '' && (
+                  <div className='flex justify-between gap-4'>
+                    <span className='type-label' style={{ color: 'var(--muted)' }}>BIC / SWIFT</span>
+                    <span className='type-label' style={{ color: 'var(--fg)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{bankTransferSettings.bic}</span>
+                  </div>
+                )}
+                <div className='flex justify-between gap-4 pt-2' style={{ borderTop: '1px solid var(--border)' }}>
+                  <span className='type-label' style={{ color: 'var(--muted)' }}>{locale === 'pl' ? 'Tytuł przelewu' : 'Reference'}</span>
+                  <span className='type-label' style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{bankTransferOrderId}</span>
+                </div>
+              </div>
+            </div>
           )}
           {inpostPoint !== null && (
             <div
@@ -2238,6 +2381,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                         blik: 'BLIK',
                         stripe: locale === 'pl' ? 'Karta' : 'Card',
                         paypal: 'PayPal',
+                        bank_transfer: locale === 'pl' ? 'Przelew' : 'Bank transfer',
                       };
                       return (
                         <button
@@ -2374,6 +2518,51 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   />
                 )}
 
+                {/* ── Bank transfer payment ── */}
+                {activePaymentMethod === 'bank_transfer' && (
+                  <div>
+                    <div className='flex items-center gap-3 mb-6'>
+                      <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                        <path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' />
+                        <polyline points='9 22 9 12 15 12 15 22' />
+                      </svg>
+                      <span className='type-label' style={{ color: 'var(--muted)' }}>
+                        {locale === 'pl' ? 'Przelew tradycyjny' : 'Traditional bank transfer'}
+                      </span>
+                    </div>
+                    <div className='p-4 mb-4 space-y-2' style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                      {bankTransferSettings.bankName !== '' && (
+                        <div className='flex justify-between gap-4'>
+                          <span className='type-label' style={{ color: 'var(--muted)' }}>{locale === 'pl' ? 'Bank' : 'Bank'}</span>
+                          <span className='type-label' style={{ color: 'var(--fg)' }}>{bankTransferSettings.bankName}</span>
+                        </div>
+                      )}
+                      <div className='flex justify-between gap-4'>
+                        <span className='type-label' style={{ color: 'var(--muted)' }}>{locale === 'pl' ? 'Odbiorca' : 'Recipient'}</span>
+                        <span className='type-label' style={{ color: 'var(--fg)' }}>{bankTransferSettings.accountName}</span>
+                      </div>
+                      <div className='flex justify-between gap-4'>
+                        <span className='type-label' style={{ color: 'var(--muted)' }}>IBAN</span>
+                        <span className='type-label' style={{ color: 'var(--fg)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{bankTransferSettings.iban}</span>
+                      </div>
+                      {bankTransferSettings.bic !== '' && (
+                        <div className='flex justify-between gap-4'>
+                          <span className='type-label' style={{ color: 'var(--muted)' }}>BIC / SWIFT</span>
+                          <span className='type-label' style={{ color: 'var(--fg)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{bankTransferSettings.bic}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className='type-label mb-4' style={{ color: 'var(--muted)', lineHeight: 1.7 }}>
+                      {locale === 'pl'
+                        ? 'Po złożeniu zamówienia otrzymasz numer referencyjny do wpisania w tytule przelewu. Zamówienie zostanie zrealizowane po zaksięgowaniu wpłaty.'
+                        : 'After placing your order you will receive a reference number to use as the transfer description. Your order will be processed once payment is confirmed.'}
+                    </p>
+                    {bankTransferError !== '' && (
+                      <p className='type-label mb-3' style={{ color: 'var(--accent)' }}>{bankTransferError}</p>
+                    )}
+                  </div>
+                )}
+
                 <div className='flex items-center justify-between mt-10'>
                   <button
                     className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors'
@@ -2393,11 +2582,29 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   {activePaymentMethod === 'blik' && !blikPending && (
                     <button
                       className='btn-primary'
-                      onClick={() => {
-                        handlePlaceOrder().catch(() => undefined);
-                      }}
+                      onClick={() => { handlePlaceOrder().catch(() => undefined); }}
                       disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable}
                       style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable ? 0.5 : 1 }}
+                    >
+                      {placingOrder && (
+                        <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M12 3a9 9 0 1 1-9 9' />
+                        </svg>
+                      )}
+                      {checkoutItems.length === 0 ? content.addItemsFirstLabel : content.placeOrderLabel}
+                      {checkoutItems.length > 0 && !placingOrder ? (
+                        <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M5 12h14M12 5l7 7-7 7' />
+                        </svg>
+                      ) : null}
+                    </button>
+                  )}
+                  {activePaymentMethod === 'bank_transfer' && (
+                    <button
+                      className='btn-primary'
+                      onClick={() => { handlePlaceBankTransferOrder().catch(() => undefined); }}
+                      disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending}
+                      style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending ? 0.5 : 1 }}
                     >
                       {placingOrder && (
                         <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>

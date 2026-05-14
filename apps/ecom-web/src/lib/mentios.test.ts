@@ -99,6 +99,86 @@ describe('Mentios product image mapping', () => {
     ]);
   });
 
+  it('keeps BaseLinker CDN image links when no FastComet copy exists', async () => {
+    const imageUrl = 'https://upload.cdn.baselinker.com/products/5003536/product-image.jpg';
+    const productDoc = {
+      _id: 'product-baselinker-image',
+      catalogId: 'catalog-mentios',
+      imageLinks: [imageUrl],
+      name_en: 'Legacy Keychain',
+      price: 10,
+      published: true,
+      sku: 'KEYCHA077',
+      stock: 1,
+    };
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn((_filter?: unknown) => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getProductsDb.mockResolvedValue(db);
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ limit: 1 });
+
+    expect(result.products[0]?.imageUrl).toBe(imageUrl);
+    expect(result.products[0]?.imageUrls).toEqual([imageUrl]);
+  });
+
+  it('prefers managed image-file URLs before external source image links', async () => {
+    const externalImageUrl = 'https://upload.cdn.baselinker.com/products/5003536/source-image.jpg';
+    const productDoc = {
+      _id: 'product-managed-image',
+      catalogId: 'catalog-mentios',
+      imageLinks: [externalImageUrl],
+      images: [
+        {
+          imageFileId: 'managed-image-file',
+          imageFile: {
+            id: 'managed-image-file',
+            filepath: '/uploads/products/KEYCHA928/local-copy.png',
+          },
+        },
+      ],
+      name_en: 'Managed Image Keychain',
+      price: 10,
+      published: true,
+      sku: 'KEYCHA928',
+      stock: 1,
+    };
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn((_filter?: unknown) => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getProductsDb.mockResolvedValue(db);
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ limit: 1 });
+
+    expect(result.products[0]?.imageUrl).toBe(
+      'https://sparksofsindri.com/uploads/products/KEYCHA928/local-copy.png'
+    );
+    expect(result.products[0]?.imageUrls).toEqual([
+      'https://sparksofsindri.com/uploads/products/KEYCHA928/local-copy.png',
+      externalImageUrl,
+    ]);
+  });
+
   it('pushes collection filters into the Mongo query before pagination', async () => {
     const productDoc = {
       _id: 'product-1',
@@ -938,8 +1018,8 @@ describe('Mentios categories', () => {
     const result = await getMentiosCategories('en');
 
     expect(result).toEqual([
-      { id: 'anime-ring', name: 'Anime Ring', parentName: 'Anime', count: 2 },
-      { id: 'movie-wallet', name: 'Movie Wallet', parentName: 'Movie', count: 3 },
+      { id: 'anime-ring', name: 'Anime Ring', parentName: 'Anime', parentNameEn: 'Anime', count: 2 },
+      { id: 'movie-wallet', name: 'Movie Wallet', parentName: 'Movie', parentNameEn: 'Movie', count: 3 },
     ]);
   });
 });

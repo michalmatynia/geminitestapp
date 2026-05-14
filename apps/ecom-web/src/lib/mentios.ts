@@ -223,6 +223,18 @@ export type MentiosCategory = {
   parentNameEn?: string;
 };
 
+const HAS_DISPLAY_NAME_CLAUSE = {
+  $or: [
+    { name_en: { $regex: '\\S' } },
+    { name_pl: { $regex: '\\S' } },
+    { name_de: { $regex: '\\S' } },
+    { name: { $regex: '\\S' } },
+    { 'name.en': { $regex: '\\S' } },
+    { 'name.pl': { $regex: '\\S' } },
+    { 'name.de': { $regex: '\\S' } },
+  ],
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -693,7 +705,6 @@ const MAIN_APP_URL = normalizeBaseUrl(process.env['NEXT_PUBLIC_MAIN_APP_URL']);
 const DEFAULT_FILE_BASE_URL = 'https://sparksofsindri.com';
 const PRODUCT_UPLOAD_PREFIX = '/uploads/products/';
 const LEGACY_FILE_HOSTS = new Set(['qubrick.io', 'www.qubrick.io']);
-const BLOCKED_IMAGE_HOSTS = new Set(['upload.cdn.baselinker.com']);
 
 const normalizeFileBaseUrl = (value: string | undefined): string => {
   const normalized = normalizeBaseUrl(value);
@@ -764,7 +775,6 @@ function normalizeProductImageUrl(value: string | null | undefined): string | un
     try {
       const url = new URL(raw);
       const productUploadPath = normalizeProductUploadPath(`${url.pathname}${url.search}${url.hash}`);
-      if (BLOCKED_IMAGE_HOSTS.has(url.hostname.toLowerCase())) return undefined;
       if (
         productUploadPath &&
         FILE_BASE_URL &&
@@ -821,8 +831,8 @@ function buildImageUrls(doc: ProductDoc): string[] {
   const imageUrls = uniqueProductImageUrls([
     ...(doc.imageUrls?.map((link) => normalizeProductImageUrl(link)) ?? []),
     normalizeProductImageUrl(doc.imageUrl),
-    ...(doc.imageLinks?.map((link) => normalizeProductImageUrl(link)) ?? []),
     ...(doc.images?.flatMap((image) => normalizeImageFileUrls(image.imageFile)) ?? []),
+    ...(doc.imageLinks?.map((link) => normalizeProductImageUrl(link)) ?? []),
   ]);
 
   if (imageUrls.length > 0) return imageUrls;
@@ -910,6 +920,7 @@ function mentiosFilter(extra: Record<string, unknown> = {}): Record<string, unkn
     archived: { $ne: true },
     stock: { $ne: 0 },
   });
+  clauses.push(HAS_DISPLAY_NAME_CLAUSE);
   if (Object.keys(extra).length > 0) clauses.push(extra);
   return { $and: clauses };
 }

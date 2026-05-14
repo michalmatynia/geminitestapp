@@ -222,6 +222,32 @@ async function updateLastAccessedAt(memoryEntries: PersonaMemoryEntryRecord[]): 
   });
 }
 
+function buildPersonaMemorySummary(
+  personaId: string,
+  items: PersonaMemoryRecord[],
+  useMoodSignals: boolean
+): PersonaMemorySearchResponse['summary'] {
+  return {
+    personaId,
+    suggestedMoodId: useMoodSignals === false ? null : countSuggestedMood(items),
+    totalRecords: items.length,
+    memoryEntryCount: items.filter((item) => item.recordType === 'memory_entry').length,
+    conversationMessageCount: items.filter((item) => item.recordType === 'conversation_message').length,
+  };
+}
+
+function resolveEnabledFilters(
+  allowMemoryEntries: boolean,
+  allowMessages: boolean,
+  memorySettings: { enabled?: boolean; includeChatHistory?: boolean },
+  tag: string | null
+): { memoryEnabled: boolean; messagesEnabled: boolean } {
+  return {
+    memoryEnabled: allowMemoryEntries && memorySettings.enabled !== false,
+    messagesEnabled: allowMessages && memorySettings.includeChatHistory !== false && tag === null,
+  };
+}
+
 export async function searchAgentPersonaMemory(
   params: SearchAgentPersonaMemoryParams
 ): Promise<PersonaMemorySearchResponse> {
@@ -237,40 +263,22 @@ export async function searchAgentPersonaMemory(
 
   const normalized = normalizeSearchParams(params);
   const { allowMessages, allowMemoryEntries } = resolveSourceTypeFilter(normalized.sourceType);
+  const { memoryEnabled, messagesEnabled } = resolveEnabledFilters(allowMemoryEntries, allowMessages, memorySettings, normalized.tag);
 
   const hasFilter = normalized.searchTerms.length > 0 || normalized.tag !== null || normalized.topic !== null || normalized.mood !== null;
   const candidateLimit = resolveCandidateLimit(limit, hasFilter);
 
   const [memoryEntries, conversationMessages] = await Promise.all([
-    fetchMemoryEntries({
-      ...normalized,
-      personaId,
-      take: candidateLimit,
-      enabled: allowMemoryEntries && memorySettings.enabled !== false,
-    }),
-    fetchConversationMessages({
-      personaId,
-      searchTerms: normalized.searchTerms,
-      take: candidateLimit,
-      enabled: allowMessages && memorySettings.includeChatHistory !== false && normalized.tag === null,
-    }),
+    fetchMemoryEntries({ ...normalized, personaId, take: candidateLimit, enabled: memoryEnabled }),
+    fetchConversationMessages({ personaId, searchTerms: normalized.searchTerms, take: candidateLimit, enabled: messagesEnabled }),
   ]);
 
   await updateLastAccessedAt(memoryEntries);
 
-  const items = processMemoryResults(memoryEntries, conversationMessages, personaId, {
-    ...normalized,
-    limit,
-  });
+  const items = processMemoryResults(memoryEntries, conversationMessages, personaId, { ...normalized, limit });
 
   return {
     items,
-    summary: {
-      personaId,
-      suggestedMoodId: memorySettings.useMoodSignals === false ? null : countSuggestedMood(items),
-      totalRecords: items.length,
-      memoryEntryCount: items.filter((item) => item.recordType === 'memory_entry').length,
-      conversationMessageCount: items.filter((item) => item.recordType === 'conversation_message').length,
-    },
+    summary: buildPersonaMemorySummary(personaId, items, memorySettings.useMoodSignals !== false),
   };
 }

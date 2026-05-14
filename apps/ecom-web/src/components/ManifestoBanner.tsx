@@ -105,14 +105,23 @@ export function ManifestoBanner({
       start: 'top 70%',
       onEnter: () => {
         gsap.fromTo('.mfst-glow',
-          { opacity: 0, scale: 0.5 },
-          { opacity: 1, scale: 1, duration: 2, ease: 'expo.out' });
+          { opacity: 0 },
+          { opacity: 1, duration: 2, ease: 'expo.out' });
       },
     });
   }, { scope: sectionRef, dependencies: [] });
 
   return (
-    <section ref={sectionRef} className='relative overflow-hidden py-0'>
+    <section
+      ref={sectionRef}
+      className='relative py-0'
+      style={{
+        background: 'var(--manifesto-bg)',
+        backgroundImage,
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
+      }}
+    >
       <div className='divider' />
 
       {/* Marquee strip */}

@@ -40,6 +40,7 @@ const shouldSuppressTestLog = (args: unknown[]): boolean => {
   return quietLogPatterns.some((pattern) => message.includes(pattern));
 };
 
+/* eslint-disable no-console */
 console.log = (...args: unknown[]): void => {
   if (!shouldSuppressTestLog(args)) originalConsoleLog(...args);
 };
@@ -52,7 +53,7 @@ console.warn = (...args: unknown[]): void => {
 console.error = (...args: unknown[]): void => {
   if (!shouldSuppressTestLog(args)) originalConsoleError(...args);
 };
-
+/* eslint-enable no-console */
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn().mockResolvedValue('mongodb'),
   getAppDbProviderSetting: vi.fn().mockResolvedValue('mongodb'),

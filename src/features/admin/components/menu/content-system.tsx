@@ -1,4 +1,15 @@
-import { StickyNoteIcon, SettingsIcon, MapIcon, BarChart3Icon, ActivityIcon, ShieldIcon } from './icons';
+import {
+  StickyNoteIcon,
+  SettingsIcon,
+  MapIcon,
+  BarChart3Icon,
+  ActivityIcon,
+  ShieldIcon,
+  AppWindow,
+  GraduationCapIcon,
+  PackageIcon,
+  ImageIcon,
+} from './icons';
 import { FileText } from 'lucide-react';
 import { type NavItem } from './admin-menu-utils';
 import React from 'react';
@@ -30,6 +41,77 @@ export const getContentNav = (handlers: { onCreatePageClick: () => void }): NavI
           },
         },
       ],
+    },
+  ],
+});
+
+export const getPageManagerNav = (): NavItem => ({
+  id: 'page-manager',
+  label: 'Page Manager',
+  href: '/admin/page-manager',
+  icon: <AppWindow className='size-4' />,
+  keywords: ['pages', 'cms', 'website', 'project pages'],
+  children: [
+    {
+      id: 'page-manager/studiq',
+      label: 'StudiQ',
+      href: '/admin/page-manager/studiq',
+      icon: <GraduationCapIcon className='size-4' />,
+      keywords: ['kangur', 'math', 'education', 'training', 'game', 'competition'],
+      children: [
+        {
+          id: 'page-manager/studiq/studio',
+          label: 'Studio',
+          href: '/admin/page-manager/studiq',
+          exact: true,
+        },
+        {
+          id: 'page-manager/studiq/builder',
+          label: 'CMS Builder',
+          href: '/admin/page-manager/studiq/builder',
+        },
+        {
+          id: 'page-manager/studiq/lessons-manager',
+          label: 'Lessons Manager',
+          href: '/admin/page-manager/studiq/lessons-manager',
+        },
+        {
+          id: 'page-manager/studiq/observability',
+          label: 'Observability',
+          href: '/admin/page-manager/studiq/observability',
+        },
+        {
+          id: 'page-manager/studiq/appearance',
+          label: 'Appearance',
+          href: '/admin/page-manager/studiq/appearance',
+          keywords: ['theme', 'theming', 'styling', 'brand'],
+        },
+        {
+          id: 'page-manager/studiq/settings',
+          label: 'Settings',
+          href: '/admin/page-manager/studiq/settings',
+        },
+        {
+          id: 'page-manager/studiq/settings/ai-tutor-content',
+          label: 'AI Tutor Content',
+          href: '/admin/page-manager/studiq/settings/ai-tutor-content',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'page-manager/stargater',
+      label: 'Stargater',
+      href: '/admin/page-manager/stargater',
+      icon: <PackageIcon className='size-4' />,
+      keywords: ['ecommerce', 'storefront', 'products pages'],
+    },
+    {
+      id: 'page-manager/milkbardesigners',
+      label: 'Milkbardesigners',
+      href: '/admin/page-manager/milkbardesigners',
+      icon: <ImageIcon className='size-4' />,
+      keywords: ['milkbar', 'architecture', 'arch web'],
     },
   ],
 });

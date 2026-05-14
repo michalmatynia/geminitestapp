@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions,consistent-return,max-lines-per-function,no-empty */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,max-lines-per-function,no-empty */
 'use client';
 
 import {

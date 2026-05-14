@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function, no-nested-ternary */
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-floating-promises, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function, no-nested-ternary */
 'use client';
 
 import { useState, useMemo, useCallback, useRef, useEffect, type JSX } from 'react';
@@ -855,7 +855,6 @@ export function CatalogPageClient({
   // Keeps latest filter values accessible inside stable callbacks without stale closure issues.
   const initialResolvedCategories = useMemo(
     () => resolveLeafCategories(initialFilters?.types ?? [], initialFilters?.parentCats ?? [], categories),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const filtersRef = useRef<FilterState>({
@@ -1087,15 +1086,15 @@ export function CatalogPageClient({
   loadMoreRef.current = loadMore;
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) loadMoreRef.current(); },
-      { rootMargin: '200px' },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    if (el) {
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) loadMoreRef.current(); },
+        { rootMargin: '200px' },
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
+    }
   }, []);
-
   // For static source: apply all filters/sort client-side. For mentios: server already did it.
   const displayProducts = useMemo(() => {
     if (source === 'mentios') return allProducts;
@@ -1134,8 +1133,8 @@ export function CatalogPageClient({
     else if (sort === 'name-asc') copy.sort((a, b) => (a.shortName ?? a.name).localeCompare(b.shortName ?? b.name));
     else if (sort === 'name-desc') copy.sort((a, b) => (b.shortName ?? b.name).localeCompare(a.shortName ?? a.name));
     else if (sort === 'category') copy.sort((a, b) => a.category.localeCompare(b.category));
-    return copy;
-  }, [source, allProducts, search, newOnly, resolvedCategories, selectedThemes, selectedMaterials, selectedSizes, selectedLores, sliderMin, sliderMax, sort]);
+    else copy.sort((a, b) => (a.shortName ?? a.name).localeCompare(b.shortName ?? b.name));
+    return copy;  }, [source, allProducts, search, newOnly, resolvedCategories, selectedThemes, selectedMaterials, selectedSizes, selectedLores, sliderMin, sliderMax, sort]);
 
   const priceFiltered = sliderMin > PRICE_SLIDER_MIN || sliderMax < sliderMaxPrice;
   const hasFilters = selectedTypes.length > 0 || selectedParentCategories.length > 0 || selectedThemes.length > 0 || selectedMaterials.length > 0 || selectedSizes.length > 0 || selectedLores.length > 0 || priceFiltered || search !== '' || newOnly;

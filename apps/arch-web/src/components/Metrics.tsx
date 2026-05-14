@@ -1,35 +1,19 @@
-export default function Metrics() {
+import type { ArchPageContent } from '@/lib/types';
+
+export default function Metrics({ metrics }: { metrics: ArchPageContent['metrics'] }) {
   return (
     <div className="metrics">
       <div className="wrap">
         <div className="metric-grid">
-          <div className="metric-cell rev">
+          {metrics.map((metric, index) => (
+          <div className="metric-cell rev" data-delay={index > 0 ? String(index) : undefined} key={`${metric.value}-${metric.label}`}>
             <span className="metric-n">
-              <span className="counter" data-target="340">340</span>
-              <span className="sx">+</span>
+              <span className="counter" data-target={metric.value}>{metric.value}</span>
+              {metric.suffix ? <span className="sx">{metric.suffix}</span> : null}
             </span>
-            <span className="metric-lbl">Projects processed<br />through studio systems</span>
+            <span className="metric-lbl">{metric.label}</span>
           </div>
-          <div className="metric-cell rev" data-delay="1">
-            <span className="metric-n">
-              <span className="counter" data-target="72">72</span>
-              <span className="sx">%</span>
-            </span>
-            <span className="metric-lbl">Median reduction<br />in documentation hours</span>
-          </div>
-          <div className="metric-cell rev" data-delay="2">
-            <span className="metric-n">
-              <span className="counter" data-target="98">98</span>
-              <span className="sx">.4%</span>
-            </span>
-            <span className="metric-lbl">Compliance check<br />accuracy rate</span>
-          </div>
-          <div className="metric-cell rev" data-delay="3">
-            <span className="metric-n">
-              <span className="counter" data-target="38">38</span>
-            </span>
-            <span className="metric-lbl">Active jurisdictional<br />regulation models</span>
-          </div>
+          ))}
         </div>
       </div>
     </div>

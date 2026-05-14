@@ -102,6 +102,18 @@ const getNavContainerStyle = (isSide: boolean, menu: MenuSettings): React.CSSPro
   gap: menu.itemGap ?? undefined,
 });
 
+const NavContent = ({ menu, normPath, colors, hydrated, itemListId, collapsed, setCollapsed, trans }: { menu: MenuSettings, normPath: string, colors: ColorSchemeColors, hydrated: boolean, itemListId: string, collapsed: boolean, setCollapsed: (val: boolean) => void, trans: (key: string) => string }): React.JSX.Element => (
+  <div style={getNavContainerStyle(menu.menuPlacement === 'left' || menu.menuPlacement === 'right', menu)}>
+    {menu.collapsible && <MenuToggle id={itemListId} collapsed={collapsed} toggle={() => setCollapsed(!collapsed)} trans={trans} />}
+    <MenuList menu={menu} normPath={normPath} colors={colors} hydrated={hydrated} />
+    <CmsStorefrontAppearanceButtons 
+      tone={colors} 
+      className={(menu.menuPlacement === 'left' || menu.menuPlacement === 'right') ? 'mt-3' : 'ml-auto'} 
+      label={trans('siteAppearance')} 
+    />
+  </div>
+);
+
 export function CmsMenu({ menu, colorSchemes: _colorSchemes, animationsEnabled: _animationsEnabled = true }: CmsMenuProps): React.JSX.Element | null {
   const path = usePathname();
   const trans = useTranslations('CmsMenu');
@@ -109,35 +121,31 @@ export function CmsMenu({ menu, colorSchemes: _colorSchemes, animationsEnabled: 
   const itemListId = useId();
   
   const [hydrated, setHydrated] = useState(false);
-  const [collapsed, setCollapsed] = useState(menu.collapsible ? menu.collapsedByDefault : false);
+  const [collapsed, setCollapsed] = useState(Boolean(menu.collapsible) && Boolean(menu.collapsedByDefault));
   
-  useEffect(() => { setCollapsed(menu.collapsible ? menu.collapsedByDefault : false); }, [menu.collapsible, menu.collapsedByDefault]);
   useEffect(() => { setHydrated(true); }, []);
   
   const colors = useMemo(() => getColors(menu, app?.mode), [menu, app?.mode]);
   const normPath = normalizePath(stripSiteLocalePrefix(path));
   const isSide = menu.menuPlacement === 'left' || menu.menuPlacement === 'right';
 
-  const navStyle = getNavStyle(isSide, menu, collapsed);
-  const containerStyle = getNavContainerStyle(isSide, menu);
-  const appearanceClasses = isSide ? 'mt-3' : 'ml-auto';
-
   return (
     <nav 
         aria-label={trans('siteNavigation')} 
-        style={{ ...navStyle, backgroundColor: colors.background, color: colors.text }} 
+        style={{ ...getNavStyle(isSide, menu, collapsed), backgroundColor: colors.background, color: colors.text }} 
         data-cms-menu='true' 
         data-appearance-mode={app?.mode ?? 'default'}
     >
-      <div style={containerStyle}>
-        {menu.collapsible && <MenuToggle id={itemListId} collapsed={collapsed} toggle={() => setCollapsed(!collapsed)} trans={trans} />}
-        <MenuList menu={menu} normPath={normPath} colors={colors} hydrated={hydrated} />
-        <CmsStorefrontAppearanceButtons 
-          tone={colors} 
-          className={appearanceClasses} 
-          label={trans('siteAppearance')} 
-        />
-      </div>
+      <NavContent 
+        menu={menu} 
+        normPath={normPath} 
+        colors={colors} 
+        hydrated={hydrated} 
+        itemListId={itemListId} 
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+        trans={trans} 
+      />
     </nav>
   );
 }

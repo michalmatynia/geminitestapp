@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useFloorPlanSlots } from '@/lib/floorPlanContext';
+import type { ArchPageContent } from '@/lib/types';
 import InteriorViewer from './InteriorViewer';
 
 const VW = 480, VH = 360;
@@ -60,7 +61,7 @@ function wallsFromRooms(rooms: Room[]): Wall[] {
 const ss  = (t: number) => t * t * (3 - 2 * t);
 const co3 = (t: number) => 1 - Math.pow(1 - t, 3);
 
-export default function FloorPlan() {
+export default function FloorPlan({ content }: { content: ArchPageContent['drawing'] }) {
   const { setSlots: publishSlots } = useFloorPlanSlots();
   const [slots,      setSlots]      = useState<Slots>(INITIAL_SLOTS);
   const [display,    setDisplay]    = useState<Room[]>(() => computeRooms(INITIAL_SLOTS));
@@ -189,15 +190,13 @@ export default function FloorPlan() {
       <div className="wrap">
         <div className="drawing-grid">
           <div className="drawing-copy">
-            <span className="label rev">— 01 / drawing</span>
-            <h2 className="rev" data-delay="1">Every line carries <em>intent.</em></h2>
+            <span className="label rev">{content.eyebrow}</span>
+            <h2 className="rev" data-delay="1">{content.title} <em>{content.emphasis}</em></h2>
             <p className="rev" data-delay="2">
-              Our systems parse architectural intent from natural language, existing drawings,
-              and site constraint. They produce documentation a peer-reviewing architect would
-              accept without amendment.
+              {content.description}
             </p>
-            <a href="#practice" className="btn-quiet rev" data-delay="3">how it works ↘</a>
-            <p className="plan-hint rev" data-delay="4">— drag rooms to reassign programme</p>
+            <a href="#practice" className="btn-quiet rev" data-delay="3">{content.ctaLabel} ↘</a>
+            <p className="plan-hint rev" data-delay="4">{content.hint}</p>
           </div>
 
           <div className="plan-col">

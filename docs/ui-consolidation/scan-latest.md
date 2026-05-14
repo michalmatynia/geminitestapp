@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,42 +8,42 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-05-10T01:04:13.341Z
+Generated at: 2026-05-14T23:10:24.439Z
 
 ## Snapshot
 
-- Scanned UI files: 3139
-- Duplicate-name clusters: 1
-- Prop-signature clusters: 4
-- Token-similarity clusters: 2
-- Thin re-export wrappers ignored: 37
-- Total consolidation opportunities: 6
+- Scanned UI files: 3216
+- Duplicate-name clusters: 2
+- Prop-signature clusters: 5
+- Token-similarity clusters: 1
+- Thin re-export wrappers ignored: 36
+- Total consolidation opportunities: 7
 - High-priority opportunities (score >= 2000): 0
 
 ## Domain Coverage
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 2530 |
-| `app` | 360 |
-| `shared-ui` | 189 |
+| `feature` | 2593 |
+| `app` | 372 |
+| `shared-ui` | 191 |
 | `shared` | 60 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 2211 |
-| `Section` | 219 |
-| `Page` | 191 |
-| `Panel` | 154 |
-| `Modal` | 91 |
-| `Card` | 48 |
-| `Tab` | 44 |
+| `Unknown` | 2252 |
+| `Section` | 224 |
+| `Page` | 198 |
+| `Panel` | 161 |
+| `Modal` | 93 |
+| `Card` | 56 |
+| `Tab` | 45 |
 | `Settings` | 36 |
-| `Header` | 35 |
-| `List` | 28 |
-| `Form` | 26 |
+| `Header` | 36 |
+| `List` | 31 |
+| `Form` | 27 |
 | `Toolbar` | 13 |
 | `Dialog` | 12 |
 | `Table` | 12 |
@@ -55,10 +55,11 @@ Generated at: 2026-05-10T01:04:13.341Z
 | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
 | 1 | 1532 | `Section` | `prop_signature` | 3 | 1 | 480 | 0% | medium | review-for-extraction |
 | 2 | 1529 | `Modal` | `prop_signature` | 2 | 2 | 520 | 0% | medium | migrate-to-shared-modal-template |
-| 3 | 880 | `Panel` | `prop_signature` | 3 | 1 | 194 | 0% | low | migrate-to-panel-template |
-| 4 | 612 | `Panel` | `token_similarity` | 2 | 1 | 349 | 100% | medium | migrate-to-panel-template |
+| 3 | 1023 | `Modal` | `prop_signature` | 2 | 1 | 435 | 0% | medium | migrate-to-shared-modal-template |
+| 4 | 880 | `Panel` | `prop_signature` | 3 | 1 | 194 | 0% | low | migrate-to-panel-template |
 | 5 | 264 | `Settings` | `token_similarity` | 2 | 1 | 145 | 0% | low | review-for-extraction |
 | 6 | 261 | `Picker` | `duplicate_name` | 2 | 2 | 132 | 50% | low | migrate-to-generic-picker |
+| 7 | 123 | `Section` | `duplicate_name` | 2 | 1 | 84 | 0% | low | review-for-extraction |
 
 ## Top Opportunity Details
 
@@ -87,7 +88,19 @@ Generated at: 2026-05-10T01:04:13.341Z
   - `src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx` (270 LOC, feature:products, no-template-import)
   - `src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx` (250 LOC, feature:filemaker, no-template-import)
 
-### 3. Panel (prop_signature)
+### 3. Modal (prop_signature)
+
+- Score: 1023
+- Files: 2
+- Scopes: feature:products
+- Total LOC: 435
+- Recommendation: migrate-to-shared-modal-template
+- Risk: medium
+- Candidate files:
+  - `src/features/products/pages/ecommerce-pages-cms/UniverseCardCreateModal.tsx` (244 LOC, feature:products, no-template-import)
+  - `src/features/products/pages/ecommerce-pages-cms/EditorialArticleCreateModal.tsx` (191 LOC, feature:products, no-template-import)
+
+### 4. Panel (prop_signature)
 
 - Score: 880
 - Files: 3
@@ -99,19 +112,6 @@ Generated at: 2026-05-10T01:04:13.341Z
   - `src/features/filemaker/components/email-builder/EmailBlockSettingsPanel.tsx` (114 LOC, feature:filemaker, no-template-import)
   - `src/features/filemaker/components/cv-builder/CvLayerPanel.tsx` (40 LOC, feature:filemaker, no-template-import)
   - `src/features/filemaker/components/email-builder/EmailLayerPanel.tsx` (40 LOC, feature:filemaker, no-template-import)
-
-### 4. Panel (token_similarity)
-
-- Score: 612
-- Files: 2
-- Scopes: feature:filemaker
-- Total LOC: 349
-- Recommendation: migrate-to-panel-template
-- Risk: medium
-- Avg token similarity: 0.726
-- Candidate files:
-  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (183 LOC, feature:filemaker, template-import)
-  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (166 LOC, feature:filemaker, template-import)
 
 ### 5. Settings (token_similarity)
 
@@ -138,6 +138,18 @@ Generated at: 2026-05-10T01:04:13.341Z
   - `src/features/filemaker/components/shared/BlockPicker.tsx` (70 LOC, feature:filemaker, no-template-import)
   - `src/features/cms/components/page-builder/BlockPicker.tsx` (62 LOC, feature:cms, template-import)
 
+### 7. Section (duplicate_name)
+
+- Score: 123
+- Files: 2
+- Scopes: feature:integrations
+- Total LOC: 84
+- Recommendation: review-for-extraction
+- Risk: low
+- Candidate files:
+  - `src/features/integrations/components/selector-registry-probe-sessions/ProbeClusterSection.tsx` (51 LOC, feature:integrations, no-template-import)
+  - `src/features/integrations/components/selector-registry/ProbeClusterSection.tsx` (33 LOC, feature:integrations, no-template-import)
+
 ## Execution Notes
 
 - Start with high score + low risk clusters.
@@ -151,6 +163,9 @@ Generated at: 2026-05-10T01:04:13.341Z
 - `Picker` `duplicate_name` files=2 loc=132 scopes=feature:cms, feature:filemaker
   - `src/features/filemaker/components/shared/BlockPicker.tsx` (70 LOC)
   - `src/features/cms/components/page-builder/BlockPicker.tsx` (62 LOC)
+- `Section` `duplicate_name` files=2 loc=84 scopes=feature:integrations
+  - `src/features/integrations/components/selector-registry-probe-sessions/ProbeClusterSection.tsx` (51 LOC)
+  - `src/features/integrations/components/selector-registry/ProbeClusterSection.tsx` (33 LOC)
 
 ### Prop Signature Clusters
 
@@ -165,15 +180,15 @@ Generated at: 2026-05-10T01:04:13.341Z
 - `Modal` `prop_signature` files=2 loc=520 scopes=feature:filemaker, feature:products
   - `src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx` (270 LOC)
   - `src/features/filemaker/components/page/FilemakerOrganizationAdvancedFilterModal.tsx` (250 LOC)
+- `Modal` `prop_signature` files=2 loc=435 scopes=feature:products
+  - `src/features/products/pages/ecommerce-pages-cms/UniverseCardCreateModal.tsx` (244 LOC)
+  - `src/features/products/pages/ecommerce-pages-cms/EditorialArticleCreateModal.tsx` (191 LOC)
 - `Panel` `prop_signature` files=2 loc=46 scopes=feature:kangur
   - `src/features/kangur/admin/settings/AiTutorSettingsPanel.tsx` (23 LOC)
   - `src/features/kangur/admin/settings/ParentVerificationPanel.tsx` (23 LOC)
 
 ### Token Similarity Clusters
 
-- `Panel` `token_similarity` files=2 loc=349 scopes=feature:filemaker
-  - `src/features/filemaker/components/page/FilemakerEventsListPanel.tsx` (183 LOC)
-  - `src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx` (166 LOC)
 - `Settings` `token_similarity` files=2 loc=145 scopes=feature:ai
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/GlobalKernelSettings.tsx` (78 LOC)
   - `src/features/ai/ai-paths/components/ai-paths-settings/sections/PathKernelSettings.tsx` (67 LOC)

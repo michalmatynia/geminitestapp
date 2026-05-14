@@ -62,6 +62,11 @@ export const ADMIN_NOTES_SECTION: AdminBreadcrumbNode = {
   href: '/admin/notes',
 };
 
+export const ADMIN_PAGE_MANAGER_SECTION: AdminBreadcrumbNode = {
+  label: 'Page Manager',
+  href: '/admin/page-manager',
+};
+
 export const ADMIN_PRODUCTS_SECTION: AdminBreadcrumbNode = {
   label: 'Products',
   href: '/admin/products',

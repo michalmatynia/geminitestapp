@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-05-10T01:04:07.916Z
+Generated at: 2026-05-14T23:10:20.090Z
 
 ## Snapshot
 
-- Scanned source files: 372
-- JSX files scanned: 360
-- Components detected: 353
+- Scanned source files: 384
+- JSX files scanned: 372
+- Components detected: 365
 - Components forwarding parent props (hotspot threshold): 1
 - Components forwarding parent props (any): 1
 - Resolved forwarded transitions: 4

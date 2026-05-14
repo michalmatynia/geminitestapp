@@ -1,41 +1,41 @@
 {
   "summary": {
-    "generatedAt": "2026-05-10T01:04:13.341Z",
-    "scannedFileCount": 3139,
-    "duplicateNameClusterCount": 1,
-    "propSignatureClusterCount": 4,
-    "tokenSimilarityClusterCount": 2,
-    "thinReExportWrapperCount": 37,
-    "totalOpportunities": 6,
+    "generatedAt": "2026-05-14T23:10:24.439Z",
+    "scannedFileCount": 3216,
+    "duplicateNameClusterCount": 2,
+    "propSignatureClusterCount": 5,
+    "tokenSimilarityClusterCount": 1,
+    "thinReExportWrapperCount": 36,
+    "totalOpportunities": 7,
     "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 2211
+        "count": 2252
       },
       {
         "family": "Section",
-        "count": 219
+        "count": 224
       },
       {
         "family": "Page",
-        "count": 191
+        "count": 198
       },
       {
         "family": "Panel",
-        "count": 154
+        "count": 161
       },
       {
         "family": "Modal",
-        "count": 91
+        "count": 93
       },
       {
         "family": "Card",
-        "count": 48
+        "count": 56
       },
       {
         "family": "Tab",
-        "count": 44
+        "count": 45
       },
       {
         "family": "Settings",
@@ -43,15 +43,15 @@
       },
       {
         "family": "Header",
-        "count": 35
+        "count": 36
       },
       {
         "family": "List",
-        "count": 28
+        "count": 31
       },
       {
         "family": "Form",
-        "count": 26
+        "count": 27
       },
       {
         "family": "Toolbar",
@@ -76,20 +76,24 @@
       {
         "family": "Drawer",
         "count": 3
+      },
+      {
+        "family": "Tabs",
+        "count": 1
       }
     ],
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 2530
+        "count": 2593
       },
       {
         "domain": "app",
-        "count": 360
+        "count": 372
       },
       {
         "domain": "shared-ui",
-        "count": 189
+        "count": 191
       },
       {
         "domain": "shared",
@@ -179,6 +183,41 @@
     },
     {
       "method": "prop_signature",
+      "family": "Modal",
+      "score": 1023,
+      "fileCount": 2,
+      "totalLines": 435,
+      "maxLines": 244,
+      "featureCount": 1,
+      "scopes": [
+        "feature:products"
+      ],
+      "templateUsers": 0,
+      "templateCoverage": 0,
+      "recommendation": "migrate-to-shared-modal-template",
+      "risk": "medium",
+      "similarity": null,
+      "files": [
+        {
+          "path": "src/features/products/pages/ecommerce-pages-cms/UniverseCardCreateModal.tsx",
+          "lines": 244,
+          "scope": "feature:products",
+          "family": "Modal",
+          "templateImports": 0,
+          "useClient": true
+        },
+        {
+          "path": "src/features/products/pages/ecommerce-pages-cms/EditorialArticleCreateModal.tsx",
+          "lines": 191,
+          "scope": "feature:products",
+          "family": "Modal",
+          "templateImports": 0,
+          "useClient": true
+        }
+      ]
+    },
+    {
+      "method": "prop_signature",
       "family": "Panel",
       "score": 880,
       "fileCount": 3,
@@ -216,41 +255,6 @@
           "scope": "feature:filemaker",
           "family": "Panel",
           "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Panel",
-      "score": 612,
-      "fileCount": 2,
-      "totalLines": 349,
-      "maxLines": 183,
-      "featureCount": 1,
-      "scopes": [
-        "feature:filemaker"
-      ],
-      "templateUsers": 2,
-      "templateCoverage": 1,
-      "recommendation": "migrate-to-panel-template",
-      "risk": "medium",
-      "similarity": 0.726,
-      "files": [
-        {
-          "path": "src/features/filemaker/components/page/FilemakerEventsListPanel.tsx",
-          "lines": 183,
-          "scope": "feature:filemaker",
-          "family": "Panel",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
-          "lines": 166,
-          "scope": "feature:filemaker",
-          "family": "Panel",
-          "templateImports": 1,
           "useClient": true
         }
       ]
@@ -325,6 +329,41 @@
           "useClient": true
         }
       ]
+    },
+    {
+      "method": "duplicate_name",
+      "family": "Section",
+      "score": 123,
+      "fileCount": 2,
+      "totalLines": 84,
+      "maxLines": 51,
+      "featureCount": 1,
+      "scopes": [
+        "feature:integrations"
+      ],
+      "templateUsers": 0,
+      "templateCoverage": 0,
+      "recommendation": "review-for-extraction",
+      "risk": "low",
+      "similarity": null,
+      "files": [
+        {
+          "path": "src/features/integrations/components/selector-registry-probe-sessions/ProbeClusterSection.tsx",
+          "lines": 51,
+          "scope": "feature:integrations",
+          "family": "Section",
+          "templateImports": 0,
+          "useClient": false
+        },
+        {
+          "path": "src/features/integrations/components/selector-registry/ProbeClusterSection.tsx",
+          "lines": 33,
+          "scope": "feature:integrations",
+          "family": "Section",
+          "templateImports": 0,
+          "useClient": true
+        }
+      ]
     }
   ],
   "clusterDiagnostics": {
@@ -350,6 +389,29 @@
             "path": "src/features/cms/components/page-builder/BlockPicker.tsx",
             "lines": 62,
             "scope": "feature:cms"
+          }
+        ]
+      },
+      {
+        "method": "duplicate_name",
+        "family": "Section",
+        "clusterKey": "name:ProbeClusterSection.tsx",
+        "fileCount": 2,
+        "totalLines": 84,
+        "scopes": [
+          "feature:integrations"
+        ],
+        "similarity": null,
+        "files": [
+          {
+            "path": "src/features/integrations/components/selector-registry-probe-sessions/ProbeClusterSection.tsx",
+            "lines": 51,
+            "scope": "feature:integrations"
+          },
+          {
+            "path": "src/features/integrations/components/selector-registry/ProbeClusterSection.tsx",
+            "lines": 33,
+            "scope": "feature:integrations"
           }
         ]
       }
@@ -437,6 +499,29 @@
       },
       {
         "method": "prop_signature",
+        "family": "Modal",
+        "clusterKey": "props:Modal|isSaving|onClose|onCreate|open",
+        "fileCount": 2,
+        "totalLines": 435,
+        "scopes": [
+          "feature:products"
+        ],
+        "similarity": null,
+        "files": [
+          {
+            "path": "src/features/products/pages/ecommerce-pages-cms/UniverseCardCreateModal.tsx",
+            "lines": 244,
+            "scope": "feature:products"
+          },
+          {
+            "path": "src/features/products/pages/ecommerce-pages-cms/EditorialArticleCreateModal.tsx",
+            "lines": 191,
+            "scope": "feature:products"
+          }
+        ]
+      },
+      {
+        "method": "prop_signature",
         "family": "Panel",
         "clusterKey": "props:Panel|className|controller",
         "fileCount": 2,
@@ -460,29 +545,6 @@
       }
     ],
     "tokenSimilarity": [
-      {
-        "method": "token_similarity",
-        "family": "Panel",
-        "clusterKey": "tokens:Panel:src/features/filemaker/components/page/FilemakerEventsListPanel.tsx|src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
-        "fileCount": 2,
-        "totalLines": 349,
-        "scopes": [
-          "feature:filemaker"
-        ],
-        "similarity": 0.726,
-        "files": [
-          {
-            "path": "src/features/filemaker/components/page/FilemakerEventsListPanel.tsx",
-            "lines": 183,
-            "scope": "feature:filemaker"
-          },
-          {
-            "path": "src/features/filemaker/components/page/FilemakerInvoicesListPanel.tsx",
-            "lines": 166,
-            "scope": "feature:filemaker"
-          }
-        ]
-      },
       {
         "method": "token_similarity",
         "family": "Settings",

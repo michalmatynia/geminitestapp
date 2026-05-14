@@ -5,7 +5,7 @@ import { getWorkspaceNav } from './menu/workspace';
 import { getCommerceNav } from './menu/commerce';
 import { getFilemakerNav, getImageStudioNav, getPromptExploderNav } from './menu/misc-sections';
 import { getIntegrationsNav, getBrainNav, getJobsNav, getAiNav } from './menu/ai-integrations';
-import { getContentNav, getSystemNav } from './menu/content-system';
+import { getContentNav, getPageManagerNav, getSystemNav } from './menu/content-system';
 
 export const buildAdminNav = (handlers: {
   onOpenChat: React.MouseEventHandler<HTMLAnchorElement>;
@@ -22,6 +22,7 @@ export const buildAdminNav = (handlers: {
   getFilemakerNav(),
   getImageStudioNav(),
   getPromptExploderNav(),
+  getPageManagerNav(),
   getCommerceNav(),
   getIntegrationsNav(),
   getBrainNav(),

@@ -15,12 +15,18 @@ const LazyKangurFeaturePageShell = React.lazy(() =>
   }))
 );
 
-export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.JSX.Element {
+export function AdminKangurPageShell({
+  basePath = KANGUR_ADMIN_BASE_PATH,
+  slug = [],
+}: {
+  basePath?: string;
+  slug?: string[];
+}): React.JSX.Element {
   const {
     normalizedBasePath,
     pageKey,
     requestedPath,
-  } = resolveKangurFeaturePageRoute(slug, KANGUR_ADMIN_BASE_PATH);
+  } = resolveKangurFeaturePageRoute(slug, basePath);
 
   return (
     <>

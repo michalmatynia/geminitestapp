@@ -631,17 +631,17 @@ export function HeroSection({
 
   /* ── Click outside the panel closes the active zone ──────────── */
   useEffect(() => {
-    if (!activeZone) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        handleBack();
-      }
-    };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [activeZone, handleBack]);
-
-  /* ── Idle animations — start after entrance completes (~2.2s) ─── */
+    if (activeZone) {
+      const onDocClick = (e: MouseEvent) => {
+        if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+          handleBack();
+        }
+      };
+      document.addEventListener('mousedown', onDocClick);
+      return () => document.removeEventListener('mousedown', onDocClick);
+    }
+    return undefined;
+  }, [activeZone, handleBack]);  /* ── Idle animations — start after entrance completes (~2.2s) ─── */
   useEffect(() => {
     const delay = setTimeout(() => {
       /* Float — applied to the hexagon wrapper */

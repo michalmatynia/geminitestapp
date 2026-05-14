@@ -24,6 +24,7 @@ import {
 } from './CmsRuntimeShared';
 import { CssAnimationWrapper } from './CssAnimationWrapper';
 import { GsapAnimationWrapper } from './GsapAnimationWrapper';
+import { SectionSubtree } from './page-renderer/SectionSubtree';
 import { MediaStylesProvider } from './media-styles-context';
 import { FrontendAccordionSection } from './sections/FrontendAccordionSection';
 import { FrontendAnnouncementBarSection } from './sections/FrontendAnnouncementBarSection';
@@ -118,57 +119,9 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
           style={{ ...hoverVars, ...(mediaVars ?? {}) }}
         >
           {ZONE_ORDER.map((zone: PageZone) =>
-            rootSectionIdsByZone[zone].map((rootId: string) => {
-              const renderSectionSubtree = (sectionId: string, depth: number): React.ReactNode => {
-                const section = hierarchy.nodeById.get(sectionId);
-                if (!section) return null;
-                if (isCmsSectionHidden(section.settings['isHidden'])) return null;
-                if (!isCmsNodeVisible(section.settings, runtime)) return null;
-                const childIds = hierarchy.childrenByParent.get(section.id) ?? [];
-
-                return (
-                  <div key={section.id}>
-                    <GsapAnimationWrapper
-                      config={
-                        section.settings['gsapAnimation'] as
-                          | Partial<GsapAnimationConfig>
-                          | undefined
-                      }
-                    >
-                      <CssAnimationWrapper
-                        config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
-                      >
-                        <EventEffectsWrapper settings={section.settings}>
-                          {renderSectionRenderer({
-                            type: section.type,
-                            sectionId: section.id,
-                            settings: section.settings,
-                            blocks: section.blocks,
-                            runtime,
-                          })}
-                        </EventEffectsWrapper>
-                      </CssAnimationWrapper>
-                    </GsapAnimationWrapper>
-                    {childIds.length > 0 ? (
-                      <div
-                        style={{ borderColor: 'var(--cms-appearance-page-border)' }}
-                        className={
-                          depth === 1
-                            ? 'ml-4 border-l pl-3'
-                            : 'ml-5 border-l pl-3'
-                        }
-                      >
-                        {childIds.map((childId: string) =>
-                          renderSectionSubtree(childId, depth + 1)
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              };
-
-              return renderSectionSubtree(rootId, 1);
-            })
+            rootSectionIdsByZone[zone].map((rootId: string) => (
+              <SectionSubtree key={rootId} sectionId={rootId} depth={1} hierarchy={hierarchy} runtime={runtime} />
+            ))
           )}
         </div>
       </CmsPageProvider>

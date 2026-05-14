@@ -1,5 +1,5 @@
-import { AdminProductPagesCmsPage } from '@/features/products/public/admin-product-pages-cms-page';
+import { redirect } from 'next/navigation';
 
-export default function ProductsPagesCmsRoute(): React.JSX.Element {
-  return <AdminProductPagesCmsPage />;
+export default function ProductsPagesCmsRoute(): never {
+  redirect('/admin/page-manager/stargater');
 }

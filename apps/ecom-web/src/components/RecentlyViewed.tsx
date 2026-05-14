@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/strict-boolean-expressions,max-lines-per-function */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,max-lines-per-function */
 'use client';
 
 import { useState, useEffect, type JSX } from 'react';

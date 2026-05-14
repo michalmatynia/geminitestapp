@@ -275,8 +275,7 @@ export function OrderStatusPageClient({ initialOrderId }: { initialOrderId: stri
         void checkStatus(pendingOrderId);
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  }, []);
   return (
     <>
       <SiteNav />

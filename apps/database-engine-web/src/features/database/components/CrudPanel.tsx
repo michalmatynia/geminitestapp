@@ -82,7 +82,7 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
           />
         </div>
         <CrudPanelModals
-          showAddModal={showAddModal} tableDetail={tableDetail} modalColumns={modalColumns}
+          showAddModal={showAddModal} tableDetail={tableDetail ?? null} modalColumns={modalColumns}
           handleAdd={handleAdd} setShowAddModal={setShowAddModal} editingRow={editingRow}
           handleEdit={handleEdit} setEditingRow={setEditingRow} deletingRow={deletingRow}
           setDeletingRow={setDeletingRow} handleDelete={handleDelete} isPending={crudMutation.isPending}

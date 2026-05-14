@@ -17,6 +17,7 @@ const MONGO_SYNC_APPLICATIONS: DatabaseEngineManagedMongoApplication[] = [
   'studiq',
   'cms-builder',
   'products',
+  'arch',
 ];
 
 const APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, string> = {
@@ -24,6 +25,7 @@ const APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, string> 
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
 
 const APPLICATION_TARGET_LABELS: Record<DatabaseEngineManagedMongoApplicationTarget, string> = {

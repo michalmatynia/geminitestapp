@@ -45,6 +45,7 @@ import {
   buildMongoBackupName,
   ensureBackupsDir,
   execFileAsync,
+  resolveArchMongoSourceConfig,
   resolveEcommerceMongoSourceConfig,
   getMongoBackupApplication,
   getMongoBackupPath,
@@ -85,6 +86,18 @@ describe('shared db mongo utils', () => {
     delete process.env['CMS_BUILDER_MONGODB_LOCAL_DB'];
     delete process.env['CMS_BUILDER_MONGODB_CLOUD_URI'];
     delete process.env['CMS_BUILDER_MONGODB_CLOUD_DB'];
+    delete process.env['ARCH_MONGODB_URI'];
+    delete process.env['ARCH_MONGODB_DB'];
+    delete process.env['ARCH_MONGODB_LOCAL_URI'];
+    delete process.env['ARCH_MONGODB_LOCAL_DB'];
+    delete process.env['ARCH_MONGODB_CLOUD_URI'];
+    delete process.env['ARCH_MONGODB_CLOUD_DB'];
+    delete process.env['MONGODB_ARCH_URI'];
+    delete process.env['MONGODB_ARCH_DB'];
+    delete process.env['MONGODB_ARCH_LOCAL_URI'];
+    delete process.env['MONGODB_ARCH_LOCAL_DB'];
+    delete process.env['MONGODB_ARCH_CLOUD_URI'];
+    delete process.env['MONGODB_ARCH_CLOUD_DB'];
     delete process.env['PRODUCTS_MONGODB_URI'];
     delete process.env['PRODUCTS_MONGODB_DB'];
     delete process.env['PRODUCTS_MONGODB_LOCAL_URI'];
@@ -120,6 +133,9 @@ describe('shared db mongo utils', () => {
       recursive: true,
     });
     expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('products'), {
+      recursive: true,
+    });
+    expect(mkdirMock).toHaveBeenCalledWith(expect.stringContaining('arch'), {
       recursive: true,
     });
   });
@@ -252,6 +268,29 @@ describe('shared db mongo utils', () => {
     });
   });
 
+  it('resolves Milkbar Designers architecture local and cloud source config', () => {
+    process.env['ARCH_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27022/arch_web_local';
+    process.env['ARCH_MONGODB_LOCAL_DB'] = 'arch_web_local';
+    process.env['ARCH_MONGODB_CLOUD_URI'] =
+      'mongodb+srv://cluster.example/?authSource=admin';
+    process.env['ARCH_MONGODB_CLOUD_DB'] = 'arch_web';
+
+    expect(resolveArchMongoSourceConfig('local')).toMatchObject({
+      source: 'local',
+      configured: true,
+      uri: 'mongodb://localhost:27022/arch_web_local',
+      dbName: 'arch_web_local',
+      usesLegacyEnv: false,
+    });
+    expect(resolveArchMongoSourceConfig('cloud')).toMatchObject({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/?authSource=admin',
+      dbName: 'arch_web',
+      usesLegacyEnv: false,
+    });
+  });
+
   it('falls back to the legacy Products cloud config for Ecommerce cloud sync', () => {
     process.env['PRODUCTS_MONGODB_CLOUD_URI'] =
       'mongodb+srv://cluster.example/?authSource=admin';
@@ -324,6 +363,7 @@ describe('shared db mongo utils', () => {
     expect(() => assertValidBackupName('studiq/studiq-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('cms-builder/cms-builder-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('products/products-local-backup.archive')).not.toThrow();
+    expect(() => assertValidBackupName('arch/arch-local-backup.archive')).not.toThrow();
     expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type for');
     expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name');
     expect(() => assertValidBackupName('other/backup.archive')).toThrow(
@@ -337,6 +377,7 @@ describe('shared db mongo utils', () => {
       'cms-builder'
     );
     expect(getMongoBackupApplication('products/products-local-backup.archive')).toBe('products');
+    expect(getMongoBackupApplication('arch/arch-local-backup.archive')).toBe('arch');
     expect(getMongoBackupApplication('legacy-backup.archive')).toBe('geminitestapp');
     expect(getMongoBackupPath('geminitestapp/app-backup.archive')).toContain(
       'geminitestapp/app-backup.archive'

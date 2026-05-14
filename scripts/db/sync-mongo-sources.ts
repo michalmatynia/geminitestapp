@@ -14,16 +14,20 @@ type MongoSourceParityModule = typeof import('@/shared/lib/db/services/mongo-sou
 type MongoSourceSyncModule = typeof import('@/shared/lib/db/services/mongo-source-sync');
 type MongoClientModule = typeof import('@/shared/lib/db/mongo-client');
 type MongoUtilsModule = typeof import('@/shared/lib/db/utils/mongo');
+type ManagedMongoSyncControlsModule = typeof import('@/shared/lib/db/managed-mongo-sync-controls');
 
 type MongoDbModules = {
   getMongoSourceState: MongoSourceModule['getMongoSourceState'];
   resolveMongoSourceConfig: MongoSourceModule['resolveMongoSourceConfig'];
+  resolveArchMongoSourceConfig: MongoUtilsModule['resolveArchMongoSourceConfig'];
   resolveCmsBuilderMongoSourceConfig: MongoUtilsModule['resolveCmsBuilderMongoSourceConfig'];
   resolveEcommerceMongoSourceConfig: MongoUtilsModule['resolveEcommerceMongoSourceConfig'];
   resolveStudiqMongoSourceConfig: MongoUtilsModule['resolveStudiqMongoSourceConfig'];
   verifyMongoSourceParity: MongoSourceParityModule['verifyMongoSourceParity'];
   syncMongoSources: MongoSourceSyncModule['syncMongoSources'];
   invalidateMongoClientCache: MongoClientModule['invalidateMongoClientCache'];
+  getManagedMongoSyncControls: ManagedMongoSyncControlsModule['getManagedMongoSyncControls'];
+  getManagedMongoApplicationSyncControl: ManagedMongoSyncControlsModule['getManagedMongoApplicationSyncControl'];
 };
 
 type CliOptions = {
@@ -32,6 +36,22 @@ type CliOptions = {
   apply: boolean;
   verifyOnly: boolean;
 };
+
+type CliMongoSourceConfig = {
+  source: MongoSource;
+  configured: boolean;
+  uri: string | null;
+  dbName: string | null;
+  usesLegacyEnv?: boolean;
+};
+
+const MONGO_SYNC_EXCLUDED_COLLECTIONS: Partial<Record<DatabaseEngineMongoSyncApplication, string[]>> = {
+  products: ['settings'],
+};
+
+const getExcludedCollectionsForSync = (
+  application: DatabaseEngineMongoSyncApplication
+): string[] => MONGO_SYNC_EXCLUDED_COLLECTIONS[application] ?? [];
 
 const parseCliOptions = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -95,28 +115,111 @@ const loadCliEnv = (): void => {
 };
 
 const loadDbModules = async (): Promise<MongoDbModules> => {
-  const [mongoSource, mongoSourceParity, mongoSourceSync, mongoClient, mongoUtils] = await Promise.all([
+  const [
+    mongoSource,
+    mongoSourceParity,
+    mongoSourceSync,
+    mongoClient,
+    mongoUtils,
+    managedMongoSyncControls,
+  ] = await Promise.all([
     import('@/shared/lib/db/mongo-source'),
     import('@/shared/lib/db/services/mongo-source-parity'),
     import('@/shared/lib/db/services/mongo-source-sync'),
     import('@/shared/lib/db/mongo-client'),
     import('@/shared/lib/db/utils/mongo'),
+    import('@/shared/lib/db/managed-mongo-sync-controls'),
   ]);
 
   return {
     getMongoSourceState: mongoSource.getMongoSourceState,
     resolveMongoSourceConfig: mongoSource.resolveMongoSourceConfig,
+    resolveArchMongoSourceConfig: mongoUtils.resolveArchMongoSourceConfig,
     resolveCmsBuilderMongoSourceConfig: mongoUtils.resolveCmsBuilderMongoSourceConfig,
     resolveEcommerceMongoSourceConfig: mongoUtils.resolveEcommerceMongoSourceConfig,
     resolveStudiqMongoSourceConfig: mongoUtils.resolveStudiqMongoSourceConfig,
     verifyMongoSourceParity: mongoSourceParity.verifyMongoSourceParity,
     syncMongoSources: mongoSourceSync.syncMongoSources,
     invalidateMongoClientCache: mongoClient.invalidateMongoClientCache,
+    getManagedMongoSyncControls: managedMongoSyncControls.getManagedMongoSyncControls,
+    getManagedMongoApplicationSyncControl:
+      managedMongoSyncControls.getManagedMongoApplicationSyncControl,
   };
 };
 
 const printJson = (payload: unknown): void => {
   process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+};
+
+const resolveApplications = (
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
+): DatabaseEngineMongoSyncApplication[] =>
+  applicationTarget === 'all'
+    ? ['geminitestapp', 'studiq', 'cms-builder', 'products', 'arch']
+    : [applicationTarget];
+
+const resolveApplicationSourceConfig = async (
+  modules: MongoDbModules,
+  application: DatabaseEngineMongoSyncApplication,
+  source: MongoSource
+): Promise<CliMongoSourceConfig> => {
+  if (application === 'studiq') return modules.resolveStudiqMongoSourceConfig(source);
+  if (application === 'cms-builder') return modules.resolveCmsBuilderMongoSourceConfig(source);
+  if (application === 'products') return modules.resolveEcommerceMongoSourceConfig(source);
+  if (application === 'arch') return modules.resolveArchMongoSourceConfig(source);
+  return modules.resolveMongoSourceConfig(source);
+};
+
+const maskMongoUri = (uri: string | null): string | null => {
+  if (!uri) return null;
+
+  try {
+    const parsed = new URL(uri);
+    if (parsed.username || parsed.password) {
+      parsed.username = parsed.username ? '***' : '';
+      parsed.password = parsed.password ? '***' : '';
+    }
+    return parsed.toString();
+  } catch {
+    return uri.replace(/\/\/([^:@/]+):([^@/]+)@/, '//***:***@');
+  }
+};
+
+const summarizeConfig = (config: CliMongoSourceConfig) => ({
+  source: config.source,
+  configured: config.configured,
+  dbName: config.dbName,
+  maskedUri: maskMongoUri(config.uri),
+  usesLegacyEnv: config.usesLegacyEnv ?? false,
+});
+
+const formatDisabledSyncIssue = (
+  application: DatabaseEngineMongoSyncApplication,
+  reason: string | null
+): string =>
+  `${application} MongoDB sync is temporarily disabled in Database Engine.${reason ? ` ${reason}` : ''}`;
+
+const resolveEnabledApplicationsForCli = async (
+  modules: MongoDbModules,
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
+): Promise<DatabaseEngineMongoSyncApplication[]> => {
+  const controls = await modules.getManagedMongoSyncControls();
+  const applications = resolveApplications(applicationTarget);
+  const enabledApplications = applications.filter((application) => {
+    const control = modules.getManagedMongoApplicationSyncControl(controls, application);
+    return !control.disabled;
+  });
+
+  if (applicationTarget !== 'all' && enabledApplications.length === 0) {
+    const control = modules.getManagedMongoApplicationSyncControl(controls, applicationTarget);
+    throw new Error(formatDisabledSyncIssue(applicationTarget, control.reason));
+  }
+
+  if (enabledApplications.length === 0) {
+    throw new Error('All managed MongoDB application syncs are temporarily disabled.');
+  }
+
+  return enabledApplications;
 };
 
 const runVerificationOnly = async (
@@ -125,29 +228,14 @@ const runVerificationOnly = async (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<void> => {
   const { source, target } = resolveEndpoints(direction);
-  const applications: DatabaseEngineMongoSyncApplication[] =
-    applicationTarget === 'all'
-      ? ['geminitestapp', 'studiq', 'cms-builder', 'products']
-      : [applicationTarget];
+  const applications = await resolveEnabledApplicationsForCli(modules, applicationTarget);
   const verifications = [];
 
   for (const application of applications) {
-    const sourceConfig =
-      application === 'studiq'
-        ? modules.resolveStudiqMongoSourceConfig(source)
-        : application === 'cms-builder'
-          ? modules.resolveCmsBuilderMongoSourceConfig(source)
-          : application === 'products'
-            ? modules.resolveEcommerceMongoSourceConfig(source)
-        : await modules.resolveMongoSourceConfig(source);
-    const targetConfig =
-      application === 'studiq'
-        ? modules.resolveStudiqMongoSourceConfig(target)
-        : application === 'cms-builder'
-          ? modules.resolveCmsBuilderMongoSourceConfig(target)
-          : application === 'products'
-            ? modules.resolveEcommerceMongoSourceConfig(target)
-        : await modules.resolveMongoSourceConfig(target);
+    const [sourceConfig, targetConfig] = await Promise.all([
+      resolveApplicationSourceConfig(modules, application, source),
+      resolveApplicationSourceConfig(modules, application, target),
+    ]);
     if (!sourceConfig.configured || !targetConfig.configured) {
       throw new Error(`${application} ${source} and ${target} MongoDB sources must be configured.`);
     }
@@ -163,6 +251,7 @@ const runVerificationOnly = async (
         targetDbName: targetConfig.dbName,
         sourceUri: sourceConfig.uri,
         targetUri: targetConfig.uri,
+        excludedCollections: getExcludedCollectionsForSync(application),
       }),
     });
   }
@@ -187,18 +276,65 @@ const runPlan = async (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<void> => {
   const { source, target } = resolveEndpoints(direction);
-  const state = await modules.getMongoSourceState();
+  const [state, controls] = await Promise.all([
+    modules.getMongoSourceState(),
+    modules.getManagedMongoSyncControls(),
+  ]);
+  const applications = await Promise.all(
+    resolveApplications(applicationTarget).map(async (application) => {
+      const [sourceConfig, targetConfig] = await Promise.all([
+        resolveApplicationSourceConfig(modules, application, source),
+        resolveApplicationSourceConfig(modules, application, target),
+      ]);
+      const syncControl = modules.getManagedMongoApplicationSyncControl(controls, application);
+      const syncIssue =
+        syncControl.disabled
+          ? formatDisabledSyncIssue(application, syncControl.reason)
+          : !sourceConfig.configured || !targetConfig.configured
+          ? `${application} ${source} and ${target} MongoDB sources must be configured.`
+          : !sourceConfig.uri || !targetConfig.uri || !sourceConfig.dbName || !targetConfig.dbName
+            ? `${application} ${source} and ${target} MongoDB URI/database values are required.`
+            : null;
+
+      return {
+        application,
+        source: summarizeConfig(sourceConfig),
+        target: summarizeConfig(targetConfig),
+        syncDisabled: syncControl.disabled,
+        syncDisabledReason: syncControl.reason,
+        syncDisabledAt: syncControl.updatedAt,
+        canSync: syncIssue === null,
+        syncIssue,
+      };
+    })
+  );
+  const enabledApplications = applications.filter((application) => !application.syncDisabled);
+  const enabledApplicationSyncIssue =
+    enabledApplications.find((application) => !application.canSync)?.syncIssue ?? null;
+  const disabledOnlySyncIssue =
+    applications.find((application) => !application.canSync)?.syncIssue ?? null;
+  const canSyncApplications =
+    enabledApplications.length > 0 &&
+    enabledApplications.every((application) => application.canSync);
+  const rootStateRequired = enabledApplications.some(
+    (application) => application.application === 'geminitestapp'
+  );
+  const rootStateIssue = rootStateRequired && !state.canSync ? state.syncIssue : null;
+  const canSync = canSyncApplications && rootStateIssue === null;
+  const syncIssue = enabledApplicationSyncIssue ?? rootStateIssue ?? (canSync ? null : disabledOnlySyncIssue);
+
   printJson({
     mode: 'plan',
     direction,
     application: applicationTarget,
     source,
     target,
-    canSync: state.canSync,
-    syncIssue: state.syncIssue,
+    canSync,
+    syncIssue,
     activeSource: state.activeSource,
-    local: state.local,
-    cloud: state.cloud,
+    rootLocal: state.local,
+    rootCloud: state.cloud,
+    applications,
     nextStep:
       direction === 'local_to_cloud'
         ? 'Run with --apply to overwrite cloud from local, then verify exact parity.'

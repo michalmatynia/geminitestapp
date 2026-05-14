@@ -27,7 +27,11 @@ const DEFAULT_AUTH_USER_PAGE_SETTINGS: AuthUserPageSettings = {
   requireEmailVerification: false,
 };
 
-const DEFAULT_AUTH_ROLES: AuthRole[] = [
+type NormalizedAuthRole = AuthRole & {
+  deniedPermissions: string[];
+};
+
+const DEFAULT_AUTH_ROLES: NormalizedAuthRole[] = [
   {
     id: 'super_admin',
     name: 'Super Admin',
@@ -61,10 +65,6 @@ const DEFAULT_AUTH_ROLES: AuthRole[] = [
     level: 10,
   },
 ];
-
-type NormalizedAuthRole = AuthRole & {
-  deniedPermissions: string[];
-};
 
 type MongoSettingDoc = Partial<MongoSettingRecord> & {
   updatedAt?: Date | string | null;
@@ -272,7 +272,7 @@ const resolveEffectiveRole = (
     defaultRole ??
     roleList.find((role) => role.id === 'viewer') ??
     roleList[0] ??
-    DEFAULT_AUTH_ROLES[0];
+    DEFAULT_AUTH_ROLES[0]!;
 
   return { role: fallbackRole, roleAssigned: false };
 };

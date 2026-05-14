@@ -14,9 +14,7 @@ const WindowWithLiteSettings = globalThis as typeof globalThis & { __LITE_SETTIN
 
 function QueryClientProbe(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const cached = queryClient.getQueryData(QUERY_KEYS.settings.scope('lite')) as
-    | Array<{ key: string; value: string }>
-    | undefined;
+  const cached = queryClient.getQueryData(QUERY_KEYS.settings.scope('lite'));
 
   return (
     <div data-testid='query-provider-lite-settings'>

@@ -653,6 +653,7 @@ export default defineConfig([
 
   {
     files: studiqWebFiles,
+    ignores: testFiles,
     languageOptions: {
       ...typedSourceLanguageOptions,
       parserOptions: {
@@ -667,6 +668,7 @@ export default defineConfig([
 
   {
     files: ecomWebFiles,
+    ignores: testFiles,
     languageOptions: {
       ...typedSourceLanguageOptions,
       parserOptions: {
@@ -681,6 +683,7 @@ export default defineConfig([
 
   {
     files: dbEngineWebFiles,
+    ignores: testFiles,
     languageOptions: {
       ...typedSourceLanguageOptions,
       parserOptions: {
@@ -695,6 +698,7 @@ export default defineConfig([
 
   {
     files: mobileFiles,
+    ignores: testFiles,
     languageOptions: {
       ...typedSourceLanguageOptions,
       parserOptions: {

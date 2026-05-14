@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useMemo, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 
 import { useDatabaseConfig, useDatabaseData, useDatabasePagination } from '../context/DatabaseContext';
 import {
@@ -24,7 +24,7 @@ type DatabasePreviewFilters = {
 };
 
 type DatabasePreviewConsoleState = {
-  consoleSectionRef: ReturnType<typeof useRef<HTMLDivElement>>;
+  consoleSectionRef: RefObject<HTMLDivElement | null>;
   consoleSql: string;
   handleQueryTable: (tableName: string) => void;
   setConsoleSql: Dispatch<SetStateAction<string>>;
@@ -33,7 +33,7 @@ type DatabasePreviewConsoleState = {
 };
 
 type DatabasePreviewCrudState = {
-  crudSectionRef: ReturnType<typeof useRef<HTMLDivElement>>;
+  crudSectionRef: RefObject<HTMLDivElement | null>;
   crudTable: string;
   handleManageTable: (tableName: string) => void;
   setCrudTable: Dispatch<SetStateAction<string>>;
@@ -48,9 +48,9 @@ type DatabasePreviewDerived = {
 
 type DatabasePreviewState = {
   backupName: ReturnType<typeof useDatabaseConfig>['backupName'];
-  consoleSectionRef: ReturnType<typeof useRef<HTMLDivElement>>;
+  consoleSectionRef: RefObject<HTMLDivElement | null>;
   consoleSql: string;
-  crudSectionRef: ReturnType<typeof useRef<HTMLDivElement>>;
+  crudSectionRef: RefObject<HTMLDivElement | null>;
   crudTable: string;
   dbType: ReturnType<typeof useDatabaseConfig>['dbType'];
   databaseSize: ReturnType<typeof useDatabaseData>['databaseSize'];

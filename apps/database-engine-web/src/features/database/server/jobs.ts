@@ -57,7 +57,8 @@ const isManagedMongoApplicationTarget = (
   value === 'geminitestapp' ||
   value === 'studiq' ||
   value === 'cms-builder' ||
-  value === 'products';
+  value === 'products' ||
+  value === 'arch';
 
 const resolveManagedBackupApplication = (
   payload: unknown

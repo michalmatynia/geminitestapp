@@ -30,6 +30,7 @@ import * as engineSourceSync from '@/features/database/server/api/engine/source/
 import * as engineManaged from '@/features/database/server/api/engine/managed/route-handler';
 import * as engineManagedBackup from '@/features/database/server/api/engine/managed/backup/route-handler';
 import * as engineManagedSync from '@/features/database/server/api/engine/managed/sync/route-handler';
+import * as engineManagedSyncControl from '@/features/database/server/api/engine/managed/sync-control/route-handler';
 import * as engineBackupSchedulerTick from '@/features/database/server/api/engine/backup-scheduler/tick/route-handler';
 import * as engineBackupSchedulerRunNow from '@/features/database/server/api/engine/backup-scheduler/run-now/route-handler';
 import * as engineBackupSchedulerStatus from '@/features/database/server/api/engine/backup-scheduler/status/route-handler';
@@ -58,6 +59,7 @@ const ROUTES = [
   { pattern: ['engine', 'managed'], module: engineManaged },
   { pattern: ['engine', 'managed', 'backup'], module: engineManagedBackup },
   { pattern: ['engine', 'managed', 'sync'], module: engineManagedSync },
+  { pattern: ['engine', 'managed', 'sync-control'], module: engineManagedSyncControl },
   { pattern: ['engine', 'backup-scheduler', 'tick'], module: engineBackupSchedulerTick },
   { pattern: ['engine', 'backup-scheduler', 'run-now'], module: engineBackupSchedulerRunNow },
   { pattern: ['engine', 'backup-scheduler', 'status'], module: engineBackupSchedulerStatus },

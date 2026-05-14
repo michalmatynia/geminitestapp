@@ -49,7 +49,7 @@ export const RestoreModal = ({
     [backupName]
   );
 
-  const handleSave = (): void => {
+  const handleSave = async (): Promise<void> => {
     onConfirm(values.truncate);
     onSuccess?.();
   };

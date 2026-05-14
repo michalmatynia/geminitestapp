@@ -203,7 +203,7 @@ const DatabasesContentLayout = ({
   <AdminDatabasePageLayout
     title='Databases - MongoDB'
     current='Backups'
-    description='MongoDB backups use mongodump/mongorestore archives in a neutral backup folder, split into geminitestapp, StudiQ, CMS Builder, and ecommerce product subfolders.'
+    description='MongoDB backups use mongodump/mongorestore archives in a neutral backup folder, split into geminitestapp, StudiQ, CMS Builder, ecommerce, and architecture website subfolders.'
     headerActions={
       <DatabaseHeaderActions
         isProd={isProd}

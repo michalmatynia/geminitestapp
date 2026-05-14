@@ -13,6 +13,8 @@ export {
   ensureBackupsDir as ensureMongoBackupsDir,
   getMongoBackupApplication,
   getMongoBackupPath,
+  getArchMongoConnectionUrl,
+  getArchMongoDatabaseName,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoDumpCommand,

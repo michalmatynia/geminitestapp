@@ -30,6 +30,7 @@ const MANAGED_APPLICATIONS: Array<{
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
   { application: 'products', label: 'Ecommerce' },
+  { application: 'arch', label: 'Milkbar Designers' },
 ];
 
 const resolveEnvSwitchTarget = (source: MongoSource | null): MongoSource =>
@@ -114,6 +115,8 @@ const resolveMongoSourceOverviewModel = (
 const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): string[] => {
   const hasValue = (value: string | null): value is string =>
     value !== null && value !== '';
+  const applicationTransfers = lastSync.applicationTransfers ?? [];
+  const preSyncBackups = lastSync.preSyncBackups ?? [];
   const metrics = [`Synced at: ${lastSync.syncedAt}`, `Direction: ${lastSync.direction}`];
 
   if (hasValue(lastSync.archivePath)) {
@@ -122,7 +125,7 @@ const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): stri
   if (hasValue(lastSync.logPath)) {
     metrics.push(`Transfer log: ${lastSync.logPath}`);
   }
-  if (lastSync.verification !== null) {
+  if (lastSync.verification !== null && lastSync.verification !== undefined) {
     metrics.push(
       `Verification: ${lastSync.verification.status} at ${lastSync.verification.verifiedAt}`
     );
@@ -133,11 +136,11 @@ const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): stri
     metrics.push(verificationSummary);
   }
 
-  if (lastSync.applicationTransfers.length > 0) {
-    metrics.push(`Application databases synced: ${lastSync.applicationTransfers.length}`);
+  if (applicationTransfers.length > 0) {
+    metrics.push(`Application databases synced: ${applicationTransfers.length}`);
   }
 
-  metrics.push(`Pre-sync backups: ${lastSync.preSyncBackups.length}`);
+  metrics.push(`Pre-sync backups: ${preSyncBackups.length}`);
 
   return metrics;
 };
@@ -153,7 +156,7 @@ export type MongoApplicationTransferSummary = {
 
 const getBackupApplication = (
   backup: DatabaseEngineMongoSyncBackup
-): DatabaseEngineManagedMongoApplication => backup.application;
+): DatabaseEngineManagedMongoApplication => backup.application ?? 'geminitestapp';
 
 const resolveTransferFromVerification = (
   application: DatabaseEngineManagedMongoApplication,
@@ -177,7 +180,8 @@ const resolveApplicationTransfer = (
   lastSync: DatabaseEngineMongoLastSync,
   application: DatabaseEngineManagedMongoApplication
 ): DatabaseEngineMongoSyncApplicationTransfer | null => {
-  const transferFromList = lastSync.applicationTransfers.find(
+  const applicationTransfers = lastSync.applicationTransfers ?? [];
+  const transferFromList = applicationTransfers.find(
     (item) => item.application === application
   );
   if (transferFromList !== undefined) {
@@ -187,12 +191,12 @@ const resolveApplicationTransfer = (
   if (application !== 'geminitestapp') {
     return null;
   }
-  if (lastSync.applicationTransfers.length !== 0) {
+  if (applicationTransfers.length !== 0) {
     return null;
   }
 
   const verification = lastSync.verification;
-  if (verification === null) {
+  if (verification === null || verification === undefined) {
     return null;
   }
 
@@ -209,7 +213,7 @@ export const buildMongoApplicationTransferSummaries = (
 ): MongoApplicationTransferSummary[] =>
   MANAGED_APPLICATIONS.map(({ application, label }) => {
     const transfer = resolveApplicationTransfer(lastSync, application);
-    const backups = lastSync.preSyncBackups.filter(
+    const backups = (lastSync.preSyncBackups ?? []).filter(
       (backup) => getBackupApplication(backup) === application
     );
 

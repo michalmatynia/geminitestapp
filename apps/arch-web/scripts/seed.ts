@@ -1,7 +1,30 @@
 import { MongoClient } from 'mongodb';
 
-const URI = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27022/arch_web_local';
-const DB  = process.env.MONGODB_DB  ?? 'arch_web_local';
+const DEFAULT_MONGODB_URI = 'mongodb://127.0.0.1:27022/arch_web_local';
+const DEFAULT_MONGODB_DB = 'arch_web_local';
+
+const firstEnvValue = (...keys: string[]): string | null => {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return null;
+};
+
+const URI =
+  firstEnvValue(
+    'ARCH_MONGODB_LOCAL_URI',
+    'MONGODB_ARCH_LOCAL_URI',
+    'ARCH_MONGODB_URI',
+    'MONGODB_ARCH_URI'
+  ) ?? DEFAULT_MONGODB_URI;
+const DB =
+  firstEnvValue(
+    'ARCH_MONGODB_LOCAL_DB',
+    'MONGODB_ARCH_LOCAL_DB',
+    'ARCH_MONGODB_DB',
+    'MONGODB_ARCH_DB'
+  ) ?? DEFAULT_MONGODB_DB;
 
 const projects = [
   {
@@ -82,17 +105,31 @@ async function seed() {
     const db = client.db(DB);
     console.log(`Connected to ${URI}/${DB}`);
 
-    await db.collection('projects').deleteMany({});
-    await db.collection('services').deleteMany({});
     await db.collection('projects').createIndex({ code: 1 }, { unique: true });
     await db.collection('services').createIndex({ code: 1 }, { unique: true });
     await db.collection('inquiries').createIndex({ email: 1 }, { unique: true });
 
-    await db.collection('projects').insertMany(projects);
-    await db.collection('services').insertMany(services);
+    await Promise.all(
+      projects.map((project) =>
+        db.collection('projects').updateOne(
+          { code: project.code },
+          { $set: project },
+          { upsert: true }
+        )
+      )
+    );
+    await Promise.all(
+      services.map((service) =>
+        db.collection('services').updateOne(
+          { code: service.code },
+          { $set: service },
+          { upsert: true }
+        )
+      )
+    );
 
-    console.log(`✓ Seeded ${projects.length} projects`);
-    console.log(`✓ Seeded ${services.length} services`);
+    console.log(`✓ Upserted ${projects.length} projects`);
+    console.log(`✓ Upserted ${services.length} services`);
     console.log('Database ready.');
   } finally {
     await client.close();

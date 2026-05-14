@@ -125,6 +125,7 @@ const buildManagedMongoState = (
     buildDatabase('studiq', 'StudiQ'),
     buildDatabase('cms-builder', 'CMS Builder'),
     buildDatabase('products', 'Ecommerce'),
+    buildDatabase('arch', 'Milkbar Designers'),
   ],
   ...overrides,
 });
@@ -159,11 +160,12 @@ describe('ManagedMongoScopePanel', () => {
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
     expect(screen.getByText('CMS Builder')).toBeInTheDocument();
     expect(screen.getByText('Ecommerce')).toBeInTheDocument();
+    expect(screen.getByText('Milkbar Designers')).toBeInTheDocument();
 
     const localLinks = screen.getAllByRole('link', { name: 'Local Tables' });
     const cloudLinks = screen.getAllByRole('link', { name: 'Cloud Tables' });
-    expect(localLinks).toHaveLength(4);
-    expect(cloudLinks).toHaveLength(4);
+    expect(localLinks).toHaveLength(5);
+    expect(cloudLinks).toHaveLength(5);
     expect(localLinks[2]).toHaveAttribute(
       'href',
       '/admin/databases/engine?view=crud&application=cms-builder&source=local'
@@ -198,6 +200,7 @@ describe('ManagedMongoScopePanel', () => {
         buildDatabase('studiq', 'StudiQ', { canPushToCloud: false }),
         buildDatabase('cms-builder', 'CMS Builder'),
         buildDatabase('products', 'Ecommerce'),
+        buildDatabase('arch', 'Milkbar Designers'),
       ],
     });
 

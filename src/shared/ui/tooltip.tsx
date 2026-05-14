@@ -52,7 +52,10 @@ type TooltipPositionState = {
 };
 
 type TooltipTriggerArgs = { children: React.ReactNode; content: React.ReactNode; isVisible: boolean; tooltipId: string };
-type TooltipPortalArgs = TooltipTriggerArgs & { contentClassName?: string | undefined; tooltipStyle: CSSProperties };
+type TooltipPortalArgs = Pick<TooltipTriggerArgs, 'content' | 'isVisible' | 'tooltipId'> & {
+  contentClassName?: string | undefined;
+  tooltipStyle: CSSProperties;
+};
 
 const hasTooltipContent = (content: React.ReactNode): boolean =>
   content !== null && content !== undefined && content !== false;

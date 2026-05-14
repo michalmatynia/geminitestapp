@@ -55,6 +55,9 @@ const DEFAULT_COLLECTION_ALLOWLIST = [
   'auth_security_attempts',
   'auth_security_profiles',
   'auth_login_challenges',
+  'projects',
+  'services',
+  'inquiries',
 ];
 
 type AllowlistConfig = {

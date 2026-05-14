@@ -9,6 +9,8 @@ import {
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
   getMongoBackupApplication,
+  getArchMongoConnectionUrl,
+  getArchMongoDatabaseName,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoRestoreCommand,
@@ -66,6 +68,13 @@ const resolveRestoreTarget = (backupName: string): { mongoUri: string; databaseN
     return {
       mongoUri: getEcommerceMongoConnectionUrl(),
       databaseName: getEcommerceMongoDatabaseName(),
+    };
+  }
+
+  if (application === 'arch') {
+    return {
+      mongoUri: getArchMongoConnectionUrl(),
+      databaseName: getArchMongoDatabaseName(),
     };
   }
 

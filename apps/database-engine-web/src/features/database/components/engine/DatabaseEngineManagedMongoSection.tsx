@@ -21,6 +21,7 @@ function useManagedMongoState(): {
   isMongoSyncBusy: boolean;
   isManualBackupAllowed: boolean;
   isManualSyncAllowed: boolean;
+  isTogglingManagedMongoSync: boolean;
   pendingMongoSourceSync: DatabaseEngineMongoPendingSyncRequest | null;
 } {
   const {
@@ -28,6 +29,7 @@ function useManagedMongoState(): {
     operationControls,
     isBackingUpManagedMongo,
     isSyncingManagedMongo,
+    isTogglingManagedMongoSync,
     isSyncingMongoSources,
     mongoSourceState,
     pendingMongoSourceSync,
@@ -48,12 +50,14 @@ function useManagedMongoState(): {
     isMongoSyncBusy,
     isManualBackupAllowed,
     isManualSyncAllowed,
+    isTogglingManagedMongoSync,
     pendingMongoSourceSync,
   };
 }
 
 export function DatabaseEngineManagedMongoSection(): JSX.Element {
-  const { backupManagedMongo, syncManagedMongo, refetchAll } = useDatabaseEngineActionsContext();
+  const { backupManagedMongo, setManagedMongoSyncDisabled, syncManagedMongo, refetchAll } =
+    useDatabaseEngineActionsContext();
   const state = useManagedMongoState();
 
   if (state.managedMongoDatabases === undefined) {
@@ -68,7 +72,7 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
 
   const backupDisabled = state.isBackingUpManagedMongo || !state.isManualBackupAllowed || Boolean(db.canBackupAllLocal) === false;
   const syncDisabled = state.isMongoSyncBusy || !state.isManualSyncAllowed || Boolean(db.canPushAllToCloud) === false;
-  const pullDisabled = state.isMongoSyncBusy || !state.isManualSyncAllowed || Boolean(db.canPullFromCloud) === false;
+  const pullDisabled = state.isMongoSyncBusy || !state.isManualSyncAllowed || Boolean(db.canPullAllFromCloud) === false;
   
   const isPushingAll = isPendingSyncTarget(state.pendingMongoSourceSync, 'local_to_cloud', 'all');
   const isPullingAll = isPendingSyncTarget(state.pendingMongoSourceSync, 'cloud_to_local', 'all');
@@ -98,8 +102,10 @@ export function DatabaseEngineManagedMongoSection(): JSX.Element {
               Boolean(db.backupStorage.canWriteBackups) === false
             }
             syncDisabled={state.isMongoSyncBusy || !state.isManualSyncAllowed}
+            isTogglingSync={state.isTogglingManagedMongoSync}
             pendingSync={state.pendingMongoSourceSync}
             backupManagedMongo={backupManagedMongo}
+            setManagedMongoSyncDisabled={setManagedMongoSyncDisabled}
             syncManagedMongo={syncManagedMongo}
           />
         ))}

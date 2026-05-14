@@ -13,11 +13,14 @@ import {
   useDatabaseEngineStateContext,
 } from '../../context/DatabaseEngineContext';
 import {
+  buildManagedMongoCrudHref,
   ManagedMongoDatabaseScopeActions,
   ManagedMongoDatabaseScopeHeader,
   ManagedMongoScopePanelActions,
   ManagedMongoScopePanelHeader,
 } from './ManagedMongoScopeParts';
+
+export { buildManagedMongoCrudHref };
 
 function getManagedMongoCardClass(isActive: boolean): string {
   const base = 'rounded-md border p-3';

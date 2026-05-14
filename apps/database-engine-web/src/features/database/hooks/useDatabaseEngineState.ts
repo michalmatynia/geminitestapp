@@ -21,6 +21,7 @@ import type {
   DatabaseEngineStatus,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
+  DatabaseEngineManagedMongoApplication,
   DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineManagedMongoDatabasesResponse,
   DatabaseEngineMongoPendingSyncRequest,
@@ -67,6 +68,7 @@ import {
   useDatabaseEngineProviderPreview,
   useSyncDatabaseEngineManagedMongoMutation,
   useSyncDatabaseEngineMongoSourceMutation,
+  useSetDatabaseEngineManagedMongoSyncDisabledMutation,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
   useRedisOverview,
@@ -104,6 +106,10 @@ export interface UseDatabaseEngineStateReturn {
     application?: DatabaseEngineManagedMongoApplicationTarget
   ) => Promise<void>;
   backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void>;
+  setManagedMongoSyncDisabled: (
+    application: DatabaseEngineManagedMongoApplication,
+    disabled: boolean
+  ) => Promise<void>;
   syncManagedMongo: (
     direction: 'cloud_to_local' | 'local_to_cloud',
     application: DatabaseEngineManagedMongoApplicationTarget
@@ -115,6 +121,7 @@ export interface UseDatabaseEngineStateReturn {
   isSyncingMongoSources: boolean;
   pendingMongoSourceSync: DatabaseEngineMongoPendingSyncRequest | null;
   isBackingUpManagedMongo: boolean;
+  isTogglingManagedMongoSync: boolean;
   isSyncingManagedMongo: boolean;
 }
 
@@ -129,7 +136,7 @@ const didMongoSyncCompleteAfterRequestStarted = (
   requestStartedAtMs: number
 ): boolean => {
   const lastSync = state?.lastSync;
-  if (lastSync === undefined) {
+  if (lastSync === undefined || lastSync === null) {
     return false;
   }
 
@@ -201,6 +208,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const updateSettingsBulk = useUpdateSettingsBulk();
   const backupManagedMongoMutation = useBackupDatabaseEngineManagedMongoMutation();
   const syncManagedMongoMutation = useSyncDatabaseEngineManagedMongoMutation();
+  const setManagedMongoSyncDisabledMutation =
+    useSetDatabaseEngineManagedMongoSyncDisabledMutation();
   const syncMongoSourcesMutation = useSyncDatabaseEngineMongoSourceMutation();
 
   const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
@@ -537,6 +546,21 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         });
       }
     },
+    setManagedMongoSyncDisabled: async (application, disabled) => {
+      try {
+        await setManagedMongoSyncDisabledMutation.mutateAsync({ application, disabled });
+        toast(`${application} sync ${disabled ? 'disabled' : 'enabled'}.`, {
+          variant: 'success',
+        });
+        void managedMongoQuery.refetch();
+        void mongoSourceQuery.refetch();
+      } catch (error) {
+        logClientError(error);
+        toast(extractMutationErrorMessage(error, 'Failed to update managed MongoDB sync control.'), {
+          variant: 'error',
+        });
+      }
+    },
     syncManagedMongo: async (direction, application) => {
       const requestStartedAtMs = Date.now();
       setPendingMongoSourceSync({
@@ -574,6 +598,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     isSyncingMongoSources: syncMongoSourcesMutation.isPending,
     pendingMongoSourceSync,
     isBackingUpManagedMongo: backupManagedMongoMutation.isPending,
+    isTogglingManagedMongoSync: setManagedMongoSyncDisabledMutation.isPending,
     isSyncingManagedMongo: syncManagedMongoMutation.isPending,
   };
 }

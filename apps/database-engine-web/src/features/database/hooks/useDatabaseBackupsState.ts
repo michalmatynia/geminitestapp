@@ -56,7 +56,7 @@ const buildRestoreMeta = (payload: DatabaseRestoreResponse): string => {
   return lines.join('\n');
 };
 
-const readPayload = <T,>(result: { payload: T }): T => result.payload;
+const readPayload = <T,>(result: { payload: unknown }): T => result.payload as T;
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, max-lines-per-function
 export function useDatabaseBackupsState() {

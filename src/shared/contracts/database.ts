@@ -62,7 +62,7 @@ export const databasePreviewRequestSchema = z.object({
   type: databaseTypeSchema,
   mode: databasePreviewModeSchema,
   backupName: z.string().nullable().optional(),
-  application: z.enum(['geminitestapp', 'studiq', 'cms-builder', 'products']).optional(),
+  application: z.enum(['geminitestapp', 'studiq', 'cms-builder', 'products', 'arch']).optional(),
   source: z.enum(['local', 'cloud']).optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
@@ -172,6 +172,7 @@ export const databaseEngineManagedMongoApplicationSchema = z.enum([
   'studiq',
   'cms-builder',
   'products',
+  'arch',
 ]);
 
 export type DatabaseEngineManagedMongoApplication = z.infer<
@@ -230,6 +231,9 @@ export const databaseEngineManagedMongoDatabaseSchema = z.object({
   canBackupLocal: z.boolean(),
   canPushToCloud: z.boolean(),
   canPullFromCloud: z.boolean(),
+  syncDisabled: z.boolean().default(false),
+  syncDisabledReason: z.string().nullable().default(null),
+  syncDisabledAt: z.string().nullable().default(null),
   syncIssue: z.string().nullable(),
 });
 
@@ -268,6 +272,28 @@ export const databaseEngineManagedMongoBackupRequestSchema = z.object({
 
 export type DatabaseEngineManagedMongoBackupRequest = z.infer<
   typeof databaseEngineManagedMongoBackupRequestSchema
+>;
+
+export const databaseEngineManagedMongoSyncControlRequestSchema = z.object({
+  application: databaseEngineManagedMongoApplicationSchema,
+  disabled: z.boolean(),
+  reason: z.string().trim().max(500).nullable().optional(),
+});
+
+export type DatabaseEngineManagedMongoSyncControlRequest = z.infer<
+  typeof databaseEngineManagedMongoSyncControlRequestSchema
+>;
+
+export const databaseEngineManagedMongoSyncControlResponseSchema = z.object({
+  success: z.boolean(),
+  application: databaseEngineManagedMongoApplicationSchema,
+  disabled: z.boolean(),
+  reason: z.string().nullable(),
+  updatedAt: z.string(),
+});
+
+export type DatabaseEngineManagedMongoSyncControlResponse = z.infer<
+  typeof databaseEngineManagedMongoSyncControlResponseSchema
 >;
 
 export const databaseEngineServiceSchema = z.enum([
@@ -568,6 +594,7 @@ export const databaseEngineMongoAppSyncStatusesSchema = z.object({
   studiq: databaseEngineMongoAppSyncStatusSchema,
   'cms-builder': databaseEngineMongoAppSyncStatusSchema,
   products: databaseEngineMongoAppSyncStatusSchema,
+  arch: databaseEngineMongoAppSyncStatusSchema,
 });
 
 export type DatabaseEngineMongoAppSyncStatuses = z.infer<

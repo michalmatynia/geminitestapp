@@ -1,3 +1,4 @@
+import { type UseMutationResult } from '@tanstack/react-query';
 import type {
   NoteWithRelations,
   NoteCreateInput,
@@ -33,17 +34,8 @@ type MutationConfig<T, U> = {
   invalidate?: string[] | InvalidationFn<T, U>;
 };
 
-const createNoteMutation = <T, U>(config: MutationConfig<T, U>) => {
+const createNoteMutation = <T, U>(config: MutationConfig<T, U>): UseMutationResult<T | DeleteResponse, Error, U> => {
   const { path, operation, resource, mutationKey, invalidate = [QUERY_KEYS.notes.all] } = config;
-  const meta = {
-    source: `notes.hooks.${operation}${resource}`,
-    operation,
-    resource,
-    domain: 'notes',
-    mutationKey,
-    tags: ['notes', resource, operation],
-    description: `${operation === 'create' ? 'Creates' : operation === 'update' ? 'Updates' : 'Deletes'} ${resource}.`,
-  };
 
   switch (operation) {
     case 'create':
@@ -85,35 +77,37 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>) => {
         },
         invalidateKeys: invalidate as string[],
       });
+    default:
+      throw new Error(`Unsupported operation: ${operation}`);
   }
 };
 
-export const useCreateNote = () => createNoteMutation<NoteWithRelations, NoteCreateInput>({ path: '/api/notes', operation: 'create', resource: 'notes', mutationKey: QUERY_KEYS.notes.all });
-export const useUpdateNote = () => createUpdateMutationV2<NoteWithRelations, NoteUpdateInput & { id: string }>({
+export const useCreateNote = (): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> => createNoteMutation<NoteWithRelations, NoteCreateInput>({ path: '/api/notes', operation: 'create', resource: 'notes', mutationKey: QUERY_KEYS.notes.all });
+export const useUpdateNote = (): UseMutationResult<NoteWithRelations, Error, NoteUpdateInput & { id: string }> => createUpdateMutationV2<NoteWithRelations, NoteUpdateInput & { id: string }>({
     mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) => api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
     mutationKey: QUERY_KEYS.notes.all,
     meta: { source: 'notes.hooks.useUpdateNote', operation: 'update', resource: 'notes', domain: 'notes', mutationKey: QUERY_KEYS.notes.all, tags: ['notes', 'update'], description: 'Updates notes.'},
     invalidateKeys: (_d, vars) => [QUERY_KEYS.notes.all, QUERY_KEYS.notes.detail(vars.id)],
 });
-export const useDeleteNote = () => createNoteMutation<DeleteResponse, string>({ path: '/api/notes', operation: 'delete', resource: 'notes', mutationKey: QUERY_KEYS.notes.all });
+export const useDeleteNote = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes', operation: 'delete', resource: 'notes', mutationKey: QUERY_KEYS.notes.all });
 
-export const useCreateNoteFolder = () => createNoteMutation<CategoryRecord, CategoryCreateInput>({ path: '/api/notes/categories', operation: 'create', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
-export const useUpdateNoteFolder = () => createNoteMutation<CategoryRecord, CategoryUpdateInput>({ path: '/api/notes/categories', operation: 'update', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
-export const useDeleteNoteFolder = () => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/categories', operation: 'delete', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
+export const useCreateNoteFolder = (): UseMutationResult<CategoryRecord, Error, CategoryCreateInput> => createNoteMutation<CategoryRecord, CategoryCreateInput>({ path: '/api/notes/categories', operation: 'create', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
+export const useUpdateNoteFolder = (): UseMutationResult<CategoryRecord, Error, CategoryUpdateInput & { id: string }> => createNoteMutation<CategoryRecord, CategoryUpdateInput>({ path: '/api/notes/categories', operation: 'update', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
+export const useDeleteNoteFolder = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/categories', operation: 'delete', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
 
-export const useCreateNotebook = () => createNoteMutation<NotebookRecord, NotebookCreateInput>({ path: '/api/notes/notebooks', operation: 'create', resource: 'notebooks', mutationKey: QUERY_KEYS.notes.notebooks() });
-export const useUpdateNotebook = () => createUpdateMutationV2<NotebookRecord, NotebookUpdateInput & { id: string }>({
+export const useCreateNotebook = (): UseMutationResult<NotebookRecord, Error, NotebookCreateInput> => createNoteMutation<NotebookRecord, NotebookCreateInput>({ path: '/api/notes/notebooks', operation: 'create', resource: 'notebooks', mutationKey: QUERY_KEYS.notes.notebooks() });
+export const useUpdateNotebook = (): UseMutationResult<NotebookRecord, Error, NotebookUpdateInput & { id: string }> => createUpdateMutationV2<NotebookRecord, NotebookUpdateInput & { id: string }>({
     mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) => api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
     mutationKey: QUERY_KEYS.notes.notebooks(),
     meta: { source: 'notes.hooks.useUpdateNotebook', operation: 'update', resource: 'notebooks', domain: 'notes', mutationKey: QUERY_KEYS.notes.notebooks(), tags: ['notes', 'notebooks', 'update'], description: 'Updates notes notebooks.'},
     invalidateKeys: (_d, vars) => [QUERY_KEYS.notes.notebooks(), QUERY_KEYS.notes.detail(vars.id)],
 });
-export const useDeleteNotebook = () => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/notebooks', operation: 'delete', resource: 'notebooks', mutationKey: QUERY_KEYS.notes.notebooks() });
+export const useDeleteNotebook = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/notebooks', operation: 'delete', resource: 'notebooks', mutationKey: QUERY_KEYS.notes.notebooks() });
 
-export const useCreateNoteTag = () => createNoteMutation<TagRecord, TagCreateInput>({ path: '/api/notes/tags', operation: 'create', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags(), invalidate: (_d, v) => [QUERY_KEYS.notes.tags(), QUERY_KEYS.notes.tags(v.notebookId ?? undefined)] });
-export const useUpdateNoteTag = () => createNoteMutation<TagRecord, TagUpdateInput>({ path: '/api/notes/tags', operation: 'update', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags() });
-export const useDeleteNoteTag = () => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/tags', operation: 'delete', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags() });
+export const useCreateNoteTag = (): UseMutationResult<TagRecord, Error, TagCreateInput> => createNoteMutation<TagRecord, TagCreateInput>({ path: '/api/notes/tags', operation: 'create', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags(), invalidate: (_d, v) => [QUERY_KEYS.notes.tags(), QUERY_KEYS.notes.tags(v.notebookId ?? undefined)] });
+export const useUpdateNoteTag = (): UseMutationResult<TagRecord, Error, TagUpdateInput & { id: string }> => createNoteMutation<TagRecord, TagUpdateInput>({ path: '/api/notes/tags', operation: 'update', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags() });
+export const useDeleteNoteTag = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/tags', operation: 'delete', resource: 'tags', mutationKey: QUERY_KEYS.notes.tags() });
 
-export const useCreateNoteTheme = () => createNoteMutation<ThemeRecord, ThemeCreateInput>({ path: '/api/notes/themes', operation: 'create', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes(), invalidate: (_d, v) => [QUERY_KEYS.notes.themes(), QUERY_KEYS.notes.themes(v.notebookId ?? undefined)] });
-export const useUpdateNoteTheme = () => createNoteMutation<ThemeRecord, ThemeUpdateInput>({ path: '/api/notes/themes', operation: 'update', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes() });
-export const useDeleteNoteTheme = () => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/themes', operation: 'delete', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes() });
+export const useCreateNoteTheme = (): UseMutationResult<ThemeRecord, Error, ThemeCreateInput> => createNoteMutation<ThemeRecord, ThemeCreateInput>({ path: '/api/notes/themes', operation: 'create', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes(), invalidate: (_d, v) => [QUERY_KEYS.notes.themes(), QUERY_KEYS.notes.themes(v.notebookId ?? undefined)] });
+export const useUpdateNoteTheme = (): UseMutationResult<ThemeRecord, Error, ThemeUpdateInput & { id: string }> => createNoteMutation<ThemeRecord, ThemeUpdateInput>({ path: '/api/notes/themes', operation: 'update', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes() });
+export const useDeleteNoteTheme = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/themes', operation: 'delete', resource: 'themes', mutationKey: QUERY_KEYS.notes.themes() });

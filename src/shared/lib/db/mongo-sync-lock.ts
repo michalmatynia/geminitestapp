@@ -63,7 +63,8 @@ const isMongoSyncApplicationTarget = (
   value === 'geminitestapp' ||
   value === 'studiq' ||
   value === 'cms-builder' ||
-  value === 'products';
+  value === 'products' ||
+  value === 'arch';
 
 /** Internal payload structure for the lock file. */
 type MongoSyncLockPayload = Pick<

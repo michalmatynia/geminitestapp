@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ShieldCheckIcon } from 'lucide-react';
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import type { DatabasePreviewMode } from '@/shared/contracts/database';
 import { Alert, CollapsibleSection, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
@@ -34,7 +35,7 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
   EXTENSION: FileTextIcon,
 };
 
-function getPreviewDescription(mode: 'current' | 'backup' | null | undefined, backupName: string): string {
+function getPreviewDescription(mode: DatabasePreviewMode | null | undefined, backupName: string): string {
   if (mode === 'current') {
     return 'Source: Current database instance';
   }
@@ -116,7 +117,7 @@ function DatabasePreviewSections({
 
 function DatabasePreviewContent(): React.JSX.Element {
   const state = useDatabasePreviewState();
-  const description = getPreviewDescription(state.mode, state.backupName);
+  const description = getPreviewDescription(state.mode, state.backupName ?? '');
   const showError = hasPreviewError(state.error);
 
   return (

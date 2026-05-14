@@ -22,6 +22,7 @@ export type DatabaseEngineStateContextValue = Omit<
   | 'updateOperationControls'
   | 'syncMongoSources'
   | 'backupManagedMongo'
+  | 'setManagedMongoSyncDisabled'
   | 'syncManagedMongo'
   | 'saveSettings'
   | 'refetchAll'
@@ -37,6 +38,7 @@ export type DatabaseEngineActionsContextValue = Pick<
   | 'updateOperationControls'
   | 'syncMongoSources'
   | 'backupManagedMongo'
+  | 'setManagedMongoSyncDisabled'
   | 'syncManagedMongo'
   | 'saveSettings'
   | 'refetchAll'
@@ -80,6 +82,7 @@ export function DatabaseEngineProvider({
     updateOperationControls,
     syncMongoSources,
     backupManagedMongo,
+    setManagedMongoSyncDisabled,
     syncManagedMongo,
     saveSettings,
     refetchAll,
@@ -95,6 +98,7 @@ export function DatabaseEngineProvider({
     updateOperationControls,
     syncMongoSources,
     backupManagedMongo,
+    setManagedMongoSyncDisabled,
     syncManagedMongo,
     saveSettings,
     refetchAll,

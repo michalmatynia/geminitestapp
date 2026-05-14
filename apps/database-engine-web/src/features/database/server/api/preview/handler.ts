@@ -8,13 +8,13 @@ import {
   type DatabaseColumnInfo,
   type DatabaseIndexInfo,
   type DatabaseTableDetail,
-  type MongoSource,
-  type DatabaseEngineManagedMongoApplication,
 } from '@/shared/contracts/database';
 import {
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
   getMongoBackupApplication,
+  getArchMongoConnectionUrl,
+  getArchMongoDatabaseName,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoRestoreCommand,
@@ -56,6 +56,12 @@ const resolvePreviewTarget = (
       return {
         mongoUri: getEcommerceMongoConnectionUrl(),
         sourceDbName: getEcommerceMongoDatabaseName(),
+      };
+    }
+    if (application === 'arch') {
+      return {
+        mongoUri: getArchMongoConnectionUrl(),
+        sourceDbName: getArchMongoDatabaseName(),
       };
     }
   }

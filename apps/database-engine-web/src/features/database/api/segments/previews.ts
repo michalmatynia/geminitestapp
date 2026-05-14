@@ -85,10 +85,10 @@ const normalizeGroups = (data: unknown): DatabasePreviewGroup[] => {
   return data
     .filter((group): group is Record<string, unknown> => group !== null && typeof group === 'object')
     .map((group) => {
-      const type = group.type;
+      const type = group['type'];
       return {
-        type: firstStringValue([type, group.name]),
-        objects: normalizeStringArray(group.objects ?? group.tables),
+        type: firstStringValue([type, group['name']]),
+        objects: normalizeStringArray(group['objects'] ?? group['tables']),
       };
     });
 };
@@ -118,8 +118,8 @@ export const getDatabasePreview = async (
       tableDetails,
       databaseSize,
       total: parseTotal(total, totalRows),
-      page: parsePositiveInt(finalPage, input.page),
-      pageSize: parsePositiveInt(finalPageSize, input.pageSize),
+      page: parsePositiveInt(finalPage, input.page ?? 1),
+      pageSize: parsePositiveInt(finalPageSize, input.pageSize ?? 20),
     };
 
     return { ok: true, payload };
@@ -129,9 +129,9 @@ export const getDatabasePreview = async (
       if (error.payload !== undefined && error.payload !== null) {
         return { ok: false, payload: error.payload as DatabasePreviewPayload };
       }
-      return { ok: false, payload: toFallbackErrorPayload<DatabasePreviewPayload>(error) };
+      return { ok: false, payload: toFallbackErrorPayload(error) };
     }
-    return { ok: false, payload: toFallbackErrorPayload<DatabasePreviewPayload>(error) };
+    return { ok: false, payload: toFallbackErrorPayload(error) };
   }
 };
 

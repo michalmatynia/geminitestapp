@@ -39,6 +39,23 @@ const mocks = vi.hoisted(() => ({
   resolveMongoSourceConfig: vi.fn(),
   createMongoSourceBackup: vi.fn(),
   recordMongoSourceSync: vi.fn(async () => undefined),
+  resolveArchMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+    source === 'local'
+      ? {
+          source,
+          configured: true,
+          uri: 'mongodb://localhost:27022/arch_web_local',
+          dbName: 'arch_web_local',
+          usesLegacyEnv: false,
+        }
+      : {
+          source,
+          configured: true,
+          uri: 'mongodb+srv://cluster.example/arch_web',
+          dbName: 'arch_web',
+          usesLegacyEnv: false,
+        }
+  ),
   resolveStudiqMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
     source === 'local'
       ? {
@@ -90,6 +107,7 @@ const mocks = vi.hoisted(() => ({
           usesLegacyEnv: false,
         }
   ),
+  getManagedMongoSyncControls: vi.fn(async () => ({})),
   verifyMongoSourceParity: vi.fn(async ({ source, target, sourceDbName, targetDbName }) => ({
     status: 'passed',
     verifiedAt: '2026-04-09T04:31:00.000Z',
@@ -126,10 +144,11 @@ vi.mock('@/shared/lib/db/mongo-source', () => ({
 }));
 
 vi.mock('@/shared/lib/db/utils/mongo', () => ({
-  MONGO_BACKUP_APPLICATIONS: ['geminitestapp', 'studiq', 'cms-builder', 'products'],
+  MONGO_BACKUP_APPLICATIONS: ['geminitestapp', 'studiq', 'cms-builder', 'products', 'arch'],
   execFileAsync: mocks.execFileAsync,
   getMongoDumpCommand: mocks.getMongoDumpCommand,
   getMongoRestoreCommand: mocks.getMongoRestoreCommand,
+  resolveArchMongoSourceConfig: mocks.resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig: mocks.resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig: mocks.resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig: mocks.resolveStudiqMongoSourceConfig,
@@ -137,6 +156,15 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
+}));
+
+vi.mock('@/shared/lib/db/managed-mongo-sync-controls', () => ({
+  getManagedMongoSyncControls: mocks.getManagedMongoSyncControls,
+  getManagedMongoApplicationSyncControl: vi.fn((controls, application) => ({
+    disabled: controls[application]?.disabled === true,
+    reason: controls[application]?.reason ?? null,
+    updatedAt: controls[application]?.updatedAt ?? null,
+  })),
 }));
 
 vi.mock('mongodb', () => ({
@@ -217,6 +245,23 @@ describe('mongo-source-sync', () => {
             usesLegacyEnv: false,
           }
     );
+    mocks.resolveArchMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+      source === 'local'
+        ? {
+            source,
+            configured: true,
+            uri: 'mongodb://localhost:27022/arch_web_local',
+            dbName: 'arch_web_local',
+            usesLegacyEnv: false,
+          }
+        : {
+            source,
+            configured: true,
+            uri: 'mongodb+srv://cluster.example/arch_web',
+            dbName: 'arch_web',
+            usesLegacyEnv: false,
+          }
+    );
     mocks.resolveStudiqMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
       source === 'local'
         ? {
@@ -268,6 +313,7 @@ describe('mongo-source-sync', () => {
             usesLegacyEnv: false,
           }
     );
+    mocks.getManagedMongoSyncControls.mockResolvedValue({});
     mocks.getMongoDb.mockResolvedValue({ dropDatabase: mocks.dropDatabase });
     mocks.execFileAsync.mockResolvedValue({ stdout: 'mongo tool ok', stderr: '' });
     mocks.mongoAdminCommand.mockResolvedValue({ ok: 1 });
@@ -326,7 +372,7 @@ describe('mongo-source-sync', () => {
     await expect(
       testOnly.assertAllApplicationsSyncReady('all', 'local_to_cloud')
     ).resolves.toBeUndefined();
-    expect(mocks.mongoClientConnect).toHaveBeenCalledTimes(8);
+    expect(mocks.mongoClientConnect).toHaveBeenCalledTimes(10);
   });
 
   it('reports a single per-app pre-flight configuration failure', async () => {
@@ -510,26 +556,40 @@ describe('mongo-source-sync', () => {
       direction: 'cloud_to_local',
       timestamp: expect.any(Number),
     });
-    expect(result.preSyncBackups).toHaveLength(8);
-    expect(result.applicationTransfers).toHaveLength(4);
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(9, {
+      application: 'arch',
+      source: 'cloud',
+      role: 'source',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(mocks.createMongoSourceBackup).toHaveBeenNthCalledWith(10, {
+      application: 'arch',
+      source: 'local',
+      role: 'target',
+      direction: 'cloud_to_local',
+      timestamp: expect.any(Number),
+    });
+    expect(result.preSyncBackups).toHaveLength(10);
+    expect(result.applicationTransfers).toHaveLength(5);
     expect(result.archivePath).toContain('mongo-sync-cloud_to_local-');
     expect(result.logPath).toContain('mongo-sync-cloud_to_local-');
     expect(result.verification?.status).toBe('passed');
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(mocks.execFileAsync).toHaveBeenCalledTimes(8);
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(10);
     expect(mocks.execFileAsync).toHaveBeenNthCalledWith(
-      8,
+      10,
       'mongorestore',
       expect.arrayContaining([
         '--uri',
-        'mongodb://localhost:27021',
+        'mongodb://localhost:27022',
         '--nsFrom',
-        'ecom_cloud.*',
+        'arch_web.*',
         '--nsTo',
-        'ecom_local.*',
+        'arch_web_local.*',
       ])
     );
-    expect(mocks.dropDatabase).toHaveBeenCalledTimes(4);
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(5);
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(1, {
       source: 'cloud',
       target: 'local',
@@ -537,6 +597,7 @@ describe('mongo-source-sync', () => {
       targetDbName: 'app_local',
       sourceUri: 'mongodb+srv://cluster.example/app_cloud',
       targetUri: 'mongodb://localhost:27017/app_local',
+      excludedCollections: [],
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(2, {
       source: 'cloud',
@@ -545,6 +606,7 @@ describe('mongo-source-sync', () => {
       targetDbName: 'studiq_local',
       sourceUri: 'mongodb+srv://cluster.example/studiq_cloud',
       targetUri: 'mongodb://localhost:27018/studiq_local',
+      excludedCollections: [],
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(3, {
       source: 'cloud',
@@ -553,6 +615,7 @@ describe('mongo-source-sync', () => {
       targetDbName: 'cms_builder_local',
       sourceUri: 'mongodb+srv://cluster.example/cms_builder_cloud',
       targetUri: 'mongodb://localhost:27019/cms_builder_local',
+      excludedCollections: [],
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(4, {
       source: 'cloud',
@@ -561,6 +624,16 @@ describe('mongo-source-sync', () => {
       targetDbName: 'ecom_local',
       sourceUri: 'mongodb+srv://cluster.example/ecom_cloud',
       targetUri: 'mongodb://localhost:27021/ecom_local',
+      excludedCollections: ['settings'],
+    });
+    expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(5, {
+      source: 'cloud',
+      target: 'local',
+      sourceDbName: 'arch_web',
+      targetDbName: 'arch_web_local',
+      sourceUri: 'mongodb+srv://cluster.example/arch_web',
+      targetUri: 'mongodb://localhost:27022/arch_web_local',
+      excludedCollections: [],
     });
     expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -573,6 +646,7 @@ describe('mongo-source-sync', () => {
           expect.objectContaining({ application: 'studiq' }),
           expect.objectContaining({ application: 'cms-builder' }),
           expect.objectContaining({ application: 'products' }),
+          expect.objectContaining({ application: 'arch' }),
         ]),
         preSyncBackups: expect.arrayContaining([
           expect.objectContaining({ application: 'geminitestapp', role: 'source', source: 'cloud' }),
@@ -583,9 +657,68 @@ describe('mongo-source-sync', () => {
           expect.objectContaining({ application: 'cms-builder', role: 'target', source: 'local' }),
           expect.objectContaining({ application: 'products', role: 'source', source: 'cloud' }),
           expect.objectContaining({ application: 'products', role: 'target', source: 'local' }),
+          expect.objectContaining({ application: 'arch', role: 'source', source: 'cloud' }),
+          expect.objectContaining({ application: 'arch', role: 'target', source: 'local' }),
         ]),
       })
     );
+  });
+
+  it('skips disabled applications when syncing all managed MongoDB apps', async () => {
+    mocks.getManagedMongoSyncControls.mockResolvedValue({
+      geminitestapp: {
+        disabled: true,
+        reason: 'Main app sync is too large for routine cloud synchronization.',
+        updatedAt: '2026-05-14T18:01:13.926Z',
+      },
+    });
+
+    const result = await syncMongoSources('cloud_to_local');
+
+    expect(result.success).toBe(true);
+    expect(result.applicationTransfers.map((transfer) => transfer.application)).toEqual([
+      'studiq',
+      'cms-builder',
+      'products',
+      'arch',
+    ]);
+    expect(result.preSyncBackups).toHaveLength(8);
+    expect(mocks.createMongoSourceBackup).toHaveBeenCalledTimes(8);
+    expect(
+      mocks.createMongoSourceBackup.mock.calls.some(
+        ([params]) => params.application === 'geminitestapp'
+      )
+    ).toBe(false);
+    expect(mocks.execFileAsync).toHaveBeenCalledTimes(8);
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(4);
+    expect(mocks.verifyMongoSourceParity).toHaveBeenCalledTimes(4);
+    expect(mocks.recordMongoSourceSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applicationTransfers: expect.not.arrayContaining([
+          expect.objectContaining({ application: 'geminitestapp' }),
+        ]),
+        preSyncBackups: expect.not.arrayContaining([
+          expect.objectContaining({ application: 'geminitestapp' }),
+        ]),
+      })
+    );
+  });
+
+  it('rejects targeted sync when the managed MongoDB app is disabled', async () => {
+    mocks.getManagedMongoSyncControls.mockResolvedValue({
+      products: {
+        disabled: true,
+        reason: 'Paused for maintenance.',
+        updatedAt: '2026-05-14T18:01:13.926Z',
+      },
+    });
+
+    await expect(syncMongoSources('local_to_cloud', 'products')).rejects.toThrow(
+      /Ecommerce MongoDB sync is temporarily disabled in Database Engine/i
+    );
+    expect(mocks.createMongoSourceBackup).not.toHaveBeenCalled();
+    expect(mocks.execFileAsync).not.toHaveBeenCalled();
+    expect(mocks.recordMongoSourceSync).not.toHaveBeenCalled();
   });
 
   it('fails sync and skips success metadata when post-restore parity verification fails', async () => {

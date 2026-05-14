@@ -31,6 +31,7 @@ const MANAGED_APPLICATIONS: Array<{
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
   { application: 'products', label: 'Ecommerce' },
+  { application: 'arch', label: 'Milkbar Designers' },
 ];
 
 const APPLICATION_SET = new Set(MANAGED_APPLICATIONS.map((item) => item.application));

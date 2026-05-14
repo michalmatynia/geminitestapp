@@ -47,7 +47,11 @@ const resolveViewLabel = (view: DatabaseEngineWorkspaceView): string =>
 const parseManagedMongoApplication = (
   value: string | null
 ): DatabaseEngineManagedMongoApplication | undefined =>
-  value === 'geminitestapp' || value === 'studiq' || value === 'cms-builder' || value === 'products'
+  value === 'geminitestapp' ||
+  value === 'studiq' ||
+  value === 'cms-builder' ||
+  value === 'products' ||
+  value === 'arch'
     ? value
     : undefined;
 
@@ -60,6 +64,7 @@ const MONGO_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplicationTarg
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
 
 const formatMongoSyncDirection = (direction: DatabaseEngineMongoSyncDirection): string =>

@@ -37,9 +37,13 @@ describe('buildBackupApplicationSummaries', () => {
         name: 'products/products-backup.archive',
         size: 400,
       }),
+      buildBackup({
+        name: 'arch/arch-backup.archive',
+        size: 500,
+      }),
     ]);
 
-    expect(summaries).toHaveLength(4);
+    expect(summaries).toHaveLength(5);
     expect(summaries.find((item) => item.application === 'geminitestapp')).toMatchObject({
       count: 2,
       totalSizeBytes: 300,
@@ -57,6 +61,10 @@ describe('buildBackupApplicationSummaries', () => {
     expect(summaries.find((item) => item.application === 'products')).toMatchObject({
       count: 1,
       totalSizeBytes: 400,
+    });
+    expect(summaries.find((item) => item.application === 'arch')).toMatchObject({
+      count: 1,
+      totalSizeBytes: 500,
     });
   });
 });

@@ -5,8 +5,8 @@ import { isSupportedSiteLocale, normalizeSiteLocale } from '@/shared/lib/i18n/si
 
 import { loadDatabaseEngineMessages } from './messages';
 
-export default getRequestConfig(({ requestLocale }) => {
-  const localeCandidate = requestLocale;
+export default getRequestConfig(async ({ requestLocale }) => {
+  const localeCandidate = await requestLocale;
   const locale = isSupportedSiteLocale(localeCandidate)
     ? normalizeSiteLocale(localeCandidate)
     : DEFAULT_SITE_I18N_CONFIG.defaultLocale;

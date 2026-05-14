@@ -74,6 +74,7 @@ import {
   fetchRedisOverview,
   restoreDatabaseBackup,
   restoreJsonBackup,
+  setDatabaseEngineManagedMongoSyncDisabled,
   syncDatabaseEngineManagedMongo,
   syncDatabaseEngineMongoSource,
   uploadDatabaseBackup,
@@ -556,6 +557,37 @@ export function useSyncDatabaseEngineManagedMongoMutation(): MutationResult<
       dbKeys.engineMongoSource(),
       dbKeys.engineStatus(),
       dbKeys.schema({ provider: 'all', includeCounts: true }),
+    ],
+  });
+}
+
+export function useSetDatabaseEngineManagedMongoSyncDisabledMutation(): MutationResult<
+  { success: boolean },
+  {
+    application: DatabaseEngineManagedMongoApplication;
+    disabled: boolean;
+  }
+> {
+  const mutationKey = dbKeys.all;
+  return createMutationV2({
+    mutationFn: (input: {
+      application: DatabaseEngineManagedMongoApplication;
+      disabled: boolean;
+    }) => setDatabaseEngineManagedMongoSyncDisabled(input.application, input.disabled),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSetDatabaseEngineManagedMongoSyncDisabledMutation',
+      operation: 'action',
+      resource: 'system.databases.engine-managed-mongo-sync-control',
+      domain: 'database',
+      mutationKey,
+      tags: ['database', 'engine', 'managed-mongo', 'sync-control'],
+      description: 'Enables or disables managed MongoDB sync for one application.',
+    },
+    invalidateKeys: [
+      dbKeys.engineManagedMongo(),
+      dbKeys.engineMongoSource(),
+      dbKeys.engineStatus(),
     ],
   });
 }

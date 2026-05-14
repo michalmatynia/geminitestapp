@@ -30,6 +30,7 @@ import { configurationError } from '@/shared/errors/app-error';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import {
   MONGO_BACKUP_APPLICATIONS,
+  resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
@@ -80,6 +81,7 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
 
 /** Normalizes a raw value to a valid MongoSource. */
@@ -269,6 +271,9 @@ const resolveApplicationMongoSourceConfig = (
   if (application === 'products') {
     return resolveEcommerceMongoSourceConfig(source);
   }
+  if (application === 'arch') {
+    return resolveArchMongoSourceConfig(source);
+  }
   return getMongoSourceConfig(source);
 };
 
@@ -301,7 +306,9 @@ const getApplicationSourceConfigIssue = (
       ? 'CMS_BUILDER'
       : application === 'products'
         ? 'ECOM'
-        : application.toUpperCase()
+        : application === 'arch'
+          ? 'ARCH'
+          : application.toUpperCase()
   }_MONGODB_${source.toUpperCase()}`;
   return `${label} ${source} MongoDB source is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
 };

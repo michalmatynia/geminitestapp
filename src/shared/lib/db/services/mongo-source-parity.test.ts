@@ -146,4 +146,39 @@ describe('mongo-source-parity', () => {
       ])
     );
   });
+
+  it('ignores explicitly excluded collections', async () => {
+    const sourceDb = makeFakeMongoDb({
+      collections: [
+        { name: 'products', type: 'collection', options: {} },
+        { name: 'settings', type: 'collection', options: {} },
+      ],
+      documents: {
+        products: [{ _id: '1', stock: 3 }],
+        settings: [{ _id: 'app-setting' }],
+      },
+    });
+    const targetDb = makeFakeMongoDb({
+      collections: [
+        { name: 'products', type: 'collection', options: {} },
+      ],
+      documents: {
+        products: [{ _id: '1', stock: 3 }],
+      },
+    });
+    mocks.getMongoDb.mockImplementation(async (source: string) =>
+      source === 'local' ? sourceDb : targetDb
+    );
+
+    const result = await verifyMongoSourceParity({
+      source: 'local',
+      target: 'cloud',
+      sourceDbName: 'ecom_local',
+      targetDbName: 'products_db',
+      excludedCollections: ['settings'],
+    });
+
+    expect(result.status).toBe('passed');
+    expect(result.collections.map((collection) => collection.name)).toEqual(['products']);
+  });
 });

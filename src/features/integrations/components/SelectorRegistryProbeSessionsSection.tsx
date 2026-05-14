@@ -18,6 +18,8 @@ import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/
 import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-badges';
 import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
 import { useSelectorRegistryProbeSessions } from './selector-registry-probe-sessions/useSelectorRegistryProbeSessions';
+import { ProbeClusterSection } from './selector-registry-probe-sessions/ProbeClusterSection';
+import { ArchivedSessionsSection } from './selector-registry-probe-sessions/ArchivedSessionsSection';
 import {
   Badge,
   Button,
@@ -286,187 +288,59 @@ export function SelectorRegistryProbeSessionsSection({
       </div>
 
       <div className='space-y-4'>
-        <ProbeClusterSection resolvedClusters={resolvedClusters} selectedKeys={selectedKeys} manuallySelectedKeys={manuallySelectedKeys} defaultKeysByRole={defaultKeysByRole} />
+        <ProbeClusterSection
+          resolvedClusters={resolvedClusters}
+          selectedKeys={selectedKeys}
+          manuallySelectedKeys={manuallySelectedKeys}
+          defaultKeysByRole={defaultKeysByRole}
+        />
 
         {showArchived && archivedClusters.length > 0 ? (
-          <div className='space-y-4 rounded-lg border border-border/70 bg-muted/10 p-4'>
-            <div className='space-y-1'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <h3 className='text-sm font-semibold'>Archived Sessions</h3>
-                <Badge variant='outline'>{archivedClusters.length} templates</Badge>
-                <Badge variant='outline'>{archivedSessions.length} archived</Badge>
-              </div>
-              <div className='text-xs text-muted-foreground'>
-                Archived probe sessions are kept for audit only and do not participate in active
-                review actions.
-              </div>
-            </div>
-
-            <div className='space-y-4'>
-              {archivedClusters.map((cluster) => (
-                <div
-                  key={`archived:${cluster.clusterKey}`}
-                  className='space-y-4 rounded-md border border-border/70 bg-background/50 p-4'
-                >
-                  <div className='flex flex-wrap items-start justify-between gap-3'>
-                    <div className='space-y-1'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <h4 className='text-sm font-semibold'>{cluster.label}</h4>
-                        <Badge variant='outline'>{cluster.sessionCount} sessions</Badge>
-                        <Badge variant='outline'>{cluster.suggestionCount} suggestions</Badge>
-                        {cluster.roleSignature.map((role) => (
-                          <Badge key={`archived:${cluster.clusterKey}:${role}`} variant='secondary'>
-                            {formatSelectorRegistryRoleLabel(role) ?? role}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className='text-xs text-muted-foreground'>
-                        Archived template history grouped by normalized path and role signature.
-                      </div>
-                    </div>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant='outline'
-                        loading={restoringClusterKey === cluster.clusterKey}
-                        loadingText='Restoring'
-                        disabled={restoreMutation.isPending}
-                        onClick={async () => {
-                          setRestoringClusterKey(cluster.clusterKey);
-                          try {
-                            const restoredCount = await restoreSessionBatch(
-                              cluster.sessions.map((session) => session.id)
-                            );
-                            toast(
-                              restoredCount === cluster.sessionCount
-                                ? `Restored ${restoredCount} archived probe session${restoredCount === 1 ? '' : 's'} in this template to active review.`
-                                : `Restored ${restoredCount} of ${cluster.sessionCount} archived probe sessions in this template.`,
-                              {
-                                variant:
-                                  restoredCount === cluster.sessionCount ? 'success' : 'error',
-                              }
-                            );
-                          } catch (error) {
-                            toast(
-                              error instanceof Error
-                                ? error.message
-                                : 'Archived template could not be restored.',
-                              { variant: 'error' }
-                            );
-                          } finally {
-                            setRestoringClusterKey(null);
-                          }
-                        }}
-                      >
-                        Restore Template
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className='space-y-3'>
-                    {cluster.sessions.map((session) => (
-                      <div
-                        key={`archived:${session.id}`}
-                        className='space-y-3 rounded-md border border-border/60 bg-muted/10 p-4'
-                      >
-                        <div className='space-y-1'>
-                          <div className='flex flex-wrap items-center gap-2'>
-                            <Badge variant='outline'>{session.profile}</Badge>
-                            <Badge variant='outline'>{session.scannedPages} pages</Badge>
-                            <Badge variant='outline'>{session.suggestionCount} suggestions</Badge>
-                            <Badge variant='secondary'>
-                              Archived {formatTimestamp(session.archivedAt ?? session.updatedAt)}
-                            </Badge>
-                          </div>
-                          <div className='text-sm font-medium'>
-                            {session.sourceTitle ?? session.sourceUrl}
-                          </div>
-                          <div className='text-xs text-muted-foreground'>{session.sourceUrl}</div>
-                        </div>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <Button
-                            type='button'
-                            size='sm'
-                            variant='outline'
-                            loading={restoringSessionId === session.id}
-                            loadingText='Restoring'
-                            disabled={restoreMutation.isPending}
-                            onClick={async () => {
-                              setRestoringSessionId(session.id);
-                              try {
-                                const restored = await restoreMutation.mutateAsync({
-                                  id: session.id,
-                                });
-                                toast(
-                                  restored.restored
-                                    ? 'Restored archived probe session to active review.'
-                                    : 'Probe session was already active or missing.',
-                                  { variant: restored.restored ? 'success' : 'error' }
-                                );
-                              } catch (error) {
-                                toast(
-                                  error instanceof Error
-                                    ? error.message
-                                    : 'Archived probe session could not be restored.',
-                                  { variant: 'error' }
-                                );
-                              } finally {
-                                setRestoringSessionId(null);
-                              }
-                            }}
-                          >
-                            Restore Session
-                          </Button>
-                        </div>
-
-                        <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
-                          {session.pages.map((pageSummary) => (
-                            <Badge key={`archived:${session.id}:${pageSummary.url}`} variant='outline'>
-                              {pageSummary.title ?? pageSummary.url} ({pageSummary.suggestionCount})
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className='space-y-3'>
-                          {session.suggestions.map((suggestion) => (
-                            <div
-                              key={`archived:${session.id}:${suggestion.suggestionId}`}
-                              className='space-y-2 rounded-md border border-border/60 bg-background/40 p-3'
-                            >
-                              <SelectorRegistryProbeSuggestionBadges
-                                role={suggestion.classificationRole}
-                                confidence={suggestion.confidence}
-                                tag={suggestion.tag}
-                                draftTargetHints={suggestion.draftTargetHints}
-                                baseKey={`archived:${session.id}:${suggestion.suggestionId}`}
-                              />
-                              <div className='text-sm font-medium'>
-                                {getSelectorRegistryProbeSuggestionTextPreview(suggestion)}
-                              </div>
-                              <div className='text-xs text-muted-foreground'>
-                                {getSelectorRegistryProbeSuggestionEvidenceText(suggestion)}
-                              </div>
-                              <div className='space-y-1 text-xs text-muted-foreground'>
-                                <div>{getSelectorRegistryProbeSuggestionPrimaryPageLabel(suggestion)}</div>
-                                {getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion) ? (
-                                  <div>{getSelectorRegistryProbeSuggestionSecondaryPageLabel(suggestion)}</div>
-                                ) : null}
-                                <SelectorRegistryProbeSuggestionCandidateDetails
-                                  suggestion={suggestion}
-                                />
-                                <div>Archived probe suggestion. Review history only until restored.</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ArchivedSessionsSection
+            archivedClusters={archivedClusters}
+            archivedSessions={archivedSessions}
+            restoreMutation={restoreMutation}
+            onRestoreSession={async (id: string) => {
+              setRestoringSessionId(id);
+              try {
+                const restored = await restoreMutation.mutateAsync({ id });
+                toast(
+                  restored.restored
+                    ? 'Restored archived probe session to active review.'
+                    : 'Probe session was already active or missing.',
+                  { variant: restored.restored ? 'success' : 'error' }
+                );
+              } catch (error) {
+                toast(
+                  error instanceof Error ? error.message : 'Archived probe session could not be restored.',
+                  { variant: 'error' }
+                );
+              } finally {
+                setRestoringSessionId(null);
+              }
+            }}
+            onRestoreTemplate={async (clusterKey: string, sessionIds: string[]) => {
+              setRestoringClusterKey(clusterKey);
+              try {
+                const restoredCount = await restoreSessionBatch(sessionIds);
+                toast(
+                  restoredCount === sessionIds.length
+                    ? `Restored ${restoredCount} archived probe session${restoredCount === 1 ? '' : 's'} in this template to active review.`
+                    : `Restored ${restoredCount} of ${sessionIds.length} archived probe sessions in this template.`,
+                  {
+                    variant: restoredCount === sessionIds.length ? 'success' : 'error',
+                  }
+                );
+              } catch (error) {
+                toast(
+                  error instanceof Error ? error.message : 'Archived template could not be restored.',
+                  { variant: 'error' }
+                );
+              } finally {
+                setRestoringClusterKey(null);
+              }
+            }}
+          />
         ) : null}
       </div>
     </section>

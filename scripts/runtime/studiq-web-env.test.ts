@@ -96,6 +96,50 @@ describe('studiq web env loader', () => {
     expect(process.env.MONGODB_CLOUD_DB).toBeUndefined();
   });
 
+  it('uses the dedicated local StudiQ database when no app MongoDB env exists', () => {
+    const repoRoot = createTempRoot();
+    const appDir = path.join(repoRoot, 'apps', 'studiq-web');
+    process.env.NODE_ENV = 'development';
+    process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/app';
+    process.env.MONGODB_DB = 'app';
+    process.env.MONGODB_LOCAL_URI = 'mongodb://127.0.0.1:27017/app';
+    process.env.MONGODB_LOCAL_DB = 'app';
+
+    loadStudiqWebEnv({ repoRoot, appDir, isDev: true, loadRootEnv: false });
+
+    expect(process.env.MONGODB_URI).toBe('mongodb://127.0.0.1:27018/studiq_local');
+    expect(process.env.MONGODB_DB).toBe('studiq_local');
+    expect(process.env.MONGODB_LOCAL_URI).toBe('mongodb://127.0.0.1:27018/studiq_local');
+    expect(process.env.MONGODB_LOCAL_DB).toBe('studiq_local');
+    expect(process.env.MONGODB_ACTIVE_SOURCE_DEFAULT).toBe('local');
+  });
+
+  it('forces local StudiQ source in development even when app env selects cloud', () => {
+    const repoRoot = createTempRoot();
+    const appDir = path.join(repoRoot, 'apps', 'studiq-web');
+    process.env.NODE_ENV = 'development';
+    writeFile(
+      appDir,
+      '.env.local',
+      [
+        'STUDIQ_MONGO_ISOLATED="true"',
+        'MONGODB_LOCAL_URI="mongodb://127.0.0.1:27018/studiq_local"',
+        'MONGODB_LOCAL_DB="studiq_local"',
+        'MONGODB_CLOUD_URI="mongodb+srv://cluster.example/studiq_db"',
+        'MONGODB_CLOUD_DB="studiq_db"',
+        'MONGODB_ACTIVE_SOURCE_DEFAULT="cloud"',
+      ].join('\n')
+    );
+
+    loadStudiqWebEnv({ repoRoot, appDir, isDev: true, loadRootEnv: false });
+
+    expect(process.env.MONGODB_URI).toBe('mongodb://127.0.0.1:27018/studiq_local');
+    expect(process.env.MONGODB_DB).toBe('studiq_local');
+    expect(process.env.MONGODB_ACTIVE_SOURCE_DEFAULT).toBe('local');
+    expect(process.env.MONGODB_CLOUD_URI).toBeUndefined();
+    expect(process.env.MONGODB_CLOUD_DB).toBeUndefined();
+  });
+
   it('supports STUDIQ_MONGODB_URI aliases', () => {
     const repoRoot = createTempRoot();
     const appDir = path.join(repoRoot, 'apps', 'studiq-web');

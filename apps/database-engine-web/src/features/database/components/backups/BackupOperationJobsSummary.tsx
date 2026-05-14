@@ -27,7 +27,8 @@ const isManagedMongoApplicationTarget = (
   value === 'geminitestapp' ||
   value === 'studiq' ||
   value === 'cms-builder' ||
-  value === 'products';
+  value === 'products' ||
+  value === 'arch';
 
 const getJobTarget = (
   payload: Record<string, unknown> | undefined

@@ -16,6 +16,7 @@ const MANAGED_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, 
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
 
 const SOURCE_LABELS: Record<MongoSource, string> = {

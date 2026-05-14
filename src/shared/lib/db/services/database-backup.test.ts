@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   ensureMongoBackupsDirMock,
+  getArchMongoConnectionUrlMock,
+  getArchMongoDatabaseNameMock,
   getMongoConnectionUrlMock,
   getMongoDatabaseNameMock,
   getMongoDumpCommandMock,
@@ -19,6 +21,7 @@ const {
   getStudiqMongoDatabaseNameMock,
   mongoExecFileAsyncMock,
   resolveMongoSourceConfigMock,
+  resolveArchMongoSourceConfigMock,
   resolveCmsBuilderMongoSourceConfigMock,
   resolveEcommerceMongoSourceConfigMock,
   resolveProductsMongoSourceConfigMock,
@@ -31,6 +34,8 @@ const {
   logWarningMock,
 } = vi.hoisted(() => ({
   ensureMongoBackupsDirMock: vi.fn(),
+  getArchMongoConnectionUrlMock: vi.fn(),
+  getArchMongoDatabaseNameMock: vi.fn(),
   getMongoConnectionUrlMock: vi.fn(),
   getMongoDatabaseNameMock: vi.fn(),
   getMongoDumpCommandMock: vi.fn(),
@@ -44,6 +49,7 @@ const {
   getStudiqMongoDatabaseNameMock: vi.fn(),
   mongoExecFileAsyncMock: vi.fn(),
   resolveMongoSourceConfigMock: vi.fn(),
+  resolveArchMongoSourceConfigMock: vi.fn(),
   resolveCmsBuilderMongoSourceConfigMock: vi.fn(),
   resolveEcommerceMongoSourceConfigMock: vi.fn(),
   resolveProductsMongoSourceConfigMock: vi.fn(),
@@ -72,6 +78,8 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   buildMongoBackupName: (application: string, archiveName: string) =>
     `${application}/${archiveName}`,
   ensureBackupsDir: ensureMongoBackupsDirMock,
+  getArchMongoConnectionUrl: getArchMongoConnectionUrlMock,
+  getArchMongoDatabaseName: getArchMongoDatabaseNameMock,
   getMongoConnectionUrl: getMongoConnectionUrlMock,
   getMongoDatabaseName: getMongoDatabaseNameMock,
   getMongoDumpCommand: getMongoDumpCommandMock,
@@ -83,6 +91,7 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   getProductsMongoDatabaseName: getProductsMongoDatabaseNameMock,
   getStudiqMongoConnectionUrl: getStudiqMongoConnectionUrlMock,
   getStudiqMongoDatabaseName: getStudiqMongoDatabaseNameMock,
+  resolveArchMongoSourceConfig: resolveArchMongoSourceConfigMock,
   resolveCmsBuilderMongoSourceConfig: resolveCmsBuilderMongoSourceConfigMock,
   resolveEcommerceMongoSourceConfig: resolveEcommerceMongoSourceConfigMock,
   resolveProductsMongoSourceConfig: resolveProductsMongoSourceConfigMock,
@@ -119,6 +128,8 @@ describe('database-backup', () => {
     getCmsBuilderMongoDatabaseNameMock.mockReturnValue('cms_builder_local');
     getEcommerceMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27021/ecom_local');
     getEcommerceMongoDatabaseNameMock.mockReturnValue('ecom_local');
+    getArchMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27022/arch_web_local');
+    getArchMongoDatabaseNameMock.mockReturnValue('arch_web_local');
     getProductsMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27017/app');
     getProductsMongoDatabaseNameMock.mockReturnValue('app');
     getMongoDumpCommandMock.mockReturnValue('mongodump');
@@ -151,6 +162,13 @@ describe('database-backup', () => {
       dbName: 'ecom_cloud',
       usesLegacyEnv: false,
     });
+    resolveArchMongoSourceConfigMock.mockReturnValue({
+      source: 'cloud',
+      configured: true,
+      uri: 'mongodb+srv://cluster.example/arch_cloud',
+      dbName: 'arch_cloud',
+      usesLegacyEnv: false,
+    });
     resolveProductsMongoSourceConfigMock.mockReturnValue({
       source: 'cloud',
       configured: true,
@@ -181,7 +199,7 @@ describe('database-backup', () => {
 
     const result = await createMongoBackup();
 
-    expect(ensureMongoBackupsDirMock).toHaveBeenCalledTimes(4);
+    expect(ensureMongoBackupsDirMock).toHaveBeenCalledTimes(5);
     expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(1, 'mongodump', [
       '--uri',
       'mongodb://user:secret@localhost:27017/app',
@@ -220,7 +238,17 @@ describe('database-backup', () => {
       ),
       '--gzip',
     ]);
-    expect(writeFileMock).toHaveBeenCalledTimes(4);
+    expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(5, 'mongodump', [
+      '--uri',
+      'mongodb://localhost:27022/arch_web_local',
+      '--db',
+      'arch_web_local',
+      expect.stringMatching(
+        /^--archive=\/tmp\/backups\/arch\/arch_web_local-backup-\d+\.archive$/
+      ),
+      '--gzip',
+    ]);
+    expect(writeFileMock).toHaveBeenCalledTimes(5);
     expect(writeFileMock).toHaveBeenCalledWith(
       expect.stringMatching(/\.archive\.log$/),
       expect.stringContaining('mongodb://user:***@localhost:27017/app')

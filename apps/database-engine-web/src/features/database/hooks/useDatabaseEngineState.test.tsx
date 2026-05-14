@@ -34,7 +34,7 @@ const mocks = vi.hoisted(() => ({
         } | null;
         syncInProgress?: {
           direction: 'cloud_to_local' | 'local_to_cloud';
-          application?: 'all' | 'geminitestapp' | 'studiq' | 'cms-builder' | 'products';
+          application?: 'all' | 'geminitestapp' | 'studiq' | 'cms-builder' | 'products' | 'arch';
           source: 'local' | 'cloud';
           target: 'local' | 'cloud';
           acquiredAt: string;

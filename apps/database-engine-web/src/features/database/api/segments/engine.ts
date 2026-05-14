@@ -1,8 +1,10 @@
 import {
   type DatabaseEngineBackupRunNowResponse,
   type DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  type DatabaseEngineManagedMongoApplication,
   type DatabaseEngineManagedMongoApplicationTarget,
   type DatabaseEngineManagedMongoDatabasesResponse,
+  type DatabaseEngineManagedMongoSyncControlResponse,
   type DatabaseEngineMongoSourceState as DatabaseEngineMongoSourceStateResponse,
   type DatabaseEngineMongoSyncDirection,
   type DatabaseEngineMongoSyncResponse as DatabaseEngineMongoSyncResponsePayload,
@@ -63,6 +65,19 @@ export const syncDatabaseEngineManagedMongo = async (
   }, {
     timeout: MONGO_SOURCE_SYNC_TIMEOUT_MS,
   });
+
+export const setDatabaseEngineManagedMongoSyncDisabled = async (
+  application: DatabaseEngineManagedMongoApplication,
+  disabled: boolean
+): Promise<DatabaseEngineManagedMongoSyncControlResponse> =>
+  api.post<DatabaseEngineManagedMongoSyncControlResponse>(
+    '/api/databases/engine/managed/sync-control',
+    {
+      application,
+      disabled,
+      reason: disabled ? 'Main app sync is too large for routine cloud synchronization.' : null,
+    }
+  );
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>
   api.get<ProviderDiagnosticsResponse>('/api/settings/providers');

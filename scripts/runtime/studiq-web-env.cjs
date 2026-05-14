@@ -13,6 +13,9 @@ const STUDIQ_MONGO_SOURCE_KEYS = [
   'MONGODB_ACTIVE_SOURCE',
 ];
 
+const DEFAULT_STUDIQ_LOCAL_MONGODB_URI = 'mongodb://127.0.0.1:27018/studiq_local';
+const DEFAULT_STUDIQ_LOCAL_MONGODB_DB = 'studiq_local';
+
 const getEnvMode = (isDev) => {
   if (process.env.NODE_ENV === 'test') return 'test';
   return isDev ? 'development' : 'production';
@@ -45,45 +48,33 @@ const loadAppEnvOverrides = (appDir, mode) => {
   return { loadedEnvFiles, loadedKeys };
 };
 
-const firstEnvValue = (...keys) => {
-  for (const key of keys) {
-    const value = process.env[key]?.trim();
-    if (value) return value;
-  }
-  return '';
-};
-
 const resolveStudiqMongoUri = (loadedKeys) => {
   if (process.env.STUDIQ_MONGODB_URI?.trim()) return process.env.STUDIQ_MONGODB_URI.trim();
+  if (process.env.STUDIQ_MONGODB_LOCAL_URI?.trim()) return process.env.STUDIQ_MONGODB_LOCAL_URI.trim();
   if (loadedKeys.has('MONGODB_URI') && process.env.MONGODB_URI?.trim()) {
     return process.env.MONGODB_URI.trim();
   }
   if (loadedKeys.has('MONGODB_LOCAL_URI') && process.env.MONGODB_LOCAL_URI?.trim()) {
     return process.env.MONGODB_LOCAL_URI.trim();
   }
-  return firstEnvValue('MONGODB_URI', 'MONGODB_LOCAL_URI');
+  return DEFAULT_STUDIQ_LOCAL_MONGODB_URI;
 };
 
 const resolveStudiqMongoDb = (loadedKeys) => {
   if (process.env.STUDIQ_MONGODB_DB?.trim()) return process.env.STUDIQ_MONGODB_DB.trim();
+  if (process.env.STUDIQ_MONGODB_LOCAL_DB?.trim()) return process.env.STUDIQ_MONGODB_LOCAL_DB.trim();
   if (loadedKeys.has('MONGODB_DB') && process.env.MONGODB_DB?.trim()) {
     return process.env.MONGODB_DB.trim();
   }
   if (loadedKeys.has('MONGODB_LOCAL_DB') && process.env.MONGODB_LOCAL_DB?.trim()) {
     return process.env.MONGODB_LOCAL_DB.trim();
   }
-  return firstEnvValue('MONGODB_DB', 'MONGODB_LOCAL_DB');
+  return DEFAULT_STUDIQ_LOCAL_MONGODB_DB;
 };
 
-const applyStudiqMongoIsolation = (loadedKeys) => {
+const applyStudiqMongoIsolation = (loadedKeys, { isDev }) => {
   const isolated =
-    process.env.STUDIQ_MONGO_ISOLATED === 'true' ||
-    (process.env.STUDIQ_MONGO_ISOLATED !== 'false' &&
-    (loadedKeys.has('STUDIQ_MONGO_ISOLATED') ||
-      loadedKeys.has('STUDIQ_MONGODB_URI') ||
-      Boolean(process.env.STUDIQ_MONGODB_URI?.trim()) ||
-      loadedKeys.has('MONGODB_URI') ||
-      loadedKeys.has('MONGODB_LOCAL_URI')));
+    isDev && process.env.STUDIQ_MONGO_ISOLATED !== 'false';
 
   if (!isolated) return;
 
@@ -100,16 +91,9 @@ const applyStudiqMongoIsolation = (loadedKeys) => {
     process.env.MONGODB_LOCAL_DB = dbName;
   }
 
-  if (!loadedKeys.has('MONGODB_ACTIVE_SOURCE_DEFAULT')) {
-    process.env.MONGODB_ACTIVE_SOURCE_DEFAULT = 'local';
-  }
-
-  if (!loadedKeys.has('MONGODB_CLOUD_URI')) {
-    delete process.env.MONGODB_CLOUD_URI;
-  }
-  if (!loadedKeys.has('MONGODB_CLOUD_DB')) {
-    delete process.env.MONGODB_CLOUD_DB;
-  }
+  process.env.MONGODB_ACTIVE_SOURCE_DEFAULT = 'local';
+  delete process.env.MONGODB_CLOUD_URI;
+  delete process.env.MONGODB_CLOUD_DB;
   delete process.env.MONGODB_ACTIVE_SOURCE;
 };
 
@@ -126,7 +110,7 @@ const loadStudiqWebEnv = ({
 
   const mode = getEnvMode(isDev);
   const appEnv = loadAppEnvOverrides(appDir, mode);
-  applyStudiqMongoIsolation(appEnv.loadedKeys);
+  applyStudiqMongoIsolation(appEnv.loadedKeys, { isDev });
 
   if (process.env.DEBUG_STUDIQ_WEB_ENV === 'true') {
     log.info?.('[studiq-web-env] loaded', {

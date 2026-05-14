@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * MongoDB Source Parity Verification
  * 
@@ -161,12 +162,14 @@ const fingerprintCollection = async (
 
 const fingerprintMongoDatabase = async (
   db: Db,
-  dbName: string
+  dbName: string,
+  excludedCollections: Set<string>
 ): Promise<MongoSourceFingerprint> => {
   const collections = (
     (await db.listCollections({}, { nameOnly: false }).toArray()) as MongoCollectionListEntry[]
   )
     .filter((entry) => isUserCollectionName(entry.name))
+    .filter((entry) => !excludedCollections.has(entry.name))
     .sort((left, right) => left.name.localeCompare(right.name));
 
   const fingerprints = new Map<string, MongoCollectionFingerprint>();
@@ -186,7 +189,8 @@ const fingerprintMongoDatabase = async (
 const fingerprintMongoSource = async (
   source: MongoSource,
   dbName: string,
-  uri?: string
+  uri: string | undefined,
+  excludedCollections: Set<string>
 ): Promise<MongoSourceFingerprint> => {
   if (uri !== undefined && uri.trim().length > 0) {
     const client = new MongoClient(uri, {
@@ -195,14 +199,14 @@ const fingerprintMongoSource = async (
     });
     try {
       await client.connect();
-      return await fingerprintMongoDatabase(client.db(dbName), dbName);
+      return await fingerprintMongoDatabase(client.db(dbName), dbName, excludedCollections);
     } finally {
       await client.close().catch(() => undefined);
     }
   }
 
   const db = await getMongoDb(source);
-  return fingerprintMongoDatabase(db, dbName);
+  return fingerprintMongoDatabase(db, dbName, excludedCollections);
 };
 
 const recordMissingCollectionMismatch = (
@@ -319,16 +323,20 @@ export const verifyMongoSourceParity = async (params: {
   targetDbName: string;
   sourceUri?: string;
   targetUri?: string;
+  excludedCollections?: string[];
 }): Promise<DatabaseEngineMongoSyncVerification> => {
+  const excludedCollections = new Set(params.excludedCollections ?? []);
   const sourceFingerprint = await fingerprintMongoSource(
     params.source,
     params.sourceDbName,
-    params.sourceUri
+    params.sourceUri,
+    excludedCollections
   );
   const targetFingerprint = await fingerprintMongoSource(
     params.target,
     params.targetDbName,
-    params.targetUri
+    params.targetUri,
+    excludedCollections
   );
 
   const collectionNames = Array.from(

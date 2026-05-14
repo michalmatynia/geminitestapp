@@ -26,6 +26,22 @@ export const countMatchingSearchTerms = (item: PersonaMemoryRecord, searchTerms:
   return searchTerms.filter((term) => haystacks.some((value) => value.includes(term))).length;
 };
 
+function matchesTag(tags: string[], tag: string | null): boolean {
+  return tag === null || matchesExactOrPartial(tags, tag);
+}
+
+function matchesTopic(topicHints: string[], topic: string | null): boolean {
+  return topic === null || matchesExactOrPartial(topicHints, topic);
+}
+
+function matchesMood(moodHints: string[], mood: AgentPersonaMoodId | null): boolean {
+  return mood === null || moodHints.includes(mood);
+}
+
+function matchesSearchTerms(item: PersonaMemoryRecord, searchTerms: string[]): boolean {
+  return searchTerms.length === 0 || countMatchingSearchTerms(item, searchTerms) > 0;
+}
+
 export const matchesPersonaMemoryRecord = (
   item: PersonaMemoryRecord,
   filters: {
@@ -35,26 +51,23 @@ export const matchesPersonaMemoryRecord = (
     searchTerms: string[];
   }
 ): boolean => {
-  const normalizedTags = uniqueLowercaseStrings(item.tags);
-
-  if (filters.tag !== null && !matchesExactOrPartial(normalizedTags, filters.tag)) {
-    return false;
-  }
-
-  if (filters.topic !== null && !matchesExactOrPartial(item.topicHints, filters.topic)) {
-    return false;
-  }
-
-  if (filters.mood !== null && !item.moodHints.includes(filters.mood)) {
-    return false;
-  }
-
-  if (filters.searchTerms.length > 0 && countMatchingSearchTerms(item, filters.searchTerms) === 0) {
-    return false;
-  }
-
-  return true;
+  if (!matchesTag(uniqueLowercaseStrings(item.tags), filters.tag)) return false;
+  if (!matchesTopic(item.topicHints, filters.topic)) return false;
+  if (!matchesMood(item.moodHints, filters.mood)) return false;
+  return matchesSearchTerms(item, filters.searchTerms);
 };
+
+function resolveTagScore(item: PersonaMemoryRecord, tag: string | null): number {
+  return (tag !== null && matchesExactOrPartial(item.tags, tag)) ? 8 : 0;
+}
+
+function resolveTopicScore(item: PersonaMemoryRecord, topic: string | null): number {
+  return (topic !== null && matchesExactOrPartial(item.topicHints, topic)) ? 12 : 0;
+}
+
+function resolveMoodScore(item: PersonaMemoryRecord, mood: string | null): number {
+  return (mood !== null && item.moodHints.includes(mood)) ? 10 : 0;
+}
 
 function resolveMatchScore(
   item: PersonaMemoryRecord,
@@ -64,17 +77,18 @@ function resolveMatchScore(
     mood: AgentPersonaMoodId | null;
   }
 ): number {
-  const tagScore = (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) ? 8 : 0;
-  const topicScore = (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) ? 12 : 0;
-  const moodScore = (filters.mood !== null && item.moodHints.includes(filters.mood)) ? 10 : 0;
-  return tagScore + topicScore + moodScore;
+  return resolveTagScore(item, filters.tag) + resolveTopicScore(item, filters.topic) + resolveMoodScore(item, filters.mood);
 }
 
 function resolveTermScore(item: PersonaMemoryRecord, searchTerms: string[]): number {
   return countMatchingSearchTerms(item, searchTerms) * 10;
 }
 
-export const scorePersonaMemoryRecord = (
+function resolveTypeScore(recordType: string): number {
+  return recordType === 'memory_entry' ? 1 : 0;
+}
+
+export function scorePersonaMemoryRecord(
   item: PersonaMemoryRecord,
   filters: {
     tag: string | null;
@@ -82,10 +96,10 @@ export const scorePersonaMemoryRecord = (
     mood: AgentPersonaMoodId | null;
     searchTerms: string[];
   }
-): number => {
+): number {
   const termScore = resolveTermScore(item, filters.searchTerms);
   const matchScore = resolveMatchScore(item, filters);
-  const typeScore = item.recordType === 'memory_entry' ? 1 : 0;
+  const typeScore = resolveTypeScore(item.recordType);
 
   return termScore + matchScore + typeScore;
-};
+}

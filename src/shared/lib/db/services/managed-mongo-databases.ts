@@ -26,10 +26,16 @@ import type {
   MongoSource,
 } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
+import {
+  getManagedMongoApplicationSyncControl,
+  getManagedMongoSyncControls,
+  type ManagedMongoSyncControls,
+} from '@/shared/lib/db/managed-mongo-sync-controls';
 import { getMongoSyncIssue, resolveMongoSourceConfig } from '@/shared/lib/db/mongo-source';
 import {
   backupsDir,
   MONGO_BACKUP_APPLICATIONS,
+  resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
@@ -42,6 +48,7 @@ const MANAGED_MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> =
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
 
 const DEFAULT_SERVER_SELECTION_TIMEOUT_MS = 5_000;
@@ -148,6 +155,9 @@ export const resolveManagedMongoSourceConfig = async (
   }
   if (application === 'products') {
     return resolveEcommerceMongoSourceConfig(source);
+  }
+  if (application === 'arch') {
+    return resolveArchMongoSourceConfig(source);
   }
   return resolveMongoSourceConfig(source);
 };
@@ -309,12 +319,14 @@ const getEndpointStatus = async (
 };
 
 const buildManagedDatabaseStatus = async (
-  application: DatabaseEngineManagedMongoApplication
+  application: DatabaseEngineManagedMongoApplication,
+  syncControls: ManagedMongoSyncControls
 ): Promise<DatabaseEngineManagedMongoDatabase> => {
   const [local, cloud] = await Promise.all([
     getEndpointStatus(application, 'local'),
     getEndpointStatus(application, 'cloud'),
   ]);
+  const syncControl = getManagedMongoApplicationSyncControl(syncControls, application);
   const syncIssue =
     local.configured && cloud.configured
       ? getMongoSyncIssue(
@@ -342,17 +354,22 @@ const buildManagedDatabaseStatus = async (
     cloud,
     canBackupLocal: local.configured && local.reachable === true,
     canPushToCloud:
+      !syncControl.disabled &&
       local.configured &&
       cloud.configured &&
       local.reachable === true &&
       cloud.reachable === true &&
       !syncIssue,
     canPullFromCloud:
+      !syncControl.disabled &&
       local.configured &&
       cloud.configured &&
       local.reachable === true &&
       cloud.reachable === true &&
       !syncIssue,
+    syncDisabled: syncControl.disabled,
+    syncDisabledReason: syncControl.reason,
+    syncDisabledAt: syncControl.updatedAt,
     syncIssue,
   };
 };
@@ -412,12 +429,16 @@ const inspectBackupStorage = async (): Promise<DatabaseEngineBackupStorage> => {
 };
 
 export async function getManagedMongoDatabasesStatus(): Promise<DatabaseEngineManagedMongoDatabasesResponse> {
-  const [databases, backupStorage] = await Promise.all([
-    Promise.all(
-      MONGO_BACKUP_APPLICATIONS.map((application) => buildManagedDatabaseStatus(application))
-    ),
+  const [syncControls, backupStorage] = await Promise.all([
+    getManagedMongoSyncControls(),
     inspectBackupStorage(),
   ]);
+  const databases = await Promise.all(
+    MONGO_BACKUP_APPLICATIONS.map((application) =>
+      buildManagedDatabaseStatus(application, syncControls)
+    )
+  );
+  const syncEnabledDatabases = databases.filter((database) => !database.syncDisabled);
 
   return {
     timestamp: new Date().toISOString(),
@@ -426,8 +447,12 @@ export async function getManagedMongoDatabasesStatus(): Promise<DatabaseEngineMa
     databases,
     canBackupAllLocal:
       backupStorage.canWriteBackups && databases.every((database) => database.canBackupLocal),
-    canPushAllToCloud: databases.every((database) => database.canPushToCloud),
-    canPullAllFromCloud: databases.every((database) => database.canPullFromCloud),
+    canPushAllToCloud:
+      syncEnabledDatabases.length > 0 &&
+      syncEnabledDatabases.every((database) => database.canPushToCloud),
+    canPullAllFromCloud:
+      syncEnabledDatabases.length > 0 &&
+      syncEnabledDatabases.every((database) => database.canPullFromCloud),
     issues: collectManagedMongoIssues(databases, backupStorage),
   };
 }

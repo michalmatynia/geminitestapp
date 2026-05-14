@@ -39,6 +39,7 @@ const MANAGED_DATABASE_OPTIONS: Array<{
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
   { application: 'products', label: 'Ecommerce' },
+  { application: 'arch', label: 'Milkbar Designers' },
 ];
 
 const MANAGED_SOURCE_OPTIONS: Array<{
@@ -227,7 +228,7 @@ function DatabaseOperationsPanelContent({
     <ListPanel
       header={
         <DatabaseOperationsHeader
-          dbTypeLabel={DATABASE_OPTIONS[0].label}
+          dbTypeLabel={DATABASE_OPTIONS[0]?.label ?? 'MongoDB'}
           tablesCount={tableDetails.length}
           activeApplication={activeApplication}
           activeSource={activeSource}

@@ -1,10 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { CloudUploadIcon, DatabaseIcon, DownloadIcon, PencilIcon, RefreshCwIcon } from 'lucide-react';
+import {
+  CloudUploadIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  PencilIcon,
+  PowerIcon,
+  RefreshCwIcon,
+} from 'lucide-react';
 import type { JSX } from 'react';
 
 import type {
+  DatabaseEngineManagedMongoApplication,
   DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineManagedMongoCollectionStats,
   DatabaseEngineManagedMongoDatabase,
@@ -140,6 +148,14 @@ export function ManagedDatabaseCardHeader({
       {database.syncIssue !== null && database.syncIssue !== '' && (
         <p className='text-xs leading-relaxed text-amber-100'>{database.syncIssue}</p>
       )}
+      {database.syncDisabled && (
+        <p className='text-xs leading-relaxed text-sky-100'>
+          Sync disabled
+          {database.syncDisabledReason !== null && database.syncDisabledReason !== ''
+            ? `: ${database.syncDisabledReason}`
+            : '.'}
+        </p>
+      )}
     </div>
   );
 }
@@ -151,7 +167,9 @@ export function ManagedDatabaseCardActions({
   isPullDisabled,
   isPushing,
   isPulling,
+  isTogglingSync,
   backupManagedMongo,
+  setManagedMongoSyncDisabled,
   syncManagedMongo,
 }: {
   database: DatabaseEngineManagedMongoDatabase;
@@ -160,7 +178,12 @@ export function ManagedDatabaseCardActions({
   isPullDisabled: boolean;
   isPushing: boolean;
   isPulling: boolean;
+  isTogglingSync: boolean;
   backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void> | void;
+  setManagedMongoSyncDisabled: (
+    application: DatabaseEngineManagedMongoApplication,
+    disabled: boolean
+  ) => Promise<void> | void;
   syncManagedMongo: (
     direction: 'local_to_cloud' | 'cloud_to_local',
     application: DatabaseEngineManagedMongoApplicationTarget
@@ -209,6 +232,20 @@ export function ManagedDatabaseCardActions({
         type='button'
         variant='outline'
         size='sm'
+        disabled={isTogglingSync}
+        loading={isTogglingSync}
+        loadingText={database.syncDisabled ? 'Enabling...' : 'Disabling...'}
+        onClick={() => {
+          void setManagedMongoSyncDisabled(database.application, !database.syncDisabled);
+        }}
+      >
+        <PowerIcon className='size-3.5' />
+        {database.syncDisabled ? 'Enable Sync' : 'Disable Sync'}
+      </Button>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
         disabled={isPullDisabled}
         loading={isPulling}
         loadingText='Pulling...'
@@ -227,15 +264,22 @@ export function ManagedDatabaseCard({
   database,
   backupDisabled,
   syncDisabled,
+  isTogglingSync,
   pendingSync,
   backupManagedMongo,
+  setManagedMongoSyncDisabled,
   syncManagedMongo,
 }: {
   database: DatabaseEngineManagedMongoDatabase;
   backupDisabled: boolean;
   syncDisabled: boolean;
+  isTogglingSync: boolean;
   pendingSync: DatabaseEngineMongoPendingSyncRequest | null;
   backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void> | void;
+  setManagedMongoSyncDisabled: (
+    application: DatabaseEngineManagedMongoApplication,
+    disabled: boolean
+  ) => Promise<void> | void;
   syncManagedMongo: (
     direction: 'local_to_cloud' | 'cloud_to_local',
     application: DatabaseEngineManagedMongoApplicationTarget
@@ -255,7 +299,9 @@ export function ManagedDatabaseCard({
           isPullDisabled={syncDisabled || !database.canPullFromCloud}
           isPushing={isPushing}
           isPulling={isPulling}
+          isTogglingSync={isTogglingSync}
           backupManagedMongo={backupManagedMongo}
+          setManagedMongoSyncDisabled={setManagedMongoSyncDisabled}
           syncManagedMongo={syncManagedMongo}
         />
       </div>

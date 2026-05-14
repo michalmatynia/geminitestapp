@@ -44,6 +44,10 @@ export const DATABASE_ENGINE_BACKUP_SCHEDULE_KEY = 'database_engine_backup_sched
 /** Key for Database Engine operation control settings. */
 export const DATABASE_ENGINE_OPERATION_CONTROLS_KEY = 'database_engine_operation_controls_v1';
 
+/** Key for per-application managed MongoDB sync controls. */
+export const DATABASE_ENGINE_MANAGED_MONGO_SYNC_CONTROLS_KEY =
+  'database_engine_managed_mongo_sync_controls_v1';
+
 /** Alias for DatabaseEngineService used in routing maps. */
 export type DatabaseEngineServiceRoute = DatabaseEngineService;
 

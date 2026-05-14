@@ -119,7 +119,7 @@ function getMongoOptionPrefixes(context: MongoContext): string[] {
   if (context === 'ecommerce') {
     return ['ECOM_MONGODB', 'MONGODB_ECOM', 'PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
   }
-  return ['MONGODB'];
+  return ['ECOM_MONGODB', 'MONGODB_ECOM', 'MONGODB'];
 }
 
 // eslint-disable-next-line complexity
@@ -297,69 +297,160 @@ async function getClient(uri: string, context: MongoContext): Promise<MongoClien
 
 /**
  * Resolve the MongoDB URI using source-selection variables local to the
- * ecommerce app. In local development this should point at the thin
- * ecommerce MongoDB file, not the main geminitestapp product database.
+ * ecommerce app. Local development is pinned to the thin ecommerce MongoDB
+ * file, not the main geminitestapp database.
  *
  * Priority:
- *  1. MONGODB_URI (explicit override — works in all environments)
- *  2. MONGODB_ACTIVE_SOURCE_DEFAULT / MONGODB_ACTIVE_SOURCE →
- *       "local"  → MONGODB_LOCAL_URI  + MONGODB_LOCAL_DB
- *       "cloud"  → MONGODB_CLOUD_URI  + MONGODB_CLOUD_DB
- *  3. Fallback to localhost for development convenience
+ *  1. Local development → ECOM_MONGODB_LOCAL_URI + ECOM_MONGODB_LOCAL_DB
+ *  2. Deployed runtime → ECOM/MONGODB_ECOM direct/source-selected config
+ *  3. Generic MONGODB_* only outside localhost development as a fallback
  */
 function resolveMongoUri(): string {
-  const directUri = envValue('MONGODB_URI');
-  if (directUri !== undefined) return directUri;
-
-  const source =
-    (envValue('MONGODB_ACTIVE_SOURCE') ?? envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ?? 'local')
-      .toLowerCase();
-
-  if (source === 'cloud') {
-    const uri = envValue('MONGODB_CLOUD_URI');
-    if (uri !== undefined) return uri;
-  }
-
-  // Default to local
-  return envValue('MONGODB_LOCAL_URI') ?? DEFAULT_ECOM_MONGODB_URI;
+  return resolveEcommerceRuntimeMongoConfig().uri;
 }
 
 function resolveMongoDb(): string {
-  const directDb = envValue('MONGODB_DB');
-  if (directDb !== undefined) return directDb;
-
-  const source =
-    (envValue('MONGODB_ACTIVE_SOURCE') ?? envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ?? 'local')
-      .toLowerCase();
-
-  if (source === 'cloud') {
-    const db = envValue('MONGODB_CLOUD_DB');
-    if (db !== undefined) return db;
-  }
-
-  return envValue('MONGODB_LOCAL_DB') ?? DEFAULT_ECOM_MONGODB_DB;
+  return resolveEcommerceRuntimeMongoConfig().dbName;
 }
 
-// eslint-disable-next-line complexity
-function resolveMongoConfigCandidates(): MongoConfig[] {
+function resolveLocalEcommerceRuntimeMongoConfig(): MongoConfig {
+  return completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+    ],
+  )) ?? {
+    uri: DEFAULT_ECOM_MONGODB_URI,
+    dbName: DEFAULT_ECOM_MONGODB_DB,
+  };
+}
+
+// eslint-disable-next-line complexity, max-lines-per-function
+function resolveEcommerceRuntimeMongoConfig(): MongoConfig {
+  if (shouldPinEcommerceToLocalDevelopment()) {
+    return resolveLocalEcommerceRuntimeMongoConfig();
+  }
+
+  const directConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
+    ],
+    [
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
+    ],
+  ));
+  if (directConfig) return directConfig;
+  const genericDirectConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_URI'],
+    ['MONGODB_DB'],
+  ));
+  if (genericDirectConfig) return genericDirectConfig;
+
   const source = normalizeSource(
     firstEnvValue(
+      'ECOM_MONGODB_ACTIVE_SOURCE',
+      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+  );
+
+  const localConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+      'MONGODB_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+      'MONGODB_LOCAL_DB',
+    ],
+  ));
+  const cloudConfig = completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
+      'MONGODB_CLOUD_URI',
+    ],
+    [
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
+      'MONGODB_CLOUD_DB',
+    ],
+  ));
+  const genericFallbackConfig = completeMongoConfig(readMongoConfig(
+    ['MONGODB_URI'],
+    ['MONGODB_DB'],
+  ));
+
+  if (source === 'cloud' && cloudConfig) return cloudConfig;
+  if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
+    return cloudConfig;
+  }
+
+  return localConfig ?? cloudConfig ?? genericFallbackConfig ?? {
+    uri: DEFAULT_ECOM_MONGODB_URI,
+    dbName: DEFAULT_ECOM_MONGODB_DB,
+  };
+}
+
+// eslint-disable-next-line complexity, max-lines-per-function
+function resolveMongoConfigCandidates(): MongoConfig[] {
+  if (shouldPinEcommerceToLocalDevelopment()) {
+    return [resolveLocalEcommerceRuntimeMongoConfig()];
+  }
+
+  const source = normalizeSource(
+    firstEnvValue(
+      'ECOM_MONGODB_ACTIVE_SOURCE',
+      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
       'MONGODB_ACTIVE_SOURCE',
       'MONGODB_ACTIVE_SOURCE_DEFAULT',
     ),
   );
 
   const directConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_URI'],
-    ['MONGODB_DB'],
+    [
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
+      'MONGODB_URI',
+    ],
+    [
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
+      'MONGODB_DB',
+    ],
   ));
   const localConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_LOCAL_URI'],
-    ['MONGODB_LOCAL_DB'],
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+      'MONGODB_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+      'MONGODB_LOCAL_DB',
+    ],
   ));
   const cloudConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_CLOUD_URI'],
-    ['MONGODB_CLOUD_DB'],
+    [
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
+      'MONGODB_CLOUD_URI',
+    ],
+    [
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
+      'MONGODB_CLOUD_DB',
+    ],
   ));
 
   const primary = {
@@ -461,8 +552,28 @@ function shouldPinEcommerceToLocalDevelopment(): boolean {
   return !isProductionLike() && !isVercelRuntime();
 }
 
+function resolveLocalEcommerceProductsMongoConfig(): MongoConfig {
+  return completeMongoConfig(readMongoConfig(
+    [
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
+    ],
+    [
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
+    ],
+  )) ?? {
+    uri: DEFAULT_ECOM_MONGODB_URI,
+    dbName: DEFAULT_ECOM_MONGODB_DB,
+  };
+}
+
 // eslint-disable-next-line complexity, max-lines-per-function
 function resolveEcommerceProductsMongoConfig(): MongoConfig {
+  if (shouldPinEcommerceToLocalDevelopment()) {
+    return resolveLocalEcommerceProductsMongoConfig();
+  }
+
   const directConfig = completeMongoConfig(readMongoConfig(
     [
       'ECOM_MONGODB_URI',
@@ -540,6 +651,10 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
 
 // eslint-disable-next-line complexity, max-lines-per-function
 function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
+  if (shouldPinEcommerceToLocalDevelopment()) {
+    return [resolveLocalEcommerceProductsMongoConfig()];
+  }
+
   const source = normalizeSource(
     firstEnvValue(
       'ECOM_MONGODB_ACTIVE_SOURCE',
@@ -602,8 +717,6 @@ function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
     ['MONGODB_DB'],
   ));
 
-  if (localConfig && shouldPinEcommerceToLocalDevelopment()) return [localConfig];
-
   const primary = resolveEcommerceProductsMongoConfig();
   const allowAlternateSourceFallback = readBooleanFromEnv(
     getMongoOptionPrefixes('ecommerce'),
@@ -638,7 +751,7 @@ const clientCache = new Map<string, MongoClient>();
 function assertMongoUri(uri: string, label: string): void {
   if (uri.length === 0) {
     throw new Error(
-      `No ${label} MongoDB URI configured. Set MONGODB_URI, MONGODB_LOCAL_URI, or ECOM_MONGODB_LOCAL_URI in apps/ecom-web/.env.local`
+      `No ${label} MongoDB URI configured. Set ECOM_MONGODB_LOCAL_URI or MONGODB_ECOM_LOCAL_URI in apps/ecom-web/.env.local`
     );
   }
 }

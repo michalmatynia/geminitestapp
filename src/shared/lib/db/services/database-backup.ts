@@ -18,6 +18,8 @@ import {
   backupsDir as mongoBackupsDir,
   buildMongoBackupName as buildMongoBackupRelativeName,
   ensureBackupsDir as ensureMongoBackupsDir,
+  getArchMongoConnectionUrl,
+  getArchMongoDatabaseName,
   getMongoConnectionUrl,
   getMongoDatabaseName,
   getMongoDumpCommand,
@@ -29,6 +31,7 @@ import {
   getStudiqMongoDatabaseName,
   resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig,
+  resolveArchMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoBackupApplication,
   execFileAsync as mongoExecFileAsync,
@@ -148,6 +151,9 @@ const resolveApplicationMongoSourceConfig = async (
   if (application === 'products') {
     return resolveEcommerceMongoSourceConfig(source);
   }
+  if (application === 'arch') {
+    return resolveArchMongoSourceConfig(source);
+  }
   return resolveMongoSourceConfig(source);
 };
 
@@ -251,6 +257,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   const studiqDatabaseName = getStudiqMongoDatabaseName();
   const cmsBuilderDatabaseName = getCmsBuilderMongoDatabaseName();
   const productsDatabaseName = getEcommerceMongoDatabaseName();
+  const archDatabaseName = getArchMongoDatabaseName();
   const geminitestapp = await runMongoBackup({
     application: 'geminitestapp',
     mongoUri: getMongoConnectionUrl(),
@@ -275,11 +282,18 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     databaseName: productsDatabaseName,
     backupName: buildMongoBackupName(productsDatabaseName, timestamp),
   });
+  const arch = await runMongoBackup({
+    application: 'arch',
+    mongoUri: getArchMongoConnectionUrl(),
+    databaseName: archDatabaseName,
+    backupName: buildMongoBackupName(archDatabaseName, timestamp),
+  });
   const warnings = [
     geminitestapp.warning,
     studiq.warning,
     cmsBuilder.warning,
     products.warning,
+    arch.warning,
   ].filter(
     (value): value is string => typeof value === 'string' && value.length > 0
   );
@@ -293,6 +307,8 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     cmsBuilder.logContent,
     `--- products: ${products.backupName} ---`,
     products.logContent,
+    `--- arch: ${arch.backupName} ---`,
+    arch.logContent,
   ].join('\n\n');
 
   return {
@@ -343,6 +359,7 @@ export const createMongoManagedBackup = async (
     'studiq',
     'cms-builder',
     'products',
+    'arch',
   ];
   const results: Array<DatabaseBackupResult & { application: DatabaseEngineManagedMongoApplication }> = [];
   for (const managedApplication of applications) {

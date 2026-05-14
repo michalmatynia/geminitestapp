@@ -58,7 +58,7 @@ describe('buildMongoApplicationTransferSummaries', () => {
 
     const summaries = buildMongoApplicationTransferSummaries(legacyLastSync);
 
-    expect(summaries).toHaveLength(4);
+    expect(summaries).toHaveLength(5);
     expect(summaries.find((summary) => summary.application === 'geminitestapp')).toMatchObject({
       backupCount: 2,
       sourceBackup: expect.objectContaining({ backupName: 'cloud-source-pre-sync.archive' }),

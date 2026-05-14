@@ -24,6 +24,7 @@ export const MONGO_BACKUP_APPLICATIONS = [
   'studiq',
   'cms-builder',
   'products',
+  'arch',
 ] as const;
 export type MongoBackupApplication = (typeof MONGO_BACKUP_APPLICATIONS)[number];
 
@@ -277,6 +278,69 @@ export const getCmsBuilderMongoConnectionUrl = (): string =>
 
 export const getCmsBuilderMongoDatabaseName = (): string =>
   resolveCmsBuilderMongoSourceConfig('local').dbName ?? 'cms_builder_local';
+
+export const resolveArchMongoSourceConfig = (
+  source: MongoSource
+): MongoApplicationSourceConfig => {
+  const explicitUri =
+    source === 'local'
+      ? firstTrimmedEnvValue('ARCH_MONGODB_LOCAL_URI', 'MONGODB_ARCH_LOCAL_URI')
+      : firstTrimmedEnvValue('ARCH_MONGODB_CLOUD_URI', 'MONGODB_ARCH_CLOUD_URI');
+  const explicitDbName =
+    source === 'local'
+      ? firstTrimmedEnvValue('ARCH_MONGODB_LOCAL_DB', 'MONGODB_ARCH_LOCAL_DB')
+      : firstTrimmedEnvValue('ARCH_MONGODB_CLOUD_DB', 'MONGODB_ARCH_CLOUD_DB');
+
+  if (explicitUri.length > 0) {
+    return {
+      source,
+      configured: true,
+      uri: explicitUri,
+      dbName: explicitDbName || getDatabaseNameFromMongoUri(explicitUri),
+      usesLegacyEnv: false,
+    };
+  }
+
+  const legacyUri = firstTrimmedEnvValue('ARCH_MONGODB_URI', 'MONGODB_ARCH_URI');
+  const legacyDbName = firstTrimmedEnvValue('ARCH_MONGODB_DB', 'MONGODB_ARCH_DB');
+  if (legacyUri.length > 0) {
+    const legacyIsLocal = isLikelyLocalMongoUri(legacyUri);
+    if ((source === 'local' && legacyIsLocal) || (source === 'cloud' && !legacyIsLocal)) {
+      return {
+        source,
+        configured: true,
+        uri: legacyUri,
+        dbName: legacyDbName || getDatabaseNameFromMongoUri(legacyUri),
+        usesLegacyEnv: true,
+      };
+    }
+  }
+
+  if (source === 'local') {
+    return {
+      source,
+      configured: true,
+      uri: 'mongodb://127.0.0.1:27022/arch_web_local',
+      dbName: 'arch_web_local',
+      usesLegacyEnv: false,
+    };
+  }
+
+  return {
+    source,
+    configured: false,
+    uri: null,
+    dbName: null,
+    usesLegacyEnv: false,
+  };
+};
+
+export const getArchMongoConnectionUrl = (): string =>
+  resolveArchMongoSourceConfig('local').uri ??
+  'mongodb://127.0.0.1:27022/arch_web_local';
+
+export const getArchMongoDatabaseName = (): string =>
+  resolveArchMongoSourceConfig('local').dbName ?? 'arch_web_local';
 
 export const resolveProductsMongoSourceConfig = (
   source: MongoSource

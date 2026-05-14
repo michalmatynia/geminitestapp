@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, max-params, no-await-in-loop */
 import 'server-only';
 
 import { promises as fs } from 'fs';
@@ -22,6 +23,10 @@ import {
   operationFailedError,
 } from '@/shared/errors/app-error';
 import { acquireMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
+import {
+  getManagedMongoApplicationSyncControl,
+  getManagedMongoSyncControls,
+} from '@/shared/lib/db/managed-mongo-sync-controls';
 import { createMongoSourceBackup } from '@/shared/lib/db/services/database-backup';
 import { verifyMongoSourceParity } from '@/shared/lib/db/services/mongo-source-parity';
 import {
@@ -34,6 +39,7 @@ import {
   getMongoDumpCommand,
   getMongoRestoreCommand,
   MONGO_BACKUP_APPLICATIONS,
+  resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
@@ -97,7 +103,15 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
   products: 'Ecommerce',
+  arch: 'Milkbar Designers',
 };
+
+const MONGO_SYNC_EXCLUDED_COLLECTIONS: Partial<Record<MongoBackupApplication, string[]>> = {
+  products: ['settings'],
+};
+
+const getExcludedCollectionsForSync = (application: MongoBackupApplication): string[] =>
+  MONGO_SYNC_EXCLUDED_COLLECTIONS[application] ?? [];
 
 const resolveSyncEndpoints = (
   direction: DatabaseEngineMongoSyncDirection
@@ -248,6 +262,9 @@ const resolveApplicationMongoSourceConfig = async (
   if (application === 'products') {
     return resolveEcommerceMongoSourceConfig(source);
   }
+  if (application === 'arch') {
+    return resolveArchMongoSourceConfig(source);
+  }
   return resolveMongoSourceConfig(source);
 };
 
@@ -273,6 +290,11 @@ const getApplicationSourceConfigIssue = (
     return `Ecommerce MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
   }
 
+  if (application === 'arch') {
+    const prefix = `ARCH_MONGODB_${source.toUpperCase()}`;
+    return `Milkbar Designers MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
+  }
+
   const prefix = source === 'local' ? 'MONGODB_LOCAL' : 'MONGODB_CLOUD';
   return `MongoDB source "${source}" is not configured. Set ${prefix}_URI and ${prefix}_DB in the effective env.`;
 };
@@ -292,6 +314,29 @@ const resolveApplicationsForSync = (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): MongoBackupApplication[] =>
   applicationTarget === 'all' ? [...MONGO_BACKUP_APPLICATIONS] : [applicationTarget];
+
+const resolveEnabledApplicationsForSync = async (
+  applicationTarget: DatabaseEngineManagedMongoApplicationTarget
+): Promise<MongoBackupApplication[]> => {
+  const applications = resolveApplicationsForSync(applicationTarget);
+  const controls = await getManagedMongoSyncControls();
+  const enabledApplications = applications.filter((application) => {
+    const control = getManagedMongoApplicationSyncControl(controls, application);
+    return !control.disabled;
+  });
+
+  if (applicationTarget !== 'all' && enabledApplications.length === 0) {
+    throw forbiddenError(
+      `${MONGO_APPLICATION_LABELS[applicationTarget]} MongoDB sync is temporarily disabled in Database Engine.`
+    );
+  }
+
+  if (enabledApplications.length === 0) {
+    throw forbiddenError('All managed MongoDB application syncs are temporarily disabled.');
+  }
+
+  return enabledApplications;
+};
 
 const resolvePreflightEndpoint = async (
   application: MongoBackupApplication,
@@ -373,8 +418,9 @@ const assertAllApplicationsSyncReady = async (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget,
   direction: DatabaseEngineMongoSyncDirection
 ): Promise<void> => {
+  const applications = await resolveEnabledApplicationsForSync(applicationTarget);
   const results = await Promise.all(
-    resolveApplicationsForSync(applicationTarget).map((application) =>
+    applications.map((application) =>
       inspectApplicationSyncReadiness(application, direction)
     )
   );
@@ -433,7 +479,7 @@ const prepareMongoSyncContexts = async (
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget
 ): Promise<MongoSyncContext[]> => {
   const timestamp = Date.now();
-  const applications = resolveApplicationsForSync(applicationTarget);
+  const applications = await resolveEnabledApplicationsForSync(applicationTarget);
   const contexts: MongoSyncContext[] = [];
 
   for (const application of applications) {
@@ -451,6 +497,9 @@ const buildMongoTransferCommands = (context: MongoSyncContext): MongoTransferCom
     context.sourceUri,
     '--db',
     context.sourceDbName,
+    ...getExcludedCollectionsForSync(context.application).flatMap((collectionName) => [
+      `--excludeCollection=${collectionName}`,
+    ]),
     `--archive=${context.archivePath}`,
     '--gzip',
   ],
@@ -724,6 +773,7 @@ const runMongoTransfer = async (
     targetDbName: context.targetDbName,
     sourceUri: context.sourceUri,
     targetUri: context.targetUri,
+    excludedCollections: getExcludedCollectionsForSync(context.application),
   });
   await writeMongoSyncLog({ context, commands, dumpResult, restoreResult, verification });
   assertVerificationPassed(context, verification);

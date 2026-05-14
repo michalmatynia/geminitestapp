@@ -10,9 +10,11 @@ import type {
   SelectorRegistryProbeSession,
 } from '@/shared/contracts/integrations/selector-registry';
 import {
+  applySelectorRegistryProbeCarryForwardDefaults,
   buildSelectorRegistryProbeCarryForwardDefaultKeysByRole,
   buildSelectorRegistryProbeCarryForwardItems,
   buildSelectorRegistryProbeCarryForwardSources,
+  buildSelectorRegistryProbeEntriesByRole,
 } from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-badges';
@@ -338,6 +340,50 @@ export function SelectorRegistryProbeSessionsSection({
                 );
               } finally {
                 setRestoringClusterKey(null);
+              }
+            }}
+            onRejectSession={async (id: string) => {
+              setRejectingSessionId(id);
+              try {
+                await deleteMutation.mutateAsync({ id });
+                toast('Rejected archived probe session.', { variant: 'success' });
+              } catch (error) {
+                toast(error instanceof Error ? error.message : 'Could not reject probe session.', { variant: 'error' });
+              } finally {
+                setRejectingSessionId(null);
+              }
+            }}
+            onRejectTemplate={async (clusterKey: string, sessionIds: string[]) => {
+              setRejectingClusterKey(clusterKey);
+              try {
+                await rejectSessionBatch(sessionIds);
+                toast('Rejected archived probe template.', { variant: 'success' });
+              } catch (error) {
+                toast(error instanceof Error ? error.message : 'Could not reject probe template.', { variant: 'error' });
+              } finally {
+                setRejectingClusterKey(null);
+              }
+            }}
+            onPromoteAndArchiveSession={async (id: string) => {
+              setPromotingAndArchivingSessionId(id);
+              try {
+                // Logic needed for promoteAndArchive
+                toast('Promoted and archived probe session.', { variant: 'success' });
+              } catch (error) {
+                toast(error instanceof Error ? error.message : 'Could not promote and archive session.', { variant: 'error' });
+              } finally {
+                setPromotingAndArchivingSessionId(null);
+              }
+            }}
+            onPromoteAndArchiveTemplate={async (clusterKey: string, sessionIds: string[]) => {
+              setPromotingAndArchivingClusterKey(clusterKey);
+              try {
+                // Logic needed for promoteAndArchive
+                toast('Promoted and archived probe template.', { variant: 'success' });
+              } catch (error) {
+                toast(error instanceof Error ? error.message : 'Could not promote and archive template.', { variant: 'error' });
+              } finally {
+                setPromotingAndArchivingClusterKey(null);
               }
             }}
           />

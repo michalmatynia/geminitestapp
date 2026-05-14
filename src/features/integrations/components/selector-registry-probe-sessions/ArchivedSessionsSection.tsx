@@ -9,7 +9,6 @@ import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-exec
 import {
   getSelectorRegistryProbeSuggestionEvidenceText,
   getSelectorRegistryProbeSuggestionPrimaryPageLabel,
-  getSelectorRegistryProbeSuggestionSecondaryPageLabel,
   getSelectorRegistryProbeSuggestionTextPreview,
 } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-formatting';
 import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
@@ -29,12 +28,20 @@ export const ArchivedSessionsSection = ({
   restoreMutation,
   onRestoreSession,
   onRestoreTemplate,
+  onRejectSession,
+  onRejectTemplate,
+  onPromoteAndArchiveSession,
+  onPromoteAndArchiveTemplate,
 }: {
   archivedClusters: SelectorRegistryProbeSessionCluster[];
   archivedSessions: SelectorRegistryProbeSession[];
   restoreMutation: any;
   onRestoreSession: (id: string) => Promise<void>;
   onRestoreTemplate: (clusterKey: string, sessionIds: string[]) => Promise<void>;
+  onRejectSession: (id: string) => Promise<void>;
+  onRejectTemplate: (clusterKey: string, sessionIds: string[]) => Promise<void>;
+  onPromoteAndArchiveSession: (id: string) => Promise<void>;
+  onPromoteAndArchiveTemplate: (clusterKey: string, sessionIds: string[]) => Promise<void>;
 }): React.JSX.Element => {
   return (
     <div className='space-y-4 rounded-lg border border-border/70 bg-muted/10 p-4'>
@@ -68,15 +75,35 @@ export const ArchivedSessionsSection = ({
                   ))}
                 </div>
               </div>
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                disabled={restoreMutation.isPending}
-                onClick={() => onRestoreTemplate(cluster.clusterKey, cluster.sessions.map((s) => s.id))}
-              >
-                Restore Template
-              </Button>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  disabled={restoreMutation.isPending}
+                  onClick={() => onRestoreTemplate(cluster.clusterKey, cluster.sessions.map((s) => s.id))}
+                >
+                  Restore Template
+                </Button>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  disabled={restoreMutation.isPending}
+                  onClick={() => onRejectTemplate(cluster.clusterKey, cluster.sessions.map((s) => s.id))}
+                >
+                  Reject Template
+                </Button>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  disabled={restoreMutation.isPending}
+                  onClick={() => onPromoteAndArchiveTemplate(cluster.clusterKey, cluster.sessions.map((s) => s.id))}
+                >
+                  Promote And Archive Template
+                </Button>
+              </div>
             </div>
             <div className='space-y-3'>
               {cluster.sessions.map((session) => (
@@ -96,15 +123,35 @@ export const ArchivedSessionsSection = ({
                     <div className='text-sm font-medium'>{session.sourceTitle ?? session.sourceUrl}</div>
                     <div className='text-xs text-muted-foreground'>{session.sourceUrl}</div>
                   </div>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    disabled={restoreMutation.isPending}
-                    onClick={() => onRestoreSession(session.id)}
-                  >
-                    Restore Session
-                  </Button>
+                  <div className='flex flex-wrap gap-2'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      disabled={restoreMutation.isPending}
+                      onClick={() => onRestoreSession(session.id)}
+                    >
+                      Restore Session
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      disabled={restoreMutation.isPending}
+                      onClick={() => onRejectSession(session.id)}
+                    >
+                      Reject Session
+                    </Button>
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      disabled={restoreMutation.isPending}
+                      onClick={() => onPromoteAndArchiveSession(session.id)}
+                    >
+                      Promote And Archive Session
+                    </Button>
+                  </div>
                   <div className='space-y-3'>
                     {session.suggestions.map((suggestion) => (
                       <div
@@ -123,6 +170,7 @@ export const ArchivedSessionsSection = ({
                         <div className='space-y-1 text-xs text-muted-foreground'>
                           <div>{getSelectorRegistryProbeSuggestionPrimaryPageLabel(suggestion as any)}</div>
                           <SelectorRegistryProbeSuggestionCandidateDetails suggestion={suggestion as any} />
+                          <div>Archived probe suggestion. Review history only until restored.</div>
                         </div>
                       </div>
                     ))}

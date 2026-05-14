@@ -1,10 +1,8 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/contracts/ui/panels';
-
 import {
   useFileManagerConfig,
   useFileManagerData,
@@ -12,86 +10,41 @@ import {
   useFileManagerUIState,
 } from '../../contexts/FileManagerContext';
 
-/**
- * REFACTORED: FileManagerFilters using FilterPanel template
- *
- * Before: 140 LOC
- * After: 60 LOC
- * Savings: 57% reduction
- *
- * Note: Simplified bulk actions rendering to focus on filtering.
- * Bulk actions UI can be extracted to separate component if needed.
- */
+const buildFilters = (enableTagSearch: boolean, folderFilterEnabled: boolean, folderOptions: string[]): FilterField[] => {
+  const filters: FilterField[] = [
+    { key: 'filename', label: 'Filename', type: 'text', placeholder: 'Search by filename' },
+    { key: 'product', label: 'Product', type: 'text', placeholder: 'Search by product name' },
+  ];
+  if (enableTagSearch) filters.push({ key: 'tag', label: 'Tags', type: 'text', placeholder: 'Search by tags' });
+  if (folderFilterEnabled) {
+    filters.push({
+      key: 'folder',
+      label: 'Folder',
+      type: 'select',
+      options: folderOptions.map((f) => ({ value: f, label: f === 'all' ? 'All folders' : f })),
+    });
+  }
+  return filters;
+};
+
 export const FileManagerFilters = memo((): React.JSX.Element => {
-  const {
-    filenameSearch,
-    setFilenameSearch,
-    productNameSearch,
-    setProductNameSearch,
-    tagSearch,
-    setTagSearch,
-  } = useFileManagerSearch();
+  const { filenameSearch, setFilenameSearch, productNameSearch, setProductNameSearch, tagSearch, setTagSearch } = useFileManagerSearch();
   const { showTagSearch, showFolderFilter } = useFileManagerConfig();
   const { activeTab, setLocalFolderFilter } = useFileManagerUIState();
   const { folderFilter, folderOptions } = useFileManagerData();
 
-  const enableTagSearch = showTagSearch;
-  const folderFilterEnabled = showFolderFilter && activeTab === 'uploads';
+  const filterConfig = useMemo(() => buildFilters(showTagSearch, showFolderFilter && activeTab === 'uploads', folderOptions), [showTagSearch, showFolderFilter, activeTab, folderOptions]);
+  const filterValues = useMemo(() => ({ filename: filenameSearch, product: productNameSearch, tag: tagSearch, folder: folderFilter }), [filenameSearch, productNameSearch, tagSearch, folderFilter]);
 
-  // Build dynamic filter fields
-  const filterConfig: FilterField[] = useMemo(() => {
-    const filters: FilterField[] = [
-      { key: 'filename', label: 'Filename', type: 'text', placeholder: 'Search by filename' },
-      { key: 'product', label: 'Product', type: 'text', placeholder: 'Search by product name' },
-    ];
-
-    if (enableTagSearch) {
-      filters.push({ key: 'tag', label: 'Tags', type: 'text', placeholder: 'Search by tags' });
-    }
-
-    if (folderFilterEnabled) {
-      filters.push({
-        key: 'folder',
-        label: 'Folder',
-        type: 'select',
-        options: folderOptions.map((folder: string) => ({
-          value: folder,
-          label: folder === 'all' ? 'All folders' : folder,
-        })),
-      });
-    }
-
-    return filters;
-  }, [enableTagSearch, folderFilterEnabled, folderOptions]);
-
-  const filterValues = useMemo(
-    () => ({
-      filename: filenameSearch,
-      product: productNameSearch,
-      tag: tagSearch,
-      folder: folderFilter,
-    }),
-    [filenameSearch, productNameSearch, tagSearch, folderFilter]
-  );
-
-  const handleFilterChange = (key: string, value: unknown) => {
-    switch (key) {
-      case 'filename':
-        setFilenameSearch(typeof value === 'string' ? value : '');
-        break;
-      case 'product':
-        setProductNameSearch(typeof value === 'string' ? value : '');
-        break;
-      case 'tag':
-        setTagSearch(typeof value === 'string' ? value : '');
-        break;
-      case 'folder':
-        setLocalFolderFilter(typeof value === 'string' ? value : 'all');
-        break;
-    }
+  const handleFilterChange = (key: string, value: unknown): void => {
+    const val = typeof value === 'string' ? value : '';
+    if (key === 'filename') setFilenameSearch(val);
+    else if (key === 'product') setProductNameSearch(val);
+    else if (key === 'tag') setTagSearch(val);
+    else if (key === 'folder') setLocalFolderFilter(val.length > 0 ? val : 'all');
   };
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setFilenameSearch('');
     setProductNameSearch('');
     setTagSearch('');

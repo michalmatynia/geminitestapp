@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   safeCancelAnimationFrame,
-  safeClearTimeout,
   safeRequestAnimationFrame,
 } from '@/shared/lib/timers';
 import {
@@ -237,7 +236,6 @@ export function useLessonsLogic() {
       return;
     }
 
-    const timeoutId: number | null = null;
     const frameId = safeRequestAnimationFrame(() => {
       setIsDeferredContentReady(true);
     });

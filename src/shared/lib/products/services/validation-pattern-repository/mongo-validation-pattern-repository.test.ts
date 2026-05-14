@@ -125,6 +125,67 @@ describe('mongoValidationPatternRepository', () => {
     expect(patterns[0]?.semanticState).toBeNull();
   });
 
+  it('skips malformed persisted pattern documents during list reads', async () => {
+    toArrayMock.mockResolvedValue([
+      {
+        _id: new ObjectId('507f1f77bcf86cd799439012'),
+      },
+      {
+        _id: new ObjectId('507f1f77bcf86cd799439013'),
+        label: 'Valid Pattern',
+        target: 'name',
+        locale: null,
+        regex: '^Valid',
+        flags: null,
+        message: 'Valid pattern',
+        severity: 'warning',
+        enabled: true,
+        replacementEnabled: false,
+        replacementAutoApply: false,
+        replacementValue: null,
+        replacementFields: [],
+        replacementAppliesToScopes: [],
+        runtimeEnabled: false,
+        runtimeType: 'none',
+        runtimeConfig: null,
+        postAcceptBehavior: 'revalidate',
+        denyBehaviorOverride: null,
+        validationDebounceMs: 0,
+        sequenceGroupId: null,
+        sequenceGroupLabel: null,
+        sequenceGroupDebounceMs: 0,
+        sequence: 20,
+        chainMode: 'continue',
+        maxExecutions: 1,
+        passOutputToNext: true,
+        launchEnabled: false,
+        launchAppliesToScopes: [],
+        launchScopeBehavior: 'gate',
+        launchSourceMode: 'current_field',
+        launchSourceField: null,
+        launchOperator: 'equals',
+        launchValue: null,
+        launchFlags: null,
+        appliesToScopes: [],
+        semanticState: null,
+        semanticAudit: null,
+        semanticAuditHistory: [],
+        createdAt: new Date('2026-03-19T12:00:00.000Z'),
+        updatedAt: new Date('2026-03-19T12:00:00.000Z'),
+      },
+    ]);
+
+    const patterns = await mongoValidationPatternRepository.listPatterns();
+
+    expect(patterns).toHaveLength(1);
+    expect(patterns[0]).toEqual(
+      expect.objectContaining({
+        id: '507f1f77bcf86cd799439013',
+        label: 'Valid Pattern',
+      })
+    );
+  });
+
   it('does not reintroduce read-time semantic migration helpers into the repository', () => {
     const source = readFileSync(repositoryPath, 'utf8');
 

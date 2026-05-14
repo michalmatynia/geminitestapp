@@ -16,6 +16,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import {
   ROTATION_ROUNDS,

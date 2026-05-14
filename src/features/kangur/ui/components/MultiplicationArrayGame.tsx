@@ -38,6 +38,7 @@ import {
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 type MultiplicationArrayGameProps = {
   finishLabel?: string;
@@ -129,10 +130,11 @@ const resolveMultiplicationArraySummaryMessage = ({
 };
 
 const clearMultiplicationArrayAdvanceTimeout = (
-  advanceTimeoutRef: React.MutableRefObject<ReturnType<typeof safeSetTimeout> | null>
+  advanceTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
 ): void => {
-  if (advanceTimeoutRef.current) {
-    safeClearTimeout(advanceTimeoutRef.current);    advanceTimeoutRef.current = null;
+  if (advanceTimeoutRef.current !== null) {
+    safeClearTimeout(advanceTimeoutRef.current);
+    advanceTimeoutRef.current = null;
   }
 };
 
@@ -147,7 +149,7 @@ const resetMultiplicationArrayGame = ({
   setXpBreakdown,
   setXpEarned,
 }: {
-  sessionStartedAtRef: React.MutableRefObject<number>;
+  sessionStartedAtRef: React.MutableRefObject<number | null>;
   setCelebrating: React.Dispatch<React.SetStateAction<boolean>>;
   setCollected: React.Dispatch<React.SetStateAction<Set<number>>>;
   setDone: React.Dispatch<React.SetStateAction<boolean>>;
@@ -180,7 +182,7 @@ const finishMultiplicationArrayGame = ({
 }: {
   newScore: number;
   ownerKey: string | null;
-  sessionStartedAtRef: React.MutableRefObject<number>;
+  sessionStartedAtRef: React.MutableRefObject<number | null>;
   setCelebrating: React.Dispatch<React.SetStateAction<boolean>>;
   setDone: React.Dispatch<React.SetStateAction<boolean>>;
   setScore: React.Dispatch<React.SetStateAction<number>>;
@@ -190,12 +192,13 @@ const finishMultiplicationArrayGame = ({
   const progress = loadProgress({ ownerKey });
   const reward = createLessonPracticeReward(progress, 'multiplication', newScore, TOTAL_ROUNDS);
   addXp(reward.xp, reward.progressUpdates, { ownerKey });
+  const timeTakenSeconds = sessionStartedAtRef.current ? Math.round((Date.now() - sessionStartedAtRef.current) / 1000) : 0;
   void persistKangurSessionScore({
     operation: 'multiplication',
     score: newScore,
     totalQuestions: TOTAL_ROUNDS,
     correctAnswers: newScore,
-    timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+    timeTakenSeconds,
     xpEarned: reward.xp,
   });
   setXpEarned(reward.xp);
@@ -226,7 +229,7 @@ const advanceMultiplicationArrayGameRound = ({
   newScore: number;
   ownerKey: string | null;
   roundIndex: number;
-  sessionStartedAtRef: React.MutableRefObject<number>;
+  sessionStartedAtRef: React.MutableRefObject<number | null>;
   setCelebrating: React.Dispatch<React.SetStateAction<boolean>>;
   setCollected: React.Dispatch<React.SetStateAction<Set<number>>>;
   setDone: React.Dispatch<React.SetStateAction<boolean>>;
@@ -575,13 +578,13 @@ export default function MultiplicationArrayGame({
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const sessionStartedAtRef = useRef(Date.now());
+  const sessionStartedAtRef = useRef<number | null>(Date.now());
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const allCollected = collected.size === a;
 
   useEffect(() => {
-    if (!allCollected || done || advanceTimeoutRef.current) {
+    if (!allCollected || done || advanceTimeoutRef.current !== null) {
       return undefined;
     }
 

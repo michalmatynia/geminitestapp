@@ -73,6 +73,20 @@ describe('order shipping display helpers', () => {
     expect(getOrderTrackingUrl(order)).toBe('https://inpost.example.test/shipments/TRACK123');
   });
 
+  it('prefers inpostShipment.trackingUrl over shipmentUrl for customer-facing link', () => {
+    const order = makeOrder({
+      shippingMethod: 'InPost Parcel Locker',
+      shippingCarrier: 'inpost',
+      inpostShipment: {
+        trackingNumber: 'TRACK999',
+        trackingUrl: 'https://inpost.pl/sledzenie-przesylek?number=TRACK999',
+        shipmentUrl: 'https://api.inpost-shipx-pl.easypack24.net/v1/shipments/TRACK999',
+      },
+    });
+
+    expect(getOrderTrackingUrl(order)).toBe('https://inpost.pl/sledzenie-przesylek?number=TRACK999');
+  });
+
   it('uses generic courier shipment tracking when present', () => {
     const order = makeOrder({
       shippingMethod: 'DPD Courier',

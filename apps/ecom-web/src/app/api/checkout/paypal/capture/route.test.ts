@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   findOne: vi.fn(),
+  findOneAndUpdate: vi.fn(),
   updateOne: vi.fn(),
   capturePayPalOrder: vi.fn(),
   sendOrderConfirmation: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock('@/lib/mongodb', () => ({
   getDb: vi.fn(async () => ({
     collection: () => ({
       findOne: mocks.findOne,
+      findOneAndUpdate: mocks.findOneAndUpdate,
       updateOne: mocks.updateOne,
     }),
   })),
@@ -61,12 +63,13 @@ function makeJsonRequest(body: unknown): NextRequest {
   }) as NextRequest;
 }
 
-const PENDING_ORDER = { orderId: VALID_ORDER_ID, status: 'pending_payment', paypalOrderId: VALID_PAYPAL_ORDER_ID, email: 'buyer@example.com' };
-const COMPLETED_ORDER = { orderId: VALID_ORDER_ID, status: 'processing', email: 'buyer@example.com' };
+const PENDING_ORDER = { _id: 'mongo-id-1', orderId: VALID_ORDER_ID, status: 'pending_payment', paypalOrderId: VALID_PAYPAL_ORDER_ID, email: 'buyer@example.com' };
+const PROCESSING_ORDER = { _id: 'mongo-id-1', orderId: VALID_ORDER_ID, status: 'processing', email: 'buyer@example.com' };
 
 describe('PayPal capture route', () => {
   beforeEach(() => {
     mocks.findOne.mockReset();
+    mocks.findOneAndUpdate.mockReset();
     mocks.updateOne.mockReset();
     mocks.capturePayPalOrder.mockReset();
     mocks.sendOrderConfirmation.mockReset();
@@ -76,9 +79,9 @@ describe('PayPal capture route', () => {
 
     mocks.checkRateLimit.mockReturnValue({ allowed: true, retryAfterSec: 0 });
     mocks.getClientIp.mockReturnValue('127.0.0.1');
-    // First findOne: check order exists. Second: fetch full order after update.
-    mocks.findOne.mockResolvedValueOnce(PENDING_ORDER).mockResolvedValueOnce(COMPLETED_ORDER);
-    mocks.updateOne.mockResolvedValue({ matchedCount: 1 });
+    mocks.findOne.mockResolvedValue(PENDING_ORDER);
+    mocks.findOneAndUpdate.mockResolvedValue(PROCESSING_ORDER);
+    mocks.updateOne.mockResolvedValue({ modifiedCount: 1 });
     mocks.capturePayPalOrder.mockResolvedValue({ paypalOrderId: VALID_PAYPAL_ORDER_ID, status: 'COMPLETED' });
     mocks.sendOrderConfirmation.mockResolvedValue(undefined);
     mocks.fulfillInpostOrder.mockResolvedValue(undefined);
@@ -92,16 +95,26 @@ describe('PayPal capture route', () => {
     expect(body.orderId).toBe(VALID_ORDER_ID);
     expect(body.status).toBe('processing');
     expect(mocks.capturePayPalOrder).toHaveBeenCalledWith(VALID_PAYPAL_ORDER_ID);
-    expect(mocks.updateOne).toHaveBeenCalledWith(
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
       { orderId: VALID_ORDER_ID },
       { $set: { status: 'processing' } },
+      { returnDocument: 'after' },
     );
-    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(COMPLETED_ORDER);
-    expect(mocks.fulfillInpostOrder).toHaveBeenCalledWith(COMPLETED_ORDER);
+    expect(mocks.sendOrderConfirmation).toHaveBeenCalledWith(PROCESSING_ORDER);
+    expect(mocks.fulfillInpostOrder).toHaveBeenCalledWith(PROCESSING_ORDER);
+  });
+
+  it('does not send confirmation email when webhook already claimed it (idempotency)', async () => {
+    mocks.updateOne.mockResolvedValue({ modifiedCount: 0 });
+
+    const res = await POST(makeJsonRequest({ orderId: VALID_ORDER_ID, paypalOrderId: VALID_PAYPAL_ORDER_ID }));
+
+    expect(res.status).toBe(200);
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
   });
 
   it('returns 200 idempotently when order is already processed', async () => {
-    mocks.findOne.mockReset();
     mocks.findOne.mockResolvedValue({ orderId: VALID_ORDER_ID, status: 'processing' });
 
     const res = await POST(makeJsonRequest({ orderId: VALID_ORDER_ID, paypalOrderId: VALID_PAYPAL_ORDER_ID }));
@@ -114,7 +127,6 @@ describe('PayPal capture route', () => {
   });
 
   it('returns 404 for an unknown order ID', async () => {
-    mocks.findOne.mockReset();
     mocks.findOne.mockResolvedValue(null);
 
     const res = await POST(makeJsonRequest({ orderId: VALID_ORDER_ID, paypalOrderId: VALID_PAYPAL_ORDER_ID }));

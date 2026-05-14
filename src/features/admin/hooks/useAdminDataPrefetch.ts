@@ -61,7 +61,7 @@ function prefetchProductCatalogs(queryClient: QueryClient): void {
     meta: {
       source: 'useAdminDataPrefetch.products.metadata.catalogs',
       operation: 'list',
-      resource: 'products.metadata.catalogs',
+      resource: 'catalogs',
       domain: 'products',
       description: 'Prefetch product catalogs for admin navigation intent',
     },

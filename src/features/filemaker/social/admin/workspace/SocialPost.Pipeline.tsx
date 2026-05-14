@@ -25,7 +25,7 @@ const PIPELINE_PROGRESS_VALUE_BY_STEP = {
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
-  if (!normalized) return false;
+  if (normalized === undefined || normalized === null || normalized.length === 0) return false;
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
@@ -68,16 +68,16 @@ export function SocialPostPipeline(): React.JSX.Element {
     setIsPostEditorModalOpen,
   } = useSocialPostContext();
 
-  const hasActivePost = Boolean(activePostId);
+  const hasActivePost = activePostId !== null && activePostId !== undefined && activePostId.length > 0;
   const canRunTextPipeline = hasActivePost && canGenerateSocialDraft;
   const canRunFreshCapture = hasActivePost && canRunFreshCapturePipeline;
   const canRunVisualAnalysis = hasActivePost && canRunVisualAnalysisPipeline;
   const canCaptureImagesOnly =
     hasActivePost &&
-    Boolean((batchCaptureBaseUrl ?? '').trim()) &&
+    (batchCaptureBaseUrl ?? '').trim().length > 0 &&
     batchCapturePresetIds.length > 0;
   const batchCapturePresetCount = batchCapturePresetIds.length;
-  const pipelineProgressValue = pipelineProgress
+  const pipelineProgressValue = pipelineProgress !== null && pipelineProgress !== undefined
     ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
     : 0;
   const isPipelineBusy =
@@ -86,8 +86,11 @@ export function SocialPostPipeline(): React.JSX.Element {
     pipelineStep === 'saving' ||
     pipelineStep === 'generating' ||
     pipelineStep === 'previewing';
+  const titlePl = editorState?.titlePl?.trim();
+  const titleEn = editorState?.titleEn?.trim();
   const activeDraftLabel =
-    editorState?.titlePl?.trim() || editorState?.titleEn?.trim() || 'Untitled draft';
+    (titlePl !== undefined && titlePl.length > 0) ? titlePl :
+    (titleEn !== undefined && titleEn.length > 0) ? titleEn : 'Untitled draft';
   const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
   const isFreshCaptureInProgress =
     pipelineStep === 'capturing' && pipelineProgress?.captureMode === 'fresh_capture';

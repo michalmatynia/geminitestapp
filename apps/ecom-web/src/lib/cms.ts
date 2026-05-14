@@ -293,7 +293,7 @@ function localizeHomeContent(content: HomeContent, localeInput?: LocaleInput): H
       ],
       panelStatus: 'UNIT-001 / WYRÓŻNIONE',
       panelTitle: 'Edycja kolekcjonerska',
-      panelSubtitle: 'Anime · Gaming · Film',
+      panelSubtitle: 'kliknij, aby odkryć',
       panelPrice: 'Od € 15',
     },
     manifesto: {
@@ -318,7 +318,17 @@ function localizeHomeContent(content: HomeContent, localeInput?: LocaleInput): H
           menswear: { label: 'Gaming', sublabel: 'RPG · FPS · Strategie', tag: 'Gorące dropy' },
           accessories: { label: 'Film i TV', sublabel: 'Kino · Seriale · Ikony', tag: 'Kolekcja' },
         };
-        return { ...card, ...(labels[card.id] ?? {}) };
+        const fallbackCard = HOME_CONTENT_DEFAULTS.categories.cards.find((item) => item.id === card.id);
+        const localizedCard = labels[card.id] ?? {};
+        const shouldLocalizeField = (field: 'label' | 'sublabel' | 'tag'): boolean =>
+          fallbackCard === undefined || card[field] === fallbackCard[field];
+
+        return {
+          ...card,
+          label: shouldLocalizeField('label') ? localizedCard.label ?? card.label : card.label,
+          sublabel: shouldLocalizeField('sublabel') ? localizedCard.sublabel ?? card.sublabel : card.sublabel,
+          tag: shouldLocalizeField('tag') ? localizedCard.tag ?? card.tag : card.tag,
+        };
       }),
     },
     featured: {
@@ -529,7 +539,10 @@ function localizeProductsContent(content: ProductsContent, localeInput?: LocaleI
       priceLabel: 'Cena',
       categoryLabel: 'Kategoria',
       categoryAllLabel: 'Wszystkie',
+      typeLabel: 'Typ',
+      universeLabel: 'Kategoria tematyczna',
       sizeLabel: 'Rozmiar',
+      loreLabel: 'Uniwersum / Lore',
       homeBreadcrumbLabel: 'Strona główna',
       collectionsBreadcrumbLabel: 'Kolekcje',
       productsCountLabel: 'produktów',
@@ -552,9 +565,12 @@ function localizeProductsContent(content: ProductsContent, localeInput?: LocaleI
         ...option,
         label: ({
           featured: 'Polecane',
+          newest: 'Najnowsze',
           'price-asc': 'Cena: od najniższej',
           'price-desc': 'Cena: od najwyższej',
-          newest: 'Najnowsze',
+          'name-asc': 'Nazwa: A → Z',
+          'name-desc': 'Nazwa: Z → A',
+          category: 'Kategoria',
         } as Record<string, string>)[option.value] ?? option.label,
       })),
       priceRanges: content.collection.priceRanges.map((range, index) => ({

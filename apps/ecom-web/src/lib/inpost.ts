@@ -357,6 +357,11 @@ export function buildShipXShipmentPayload(order: Order, config = getEnvConfig())
   };
 }
 
+function inpostCustomerTrackingUrl(trackingNumber: string | undefined): string | undefined {
+  if (!trackingNumber) return undefined;
+  return `https://inpost.pl/sledzenie-przesylek?number=${encodeURIComponent(trackingNumber)}`;
+}
+
 function parseShipmentResponse(data: unknown): InpostShipment {
   const response = typeof data === 'object' && data !== null
     ? data as ShipXShipmentResponse
@@ -366,6 +371,7 @@ function parseShipmentResponse(data: unknown): InpostShipment {
   return {
     shipmentId: response.id === null ? undefined : String(response.id),
     trackingNumber,
+    trackingUrl: inpostCustomerTrackingUrl(trackingNumber),
     status: response.status,
     shipmentUrl: response.href,
     service: response.service,
@@ -556,6 +562,7 @@ export async function applyInpostTrackingEvent(event: InpostTrackingEvent): Prom
     $set: {
       ...(orderStatus ? { status: orderStatus } : {}),
       'inpostShipment.trackingNumber': event.trackingNumber,
+      'inpostShipment.trackingUrl': inpostCustomerTrackingUrl(event.trackingNumber),
       'inpostShipment.status': event.eventCode,
       'inpostShipment.eventCode': event.eventCode,
       'inpostShipment.eventId': event.eventId,

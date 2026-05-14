@@ -81,15 +81,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'PayPal payment was declined.' }, { status: 422 });
   }
 
-  await collection.updateOne(
+  const updated = await collection.findOneAndUpdate(
     { orderId },
     { $set: { status: 'processing' } },
-  ).catch(() => undefined);
+    { returnDocument: 'after' },
+  ).catch(() => null);
 
-  const order = await collection.findOne({ orderId });
-  if (order !== null) {
-    await sendOrderConfirmation(serializeOrder(order)).catch(() => undefined);
-    await fulfillInpostOrder(serializeOrder(order)).catch(() => undefined);
+  if (updated !== null) {
+    // Atomic guard: claim the right to send the confirmation email once, even if
+    // the PayPal webhook fires concurrently and also tries to send it.
+    const emailClaim = await collection.updateOne(
+      { _id: updated._id, confirmationEmailQueuedAt: { $exists: false } },
+      { $set: { confirmationEmailQueuedAt: new Date().toISOString() } },
+    ).catch(() => ({ modifiedCount: 0 }));
+    if (emailClaim.modifiedCount > 0) {
+      await sendOrderConfirmation(serializeOrder(updated)).catch(() => undefined);
+      await fulfillInpostOrder(serializeOrder(updated)).catch(() => undefined);
+    }
   }
 
   return NextResponse.json({ orderId, status: 'processing' }, { status: 200 });

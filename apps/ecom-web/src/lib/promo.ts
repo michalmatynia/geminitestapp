@@ -123,6 +123,11 @@ const normalizePercentageValue = (value: number): number | null => {
   return value > 1 ? value / 100 : value;
 };
 
+const roundMoneyAmount = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+};
+
 const readPromoEmail = (value: string | null | undefined): string => {
   if (typeof value !== 'string') return '';
   return value.trim().toLowerCase();
@@ -218,11 +223,11 @@ const toEvaluation = (
   discountValue: number,
   subtotal: number,
 ): PromoEvaluation | null => {
-  const roundedSubtotal = Math.round(Math.max(0, subtotal));
+  const roundedSubtotal = roundMoneyAmount(Math.max(0, subtotal));
   if (discountType === 'percentage') {
     const normalizedPct = normalizePercentageValue(discountValue);
     if (normalizedPct === null) return null;
-    const discountAmount = Math.round(roundedSubtotal * normalizedPct);
+    const discountAmount = roundMoneyAmount(roundedSubtotal * normalizedPct);
     const discountPct = roundedSubtotal > 0 ? discountAmount / roundedSubtotal : 0;
     return {
       discountType,
@@ -232,7 +237,7 @@ const toEvaluation = (
     };
   }
 
-  const fixed = Math.max(0, Math.round(discountValue));
+  const fixed = roundMoneyAmount(Math.max(0, discountValue));
   if (!Number.isFinite(fixed) || fixed <= 0) return null;
   const discountAmount = Math.min(roundedSubtotal, fixed);
   const discountPct = roundedSubtotal > 0 ? discountAmount / roundedSubtotal : 0;

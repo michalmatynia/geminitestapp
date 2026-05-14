@@ -6,6 +6,7 @@ import { ensureVisibleHomeCategoryCards, HOME_CONTENT_DEFAULTS, type HomeCategor
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocalizedHref } from '@/context/LocaleContext';
 import { getHomeCategoryCardHref, type CatalogCategoryOption } from '@/lib/homeCategoryLinks';
+import { ProductImage } from '@/components/ProductImage';
 
 const CATEGORY_VISUALS = [
   {
@@ -134,14 +135,17 @@ export function CategoriesGrid({
               {/* Background */}
               {cat.imageUrl.trim() ? (
                 <>
-                  <img
-                    src={cat.imageUrl}
+                  <ProductImage
+                    imageUrl={cat.imageUrl}
+                    gradient={visual.gradient}
                     alt=''
-                    className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]'
-                    loading='lazy'
+                    className='cat-bg absolute inset-0'
+                    fit='cover'
+                    position='center'
+                    sizes='(max-width: 768px) 50vw, 25vw'
                   />
                   <div
-                    className='cat-bg absolute inset-0'
+                    className='absolute inset-0'
                     style={{ background: 'linear-gradient(180deg, rgba(4,3,20,0.14) 0%, rgba(4,3,20,0.76) 100%)' }}
                   />
                 </>

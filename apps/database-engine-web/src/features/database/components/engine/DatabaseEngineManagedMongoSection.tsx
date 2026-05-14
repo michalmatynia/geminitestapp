@@ -10,6 +10,10 @@ import {
   ManagedMongoSummaryCard,
   isPendingSyncTarget,
 } from './DatabaseEngineManagedMongoParts';
+import type {
+  DatabaseEngineManagedMongoDatabasesResponse,
+  DatabaseEngineMongoPendingSyncRequest,
+} from '@/shared/contracts/database';
 
 function useManagedMongoState(): {
   managedMongoDatabases: DatabaseEngineManagedMongoDatabasesResponse | undefined;

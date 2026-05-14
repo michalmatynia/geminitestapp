@@ -220,6 +220,7 @@ export type MentiosCategory = {
   name: string;
   count: number;
   parentName?: string;
+  parentNameEn?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -848,7 +849,9 @@ function mapDoc(
   const category = categoryId ? categoryMap.get(categoryId) : undefined;
   const productCategoryName = pickProductCategoryName(doc, locale);
   const name = pickProductName(doc, locale);
-  const { shortName, sizeInfo, material, categoryName: pipedCategoryName, lore } = parsePipedName(name);
+  const { shortName, sizeInfo, categoryName: pipedCategoryName, lore } = parsePipedName(name);
+  // Material is always extracted from the English name so filter labels stay language-neutral.
+  const { material } = parsePipedName(pickProductName(doc, 'en'));
   const description = pickProductDescription(doc, locale);
   const displayPricing = resolveProductDisplayPricing(doc, pricing, locale);
   const price = roundCurrencyAmount(displayPricing.price);
@@ -1071,7 +1074,8 @@ export interface FetchProductsOptions {
   categoryId?: string;      // filter by raw DB categoryId (DB-level, before mapping)
   categoryName?: string;    // filter by localized display name — resolved to categoryId internally
   categoryNames?: string[];  // filter by multiple localized display names
-  themeNames?: string[];     // filter by lore/theme text in product names
+  themeNames?: string[];     // filter by lore/theme text in product names (substring)
+  loreNames?: string[];      // filter by exact lore values (5th pipe segment)
   search?: string;          // regex search across name / sku / description
   ids?: string[];           // fetch specific products by _id
   newOnly?: boolean;        // only products created within NEW_ARRIVALS_DAYS
@@ -1090,6 +1094,12 @@ export interface MentiosHomeStats {
   itemCount: number;
   categoryCount: number;
   loreCount: number;
+}
+
+export interface MentiosHeroLoreGroups {
+  anime: string[];
+  gaming: string[];
+  movie: string[];
 }
 
 /** Return the storefront locales enabled on the configured Mentios catalog. */
@@ -1253,6 +1263,26 @@ function productThemeNameClause(values: string[]): Record<string, unknown> {
   return clauses.length > 0 ? { $or: clauses } : {};
 }
 
+function productLoreNameClause(values: string[]): Record<string, unknown> {
+  // Exact match on the 5th pipe segment: ^(seg|){4}\s*<lore>\s*$
+  const clauses = values.flatMap((value) => {
+    const pattern = `^(?:[^|]*\\|){4}\\s*${escapeRegex(value)}\\s*$`;
+    const matcher = { $regex: pattern, $options: 'i' };
+    return [
+      { name_en: matcher },
+      { name_pl: matcher },
+      { name_de: matcher },
+      { name: matcher },
+      { 'name.en': matcher },
+      { 'name.pl': matcher },
+      { 'name.de': matcher },
+    ];
+  });
+  // OR across values, but we need ANY lore to match — wrap each value's clauses with $or,
+  // then the outer list is also $or (any lore in the selected set is a match).
+  return clauses.length > 0 ? { $or: clauses } : {};
+}
+
 function usesResolvedPricePipeline(opts: FetchProductsOptions): boolean {
   return (
     opts.sort === 'price-asc' ||
@@ -1344,10 +1374,10 @@ export async function getMentiosProducts(opts: FetchProductsOptions = {}): Promi
 
     // Text search via $regex across all name/description fields.
     const themeNames = uniqueStrings(opts.themeNames ?? []);
+    const loreNames = uniqueStrings(opts.loreNames ?? []);
     if (opts.search) queryClauses.push(productTextSearchClause(opts.search));
-    if (themeNames.length > 0) {
-      queryClauses.push(productThemeNameClause(themeNames));
-    }
+    if (themeNames.length > 0) queryClauses.push(productThemeNameClause(themeNames));
+    if (loreNames.length > 0) queryClauses.push(productLoreNameClause(loreNames));
 
     const filter = mentiosFilterWithClauses(queryClauses);
     const mapContext = { categoryMap, locale, pricing };
@@ -1486,6 +1516,9 @@ export const getMentiosCategories = cache(async (
     const normalizedCategoryDocs = categoryDocs as unknown as CategoryDoc[];
     const categoryMap = buildCategoryMap(normalizedCategoryDocs, locale);
     const parentNameMap = buildCategoryParentNameMap(normalizedCategoryDocs, locale);
+    const parentNameEnMap = locale !== 'en'
+      ? buildCategoryParentNameMap(normalizedCategoryDocs, 'en')
+      : parentNameMap;
     const leafCategoryIds = buildLeafChildCategoryIds(normalizedCategoryDocs);
     const effectiveCategoryIds = leafCategoryIds.size > 0
       ? leafCategoryIds
@@ -1501,9 +1534,11 @@ export const getMentiosCategories = cache(async (
       .filter(([id]) => effectiveCategoryIds.has(id))
       .map(([id, { name }]) => {
         const parentName = parentNameMap.get(id);
-        return parentName
-          ? { id, name, parentName, count: countMap.get(id) ?? 0 }
-          : { id, name, count: countMap.get(id) ?? 0 };
+        const parentNameEn = parentNameEnMap.get(id);
+        const count = countMap.get(id) ?? 0;
+        if (parentName && parentNameEn) return { id, name, parentName, parentNameEn, count };
+        if (parentName) return { id, name, parentName, count };
+        return { id, name, count };
       })
       .filter(({ count }) => count > 0)
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -1528,6 +1563,55 @@ export const getMentiosCategories = cache(async (
 
     return Array.from(fallbackCounts.entries())
       .map(([name, count]) => ({ id: name, name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
+});
+
+/** Return the highest raw price across the full product catalog (rounded up to nearest 50). */
+export const getMentiosMaxPrice = cache(async (): Promise<number | null> => {
+  if (!hasEcommerceProductsMongoConfig()) return null;
+  try {
+    const db = await getEcommerceProductsDb();
+    const result = await db
+      .collection<ProductDoc>(PRODUCTS_COLLECTION)
+      .aggregate<{ maxPrice: number | null }>([
+        { $match: mentiosFilter() },
+        { $group: { _id: null, maxPrice: { $max: '$price' } } },
+      ])
+      .next();
+    const raw = result?.maxPrice;
+    if (raw === undefined || raw === null || !Number.isFinite(raw) || raw <= 0) return null;
+    return Math.ceil(raw / 10) * 10;
+  } catch {
+    return null;
+  }
+});
+
+/** Return distinct lore/universe names from the full product catalog, with counts. */
+export const getMentiosLoreNames = cache(async (
+  localeInput?: EcomLocale | string | null,
+): Promise<Array<{ name: string; count: number }>> => {
+  const locale = normalizeLocale(localeInput);
+  if (!hasEcommerceProductsMongoConfig()) return [];
+  try {
+    const db = await getEcommerceProductsDb();
+    const docs = await db
+      .collection<ProductDoc>(PRODUCTS_COLLECTION)
+      .find(mentiosFilter())
+      .project({ _id: 1, name: 1, name_en: 1, name_pl: 1, name_de: 1 })
+      .toArray();
+
+    const counts = new Map<string, number>();
+    for (const doc of docs as unknown as ProductDoc[]) {
+      const lore = parsePipedName(pickProductName(doc, locale)).lore?.trim();
+      if (!lore) continue;
+      counts.set(lore, (counts.get(lore) ?? 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch {
     return [];
@@ -1608,6 +1692,102 @@ function countLiveLores(productDocs: ProductDoc[], locale: EcomLocale): number {
   }
   return lores.size;
 }
+
+type HeroLoreGroupKey = keyof MentiosHeroLoreGroups;
+
+function emptyHeroLoreGroups(): MentiosHeroLoreGroups {
+  return { anime: [], gaming: [], movie: [] };
+}
+
+function matchHeroLoreGroup(value: string): HeroLoreGroupKey | null {
+  if (/\banime\b/i.test(value)) return 'anime';
+  if (/\b(gaming|game|games|gier|gry)\b/i.test(value)) return 'gaming';
+  if (/\b(movie|movies|film|films|filmow\w*|tv|cinema|cinematic)\b/i.test(value)) return 'movie';
+  return null;
+}
+
+function productHeroLoreGroup(
+  doc: ProductDoc,
+  categoryMap: Map<string, CategoryMapEntry>,
+  parentNamesById: Map<string, string>,
+  locale: EcomLocale,
+): HeroLoreGroupKey | null {
+  const categoryId = stringifyDocumentId(doc.categoryId);
+  const category = categoryId ? categoryMap.get(categoryId) : undefined;
+  const pipedCategory = parsePipedName(pickProductName(doc, locale)).categoryName;
+  const categoryText = uniqueStrings([
+    category?.name,
+    ...(category?.aliases ?? []),
+    categoryId ? parentNamesById.get(categoryId) : undefined,
+    pickProductCategoryName(doc, locale),
+    pipedCategory,
+  ]).join(' ');
+  return matchHeroLoreGroup(categoryText);
+}
+
+function pushUniqueHeroLore(target: string[], lore: string): void {
+  const normalized = lore.trim();
+  if (normalized.length === 0) return;
+  const key = normalized.toLowerCase();
+  if (target.some((value) => value.toLowerCase() === key)) return;
+  target.push(normalized);
+}
+
+/** Return unique lore/theme names grouped by the product universe categories used by the home hero. */
+export const getMentiosHeroLoreGroups = cache(async (
+  localeInput?: EcomLocale | string | null,
+): Promise<MentiosHeroLoreGroups> => {
+  const locale = normalizeLocale(localeInput);
+  if (!hasEcommerceProductsMongoConfig()) return emptyHeroLoreGroups();
+
+  try {
+    const db = await getEcommerceProductsDb();
+    const [productDocs, categoryDocs] = await Promise.all([
+      db.collection<ProductDoc>(PRODUCTS_COLLECTION)
+        .find(mentiosFilter())
+        .project({
+          _id: 1,
+          categoryId: 1,
+          categoryName: 1,
+          categoryName_en: 1,
+          categoryName_pl: 1,
+          categoryName_de: 1,
+          name: 1,
+          name_en: 1,
+          name_pl: 1,
+          name_de: 1,
+        })
+        .toArray(),
+      db.collection<CategoryDoc>(CATEGORIES_COLLECTION)
+        .find(categoryCatalogFilter())
+        .project({ _id: 1, parentId: 1, name: 1, name_en: 1, name_pl: 1 })
+        .toArray(),
+    ]);
+
+    const products = productDocs as unknown as ProductDoc[];
+    const categories = categoryDocs as unknown as CategoryDoc[];
+    const categoryMap = buildCategoryMap(categories, locale);
+    const parentNamesById = buildCategoryParentNameMap(categories, locale);
+    const groups = emptyHeroLoreGroups();
+
+    for (const doc of products) {
+      const lore = parsePipedName(pickProductName(doc, locale)).lore?.trim();
+      if (!lore) continue;
+      const group = productHeroLoreGroup(doc, categoryMap, parentNamesById, locale);
+      if (group === null) continue;
+      pushUniqueHeroLore(groups[group], lore);
+    }
+
+    return {
+      anime: groups.anime.sort((a, b) => a.localeCompare(b)),
+      gaming: groups.gaming.sort((a, b) => a.localeCompare(b)),
+      movie: groups.movie.sort((a, b) => a.localeCompare(b)),
+    };
+  } catch (err) {
+    logMentiosFallback('Hero lore groups', err);
+    return emptyHeroLoreGroups();
+  }
+});
 
 /** Return live storefront hero counts from in-stock products, child categories, and lore terms. */
 export async function getMentiosHomeStats(

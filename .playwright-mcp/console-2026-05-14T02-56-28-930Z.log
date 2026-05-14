@@ -1,0 +1,63 @@
+[      19ms] [ERROR] ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts:818:1
+Parsing ecmascript source code failed
+  816 |   return null;
+  817 | }
+> 818 |
+      | ^
+
+Expected '}', got '<eof>'
+
+Import trace:
+  App Route:
+    ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/execution/step-runner/tool-logic.ts
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/app/api/v2/products/scrape-profiles/run/handler.ts
+    ./src/app/api/v2/products/scrape-profiles/run/route-handler.ts
+    ./src/app/api/v2/products/[[...path]]/route.ts @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[      19ms] [ERROR] ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts
+Code generation for chunk item errored
+An error occurred while generating the chunk item [project]/src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts [app-route] (ecmascript)
+
+Caused by:
+- CJS module can't be async.
+
+Debug info:
+- An error occurred while generating the chunk item [project]/src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts [app-route] (ecmascript)
+- Execution of <ModuleChunkItem as EcmascriptChunkItem>::content_with_async_module_info failed
+- Execution of EcmascriptChunkItemContent::new failed
+- CJS module can't be async.
+
+Import trace:
+  App Route:
+    ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts
+    ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts
+    ./src/features/ai/agent-runtime/execution/step-runner/tool-logic.ts
+    ./src/features/ai/agent-runtime/execution/step-runner.ts
+    ./src/features/ai/agent-runtime/core/engine.ts
+    ./src/features/ai/agent-runtime/workers/agent-processor.ts
+    ./src/features/ai/agent-runtime/workers/agentQueue.ts
+    ./src/features/jobs/queue-init.ts
+    ./src/app/api/v2/products/scrape-profiles/run/handler.ts
+    ./src/app/api/v2/products/scrape-profiles/run/route-handler.ts
+    ./src/app/api/v2/products/[[...path]]/route.ts @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[     694ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[     772ms] [LOG] [HMR] connected @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    1452ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    1670ms] [LOG] [Fast Refresh] done in 218ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    2567ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    3309ms] [LOG] [Fast Refresh] done in 742ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    3421ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    3751ms] [LOG] [Fast Refresh] done in 329ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    3976ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    4162ms] [LOG] [Fast Refresh] done in 187ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    4220ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[    4450ms] [LOG] [Fast Refresh] done in 231ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  177114ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  177612ms] [LOG] [Fast Refresh] done in 499ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[10437292ms] [LOG] [HMR] connected @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27

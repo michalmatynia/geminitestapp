@@ -51,6 +51,14 @@ describe('ensureAppIndexes', () => {
       { background: true, name: 'ecom_settings_key' },
     );
     expect(mocks.appCreateIndex).toHaveBeenCalledWith(
+      { paypalOrderId: 1 },
+      { background: true, name: 'orders_paypal_id', sparse: true },
+    );
+    expect(mocks.appCreateIndex).toHaveBeenCalledWith(
+      { stripePaymentIntentId: 1 },
+      { background: true, name: 'orders_stripe_intent_id', sparse: true },
+    );
+    expect(mocks.appCreateIndex).toHaveBeenCalledWith(
       { 'inpostShipment.trackingNumber': 1 },
       { background: true, name: 'orders_inpost_tracking', sparse: true },
     );
@@ -58,6 +66,11 @@ describe('ensureAppIndexes', () => {
       { inpostEventIds: 1 },
       { background: true, name: 'orders_inpost_event_ids', sparse: true },
     );
+    expect(mocks.appCreateIndex).toHaveBeenCalledWith(
+      { email: 1 },
+      { background: true, name: 'newsletter_email', unique: true },
+    );
+    expect(mocks.appCollection).toHaveBeenCalledWith('newsletter_subscribers');
   });
 
   it('does not recreate the ecom settings key index when it already exists', async () => {

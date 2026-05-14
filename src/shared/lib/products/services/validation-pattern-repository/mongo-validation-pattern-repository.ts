@@ -1,6 +1,10 @@
 import { ObjectId, type Db, type Document, type Filter, type UpdateFilter } from 'mongodb';
 
-import type { CreateProductValidationPatternInput, UpdateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import {
+  productValidationPatternSchema,
+  type CreateProductValidationPatternInput,
+  type UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products/validation';
 import type { ProductValidationPatternRepository, ProductValidationPatternWriteOptions } from '@/shared/contracts/products/drafts';
 import type { ProductValidationChainMode, ProductValidationDenyBehavior, ProductValidationInstanceDenyBehaviorMap, ProductValidationInstanceScope, ProductValidationLaunchScopeBehavior, ProductValidationLaunchOperator, ProductValidationLaunchSourceMode, ProductValidationPostAcceptBehavior, ProductValidationRuntimeType, ProductValidationPattern, ProductValidationSemanticAuditRecord, ProductValidationSemanticAuditSource, ProductValidationSemanticState, ProductValidationSeverity, ProductValidationTarget } from '@/shared/contracts/products/validation';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
@@ -354,6 +358,12 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   };
 };
 
+const toValidDomainOrNull = (doc: ProductValidationPatternDoc): ProductValidationPattern | null => {
+  const pattern = toDomain(doc);
+  const parsed = productValidationPatternSchema.safeParse(pattern);
+  return parsed.success ? parsed.data : null;
+};
+
 const resolveSemanticAuditSource = (
   input: ProductValidationPatternWriteOptions | undefined
 ): ProductValidationSemanticAuditSource => input?.semanticAuditSource ?? 'manual_save';
@@ -369,7 +379,12 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       .find({})
       .sort({ sequence: 1, target: 1, label: 1 })
       .toArray();
-    return rows.map(toDomain);
+    // Local/cloud sync can leave placeholder rows with only `_id`; keep those from
+    // breaking validator config reads while preserving the source documents.
+    return rows.flatMap((row) => {
+      const pattern = toValidDomainOrNull(row);
+      return pattern ? [pattern] : [];
+    });
   },
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
@@ -380,7 +395,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .findOne({ _id: toObjectId(id) });
     if (!row) return null;
-    return toDomain(row);
+    return toValidDomainOrNull(row);
   },
 
   async createPattern(

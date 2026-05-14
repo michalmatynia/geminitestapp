@@ -37,6 +37,7 @@ export interface SiteNewsletterContent {
   emailPlaceholder: string;
   emailAriaLabel: string;
   submitLabel: string;
+  successLabel: string;
 }
 
 export interface SiteFooterColumnContent {
@@ -225,6 +226,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
       emailPlaceholder: 'your@email.com',
       emailAriaLabel: 'Email for newsletter',
       submitLabel: 'Subscribe',
+      successLabel: "You're subscribed.",
     },
     brandName: 'STARGATER',
     brandSuffix: 'NEXUS',
@@ -757,6 +759,14 @@ export function validateSiteContent(input: unknown): SiteContentValidationResult
           TEXT_LIMITS.short,
           errors,
           'footer.newsletter.submitLabel',
+        ),
+        successLabel: readString(
+          newsletter,
+          'successLabel',
+          SITE_CONTENT_DEFAULTS.footer.newsletter.successLabel,
+          TEXT_LIMITS.short,
+          errors,
+          'footer.newsletter.successLabel',
         ),
       },
       brandName: readString(

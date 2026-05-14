@@ -77,10 +77,10 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
   pushBucket(record['feature']);
 
   const textFields =
-    record['text_fields'] && typeof record['text_fields'] === 'object'
+    record['text_fields'] !== null && typeof record['text_fields'] === 'object'
       ? (record['text_fields'] as Record<string, unknown>)
       : null;
-  if (!textFields) {
+  if (textFields === null) {
     return buckets;
   }
 
@@ -90,7 +90,7 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
 
   Object.entries(textFields).forEach(([key, value]: [string, unknown]) => {
     const normalizedKey = key.trim().toLowerCase();
-    if (!normalizedKey) return;
+    if (normalizedKey.length === 0) return;
     if (
       normalizedKey.startsWith('features|') ||
       normalizedKey.startsWith('parameters|') ||

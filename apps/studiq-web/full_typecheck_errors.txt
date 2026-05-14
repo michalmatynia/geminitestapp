@@ -1,0 +1,368 @@
+../../src/features/ai/agent-runtime/core/engine-utils.ts(36,52): error TS2345: Argument of type 'string | null' is not assignable to parameter of type '"web_task" | "extract_info" | null | undefined'.
+  Type 'string' is not assignable to type '"web_task" | "extract_info" | null | undefined'.
+../../src/features/ai/agent-runtime/core/utils.ts(15,20): error TS2345: Argument of type '(value: void | PromiseLike<void>) => void' is not assignable to parameter of type '(...args: unknown[]) => void'.
+  Types of parameters 'value' and 'args' are incompatible.
+    Type 'unknown' is not assignable to type 'void | PromiseLike<void>'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,20): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,63): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,97): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,133): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,169): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,208): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/context.ts(35,254): error TS2532: Object is possibly 'undefined'.
+../../src/features/ai/agent-runtime/execution/plan.ts(74,5): error TS2322: Type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; } | null' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; } | null | undefined'.
+  Type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; }' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; }'.
+    Types of property 'url' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+../../src/features/ai/agent-runtime/execution/plan.ts(77,16): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(87,5): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(104,16): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(106,24): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(107,30): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(108,28): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(120,7): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(120,43): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(122,39): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(132,36): error TS2339: Property 'preferences' does not exist on type '{ steps: { id: string; title: string; status: "pending" | "failed" | "completed" | "running"; tool?: "none" | "playwright" | undefined; expectedObservation?: string | null | undefined; ... 9 more ...; logCount?: number | ... 1 more ... | undefined; }[]; ... 16 more ...; contextRegistry?: { ...; } | ... 1 more ... | ...'.
+../../src/features/ai/agent-runtime/execution/plan.ts(148,5): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(149,5): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(150,5): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(151,5): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(151,38): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(161,19): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(162,71): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(165,18): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(166,36): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(166,80): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(180,5): error TS2322: Type '"web_task" | "extract_info" | null | undefined' is not assignable to type '"web_task" | "extract_info" | null'.
+  Type 'undefined' is not assignable to type '"web_task" | "extract_info" | null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(188,19): error TS18047: 'checkpoint' is possibly 'null'.
+../../src/features/ai/agent-runtime/execution/plan.ts(264,5): error TS2322: Type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; } | null' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; } | null | undefined'.
+  Type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; }' is not assignable to type '{ url: string; title: string | null; domTextSample: string; logs: { level: string; message: string; }[]; uiInventory?: unknown; }'.
+    Types of property 'url' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+../../src/features/ai/agent-runtime/execution/plan.ts(264,47): error TS2345: Argument of type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; } | null' is not assignable to parameter of type 'BrowserContextSummary | null | undefined'.
+  Type '{ url?: string | null | undefined; title?: string | null | undefined; domTextSample?: string | undefined; logs?: { level: string; message: string; }[] | undefined; uiInventory?: unknown; }' is not assignable to type 'BrowserContextSummary'.
+    Types of property 'url' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+../../src/features/ai/agent-runtime/memory/segments/long-term.ts(271,11): error TS4111: Property 'memoryKey' comes from an index signature, so it must be accessed with ['memoryKey'].
+../../src/features/ai/agent-runtime/memory/segments/long-term.ts(274,11): error TS4111: Property 'personaId' comes from an index signature, so it must be accessed with ['personaId'].
+../../src/features/ai/agent-runtime/memory/segments/long-term.ts(277,11): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
+../../src/features/ai/agent-runtime/memory/segments/short-term.ts(93,37): error TS2367: This comparison appears to be unintentional because the types 'MemoryScope' and '""' have no overlap.
+../../src/features/ai/agent-runtime/planning/llm-evaluation/core.ts(36,11): error TS18047: 'agentAuditLog' is possibly 'null'.
+../../src/features/ai/agent-runtime/planning/llm-postprocessing/core.ts(35,11): error TS18047: 'agentAuditLog' is possibly 'null'.
+../../src/features/ai/agent-runtime/planning/llm-postprocessing/hierarchy.ts(29,47): error TS2322: Type 'unknown[]' is not assignable to type '{ title?: string | undefined; successCriteria?: string | null | undefined; priority?: number | null | undefined; dependsOn?: string[] | number[] | null | undefined; subgoals?: { title?: string | undefined; successCriteria?: string | ... 1 more ... | undefined; priority?: number | ... 1 more ... | undefined; dependsO...'.
+  Type 'unknown' is not assignable to type '{ title?: string | undefined; successCriteria?: string | null | undefined; priority?: number | null | undefined; dependsOn?: string[] | number[] | null | undefined; subgoals?: { title?: string | undefined; successCriteria?: string | ... 1 more ... | undefined; priority?: number | ... 1 more ... | undefined; dependsO...'.
+../../src/features/ai/agent-runtime/planning/llm-postprocessing/hierarchy.ts(65,47): error TS2322: Type 'unknown[]' is not assignable to type '{ title?: string | undefined; successCriteria?: string | null | undefined; priority?: number | null | undefined; dependsOn?: string[] | number[] | null | undefined; subgoals?: { title?: string | undefined; successCriteria?: string | ... 1 more ... | undefined; priority?: number | ... 1 more ... | undefined; dependsO...'.
+  Type 'unknown' is not assignable to type '{ title?: string | undefined; successCriteria?: string | null | undefined; priority?: number | null | undefined; dependsOn?: string[] | number[] | null | undefined; subgoals?: { title?: string | undefined; successCriteria?: string | ... 1 more ... | undefined; priority?: number | ... 1 more ... | undefined; dependsO...'.
+../../src/features/ai/agent-runtime/planning/llm/build-plan.ts(86,7): error TS2322: Type '"tool" | "wait_human" | "finish"' is not assignable to type '"tool" | "respond" | "wait_human"'.
+  Type '"finish"' is not assignable to type '"tool" | "respond" | "wait_human"'.
+../../src/features/ai/agent-runtime/planning/llm/build-plan.ts(98,37): error TS2322: Type '"finish"' is not assignable to type '"tool" | "respond" | "wait_human"'.
+../../src/features/ai/agent-runtime/planning/utils/json-parse.ts(7,7): error TS18048: 'raw' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/json-parse.ts(8,17): error TS18048: 'raw' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/json-parse.ts(10,7): error TS18048: 'jsonText' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/json-parse.ts(12,23): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../src/features/ai/agent-runtime/planning/utils/specs.ts(88,7): error TS18048: 'decision' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/specs.ts(89,7): error TS18048: 'decision' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/specs.ts(93,34): error TS18048: 'decision' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/planning/utils/specs.ts(96,36): error TS18048: 'decision' is possibly 'undefined'.
+../../src/features/ai/agent-runtime/tools/image-studio/batch-generator.ts(19,9): error TS2322: Type '{ contextRegistry?: Record<string, any> | undefined; projectId: string; prompt: string; }' is not assignable to type '{ projectId: string; prompt: string; operation?: "generate" | "center_object" | undefined; asset?: { filepath: string; id?: string | undefined; } | undefined; referenceAssets?: { filepath: string; id?: string | undefined; }[] | undefined; mask?: { ...; } | ... 2 more ... | undefined; center?: { ...; } | undefined; s...'.
+  Types of property 'contextRegistry' are incompatible.
+    Type 'Record<string, any> | undefined' is not assignable to type '{ refs: { id: string; kind: "static_node" | "runtime_document"; providerId?: string | undefined; entityType?: string | undefined; }[]; engineVersion: string; resolved?: { refs: { id: string; kind: "static_node" | "runtime_document"; providerId?: string | undefined; entityType?: string | undefined; }[]; nodes: { ...;...'.
+      Type 'Record<string, any>' is missing the following properties from type '{ refs: { id: string; kind: "static_node" | "runtime_document"; providerId?: string | undefined; entityType?: string | undefined; }[]; engineVersion: string; resolved?: { refs: { id: string; kind: "static_node" | "runtime_document"; providerId?: string | undefined; entityType?: string | undefined; }[]; nodes: { ...;...': refs, engineVersion
+../../src/features/ai/agent-runtime/tools/run-agent-browser-control.ts(137,36): error TS2554: Expected 1 arguments, but got 5.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(111,14): error TS2352: Conversion of type '{ ok: true; output: { runIds: string[]; extractionType: "batch_image"; extractedTotal: number; }; }' to type 'AgentToolResultV2' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  The types of 'output.extractionType' are incompatible between these types.
+    Type '"batch_image"' is not comparable to type '"product_names" | "emails" | undefined'.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(121,9): error TS2367: This comparison appears to be unintentional because the types '"product_names" | "emails"' and '"search"' have no overlap.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(122,29): error TS2304: Cannot find name 'runAggregatedSearch'.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(125,14): error TS2352: Conversion of type '{ ok: true; output: { results: any; extractionType: "search"; extractedTotal: any; }; }' to type 'AgentToolResultV2' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  The types of 'output.extractionType' are incompatible between these types.
+    Type '"search"' is not comparable to type '"product_names" | "emails" | undefined'.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(135,9): error TS2367: This comparison appears to be unintentional because the types '"product_names" | "emails"' and '"document_analyze"' have no overlap.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(136,28): error TS2304: Cannot find name 'analyzeDocument'.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(185,7): error TS2554: Expected 1 arguments, but got 5.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(340,11): error TS2554: Expected 1 arguments, but got 5.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(510,9): error TS2554: Expected 1 arguments, but got 5.
+../../src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts(575,9): error TS2554: Expected 1 arguments, but got 5.
+../../src/features/ai/agentcreator/server/persona-avatar-thumbnails.ts(95,5): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+../../src/features/ai/agentcreator/server/persona-avatar-thumbnails.ts(96,5): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+../../src/features/ai/agentcreator/server/persona-avatar-thumbnails.ts(97,5): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+../../src/features/ai/agentcreator/teaching/server/chat.ts(35,65): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../src/features/ai/image-studio/product-studio/product-studio-service.preflight.ts(67,36): error TS2741: Property 'activeRun' is missing in type '{ sourceSlotId: null; sourceSlot: null; variants: never[]; projectId: string | null; sequenceGenerationMode: "auto" | "studio_prompt_then_sequence" | "model_full_sequence" | "studio_native_sequencer_prior_generation"; ... 4 more ...; sequenceStepPlan: { ...; }[]; }' but required in type '{ config: { projectId: string | null; sourceSlotByImageIndex: Record<string, string>; sourceSlotHistoryByImageIndex: Record<string, string[]>; updatedAt: string; }; ... 9 more ...; activeRun: { ...; } | null; }'.
+../../src/features/ai/image-studio/product-studio/product-studio-service.preflight.ts(78,36): error TS2741: Property 'activeRun' is missing in type '{ sourceSlotId: string | null; sourceSlot: { id: string; projectId: string; name: string | null; folderPath: string | null; createdAt?: string | undefined; updatedAt?: string | null | undefined; ... 16 more ...; asset3d?: { ...; } | ... 1 more ... | undefined; } | null; ... 7 more ...; sequenceStepPlan: { ...; }[]; }' but required in type '{ config: { projectId: string | null; sourceSlotByImageIndex: Record<string, string>; sourceSlotHistoryByImageIndex: Record<string, string[]>; updatedAt: string; }; ... 9 more ...; activeRun: { ...; } | null; }'.
+../../src/features/auth/auth.config.ts(216,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../src/features/auth/auth.config.ts(315,9): error TS2322: Type 'User' is not assignable to type '{ id: string; name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; isElevated?: boolean | undefined; role?: string | null | undefined; ... 4 more ...; accountBanned?: boolean | undefined; }'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../src/features/auth/auth.ts(80,77): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+../../src/features/auth/auth.ts(97,26): error TS2345: Argument of type '{ userId: string; mfaEnabled: boolean; mfaSecret: string | null; recoveryCodes: string[]; allowedIps: string[]; disabledAt: string | null; bannedAt: string | null; createdAt: string; updatedAt: string; }' is not assignable to parameter of type '{ bannedAt: Date | null; disabledAt: Date | null; }'.
+  Types of property 'bannedAt' are incompatible.
+    Type 'string | null' is not assignable to type 'Date | null'.
+      Type 'string' is not assignable to type 'Date'.
+../../src/features/auth/auth.ts(128,110): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+../../src/features/auth/auth.ts(133,12): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+../../src/features/auth/auth.ts(282,11): error TS2322: Type 'User' is not assignable to type '{ id: string; name?: string | null | undefined; email?: string | null | undefined; image?: string | null | undefined; isElevated?: boolean | undefined; role?: string | null | undefined; ... 4 more ...; accountBanned?: boolean | undefined; }'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../src/features/auth/services/auth-user-service.ts(16,5): error TS2322: Type 'AuthUserRecord | null' is not assignable to type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; } | null'.
+  Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/auth/services/auth-user-service.ts(30,5): error TS2322: Type 'AuthUserRecord | null' is not assignable to type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; } | null'.
+  Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/cms/components/frontend/CmsMenu.tsx(73,91): error TS2741: Property 'surface' is missing in type 'Required<CmsAppearanceTone>' but required in type '{ background: string; surface: string; text: string; accent: string; border: string; }'.
+../../src/features/cms/components/frontend/CmsMenu.tsx(78,4): error TS2345: Argument of type 'string' is not assignable to parameter of type 'CmsStorefrontAppearanceMode'.
+../../src/features/cms/components/frontend/home/home-fallback-content.collections.tsx(4,15): error TS2724: '"next-intl"' has no exported member named 'Translation'. Did you mean '_Translator'?
+../../src/features/cms/components/frontend/home/home-fallback-content.highlights.tsx(64,20): error TS2322: Type 'string' is not assignable to type 'never'.
+../../src/features/cms/components/frontend/home/home-fallback-content.products.tsx(41,15): error TS2724: '"next-intl"' has no exported member named 'Translation'. Did you mean '_Translator'?
+../../src/features/cms/components/frontend/sections/FrontendButtonElementSection.tsx(15,17): error TS4111: Property 'gsapAnimation' comes from an index signature, so it must be accessed with ['gsapAnimation'].
+../../src/features/cms/components/frontend/sections/FrontendImageElementSection.tsx(15,17): error TS4111: Property 'gsapAnimation' comes from an index signature, so it must be accessed with ['gsapAnimation'].
+../../src/features/cms/components/frontend/sections/FrontendModel3DElementSection.tsx(15,17): error TS4111: Property 'gsapAnimation' comes from an index signature, so it must be accessed with ['gsapAnimation'].
+../../src/features/cms/components/page-builder/context/InspectorAiContext.tsx(82,59): error TS2554: Expected 1 arguments, but got 6.
+../../src/features/cms/components/page-builder/menu-settings/useMenuSettingsController.ts(17,11): error TS6133: 'domains' is declared but its value is never read.
+../../src/features/cms/components/page-builder/MenuSettingsPanel.tsx(38,57): error TS2345: Argument of type '(prev: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null>'.
+  Type '(prev: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; }' is not assignable to type '(prevState: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; } | null'.
+    Call signature return types '{ items: ({ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; })[]; showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; ... 46 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; }' and '{ showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "static" | "sticky"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null' are incompatible.
+      The types of 'items' are incompatible between these types.
+        Type '({ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; })[]' is not assignable to type '{ id: string; label: string; url: string; imageUrl: string; }[]'.
+          Type '{ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; }' is not assignable to type '{ id: string; label: string; url: string; imageUrl: string; }'.
+            Property 'imageUrl' is missing in type '{ id: string; label: string; url: string; }' but required in type '{ id: string; label: string; url: string; imageUrl: string; }'.
+../../src/features/cms/components/page-builder/preview-panel/PreviewToolbar.tsx(1,18): error TS6133: 'Badge' is declared but its value is never read.
+../../src/features/cms/components/page-builder/preview-panel/usePreviewPanelController.ts(1,42): error TS6133: 'useRef' is declared but its value is never read.
+../../src/features/cms/components/page-builder/preview-panel/usePreviewPanelController.ts(19,10): error TS6133: 'hoveredNodeId' is declared but its value is never read.
+../../src/features/cms/components/page-builder/preview/PreviewSlideshowBlock.tsx(367,17): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+../../src/features/cms/services/cms-theme-settings.ts(2,10): error TS6133: 'DEFAULT_THEME' is declared but its value is never read.
+../../src/features/cms/services/cms-theme-settings.ts(22,7): error TS6133: 'awaitThemeSettingsWithinTimeout' is declared but its value is never read.
+../../src/features/cms/services/menu/menu-service.ts(18,1): error TS6133: 'ErrorSystem' is declared but its value is never read.
+../../src/features/cms/services/theme/theme-service.ts(9,3): error TS6133: 'DEFAULT_THEME' is declared but its value is never read.
+../../src/features/files/contexts/FileManagerContext.tsx(140,56): error TS2322: Type '{ onSelectFile?: ((files: { id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: numbe...' is not assignable to type 'FileManagerConfig'.
+  Types of property 'mode' are incompatible.
+    Type '"select" | "view" | undefined' is not assignable to type '"select" | "view"'.
+      Type 'undefined' is not assignable to type '"select" | "view"'.
+../../src/features/files/hooks/useFileAsset3dQueries.ts(41,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+../../src/features/files/hooks/useFileAsset3dQueries.ts(44,5): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+../../src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(692,27): error TS2339: Property 'authError' does not exist on type 'KangurAuthSessionContextValue'.
+../../src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(694,27): error TS2339: Property 'isLoadingAuth' does not exist on type 'KangurAuthSessionContextValue'.
+../../src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(697,11): error TS2339: Property 'authError' does not exist on type 'KangurAuthSessionContextValue'.
+../../src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(697,55): error TS2339: Property 'isLoadingAuth' does not exist on type 'KangurAuthSessionContextValue'.
+../../src/features/kangur/server/parent-account-captcha.ts(104,5): error TS2304: Cannot find name 'safeClearTimeout'.
+../../src/features/kangur/server/parent-email-auth.ts(252,36): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(259,7): error TS2741: Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(267,7): error TS2741: Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(426,31): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(523,23): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(523,57): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(529,7): error TS2741: Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(539,32): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(624,5): error TS2741: Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(632,5): error TS2322: Type 'AuthUserRecord | null' is not assignable to type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; } | null'.
+  Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(634,5): error TS2322: Type 'AuthUserRecord | null' is not assignable to type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; } | null'.
+  Property 'provider' is missing in type 'AuthUserRecord' but required in type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'.
+../../src/features/kangur/server/parent-email-auth.ts(668,19): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/server/parent-email-auth.ts(668,53): error TS2551: Property 'passwordHash' does not exist on type '{ id: string; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; createdAt?: string | undefined; updatedAt?: string | null | undefined; password?: string | undefined; }'. Did you mean 'password'?
+../../src/features/kangur/services/kangur-learner-repository.ts(21,3): error TS6133: 'hashPassword' is declared but its value is never read.
+../../src/features/kangur/services/kangur-learner-repository.ts(22,3): error TS6133: 'verifyPassword' is declared but its value is never read.
+../../src/features/kangur/services/kangur-learner-repository.ts(704,9): error TS2304: Cannot find name 'randomUUID'.
+../../src/features/kangur/services/kangur-learner-repository.ts(714,25): error TS2552: Cannot find name 'bcrypt'. Did you mean 'crypto'?
+../../src/features/kangur/services/kangur-learner-repository.ts(771,17): error TS2552: Cannot find name 'bcrypt'. Did you mean 'crypto'?
+../../src/features/kangur/services/kangur-learner-repository.ts(942,20): error TS2552: Cannot find name 'bcrypt'. Did you mean 'crypto'?
+../../src/features/kangur/services/kangur-learner-repository.ts(973,63): error TS2304: Cannot find name 'randomUUID'.
+../../src/features/kangur/services/lessons/lesson-document-repository.ts(9,32): error TS6133: 'Db' is declared but its value is never read.
+../../src/features/kangur/services/lessons/lesson-document-repository.ts(10,1): error TS6133: 'randomUUID' is declared but its value is never read.
+../../src/features/kangur/services/lessons/lesson-document-repository.ts(12,37): error TS6196: 'KangurLessonDocumentStore' is declared but never used.
+../../src/features/kangur/services/lessons/lesson-document-repository.ts(21,1): error TS6133: 'getMongoDb' is declared but its value is never read.
+../../src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx(269,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx(351,9): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx(371,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx(383,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/adding-synthesis/AddingSynthesisGame.hooks.ts(211,30): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/adding-synthesis/AddingSynthesisGame.hooks.ts(280,31): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useNarrationObserverEffect.ts(28,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useNarrationObserverEffect.ts(54,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useResetGuidanceEffect.ts(3,70): error TS2307: Cannot find module './KangurAiTutorWidget.types' or its corresponding type declarations.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useResponseTimeoutEffect.ts(3,70): error TS2307: Cannot find module './KangurAiTutorWidget.types' or its corresponding type declarations.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useSectionGuidanceEffect.ts(3,44): error TS2307: Cannot find module './KangurAiTutorWidget.types' or its corresponding type declarations.
+../../src/features/kangur/ui/components/ai-tutor-widget/effects/useSupplementalTelemetryEffects.ts(4,42): error TS2307: Cannot find module '../KangurAiTutorPanelBody.context' or its corresponding type declarations.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.coordinator.ts(354,5): error TS2719: Type 'AuthState' is not assignable to type 'AuthState'. Two different types with this name exist, but they are unrelated.
+  Type '{ isAuthenticated?: boolean | undefined; isLoadingAuth?: boolean | undefined; user?: { ownerEmailVerified?: boolean | undefined; } | null | undefined; }' is not assignable to type 'AuthState'.
+    Types of property 'isAuthenticated' are incompatible.
+      Type 'boolean | undefined' is not assignable to type 'boolean'.
+        Type 'undefined' is not assignable to type 'boolean'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.guided.ts(367,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.guided.ts(428,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.guided.ts(432,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.guided.ts(494,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.tsx(73,5): error TS2322: Type 'KangurAiTutorHomeOnboardingMode' is not assignable to type '"first_visit" | "every_visit"'.
+  Type '"off"' is not assignable to type '"first_visit" | "every_visit"'.
+../../src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.tsx(139,5): error TS2322: Type 'boolean | null' is not assignable to type 'boolean | undefined'.
+  Type 'null' is not assignable to type 'boolean | undefined'.
+../../src/features/kangur/ui/components/clock-training/ClockTraining.context.tsx(321,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/clock-training/ClockTraining.context.tsx(387,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/clock-training/ClockTraining.context.tsx(392,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage.ts(93,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage.ts(96,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/game-runtime/QuestionCard.tsx(197,27): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/game-runtime/QuestionCard.tsx(198,22): error TS2304: Cannot find name 'safeClearTimeout'.
+../../src/features/kangur/ui/components/game-runtime/QuestionCard.tsx(203,23): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/game-runtime/QuestionCard.tsx(204,18): error TS2304: Cannot find name 'safeClearTimeout'.
+../../src/features/kangur/ui/components/KangurLessonNarrator.tsx(166,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/KangurLessonNarrator.tsx(168,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/KangurLessonNarrator.tsx(180,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(124,21): error TS4111: Property 'initial' comes from an index signature, so it must be accessed with ['initial'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(125,21): error TS4111: Property 'animate' comes from an index signature, so it must be accessed with ['animate'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(126,21): error TS4111: Property 'exit' comes from an index signature, so it must be accessed with ['exit'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(127,21): error TS4111: Property 'transition' comes from an index signature, so it must be accessed with ['transition'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(128,21): error TS4111: Property 'whileHover' comes from an index signature, so it must be accessed with ['whileHover'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(129,21): error TS4111: Property 'whileTap' comes from an index signature, so it must be accessed with ['whileTap'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(130,21): error TS4111: Property 'whileFocus' comes from an index signature, so it must be accessed with ['whileFocus'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(131,21): error TS4111: Property 'whileInView' comes from an index signature, so it must be accessed with ['whileInView'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(132,21): error TS4111: Property 'whileDrag' comes from an index signature, so it must be accessed with ['whileDrag'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(133,21): error TS4111: Property 'variants' comes from an index signature, so it must be accessed with ['variants'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(134,21): error TS4111: Property 'layout' comes from an index signature, so it must be accessed with ['layout'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(135,21): error TS4111: Property 'layoutId' comes from an index signature, so it must be accessed with ['layoutId'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(136,21): error TS4111: Property 'onAnimationStart' comes from an index signature, so it must be accessed with ['onAnimationStart'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(137,21): error TS4111: Property 'onAnimationComplete' comes from an index signature, so it must be accessed with ['onAnimationComplete'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(161,22): error TS4111: Property 'initial' comes from an index signature, so it must be accessed with ['initial'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(162,22): error TS4111: Property 'animate' comes from an index signature, so it must be accessed with ['animate'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(163,22): error TS4111: Property 'exit' comes from an index signature, so it must be accessed with ['exit'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(164,22): error TS4111: Property 'transition' comes from an index signature, so it must be accessed with ['transition'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(165,22): error TS4111: Property 'whileHover' comes from an index signature, so it must be accessed with ['whileHover'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(166,22): error TS4111: Property 'whileTap' comes from an index signature, so it must be accessed with ['whileTap'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(167,22): error TS4111: Property 'whileFocus' comes from an index signature, so it must be accessed with ['whileFocus'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(168,22): error TS4111: Property 'whileInView' comes from an index signature, so it must be accessed with ['whileInView'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(169,22): error TS4111: Property 'whileDrag' comes from an index signature, so it must be accessed with ['whileDrag'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(170,22): error TS4111: Property 'variants' comes from an index signature, so it must be accessed with ['variants'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(171,22): error TS4111: Property 'layout' comes from an index signature, so it must be accessed with ['layout'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(172,22): error TS4111: Property 'layoutId' comes from an index signature, so it must be accessed with ['layoutId'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(173,22): error TS4111: Property 'onAnimationStart' comes from an index signature, so it must be accessed with ['onAnimationStart'].
+../../src/features/kangur/ui/components/LazyAnimatePresence.tsx(174,22): error TS4111: Property 'onAnimationComplete' comes from an index signature, so it must be accessed with ['onAnimationComplete'].
+../../src/features/kangur/ui/components/MultiplicationArrayGame.tsx(132,63): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/MultiplicationArrayGame.tsx(135,5): error TS2304: Cannot find name 'safeClearTimeout'.
+../../src/features/kangur/ui/components/MultiplicationArrayGame.tsx(589,33): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthAudioContext.ts(46,22): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthAudioContext.ts(53,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthPlayback.ts(35,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthPlayback.ts(49,77): error TS2367: This comparison appears to be unintentional because the types 'number' and 'Timeout' have no overlap.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthPlayback.ts(52,34): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'number'.
+../../src/features/kangur/ui/components/music/synth/useKangurMusicSynthPlayback.ts(53,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/NumberBalanceRushGame.runtime.ts(271,3): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.hooks.ts(146,9): error TS6198: All destructured elements are unused.
+../../src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.runtime.tsx(20,1): error TS6133: 'useKangurPrimaryNavigationState' is declared but its value is never read.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(47,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(50,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(134,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(136,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(155,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/hooks/useKangurGameCore.ts(170,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/hooks/useKangurRouteTransitionLogic.ts(267,22): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/hooks/useKangurRouteTransitionLogic.ts(531,9): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/KangurAuthContext.tsx(239,13): error TS7030: Not all code paths return a value.
+../../src/features/kangur/ui/context/KangurScoreSyncProvider.tsx(87,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/KangurScoreSyncProvider.tsx(100,37): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/KangurScoreSyncProvider.tsx(118,20): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/context/KangurTopNavigationContext.tsx(79,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/context/KangurTopNavigationContext.tsx(90,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/hooks/useKangurLearnerActivity.ts(352,23): error TS2304: Cannot find name 'safeSetTimeout'.
+../../src/features/kangur/ui/hooks/useKangurLearnerActivity.ts(356,7): error TS2304: Cannot find name 'safeClearTimeout'.
+../../src/features/kangur/ui/hooks/useKangurRouteNavigator.ts(341,20): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/hooks/useKangurRouteNavigator.ts(481,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/hooks/useKangurTextHighlight.ts(396,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/hooks/useKangurTextHighlight.ts(398,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/KangurFeatureApp.tsx(335,6): error TS2322: Type '{ children: Element; animate: Record<string, unknown>; exit: Record<string, unknown>; initial: Record<string, unknown>; transition: Record<string, unknown>; key: string; className: string; "data-testid": string; loadMotion: boolean; }' is not assignable to type 'Omit<LazyMotionDivProps, "ref">'.
+  Types of property 'initial' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'boolean | TargetAndTransition | VariantLabels | undefined'.
+      Type 'Record<string, unknown>' is not assignable to type 'TargetAndTransition'.
+        Type 'Record<string, unknown>' is not assignable to type 'Target'.
+          Type 'Record<string, unknown>' is not assignable to type 'VariableKeyframesDefinition'.
+            'string' and '`--${string}`' index signatures are incompatible.
+              Type 'unknown' is not assignable to type 'ValueKeyframesDefinition'.
+../../src/features/kangur/ui/KangurFeaturePage.tsx(50,7): error TS6133: 'resolveKangurFeaturePageShellBrowserPathname' is declared but its value is never read.
+../../src/features/kangur/ui/KangurLoginPage.hooks.ts(400,24): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/KangurLoginPage.hooks.ts(403,5): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/login-page/use-login-logic.ts(118,20): error TS2345: Argument of type '(value: void | PromiseLike<void>) => void' is not assignable to parameter of type '(...args: unknown[]) => void'.
+  Types of parameters 'value' and 'args' are incompatible.
+    Type 'unknown' is not assignable to type 'void | PromiseLike<void>'.
+../../src/features/kangur/ui/login-page/use-login-logic.ts(138,66): error TS2339: Property 'checkAppState' does not exist on type 'KangurAuthActionsContextValue | null'.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(3,1): error TS6192: All imports in import declaration are unused.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(4,1): error TS6133: 'withKangurClientError' is declared but its value is never read.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(8,1): error TS6133: 'KANGUR_DUELS_DEFAULT_LOBBY_LIMIT' is declared but its value is never read.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(11,1): error TS6192: All imports in import declaration are unused.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(15,1): error TS6133: 'isAbortLikeError' is declared but its value is never read.
+../../src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(17,7): error TS6133: 'kangurPlatform' is declared but its value is never read.
+../../src/features/kangur/ui/pages/Game.launchable-runtime.ts(13,8): error TS6133: 'KangurLaunchableGameScreen' is declared but its value is never read.
+../../src/features/kangur/ui/pages/Game.screen-components.tsx(16,3): error TS6133: 'KANGUR_PANEL_GAP_CLASSNAME' is declared but its value is never read.
+../../src/features/kangur/ui/pages/GameDeferredHomeEnhancements.tsx(40,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { activeGameAssignmentId?: string | null | undefined; canAccessParentAssignments: boolean; enabled?: boolean | undefined; refs: GameTutorAnchorRefs; screen: "playing" | ... 42 more ... | "kangur_setup"; translations: Translator<...>; tutorActivityContentId: string; }, context?: any): string | ... 8 more ... | undefined', gave the following error.
+    Type 'GameHomeScreenRefs' is not assignable to type 'GameTutorAnchorRefs'.
+      Type 'GameHomeScreenRefs' is missing the following properties from type 'GameSessionScreenRefs': kangurSessionRef, kangurSetupRef, operationSelectorRef, resultLeaderboardRef, and 2 more.
+  Overload 2 of 2, '(props: { activeGameAssignmentId?: string | null | undefined; canAccessParentAssignments: boolean; enabled?: boolean | undefined; refs: GameTutorAnchorRefs; screen: "playing" | ... 42 more ... | "kangur_setup"; translations: Translator<...>; tutorActivityContentId: string; }): string | ... 8 more ... | undefined', gave the following error.
+    Type 'GameHomeScreenRefs' is not assignable to type 'GameTutorAnchorRefs'.
+      Type 'GameHomeScreenRefs' is missing the following properties from type 'GameSessionScreenRefs': kangurSessionRef, kangurSetupRef, operationSelectorRef, resultLeaderboardRef, and 2 more.
+../../src/features/kangur/ui/pages/GameDeferredNonHomeScreen.tsx(265,7): error TS2322: Type '"kangur" | "kangur_setup" | "agentic_approval_gate_quiz" | "agentic_prompt_trim_quiz" | "agentic_reasoning_router_quiz" | "agentic_surface_match_quiz" | "alphabet_first_words_quiz" | ... 31 more ... | "english_parts_of_speech_quiz"' is not assignable to type '"kangur" | "kangur_setup"'.
+  Type '"agentic_approval_gate_quiz"' is not assignable to type '"kangur" | "kangur_setup"'.
+../../src/features/kangur/ui/pages/GameDeferredRoutedContent.tsx(17,8): error TS6133: 'GameSessionScreenRefs' is declared but its value is never read.
+../../src/features/kangur/ui/pages/GameDeferredRoutedScreen.tsx(11,8): error TS6133: 'KangurLaunchableGameScreen' is declared but its value is never read.
+../../src/features/kangur/ui/pages/lessons/Lessons.ActiveLesson.tsx(442,26): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+../../src/features/kangur/ui/pages/lessons/Lessons.ActiveLesson.tsx(444,7): error TS2322: Type 'Timeout' is not assignable to type 'number'.
+../../src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx(9,3): error TS6133: 'safeSetTimeout' is declared but its value is never read.
+../../src/features/kangur/ui/pages/lessons/Lessons.hooks.ts(6,3): error TS6133: 'safeClearTimeout' is declared but its value is never read.
+../../src/features/kangur/ui/pages/lessons/Lessons.hooks.ts(240,11): error TS6133: 'timeoutId' is declared but its value is never read.
+../../src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx(172,17): error TS18048: 'asset' is possibly 'undefined'.
+../../src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx(172,37): error TS18048: 'asset' is possibly 'undefined'.
+../../src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx(172,50): error TS18048: 'asset' is possibly 'undefined'.
+../../src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx(179,32): error TS18048: 'asset' is possibly 'undefined'.
+../../src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx(184,51): error TS2322: Type '{ id: string; name: string; description: string | null; categoryId: string | null; createdAt?: string | undefined; updatedAt?: string | null | undefined; fileId?: string | undefined; ... 13 more ...; viewerConfig?: Record<...> | undefined; } | undefined' is not assignable to type '{ id: string; name: string; description: string | null; categoryId: string | null; createdAt?: string | undefined; updatedAt?: string | null | undefined; fileId?: string | undefined; ... 13 more ...; viewerConfig?: Record<...> | undefined; }'.
+  Type 'undefined' is not assignable to type '{ id: string; name: string; description: string | null; categoryId: string | null; createdAt?: string | undefined; updatedAt?: string | null | undefined; fileId?: string | undefined; ... 13 more ...; viewerConfig?: Record<...> | undefined; }'.
+../../src/shared/lib/ai-brain/providers/anthropic.ts(78,26): error TS2322: Type '{ role: string; content: ({ type: "text"; text: string; source?: undefined; } | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/gif" | "image/webp"; data: string; }; text?: undefined; })[]; }[]' is not assignable to type '{ role: "user" | "assistant"; content: AnthropicMessageContentPart[]; }[]'.
+  Type '{ role: string; content: ({ type: "text"; text: string; source?: undefined; } | { type: "image"; source: { type: "base64"; media_type: "image/png" | "image/jpeg" | "image/gif" | "image/webp"; data: string; }; text?: undefined; })[]; }' is not assignable to type '{ role: "user" | "assistant"; content: AnthropicMessageContentPart[]; }'.
+    Types of property 'role' are incompatible.
+      Type 'string' is not assignable to type '"user" | "assistant"'.
+../../src/shared/lib/ai-brain/providers/gemini.ts(69,26): error TS2322: Type '{ role: string; parts: ({ text: string; inline_data?: undefined; } | { inline_data: { mime_type: string; data: string; }; text?: undefined; })[]; }[]' is not assignable to type '{ role: "model" | "user"; parts: GeminiMessagePart[]; }[]'.
+  Type '{ role: string; parts: ({ text: string; inline_data?: undefined; } | { inline_data: { mime_type: string; data: string; }; text?: undefined; })[]; }' is not assignable to type '{ role: "model" | "user"; parts: GeminiMessagePart[]; }'.
+    Types of property 'role' are incompatible.
+      Type 'string' is not assignable to type '"model" | "user"'.
+../../src/shared/lib/ai-paths/services/path-run-repository/methods/repository-shared.ts(189,32): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(def: Date): ZodCatch<ZodPipe<ZodUnion<readonly [ZodDate, ZodPipe<ZodString, ZodTransform<Date, string>>, ZodPipe<ZodNumber, ZodTransform<Date, number>>, ZodPipe<...>, ZodPipe<...>, ZodPipe<...>]>, ZodDate>>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type 'Date'.
+  Overload 2 of 2, '(def: (ctx: $ZodCatchCtx) => Date): ZodCatch<ZodPipe<ZodUnion<readonly [ZodDate, ZodPipe<ZodString, ZodTransform<Date, string>>, ZodPipe<...>, ZodPipe<...>, ZodPipe<...>, ZodPipe<...>]>, ZodDate>>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type '(ctx: $ZodCatchCtx) => Date'.
+../../src/shared/lib/ai-paths/services/path-run-repository/methods/repository-shared.ts(217,31): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(def: { nodes: { id: string; type: "function" | "model" | "context" | "database" | "playwright" | "state" | "prompt" | "agent" | "iterator" | "template" | "switch" | "math" | "gate" | "regex" | ... 28 more ... | "subgraph"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]; edges: { ...; }[]; }): ZodCatch<...>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type '{ nodes: { id: string; type: "function" | "model" | "context" | "database" | "playwright" | "state" | "prompt" | "agent" | "iterator" | "template" | "switch" | "math" | "gate" | "regex" | ... 28 more ... | "subgraph"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]; edges: { ...; }[]; }'.
+  Overload 2 of 2, '(def: (ctx: $ZodCatchCtx) => { nodes: { id: string; type: "function" | "model" | "context" | "database" | "playwright" | "state" | "prompt" | "agent" | "iterator" | "template" | ... 32 more ... | "subgraph"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]; edges: { ...; }[]; }): ZodCatch<...>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type '(ctx: $ZodCatchCtx) => { nodes: { id: string; type: "function" | "model" | "context" | "database" | "playwright" | "state" | "prompt" | "agent" | "iterator" | "template" | ... 32 more ... | "subgraph"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]; edges: { ...; }[]; }'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(443,30): error TS2345: Argument of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...' is not assignable to parameter of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+  Type 'undefined' is not assignable to type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(446,64): error TS2345: Argument of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...' is not assignable to parameter of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+  Type 'undefined' is not assignable to type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(447,77): error TS2322: Type 'FastCometUploadResponse' is not assignable to type 'FastCometUploadOkResponse'.
+  Type 'FastCometUploadQueuedResponse' is not assignable to type 'FastCometUploadOkResponse'.
+    Types of property 'status' are incompatible.
+      Type '"queued"' is not assignable to type '"ok"'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(651,30): error TS2345: Argument of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...' is not assignable to parameter of type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+  Type 'undefined' is not assignable to type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(657,35): error TS2339: Property 'alreadyUploaded' does not exist on type 'FastCometUploadResponse'.
+  Property 'alreadyUploaded' does not exist on type 'FastCometUploadQueuedResponse'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(658,11): error TS2719: Type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...' is not assignable to type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'. Two different types with this name exist, but they are unrelated.
+  Type 'undefined' is not assignable to type '{ id: string; url?: string | undefined; publicUrl?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; storageProvider?: "local" | ... 3 more ... | undefined; metadata?: Record<...> | ... 1 more ... | undefined; width?: number | ... 1 more ... | undef...'.
+../../src/shared/ui/image-slot-manager/ProductImageManagerUIContext.tsx(661,29): error TS2339: Property 'remoteUrl' does not exist on type 'FastCometUploadResponse'.
+  Property 'remoteUrl' does not exist on type 'FastCometUploadQueuedResponse'.
+../../src/shared/ui/tooltip.tsx(313,39): error TS2345: Argument of type '{ content: React.ReactNode; contentClassName: string | undefined; isVisible: boolean; tooltipId: string; tooltipStyle: React.CSSProperties; }' is not assignable to parameter of type 'TooltipPortalArgs'.
+  Property 'children' is missing in type '{ content: React.ReactNode; contentClassName: string | undefined; isVisible: boolean; tooltipId: string; tooltipStyle: React.CSSProperties; }' but required in type 'TooltipTriggerArgs'.

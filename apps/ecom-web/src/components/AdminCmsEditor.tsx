@@ -3138,6 +3138,7 @@ function addEditorialReport(): void {
                 <Field label='Email placeholder' value={siteContent.footer.newsletter.emailPlaceholder} onChange={(value) => updateNewsletter('emailPlaceholder', value)} />
                 <Field label='Email aria label' value={siteContent.footer.newsletter.emailAriaLabel} onChange={(value) => updateNewsletter('emailAriaLabel', value)} />
                 <Field label='Submit label' value={siteContent.footer.newsletter.submitLabel} onChange={(value) => updateNewsletter('submitLabel', value)} />
+                <Field label='Success label' value={siteContent.footer.newsletter.successLabel} onChange={(value) => updateNewsletter('successLabel', value)} />
               </div>
               <TextArea label='Newsletter body' value={siteContent.footer.newsletter.body} onChange={(value) => updateNewsletter('body', value)} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
@@ -3606,6 +3607,7 @@ function addEditorialReport(): void {
                 <Field label='Clear all label' value={productsContent.collection.clearAllLabel} onChange={(value) => updateProductsCollection('clearAllLabel', value)} />
                 <Field label='Clear filters label' value={productsContent.collection.clearFiltersLabel} onChange={(value) => updateProductsCollection('clearFiltersLabel', value)} />
                 <Field label='Price label' value={productsContent.collection.priceLabel} onChange={(value) => updateProductsCollection('priceLabel', value)} />
+                <Field label='Material label' value={productsContent.collection.materialLabel} onChange={(value) => updateProductsCollection('materialLabel', value)} />
                 <Field label='Size label' value={productsContent.collection.sizeLabel} onChange={(value) => updateProductsCollection('sizeLabel', value)} />
                 <Field label='Home breadcrumb label' value={productsContent.collection.homeBreadcrumbLabel} onChange={(value) => updateProductsCollection('homeBreadcrumbLabel', value)} />
                 <Field label='Collections breadcrumb label' value={productsContent.collection.collectionsBreadcrumbLabel} onChange={(value) => updateProductsCollection('collectionsBreadcrumbLabel', value)} />

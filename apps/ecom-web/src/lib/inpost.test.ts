@@ -195,7 +195,10 @@ describe('InPost ShipX integration helpers', () => {
       { orderId: 'ARC-2026-ABCD1234' },
       expect.objectContaining({
         $set: {
-          inpostShipment: expect.objectContaining({ trackingNumber: 'TRACK123' }),
+          inpostShipment: expect.objectContaining({
+            trackingNumber: 'TRACK123',
+            trackingUrl: 'https://inpost.pl/sledzenie-przesylek?number=TRACK123',
+          }),
         },
       }),
     );

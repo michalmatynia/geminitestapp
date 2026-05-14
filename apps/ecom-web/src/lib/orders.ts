@@ -35,6 +35,7 @@ export type InpostPoint = {
 export type InpostShipment = {
   shipmentId?: string;
   trackingNumber?: string;
+  trackingUrl?: string;
   status?: string;
   eventCode?: string;
   eventId?: string;

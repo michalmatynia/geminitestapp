@@ -102,6 +102,13 @@ type HeroCopy = {
 interface HeroSectionProps {
   content?: HomeHeroContent;
   catalogCategories?: CatalogCategoryOption[];
+  heroLoreGroups?: Partial<Record<'anime' | 'gaming' | 'movie', string[]>>;
+}
+
+function getZoneLoreGroupKey(zone: ZoneId): 'anime' | 'gaming' | 'movie' {
+  if (zone === 'outer') return 'anime';
+  if (zone === 'middle') return 'movie';
+  return 'gaming';
 }
 
 function buildThemeCatalogHref(theme: string): string {
@@ -282,6 +289,8 @@ function HexMenu({
 function LorePanel({
   content,
   copy,
+  panelIdleSubtitle,
+  heroLoreGroups,
   hoveredZone,
   activeZone,
   selectedLore,
@@ -294,6 +303,8 @@ function LorePanel({
 }: {
   content: HomeHeroContent;
   copy: HeroCopy;
+  panelIdleSubtitle: string;
+  heroLoreGroups: Partial<Record<'anime' | 'gaming' | 'movie', string[]>>;
   hoveredZone: ZoneId | null;
   activeZone: ZoneId | null;
   selectedLore: string | null;
@@ -325,6 +336,12 @@ function LorePanel({
     : content.panelTitle;
 
   const titleColor = zoneStyle ? zoneStyle.color : 'var(--fg)';
+  const liveLoreItems = activeZone ? heroLoreGroups[getZoneLoreGroupKey(activeZone)] : undefined;
+  const activeLoreItems = activeZone
+    ? liveLoreItems && liveLoreItems.length > 0
+      ? liveLoreItems
+      : copy.zones[activeZone].items
+    : [];
   const engageStyle = {
     '--hero-engage-color': zoneStyle?.color ?? 'var(--accent)',
     '--hero-engage-rgb': zoneStyle?.rgb ?? 'var(--accent-rgb)',
@@ -430,8 +447,8 @@ function LorePanel({
       {/* No zone active → zone selectors */}
       {!activeZone && (
         <div>
-          <div className='type-label mb-4' style={{ color: 'var(--muted-teal)' }}>
-            {hoveredZone ? copy.clickToExplore : content.panelSubtitle}
+          <div className='type-label mb-4' style={{ color: 'var(--muted-teal)', textTransform: 'none' }}>
+            {hoveredZone ? copy.clickToExplore : panelIdleSubtitle}
           </div>
           <div className='flex justify-center items-center gap-4 mb-5'>
             {ZONE_IDS.map((z) => (
@@ -472,8 +489,12 @@ function LorePanel({
 
       {/* Active zone → lore list */}
       {activeZone && (
-        <div ref={loreRef} className='mb-3'>
-          {copy.zones[activeZone].items.map((lore) => {
+        <div
+          ref={loreRef}
+          className='mb-3'
+          style={{ maxHeight: '13rem', overflowY: 'auto', paddingRight: '0.25rem' }}
+        >
+          {activeLoreItems.map((lore) => {
             const isSelected = selectedLore === lore;
             return (
               <button
@@ -540,6 +561,7 @@ function LorePanel({
 export function HeroSection({
   content = HOME_CONTENT_DEFAULTS.hero,
   catalogCategories = [],
+  heroLoreGroups = {},
 }: HeroSectionProps): JSX.Element {
   const bottomStripText = [...content.bottomStripItems, ...content.bottomStripItems].join('  ·  ');
   const locale = useLocale();
@@ -548,6 +570,10 @@ export function HeroSection({
   const heroProductTags = locale === 'pl'
     ? ['Breloki', 'Piny', 'Pierścionki', 'Bransoletki', 'Kości']
     : ['Keychains', 'Pins', 'Rings', 'Bracelets', 'Dice'];
+  const headlineLine1FontSize = locale === 'pl'
+    ? 'clamp(2.25rem, 8.4cqw, 4.35rem)'
+    : 'clamp(3.1rem, 12cqw, 5.8rem)';
+  const headlineLine2FontSize = 'clamp(3.1rem, 12cqw, 5.8rem)';
 
   /* Hex menu interaction state */
   const [hoveredZone, setHoveredZone]           = useState<ZoneId | null>(null);
@@ -764,6 +790,7 @@ export function HeroSection({
       <div
         ref={leftRef}
         className='relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-16 xl:px-20 w-full lg:w-[55%] py-20 lg:py-28 will-change-transform'
+        style={{ containerType: 'inline-size' }}
       >
         <div className='hero-beacon flex items-center gap-3 mb-10'>
           <span
@@ -774,7 +801,16 @@ export function HeroSection({
         </div>
 
         <div className='overflow-hidden mb-1'>
-          <h1 className='hero-h1-1 type-display-xl' style={{ color: 'var(--fg)', fontSize: 'clamp(3.1rem, 6.2vw, 5.8rem)' }}>
+          <h1
+            className='hero-h1-1 type-display-xl'
+            style={{
+              color: 'var(--fg)',
+              fontSize: headlineLine1FontSize,
+              letterSpacing: 0,
+              maxWidth: '100%',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {content.headlineLine1}
           </h1>
         </div>
@@ -783,7 +819,15 @@ export function HeroSection({
             className='hero-h1-2 hero-cache-glitch type-display-xl'
             data-text={content.headlineLine2}
             aria-label={content.headlineLine2}
-            style={{ color: 'transparent', fontSize: 'clamp(3.1rem, 6.2vw, 5.8rem)', WebkitTextStroke: '1.5px var(--accent)', textShadow: '0 0 60px rgba(var(--accent-rgb),0.25)' }}
+            style={{
+              color: 'transparent',
+              fontSize: headlineLine2FontSize,
+              letterSpacing: 0,
+              maxWidth: '100%',
+              whiteSpace: 'nowrap',
+              WebkitTextStroke: '1.5px var(--accent)',
+              textShadow: '0 0 60px rgba(var(--accent-rgb),0.25)',
+            }}
           >
             {Array.from(content.headlineLine2).map((letter, index) => (
               <span
@@ -931,6 +975,8 @@ export function HeroSection({
             <LorePanel
               content={content}
               copy={copy}
+              panelIdleSubtitle={content.panelSubtitle}
+              heroLoreGroups={heroLoreGroups}
               hoveredZone={hoveredZone}
               activeZone={activeZone}
               selectedLore={selectedLore}

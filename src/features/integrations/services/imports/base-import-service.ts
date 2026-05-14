@@ -143,13 +143,19 @@ const toCompactFailureMessage = (value: string | null | undefined, maxLength = 2
 };
 
 const formatLatestFailureSummary = (item: BaseImportItemRecord | null): string | null => {
-  if (!item) return null;
-  const subject = item.sku?.trim() || item.itemId?.trim() || item.baseProductId?.trim() || 'item';
-  const code = item.errorCode?.trim() || '';
+  if (item === null) return null;
+  const sku = item.sku?.trim();
+  const itemId = item.itemId?.trim();
+  const baseProductId = item.baseProductId?.trim();
+  const subject = (sku !== undefined && sku.length > 0) ? sku :
+                  (itemId !== undefined && itemId.length > 0) ? itemId :
+                  (baseProductId !== undefined && baseProductId.length > 0) ? baseProductId : 'item';
+  const code = item.errorCode?.trim() ?? '';
   const message = toCompactFailureMessage(item.errorMessage);
-  if (!code && !message) return null;
-  if (!message) return `Latest failure: ${subject}${code ? ` [${code}]` : ''}`;
-  return `Latest failure: ${subject}${code ? ` [${code}]` : ''}: ${message}`;
+  
+  if (code.length === 0 && message === null) return null;
+  if (message === null) return `Latest failure: ${subject}${code.length > 0 ? ` [${code}]` : ''}`;
+  return `Latest failure: ${subject}${code.length > 0 ? ` [${code}]` : ''}: ${message}`;
 };
 
 const formatExactTargetItemSummary = (input: {

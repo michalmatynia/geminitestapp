@@ -12,6 +12,8 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
   const { toast } = useToast();
   const localizedHref = useLocalizedHref();
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -19,10 +21,29 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
-    toast({ type: 'success', title: content.success.toastTitle, message: content.success.toastMessage });
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        setSubmitError(typeof data['error'] === 'string' ? data['error'] : 'Failed to send message.');
+        return;
+      }
+      setSent(true);
+      toast({ type: 'success', title: content.success.toastTitle, message: content.success.toastMessage });
+    } catch {
+      setSubmitError('Failed to send message. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -326,15 +347,26 @@ export function ContactPageClient({ content }: { content: ContactContent }): JSX
                     />
                   </div>
 
+                  {submitError !== '' && (
+                    <p className='type-label' style={{ color: 'var(--accent)' }}>{submitError}</p>
+                  )}
+
                   <div className='flex items-center justify-between pt-2'>
                     <p className='type-label' style={{ color: 'var(--muted)' }}>
                       {content.form.footnote}
                     </p>
-                    <button type='submit' className='btn-primary'>
+                    <button type='submit' className='btn-primary' disabled={submitting} style={{ opacity: submitting ? 0.6 : 1 }}>
+                      {submitting ? (
+                        <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M12 3a9 9 0 1 1-9 9' />
+                        </svg>
+                      ) : null}
                       {content.form.submitLabel}
-                      <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
-                        <path d='M5 12h14M12 5l7 7-7 7' />
-                      </svg>
+                      {!submitting && (
+                        <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                          <path d='M5 12h14M12 5l7 7-7 7' />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </form>

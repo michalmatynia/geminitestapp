@@ -11,9 +11,130 @@ import type { ProductsContent } from '@/data/productsContent';
 import { formatPrice, type EcomLocale } from '@/lib/locales';
 import { getCategorySelectorTitle, type ProductCategoryDisplayOption } from '@/lib/productFilterLabels';
 import { productMatchesThemes } from '@/lib/productThemes';
+import { productMatchesMaterials } from '@/lib/productMaterial';
+import { productMatchesSizes } from '@/lib/productSizeInfo';
+import { productMatchesLores } from '@/lib/productLore';
 import { useCart } from '@/context/CartContext';
 
 const LOAD_MORE_SIZE = 24;
+const PRICE_SLIDER_MIN = 0;
+const PRICE_SLIDER_MAX = 5000;
+const PRICE_SLIDER_STEP = 10;
+
+function PriceRangeSlider({
+  valueMin,
+  valueMax,
+  absMax,
+  onDrag,
+  onCommit,
+  formatValue,
+}: {
+  valueMin: number;
+  valueMax: number;
+  absMax: number;
+  onDrag: (min: number, max: number) => void;
+  onCommit: () => void;
+  formatValue: (v: number) => string;
+}): JSX.Element {
+  const trackRef = useRef<HTMLDivElement>(null);
+  // Stable refs so pointer handlers never go stale without recreating
+  const valueMinRef = useRef(valueMin);
+  const valueMaxRef = useRef(valueMax);
+  const onDragRef = useRef(onDrag);
+  const onCommitRef = useRef(onCommit);
+  valueMinRef.current = valueMin;
+  valueMaxRef.current = valueMax;
+  onDragRef.current = onDrag;
+  onCommitRef.current = onCommit;
+
+  const pct = (v: number) => ((v - PRICE_SLIDER_MIN) / (absMax - PRICE_SLIDER_MIN)) * 100;
+
+  const valueFromClientX = useCallback((clientX: number): number => {
+    const track = trackRef.current;
+    if (!track) return PRICE_SLIDER_MIN;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const raw = PRICE_SLIDER_MIN + ratio * (absMax - PRICE_SLIDER_MIN);
+    return Math.round(raw / PRICE_SLIDER_STEP) * PRICE_SLIDER_STEP;
+  }, [absMax]);
+
+  const makeHandleProps = useCallback((which: 'min' | 'max') => ({
+    onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+      e.preventDefault();
+      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    },
+    onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+      if (!(e.currentTarget as HTMLDivElement).hasPointerCapture(e.pointerId)) return;
+      const v = valueFromClientX(e.clientX);
+      if (which === 'min') {
+        onDragRef.current(Math.min(v, valueMaxRef.current - PRICE_SLIDER_STEP), valueMaxRef.current);
+      } else {
+        onDragRef.current(valueMinRef.current, Math.max(v, valueMinRef.current + PRICE_SLIDER_STEP));
+      }
+    },
+    onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      onCommitRef.current();
+    },
+  }), [valueFromClientX]);
+
+  const handleStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '14px',
+    height: '14px',
+    borderRadius: '50%',
+    background: 'var(--card-bg)',
+    border: '1.5px solid var(--accent)',
+    cursor: 'grab',
+    touchAction: 'none',
+    zIndex: 1,
+  };
+
+  return (
+    <div>
+      {/* Price labels */}
+      <div className='flex justify-between mb-3'>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent)' }}>
+          {formatValue(valueMin)}
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--accent)' }}>
+          {formatValue(valueMax)}
+        </span>
+      </div>
+
+      {/* Slider track — receives move/up when no handle is captured yet */}
+      <div
+        ref={trackRef}
+        className='relative'
+        style={{ height: '20px', touchAction: 'none', userSelect: 'none' }}
+      >
+        {/* Background track */}
+        <div
+          className='absolute top-1/2 w-full'
+          style={{ height: '1px', background: 'var(--border)', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+        />
+        {/* Active fill */}
+        <div
+          className='absolute top-1/2'
+          style={{
+            height: '1px',
+            background: 'var(--accent)',
+            left: `${pct(valueMin)}%`,
+            right: `${100 - pct(valueMax)}%`,
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Min handle */}
+        <div style={{ ...handleStyle, left: `${pct(valueMin)}%` }} {...makeHandleProps('min')} />
+        {/* Max handle */}
+        <div style={{ ...handleStyle, left: `${pct(valueMax)}%` }} {...makeHandleProps('max')} />
+      </div>
+    </div>
+  );
+}
 
 function CatalogSkeleton({ count = 10 }: { count?: number }): JSX.Element {
   return (
@@ -172,22 +293,101 @@ function CatalogCard({
   );
 }
 
-function FilterSection({ title, children }: { title: string; children: React.ReactNode }): JSX.Element {
+function FilterSection({
+  title,
+  children,
+  searchPlaceholder = 'Filter…',
+}: {
+  title: string;
+  children: React.ReactNode | ((query: string) => React.ReactNode);
+  searchPlaceholder?: string;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const handleToggle = () => {
+    setOpen((v) => {
+      if (v) setQuery('');
+      return !v;
+    });
+  };
+
   return (
-    <div className='mb-7'>
-      <div
-        className='mb-3'
+    <div style={{ borderBottom: '1px solid var(--border)' }}>
+      <button
+        onClick={handleToggle}
+        className='flex items-center justify-between w-full py-3 transition-colors hover:text-[var(--fg)]'
         style={{
           fontFamily: 'var(--font-mono)',
           fontSize: '0.62rem',
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: 'var(--fg)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
         }}
       >
-        {title}
-      </div>
-      {children}
+        <span>{title}</span>
+        <svg
+          width='10'
+          height='10'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+          style={{ flexShrink: 0, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          <polyline points='6 9 12 15 18 9' />
+        </svg>
+      </button>
+      {open && (
+        <div className='pb-4'>
+          {typeof children === 'function' && (
+            <div className='relative mb-2.5'>
+              <input
+                type='text'
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={searchPlaceholder}
+                className='w-full bg-transparent pb-1 pr-5 outline-none border-b border-[var(--border)] focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]'
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.62rem',
+                  letterSpacing: '0.05em',
+                  color: 'var(--fg)',
+                }}
+              />
+              {query ? (
+                <button
+                  onClick={() => setQuery('')}
+                  className='absolute right-0 top-0 leading-none transition-opacity hover:opacity-70'
+                  style={{ color: 'var(--muted)', fontSize: '0.65rem' }}
+                >
+                  ✕
+                </button>
+              ) : (
+                <svg
+                  className='absolute right-0 top-0.5 pointer-events-none'
+                  width='9'
+                  height='9'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  style={{ color: 'var(--muted)' }}
+                >
+                  <circle cx='11' cy='11' r='8' /><line x1='21' y1='21' x2='16.65' y2='16.65' />
+                </svg>
+              )}
+            </div>
+          )}
+          {typeof children === 'function' ? children(query) : children}
+        </div>
+      )}
     </div>
   );
 }
@@ -229,14 +429,26 @@ function FilterButton({
 }
 
 function SidebarFilters({
-  sort,
-  setSort,
-  selectedCategories,
-  setSelectedCategory,
-  filterPrice,
-  setFilterPrice,
-  search,
-  onSearch,
+  selectedTypes,
+  setSelectedType,
+  availableTypes,
+  selectedParentCategories,
+  setSelectedParentCategory,
+  availableParentCategories,
+  sliderMin,
+  sliderMax,
+  sliderAbsMax,
+  onPriceDrag,
+  onPriceCommit,
+  selectedMaterials,
+  setSelectedMaterial,
+  availableMaterials,
+  selectedSizes,
+  setSelectedSize,
+  availableSizes,
+  selectedLores,
+  setSelectedLore,
+  availableLores,
   newOnly,
   onNewOnly,
   hasFilters,
@@ -244,16 +456,27 @@ function SidebarFilters({
   onClose,
   totalCount,
   content,
-  categories,
 }: {
-  sort: string;
-  setSort: (v: string) => void;
-  selectedCategories: string[];
-  setSelectedCategory: (v: string) => void;
-  filterPrice: string;
-  setFilterPrice: (v: string) => void;
-  search: string;
-  onSearch: (v: string) => void;
+  selectedTypes: string[];
+  setSelectedType: (v: string) => void;
+  availableTypes: string[];
+  selectedParentCategories: string[];
+  setSelectedParentCategory: (v: string) => void;
+  availableParentCategories: string[];
+  sliderMin: number;
+  sliderMax: number;
+  sliderAbsMax: number;
+  onPriceDrag: (min: number, max: number) => void;
+  onPriceCommit: () => void;
+  selectedMaterials: string[];
+  setSelectedMaterial: (v: string) => void;
+  availableMaterials: string[];
+  selectedSizes: string[];
+  setSelectedSize: (v: string) => void;
+  availableSizes: string[];
+  selectedLores: string[];
+  setSelectedLore: (v: string) => void;
+  availableLores: string[];
   newOnly: boolean;
   onNewOnly: (v: boolean) => void;
   hasFilters: boolean;
@@ -261,15 +484,16 @@ function SidebarFilters({
   onClose?: () => void;
   totalCount: number;
   content: ProductsContent;
-  categories: Array<{ id: string; name: string; count: number } & ProductCategoryDisplayOption>;
 }): JSX.Element {
   const col = content.collection;
+  const locale = useLocale();
 
   const wrap = <T,>(fn: (v: T) => void) => (v: T) => { fn(v); onClose?.(); };
+  const fmtPrice = (v: number) => formatPrice(v, locale);
 
   return (
-    <div className='px-5 py-6'>
-      <div className='flex items-center justify-between mb-6'>
+    <div className='px-5 py-5'>
+      <div className='flex items-center justify-between mb-4'>
         <span
           style={{
             fontFamily: 'var(--font-mono)',
@@ -289,6 +513,9 @@ function SidebarFilters({
               fontSize: '0.6rem',
               letterSpacing: '0.08em',
               color: 'var(--accent)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
             {col.clearAllLabel}
@@ -296,132 +523,181 @@ function SidebarFilters({
         )}
       </div>
 
-      {/* Search */}
-      <div className='mb-7'>
-        <div className='relative'>
-          <input
-            type='text'
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder={col.searchPlaceholder}
-            className='w-full bg-transparent pb-1.5 pr-6 outline-none border-b border-[var(--border)] focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]'
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.68rem',
-              letterSpacing: '0.06em',
-              color: 'var(--fg)',
-            }}
-          />
-          {search ? (
-            <button
-              onClick={() => { onSearch(''); onClose?.(); }}
-              className='absolute right-0 top-0 leading-none transition-opacity hover:opacity-70'
-              style={{ color: 'var(--muted)', fontSize: '0.7rem' }}
-            >
-              ✕
-            </button>
-          ) : (
-            <svg
-              className='absolute right-0 top-0.5 pointer-events-none'
-              width='11'
-              height='11'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='1.8'
-              strokeLinecap='round'
-              style={{ color: 'var(--muted)' }}
-            >
-              <circle cx='11' cy='11' r='8' /><line x1='21' y1='21' x2='16.65' y2='16.65' />
-            </svg>
-          )}
-        </div>
-      </div>
-
-      <FilterSection title={col.sortLabel}>
-        <div className='space-y-0.5'>
-          {col.sortOptions.map((opt) => (
-            <FilterButton key={opt.value} active={sort === opt.value} onClick={() => wrap(setSort)(opt.value)}>
-              {opt.label}
-            </FilterButton>
-          ))}
-        </div>
-      </FilterSection>
-
-      {/* New arrivals toggle */}
-      <div className='mb-7'>
+      {/* New arrivals toggle — a simple filter, not collapsible */}
+      <div className='py-3' style={{ borderBottom: '1px solid var(--border)' }}>
         <FilterButton active={newOnly} onClick={() => { onNewOnly(!newOnly); onClose?.(); }}>
           {col.newArrivalsLabel}
         </FilterButton>
       </div>
 
-      <FilterSection title={col.categoryLabel}>
-        <div className='space-y-0.5'>
-          <FilterButton active={selectedCategories.length === 0} onClick={() => wrap(setSelectedCategory)('')}>
-            <span className='flex-1 min-w-0 truncate'>{col.categoryAllLabel}</span>
-            {totalCount > 0 && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.56rem',
-                  color: 'var(--muted)',
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              >
-                {totalCount}
-              </span>
-            )}
-          </FilterButton>
-          {categories.map((cat) => (
-            <FilterButton
-              key={cat.id}
-              active={selectedCategories.includes(cat.name)}
-              onClick={() => wrap(setSelectedCategory)(cat.name)}
-            >
-              <span className='flex-1 min-w-0 truncate'>{cat.name}</span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.56rem',
-                  color: 'var(--muted)',
-                  opacity: 0.6,
-                  flexShrink: 0,
-                }}
-              >
-                {cat.count}
-              </span>
-            </FilterButton>
-          ))}
-        </div>
+      <FilterSection title={col.priceLabel}>
+        {() => (
+          <PriceRangeSlider
+            valueMin={sliderMin}
+            valueMax={sliderMax}
+            absMax={sliderAbsMax}
+            onDrag={onPriceDrag}
+            onCommit={onPriceCommit}
+            formatValue={fmtPrice}
+          />
+        )}
       </FilterSection>
 
-      <FilterSection title={col.priceLabel}>
-        <div className='space-y-0.5'>
-          {col.priceRanges.map((range) => (
-            <FilterButton
-              key={range.label}
-              active={filterPrice === range.label}
-              onClick={() => wrap(setFilterPrice)(filterPrice === range.label ? '' : range.label)}
-            >
-              {range.label}
-            </FilterButton>
-          ))}
-        </div>
-      </FilterSection>
+      {availableTypes.length > 0 && (
+        <FilterSection title={col.universeLabel}>
+          {(query) => {
+            const q = query.toLowerCase();
+            const filtered = q ? availableTypes.filter((t) => t.toLowerCase().includes(q)) : availableTypes;
+            return (
+              <div className='space-y-0.5'>
+                {filtered.map((theme) => (
+                  <FilterButton
+                    key={theme}
+                    active={selectedTypes.includes(theme)}
+                    onClick={() => { setSelectedType(theme); onClose?.(); }}
+                  >
+                    <span className='flex-1 min-w-0 truncate'>{theme}</span>
+                  </FilterButton>
+                ))}
+              </div>
+            );
+          }}
+        </FilterSection>
+      )}
+
+      {availableParentCategories.length > 0 && (
+        <FilterSection title={col.typeLabel}>
+          {(query) => {
+            const q = query.toLowerCase();
+            const filtered = q ? availableParentCategories.filter((p) => p.toLowerCase().includes(q)) : availableParentCategories;
+            return (
+              <div className='space-y-0.5'>
+                {filtered.map((productType) => (
+                  <FilterButton
+                    key={productType}
+                    active={selectedParentCategories.includes(productType)}
+                    onClick={() => { setSelectedParentCategory(productType); onClose?.(); }}
+                  >
+                    <span className='flex-1 min-w-0 truncate'>{productType}</span>
+                  </FilterButton>
+                ))}
+              </div>
+            );
+          }}
+        </FilterSection>
+      )}
+
+      {availableMaterials.length > 0 && (
+        <FilterSection title={col.materialLabel}>
+          {(query) => {
+            const q = query.toLowerCase();
+            const filtered = q ? availableMaterials.filter((m) => m.toLowerCase().includes(q)) : availableMaterials;
+            return (
+              <div className='space-y-0.5'>
+                {filtered.map((material) => (
+                  <FilterButton
+                    key={material}
+                    active={selectedMaterials.includes(material)}
+                    onClick={() => { setSelectedMaterial(material); onClose?.(); }}
+                  >
+                    {material}
+                  </FilterButton>
+                ))}
+              </div>
+            );
+          }}
+        </FilterSection>
+      )}
+
+      {availableSizes.length > 0 && (
+        <FilterSection title={col.sizeLabel}>
+          {(query) => {
+            const q = query.toLowerCase();
+            const filtered = q ? availableSizes.filter((s) => s.toLowerCase().includes(q)) : availableSizes;
+            return (
+              <div className='space-y-0.5'>
+                {filtered.map((size) => (
+                  <FilterButton
+                    key={size}
+                    active={selectedSizes.includes(size)}
+                    onClick={() => { setSelectedSize(size); onClose?.(); }}
+                  >
+                    {size}
+                  </FilterButton>
+                ))}
+              </div>
+            );
+          }}
+        </FilterSection>
+      )}
+
+      {availableLores.length > 0 && (
+        <FilterSection title={col.loreLabel}>
+          {(query) => {
+            const q = query.toLowerCase();
+            const filtered = q ? availableLores.filter((l) => l.toLowerCase().includes(q)) : availableLores;
+            return (
+              <div className='space-y-0.5'>
+                {filtered.map((lore) => (
+                  <FilterButton
+                    key={lore}
+                    active={selectedLores.includes(lore)}
+                    onClick={() => { setSelectedLore(lore); onClose?.(); }}
+                  >
+                    {lore}
+                  </FilterButton>
+                ))}
+              </div>
+            );
+          }}
+        </FilterSection>
+      )}
     </div>
   );
 }
 
 type FilterState = {
   category: string;
-  categories: string[];
+  categories: string[]; // resolved leaf category names forwarded to the API
+  types: string[];      // user-selected themes (e.g. "Anime") — all-but-last-word of leaf name
+  parentCats: string[]; // user-selected product types (e.g. "Breloki") — last word of leaf name
   themes: string[];
+  materials: string[];
+  sizes: string[];
+  lores: string[];
   sort: string;
-  priceLabel: string;
+  priceMin: number | undefined;
+  priceMax: number | undefined;
   search: string;
   newOnly: boolean;
 };
+
+// Extract product type from leaf category name: last word, locale-aware.
+// "Anime Breloki" → "Breloki" ; "Anime Keychains" → "Keychains"
+function extractLeafProductType(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? '';
+}
+
+
+function resolveLeafCategories(
+  types: string[],      // canonical English theme names (e.g. "Anime", "Gaming")
+  parentCats: string[], // product types from last word of leaf name (e.g. "Breloki", "Keychains")
+  allCats: Array<{ name: string; parentName?: string | null; parentNameEn?: string | null }>,
+): string[] {
+  if (types.length === 0 && parentCats.length === 0) return [];
+  const themeSet = new Set(types.map((t) => t.toLowerCase()));
+  const typeSet = new Set(parentCats.map((t) => t.toLowerCase()));
+  return allCats
+    .filter((cat) => {
+      const leafType = extractLeafProductType(cat.name).toLowerCase();
+      const parentName = (cat.parentNameEn ?? cat.parentName ?? '').toLowerCase();
+      const typeOk = typeSet.size === 0 || typeSet.has(leafType);
+      const themeOk = themeSet.size === 0 || (parentName.length > 0 && themeSet.has(parentName));
+      return typeOk && themeOk;
+    })
+    .map((cat) => cat.name);
+}
 
 function uniqueFilterValues(values: string[]): string[] {
   const seen = new Set<string>();
@@ -447,6 +723,10 @@ export function CatalogPageClient({
   content,
   categories,
   initialFilters,
+  availableMaterials = [],
+  availableSizes = [],
+  availableLores = [],
+  sliderMaxPrice = PRICE_SLIDER_MAX,
 }: {
   products: Product[];
   total: number;
@@ -454,6 +734,10 @@ export function CatalogPageClient({
   content: ProductsContent;
   categories: Array<{ id: string; name: string; count: number } & ProductCategoryDisplayOption>;
   initialFilters?: FilterState;
+  availableMaterials?: string[];
+  availableSizes?: string[];
+  availableLores?: string[];
+  sliderMaxPrice?: number;
 }): JSX.Element {
   const col = content.collection;
   const locale = useLocale();
@@ -464,48 +748,81 @@ export function CatalogPageClient({
   const [currentTotal, setCurrentTotal] = useState(total);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [sort, setSort] = useState(initialFilters?.sort ?? 'featured');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    initialFilters?.categories?.length
-      ? initialFilters.categories
-      : initialFilters?.category
-        ? [initialFilters.category]
-        : [],
-  );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(initialFilters?.types ?? []);
+  const [selectedParentCategories, setSelectedParentCategories] = useState<string[]>(initialFilters?.parentCats ?? []);
   const [selectedThemes, setSelectedThemes] = useState<string[]>(initialFilters?.themes ?? []);
-  const [filterPrice, setFilterPrice] = useState(initialFilters?.priceLabel ?? '');
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(initialFilters?.materials ?? []);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(initialFilters?.sizes ?? []);
+  const [selectedLores, setSelectedLores] = useState<string[]>(initialFilters?.lores ?? []);
+  const [sliderMin, setSliderMin] = useState(initialFilters?.priceMin ?? PRICE_SLIDER_MIN);
+  const [sliderMax, setSliderMax] = useState(initialFilters?.priceMax ?? sliderMaxPrice);
   const [search, setSearch] = useState(initialFilters?.search ?? '');
   const [newOnly, setNewOnly] = useState(initialFilters?.newOnly ?? false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Derived: product types (last word of leaf name, locale-aware) and themes (DB parentName).
+  // parentCats → product types like "Breloki"/"Keychains" (from last word, respects current locale).
+  // types → canonical theme names like "Anime"/"Gaming" (from parentName — proper nouns, language-invariant).
+  const availableParentCategories = useMemo(() => {
+    const productTypes = categories.map((c) => extractLeafProductType(c.name)).filter((t) => t.length > 0);
+    return [...new Set(productTypes)].sort();
+  }, [categories]);
+  const availableTypes = useMemo(() => {
+    const themes = categories
+      .map((c) => c.parentNameEn ?? c.parentName)
+      .filter((p): p is string => typeof p === 'string' && p.length > 0);
+    return [...new Set(themes)].sort();
+  }, [categories]);
+
+  // Resolved leaf category names for API calls (intersection of type + parent selections).
+  const resolvedCategories = useMemo(
+    () => resolveLeafCategories(selectedTypes, selectedParentCategories, categories),
+    [selectedTypes, selectedParentCategories, categories],
+  );
+
   // Keeps latest filter values accessible inside stable callbacks without stale closure issues.
+  const initialResolvedCategories = useMemo(
+    () => resolveLeafCategories(initialFilters?.types ?? [], initialFilters?.parentCats ?? [], categories),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   const filtersRef = useRef<FilterState>({
-    category: initialFilters?.category ?? '',
-    categories: initialFilters?.categories?.length
-      ? initialFilters.categories
-      : initialFilters?.category
-        ? [initialFilters.category]
-        : [],
+    category: initialResolvedCategories[0] ?? initialFilters?.category ?? '',
+    categories: initialResolvedCategories,
+    types: initialFilters?.types ?? [],
+    parentCats: initialFilters?.parentCats ?? [],
     themes: initialFilters?.themes ?? [],
+    materials: initialFilters?.materials ?? [],
+    sizes: initialFilters?.sizes ?? [],
+    lores: initialFilters?.lores ?? [],
     sort: initialFilters?.sort ?? 'featured',
-    priceLabel: initialFilters?.priceLabel ?? '',
+    priceMin: initialFilters?.priceMin,
+    priceMax: initialFilters?.priceMax,
     search: initialFilters?.search ?? '',
     newOnly: initialFilters?.newOnly ?? false,
   });
-  const selectedCategory = selectedCategories.length === 1 ? selectedCategories[0] : '';
-  const categorySelectorTitle = getCategorySelectorTitle(selectedCategories, categories);
-  const selectorTitle = selectedCategories.length > 0
-    ? categorySelectorTitle
-    : selectedThemes.length > 0
-      ? selectedThemes.join(', ')
-      : '';
+  const selectorTitle = selectedTypes.length > 0
+    ? selectedTypes.join(', ')
+    : selectedParentCategories.length > 0
+      ? selectedParentCategories.join(', ')
+      : selectedThemes.length > 0
+        ? selectedThemes.join(', ')
+        : '';
   filtersRef.current = {
-    category: selectedCategory,
-    categories: selectedCategories,
+    category: resolvedCategories[0] ?? '',
+    categories: resolvedCategories,
+    types: selectedTypes,
+    parentCats: selectedParentCategories,
     themes: selectedThemes,
+    materials: selectedMaterials,
+    sizes: selectedSizes,
+    lores: selectedLores,
     sort,
-    priceLabel: filterPrice,
+    priceMin: sliderMin > PRICE_SLIDER_MIN ? sliderMin : undefined,
+    priceMax: sliderMax < sliderMaxPrice ? sliderMax : undefined,
     search,
     newOnly,
   };
@@ -515,11 +832,15 @@ export function CatalogPageClient({
     const p = new URLSearchParams();
     if (f.search) p.set('q', f.search);
     if (f.newOnly) p.set('new', '1');
-    if (f.categories.length === 1) p.set('category', f.categories[0]);
-    if (f.categories.length > 1) p.set('categories', f.categories.join(','));
+    if (f.types.length > 0) p.set('types', f.types.join(','));
+    if (f.parentCats.length > 0) p.set('parentCats', f.parentCats.join(','));
     if (f.themes.length > 0) p.set('themes', f.themes.join(','));
+    if (f.materials.length > 0) p.set('materials', f.materials.join(','));
+    if (f.sizes.length > 0) p.set('sizes', f.sizes.join(','));
+    if (f.lores.length > 0) p.set('lores', f.lores.join(','));
     if (f.sort && f.sort !== 'featured') p.set('sort', f.sort);
-    if (f.priceLabel) p.set('price', encodeURIComponent(f.priceLabel));
+    if (f.priceMin !== undefined) p.set('priceMin', String(f.priceMin));
+    if (f.priceMax !== undefined) p.set('priceMax', String(f.priceMax));
     const qs = p.toString();
     window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
   }, []);
@@ -543,16 +864,16 @@ export function CatalogPageClient({
     if (f.categories.length === 1) params.set('category', f.categories[0]);
     if (f.categories.length > 1) params.set('categories', f.categories.join(','));
     if (f.themes.length > 0) params.set('themes', f.themes.join(','));
+    if (f.materials.length > 0) params.set('materials', f.materials.join(','));
+    if (f.sizes.length > 0) params.set('sizes', f.sizes.join(','));
+    if (f.lores.length > 0) params.set('lores', f.lores.join(','));
     if (f.sort && f.sort !== 'featured') params.set('sort', f.sort);
-    const range = col.priceRanges.find((r) => r.label === f.priceLabel);
-    if (range) {
-      params.set('priceMin', String(range.min));
-      if (range.max !== null) params.set('priceMax', String(range.max));
-    }
+    if (f.priceMin !== undefined) params.set('priceMin', String(f.priceMin));
+    if (f.priceMax !== undefined) params.set('priceMax', String(f.priceMax));
     if (f.search) params.set('q', f.search);
     if (f.newOnly) params.set('new', '1');
     return params;
-  }, [locale, col.priceRanges]);
+  }, [locale]);
 
   // Re-fetches from page 0 with an explicit filter snapshot.
   // For mentios: hits the API. For static: only updates URL (client-side filtering handles the rest).
@@ -584,25 +905,30 @@ export function CatalogPageClient({
     refetch({ ...filtersRef.current, themes: nextThemes });
   }, [refetch]);
 
-  const handleCategoryChange = useCallback((category: string) => {
-    const current = filtersRef.current.categories;
-    const nextCategories = category
-      ? current.includes(category)
-        ? current.filter((value) => value !== category)
-        : [...current, category]
-      : [];
-    setSelectedCategories(nextCategories);
-    refetch({
-      ...filtersRef.current,
-      category: nextCategories.length === 1 ? nextCategories[0] : '',
-      categories: nextCategories,
-    });
-  }, [refetch]);
+  const handleTypeChange = useCallback((type: string) => {
+    const current = filtersRef.current.types;
+    const nextTypes = current.includes(type) ? current.filter((v) => v !== type) : [...current, type];
+    setSelectedTypes(nextTypes);
+    const resolved = resolveLeafCategories(nextTypes, filtersRef.current.parentCats, categories);
+    refetch({ ...filtersRef.current, types: nextTypes, categories: resolved, category: resolved[0] ?? '' });
+  }, [refetch, categories]);
+
+  const handleParentCatChange = useCallback((parent: string) => {
+    const current = filtersRef.current.parentCats;
+    const nextParents = current.includes(parent) ? current.filter((v) => v !== parent) : [...current, parent];
+    setSelectedParentCategories(nextParents);
+    const resolved = resolveLeafCategories(filtersRef.current.types, nextParents, categories);
+    refetch({ ...filtersRef.current, parentCats: nextParents, categories: resolved, category: resolved[0] ?? '' });
+  }, [refetch, categories]);
 
   const clearProductSelectors = useCallback(() => {
-    setSelectedCategories([]);
+    setSelectedTypes([]);
+    setSelectedParentCategories([]);
     setSelectedThemes([]);
-    refetch({ ...filtersRef.current, category: '', categories: [], themes: [] });
+    setSelectedMaterials([]);
+    setSelectedSizes([]);
+    setSelectedLores([]);
+    refetch({ ...filtersRef.current, types: [], parentCats: [], category: '', categories: [], themes: [], materials: [], sizes: [], lores: [] });
   }, [refetch]);
 
   const handleSortChange = useCallback((newSort: string) => {
@@ -610,9 +936,45 @@ export function CatalogPageClient({
     refetch({ ...filtersRef.current, sort: newSort });
   }, [refetch]);
 
-  const handlePriceChange = useCallback((newPrice: string) => {
-    setFilterPrice(newPrice);
-    refetch({ ...filtersRef.current, priceLabel: newPrice });
+  const handlePriceDrag = useCallback((min: number, max: number) => {
+    setSliderMin(min);
+    setSliderMax(max);
+    const priceMin = min > PRICE_SLIDER_MIN ? min : undefined;
+    const priceMax = max < sliderMaxPrice ? max : undefined;
+    syncUrl({ ...filtersRef.current, priceMin, priceMax });
+  }, [syncUrl, sliderMaxPrice]);
+
+  const handlePriceCommit = useCallback(() => {
+    const min = filtersRef.current.priceMin;
+    const max = filtersRef.current.priceMax;
+    refetch({ ...filtersRef.current, priceMin: min, priceMax: max });
+  }, [refetch]);
+
+  const handleMaterialChange = useCallback((material: string) => {
+    const current = filtersRef.current.materials;
+    const nextMaterials = current.includes(material)
+      ? current.filter((v) => v !== material)
+      : [...current, material];
+    setSelectedMaterials(nextMaterials);
+    refetch({ ...filtersRef.current, materials: nextMaterials });
+  }, [refetch]);
+
+  const handleSizeChange = useCallback((size: string) => {
+    const current = filtersRef.current.sizes;
+    const nextSizes = current.includes(size)
+      ? current.filter((v) => v !== size)
+      : [...current, size];
+    setSelectedSizes(nextSizes);
+    refetch({ ...filtersRef.current, sizes: nextSizes });
+  }, [refetch]);
+
+  const handleLoreChange = useCallback((lore: string) => {
+    const current = filtersRef.current.lores;
+    const nextLores = current.includes(lore)
+      ? current.filter((v) => v !== lore)
+      : [...current, lore];
+    setSelectedLores(nextLores);
+    refetch({ ...filtersRef.current, lores: nextLores });
   }, [refetch]);
 
   const handleNewOnlyChange = useCallback((value: boolean) => {
@@ -651,6 +1013,20 @@ export function CatalogPageClient({
     }
   }, [isLoadingMore, loadedCount, buildParams]);
 
+  // Attach IntersectionObserver to the sentinel div — auto-load when it enters the viewport.
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMoreRef.current(); },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // For static source: apply all filters/sort client-side. For mentios: server already did it.
   const displayProducts = useMemo(() => {
     if (source === 'mentios') return allProducts;
@@ -664,29 +1040,44 @@ export function CatalogPageClient({
       );
     }
     if (newOnly) result = result.filter((p) => p.isNew);
-    if (selectedCategories.length > 0) {
-      const selected = new Set(selectedCategories);
+    if (resolvedCategories.length > 0) {
+      const selected = new Set(resolvedCategories);
       result = result.filter((p) => selected.has(p.category));
     }
     if (selectedThemes.length > 0) {
       result = result.filter((p) => productMatchesThemes(p, selectedThemes));
     }
-    if (filterPrice) {
-      const range = col.priceRanges.find((r) => r.label === filterPrice);
-      if (range) result = result.filter((p) => p.price >= range.min && (range.max === null || p.price < range.max));
+    if (selectedMaterials.length > 0) {
+      result = result.filter((p) => productMatchesMaterials(p, selectedMaterials));
     }
+    if (selectedSizes.length > 0) {
+      result = result.filter((p) => productMatchesSizes(p, selectedSizes));
+    }
+    if (selectedLores.length > 0) {
+      result = result.filter((p) => productMatchesLores(p, selectedLores));
+    }
+    if (sliderMin > PRICE_SLIDER_MIN) result = result.filter((p) => p.price >= sliderMin);
+    if (sliderMax < sliderMaxPrice) result = result.filter((p) => p.price <= sliderMax);
     const copy = [...result];
     if (sort === 'price-asc') copy.sort((a, b) => a.price - b.price);
     else if (sort === 'price-desc') copy.sort((a, b) => b.price - a.price);
     else if (sort === 'newest') copy.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+    else if (sort === 'name-asc') copy.sort((a, b) => (a.shortName ?? a.name).localeCompare(b.shortName ?? b.name));
+    else if (sort === 'name-desc') copy.sort((a, b) => (b.shortName ?? b.name).localeCompare(a.shortName ?? a.name));
+    else if (sort === 'category') copy.sort((a, b) => a.category.localeCompare(b.category));
     return copy;
-  }, [source, allProducts, search, newOnly, selectedCategories, selectedThemes, filterPrice, sort, col.priceRanges]);
+  }, [source, allProducts, search, newOnly, resolvedCategories, selectedThemes, selectedMaterials, selectedSizes, selectedLores, sliderMin, sliderMax, sort]);
 
-  const hasFilters = selectedCategories.length > 0 || selectedThemes.length > 0 || filterPrice !== '' || search !== '' || newOnly;
+  const priceFiltered = sliderMin > PRICE_SLIDER_MIN || sliderMax < sliderMaxPrice;
+  const hasFilters = selectedTypes.length > 0 || selectedParentCategories.length > 0 || selectedThemes.length > 0 || selectedMaterials.length > 0 || selectedSizes.length > 0 || selectedLores.length > 0 || priceFiltered || search !== '' || newOnly;
   const activeFilterCount =
-    selectedCategories.length +
+    selectedTypes.length +
+    selectedParentCategories.length +
     selectedThemes.length +
-    (filterPrice ? 1 : 0) +
+    selectedMaterials.length +
+    selectedSizes.length +
+    selectedLores.length +
+    (priceFiltered ? 1 : 0) +
     (search ? 1 : 0) +
     (newOnly ? 1 : 0);
 
@@ -697,54 +1088,79 @@ export function CatalogPageClient({
   );
 
   const clearFilters = useCallback(() => {
-    setSelectedCategories([]);
+    setSelectedTypes([]);
+    setSelectedParentCategories([]);
     setSelectedThemes([]);
-    setFilterPrice('');
+    setSelectedMaterials([]);
+    setSelectedSizes([]);
+    setSelectedLores([]);
+    setSliderMin(PRICE_SLIDER_MIN);
+    setSliderMax(sliderMaxPrice);
     setSearch('');
     setNewOnly(false);
-    refetch({ category: '', categories: [], themes: [], sort: filtersRef.current.sort, priceLabel: '', search: '', newOnly: false });
+    refetch({ types: [], parentCats: [], category: '', categories: [], themes: [], materials: [], sizes: [], lores: [], sort: filtersRef.current.sort, priceMin: undefined, priceMax: undefined, search: '', newOnly: false });
   }, [refetch]);
 
   // Restore filter state when the user presses the browser back/forward button.
   useEffect(() => {
     const onPopState = () => {
       const p = new URLSearchParams(window.location.search);
-      const category = p.get('category') ?? '';
-      const categories = uniqueFilterValues([...parseFilterList(p.get('categories')), ...(category ? [category] : [])]);
+      const types = parseFilterList(p.get('types'));
+      const parentCats = parseFilterList(p.get('parentCats'));
       const themes = parseFilterList(p.get('themes'));
+      const materials = parseFilterList(p.get('materials'));
+      const sizes = parseFilterList(p.get('sizes'));
+      const lores = parseFilterList(p.get('lores'));
       const sort = p.get('sort') ?? 'featured';
-      const priceLabel = p.has('price') ? decodeURIComponent(p.get('price')!) : '';
+      const priceMin = p.has('priceMin') ? Number(p.get('priceMin')) : undefined;
+      const priceMax = p.has('priceMax') ? Number(p.get('priceMax')) : undefined;
       const search = p.get('q') ?? '';
       const newOnly = p.get('new') === '1';
-      setSelectedCategories(categories);
+      const resolved = resolveLeafCategories(types, parentCats, categories);
+      setSelectedTypes(types);
+      setSelectedParentCategories(parentCats);
       setSelectedThemes(themes);
+      setSelectedMaterials(materials);
+      setSelectedSizes(sizes);
+      setSelectedLores(lores);
       setSort(sort);
-      setFilterPrice(priceLabel);
+      setSliderMin(priceMin ?? PRICE_SLIDER_MIN);
+      setSliderMax(priceMax ?? sliderMaxPrice);
       setSearch(search);
       setNewOnly(newOnly);
-      refetch({ category: categories.length === 1 ? categories[0] : '', categories, themes, sort, priceLabel, search, newOnly });
+      refetch({ types, parentCats, category: resolved[0] ?? '', categories: resolved, themes, materials, sizes, lores, sort, priceMin, priceMax, search, newOnly });
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [refetch]);
+  }, [refetch, categories, sliderMaxPrice]);
 
   const filterProps = {
-    sort,
-    setSort: handleSortChange,
-    selectedCategory,
-    selectedCategories,
-    setSelectedCategory: handleCategoryChange,
-    filterPrice,
-    setFilterPrice: handlePriceChange,
-    search,
-    onSearch: handleSearch,
+    selectedTypes,
+    setSelectedType: handleTypeChange,
+    availableTypes,
+    selectedParentCategories,
+    setSelectedParentCategory: handleParentCatChange,
+    availableParentCategories,
+    sliderMin,
+    sliderMax,
+    sliderAbsMax: sliderMaxPrice,
+    onPriceDrag: handlePriceDrag,
+    onPriceCommit: handlePriceCommit,
+    selectedMaterials,
+    setSelectedMaterial: handleMaterialChange,
+    availableMaterials,
+    selectedSizes,
+    setSelectedSize: handleSizeChange,
+    availableSizes,
+    selectedLores,
+    setSelectedLore: handleLoreChange,
+    availableLores,
     newOnly,
     onNewOnly: handleNewOnlyChange,
     hasFilters,
     onClear: clearFilters,
     totalCount,
     content,
-    categories,
   };
 
   return (
@@ -862,10 +1278,12 @@ export function CatalogPageClient({
             {/* Results bar — scroll target when filters change */}
             <div
               ref={resultsRef}
-              className='flex items-center justify-between mb-5 pb-4'
+              className='flex items-center gap-3 mb-5 pb-4 flex-wrap'
               style={{ borderBottom: '1px solid var(--border)' }}
             >
+              {/* Count */}
               <p
+                className='flex-shrink-0'
                 style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.62rem',
@@ -882,6 +1300,85 @@ export function CatalogPageClient({
                   </>
                 )}
               </p>
+
+              {/* Spacer */}
+              <div className='flex-1' />
+
+              {/* Search input */}
+              <div className='relative flex-shrink-0'>
+                <input
+                  type='text'
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder={col.searchPlaceholder}
+                  className='bg-transparent pb-1 pr-6 outline-none border-b border-[var(--border)] focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]'
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.05em',
+                    color: 'var(--fg)',
+                    width: '160px',
+                  }}
+                />
+                {search ? (
+                  <button
+                    onClick={() => handleSearch('')}
+                    className='absolute right-0 top-0 leading-none transition-opacity hover:opacity-70'
+                    style={{ color: 'var(--muted)', fontSize: '0.7rem' }}
+                  >
+                    ✕
+                  </button>
+                ) : (
+                  <svg
+                    className='absolute right-0 top-0.5 pointer-events-none'
+                    width='10'
+                    height='10'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='1.8'
+                    strokeLinecap='round'
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    <circle cx='11' cy='11' r='8' /><line x1='21' y1='21' x2='16.65' y2='16.65' />
+                  </svg>
+                )}
+              </div>
+
+              {/* Sort selector */}
+              <div className='relative flex-shrink-0'>
+                <select
+                  value={sort}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className='appearance-none bg-transparent border-b border-[var(--border)] focus:border-[var(--accent)] outline-none pr-5 pb-1 transition-colors cursor-pointer'
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.05em',
+                    color: 'var(--muted)',
+                  }}
+                >
+                  {col.sortOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value} style={{ background: 'var(--card-bg)', color: 'var(--fg)' }}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className='absolute right-0 top-0.5 pointer-events-none'
+                  width='10'
+                  height='10'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  style={{ color: 'var(--muted)' }}
+                >
+                  <polyline points='6 9 12 15 18 9' />
+                </svg>
+              </div>
 
               {/* Mobile filter toggle */}
               <button
@@ -957,10 +1454,10 @@ export function CatalogPageClient({
                     </svg>
                   </button>
                 )}
-                {selectedCategories.map((category) => (
+                {selectedTypes.map((theme) => (
                   <button
-                    key={`category-${category}`}
-                    onClick={() => handleCategoryChange(category)}
+                    key={`theme-cat-${theme}`}
+                    onClick={() => handleTypeChange(theme)}
                     className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
                     style={{
                       fontFamily: 'var(--font-mono)',
@@ -973,7 +1470,29 @@ export function CatalogPageClient({
                       padding: '0.25rem 0.6rem',
                     }}
                   >
-                    {col.categoryLabel}: {category}
+                    {col.universeLabel}: {theme}
+                    <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
+                      <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+                    </svg>
+                  </button>
+                ))}
+                {selectedParentCategories.map((productType) => (
+                  <button
+                    key={`ptype-${productType}`}
+                    onClick={() => handleParentCatChange(productType)}
+                    className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                      border: '1px solid rgba(var(--accent-rgb),0.4)',
+                      background: 'rgba(var(--accent-rgb),0.07)',
+                      padding: '0.25rem 0.6rem',
+                    }}
+                  >
+                    {col.typeLabel}: {productType}
                     <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
                       <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
                     </svg>
@@ -1001,9 +1520,10 @@ export function CatalogPageClient({
                     </svg>
                   </button>
                 ))}
-                {filterPrice && (
+                {selectedMaterials.map((material) => (
                   <button
-                    onClick={() => handlePriceChange('')}
+                    key={`material-${material}`}
+                    onClick={() => handleMaterialChange(material)}
                     className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
                     style={{
                       fontFamily: 'var(--font-mono)',
@@ -1016,7 +1536,76 @@ export function CatalogPageClient({
                       padding: '0.25rem 0.6rem',
                     }}
                   >
-                    {col.priceLabel}: {filterPrice}
+                    {col.materialLabel}: {material}
+                    <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
+                      <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+                    </svg>
+                  </button>
+                ))}
+                {selectedSizes.map((size) => (
+                  <button
+                    key={`size-${size}`}
+                    onClick={() => handleSizeChange(size)}
+                    className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                      border: '1px solid rgba(var(--accent-rgb),0.4)',
+                      background: 'rgba(var(--accent-rgb),0.07)',
+                      padding: '0.25rem 0.6rem',
+                    }}
+                  >
+                    {col.sizeLabel}: {size}
+                    <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
+                      <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+                    </svg>
+                  </button>
+                ))}
+                {selectedLores.map((lore) => (
+                  <button
+                    key={`lore-${lore}`}
+                    onClick={() => handleLoreChange(lore)}
+                    className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                      border: '1px solid rgba(var(--accent-rgb),0.4)',
+                      background: 'rgba(var(--accent-rgb),0.07)',
+                      padding: '0.25rem 0.6rem',
+                    }}
+                  >
+                    {col.loreLabel}: {lore}
+                    <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
+                      <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
+                    </svg>
+                  </button>
+                ))}
+                {priceFiltered && (
+                  <button
+                    onClick={() => {
+                      setSliderMin(PRICE_SLIDER_MIN);
+                      setSliderMax(sliderMaxPrice);
+                      refetch({ ...filtersRef.current, priceMin: undefined, priceMax: undefined });
+                    }}
+                    className='flex items-center gap-1.5 transition-colors hover:border-[var(--accent)]'
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--accent)',
+                      border: '1px solid rgba(var(--accent-rgb),0.4)',
+                      background: 'rgba(var(--accent-rgb),0.07)',
+                      padding: '0.25rem 0.6rem',
+                    }}
+                  >
+                    {col.priceLabel}: {formatPrice(sliderMin, locale)} – {formatPrice(sliderMax, locale)}
                     <svg width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round'>
                       <line x1='18' y1='6' x2='6' y2='18' /><line x1='6' y1='6' x2='18' y2='18' />
                     </svg>
@@ -1054,42 +1643,20 @@ export function CatalogPageClient({
             )}
 
             {canLoadMore && (
-              <div className='flex flex-col items-center mt-14 gap-3'>
-                <button
-                  className='btn-ghost px-12 flex items-center gap-3'
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  style={{ opacity: isLoadingMore ? 0.6 : 1 }}
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <svg
-                        width='13'
-                        height='13'
-                        viewBox='0 0 24 24'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='1.5'
-                        style={{ animation: 'spin 0.9s linear infinite' }}
-                      >
-                        <path d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83' />
-                      </svg>
-                      {col.loadingLabel}
-                    </>
-                  ) : (
-                    `${col.loadMorePrefix} (${currentTotal - loadedCount} ${col.remainingLabel})`
-                  )}
-                </button>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.62rem',
-                    letterSpacing: '0.08em',
-                    color: 'var(--muted)',
-                  }}
-                >
-                  {col.showingLabel} {allProducts.length} {col.ofLabel} {currentTotal}
-                </p>
+              <div ref={sentinelRef} className='flex flex-col items-center mt-14 gap-3' aria-hidden='true'>
+                {isLoadingMore && (
+                  <svg
+                    width='18'
+                    height='18'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='1.5'
+                    style={{ animation: 'spin 0.9s linear infinite', color: 'var(--muted)' }}
+                  >
+                    <path d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83' />
+                  </svg>
+                )}
               </div>
             )}
           </div>

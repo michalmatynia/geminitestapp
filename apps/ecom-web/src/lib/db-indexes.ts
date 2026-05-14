@@ -104,6 +104,16 @@ export async function ensureAppIndexes(): Promise<void> {
         { payuOrderId: 1 },
         { background: true, name: 'orders_payu_id', sparse: true },
       ),
+      // Orders lookup by paypalOrderId (PayPal webhook + capture handler)
+      db.collection('ecom_orders').createIndex(
+        { paypalOrderId: 1 },
+        { background: true, name: 'orders_paypal_id', sparse: true },
+      ),
+      // Orders lookup by stripePaymentIntentId (Stripe webhook handler)
+      db.collection('ecom_orders').createIndex(
+        { stripePaymentIntentId: 1 },
+        { background: true, name: 'orders_stripe_intent_id', sparse: true },
+      ),
       // Fulfillment dashboard: filter carrier-specific orders and sort newest first
       db.collection('ecom_orders').createIndex(
         { shippingCarrier: 1, createdAt: -1 },
@@ -128,6 +138,11 @@ export async function ensureAppIndexes(): Promise<void> {
       db.collection('ecom_users').createIndex(
         { email: 1 },
         { background: true, name: 'users_email', unique: true },
+      ),
+      // Newsletter subscriber deduplication
+      db.collection('newsletter_subscribers').createIndex(
+        { email: 1 },
+        { background: true, name: 'newsletter_email', unique: true },
       ),
       ensureEcomSettingsKeyIndex(),
     ]);

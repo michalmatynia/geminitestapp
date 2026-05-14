@@ -14,11 +14,11 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export type { ImageExportLogger, ImageBase64Mode, ImageTransformOptions };
 
 const IMAGE_BASE_URL =
-  process.env['NEXT_PUBLIC_APP_URL'] ||
-  process.env['NEXT_PUBLIC_BASE_URL'] ||
-  process.env['PUBLIC_BASE_URL'] ||
-  process.env['APP_URL'] ||
-  process.env['NEXTAUTH_URL'] ||
+  process.env['NEXT_PUBLIC_APP_URL'] ??
+  process.env['NEXT_PUBLIC_BASE_URL'] ??
+  process.env['PUBLIC_BASE_URL'] ??
+  process.env['APP_URL'] ??
+  process.env['NEXTAUTH_URL'] ??
   '';
 
 const hasScheme = (value: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(value);
@@ -26,15 +26,15 @@ export const resolveImageUrl = (
   value: string | null | undefined,
   baseUrl?: string | null
 ): string | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value.trim().length === 0) return null;
   const trimmed = value.trim();
-  if (!trimmed) return null;
+  if (trimmed.length === 0) return null;
   if (hasScheme(trimmed)) return trimmed;
   const baseCandidate = baseUrl ?? IMAGE_BASE_URL;
-  if (!baseCandidate) return trimmed;
+  if (baseCandidate.length === 0) return trimmed;
   const base = baseCandidate.replace(/\/+$/, '');
-  const path = trimmed.replace(/^\/+/, '');
-  return `${base}/${path}`;
+  const resourcePath = trimmed.replace(/^\/+/, '');
+  return `${base}/${resourcePath}`;
 };
 
 type ProductImageDiagnostic = {

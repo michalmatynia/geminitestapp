@@ -87,8 +87,8 @@ export const prefetchKangurPageContentStore = async (
       ...createKangurPageContentQueryMeta(resolvedLocale),
       source: 'kangur.hooks.prefetchKangurPageContentStore',
       description: 'Prefetches Kangur page content.',
-    },
-  })();
+      domain: 'kangur',
+    },  })();
 
   return queryClient.getQueryState(queryKey)?.status === 'success';
 };

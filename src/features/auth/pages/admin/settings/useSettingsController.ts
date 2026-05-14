@@ -46,9 +46,39 @@ export function useSettingsController(): SettingsControllerReturn {
   const [defaultDirty, setDefaultDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
 
-  const mfaSetupMutation = createMutationV2({ mutationKey: QUERY_KEYS.auth.mutation('mfa.setup'), mutationFn: setupMfa });
-  const mfaVerifyMutation = createMutationV2({ mutationKey: QUERY_KEYS.auth.mutation('mfa.verify'), mutationFn: verifyMfa });
-  const mfaDisableMutation = createMutationV2({ mutationKey: QUERY_KEYS.auth.mutation('mfa.disable'), mutationFn: disableMfa });
+  const mfaSetupMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.setup'),
+    mutationFn: setupMfa,
+    meta: {
+      source: 'useSettingsController.mfaSetup',
+      operation: 'action',
+      resource: 'mfa.setup',
+      domain: 'auth',
+      description: 'Setup MFA for the user',
+    },
+  });
+  const mfaVerifyMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.verify'),
+    mutationFn: verifyMfa,
+    meta: {
+      source: 'useSettingsController.mfaVerify',
+      operation: 'action',
+      resource: 'mfa.verify',
+      domain: 'auth',
+      description: 'Verify MFA for the user',
+    },
+  });
+  const mfaDisableMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.disable'),
+    mutationFn: disableMfa,
+    meta: {
+      source: 'useSettingsController.mfaDisable',
+      operation: 'action',
+      resource: 'mfa.disable',
+      domain: 'auth',
+      description: 'Disable MFA for the user',
+    },
+  });
   const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
 
   useEffect(() => {

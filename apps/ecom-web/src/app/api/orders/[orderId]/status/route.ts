@@ -60,9 +60,11 @@ function readInpostPoint(value: unknown): InpostPoint | undefined {
 function readInpostShipment(value: unknown): InpostShipment | undefined {
   if (!isRecord(value)) return undefined;
   const trackingNumber = readString(value['trackingNumber'], 80);
+  const trackingUrl = readString(value['trackingUrl'], 320);
   const shipmentUrl = readString(value['shipmentUrl'], 320);
   const shipment: InpostShipment = {};
   if (trackingNumber.length > 0) shipment.trackingNumber = trackingNumber;
+  if (trackingUrl.length > 0) shipment.trackingUrl = trackingUrl;
   if (shipmentUrl.length > 0) shipment.shipmentUrl = shipmentUrl;
   return Object.keys(shipment).length > 0 ? shipment : undefined;
 }

@@ -3,8 +3,8 @@ import type { JSX } from 'react';
 
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteNav } from '@/components/SiteNav';
+import { ProductImage } from '@/components/ProductImage';
 import { getLoreDropsArticles, type LoreDropsArticle } from '@/lib/loreDrops';
-import { getProductImageSrc } from '@/lib/productImages';
 import { localizeHref, type EcomLocale } from '@/lib/locales';
 import { getRequestLocale } from '@/lib/request-locale';
 
@@ -40,8 +40,7 @@ function LoreDropCard({
   locale: EcomLocale;
 }): JSX.Element {
   const visual = CARD_VISUALS[index % CARD_VISUALS.length] ?? CARD_VISUALS[0];
-  const articleImageUrl = getProductImageSrc(article.imageUrl);
-  const hasImage = articleImageUrl !== undefined && articleImageUrl.trim().length > 0;
+  const hasImage = article.imageUrl.trim().length > 0;
 
   return (
     <a
@@ -50,10 +49,14 @@ function LoreDropCard({
       style={{ aspectRatio: '3/4', border: '1px solid rgba(var(--accent-rgb),0.12)' }}
     >
       {hasImage ? (
-        <img
+        <ProductImage
+          imageUrl={article.imageUrl}
+          gradient={visual.background}
           alt=''
           className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105'
-          src={articleImageUrl}
+          fit='cover'
+          position='center'
+          sizes='(max-width: 768px) 100vw, 33vw'
         />
       ) : null}
       <div className='absolute inset-0 transition-transform duration-700 group-hover:scale-105'

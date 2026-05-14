@@ -12,6 +12,7 @@ import { retryMessage, refreshMessage, type InpostFulfillResponse, type InpostRe
 import { AdminInpostOrdersPanel } from './AdminInpostOrdersPanel';
 import { AdminShippingOrdersPanel } from './AdminShippingOrdersPanel';
 import { AdminUsersPanel } from './AdminUsersPanel';
+import { AdminNewsletterPanel } from './AdminNewsletterPanel';
 
 interface AdminUser {
   id: string;
@@ -45,6 +46,9 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [subscribers, setSubscribers] = useState<{ email: string; subscribedAt: string }[]>([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(true);
+  const [subscribersError, setSubscribersError] = useState('');
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [adminOrderTotal, setAdminOrderTotal] = useState(0);
   const [adminOrdersLoading, setAdminOrdersLoading] = useState(true);
@@ -76,6 +80,24 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
         setLoading(false);
       });
   }, [content.loadUsersError]);
+
+  useEffect(() => {
+    fetch('/api/newsletter/subscribers')
+      .then((res) => res.json())
+      .then((data: { subscribers?: { email: string; subscribedAt: string }[]; error?: string }) => {
+        if (data.error !== undefined && data.error.length > 0) {
+          setSubscribersError(data.error);
+          return;
+        }
+        setSubscribers(data.subscribers ?? []);
+      })
+      .catch(() => {
+        setSubscribersError(locale === 'pl' ? 'Nie można wczytać subskrybentów.' : 'Could not load subscribers.');
+      })
+      .finally(() => {
+        setSubscribersLoading(false);
+      });
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -288,6 +310,25 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
           </div>
           <div className='type-label' style={{ color: 'var(--muted)' }}>{content.registeredUsersLabel}</div>
         </div>
+        <div style={{
+          padding: '1.5rem',
+          border: '1px solid rgba(210,116,102,0.25)',
+          background: 'rgba(210,116,102,0.04)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '2.2rem',
+            fontWeight: 300,
+            color: 'var(--coral-red)',
+            lineHeight: 1,
+            marginBottom: '0.5rem',
+          }}>
+            {subscribersLoading ? '—' : subscribers.length}
+          </div>
+          <div className='type-label' style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Subskrybenci newslettera' : 'Newsletter subscribers'}
+          </div>
+        </div>
       </div>
 
       <AdminInpostOrdersPanel
@@ -325,6 +366,13 @@ export function AdminTab({ content, orderStatuses, availableLocales }: AdminTabP
         loading={loading}
         error={error}
         users={adminUsers}
+      />
+
+      <AdminNewsletterPanel
+        locale={locale}
+        loading={subscribersLoading}
+        error={subscribersError}
+        subscribers={subscribers}
       />
     </div>
   );

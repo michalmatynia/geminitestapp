@@ -78,11 +78,8 @@ async function resolveImagePath(filePath: string, root: string): Promise<string>
   let entryStat;
   try {
     entryStat = await stat(filePath);
-  } catch (error) {
-    if (path.basename(filePath).startsWith('__primary.')) {
-      return resolvePrimaryImagePath(path.dirname(filePath), root);
-    }
-    throw error;
+  } catch {
+    return resolvePrimaryImagePath(path.dirname(filePath), root);
   }
 
   if (entryStat.isFile()) return filePath;

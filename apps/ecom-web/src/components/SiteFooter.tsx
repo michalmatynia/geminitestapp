@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function,no-param-reassign */
 'use client';
 
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { useSiteContent } from '@/context/SiteContentContext';
 import { useLocalizedHref } from '@/context/LocaleContext';
 
@@ -12,6 +12,9 @@ function normalizeLegacyBrand(value: string): string {
 export function SiteFooter(): JSX.Element {
   const { footer } = useSiteContent();
   const localizedHref = useLocalizedHref();
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSent, setNewsletterSent] = useState(false);
+  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
   const brandName = normalizeLegacyBrand(footer.brandName);
   const brandSuffix = normalizeLegacyBrand(footer.brandSuffix);
   const brandDescription = normalizeLegacyBrand(footer.brandDescription);
@@ -57,24 +60,55 @@ export function SiteFooter(): JSX.Element {
             </p>
           </div>
 
-          <form onSubmit={(e) => e.preventDefault()} className='flex w-full md:w-auto'>
-            <input
-              type='email'
-              placeholder={footer.newsletter.emailPlaceholder}
-              aria-label={footer.newsletter.emailAriaLabel}
-              className='flex-1 md:w-72 px-5 py-3.5 bg-transparent outline-none type-label placeholder:opacity-30'
-              style={{
-                border: '1px solid rgba(var(--accent-rgb),0.25)',
-                borderRight: 'none',
-                color: 'var(--fg)',
-                fontFamily: 'var(--font-mono)',
-                background: 'var(--input-bg)',
+          {newsletterSent ? (
+            <p className='type-label' style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
+              {footer.newsletter.successLabel}
+            </p>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (newsletterSubmitting) return;
+                setNewsletterSubmitting(true);
+                try {
+                  await fetch('/api/newsletter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: newsletterEmail }),
+                  });
+                  setNewsletterSent(true);
+                } finally {
+                  setNewsletterSubmitting(false);
+                }
               }}
-            />
-            <button type='submit' className='btn-primary whitespace-nowrap' style={{ padding: '0.75rem 1.75rem' }}>
-              {footer.newsletter.submitLabel}
-            </button>
-          </form>
+              className='flex w-full md:w-auto'
+            >
+              <input
+                type='email'
+                required
+                value={newsletterEmail}
+                onChange={(e) => { setNewsletterEmail(e.target.value); }}
+                placeholder={footer.newsletter.emailPlaceholder}
+                aria-label={footer.newsletter.emailAriaLabel}
+                className='flex-1 md:w-72 px-5 py-3.5 bg-transparent outline-none type-label placeholder:opacity-30'
+                style={{
+                  border: '1px solid rgba(var(--accent-rgb),0.25)',
+                  borderRight: 'none',
+                  color: 'var(--fg)',
+                  fontFamily: 'var(--font-mono)',
+                  background: 'var(--input-bg)',
+                }}
+              />
+              <button
+                type='submit'
+                disabled={newsletterSubmitting}
+                className='btn-primary whitespace-nowrap'
+                style={{ padding: '0.75rem 1.75rem', opacity: newsletterSubmitting ? 0.6 : 1 }}
+              >
+                {footer.newsletter.submitLabel}
+              </button>
+            </form>
+          )}
         </div>
       </div>
 

@@ -28,6 +28,7 @@ vi.mock('./mongodb', () => ({
 import {
   getCanonicalProductPricing,
   getMentiosCategories,
+  getMentiosHeroLoreGroups,
   getMentiosHomeStats,
   getMentiosProducts,
 } from './mentios';
@@ -801,6 +802,106 @@ describe('Mentios home stats', () => {
     expect(result).toBeNull();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe('Mentios hero lore groups', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.hasProductsMongoConfig.mockReturnValue(true);
+    mocks.hasEcommerceProductsMongoConfig.mockReturnValue(true);
+  });
+
+  it('groups unique product lores by anime, movie, and gaming categories', async () => {
+    const productDocs = [
+      {
+        _id: 'anime-1',
+        categoryId: 'anime-ring',
+        name_en: 'Juzo | Adjustable | Metal | Anime Ring | Tokyo Ghoul',
+        stock: 4,
+      },
+      {
+        _id: 'anime-2',
+        categoryId: 'anime-keychain',
+        name_en: 'Tanjiro | One Size | Acrylic | Anime Keychain | Demon Slayer',
+        stock: 2,
+      },
+      {
+        _id: 'anime-duplicate',
+        categoryId: 'anime-keychain',
+        name_en: 'Ken | One Size | Acrylic | Anime Keychain | Tokyo Ghoul',
+        stock: 1,
+      },
+      {
+        _id: 'movie-1',
+        categoryId: 'movie-wallet',
+        name_en: 'Trooper | One Size | PU | Movie Wallet | Star Wars',
+        stock: 2,
+      },
+      {
+        _id: 'gaming-1',
+        categoryId: 'gaming-pin',
+        name_en: 'Rune | One Size | Metal | Gaming Pin | Elden Ring',
+        stock: 1,
+      },
+      {
+        _id: 'fallback-category',
+        categoryName_en: 'Movie Ring',
+        name_en: 'Deckard | One Size | Metal | Movie Ring | Blade Runner 2049',
+        stock: 1,
+      },
+      {
+        _id: 'polish-movie-category',
+        categoryName_pl: 'Filmowy brelok',
+        name_pl: 'Wybraniec | One Size | Metal | Filmowy brelok | The Matrix',
+        stock: 1,
+      },
+    ];
+    const categoryDocs = [
+      { _id: 'anime-parent', name_en: 'Anime' },
+      { _id: 'anime-ring', parentId: 'anime-parent', name_en: 'Anime Ring' },
+      { _id: 'anime-keychain', parentId: 'anime-parent', name_en: 'Anime Keychain' },
+      { _id: 'movie-parent', name_en: 'Movie' },
+      { _id: 'movie-wallet', parentId: 'movie-parent', name_en: 'Movie Wallet' },
+      { _id: 'gaming-parent', name_en: 'Gaming' },
+      { _id: 'gaming-pin', parentId: 'gaming-parent', name_en: 'Gaming Pin' },
+    ];
+    const productsCollection = {
+      find: vi.fn(() => createCursor(productDocs)),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor(categoryDocs)),
+    };
+    const db = {
+      collection: vi.fn((name: string) =>
+        name === 'products' ? productsCollection : categoriesCollection
+      ),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosHeroLoreGroups('en');
+
+    expect(result).toEqual({
+      anime: ['Demon Slayer', 'Tokyo Ghoul'],
+      gaming: ['Elden Ring'],
+      movie: ['Blade Runner 2049', 'Star Wars', 'The Matrix'],
+    });
+  });
+
+  it('returns empty groups when ecommerce MongoDB is not configured', async () => {
+    mocks.hasEcommerceProductsMongoConfig.mockReturnValue(false);
+
+    const result = await getMentiosHeroLoreGroups('en');
+
+    expect(result).toEqual({ anime: [], gaming: [], movie: [] });
+  });
+
+  it('returns empty groups when the DB throws', async () => {
+    mocks.getEcommerceProductsDb.mockRejectedValue(new Error('connection refused'));
+
+    const result = await getMentiosHeroLoreGroups('en');
+
+    expect(result).toEqual({ anime: [], gaming: [], movie: [] });
   });
 });
 

@@ -62,7 +62,7 @@ export function useStreamingQuery<T>(
             connect();
           },
           reconnectDelay * Math.pow(2, reconnectAttemptsRef.current)
-        ) as SafeTimeout;
+        );
       }
     };
   }, [config, queryKey, queryClient, maxReconnectAttempts, reconnectDelay]);
@@ -140,7 +140,7 @@ export function useWebSocketQuery<T>(
       if (options?.reconnect !== false) {
         reconnectTimeoutRef.current = setTimeout((): void => {
           connect();
-        }, 3000) as SafeTimeout;
+        }, 3000);
       }
     };
   }, [wsUrl, queryKey, queryClient, options]);

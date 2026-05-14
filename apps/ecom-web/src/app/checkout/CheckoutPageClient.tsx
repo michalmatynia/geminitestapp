@@ -64,16 +64,21 @@ type PayPalPublicSettings = {
 
 type ActivePaymentMethod = 'blik' | 'stripe' | 'paypal';
 
+const roundMoneyAmount = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+};
+
 const calculatePromoDiscount = (
   subtotal: number,
   promoDiscountType: 'percentage' | 'fixed' | null,
   promoDiscountValue: number
 ): number => {
   if (promoDiscountType === 'fixed') {
-    return Math.min(subtotal, Math.round(promoDiscountValue));
+    return roundMoneyAmount(Math.min(subtotal, roundMoneyAmount(promoDiscountValue)));
   }
   if (promoDiscountType === 'percentage') {
-    return Math.round(subtotal * promoDiscountValue);
+    return roundMoneyAmount(subtotal * promoDiscountValue);
   }
   return 0;
 };
@@ -585,6 +590,8 @@ function InpostPointSelector({
   manualValue,
   error,
   manualInvalid,
+  city,
+  postcode,
   onSelect,
   onManualValueChange,
 }: {
@@ -594,6 +601,8 @@ function InpostPointSelector({
   manualValue: string;
   error: string;
   manualInvalid: boolean;
+  city?: string | undefined;
+  postcode?: string | undefined;
   onSelect: (point: InpostPoint | null) => void;
   onManualValueChange: (value: string) => void;
 }): JSX.Element {
@@ -621,6 +630,23 @@ function InpostPointSelector({
     const handleInit = (event: Event): void => {
       const registerPointSelected = readGeowidgetPointSelectedRegistrar(event);
       if (registerPointSelected !== null) registerPointSelected(handlePointPayload);
+
+      // Inject CSS into the widget's shadow DOM to prevent the Leaflet gesture
+      // overlay from blocking pointer events. The overlay shows ⌘+scroll hint
+      // during page scroll and sits on top of the map with pointer-events: auto,
+      // which intercepts clicks on locker markers.
+      if (widget) {
+        const shadow = widget.shadowRoot;
+        if (shadow && !shadow.getElementById('gesture-overlay-fix')) {
+          const style = document.createElement('style');
+          style.id = 'gesture-overlay-fix';
+          style.textContent = [
+            '.leaflet-gesture-handling-warning { pointer-events: none !important; }',
+            '.leaflet-gesture-handling-warning::after { pointer-events: none !important; }',
+          ].join(' ');
+          shadow.appendChild(style);
+        }
+      }
     };
 
     setLoadError('');
@@ -632,8 +658,15 @@ function InpostPointSelector({
         widget.setAttribute('language', locale);
         widget.setAttribute('config', 'parcelCollect');
         widget.setAttribute('onpoint', eventName);
+        // Use browser geolocation to centre the map on the user's area.
+        // If the user denies geolocation, the widget falls back to its own default.
+        widget.setAttribute('geolocation', 'true');
+        // Pre-fill the widget's search origin with the shipping city/postcode so
+        // the map opens focused on the right area without requiring geolocation.
+        const origin = [postcode, city].filter(Boolean).join(' ');
+        if (origin) widget.setAttribute('origin', origin);
         widget.style.display = 'block';
-        widget.style.height = '600px';
+        widget.style.height = '560px';
         widget.style.width = '100%';
         widget.addEventListener(initEventName, handleInit, { once: true });
         widget.addEventListener(eventName, handleSelect);
@@ -651,7 +684,7 @@ function InpostPointSelector({
       widget?.removeEventListener(eventName, handleSelect);
       container.replaceChildren();
     };
-  }, [hasWidgetToken, locale, onSelect, token]);
+  }, [hasWidgetToken, locale, onSelect, token, city, postcode]);
 
   const selectedAddress = [
     point?.addressLine1,
@@ -706,7 +739,17 @@ function InpostPointSelector({
       {hasWidgetToken ? (
         <>
           {loadError === '' ? (
-            <div ref={widgetRef} style={{ height: 600, width: '100%' }} />
+            <>
+              <p className='type-label mb-2' style={{ color: 'var(--muted)' }}>
+                {locale === 'pl'
+                  ? 'Kliknij paczkomat na mapie, aby go wybrać.'
+                  : 'Click a parcel locker on the map to select it.'}
+              </p>
+              <div
+                ref={widgetRef}
+                style={{ height: 560, width: '100%', overscrollBehavior: 'contain' }}
+              />
+            </>
           ) : (
             <div className='space-y-3'>
               <p className='type-label' style={{ color: 'var(--accent)' }}>
@@ -801,7 +844,7 @@ function OrderSummary({
   const summaryCurrencyCode = firstCartCurrencyCode(displayItems, locale);
   const freeShippingEnabled = freeShippingThreshold > 0;
   const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
-  const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
+  const freeShippingRemaining = roundMoneyAmount(Math.max(0, freeShippingThreshold - subtotal));
   const freeShippingUnlockedMessage = locale === 'pl' ? 'Darmowa dostawa odblokowana!' : 'Free shipping unlocked!';
   const freeShippingMessage = freeShippingUnlocked
     ? freeShippingUnlockedMessage
@@ -810,7 +853,7 @@ function OrderSummary({
     ? Math.round(promoDiscountValue * 100)
     : 0;
   const discountLabelSuffix = promoDiscountType === 'fixed'
-    ? formatPrice(Math.round(promoDiscountValue), locale, summaryCurrencyCode)
+    ? formatPrice(roundMoneyAmount(promoDiscountValue), locale, summaryCurrencyCode)
     : `${discountRate}%`;
 
   const applyPromo = async (): Promise<void> => {
@@ -1088,7 +1131,7 @@ type StripePaymentSectionProps = {
   onReset(): void;
 };
 
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line max-lines-per-function, complexity
 function StripePaymentSection({
   locale,
   publishableKey,
@@ -1131,9 +1174,9 @@ function StripePaymentSection({
       elementRef.current = paymentElement;
     };
 
-    const existing = document.getElementById('stripe-js') as HTMLScriptElement | null;
-    if (existing) {
-      if ((window as unknown as { Stripe?: unknown }).Stripe) mountElements();
+    const existing = document.getElementById('stripe-js');
+    if (existing !== null) {
+      if (typeof (window as unknown as { Stripe?: unknown }).Stripe === 'function') mountElements();
       else existing.addEventListener('load', mountElements, { once: true });
     } else {
       const script = document.createElement('script');
@@ -1154,6 +1197,7 @@ function StripePaymentSection({
     };
   }, [clientSecret, publishableKey]);
 
+  // eslint-disable-next-line complexity
   const handleConfirm = async (): Promise<void> => {
     if (!stripeRef.current || !elementsRef.current || submitting) return;
     setSubmitting(true);
@@ -1285,7 +1329,7 @@ type PayPalPaymentSectionProps = {
   onCapture(paypalOrderId: string): Promise<void>;
 };
 
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line max-lines-per-function, complexity
 function PayPalPaymentSection({
   locale,
   clientId,
@@ -1335,9 +1379,9 @@ function PayPalPaymentSection({
     };
 
     const scriptSrc = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&intent=capture&components=buttons`;
-    const existing = document.querySelector('script[data-paypal-sdk]') as HTMLScriptElement | null;
-    if (existing) {
-      if ((window as unknown as { paypal?: unknown }).paypal) renderButtons();
+    const existing = document.querySelector('script[data-paypal-sdk]');
+    if (existing !== null) {
+      if ((window as unknown as { paypal?: unknown }).paypal !== undefined) renderButtons();
       else existing.addEventListener('load', renderButtons, { once: true });
     } else {
       const script = document.createElement('script');
@@ -1498,7 +1542,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     [freshCartProducts, items]
   );
   const checkoutCurrencyCode = firstCartCurrencyCode(checkoutItems, locale);
-  const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = roundMoneyAmount(checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0));
   const zoneMethods = useMemo(() => {
     const shippingCountry = form.country ?? '';
     const zone = getZoneForCountry(content.shippingZones, shippingCountry);
@@ -1548,7 +1592,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const manualInpostPointInvalid = inpostPointManualValue.trim() !== ''
     && normalizeInpostPointCode(inpostPointManualValue) === null;
   const discount = calculatePromoDiscount(subtotal, promoDiscountType, promoDiscountValue);
-  const total = subtotal - discount + selectedShipping.price;
+  const total = roundMoneyAmount(subtotal - discount + selectedShipping.price);
   const estimatedDeliveryLabel = locale === 'pl' ? 'Szacowana dostawa:' : 'Estimated:';
   const blikLabel = locale === 'pl' ? 'Kod BLIK' : 'BLIK code';
   const blikPlaceholder = '000000';
@@ -1726,6 +1770,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     }
   };
 
+  // eslint-disable-next-line complexity
   const handleInitiateStripePayment = async (): Promise<void> => {
     if (!validateInformationForm()) { setStep('information'); return; }
     if (!validateShippingStep()) { setStep('shipping'); return; }
@@ -1775,6 +1820,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     }
   };
 
+  // eslint-disable-next-line complexity
   const handlePayPalCreateOrder = async (): Promise<string> => {
     if (!validateInformationForm()) { setStep('information'); return ''; }
     if (!validateShippingStep()) { setStep('shipping'); return ''; }
@@ -1943,6 +1989,30 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
               {confirmedOrderId}
             </p>
           )}
+          {inpostPoint !== null && (
+            <div
+              className='mb-8 px-6 py-4 rounded-lg text-left'
+              style={{ border: '1px solid var(--border)', maxWidth: '360px', width: '100%' }}
+            >
+              <p
+                className='type-label mb-1'
+                style={{ color: 'var(--muted)', fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+              >
+                {locale === 'pl' ? 'Paczkomat InPost' : 'InPost pickup point'}
+              </p>
+              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--fg)', fontSize: '0.9rem' }}>
+                {inpostPoint.name}
+              </p>
+              {(inpostPoint.addressLine1 ?? inpostPoint.city) !== undefined && (
+                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, color: 'var(--muted)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
+                  {[
+                    inpostPoint.addressLine1,
+                    [inpostPoint.postCode, inpostPoint.city].filter(Boolean).join(' '),
+                  ].filter(Boolean).join(', ')}
+                </p>
+              )}
+            </div>
+          )}
           <div className='flex gap-3'>
             <a href={localizedHref(content.continueShoppingHref)} className='btn-primary'>{content.continueShoppingLabel}</a>
             <a href={localizedHref(trackOrderHref)} className='btn-ghost'>{content.trackOrderLabel}</a>
@@ -2105,6 +2175,8 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                       manualValue={inpostPointManualValue}
                       error={inpostPointError}
                       manualInvalid={manualInpostPointInvalid}
+                      city={form.city}
+                      postcode={form.postcode}
                       onSelect={handleInpostPointSelect}
                       onManualValueChange={handleManualInpostPointChange}
                     />
@@ -2242,8 +2314,14 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                           aria-invalid={blikError !== '' || !isPayuPaymentAvailable}
                           aria-describedby={blikError !== '' || !isPayuPaymentAvailable ? 'blik-error' : 'blik-hint'}
                           style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: `1px solid ${blikError !== '' ? 'var(--accent)' : 'var(--border)'}`, outline: 'none', fontFamily: 'var(--font-mono)', fontSize: '1.75rem', letterSpacing: '0.4em', color: 'var(--fg)', textAlign: 'center', transition: 'border-color 0.2s ease', opacity: isPayuPaymentAvailable ? 1 : 0.5 }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--fg)'; }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = blikError !== '' ? 'var(--accent)' : 'var(--border)'; }}
+                          onFocus={(e) => {
+                            const input = e.currentTarget;
+                            input.style.borderColor = 'var(--fg)';
+                          }}
+                          onBlur={(e) => {
+                            const input = e.currentTarget;
+                            input.style.borderColor = blikError !== '' ? 'var(--accent)' : 'var(--border)';
+                          }}
                         />
                         {blikError !== '' || !isPayuPaymentAvailable ? (
                           <p id='blik-error' className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
@@ -2268,7 +2346,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                     total={total}
                     checkoutItemsEmpty={checkoutItems.length === 0}
                     elementsReady={stripeElementsReady}
-                    onInitiate={() => void handleInitiateStripePayment()}
+                    onInitiate={() => {
+                      handleInitiateStripePayment().catch(() => undefined);
+                    }}
                     onElementsReady={() => setStripeElementsReady(true)}
                     onSuccess={(oid) => {
                       setConfirmedOrderId(oid !== '' ? oid : confirmedOrderId);
@@ -2313,7 +2393,9 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   {activePaymentMethod === 'blik' && !blikPending && (
                     <button
                       className='btn-primary'
-                      onClick={() => void handlePlaceOrder()}
+                      onClick={() => {
+                        handlePlaceOrder().catch(() => undefined);
+                      }}
                       disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable}
                       style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable ? 0.5 : 1 }}
                     >

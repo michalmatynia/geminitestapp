@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
 import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 
-const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
-const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
+const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27020/products_local';
+const DEFAULT_ECOM_MONGODB_DB = 'products_local';
 
 type MongoSource = 'local' | 'cloud';
 type MongoConfig = { uri: string; dbName: string };
@@ -457,6 +457,10 @@ function resolveEcommerceProductsMongoUri(): string {
   return resolveEcommerceProductsMongoConfig().uri;
 }
 
+function shouldPinEcommerceToLocalDevelopment(): boolean {
+  return !isProductionLike() && !isVercelRuntime();
+}
+
 // eslint-disable-next-line complexity, max-lines-per-function
 function resolveEcommerceProductsMongoConfig(): MongoConfig {
   const directConfig = completeMongoConfig(readMongoConfig(
@@ -522,6 +526,7 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
     ['MONGODB_DB'],
   ));
 
+  if (localConfig && shouldPinEcommerceToLocalDevelopment()) return localConfig;
   if (source === 'cloud' && cloudConfig) return cloudConfig;
   if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
     return cloudConfig;
@@ -596,6 +601,8 @@ function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
     ['MONGODB_URI'],
     ['MONGODB_DB'],
   ));
+
+  if (localConfig && shouldPinEcommerceToLocalDevelopment()) return [localConfig];
 
   const primary = resolveEcommerceProductsMongoConfig();
   const allowAlternateSourceFallback = readBooleanFromEnv(

@@ -85,8 +85,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (newStatus === 'processing') {
-    await sendOrderConfirmation(serializeOrder(order)).catch(() => undefined);
-    await fulfillInpostOrder(serializeOrder(order)).catch(() => undefined);
+    // Atomic guard: claim the right to send the confirmation email exactly once,
+    // even when Stripe retries the webhook on transient failures.
+    const emailClaim = await collection.updateOne(
+      { _id: order._id, confirmationEmailQueuedAt: { $exists: false } },
+      { $set: { confirmationEmailQueuedAt: new Date().toISOString() } },
+    );
+    if (emailClaim.modifiedCount > 0) {
+      await sendOrderConfirmation(serializeOrder(order)).catch(() => undefined);
+      await fulfillInpostOrder(serializeOrder(order)).catch(() => undefined);
+    }
   }
 
   return NextResponse.json({ received: true });

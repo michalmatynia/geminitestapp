@@ -5,13 +5,13 @@ import type { JSX } from 'react';
 
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteNav } from '@/components/SiteNav';
+import { ProductImage } from '@/components/ProductImage';
 import {
   getLoreDropsArticleBySlug,
   getLoreDropsArticles,
   getLoreDropsArticleBodyBlocks,
   type LoreDropsArticleBodyBlock,
 } from '@/lib/loreDrops';
-import { getProductImageSrc } from '@/lib/productImages';
 import { localizeHref } from '@/lib/locales';
 import { getRequestLocale } from '@/lib/request-locale';
 
@@ -85,23 +85,23 @@ function ArticleHero({
   editorialTitle: string;
   locale: Awaited<ReturnType<typeof getRequestLocale>>;
 }): JSX.Element {
-  const articleImageUrl = getProductImageSrc(article.imageUrl);
-  const hasImage = articleImageUrl !== undefined && articleImageUrl.trim().length > 0;
+  const hasImage = article.imageUrl.trim().length > 0;
   return (
     <section className='relative min-h-[62vh] overflow-hidden grain' style={{ background }}>
       <div className='absolute inset-0 dot-grid opacity-20' />
       {hasImage ? (
         <>
-          <img
+          <ProductImage
+            imageUrl={article.imageUrl}
+            gradient={background}
             alt=''
             className='absolute inset-0 h-full w-full object-cover'
-            src={articleImageUrl}
+            fit='cover'
+            position='center'
+            priority
+            sizes='100vw'
           />
           <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/80' />
-          <div
-            className='absolute inset-0'
-            style={{ background }}
-          />
         </>
       ) : (
         <div className='absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70' />

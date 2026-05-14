@@ -5,12 +5,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CHECKOUT_CONTENT_DEFAULTS } from '@/data/checkoutContent';
+import { HOME_CONTENT_DEFAULTS } from '@/data/homeContent';
 import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
 import { getEcommerceProductsDb } from '@/lib/mongodb';
 import {
   deleteCheckoutContent,
   getCheckoutCmsSnapshot,
   getCheckoutContent,
+  getHomeContent,
   getSiteCmsSnapshot,
   localizeCheckoutContent,
   saveCheckoutContent,
@@ -170,6 +172,49 @@ describe('checkout CMS localization', () => {
     expect(defaultDeleted).toBe(false);
     expect(cmsDbMocks.deleteOne).toHaveBeenCalledTimes(1);
     expect(cmsDbMocks.deleteOne).toHaveBeenCalledWith({ page: 'checkout', locale: 'pl' });
+  });
+});
+
+describe('home CMS localization', () => {
+  it('preserves custom cloud category card text when localizing Polish fallback content', async () => {
+    const cloudHomeContent = {
+      ...HOME_CONTENT_DEFAULTS,
+      categories: {
+        ...HOME_CONTENT_DEFAULTS.categories,
+        cards: HOME_CONTENT_DEFAULTS.categories.cards.map((card) =>
+          card.id === 'menswear'
+            ? {
+                ...card,
+                label: 'Warhammer',
+                sublabel: 'Miniatures · Codex',
+                tag: 'Faction',
+              }
+            : card,
+        ),
+      },
+    };
+    cmsDbMocks.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        page: 'home',
+        locale: 'en',
+        content: cloudHomeContent,
+        updatedAt: new Date('2026-05-01T12:00:00.000Z'),
+        updatedBy: 'admin',
+      });
+
+    const content = await getHomeContent('pl');
+
+    expect(content.categories.cards.find((card) => card.id === 'menswear')).toMatchObject({
+      label: 'Warhammer',
+      sublabel: 'Miniatures · Codex',
+      tag: 'Faction',
+    });
+    expect(content.categories.cards.find((card) => card.id === 'womenswear')).toMatchObject({
+      label: 'Anime',
+      sublabel: 'Piny · Breloki · Biżuteria',
+      tag: 'Nowy sezon',
+    });
   });
 });
 

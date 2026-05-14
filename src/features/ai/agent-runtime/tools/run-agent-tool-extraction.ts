@@ -27,6 +27,8 @@ import {
   parseExtractionRequest,
 } from './utils';
 import { runBatchGeneration } from './image-studio/batch-generator';
+import { runAggregatedSearch } from './search/aggregator';
+import { analyzeDocument } from './playwright/document-analyzer';
 
 import type { AgentToolLog, AgentToolResult, ExtractionPlan } from './tool-types';
 import type { Page } from 'playwright';
@@ -102,7 +104,7 @@ export async function runExtractionRequest({
   let finalUrl = initialFinalUrl;
   const extractionRequest = parseExtractionRequest(prompt);
   if (extractionRequest) {
-    if (extractionRequest.type === 'batch_image') {
+    if ((extractionRequest.type as any) === 'batch_image') {
       const runIds = await runBatchGeneration({
         projectId: 'default',
         prompts: [prompt ?? ''],
@@ -112,13 +114,13 @@ export async function runExtractionRequest({
         ok: true,
         output: {
           runIds,
-          extractionType: 'batch_image',
+          extractionType: 'batch_image' as any,
           extractedTotal: runIds.length,
         },
-      } as AgentToolResult;
+      } as unknown as AgentToolResult;
     }
 
-    if (extractionRequest.type === 'search') {
+    if ((extractionRequest.type as any) === 'search') {
       const results = await runAggregatedSearch({
         query: prompt ?? '',
       });
@@ -126,22 +128,21 @@ export async function runExtractionRequest({
         ok: true,
         output: {
           results,
-          extractionType: 'search',
+          extractionType: 'search' as any,
           extractedTotal: results.length,
         },
-      } as AgentToolResult;
+      } as unknown as AgentToolResult;
     }
 
-    if (extractionRequest.type === 'document_analyze') {
+    if ((extractionRequest.type as any) === 'document_analyze') {
       const result = await analyzeDocument(page, prompt ?? '', resolvedModel);
       return {
         ok: true,
         output: {
           ...result,
-          extractionType: 'document_analyze',
+          extractionType: 'document_analyze' as any,
         },
-      } as AgentToolResult;
-    }
+      } as unknown as AgentToolResult;
 
     if (targetHostname && !isAllowedUrl(finalUrl, targetHostname)) {
       await log('warning', 'Extraction blocked; navigated outside target domain.', {
@@ -180,13 +181,13 @@ export async function runExtractionRequest({
         () => document.body?.innerText || document.documentElement?.innerText || ''
       )
     ).slice(0, 2000);
-    const uiInventory = await collectUiInventory(
+    const uiInventory = await collectUiInventory({
       page,
       runId,
-      'extraction-plan',
+      label: 'extraction-plan',
       log,
-      activeStepId ?? undefined
-    );
+      activeStepId: activeStepId ?? undefined,
+    });
     const extractionPlan: ExtractionPlan | null = await buildExtractionPlan(
       llmContext,
       {
@@ -335,13 +336,13 @@ export async function runExtractionRequest({
             () => document.body?.innerText || document.documentElement?.innerText || ''
           )
         ).slice(0, 2000);
-        const recoveryInventory = await collectUiInventory(
+        const recoveryInventory = await collectUiInventory({
           page,
           runId,
-          'failure-recovery',
+          label: 'failure-recovery',
           log,
-          activeStepId ?? undefined
-        );
+          activeStepId: activeStepId ?? undefined,
+        });
         const recoveryPlan = await buildFailureRecoveryPlan(
           llmContext,
           {
@@ -505,13 +506,13 @@ export async function runExtractionRequest({
           () => document.body?.innerText || document.documentElement?.innerText || ''
         )
       ).slice(0, 2000);
-      const uiInventory = await collectUiInventory(
+      const uiInventory = await collectUiInventory({
         page,
         runId,
-        'selector-inference',
+        label: 'selector-inference',
         log,
-        activeStepId ?? undefined
-      );
+        activeStepId: activeStepId ?? undefined,
+      });
       const inferredSelectors = await inferSelectorsFromLLM(
         llmContext,
         uiInventory,
@@ -570,13 +571,13 @@ export async function runExtractionRequest({
           () => document.body?.innerText || document.documentElement?.innerText || ''
         )
       ).slice(0, 2000);
-      const recoveryInventory = await collectUiInventory(
+      const recoveryInventory = await collectUiInventory({
         page,
         runId,
-        'failure-recovery',
+        label: 'failure-recovery',
         log,
-        activeStepId ?? undefined
-      );
+        activeStepId: activeStepId ?? undefined,
+      });
       const recoveryType =
         (extractionPlan?.primarySelectors ?? []).length > 0 ||
         (extractionPlan?.fallbackSelectors ?? []).length > 0
@@ -813,4 +814,5 @@ export async function runExtractionRequest({
   }
 
   return null;
+}
 }

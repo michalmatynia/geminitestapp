@@ -65,6 +65,22 @@ describe('POST /api/checkout/validate-promo', () => {
     expect(promoLib.lookupPromoDiscount).toHaveBeenCalledWith('FIXED15', 10000, null);
   });
 
+  it('passes fractional subtotals through to promo lookup', async () => {
+    mockPromoLookup({
+      discountType: 'percentage',
+      discountValue: 0.10,
+      discountAmount: 1.9,
+      discountPct: 0.10,
+    });
+
+    const res = await POST(jsonReq({ code: 'ARCANA10', subtotal: 19.04, email: 'alice@example.com' }));
+    const body = await res.json() as { valid: boolean; discountAmount?: number };
+
+    expect(body.valid).toBe(true);
+    expect(body.discountAmount).toBe(1.9);
+    expect(promoLib.lookupPromoDiscount).toHaveBeenCalledWith('ARCANA10', 19.04, 'alice@example.com');
+  });
+
   it('returns valid:true with discount percentage for a known code', async () => {
     mockPromoLookup({
       discountType: 'percentage',

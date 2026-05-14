@@ -5,7 +5,7 @@ import { useRef, type JSX } from 'react';
 import { HOME_CONTENT_DEFAULTS, type HomeEditorialContent } from '@/data/homeContent';
 import { useLocalizedHref } from '@/context/LocaleContext';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
-import { getProductImageSrc } from '@/lib/productImages';
+import { ProductImage } from '@/components/ProductImage';
 
 const REPORT_VISUALS = [
   {
@@ -84,8 +84,7 @@ export function EditorialStrip({
   <div className='grid md:grid-cols-3 gap-4'>
         {visibleReports.map((story, index) => {
           const visual = REPORT_VISUALS[index] ?? DEFAULT_VISUAL;
-          const storyImageUrl = getProductImageSrc(story.imageUrl);
-          const hasImage = storyImageUrl !== undefined && storyImageUrl.trim().length > 0;
+          const hasImage = story.imageUrl.trim().length > 0;
           return (
           <a
             key={`${story.title}-${index}`}
@@ -106,10 +105,14 @@ export function EditorialStrip({
             }}
             >
             {hasImage ? (
-              <img
+              <ProductImage
+                imageUrl={story.imageUrl}
+                gradient={visual.gradient}
                 alt=''
-                className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105'
-                src={storyImageUrl}
+                className='absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105'
+                fit='cover'
+                position='center'
+                sizes='(max-width: 768px) 100vw, 33vw'
               />
             ) : null}
             <div

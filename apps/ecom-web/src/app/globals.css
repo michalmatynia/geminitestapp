@@ -1062,3 +1062,14 @@ body[data-cosmos-background='enabled'] {
   overflow: hidden;
   position: relative;
 }
+
+/* ─── InPost geowidget ─────────────────────────────────────────── */
+/* Leaflet's gesture-handling overlay fires when the user scrolls over the map
+   and shows a ⌘+scroll hint with pointer-events: auto, which intercepts clicks
+   on locker markers. Nullify pointer events so the overlay is visual-only.
+   This targets the light-DOM case; Shadow DOM is patched via JS injection. */
+inpost-geowidget .leaflet-gesture-handling-warning,
+inpost-geowidget .leaflet-gesture-handling-warning::before,
+inpost-geowidget .leaflet-gesture-handling-warning::after {
+  pointer-events: none !important;
+}

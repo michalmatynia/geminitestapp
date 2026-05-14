@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 const MAX_UPLOAD_PATH_LENGTH = 900;
 const UPLOADS_PREFIX = '/uploads/';
+const FORBIDDEN_UPLOAD_PATH_TOKENS = ['\\', '\0', '?', '#'];
 
 function normalizeBaseUrl(value: string | undefined): string {
   const raw = value?.trim().replace(/\/$/, '');
@@ -28,11 +29,24 @@ function getFallbackFileBaseUrl(): string {
   return process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000';
 }
 
+function isValidUploadPathLength(value: string): boolean {
+  return value.length > 0 && value.length <= MAX_UPLOAD_PATH_LENGTH;
+}
+
+function containsUnsafeUploadToken(value: string): boolean {
+  return FORBIDDEN_UPLOAD_PATH_TOKENS.some((token) => value.includes(token));
+}
+
+function containsParentTraversal(value: string): boolean {
+  return value.split('/').includes('..');
+}
+
 function sanitizeUploadPath(value: string | null): string | null {
-  if (value === null || value.length === 0 || value.length > MAX_UPLOAD_PATH_LENGTH) return null;
+  if (value === null) return null;
+  if (!isValidUploadPathLength(value)) return null;
   if (!value.startsWith(UPLOADS_PREFIX)) return null;
-  if (value.includes('\\') || value.includes('\0') || value.includes('?') || value.includes('#')) return null;
-  if (value.split('/').some((segment) => segment === '..')) return null;
+  if (containsUnsafeUploadToken(value)) return null;
+  if (containsParentTraversal(value)) return null;
   return value;
 }
 

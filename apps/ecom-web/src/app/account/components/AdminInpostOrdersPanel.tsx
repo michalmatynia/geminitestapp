@@ -91,7 +91,12 @@ function AdminInpostOrderRow({
         </div>
         {order.inpostShipment?.trackingNumber !== undefined && (
           <div className='type-label mt-1' style={{ color: 'var(--accent)' }}>
-            Tracking: {order.inpostShipment.trackingNumber}
+            Tracking:{' '}
+            {order.inpostShipment.trackingUrl !== undefined ? (
+              <a href={order.inpostShipment.trackingUrl} target='_blank' rel='noreferrer' style={{ color: 'var(--accent)' }}>
+                {order.inpostShipment.trackingNumber}
+              </a>
+            ) : order.inpostShipment.trackingNumber}
           </div>
         )}
         {order.inpostShipment?.eventCode !== undefined && (

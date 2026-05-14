@@ -50,21 +50,39 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>) => {
       return createCreateMutationV2<T, U>({
         mutationFn: (payload: U) => api.post<T>(path, payload),
         mutationKey,
-        meta,
+        meta: {
+          source: `notes.hooks.create${resource}`,
+          operation: 'create',
+          resource,
+          domain: 'notes',
+          description: `Creates ${resource}.`,
+        },
         invalidateKeys: invalidate as string[],
       });
     case 'update':
       return createUpdateMutationV2<T, U & { id: string }>({
         mutationFn: ({ id, ...data }: U & { id: string }) => api.patch<T>(`${path}/${id}`, data),
         mutationKey,
-        meta,
+        meta: {
+          source: `notes.hooks.update${resource}`,
+          operation: 'update',
+          resource,
+          domain: 'notes',
+          description: `Updates ${resource}.`,
+        },
         invalidateKeys: invalidate as InvalidationFn<T, U & { id: string }>,
       });
     case 'delete':
       return createDeleteMutationV2<DeleteResponse, string>({
         mutationFn: (id: string) => api.delete<DeleteResponse>(`${path}/${id}`),
         mutationKey,
-        meta,
+        meta: {
+          source: `notes.hooks.delete${resource}`,
+          operation: 'delete',
+          resource,
+          domain: 'notes',
+          description: `Deletes ${resource}.`,
+        },
         invalidateKeys: invalidate as string[],
       });
   }

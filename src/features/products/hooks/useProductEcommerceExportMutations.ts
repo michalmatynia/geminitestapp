@@ -21,7 +21,7 @@ export function useExportProductToEcommerce(): UpdateMutation<
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useExportProductToEcommerce',
-      operation: 'create',
+      operation: 'action',
       resource: 'integrations.ecommerce.products.export',
       domain: 'integrations',
       mutationKey: QUERY_KEYS.products.all,
@@ -43,7 +43,7 @@ export function useDeleteProductFromEcommerce(): UpdateMutation<
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useDeleteProductFromEcommerce',
-      operation: 'delete',
+      operation: 'action',
       resource: 'integrations.ecommerce.products.delete',
       domain: 'integrations',
       mutationKey: QUERY_KEYS.products.all,
@@ -68,12 +68,12 @@ export function useBulkExportProductsToEcommerce(): UpdateMutation<
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useBulkExportProductsToEcommerce',
-      operation: 'create',
-      resource: 'integrations.ecommerce.products.export.bulk',
+      operation: 'action',
+      resource: 'integrations.ecommerce.products.bulk-export',
       domain: 'integrations',
       mutationKey: QUERY_KEYS.products.all,
-      tags: ['products', 'integrations', 'ecommerce', 'export', 'bulk'],
-      description: 'Exports selected Product List products to the ecommerce product database.',
+      tags: ['products', 'integrations', 'ecommerce', 'bulk-export'],
+      description: 'Bulk exports products to the ecommerce store.',
     },
   });
 }

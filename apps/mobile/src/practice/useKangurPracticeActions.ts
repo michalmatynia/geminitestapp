@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { completeKangurPracticeSession } from '@kangur/core';
+import { completeKangurPracticeSession, type KangurPracticeOperation } from '@kangur/core';
 import { resolvePracticePlayerName } from './practice-utils';
 import { 
     buildAwaitingAuthRetryState, 
@@ -8,72 +8,88 @@ import {
     buildSyncingState, 
     buildUnexpectedSyncFailureState
 } from './practiceScoreSyncState';
-import { type PracticeActionData, type KangurPracticeActionsResult, type SyncInput } from './types';
+import { type PracticeData, type KangurPracticeActionsResult } from './practice-types';
+
+export interface SyncInput {
+  correctAnswers: number;
+  completedRunId: number;
+  operation: KangurPracticeOperation;
+  totalQuestions: number;
+}
+
+async function executeScoreSync(
+  input: SyncInput,
+  data: PracticeData,
+): Promise<void> {
+  const { apiClient, locale, runStartedAt, session, queryClient } = data;
+  const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
+  
+  if (!session?.user) return;
+
+  await apiClient.createScore({
+    player_name: resolvePracticePlayerName({ user: session.user }, locale),
+    score: input.correctAnswers,
+    operation: input.operation,
+    subject: 'maths',
+    total_questions: input.totalQuestions,
+    correct_answers: input.correctAnswers,
+    time_taken: timeTakenSeconds,
+  });
+  
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
+    queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
+  ]);
+}
 
 async function performSync(
   input: SyncInput,
-  data: PracticeActionData,
-  pendingScoreSync: React.MutableRefObject<SyncInput | null>,
+  data: PracticeData,
+  setPendingScoreSync: (val: SyncInput | null) => void,
 ): Promise<void> {
-  const { apiClient, locale, queryClient, runStartedAt, session, setScoreSyncState, isLoadingAuth } = data;
+  const { locale, session, setScoreSyncState, isLoadingAuth } = data;
 
-  if (session.status !== 'authenticated') {
+  if (session?.status !== 'authenticated') {
     if (isLoadingAuth) {
-      pendingScoreSync.current = input;
+      setPendingScoreSync(input);
       setScoreSyncState(buildAwaitingAuthRetryState(locale));
-      return;
+    } else {
+      setScoreSyncState(buildLocalOnlySyncState('auth', locale));
     }
-    setScoreSyncState(buildLocalOnlySyncState('auth', locale));
     return;
   }
 
-  pendingScoreSync.current = null;
+  setPendingScoreSync(null);
   setScoreSyncState(buildSyncingState(locale));
 
-  const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
   try {
-    await apiClient.createScore({
-      player_name: resolvePracticePlayerName({ user: session.user }, locale),
-      score: input.correctAnswers,
-      operation: input.operation,
-      subject: 'maths',
-      total_questions: input.totalQuestions,
-      correct_answers: input.correctAnswers,
-      time_taken: timeTakenSeconds,
-    });
+    await executeScoreSync(input, data);
     setScoreSyncState(buildSyncedState(locale));
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
-      queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
-    ]);
-  } catch (error: unknown) {
-    const err = error as { status?: number };
-    const status = err.status;
-    if (status === 401 || status === 403 || error instanceof TypeError) {
-      setScoreSyncState(buildLocalOnlySyncState('expected-error', locale));
-    } else {
-      setScoreSyncState(buildUnexpectedSyncFailureState(locale));
-    }
+  } catch (error) {
+    const status = (error as { status?: number })?.status;
+    const isExpectedError = status === 401 || status === 403 || error instanceof TypeError;
+    setScoreSyncState(isExpectedError ? buildLocalOnlySyncState('expected-error', locale) : buildUnexpectedSyncFailureState(locale));
   }
 }
 
-export function useKangurPracticeActions(data: PracticeActionData): KangurPracticeActionsResult {
+export function useKangurPracticeActions(data: PracticeData): KangurPracticeActionsResult {
   const { 
     setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, 
-    runId, questions, operation, progressStore, correctAnswers
+    runId, questions, operation, progressStore, correctAnswers, currentIndex, selectedChoice
   } = data;
   
-  const pendingScoreSync = useRef<SyncInput | null>(null);
-  const syncScoreRecord = useCallback(async (input: SyncInput) => performSync(input, data, pendingScoreSync), [data]);
+  const pendingScoreSyncRef = useRef<SyncInput | null>(null);
+  const setPendingScoreSync = (val: SyncInput | null): void => { pendingScoreSyncRef.current = val; };
+  const syncScoreRecord = useCallback(async (input: SyncInput) => performSync(input, data, setPendingScoreSync), [data]);
 
   const handleNext = useCallback((): void => {
-    const currentQuestion = questions[data.currentIndex];
-    if (currentQuestion === undefined || data.selectedChoice === null) return;
+    const currentQuestion = questions[currentIndex];
+    if (!currentQuestion || selectedChoice === null) return;
 
-    const isChoiceCorrect = String(data.selectedChoice) === String(currentQuestion.answer);
+    const isChoiceCorrect = String(selectedChoice) === String(currentQuestion.answer);
     const nextCorrectAnswers = isChoiceCorrect ? correctAnswers + 1 : correctAnswers;
 
-    if (data.currentIndex >= questions.length - 1) {
+    if (currentIndex >= questions.length - 1) {
       const result = completeKangurPracticeSession({
         progress: progressStore.loadProgress(),
         operation,
@@ -85,13 +101,12 @@ export function useKangurPracticeActions(data: PracticeActionData): KangurPracti
       setCompletion(result);
       setSelectedChoice(null);
       void syncScoreRecord({ correctAnswers: nextCorrectAnswers, completedRunId: runId, operation, totalQuestions: questions.length });
-      return;
+    } else {
+      setCorrectAnswers(nextCorrectAnswers);
+      setCurrentIndex((c: number) => c + 1);
+      setSelectedChoice(null);
     }
-
-    setCorrectAnswers(nextCorrectAnswers);
-    setCurrentIndex((c: number) => c + 1);
-    setSelectedChoice(null);
-  }, [questions, data, correctAnswers, runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
+  }, [questions, currentIndex, selectedChoice, correctAnswers, runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
 
   return { handleNext, syncScoreRecord };
 }

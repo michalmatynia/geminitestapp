@@ -9,7 +9,13 @@ import { EditorialStrip } from '@/components/EditorialStrip';
 import { RecentlyViewed } from '@/components/RecentlyViewed';
 import { SiteFooter } from '@/components/SiteFooter';
 import { HOME_CONTENT_DEFAULTS } from '@/data/homeContent';
-import { getMentiosCategories, getMentiosProducts, getMentiosCollectionCounts, getMentiosHomeStats } from '@/lib/mentios';
+import {
+  getMentiosCategories,
+  getMentiosProducts,
+  getMentiosCollectionCounts,
+  getMentiosHomeStats,
+  getMentiosHeroLoreGroups,
+} from '@/lib/mentios';
 import { getHomeContent } from '@/lib/cms';
 import { getRequestLocale } from '@/lib/request-locale';
 import type { EcomLocale } from '@/lib/locales';
@@ -47,12 +53,20 @@ function formatStatValue(value: number, locale: EcomLocale): string {
 
 export default async function HomePage(): Promise<JSX.Element> {
   const locale = await getRequestLocale();
-  const [{ products: dbProducts }, collectionCounts, homeContent, homeStats, catalogCategories] = await Promise.all([
+  const [
+    { products: dbProducts },
+    collectionCounts,
+    homeContent,
+    homeStats,
+    catalogCategories,
+    heroLoreGroups,
+  ] = await Promise.all([
     getMentiosProducts({ limit: FEATURED_PRODUCT_COUNT, locale }).catch(() => ({ products: [], total: 0 })),
     getMentiosCollectionCounts().catch(() => ({})),
     getHomeContent(locale).catch(() => HOME_CONTENT_DEFAULTS),
     getMentiosHomeStats(locale).catch(() => null),
     getMentiosCategories(locale).catch(() => []),
+    getMentiosHeroLoreGroups(locale).catch(() => ({ anime: [], gaming: [], movie: [] })),
   ]);
 
   const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, FEATURED_PRODUCT_COUNT) : null;
@@ -77,7 +91,7 @@ export default async function HomePage(): Promise<JSX.Element> {
     <>
       <SiteNav />
       <main>
-        <HeroSection content={heroContent} catalogCategories={catalogCategories} />
+        <HeroSection content={heroContent} catalogCategories={catalogCategories} heroLoreGroups={heroLoreGroups} />
         <CategoriesGrid counts={collectionCounts} content={homeContent.categories} catalogCategories={catalogCategories} />
         <FeaturedProducts products={featuredProducts} content={homeContent.featured} catalogCategories={catalogCategories} />
         <ManifestoBanner

@@ -35,6 +35,7 @@ export function ProductImage({
   const [activeImageUrl, setActiveImageUrl] = useState<string | undefined>(resolvedImageUrl);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  const imageNodeRef = useRef<HTMLImageElement | null>(null);
   const revealFrameRef = useRef<number | undefined>(undefined);
   const previousResolvedImageUrlRef = useRef(resolvedImageUrl);
   const hasRenderableImage = activeImageUrl !== undefined && activeImageUrl.trim().length > 0 && !hasFailed;
@@ -70,11 +71,33 @@ export function ProductImage({
 
   const handleImageNode = useCallback(
     (node: HTMLImageElement | null): void => {
+      imageNodeRef.current = node;
       if (!node || !hasRenderableImage || isLoaded) return;
       if (node.complete && node.naturalWidth > 0) revealImage();
     },
     [hasRenderableImage, isLoaded, revealImage]
   );
+
+  useEffect(() => {
+    const node = imageNodeRef.current;
+    if (!node || !hasRenderableImage || isLoaded) return undefined;
+    let didCancel = false;
+    const revealIfComplete = (): void => {
+      if (didCancel) return;
+      if (node.complete && node.naturalWidth > 0) revealImage();
+    };
+    const fallbackCheck = window.setTimeout(revealIfComplete, 140);
+
+    revealIfComplete();
+    if (typeof node.decode === 'function') {
+      void node.decode().then(revealIfComplete).catch(revealIfComplete);
+    }
+
+    return () => {
+      didCancel = true;
+      window.clearTimeout(fallbackCheck);
+    };
+  }, [activeImageUrl, hasRenderableImage, isLoaded, revealImage]);
 
   const handleImageLoad = (): void => {
     revealImage();

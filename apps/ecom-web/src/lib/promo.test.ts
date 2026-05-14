@@ -63,9 +63,10 @@ describe('promo code helpers', () => {
       expect(await computeDiscount(10000, 'WELCOME20')).toBe(2000); // 20% of 100.00
     });
 
-    it('rounds half-up correctly on non-integer discount', async () => {
-      // 15% of 9999 = 1499.85 → rounds to 1500
-      expect(await computeDiscount(9999, 'ARCANA15')).toBe(1500);
+    it('preserves cents on fractional percentage discounts', async () => {
+      expect(await computeDiscount(9999, 'ARCANA15')).toBe(1499.85);
+      expect(await computeDiscount(19.04, 'ARCANA10')).toBe(1.9);
+      expect(await computeDiscount(19.04, 'WELCOME20')).toBe(3.81);
     });
 
     it('returns 0 for invalid or missing code', async () => {
@@ -194,6 +195,35 @@ describe('promo code helpers', () => {
 
     expect(await computeDiscount(2000, 'FIXED15', 'alice@example.com')).toBe(0);
     expect(await computeDiscount(3000, 'FIXED15', 'alice@example.com')).toBe(1500);
+  });
+
+  it('preserves cents for database-backed fixed discount codes', async () => {
+    const promoCollection = {
+      findOne: vi.fn().mockResolvedValue({
+        code: 'FIXED150',
+        enabled: true,
+        discountType: 'fixed',
+        value: 1.5,
+        minOrderAmount: 10,
+      }),
+    };
+    const ordersDb = {
+      collection: vi.fn((name: string) => {
+        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
+        return null;
+      }),
+    };
+    const ecommerceDb = {
+      collection: vi.fn((name: string) => {
+        if (name === 'ecom_discounts') return promoCollection;
+        return null;
+      }),
+    };
+
+    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
+    mocks.getDb.mockResolvedValue(ordersDb);
+
+    expect(await computeDiscount(19.04, 'FIXED150', 'alice@example.com')).toBe(1.5);
   });
 
   it('respects coupon start and end date boundaries', async () => {

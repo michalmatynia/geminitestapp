@@ -1,6 +1,7 @@
 export type ProductCategoryDisplayOption = {
   name: string;
   parentName?: string | null;
+  parentNameEn?: string | null;
 };
 
 const UNIVERSE_CATEGORY_PREFIXES = new Set(['Anime', 'Gaming', 'Movie']);

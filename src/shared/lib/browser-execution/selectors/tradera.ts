@@ -970,7 +970,7 @@ export const LISTING_CONFIRMATION_LABELS = [
   'annonsen är korrekt',
 ] as const;
 export const PAYMENT_SOLUTION_MODAL_TEXT_HINTS = [
-  "Tradera's payment solution",
+  'Tradera\'s payment solution',
   'payment solution',
   'Security for payment is important at Tradera',
   'approve the terms of the payment solution',
@@ -980,7 +980,7 @@ export const PAYMENT_SOLUTION_MODAL_TEXT_HINTS = [
   'godkänna villkoren',
 ] as const;
 export const PAYMENT_SOLUTION_TERMS_LABELS = [
-  "I accept terms and conditions for Tradera's payment solution",
+  'I accept terms and conditions for Tradera\'s payment solution',
   'I accept terms and conditions',
   'certify that I am shopping on my own behalf',
   'shopping on my own behalf',

@@ -1,0 +1,899 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e6]: Free shipping on orders over € 60 — New drops every week
+        - link "Shop New Drops" [ref=e7] [cursor=pointer]:
+          - /url: /products?new=1
+        - button "Dismiss announcement" [ref=e8] [cursor=pointer]:
+          - img [ref=e9]
+      - generic [ref=e13]:
+        - link "STARGATER NEXUS" [ref=e14] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e15]: STARGATER
+          - generic [ref=e16]: NEXUS
+        - navigation [ref=e17]:
+          - link "Anime" [ref=e18] [cursor=pointer]:
+            - /url: /products?categories=Anime%20Cards,Anime%20Figurine,Anime%20Keychain,Anime%20Pendant,Anime%20Pin,Anime%20Plushie,Anime%20Ring,Anime%20Wallet
+            - text: Anime
+          - link "Gaming" [ref=e20] [cursor=pointer]:
+            - /url: /products?categories=Gaming%20Bottle%20Opener,Gaming%20Bracelets,Gaming%20Coins,Gaming%20Cufflinks,Gaming%20Keycap,Gaming%20Keychain,Gaming%20Magnet,Gaming%20Notebook,Gaming%20Pendant,Gaming%20Pin,Gaming%20Plushie,Gaming%20Ring,Gaming%20Sticker,Gaming%20Wallet
+            - text: Gaming
+          - link "Film" [ref=e22] [cursor=pointer]:
+            - /url: /products?categories=Movie%20Bottle%20Opener,Movie%20Comb,Movie%20Figurine,Movie%20Keychain,Movie%20Magnet,Movie%20Pendant,Movie%20Pin,Movie%20Ring,Movie%20Wallet
+            - text: Film
+          - link "New Drops" [ref=e24] [cursor=pointer]:
+            - /url: /#new-drops
+            - text: New Drops
+          - link "Catalog" [ref=e26] [cursor=pointer]:
+            - /url: /products
+            - text: Catalog
+        - generic [ref=e28]:
+          - button "Switch to daily theme" [ref=e29] [cursor=pointer]:
+            - img [ref=e30]
+          - generic "Language" [ref=e32]:
+            - link "EN" [ref=e33] [cursor=pointer]:
+              - /url: /products
+            - link "PL" [ref=e34] [cursor=pointer]:
+              - /url: /pl/products
+          - button "Search" [ref=e35] [cursor=pointer]:
+            - img [ref=e36]
+          - button "Shopping bag" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+          - link "Wishlist (0)" [ref=e43] [cursor=pointer]:
+            - /url: /wishlist
+            - img [ref=e44]
+          - button "Account" [ref=e46] [cursor=pointer]:
+            - img [ref=e47]
+    - dialog "Search" [ref=e50]:
+      - generic [ref=e51]:
+        - img [ref=e52]
+        - searchbox "Search" [ref=e55]
+        - button "Close search" [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]: Close
+          - generic [ref=e58]: Esc
+      - generic [ref=e60]:
+        - paragraph [ref=e61]: Trending searches
+        - generic [ref=e62]:
+          - button "Anime" [ref=e63] [cursor=pointer]
+          - button "Attack on Titan" [ref=e64] [cursor=pointer]
+          - button "Keychain" [ref=e65] [cursor=pointer]
+          - button "Elden Ring" [ref=e66] [cursor=pointer]
+          - button "Ghibli" [ref=e67] [cursor=pointer]
+        - generic [ref=e68]:
+          - paragraph [ref=e69]: Browse collections
+          - generic [ref=e70]:
+            - link "Anime" [ref=e71] [cursor=pointer]:
+              - /url: /collections/womenswear
+              - generic [ref=e74]: Anime
+            - link "Gaming" [ref=e75] [cursor=pointer]:
+              - /url: /collections/menswear
+              - generic [ref=e78]: Gaming
+            - link "Film & TV" [ref=e79] [cursor=pointer]:
+              - /url: /collections/accessories
+              - generic [ref=e82]: Film & TV
+            - link "All Items" [ref=e83] [cursor=pointer]:
+              - /url: /products
+              - generic [ref=e86]: All Items
+    - main [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - link "Home" [ref=e90] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e91]: /
+          - generic [ref=e92]: All Products
+        - heading "All Products" [level=1] [ref=e93]
+        - paragraph [ref=e94]: 1277 products
+      - generic [ref=e95]:
+        - complementary [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: Filters
+              - button "Clear all" [ref=e1088] [cursor=pointer]
+            - generic [ref=e101]:
+              - textbox "Search products…" [ref=e102]
+              - img
+            - generic [ref=e103]:
+              - generic [ref=e104]: "Sort:"
+              - generic [ref=e105]:
+                - button "Featured" [ref=e106] [cursor=pointer]: Featured
+                - 'button "Price: Low to High" [ref=e108] [cursor=pointer]': "Price: Low to High"
+                - 'button "Price: High to Low" [ref=e110] [cursor=pointer]': "Price: High to Low"
+                - button "Newest" [ref=e112] [cursor=pointer]: Newest
+            - button "New Arrivals" [ref=e115] [cursor=pointer]: New Arrivals
+            - generic [ref=e117]:
+              - generic [ref=e118]: Category
+              - generic [ref=e119]:
+                - button "All 1270" [ref=e120] [cursor=pointer]:
+                  - generic [ref=e122]: All
+                  - generic [ref=e123]: "1270"
+                - button "Anime Cards 3" [ref=e124] [cursor=pointer]:
+                  - generic [ref=e126]: Anime Cards
+                  - generic [ref=e127]: "3"
+                - button "Anime Figurine 6" [ref=e128] [cursor=pointer]:
+                  - generic [ref=e130]: Anime Figurine
+                  - generic [ref=e131]: "6"
+                - button "Anime Keychain 70" [ref=e132] [cursor=pointer]:
+                  - generic [ref=e134]: Anime Keychain
+                  - generic [ref=e135]: "70"
+                - button "Anime Pendant 2" [ref=e136] [cursor=pointer]:
+                  - generic [ref=e138]: Anime Pendant
+                  - generic [ref=e139]: "2"
+                - button "Anime Pin 90" [ref=e140] [cursor=pointer]:
+                  - generic [ref=e142]: Anime Pin
+                  - generic [ref=e143]: "90"
+                - button "Anime Plushie 4" [ref=e144] [cursor=pointer]:
+                  - generic [ref=e146]: Anime Plushie
+                  - generic [ref=e147]: "4"
+                - button "Anime Ring 11" [ref=e148] [cursor=pointer]:
+                  - generic [ref=e150]: Anime Ring
+                  - generic [ref=e151]: "11"
+                - button "Anime Wallet 56" [ref=e152] [cursor=pointer]:
+                  - generic [ref=e154]: Anime Wallet
+                  - generic [ref=e155]: "56"
+                - button "Art Pin 1" [ref=e156] [cursor=pointer]:
+                  - generic [ref=e158]: Art Pin
+                  - generic [ref=e159]: "1"
+                - button "Blunt Knife 14" [ref=e160] [cursor=pointer]:
+                  - generic [ref=e162]: Blunt Knife
+                  - generic [ref=e163]: "14"
+                - button "Foam Axe 2" [ref=e164] [cursor=pointer]:
+                  - generic [ref=e166]: Foam Axe
+                  - generic [ref=e167]: "2"
+                - button "Foam Hammer 2" [ref=e168] [cursor=pointer]:
+                  - generic [ref=e170]: Foam Hammer
+                  - generic [ref=e171]: "2"
+                - button "Foam Helmet 4" [ref=e172] [cursor=pointer]:
+                  - generic [ref=e174]: Foam Helmet
+                  - generic [ref=e175]: "4"
+                - button "Foam Shield 2" [ref=e176] [cursor=pointer]:
+                  - generic [ref=e178]: Foam Shield
+                  - generic [ref=e179]: "2"
+                - button "Foam Spear 4" [ref=e180] [cursor=pointer]:
+                  - generic [ref=e182]: Foam Spear
+                  - generic [ref=e183]: "4"
+                - button "Foam Sword 8" [ref=e184] [cursor=pointer]:
+                  - generic [ref=e186]: Foam Sword
+                  - generic [ref=e187]: "8"
+                - button "Foam Toy Katana 1" [ref=e188] [cursor=pointer]:
+                  - generic [ref=e190]: Foam Toy Katana
+                  - generic [ref=e191]: "1"
+                - button "Foam Toy Sword 5" [ref=e192] [cursor=pointer]:
+                  - generic [ref=e194]: Foam Toy Sword
+                  - generic [ref=e195]: "5"
+                - button "Gaming Bottle Opener 3" [ref=e196] [cursor=pointer]:
+                  - generic [ref=e198]: Gaming Bottle Opener
+                  - generic [ref=e199]: "3"
+                - button "Gaming Bracelets 2" [ref=e200] [cursor=pointer]:
+                  - generic [ref=e202]: Gaming Bracelets
+                  - generic [ref=e203]: "2"
+                - button "Gaming Coins 19" [ref=e204] [cursor=pointer]:
+                  - generic [ref=e206]: Gaming Coins
+                  - generic [ref=e207]: "19"
+                - button "Gaming Cufflinks 3" [ref=e208] [cursor=pointer]:
+                  - generic [ref=e210]: Gaming Cufflinks
+                  - generic [ref=e211]: "3"
+                - button "Gaming Keycap 3" [ref=e212] [cursor=pointer]:
+                  - generic [ref=e214]: Gaming Keycap
+                  - generic [ref=e215]: "3"
+                - button "Gaming Keychain 209" [ref=e216] [cursor=pointer]:
+                  - generic [ref=e218]: Gaming Keychain
+                  - generic [ref=e219]: "209"
+                - button "Gaming Magnet 11" [ref=e220] [cursor=pointer]:
+                  - generic [ref=e222]: Gaming Magnet
+                  - generic [ref=e223]: "11"
+                - button "Gaming Notebook 3" [ref=e224] [cursor=pointer]:
+                  - generic [ref=e226]: Gaming Notebook
+                  - generic [ref=e227]: "3"
+                - button "Gaming Pendant 38" [ref=e228] [cursor=pointer]:
+                  - generic [ref=e230]: Gaming Pendant
+                  - generic [ref=e231]: "38"
+                - button "Gaming Pin 206" [ref=e232] [cursor=pointer]:
+                  - generic [ref=e234]: Gaming Pin
+                  - generic [ref=e235]: "206"
+                - button "Gaming Plushie 11" [ref=e236] [cursor=pointer]:
+                  - generic [ref=e238]: Gaming Plushie
+                  - generic [ref=e239]: "11"
+                - button "Gaming Ring 60" [ref=e240] [cursor=pointer]:
+                  - generic [ref=e242]: Gaming Ring
+                  - generic [ref=e243]: "60"
+                - button "Gaming Sticker 1" [ref=e244] [cursor=pointer]:
+                  - generic [ref=e246]: Gaming Sticker
+                  - generic [ref=e247]: "1"
+                - button "Gaming Wallet 46" [ref=e248] [cursor=pointer]:
+                  - generic [ref=e250]: Gaming Wallet
+                  - generic [ref=e251]: "46"
+                - button "Keychain Mini Dice 13" [ref=e252] [cursor=pointer]:
+                  - generic [ref=e254]: Keychain Mini Dice
+                  - generic [ref=e255]: "13"
+                - button "Minibow 4" [ref=e256] [cursor=pointer]:
+                  - generic [ref=e258]: Minibow
+                  - generic [ref=e259]: "4"
+                - button "Movie Bottle Opener 4" [ref=e260] [cursor=pointer]:
+                  - generic [ref=e262]: Movie Bottle Opener
+                  - generic [ref=e263]: "4"
+                - button "Movie Comb 2" [ref=e264] [cursor=pointer]:
+                  - generic [ref=e266]: Movie Comb
+                  - generic [ref=e267]: "2"
+                - button "Movie Figurine 2" [ref=e268] [cursor=pointer]:
+                  - generic [ref=e270]: Movie Figurine
+                  - generic [ref=e271]: "2"
+                - button "Movie Keychain 69" [ref=e272] [cursor=pointer]:
+                  - generic [ref=e274]: Movie Keychain
+                  - generic [ref=e275]: "69"
+                - button "Movie Magnet 1" [ref=e276] [cursor=pointer]:
+                  - generic [ref=e278]: Movie Magnet
+                  - generic [ref=e279]: "1"
+                - button "Movie Pendant 5" [ref=e280] [cursor=pointer]:
+                  - generic [ref=e282]: Movie Pendant
+                  - generic [ref=e283]: "5"
+                - button "Movie Pin 56" [ref=e284] [cursor=pointer]:
+                  - generic [ref=e286]: Movie Pin
+                  - generic [ref=e287]: "56"
+                - button "Movie Ring 6" [ref=e288] [cursor=pointer]:
+                  - generic [ref=e290]: Movie Ring
+                  - generic [ref=e291]: "6"
+                - button "Movie Wallet 49" [ref=e292] [cursor=pointer]:
+                  - generic [ref=e294]: Movie Wallet
+                  - generic [ref=e295]: "49"
+                - button "Plastic Helmet 7" [ref=e296] [cursor=pointer]:
+                  - generic [ref=e298]: Plastic Helmet
+                  - generic [ref=e299]: "7"
+                - button "Plastic Toy Sword 6" [ref=e300] [cursor=pointer]:
+                  - generic [ref=e302]: Plastic Toy Sword
+                  - generic [ref=e303]: "6"
+                - button "Pop Culture Pin 15" [ref=e304] [cursor=pointer]:
+                  - generic [ref=e306]: Pop Culture Pin
+                  - generic [ref=e307]: "15"
+                - button "Roulette Dice 1" [ref=e308] [cursor=pointer]:
+                  - generic [ref=e310]: Roulette Dice
+                  - generic [ref=e311]: "1"
+                - button "Set Of 7 Dice 9" [ref=e312] [cursor=pointer]:
+                  - generic [ref=e314]: Set Of 7 Dice
+                  - generic [ref=e315]: "9"
+                - button "Sharp Knife 6" [ref=e316] [cursor=pointer]:
+                  - generic [ref=e318]: Sharp Knife
+                  - generic [ref=e319]: "6"
+                - button "Shuriken Spinner 12" [ref=e320] [cursor=pointer]:
+                  - generic [ref=e322]: Shuriken Spinner
+                  - generic [ref=e323]: "12"
+                - button "Vintage Pin 30" [ref=e324] [cursor=pointer]:
+                  - generic [ref=e326]: Vintage Pin
+                  - generic [ref=e327]: "30"
+                - button "Wheel Dice 1" [ref=e328] [cursor=pointer]:
+                  - generic [ref=e330]: Wheel Dice
+                  - generic [ref=e331]: "1"
+                - button "Wooden Katana 1" [ref=e332] [cursor=pointer]:
+                  - generic [ref=e334]: Wooden Katana
+                  - generic [ref=e335]: "1"
+                - button "Wooden Toy Axe 8" [ref=e336] [cursor=pointer]:
+                  - generic [ref=e338]: Wooden Toy Axe
+                  - generic [ref=e339]: "8"
+                - button "Wooden Toy Bow 4" [ref=e340] [cursor=pointer]:
+                  - generic [ref=e342]: Wooden Toy Bow
+                  - generic [ref=e343]: "4"
+                - button "Wooden Toy Crossbow 3" [ref=e344] [cursor=pointer]:
+                  - generic [ref=e346]: Wooden Toy Crossbow
+                  - generic [ref=e347]: "3"
+                - button "Wooden Toy Katana 15" [ref=e348] [cursor=pointer]:
+                  - generic [ref=e350]: Wooden Toy Katana
+                  - generic [ref=e351]: "15"
+                - button "Wooden Toy Shield 2" [ref=e352] [cursor=pointer]:
+                  - generic [ref=e354]: Wooden Toy Shield
+                  - generic [ref=e355]: "2"
+                - button "Wooden Toy Slingshot 2" [ref=e356] [cursor=pointer]:
+                  - generic [ref=e358]: Wooden Toy Slingshot
+                  - generic [ref=e359]: "2"
+                - button "Wooden Toy Spear 4" [ref=e360] [cursor=pointer]:
+                  - generic [ref=e362]: Wooden Toy Spear
+                  - generic [ref=e363]: "4"
+                - button "Wooden Toy Sword 32" [ref=e364] [cursor=pointer]:
+                  - generic [ref=e366]: Wooden Toy Sword
+                  - generic [ref=e367]: "32"
+                - button "Wooden Wand 1" [ref=e368] [cursor=pointer]:
+                  - generic [ref=e370]: Wooden Wand
+                  - generic [ref=e371]: "1"
+            - generic [ref=e372]:
+              - generic [ref=e373]: Price
+              - generic [ref=e374]:
+                - button "Under 200 zł" [ref=e375] [cursor=pointer]: Under 200 zł
+                - button "200 zł - 500 zł" [ref=e377] [cursor=pointer]: 200 zł - 500 zł
+                - button "500 zł - 1,000 zł" [ref=e379] [cursor=pointer]: 500 zł - 1,000 zł
+                - button "Over 1,000 zł" [ref=e381] [cursor=pointer]: Over 1,000 zł
+            - generic [ref=e383]:
+              - generic [ref=e384]: Material
+              - generic [ref=e385]:
+                - button "Eko-Skóra" [ref=e386] [cursor=pointer]: Eko-Skóra
+                - button "Faux Leather" [ref=e388] [cursor=pointer]: Faux Leather
+                - button "Foam" [ref=e390] [cursor=pointer]: Foam
+                - button "Metal" [active] [ref=e392] [cursor=pointer]: Metal
+                - button "Textile" [ref=e394] [cursor=pointer]: Textile
+                - button "Wood" [ref=e396] [cursor=pointer]: Wood
+            - generic [ref=e398]:
+              - generic [ref=e399]: Size
+              - generic [ref=e400]:
+                - button "10 cm" [ref=e401] [cursor=pointer]: 10 cm
+                - button "100 cm" [ref=e403] [cursor=pointer]: 100 cm
+                - button "12 cm" [ref=e405] [cursor=pointer]: 12 cm
+                - button "13 cm" [ref=e407] [cursor=pointer]: 13 cm
+                - button "17 cm" [ref=e409] [cursor=pointer]: 17 cm
+                - button "2 cm" [ref=e411] [cursor=pointer]: 2 cm
+                - button "20 cm" [ref=e413] [cursor=pointer]: 20 cm
+                - button "22 cm" [ref=e415] [cursor=pointer]: 22 cm
+                - button "3 cm" [ref=e417] [cursor=pointer]: 3 cm
+                - button "30 cm" [ref=e419] [cursor=pointer]: 30 cm
+                - button "4 cm" [ref=e421] [cursor=pointer]: 4 cm
+                - button "5 cm" [ref=e423] [cursor=pointer]: 5 cm
+                - button "55 cm" [ref=e425] [cursor=pointer]: 55 cm
+                - button "6 cm" [ref=e427] [cursor=pointer]: 6 cm
+                - button "8 cm" [ref=e429] [cursor=pointer]: 8 cm
+                - button "Adjustable Size" [ref=e431] [cursor=pointer]: Adjustable Size
+                - button "Diameter 16 mm" [ref=e433] [cursor=pointer]: Diameter 16 mm
+                - button "Diameter 18 mm" [ref=e435] [cursor=pointer]: Diameter 18 mm
+        - generic [ref=e437]:
+          - paragraph [ref=e439]: 48 of 1277 results
+          - 'button "Material: Metal" [ref=e1090] [cursor=pointer]':
+            - text: "Material: Metal"
+            - img [ref=e1091]
+          - generic [ref=e1094]:
+            - link "Agatsuma Zenitsu Quick Add Anime Pin Demon Slayer Agatsuma Zenitsu € 11.48" [ref=e1095] [cursor=pointer]:
+              - /url: /products/keycha1471
+              - generic [ref=e1096]:
+                - img "Agatsuma Zenitsu" [ref=e1099]
+                - button "Quick Add" [ref=e1101]
+              - generic [ref=e1102]: Anime Pin
+              - generic [ref=e1103]: Demon Slayer
+              - generic [ref=e1104]: Agatsuma Zenitsu
+              - generic [ref=e1105]: € 11.48
+            - link "Revolutionary Girl Utena Quick Add Anime Pin Anthy Himemiya Revolutionary Girl Utena € 11.48" [ref=e1106] [cursor=pointer]:
+              - /url: /products/keycha1470
+              - generic [ref=e1107]:
+                - img "Revolutionary Girl Utena" [ref=e1110]
+                - button "Quick Add" [ref=e1112]
+              - generic [ref=e1113]: Anime Pin
+              - generic [ref=e1114]: Anthy Himemiya
+              - generic [ref=e1115]: Revolutionary Girl Utena
+              - generic [ref=e1116]: € 11.48
+            - link "Guts Quick Add Gaming Pin Berserk Guts € 6.16" [ref=e1117] [cursor=pointer]:
+              - /url: /products/keycha1469
+              - generic [ref=e1118]:
+                - img "Guts" [ref=e1121]
+                - button "Quick Add" [ref=e1123]
+              - generic [ref=e1124]: Gaming Pin
+              - generic [ref=e1125]: Berserk
+              - generic [ref=e1126]: Guts
+              - generic [ref=e1127]: € 6.16
+            - link "Space Marine Quick Add Gaming Pin Warhammer 40k Space Marine € 12.60" [ref=e1128] [cursor=pointer]:
+              - /url: /products/keycha1468
+              - generic [ref=e1129]:
+                - img "Space Marine" [ref=e1132]
+                - button "Quick Add" [ref=e1134]
+              - generic [ref=e1135]: Gaming Pin
+              - generic [ref=e1136]: Warhammer 40k
+              - generic [ref=e1137]: Space Marine
+              - generic [ref=e1138]: € 12.60
+            - link "Darth Maul Quick Add Movie Wallet Star Wars Darth Maul € 17.08" [ref=e1139] [cursor=pointer]:
+              - /url: /products/keycha1397
+              - generic [ref=e1140]:
+                - img "Darth Maul" [ref=e1143]
+                - button "Quick Add" [ref=e1145]
+              - generic [ref=e1146]: Movie Wallet
+              - generic [ref=e1147]: Star Wars
+              - generic [ref=e1148]: Darth Maul
+              - generic [ref=e1149]: € 17.08
+            - link "Juzo Suzuya Boy Quick Add Anime Ring Tokyo Ghoul Juzo Suzuya Boy € 15.40" [ref=e1150] [cursor=pointer]:
+              - /url: /products/keycha1451
+              - generic [ref=e1151]:
+                - img "Juzo Suzuya Boy" [ref=e1154]
+                - button "Quick Add" [ref=e1156]
+              - generic [ref=e1157]: Anime Ring
+              - generic [ref=e1158]: Tokyo Ghoul
+              - generic [ref=e1159]: Juzo Suzuya Boy
+              - generic [ref=e1160]: € 15.40
+            - link "Iron Warriors Quick Add Gaming Ring WH 40k Iron Warriors € 6.16" [ref=e1161] [cursor=pointer]:
+              - /url: /products/keycha1452
+              - generic [ref=e1162]:
+                - img "Iron Warriors" [ref=e1165]
+                - button "Quick Add" [ref=e1167]
+              - generic [ref=e1168]: Gaming Ring
+              - generic [ref=e1169]: WH 40k
+              - generic [ref=e1170]: Iron Warriors
+              - generic [ref=e1171]: € 6.16
+            - link "Dragon Slayer Quick Add Gaming Keychain Berserk Gantz Dragon Slayer € 18.76" [ref=e1172] [cursor=pointer]:
+              - /url: /products/keycha758
+              - generic [ref=e1173]:
+                - img "Dragon Slayer" [ref=e1176]
+                - button "Quick Add" [ref=e1178]
+              - generic [ref=e1179]: Gaming Keychain
+              - generic [ref=e1180]: Berserk Gantz
+              - generic [ref=e1181]: Dragon Slayer
+              - generic [ref=e1182]: € 18.76
+            - link "Blood Angel Chalice Quick Add Last pieces Gaming Pendant Warhammer 40k Blood Angel Chalice € 26.04" [ref=e1183] [cursor=pointer]:
+              - /url: /products/keycha655
+              - generic [ref=e1184]:
+                - img "Blood Angel Chalice" [ref=e1187]
+                - button "Quick Add" [ref=e1189]
+              - generic [ref=e1190]: Last pieces
+              - generic [ref=e1191]: Gaming Pendant
+              - generic [ref=e1192]: Warhammer 40k
+              - generic [ref=e1193]: Blood Angel Chalice
+              - generic [ref=e1194]: € 26.04
+            - link "Astarion Ancunin Quick Add Gaming Ring Baldur’s Gate Astarion Ancunin € 17.92" [ref=e1195] [cursor=pointer]:
+              - /url: /products/keycha1444
+              - generic [ref=e1196]:
+                - img "Astarion Ancunin" [ref=e1199]
+                - button "Quick Add" [ref=e1201]
+              - generic [ref=e1202]: Gaming Ring
+              - generic [ref=e1203]: Baldur’s Gate
+              - generic [ref=e1204]: Astarion Ancunin
+              - generic [ref=e1205]: € 17.92
+            - link "Cosy Quick Add Pop Culture Pin Labubu Cosy € 6.16" [ref=e1206] [cursor=pointer]:
+              - /url: /products/keycha938
+              - generic [ref=e1207]:
+                - img "Cosy" [ref=e1210]
+                - button "Quick Add" [ref=e1212]
+              - generic [ref=e1213]: Pop Culture Pin
+              - generic [ref=e1214]: Labubu
+              - generic [ref=e1215]: Cosy
+              - generic [ref=e1216]: € 6.16
+            - link "Baby Quick Add Last pieces Pop Culture Pin Labubu Baby € 6.16" [ref=e1217] [cursor=pointer]:
+              - /url: /products/keycha940
+              - generic [ref=e1218]:
+                - img "Baby" [ref=e1221]
+                - button "Quick Add" [ref=e1223]
+              - generic [ref=e1224]: Last pieces
+              - generic [ref=e1225]: Pop Culture Pin
+              - generic [ref=e1226]: Labubu
+              - generic [ref=e1227]: Baby
+              - generic [ref=e1228]: € 6.16
+            - link "Pink Quick Add Pop Culture Pin Labubu Pink € 6.16" [ref=e1229] [cursor=pointer]:
+              - /url: /products/keycha941
+              - generic [ref=e1230]:
+                - img "Pink" [ref=e1233]
+                - button "Quick Add" [ref=e1235]
+              - generic [ref=e1236]: Pop Culture Pin
+              - generic [ref=e1237]: Labubu
+              - generic [ref=e1238]: Pink
+              - generic [ref=e1239]: € 6.16
+            - link "Usagi Tsukino Quick Add Last pieces Anime Pin Sailor Moon Usagi Tsukino € 12.88" [ref=e1240] [cursor=pointer]:
+              - /url: /products/keycha979
+              - generic [ref=e1241]:
+                - img "Usagi Tsukino" [ref=e1244]
+                - button "Quick Add" [ref=e1246]
+              - generic [ref=e1247]: Last pieces
+              - generic [ref=e1248]: Anime Pin
+              - generic [ref=e1249]: Sailor Moon
+              - generic [ref=e1250]: Usagi Tsukino
+              - generic [ref=e1251]: € 12.88
+            - link "Logo Quick Add Movie Keychain Stranger Things Logo € 15.40" [ref=e1252] [cursor=pointer]:
+              - /url: /products/keycha1030
+              - generic [ref=e1253]:
+                - img "Logo" [ref=e1256]
+                - button "Quick Add" [ref=e1258]
+              - generic [ref=e1259]: Movie Keychain
+              - generic [ref=e1260]: Stranger Things
+              - generic [ref=e1261]: Logo
+              - generic [ref=e1262]: € 15.40
+            - link "Koopa Shell Quick Add Gaming Pin Super Mario Koopa Shell € 5.88" [ref=e1263] [cursor=pointer]:
+              - /url: /products/keycha928
+              - generic [ref=e1264]:
+                - img "Koopa Shell" [ref=e1267]
+                - button "Quick Add" [ref=e1269]
+              - generic [ref=e1270]: Gaming Pin
+              - generic [ref=e1271]: Super Mario
+              - generic [ref=e1272]: Koopa Shell
+              - generic [ref=e1273]: € 5.88
+            - link "Ostrze Chaosu Kratosa Quick Add Last pieces Gaming Keychain God Of War Ostrze Chaosu Kratosa € 15.40" [ref=e1274] [cursor=pointer]:
+              - /url: /products/keycha001
+              - generic [ref=e1275]:
+                - img "Ostrze Chaosu Kratosa" [ref=e1278]
+                - button "Quick Add" [ref=e1280]
+              - generic [ref=e1281]: Last pieces
+              - generic [ref=e1282]: Gaming Keychain
+              - generic [ref=e1283]: God Of War
+              - generic [ref=e1284]: Ostrze Chaosu Kratosa
+              - generic [ref=e1285]: € 15.40
+            - link "Figurka akcji Sinon Quick Add Anime Figurine Figurka akcji Sinon € 36.12" [ref=e1286] [cursor=pointer]:
+              - /url: /products/figani029
+              - generic [ref=e1287]:
+                - img "Figurka akcji Sinon" [ref=e1290]
+                - button "Quick Add" [ref=e1292]
+              - generic [ref=e1293]: Anime Figurine
+              - generic [ref=e1294]: Figurka akcji Sinon
+              - generic [ref=e1295]: € 36.12
+            - link "Nuka-Cola Cap Quick Add Last pieces Anime Pin Fallout Nuka-Cola Cap € 6.16" [ref=e1296] [cursor=pointer]:
+              - /url: /products/keycha1072
+              - generic [ref=e1297]:
+                - img "Nuka-Cola Cap" [ref=e1300]
+                - button "Quick Add" [ref=e1302]
+              - generic [ref=e1303]: Last pieces
+              - generic [ref=e1304]: Anime Pin
+              - generic [ref=e1305]: Fallout
+              - generic [ref=e1306]: Nuka-Cola Cap
+              - generic [ref=e1307]: € 6.16
+            - link "Thor's Hammer Quick Add Last pieces Movie Keychain Avengers Thor's Hammer € 15.40" [ref=e1308] [cursor=pointer]:
+              - /url: /products/keycha1089
+              - generic [ref=e1309]:
+                - img "Thor's Hammer" [ref=e1312]
+                - button "Quick Add" [ref=e1314]
+              - generic [ref=e1315]: Last pieces
+              - generic [ref=e1316]: Movie Keychain
+              - generic [ref=e1317]: Avengers
+              - generic [ref=e1318]: Thor's Hammer
+              - generic [ref=e1319]: € 15.40
+            - link "Container Quick Add Dice Dungeons and Dragons Container € 18.76" [ref=e1320] [cursor=pointer]:
+              - /url: /products/keycha1104
+              - generic [ref=e1321]:
+                - img "Container" [ref=e1324]
+                - button "Quick Add" [ref=e1326]
+              - generic [ref=e1327]: Dice
+              - generic [ref=e1328]: Dungeons and Dragons
+              - generic [ref=e1329]: Container
+              - generic [ref=e1330]: € 18.76
+            - link "Cloud Quick Add Last pieces Gaming Pin Super Mario Cloud € 5.88" [ref=e1331] [cursor=pointer]:
+              - /url: /products/keycha1123
+              - generic [ref=e1332]:
+                - img "Cloud" [ref=e1335]
+                - button "Quick Add" [ref=e1337]
+              - generic [ref=e1338]: Last pieces
+              - generic [ref=e1339]: Gaming Pin
+              - generic [ref=e1340]: Super Mario
+              - generic [ref=e1341]: Cloud
+              - generic [ref=e1342]: € 5.88
+            - link "Spaceman Quick Add Gaming Plushie Ivan Cornejo Spaceman € 18.76" [ref=e1343] [cursor=pointer]:
+              - /url: /products/keycha1431
+              - generic [ref=e1344]:
+                - img "Spaceman" [ref=e1347]
+                - button "Quick Add" [ref=e1349]
+              - generic [ref=e1350]: Gaming Plushie
+              - generic [ref=e1351]: Ivan Cornejo
+              - generic [ref=e1352]: Spaceman
+              - generic [ref=e1353]: € 18.76
+            - link "Indomitus Cross Quick Add Gaming Pendant Warhammer 40k Indomitus Cross € 21" [ref=e1354] [cursor=pointer]:
+              - /url: /products/keycha999
+              - generic [ref=e1355]:
+                - img "Indomitus Cross" [ref=e1358]
+                - button "Quick Add" [ref=e1360]
+              - generic [ref=e1361]: Gaming Pendant
+              - generic [ref=e1362]: Warhammer 40k
+              - generic [ref=e1363]: Indomitus Cross
+              - generic [ref=e1364]: € 21
+            - link "Redouvia Dagger Quick Add Last pieces Gaming Keychain Elden Ring Redouvia Dagger € 15.40" [ref=e1365] [cursor=pointer]:
+              - /url: /products/keycha1139
+              - generic [ref=e1366]:
+                - img "Redouvia Dagger" [ref=e1369]
+                - button "Quick Add" [ref=e1371]
+              - generic [ref=e1372]: Last pieces
+              - generic [ref=e1373]: Gaming Keychain
+              - generic [ref=e1374]: Elden Ring
+              - generic [ref=e1375]: Redouvia Dagger
+              - generic [ref=e1376]: € 15.40
+            - link "Sword Quick Add Wooden Toy Katana Samurai Sword € 5.88" [ref=e1377] [cursor=pointer]:
+              - /url: /products/keycha1169
+              - generic [ref=e1378]:
+                - img "Sword" [ref=e1381]
+                - button "Quick Add" [ref=e1383]
+              - generic [ref=e1384]: Wooden Toy Katana
+              - generic [ref=e1385]: Samurai
+              - generic [ref=e1386]: Sword
+              - generic [ref=e1387]: € 5.88
+            - link "Death Guard Quick Add Gaming Ring Warhammer 40k Death Guard € 22.96" [ref=e1388] [cursor=pointer]:
+              - /url: /products/keycha904
+              - generic [ref=e1389]:
+                - img "Death Guard" [ref=e1392]
+                - button "Quick Add" [ref=e1394]
+              - generic [ref=e1395]: Gaming Ring
+              - generic [ref=e1396]: Warhammer 40k
+              - generic [ref=e1397]: Death Guard
+              - generic [ref=e1398]: € 22.96
+            - link "Jolly Quick Add Pop Culture Pin Labubu Jolly € 6.16" [ref=e1399] [cursor=pointer]:
+              - /url: /products/keycha942
+              - generic [ref=e1400]:
+                - img "Jolly" [ref=e1403]
+                - button "Quick Add" [ref=e1405]
+              - generic [ref=e1406]: Pop Culture Pin
+              - generic [ref=e1407]: Labubu
+              - generic [ref=e1408]: Jolly
+              - generic [ref=e1409]: € 6.16
+            - link "Blade Of Chaos Quick Add Gaming Keychain God Of War Blade Of Chaos € 15.40" [ref=e1410] [cursor=pointer]:
+              - /url: /products/keycha110
+              - generic [ref=e1411]:
+                - img "Blade Of Chaos" [ref=e1414]
+                - button "Quick Add" [ref=e1416]
+              - generic [ref=e1417]: Gaming Keychain
+              - generic [ref=e1418]: God Of War
+              - generic [ref=e1419]: Blade Of Chaos
+              - generic [ref=e1420]: € 15.40
+            - link "Thor's Hammer Quick Add Last pieces Gaming Keychain God Of War Thor's Hammer € 15.40" [ref=e1421] [cursor=pointer]:
+              - /url: /products/keycha109
+              - generic [ref=e1422]:
+                - img "Thor's Hammer" [ref=e1425]
+                - button "Quick Add" [ref=e1427]
+              - generic [ref=e1428]: Last pieces
+              - generic [ref=e1429]: Gaming Keychain
+              - generic [ref=e1430]: God Of War
+              - generic [ref=e1431]: Thor's Hammer
+              - generic [ref=e1432]: € 15.40
+            - link "Blade Of Chaos Quick Add Last pieces Gaming Keychain God Of War Blade Of Chaos € 15.40" [ref=e1433] [cursor=pointer]:
+              - /url: /products/keycha105
+              - generic [ref=e1434]:
+                - img "Blade Of Chaos" [ref=e1437]
+                - button "Quick Add" [ref=e1439]
+              - generic [ref=e1440]: Last pieces
+              - generic [ref=e1441]: Gaming Keychain
+              - generic [ref=e1442]: God Of War
+              - generic [ref=e1443]: Blade Of Chaos
+              - generic [ref=e1444]: € 15.40
+            - link "Arctic Axe Quick Add Gaming Keychain Arena Breakout Arctic Axe € 24.08" [ref=e1445] [cursor=pointer]:
+              - /url: /products/keycha1201
+              - generic [ref=e1446]:
+                - img "Arctic Axe" [ref=e1449]
+                - button "Quick Add" [ref=e1451]
+              - generic [ref=e1452]: Gaming Keychain
+              - generic [ref=e1453]: Arena Breakout
+              - generic [ref=e1454]: Arctic Axe
+              - generic [ref=e1455]: € 24.08
+            - link "Kunai Quick Add Last pieces Anime Keychain Naruto Kunai € 21.28" [ref=e1456] [cursor=pointer]:
+              - /url: /products/keycha1189
+              - generic [ref=e1457]:
+                - img "Kunai" [ref=e1460]
+                - button "Quick Add" [ref=e1462]
+              - generic [ref=e1463]: Last pieces
+              - generic [ref=e1464]: Anime Keychain
+              - generic [ref=e1465]: Naruto
+              - generic [ref=e1466]: Kunai
+              - generic [ref=e1467]: € 21.28
+            - link "Jiki Jiki no Mi Quick Add Anime Pin One Piece Jiki Jiki no Mi € 7.56" [ref=e1468] [cursor=pointer]:
+              - /url: /products/keycha1219
+              - generic [ref=e1469]:
+                - img "Jiki Jiki no Mi" [ref=e1472]
+                - button "Quick Add" [ref=e1474]
+              - generic [ref=e1475]: Anime Pin
+              - generic [ref=e1476]: One Piece
+              - generic [ref=e1477]: Jiki Jiki no Mi
+              - generic [ref=e1478]: € 7.56
+            - link "Mark Of Chaos Quick Add Gaming Pin Warhammer 40k Mark Of Chaos € 21.28" [ref=e1479] [cursor=pointer]:
+              - /url: /products/keycha993
+              - generic [ref=e1480]:
+                - img "Mark Of Chaos" [ref=e1483]
+                - button "Quick Add" [ref=e1485]
+              - generic [ref=e1486]: Gaming Pin
+              - generic [ref=e1487]: Warhammer 40k
+              - generic [ref=e1488]: Mark Of Chaos
+              - generic [ref=e1489]: € 21.28
+            - link "Indomitus Quick Add Gaming Pin Warhammer 40k Indomitus € 24.36" [ref=e1490] [cursor=pointer]:
+              - /url: /products/keycha992
+              - generic [ref=e1491]:
+                - img "Indomitus" [ref=e1494]
+                - button "Quick Add" [ref=e1496]
+              - generic [ref=e1497]: Gaming Pin
+              - generic [ref=e1498]: Warhammer 40k
+              - generic [ref=e1499]: Indomitus
+              - generic [ref=e1500]: € 24.36
+            - link "Broken Pines Quick Add Foam Toy Sword Genshin Impact Broken Pines € 36.12" [ref=e1501] [cursor=pointer]:
+              - /url: /products/foasw020
+              - generic [ref=e1502]:
+                - img "Broken Pines" [ref=e1505]
+                - button "Quick Add" [ref=e1507]
+              - generic [ref=e1508]: Foam Toy Sword
+              - generic [ref=e1509]: Genshin Impact
+              - generic [ref=e1510]: Broken Pines
+              - generic [ref=e1511]: € 36.12
+            - link "The Vessel Quick Add Last pieces Gaming Wallet Hollow Knight The Vessel € 17.08" [ref=e1512] [cursor=pointer]:
+              - /url: /products/keycha1211
+              - generic [ref=e1513]:
+                - img "The Vessel" [ref=e1516]
+                - button "Quick Add" [ref=e1518]
+              - generic [ref=e1519]: Last pieces
+              - generic [ref=e1520]: Gaming Wallet
+              - generic [ref=e1521]: Hollow Knight
+              - generic [ref=e1522]: The Vessel
+              - generic [ref=e1523]: € 17.08
+            - link "Nevermore Academy Quick Add Movie Pin Wednesday Nevermore Academy € 7.56" [ref=e1524] [cursor=pointer]:
+              - /url: /products/keycha1232
+              - generic [ref=e1525]:
+                - img "Nevermore Academy" [ref=e1528]
+                - button "Quick Add" [ref=e1530]
+              - generic [ref=e1531]: Movie Pin
+              - generic [ref=e1532]: Wednesday
+              - generic [ref=e1533]: Nevermore Academy
+              - generic [ref=e1534]: € 7.56
+            - link "Sophie's Ring Quick Add Anime Ring Howls Moving Castle Sophie's Ring € 17.08" [ref=e1535] [cursor=pointer]:
+              - /url: /products/keycha1445
+              - generic [ref=e1536]:
+                - img "Sophie's Ring" [ref=e1539]
+                - button "Quick Add" [ref=e1541]
+              - generic [ref=e1542]: Anime Ring
+              - generic [ref=e1543]: Howls Moving Castle
+              - generic [ref=e1544]: Sophie's Ring
+              - generic [ref=e1545]: € 17.08
+            - link "Dark Moon Quick Add Gaming Ring Elden Ring Dark Moon € 17.08" [ref=e1546] [cursor=pointer]:
+              - /url: /products/keycha1446
+              - generic [ref=e1547]:
+                - img "Dark Moon" [ref=e1550]
+                - button "Quick Add" [ref=e1552]
+              - generic [ref=e1553]: Gaming Ring
+              - generic [ref=e1554]: Elden Ring
+              - generic [ref=e1555]: Dark Moon
+              - generic [ref=e1556]: € 17.08
+            - link "Sophie's Ring Quick Add Anime Ring Howls Moving Castle Sophie's Ring € 17.08" [ref=e1557] [cursor=pointer]:
+              - /url: /products/keycha1443
+              - generic [ref=e1558]:
+                - img "Sophie's Ring" [ref=e1561]
+                - button "Quick Add" [ref=e1563]
+              - generic [ref=e1564]: Anime Ring
+              - generic [ref=e1565]: Howls Moving Castle
+              - generic [ref=e1566]: Sophie's Ring
+              - generic [ref=e1567]: € 17.08
+            - link "Diamond Quick Add Gaming Ring Minecraft Diamond € 17.08" [ref=e1568] [cursor=pointer]:
+              - /url: /products/keycha1447
+              - generic [ref=e1569]:
+                - img "Diamond" [ref=e1572]
+                - button "Quick Add" [ref=e1574]
+              - generic [ref=e1575]: Gaming Ring
+              - generic [ref=e1576]: Minecraft
+              - generic [ref=e1577]: Diamond
+              - generic [ref=e1578]: € 17.08
+            - link "Space Wolves Quick Add Gaming Ring Warhammer 40k Space Wolves € 20.16" [ref=e1579] [cursor=pointer]:
+              - /url: /products/keycha1448
+              - generic [ref=e1580]:
+                - img "Space Wolves" [ref=e1583]
+                - button "Quick Add" [ref=e1585]
+              - generic [ref=e1586]: Gaming Ring
+              - generic [ref=e1587]: Warhammer 40k
+              - generic [ref=e1588]: Space Wolves
+              - generic [ref=e1589]: € 20.16
+            - link "Adepta Sororitas Quick Add Gaming Ring Warhammer 40k Adepta Sororitas € 24.36" [ref=e1590] [cursor=pointer]:
+              - /url: /products/keycha1449
+              - generic [ref=e1591]:
+                - img "Adepta Sororitas" [ref=e1594]
+                - button "Quick Add" [ref=e1596]
+              - generic [ref=e1597]: Gaming Ring
+              - generic [ref=e1598]: Warhammer 40k
+              - generic [ref=e1599]: Adepta Sororitas
+              - generic [ref=e1600]: € 24.36
+            - link "Sapphire Quick Add Gaming Ring Monster Hunter Sapphire € 18.76" [ref=e1601] [cursor=pointer]:
+              - /url: /products/keycha1441
+              - generic [ref=e1602]:
+                - img "Sapphire" [ref=e1605]
+                - button "Quick Add" [ref=e1607]
+              - generic [ref=e1608]: Gaming Ring
+              - generic [ref=e1609]: Monster Hunter
+              - generic [ref=e1610]: Sapphire
+              - generic [ref=e1611]: € 18.76
+            - link "Space Wolves Quick Add Gaming Ring Warhammer 40k Space Wolves € 21.28" [ref=e1612] [cursor=pointer]:
+              - /url: /products/keycha1442
+              - generic [ref=e1613]:
+                - img "Space Wolves" [ref=e1616]
+                - button "Quick Add" [ref=e1618]
+              - generic [ref=e1619]: Gaming Ring
+              - generic [ref=e1620]: Warhammer 40k
+              - generic [ref=e1621]: Space Wolves
+              - generic [ref=e1622]: € 21.28
+            - link "Iron Warriors Quick Add Gaming Ring Warhammer 40k Iron Warriors € 19.88" [ref=e1623] [cursor=pointer]:
+              - /url: /products/keycha1440
+              - generic [ref=e1624]:
+                - img "Iron Warriors" [ref=e1627]
+                - button "Quick Add" [ref=e1629]
+              - generic [ref=e1630]: Gaming Ring
+              - generic [ref=e1631]: Warhammer 40k
+              - generic [ref=e1632]: Iron Warriors
+              - generic [ref=e1633]: € 19.88
+          - generic [ref=e980]:
+            - button "Load more (1229 remaining)" [ref=e981] [cursor=pointer]
+            - paragraph [ref=e982]: Showing 48 of 1277
+    - contentinfo [ref=e983]:
+      - generic [ref=e985]:
+        - generic [ref=e986]:
+          - generic [ref=e989]: Stay Connected
+          - heading "The Drop Signal" [level=3] [ref=e990]
+          - paragraph [ref=e991]: New drops, limited runs and universe exclusives — direct to your inbox before the public.
+        - generic [ref=e992]:
+          - textbox "Email for newsletter" [ref=e993]:
+            - /placeholder: your@email.com
+          - button "Subscribe" [ref=e994] [cursor=pointer]
+      - generic [ref=e996]:
+        - generic [ref=e997]:
+          - generic [ref=e998]:
+            - generic [ref=e999]: STARGATER
+            - generic [ref=e1000]: NEXUS
+          - paragraph [ref=e1001]: Officially licensed collectibles from the anime, gaming and film universes you love most.
+          - generic [ref=e1002]:
+            - link "X" [ref=e1003] [cursor=pointer]:
+              - /url: "#"
+            - link "Instagram" [ref=e1004] [cursor=pointer]:
+              - /url: "#"
+              - text: IG
+            - link "TikTok" [ref=e1005] [cursor=pointer]:
+              - /url: "#"
+              - text: TK
+        - generic [ref=e1006]:
+          - generic [ref=e1007]: Shop
+          - list [ref=e1008]:
+            - listitem [ref=e1009]:
+              - link "Anime Keychains" [ref=e1010] [cursor=pointer]:
+                - /url: /collections/womenswear
+            - listitem [ref=e1011]:
+              - link "Gaming Pins" [ref=e1012] [cursor=pointer]:
+                - /url: /collections/menswear
+            - listitem [ref=e1013]:
+              - link "Film Collectibles" [ref=e1014] [cursor=pointer]:
+                - /url: /collections/accessories
+            - listitem [ref=e1015]:
+              - link "New Drops" [ref=e1016] [cursor=pointer]:
+                - /url: /products?new=1
+            - listitem [ref=e1017]:
+              - link "All Items" [ref=e1018] [cursor=pointer]:
+                - /url: /products
+        - generic [ref=e1019]:
+          - generic [ref=e1020]: Company
+          - list [ref=e1021]:
+            - listitem [ref=e1022]:
+              - link "About STARGATER" [ref=e1023] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e1024]:
+              - link "Sourcing & Ethics" [ref=e1025] [cursor=pointer]:
+                - /url: /sourcing
+            - listitem [ref=e1026]:
+              - link "Press" [ref=e1027] [cursor=pointer]:
+                - /url: /press
+            - listitem [ref=e1028]:
+              - link "Affiliates" [ref=e1029] [cursor=pointer]:
+                - /url: /affiliates
+            - listitem [ref=e1030]:
+              - link "Careers" [ref=e1031] [cursor=pointer]:
+                - /url: /careers
+        - generic [ref=e1032]:
+          - generic [ref=e1033]: Support
+          - list [ref=e1034]:
+            - listitem [ref=e1035]:
+              - link "Sizing Guide" [ref=e1036] [cursor=pointer]:
+                - /url: /sizing
+            - listitem [ref=e1037]:
+              - link "Care Guide" [ref=e1038] [cursor=pointer]:
+                - /url: /care
+            - listitem [ref=e1039]:
+              - link "Returns" [ref=e1040] [cursor=pointer]:
+                - /url: /returns
+            - listitem [ref=e1041]:
+              - link "Shipping" [ref=e1042] [cursor=pointer]:
+                - /url: /shipping
+            - listitem [ref=e1043]:
+              - link "Contact" [ref=e1044] [cursor=pointer]:
+                - /url: /contact
+      - generic [ref=e1045]:
+        - generic [ref=e1046]: © 2026 STARGATER NEXUS. All rights reserved.
+        - generic [ref=e1047]:
+          - link "Privacy" [ref=e1048] [cursor=pointer]:
+            - /url: "#"
+          - link "Terms" [ref=e1049] [cursor=pointer]:
+            - /url: "#"
+          - link "Cookies" [ref=e1050] [cursor=pointer]:
+            - /url: "#"
+    - dialog "Shopping bag" [ref=e1051]:
+      - generic [ref=e1052]:
+        - generic [ref=e1053]:
+          - heading "Your Bag" [level=2] [ref=e1054]
+          - paragraph [ref=e1055]: 0 items
+        - button "Close bag" [ref=e1056] [cursor=pointer]:
+          - img [ref=e1057]
+      - generic [ref=e1061]:
+        - img [ref=e1062]
+        - paragraph [ref=e1065]: Your bag is empty
+        - button "Continue shopping" [ref=e1066] [cursor=pointer]
+    - generic "Notifications"
+    - button "Back to top":
+      - img
+    - generic [ref=e1068]:
+      - generic [ref=e1069]:
+        - img [ref=e1071]
+        - paragraph [ref=e1073]:
+          - text: We use cookies to remember your preferences, understand how you use STARGATER, and improve your experience.
+          - link "Privacy policy" [ref=e1074] [cursor=pointer]:
+            - /url: /values
+      - generic [ref=e1075]:
+        - button "Essential only" [ref=e1076] [cursor=pointer]
+        - button "Accept all" [ref=e1077] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e1083] [cursor=pointer]:
+    - img [ref=e1084]
+  - alert [ref=e1087]

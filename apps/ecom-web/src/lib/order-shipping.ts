@@ -106,7 +106,11 @@ function safeTrackingUrl(value: string | undefined): string | undefined {
 }
 
 export function getOrderTrackingUrl(order: OrderShippingDisplayInput): string | undefined {
-  return safeTrackingUrl(order.shipment?.trackingUrl) ?? safeTrackingUrl(order.inpostShipment?.shipmentUrl);
+  return (
+    safeTrackingUrl(order.shipment?.trackingUrl) ??
+    safeTrackingUrl(order.inpostShipment?.trackingUrl) ??
+    safeTrackingUrl(order.inpostShipment?.shipmentUrl)
+  );
 }
 
 export function getOrderShippingSummary(

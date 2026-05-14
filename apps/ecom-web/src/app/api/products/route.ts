@@ -53,9 +53,11 @@ function clampText(value: string | null | undefined): string | undefined {
   return normalized.slice(0, MAX_QUERY_TEXT_LENGTH);
 }
 
+const VALID_SORT_VALUES = new Set(['featured', 'price-asc', 'price-desc', 'newest', 'name-asc', 'name-desc', 'category']);
+
 function isValidSort(value: string | null | undefined): boolean {
   if (value === null || value === undefined || value.length === 0) return true;
-  return value === 'featured' || value === 'price-asc' || value === 'price-desc' || value === 'newest';
+  return VALID_SORT_VALUES.has(value);
 }
 
 function productMatchesThemes(product: { lore?: string; name: string }, themes: string[]): boolean {
@@ -117,6 +119,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     ...(rawCategoryName === undefined ? [] : [rawCategoryName]),
   ];
   const themeNames = parseFilterList(searchParams, 'themes');
+  const materialNames = parseFilterList(searchParams, 'materials');
+  const sizeNames = parseFilterList(searchParams, 'sizes');
+  const loreNames = parseFilterList(searchParams, 'lores');
   const search = searchParams.get('q') ?? undefined;
   const limit = parseLimit(searchParams.get('limit'), 100, 200);
   const skip = parseSkip(searchParams.get('skip'));
@@ -139,10 +144,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!isValidSort(sort)) {
     return NextResponse.json({ error: 'Invalid sort' }, { status: 400 });
   }
-  if (themeNames.length > MAX_CATALOG_FILTER_ITEMS || categoryNames.length > MAX_CATALOG_FILTER_ITEMS) {
+  if (themeNames.length > MAX_CATALOG_FILTER_ITEMS || categoryNames.length > MAX_CATALOG_FILTER_ITEMS ||
+      materialNames.length > MAX_CATALOG_FILTER_ITEMS || sizeNames.length > MAX_CATALOG_FILTER_ITEMS ||
+      loreNames.length > MAX_CATALOG_FILTER_ITEMS) {
     return NextResponse.json({ error: 'Too many filter values' }, { status: 400 });
   }
-  for (const value of [...themeNames, ...categoryNames]) {
+  for (const value of [...themeNames, ...categoryNames, ...materialNames, ...sizeNames, ...loreNames]) {
     if (value.length > MAX_QUERY_TEXT_LENGTH) {
       return NextResponse.json({ error: 'Invalid filter value length' }, { status: 400 });
     }
@@ -162,6 +169,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     categoryName: safeCategoryName,
     categoryNames,
     themeNames,
+    loreNames,
     search: search?.slice(0, MAX_QUERY_TEXT_LENGTH),
     ids,
     newOnly,
@@ -197,6 +205,33 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       staticProducts = staticProducts.filter((p) => productMatchesThemes(p, themeNames));
     }
 
+    if (materialNames.length > 0) {
+      const materialSet = new Set(materialNames.map((m) => m.toLowerCase()));
+      staticProducts = staticProducts.filter((p) => {
+        const segments = p.name.split('|');
+        const mat = (p.material?.trim() ?? segments[2]?.trim() ?? '').toLowerCase();
+        return mat.length > 0 && materialSet.has(mat);
+      });
+    }
+
+    if (sizeNames.length > 0) {
+      const sizeSet = new Set(sizeNames.map((s) => s.toLowerCase()));
+      staticProducts = staticProducts.filter((p) => {
+        const segments = p.name.split('|');
+        const sz = (p.sizeInfo?.trim() ?? segments[1]?.trim() ?? '').toLowerCase();
+        return sz.length > 0 && sizeSet.has(sz);
+      });
+    }
+
+    if (loreNames.length > 0) {
+      const loreSet = new Set(loreNames.map((l) => l.toLowerCase()));
+      staticProducts = staticProducts.filter((p) => {
+        const segments = p.name.split('|');
+        const lr = (p.lore?.trim() ?? segments[4]?.trim() ?? '').toLowerCase();
+        return lr.length > 0 && loreSet.has(lr);
+      });
+    }
+
     if (search !== undefined) {
       const q = search.toLowerCase();
       staticProducts = staticProducts.filter(
@@ -217,6 +252,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     if (sort === 'price-asc') staticProducts = [...staticProducts].sort((a, b) => a.price - b.price);
     else if (sort === 'price-desc') staticProducts = [...staticProducts].sort((a, b) => b.price - a.price);
+    else if (sort === 'name-asc') staticProducts = [...staticProducts].sort((a, b) => (a.shortName ?? a.name).localeCompare(b.shortName ?? b.name));
+    else if (sort === 'name-desc') staticProducts = [...staticProducts].sort((a, b) => (b.shortName ?? b.name).localeCompare(a.shortName ?? a.name));
+    else if (sort === 'category') staticProducts = [...staticProducts].sort((a, b) => a.category.localeCompare(b.category));
 
     return NextResponse.json({
       products: staticProducts.slice(skip, skip + limit),

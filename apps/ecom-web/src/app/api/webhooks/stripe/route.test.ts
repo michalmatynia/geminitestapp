@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   findOneAndUpdate: vi.fn(),
+  updateOne: vi.fn(),
   verifyStripeWebhook: vi.fn(),
   sendOrderConfirmation: vi.fn(),
   fulfillInpostOrder: vi.fn(),
@@ -16,7 +17,7 @@ vi.mock('server-only', () => ({}));
 
 vi.mock('@/lib/mongodb', () => ({
   getDb: vi.fn(async () => ({
-    collection: () => ({ findOneAndUpdate: mocks.findOneAndUpdate }),
+    collection: () => ({ findOneAndUpdate: mocks.findOneAndUpdate, updateOne: mocks.updateOne }),
   })),
 }));
 
@@ -66,12 +67,14 @@ const PROCESSING_ORDER = { orderId: 'ARC-2026-DEADBEEF', status: 'processing', e
 describe('Stripe webhook route', () => {
   beforeEach(() => {
     mocks.findOneAndUpdate.mockReset();
+    mocks.updateOne.mockReset();
     mocks.verifyStripeWebhook.mockReset();
     mocks.sendOrderConfirmation.mockReset();
     mocks.fulfillInpostOrder.mockReset();
 
     mocks.verifyStripeWebhook.mockResolvedValue(true);
     mocks.findOneAndUpdate.mockResolvedValue(PROCESSING_ORDER);
+    mocks.updateOne.mockResolvedValue({ modifiedCount: 1 });
     mocks.sendOrderConfirmation.mockResolvedValue(undefined);
     mocks.fulfillInpostOrder.mockResolvedValue(undefined);
   });
@@ -160,5 +163,15 @@ describe('Stripe webhook route', () => {
     expect(res.status).toBe(200);
     const filter = mocks.findOneAndUpdate.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(JSON.stringify(filter)).toContain('ARC-2026-CUSTMORD');
+  });
+
+  it('does not send confirmation email when webhook is already processed (idempotency)', async () => {
+    mocks.updateOne.mockResolvedValue({ modifiedCount: 0 });
+
+    const res = await POST(makeWebhookRequest(makePaymentIntentEvent('payment_intent.succeeded', 'succeeded')));
+
+    expect(res.status).toBe(200);
+    expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
+    expect(mocks.fulfillInpostOrder).not.toHaveBeenCalled();
   });
 });

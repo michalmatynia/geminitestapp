@@ -1,0 +1,9 @@
+src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts
+src/features/kangur/server/parent-account-captcha.ts
+src/features/kangur/services/kangur-learner-repository.ts
+src/features/kangur/ui/components/adding-synthesis/AddingSynthesisGame.hooks.ts
+src/features/kangur/ui/components/game-runtime/QuestionCard.tsx
+src/features/kangur/ui/components/MultiplicationArrayGame.tsx
+src/features/kangur/ui/hooks/useKangurLearnerActivity.ts
+src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx
+src/features/kangur/ui/pages/lessons/Lessons.hooks.ts

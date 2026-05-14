@@ -1,0 +1,70 @@
+- generic [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - main [ref=e8]:
+        - generic [ref=e9]:
+          - heading "Page not found" [level=1] [ref=e10]
+          - paragraph [ref=e11]: We couldn't find what you're looking for.
+  - generic [active]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - navigation [ref=e17]:
+            - button "previous" [disabled] [ref=e18]:
+              - img "previous" [ref=e19]
+            - generic [ref=e21]:
+              - generic [ref=e22]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e23]:
+              - img "next" [ref=e24]
+          - img
+        - generic [ref=e26]:
+          - link "Next.js 16.1.7 (stale) Turbopack" [ref=e27] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e28]
+            - generic "There is a newer version (16.2.6) available, upgrade recommended!" [ref=e30]: Next.js 16.1.7 (stale)
+            - generic [ref=e31]: Turbopack
+          - img
+      - dialog "Build Error" [ref=e33]:
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e40]: Build Error
+              - generic [ref=e41]:
+                - button "Copy Error Info" [ref=e42] [cursor=pointer]:
+                  - img [ref=e43]
+                - button "No related documentation found" [disabled] [ref=e45]:
+                  - img [ref=e46]
+                - button "Attach Node.js inspector" [ref=e48] [cursor=pointer]:
+                  - img [ref=e49]
+            - generic [ref=e58]: Parsing ecmascript source code failed
+          - generic [ref=e60]:
+            - generic [ref=e62]:
+              - img [ref=e64]
+              - generic [ref=e68]: ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts (818:1)
+              - button "Open in editor" [ref=e69] [cursor=pointer]:
+                - img [ref=e71]
+            - generic [ref=e74]:
+              - generic [ref=e75]: Parsing ecmascript source code failed
+              - generic [ref=e76]: 816 |
+              - text: return null;
+              - generic [ref=e77]: 817 |
+              - generic [ref=e78]: "}"
+              - text: ">"
+              - generic [ref=e79]: 818 |
+              - generic [ref=e80]: "|"
+              - text: ^
+              - generic [ref=e81]: "Expected '}', got '<eof>' Import trace: App Route: ./src/features/ai/agent-runtime/tools/run-agent-tool-extraction.ts ./src/features/ai/agent-runtime/tools/segments/tool-execution.ts ./src/features/ai/agent-runtime/execution/step-runner/tool-logic.ts ./src/features/ai/agent-runtime/execution/step-runner.ts ./src/features/ai/agent-runtime/core/engine.ts ./src/features/ai/agent-runtime/workers/agent-processor.ts ./src/features/ai/agent-runtime/workers/agentQueue.ts ./src/features/jobs/queue-init.ts ./src/app/api/v2/products/scrape-profiles/run/handler.ts ./src/app/api/v2/products/scrape-profiles/run/route-handler.ts ./src/app/api/v2/products/[[...path]]/route.ts"
+        - generic [ref=e82]: "1"
+        - generic [ref=e83]: "2"
+    - button "Open issues overlay" [ref=e90] [cursor=pointer]:
+      - img [ref=e92]
+      - generic [ref=e94]:
+        - generic [ref=e95]: "0"
+        - generic [ref=e96]: "1"
+      - generic [ref=e97]: Issue
+  - alert [ref=e98]

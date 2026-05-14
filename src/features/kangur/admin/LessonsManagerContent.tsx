@@ -13,15 +13,13 @@ import { LessonMetadataForm } from '../components/LessonMetadataForm';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { LessonContentEditorDialog } from '../components/LessonContentEditorDialog';
 import { LessonSvgQuickAddModal } from '../components/LessonSvgQuickAddModal';
-import type { UseAdminKangurLessonsManagerStateReturn } from './AdminKangurLessonsManagerPage.hooks';
 
 export function LessonsManagerContent({ standalone = true }: { standalone?: boolean }): React.JSX.Element {
   const state = useLessonsManager();
 
   const {
     contentLocale, setContentLocale, isLoading, contentLocaleOptions, contentLocaleLabel, lessons,
-    showModal, setShowModal, showContentModal, setShowContentModal, editingLesson, setEditingLesson,
-    editingContentLesson, setEditingContentLesson, lessonToDelete, setLessonToDelete, formData, setFormData,
+    showModal, editingLesson, lessonToDelete, setLessonToDelete, formData, setFormData,
     componentContentJson, setComponentContentJson, contentDraft, setContentDraft, treeMode, setTreeModeAndPersist,
     authoringFilter, setAuthoringFilter, ageGroupFilter, setAgeGroupFilter, isSaving, authoringFilterCounts,
     authoringFilteredLessons, geometryPackAddedCount, logicPackAddedCount, legacyImportCount, filteredLessons,

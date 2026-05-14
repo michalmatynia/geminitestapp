@@ -7,6 +7,11 @@ const normalizePromoCode = (value: unknown): string => {
   return value.trim().toUpperCase().replace(/\s+/g, '');
 };
 
+const roundMoneyAmount = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+};
+
 function parseEmail(body: unknown): string | null {
   if (typeof body !== 'object' || body === null) {
     return null;
@@ -23,7 +28,7 @@ function parseSubtotal(body: unknown): number {
   if (typeof subtotalRaw !== 'number' || !Number.isFinite(subtotalRaw)) {
     return 0;
   }
-  return Math.round(subtotalRaw);
+  return roundMoneyAmount(Math.max(0, subtotalRaw));
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

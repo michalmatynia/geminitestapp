@@ -1,16 +1,6 @@
 export { processProductSyncRun } from './processor/handlers';
 import 'server-only';
 
-import { randomUUID } from 'crypto';
-
-import {
-  getProductSyncProfile,
-  getProductSyncRun,
-  putProductSyncRunItem,
-  touchProductSyncProfileLastRunAt,
-  updateProductSyncRun,
-  updateProductSyncRunStatus,
-} from '@/features/product-sync/services/product-sync-repository';
 import { extractBaseParameters } from '@/features/integrations/services/imports/parameter-import/extractor';
 import {
   getCatalogParameterLinks,
@@ -38,8 +28,6 @@ import type {
   ProductSyncProfile,
   ProductSyncPreview,
   ProductSyncTargetSource,
-  ProductSyncRunItemRecord,
-  ProductSyncRunRecord,
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
@@ -59,8 +47,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   BASE_INTEGRATION_SLUGS,
   BASE_DETAILS_BATCH_SIZE,
-  RUN_PROGRESS_FLUSH_EVERY_ITEMS,
-  RUN_PROGRESS_FLUSH_EVERY_MS,
 } from './product-sync-processor/constants';
 import type {
   BaseConnectionContext,
@@ -105,7 +91,7 @@ export const coerceNumber = (value: unknown): number | null => {
     return null;
   }
 
-  if (value && typeof value === 'object') {
+  if (value !== null && typeof value === 'object') {
     for (const entry of Object.values(value as Record<string, unknown>)) {
       const parsed = coerceNumber(entry);
       if (parsed !== null) return parsed;
@@ -141,7 +127,7 @@ const PARAMETER_COLLECTION_KEYS = ['parameters', 'params', 'attributes', 'featur
 
 const normalizeScalarParameterValue = (value: unknown): string => {
   const direct = toTrimmedString(value);
-  if (direct) return direct;
+  if (direct.length > 0) return direct;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (Array.isArray(value)) {
@@ -150,7 +136,7 @@ const normalizeScalarParameterValue = (value: unknown): string => {
       .filter((entry: string): boolean => entry.length > 0)
       .join(', ');
   }
-  if (value && typeof value === 'object') {
+  if (value !== null && typeof value === 'object') {
     try {
       const serialized = JSON.stringify(value);
       return serialized !== '{}' ? serialized : '';

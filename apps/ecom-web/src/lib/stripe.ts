@@ -119,15 +119,21 @@ export async function createStripePaymentIntent(
   };
 }
 
+function parseStripeSignature(header: string): { timestamp: string; sig: string } {
+  const parts = header.split(',');
+  return {
+    timestamp: parts.find((p) => p.startsWith('t='))?.slice(2) ?? '',
+    sig: parts.find((p) => p.startsWith('v1='))?.slice(3) ?? '',
+  };
+}
+
 export function verifyStripeWebhookSignature(
   payload: string,
   signatureHeader: string,
   secret: string,
 ): boolean {
   try {
-    const parts = signatureHeader.split(',');
-    const timestamp = parts.find((p) => p.startsWith('t='))?.slice(2) ?? '';
-    const sig = parts.find((p) => p.startsWith('v1='))?.slice(3) ?? '';
+    const { timestamp, sig } = parseStripeSignature(signatureHeader);
     if (timestamp === '' || sig === '') return false;
 
     const ts = Number(timestamp);

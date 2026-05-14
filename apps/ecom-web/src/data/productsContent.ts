@@ -22,7 +22,11 @@ export interface ProductsCollectionContent {
   priceLabel: string;
   categoryLabel: string;
   categoryAllLabel: string;
+  typeLabel: string;
+  universeLabel: string;
+  materialLabel: string;
   sizeLabel: string;
+  loreLabel: string;
   homeBreadcrumbLabel: string;
   collectionsBreadcrumbLabel: string;
   productsCountLabel: string;
@@ -112,7 +116,11 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
     priceLabel: 'Price',
     categoryLabel: 'Category',
     categoryAllLabel: 'All',
+    typeLabel: 'Type',
+    universeLabel: 'Universe',
+    materialLabel: 'Material',
     sizeLabel: 'Size',
+    loreLabel: 'Universe / Lore',
     homeBreadcrumbLabel: 'Home',
     collectionsBreadcrumbLabel: 'Collections',
     productsCountLabel: 'products',
@@ -133,9 +141,12 @@ export const PRODUCTS_CONTENT_DEFAULTS: ProductsContent = {
     showingLabel: 'Showing',
     sortOptions: [
       { value: 'featured', label: 'Featured' },
+      { value: 'newest', label: 'Newest' },
       { value: 'price-asc', label: 'Price: Low to High' },
       { value: 'price-desc', label: 'Price: High to Low' },
-      { value: 'newest', label: 'Newest' },
+      { value: 'name-asc', label: 'Name: A → Z' },
+      { value: 'name-desc', label: 'Name: Z → A' },
+      { value: 'category', label: 'Category' },
     ],
     sizes: ['XS', 'S', 'M', 'L', 'XL', '44', '46', '48', '50', '52'],
     priceRanges: [
@@ -432,7 +443,11 @@ export function validateProductsContent(input: unknown): ProductsContentValidati
       priceLabel: readString(collection, 'priceLabel', collectionDefaults.priceLabel, TEXT_LIMITS.short, errors, 'collection.priceLabel'),
       categoryLabel: readString(collection, 'categoryLabel', collectionDefaults.categoryLabel, TEXT_LIMITS.short, errors, 'collection.categoryLabel'),
       categoryAllLabel: readString(collection, 'categoryAllLabel', collectionDefaults.categoryAllLabel, TEXT_LIMITS.short, errors, 'collection.categoryAllLabel'),
+      typeLabel: readString(collection, 'typeLabel', collectionDefaults.typeLabel, TEXT_LIMITS.short, errors, 'collection.typeLabel'),
+      universeLabel: readString(collection, 'universeLabel', collectionDefaults.universeLabel, TEXT_LIMITS.short, errors, 'collection.universeLabel'),
+      materialLabel: readString(collection, 'materialLabel', collectionDefaults.materialLabel, TEXT_LIMITS.short, errors, 'collection.materialLabel'),
       sizeLabel: readString(collection, 'sizeLabel', collectionDefaults.sizeLabel, TEXT_LIMITS.short, errors, 'collection.sizeLabel'),
+      loreLabel: readString(collection, 'loreLabel', collectionDefaults.loreLabel, TEXT_LIMITS.short, errors, 'collection.loreLabel'),
       homeBreadcrumbLabel: readString(collection, 'homeBreadcrumbLabel', collectionDefaults.homeBreadcrumbLabel, TEXT_LIMITS.short, errors, 'collection.homeBreadcrumbLabel'),
       collectionsBreadcrumbLabel: readString(collection, 'collectionsBreadcrumbLabel', collectionDefaults.collectionsBreadcrumbLabel, TEXT_LIMITS.short, errors, 'collection.collectionsBreadcrumbLabel'),
       productsCountLabel: readString(collection, 'productsCountLabel', collectionDefaults.productsCountLabel, TEXT_LIMITS.short, errors, 'collection.productsCountLabel'),

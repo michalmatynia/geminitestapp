@@ -131,7 +131,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
     ],
     panelStatus: 'UNIT-001 / FEATURED',
     panelTitle: 'Collector\'s Edition',
-    panelSubtitle: 'Anime · Gaming · Film',
+    panelSubtitle: 'click to explore',
     panelPrice: 'From € 15',
     bottomStripItems: [
       'ANIME',

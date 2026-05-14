@@ -117,6 +117,7 @@ const PRODUCT_COLLECTIONS: MigrationCollection[] = [
 ];
 
 const readEnv = (key: string): string => process.env[key]?.trim() ?? '';
+const RETIRED_MIGRATION_OVERRIDE_ENV = 'ALLOW_RETIRED_PRODUCTS_DB_MIGRATION';
 
 const resolveMainUri = (): string =>
   readEnv('MONGODB_URI') || readEnv('MONGODB_LOCAL_URI') || 'mongodb://127.0.0.1:27017/app';
@@ -129,14 +130,14 @@ const resolveProductsUri = (): string =>
   readEnv('MONGODB_PRODUCTS_LOCAL_URI') ||
   readEnv('PRODUCTS_MONGODB_URI') ||
   readEnv('MONGODB_PRODUCTS_URI') ||
-  'mongodb://127.0.0.1:27020/products_local';
+  'mongodb://127.0.0.1:27017/app';
 
 const resolveProductsDb = (): string =>
   readEnv('PRODUCTS_MONGODB_LOCAL_DB') ||
   readEnv('MONGODB_PRODUCTS_LOCAL_DB') ||
   readEnv('PRODUCTS_MONGODB_DB') ||
   readEnv('MONGODB_PRODUCTS_DB') ||
-  'products_local';
+  'app';
 
 const parseCliOptions = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -286,6 +287,15 @@ const copyCollection = async (
 
 const run = async (): Promise<void> => {
   const options = parseCliOptions(process.argv.slice(2));
+  const sourceMatchesTarget = options.sourceUri === options.targetUri && options.sourceDb === options.targetDb;
+  if (sourceMatchesTarget && process.env[RETIRED_MIGRATION_OVERRIDE_ENV]?.trim().toLowerCase() !== 'true') {
+    throw new Error(
+      'Products migration to a separate local database is retired. ' +
+        'Product List now uses the main app database. ' +
+        `Set ${RETIRED_MIGRATION_OVERRIDE_ENV}=true only for a deliberate one-off legacy migration.`
+    );
+  }
+
   const sourceClient = new MongoClient(options.sourceUri, {
     directConnection: options.sourceUri.includes('127.0.0.1') || options.sourceUri.includes('localhost'),
   });

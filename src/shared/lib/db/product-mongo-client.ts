@@ -1,9 +1,9 @@
 /**
  * Product MongoDB Client
  * 
- * Specialized MongoDB connection management for the Products/Ecommerce subsystem.
- * This module provides a dedicated connection pool for product-related operations,
- * supporting independent scaling and configuration from the primary app database.
+ * Specialized MongoDB connection management for product operations.
+ * Local Product List reads use the main app database by default; cloud product
+ * operations can still resolve through the products source config.
  * 
  * Features:
  * - Dedicated connection pooling for products.

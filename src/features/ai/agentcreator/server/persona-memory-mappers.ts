@@ -31,6 +31,27 @@ const resolveTitle = (item: PersonaMemoryEntryRecord): string => {
   return truncateText(item.content, 80);
 };
 
+const resolveSessionId = (metadata: Record<string, unknown> | undefined, runId: string | null): string | null => {
+  if (typeof metadata?.['sessionId'] === 'string') return metadata['sessionId'];
+  return runId;
+};
+
+const resolveTopicHints = (item: PersonaMemoryEntryRecord): string[] => {
+  return extractTopicHints(item.summary ?? item.content, item.topicHints);
+};
+
+const resolveMoodHints = (item: PersonaMemoryEntryRecord): string[] => {
+  return normalizeMoodHints(item.moodHints, item.summary ?? item.content);
+};
+
+const resolveMetadata = (item: PersonaMemoryEntryRecord, metadata: Record<string, unknown> | undefined, lastAccessedAt: string | null): Record<string, unknown> => {
+  return {
+    ...(metadata ?? {}),
+    ...(item.runId !== null ? { runId: item.runId } : {}),
+    ...(lastAccessedAt !== null ? { lastAccessedAt } : {}),
+  };
+};
+
 export const mapMemoryEntryToRecord = (
   item: PersonaMemoryEntryRecord,
   personaId: string
@@ -48,7 +69,7 @@ export const mapMemoryEntryToRecord = (
     summary: item.summary,
     title: resolveTitle(item),
     role: resolveRole(metadata),
-    sessionId: typeof metadata?.['sessionId'] === 'string' ? metadata['sessionId'] : item.runId,
+    sessionId: resolveSessionId(metadata, item.runId),
     memoryKey: item.memoryKey,
     sourceType: (item.sourceType ?? 'agent_memory') as PersonaMemorySourceType,
     sourceId: item.sourceId ?? item.id,
@@ -56,14 +77,20 @@ export const mapMemoryEntryToRecord = (
     sourceCreatedAt: resolveSourceCreatedAt(item, metadata),
     importance: item.importance,
     tags: item.tags,
-    topicHints: extractTopicHints(item.summary ?? item.content, item.topicHints),
-    moodHints: normalizeMoodHints(item.moodHints, item.summary ?? item.content),
-    metadata: {
-      ...(metadata ?? {}),
-      ...(item.runId !== null ? { runId: item.runId } : {}),
-      ...(lastAccessedAt !== null ? { lastAccessedAt } : {}),
-    },
+    topicHints: resolveTopicHints(item),
+    moodHints: resolveMoodHints(item),
+    metadata: resolveMetadata(item, metadata, lastAccessedAt),
   };
+};
+
+const resolveConversationMoodHints = (message: PersonaConversationMessageRecord, metadata: Record<string, unknown> | undefined): string[] => {
+  const rawMoodHints = metadata?.['moodHints'];
+  return normalizeMoodHints(
+    Array.isArray(rawMoodHints)
+      ? rawMoodHints.filter((item): item is string => typeof item === 'string')
+      : [],
+    message.content
+  );
 };
 
 export const mapConversationMessageToRecord = (
@@ -71,13 +98,6 @@ export const mapConversationMessageToRecord = (
   personaId: string
 ): PersonaMemoryRecord => {
   const metadata = asRecord(message.metadata);
-  const rawMoodHints = metadata?.['moodHints'];
-  const moodHints = normalizeMoodHints(
-    Array.isArray(rawMoodHints)
-      ? rawMoodHints.filter((item): item is string => typeof item === 'string')
-      : [],
-    message.content
-  );
 
   return {
     id: message.id,
@@ -98,7 +118,7 @@ export const mapConversationMessageToRecord = (
     importance: null,
     tags: [],
     topicHints: extractTopicHints(message.content),
-    moodHints,
+    moodHints: resolveConversationMoodHints(message, metadata),
     metadata: {
       ...(metadata ?? {}),
       sessionTitle: message.session.title,

@@ -1,8 +1,8 @@
 /* eslint-disable max-lines */
 import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 
-const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27020/products_local';
-const DEFAULT_ECOM_MONGODB_DB = 'products_local';
+const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
+const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
 
 type MongoSource = 'local' | 'cloud';
 type MongoConfig = { uri: string; dbName: string };

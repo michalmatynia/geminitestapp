@@ -206,9 +206,9 @@ describe('shared db mongo utils', () => {
     });
   });
 
-  it('resolves dedicated Products local and cloud source config', () => {
-    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27020/products_local';
-    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+  it('resolves Products local and cloud source config', () => {
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://localhost:27017/app';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'app';
     process.env['PRODUCTS_MONGODB_CLOUD_URI'] =
       'mongodb+srv://cluster.example/?authSource=admin';
     process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
@@ -216,8 +216,8 @@ describe('shared db mongo utils', () => {
     expect(resolveProductsMongoSourceConfig('local')).toMatchObject({
       source: 'local',
       configured: true,
-      uri: 'mongodb://localhost:27020/products_local',
-      dbName: 'products_local',
+      uri: 'mongodb://localhost:27017/app',
+      dbName: 'app',
       usesLegacyEnv: false,
     });
     expect(resolveProductsMongoSourceConfig('cloud')).toMatchObject({

@@ -15,7 +15,7 @@ MongoDB model it uses for four application databases:
 - `geminitestapp`
 - `studiq`
 - `cms-builder`
-- `products`
+- `products` (uses the main `geminitestapp` local database)
 
 The Database Engine can inspect, edit, back up, and sync each local database
 individually, and can also run backup or cloud sync actions for all four as a
@@ -53,7 +53,7 @@ DATABASE_ENGINE_WEB_ORIGIN="http://localhost:3400"
    the engine to manage.
 3. Keep `MONGO_BACKUPS_DIR` outside an application folder, for example
    `../database/mongo-backups`.
-4. Start local MongoDB instances for `geminitestapp`, StudiQ, CMS Builder, and Products.
+4. Start local MongoDB instances for `geminitestapp`, StudiQ, CMS Builder, and Stargater ecommerce.
 5. Start the Database Engine with `npm run dev:database-engine`.
 6. Open `/admin/databases/engine` and confirm all local/cloud cards are
    reachable.
@@ -70,7 +70,7 @@ The managed database model has a local and cloud endpoint for each application.
 | `geminitestapp` | `MONGODB_LOCAL_URI`, `MONGODB_LOCAL_DB` | `MONGODB_CLOUD_URI`, `MONGODB_CLOUD_DB` | `geminitestapp/` |
 | `studiq` | `STUDIQ_MONGODB_LOCAL_URI`, `STUDIQ_MONGODB_LOCAL_DB` | `STUDIQ_MONGODB_CLOUD_URI`, `STUDIQ_MONGODB_CLOUD_DB` | `studiq/` |
 | `cms-builder` | `CMS_BUILDER_MONGODB_LOCAL_URI`, `CMS_BUILDER_MONGODB_LOCAL_DB` | `CMS_BUILDER_MONGODB_CLOUD_URI`, `CMS_BUILDER_MONGODB_CLOUD_DB` | `cms-builder/` |
-| `products` | `PRODUCTS_MONGODB_LOCAL_URI`, `PRODUCTS_MONGODB_LOCAL_DB` | `PRODUCTS_MONGODB_CLOUD_URI`, `PRODUCTS_MONGODB_CLOUD_DB` | `products/` |
+| `products` | `PRODUCTS_MONGODB_LOCAL_URI`, `PRODUCTS_MONGODB_LOCAL_DB` (same local DB as `geminitestapp`) | `PRODUCTS_MONGODB_CLOUD_URI`, `PRODUCTS_MONGODB_CLOUD_DB` | `products/` |
 
 Legacy aliases are still supported:
 
@@ -82,11 +82,12 @@ Legacy aliases are still supported:
 Prefer the split local/cloud keys for Database Engine operations. Do not commit
 real MongoDB credentials into `.env.example`, README files, or docs.
 
-## Products Split
+## Products And Ecommerce Split
 
-Products has a dedicated local MongoDB runtime so product, product-integration,
-order-import, and ecommerce account data are not stored in the main
-`geminitestapp` database.
+Product List data for `geminitestapp` now uses the main local MongoDB runtime
+and database. Stargater ecommerce uses its own local MongoDB runtime so checkout,
+CMS, ecommerce accounts, and store-local product reads do not share the app
+runtime.
 
 Runtime commands:
 
@@ -94,35 +95,14 @@ Runtime commands:
 npm run mongo:products:up
 npm run mongo:products:status
 npm run mongo:products:down
+npm run mongo:ecom:up
+npm run mongo:ecom:status
+npm run mongo:ecom:down
 ```
 
-Migration commands:
-
-```bash
-npm run mongo:products:migrate:plan
-npm run mongo:products:migrate:apply
-```
-
-The migration copies data from the main MongoDB source into
-`products_local`. It is non-destructive to the source database. The ecommerce
-users copy is stored as `ecom_users`; the shared source `users` collection is
-not pruned because `geminitestapp` still uses it. Integration rows are filtered
-to product-commerce slugs, and connection rows are filtered to those integration
-IDs so non-product integrations stay attached to the main database.
-
-Source cleanup is intentionally a separate step:
-
-```bash
-npm run mongo:products:prune:plan
-npm run mongo:products:prune:apply
-```
-
-`mongo:products:prune:apply` requires the hard-coded confirmation token in the
-script command and removes only the product-commerce source collections plus
-matching product-commerce settings from the main database. The prune script does
-not drop the shared `users` collection, and it only removes product-commerce
-integration records by slug so unrelated LinkedIn/job-board integration records
-can remain in the main database.
+The `mongo:products:*` aliases start the main `geminitestapp` MongoDB runtime.
+The `mongo:ecom:*` commands start the Stargater ecommerce runtime on its
+dedicated local database.
 
 ## Environment Example
 
@@ -147,10 +127,18 @@ CMS_BUILDER_MONGODB_CLOUD_URI="mongodb+srv://user:password@cluster.example/cms_b
 CMS_BUILDER_MONGODB_CLOUD_DB="cms_builder_db"
 
 # Products
-PRODUCTS_MONGODB_LOCAL_URI="mongodb://127.0.0.1:27020/products_local"
-PRODUCTS_MONGODB_LOCAL_DB="products_local"
+PRODUCTS_MONGODB_LOCAL_URI="mongodb://127.0.0.1:27017/app"
+PRODUCTS_MONGODB_LOCAL_DB="app"
 PRODUCTS_MONGODB_CLOUD_URI="mongodb+srv://user:password@cluster.example/products_db"
 PRODUCTS_MONGODB_CLOUD_DB="products_db"
+
+# Stargater ecommerce
+ECOM_MONGODB_LOCAL_URI="mongodb://127.0.0.1:27021/ecom_local"
+ECOM_MONGODB_LOCAL_DB="ecom_local"
+ECOM_MONGODB_CLOUD_URI="mongodb+srv://user:password@cluster.example/products_db"
+ECOM_MONGODB_CLOUD_DB="products_db"
+ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT="local"
+ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR="false"
 
 # neutral backup root, outside geminitestapp app structure
 MONGO_BACKUPS_DIR="../database/mongo-backups"
@@ -536,8 +524,8 @@ Key implementation files:
 - `src/shared/lib/db/services/mongo-source-sync.ts`
 - `src/shared/lib/db/product-mongo-client.ts`
 - `src/shared/contracts/database.ts`
-- `scripts/db/migrate-products-to-products-mongo.ts`
-- `scripts/db/prune-products-from-main-mongo.ts`
+- `scripts/db/migrate-products-to-products-mongo.ts` (legacy guarded migration)
+- `scripts/db/prune-products-from-main-mongo.ts` (retired guarded cleanup)
 
 ## Validation
 

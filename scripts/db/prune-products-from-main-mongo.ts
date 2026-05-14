@@ -16,6 +16,7 @@ type CliOptions = {
 };
 
 const PRUNE_CONFIRMATION = 'products-main-prune';
+const RETIRED_PRUNE_OVERRIDE_ENV = 'ALLOW_RETIRED_PRODUCTS_MAIN_PRUNE';
 const PRODUCT_COMMERCE_INTEGRATION_SLUGS = [
   '1688',
   'allegro',
@@ -191,6 +192,14 @@ const pruneTarget = async (
 
 const run = async (): Promise<void> => {
   const options = parseCliOptions(process.argv.slice(2));
+  if (process.env[RETIRED_PRUNE_OVERRIDE_ENV]?.trim().toLowerCase() !== 'true') {
+    throw new Error(
+      'Product pruning from the main MongoDB database is retired. ' +
+        `Product List now uses the main app database; set ${RETIRED_PRUNE_OVERRIDE_ENV}=true ` +
+        'only for a deliberate one-off legacy cleanup.'
+    );
+  }
+
   const client = new MongoClient(options.sourceUri, {
     directConnection: options.sourceUri.includes('127.0.0.1') || options.sourceUri.includes('localhost'),
   });

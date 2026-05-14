@@ -84,14 +84,14 @@ const resolveProductsUri = (): string =>
   readEnv('MONGODB_PRODUCTS_LOCAL_URI') ||
   readEnv('PRODUCTS_MONGODB_URI') ||
   readEnv('MONGODB_PRODUCTS_URI') ||
-  'mongodb://127.0.0.1:27020/products_local';
+  'mongodb://127.0.0.1:27017/app';
 
 const resolveProductsDb = (): string =>
   readEnv('PRODUCTS_MONGODB_LOCAL_DB') ||
   readEnv('MONGODB_PRODUCTS_LOCAL_DB') ||
   readEnv('PRODUCTS_MONGODB_DB') ||
   readEnv('MONGODB_PRODUCTS_DB') ||
-  'products_local';
+  'app';
 
 const isLoopbackHostname = (hostname: string): boolean =>
   loopbackHostnames.has(hostname.replace(/^\[|\]$/g, '').toLowerCase());

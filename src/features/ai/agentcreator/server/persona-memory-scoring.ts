@@ -56,6 +56,21 @@ export const matchesPersonaMemoryRecord = (
   return true;
 };
 
+function resolveMatchScore(
+  item: PersonaMemoryRecord,
+  filters: {
+    tag: string | null;
+    topic: string | null;
+    mood: AgentPersonaMoodId | null;
+  }
+): number {
+  let score = 0;
+  if (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) score += 8;
+  if (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) score += 12;
+  if (filters.mood !== null && item.moodHints.includes(filters.mood)) score += 10;
+  return score;
+}
+
 export const scorePersonaMemoryRecord = (
   item: PersonaMemoryRecord,
   filters: {
@@ -65,23 +80,9 @@ export const scorePersonaMemoryRecord = (
     searchTerms: string[];
   }
 ): number => {
-  let score = countMatchingSearchTerms(item, filters.searchTerms) * 10;
+  const termScore = countMatchingSearchTerms(item, filters.searchTerms) * 10;
+  const matchScore = resolveMatchScore(item, filters);
+  const typeScore = item.recordType === 'memory_entry' ? 1 : 0;
 
-  if (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) {
-    score += 8;
-  }
-
-  if (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) {
-    score += 12;
-  }
-
-  if (filters.mood !== null && item.moodHints.includes(filters.mood)) {
-    score += 10;
-  }
-
-  if (item.recordType === 'memory_entry') {
-    score += 1;
-  }
-
-  return score;
+  return termScore + matchScore + typeScore;
 };

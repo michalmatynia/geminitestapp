@@ -4,11 +4,39 @@ import {
   type HomeUniverseCategoryPrefix,
 } from '@/data/homeCategoryFilters';
 
+export type HomeProductTypeFilterKey = 'Bracelets' | 'Dice' | 'Keychains' | 'Pins' | 'Rings';
+
 export type CatalogCategoryOption = {
   name: string;
+  parentName?: string | null;
 };
 
 export const FALLBACK_MOVIE_CATEGORY_FILTERS = HOME_UNIVERSE_CATEGORY_FILTERS.Movie;
+
+export const HOME_PRODUCT_TYPE_CATEGORY_FILTERS: Record<HomeProductTypeFilterKey, string[]> = {
+  Bracelets: [
+    'Gaming Bracelets',
+  ],
+  Dice: [
+    'Keychain Mini Dice',
+    'Set Of 7 Dice',
+  ],
+  Keychains: [
+    'Anime Keychain',
+    'Gaming Keychain',
+    'Movie Keychain',
+  ],
+  Pins: [
+    'Anime Pin',
+    'Gaming Pin',
+    'Movie Pin',
+  ],
+  Rings: [
+    'Anime Ring',
+    'Gaming Ring',
+    'Movie Ring',
+  ],
+};
 
 function uniqueTrimmed(values: string[]): string[] {
   const seen = new Set<string>();
@@ -28,6 +56,24 @@ function hasPrefixWord(value: string, prefix: HomeUniverseCategoryPrefix): boole
   return new RegExp(`\\b${prefix}\\b`, 'i').test(value);
 }
 
+function hasLiveUniverseCategoryWord(value: string, prefix: HomeUniverseCategoryPrefix): boolean {
+  if (prefix !== 'Movie') return hasPrefixWord(value, prefix);
+  return /\b(movie|film|tv|cinema)\b/i.test(value);
+}
+
+function getProductTypePattern(key: HomeProductTypeFilterKey): RegExp {
+  if (key === 'Bracelets') return /\bbracelets?\b/i;
+  if (key === 'Dice') return /\bdice\b/i;
+  if (key === 'Keychains') return /\bkeychains?\b/i;
+  if (key === 'Pins') return /\bpins?\b/i;
+  return /\brings?\b/i;
+}
+
+function hasLiveProductTypeWord(category: CatalogCategoryOption, key: HomeProductTypeFilterKey): boolean {
+  const pattern = getProductTypePattern(key);
+  return pattern.test(category.name) || pattern.test(category.parentName ?? '');
+}
+
 function resolveUniversePrefix(card: HomeCategoryCardContent): HomeUniverseCategoryPrefix | null {
   const haystack = [
     card.id,
@@ -44,15 +90,24 @@ function resolveUniversePrefix(card: HomeCategoryCardContent): HomeUniverseCateg
   return null;
 }
 
-function resolveUniverseCategoryValues(
+export function resolveHomeProductTypeFilterKey(label: string): HomeProductTypeFilterKey | null {
+  if (/\bbracelets?\b|\bbransolet/i.test(label)) return 'Bracelets';
+  if (/\bdice\b|\bko[sś]ci\b/i.test(label)) return 'Dice';
+  if (/\bkeychains?\b|\bbreloki?\b/i.test(label)) return 'Keychains';
+  if (/\bpins?\b|\bpiny?\b/i.test(label)) return 'Pins';
+  if (/\brings?\b|\bpier[sś]cion/i.test(label)) return 'Rings';
+  return null;
+}
+
+export function getHomeUniverseCategoryValues(
   prefix: HomeUniverseCategoryPrefix,
-  configuredValues: string[],
   catalogCategories: CatalogCategoryOption[] = [],
+  configuredValues: string[] = [],
 ): string[] {
   const liveCategories = uniqueTrimmed(
     catalogCategories
       .map((category) => category.name)
-      .filter((name) => hasPrefixWord(name, prefix)),
+      .filter((name) => hasLiveUniverseCategoryWord(name, prefix)),
   );
   if (liveCategories.length > 0) return liveCategories;
 
@@ -60,6 +115,25 @@ function resolveUniverseCategoryValues(
   return configuredCategories.length > 0
     ? configuredCategories
     : HOME_UNIVERSE_CATEGORY_FILTERS[prefix];
+}
+
+export function getHomeProductTypeCategoryValues(
+  key: HomeProductTypeFilterKey,
+  catalogCategories: CatalogCategoryOption[] = [],
+  configuredValues: string[] = [],
+): string[] {
+  const liveCategories = uniqueTrimmed(
+    catalogCategories
+      .filter((category) => hasLiveProductTypeWord(category, key))
+      .map((category) => category.name),
+  );
+  if (liveCategories.length > 0) return liveCategories;
+
+  const pattern = getProductTypePattern(key);
+  const configuredCategories = configuredValues.filter((value) => pattern.test(value));
+  return configuredCategories.length > 0
+    ? configuredCategories
+    : HOME_PRODUCT_TYPE_CATEGORY_FILTERS[key];
 }
 
 function selectorValuesHref(selectorType: HomeCategoryCardContent['selectorType'], values: string[]): string | null {
@@ -81,6 +155,14 @@ function buildCategoryHref(values: string[]): string {
   return `/products?${params.toString()}`;
 }
 
+export function buildHomeProductTypeCategoryHref(
+  key: HomeProductTypeFilterKey,
+  catalogCategories: CatalogCategoryOption[] = [],
+  configuredValues: string[] = [],
+): string {
+  return buildCategoryHref(getHomeProductTypeCategoryValues(key, catalogCategories, configuredValues));
+}
+
 export function getHomeCategoryCardHref(
   card: HomeCategoryCardContent,
   catalogCategories: CatalogCategoryOption[] = [],
@@ -89,7 +171,7 @@ export function getHomeCategoryCardHref(
   const values = uniqueTrimmed(card.selectorValues);
   const universePrefix = resolveUniversePrefix(card);
   if (universePrefix !== null) {
-    return buildCategoryHref(resolveUniverseCategoryValues(universePrefix, values, catalogCategories));
+    return buildCategoryHref(getHomeUniverseCategoryValues(universePrefix, catalogCategories, values));
   }
   const selectorHref = selectorValuesHref(card.selectorType, values);
   if (selectorHref !== null) {

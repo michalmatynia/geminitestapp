@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { HOME_CONTENT_DEFAULTS, normalizeHomeContent, validateHomeContent } from './homeContent';
+import {
+  ensureVisibleHomeCategoryCards,
+  HOME_CONTENT_DEFAULTS,
+  normalizeHomeContent,
+  validateHomeContent,
+} from './homeContent';
 
 describe('home manifesto content', () => {
   it('defaults the manifesto background image to empty', () => {
@@ -93,13 +98,23 @@ describe('home editorial article content', () => {
   it('allows long editorial article bodies', () => {
     const body = 'A'.repeat(2000);
     const result = validateHomeContent({
+      ...HOME_CONTENT_DEFAULTS,
+      categories: {
+        ...HOME_CONTENT_DEFAULTS.categories,
+        cards: HOME_CONTENT_DEFAULTS.categories.cards.map((card) => ({
+          ...card,
+          href: '/products',
+        })),
+      },
       editorial: {
+        ...HOME_CONTENT_DEFAULTS.editorial,
         reports: [
           {
             body,
             excerpt: 'Short form',
             href: '/lore-drops/long-report',
             id: 'long-report',
+            imageUrl: '',
             tag: 'Universe Report',
             title: 'Long Report',
             visible: true,
@@ -110,5 +125,39 @@ describe('home editorial article content', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.content.editorial.reports[0]?.body).toBe(body);
+  });
+});
+
+describe('home category content', () => {
+  it('keeps configured visible universe cards', () => {
+    const content = ensureVisibleHomeCategoryCards({
+      ...HOME_CONTENT_DEFAULTS.categories,
+      cards: [
+        {
+          ...HOME_CONTENT_DEFAULTS.categories.cards[0],
+          id: 'custom',
+          label: 'Custom Universe',
+          visible: true,
+        },
+      ],
+    });
+
+    expect(content.cards).toHaveLength(1);
+    expect(content.cards[0]?.label).toBe('Custom Universe');
+  });
+
+  it('falls back to default universe cards when all configured cards are hidden', () => {
+    const content = ensureVisibleHomeCategoryCards({
+      ...HOME_CONTENT_DEFAULTS.categories,
+      cards: HOME_CONTENT_DEFAULTS.categories.cards.map((card) => ({
+        ...card,
+        visible: false,
+      })),
+    });
+
+    expect(content.cards.map((card) => card.label)).toEqual(
+      HOME_CONTENT_DEFAULTS.categories.cards.map((card) => card.label),
+    );
+    expect(content.cards.every((card) => card.visible)).toBe(true);
   });
 });

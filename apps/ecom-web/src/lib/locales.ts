@@ -148,18 +148,25 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 const PREFIX_CURRENCIES = new Set(['EUR', 'GBP', 'USD']);
 
 function normalizeCurrencyCode(currencyCode: string | null | undefined): string {
-  const normalized = (currencyCode ?? 'PLN').trim().toUpperCase();
-  return normalized.length > 0 ? normalized : 'PLN';
+  const normalized = (currencyCode ?? '').trim().toUpperCase();
+  return normalized;
+}
+
+export function defaultCurrencyForLocale(locale: EcomLocale): string {
+  return locale === 'pl' ? 'PLN' : 'EUR';
 }
 
 export function formatPrice(
   price: number,
   locale: EcomLocale,
-  currencyCode: string | null | undefined = 'PLN',
+  currencyCode?: string | null,
 ): string {
   const localeTag = locale === 'pl' ? 'pl-PL' : 'en-US';
   const minimumFractionDigits = Number.isInteger(price) ? 0 : 2;
-  const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
+  const requestedCurrencyCode = normalizeCurrencyCode(currencyCode);
+  const normalizedCurrencyCode = requestedCurrencyCode.length > 0
+    ? requestedCurrencyCode
+    : defaultCurrencyForLocale(locale);
   const symbol = CURRENCY_SYMBOLS[normalizedCurrencyCode] ?? normalizedCurrencyCode;
   const amount = price.toLocaleString(localeTag, {
     minimumFractionDigits,
@@ -173,7 +180,7 @@ export function formatPrice(
 export function formatPriceTotal(
   total: number,
   locale: EcomLocale,
-  currencyCode: string | null | undefined = 'PLN',
+  currencyCode?: string | null,
 ): string {
   return formatPrice(total, locale, currencyCode);
 }

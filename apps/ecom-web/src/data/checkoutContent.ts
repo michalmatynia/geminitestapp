@@ -317,6 +317,29 @@ const ALLOWED_SHIPPING_CARRIERS = new Set<CheckoutShippingCarrier>([
   'poczta_polska',
   'dpd',
 ]);
+const PROVIDER_SHIPPING_CARRIERS = new Set<CheckoutShippingCarrier>([
+  'inpost',
+  'poczta_polska',
+  'dpd',
+]);
+
+function hasProviderShippingMethod(methods: CheckoutShippingMethodContent[]): boolean {
+  return methods.some((method) => {
+    const carrier = method.carrier ?? 'manual';
+    return PROVIDER_SHIPPING_CARRIERS.has(carrier);
+  });
+}
+
+export function ensureCheckoutProviderShipping(content: CheckoutContent): CheckoutContent {
+  if (content.shippingZones.some((zone) => hasProviderShippingMethod(zone.methods))) {
+    return content;
+  }
+
+  return {
+    ...content,
+    shippingZones: CHECKOUT_CONTENT_DEFAULTS.shippingZones,
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

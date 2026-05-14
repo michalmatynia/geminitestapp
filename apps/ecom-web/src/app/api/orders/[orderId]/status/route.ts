@@ -19,6 +19,7 @@ const ORDER_STATUS_PROJECTION = {
 
 const ORDER_STATUSES = new Set<OrderStatus>(['pending_payment', 'processing', 'in-transit', 'delivered', 'cancelled']);
 const SHIPPING_CARRIERS = new Set<ShippingCarrier>(['manual', 'inpost', 'poczta_polska', 'dpd']);
+const ORDER_ID_RE = /^ARC-\d{4}-[0-9A-F]{8}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -120,7 +121,7 @@ export async function GET(
 
   const { orderId } = await params;
   const normalizedOrderId = orderId.trim().toUpperCase();
-  if (normalizedOrderId.length === 0) {
+  if (!ORDER_ID_RE.test(normalizedOrderId)) {
     return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
   }
 

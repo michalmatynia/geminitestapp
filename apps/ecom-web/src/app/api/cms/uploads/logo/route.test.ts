@@ -73,10 +73,9 @@ describe('CMS logo upload API route', () => {
       updatedBy: 'admin-1',
     });
     expect(mocks.uploadToFastComet).toHaveBeenCalledWith(expect.objectContaining({
-      buffer: expect.any(Buffer),
-      filename: expect.stringMatching(/^\d+-[a-f0-9]{8}-arcana-mark\.png$/),
+      filename: expect.stringMatching(/^\d+-[a-f0-9]{8}-stargater-mark\.png$/),
       mimetype: 'image/png',
-      publicPath: expect.stringMatching(/^\/uploads\/ecom\/logos\/\d+-[a-f0-9]{8}-arcana-mark\.png$/),
+      publicPath: expect.stringMatching(/^\/uploads\/ecom\/logos\/\d+-[a-f0-9]{8}-stargater-mark\.png$/),
       category: 'ecom',
       folder: 'logos',
     }));

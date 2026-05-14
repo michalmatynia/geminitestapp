@@ -7,10 +7,10 @@ import { useSiteContent } from '@/context/SiteContentContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
-import { productCountWord, formatPrice } from '@/lib/locales';
+import { defaultCurrencyForLocale, productCountWord, formatPrice, type EcomLocale } from '@/lib/locales';
 
-const firstCartCurrencyCode = (items: CartItem[]): string =>
-  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
+const firstCartCurrencyCode = (items: CartItem[], locale: EcomLocale): string =>
+  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? defaultCurrencyForLocale(locale);
 
 const freshText = (next: string, current: string): string => (next === '' ? current : next);
 const freshPrice = (next: number, current: number): number => (next === 0 ? current : next);
@@ -99,7 +99,7 @@ export function CartDrawer(): JSX.Element {
 
   const displayItems: CartItem[] = items.map((item) => mergeFreshCartItem(item, freshData[item.productId]));
   const displayTotalPrice = displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const cartCurrencyCode = firstCartCurrencyCode(displayItems);
+  const cartCurrencyCode = firstCartCurrencyCode(displayItems, locale);
 
   // Lock body scroll when drawer is open
   useEffect(() => {

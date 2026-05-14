@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions,complexity,max-lines,max-lines-per-function,max-params */
 
+import { buildCategoryFilterHref, HOME_UNIVERSE_CATEGORY_FILTERS } from './homeCategoryFilters';
+
 export interface SiteLinkContent {
   label: string;
   href: string;
@@ -183,6 +185,18 @@ export interface SiteContentValidationResult {
   errors: string[];
 }
 
+export const STARGATER_NAV_LINKS: SiteLinkContent[] = [
+  { label: 'Anime', href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Anime) },
+  { label: 'Gaming', href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Gaming) },
+  { label: 'Film', href: buildCategoryFilterHref(HOME_UNIVERSE_CATEGORY_FILTERS.Movie) },
+  { label: 'New Drops', href: '/#new-drops' },
+  { label: 'Catalog', href: '/products' },
+];
+
+function stargaterNavLinks(): SiteLinkContent[] {
+  return STARGATER_NAV_LINKS.map((link) => ({ ...link }));
+}
+
 export const SITE_CONTENT_DEFAULTS: SiteContent = {
   background: {
     cosmosParallaxEnabled: true,
@@ -192,13 +206,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     brandSuffix: 'NEXUS',
     logoUrl: '',
     logoAlt: '',
-    links: [
-      { label: 'Anime', href: '/collections/womenswear' },
-      { label: 'Gaming', href: '/collections/menswear' },
-      { label: 'Film', href: '/collections/accessories' },
-      { label: 'New Drops', href: '/products?new=1' },
-      { label: 'Catalog', href: '/products' },
-    ],
+    links: stargaterNavLinks(),
     announcement: {
       enabled: true,
       message: 'Free shipping on orders over € 60 — New drops every week',
@@ -369,6 +377,7 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
 };
 
 const TEXT_LIMITS = {
+  href: 900,
   short: 120,
   medium: 240,
   long: 900,
@@ -431,7 +440,7 @@ function readHref(
   errors: string[],
   path: string,
 ): string {
-  const value = readString(source, key, fallback, TEXT_LIMITS.medium, errors, path);
+  const value = readString(source, key, fallback, TEXT_LIMITS.href, errors, path);
   if (!value) return fallback;
   if (!isAllowedHref(value)) {
     errors.push(`${path} must be an internal path, anchor, or http(s) URL.`);
@@ -1362,6 +1371,7 @@ export function normalizeSiteContent(input: unknown): SiteContent {
       ...content.nav,
       brandName: normalizeLegacyBrand(content.nav.brandName),
       brandSuffix: normalizeLegacyBrand(content.nav.brandSuffix),
+      links: stargaterNavLinks(),
     },
     footer: {
       ...content.footer,

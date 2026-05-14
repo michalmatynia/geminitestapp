@@ -170,6 +170,16 @@ export default function ProjectViewer({ projects }: Props) {
       { x: 18, y: 15, z: 18, ty: 6 },
     ];
 
+    function animateMat(mat: THREE.Material & { opacity: number }, to: number, durMs: number) {
+      const startTime = Date.now(), from = mat.opacity;
+      const tick = () => {
+        const t = Math.min((Date.now() - startTime) / durMs, 1);
+        mat.opacity = from + (to - from) * (1 - Math.pow(1 - t, 2));
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
     function animateOpacity(group: THREE.Group, targetFn: (c: THREE.Object3D) => number, durMs: number) {
       const startTime = Date.now();
       const entries: Array<{ mat: THREE.Material & { opacity: number }; from: number; to: number }> = [];
@@ -194,7 +204,7 @@ export default function ProjectViewer({ projects }: Props) {
         if (c.userData.isWire) {
           const lineMat = (c as THREE.LineSegments).material as THREE.LineBasicMaterial;
           if (m === 'wire')    return lineMat.opacity || 0.75;
-          if (m === 'texture') return (lineMat.opacity || 0.75) * 0.14; // subtle structural overlay
+          if (m === 'texture') return (lineMat.opacity || 0.75) * 0.22; // structural overlay
           return 0;
         }
         return 0;
@@ -244,9 +254,18 @@ export default function ProjectViewer({ projects }: Props) {
       requestAnimationFrame(tick);
     }
 
+    const pavingMat = pavingMesh.material as THREE.Material & { opacity: number };
+
     sceneRef.current = {
       loadProject,
-      setMode: (m: RenderMode) => { mode = m; if (currentGroup) animateOpacity(currentGroup, opFn(m), 500); },
+      setMode: (m: RenderMode) => {
+        mode = m;
+        // Paving fades in for textured, out otherwise
+        animateMat(pavingMat, m === 'texture' ? 0.88 : 0, 600);
+        // Grid dims in textured mode (still readable as site context)
+        animateMat(gridMat, m === 'texture' ? 0.18 : 0.60, 600);
+        if (currentGroup) animateOpacity(currentGroup, opFn(m), 500);
+      },
       zoom: doZoom,
     };
 
@@ -260,11 +279,16 @@ export default function ProjectViewer({ projects }: Props) {
     }
     window.addEventListener('resize', onResize);
 
+    const bgParchment = new THREE.Color(0xECEAE6);
+    const bgSky       = new THREE.Color(0xE2ECF4);
+    const bgCurrent   = new THREE.Color(0xECEAE6);
+
     let rafId: number;
     function animate() {
       rafId = requestAnimationFrame(animate);
       controls.update();
-      renderer.setClearColor(0xECEAE6, 1);
+      bgCurrent.lerp(mode === 'texture' ? bgSky : bgParchment, 0.05);
+      renderer.setClearColor(bgCurrent, 1);
       renderer.render(scene, camera);
     }
     animate();

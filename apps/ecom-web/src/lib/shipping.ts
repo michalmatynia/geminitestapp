@@ -6,6 +6,8 @@ import type {
 import type { EcomLocale } from '@/lib/locales';
 import type { InpostPoint, ShippingCarrier } from '@/lib/orders';
 
+export type ShippingProviderAvailability = Partial<Record<ShippingCarrier, boolean>>;
+
 function normalizeCountry(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -21,6 +23,20 @@ export function filterShippingMethodsForCountry(
 ): CheckoutShippingMethodContent[] {
   if (isPolandShippingCountry(country)) return methods;
   return methods.filter((method) => method.carrier !== 'inpost');
+}
+
+export function filterShippingMethodsForProviderAvailability(
+  methods: CheckoutShippingMethodContent[],
+  availability: ShippingProviderAvailability,
+): CheckoutShippingMethodContent[] {
+  const availableMethods = methods.filter((method) => {
+    const carrier = method.carrier ?? 'manual';
+    return availability[carrier] !== false;
+  });
+
+  return methods.length > 0 && availableMethods.length === 0
+    ? methods
+    : availableMethods;
 }
 
 function addBusinessDays(start: Date, days: number): Date {
@@ -109,6 +125,7 @@ export type CheckoutShippingSelectionInput = {
   carrier: ShippingCarrier;
   price: number;
   inpostPoint: InpostPoint | null;
+  providerAvailability?: ShippingProviderAvailability;
 };
 
 export type CheckoutShippingSelection = {
@@ -212,8 +229,12 @@ export function resolveCheckoutShippingSelection(
   const zone = getZoneForCountry(input.content.shippingZones, input.country);
   const rawMethods = zone !== null ? zone.methods : input.content.shippingMethods;
   const countryMethods = filterShippingMethodsForCountry(rawMethods, input.country);
-  const methods = applyFreeThreshold(
+  const providerMethods = filterShippingMethodsForProviderAvailability(
     countryMethods,
+    input.providerAvailability ?? {}
+  );
+  const methods = applyFreeThreshold(
+    providerMethods,
     input.subtotal,
     input.content.freeShippingThreshold,
     input.content.freeShippingMethodId,

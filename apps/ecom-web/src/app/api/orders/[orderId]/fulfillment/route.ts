@@ -32,12 +32,12 @@ function readTrackingUrl(value: unknown): string | null {
 }
 
 // eslint-disable-next-line complexity
-function buildShipment(
+async function buildShipment(
   order: Order,
   body: Record<string, unknown>,
   status: OrderStatus,
   now: string,
-): OrderShipment | null | undefined {
+): Promise<OrderShipment | null | undefined> {
   const trackingNumber = readString(body['trackingNumber'], 80);
   const trackingUrl = readTrackingUrl(body['trackingUrl']);
   const note = readString(body['note'], 240);
@@ -55,7 +55,7 @@ function buildShipment(
   if (trackingNumber.length > 0) shipment.trackingNumber = trackingNumber;
   const resolvedTrackingUrl = trackingUrl.length > 0
     ? trackingUrl
-    : buildCarrierTrackingUrl(order.shippingCarrier, trackingNumber);
+    : await buildCarrierTrackingUrl(order.shippingCarrier, trackingNumber);
   if (resolvedTrackingUrl !== undefined) shipment.trackingUrl = resolvedTrackingUrl;
   if (note.length > 0) shipment.note = note;
   return shipment;
@@ -100,7 +100,7 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
-  const shipment = buildShipment(order, body, status, now);
+  const shipment = await buildShipment(order, body, status, now);
   if (shipment === null) {
     return NextResponse.json({ error: 'Tracking URL is invalid' }, { status: 400 });
   }

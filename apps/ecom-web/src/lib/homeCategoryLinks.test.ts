@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { HOME_CONTENT_DEFAULTS, type HomeCategoryCardContent } from '@/data/homeContent';
 import { HOME_UNIVERSE_CATEGORY_FILTERS } from '@/data/homeCategoryFilters';
-import { FALLBACK_MOVIE_CATEGORY_FILTERS, getHomeCategoryCardHref } from './homeCategoryLinks';
+import {
+  buildHomeProductTypeCategoryHref,
+  FALLBACK_MOVIE_CATEGORY_FILTERS,
+  getHomeProductTypeCategoryValues,
+  getHomeCategoryCardHref,
+  getHomeUniverseCategoryValues,
+  HOME_PRODUCT_TYPE_CATEGORY_FILTERS,
+  resolveHomeProductTypeFilterKey,
+} from './homeCategoryLinks';
 
 function cardByLabel(label: string, overrides: Partial<HomeCategoryCardContent> = {}): HomeCategoryCardContent {
   const card = HOME_CONTENT_DEFAULTS.categories.cards.find((item) => item.label === label);
@@ -31,6 +39,14 @@ describe('home category links', () => {
 
     expect(categoryParam(href)).toBe('Movie Pin,Movie Wallet');
     expect(href).not.toContain('Film');
+  });
+
+  it('treats live Film category names as movie-universe filters', () => {
+    expect(getHomeUniverseCategoryValues('Movie', [
+      { name: 'Film Keychain' },
+      { name: 'TV Pendant' },
+      { name: 'Gaming Pin' },
+    ])).toEqual(['Film Keychain', 'TV Pendant']);
   });
 
   it('falls back to Movie category filters when CMS still has Film Collectibles', () => {
@@ -100,5 +116,44 @@ describe('home category links', () => {
     });
 
     expect(categoryParam(href)).toBe('Set Of 7 Dice');
+  });
+
+  it('builds product-type catalog links from live category names', () => {
+    const href = buildHomeProductTypeCategoryHref('Keychains', [
+      { name: 'Anime Keychain', parentName: 'Keychains' },
+      { name: 'Gaming Keychain', parentName: 'Keychains' },
+      { name: 'Movie Ring', parentName: 'Rings' },
+    ]);
+
+    expect(categoryParam(href)).toBe('Anime Keychain,Gaming Keychain');
+  });
+
+  it('falls back to product-type category filters without live categories', () => {
+    expect(getHomeProductTypeCategoryValues('Bracelets')).toEqual(HOME_PRODUCT_TYPE_CATEGORY_FILTERS.Bracelets);
+    expect(getHomeProductTypeCategoryValues('Dice')).toEqual(HOME_PRODUCT_TYPE_CATEGORY_FILTERS.Dice);
+    expect(getHomeProductTypeCategoryValues('Pins')).toEqual(HOME_PRODUCT_TYPE_CATEGORY_FILTERS.Pins);
+    expect(getHomeProductTypeCategoryValues('Rings')).toEqual(HOME_PRODUCT_TYPE_CATEGORY_FILTERS.Rings);
+  });
+
+  it('resolves hero badge labels to product-type filters', () => {
+    expect(resolveHomeProductTypeFilterKey('Keychains')).toBe('Keychains');
+    expect(resolveHomeProductTypeFilterKey('Pins')).toBe('Pins');
+    expect(resolveHomeProductTypeFilterKey('Rings')).toBe('Rings');
+    expect(resolveHomeProductTypeFilterKey('Bracelets')).toBe('Bracelets');
+    expect(resolveHomeProductTypeFilterKey('Dice')).toBe('Dice');
+    expect(resolveHomeProductTypeFilterKey('Anime')).toBeNull();
+  });
+
+  it('builds product-type catalog links for Bracelets and Dice', () => {
+    expect(categoryParam(buildHomeProductTypeCategoryHref('Bracelets', [
+      { name: 'Gaming Bracelets' },
+      { name: 'Gaming Ring' },
+    ]))).toBe('Gaming Bracelets');
+
+    expect(categoryParam(buildHomeProductTypeCategoryHref('Dice', [
+      { name: 'Keychain Mini Dice' },
+      { name: 'Set Of 7 Dice' },
+      { name: 'Movie Keychain' },
+    ]))).toBe('Keychain Mini Dice,Set Of 7 Dice');
   });
 });

@@ -289,8 +289,8 @@ export const slugifyPlaywrightVerificationReviewSegment = (
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  if ((normalized ?? '') !== '' && normalized!.length > 0) {
-    return normalized!;
+  if (normalized !== null && normalized !== undefined && normalized.length > 0) {
+    return normalized;
   }
 
   return normalizeOptionalText(fallback) ?? 'unknown';
@@ -304,10 +304,15 @@ const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<
   await new AsyncFunction('page', code)(page);
 };
 
+type ArtifactHandlers = {
+  file?: (key: string, buffer: Buffer, options: { extension: string; mimeType: string; kind: string }) => Promise<string>;
+  html?: (key: string) => Promise<string | null>;
+};
+
 async function saveIterationArtifacts(
   iterationsRun: number,
   screenshotBuffer: Buffer | null,
-  config: PlaywrightVerificationInjectionConfig<any>
+  config: PlaywrightVerificationInjectionConfig<unknown> & { artifacts?: ArtifactHandlers }
 ): Promise<{ screenshot: string | null; html: string | null }> {
   const artifactKey = config.artifactKey ?? '';
   if (artifactKey === '') {

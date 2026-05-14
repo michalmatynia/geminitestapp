@@ -2,13 +2,31 @@
  * @vitest-environment node
  */
 
+import { createHmac } from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+  readInpostProviderSettings: vi.fn(),
+  updateOne: vi.fn(),
+}));
+
+vi.mock('@/lib/providerSettings', () => ({
+  readInpostProviderSettings: mocks.readInpostProviderSettings,
+}));
+
+vi.mock('@/lib/mongodb', () => ({
+  getDb: vi.fn(async () => ({
+    collection: () => ({ updateOne: mocks.updateOne }),
+  })),
+}));
 
 import {
   buildShipXShipmentPayload,
+  createInpostShipment,
   isInpostConfigured,
   isInpostShippingApiConfigured,
   mapInpostEventToOrderStatus,
+  verifyInpostWebhookSignature,
 } from './inpost';
 import type { Order } from './orders';
 
@@ -47,6 +65,11 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 describe('InPost ShipX integration helpers', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    mocks.readInpostProviderSettings.mockReset();
+    mocks.readInpostProviderSettings.mockResolvedValue(null);
+    mocks.updateOne.mockReset();
+    mocks.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
   });
 
   it('reports configuration readiness from ShipX env vars', () => {
@@ -113,5 +136,68 @@ describe('InPost ShipX integration helpers', () => {
     expect(mapInpostEventToOrderStatus('EOL.1008')).toBe('delivered');
     expect(mapInpostEventToOrderStatus('EOL.9004')).toBe('cancelled');
     expect(mapInpostEventToOrderStatus('CRE.1001')).toBeNull();
+  });
+
+  it('uses pushed provider settings for webhook signatures', async () => {
+    const body = JSON.stringify({ trackingNumber: 'TRACK123' });
+    const secret = 'stored-webhook-secret';
+    const signature = createHmac('sha256', secret).update(body, 'utf8').digest('base64');
+    mocks.readInpostProviderSettings.mockResolvedValue({
+      apiToken: '',
+      apiUrl: '',
+      defaultParcelTemplate: '',
+      enabled: true,
+      geowidgetToken: '',
+      oauthClientId: '',
+      oauthClientSecret: '',
+      oauthTokenUrl: '',
+      organizationId: '',
+      sendingMethod: '',
+      webhookSecret: secret,
+    });
+
+    await expect(verifyInpostWebhookSignature(body, signature)).resolves.toBe(true);
+  });
+
+  it('uses pushed provider settings for ShipX shipment creation', async () => {
+    mocks.readInpostProviderSettings.mockResolvedValue({
+      apiToken: 'stored-token',
+      apiUrl: 'https://shipx.example.test',
+      defaultParcelTemplate: 'medium',
+      enabled: true,
+      geowidgetToken: '',
+      oauthClientId: '',
+      oauthClientSecret: '',
+      oauthTokenUrl: '',
+      organizationId: 'stored-org',
+      sendingMethod: 'parcel_locker',
+      webhookSecret: '',
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        href: 'https://shipx.example.test/shipments/1',
+        id: 'shipment-1',
+        tracking_number: 'TRACK123',
+      }), { status: 201 }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createInpostShipment(makeOrder());
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://shipx.example.test/v1/organizations/stored-org/shipments',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer stored-token' }),
+        body: expect.stringContaining('"template":"medium"'),
+      }),
+    );
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: 'ARC-2026-ABCD1234' },
+      expect.objectContaining({
+        $set: {
+          inpostShipment: expect.objectContaining({ trackingNumber: 'TRACK123' }),
+        },
+      }),
+    );
   });
 });

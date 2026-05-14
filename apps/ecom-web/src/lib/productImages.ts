@@ -33,6 +33,13 @@ function getFallbackFileBaseUrl(): string {
   return process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000';
 }
 
+function getFallbackImageProxySrc(uploadPath: string, fallbackBaseUrl: string): string | undefined {
+  const fallbackUrl = parseHttpUrl(fallbackBaseUrl);
+  if (fallbackUrl === null || !isLocalHostname(fallbackUrl.hostname)) return undefined;
+
+  return `/api/product-images/fallback?path=${encodeURIComponent(uploadPath)}`;
+}
+
 function parseHttpUrl(value: string): URL | null {
   try {
     const url = new URL(value);
@@ -67,6 +74,10 @@ function isLocalHostname(hostname: string): boolean {
 function isConfiguredFileOrigin(url: URL): boolean {
   const fileBaseUrl = parseHttpUrl(getFileBaseUrl());
   return fileBaseUrl !== null && url.origin === fileBaseUrl.origin;
+}
+
+function isFallbackImageProxyPath(raw: string): boolean {
+  return raw.startsWith('/api/product-images/fallback?');
 }
 
 function isKnownFileHost(url: URL): boolean {
@@ -132,12 +143,15 @@ export function getProductImageFallbackSrc(src: string | undefined): string | un
   if (uploadPath === undefined) return undefined;
 
   const fallbackBaseUrl = getFallbackFileBaseUrl();
-  return fallbackBaseUrl !== '' ? `${fallbackBaseUrl}${uploadPath}` : uploadPath;
+  if (fallbackBaseUrl === '') return uploadPath;
+
+  return getFallbackImageProxySrc(uploadPath, fallbackBaseUrl) ?? `${fallbackBaseUrl}${uploadPath}`;
 }
 
 export function shouldBypassImageOptimization(src: string | undefined): boolean {
   const raw = src?.trim();
   if (raw === '' || raw === undefined) return false;
+  if (isFallbackImageProxyPath(raw)) return true;
 
   const url = parseHttpUrl(raw);
   if (url === null) return false;

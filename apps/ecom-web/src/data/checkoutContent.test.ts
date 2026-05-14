@@ -5,7 +5,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { COUNTRIES } from './countries';
-import { CHECKOUT_CONTENT_DEFAULTS, validateCheckoutContent } from './checkoutContent';
+import {
+  CHECKOUT_CONTENT_DEFAULTS,
+  ensureCheckoutProviderShipping,
+  validateCheckoutContent,
+} from './checkoutContent';
 
 describe('checkout content validation', () => {
   it('accepts shipping zones with positive integer business day ranges', () => {
@@ -180,6 +184,21 @@ describe('checkout content validation', () => {
 
     expect(errors).toEqual([]);
     expect(content.shippingZones[0].methods).toEqual(CHECKOUT_CONTENT_DEFAULTS.shippingZones[0].methods);
+  });
+
+  it('restores current provider zones for old checkout CMS snapshots', () => {
+    const { content } = validateCheckoutContent({
+      ...CHECKOUT_CONTENT_DEFAULTS,
+      shippingZones: [],
+    });
+    const migrated = ensureCheckoutProviderShipping(content);
+    const domesticZone = migrated.shippingZones.find((zone) => zone.id === 'domestic');
+
+    expect(domesticZone?.methods).toEqual(expect.arrayContaining([
+      expect.objectContaining({ carrier: 'poczta_polska' }),
+      expect.objectContaining({ carrier: 'inpost' }),
+      expect.objectContaining({ carrier: 'dpd' }),
+    ]));
   });
 });
 

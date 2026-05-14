@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-unnecessary-condition,@typescript-eslint/strict-boolean-expressions,complexity,max-lines-per-function */
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-unnecessary-condition,@typescript-eslint/strict-boolean-expressions,complexity,max-lines,max-lines-per-function */
 'use client';
 
 import { useRef, type CSSProperties, type JSX } from 'react';
-import { HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
+import { ensureVisibleHomeCategoryCards, HOME_CONTENT_DEFAULTS, type HomeCategoriesContent } from '@/data/homeContent';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocalizedHref } from '@/context/LocaleContext';
 import { getHomeCategoryCardHref, type CatalogCategoryOption } from '@/lib/homeCategoryLinks';
@@ -57,6 +57,7 @@ export function CategoriesGrid({
   const hasLiveCounts = Object.values(counts).some(isValidCount);
   const localizedHref = useLocalizedHref();
   const cornerLineColorOpacity = (alpha: number, accentRgb: string): string => `rgba(${accentRgb}, ${alpha})`;
+  const categoriesContent = ensureVisibleHomeCategoryCards(content);
 
   useGSAP(() => {
     /* Section header reveal */
@@ -92,18 +93,18 @@ export function CategoriesGrid({
       <div className='cat-header flex items-end justify-between mb-12'>
         <div>
           <div className='type-label mb-3' style={{ color: 'var(--accent)' }}>
-            {content.eyebrow}
+            {categoriesContent.eyebrow}
           </div>
           <h2 className='type-display-lg' style={{ color: 'var(--fg)' }}>
-            {content.title}
+            {categoriesContent.title}
           </h2>
         </div>
         <a
-          href={localizedHref(content.ctaHref)}
+          href={localizedHref(categoriesContent.ctaHref)}
           className='hidden md:flex type-label items-center gap-2 hover:gap-3 transition-all duration-200'
           style={{ color: 'var(--muted-teal)' }}
         >
-          {content.ctaLabel}
+          {categoriesContent.ctaLabel}
           <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
             <path d='M5 12h14M12 5l7 7-7 7' />
           </svg>
@@ -112,7 +113,7 @@ export function CategoriesGrid({
 
       {/* Grid */}
       <div className='grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4'>
-        {content.cards.filter((card) => card.visible).map((cat, i) => {
+        {categoriesContent.cards.filter((card) => card.visible).map((cat, i) => {
               const visual = CATEGORY_VISUALS.find((item) => item.id === cat.id) ?? CATEGORY_VISUALS[i] ?? DEFAULT_VISUAL;
               const categoryCount = counts[cat.id];
               const totalCount = cat.id === 'objects' && hasLiveCounts

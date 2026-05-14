@@ -9,7 +9,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
   const signatureHeader = req.headers.get('x-inpost-signature');
 
-  if (!verifyInpostWebhookSignature(rawBody, signatureHeader)) {
+  if (!(await verifyInpostWebhookSignature(rawBody, signatureHeader))) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 

@@ -8,21 +8,25 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { normalizeInpostPointCode } from '@/lib/inpost-point-code';
-import { formatPrice } from '@/lib/locales';
+import { defaultCurrencyForLocale, formatPrice } from '@/lib/locales';
 import {
   applyFreeThreshold,
   calcDeliveryRange,
   filterShippingMethodsForCountry,
+  filterShippingMethodsForProviderAvailability,
   getZoneForCountry,
   isPolandShippingCountry,
+  type ShippingProviderAvailability,
 } from '@/lib/shipping';
 import { SiteNav } from '@/components/SiteNav';
+import { ProductImage } from '@/components/ProductImage';
 import { COUNTRIES } from '@/data/countries';
 import {
   normalizeGeowidgetEventPoint,
   normalizeGeowidgetPoint,
   readGeowidgetPointSelectedRegistrar,
 } from './inpost-geowidget';
+import { buildCheckoutInfoSchema } from './checkout-schema';
 import type { CartItem } from '@/context/CartContext';
 import type { Product } from '@/data/products';
 import type { EcomLocale } from '@/lib/locales';
@@ -41,6 +45,24 @@ type FreshCartProduct = Pick<
   Product,
   'id' | 'name' | 'category' | 'price' | 'priceDisplay' | 'currencyCode' | 'gradient' | 'imageUrl'
 >;
+type PaymentProviderAvailability = {
+  payu?: boolean;
+  stripe?: boolean;
+  paypal?: boolean;
+};
+
+type StripePublicSettings = {
+  enabled: boolean;
+  publishableKey: string;
+};
+
+type PayPalPublicSettings = {
+  enabled: boolean;
+  clientId: string;
+  mode: 'sandbox' | 'live';
+};
+
+type ActivePaymentMethod = 'blik' | 'stripe' | 'paypal';
 
 const calculatePromoDiscount = (
   subtotal: number,
@@ -62,12 +84,14 @@ const isNonEmptyString = (value: string | null | undefined): value is string => 
 const isTruthyBoolean = (value: boolean | null | undefined): value is true => value === true;
 
 const toOptionalText = (value: string): string | undefined => (value === '' ? undefined : value);
-const firstCartCurrencyCode = (items: CartItem[]): string =>
-  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? 'PLN';
+const firstCartCurrencyCode = (items: CartItem[], locale: EcomLocale): string =>
+  items.find((item) => (item.currencyCode ?? '').trim() !== '')?.currencyCode ?? defaultCurrencyForLocale(locale);
 const freshText = (next: string, current: string): string => (next === '' ? current : next);
 const freshPrice = (next: number, current: number): number => (next === 0 ? current : next);
 const prefillText = (current: string | undefined, fallback: string): string =>
   current !== undefined && current.trim() !== '' ? current : fallback;
+const initialCheckoutForm = (locale: EcomLocale): Partial<Record<string, string>> =>
+  locale === 'pl' ? { country: 'Poland' } : {};
 
 const mergeFreshCartItem = (
   item: CartItem,
@@ -418,6 +442,82 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function fallbackInpostGeowidgetToken(): string {
+  return process.env['NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN']?.trim() ?? '';
+}
+
+function readPublicInpostGeowidgetToken(data: unknown): string {
+  if (!isPlainRecord(data)) return '';
+  const shipping = data['shipping'];
+  if (!isPlainRecord(shipping)) return '';
+  const inpost = shipping['inpost'];
+  if (!isPlainRecord(inpost)) return '';
+  if (inpost['enabled'] === false) return '';
+  const token = inpost['geowidgetToken'];
+  return typeof token === 'string' ? token.trim() : '';
+}
+
+function readProviderEnabled(shipping: Record<string, unknown>, key: string): boolean | undefined {
+  const provider = shipping[key];
+  if (!isPlainRecord(provider)) return undefined;
+  const enabled = provider['enabled'];
+  return typeof enabled === 'boolean' ? enabled : undefined;
+}
+
+function readPublicShippingProviderAvailability(data: unknown): ShippingProviderAvailability {
+  if (!isPlainRecord(data)) return {};
+  const shipping = data['shipping'];
+  if (!isPlainRecord(shipping)) return {};
+  return {
+    dpd: readProviderEnabled(shipping, 'dpd'),
+    inpost: readProviderEnabled(shipping, 'inpost'),
+    poczta_polska: readProviderEnabled(shipping, 'pocztaPolska'),
+  };
+}
+
+function readPaymentProviderBool(payment: Record<string, unknown>, key: string): boolean | undefined {
+  const provider = payment[key];
+  if (!isPlainRecord(provider)) return undefined;
+  const enabled = provider['enabled'];
+  return typeof enabled === 'boolean' ? enabled : undefined;
+}
+
+function readPublicPaymentProviderAvailability(data: unknown): PaymentProviderAvailability {
+  if (!isPlainRecord(data)) return {};
+  const payment = data['payment'];
+  if (!isPlainRecord(payment)) return {};
+  return {
+    payu: readPaymentProviderBool(payment, 'payu'),
+    stripe: readPaymentProviderBool(payment, 'stripe'),
+    paypal: readPaymentProviderBool(payment, 'paypal'),
+  };
+}
+
+function readPublicStripeSettings(data: unknown): StripePublicSettings {
+  if (!isPlainRecord(data)) return { enabled: false, publishableKey: '' };
+  const payment = data['payment'];
+  if (!isPlainRecord(payment)) return { enabled: false, publishableKey: '' };
+  const stripe = payment['stripe'];
+  if (!isPlainRecord(stripe)) return { enabled: false, publishableKey: '' };
+  return {
+    enabled: stripe['enabled'] === true,
+    publishableKey: typeof stripe['publishableKey'] === 'string' ? stripe['publishableKey'] : '',
+  };
+}
+
+function readPublicPayPalSettings(data: unknown): PayPalPublicSettings {
+  if (!isPlainRecord(data)) return { enabled: false, clientId: '', mode: 'sandbox' };
+  const payment = data['payment'];
+  if (!isPlainRecord(payment)) return { enabled: false, clientId: '', mode: 'sandbox' };
+  const paypal = payment['paypal'];
+  if (!isPlainRecord(paypal)) return { enabled: false, clientId: '', mode: 'sandbox' };
+  return {
+    enabled: paypal['enabled'] === true,
+    clientId: typeof paypal['clientId'] === 'string' ? paypal['clientId'] : '',
+    mode: paypal['mode'] === 'live' ? 'live' : 'sandbox',
+  };
+}
+
 function ManualInpostPointInput({
   locale,
   value,
@@ -479,6 +579,7 @@ function ManualInpostPointInput({
 
 // eslint-disable-next-line max-lines-per-function, complexity
 function InpostPointSelector({
+  geowidgetToken,
   locale,
   point,
   manualValue,
@@ -487,6 +588,7 @@ function InpostPointSelector({
   onSelect,
   onManualValueChange,
 }: {
+  geowidgetToken: string;
   locale: EcomLocale;
   point: InpostPoint | null;
   manualValue: string;
@@ -497,7 +599,7 @@ function InpostPointSelector({
 }): JSX.Element {
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const [loadError, setLoadError] = useState('');
-  const token = process.env.NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN?.trim() ?? '';
+  const token = geowidgetToken.trim();
   const hasWidgetToken = Boolean(token);
 
   useEffect(() => {
@@ -531,7 +633,8 @@ function InpostPointSelector({
         widget.setAttribute('config', 'parcelCollect');
         widget.setAttribute('onpoint', eventName);
         widget.style.display = 'block';
-        widget.style.minHeight = '420px';
+        widget.style.height = '600px';
+        widget.style.width = '100%';
         widget.addEventListener(initEventName, handleInit, { once: true });
         widget.addEventListener(eventName, handleSelect);
         container.replaceChildren(widget);
@@ -603,7 +706,7 @@ function InpostPointSelector({
       {hasWidgetToken ? (
         <>
           {loadError === '' ? (
-            <div ref={widgetRef} style={{ minHeight: 420 }} />
+            <div ref={widgetRef} style={{ height: 600, width: '100%' }} />
           ) : (
             <div className='space-y-3'>
               <p className='type-label' style={{ color: 'var(--accent)' }}>
@@ -620,13 +723,32 @@ function InpostPointSelector({
           )}
         </>
       ) : (
-        <ManualInpostPointInput
-          locale={locale}
-          value={manualValue}
-          error={error}
-          invalid={manualInvalid}
-          onChange={onManualValueChange}
-        />
+        <div className='space-y-3'>
+          <div
+            className='p-3'
+            style={{
+              border: '1px dashed var(--border)',
+              background: 'var(--surface)',
+              minHeight: 80,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <p className='type-label text-center' style={{ color: 'var(--muted)', lineHeight: 1.6 }}>
+              {locale === 'pl'
+                ? 'Mapa paczkomatu jest chwilowo niedostępna. Wpisz kod paczkomatu poniżej.'
+                : 'The parcel locker map is temporarily unavailable. Enter the locker code below.'}
+            </p>
+          </div>
+          <ManualInpostPointInput
+            locale={locale}
+            value={manualValue}
+            error={error}
+            invalid={manualInvalid}
+            onChange={onManualValueChange}
+          />
+        </div>
       )}
 
       {error !== '' && (
@@ -676,7 +798,7 @@ function OrderSummary({
   const [promoError, setPromoError] = useState(false);
   const [promoApplying, setPromoApplying] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
-  const summaryCurrencyCode = firstCartCurrencyCode(displayItems);
+  const summaryCurrencyCode = firstCartCurrencyCode(displayItems, locale);
   const freeShippingEnabled = freeShippingThreshold > 0;
   const freeShippingUnlocked = freeShippingEnabled && subtotal >= freeShippingThreshold;
   const freeShippingRemaining = Math.max(0, freeShippingThreshold - subtotal);
@@ -747,10 +869,14 @@ function OrderSummary({
         ) : (
           displayItems.map((item) => (
             <div key={`${item.productId}::${item.size}`} className='flex gap-3'>
-              <div className='relative flex-shrink-0'>
-                <div
-                  className='w-14 h-16'
-                  style={{ background: item.gradient }}
+              <div className='relative h-16 w-14 flex-shrink-0 overflow-hidden'>
+                <ProductImage
+                  imageUrl={item.imageUrl}
+                  gradient={item.gradient}
+                  alt={item.name}
+                  className='absolute inset-0'
+                  sizes='56px'
+                  fit='cover'
                 />
                 <span
                   className='absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center'
@@ -926,6 +1052,341 @@ function OrderSummary({
   );
 }
 
+// ── Stripe (loaded from CDN) ─────────────────────────────────────────────────
+
+type StripeSDK = {
+  elements(options: { clientSecret: string; appearance?: Record<string, unknown> }): StripeElementsGroup;
+  confirmPayment(options: {
+    elements: StripeElementsGroup;
+    confirmParams: { return_url: string };
+    redirect?: 'if_required';
+  }): Promise<{ error?: { message?: string } }>;
+};
+type StripeElementsGroup = {
+  create(type: string): StripeElement;
+  submit(): Promise<{ error?: { message?: string } }>;
+};
+type StripeElement = {
+  mount(target: HTMLElement): void;
+  destroy(): void;
+  on(event: string, handler: () => void): void;
+};
+
+type StripePaymentSectionProps = {
+  locale: EcomLocale;
+  publishableKey: string;
+  clientSecret: string;
+  initiating: boolean;
+  error: string;
+  total: number;
+  checkoutItemsEmpty: boolean;
+  elementsReady: boolean;
+  onInitiate(): void;
+  onElementsReady(): void;
+  onSuccess(orderId: string): void;
+  onError(message: string): void;
+  onReset(): void;
+};
+
+// eslint-disable-next-line max-lines-per-function
+function StripePaymentSection({
+  locale,
+  publishableKey,
+  clientSecret,
+  initiating,
+  error,
+  checkoutItemsEmpty,
+  elementsReady,
+  onInitiate,
+  onElementsReady,
+  onSuccess,
+  onError,
+  onReset,
+}: StripePaymentSectionProps): JSX.Element {
+  const paymentRef = useRef<HTMLDivElement | null>(null);
+  const stripeRef = useRef<StripeSDK | null>(null);
+  const elementsRef = useRef<StripeElementsGroup | null>(null);
+  const elementRef = useRef<StripeElement | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [scriptError, setScriptError] = useState('');
+  const onElementsReadyRef = useRef(onElementsReady);
+  onElementsReadyRef.current = onElementsReady;
+
+  useEffect(() => {
+    if (clientSecret === '' || publishableKey === '') return undefined;
+
+    let active = true;
+
+    const mountElements = (): void => {
+      if (!active || !paymentRef.current) return;
+      const win = window as unknown as { Stripe?: (key: string) => StripeSDK };
+      if (!win.Stripe) return;
+      const stripe = win.Stripe(publishableKey);
+      const elements = stripe.elements({ clientSecret, appearance: { theme: 'flat' } });
+      const paymentElement = elements.create('payment');
+      paymentElement.on('ready', () => { if (active) onElementsReadyRef.current(); });
+      paymentElement.mount(paymentRef.current);
+      stripeRef.current = stripe;
+      elementsRef.current = elements;
+      elementRef.current = paymentElement;
+    };
+
+    const existing = document.getElementById('stripe-js') as HTMLScriptElement | null;
+    if (existing) {
+      if ((window as unknown as { Stripe?: unknown }).Stripe) mountElements();
+      else existing.addEventListener('load', mountElements, { once: true });
+    } else {
+      const script = document.createElement('script');
+      script.id = 'stripe-js';
+      script.src = 'https://js.stripe.com/v3/';
+      script.async = true;
+      script.onload = mountElements;
+      script.onerror = (): void => { if (active) setScriptError('Failed to load Stripe. Please try again.'); };
+      document.head.appendChild(script);
+    }
+
+    return (): void => {
+      active = false;
+      elementRef.current?.destroy();
+      stripeRef.current = null;
+      elementsRef.current = null;
+      elementRef.current = null;
+    };
+  }, [clientSecret, publishableKey]);
+
+  const handleConfirm = async (): Promise<void> => {
+    if (!stripeRef.current || !elementsRef.current || submitting) return;
+    setSubmitting(true);
+    const { error: submitErr } = await elementsRef.current.submit();
+    if (submitErr) { setSubmitting(false); onError(submitErr.message ?? 'Payment failed.'); return; }
+    const returnUrl = `${window.location.origin}/order-status`;
+    const { error: confirmErr } = await stripeRef.current.confirmPayment({
+      elements: elementsRef.current,
+      confirmParams: { return_url: returnUrl },
+      redirect: 'if_required',
+    });
+    setSubmitting(false);
+    if (confirmErr) { onError(confirmErr.message ?? 'Payment was declined.'); return; }
+    const oid = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('stripe_pending_order_id') : null) ?? '';
+    onSuccess(oid);
+  };
+
+  if (clientSecret === '') {
+    return (
+      <div>
+        <div className='flex items-center gap-3 mb-6'>
+          <div className='flex items-center justify-center px-3 py-1' style={{ background: 'var(--fg)', color: 'var(--bg)', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.15em', fontWeight: 600 }}>
+            CARD
+          </div>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Płatność kartą' : 'Card payment'}
+          </span>
+        </div>
+        <p className='type-label mb-6' style={{ color: 'var(--muted)' }}>
+          {locale === 'pl' ? 'Bezpieczna płatność kartą przez Stripe.' : 'Secure card payment powered by Stripe.'}
+        </p>
+        {error !== '' && <p className='type-label mb-4' style={{ color: 'var(--accent)' }}>{error}</p>}
+        <button
+          className='btn-primary w-full flex items-center justify-center gap-2'
+          onClick={onInitiate}
+          disabled={initiating || checkoutItemsEmpty}
+          style={{ opacity: initiating || checkoutItemsEmpty ? 0.5 : 1 }}
+        >
+          {initiating && (
+            <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+              <path d='M12 3a9 9 0 1 1-9 9' />
+            </svg>
+          )}
+          {locale === 'pl' ? 'Kontynuuj do płatności kartą' : 'Continue to card payment'}
+          {!initiating && (
+            <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+              <path d='M5 12h14M12 5l7 7-7 7' />
+            </svg>
+          )}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className='flex items-center justify-between gap-3 mb-6'>
+        <div className='flex items-center gap-3'>
+          <div className='flex items-center justify-center px-3 py-1' style={{ background: 'var(--fg)', color: 'var(--bg)', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.15em', fontWeight: 600 }}>
+            CARD
+          </div>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Płatność kartą' : 'Card payment'}
+          </span>
+        </div>
+        <button onClick={onReset} className='type-label hover:text-[var(--fg)] transition-colors' style={{ color: 'var(--muted)' }}>
+          {locale === 'pl' ? 'Zmień' : 'Change'}
+        </button>
+      </div>
+      {(error !== '' || scriptError !== '') && (
+        <p className='type-label mb-4' style={{ color: 'var(--accent)' }}>{error !== '' ? error : scriptError}</p>
+      )}
+      {!elementsReady && scriptError === '' && (
+        <div className='flex items-center gap-2 mb-3'>
+          <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' style={{ color: 'var(--muted)' }}>
+            <path d='M12 3a9 9 0 1 1-9 9' />
+          </svg>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Ładowanie formularza...' : 'Loading payment form...'}
+          </span>
+        </div>
+      )}
+      <div
+        ref={paymentRef}
+        className='mb-6'
+        style={{ minHeight: elementsReady ? undefined : 80, opacity: elementsReady ? 1 : 0.3, transition: 'opacity 0.3s ease' }}
+      />
+      <button
+        className='btn-primary w-full flex items-center justify-center gap-2'
+        onClick={() => { void handleConfirm(); }}
+        disabled={!elementsReady || submitting || scriptError !== ''}
+        style={{ opacity: !elementsReady || submitting ? 0.5 : 1 }}
+      >
+        {submitting && (
+          <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+            <path d='M12 3a9 9 0 1 1-9 9' />
+          </svg>
+        )}
+        {locale === 'pl' ? 'Potwierdź płatność' : 'Confirm payment'}
+        {!submitting && (
+          <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+            <path d='M5 12h14M12 5l7 7-7 7' />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ── PayPal (loaded from CDN) ─────────────────────────────────────────────────
+
+type PayPalButtonsInstance = { render(target: HTMLElement): Promise<void>; close(): Promise<void> };
+type PayPalNamespace = {
+  Buttons(config: {
+    createOrder(): Promise<string>;
+    onApprove(data: { orderID: string }): Promise<void>;
+    onError?(err: unknown): void;
+    style?: Record<string, unknown>;
+  }): PayPalButtonsInstance;
+};
+
+type PayPalPaymentSectionProps = {
+  locale: EcomLocale;
+  clientId: string;
+  mode: 'sandbox' | 'live';
+  initiating: boolean;
+  error: string;
+  onCreateOrder(): Promise<string>;
+  onCapture(paypalOrderId: string): Promise<void>;
+};
+
+// eslint-disable-next-line max-lines-per-function
+function PayPalPaymentSection({
+  locale,
+  clientId,
+  mode,
+  initiating,
+  error,
+  onCreateOrder,
+  onCapture,
+}: PayPalPaymentSectionProps): JSX.Element {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const instanceRef = useRef<PayPalButtonsInstance | null>(null);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [sdkError, setSdkError] = useState('');
+  const onCreateOrderRef = useRef(onCreateOrder);
+  const onCaptureRef = useRef(onCapture);
+  onCreateOrderRef.current = onCreateOrder;
+  onCaptureRef.current = onCapture;
+
+  useEffect(() => {
+    if (clientId === '') return undefined;
+
+    let active = true;
+
+    const renderButtons = (): void => {
+      if (!active || !containerRef.current) return;
+      const win = window as unknown as { paypal?: PayPalNamespace };
+      if (!win.paypal) return;
+      instanceRef.current?.close().catch(() => undefined);
+      containerRef.current.innerHTML = '';
+      const instance = win.paypal.Buttons({
+        createOrder: async () => {
+          const id = await onCreateOrderRef.current();
+          if (id === '') throw new Error('Order creation failed.');
+          return id;
+        },
+        onApprove: async (data: { orderID: string }) => {
+          await onCaptureRef.current(data.orderID);
+        },
+        onError: (err: unknown): void => {
+          if (!active) return;
+          setSdkError(err instanceof Error ? err.message : 'PayPal error occurred.');
+        },
+        style: { layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 48 },
+      });
+      instanceRef.current = instance;
+      void instance.render(containerRef.current).then(() => { if (active) setSdkReady(true); });
+    };
+
+    const scriptSrc = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&intent=capture&components=buttons`;
+    const existing = document.querySelector('script[data-paypal-sdk]') as HTMLScriptElement | null;
+    if (existing) {
+      if ((window as unknown as { paypal?: unknown }).paypal) renderButtons();
+      else existing.addEventListener('load', renderButtons, { once: true });
+    } else {
+      const script = document.createElement('script');
+      script.setAttribute('data-paypal-sdk', '1');
+      script.src = scriptSrc;
+      script.async = true;
+      script.onload = renderButtons;
+      script.onerror = (): void => { if (active) setSdkError('Failed to load PayPal. Please try again.'); };
+      document.body.appendChild(script);
+    }
+
+    return (): void => {
+      active = false;
+      instanceRef.current?.close().catch(() => undefined);
+      instanceRef.current = null;
+    };
+  }, [clientId, mode]);
+
+  return (
+    <div>
+      <div className='flex items-center gap-3 mb-6'>
+        <div
+          className='flex items-center justify-center px-4 py-1'
+          style={{ background: '#FFC439', fontFamily: 'var(--font-body)', fontSize: '0.75rem', fontWeight: 700, color: '#003087', borderRadius: 2 }}
+        >
+          PayPal
+        </div>
+        <span className='type-label' style={{ color: 'var(--muted)' }}>
+          {locale === 'pl' ? 'Płatność przez PayPal' : 'Pay with PayPal'}
+        </span>
+      </div>
+      {(error !== '' || sdkError !== '') && (
+        <p className='type-label mb-4' style={{ color: 'var(--accent)' }}>{error !== '' ? error : sdkError}</p>
+      )}
+      {!sdkReady && sdkError === '' && !initiating && (
+        <div className='flex items-center gap-2 mb-4'>
+          <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' style={{ color: 'var(--muted)' }}>
+            <path d='M12 3a9 9 0 1 1-9 9' />
+          </svg>
+          <span className='type-label' style={{ color: 'var(--muted)' }}>
+            {locale === 'pl' ? 'Ładowanie PayPal...' : 'Loading PayPal...'}
+          </span>
+        </div>
+      )}
+      <div ref={containerRef} style={{ minHeight: 48 }} />
+    </div>
+  );
+}
+
 // eslint-disable-next-line max-lines-per-function, complexity
 export function CheckoutPageClient({ content }: { content: CheckoutContent }): JSX.Element {
   const { items, clearCart } = useCart();
@@ -935,7 +1396,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const localizedHref = useLocalizedHref();
   const [step, setStep] = useState<Step>('information');
   const [shipping, setShipping] = useState(content.shippingMethods[0]?.id ?? 'standard');
-  const [form, setForm] = useState<Partial<Record<string, string>>>({});
+  const [form, setForm] = useState<Partial<Record<string, string>>>(() => initialCheckoutForm(locale));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoDiscountType, setPromoDiscountType] = useState<'percentage' | 'fixed' | null>(null);
@@ -957,6 +1418,23 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const [inpostPointError, setInpostPointError] = useState('');
   const [freshCartProducts, setFreshCartProducts] = useState<Partial<Record<string, FreshCartProduct>>>({});
   const [cartRefreshPending, setCartRefreshPending] = useState(false);
+  const [inpostGeowidgetToken, setInpostGeowidgetToken] = useState('');
+  const [paymentProviderAvailability, setPaymentProviderAvailability] =
+    useState<PaymentProviderAvailability>({});
+  const [shippingProviderAvailability, setShippingProviderAvailability] =
+    useState<ShippingProviderAvailability>({});
+  const [stripeSettings, setStripeSettings] = useState<StripePublicSettings>({ enabled: false, publishableKey: '' });
+  const [paypalSettings, setPaypalSettings] = useState<PayPalPublicSettings>({ enabled: false, clientId: '', mode: 'sandbox' });
+  const [activePaymentMethod, setActivePaymentMethod] = useState<ActivePaymentMethod>('blik');
+  // Stripe state
+  const [stripeClientSecret, setStripeClientSecret] = useState('');
+  const [stripePublishableKey, setStripePublishableKey] = useState('');
+  const [stripeInitiating, setStripeInitiating] = useState(false);
+  const [stripeError, setStripeError] = useState('');
+  const [stripeElementsReady, setStripeElementsReady] = useState(false);
+  // PayPal state
+  const [paypalInitiating, setPaypalInitiating] = useState(false);
+  const [paypalError, setPaypalError] = useState('');
 
   const idKey = items.map((item) => item.productId).join(',');
   useEffect(() => {
@@ -987,11 +1465,39 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     };
   }, [idKey, locale]);
 
+  useEffect(() => {
+    let active = true;
+    const loadProviderSettings = async (): Promise<void> => {
+      try {
+        const response = await fetch('/api/checkout/provider-settings', { cache: 'no-store' });
+        const data = (await response.json().catch(() => null)) as unknown;
+        if (active && response.ok) {
+          setInpostGeowidgetToken(readPublicInpostGeowidgetToken(data));
+          setPaymentProviderAvailability(readPublicPaymentProviderAvailability(data));
+          setShippingProviderAvailability(readPublicShippingProviderAvailability(data));
+          setStripeSettings(readPublicStripeSettings(data));
+          setPaypalSettings(readPublicPayPalSettings(data));
+        } else if (active) {
+          setInpostGeowidgetToken(fallbackInpostGeowidgetToken());
+        }
+      } catch {
+        if (active) setInpostGeowidgetToken(fallbackInpostGeowidgetToken());
+        if (active) setPaymentProviderAvailability({});
+        if (active) setShippingProviderAvailability({});
+      }
+    };
+
+    void loadProviderSettings();
+    return (): void => {
+      active = false;
+    };
+  }, []);
+
   const checkoutItems = useMemo(
     () => items.map((item) => mergeFreshCartItem(item, freshCartProducts[item.productId])),
     [freshCartProducts, items]
   );
-  const checkoutCurrencyCode = firstCartCurrencyCode(checkoutItems);
+  const checkoutCurrencyCode = firstCartCurrencyCode(checkoutItems, locale);
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const zoneMethods = useMemo(() => {
     const shippingCountry = form.country ?? '';
@@ -1000,8 +1506,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       ? zone.methods
       : content.shippingMethods;
     const countryMethods = filterShippingMethodsForCountry(rawMethods, shippingCountry);
-    return applyFreeThreshold(
+    const providerMethods = filterShippingMethodsForProviderAvailability(
       countryMethods,
+      shippingProviderAvailability,
+    );
+    return applyFreeThreshold(
+      providerMethods,
       subtotal,
       content.freeShippingThreshold,
       content.freeShippingMethodId,
@@ -1012,6 +1522,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     content.shippingMethods,
     content.shippingZones,
     form.country,
+    shippingProviderAvailability,
     subtotal,
   ]);
   const defaultShipping: CheckoutShippingMethodContent = {
@@ -1038,8 +1549,6 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     && normalizeInpostPointCode(inpostPointManualValue) === null;
   const discount = calculatePromoDiscount(subtotal, promoDiscountType, promoDiscountValue);
   const total = subtotal - discount + selectedShipping.price;
-  const requiredMessage = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
-  const invalidEmailMessage = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
   const estimatedDeliveryLabel = locale === 'pl' ? 'Szacowana dostawa:' : 'Estimated:';
   const blikLabel = locale === 'pl' ? 'Kod BLIK' : 'BLIK code';
   const blikPlaceholder = '000000';
@@ -1051,6 +1560,17 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     ? 'Otwórz aplikację bankową i zatwierdź płatność BLIK. Czekamy na potwierdzenie…'
     : 'Open your banking app and approve the BLIK payment. Waiting for confirmation…';
   const blikInvalidMessage = locale === 'pl' ? 'Wpisz poprawny 6-cyfrowy kod BLIK.' : 'Enter a valid 6-digit BLIK code.';
+  const isPayuPaymentAvailable = paymentProviderAvailability.payu !== false;
+  const isStripePaymentAvailable = paymentProviderAvailability.stripe === true && stripeSettings.publishableKey !== '';
+  const isPayPalPaymentAvailable = paymentProviderAvailability.paypal === true && paypalSettings.clientId !== '';
+  const availablePaymentMethods: ActivePaymentMethod[] = [
+    ...(isPayuPaymentAvailable ? ['blik' as const] : []),
+    ...(isStripePaymentAvailable ? ['stripe' as const] : []),
+    ...(isPayPalPaymentAvailable ? ['paypal' as const] : []),
+  ];
+  const paymentUnavailableMessage = locale === 'pl'
+    ? 'Płatność BLIK jest chwilowo niedostępna.'
+    : 'BLIK payment is temporarily unavailable.';
   const inpostPointRequiredMessage = locale === 'pl' ? 'Wybierz paczkomat InPost.' : 'Choose an InPost pickup point.';
   const inpostPointInvalidMessage = locale === 'pl' ? 'Wpisz prawidłowy kod paczkomatu.' : 'Enter a valid parcel locker code.';
 
@@ -1109,20 +1629,20 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   }, []);
 
   const validateInformationForm = (): boolean => {
+    const result = buildCheckoutInfoSchema(locale).safeParse(form);
+    if (result.success) {
+      setErrors({});
+      return true;
+    }
     const nextErrors: Record<string, string> = {};
-    const requiredFields = ['email', 'firstName', 'lastName', 'address', 'city', 'postcode', 'country', 'phone'];
-
-    for (const field of requiredFields) {
-      const fieldValue = form[field] ?? '';
-      if (fieldValue.trim() === '') nextErrors[field] = requiredMessage;
+    for (const issue of result.error.issues) {
+      const field = issue.path[0];
+      if (typeof field === 'string' && !Object.hasOwn(nextErrors, field)) {
+        nextErrors[field] = issue.message;
+      }
     }
-    const emailValue = form.email ?? '';
-    if (emailValue.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue.trim())) {
-      nextErrors.email = invalidEmailMessage;
-    }
-
     setErrors((current) => ({ ...current, ...nextErrors }));
-    return Object.keys(nextErrors).length === 0;
+    return false;
   };
 
   const validateShippingStep = (): boolean => {
@@ -1134,9 +1654,16 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
     return true;
   };
 
+  const validatePaymentAvailability = (): boolean => {
+    if (isPayuPaymentAvailable) return true;
+    setBlikError(paymentUnavailableMessage);
+    return false;
+  };
+
   // eslint-disable-next-line complexity
   const handlePlaceOrder = async (): Promise<void> => {
     if (checkoutItems.length === 0 || placingOrder || cartRefreshPending) return;
+    if (!validatePaymentAvailability()) return;
     if (!validateInformationForm()) {
       setStep('information');
       return;
@@ -1196,6 +1723,121 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
       toast({ type: 'error', title: 'Order failed', message: 'Please try again.' });
     } finally {
       setPlacingOrder(false);
+    }
+  };
+
+  const handleInitiateStripePayment = async (): Promise<void> => {
+    if (!validateInformationForm()) { setStep('information'); return; }
+    if (!validateShippingStep()) { setStep('shipping'); return; }
+    setStripeError('');
+    setStripeInitiating(true);
+    try {
+      const res = await fetch('/api/checkout/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email ?? '',
+          items: checkoutItems,
+          shippingMethod: selectedShipping.label,
+          shippingMethodId: selectedShipping.id,
+          shippingPrice: selectedShipping.price,
+          shippingCarrier: selectedShipping.carrier ?? 'manual',
+          shippingService: selectedShipping.service ?? selectedShipping.id,
+          inpostPoint: requiresInpostPoint ? inpostPoint ?? undefined : undefined,
+          shippingAddress: { ...form },
+          subtotal,
+          discount,
+          promoCode: promoCode ?? undefined,
+          total,
+        }),
+      });
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      if (!res.ok || !isPlainRecord(data)) {
+        const msg = isPlainRecord(data) && typeof data.error === 'string' ? data.error : 'Card payment setup failed.';
+        setStripeError(msg);
+        return;
+      }
+      const secret = typeof data.clientSecret === 'string' ? data.clientSecret : '';
+      const pubKey = typeof data.publishableKey === 'string' ? data.publishableKey : '';
+      const oid = typeof data.orderId === 'string' ? data.orderId : '';
+      if (secret === '' || pubKey === '') { setStripeError('Card payment setup failed.'); return; }
+      setConfirmedOrderId(oid);
+      setStripeClientSecret(secret);
+      setStripePublishableKey(pubKey);
+      // Save orderId for 3DS redirect recovery
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('stripe_pending_order_id', oid);
+      }
+    } catch {
+      setStripeError('Card payment setup failed. Please try again.');
+    } finally {
+      setStripeInitiating(false);
+    }
+  };
+
+  const handlePayPalCreateOrder = async (): Promise<string> => {
+    if (!validateInformationForm()) { setStep('information'); return ''; }
+    if (!validateShippingStep()) { setStep('shipping'); return ''; }
+    setPaypalError('');
+    setPaypalInitiating(true);
+    try {
+      const res = await fetch('/api/checkout/paypal/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email ?? '',
+          items: checkoutItems,
+          shippingMethod: selectedShipping.label,
+          shippingMethodId: selectedShipping.id,
+          shippingPrice: selectedShipping.price,
+          shippingCarrier: selectedShipping.carrier ?? 'manual',
+          shippingService: selectedShipping.service ?? selectedShipping.id,
+          inpostPoint: requiresInpostPoint ? inpostPoint ?? undefined : undefined,
+          shippingAddress: { ...form },
+          subtotal,
+          discount,
+          promoCode: promoCode ?? undefined,
+          total,
+        }),
+      });
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      if (!res.ok || !isPlainRecord(data)) {
+        const msg = isPlainRecord(data) && typeof data.error === 'string' ? data.error : 'PayPal setup failed.';
+        setPaypalError(msg);
+        return '';
+      }
+      const ppOrderId = typeof data.paypalOrderId === 'string' ? data.paypalOrderId : '';
+      const oid = typeof data.orderId === 'string' ? data.orderId : '';
+      setConfirmedOrderId(oid);
+      return ppOrderId;
+    } catch {
+      setPaypalError('PayPal setup failed. Please try again.');
+      return '';
+    } finally {
+      setPaypalInitiating(false);
+    }
+  };
+
+  const handlePayPalCaptureOrder = async (paypalOrderId: string): Promise<void> => {
+    const oid = confirmedOrderId;
+    if (oid === '' || paypalOrderId === '') { setPaypalError('Payment could not be completed.'); return; }
+    try {
+      const res = await fetch('/api/checkout/paypal/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: oid, paypalOrderId }),
+      });
+      const data = (await res.json().catch(() => undefined)) as unknown;
+      if (res.ok) {
+        setStep('confirmation');
+        clearCart();
+        toast({ type: 'success', title: content.orderPlacedToastTitle, message: oid });
+      } else {
+        const msg = isPlainRecord(data) && typeof data.error === 'string' ? data.error : 'PayPal payment was declined.';
+        setPaypalError(msg);
+      }
+    } catch {
+      setPaypalError('PayPal payment failed. Please try again.');
     }
   };
 
@@ -1457,6 +2099,7 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   ))}
                   {requiresInpostPoint && (
                     <InpostPointSelector
+                      geowidgetToken={inpostGeowidgetToken}
                       locale={locale}
                       point={inpostPoint}
                       manualValue={inpostPointManualValue}
@@ -1515,150 +2158,151 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                   </span>
                 </div>
 
-                {blikPending ? (
-                  /* ── BLIK pending: customer is confirming in banking app ── */
-                  <div className='flex flex-col items-center text-center py-8 gap-6'>
-                    <svg
-                      className='animate-spin'
-                      width='36'
-                      height='36'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='1.5'
-                      strokeLinecap='round'
-                      style={{ color: 'var(--fg)' }}
-                    >
-                      <path d='M12 3a9 9 0 1 1-9 9' />
-                    </svg>
-                    <div>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '1.1rem',
-                          fontWeight: 300,
-                          color: 'var(--fg)',
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        {blikPendingTitle}
-                      </p>
-                      <p className='type-label' style={{ color: 'var(--muted)', maxWidth: '320px' }}>
-                        {blikPendingBody}
-                      </p>
-                      {blikSecondsLeft > 0 && (
-                        <p
-                          className='type-label mt-3'
-                          style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}
+                {/* Payment method selector — only shown when multiple methods are available */}
+                {availablePaymentMethods.length > 1 && !blikPending && stripeClientSecret === '' && (
+                  <div className='flex gap-2 mb-8'>
+                    {availablePaymentMethods.map((method) => {
+                      const labels: Record<ActivePaymentMethod, string> = {
+                        blik: 'BLIK',
+                        stripe: locale === 'pl' ? 'Karta' : 'Card',
+                        paypal: 'PayPal',
+                      };
+                      return (
+                        <button
+                          key={method}
+                          className='type-label px-4 py-2 transition-colors'
+                          style={{
+                            border: `1px solid ${activePaymentMethod === method ? 'var(--fg)' : 'var(--border)'}`,
+                            background: activePaymentMethod === method ? 'var(--surface)' : 'transparent',
+                            color: activePaymentMethod === method ? 'var(--fg)' : 'var(--muted)',
+                          }}
+                          onClick={() => {
+                            setActivePaymentMethod(method);
+                            setStripeError('');
+                            setPaypalError('');
+                          }}
                         >
-                          {String(Math.floor(blikSecondsLeft / 60)).padStart(2, '0')}
-                          :{String(blikSecondsLeft % 60).padStart(2, '0')}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      className='type-label hover:text-[var(--fg)] transition-colors'
-                      style={{ color: 'var(--muted)' }}
-                      onClick={() => {
-                        setBlikPending(false);
-                        setBlikSecondsLeft(0);
-                        setBlikCode('');
-                        setBlikError('');
-                      }}
-                    >
-                      {locale === 'pl' ? 'Anuluj i spróbuj ponownie' : 'Cancel and try again'}
-                    </button>
+                          {labels[method]}
+                        </button>
+                      );
+                    })}
                   </div>
-                ) : (
-                  /* ── BLIK code input ── */
-                  <div>
-                    {/* BLIK logo badge */}
-                    <div className='flex items-center gap-3 mb-6'>
-                      <div
-                        className='flex items-center justify-center px-3 py-1'
-                        style={{
-                          background: 'var(--fg)',
-                          color: 'var(--bg)',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.7rem',
-                          letterSpacing: '0.15em',
-                          fontWeight: 600,
-                        }}
-                      >
-                        BLIK
-                      </div>
-                      <span className='type-label' style={{ color: 'var(--muted)' }}>
-                        {locale === 'pl' ? 'Płatność mobilna' : 'Mobile payment'}
-                      </span>
-                    </div>
+                )}
 
-                    <div className='mb-2'>
-                      <label
-                        htmlFor='blik-code'
-                        className='type-label block mb-1.5'
-                        style={{ color: 'var(--fg)' }}
+                {/* ── BLIK payment ── */}
+                {activePaymentMethod === 'blik' && (
+                  blikPending ? (
+                    <div className='flex flex-col items-center text-center py-8 gap-6'>
+                      <svg className='animate-spin' width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' style={{ color: 'var(--fg)' }}>
+                        <path d='M12 3a9 9 0 1 1-9 9' />
+                      </svg>
+                      <div>
+                        <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 300, color: 'var(--fg)', marginBottom: '0.5rem' }}>
+                          {blikPendingTitle}
+                        </p>
+                        <p className='type-label' style={{ color: 'var(--muted)', maxWidth: '320px' }}>
+                          {blikPendingBody}
+                        </p>
+                        {blikSecondsLeft > 0 && (
+                          <p className='type-label mt-3' style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
+                            {String(Math.floor(blikSecondsLeft / 60)).padStart(2, '0')}:{String(blikSecondsLeft % 60).padStart(2, '0')}
+                          </p>
+                        )}
+                      </div>
+                      <button className='type-label hover:text-[var(--fg)] transition-colors' style={{ color: 'var(--muted)' }}
+                        onClick={() => { setBlikPending(false); setBlikSecondsLeft(0); setBlikCode(''); setBlikError(''); }}
                       >
-                        {blikLabel}
-                      </label>
-                      <input
-                        id='blik-code'
-                        type='text'
-                        inputMode='numeric'
-                        pattern='\d{6}'
-                        maxLength={6}
-                        value={blikCode}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setBlikCode(digits);
-                          if (blikError !== '') {
-                            setBlikError('');
-                          }
-                        }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') void handlePlaceOrder(); }}
-                        placeholder={blikPlaceholder}
-                        autoComplete='one-time-code'
-                        aria-invalid={blikError !== ''}
-                        aria-describedby={blikError !== '' ? 'blik-error' : 'blik-hint'}
-                        style={{
-                          width: '100%',
-                          padding: '1rem 1.25rem',
-                          background: 'transparent',
-                          border: `1px solid ${blikError !== '' ? 'var(--accent)' : 'var(--border)'}`,
-                          outline: 'none',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '1.75rem',
-                          letterSpacing: '0.4em',
-                          color: 'var(--fg)',
-                          textAlign: 'center',
-                          transition: 'border-color 0.2s ease',
-                        }}
-                        onFocus={(event) => {
-                          const target = event.currentTarget;
-                          target.style.borderColor = 'var(--fg)';
-                        }}
-                        onBlur={(event) => {
-                          const target = event.currentTarget;
-                          target.style.borderColor = blikError !== '' ? 'var(--accent)' : 'var(--border)';
-                        }}
-                      />
-                      {blikError !== '' ? (
-                        <p id='blik-error' className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
-                          {blikError}
-                        </p>
-                      ) : (
-                        <p id='blik-hint' className='type-label mt-1.5' style={{ color: 'var(--muted)' }}>
-                          {blikHint}
-                        </p>
-                      )}
+                        {locale === 'pl' ? 'Anuluj i spróbuj ponownie' : 'Cancel and try again'}
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <div className='flex items-center gap-3 mb-6'>
+                        <div className='flex items-center justify-center px-3 py-1' style={{ background: 'var(--fg)', color: 'var(--bg)', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.15em', fontWeight: 600 }}>
+                          BLIK
+                        </div>
+                        <span className='type-label' style={{ color: 'var(--muted)' }}>
+                          {locale === 'pl' ? 'Płatność mobilna' : 'Mobile payment'}
+                        </span>
+                      </div>
+                      <div className='mb-2'>
+                        <label htmlFor='blik-code' className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>{blikLabel}</label>
+                        <input
+                          id='blik-code'
+                          type='text'
+                          inputMode='numeric'
+                          pattern='\d{6}'
+                          maxLength={6}
+                          disabled={!isPayuPaymentAvailable}
+                          value={blikCode}
+                          onChange={(e) => { const digits = e.target.value.replace(/\D/g, '').slice(0, 6); setBlikCode(digits); if (blikError !== '') setBlikError(''); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') void handlePlaceOrder(); }}
+                          placeholder={blikPlaceholder}
+                          autoComplete='one-time-code'
+                          aria-invalid={blikError !== '' || !isPayuPaymentAvailable}
+                          aria-describedby={blikError !== '' || !isPayuPaymentAvailable ? 'blik-error' : 'blik-hint'}
+                          style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: `1px solid ${blikError !== '' ? 'var(--accent)' : 'var(--border)'}`, outline: 'none', fontFamily: 'var(--font-mono)', fontSize: '1.75rem', letterSpacing: '0.4em', color: 'var(--fg)', textAlign: 'center', transition: 'border-color 0.2s ease', opacity: isPayuPaymentAvailable ? 1 : 0.5 }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--fg)'; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = blikError !== '' ? 'var(--accent)' : 'var(--border)'; }}
+                        />
+                        {blikError !== '' || !isPayuPaymentAvailable ? (
+                          <p id='blik-error' className='type-label mt-1.5' style={{ color: 'var(--accent)' }}>
+                            {blikError !== '' ? blikError : paymentUnavailableMessage}
+                          </p>
+                        ) : (
+                          <p id='blik-hint' className='type-label mt-1.5' style={{ color: 'var(--muted)' }}>{blikHint}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {/* ── Stripe card payment ── */}
+                {activePaymentMethod === 'stripe' && (
+                  <StripePaymentSection
+                    locale={locale}
+                    publishableKey={stripePublishableKey !== '' ? stripePublishableKey : stripeSettings.publishableKey}
+                    clientSecret={stripeClientSecret}
+                    initiating={stripeInitiating}
+                    error={stripeError}
+                    total={total}
+                    checkoutItemsEmpty={checkoutItems.length === 0}
+                    elementsReady={stripeElementsReady}
+                    onInitiate={() => void handleInitiateStripePayment()}
+                    onElementsReady={() => setStripeElementsReady(true)}
+                    onSuccess={(oid) => {
+                      setConfirmedOrderId(oid !== '' ? oid : confirmedOrderId);
+                      setStep('confirmation');
+                      clearCart();
+                      toast({ type: 'success', title: content.orderPlacedToastTitle, message: oid !== '' ? oid : confirmedOrderId });
+                    }}
+                    onError={(msg) => setStripeError(msg)}
+                    onReset={() => { setStripeClientSecret(''); setStripePublishableKey(''); setStripeError(''); setStripeElementsReady(false); }}
+                  />
+                )}
+
+                {/* ── PayPal payment ── */}
+                {activePaymentMethod === 'paypal' && (
+                  <PayPalPaymentSection
+                    locale={locale}
+                    clientId={paypalSettings.clientId}
+                    mode={paypalSettings.mode}
+                    initiating={paypalInitiating}
+                    error={paypalError}
+                    onCreateOrder={handlePayPalCreateOrder}
+                    onCapture={handlePayPalCaptureOrder}
+                  />
                 )}
 
                 <div className='flex items-center justify-between mt-10'>
                   <button
                     className='type-label flex items-center gap-2 hover:text-[var(--fg)] transition-colors'
                     style={{ color: 'var(--muted)' }}
-                    onClick={() => { if (!blikPending) setStep('shipping'); }}
+                    onClick={() => {
+                      if (blikPending) return;
+                      if (stripeClientSecret !== '') { setStripeClientSecret(''); setStripePublishableKey(''); setStripeElementsReady(false); return; }
+                      setStep('shipping');
+                    }}
                     disabled={blikPending}
                   >
                     <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
@@ -1666,14 +2310,12 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
                     </svg>
                     {content.backLabel}
                   </button>
-                  {!blikPending && (
+                  {activePaymentMethod === 'blik' && !blikPending && (
                     <button
                       className='btn-primary'
-                      onClick={() => {
-                        void handlePlaceOrder();
-                      }}
-                      disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending}
-                      style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending ? 0.5 : 1 }}
+                      onClick={() => void handlePlaceOrder()}
+                      disabled={checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable}
+                      style={{ opacity: checkoutItems.length === 0 || placingOrder || cartRefreshPending || !isPayuPaymentAvailable ? 0.5 : 1 }}
                     >
                       {placingOrder && (
                         <svg className='animate-spin' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>

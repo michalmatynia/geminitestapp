@@ -76,80 +76,79 @@ export const buildAgentTeachingChatRuntimeDocument = (
       kind: 'facts',
       title: 'Workspace snapshot',
       items: [
-        {
-          selectedAgentId: input.selectedAgent?.id ?? null,
-          selectedAgentName: input.selectedAgent?.name ?? null,
-          agentCount: input.agents.length,
-          collectionCount: input.collections.length,
-          messageCount: input.messages.length,
-          lastRetrievedSourceCount: input.lastSources.length,
-          configuredChatModelId: input.chatModelId || null,
-          configuredEmbeddingModelId: input.embeddingModelId || null,
-        },
+      {
+        selectedAgentId: input.selectedAgent?.id ?? null,
+        selectedAgentName: input.selectedAgent?.name ?? null,
+        agentCount: input.agents.length,
+        collectionCount: input.collections.length,
+        messageCount: input.messages.length,
+        lastRetrievedSourceCount: input.lastSources.length,
+        configuredChatModelId: input.chatModelId.length > 0 ? input.chatModelId : null,
+        configuredEmbeddingModelId: input.embeddingModelId.length > 0 ? input.embeddingModelId : null,
+      },
       ],
-    },
-    {
+      },
+      {
       kind: 'items',
       title: 'Available agents',
       summary: 'Current learner agents visible in the teaching workspace.',
       items: input.agents.slice(0, 12).map((agent) => summarizeAgent(agent, collectionNamesById)),
-    },
-  ];
+      },
+      ];
 
-  if (input.selectedAgent) {
-    sections.push({
+      if (input.selectedAgent !== null) {
+      sections.push({
       kind: 'facts',
       title: 'Selected agent',
       items: [summarizeAgent(input.selectedAgent, collectionNamesById)],
-    });
-  }
+      });
+      }
 
-  if (input.messages.length > 0) {
-    sections.push({
+      if (input.messages.length > 0) {
+      sections.push({
       kind: 'items',
       title: 'Recent messages',
       summary: 'Latest chat messages on the page.',
       items: input.messages.slice(-8).map((message, index) => ({
-        index: input.messages.length - Math.min(input.messages.length, 8) + index,
-        role: message.role,
-        content: message.content,
+      index: input.messages.length - Math.min(input.messages.length, 8) + index,
+      role: message.role,
+      content: message.content,
       })),
-    });
-  }
+      });
+      }
 
-  if (input.lastSources.length > 0) {
-    sections.push({
+      if (input.lastSources.length > 0) {
+      sections.push({
       kind: 'items',
       title: 'Retrieved sources',
       summary: 'Latest knowledge-base sources shown in the teaching chat UI.',
       items: input.lastSources.slice(0, 8).map((source) => summarizeSource(source, collectionNamesById)),
-    });
-  }
+      });
+      }
 
-  return {
-    id: AGENT_TEACHING_CHAT_RUNTIME_REF.id,
-    kind: 'runtime_document',
-    entityType: AGENT_TEACHING_CHAT_RUNTIME_REF.entityType,
-    title: input.selectedAgent
+      return {
+      id: AGENT_TEACHING_CHAT_RUNTIME_REF.id,
+      kind: 'runtime_document',
+      entityType: AGENT_TEACHING_CHAT_RUNTIME_REF.entityType,
+      title: input.selectedAgent !== null
       ? `Agent teaching chat state for ${input.selectedAgent.name}`
       : 'Agent teaching chat workspace state',
-    summary:
+      summary:
       'Live operator context for the Agent Creator teaching chat page, including selected agent, ' +
       'recent messages, and retrieved knowledge-base source previews.',
-    status: null,
-    tags: ['agent-creator', 'teaching', 'chat', 'live-state'],
-    relatedNodeIds: [...AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS],
-    facts: {
+      status: null,
+      tags: ['agent-creator', 'teaching', 'chat', 'live-state'],
+      relatedNodeIds: [...AGENT_TEACHING_CHAT_CONTEXT_ROOT_IDS],
+      facts: {
       selectedAgentId: input.selectedAgent?.id ?? null,
       selectedAgentName: input.selectedAgent?.name ?? null,
       agentCount: input.agents.length,
       collectionCount: input.collections.length,
       messageCount: input.messages.length,
       lastRetrievedSourceCount: input.lastSources.length,
-      configuredChatModelId: input.chatModelId || null,
-      configuredEmbeddingModelId: input.embeddingModelId || null,
-    },
-    sections,
+      configuredChatModelId: input.chatModelId.length > 0 ? input.chatModelId : null,
+      configuredEmbeddingModelId: input.embeddingModelId.length > 0 ? input.embeddingModelId : null,
+      },    sections,
     provenance: {
       source: 'agentcreator.teaching.chat.client-state',
       persisted: false,

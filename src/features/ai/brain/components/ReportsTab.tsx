@@ -119,7 +119,95 @@ function DefaultPromptsSection(): React.JSX.Element {
   );
 }
 
-function FeatureOverridesSection({ brain }: { brain: ReturnType<typeof useBrain> }): React.JSX.Element {
+type FeatureOverrideItem = {
+  id: AiBrainFeature;
+  title: string;
+  description: string;
+  original: {
+    feature: FeatureConfig;
+    overrideEnabled: boolean;
+    assignment: AiBrainAssignment;
+    featureEnabled: boolean;
+  };
+};
+
+function FeatureOverrideActions({
+  item,
+  brain,
+}: {
+  item: FeatureOverrideItem;
+  brain: ReturnType<typeof useBrain>;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
+      <div className='inline-flex items-center gap-2'>
+        <span>Feature</span>
+        <StatusToggle
+          enabled={item.original.featureEnabled}
+          disabled={brain.saving}
+          size='sm'
+          enabledLabel='ON'
+          disabledLabel='OFF'
+          onToggle={(nextEnabled: boolean): void =>
+            brain.setFeatureEnabled(item.original.feature.key, nextEnabled)
+          }
+        />
+      </div>
+      <div className='inline-flex items-center gap-2'>
+        <span>Fallback override</span>
+        <StatusToggle
+          enabled={item.original.overrideEnabled}
+          disabled={brain.saving}
+          size='sm'
+          enabledLabel='CUSTOM'
+          disabledLabel='DEFAULT'
+          enabledVariant='blue'
+          disabledVariant='gray'
+          onToggle={(nextEnabled: boolean): void =>
+            brain.toggleOverride(item.original.feature.key, nextEnabled)
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function FeatureOverrideContent({
+  item,
+  brain,
+}: {
+  item: FeatureOverrideItem;
+  brain: ReturnType<typeof useBrain>;
+}): React.JSX.Element {
+  return (
+    <div className='space-y-2'>
+      <AssignmentEditor
+        assignment={item.original.assignment}
+        onChange={(next: AiBrainAssignment) =>
+          brain.handleOverrideChange(item.original.feature.key, next)
+        }
+        readOnly={!item.original.overrideEnabled}
+        allowedProviders={['model']}
+        showSystemPrompt={false}
+      />
+      {!item.original.featureEnabled && (
+        <div className='text-[11px] text-amber-300'>
+          Feature is off. Report prompts and assignments are preserved, but this report feature will
+          stay inactive until you turn it back on.
+        </div>
+      )}
+      {!item.original.overrideEnabled && (
+        <div className='text-[11px] text-gray-500'>Using global defaults.</div>
+      )}
+    </div>
+  );
+}
+
+function FeatureOverridesSection({
+  brain,
+}: {
+  brain: ReturnType<typeof useBrain>;
+}): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <div className='text-sm font-semibold text-white'>Feature Overrides</div>
@@ -138,61 +226,14 @@ function FeatureOverridesSection({ brain }: { brain: ReturnType<typeof useBrain>
           };
         })}
         columns={2}
-        renderActions={(item) => (
-          <div className='flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
-            <div className='inline-flex items-center gap-2'>
-              <span>Feature</span>
-              <StatusToggle
-                enabled={item.original.featureEnabled}
-                disabled={brain.saving}
-                size='sm'
-                enabledLabel='ON'
-                disabledLabel='OFF'
-                onToggle={(nextEnabled: boolean): void =>
-                  brain.setFeatureEnabled(item.original.feature.key, nextEnabled)
-                }
-              />
-            </div>
-            <div className='inline-flex items-center gap-2'>
-              <span>Fallback override</span>
-              <StatusToggle
-                enabled={item.original.overrideEnabled}
-                disabled={brain.saving}
-                size='sm'
-                enabledLabel='CUSTOM'
-                disabledLabel='DEFAULT'
-                enabledVariant='blue'
-                disabledVariant='gray'
-                onToggle={(nextEnabled: boolean): void =>
-                  brain.toggleOverride(item.original.feature.key, nextEnabled)
-                }
-              />
-            </div>
-          </div>
+        renderActions={(item: FeatureOverrideItem) => (
+          <FeatureOverrideActions item={item} brain={brain} />
         )}
-        renderCustomContent={(item) => (
-          <div className='space-y-2'>
-            <AssignmentEditor
-              assignment={item.original.assignment}
-              onChange={(next: AiBrainAssignment) =>
-                brain.handleOverrideChange(item.original.feature.key, next)
-              }
-              readOnly={!item.original.overrideEnabled}
-              allowedProviders={['model']}
-              showSystemPrompt={false}
-            />
-            {!item.original.featureEnabled && (
-              <div className='text-[11px] text-amber-300'>
-                Feature is off. Report prompts and assignments are preserved, but this report
-                feature will stay inactive until you turn it back on.
-              </div>
-            )}
-            {!item.original.overrideEnabled && (
-              <div className='text-[11px] text-gray-500'>Using global defaults.</div>
-            )}
-          </div>
+        renderCustomContent={(item: FeatureOverrideItem) => (
+          <FeatureOverrideContent item={item} brain={brain} />
         )}
       />
     </div>
   );
 }
+

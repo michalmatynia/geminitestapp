@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function */
 'use client';
 
-import { useState, useEffect, type JSX, type SyntheticEvent } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, type JSX } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -15,11 +14,6 @@ import { ProductReviews } from '@/components/ProductReviews';
 import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsContent, ProductsDetailContent } from '@/data/productsContent';
-import {
-  getProductImageFallbackSrc,
-  getProductImageSrc,
-  shouldBypassImageOptimization,
-} from '@/lib/productImages';
 
 function AccordionItem({
   label,
@@ -201,61 +195,28 @@ function uniqueGalleryImages(product: Product): string[] {
 
 function ProductDetailGalleryImage({
   alt,
+  gradient,
   imageUrl,
   priority = false,
   sizes,
 }: {
   alt: string;
+  gradient: string;
   imageUrl: string;
   priority?: boolean;
   sizes: string;
-}): JSX.Element | null {
-  const resolvedImageUrl = getProductImageSrc(imageUrl);
-  if (!resolvedImageUrl) return null;
-
-  const fallbackImageUrl = getProductImageFallbackSrc(imageUrl);
-  const usesNativeImage = shouldBypassImageOptimization(resolvedImageUrl);
-  const handleNativeImageError = (e: SyntheticEvent<HTMLImageElement>): void => {
-    const image = e.currentTarget;
-    if (fallbackImageUrl && image.getAttribute('src') !== fallbackImageUrl) {
-      image.src = fallbackImageUrl;
-      return;
-    }
-    image.style.display = 'none';
-  };
-
-  if (usesNativeImage) {
-    return (
-      <img
-        src={resolvedImageUrl}
-        alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding='async'
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center',
-        }}
-        onError={handleNativeImageError}
-      />
-    );
-  }
-
+}): JSX.Element {
   return (
-    <Image
-      src={resolvedImageUrl}
+    <ProductImage
+      imageUrl={imageUrl}
+      gradient={gradient}
       alt={alt}
-      fill
-      priority={priority}
       sizes={sizes}
-      style={{ objectFit: 'cover', objectPosition: 'center' }}
-      onError={(e) => {
-        const image = e.currentTarget as HTMLImageElement;
-        image.style.display = 'none';
-      }}
+      className='absolute inset-0'
+      fit='cover'
+      position='center'
+      priority={priority}
+      quality={82}
     />
   );
 }
@@ -375,6 +336,7 @@ export function ProductDetailClient({
                 <ProductDetailGalleryImage
                   imageUrl={galleryImages[activeImage]}
                   alt={`${product.name} image ${activeImage + 1}`}
+                  gradient={activeGradient}
                   priority
                   sizes='(max-width: 768px) 100vw, 55vw'
                 />
@@ -403,6 +365,7 @@ export function ProductDetailClient({
                     <ProductDetailGalleryImage
                       imageUrl={imageUrl}
                       alt={`${product.name} thumbnail ${i + 1}`}
+                      gradient={gradients[i % gradients.length]}
                       sizes='80px'
                     />
                   )}

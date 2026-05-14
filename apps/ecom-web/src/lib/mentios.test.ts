@@ -218,7 +218,7 @@ describe('Mentios product image mapping', () => {
     };
     mocks.getEcommerceProductsDb.mockResolvedValue(db);
 
-    const result = await getMentiosProducts({ limit: 1 });
+    const result = await getMentiosProducts({ limit: 1, locale: 'pl' });
 
     expect(result.products[0]).toMatchObject({
       category: 'Keychain Mini Dice',
@@ -276,12 +276,134 @@ describe('Mentios product image mapping', () => {
     };
     mocks.getEcommerceProductsDb.mockResolvedValue(db);
 
-    const result = await getMentiosProducts({ limit: 1 });
+    const result = await getMentiosProducts({ limit: 1, locale: 'pl' });
 
     expect(result.products[0]).toMatchObject({
       currencyCode: 'PLN',
       price: 409,
       priceDisplay: '409 zł',
+    });
+  });
+
+  it('prefers EUR price groups for English catalog pricing', async () => {
+    const productDoc = {
+      _id: 'product-en-eur',
+      catalogId: 'catalog-mentios',
+      defaultPriceGroupId: 'group-pln',
+      name_en: 'English Currency Charm',
+      price: 400,
+      published: true,
+      sku: 'SKU_EN_EUR',
+      stock: 1,
+    };
+    const priceGroupDocs = [
+      {
+        _id: 'group-pln',
+        currencyCode: 'PLN',
+        id: 'group-pln',
+        isDefault: true,
+        priceMultiplier: 1,
+      },
+      {
+        _id: 'group-eur',
+        currencyCode: 'EUR',
+        id: 'group-eur',
+        priceMultiplier: 0.25,
+        sourceGroupId: 'group-pln',
+        type: 'dependent',
+      },
+    ];
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn(() => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const priceGroupsCollection = {
+      find: vi.fn(() => createCursor(priceGroupDocs)),
+    };
+    const db = {
+      collection: vi.fn((name: string) => {
+        if (name === 'products') return productsCollection;
+        if (name === 'price_groups') return priceGroupsCollection;
+        return categoriesCollection;
+      }),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ limit: 1, locale: 'en' });
+
+    expect(result.products[0]).toMatchObject({
+      currencyCode: 'EUR',
+      price: 100,
+      priceDisplay: '€ 100',
+    });
+  });
+
+  it('resolves EUR pricing through synced currency records and price group aliases', async () => {
+    const productDoc = {
+      _id: 'product-en-eur-currency-id',
+      catalogId: 'catalog-mentios',
+      defaultPriceGroupId: 'PLN_STANDARD',
+      name_en: 'Currency Record Charm',
+      price: 400,
+      published: true,
+      sku: 'SKU_EN_EUR_CURRENCY_ID',
+      stock: 1,
+    };
+    const priceGroupDocs = [
+      {
+        _id: 'group-pln',
+        currencyId: 'currency-pln',
+        groupId: 'PLN_STANDARD',
+        id: 'group-pln',
+        isDefault: true,
+        priceMultiplier: 1,
+      },
+      {
+        _id: 'group-eur',
+        currencyId: 'currency-eur',
+        groupId: 'EUR_RETAIL',
+        id: 'group-eur',
+        priceMultiplier: 0.25,
+        sourceGroupId: 'PLN_STANDARD',
+        type: 'dependent',
+      },
+    ];
+    const currencyDocs = [
+      { _id: 'currency-pln-db-id', code: 'PLN', id: 'currency-pln' },
+      { _id: 'currency-eur-db-id', code: 'EUR', id: 'currency-eur' },
+    ];
+    const productsCollection = {
+      countDocuments: vi.fn().mockResolvedValue(1),
+      find: vi.fn(() => createCursor([productDoc])),
+    };
+    const categoriesCollection = {
+      find: vi.fn(() => createCursor([])),
+    };
+    const currenciesCollection = {
+      find: vi.fn(() => createCursor(currencyDocs)),
+    };
+    const priceGroupsCollection = {
+      find: vi.fn(() => createCursor(priceGroupDocs)),
+    };
+    const db = {
+      collection: vi.fn((name: string) => {
+        if (name === 'products') return productsCollection;
+        if (name === 'price_groups') return priceGroupsCollection;
+        if (name === 'currencies') return currenciesCollection;
+        return categoriesCollection;
+      }),
+    };
+    mocks.getEcommerceProductsDb.mockResolvedValue(db);
+
+    const result = await getMentiosProducts({ limit: 1, locale: 'en' });
+
+    expect(result.products[0]).toMatchObject({
+      currencyCode: 'EUR',
+      price: 100,
+      priceDisplay: '€ 100',
     });
   });
 
@@ -338,7 +460,7 @@ describe('Mentios product image mapping', () => {
 
     expect(result.products[0]).toMatchObject({
       currencyCode: 'EUR',
-      price: 103.60000000000001,
+      price: 103.6,
       priceDisplay: '€ 103.60',
     });
   });
@@ -368,7 +490,7 @@ describe('Mentios product image mapping', () => {
     };
     mocks.getEcommerceProductsDb.mockResolvedValue(db);
 
-    const result = await getMentiosProducts({ limit: 1 });
+    const result = await getMentiosProducts({ limit: 1, locale: 'pl' });
 
     expect(result.products[0]).toMatchObject({
       currencyCode: 'USD',
@@ -423,15 +545,15 @@ describe('Mentios product image mapping', () => {
 
     expect(result.get('gemini-product-1')).toEqual({
       currencyCode: 'EUR',
-      price: 104,
+      price: 103.6,
     });
     expect(result.get('product-source-price')).toEqual({
       currencyCode: 'EUR',
-      price: 104,
+      price: 103.6,
     });
   });
 
-  it('does not resolve ecommerce price group dependencies through noncanonical group ids', async () => {
+  it('resolves ecommerce price group dependencies through groupId aliases', async () => {
     const productDoc = {
       _id: 'product-noncanonical-source-group',
       catalogId: 'catalog-mentios',
@@ -479,12 +601,12 @@ describe('Mentios product image mapping', () => {
     };
     mocks.getEcommerceProductsDb.mockResolvedValue(db);
 
-    const result = await getMentiosProducts({ limit: 1 });
+    const result = await getMentiosProducts({ limit: 1, locale: 'en' });
 
     expect(result.products[0]).toMatchObject({
-      currencyCode: 'PLN',
-      price: 370,
-      priceDisplay: '370 zł',
+      currencyCode: 'EUR',
+      price: 103.6,
+      priceDisplay: '€ 103.60',
     });
   });
 

@@ -66,14 +66,14 @@ const MOOD_KEYWORDS: Record<Exclude<AgentPersonaMoodId, 'neutral'>, string[]> = 
 };
 
 const clamp = (value: number | undefined, min: number, max: number, fallback: number): number => {
-  if (!Number.isFinite(value)) return fallback;
-  return Math.min(max, Math.max(min, Math.round(value!)));
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(value)));
 };
 
 const asRecord = (
   value: JsonValue | null | undefined
 ): Record<string, unknown> | undefined => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
   }
   return value as Record<string, unknown>;
@@ -116,7 +116,7 @@ type PersonaConversationMessageRecord = {
 };
 
 const toIsoString = (value: Date | string | null | undefined): string | null => {
-  if (!value) return null;
+  if (value === null || value === undefined) return null;
   return value instanceof Date ? value.toISOString() : value;
 };
 
@@ -129,7 +129,7 @@ const truncateText = (value: string, maxLength: number): string => {
 };
 
 const toTimestamp = (value?: string | null): number => {
-  if (!value) return 0;
+  if (value === null || value === undefined) return 0;
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
 };
@@ -138,7 +138,7 @@ const extractTopicHints = (text: string, fallback: string[] = []): string[] => {
   const tokens = normalizeText(text)
     .toLowerCase()
     .match(/[a-z0-9]{4,}/g);
-  if (!tokens) {
+  if (tokens === null) {
     return fallback.slice(0, 5);
   }
 
@@ -190,7 +190,7 @@ const countSuggestedMood = (items: PersonaMemoryRecord[]): AgentPersonaMoodId | 
 const resolveSourceTypeFilter = (
   sourceType: PersonaMemorySourceType | null | undefined
 ): { allowMessages: boolean; allowMemoryEntries: boolean } => {
-  if (!sourceType) {
+  if (sourceType === null || sourceType === undefined) {
     return {
       allowMessages: true,
       allowMemoryEntries: true,
@@ -326,15 +326,15 @@ const matchesPersonaMemoryRecord = (
 ): boolean => {
   const normalizedTags = uniqueLowercaseStrings(item.tags);
 
-  if (filters.tag && !matchesExactOrPartial(normalizedTags, filters.tag)) {
+  if (filters.tag !== null && !matchesExactOrPartial(normalizedTags, filters.tag)) {
     return false;
   }
 
-  if (filters.topic && !matchesExactOrPartial(item.topicHints, filters.topic)) {
+  if (filters.topic !== null && !matchesExactOrPartial(item.topicHints, filters.topic)) {
     return false;
   }
 
-  if (filters.mood && !item.moodHints.includes(filters.mood)) {
+  if (filters.mood !== null && !item.moodHints.includes(filters.mood)) {
     return false;
   }
 
@@ -356,15 +356,15 @@ const scorePersonaMemoryRecord = (
 ): number => {
   let score = countMatchingSearchTerms(item, filters.searchTerms) * 10;
 
-  if (filters.tag && matchesExactOrPartial(item.tags, filters.tag)) {
+  if (filters.tag !== null && matchesExactOrPartial(item.tags, filters.tag)) {
     score += 8;
   }
 
-  if (filters.topic && matchesExactOrPartial(item.topicHints, filters.topic)) {
+  if (filters.topic !== null && matchesExactOrPartial(item.topicHints, filters.topic)) {
     score += 12;
   }
 
-  if (filters.mood && item.moodHints.includes(filters.mood)) {
+  if (filters.mood !== null && item.moodHints.includes(filters.mood)) {
     score += 10;
   }
 
@@ -375,19 +375,125 @@ const scorePersonaMemoryRecord = (
   return score;
 };
 
+const mapMemoryEntryToRecord = (
+  item: PersonaMemoryEntryRecord,
+  personaId: string
+): PersonaMemoryRecord => {
+  const metadata = asRecord(item.metadata);
+  let role: string | null = null;
+  if (typeof metadata?.['role'] === 'string') {
+    role = metadata['role'];
+  } else if (typeof metadata?.['originRole'] === 'string') {
+    role = metadata['originRole'];
+  }
+
+  const sourceTypeValue = (item.sourceType ?? 'agent_memory') as PersonaMemorySourceType;
+  const sourceCreatedAtStr = toIsoString(item.sourceCreatedAt);
+  const metadataSourceCreatedAt = metadata?.['sourceCreatedAt'];
+  
+  let sourceCreatedAt: string | null = sourceCreatedAtStr;
+  if (sourceCreatedAt === null && typeof metadataSourceCreatedAt === 'string') {
+    sourceCreatedAt = metadataSourceCreatedAt;
+  }
+
+  let title: string = truncateText(item.content, 80);
+  if (item.sourceLabel !== null) {
+    title = item.sourceLabel;
+  } else if (item.summary !== null) {
+    title = item.summary;
+  }
+
+  const lastAccessedAt = item.lastAccessedAt !== null ? toIsoString(item.lastAccessedAt) : null;
+
+  return {
+    id: item.id,
+    createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+    updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+    personaId,
+    recordType: 'memory_entry',
+    content: item.content,
+    summary: item.summary,
+    title,
+    role,
+    sessionId:
+      typeof metadata?.['sessionId'] === 'string' ? metadata['sessionId'] : item.runId,
+    memoryKey: item.memoryKey,
+    sourceType: sourceTypeValue,
+    sourceId: item.sourceId ?? item.id,
+    sourceLabel: item.sourceLabel,
+    sourceCreatedAt,
+    importance: item.importance,
+    tags: item.tags,
+    topicHints: extractTopicHints(item.summary ?? item.content, item.topicHints),
+    moodHints: normalizeMoodHints(item.moodHints, item.summary ?? item.content),
+    metadata: {
+      ...(metadata ?? {}),
+      ...(item.runId !== null ? { runId: item.runId } : {}),
+      ...(lastAccessedAt !== null ? { lastAccessedAt } : {}),
+    },
+  };
+};
+
+const mapConversationMessageToRecord = (
+  message: PersonaConversationMessageRecord,
+  personaId: string
+): PersonaMemoryRecord => {
+  const metadata = asRecord(message.metadata);
+  const rawMoodHints = metadata?.['moodHints'];
+  const moodHints = normalizeMoodHints(
+    Array.isArray(rawMoodHints)
+      ? rawMoodHints.filter((item): item is string => typeof item === 'string')
+      : [],
+    message.content
+  );
+
+  return {
+    id: message.id,
+    createdAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
+    updatedAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
+    personaId,
+    recordType: 'conversation_message',
+    content: message.content,
+    summary: truncateText(message.content, 140),
+    title: `${message.role === 'assistant' ? 'Assistant' : 'User'} message`,
+    role: message.role,
+    sessionId: message.sessionId,
+    memoryKey: null,
+    sourceType: 'chat_message',
+    sourceId: message.id,
+    sourceLabel: message.session.title ?? 'Untitled session',
+    sourceCreatedAt: toIsoString(message.createdAt),
+    importance: null,
+    tags: [],
+    topicHints: extractTopicHints(message.content),
+    moodHints,
+    metadata: {
+      ...(metadata ?? {}),
+      sessionTitle: message.session.title,
+      ...(message.model !== null ? { model: message.model } : {}),
+      ...(message.images.length > 0 ? { images: message.images } : {}),
+    },
+  };
+};
+
 export async function searchAgentPersonaMemory(
   params: SearchAgentPersonaMemoryParams
 ): Promise<PersonaMemorySearchResponse> {
-  const persona = await getAgentPersonaById(params.personaId);
-  if (!persona) {
-    throw new Error(`Agent persona "${params.personaId}" was not found.`);
+  const personaId = params.personaId;
+  const persona = await getAgentPersonaById(personaId);
+  if (persona === null) {
+    throw new Error(`Agent persona "${personaId}" was not found.`);
   }
 
   const settings = buildAgentPersonaSettings(persona.settings);
   const memorySettings = settings.memory ?? {};
   const limit = clamp(params.limit, 1, 100, memorySettings.defaultSearchLimit ?? 20);
-  const searchQuery = params.q?.trim() || null;
-  const tag = params.tag?.trim() || null;
+
+  const rawQ = params.q;
+  const searchQuery = rawQ !== null && rawQ !== undefined ? rawQ.trim() : null;
+  const rawTag = params.tag;
+  const tag = rawTag !== null && rawTag !== undefined ? rawTag.trim() : null;
+
   const topic = normalizeTopicFilter(params.topic);
   const mood = params.mood ?? null;
   const sourceType = params.sourceType ?? null;
@@ -395,20 +501,19 @@ export async function searchAgentPersonaMemory(
   const { allowMessages, allowMemoryEntries } = resolveSourceTypeFilter(sourceType);
   const agentLongTermMemory = getAgentLongTermMemoryDelegate();
   const chatbotMessage = getChatbotMessageDelegate();
-  const candidateLimit =
-    searchTerms.length > 0 || tag || topic || mood
-      ? clamp(limit * 4, limit, 200, limit)
-      : limit;
+
+  const hasFilter = searchTerms.length > 0 || tag !== null || topic !== null || mood !== null;
+  const candidateLimit = hasFilter ? clamp(limit * 4, limit, 200, limit) : limit;
 
   const memoryQuery =
-    allowMemoryEntries && memorySettings.enabled !== false && agentLongTermMemory
+    allowMemoryEntries && memorySettings.enabled !== false && agentLongTermMemory !== null
       ? agentLongTermMemory.findMany<PersonaMemoryEntryRecord>({
         where: {
-          personaId: params.personaId,
-          ...(sourceType ? { sourceType } : {}),
-          ...(tag ? { tags: { has: tag } } : {}),
-          ...(topic ? { topicHints: { has: topic } } : {}),
-          ...(mood ? { moodHints: { has: mood } } : {}),
+          personaId,
+          ...(sourceType !== null ? { sourceType } : {}),
+          ...(tag !== null ? { tags: { has: tag } } : {}),
+          ...(topic !== null ? { topicHints: { has: topic } } : {}),
+          ...(mood !== null ? { moodHints: { has: mood } } : {}),
           ...(searchTerms.length > 0
             ? {
               OR: searchTerms.flatMap((term) => [
@@ -427,12 +532,10 @@ export async function searchAgentPersonaMemory(
       : Promise.resolve<PersonaMemoryEntryRecord[]>([]);
 
   const messageQuery =
-    allowMessages && memorySettings.includeChatHistory !== false && !tag && chatbotMessage
+    allowMessages && memorySettings.includeChatHistory !== false && tag === null && chatbotMessage !== null
       ? chatbotMessage.findMany<PersonaConversationMessageRecord>({
         where: {
-          session: {
-            personaId: params.personaId,
-          },
+          session: { personaId },
           ...(searchTerms.length > 0
             ? {
               OR: searchTerms.flatMap((term) => [
@@ -463,11 +566,11 @@ export async function searchAgentPersonaMemory(
 
   const [memoryEntries, conversationMessages] = await Promise.all([memoryQuery, messageQuery]);
 
-  if (memoryEntries.length > 0) {
-    await agentLongTermMemory?.updateMany({
+  if (memoryEntries.length > 0 && agentLongTermMemory !== null) {
+    await agentLongTermMemory.updateMany({
       where: {
         id: {
-          in: memoryEntries.map((item: PersonaMemoryEntryRecord) => item.id),
+          in: memoryEntries.map((item) => item.id),
         },
       },
       data: {
@@ -476,86 +579,8 @@ export async function searchAgentPersonaMemory(
     });
   }
 
-  const memoryItems: PersonaMemoryRecord[] = memoryEntries.map((item: PersonaMemoryEntryRecord) => {
-    const metadata = asRecord(item.metadata);
-    const role =
-      typeof metadata?.['role'] === 'string'
-        ? metadata['role']
-        : typeof metadata?.['originRole'] === 'string'
-          ? metadata['originRole']
-          : null;
-    const sourceTypeValue = (item.sourceType ?? 'agent_memory') as PersonaMemorySourceType;
-    const sourceCreatedAt =
-      toIsoString(item.sourceCreatedAt) ??
-      (typeof metadata?.['sourceCreatedAt'] === 'string' ? metadata['sourceCreatedAt'] : null);
-
-    return {
-      id: item.id,
-      createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
-      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
-      personaId: params.personaId,
-      recordType: 'memory_entry',
-      content: item.content,
-      summary: item.summary ?? null,
-      title: item.sourceLabel ?? item.summary ?? truncateText(item.content, 80),
-      role,
-      sessionId:
-        typeof metadata?.['sessionId'] === 'string' ? metadata['sessionId'] : item.runId ?? null,
-      memoryKey: item.memoryKey,
-      sourceType: sourceTypeValue,
-      sourceId: item.sourceId ?? item.id,
-      sourceLabel: item.sourceLabel ?? null,
-      sourceCreatedAt,
-      importance: item.importance ?? null,
-      tags: item.tags ?? [],
-      topicHints: extractTopicHints(item.summary ?? item.content, item.topicHints ?? []),
-      moodHints: normalizeMoodHints(item.moodHints, item.summary ?? item.content),
-      metadata: {
-        ...(metadata ?? {}),
-        ...(item.runId ? { runId: item.runId } : {}),
-        ...(item.lastAccessedAt ? { lastAccessedAt: toIsoString(item.lastAccessedAt) } : {}),
-      },
-    };
-  });
-
-  const messageItems: PersonaMemoryRecord[] = conversationMessages.map(
-    (message: PersonaConversationMessageRecord) => {
-    const metadata = asRecord(message.metadata);
-    const moodHints = normalizeMoodHints(
-      Array.isArray(metadata?.['moodHints'])
-        ? metadata['moodHints'].filter((item): item is string => typeof item === 'string')
-        : [],
-      message.content
-    );
-
-    return {
-      id: message.id,
-      createdAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
-      updatedAt: toIsoString(message.createdAt) ?? new Date().toISOString(),
-      personaId: params.personaId,
-      recordType: 'conversation_message',
-      content: message.content,
-      summary: truncateText(message.content, 140),
-      title: `${message.role === 'assistant' ? 'Assistant' : 'User'} message`,
-      role: message.role,
-      sessionId: message.sessionId,
-      memoryKey: null,
-      sourceType: 'chat_message',
-      sourceId: message.id,
-      sourceLabel: message.session.title ?? 'Untitled session',
-      sourceCreatedAt: toIsoString(message.createdAt),
-      importance: null,
-      tags: [],
-      topicHints: extractTopicHints(message.content),
-      moodHints,
-      metadata: {
-        ...(metadata ?? {}),
-        sessionTitle: message.session.title ?? null,
-        ...(message.model ? { model: message.model } : {}),
-        ...(message.images.length > 0 ? { images: message.images } : {}),
-      },
-    };
-  });
+  const memoryItems = memoryEntries.map((item) => mapMemoryEntryToRecord(item, personaId));
+  const messageItems = conversationMessages.map((message) => mapConversationMessageToRecord(message, personaId));
 
   const items = [...memoryItems, ...messageItems]
     .filter((item) =>
@@ -590,7 +615,7 @@ export async function searchAgentPersonaMemory(
   return {
     items,
     summary: {
-      personaId: params.personaId,
+      personaId,
       suggestedMoodId: memorySettings.useMoodSignals === false ? null : countSuggestedMood(items),
       totalRecords: items.length,
       memoryEntryCount: items.filter((item) => item.recordType === 'memory_entry').length,
@@ -604,11 +629,11 @@ const formatMemoryPromptLine = (item: PersonaMemoryRecord): string => {
   const provenance = [
     item.recordType === 'conversation_message' ? 'chat history' : 'memory',
     item.sourceType ?? 'unknown-source',
-    item.sourceLabel ? `from "${item.sourceLabel}"` : null,
-    item.sourceCreatedAt ? `original ${item.sourceCreatedAt}` : null,
+    item.sourceLabel !== null ? `from "${item.sourceLabel}"` : null,
+    item.sourceCreatedAt !== null ? `original ${item.sourceCreatedAt}` : null,
     `captured ${item.createdAt}`,
   ]
-    .filter(Boolean)
+    .filter((part): part is string => part !== null)
     .join(' | ');
 
   return `- ${provenance}: ${truncateText(item.summary ?? item.content, 220)}`;
@@ -623,14 +648,15 @@ export async function buildPersonaChatMemoryContext(
   suggestedMoodId: AgentPersonaMoodId | null;
 }> {
   const persona = await getAgentPersonaById(params.personaId);
-  if (!persona) {
+  if (persona === null) {
     throw new Error(`Agent persona "${params.personaId}" was not found.`);
   }
 
   const settings = buildAgentPersonaSettings(persona.settings);
   const memorySettings = settings.memory ?? {};
   const limit = clamp(memorySettings.defaultSearchLimit, 1, 12, 6);
-  const latestUserMessage = params.latestUserMessage?.trim() || null;
+  const latestUserMessageRaw = params.latestUserMessage;
+  const latestUserMessage = latestUserMessageRaw !== null && latestUserMessageRaw !== undefined ? latestUserMessageRaw.trim() : null;
 
   const memory =
     memorySettings.enabled === false
@@ -652,13 +678,13 @@ export async function buildPersonaChatMemoryContext(
 
   const memoryLines = memory.items.slice(0, limit).map(formatMemoryPromptLine);
   const promptSections = [
-    `Active persona: ${persona.name}${persona.role ? ` (${persona.role})` : ''}.`,
-    persona.instructions ? `Persona instructions: ${persona.instructions}` : null,
-    memory.summary.suggestedMoodId
+    `Active persona: ${persona.name}${persona.role !== null ? ` (${persona.role})` : ''}.`,
+    persona.instructions !== null ? `Persona instructions: ${persona.instructions}` : null,
+    memory.summary.suggestedMoodId !== null
       ? `Memory-informed mood: ${memory.summary.suggestedMoodId}.`
       : null,
     memoryLines.length > 0 ? `Relevant persona memory:\n${memoryLines.join('\n')}` : null,
-  ].filter((section): section is string => Boolean(section));
+  ].filter((section): section is string => section !== null);
 
   return {
     persona,
@@ -673,12 +699,14 @@ export async function persistAgentPersonaExchangeMemory(
 ): Promise<void> {
   const personaId = params.personaId.trim();
   const assistantMessage = params.assistantMessage.trim();
-  const userMessage = params.userMessage?.trim() || '';
-  if (!personaId || !assistantMessage) {
+  const userMessageRaw = params.userMessage;
+  const userMessage = userMessageRaw !== null && userMessageRaw !== undefined ? userMessageRaw.trim() : '';
+
+  if (personaId === '' || assistantMessage === '') {
     return;
   }
 
-  const combinedText = [userMessage, assistantMessage].filter(Boolean).join('\n');
+  const combinedText = [userMessage, assistantMessage].filter((part) => part !== '').join('\n');
   const topicHints = uniqueStrings([
     ...(params.topicHints ?? []),
     ...extractTopicHints(combinedText),
@@ -691,10 +719,10 @@ export async function persistAgentPersonaExchangeMemory(
     ...(params.tags ?? []),
   ]);
 
-  const content = userMessage
+  const content = userMessage !== ''
     ? `User: ${userMessage}\nAssistant: ${assistantMessage}`
     : `Assistant: ${assistantMessage}`;
-  const summary = userMessage
+  const summary = userMessage !== ''
     ? `User asked: ${truncateText(userMessage, 90)} Assistant replied: ${truncateText(assistantMessage, 120)}`
     : truncateText(assistantMessage, 180);
 
@@ -712,9 +740,9 @@ export async function persistAgentPersonaExchangeMemory(
     sourceCreatedAt: params.sourceCreatedAt ?? null,
     metadata: {
       ...(params.metadata ?? {}),
-      ...(params.sessionId ? { sessionId: params.sessionId } : {}),
+      ...(params.sessionId !== null && params.sessionId !== undefined ? { sessionId: params.sessionId } : {}),
       originRole: 'assistant',
-      ...(userMessage ? { latestUserMessage: userMessage } : {}),
+      ...(userMessage !== '' ? { latestUserMessage: userMessage } : {}),
     },
     importance: params.sourceType === 'chat_message' ? 2 : 3,
   });

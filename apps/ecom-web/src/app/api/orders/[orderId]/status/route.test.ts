@@ -149,12 +149,19 @@ describe('GET /api/orders/[orderId]/status', () => {
     expect(body.trackingUrl).toBeUndefined();
   });
 
-  it('returns 404 for an unknown order', async () => {
+  it('returns 404 for an unknown well-formed order', async () => {
     mocks.findOne.mockResolvedValue(null);
 
-    const res = await GET(makeRequest('ARC-UNKNOWN'), makeParams('ARC-UNKNOWN'));
+    const res = await GET(makeRequest('ARC-2026-00000000'), makeParams('ARC-2026-00000000'));
 
     expect(res.status).toBe(404);
+  });
+
+  it('rejects malformed order IDs before querying MongoDB', async () => {
+    const res = await GET(makeRequest('ARC-UNKNOWN'), makeParams('ARC-UNKNOWN'));
+
+    expect(res.status).toBe(400);
+    expect(mocks.findOne).not.toHaveBeenCalled();
   });
 
   it('returns 429 when rate limited', async () => {
@@ -169,10 +176,10 @@ describe('GET /api/orders/[orderId]/status', () => {
   it('queries only safe public tracking fields from MongoDB', async () => {
     mocks.findOne.mockResolvedValue({ status: 'pending_payment' });
 
-    await GET(makeRequest('ARC-2026-XYZ'), makeParams('ARC-2026-XYZ'));
+    await GET(makeRequest('ARC-2026-ABCDEF12'), makeParams('ARC-2026-ABCDEF12'));
 
     expect(mocks.findOne).toHaveBeenCalledWith(
-      { orderId: 'ARC-2026-XYZ' },
+      { orderId: 'ARC-2026-ABCDEF12' },
       {
         projection: {
           status: 1,

@@ -89,6 +89,10 @@ function normalizeOrderId(value: string): string {
   return value.trim().toUpperCase();
 }
 
+function isValidOrderId(value: string): boolean {
+  return /^ARC-\d{4}-[0-9A-F]{8}$/.test(value);
+}
+
 function isOrderStatus(value: unknown): value is OrderStatus {
   return value === 'pending_payment'
     || value === 'processing'
@@ -228,7 +232,7 @@ export function OrderStatusPageClient({ initialOrderId }: { initialOrderId: stri
     setOrderId(normalizedOrderId);
     setResult(null);
     setError('');
-    if (normalizedOrderId.length === 0) {
+    if (!isValidOrderId(normalizedOrderId)) {
       setError(copy.invalidLabel);
       return;
     }
@@ -258,6 +262,20 @@ export function OrderStatusPageClient({ initialOrderId }: { initialOrderId: stri
     if (initialOrderId.trim().length === 0) return;
     void checkStatus(initialOrderId);
   }, [initialOrderId]);
+
+  // Handle Stripe 3DS redirect: Stripe appends ?payment_intent=pi_xxx&redirect_status=succeeded
+  // after the customer completes 3D Secure authentication. We stored the orderId in sessionStorage
+  // before redirecting, so we can recover it here and show the result automatically.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment_intent') && params.get('redirect_status') === 'succeeded') {
+      const pendingOrderId = sessionStorage.getItem('stripe_pending_order_id') ?? '';
+      sessionStorage.removeItem('stripe_pending_order_id');
+      if (pendingOrderId.length > 0) {
+        void checkStatus(pendingOrderId);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

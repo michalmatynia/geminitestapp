@@ -25,6 +25,38 @@ describe('product filter display labels', () => {
     )).toEqual(['Anime', 'Movie']);
   });
 
+  it('uses product type labels when selected filters span universes within one item type', () => {
+    expect(getCategorySelectorTitle(
+      ['Anime Keychain', 'Gaming Keychain', 'Keychain Mini Dice', 'Movie Keychain'],
+      [
+        { name: 'Anime Keychain', parentName: 'Keychains' },
+        { name: 'Gaming Keychain', parentName: 'Keychains' },
+        { name: 'Keychain Mini Dice', parentName: 'Dice' },
+        { name: 'Movie Keychain', parentName: 'Keychains' },
+      ],
+    )).toBe('Keychains');
+  });
+
+  it('uses Dice as the title for dice category filters', () => {
+    expect(getCategorySelectorTitle(
+      ['Keychain Mini Dice', 'Set Of 7 Dice'],
+      [
+        { name: 'Keychain Mini Dice', parentName: 'Dice' },
+        { name: 'Set Of 7 Dice', parentName: 'Dice' },
+      ],
+    )).toBe('Dice');
+  });
+
+  it('uses Bracelets as the title for bracelet category filters', () => {
+    expect(getCategorySelectorTitle(
+      ['Gaming Bracelets', 'Anime Bracelet'],
+      [
+        { name: 'Gaming Bracelets', parentName: 'Bracelets' },
+        { name: 'Anime Bracelet', parentName: 'Bracelets' },
+      ],
+    )).toBe('Bracelets');
+  });
+
   it('uses universe category prefixes even for a single child category', () => {
     expect(getCategorySelectorTitle(
       ['Movie Wallet'],
@@ -43,7 +75,8 @@ describe('product filter display labels', () => {
     expect(getCategorySelectorTitle(['Movie Pin', 'Movie Wallet', 'Movie Ring'])).toBe('Movie');
   });
 
-  it('does not collapse a single child category without parent data', () => {
-    expect(getCategorySelectorTitle(['Set Of 7 Dice'])).toBe('Set Of 7 Dice');
+  it('uses product type labels for single matching category filters', () => {
+    expect(getCategorySelectorTitle(['Set Of 7 Dice'])).toBe('Dice');
+    expect(getCategorySelectorTitle(['Gaming Bracelets'])).toBe('Bracelets');
   });
 });

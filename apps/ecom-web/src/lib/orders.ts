@@ -73,7 +73,10 @@ export type Order = {
   userId?: string;
   email: string;
   status: 'pending_payment' | 'processing' | 'in-transit' | 'delivered' | 'cancelled';
+  paymentMethod?: 'blik' | 'stripe' | 'paypal';
   payuOrderId?: string;
+  stripePaymentIntentId?: string;
+  paypalOrderId?: string;
   items: OrderItem[];
   shippingMethod: string;
   shippingPrice: number;

@@ -9,6 +9,7 @@ import {
   applyFreeThreshold,
   calcDeliveryRange,
   filterShippingMethodsForCountry,
+  filterShippingMethodsForProviderAvailability,
   getZoneForCountry,
   isPolandShippingCountry,
   resolveCheckoutShippingSelection,
@@ -117,6 +118,25 @@ describe('shipping helpers', () => {
     expect(filterShippingMethodsForCountry(methods, '')).toEqual([standardMethod, expressMethod]);
   });
 
+  it('removes shipping methods disabled by provider settings', () => {
+    const methods = [standardMethod, inpostLockerMethod, expressMethod];
+
+    expect(filterShippingMethodsForProviderAvailability(methods, { inpost: false })).toEqual([
+      standardMethod,
+      expressMethod,
+    ]);
+  });
+
+  it('keeps checkout usable when provider settings would remove every method', () => {
+    const domesticMethods = CHECKOUT_CONTENT_DEFAULTS.shippingZones[0].methods;
+
+    expect(filterShippingMethodsForProviderAvailability(domesticMethods, {
+      dpd: false,
+      inpost: false,
+      poczta_polska: false,
+    })).toBe(domesticMethods);
+  });
+
   it('calculates delivery estimates using business days and localized date formats', () => {
     expect(calcDeliveryRange(1, 1, 'en')).toBe('Mon 11 May');
     expect(calcDeliveryRange(3, 5, 'en')).toBe('13-15 May');
@@ -174,6 +194,23 @@ describe('shipping helpers', () => {
       carrier: 'inpost',
       price: 4,
       inpostPoint: { id: 'WAW01A', name: 'WAW01A' },
+    });
+
+    expect(result).toEqual({ ok: false, error: 'Selected shipping method is not available for this address.' });
+  });
+
+  it('rejects shipping carriers disabled by provider settings', () => {
+    const result = resolveCheckoutShippingSelection({
+      content: CHECKOUT_CONTENT_DEFAULTS,
+      country: 'Poland',
+      subtotal: 1500,
+      methodId: 'dpd-courier',
+      methodLabel: 'DPD Courier',
+      service: 'dpd_courier_standard',
+      carrier: 'dpd',
+      price: 10,
+      inpostPoint: null,
+      providerAvailability: { dpd: false },
     });
 
     expect(result).toEqual({ ok: false, error: 'Selected shipping method is not available for this address.' });

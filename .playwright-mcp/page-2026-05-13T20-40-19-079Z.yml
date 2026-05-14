@@ -1,0 +1,47 @@
+- generic [ref=e1]:
+  - generic [active]:
+    - generic [ref=e456]:
+      - generic [ref=e457]:
+        - generic [ref=e458]:
+          - navigation [ref=e459]:
+            - button "previous" [disabled] [ref=e460]:
+              - img "previous" [ref=e461]
+            - generic [ref=e463]:
+              - generic [ref=e464]: 1/
+              - text: "1"
+            - button "next" [disabled] [ref=e465]:
+              - img "next" [ref=e466]
+          - img
+        - generic [ref=e468]:
+          - link "Next.js 16.1.7 (stale) Webpack" [ref=e469] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e470]
+            - generic "There is a newer version (16.2.6) available, upgrade recommended!" [ref=e472]: Next.js 16.1.7 (stale)
+            - generic [ref=e473]: Webpack
+          - img
+      - dialog "Runtime TypeError" [ref=e475]:
+        - generic [ref=e479]:
+          - generic [ref=e480]:
+            - generic [ref=e482]: Runtime TypeError
+            - generic [ref=e483]:
+              - button "Copy Error Info" [ref=e484] [cursor=pointer]:
+                - img [ref=e485]
+              - button "No related documentation found" [disabled] [ref=e487]:
+                - img [ref=e488]
+              - button "Attach Node.js inspector" [ref=e490] [cursor=pointer]:
+                - img [ref=e491]
+          - generic [ref=e500]: network error
+        - generic [ref=e501]: "1"
+        - generic [ref=e502]: "2"
+    - generic [ref=e204] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e205]:
+        - img [ref=e206]
+      - generic [ref=e503]:
+        - button "Open issues overlay" [ref=e504]:
+          - generic [ref=e505]:
+            - generic [ref=e506]: "0"
+            - generic [ref=e507]: "1"
+          - generic [ref=e508]: Issue
+        - button "Collapse issues badge" [ref=e509]:
+          - img [ref=e510]
+  - 'heading "Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)." [level=2] [ref=e514]'

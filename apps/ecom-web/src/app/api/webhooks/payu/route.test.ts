@@ -22,6 +22,10 @@ vi.mock('@/lib/mongodb', () => ({
   })),
 }));
 
+vi.mock('@/lib/providerSettings', () => ({
+  readPayUProviderSettings: vi.fn(async () => null),
+}));
+
 vi.mock('@/lib/email', () => ({
   sendOrderConfirmation: mocks.sendOrderConfirmation,
 }));
@@ -102,6 +106,7 @@ describe('PayU IPN webhook', () => {
       {
         $set: {
           status: 'processing',
+          payuOrderId: 'PAYU-123',
           confirmationEmailQueuedAt: '2026-05-13T12:00:00.000Z',
         },
       },
@@ -134,6 +139,7 @@ describe('PayU IPN webhook', () => {
       {
         $set: {
           status: 'processing',
+          payuOrderId: 'PAYU-123',
           confirmationEmailQueuedAt: '2026-05-13T12:00:00.000Z',
         },
       },
@@ -160,6 +166,7 @@ describe('PayU IPN webhook', () => {
       {
         $set: expect.objectContaining({
           status: 'processing',
+          payuOrderId: 'PAYU-123',
           confirmationEmailQueuedAt: expect.any(String),
         }),
       },
@@ -176,7 +183,7 @@ describe('PayU IPN webhook', () => {
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
       { payuOrderId: 'PAYU-456', status: 'pending_payment' },
-      { $set: { status: 'cancelled' } },
+      { $set: { status: 'cancelled', payuOrderId: 'PAYU-456' } },
       { returnDocument: 'after' },
     );
     expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
@@ -192,7 +199,7 @@ describe('PayU IPN webhook', () => {
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
       { payuOrderId: 'PAYU-456', status: 'pending_payment' },
-      { $set: { status: 'cancelled' } },
+      { $set: { status: 'cancelled', payuOrderId: 'PAYU-456' } },
       { returnDocument: 'after' },
     );
     expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();
@@ -206,7 +213,7 @@ describe('PayU IPN webhook', () => {
     expect(res.status).toBe(200);
     expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
       { payuOrderId: 'PAYU-789', status: 'pending_payment' },
-      { $set: { status: 'pending_payment' } },
+      { $set: { status: 'pending_payment', payuOrderId: 'PAYU-789' } },
       { returnDocument: 'after' },
     );
     expect(mocks.sendOrderConfirmation).not.toHaveBeenCalled();

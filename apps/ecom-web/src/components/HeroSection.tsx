@@ -5,6 +5,11 @@ import { useRef, useCallback, useState, useEffect, type CSSProperties, type JSX 
 import { HOME_CONTENT_DEFAULTS, type HomeHeroContent } from '@/data/homeContent';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import {
+  buildHomeProductTypeCategoryHref,
+  resolveHomeProductTypeFilterKey,
+  type CatalogCategoryOption,
+} from '@/lib/homeCategoryLinks';
 
 /* ── Zone data ──────────────────────────────────────────────────── */
 type ZoneId = 'outer' | 'middle' | 'inner';
@@ -96,6 +101,7 @@ type HeroCopy = {
 
 interface HeroSectionProps {
   content?: HomeHeroContent;
+  catalogCategories?: CatalogCategoryOption[];
 }
 
 function buildThemeCatalogHref(theme: string): string {
@@ -531,11 +537,17 @@ function LorePanel({
 }
 
 /* ── Main HeroSection ───────────────────────────────────────────── */
-export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectionProps): JSX.Element {
+export function HeroSection({
+  content = HOME_CONTENT_DEFAULTS.hero,
+  catalogCategories = [],
+}: HeroSectionProps): JSX.Element {
   const bottomStripText = [...content.bottomStripItems, ...content.bottomStripItems].join('  ·  ');
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
   const copy = locale === 'pl' ? HERO_COPY.pl : HERO_COPY.en;
+  const heroProductTags = locale === 'pl'
+    ? ['Breloki', 'Piny', 'Pierścionki', 'Bransoletki', 'Kości']
+    : ['Keychains', 'Pins', 'Rings', 'Bracelets', 'Dice'];
 
   /* Hex menu interaction state */
   const [hoveredZone, setHoveredZone]           = useState<ZoneId | null>(null);
@@ -787,9 +799,22 @@ export function HeroSection({ content = HOME_CONTENT_DEFAULTS.hero }: HeroSectio
         </div>
 
         <div className='flex flex-wrap gap-2 mb-8'>
-          {content.tags.map((tag) => (
-            <span key={tag} className='hero-tag neon-tag-cyan'>{tag}</span>
-          ))}
+          {heroProductTags.map((tag) => {
+            const filterKey = resolveHomeProductTypeFilterKey(tag);
+            const href = filterKey === null
+              ? '/products'
+              : buildHomeProductTypeCategoryHref(filterKey, catalogCategories);
+
+            return (
+              <a
+                key={tag}
+                href={localizedHref(href)}
+                className='hero-tag neon-tag-cyan inline-block transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]'
+              >
+                {tag}
+              </a>
+            );
+          })}
         </div>
 
         <p

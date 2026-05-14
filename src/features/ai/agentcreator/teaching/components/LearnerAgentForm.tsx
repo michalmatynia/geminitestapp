@@ -30,8 +30,13 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
     const found = collections.find((c) => c.id === id);
     return found?.name ?? id;
   };
-  const effectiveChatModel = chatModel.trim() || draft.llmModel?.trim() || '';
-  const effectiveEmbeddingModel = embeddingModel.trim() || draft.embeddingModel?.trim() || '';
+  const chatModelValue = chatModel.trim();
+  const llmModelValue = draft.llmModel ?? '';
+  const effectiveChatModel = chatModelValue.length > 0 ? chatModelValue : llmModelValue.trim();
+
+  const embeddingModelValue = embeddingModel.trim();
+  const draftEmbeddingModelValue = draft.embeddingModel ?? '';
+  const effectiveEmbeddingModel = embeddingModelValue.length > 0 ? embeddingModelValue : draftEmbeddingModelValue.trim();
 
   return (
     <div className='space-y-6'>
@@ -41,12 +46,14 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
           description='Brain-managed via Agent Teaching Chat capability.'
         >
           <Input
-            value={effectiveChatModel || 'Not configured in AI Brain'}
+            value={effectiveChatModel.length > 0 ? effectiveChatModel : 'Not configured in AI Brain'}
             readOnly
             disabled
             placeholder='Not configured in AI Brain'
             className='cursor-not-allowed'
-           aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
+            aria-label='Not configured in AI Brain'
+            title='Not configured in AI Brain'
+          />
         </FormField>
 
         <FormField
@@ -54,12 +61,14 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
           description='Brain-managed via Agent Teaching Embeddings capability.'
         >
           <Input
-            value={effectiveEmbeddingModel || 'Not configured in AI Brain'}
+            value={effectiveEmbeddingModel.length > 0 ? effectiveEmbeddingModel : 'Not configured in AI Brain'}
             readOnly
             disabled
             placeholder='Not configured in AI Brain'
             className='cursor-not-allowed'
-           aria-label='Not configured in AI Brain' title='Not configured in AI Brain'/>
+            aria-label='Not configured in AI Brain'
+            title='Not configured in AI Brain'
+          />
         </FormField>
       </div>
 
@@ -157,9 +166,10 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
           <div className='grid gap-2 md:grid-cols-2'>
             {collections.map((collection: AgentTeachingEmbeddingCollectionRecord) => {
               const checked = (draft.collectionIds ?? []).includes(collection.id);
-              const sameModel =
-                !effectiveEmbeddingModel || collection.embeddingModel === effectiveEmbeddingModel;
               const checkboxId = `learner-agent-collection-${collection.id}`;
+              const isSameModel =
+                effectiveEmbeddingModel.length === 0 || collection.embeddingModel === effectiveEmbeddingModel;
+
               return (
                 <label
                   key={collection.id}
@@ -169,10 +179,10 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
                     checked
                       ? 'border-emerald-500/40 bg-emerald-500/10'
                       : 'border-border bg-card/40 hover:bg-card/60',
-                    !sameModel && 'opacity-60'
+                    !isSameModel && 'opacity-60'
                   )}
                   title={
-                    sameModel
+                    isSameModel
                       ? undefined
                       : `Embedding model mismatch (collection: ${collection.embeddingModel})`
                   }

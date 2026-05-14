@@ -240,3 +240,22 @@ Import trace for requested module:
 [16329063ms] [LOG] [Fast Refresh] done in 616ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
 [16362743ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
 [16362823ms] [LOG] [HMR] connected @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27445144ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27452982ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27453162ms] [LOG] [Fast Refresh] done in 180ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27453412ms] [LOG] [Fast Refresh] done in 430ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27455565ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27455713ms] [LOG] [Fast Refresh] done in 147ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27455727ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27456015ms] [LOG] [Fast Refresh] done in 287ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27461574ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27461719ms] [LOG] [Fast Refresh] done in 146ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27461727ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[27461948ms] [LOG] [Fast Refresh] done in 222ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28203018ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28205082ms] [LOG] [Fast Refresh] done in 2064ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28206675ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28215791ms] [LOG] [Fast Refresh] done in 9115ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28260759ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28334803ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[28339286ms] [LOG] [Fast Refresh] done in 4483ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27

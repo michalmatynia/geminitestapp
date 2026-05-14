@@ -1,0 +1,252 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e6]: Free shipping on orders over € 60 — New drops every week
+        - link "Shop New Drops" [ref=e7] [cursor=pointer]:
+          - /url: /products?new=1
+        - button "Dismiss announcement" [ref=e8] [cursor=pointer]:
+          - img [ref=e9]
+      - generic [ref=e13]:
+        - link "STARGATER NEXUS" [ref=e14] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e15]: STARGATER
+          - generic [ref=e16]: NEXUS
+        - navigation [ref=e17]:
+          - link "Anime" [ref=e18] [cursor=pointer]:
+            - /url: /collections/womenswear
+            - text: Anime
+          - link "Gaming" [ref=e20] [cursor=pointer]:
+            - /url: /collections/menswear
+            - text: Gaming
+          - link "Film" [ref=e22] [cursor=pointer]:
+            - /url: /collections/accessories
+            - text: Film
+          - link "New Drops" [ref=e24] [cursor=pointer]:
+            - /url: /products?new=1
+            - text: New Drops
+          - link "Catalog" [ref=e26] [cursor=pointer]:
+            - /url: /products
+            - text: Catalog
+        - generic [ref=e28]:
+          - button "Switch to daily theme" [ref=e29] [cursor=pointer]:
+            - img [ref=e30]
+          - generic "Language" [ref=e32]:
+            - link "EN" [ref=e33] [cursor=pointer]:
+              - /url: /checkout
+            - link "PL" [ref=e34] [cursor=pointer]:
+              - /url: /pl/checkout
+          - button "Search" [ref=e35] [cursor=pointer]:
+            - img [ref=e36]
+          - button "Shopping bag" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+          - link "Wishlist (0)" [ref=e43] [cursor=pointer]:
+            - /url: /wishlist
+            - img [ref=e44]
+          - button "Account" [ref=e46] [cursor=pointer]:
+            - img [ref=e47]
+    - dialog "Search" [ref=e50]:
+      - generic [ref=e51]:
+        - img [ref=e52]
+        - searchbox "Search" [ref=e55]
+        - button "Close search" [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]: Close
+          - generic [ref=e58]: Esc
+      - generic [ref=e60]:
+        - paragraph [ref=e61]: Trending searches
+        - generic [ref=e62]:
+          - button "Anime" [ref=e63] [cursor=pointer]
+          - button "Attack on Titan" [ref=e64] [cursor=pointer]
+          - button "Keychain" [ref=e65] [cursor=pointer]
+          - button "Elden Ring" [ref=e66] [cursor=pointer]
+          - button "Ghibli" [ref=e67] [cursor=pointer]
+        - generic [ref=e68]:
+          - paragraph [ref=e69]: Browse collections
+          - generic [ref=e70]:
+            - link "Anime" [ref=e71] [cursor=pointer]:
+              - /url: /collections/womenswear
+              - generic [ref=e74]: Anime
+            - link "Gaming" [ref=e75] [cursor=pointer]:
+              - /url: /collections/menswear
+              - generic [ref=e78]: Gaming
+            - link "Film & TV" [ref=e79] [cursor=pointer]:
+              - /url: /collections/accessories
+              - generic [ref=e82]: Film & TV
+            - link "All Items" [ref=e83] [cursor=pointer]:
+              - /url: /products
+              - generic [ref=e86]: All Items
+    - main [ref=e87]:
+      - generic [ref=e88]:
+        - link "STARGATER" [ref=e89] [cursor=pointer]:
+          - /url: /
+        - navigation "Checkout steps" [ref=e90]:
+          - generic [ref=e92]:
+            - img [ref=e210]
+            - generic [ref=e94]: Information
+          - generic [ref=e97]:
+            - generic [ref=e98]: "2"
+            - generic [ref=e99]: Shipping
+          - generic [ref=e102]:
+            - generic [ref=e103]: "3"
+            - generic [ref=e104]: Payment
+      - generic [ref=e105]:
+        - generic [ref=e212]:
+          - heading "Shipping method" [level=2] [ref=e213]
+          - generic [ref=e214]:
+            - generic [ref=e215]:
+              - generic [ref=e216]: Delivering to
+              - generic [ref=e217]: ul. Marszałkowska 10, Warszawa 00-001, Poland
+            - button "Change" [ref=e218] [cursor=pointer]
+          - generic [ref=e219]:
+            - generic [ref=e220] [cursor=pointer]:
+              - 'radio "Poczta Polska Tracked postal delivery, 2-4 business days Estimated: 15-19 May Free" [ref=e221]'
+              - generic [ref=e224]:
+                - generic [ref=e225]: Poczta Polska
+                - generic [ref=e226]: Tracked postal delivery, 2-4 business days
+                - generic [ref=e227]: "Estimated: 15-19 May"
+              - generic [ref=e228]: Free
+            - generic [ref=e229] [cursor=pointer]:
+              - 'radio "InPost Parcel Locker Pickup at selected parcel locker, 1-2 business days Estimated: 14-15 May 4 zł" [checked] [active] [ref=e230]'
+              - generic [ref=e232]:
+                - generic [ref=e233]: InPost Parcel Locker
+                - generic [ref=e234]: Pickup at selected parcel locker, 1-2 business days
+                - generic [ref=e235]: "Estimated: 14-15 May"
+              - generic [ref=e236]: 4 zł
+            - generic [ref=e237] [cursor=pointer]:
+              - 'radio "DPD Courier Door delivery, 1-2 business days Estimated: 14-15 May 10 zł" [ref=e238]'
+              - generic [ref=e240]:
+                - generic [ref=e241]: DPD Courier
+                - generic [ref=e242]: Door delivery, 1-2 business days
+                - generic [ref=e243]: "Estimated: 14-15 May"
+              - generic [ref=e244]: 10 zł
+            - generic [ref=e253]:
+              - generic [ref=e255]:
+                - generic [ref=e256]: InPost pickup point
+                - paragraph [ref=e257]: Choose the parcel locker for this shipment.
+              - iframe [ref=e260]:
+                - generic [ref=f4e4]:
+                  - generic:
+                    - generic:
+                      - article "Search point filters":
+                        - generic [ref=f4e6]:
+                          - generic [ref=f4e7]:
+                            - button "Use my location" [ref=f4e9] [cursor=pointer]:
+                              - generic [ref=f4e10]: Use my location
+                            - generic [ref=f4e12]:
+                              - button "Polski" [ref=f4e13] [cursor=pointer]:
+                                - generic [ref=f4e14]: Change language to pl
+                              - button "Українська" [ref=f4e15] [cursor=pointer]:
+                                - generic [ref=f4e16]: Change language to uk
+                          - generic [ref=f4e19] [cursor=pointer]:
+                            - generic [ref=f4e20]:
+                              - generic [ref=f4e21]: Start entering text to search Parcel Locker or Parcel Point
+                              - textbox "Start entering text to search Parcel Locker or Parcel Point" [ref=f4e22]:
+                                - /placeholder: ""
+                            - generic [ref=f4e24]: 
+                          - tablist [ref=f4e27]:
+                            - tab "All" [selected] [ref=f4e28] [cursor=pointer]
+                            - tab "Parcel Locker" [ref=f4e29] [cursor=pointer]
+                            - tab "Parcel Point" [ref=f4e30] [cursor=pointer]
+                  - region [ref=f4e35]:
+                    - img [ref=f4e48] [cursor=pointer]
+                    - img [ref=f4e49] [cursor=pointer]
+                    - img [ref=f4e50] [cursor=pointer]
+                    - img [ref=f4e51] [cursor=pointer]
+                    - img [ref=f4e52] [cursor=pointer]
+                    - generic [ref=f4e54] [cursor=pointer]: "5"
+                    - generic [ref=f4e56] [cursor=pointer]: "11"
+                    - generic [ref=f4e58] [cursor=pointer]: "3"
+                    - generic [ref=f4e60] [cursor=pointer]: "2"
+                    - generic [ref=f4e62] [cursor=pointer]: "5"
+                    - generic [ref=f4e64] [cursor=pointer]: "4"
+                    - generic [ref=f4e66] [cursor=pointer]: "4"
+                    - generic [ref=f4e68] [cursor=pointer]: "3"
+                    - generic [ref=f4e70] [cursor=pointer]: "5"
+                    - generic [ref=f4e72] [cursor=pointer]: "4"
+                    - generic [ref=f4e74] [cursor=pointer]: "2"
+                    - generic [ref=f4e76] [cursor=pointer]: "9"
+                    - generic [ref=f4e78] [cursor=pointer]: "7"
+                    - generic [ref=f4e80] [cursor=pointer]: "6"
+                    - generic [ref=f4e82] [cursor=pointer]: "3"
+                    - generic [ref=f4e84] [cursor=pointer]: "2"
+                    - generic [ref=f4e86] [cursor=pointer]: "3"
+                    - generic [ref=f4e88] [cursor=pointer]: "5"
+                    - generic [ref=f4e90] [cursor=pointer]: "3"
+                    - generic [ref=f4e92] [cursor=pointer]: "5"
+                    - generic [ref=f4e94] [cursor=pointer]: "7"
+                    - generic [ref=f4e96] [cursor=pointer]: "4"
+                    - generic [ref=f4e98] [cursor=pointer]: "4"
+                    - generic [ref=f4e100] [cursor=pointer]: "4"
+                    - generic [ref=f4e102] [cursor=pointer]: "3"
+                    - generic [ref=f4e104] [cursor=pointer]: "2"
+                    - generic [ref=f4e106] [cursor=pointer]: "2"
+                    - generic:
+                      - generic [ref=f4e38]:
+                        - link [ref=f4e39] [cursor=pointer]:
+                          - /url: "#"
+                          - text: +
+                        - link [ref=f4e40] [cursor=pointer]:
+                          - /url: "#"
+                          - text: −
+                      - link [ref=f4e42] [cursor=pointer]:
+                        - /url: "#"
+                        - generic [ref=f4e43]: 
+                    - generic [ref=f4e44]:
+                      - link [ref=f4e45] [cursor=pointer]:
+                        - /url: https://leafletjs.com
+                        - text: Leaflet
+                      - text: "|"
+                      - link [ref=f4e46] [cursor=pointer]:
+                        - /url: https://inpost.pl
+                        - text: InPost
+          - generic [ref=e245]:
+            - button "Back" [ref=e246] [cursor=pointer]:
+              - img [ref=e247]
+              - text: Back
+            - button "Continue to payment" [ref=e249] [cursor=pointer]:
+              - text: Continue to payment
+              - img [ref=e250]
+        - generic [ref=e152]:
+          - heading "Order Summary" [level=2] [ref=e153]
+          - paragraph [ref=e155]: No items in bag
+          - button "Have a promo code?" [ref=e157] [cursor=pointer]:
+            - text: Have a promo code?
+            - img [ref=e158]
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - generic [ref=e163]: Subtotal
+              - generic [ref=e164]: 0 zł
+            - generic [ref=e165]: Add 60 zł more for free shipping
+            - generic [ref=e166]:
+              - generic [ref=e167]: Shipping
+              - generic [ref=e168]: 4 zł
+          - generic [ref=e170]:
+            - generic [ref=e171]: Total
+            - generic [ref=e172]: 4 zł
+    - dialog "Shopping bag" [ref=e173]:
+      - generic [ref=e174]:
+        - generic [ref=e175]:
+          - heading "Your Bag" [level=2] [ref=e176]
+          - paragraph [ref=e177]: 0 items
+        - button "Close bag" [ref=e178] [cursor=pointer]:
+          - img [ref=e179]
+      - generic [ref=e183]:
+        - img [ref=e184]
+        - paragraph [ref=e187]: Your bag is empty
+        - button "Continue shopping" [ref=e188] [cursor=pointer]
+    - generic "Notifications"
+    - button "Back to top":
+      - img
+    - generic [ref=e190]:
+      - generic [ref=e191]:
+        - img [ref=e193]
+        - paragraph [ref=e195]:
+          - text: We use cookies to remember your preferences, understand how you use STARGATER, and improve your experience.
+          - link "Privacy policy" [ref=e196] [cursor=pointer]:
+            - /url: /values
+      - generic [ref=e197]:
+        - button "Essential only" [ref=e198] [cursor=pointer]
+        - button "Accept all" [ref=e199] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e205] [cursor=pointer]:
+    - img [ref=e206]
+  - alert [ref=e209]

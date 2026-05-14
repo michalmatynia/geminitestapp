@@ -1,0 +1,233 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e210]:
+      - generic [ref=e211]:
+        - generic [ref=e213]: Free shipping on orders over € 60 — New drops every week
+        - link "Shop New Drops" [ref=e214] [cursor=pointer]:
+          - /url: /products?new=1
+        - button "Dismiss announcement" [ref=e215] [cursor=pointer]:
+          - img [ref=e216]
+      - generic [ref=e220]:
+        - link "STARGATER NEXUS" [ref=e221] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e222]: STARGATER
+          - generic [ref=e223]: NEXUS
+        - navigation [ref=e224]:
+          - link "Anime" [ref=e225] [cursor=pointer]:
+            - /url: /collections/womenswear
+            - text: Anime
+          - link "Gaming" [ref=e227] [cursor=pointer]:
+            - /url: /collections/menswear
+            - text: Gaming
+          - link "Film" [ref=e229] [cursor=pointer]:
+            - /url: /collections/accessories
+            - text: Film
+          - link "New Drops" [ref=e231] [cursor=pointer]:
+            - /url: /products?new=1
+            - text: New Drops
+          - link "Catalog" [ref=e233] [cursor=pointer]:
+            - /url: /products
+            - text: Catalog
+        - generic [ref=e235]:
+          - button "Switch to daily theme" [ref=e236] [cursor=pointer]:
+            - img [ref=e237]
+          - generic "Language" [ref=e239]:
+            - link "EN" [ref=e240] [cursor=pointer]:
+              - /url: /checkout
+            - link "PL" [ref=e241] [cursor=pointer]:
+              - /url: /pl/checkout
+          - button "Search" [ref=e242] [cursor=pointer]:
+            - img [ref=e243]
+          - button "Shopping bag" [ref=e246] [cursor=pointer]:
+            - img [ref=e247]
+          - link "Wishlist (0)" [ref=e250] [cursor=pointer]:
+            - /url: /wishlist
+            - img [ref=e251]
+          - button "Account" [ref=e253] [cursor=pointer]:
+            - img [ref=e254]
+    - dialog "Search" [ref=e257]:
+      - generic [ref=e258]:
+        - img [ref=e259]
+        - searchbox "Search" [ref=e262]
+        - button "Close search" [ref=e263] [cursor=pointer]:
+          - generic [ref=e264]: Close
+          - generic [ref=e265]: Esc
+      - generic [ref=e267]:
+        - paragraph [ref=e268]: Trending searches
+        - generic [ref=e269]:
+          - button "Anime" [ref=e270] [cursor=pointer]
+          - button "Attack on Titan" [ref=e271] [cursor=pointer]
+          - button "Keychain" [ref=e272] [cursor=pointer]
+          - button "Elden Ring" [ref=e273] [cursor=pointer]
+          - button "Ghibli" [ref=e274] [cursor=pointer]
+        - generic [ref=e275]:
+          - paragraph [ref=e276]: Browse collections
+          - generic [ref=e277]:
+            - link "Anime" [ref=e278] [cursor=pointer]:
+              - /url: /collections/womenswear
+              - generic [ref=e281]: Anime
+            - link "Gaming" [ref=e282] [cursor=pointer]:
+              - /url: /collections/menswear
+              - generic [ref=e285]: Gaming
+            - link "Film & TV" [ref=e286] [cursor=pointer]:
+              - /url: /collections/accessories
+              - generic [ref=e289]: Film & TV
+            - link "All Items" [ref=e290] [cursor=pointer]:
+              - /url: /products
+              - generic [ref=e293]: All Items
+    - main [ref=e294]:
+      - generic [ref=e295]:
+        - link "STARGATER" [ref=e296] [cursor=pointer]:
+          - /url: /
+        - navigation "Checkout steps" [ref=e297]:
+          - generic [ref=e299]:
+            - generic [ref=e300]: "1"
+            - generic [ref=e301]: Information
+          - generic [ref=e304]:
+            - generic [ref=e305]: "2"
+            - generic [ref=e306]: Shipping
+          - generic [ref=e309]:
+            - generic [ref=e310]: "3"
+            - generic [ref=e311]: Payment
+      - generic [ref=e312]:
+        - generic [ref=e314]:
+          - heading "Contact & Delivery" [level=2] [ref=e315]
+          - generic [ref=e316]:
+            - generic [ref=e318]:
+              - generic [ref=e319]: Email address
+              - textbox "you@example.com" [ref=e320]
+              - paragraph [ref=e380]: This field is required.
+            - generic [ref=e321]:
+              - generic [ref=e322]:
+                - generic [ref=e323]: First name
+                - textbox "Marie" [ref=e324]
+                - paragraph [ref=e381]: This field is required.
+              - generic [ref=e325]:
+                - generic [ref=e326]: Last name
+                - textbox "Curie" [ref=e327]
+                - paragraph [ref=e382]: This field is required.
+            - generic [ref=e329]:
+              - generic [ref=e330]: Address
+              - textbox "12 Rue de Rivoli" [ref=e331]
+              - paragraph [ref=e383]: This field is required.
+            - generic [ref=e333]:
+              - generic [ref=e334]: Apartment / suite (optional)
+              - textbox "Floor 3" [ref=e335]
+            - generic [ref=e336]:
+              - generic [ref=e337]:
+                - generic [ref=e338]: City
+                - textbox "Paris" [ref=e339]
+                - paragraph [ref=e384]: This field is required.
+              - generic [ref=e340]:
+                - generic [ref=e341]: Postcode
+                - textbox "75001" [ref=e342]
+                - paragraph [ref=e385]: This field is required.
+            - generic [ref=e344]:
+              - generic [ref=e345]: Country
+              - combobox [ref=e346]:
+                - option "Select country"
+                - option "Poland" [selected]
+                - option "Austria"
+                - option "Belgium"
+                - option "Bulgaria"
+                - option "Croatia"
+                - option "Cyprus"
+                - option "Czechia"
+                - option "Denmark"
+                - option "Estonia"
+                - option "Finland"
+                - option "France"
+                - option "Germany"
+                - option "Greece"
+                - option "Hungary"
+                - option "Ireland"
+                - option "Italy"
+                - option "Latvia"
+                - option "Lithuania"
+                - option "Luxembourg"
+                - option "Malta"
+                - option "Netherlands"
+                - option "Portugal"
+                - option "Romania"
+                - option "Slovakia"
+                - option "Slovenia"
+                - option "Spain"
+                - option "Sweden"
+                - option "United Kingdom"
+                - option "Norway"
+                - option "Switzerland"
+                - option "Iceland"
+                - option "Liechtenstein"
+                - option "United States"
+                - option "Canada"
+                - option "Australia"
+                - option "New Zealand"
+                - option "Japan"
+                - option "South Korea"
+                - option "China"
+                - option "Hong Kong"
+                - option "Singapore"
+                - option "United Arab Emirates"
+                - option "Israel"
+                - option "Turkey"
+                - option "Ukraine"
+                - option "Brazil"
+                - option "Mexico"
+                - option "India"
+                - option "South Africa"
+            - generic [ref=e348]:
+              - generic [ref=e349]: Phone
+              - textbox "+33 6 12 34 56 78" [ref=e350]
+              - paragraph [ref=e386]: This field is required.
+          - generic [ref=e351]:
+            - link "Return to bag" [ref=e352] [cursor=pointer]:
+              - /url: /
+              - img [ref=e353]
+              - text: Return to bag
+            - button "Continue to shipping" [active] [ref=e355] [cursor=pointer]:
+              - text: Continue to shipping
+              - img [ref=e356]
+        - generic [ref=e359]:
+          - heading "Order Summary" [level=2] [ref=e360]
+          - paragraph [ref=e362]: No items in bag
+          - button "Have a promo code?" [ref=e364] [cursor=pointer]:
+            - text: Have a promo code?
+            - img [ref=e365]
+          - generic [ref=e368]:
+            - generic [ref=e369]:
+              - generic [ref=e370]: Subtotal
+              - generic [ref=e371]: 0 zł
+            - generic [ref=e372]: Add 60 zł more for free shipping
+            - generic [ref=e373]:
+              - generic [ref=e374]: Shipping
+              - generic [ref=e375]: Free
+          - generic [ref=e377]:
+            - generic [ref=e378]: Total
+            - generic [ref=e379]: 0 zł
+    - dialog "Shopping bag" [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - heading "Your Bag" [level=2] [ref=e168]
+          - paragraph [ref=e169]: 0 items
+        - button "Close bag" [ref=e170] [cursor=pointer]:
+          - img [ref=e171]
+      - generic [ref=e175]:
+        - img [ref=e176]
+        - paragraph [ref=e179]: Your bag is empty
+        - button "Continue shopping" [ref=e180] [cursor=pointer]
+    - generic "Notifications"
+    - button "Back to top":
+      - img
+    - generic [ref=e199]:
+      - generic [ref=e200]:
+        - img [ref=e202]
+        - paragraph [ref=e204]:
+          - text: We use cookies to remember your preferences, understand how you use STARGATER, and improve your experience.
+          - link "Privacy policy" [ref=e205] [cursor=pointer]:
+            - /url: /values
+      - generic [ref=e206]:
+        - button "Essential only" [ref=e207] [cursor=pointer]
+        - button "Accept all" [ref=e208] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e186] [cursor=pointer]:
+    - img [ref=e187]
+  - alert [ref=e209]

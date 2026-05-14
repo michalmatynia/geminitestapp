@@ -9,6 +9,8 @@ import { POST } from './route';
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   findOne: vi.fn(),
+  readDpdProviderSettings: vi.fn(),
+  readPocztaPolskaProviderSettings: vi.fn(),
   updateOne: vi.fn(),
 }));
 
@@ -23,6 +25,11 @@ vi.mock('@/lib/mongodb', () => ({
       updateOne: mocks.updateOne,
     }),
   })),
+}));
+
+vi.mock('@/lib/providerSettings', () => ({
+  readDpdProviderSettings: mocks.readDpdProviderSettings,
+  readPocztaPolskaProviderSettings: mocks.readPocztaPolskaProviderSettings,
 }));
 
 function makeOrder(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -60,6 +67,8 @@ describe('POST /api/orders/[orderId]/fulfillment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({ id: 'admin-1', isSuperAdmin: true });
+    mocks.readDpdProviderSettings.mockResolvedValue(null);
+    mocks.readPocztaPolskaProviderSettings.mockResolvedValue(null);
     mocks.updateOne.mockResolvedValue({ matchedCount: 1 });
   });
 
@@ -130,6 +139,46 @@ describe('POST /api/orders/[orderId]/fulfillment', () => {
           shipment: expect.objectContaining({
             trackingNumber: 'DPD123',
             trackingUrl: 'https://tracktrace.dpd.com.pl/parcelDetails?p1=DPD123&typ=1',
+          }),
+        }),
+      },
+    );
+  });
+
+  it('infers DPD tracking links from pushed provider settings', async () => {
+    mocks.readDpdProviderSettings.mockResolvedValue({
+      accountNumber: '',
+      apiUrl: '',
+      enabled: true,
+      password: '',
+      trackingUrlTemplate: 'https://dpd.example.test/track/{trackingNumber}',
+      username: '',
+    });
+    mocks.findOne
+      .mockResolvedValueOnce(makeOrder())
+      .mockResolvedValueOnce(makeOrder({
+        status: 'in-transit',
+        shipment: {
+          carrier: 'dpd',
+          service: 'dpd_courier_standard',
+          trackingNumber: 'DPD123',
+          trackingUrl: 'https://dpd.example.test/track/DPD123',
+          status: 'in-transit',
+        },
+      }));
+
+    const response = await POST(makeRequest({
+      status: 'in-transit',
+      trackingNumber: 'DPD123',
+    }), makeParams());
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { orderId: 'ARC-2026-ABCD1234' },
+      {
+        $set: expect.objectContaining({
+          shipment: expect.objectContaining({
+            trackingUrl: 'https://dpd.example.test/track/DPD123',
           }),
         }),
       },

@@ -19,6 +19,10 @@ vi.mock('@/lib/mongodb', () => ({
   })),
 }));
 
+vi.mock('@/lib/providerSettings', () => ({
+  readInpostProviderSettings: vi.fn(async () => null),
+}));
+
 function makePayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     customerReference: 'ARC-2026-ABCD1234',

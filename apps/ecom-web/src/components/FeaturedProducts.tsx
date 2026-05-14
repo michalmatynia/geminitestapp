@@ -1,15 +1,20 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/strict-boolean-expressions,complexity,max-lines-per-function */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions,complexity,max-lines-per-function */
 'use client';
 
-import { useRef, type JSX } from 'react';
-import { useCart } from '@/context/CartContext';
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import { PRODUCTS } from '@/data/products';
 import type { Product } from '@/data/products';
-import { ProductImage } from '@/components/ProductImage';
+import { FeaturedProductCard } from '@/components/FeaturedProductCard';
 import { HOME_CONTENT_DEFAULTS, type HomeFeaturedContent } from '@/data/homeContent';
-import { formatPrice } from '@/lib/locales';
+import {
+  getHomeFeaturedFilterConfigs,
+  type CatalogCategoryOption,
+  type HomeFeaturedFilterConfig,
+} from '@/lib/homeFeaturedFilters';
 import { gsap, useGSAP } from '@/lib/gsap';
+
+const FEATURED_FILTER_LIMIT = 24;
 
 const FEATURED_SLUGS = [
   'amphora-vessel',
@@ -24,158 +29,84 @@ const STATIC_FEATURED = FEATURED_SLUGS
   .map((slug) => PRODUCTS.find((p) => p.slug === slug))
   .filter((p): p is Product => Boolean(p));
 
-function ProductCard({ product, quickAddLabel, priority = false }: { product: Product; quickAddLabel: string; priority?: boolean }): JSX.Element {
-  const { addItem } = useCart();
-  const locale = useLocale();
-  const localizedHref = useLocalizedHref();
-  const aspect = '1/1';
-  const isNewTag = product.tag === 'New' || product.tag === 'Nowość';
-
-  const handleQuickAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    addItem({
-      productId: product.id,
-      slug: product.slug,
-      name: product.shortName ?? product.name,
-      category: product.category,
-      price: product.price,
-      priceDisplay: product.priceDisplay,
-      currencyCode: product.currencyCode,
-      size: product.sizes[1] ?? '',
-      gradient: product.gradient,
-      imageUrl: product.imageUrl,
-      quantity: 1,
-    });
-  };
-
-  return (
-    <a
-      href={localizedHref(`/products/${product.slug}`)}
-      className='product-card group block'
-    >
-      {/* Image box — overflow-hidden clips both images and the slide-up panel */}
-      <div className='relative overflow-hidden' style={{ aspectRatio: aspect }}>
-        {/* Primary image */}
-        <ProductImage
-          imageUrl={product.imageUrl}
-          gradient={product.gradient}
-          alt={product.shortName ?? product.name}
-          sizes='(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 12.5vw'
-          className='card-image absolute inset-0'
-          fit='cover'
-          position='center'
-          priority={priority}
-        />
-        {/* Secondary image — crossfades in on hover */}
-        <ProductImage
-          imageUrl={product.imageUrls?.[1] ?? product.imageUrl}
-          gradient={product.gradientAlt ?? product.gradient}
-          alt={product.shortName ?? product.name}
-          sizes='(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 12.5vw'
-          className='absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0 group-hover:opacity-100'
-          fit='cover'
-          position='center'
-        />
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-2/3 bg-gradient-to-t from-black/65 via-black/20 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-100'
-        />
-
-        {product.tag && (
-          <div className='absolute top-3 left-3 z-10'>
-            <span
-              className='type-label px-2 py-1 inline-block'
-              style={{
-                background: isNewTag ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(var(--coral-rgb),0.15)',
-                color: isNewTag ? 'var(--accent)' : 'var(--coral-red)',
-                border: `1px solid ${isNewTag ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--coral-rgb),0.4)'}`,
-              }}
-            >
-              {product.tag}
-            </span>
-          </div>
-        )}
-
-        {/* Quick add — hidden below the image edge, slides up on group hover */}
-        <div
-          className='absolute bottom-0 left-0 right-0 z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out'
-          style={{ background: 'rgba(4,3,20,0.82)', backdropFilter: 'blur(6px)' }}
-        >
-          <button
-            className='w-full py-3 transition-colors hover:bg-[rgba(255,255,255,0.06)]'
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.6rem',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#fff',
-            }}
-            onClick={handleQuickAdd}
-          >
-            {quickAddLabel}
-          </button>
-        </div>
-      </div>
-
-      {/* Text block — below the image */}
-      <div className='mt-2.5 px-1'>
-        <div
-          className='type-label mb-1'
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-        >
-          {product.category}
-        </div>
-        {product.lore && (
-          <div className='mb-1.5'>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.5rem',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'rgba(180,160,255,0.8)',
-                border: '1px solid rgba(140,100,255,0.28)',
-                padding: '0.1rem 0.4rem',
-              }}
-            >
-              {product.lore}
-            </span>
-          </div>
-        )}
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '0.9rem',
-            fontWeight: 400,
-            color: 'var(--fg)',
-            lineHeight: 1.25,
-            marginBottom: '0.3rem',
-          }}
-        >
-          {product.shortName ?? product.name}
-        </div>
-        <span
-          className='type-price'
-          style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.4)' }}
-        >
-          {formatPrice(product.price, locale, product.currencyCode)}
-        </span>
-      </div>
-    </a>
-  );
-}
-
 export function FeaturedProducts({
   products: dbProducts,
   content = HOME_CONTENT_DEFAULTS.featured,
+  catalogCategories = [],
 }: {
   products?: Product[] | null;
   content?: HomeFeaturedContent;
+  catalogCategories?: CatalogCategoryOption[];
 }): JSX.Element {
-  const featured = dbProducts && dbProducts.length > 0 ? dbProducts : STATIC_FEATURED;
+  const featured = useMemo(
+    () => (dbProducts && dbProducts.length > 0 ? dbProducts : STATIC_FEATURED),
+    [dbProducts],
+  );
   const isLive = dbProducts && dbProducts.length > 0;
   const localizedHref = useLocalizedHref();
+  const locale = useLocale();
   const sectionRef = useRef<HTMLElement>(null);
+  const filterFetchSeqRef = useRef(0);
+  const [activeFilter, setActiveFilter] = useState(content.filters[0] ?? 'All');
+  const [visibleProducts, setVisibleProducts] = useState<Product[]>(featured);
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  const filterConfigs = useMemo(
+    () => getHomeFeaturedFilterConfigs(content.filters, catalogCategories),
+    [catalogCategories, content.filters],
+  );
+
+  const activeFilterConfig = filterConfigs.find((filter) => filter.label === activeFilter) ?? {
+    categories: [],
+    href: content.ctaHref,
+    key: 'all' as const,
+    label: content.filters[0] ?? 'All',
+  };
+
+  useEffect(() => {
+    setActiveFilter(content.filters[0] ?? 'All');
+    setVisibleProducts(featured);
+  }, [content.filters, featured]);
+
+  const handleFilterClick = useCallback(async (filter: HomeFeaturedFilterConfig) => {
+    setActiveFilter(filter.label);
+
+    if (filter.key === null || filter.key === 'all' || filter.categories.length === 0) {
+      filterFetchSeqRef.current += 1;
+      setVisibleProducts(featured);
+      setIsFiltering(false);
+      return;
+    }
+
+    if (!isLive) {
+      const selected = new Set(filter.categories);
+      setVisibleProducts(featured.filter((product) => selected.has(product.category)));
+      return;
+    }
+
+    setIsFiltering(true);
+    const seq = ++filterFetchSeqRef.current;
+
+    try {
+      const params = new URLSearchParams({
+        categories: filter.categories.join(','),
+        limit: String(FEATURED_FILTER_LIMIT),
+        locale,
+      });
+      const res = await fetch(`/api/products?${params}`);
+      if (!res.ok) throw new Error('Failed to fetch filtered products');
+      const data = (await res.json()) as { products?: Product[] };
+      if (seq !== filterFetchSeqRef.current) return;
+      setVisibleProducts(data.products ?? []);
+    } catch {
+      if (seq === filterFetchSeqRef.current) {
+        const selected = new Set(filter.categories);
+        setVisibleProducts(featured.filter((product) => selected.has(product.category)));
+      }
+    } finally {
+      if (seq === filterFetchSeqRef.current) setIsFiltering(false);
+    }
+  }, [featured, isLive, locale]);
 
   useGSAP(() => {
     /* Section header */
@@ -205,7 +136,7 @@ export function FeaturedProducts({
   }, { scope: sectionRef, dependencies: [] });
 
   return (
-    <section ref={sectionRef} className='relative isolate px-6 md:px-10 pb-16 md:pb-20 max-w-screen-2xl mx-auto'>
+    <section id='new-drops' ref={sectionRef} className='relative isolate scroll-mt-28 px-6 md:px-10 pb-16 md:pb-20 max-w-screen-2xl mx-auto'>
       <div
         aria-hidden='true'
         className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-56 bg-gradient-to-t from-black/70 via-black/25 to-transparent'
@@ -222,35 +153,45 @@ export function FeaturedProducts({
           </h2>
         </div>
         <div className='hidden md:flex items-center gap-3'>
-          {content.filters.map((f, i) => (
-            <button
-              key={f}
-              className='type-label px-4 py-2 transition-all duration-200'
-              style={{
-                background: i === 0 ? 'rgba(var(--accent-rgb),0.12)' : 'transparent',
-                color: i === 0 ? 'var(--accent)' : 'var(--muted-teal)',
-                border: `1px solid ${i === 0 ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--accent-rgb),0.1)'}`,
-                boxShadow: i === 0 ? '0 0 8px rgba(var(--accent-rgb),0.12)' : 'none',
-              }}
-            >
-              {f}
-            </button>
-          ))}
+          {filterConfigs.map((filter) => {
+            const isActive = filter.label === activeFilter;
+            return (
+              <button
+                key={filter.label}
+                className='type-label px-4 py-2 transition-all duration-200'
+                type='button'
+                aria-pressed={isActive}
+                disabled={isFiltering && isActive}
+                onClick={() => {
+                  handleFilterClick(filter).catch(() => undefined);
+                }}
+                style={{
+                  background: isActive ? 'rgba(var(--accent-rgb),0.12)' : 'transparent',
+                  color: isActive ? 'var(--accent)' : 'var(--muted-teal)',
+                  border: `1px solid ${isActive ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(var(--accent-rgb),0.1)'}`,
+                  boxShadow: isActive ? '0 0 8px rgba(var(--accent-rgb),0.12)' : 'none',
+                  cursor: isFiltering && isActive ? 'wait' : 'pointer',
+                }}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Grid */}
       <div className='feat-grid relative z-10 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 md:gap-4'>
-        {featured.map((product, index) => (
+        {visibleProducts.map((product, index) => (
           <div key={product.id} className='feat-card'>
-            <ProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 8} />
+            <FeaturedProductCard product={product} quickAddLabel={content.quickAddLabel} priority={index < 8} />
           </div>
         ))}
       </div>
 
       {/* View all CTA */}
       <div className='feat-cta relative z-30 flex justify-center mt-10'>
-        <a href={localizedHref(content.ctaHref)} className='btn-primary px-16'>
+        <a href={localizedHref(activeFilterConfig.href)} className='btn-primary px-16'>
           {isLive ? content.ctaLiveLabel : content.ctaFallbackLabel}
           <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
             <path d='M5 12h14M12 5l7 7-7 7' />

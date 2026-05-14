@@ -7,6 +7,7 @@ import { BackgroundSettingsCard } from './BackgroundSettingsCard';
 import { CollectionCardsEditorCard } from './CollectionCardsEditorCard';
 import { EcommerceDataSyncPanel } from './EcommerceDataSyncPanel';
 import { EcommerceDiscountCouponsPanel } from './EcommerceDiscountCouponsPanel';
+import { EcommerceProviderSettingsPanel } from './EcommerceProviderSettingsPanel';
 import { EditorialArticlesEditorCard } from './EditorialArticlesEditorCard';
 import { LogoPreviewCard, LogoUploadCard, type LogoController } from './LogoCmsCards';
 import { ManifestoCmsCard } from './ManifestoCmsCard';
@@ -38,6 +39,7 @@ const LOGO_ENDPOINT = '/api/v2/products/pages/logo';
 const ECOMMERCE_PAGE_TABS = [
   { label: 'CMS Content', value: 'content' },
   { label: 'Discount Coupons', value: 'discount-coupons' },
+  { label: 'Provider Settings', value: 'provider-settings' },
   { label: 'Data Synchronisation', value: 'data-sync' },
 ] as const;
 
@@ -49,12 +51,14 @@ const toErrorMessage = (error: unknown): string =>
 const getPageTitle = (activeTab: EcommercePageTab): string => {
   if (activeTab === 'data-sync') return 'Data Synchronisation';
   if (activeTab === 'discount-coupons') return 'Discount Coupons';
+  if (activeTab === 'provider-settings') return 'Provider Settings';
   return 'Pages';
 };
 
 const getPageDescription = (activeTab: EcommercePageTab): string => {
   if (activeTab === 'data-sync') return 'Push Products source data into ecommerce databases.';
   if (activeTab === 'discount-coupons') return 'Manage ecommerce discount coupons for checkout.';
+  if (activeTab === 'provider-settings') return 'Configure ecommerce payment and shipping providers.';
   return 'Manage ecommerce storefront CMS content from Products.';
 };
 
@@ -156,7 +160,12 @@ export function AdminProductPagesCmsPage(): React.JSX.Element {
   const collectionCardsController = useCollectionCardsController();
   const editorialArticlesController = useEditorialArticlesController();
   const handleTabChange = useCallback((value: string): void => {
-    if (value === 'content' || value === 'discount-coupons' || value === 'data-sync') {
+    if (
+      value === 'content' ||
+      value === 'discount-coupons' ||
+      value === 'provider-settings' ||
+      value === 'data-sync'
+    ) {
       setActiveTab(value);
     }
   }, []);
@@ -175,6 +184,7 @@ export function AdminProductPagesCmsPage(): React.JSX.Element {
     >
       {activeTab === 'data-sync' && <EcommerceDataSyncPanel />}
       {activeTab === 'discount-coupons' && <EcommerceDiscountCouponsPanel />}
+      {activeTab === 'provider-settings' && <EcommerceProviderSettingsPanel />}
       {activeTab === 'content' && (
         <PagesCmsContentTab
           backgroundController={backgroundController}

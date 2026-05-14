@@ -19,14 +19,45 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-export function useAgentTeachingCollectionDetailState() {
+export function useAgentTeachingCollectionDetailState(): {
+  collectionId: string | null;
+  collection: AgentTeachingEmbeddingCollectionRecord | null;
+  docs: AgentTeachingEmbeddingDocumentListItem[];
+  isLoading: boolean;
+  adding: boolean;
+  deleting: boolean;
+  searching: boolean;
+  text: string;
+  setText: React.Dispatch<React.SetStateAction<string>>;
+  title: string;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
+  source: string;
+  setSource: React.Dispatch<React.SetStateAction<string>>;
+  tags: string;
+  setTags: React.Dispatch<React.SetStateAction<string>>;
+  docToDelete: AgentTeachingEmbeddingDocumentListItem | null;
+  setDocToDelete: React.Dispatch<React.SetStateAction<AgentTeachingEmbeddingDocumentListItem | null>>;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  searchTopK: number;
+  setSearchTopK: React.Dispatch<React.SetStateAction<number>>;
+  searchMinScore: number;
+  setSearchMinScore: React.Dispatch<React.SetStateAction<number>>;
+  searchResults: AgentTeachingChatSource[];
+  setSearchResults: React.Dispatch<React.SetStateAction<AgentTeachingChatSource[]>>;
+  searchError: string | null;
+  setSearchError: React.Dispatch<React.SetStateAction<string | null>>;
+  handleAdd: () => Promise<void>;
+  handleDelete: () => Promise<void>;
+  handleSearch: () => Promise<void>;
+} {
   const { toast } = useToast();
   const params = useParams<{ collectionId: string }>();
-  const collectionId = params?.collectionId ?? null;
+  const collectionId = params.collectionId ?? null;
 
   const { collections, isLoading: loadingCollections } = useAgentTeachingQueriesContext();
   const collection = useMemo(
-    () => (collectionId ? (collections.find((c) => c.id === collectionId) ?? null) : null),
+    () => (collectionId !== null ? (collections.find((c) => c.id === collectionId) ?? null) : null),
     [collectionId, collections]
   );
 
@@ -56,9 +87,9 @@ export function useAgentTeachingCollectionDetailState() {
   const searching = searchMutation.isPending;
 
   const handleAdd = useCallback(async () => {
-    if (!collectionId) return;
+    if (collectionId === null) return;
     const trimmed = text.trim();
-    if (!trimmed) {
+    if (trimmed.length === 0) {
       toast('Text is required.', { variant: 'error' });
       return;
     }
@@ -66,12 +97,12 @@ export function useAgentTeachingCollectionDetailState() {
       await addDoc({
         collectionId,
         text: trimmed,
-        title: title.trim() || null,
-        source: source.trim() || null,
+        title: title.trim().length > 0 ? title.trim() : null,
+        source: source.trim().length > 0 ? source.trim() : null,
         tags: tags
           .split(',')
           .map((t) => t.trim())
-          .filter(Boolean),
+          .filter((t) => t.length > 0),
       });
       toast('Document embedded and saved.', { variant: 'success' });
       setText('');
@@ -88,7 +119,7 @@ export function useAgentTeachingCollectionDetailState() {
   }, [collectionId, text, title, source, tags, addDoc, toast, refetchDocs]);
 
   const handleDelete = useCallback(async () => {
-    if (!collectionId || !docToDelete) return;
+    if (collectionId === null || docToDelete === null) return;
     try {
       await deleteDoc({ collectionId, documentId: docToDelete.id });
       toast('Document deleted.', { variant: 'success' });
@@ -104,9 +135,9 @@ export function useAgentTeachingCollectionDetailState() {
   }, [collectionId, docToDelete, deleteDoc, toast, refetchDocs]);
 
   const handleSearch = useCallback(async () => {
-    if (!collectionId) return;
+    if (collectionId === null) return;
     const queryText = searchQuery.trim();
-    if (!queryText) return;
+    if (queryText.length === 0) return;
     setSearchError(null);
     try {
       const results = await searchMutation.mutateAsync({

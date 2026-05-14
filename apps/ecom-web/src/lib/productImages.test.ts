@@ -56,23 +56,31 @@ describe('ecom product image helpers', () => {
       getProductImageFallbackSrc(
         'https://sparksofsindri.com/public/uploads/products/SKU_123/stored.png'
       )
-    ).toBe('http://localhost:3000/uploads/products/SKU_123/stored.png');
+    ).toBe('/api/product-images/fallback?path=%2Fuploads%2Fproducts%2FSKU_123%2Fstored.png');
   });
 
-  it('uses configured local upload fallback hosts for ecommerce development', () => {
+  it('proxies configured local upload fallback hosts through the ecommerce app', () => {
     process.env.NEXT_PUBLIC_FILE_FALLBACK_BASE_URL = 'http://localhost:3000/';
 
     expect(
       getProductImageFallbackSrc(
         'https://sparksofsindri.com/public/uploads/products/SKU_123/stored.png'
       )
-    ).toBe('http://localhost:3000/uploads/products/SKU_123/stored.png');
+    ).toBe('/api/product-images/fallback?path=%2Fuploads%2Fproducts%2FSKU_123%2Fstored.png');
 
     delete process.env.NEXT_PUBLIC_FILE_FALLBACK_BASE_URL;
     process.env.NEXT_PUBLIC_MAIN_APP_URL = 'http://127.0.0.1:3000/';
 
     expect(getProductImageFallbackSrc('/uploads/products/SKU_123/stored.png')).toBe(
-      'http://127.0.0.1:3000/uploads/products/SKU_123/stored.png'
+      '/api/product-images/fallback?path=%2Fuploads%2Fproducts%2FSKU_123%2Fstored.png'
+    );
+  });
+
+  it('uses direct remote fallback hosts when they are not local development origins', () => {
+    process.env.NEXT_PUBLIC_FILE_FALLBACK_BASE_URL = 'https://fallback.example.test/';
+
+    expect(getProductImageFallbackSrc('/uploads/products/SKU_123/stored.png')).toBe(
+      'https://fallback.example.test/uploads/products/SKU_123/stored.png'
     );
   });
 
@@ -98,5 +106,13 @@ describe('ecom product image helpers', () => {
     expect(shouldBypassImageOptimization('https://qubrick.io/uploads/products/SKU_123/stored.png')).toBe(true);
     expect(shouldBypassImageOptimization('https://sparksofsindri.com/remote/image.png')).toBe(false);
     expect(shouldBypassImageOptimization('https://images.example.com/remote/image.png')).toBe(false);
+  });
+
+  it('bypasses Next image optimization for local fallback proxy URLs', () => {
+    expect(
+      shouldBypassImageOptimization(
+        '/api/product-images/fallback?path=%2Fuploads%2Fproducts%2FSKU_123%2Fstored.png'
+      )
+    ).toBe(true);
   });
 });

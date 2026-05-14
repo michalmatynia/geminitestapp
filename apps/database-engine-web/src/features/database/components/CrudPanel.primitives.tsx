@@ -83,6 +83,10 @@ export const DataTable = ({
   const { setPage, setPageSize } = useCrudPanelActionsContext();
   if (selectedTable === '') return <DataTableEmpty />;
   const hasFooter = !isLoadingRows && rows.length > 0;
+  const handlePageSizeChange = (size: number): void => {
+    setPage(1);
+    setPageSize(size);
+  };
   return (
     <StandardDataTablePanel
       columns={columnDefs} data={rows} isLoading={isLoadingRows} maxHeight='50vh' stickyHeader
@@ -91,7 +95,7 @@ export const DataTable = ({
       footer={
         <DataTableFooter
           page={page} pageSize={pageSize} totalRows={totalRows} isLoadingRows={isLoadingRows}
-          showFooter={hasFooter} onPageChange={setPage} onPageSizeChange={(size) => { setPage(1); setPageSize(size); }}
+          showFooter={hasFooter} onPageChange={setPage} onPageSizeChange={handlePageSizeChange}
         />
       }
       variant='flat'
@@ -104,41 +108,30 @@ export function CrudPanelModals({
   editingRow, handleEdit, setEditingRow, deletingRow, setDeletingRow, handleDelete, isPending,
 }: {
   showAddModal: boolean; tableDetail: DatabaseTableDetail | null; modalColumns: DatabaseColumnInfo[];
-  handleAdd: (data: Record<string, unknown>) => Promise<unknown>;
+  handleAdd: (data: Record<string, unknown>) => void;
   setShowAddModal: (value: boolean) => void; editingRow: RowData | null;
-  handleEdit: (data: Record<string, unknown>) => Promise<unknown>;
+  handleEdit: (data: Record<string, unknown>) => void;
   setEditingRow: (row: RowData | null) => void; deletingRow: RowData | null;
-  setDeletingRow: (row: RowData | null) => void; handleDelete: () => Promise<unknown>;
+  setDeletingRow: (row: RowData | null) => void; handleDelete: () => void;
   isPending: boolean;
 }): React.JSX.Element {
   return (
     <>
       {showAddModal && tableDetail !== null && (
         <RowFormModal
-          columns={modalColumns}
-          mode='add'
-          onSubmit={(data) => {
-            handleAdd(data).catch(() => undefined);
-          }}
-          onClose={() => setShowAddModal(false)}
-          isPending={isPending}
+          columns={modalColumns} mode='add' onSubmit={handleAdd}
+          onClose={() => setShowAddModal(false)} isPending={isPending}
         />
       )}
       {editingRow && tableDetail !== null && (
         <RowFormModal
-          columns={modalColumns}
-          initialData={editingRow}
-          mode='edit'
-          onSubmit={(data) => {
-            handleEdit(data).catch(() => undefined);
-          }}
-          onClose={() => setEditingRow(null)}
-          isPending={isPending}
+          columns={modalColumns} initialData={editingRow} mode='edit'
+          onSubmit={handleEdit} onClose={() => setEditingRow(null)} isPending={isPending}
         />
       )}
       <ConfirmModal
         isOpen={deletingRow !== null} onClose={() => setDeletingRow(null)}
-        onConfirm={() => { void handleDelete(); }} title='Delete Row'
+        onConfirm={handleDelete} title='Delete Row'
         message='Are you sure?' confirmText='Delete' isDangerous={true} loading={isPending}
       />
     </>

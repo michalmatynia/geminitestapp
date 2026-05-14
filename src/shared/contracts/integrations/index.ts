@@ -17,6 +17,7 @@ export * from './connections';
 export * from './context';
 export * from './domain';
 export * from './ecommerce-export';
+export * from './ecommerce-provider-settings';
 export {
   importExportTemplateSchema,
   createImportExportTemplateSchema,

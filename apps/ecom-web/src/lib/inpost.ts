@@ -9,6 +9,7 @@ import {
   type InpostTrackingEventRecord,
   type Order,
 } from '@/lib/orders';
+import { readInpostProviderSettings } from '@/lib/providerSettings';
 
 const DEFAULT_SHIPX_API_URL = 'https://sandbox-api-shipx-pl.easypack24.net';
 const DEFAULT_INPOST_GROUP_API_URL = 'https://stage-api.inpost-group.com';
@@ -126,7 +127,7 @@ function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function getConfig(): ShipXConfig {
+function getEnvConfig(): ShipXConfig {
   return {
     apiUrl: (env('INPOST_API_URL') || DEFAULT_SHIPX_API_URL).replace(/\/+$/, ''),
     token: env('INPOST_API_TOKEN'),
@@ -136,7 +137,28 @@ function getConfig(): ShipXConfig {
   };
 }
 
-function getShippingApiConfig(): ShippingApiConfig {
+async function getConfig(): Promise<ShipXConfig> {
+  const settings = await readInpostProviderSettings();
+  if (settings !== null && settings.enabled === false) {
+    return {
+      apiUrl: (settings.apiUrl || DEFAULT_SHIPX_API_URL).replace(/\/+$/, ''),
+      token: '',
+      organizationId: '',
+      parcelTemplate: settings.defaultParcelTemplate || DEFAULT_PARCEL_TEMPLATE,
+      sendingMethod: settings.sendingMethod || DEFAULT_SENDING_METHOD,
+    };
+  }
+  const envConfig = getEnvConfig();
+  return {
+    apiUrl: (settings?.apiUrl || envConfig.apiUrl || DEFAULT_SHIPX_API_URL).replace(/\/+$/, ''),
+    token: settings?.apiToken || envConfig.token,
+    organizationId: settings?.organizationId || envConfig.organizationId,
+    parcelTemplate: settings?.defaultParcelTemplate || envConfig.parcelTemplate,
+    sendingMethod: settings?.sendingMethod || envConfig.sendingMethod,
+  };
+}
+
+function getEnvShippingApiConfig(): ShippingApiConfig {
   const apiUrl = (
     env('INPOST_GROUP_API_URL')
     || env('INPOST_SHIPPING_API_URL')
@@ -157,18 +179,59 @@ function getShippingApiConfig(): ShippingApiConfig {
   };
 }
 
+async function getShippingApiConfig(): Promise<ShippingApiConfig> {
+  const settings = await readInpostProviderSettings();
+  if (settings !== null && settings.enabled === false) {
+    return {
+      apiUrl: (settings.apiUrl || DEFAULT_INPOST_GROUP_API_URL).replace(/\/+$/, ''),
+      tokenUrl: settings.oauthTokenUrl || DEFAULT_INPOST_GROUP_TOKEN_URL,
+      token: '',
+      clientId: '',
+      clientSecret: '',
+      organizationId: '',
+    };
+  }
+  const envConfig = getEnvShippingApiConfig();
+  const apiUrl = (
+    settings?.apiUrl ||
+    envConfig.apiUrl ||
+    DEFAULT_INPOST_GROUP_API_URL
+  ).replace(/\/+$/, '');
+  return {
+    apiUrl,
+    tokenUrl: settings?.oauthTokenUrl || envConfig.tokenUrl,
+    token: settings?.apiToken || envConfig.token,
+    clientId: settings?.oauthClientId || envConfig.clientId,
+    clientSecret: settings?.oauthClientSecret || envConfig.clientSecret,
+    organizationId: settings?.organizationId || envConfig.organizationId,
+  };
+}
+
 export function isInpostConfigured(): boolean {
-  const config = getConfig();
+  const config = getEnvConfig();
   return Boolean(config.token && config.organizationId);
 }
 
 export function isInpostShippingApiConfigured(): boolean {
-  const config = getShippingApiConfig();
+  const config = getEnvShippingApiConfig();
   return Boolean(config.organizationId && (config.token || (config.clientId && config.clientSecret)));
 }
 
-export function verifyInpostWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const secret = env('INPOST_WEBHOOK_SECRET');
+async function isRuntimeInpostConfigured(): Promise<boolean> {
+  const config = await getConfig();
+  return Boolean(config.token && config.organizationId);
+}
+
+async function isRuntimeInpostShippingApiConfigured(): Promise<boolean> {
+  const config = await getShippingApiConfig();
+  return Boolean(config.organizationId && (config.token || (config.clientId && config.clientSecret)));
+}
+
+export async function verifyInpostWebhookSignature(rawBody: string, signatureHeader: string | null): Promise<boolean> {
+  const settings = await readInpostProviderSettings();
+  const secret = settings !== null && settings.enabled === false
+    ? ''
+    : settings?.webhookSecret || env('INPOST_WEBHOOK_SECRET');
   if (!secret) return false;
   if (!signatureHeader) return false;
 
@@ -268,12 +331,11 @@ function readAddress(order: Order, key: string): string {
   return order.shippingAddress[key]?.trim() ?? '';
 }
 
-export function buildShipXShipmentPayload(order: Order): ShipXShipmentPayload {
+export function buildShipXShipmentPayload(order: Order, config = getEnvConfig()): ShipXShipmentPayload {
   if (!order.inpostPoint?.id) {
     throw new Error('InPost pickup point is missing.');
   }
 
-  const config = getConfig();
   const service = order.shippingService?.trim() || DEFAULT_LOCKER_SERVICE;
 
   return {
@@ -312,22 +374,22 @@ function parseShipmentResponse(data: unknown): InpostShipment {
   };
 }
 
-async function getInpostShippingAccessToken(scope: string): Promise<string> {
-  const config = getShippingApiConfig();
-  if (config.clientId && config.clientSecret) {
+async function getInpostShippingAccessToken(scope: string, config?: ShippingApiConfig): Promise<string> {
+  const resolvedConfig = config ?? await getShippingApiConfig();
+  if (resolvedConfig.clientId && resolvedConfig.clientSecret) {
     const now = Date.now();
     if (oauthTokenCache?.scope === scope && oauthTokenCache.expiresAt > now + 30_000) {
       return oauthTokenCache.token;
     }
 
-    const res = await fetch(config.tokenUrl, {
+    const res = await fetch(resolvedConfig.tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
         scope,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
+        client_id: resolvedConfig.clientId,
+        client_secret: resolvedConfig.clientSecret,
       }).toString(),
       cache: 'no-store',
     });
@@ -347,7 +409,7 @@ async function getInpostShippingAccessToken(scope: string): Promise<string> {
     return nextToken.token;
   }
 
-  if (config.token) return config.token;
+  if (resolvedConfig.token) return resolvedConfig.token;
   throw new Error('InPost API token or OAuth client credentials are not configured.');
 }
 
@@ -386,12 +448,12 @@ async function persistShipmentError(orderId: string, error: unknown): Promise<vo
 }
 
 export async function createInpostShipment(order: Order): Promise<InpostShipment> {
-  const config = getConfig();
+  const config = await getConfig();
   if (!config.token || !config.organizationId) {
     throw new Error('InPost API token or organization ID is not configured.');
   }
 
-  const payload = buildShipXShipmentPayload(order);
+  const payload = buildShipXShipmentPayload(order, config);
   const res = await fetch(`${config.apiUrl}/v1/organizations/${encodeURIComponent(config.organizationId)}/shipments`, {
     method: 'POST',
     headers: {
@@ -428,7 +490,7 @@ export async function fulfillInpostOrder(order: Order): Promise<InpostShipment |
   if (!order.inpostPoint) return null;
   if (order.inpostShipment?.shipmentId) return order.inpostShipment;
 
-  if (!isInpostConfigured()) {
+  if (!(await isRuntimeInpostConfigured())) {
     console.warn('InPost shipment skipped: INPOST_API_TOKEN or INPOST_ORGANIZATION_ID is not configured.');
     return null;
   }
@@ -464,7 +526,7 @@ export async function fulfillInpostOrderByOrderId(orderId: string): Promise<Inpo
   if (order.status !== 'processing') {
     return { order, shipment: null, created: false, skippedReason: 'not_ready' };
   }
-  if (!isInpostConfigured()) {
+  if (!(await isRuntimeInpostConfigured())) {
     return { order, shipment: null, created: false, skippedReason: 'not_configured' };
   }
 
@@ -572,12 +634,12 @@ export async function applyInpostTrackingEvent(event: InpostTrackingEvent): Prom
 }
 
 async function fetchShippingApiShipmentDetails(trackingNumber: string): Promise<InpostShipment> {
-  const config = getShippingApiConfig();
+  const config = await getShippingApiConfig();
   if (!config.organizationId) {
     throw new Error('InPost organization ID is not configured.');
   }
 
-  const token = await getInpostShippingAccessToken('openid api:shipments:read');
+  const token = await getInpostShippingAccessToken('openid api:shipments:read', config);
   const url = `${config.apiUrl}/shipping/v2/organizations/${encodeURIComponent(config.organizationId)}/shipments/${encodeURIComponent(trackingNumber)}`;
   const res = await fetch(url, {
     method: 'GET',
@@ -618,7 +680,7 @@ export async function refreshInpostShipmentByOrderId(orderId: string): Promise<I
   if (!trackingNumber) {
     return { order, shipment: null, refreshed: false, skippedReason: 'missing_tracking' };
   }
-  if (!isInpostShippingApiConfigured()) {
+  if (!(await isRuntimeInpostShippingApiConfigured())) {
     return { order, shipment: null, refreshed: false, skippedReason: 'not_configured' };
   }
 
@@ -643,12 +705,12 @@ export async function downloadInpostLabel(order: Order, accept = DEFAULT_LABEL_A
     throw new Error('InPost tracking number is missing.');
   }
 
-  const config = getShippingApiConfig();
+  const config = await getShippingApiConfig();
   if (!config.organizationId) {
     throw new Error('InPost organization ID is not configured.');
   }
 
-  const token = await getInpostShippingAccessToken('openid api:shipments:read');
+  const token = await getInpostShippingAccessToken('openid api:shipments:read', config);
   const url = `${config.apiUrl}/shipping/v2/organizations/${encodeURIComponent(config.organizationId)}/shipments/${encodeURIComponent(trackingNumber)}/label`;
   const res = await fetch(url, {
     method: 'GET',

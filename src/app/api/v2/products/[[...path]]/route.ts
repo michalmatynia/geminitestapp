@@ -68,6 +68,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['pages', 'data-sync', 'pricing'], loader: () => import('../pages/data-sync/pricing/route-handler') },
   { pattern: ['pages', 'discount-coupons'], loader: () => import('../pages/discount-coupons/route-handler') },
   { pattern: ['pages', 'discount-coupons', param('code')], loader: () => import('../pages/discount-coupons/[code]/route-handler') },
+  { pattern: ['pages', 'provider-settings'], loader: () => import('../pages/provider-settings/route-handler') },
   { pattern: ['pages', 'editorial-articles', 'image'], loader: () => import('../pages/editorial-articles/image/route-handler') },
   { pattern: ['pages', 'editorial-articles', 'generate'], loader: () => import('../pages/editorial-articles/generate/route-handler') },
   { pattern: ['pages', 'editorial-articles'], loader: () => import('../pages/editorial-articles/route-handler') },

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function, no-console */
 import { cache } from 'react';
-import { getDb } from '@/lib/mongodb';
+import { getEcommerceProductsDb } from '@/lib/mongodb';
 import type { Collection } from 'mongodb';
 import {
   HOME_CONTENT_DEFAULTS,
@@ -52,6 +52,7 @@ import {
 } from '@/data/wishlistContent';
 import {
   CHECKOUT_CONTENT_DEFAULTS,
+  ensureCheckoutProviderShipping,
   normalizeCheckoutContent,
   validateCheckoutContent,
   type CheckoutContent,
@@ -165,7 +166,7 @@ function logCmsIndexFailure(error: unknown): void {
 }
 
 async function getCmsPagesCollection(): Promise<Collection<CmsPageDoc>> {
-  const db = await getDb();
+  const db = await getEcommerceProductsDb();
   const collection = db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION);
   cmsPagesIndexPromise ??= collection.createIndex({ page: 1, locale: 1 }, { unique: true }).catch((error) => {
     cmsPagesIndexPromise = null;
@@ -281,7 +282,7 @@ function localizeHomeContent(content: HomeContent, localeInput?: LocaleInput): H
       status: 'NEXUS ONLINE - NOWE DROPY AKTYWNE',
       headlineLine1: 'KOLEKCJONERSKI',
       headlineLine2: 'CACHE',
-      tags: ['Anime', 'Gaming', 'Film', 'Manga', 'Breloki', 'Piny', 'Biżuteria'],
+      tags: ['Breloki', 'Piny', 'Pierścionki', 'Bransoletki', 'Kości'],
       description: 'Ulubione uniwersa zamienione w kolekcjonerskie przedmioty. Anime, gaming i film - licencjonowane, starannie wybrane dodatki.',
       primaryCtaLabel: 'Zobacz nowości',
       secondaryCtaLabel: 'Przeglądaj wszystko',
@@ -355,6 +356,7 @@ function localizeSiteContent(content: SiteContent, localeInput?: LocaleInput): S
       links: content.nav.links.map((link) => {
         const labels: Record<string, string> = {
           '/products?new=1': 'Nowości',
+          '/#new-drops': 'Nowości',
           '/products': 'Katalog',
         };
         return { ...link, label: labels[link.href] ?? link.label };
@@ -1817,7 +1819,7 @@ export async function deleteWishlistContent(locale?: LocaleInput): Promise<boole
 
 function toCheckoutSnapshot(doc: CmsPageDoc | null): CheckoutCmsSnapshot {
   return {
-    content: normalizeCheckoutContent(doc?.content ?? CHECKOUT_CONTENT_DEFAULTS),
+    content: ensureCheckoutProviderShipping(normalizeCheckoutContent(doc?.content ?? CHECKOUT_CONTENT_DEFAULTS)),
     updatedAt: doc?.updatedAt ? doc.updatedAt.toISOString() : null,
     updatedBy: doc?.updatedBy ?? null,
   };

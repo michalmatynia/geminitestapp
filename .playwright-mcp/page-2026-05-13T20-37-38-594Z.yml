@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic "Loading" [ref=e3]
+    - dialog "Shopping bag" [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - heading "Your Bag" [level=2] [ref=e8]
+          - paragraph [ref=e9]: 0 items
+        - button "Close bag" [ref=e10] [cursor=pointer]:
+          - img [ref=e11]
+      - generic [ref=e15]:
+        - img [ref=e16]
+        - paragraph [ref=e19]: Your bag is empty
+        - button "Continue shopping" [ref=e20] [cursor=pointer]
+    - generic "Notifications"
+    - button "Back to top":
+      - img
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - img [ref=e25]
+        - paragraph [ref=e27]:
+          - text: We use cookies to remember your preferences, understand how you use STARGATER, and improve your experience.
+          - link "Privacy policy" [ref=e28] [cursor=pointer]:
+            - /url: /values
+      - generic [ref=e29]:
+        - button "Essential only" [ref=e30] [cursor=pointer]
+        - button "Accept all" [ref=e31] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=e37] [cursor=pointer]:
+    - generic [ref=e40]:
+      - text: Rendering
+      - generic [ref=e41]:
+        - generic [ref=e42]: .
+        - generic [ref=e43]: .
+        - generic [ref=e44]: .
+  - alert [ref=e45]

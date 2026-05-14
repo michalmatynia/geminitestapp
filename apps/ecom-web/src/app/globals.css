@@ -258,6 +258,97 @@ body[data-cosmos-background='enabled'] {
   background-size: 28px 28px;
 }
 
+/* ─── Product image skeleton ───────────────────────────────────── */
+.product-image-frame {
+  background: var(--card-bg);
+  contain: paint;
+}
+
+.product-image-media {
+  z-index: 2;
+  opacity: 0;
+  filter: blur(10px) saturate(0.92);
+  transform: scale(1.018);
+  transition:
+    opacity 0.36s ease,
+    filter 0.42s ease,
+    transform 0.42s ease;
+  backface-visibility: hidden;
+  will-change: opacity, filter, transform;
+}
+
+.product-image-frame.is-loaded .product-image-media {
+  opacity: 1;
+  filter: none;
+  transform: scale(1);
+}
+
+.product-image-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(var(--gold-rgb),0.18) 0%, transparent 28%),
+    radial-gradient(circle at 82% 72%, rgba(var(--blue-rgb),0.16) 0%, transparent 34%),
+    linear-gradient(145deg, rgba(2,2,5,0.36) 0%, rgba(6,9,19,0.7) 56%, rgba(18,7,8,0.62) 100%);
+  opacity: 1;
+  transition: opacity 0.28s ease;
+}
+
+.product-image-frame.is-loaded .product-image-skeleton {
+  opacity: 0;
+}
+
+.product-image-skeleton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 5px,
+    rgba(var(--fg-rgb),0.08) 5px,
+    rgba(var(--fg-rgb),0.08) 6px
+  );
+  mix-blend-mode: soft-light;
+}
+
+.product-image-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: -40% -55%;
+  background: linear-gradient(
+    110deg,
+    transparent 38%,
+    rgba(var(--mint-rgb),0.08) 46%,
+    rgba(var(--gold-rgb),0.28) 50%,
+    rgba(var(--mint-rgb),0.08) 54%,
+    transparent 62%
+  );
+  transform: translateX(-34%);
+  animation: product-image-skeleton-sweep 1.35s ease-in-out infinite;
+}
+
+@keyframes product-image-skeleton-sweep {
+  0% { transform: translateX(-34%); }
+  100% { transform: translateX(34%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-image-media {
+    transition: none;
+    filter: none;
+    transform: none;
+  }
+
+  .product-image-skeleton::after {
+    animation: none;
+    transform: none;
+  }
+}
+
 /* ─── Scanlines overlay ────────────────────────────────────────── */
 .category-card-scanline-wrap {
   z-index: 1;

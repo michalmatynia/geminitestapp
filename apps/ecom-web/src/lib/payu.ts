@@ -1,21 +1,75 @@
 import { createHash, timingSafeEqual } from 'crypto';
 
-// Read static config eagerly — these don't change at runtime.
-const PAYU_API_URL = process.env.PAYU_API_URL ?? 'https://secure.snd.payu.com';
-const PAYU_POS_ID = process.env.PAYU_POS_ID ?? '';
-const PAYU_CLIENT_ID = process.env.PAYU_CLIENT_ID ?? '';
-const PAYU_CLIENT_SECRET = process.env.PAYU_CLIENT_SECRET ?? '';
-// Read lazily in verifyPayUWebhook so tests can stub it with vi.stubEnv.
-const getSecondKey = (): string => process.env.PAYU_SECOND_KEY ?? '';
+import { readPayUProviderSettings, type PayUProviderSettings } from './providerSettings';
 
-async function getPayUToken(): Promise<string> {
-  const res = await fetch(`${PAYU_API_URL}/pl/standard/user/oauth/authorize`, {
+const DEFAULT_PAYU_API_URL = 'https://secure.snd.payu.com';
+
+type PayUConfig = {
+  apiUrl: string;
+  clientId: string;
+  clientSecret: string;
+  enabled: boolean;
+  posId: string;
+  secondKey: string;
+};
+
+function env(name: string): string {
+  return process.env[name]?.trim() ?? '';
+}
+
+function firstNonEmpty(...values: string[]): string {
+  for (const value of values) {
+    if (value.length > 0) return value;
+  }
+  return '';
+}
+
+function getDisabledPayUConfig(apiUrl: string): PayUConfig {
+  return {
+    apiUrl: firstNonEmpty(apiUrl, DEFAULT_PAYU_API_URL),
+    clientId: '',
+    clientSecret: '',
+    enabled: false,
+    posId: '',
+    secondKey: '',
+  };
+}
+
+function storedPayUValue(
+  settings: PayUProviderSettings | null,
+  key: keyof Omit<PayUProviderSettings, 'enabled'>
+): string {
+  return settings === null ? '' : settings[key];
+}
+
+function getActivePayUConfig(settings: PayUProviderSettings | null): PayUConfig {
+  return {
+    apiUrl: firstNonEmpty(storedPayUValue(settings, 'apiUrl'), env('PAYU_API_URL'), DEFAULT_PAYU_API_URL),
+    clientId: firstNonEmpty(storedPayUValue(settings, 'clientId'), env('PAYU_CLIENT_ID')),
+    clientSecret: firstNonEmpty(storedPayUValue(settings, 'clientSecret'), env('PAYU_CLIENT_SECRET')),
+    enabled: true,
+    posId: firstNonEmpty(storedPayUValue(settings, 'posId'), env('PAYU_POS_ID')),
+    secondKey: firstNonEmpty(storedPayUValue(settings, 'secondKey'), env('PAYU_SECOND_KEY')),
+  };
+}
+
+async function getPayUConfig(): Promise<PayUConfig> {
+  const settings = await readPayUProviderSettings();
+  if (settings !== null && settings.enabled === false) {
+    return getDisabledPayUConfig(settings.apiUrl);
+  }
+
+  return getActivePayUConfig(settings);
+}
+
+async function getPayUToken(config: PayUConfig): Promise<string> {
+  const res = await fetch(`${config.apiUrl}/pl/standard/user/oauth/authorize`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
-      client_id: PAYU_CLIENT_ID,
-      client_secret: PAYU_CLIENT_SECRET,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
     }).toString(),
     cache: 'no-store',
   });
@@ -74,11 +128,11 @@ type PayUOrderBody = {
   extOrderId?: string;
 };
 
-function buildPayUOrderBody(params: CreatePayUBlikParams): PayUOrderBody {
+function buildPayUOrderBody(params: CreatePayUBlikParams, config: PayUConfig): PayUOrderBody {
   const body: PayUOrderBody = {
     notifyUrl: params.notifyUrl,
     customerIp: params.customerIp,
-    merchantPosId: PAYU_POS_ID,
+    merchantPosId: config.posId,
     description: params.description,
     currencyCode: params.currencyCode,
     totalAmount: params.totalAmount,
@@ -165,16 +219,21 @@ function getSuccessfulPayUOrderResult(
 export async function createPayUBlikOrder(
   params: CreatePayUBlikParams,
 ): Promise<PayUOrderResult> {
-  const token = await getPayUToken();
+  const config = await getPayUConfig();
+  if (!config.enabled) throw new Error('PayU provider is disabled.');
+  if (config.posId === '' || config.clientId === '' || config.clientSecret === '') {
+    throw new Error('PayU POS ID, client ID, and client secret are not configured.');
+  }
+  const token = await getPayUToken(config);
 
-  const res = await fetch(`${PAYU_API_URL}/api/v2_1/orders`, {
+  const res = await fetch(`${config.apiUrl}/api/v2_1/orders`, {
     method: 'POST',
     redirect: 'manual',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(buildPayUOrderBody(params)),
+    body: JSON.stringify(buildPayUOrderBody(params, config)),
     cache: 'no-store',
   });
 
@@ -186,11 +245,12 @@ export async function createPayUBlikOrder(
 
 // Verifies the OpenPayU-Signature header for incoming IPN webhooks.
 // Header format: sender=checkout;signature=<hex>;algorithm=MD5;content=DOCUMENT
-export function verifyPayUWebhook(
+export async function verifyPayUWebhook(
   rawBody: string,
   signatureHeader: string | null,
-): boolean {
-  const secondKey = getSecondKey();
+): Promise<boolean> {
+  const config = await getPayUConfig();
+  const secondKey = config.enabled ? config.secondKey : '';
   if (signatureHeader === null || secondKey === '') return false;
 
   const sigMatch = /signature=([a-f0-9]{32})/i.exec(signatureHeader);

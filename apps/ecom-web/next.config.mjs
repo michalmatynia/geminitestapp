@@ -29,6 +29,14 @@ const fileUploadBaseUrls = [
   'https://sparksofsindri.com',
   'https://qubrick.io',
   process.env.NEXT_PUBLIC_FILE_BASE_URL,
+  process.env.NEXT_PUBLIC_FILE_FALLBACK_BASE_URL,
+  process.env.NEXT_PUBLIC_MAIN_APP_URL,
+  ...(process.env.NODE_ENV === 'production' ? [] : [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+  ]),
 ];
 
 const fileUploadsRemotePatterns = fileUploadBaseUrls.reduce((patterns, baseUrl) => {
@@ -42,9 +50,33 @@ const fileUploadsRemotePatterns = fileUploadBaseUrls.reduce((patterns, baseUrl) 
   return alreadyConfigured ? patterns : [...patterns, pattern];
 }, []);
 
+const fileUploadImageSources = fileUploadBaseUrls.reduce((sources, baseUrl) => {
+  const raw = baseUrl?.trim();
+  if (!raw) return sources;
+
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return sources;
+
+    const source = url.origin;
+    return sources.includes(source) ? sources : [...sources, source];
+  } catch {
+    return sources;
+  }
+}, []);
+
 const scriptSrc = [
-  "script-src 'self' 'unsafe-inline' https://geowidget.inpost.pl",
+  "script-src 'self' 'unsafe-inline' https://geowidget.inpost.pl https://js.stripe.com https://www.paypal.com",
   ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
+].join(' ');
+
+const imageSrc = [
+  "img-src 'self' data: blob:",
+  'https://*.googleapis.com',
+  'https://*.gstatic.com',
+  'https://geowidget.inpost.pl',
+  'https://www.paypalobjects.com',
+  ...fileUploadImageSources,
 ].join(' ');
 
 const contentSecurityPolicy = [
@@ -53,12 +85,12 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://geowidget.inpost.pl https://qubrick.io https://sparksofsindri.com",
+  imageSrc,
   "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://geowidget.inpost.pl",
   scriptSrc,
-  "connect-src 'self' https://secure.snd.payu.com https://geowidget.inpost.pl https://qubrick.io https://sparksofsindri.com",
-  "frame-src 'self' https://geowidget.inpost.pl",
+  "connect-src 'self' https://secure.snd.payu.com https://geowidget.inpost.pl https://qubrick.io https://sparksofsindri.com https://api.stripe.com https://www.paypal.com https://www.sandbox.paypal.com",
+  "frame-src 'self' https://geowidget.inpost.pl https://geowidget-app.inpost.pl https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://www.sandbox.paypal.com",
 ].join('; ');
 
 const securityHeaders = [

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawBody = await req.text();
   const signatureHeader = req.headers.get('OpenPayU-Signature');
 
-  if (!verifyPayUWebhook(rawBody, signatureHeader)) {
+  if (!(await verifyPayUWebhook(rawBody, signatureHeader))) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -80,6 +80,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const update: Record<string, unknown> = { status: newStatus };
+  const cleanPayuOrderId = cleanOrderLookupId(payuOrderId);
+  if (cleanPayuOrderId.length > 0) update['payuOrderId'] = cleanPayuOrderId;
   if (newStatus === 'processing') {
     filter['status'] = 'pending_payment';
     filter['confirmationEmailQueuedAt'] = { $exists: false };

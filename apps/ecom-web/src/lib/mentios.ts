@@ -16,6 +16,7 @@ import { ObjectId, type Db } from 'mongodb';
 import type { Product } from '../data/products';
 import { ensureProductIndexes } from './db-indexes';
 import {
+  defaultCurrencyForLocale,
   formatPrice as formatLocalizedPrice,
   normalizeLocale,
   normalizeLocaleList,
@@ -31,6 +32,7 @@ const CATALOG_ID = process.env['MENTIOS_CATALOG_ID']?.trim() ?? '';
 const PRODUCTS_COLLECTION = 'products';
 const CATEGORIES_COLLECTION = 'product_categories';
 const PRICE_GROUPS_COLLECTION = 'price_groups';
+const CURRENCIES_COLLECTION = 'currencies';
 const CATALOGS_COLLECTION = 'catalogs';
 const LANGUAGES_COLLECTION = 'languages';
 const PRICE_GROUP_SOURCE_PRICE_FIELD = 'sourcePrice';
@@ -134,6 +136,7 @@ interface ProductDoc {
 interface ProductPriceDoc {
   _id: unknown;
   sourceProductId?: string | null;
+  defaultPriceGroupId?: string | null;
   price?: number | null;
   priceCurrencyCode?: string | null;
   currencyCode?: string | null;
@@ -145,7 +148,10 @@ type PriceGroupDoc = {
   _id?: unknown;
   addToPrice?: number | null;
   basePriceField?: string | null;
+  currency?: { code?: string | null } | null;
+  currencyId?: string | null;
   currencyCode?: string | null;
+  groupId?: string | null;
   id?: string | null;
   isDefault?: boolean | null;
   priceMultiplier?: number | null;
@@ -156,12 +162,20 @@ type PriceGroupDoc = {
 type PriceGroup = {
   addToPrice: number;
   basePriceField: string;
+  currencyId: string;
   currencyCode: string;
+  groupId: string;
   id: string;
   isDefault: boolean;
   priceMultiplier: number;
   sourceGroupId: string | null;
   type: string;
+};
+
+type CurrencyDoc = {
+  _id?: unknown;
+  code?: string | null;
+  id?: string | null;
 };
 
 type PricingContext = {
@@ -399,14 +413,27 @@ function toFinitePrice(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function toPriceGroup(doc: PriceGroupDoc): PriceGroup | null {
+function roundCurrencyAmount(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function toPriceGroup(doc: PriceGroupDoc, currencyCodeById: Map<string, string>): PriceGroup | null {
   const id = firstNonEmptyString(typeof doc.id === 'string' ? doc.id : '');
-  const currencyCode = normalizeCurrencyCode(doc.currencyCode ?? '');
+  const groupId = firstNonEmptyString(doc.groupId ?? '');
+  const currencyId = firstNonEmptyString(doc.currencyId ?? '');
+  const currencyCode = normalizeCurrencyCode(firstNonEmptyString(
+    doc.currency?.code ?? '',
+    doc.currencyCode ?? '',
+    currencyCodeById.get(currencyId) ?? '',
+    currencyId,
+  ));
   if (id.length === 0 || currencyCode.length === 0) return null;
   return {
     addToPrice: toFinitePrice(doc.addToPrice) ?? 0,
     basePriceField: firstNonEmptyString(doc.basePriceField ?? '', 'price'),
+    currencyId,
     currencyCode,
+    groupId,
     id,
     isDefault: doc.isDefault === true,
     priceMultiplier: toFinitePrice(doc.priceMultiplier) ?? 1,
@@ -417,7 +444,7 @@ function toPriceGroup(doc: PriceGroupDoc): PriceGroup | null {
 
 function groupKeyMatches(group: PriceGroup, id: string | null | undefined): boolean {
   const normalized = (id ?? '').trim();
-  return normalized.length > 0 && group.id === normalized;
+  return normalized.length > 0 && (group.id === normalized || group.groupId === normalized);
 }
 
 function findPriceGroup(groups: PriceGroup[], id: string | null | undefined): PriceGroup | undefined {
@@ -426,7 +453,24 @@ function findPriceGroup(groups: PriceGroup[], id: string | null | undefined): Pr
 
 function groupCurrencyMatches(group: PriceGroup, currencyCode: string): boolean {
   const normalized = normalizeCurrencyCode(currencyCode);
-  return normalized.length > 0 && group.currencyCode === normalized;
+  if (normalized.length === 0) return false;
+  return (
+    group.currencyCode === normalized ||
+    normalizeCurrencyCode(group.currencyId) === normalized ||
+    normalizeCurrencyCode(group.groupId) === normalized
+  );
+}
+
+function uniqueCurrencyCodes(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = normalizeCurrencyCode(value);
+    if (normalized.length === 0 || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
 }
 
 function productFieldPrice(doc: ProductDoc, group: PriceGroup): number | null {
@@ -460,22 +504,45 @@ function resolveGroupPrice(
 function resolveProductDisplayPricing(
   doc: ProductDoc,
   pricing: PricingContext,
+  locale: EcomLocale,
+  preferredCurrencyCode?: string | null,
 ): { currencyCode: string; price: number } {
   const fallback = resolveFallbackProductPricing(doc);
   const groups = pricing.groups;
+  const explicitRequestedCurrencyCode = normalizeCurrencyCode(preferredCurrencyCode);
+  const requestedCurrencyCode = explicitRequestedCurrencyCode.length > 0
+    ? explicitRequestedCurrencyCode
+    : defaultCurrencyForLocale(locale);
   const baseGroup = findPriceGroup(groups, doc.defaultPriceGroupId) ?? groups.find((group) => group.isDefault) ?? groups[0];
   if (baseGroup === undefined) return fallback;
 
-  const targetCurrencyCode = pricing.defaultCurrencyCode ?? baseGroup.currencyCode;
-  if (groupCurrencyMatches(baseGroup, targetCurrencyCode)) {
-    const price = resolveGroupPrice(doc, baseGroup, groups);
-    return price === null ? fallback : { currencyCode: targetCurrencyCode, price };
-  }
+  const targetCurrencyCodes = uniqueCurrencyCodes([
+    requestedCurrencyCode,
+    pricing.defaultCurrencyCode,
+    baseGroup.currencyCode,
+  ]);
 
-  const targetGroups = groups.filter((group) => groupCurrencyMatches(group, targetCurrencyCode));
-  for (const targetGroup of targetGroups) {
-    const price = resolveGroupPrice(doc, targetGroup, groups);
-    if (price !== null) return { currencyCode: targetCurrencyCode, price };
+  for (const targetCurrencyCode of targetCurrencyCodes) {
+    if (groupCurrencyMatches(baseGroup, targetCurrencyCode)) {
+      const price = resolveGroupPrice(doc, baseGroup, groups);
+      if (price !== null) {
+        return {
+          currencyCode: targetCurrencyCode,
+          price,
+        };
+      }
+    }
+
+    const targetGroups = groups.filter((group) => groupCurrencyMatches(group, targetCurrencyCode));
+    for (const targetGroup of targetGroups) {
+      const price = resolveGroupPrice(doc, targetGroup, groups);
+      if (price !== null) {
+        return {
+          currencyCode: targetCurrencyCode,
+          price,
+        };
+      }
+    }
   }
   return fallback;
 }
@@ -559,6 +626,26 @@ function buildLanguageCodeLookup(rows: LanguageDoc[]): Map<string, string> {
   }
 
   return lookup;
+}
+
+function buildCurrencyCodeLookup(rows: CurrencyDoc[]): Map<string, string> {
+  const lookup = new Map<string, string>();
+
+  for (const row of rows) {
+    const code = normalizeCurrencyCode(row.code);
+    if (code.length === 0) continue;
+    const id = typeof row.id === 'string' ? row.id.trim() : '';
+    const documentId = stringifyDocumentId(row._id);
+    if (id.length > 0) lookup.set(id, code);
+    if (documentId.length > 0) lookup.set(documentId, code);
+    lookup.set(code, code);
+  }
+
+  return lookup;
+}
+
+function uniqueCurrencyIds(rows: PriceGroupDoc[]): string[] {
+  return uniqueStrings(rows.map((row) => row.currencyId));
 }
 
 function resolveLanguageCode(id: string, lookup: Map<string, string>): string {
@@ -763,8 +850,8 @@ function mapDoc(
   const name = pickProductName(doc, locale);
   const { shortName, sizeInfo, material, categoryName: pipedCategoryName, lore } = parsePipedName(name);
   const description = pickProductDescription(doc, locale);
-  const displayPricing = resolveProductDisplayPricing(doc, pricing);
-  const price = displayPricing.price;
+  const displayPricing = resolveProductDisplayPricing(doc, pricing, locale);
+  const price = roundCurrencyAmount(displayPricing.price);
   const currencyCode = displayPricing.currencyCode;
   const imageUrls = buildImageUrls(doc);
   const exportedCollectionSlug = doc.collectionSlug?.trim() ?? '';
@@ -923,7 +1010,8 @@ function dedupeProductIds(productIds: string[]): string[] {
  * Keys map both `_id` and `sourceProductId`, where available.
  */
 export async function getCanonicalProductPricing(
-  productIds: string[]
+  productIds: string[],
+  preferredCurrencyCode?: string | null,
 ): Promise<Map<string, CanonicalProductPricing>> {
   const ids = dedupeProductIds(productIds);
   if (ids.length === 0) return new Map<string, CanonicalProductPricing>();
@@ -954,9 +1042,9 @@ export async function getCanonicalProductPricing(
 
   const prices = new Map<string, CanonicalProductPricing>();
   for (const row of docs as unknown as ProductPriceDoc[]) {
-    const displayPricing = resolveProductDisplayPricing(row, pricingContext);
+    const displayPricing = resolveProductDisplayPricing(row, pricingContext, 'en', preferredCurrencyCode);
     if (displayPricing.price < 0) continue;
-    const pricing = { ...displayPricing, price: Math.round(displayPricing.price) };
+    const pricing = { ...displayPricing, price: roundCurrencyAmount(displayPricing.price) };
     const id = stringifyDocumentId(row._id);
     if (id) prices.set(id, pricing);
     if (typeof row.sourceProductId === 'string' && row.sourceProductId.length > 0) {
@@ -1051,8 +1139,19 @@ async function fetchPricingContextFromDb(db: Db): Promise<PricingContext> {
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
       .find({})
       .toArray();
+    const currencyIds = uniqueCurrencyIds(docs as PriceGroupDoc[]);
+    const currencies = currencyIds.length > 0
+      ? await db
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find(
+            { $or: [{ id: { $in: currencyIds } }, { code: { $in: currencyIds } }] },
+            { projection: { _id: 1, id: 1, code: 1 } },
+          )
+          .toArray()
+      : [];
+    const currencyCodeById = buildCurrencyCodeLookup(currencies as CurrencyDoc[]);
     const groups = (docs as PriceGroupDoc[])
-      .map(toPriceGroup)
+      .map((doc) => toPriceGroup(doc, currencyCodeById))
       .filter((group): group is PriceGroup => group !== null);
     const configuredDefault = normalizeCurrencyCode(process.env['ECOM_DISPLAY_CURRENCY_CODE']);
     const defaultCurrencyCode =

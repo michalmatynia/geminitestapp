@@ -117,7 +117,7 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
     status: 'NEXUS ONLINE — NEW DROPS ACTIVE',
     headlineLine1: 'COLLECTOR\'S',
     headlineLine2: 'CACHE',
-    tags: ['Anime', 'Gaming', 'Film', 'Manga', 'Keychains', 'Pins', 'Jewellery'],
+    tags: ['Keychains', 'Pins', 'Rings', 'Bracelets', 'Dice'],
     description:
       'Your favourite universes, forged into wearable art. Anime, gaming and film collectibles — officially licensed, obsessively curated.',
     primaryCtaLabel: 'Shop New Drops',
@@ -281,6 +281,17 @@ export const HOME_CONTENT_DEFAULTS: HomeContent = {
     ctaHref: '/collections/objects',
   },
 };
+
+export function ensureVisibleHomeCategoryCards(content: HomeCategoriesContent): HomeCategoriesContent {
+  if (content.cards.some((card) => card.visible)) {
+    return content;
+  }
+
+  return {
+    ...content,
+    cards: HOME_CONTENT_DEFAULTS.categories.cards,
+  };
+}
 
 const TEXT_LIMITS = {
   short: 120,

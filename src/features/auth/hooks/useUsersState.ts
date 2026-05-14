@@ -1,18 +1,12 @@
 'use client';
 
+import { useState, type SetStateAction, type Dispatch } from 'react';
 import { type UseMutationResult } from '@tanstack/react-query';
-import { useState, useMemo, useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   useAuthUsers,
   useAuthUserSecurity,
-  useMockSignIn,
-  useRegisterUser,
-  useDeleteAuthUser,
-  useUpdateAuthUser,
-  useUpdateAuthUserSecurity,
-  useUpdateAuthUserRoles,
 } from '@/features/auth/hooks/useAuthQueries';
 import { type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import type {
@@ -21,82 +15,16 @@ import type {
   AuthUser as AuthUserSummary,
   AuthRole,
 } from '@/shared/contracts/auth';
-import { useToast } from '@/shared/ui/primitives.public';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type CreateUserForm = {
-  name: string;
-  email: string;
-  password: string;
-  roleId: string;
-  verified: boolean;
-};
-const EMPTY_CREATE: CreateUserForm = {
-  name: '',
-  email: '',
-  password: '',
-  roleId: 'none',
-  verified: false,
-};
-
-const useUserFiltering = (users: AuthUserSummary[], search: string): AuthUserSummary[] => {
-  return useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (q === '') return users;
-    return users.filter(
-      (u) =>
-        (u.email?.toLowerCase().includes(q) ?? false) ||
-        (u.name?.toLowerCase().includes(q) ?? false) ||
-        u.id.toLowerCase().includes(q)
-    );
-  }, [users, search]);
-};
-
-const useUserActions = (args: {
-  localUserRoles: AuthUserRoleMap;
-  setDirtyRoles: (dirty: boolean) => void;
-  updateUserRolesMutation: ReturnType<typeof useUpdateAuthUserRoles>;
-  deleteAuthUserMutation: ReturnType<typeof useDeleteAuthUser>;
-  userToDelete: AuthUserSummary | null;
-  setUserToDelete: (user: AuthUserSummary | null) => void;
-  session: Session | null;
-}) => {
-  const { toast } = useToast();
-  const { localUserRoles, setDirtyRoles, updateUserRolesMutation, deleteAuthUserMutation, userToDelete, setUserToDelete, session } = args;
-
-  const saveRoles = async (): Promise<void> => {
-    try {
-      await updateUserRolesMutation.mutateAsync({ userRoles: localUserRoles });
-      setDirtyRoles(false);
-      toast('User roles updated', { variant: 'success' });
-    } catch (_e) {
-      logClientError(_e);
-      toast('Failed to save roles', { variant: 'error' });
-    }
-  };
-
-  const deleteUser = async (): Promise<void> => {
-    if (userToDelete === null) return;
-    const currentUserId = session?.user?.id;
-    const isSelf = currentUserId !== undefined && currentUserId !== '' && userToDelete.id === currentUserId;
-    if (isSelf) {
-      toast('You cannot delete your own account while signed in.', { variant: 'error' });
-      return;
-    }
-    try {
-      await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
-      toast('User deleted', { variant: 'success' });
-      setUserToDelete(null);
-    } catch (error) {
-      logClientError(error);
-      const errorMsg = error instanceof Error ? error.message.trim() : '';
-      toast(errorMsg !== '' ? errorMsg : 'Failed to delete user', { variant: 'error' });
-    }
-  };
-
-  return { saveRoles, deleteUser };
-};
+import {
+  type CreateUserForm,
+  useUserActions,
+  useCreateUserState,
+  useMockSignInState,
+  useUserMutations,
+  useUserSearchState,
+  useUserRolesState,
+} from './useUsersStateHelpers';
 
 export interface UseUsersStateReturn {
   users: AuthUserSummary[];
@@ -172,111 +100,47 @@ export interface UseUsersStateReturn {
   };
 }
 
-export function useUsersState(): UseUsersStateReturn {
-  const { toast } = useToast();
-  const {
-    session,
-    roles,
-    userRoles,
-    canReadUsers,
-    canManageSecurity,
-    isLoading: authLoading,
-    refetchSettings,
-  } = useAuth();
+const useUserQueriesState = (canReadUsers: boolean, canManageSecurity: boolean, editingUserId: string | null | undefined): {
+  authUsersQuery: ReturnType<typeof useAuthUsers>;
+  userSecurityQuery: ReturnType<typeof useAuthUserSecurity>;
+} => {
+  const authUsersQuery = useAuthUsers(canReadUsers);
+  const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? (editingUserId ?? null) : null);
+  return { authUsersQuery, userSecurityQuery };
+};
 
-  const [localUserRoles, setLocalUserRoles] = useState<AuthUserRoleMap>({});
-  const [search, setSearch] = useState('');
-  const [dirtyRoles, setDirtyRoles] = useState(false);
+export function useUsersState(): UseUsersStateReturn {
+  const { session, roles, userRoles, canReadUsers, canManageSecurity, isLoading: authLoading, refetchSettings } = useAuth();
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
   const [userToDelete, setUserToDelete] = useState<AuthUserSummary | null>(null);
-
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
-
-  const [mockOpen, setMockOpen] = useState(false);
-  const [mockEmail, setMockEmail] = useState('');
-  const [mockPassword, setMockPassword] = useState('');
-
-  const authUsersQuery = useAuthUsers(canReadUsers);
-  const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
-
-  const updateAuthUserMutation = useUpdateAuthUser();
-  const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
-  const deleteAuthUserMutation = useDeleteAuthUser();
-  const registerUserMutation = useRegisterUser();
-  const mockSignInMutation = useMockSignIn();
-  const updateUserRolesMutation = useUpdateAuthUserRoles();
-
-  useEffect(() => {
-    setLocalUserRoles(userRoles);
-    setDirtyRoles(false);
-  }, [userRoles]);
-
+  const { createOpen, setCreateOpen, createForm, setCreateForm } = useCreateUserState();
+  const { mockOpen, setMockOpen, mockEmail, setMockEmail, mockPassword, setMockPassword } = useMockSignInState();
+  const mutations = useUserMutations();
+  const { authUsersQuery, userSecurityQuery } = useUserQueriesState(canReadUsers, canManageSecurity, editingUser?.id);
   const users = authUsersQuery.data?.users ?? [];
-  const filteredUsers = useUserFiltering(users, search);
-
-  const handleRoleChange = useCallback((userId: string, roleId: string) => {
-    setLocalUserRoles((prev) => {
-      const next = { ...prev };
-      if (roleId === '' || roleId === 'none') delete next[userId];
-      else next[userId] = roleId;
-      return next;
-    });
-    setDirtyRoles(true);
-  }, []);
-
+  const { search, setSearch, filteredUsers } = useUserSearchState(users);
+  const { localUserRoles, dirtyRoles, setDirtyRoles, handleRoleChange } = useUserRolesState(userRoles);
   const { saveRoles, deleteUser } = useUserActions({
-    localUserRoles,
-    setDirtyRoles,
-    updateUserRolesMutation,
-    deleteAuthUserMutation,
-    userToDelete,
-    setUserToDelete,
-    session,
+    localUserRoles, setDirtyRoles, updateUserRolesMutation: mutations.updateUserRolesMutation,
+    deleteAuthUserMutation: mutations.deleteAuthUserMutation, userToDelete, setUserToDelete, session,
   });
-
   return {
-    users,
-    filteredUsers,
-    search,
-    setSearch,
-    localUserRoles,
-    handleRoleChange,
-    dirtyRoles,
-    saveRoles,
-    editingUser,
-    setEditingUser,
-    userToDelete,
-    setUserToDelete,
-    deleteUser,
-    createOpen,
-    setCreateOpen,
-    createForm,
-    setCreateForm,
-    mockOpen,
-    setMockOpen,
-    mockEmail,
-    setMockEmail,
-    mockPassword,
-    setMockPassword,
+    users, filteredUsers, search, setSearch, localUserRoles, handleRoleChange,
+    dirtyRoles, saveRoles, editingUser, setEditingUser, userToDelete, setUserToDelete,
+    deleteUser, createOpen, setCreateOpen, createForm, setCreateForm,
+    mockOpen, setMockOpen, mockEmail, setMockEmail, mockPassword, setMockPassword,
     isLoading: authUsersQuery.isPending || authLoading,
     isFetching: authUsersQuery.isFetching,
-    canReadUsers,
-    canManageSecurity,
-    roles,
+    canReadUsers, canManageSecurity, roles,
     provider: authUsersQuery.data?.provider ?? 'mongodb',
-    refetch: () => {
-      void authUsersQuery.refetch();
-      void refetchSettings();
-    },
-    userSecurity: userSecurityQuery.data,
-    loadingSecurity: userSecurityQuery.isPending,
+    refetch: () => { void authUsersQuery.refetch(); void refetchSettings(); },
+    userSecurity: userSecurityQuery.data, loadingSecurity: userSecurityQuery.isPending,
     mutations: {
-      updateUser: updateAuthUserMutation,
-      updateSecurity: updateAuthUserSecurityMutation,
-      deleteUser: deleteAuthUserMutation,
-      register: registerUserMutation,
-      mockSignIn: mockSignInMutation,
+      updateUser: mutations.updateAuthUserMutation,
+      updateSecurity: mutations.updateAuthUserSecurityMutation,
+      deleteUser: mutations.deleteAuthUserMutation,
+      register: mutations.registerUserMutation,
+      mockSignIn: mutations.mockSignInMutation,
     },
   };
 }

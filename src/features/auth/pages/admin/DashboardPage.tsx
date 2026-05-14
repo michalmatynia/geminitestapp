@@ -10,6 +10,90 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, Al
 import { SectionHeader, MetadataItem, LoadingState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+interface Metrics {
+  total: number;
+  verified: number;
+  unverified: number;
+  roleCounts: Record<string, number>;
+  unassigned: number;
+}
+
+const useAuthMetrics = (users: AuthUserSummary[], roles: AuthRole[], userRoles: Record<string, string>): Metrics => {
+  return useMemo(() => {
+    const total = users.length;
+    const verified = users.filter((user) => Boolean(user.emailVerified)).length;
+    const unverified = total - verified;
+    const initialRoleCounts = roles.reduce<Record<string, number>>(
+      (acc, role) => ({ ...acc, [role.id]: 0 }),
+      {}
+    );
+    let unassigned = 0;
+    users.forEach((user) => {
+      const assignedRole = userRoles[user.id];
+      if (assignedRole !== undefined && assignedRole !== '' && initialRoleCounts[assignedRole] !== undefined) {
+        initialRoleCounts[assignedRole] += 1;
+      } else {
+        unassigned += 1;
+      }
+    });
+    return { total, verified, unverified, roleCounts: initialRoleCounts, unassigned };
+  }, [roles, userRoles, users]);
+};
+
+const MetricsGrid = ({ metrics }: { metrics: Metrics }): React.JSX.Element => (
+  <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-4`}>
+    <MetadataItem
+      label='Total Users'
+      hint='All accounts'
+      value={String(metrics.total)}
+      valueClassName='text-3xl font-semibold text-white'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Verified Emails'
+      hint='Email verified'
+      value={String(metrics.verified)}
+      valueClassName='text-3xl font-semibold text-white'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Unverified'
+      hint='Pending verification'
+      value={String(metrics.unverified)}
+      valueClassName='text-3xl font-semibold text-white'
+      className='p-4'
+    />
+    <MetadataItem
+      label='Unassigned Roles'
+      hint='No role assigned'
+      value={String(metrics.unassigned)}
+      valueClassName='text-3xl font-semibold text-white'
+      className='p-4'
+    />
+  </div>
+);
+
+const RoleDistribution = ({ roles, roleCounts }: { roles: AuthRole[]; roleCounts: Record<string, number> }): React.JSX.Element => (
+  <Card className='bg-card border-border'>
+    <CardHeader>
+      <CardTitle className='text-white text-lg'>Role Distribution</CardTitle>
+      <CardDescription className='text-gray-500'>Users assigned to each role.</CardDescription>
+    </CardHeader>
+    <CardContent className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+      {roles.map((role) => (
+        <MetadataItem
+          key={role.id}
+          label={role.name}
+          hint={role.description ?? role.id}
+          value={String(roleCounts[role.id] ?? 0)}
+          valueClassName='text-2xl font-semibold text-white'
+          className='p-4 bg-card/50'
+        />
+      ))}
+    </CardContent>
+  </Card>
+);
+
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
   const { roles, userRoles, canReadUsers, isLoading: authLoading } = useAuth();
@@ -17,7 +101,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
   const authUsersQuery = useAuthUsers(canReadUsers);
 
   useEffect(() => {
-    if (!authUsersQuery.error || !canReadUsers) return;
+    if (authUsersQuery.error === null || !canReadUsers) return;
     logClientError(authUsersQuery.error, {
       context: { source: 'AuthDashboardPage', action: 'loadMetrics' },
     });
@@ -29,29 +113,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
     [authUsersQuery.data?.users, canReadUsers]
   );
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
-
-  const metrics = useMemo(() => {
-    const total = users.length;
-    const verified = users.filter((user: AuthUserSummary) => Boolean(user.emailVerified)).length;
-    const unverified = total - verified;
-    const roleCounts = roles.reduce<Record<string, number>>(
-      (acc: Record<string, number>, role: AuthRole) => {
-        acc[role.id] = 0;
-        return acc;
-      },
-      {}
-    );
-    let unassigned = 0;
-    users.forEach((user: AuthUserSummary) => {
-      const assignedRole = userRoles[user.id];
-      if (assignedRole && roleCounts[assignedRole] !== undefined) {
-        roleCounts[assignedRole] += 1;
-      } else {
-        unassigned += 1;
-      }
-    });
-    return { total, verified, unverified, roleCounts, unassigned };
-  }, [roles, userRoles, users]);
+  const metrics = useAuthMetrics(users, roles, userRoles);
 
   if (!canReadUsers) {
     return (
@@ -83,55 +145,8 @@ export default function AuthDashboardPage(): React.JSX.Element {
         />
       </Card>
 
-      <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-4`}>
-        <MetadataItem
-          label='Total Users'
-          hint='All accounts'
-          value={String(metrics.total)}
-          valueClassName='text-3xl font-semibold text-white'
-          className='p-4'
-        />
-        <MetadataItem
-          label='Verified Emails'
-          hint='Email verified'
-          value={String(metrics.verified)}
-          valueClassName='text-3xl font-semibold text-white'
-          className='p-4'
-        />
-        <MetadataItem
-          label='Unverified'
-          hint='Pending verification'
-          value={String(metrics.unverified)}
-          valueClassName='text-3xl font-semibold text-white'
-          className='p-4'
-        />
-        <MetadataItem
-          label='Unassigned Roles'
-          hint='No role assigned'
-          value={String(metrics.unassigned)}
-          valueClassName='text-3xl font-semibold text-white'
-          className='p-4'
-        />
-      </div>
-
-      <Card className='bg-card border-border'>
-        <CardHeader>
-          <CardTitle className='text-white text-lg'>Role Distribution</CardTitle>
-          <CardDescription className='text-gray-500'>Users assigned to each role.</CardDescription>
-        </CardHeader>
-        <CardContent className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-          {roles.map((role: AuthRole) => (
-            <MetadataItem
-              key={role.id}
-              label={role.name}
-              hint={role.description ?? role.id}
-              value={String(metrics.roleCounts[role.id] ?? 0)}
-              valueClassName='text-2xl font-semibold text-white'
-              className='p-4 bg-card/50'
-            />
-          ))}
-        </CardContent>
-      </Card>
+      <MetricsGrid metrics={metrics} />
+      <RoleDistribution roles={roles} roleCounts={metrics.roleCounts} />
     </div>
   );
 }

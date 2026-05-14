@@ -10,7 +10,11 @@ import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { getMarketplaceButtonClass } from '../product-column-utils';
+import {
+  getMarketplaceButtonClass,
+  normalizeMarketplaceStatus,
+  SUCCESS_STATUSES,
+} from '../product-column-utils';
 import {
   PRODUCT_LIST_MARKETPLACE_DISABLED_INTERACTION_CLASS,
   ProductListMarketplacePendingTextButton,
@@ -47,7 +51,9 @@ export function EcommerceExportButton({
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const isActive = showEcommerceBadge && ecommerceStatus === 'active';
+  const normalizedEcommerceStatus = normalizeMarketplaceStatus(ecommerceStatus ?? '');
+  const isActive = showEcommerceBadge && SUCCESS_STATUSES.has(normalizedEcommerceStatus);
+  const buttonStatus = isActive ? normalizedEcommerceStatus : 'not_started';
 
   const handleClick = useCallback((): void => {
     if (isPending) return;
@@ -70,7 +76,7 @@ export function EcommerceExportButton({
   }, [isPending, isActive, mutateAsync, product.id, queryClient, toast]);
 
   const ariaLabel = isActive ? 'Manage ecommerce product' : 'Export to ecommerce';
-  const toneClass = getMarketplaceButtonClass(isActive ? 'active' : 'not_started', isActive, 'ecommerce');
+  const toneClass = getMarketplaceButtonClass(buttonStatus, isActive, 'ecommerce');
 
   return (
     <>

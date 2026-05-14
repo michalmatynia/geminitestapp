@@ -79,6 +79,25 @@ describe('ProductImageManagerUIContext', () => {
     expect(result.current.actions.clearVisibleImage).toBeTypeOf('function');
   });
 
+  it('classifies Spark upload links as FastComet source slots', async () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ProductImageManagerUIProvider
+        externalBaseUrl='http://localhost'
+        explicitController={buildController({
+          imageLinks: [
+            'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+          ],
+        })}
+      >
+        {children}
+      </ProductImageManagerUIProvider>
+    );
+
+    const { result } = renderHook(() => useProductImageManagerUIState(), { wrapper });
+
+    await waitFor(() => expect(result.current.slotViewModes[0]).toBe('fastcomet'));
+  });
+
   it('uploads selected slot files immediately through the product FastComet route', async () => {
     const file = new File(['image'], 'fresh.png', { type: 'image/png' });
     const imageFile = {

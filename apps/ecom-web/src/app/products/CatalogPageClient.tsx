@@ -15,6 +15,25 @@ import { productMatchesMaterials } from '@/lib/productMaterial';
 import { productMatchesSizes } from '@/lib/productSizeInfo';
 import { productMatchesLores } from '@/lib/productLore';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useWishlist } from '@/context/WishlistContext';
+
+function StarIcon({ filled, size = 13 }: { filled: boolean; size?: number }): JSX.Element {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill={filled ? 'currentColor' : 'none'}
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
+    </svg>
+  );
+}
 
 const LOAD_MORE_SIZE = 24;
 const PRICE_SLIDER_MIN = 0;
@@ -169,6 +188,13 @@ function CatalogCard({
 }): JSX.Element {
   const localizedHref = useLocalizedHref();
   const { addItem, openCart } = useCart();
+  const { user } = useAuth();
+  const { isWishlisted, toggle, getCount, requestCount } = useWishlist();
+
+  const wishlisted = isWishlisted(product.id);
+  const count = getCount(product.id);
+
+  useEffect(() => { requestCount(product.id); }, [product.id, requestCount]);
 
   const handleAddToBasket = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -188,6 +214,22 @@ function CatalogCard({
     openCart();
   };
 
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    toggle({
+      productId: product.id,
+      slug: product.slug,
+      name: product.shortName ?? product.name,
+      category: product.category,
+      price: product.price,
+      priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
+      gradient: product.gradient,
+      imageUrl: product.imageUrl,
+    });
+  };
+
   return (
     <a href={localizedHref(`/products/${product.slug}`)} className='group block'>
       {/* Image with slide-up "Add to basket" panel on hover */}
@@ -202,6 +244,22 @@ function CatalogCard({
           position='center'
           priority={priority}
         />
+        {/* Wishlist star — only for logged-in users */}
+        {user && (
+          <button
+            onClick={handleToggleWishlist}
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className='absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 focus:opacity-100'
+            style={{
+              background: 'rgba(4,3,20,0.65)',
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: wishlisted ? 'var(--accent)' : 'rgba(255,255,255,0.7)',
+            }}
+          >
+            <StarIcon filled={wishlisted} size={11} />
+          </button>
+        )}
         {/* Hover panel — slides up from bottom of image */}
         <div
           className='absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out'
@@ -286,8 +344,19 @@ function CatalogCard({
       >
         {product.shortName ?? product.name}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--muted)' }}>
-        {formatPrice(product.price, locale, product.currencyCode)}
+      <div className='flex items-center gap-1.5'>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--muted)' }}>
+          {formatPrice(product.price, locale, product.currencyCode)}
+        </span>
+        {count > 0 && (
+          <span
+            className='flex items-center gap-0.5'
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.04em' }}
+          >
+            <StarIcon filled={false} size={9} />
+            {count}
+          </span>
+        )}
       </div>
     </a>
   );

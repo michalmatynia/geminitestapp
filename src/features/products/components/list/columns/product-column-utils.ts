@@ -4,12 +4,11 @@ import type {
 } from '@/shared/contracts/products/product';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
-export type ProductImageStorageStatus = {
-  hasFastCometImage: boolean;
-  hasLocalImage: boolean;
-  hasExternalLinkImage: boolean;
-  hasBase64Image: boolean;
-};
+export type { ProductImageStorageStatus } from './product-image-storage-status';
+export {
+  hasAnyProductImageStorageStatus,
+  resolveProductImageStorageStatus,
+} from './product-image-storage-status';
 
 const NAME_KEY_TO_LANGUAGE_CODE: Record<ProductNameKey, string> = {
   name_en: 'en',
@@ -79,46 +78,6 @@ export const getImageFilepath = (imageFile: unknown): string | undefined => {
     if (typeof value === 'string' && value.trim().length > 0) return value;
   }
   return undefined;
-};
-
-const getProductImageFileRecords = (product: ProductWithImages): Record<string, unknown>[] =>
-  (Array.isArray(product.images) ? product.images : [])
-    .map((image) => toRecord(image)?.['imageFile'])
-    .map(toRecord)
-    .filter((record): record is Record<string, unknown> => record !== null);
-
-const isFastCometImageFileRecord = (imageFile: Record<string, unknown>): boolean => {
-  const metadata = toRecord(imageFile['metadata']);
-  const fastCometUploadStatus = toTrimmedString(metadata?.['fastCometUploadStatus']).toLowerCase();
-  return (
-    toTrimmedString(imageFile['storageProvider']).toLowerCase() === 'fastcomet' ||
-    toTrimmedString(metadata?.['storageSource']).toLowerCase() === 'fastcomet' ||
-    ['completed', 'complete', 'success', 'uploaded'].includes(fastCometUploadStatus) ||
-    toTrimmedString(metadata?.['uploadedToFastCometAt']).length > 0
-  );
-};
-
-export const hasAnyProductImageStorageStatus = (status: ProductImageStorageStatus): boolean =>
-  status.hasFastCometImage ||
-  status.hasLocalImage ||
-  status.hasExternalLinkImage ||
-  status.hasBase64Image;
-
-export const resolveProductImageStorageStatus = (
-  product: ProductWithImages
-): ProductImageStorageStatus => {
-  const imageFiles = getProductImageFileRecords(product);
-
-  return {
-    hasFastCometImage: imageFiles.some(isFastCometImageFileRecord),
-    hasLocalImage: imageFiles.length > 0,
-    hasExternalLinkImage: Array.isArray(product.imageLinks)
-      ? product.imageLinks.some((link: string) => link.trim() !== '')
-      : false,
-    hasBase64Image: Array.isArray(product.imageBase64s)
-      ? product.imageBase64s.some((imageBase64: string) => imageBase64.trim() !== '')
-      : false,
-  };
 };
 
 const findFirstDisplayValue = (

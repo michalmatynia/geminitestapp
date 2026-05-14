@@ -779,7 +779,32 @@ const buildMongoNestedIdArrayCondition = (
   arrayPath: 'catalogs' | 'tags' | 'producers',
   condition: ProductAdvancedFilterCondition
 ): Filter<ProductDocument> | null => {
+  const isCatalogField = fieldPath === 'catalogs.catalogId';
+  const buildCatalogMembershipCondition = (
+    value: string | string[]
+  ): Filter<ProductDocument> => {
+    const operator = Array.isArray(value) ? { $in: value } : value;
+    return {
+      $or: [{ catalogId: operator }, { [fieldPath]: operator }],
+    } as Filter<ProductDocument>;
+  };
+
   if (condition.operator === 'isEmpty') {
+    if (isCatalogField) {
+      return {
+        $and: [
+          buildEmptyStringPathCondition('catalogId'),
+          {
+            $or: [
+              { [fieldPath]: { $exists: false } },
+              { [fieldPath]: null },
+              { [arrayPath]: { $exists: false } },
+              { [arrayPath]: { $size: 0 } },
+            ],
+          },
+        ],
+      } as Filter<ProductDocument>;
+    }
     return {
       $or: [
         { [fieldPath]: { $exists: false } },
@@ -791,6 +816,15 @@ const buildMongoNestedIdArrayCondition = (
   }
 
   if (condition.operator === 'isNotEmpty') {
+    if (isCatalogField) {
+      return {
+        $or: [
+          buildNonEmptyStringPathCondition('catalogId'),
+          { [fieldPath]: { $exists: true, $nin: [null, ''] } },
+          { [`${arrayPath}.0`]: { $exists: true } },
+        ],
+      } as Filter<ProductDocument>;
+    }
     return {
       $or: [
         { [fieldPath]: { $exists: true, $nin: [null, ''] } },
@@ -802,24 +836,32 @@ const buildMongoNestedIdArrayCondition = (
   if (condition.operator === 'eq') {
     const value = toAdvancedStringValue(condition.value);
     if (!value) return null;
+    if (isCatalogField) return buildCatalogMembershipCondition(value);
     return { [fieldPath]: value } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'neq') {
     const value = toAdvancedStringValue(condition.value);
     if (!value) return null;
+    if (isCatalogField) {
+      return { $nor: [buildCatalogMembershipCondition(value)] } as Filter<ProductDocument>;
+    }
     return { [fieldPath]: { $ne: value } } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'in') {
     const values = toAdvancedStringArrayValues(condition.value);
     if (values.length === 0) return null;
+    if (isCatalogField) return buildCatalogMembershipCondition(values);
     return { [fieldPath]: { $in: values } } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'notIn') {
     const values = toAdvancedStringArrayValues(condition.value);
     if (values.length === 0) return null;
+    if (isCatalogField) {
+      return { $nor: [buildCatalogMembershipCondition(values)] } as Filter<ProductDocument>;
+    }
     return { [fieldPath]: { $nin: values } } as Filter<ProductDocument>;
   }
 
@@ -927,15 +969,6 @@ export const buildMongoBaseExportedCondition = (
 ): Filter<ProductDocument> | null => {
   const exportedByBaseProductId = buildMongoExportedByBaseProductIdCondition();
   const unexportedByBaseProductId = buildMongoUnexportedByBaseProductIdCondition();
-
-  if (context.integrationLookupValues.length === 0) {
-    if (baseExported) {
-      return {
-        id: '__no_base_exported_products__',
-      } as Filter<ProductDocument>;
-    }
-    return null;
-  }
 
   if (baseExported) {
     if (context.exportedProductIds.length === 0) {
@@ -1170,11 +1203,14 @@ export const buildMongoWhere = async (
   if (filters.catalogId) {
     if (filters.catalogId === 'unassigned') {
       filter = appendAndCondition(filter, {
-        $or: [{ catalogs: { $exists: false } }, { catalogs: { $size: 0 } }],
+        $and: [
+          buildEmptyStringPathCondition('catalogId'),
+          { $or: [{ catalogs: { $exists: false } }, { catalogs: { $size: 0 } }] },
+        ],
       } as Filter<ProductDocument>);
     } else {
       filter = appendAndCondition(filter, {
-        'catalogs.catalogId': filters.catalogId,
+        $or: [{ catalogId: filters.catalogId }, { 'catalogs.catalogId': filters.catalogId }],
       } as Filter<ProductDocument>);
     }
   }

@@ -190,6 +190,36 @@ describe('ProductImageSlot', () => {
     openSpy.mockRestore();
   });
 
+  it('treats Spark upload links as FastComet instead of external links', async () => {
+    const user = userEvent.setup();
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const controller = buildController();
+    controller.imageLinks = [
+      'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+    ];
+
+    render(
+      <ProductImageManagerUIProvider externalBaseUrl='http://localhost:3000' explicitController={controller}>
+        <ProductImageSlot index={0} />
+      </ProductImageManagerUIProvider>
+    );
+
+    expect(await screen.findByText('View: FastComet')).toBeInTheDocument();
+    expect(screen.getByText('F')).toHaveClass('border-emerald-400/70');
+    expect(screen.getByText('L')).toHaveClass('border-gray-600');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Open full preview for image slot 1 in new tab' })
+    );
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
+
   it('uses pending and failure tones for unresolved FastComet upload status', () => {
     const renderFastCometStatus = (fastCometUploadStatus: string): HTMLElement => {
       const controller = buildController();

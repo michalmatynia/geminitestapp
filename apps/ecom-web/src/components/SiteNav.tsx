@@ -283,30 +283,32 @@ export function SiteNav() {
                 )}
               </button>
 
-              {/* Wishlist */}
-              <a
-                href={localizedHref('/wishlist')}
-                aria-label={`${nav.mobileWishlistLabel} (${wishlistTotal})`}
-                className='relative hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]'
-                style={{ color: 'var(--muted-teal)' }}
-              >
-                <svg width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
-                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
-                </svg>
-                {wishlistTotal > 0 && (
-                  <span
-                    className='absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center'
-                    style={{
-                      background: 'var(--soft-gold)',
-                      color: 'var(--gold-contrast)',
-                      fontFamily: 'var(--font-mono)',
-                      boxShadow: '0 0 8px rgba(var(--gold-rgb),0.5)',
-                    }}
-                  >
-                    {wishlistTotal}
-                  </span>
-                )}
-              </a>
+              {/* Wishlist — only for logged-in users */}
+              {user && (
+                <a
+                  href={localizedHref('/wishlist')}
+                  aria-label={`${nav.mobileWishlistLabel} (${wishlistTotal})`}
+                  className='relative hidden md:flex transition-colors duration-200 hover:text-[var(--accent)]'
+                  style={{ color: 'var(--muted-teal)' }}
+                >
+                  <svg width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+                    <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
+                  </svg>
+                  {wishlistTotal > 0 && (
+                    <span
+                      className='absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] flex items-center justify-center'
+                      style={{
+                        background: 'var(--soft-gold)',
+                        color: 'var(--gold-contrast)',
+                        fontFamily: 'var(--font-mono)',
+                        boxShadow: '0 0 8px rgba(var(--gold-rgb),0.5)',
+                      }}
+                    >
+                      {wishlistTotal}
+                    </span>
+                  )}
+                </a>
+              )}
 
               {/* Account */}
               {user ? (
@@ -415,7 +417,7 @@ export function SiteNav() {
           <div className='flex items-center gap-8 mt-4'>
             {[
               { label: nav.mobileAccountLabel, href: '/account' },
-              { label: nav.mobileWishlistLabel, href: '/wishlist' },
+              ...(user ? [{ label: nav.mobileWishlistLabel, href: '/wishlist' }] : []),
             ].map((link) => (
               <a
                 key={link.label}

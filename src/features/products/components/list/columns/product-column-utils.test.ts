@@ -208,6 +208,38 @@ describe('product list status helpers', () => {
     expect(hasAnyProductImageStorageStatus(status)).toBe(true);
   });
 
+  it('matches the image slot modal by treating Spark upload links as FastComet, not Link', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        imageLinks: [
+          'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+        ],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: true,
+      hasLocalImage: false,
+      hasExternalLinkImage: false,
+      hasBase64Image: false,
+    });
+  });
+
+  it('treats local upload paths as uploaded files instead of external links', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        imageLinks: ['/uploads/products/KEYCHA1479/local-file.png'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: false,
+      hasLocalImage: true,
+      hasExternalLinkImage: false,
+      hasBase64Image: false,
+    });
+  });
+
   it('matches Product Slot by treating direct FastComet image files as uploaded images', () => {
     const status = resolveProductImageStorageStatus(
       createProduct({

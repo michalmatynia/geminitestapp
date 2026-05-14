@@ -134,6 +134,11 @@ export async function ensureAppIndexes(): Promise<void> {
         { userId: 1 },
         { background: true, name: 'wishlists_user', unique: true },
       ),
+      // Wishlist count lookup by productId (global count per product)
+      db.collection('ecom_wishlist_counts').createIndex(
+        { productId: 1 },
+        { background: true, name: 'wishlist_counts_product', unique: true },
+      ),
       // User lookup by email (login, register duplicate check)
       db.collection('ecom_users').createIndex(
         { email: 1 },

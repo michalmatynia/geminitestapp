@@ -140,8 +140,8 @@ export function WishlistPageClient({ content }: { content: WishlistContent }): J
               className='w-20 h-20 rounded-full flex items-center justify-center'
               style={{ border: '1px solid var(--border)' }}
             >
-              <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1' strokeLinecap='round' style={{ color: 'rgba(var(--accent-rgb),0.3)' }}>
-                <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
+              <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1' strokeLinecap='round' strokeLinejoin='round' style={{ color: 'rgba(var(--accent-rgb),0.3)' }}>
+                <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
               </svg>
             </div>
             <div>

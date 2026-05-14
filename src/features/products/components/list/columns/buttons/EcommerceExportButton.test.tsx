@@ -93,4 +93,13 @@ describe('EcommerceExportButton', () => {
     expect(button.className).toContain('bg-emerald-500/15');
     expect(button.className).toContain('text-emerald-100');
   });
+
+  it('treats completed ecommerce badge status as an exported product', () => {
+    renderButton({ showEcommerceBadge: true, ecommerceStatus: 'completed' });
+
+    const button = screen.getByRole('button', { name: 'Manage ecommerce product' });
+    expect(button.className).toContain('border-emerald-400/70');
+    expect(button.className).toContain('bg-emerald-500/15');
+    expect(button.className).toContain('text-emerald-100');
+  });
 });

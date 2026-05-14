@@ -11,6 +11,10 @@ import { api } from '@/shared/lib/api-client';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
+import {
+  isFastCometImageFile,
+  isFastCometUploadUrl,
+} from './product-image-source-classification';
 
 import type {
   ProductImageManagerUIActionsContextValue,
@@ -48,15 +52,6 @@ const ProductImageManagerUIActionsContext = productImageManagerUIActionsContextR
 export const PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED = process.env[
   'NEXT_PUBLIC_PRODUCT_IMAGE_MANAGER_DEBUG'
 ] === 'true';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const isFastCometImageFile = (imageFile: ImageFileSelection | null | undefined): boolean => {
-  if (imageFile?.storageProvider === 'fastcomet') return true;
-  const metadata = imageFile?.metadata;
-  return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
-};
 
 type ProductImageSlotValue = ProductImageManagerController['imageSlots'][number];
 
@@ -362,7 +357,9 @@ export function ProductImageManagerUIProvider({
         const hasUpload = Boolean(imageSlots[i]);
         const hasLink = Boolean(imageLinks[i]?.trim());
         const hasBase64 = Boolean(imageBase64s[i]?.trim());
-        const hasFastComet = isFastCometImageFile(getExistingImageFileFromSlot(imageSlots[i]));
+        const hasFastComet =
+          isFastCometImageFile(getExistingImageFileFromSlot(imageSlots[i])) ||
+          isFastCometUploadUrl(imageLinks[i]);
         const current = prev[i];
 
         const currentValid =
@@ -379,6 +376,8 @@ export function ProductImageManagerUIProvider({
           else next[i] = 'upload';
         } else if (hasBase64 && !hasUpload) {
           next[i] = 'base64';
+        } else if (hasFastComet && !hasUpload) {
+          next[i] = 'fastcomet';
         } else if (hasLink && !hasUpload) {
           next[i] = 'link';
         } else {

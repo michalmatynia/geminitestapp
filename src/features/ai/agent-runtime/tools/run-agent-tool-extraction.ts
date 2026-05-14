@@ -143,6 +143,7 @@ export async function runExtractionRequest({
           extractionType: 'document_analyze' as any,
         },
       } as unknown as AgentToolResult;
+    }
 
     if (targetHostname && !isAllowedUrl(finalUrl, targetHostname)) {
       await log('warning', 'Extraction blocked; navigated outside target domain.', {
@@ -814,5 +815,4 @@ export async function runExtractionRequest({
   }
 
   return null;
-}
 }

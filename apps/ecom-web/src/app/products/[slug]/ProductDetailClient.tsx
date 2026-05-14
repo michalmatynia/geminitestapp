@@ -7,6 +7,7 @@ import { useToast } from '@/context/ToastContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { useAuth } from '@/context/AuthContext';
 import { formatPrice } from '@/lib/locales';
 import { SiteNav } from '@/components/SiteNav';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -14,6 +15,23 @@ import { ProductReviews } from '@/components/ProductReviews';
 import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsContent, ProductsDetailContent } from '@/data/productsContent';
+
+function StarIcon({ filled, size = 13 }: { filled: boolean; size?: number }): JSX.Element {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill={filled ? 'currentColor' : 'none'}
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
+    </svg>
+  );
+}
 
 function AccordionItem({
   label,
@@ -235,7 +253,8 @@ export function ProductDetailClient({
   const locale = useLocale();
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
-  const { isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const { isWishlisted, toggle: toggleWishlist, getCount, requestCount } = useWishlist();
+  const { user } = useAuth();
   const { track } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[1] ?? '');
   const [activeImage, setActiveImage] = useState(0);
@@ -243,6 +262,9 @@ export function ProductDetailClient({
   const [sizeError, setSizeError] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const galleryImages = uniqueGalleryImages(product);
+  const wishlistCount = getCount(product.id);
+
+  useEffect(() => { requestCount(product.id); }, [product.id, requestCount]);
 
   useEffect(() => {
     track({
@@ -354,8 +376,9 @@ export function ProductDetailClient({
                   key={i}
                   onClick={() => setActiveImage(i)}
                   aria-label={`${detailContent.imageAriaPrefix} ${i + 1}`}
-                  className='flex-1 h-20 transition-all duration-200 relative overflow-hidden'
+                  className='flex-1 transition-all duration-200 relative overflow-hidden'
                   style={{
+                    aspectRatio: '1/1',
                     background: gradients[i % gradients.length],
                     outline: activeImage === i ? '2px solid var(--fg)' : '2px solid transparent',
                     outlineOffset: '2px',
@@ -538,41 +561,43 @@ export function ProductDetailClient({
                 )}
               </button>
 
-              <button
-                className='btn-ghost w-full justify-center mb-8'
-                onClick={() => {
-                  toggleWishlist({
-                    productId: product.id,
-                    slug: product.slug,
-                    name: product.name,
-                    category: product.category,
-                    price: product.price,
-                    priceDisplay: product.priceDisplay,
-                    currencyCode: product.currencyCode,
-                    gradient: product.gradient,
-                    imageUrl: product.imageUrl,
-                  });
-                  toast({
-                    type: isWishlisted(product.id) ? 'info' : 'success',
-                    title: isWishlisted(product.id) ? detailContent.removedWishlistToastTitle : detailContent.savedWishlistToastTitle,
-                    message: product.name,
-                  });
-                }}
-              >
-                <svg
-                  width='14'
-                  height='14'
-                  viewBox='0 0 24 24'
-                  fill={isWishlisted(product.id) ? 'currentColor' : 'none'}
-                  stroke='currentColor'
-                  strokeWidth='1.5'
-                  strokeLinecap='round'
-                  style={{ color: isWishlisted(product.id) ? 'var(--accent)' : 'inherit' }}
-                >
-                  <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' />
-                </svg>
-                {isWishlisted(product.id) ? detailContent.savedWishlistButtonLabel : detailContent.saveWishlistButtonLabel}
-              </button>
+              <div className='mb-8'>
+                {user && (
+                  <button
+                    className='btn-ghost w-full justify-center mb-2'
+                    onClick={() => {
+                      toggleWishlist({
+                        productId: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        category: product.category,
+                        price: product.price,
+                        priceDisplay: product.priceDisplay,
+                        currencyCode: product.currencyCode,
+                        gradient: product.gradient,
+                        imageUrl: product.imageUrl,
+                      });
+                      toast({
+                        type: isWishlisted(product.id) ? 'info' : 'success',
+                        title: isWishlisted(product.id) ? detailContent.removedWishlistToastTitle : detailContent.savedWishlistToastTitle,
+                        message: product.name,
+                      });
+                    }}
+                  >
+                    <StarIcon filled={isWishlisted(product.id)} size={14} />
+                    {isWishlisted(product.id) ? detailContent.savedWishlistButtonLabel : detailContent.saveWishlistButtonLabel}
+                  </button>
+                )}
+                {wishlistCount > 0 && (
+                  <div
+                    className='flex items-center justify-center gap-1.5'
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.06em', color: 'var(--muted)' }}
+                  >
+                    <StarIcon filled={false} size={9} />
+                    {wishlistCount}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Accordions */}

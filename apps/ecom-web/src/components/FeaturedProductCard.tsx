@@ -2,12 +2,31 @@
 'use client';
 
 import type { JSX } from 'react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
+import { useAuth } from '@/context/AuthContext';
+import { useWishlist } from '@/context/WishlistContext';
 import type { Product } from '@/data/products';
 import { ProductImage } from '@/components/ProductImage';
 import { formatPrice } from '@/lib/locales';
+
+function StarIcon({ filled, size = 13 }: { filled: boolean; size?: number }): JSX.Element {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox='0 0 24 24'
+      fill={filled ? 'currentColor' : 'none'}
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    >
+      <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
+    </svg>
+  );
+}
 
 export function FeaturedProductCard({
   product,
@@ -21,10 +40,16 @@ export function FeaturedProductCard({
   const { addItem } = useCart();
   const locale = useLocale();
   const localizedHref = useLocalizedHref();
+  const { user } = useAuth();
+  const { isWishlisted, toggle, getCount, requestCount } = useWishlist();
+
   const isNewTag = product.tag === 'New' || product.tag === 'Nowość';
   const secondaryImageUrl = product.imageUrls?.[1]?.trim();
   const hasSecondaryImage = secondaryImageUrl !== undefined && secondaryImageUrl.length > 0 && secondaryImageUrl !== product.imageUrl;
-  const [shouldLoadSecondaryImage, setShouldLoadSecondaryImage] = useState(false);
+  const wishlisted = isWishlisted(product.id);
+  const count = getCount(product.id);
+
+  useEffect(() => { requestCount(product.id); }, [product.id, requestCount]);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,12 +68,26 @@ export function FeaturedProductCard({
     });
   };
 
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    toggle({
+      productId: product.id,
+      slug: product.slug,
+      name: product.shortName ?? product.name,
+      category: product.category,
+      price: product.price,
+      priceDisplay: product.priceDisplay,
+      currencyCode: product.currencyCode,
+      gradient: product.gradient,
+      imageUrl: product.imageUrl,
+    });
+  };
+
   return (
     <a
       href={localizedHref(`/products/${product.slug}`)}
       className='product-card group block'
-      onFocus={() => setShouldLoadSecondaryImage(true)}
-      onPointerEnter={() => setShouldLoadSecondaryImage(true)}
     >
       <div className='relative overflow-hidden' style={{ aspectRatio: '1/1' }}>
         <ProductImage
@@ -61,7 +100,7 @@ export function FeaturedProductCard({
           position='center'
           priority={priority}
         />
-        {hasSecondaryImage && shouldLoadSecondaryImage && (
+        {hasSecondaryImage && (
           <ProductImage
             imageUrl={secondaryImageUrl}
             gradient={product.gradientAlt ?? product.gradient}
@@ -93,6 +132,23 @@ export function FeaturedProductCard({
           </div>
         )}
 
+        {/* Wishlist star — only for logged-in users */}
+        {user && (
+          <button
+            onClick={handleToggleWishlist}
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className='absolute top-3 right-3 z-10 w-7 h-7 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 focus:opacity-100'
+            style={{
+              background: 'rgba(4,3,20,0.65)',
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: wishlisted ? 'var(--accent)' : 'rgba(255,255,255,0.7)',
+            }}
+          >
+            <StarIcon filled={wishlisted} size={12} />
+          </button>
+        )}
+
         <div
           className='absolute bottom-0 left-0 right-0 z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out'
           style={{ background: 'rgba(4,3,20,0.82)', backdropFilter: 'blur(6px)' }}
@@ -114,10 +170,7 @@ export function FeaturedProductCard({
       </div>
 
       <div className='mt-2.5 px-1'>
-        <div
-          className='type-label mb-1'
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-        >
+        <div className='type-label mb-1' style={{ color: 'rgba(255,255,255,0.45)' }}>
           {product.category}
         </div>
         {product.lore && (
@@ -149,12 +202,23 @@ export function FeaturedProductCard({
         >
           {product.shortName ?? product.name}
         </div>
-        <span
-          className='type-price'
-          style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.4)' }}
-        >
-          {formatPrice(product.price, locale, product.currencyCode)}
-        </span>
+        <div className='flex items-center gap-2'>
+          <span
+            className='type-price'
+            style={{ color: 'var(--soft-gold)', textShadow: '0 0 10px rgba(var(--gold-rgb),0.4)' }}
+          >
+            {formatPrice(product.price, locale, product.currencyCode)}
+          </span>
+          {count > 0 && (
+            <span
+              className='flex items-center gap-0.5'
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--muted)', letterSpacing: '0.04em' }}
+            >
+              <StarIcon filled={false} size={9} />
+              {count}
+            </span>
+          )}
+        </div>
       </div>
     </a>
   );

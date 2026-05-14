@@ -70,6 +70,15 @@ export default async function HomePage(): Promise<JSX.Element> {
   ]);
 
   const featuredProducts = dbProducts.length > 0 ? dbProducts.slice(0, FEATURED_PRODUCT_COUNT) : null;
+  const featuredContent = homeStats?.itemCount
+    ? {
+        ...homeContent.featured,
+        ctaLiveLabel: homeContent.featured.ctaLiveLabel.replace(
+          /[\d,]+\+?/,
+          `${formatStatValue(homeStats.itemCount, locale)}+`,
+        ),
+      }
+    : homeContent.featured;
   const liveStatValues = homeStats
     ? [
         formatStatValue(homeStats.itemCount, locale),
@@ -93,14 +102,14 @@ export default async function HomePage(): Promise<JSX.Element> {
       <main>
         <HeroSection content={heroContent} catalogCategories={catalogCategories} heroLoreGroups={heroLoreGroups} />
         <CategoriesGrid counts={collectionCounts} content={homeContent.categories} catalogCategories={catalogCategories} />
-        <FeaturedProducts products={featuredProducts} content={homeContent.featured} catalogCategories={catalogCategories} />
+        <FeaturedProducts products={featuredProducts} content={featuredContent} catalogCategories={catalogCategories} />
         <ManifestoBanner
           content={homeContent.manifesto}
           locale={locale}
           allowedCategoryNames={catalogCategories.map((category) => category.name)}
         />
         <EditorialStrip content={homeContent.editorial} />
-        <RecentlyViewed content={homeContent.recentlyViewed} />
+        <RecentlyViewed content={homeContent.recentlyViewed} quickAddLabel={homeContent.featured.quickAddLabel} />
         <SiteFooter />
       </main>
     </>

@@ -8,6 +8,7 @@ import {
   useEffect,
   useCallback,
   useRef,
+  useState,
   type ReactNode,
   type JSX,
 } from 'react';
@@ -55,6 +56,8 @@ type WishlistContextValue = {
   isWishlisted: (productId: string) => boolean;
   toggle: (item: WishlistItem) => void;
   remove: (productId: string) => void;
+  getCount: (productId: string) => number;
+  requestCount: (productId: string) => void;
 };
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
@@ -62,12 +65,44 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 export function WishlistProvider({ children }: { children: ReactNode }): JSX.Element {
   const [items, dispatch] = useReducer(reducer, []);
   const { user } = useAuth();
-  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track whether we've loaded the DB wishlist for the current user so we don't
-  // overwrite local changes on re-renders.
   const loadedUserIdRef = useRef<string | null>(null);
 
-  // Hydrate from localStorage on first mount (before any user info arrives)
+  // Global wishlist counts cache — visible to all users
+  const [countsCache, setCountsCache] = useState<Record<string, number>>({});
+
+  // Batched count fetch — collects product IDs and fires a single request per tick
+  const pendingIdsRef = useRef<Set<string>>(new Set());
+  const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushCountBatch = useCallback(() => {
+    const ids = [...pendingIdsRef.current];
+    pendingIdsRef.current.clear();
+    if (ids.length === 0) return;
+
+    // Split into chunks of 100 (API limit)
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+
+    for (const chunk of chunks) {
+      void fetch(`/api/wishlist/counts?productIds=${chunk.join(',')}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { counts?: Record<string, number> } | null) => {
+          if (data?.counts) setCountsCache((prev) => ({ ...prev, ...data.counts }));
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  const requestCount = useCallback((productId: string) => {
+    if (countsCache[productId] !== undefined) return; // already loaded
+    pendingIdsRef.current.add(productId);
+    if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
+    batchTimerRef.current = setTimeout(flushCountBatch, 50);
+  }, [countsCache, flushCountBatch]);
+
+  const getCount = useCallback((productId: string): number => countsCache[productId] ?? 0, [countsCache]);
+
+  // Hydrate from localStorage on first mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -75,10 +110,11 @@ export function WishlistProvider({ children }: { children: ReactNode }): JSX.Ele
     } catch {}
   }, []);
 
-  // When user logs in, fetch their DB wishlist and merge with / replace local state.
+  // When user logs in, fetch their DB wishlist
   useEffect(() => {
     if (!user) {
       loadedUserIdRef.current = null;
+      dispatch({ type: 'HYDRATE', items: [] });
       return;
     }
     if (loadedUserIdRef.current === user.id) return;
@@ -87,59 +123,52 @@ export function WishlistProvider({ children }: { children: ReactNode }): JSX.Ele
     fetch('/api/wishlist')
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { items?: WishlistItem[] } | null) => {
-        if (data?.items && data.items.length > 0) {
-          dispatch({ type: 'HYDRATE', items: data.items });
-        } else {
-          // No DB wishlist yet — push whatever is in localStorage to DB
-          try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            const local: WishlistItem[] = stored ? (JSON.parse(stored) as WishlistItem[]) : [];
-            if (local.length > 0) {
-              void fetch('/api/wishlist', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items: local }),
-              });
-            }
-          } catch {}
-        }
+        if (data?.items) dispatch({ type: 'HYDRATE', items: data.items });
       })
       .catch(() => {});
   }, [user]);
 
-  // Persist to localStorage on every change
+  // Persist to localStorage on every change (only when logged in)
   useEffect(() => {
+    if (!user) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {}
-  }, [items]);
+  }, [items, user]);
 
-  // Debounced sync to DB when user is logged in
-  useEffect(() => {
+  // Toggle: requires auth; uses the dedicated toggle endpoint which handles counts atomically
+  const toggle = useCallback((item: WishlistItem) => {
     if (!user) return;
-    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = setTimeout(() => {
-      void fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+
+    // Optimistic update
+    dispatch({ type: 'TOGGLE', item });
+
+    void fetch('/api/wishlist/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { wishlisted?: boolean; count?: number } | null) => {
+        if (data?.count !== undefined) {
+          setCountsCache((prev) => ({ ...prev, [item.productId]: data.count! }));
+        }
+      })
+      .catch(() => {
+        // Revert optimistic update on error
+        dispatch({ type: 'TOGGLE', item });
       });
-    }, 800);
-    return () => {
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-    };
-  }, [items, user?.id]);
+  }, [user]);
+
+  const remove = useCallback((productId: string) => dispatch({ type: 'REMOVE', productId }), []);
 
   const isWishlisted = useCallback(
     (productId: string) => items.some((i) => i.productId === productId),
     [items],
   );
 
-  const toggle = useCallback((item: WishlistItem) => dispatch({ type: 'TOGGLE', item }), []);
-  const remove = useCallback((productId: string) => dispatch({ type: 'REMOVE', productId }), []);
-
   return (
-    <WishlistContext.Provider value={{ items, total: items.length, isWishlisted, toggle, remove }}>
+    <WishlistContext.Provider value={{ items, total: items.length, isWishlisted, toggle, remove, getCount, requestCount }}>
       {children}
     </WishlistContext.Provider>
   );

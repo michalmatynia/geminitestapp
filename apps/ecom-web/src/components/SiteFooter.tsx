@@ -30,15 +30,13 @@ export function SiteFooter(): JSX.Element {
       {/* Newsletter */}
       <div
         className='px-8 md:px-16 py-16 relative overflow-hidden'
-        style={{ borderBottom: '1px solid rgba(var(--accent-rgb),0.1)' }}
+        style={{
+          borderBottom: '1px solid rgba(var(--accent-rgb),0.1)',
+          background: 'radial-gradient(ellipse 80% 100% at 50% 100%, rgba(var(--accent-rgb),0.12) 0%, transparent 70%)',
+        }}
       >
         {/* Dot grid accent */}
         <div className='absolute inset-0 dot-grid opacity-15 pointer-events-none' />
-        {/* Ambient glow */}
-        <div
-          className='absolute -bottom-20 left-1/2 -translate-x-1/2 w-96 h-40 pointer-events-none'
-          style={{ background: 'radial-gradient(circle, rgba(var(--accent-rgb),0.08) 0%, transparent 70%)' }}
-        />
 
         <div className='max-w-screen-2xl mx-auto flex flex-col md:flex-row items-start md:items-end gap-8 justify-between relative z-10'>
           <div>

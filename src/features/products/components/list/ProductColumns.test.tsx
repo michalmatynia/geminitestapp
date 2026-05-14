@@ -1373,6 +1373,26 @@ describe('ProductColumns queued badge', () => {
     expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-product-image-storage-shape', 'trapezoid');
   });
 
+  it('renders Spark upload links as FastComet storage instead of Link in the desktop product row', () => {
+    const product = createProduct({
+      imageLinks: [
+        'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+      ],
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByLabelText('Product image storage: FastComet')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-active', 'true');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-kind="external-link"]')).toHaveAttribute('data-active', 'false');
+  });
+
   it('renders the imported badge for detached Base imports without sync linkage', () => {
     const product = createProduct({
       baseProductId: null,

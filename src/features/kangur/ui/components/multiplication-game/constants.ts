@@ -1,5 +1,3 @@
-import { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
-
 export type MultiplicationArrayProblem = [number, number];
 
 export const TOTAL_ROUNDS = 6;
@@ -37,7 +35,7 @@ export const ROW_GLOW = [
 
 export function pickProblem(excludePrev?: MultiplicationArrayProblem): MultiplicationArrayProblem {
   const candidates = GROUP_SIZES.filter(
-    ([a, b]) => a !== excludePrev?.[0] || b !== (excludePrev?.[1] ?? -1)
+    ([a, b]) => a !== excludePrev?.[0] || b !== excludePrev[1]
   );
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   return pick ?? [3, 4];

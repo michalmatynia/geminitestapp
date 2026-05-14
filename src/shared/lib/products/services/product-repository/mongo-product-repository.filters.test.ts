@@ -122,7 +122,7 @@ describe('mongo-product-repository.filters', () => {
         exportedProductLookupValues: [],
       })
     ).toEqual({
-      id: '__no_base_exported_products__',
+      baseProductId: { $exists: true, $nin: [null, ''] },
     });
 
     expect(buildMongoBaseExportedCondition(false, baseExportContext)).toEqual({
@@ -153,7 +153,13 @@ describe('mongo-product-repository.filters', () => {
         exportedProductIds: [],
         exportedProductLookupValues: [],
       })
-    ).toBeNull();
+    ).toEqual({
+      $or: [
+        { baseProductId: { $exists: false } },
+        { baseProductId: null },
+        { baseProductId: '' },
+      ],
+    });
   });
 
   it('compiles advanced filters across string, numeric, nested-id, date, boolean, and not branches', async () => {
@@ -235,7 +241,12 @@ describe('mongo-product-repository.filters', () => {
           ],
         },
         { price: { $gte: 10, $lte: 20 } },
-        { 'catalogs.catalogId': { $in: ['catalog-a', 'catalog-b'] } },
+        {
+          $or: [
+            { catalogId: { $in: ['catalog-a', 'catalog-b'] } },
+            { 'catalogs.catalogId': { $in: ['catalog-a', 'catalog-b'] } },
+          ],
+        },
         { published: true },
         {
           $and: [
@@ -895,6 +906,7 @@ describe('mongo-product-repository.filters', () => {
     expect(serialized).toContain('"_id":"product-2"');
     expect(serialized).toContain('"name_pl":{"$regex":"szukaj","$options":"i"}');
     expect(serialized).toContain('"stock":4');
+    expect(serialized).toContain('"catalogId":"catalog-2"');
     expect(serialized).toContain('"catalogs.catalogId":"catalog-2"');
     expect(serialized).toContain('"baseProductId":{"$exists":true,"$nin":[null,""]}');
     expect(serialized).toContain('"$in":["product-1"]');
@@ -1140,8 +1152,16 @@ describe('mongo-product-repository.filters', () => {
 
     expect(result).toMatchObject({
       $and: [
-        { 'catalogs.catalogId': 'catalog-1' },
-        { 'catalogs.catalogId': { $ne: 'catalog-2' } },
+        {
+          $or: [{ catalogId: 'catalog-1' }, { 'catalogs.catalogId': 'catalog-1' }],
+        },
+        {
+          $nor: [
+            {
+              $or: [{ catalogId: 'catalog-2' }, { 'catalogs.catalogId': 'catalog-2' }],
+            },
+          ],
+        },
         { 'tags.tagId': 'tag-1' },
         {
           $or: [

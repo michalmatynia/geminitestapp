@@ -629,6 +629,18 @@ export function HeroSection({
     );
   }, [activeZone]);
 
+  /* ── Click outside the panel closes the active zone ──────────── */
+  useEffect(() => {
+    if (!activeZone) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        handleBack();
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [activeZone, handleBack]);
+
   /* ── Idle animations — start after entrance completes (~2.2s) ─── */
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -990,17 +1002,18 @@ export function HeroSection({
           </div>
         </div>
 
-        {/* Bottom marquee */}
+      </div>
+
+      {/* Bottom marquee — anchored to the section (not the parallaxed right column) so it never clips */}
+      <div
+        className='hidden lg:block absolute bottom-5 right-0 w-[47%] overflow-hidden z-20'
+        style={{ borderTop: '1px solid rgba(var(--accent-rgb),0.08)', paddingTop: '0.75rem' }}
+      >
         <div
-          className='absolute bottom-5 left-0 right-0 overflow-hidden z-10'
-          style={{ borderTop: '1px solid rgba(var(--accent-rgb),0.08)', paddingTop: '0.75rem' }}
+          className='animate-marquee whitespace-nowrap type-label'
+          style={{ color: 'rgba(var(--accent-rgb),0.3)', letterSpacing: '0.3em' }}
         >
-          <div
-            className='animate-marquee whitespace-nowrap type-label'
-            style={{ color: 'rgba(var(--accent-rgb),0.3)', letterSpacing: '0.3em' }}
-          >
-            {bottomStripText}
-          </div>
+          {bottomStripText}
         </div>
       </div>
 

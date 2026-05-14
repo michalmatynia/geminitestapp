@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { type useTranslations } from 'next-intl';
 
 export type MultiplicationArrayGameContextValue = {
   a: number;

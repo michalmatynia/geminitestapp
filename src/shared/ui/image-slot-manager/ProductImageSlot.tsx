@@ -15,6 +15,10 @@ import {
   useProductImageManagerUIActions,
   useProductImageManagerUIState,
 } from './ProductImageManagerUIContext';
+import {
+  isFastCometImageFile,
+  isFastCometUploadUrl,
+} from './product-image-source-classification';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -23,12 +27,8 @@ type ProductImageSlotValue = ReturnType<
   typeof useProductImageManagerUIState
 >['controller']['imageSlots'][number];
 
-const isFastCometImageSlot = (slot: ProductImageSlotValue | undefined): boolean => {
-  if (slot?.type !== 'existing') return false;
-  if (slot.data.storageProvider === 'fastcomet') return true;
-  const metadata = slot.data.metadata;
-  return isRecord(metadata) && metadata['storageSource'] === 'fastcomet';
-};
+const isFastCometImageSlot = (slot: ProductImageSlotValue | undefined): boolean =>
+  slot?.type === 'existing' && isFastCometImageFile(slot.data);
 
 const readTrimmedText = (value: unknown): string | null => {
   const trimmed = typeof value === 'string' ? value.trim() : '';
@@ -107,6 +107,11 @@ const slotViewModeOptions: SlotViewMode[] = ['upload', 'link', 'base64', 'fastco
 const resolveSlotViewModeLabel = (mode: SlotViewMode | undefined): string =>
   slotViewModeLabels[mode ?? 'upload'];
 
+const resolveLinkedFastCometUrl = (linkValue: string): string => {
+  if (!isFastCometUploadUrl(linkValue)) return '';
+  return resolveProductImageUrl(linkValue, DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL) ?? linkValue;
+};
+
 interface ProductImageSlotProps {
   index: number;
 }
@@ -153,7 +158,11 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const imageLocked = Boolean(controller.isSlotImageLocked?.(index));
   const linkValue = imageLinks[index] ?? '';
   const base64Value = imageBase64s[index] ?? '';
-  const fastCometUrl = resolveFastCometImageSlotUrl(slot);
+  const isFastCometLink = isFastCometUploadUrl(linkValue);
+  const slotFastCometUrl = resolveFastCometImageSlotUrl(slot);
+  const linkedFastCometUrl = resolveLinkedFastCometUrl(linkValue);
+  const fastCometUrl =
+    slotFastCometUrl.length > 0 ? slotFastCometUrl : linkedFastCometUrl;
   const hasFastCometUrl = Boolean(fastCometUrl);
   const isFastCometUpload = isFastCometImageSlot(slot);
   const fastCometUploadStatus = readFastCometUploadStatus(slot);
@@ -168,11 +177,15 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const mode = slotViewModes[index];
   const showBase64 =
     (mode === 'base64' && Boolean(base64Value.trim())) ||
-    (!hasUpload && !linkValue.trim() && Boolean(base64Value.trim()));
+    (!hasUpload && linkValue.trim().length === 0 && Boolean(base64Value.trim()));
   const showLink =
-    (mode === 'link' && Boolean(linkValue.trim())) || (!hasUpload && Boolean(linkValue.trim()) && !showBase64);
+    (mode === 'link' && Boolean(linkValue.trim()) && !isFastCometLink) ||
+    (!hasUpload && Boolean(linkValue.trim()) && !showBase64 && !hasFastCometUrl);
   const showFastComet = mode === 'fastcomet' && hasFastCometUrl;
-  const displayUrl = showBase64 ? base64Value : showLink ? linkValue : showFastComet ? fastCometUrl : uploadUrl;
+  let displayUrl = uploadUrl;
+  if (showLink) displayUrl = linkValue;
+  if (showFastComet) displayUrl = fastCometUrl;
+  if (showBase64) displayUrl = base64Value;
 
   const canReorder = !minimalUi && imageSlots.length > 1;
   const isSingleMinimalSlot = minimalUi && imageSlots.length === 1;
@@ -184,7 +197,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const isLocalPreviewUrl = (url: string) => url.startsWith('blob:') || url.startsWith('data:');
   const isViewModeDisabled = (viewMode: SlotViewMode): boolean => {
     if (viewMode === 'upload') return !hasUpload;
-    if (viewMode === 'link') return !linkValue.trim();
+    if (viewMode === 'link') return !linkValue.trim() || isFastCometLink;
     if (viewMode === 'base64') return !base64Value.trim();
     return !hasFastCometUrl;
   };
@@ -201,7 +214,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     },
     {
       colorClass: imageSlotStatusToneClass.pending,
-      hasValue: Boolean(linkValue.trim()),
+      hasValue: Boolean(linkValue.trim()) && !isFastCometLink,
       label: 'L',
     },
     {

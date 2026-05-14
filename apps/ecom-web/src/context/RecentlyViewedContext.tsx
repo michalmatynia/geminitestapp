@@ -30,7 +30,7 @@ interface RecentlyViewedCtx {
 
 const Ctx = createContext<RecentlyViewedCtx | null>(null);
 const KEY = 'arcana-recently-viewed';
-const MAX = 6;
+const MAX = 8;
 
 export function RecentlyViewedProvider({ children }: { children: ReactNode }): JSX.Element {
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);

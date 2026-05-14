@@ -1,20 +1,39 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/no-unnecessary-condition,@typescript-eslint/strict-boolean-expressions,max-lines-per-function */
+/* eslint-disable @typescript-eslint/explicit-function-return-type,@typescript-eslint/strict-boolean-expressions,max-lines-per-function */
 'use client';
 
 import { useState, useEffect, type JSX } from 'react';
 import { useRecentlyViewed, type RecentlyViewedItem } from '@/context/RecentlyViewedContext';
 import { useLocale, useLocalizedHref } from '@/context/LocaleContext';
 import type { Product } from '@/data/products';
-import { ProductImage } from '@/components/ProductImage';
 import { HOME_CONTENT_DEFAULTS, type HomeRecentlyViewedContent } from '@/data/homeContent';
-import { formatPrice } from '@/lib/locales';
+import { FeaturedProductCard } from '@/components/FeaturedProductCard';
 
-const freshText = (next: string, current: string): string => (next === '' ? current : next);
+function toProduct(item: RecentlyViewedItem, fresh?: Product): Product {
+  if (fresh) return fresh;
+  return {
+    id: item.productId,
+    slug: item.slug,
+    name: item.name,
+    category: item.category,
+    collectionSlug: '',
+    price: item.price,
+    priceDisplay: item.priceDisplay,
+    currencyCode: item.currencyCode,
+    gradient: item.gradient,
+    imageUrl: item.imageUrl,
+    description: '',
+    details: [],
+    care: [],
+    sizes: [],
+  };
+}
 
 export function RecentlyViewed({
   content = HOME_CONTENT_DEFAULTS.recentlyViewed,
+  quickAddLabel = HOME_CONTENT_DEFAULTS.featured.quickAddLabel,
 }: {
   content?: HomeRecentlyViewedContent;
+  quickAddLabel?: string;
 }): JSX.Element | null {
   const { items } = useRecentlyViewed();
   const locale = useLocale();
@@ -36,21 +55,6 @@ export function RecentlyViewed({
   }, [idKey, locale]);
 
   if (items.length === 0) return null;
-
-  const getItem = (item: RecentlyViewedItem) => {
-    const fresh = freshData[item.productId];
-    if (!fresh) return item;
-    return {
-      ...item,
-      name: freshText(fresh.name, item.name),
-      category: freshText(fresh.category, item.category),
-      price: fresh.price ?? item.price,
-      priceDisplay: freshText(fresh.priceDisplay, item.priceDisplay),
-      currencyCode: fresh.currencyCode ?? item.currencyCode,
-      gradient: freshText(fresh.gradient, item.gradient),
-      imageUrl: fresh.imageUrl ?? item.imageUrl,
-    };
-  };
 
   return (
     <section
@@ -87,56 +91,15 @@ export function RecentlyViewed({
           </a>
         </div>
 
-        <div
-          className='flex gap-5 overflow-x-auto pb-2'
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {items.map((stored) => {
-            const item = getItem(stored);
+        <div className='grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-3'>
+          {items.slice(0, 8).map((stored) => {
+            const product = toProduct(stored, freshData[stored.productId]);
             return (
-              <a
-                key={item.productId}
-                href={localizedHref(`/products/${item.slug}`)}
-                className='group flex-shrink-0'
-                style={{ width: '190px' }}
-              >
-                <div
-                  className='w-full mb-4 overflow-hidden relative'
-                  style={{ aspectRatio: '3/4' }}
-                >
-                  <ProductImage
-                    imageUrl={item.imageUrl}
-                    gradient={item.gradient}
-                    alt={item.name}
-                    className='absolute inset-0 transition-transform duration-700 group-hover:scale-105'
-                    sizes='190px'
-                  />
-                </div>
-                <div
-                  className='type-label mb-1'
-                  style={{ color: 'var(--muted)', fontSize: '0.65rem', letterSpacing: '0.08em' }}
-                >
-                  {item.category}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.95rem',
-                    fontWeight: 300,
-                    color: 'var(--fg)',
-                    lineHeight: 1.2,
-                    marginBottom: '0.3rem',
-                  }}
-                >
-                  {item.name}
-                </div>
-                <div
-                  className='type-price'
-                  style={{ color: 'var(--muted)', fontSize: '0.78rem' }}
-                >
-                  {formatPrice(item.price ?? 0, locale, item.currencyCode)}
-                </div>
-              </a>
+              <FeaturedProductCard
+                key={stored.productId}
+                product={product}
+                quickAddLabel={quickAddLabel}
+              />
             );
           })}
         </div>

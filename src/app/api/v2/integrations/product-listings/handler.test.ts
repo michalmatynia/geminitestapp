@@ -5,10 +5,14 @@ const {
   listAllListingsMock,
   listProductListingsByProductIdsMock,
   listIntegrationsMock,
+  findVisibleEcommerceProductIdsMock,
+  applyRemoteBaseSkuBadgeFallbackMock,
 } = vi.hoisted(() => ({
   listAllListingsMock: vi.fn(),
   listProductListingsByProductIdsMock: vi.fn(),
   listIntegrationsMock: vi.fn(),
+  findVisibleEcommerceProductIdsMock: vi.fn(),
+  applyRemoteBaseSkuBadgeFallbackMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -29,6 +33,16 @@ vi.mock('@/features/integrations/services/base-listing-canonicalization', () => 
     ['baselinker', 'base', 'base-com'].includes((value ?? '').trim().toLowerCase()),
 }));
 
+vi.mock('@/features/integrations/services/ecommerce-product-export.listings', () => ({
+  findVisibleEcommerceProductIds: (...args: unknown[]) =>
+    findVisibleEcommerceProductIdsMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/base-sku-badge-fallback', () => ({
+  applyRemoteBaseSkuBadgeFallback: (...args: unknown[]) =>
+    applyRemoteBaseSkuBadgeFallbackMock(...args),
+}));
+
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: vi.fn(),
 }));
@@ -45,6 +59,8 @@ describe('integration product listings handler', () => {
       },
     ]);
     listAllListingsMock.mockResolvedValue([]);
+    findVisibleEcommerceProductIdsMock.mockResolvedValue(new Set<string>());
+    applyRemoteBaseSkuBadgeFallbackMock.mockImplementation(async (payload: unknown) => payload);
   });
 
   it('prefers the newer auth_required Tradera status over an older queued listing', async () => {
@@ -286,6 +302,62 @@ describe('integration product listings handler', () => {
     const payload = await response.json();
 
     expect(payload).toEqual({});
+    expect(findVisibleEcommerceProductIdsMock).toHaveBeenCalledWith(['product-1', 'product-2']);
+  });
+
+  it('fills ecommerce badges from already visible ecommerce products', async () => {
+    listIntegrationsMock.mockResolvedValue([]);
+    listProductListingsByProductIdsMock.mockResolvedValue([]);
+    findVisibleEcommerceProductIdsMock.mockResolvedValue(new Set(['product-2']));
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1,product-2'
+      ),
+      {
+        query: { productIds: ['product-1', 'product-2'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-2': {
+        ecommerce: 'active',
+      },
+    });
+  });
+
+  it('fills base badges from remote Base SKU fallback before ecommerce badges', async () => {
+    listIntegrationsMock.mockResolvedValue([]);
+    listProductListingsByProductIdsMock.mockResolvedValue([]);
+    applyRemoteBaseSkuBadgeFallbackMock.mockResolvedValue({
+      'product-1': {
+        base: 'active',
+      },
+    });
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1,product-2'
+      ),
+      {
+        query: { productIds: ['product-1', 'product-2'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(applyRemoteBaseSkuBadgeFallbackMock).toHaveBeenCalledWith({}, [
+      'product-1',
+      'product-2',
+    ]);
+    expect(findVisibleEcommerceProductIdsMock).toHaveBeenCalledWith(['product-1', 'product-2']);
+    expect(payload).toEqual({
+      'product-1': {
+        base: 'active',
+      },
+    });
   });
 
   it('reads ecommerce badges from product listing records', async () => {

@@ -5,6 +5,13 @@ import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type { FilemakerJobApplication } from '../types';
+import {
+  normalizeSearchInput,
+  parseJobApplicationsPayload,
+  resolveManualUnmarkFallback,
+  selectManualUnmarkTargetFromApplications,
+  type ManualUnmarkTarget,
+} from './AdminFilemakerJobListingsPage.components';
 
 export type ApplicationInfoPayload = {
   application?: FilemakerJobApplication;
@@ -32,6 +39,53 @@ export type ManualMarkMutationVariables = {
   request: ManualMarkRequest;
   wasApplied: boolean;
 };
+
+export type ResolveManualUnmarkTargetVariables = {
+  listingId: string;
+  mutableApplicationId: string | null;
+  personId: string;
+};
+
+export const useResolveManualUnmarkTargetMutation = (): MutationResult<
+  ManualUnmarkTarget | null,
+  ResolveManualUnmarkTargetVariables
+> =>
+  createMutationV2<ManualUnmarkTarget | null, ResolveManualUnmarkTargetVariables>({
+    mutationKey: ['filemaker', 'job-applications', 'manual-unmark-target'],
+    mutationFn: async ({ listingId, mutableApplicationId, personId }) => {
+      const normalizedPersonId = normalizeSearchInput(personId);
+      if (normalizedPersonId.length === 0) return null;
+
+      const query = new URLSearchParams({
+        jobListingId: listingId,
+        personId: normalizedPersonId,
+        limit: '100',
+      });
+
+      const response = await fetch(`/api/filemaker/job-applications?${query.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load related applications (${response.status}).`);
+      }
+
+      const applications = parseJobApplicationsPayload(await response.json());
+      const target = selectManualUnmarkTargetFromApplications(applications, normalizedPersonId);
+      if (target === null) {
+        return resolveManualUnmarkFallback(mutableApplicationId);
+      }
+
+      const resolvedId = target.applicationId.trim();
+      if (resolvedId.length === 0) return null;
+      return { ...target, applicationId: resolvedId };
+    },
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerJobListingsPage.resolveManualUnmarkTarget',
+      operation: 'fetch',
+      resource: 'filemaker.job-application',
+      domain: 'files',
+      description: 'Resolve the Filemaker job application target for manual unmark applied.',
+      errorPresentation: 'toast',
+    },
+  });
 
 export const useMarkAppliedMutation = (): MutationResult<
   ApplicationInfoPayload,

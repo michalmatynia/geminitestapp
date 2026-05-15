@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -97,6 +98,12 @@ const createRenderInput = (
 const renderJobListingNode = (
   overrides: Partial<FolderTreeViewportRenderNodeInput> = {}
 ) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
   const props = {
     ...createRenderInput(overrides),
     jobListingById: new Map<string, EnrichedJobListing>([['job-1', listingFixture]]),
@@ -105,7 +112,11 @@ const renderJobListingNode = (
     personId: 'person-1',
     personName: 'Jane Smith',
   };
-  render(<FilemakerJobListingMasterTreeNode {...props} />);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <FilemakerJobListingMasterTreeNode {...props} />
+    </QueryClientProvider>
+  );
   return props;
 };
 

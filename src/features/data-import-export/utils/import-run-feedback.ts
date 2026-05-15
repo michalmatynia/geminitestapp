@@ -64,6 +64,33 @@ const getDispatchModeLabel = (dispatchMode: string | null): string => {
   return 'not dispatched';
 };
 
+const getPreflightErrorExplanation = (result: ImportResponse): string | null => {
+  if (result.preflight?.ok === false) {
+    return 'Dispatch stopped at preflight before this run reached runtime queueing.';
+  }
+  return null;
+};
+
+const getDispatchExplanation = (result: ImportResponse, isExactTargetSummary: boolean): string | null => {
+  if (result.dispatchMode === 'inline') {
+    return 'This run used inline fallback because Redis queueing was unavailable or enqueueing failed.';
+  }
+  if (result.dispatchMode === 'queued') {
+    return isExactTargetSummary
+      ? 'This exact-target run was submitted to the separate base-import runtime queue and will create a new product with a Base.com connection.'
+      : 'This run was submitted to the separate base-import runtime queue.';
+  }
+  return null;
+};
+
+const getMatchedEmptyExplanation = (result: ImportResponse): string | null => {
+  const isMatchedEmpty = (result.status === 'completed' || result.status === 'partial_success') &&
+    (result.summaryMessage?.includes('No products matched') ?? false);
+  return isMatchedEmpty
+    ? 'Nothing was queued because item resolution returned zero import candidates.'
+    : null;
+};
+
 export const getImportResultDisplaySummary = (
   result: ImportResponse
 ): ImportResultDisplaySummary => {
@@ -71,47 +98,16 @@ export const getImportResultDisplaySummary = (
   const dispatchModeLabel = getDispatchModeLabel(result.dispatchMode);
   const queueJobLabel = result.queueJobId ?? 'not assigned';
 
-  if (result.preflight?.ok === false) {
-    return {
-      dispatchModeLabel,
-      queueJobLabel,
-      explanation: 'Dispatch stopped at preflight before this run reached runtime queueing.',
-    };
-  }
-
-  if (result.dispatchMode === 'inline') {
-    return {
-      dispatchModeLabel,
-      queueJobLabel,
-      explanation: 'This run used inline fallback because Redis queueing was unavailable or enqueueing failed.',
-    };
-  }
-
-  if (result.dispatchMode === 'queued') {
-    return {
-      dispatchModeLabel,
-      queueJobLabel,
-      explanation: isExactTargetSummary
-        ? 'This exact-target run was submitted to the separate base-import runtime queue and will create a new product with a Base.com connection.'
-        : 'This run was submitted to the separate base-import runtime queue.',
-    };
-  }
-
-  const isMatchedEmpty = (result.status === 'completed' || result.status === 'partial_success') &&
-    (result.summaryMessage?.includes('No products matched') ?? false);
-
-  if (isMatchedEmpty) {
-    return {
-      dispatchModeLabel,
-      queueJobLabel,
-      explanation: 'Nothing was queued because item resolution returned zero import candidates.',
-    };
-  }
+  const explanations = [
+    getPreflightErrorExplanation(result),
+    getDispatchExplanation(result, isExactTargetSummary),
+    getMatchedEmptyExplanation(result),
+  ];
 
   return {
     dispatchModeLabel,
     queueJobLabel,
-    explanation: null,
+    explanation: explanations.find((e) => e !== null) ?? null,
   };
 };
 
@@ -120,6 +116,18 @@ const getImportLabel = (kind: ImportActionKind, dryRun: boolean, isExact: boolea
   if (isExact) return 'Exact import';
   if (dryRun) return 'Dry-run import';
   return 'Import';
+};
+
+const getQueuedRunMessage = (label: string, result: ImportResponse, suffix: string): string =>
+  result.dispatchMode === 'inline' 
+    ? `${label} running inline${suffix}` 
+    : `${label} queued to base-import runtime${suffix}`;
+
+const getFailedRunMessage = (result: ImportResponse, preflightErrors: string[]): string => {
+  if (preflightErrors.length > 0) {
+    return `Import blocked before dispatch: ${preflightErrors[0]}`;
+  }
+  return result.summaryMessage ?? 'Import failed.';
 };
 
 export const buildImportResultToast = (
@@ -131,10 +139,7 @@ export const buildImportResultToast = (
 
   if (result.status === 'queued' || result.status === 'running') {
     const suffix = result.queueJobId !== null ? ` (job ${result.queueJobId}).` : '.';
-    const msg = result.dispatchMode === 'inline' 
-      ? `${label} running inline${suffix}` 
-      : `${label} queued to base-import runtime${suffix}`;
-
+    const msg = getQueuedRunMessage(label, result, suffix);
     return {
       message: msg,
       toast: { variant: result.dispatchMode === 'inline' ? 'warning' : 'success' },
@@ -149,16 +154,8 @@ export const buildImportResultToast = (
   }
 
   if (result.status === 'failed') {
-    const preflightErrors = getPreflightErrorMessages(result);
-    if (preflightErrors.length > 0) {
-      return {
-        message: `Import blocked before dispatch: ${preflightErrors[0]}`,
-        toast: { variant: 'error' },
-      };
-    }
-
     return {
-      message: result.summaryMessage ?? `${label} failed.`,
+      message: getFailedRunMessage(result, getPreflightErrorMessages(result)),
       toast: { variant: 'error' },
     };
   }

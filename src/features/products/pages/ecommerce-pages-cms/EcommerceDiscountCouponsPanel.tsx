@@ -6,19 +6,19 @@ import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, us
 import { EcommerceDiscountCouponCard } from './EcommerceDiscountCouponCard';
 import { EcommerceDiscountCouponForm } from './EcommerceDiscountCouponForm';
 import {
-  buildCouponPayload,
-  COUPONS_ENDPOINT,
   couponToForm,
   EMPTY_COUPON_FORM,
   toErrorMessage,
 } from './discount-coupons.helpers';
 import type {
   CouponFormState,
-  CouponsResponse,
-  CouponWriteResponse,
   DiscountCoupon,
 } from './discount-coupons.types';
-import { api } from '@/shared/lib/api-client';
+import {
+  useDeleteDiscountCouponMutation,
+  useLoadDiscountCouponsMutation,
+  useSaveDiscountCouponMutation,
+} from './EcommerceDiscountCouponsPanel.mutations';
 import {
   Alert,
   Badge,
@@ -141,21 +141,20 @@ function useLoadCoupons({
   setError: SetError;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
 }): () => Promise<void> {
+  const { mutateAsync: loadCouponsAsync } = useLoadDiscountCouponsMutation();
+
   return useCallback(async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get<CouponsResponse>(COUPONS_ENDPOINT, {
-        logError: false,
-        timeout: 120_000,
-      });
+      const response = await loadCouponsAsync();
       setCoupons(response.coupons);
     } catch (loadError: unknown) {
       handleError(loadError);
     } finally {
       setIsLoading(false);
     }
-  }, [handleError, setCoupons, setError, setIsLoading]);
+  }, [handleError, loadCouponsAsync, setCoupons, setError, setIsLoading]);
 }
 
 function useSaveCoupon(args: {
@@ -167,15 +166,13 @@ function useSaveCoupon(args: {
   setIsSaving: Dispatch<SetStateAction<boolean>>;
   toast: Toast;
 }): () => Promise<void> {
+  const { mutateAsync: saveCouponAsync } = useSaveDiscountCouponMutation();
+
   return useCallback(async (): Promise<void> => {
     args.setIsSaving(true);
     args.setError(null);
     try {
-      const response = await api.put<CouponWriteResponse>(
-        COUPONS_ENDPOINT,
-        buildCouponPayload(args.form),
-        { logError: false, timeout: 120_000 }
-      );
+      const response = await saveCouponAsync({ form: args.form });
       args.setCoupons((current) =>
         sortCoupons([response.coupon, ...current.filter((coupon) => coupon.code !== response.coupon.code)])
       );
@@ -186,7 +183,7 @@ function useSaveCoupon(args: {
     } finally {
       args.setIsSaving(false);
     }
-  }, [args]);
+  }, [args, saveCouponAsync]);
 }
 
 function useDeleteCoupon(args: {
@@ -197,20 +194,19 @@ function useDeleteCoupon(args: {
   setForm: SetForm;
   toast: Toast;
 }): (code: string) => Promise<void> {
+  const { mutateAsync: deleteCouponAsync } = useDeleteDiscountCouponMutation();
+
   return useCallback(async (code: string): Promise<void> => {
     args.setError(null);
     try {
-      await api.delete(`${COUPONS_ENDPOINT}/${encodeURIComponent(code)}`, {
-        logError: false,
-        timeout: 120_000,
-      });
+      await deleteCouponAsync({ code });
       args.setCoupons((current) => current.filter((coupon) => coupon.code !== code));
       if (args.form.code.trim().toUpperCase() === code) args.setForm(EMPTY_COUPON_FORM);
       args.toast('Discount coupon deleted from ecommerce databases.', { variant: 'success' });
     } catch (deleteError: unknown) {
       args.handleError(deleteError);
     }
-  }, [args]);
+  }, [args, deleteCouponAsync]);
 }
 
 function CouponList({

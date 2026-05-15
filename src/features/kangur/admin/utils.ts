@@ -25,9 +25,9 @@ export const resolvePageSectionOptions = (
   sectionTitle?: string;
   sectionDescription?: string;
 } => ({
-  sectionKey: (page?.sectionKey?.trim().length ?? 0) > 0 ? page?.sectionKey?.trim() : '',
-  sectionTitle: (page?.sectionTitle?.trim().length ?? 0) > 0 ? page?.sectionTitle?.trim() : '',
-  sectionDescription: (page?.sectionDescription?.trim().length ?? 0) > 0 ? page?.sectionDescription?.trim() : '',
+  sectionKey: (page?.sectionKey?.trim().length ?? 0) > 0 ? (page?.sectionKey?.trim() ?? '') : '',
+  sectionTitle: (page?.sectionTitle?.trim().length ?? 0) > 0 ? (page?.sectionTitle?.trim() ?? '') : '',
+  sectionDescription: (page?.sectionDescription?.trim().length ?? 0) > 0 ? (page?.sectionDescription?.trim() ?? '') : '',
 });
 
 type LessonRecipeFamily = 'time' | 'arithmetic' | 'geometry' | 'logic';
@@ -48,9 +48,9 @@ const LESSON_RECIPE_FAMILY_BY_COMPONENT_ID = new Map<KangurLessonComponentId, Le
 export const getLessonRecipeFamily = (
   componentId: KangurLessonComponentId | null | undefined
 ): LessonRecipeFamily => {
-  if (componentId != null) {
+  if (componentId !== null && componentId !== undefined) {
     const family = LESSON_RECIPE_FAMILY_BY_COMPONENT_ID.get(componentId);
-    if (family != null) return family;
+    if (family !== undefined) return family;
   }
   return 'logic';
 };
@@ -99,45 +99,34 @@ const applyDefinedLessonFormOverrides = (
   return nextFormData;
 };
 
-const readLessonTemplateFormField = (
+const getTemplateField = (
   template: KangurLessonTemplate,
   field: LessonTemplateFormField
 ): LessonFormData[LessonTemplateFormField] | undefined => {
   switch (field) {
-    case 'subject':
-      return template.subject;
-    case 'ageGroup':
-      return template.ageGroup;
-    case 'title':
-      return template.title;
-    case 'description':
-      return template.description;
-    case 'emoji':
-      return template.emoji;
-    case 'color':
-      return template.color;
-    case 'activeBg':
-      return template.activeBg;
+    case 'subject': return template.subject;
+    case 'ageGroup': return template.ageGroup;
+    case 'title': return template.title;
+    case 'description': return template.description;
+    case 'emoji': return template.emoji;
+    case 'color': return template.color;
+    case 'activeBg': return template.activeBg;
   }
 };
 
 const resolveLessonTemplateFormOverrides = (
   template?: KangurLessonTemplate | null
 ): Partial<Pick<LessonFormData, LessonTemplateFormField>> => {
-  if (!template) {
-    return {};
-  }
+  if (!template) return {};
 
-  return LESSON_TEMPLATE_FORM_FIELDS.reduce<Partial<Pick<LessonFormData, LessonTemplateFormField>>>(
-    (overrides, field) => {
-      const value = readLessonTemplateFormField(template, field);
-      if (value !== undefined) {
-        return { ...overrides, [field]: value };
-      }
-      return overrides;
-    },
-    {}
-  );
+  const overrides: Partial<Pick<LessonFormData, LessonTemplateFormField>> = {};
+  for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
+    const value = getTemplateField(template, field);
+    if (value !== undefined) {
+      overrides[field] = value;
+    }
+  }
+  return overrides;
 };
 
 export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
@@ -242,19 +231,26 @@ export const parseNumberInput = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
 const readFiniteNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-const readLessonGroupMetadata = (metadata: unknown): Record<string, unknown> | null =>
-  asRecord(asRecord(metadata)?.['kangurLessonGroup']);
+const readLessonGroupMetadata = (metadata: unknown): Record<string, unknown> | null => {
+  if (typeof metadata === 'object' && metadata !== null) {
+    const record = metadata as Record<string, unknown>;
+    const group = record['kangurLessonGroup'];
+    if (typeof group === 'object' && group !== null) {
+      return group as Record<string, unknown>;
+    }
+  }
+  return null;
+};
 
-export const readLessonGroupCount = (metadata: unknown): number | null =>
-  readFiniteNumber(readLessonGroupMetadata(metadata)?.['lessonCount']);
+export const readLessonGroupCount = (metadata: unknown): number | null => {
+  const meta = readLessonGroupMetadata(metadata);
+  if (meta === null) return null;
+  const count = meta['lessonCount'];
+  return readFiniteNumber(count);
+};
 
 export const clampGridColumnStart = (
   columnStart: number | null,
@@ -274,11 +270,12 @@ export const parseOptionalNumberInput = (
   min: number,
   max: number
 ): number | null => {
-  if (value.trim() === '') {
+  const trimmed = value.trim();
+  if (trimmed === '') {
     return null;
   }
 
-  const parsed = Number.parseInt(value, 10);
+  const parsed = Number.parseInt(trimmed, 10);
   if (!Number.isFinite(parsed)) {
     return null;
   }

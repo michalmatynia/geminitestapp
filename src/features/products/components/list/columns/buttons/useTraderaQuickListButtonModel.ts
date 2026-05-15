@@ -19,6 +19,7 @@ import type {
   ProductListingsRecoveryContext,
 } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/toast';
 
 import {
@@ -180,6 +181,35 @@ const useTraderaQuickListClickHandler = (
 ): (() => void) => {
   const localFeedbackRef = useRef(input.localFeedback);
   localFeedbackRef.current = input.localFeedback;
+  const quickListMutation = createMutationV2<void, void>({
+    mutationKey: ['products', 'quick-list', 'tradera', input.productId],
+    mutationFn: async (): Promise<void> =>
+      runTraderaQuickListAction({
+        productId: input.productId,
+        queryClient: input.queryClient,
+        toast: input.toast,
+        createListing: input.createListing,
+        browserMode: input.browserMode,
+        resolveConnection: input.resolveConnection,
+        enableDefaultScriptedConnection: input.enableDefaultScriptedConnection,
+        setFeedbackStatus: input.setFeedbackStatus,
+        getLocalFeedback: () => localFeedbackRef.current,
+        onOpenIntegrations: input.onOpenIntegrations,
+        prefetchListings: input.prefetchListings,
+      }),
+    onSettled: (): void => {
+      input.setSubmitting(false);
+    },
+    meta: {
+      source: 'products.quickList.TraderaQuickListButton.run',
+      operation: 'action',
+      resource: 'products.quick-list.tradera',
+      domain: 'products',
+      description: 'Runs the Tradera one-click product listing flow.',
+      errorPresentation: 'toast',
+      tags: ['products', 'tradera', 'quick-list'],
+    },
+  });
 
   return useCallback((): void => {
     if (input.actionSettingsPending) {
@@ -190,20 +220,8 @@ const useTraderaQuickListClickHandler = (
     if (input.isClosedTraderaStatus) input.setTrackClosedQuickListAttempt(true);
     input.setSubmitting(true);
     input.setFeedbackStatus('processing');
-    void runTraderaQuickListAction({
-      productId: input.productId,
-      queryClient: input.queryClient,
-      toast: input.toast,
-      createListing: input.createListing,
-      browserMode: input.browserMode,
-      resolveConnection: input.resolveConnection,
-      enableDefaultScriptedConnection: input.enableDefaultScriptedConnection,
-      setFeedbackStatus: input.setFeedbackStatus,
-      getLocalFeedback: () => localFeedbackRef.current,
-      onOpenIntegrations: input.onOpenIntegrations,
-      prefetchListings: input.prefetchListings,
-    }).finally(() => input.setSubmitting(false));
-  }, [input]);
+    quickListMutation.mutate();
+  }, [input, quickListMutation]);
 };
 
 export function useTraderaQuickListButtonModel(

@@ -1,6 +1,16 @@
 import type { ArchLocale, ArchPageContent, ArchPageSettings, ArchSeoMeta } from './types';
 
 export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
+  nav: {
+    brandSub: '/ est. Amsterdam',
+    links: [
+      { label: 'practice', href: '#practice' },
+      { label: 'projects', href: '#projects' },
+      { label: 'process', href: '#process' },
+      { label: 'studio', href: '#studio' },
+    ],
+    ctaLabel: 'enquire',
+  },
   hero: {
     location: 'Amsterdam / London / Zurich',
     indexLabel: 'Index - MMXXV',
@@ -292,6 +302,21 @@ function normalizeCaseStudyStats(
   return result.length > 0 ? result : fallback;
 }
 
+function normalizeNavLinks(
+  value: unknown,
+  fallback: ArchPageContent['nav']['links']
+): ArchPageContent['nav']['links'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((l) => ({
+      label: asString(l['label'], ''),
+      href: asString(l['href'], '#'),
+    }))
+    .filter((l) => l.label.length > 0);
+  return result.length > 0 ? result : fallback;
+}
+
 function normalizeFooterColumns(
   value: unknown,
   fallback: ArchPageContent['footer']['columns']
@@ -315,6 +340,7 @@ function normalizeFooterColumns(
 
 export function normalizeArchPageContent(input: unknown): ArchPageContent {
   const source = isRecord(input) ? input : {};
+  const nav = isRecord(source['nav']) ? source['nav'] : {};
   const hero = isRecord(source['hero']) ? source['hero'] : {};
   const drawing = isRecord(source['drawing']) ? source['drawing'] : {};
   const philosophy = isRecord(source['philosophy']) ? source['philosophy'] : {};
@@ -328,6 +354,11 @@ export function normalizeArchPageContent(input: unknown): ArchPageContent {
   const d = DEFAULT_ARCH_PAGE_CONTENT;
 
   return {
+    nav: {
+      brandSub: asString(nav['brandSub'], d.nav.brandSub),
+      links: normalizeNavLinks(nav['links'], d.nav.links),
+      ctaLabel: asString(nav['ctaLabel'], d.nav.ctaLabel),
+    },
     hero: {
       location: asString(hero['location'], d.hero.location),
       indexLabel: asString(hero['indexLabel'], d.hero.indexLabel),

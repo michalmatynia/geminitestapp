@@ -64,20 +64,21 @@ const redactObject = (value: Record<string, unknown>, depth: number): Record<str
 const redactValue = (value: unknown, depth: number): unknown => {
   if (depth > MAX_DEPTH) return '[Truncated]';
   if (typeof value === 'string') return truncateString(value, MAX_STRING);
-  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (value === null) return null;
   if (Array.isArray(value)) {
     return value.slice(0, MAX_ARRAY).map((item: unknown) => redactValue(item, depth + 1));
   }
-  if (typeof value === 'object' && value !== null) {
+  if (typeof value === 'object') {
     return redactObject(value as Record<string, unknown>, depth);
   }
   return '[Unknown]';
 };
 
 const redactBody = (body: unknown): Record<string, unknown> | null => {
-  if (body === undefined || body === null || body === false) return null;
+  if (body === null || body === false || body === undefined) return null;
   const redacted = redactValue(body, 0);
-  if (redacted !== null && typeof redacted === 'object' && !Array.isArray(redacted)) {
+  if (typeof redacted === 'object' && redacted !== null && !Array.isArray(redacted)) {
     return redacted as Record<string, unknown>;
   }
   return { value: redacted };
@@ -101,17 +102,23 @@ const buildAuthContext = (input: AuthLogInput, url: URL): Record<string, unknown
     headers: extractHeaders(input.req),
   };
 
-  if (typeof input.outcome === 'string' && input.outcome !== '') {
-    context['outcome'] = input.outcome;
+  const outcome = input.outcome;
+  if (outcome !== null && outcome !== '') {
+    context['outcome'] = outcome;
   }
-  if (typeof input.status === 'number') {
-    context['status'] = input.status;
+  const status = input.status;
+  if (status !== null && status !== undefined) {
+    context['status'] = status;
   }
-  if (input.body !== undefined && input.body !== null) {
-    context['body'] = redactBody(input.body);
+  
+  const body = input.body;
+  if (body !== null && body !== undefined) {
+    context['body'] = redactBody(body);
   }
-  if (input.extra !== undefined && input.extra !== null) {
-    context['extra'] = redactValue(input.extra, 0);
+  
+  const extra = input.extra;
+  if (extra !== null && extra !== undefined) {
+    context['extra'] = redactValue(extra, 0);
   }
 
   return context;

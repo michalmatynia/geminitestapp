@@ -1,11 +1,12 @@
 'use client';
 
 import { RefreshCcwIcon } from 'lucide-react';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo } from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Badge, Button, Card, Skeleton } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type TrendSnapshot = {
   at: string;
@@ -53,6 +54,12 @@ type TrendSnapshotsPayload = {
 };
 
 const TREND_SNAPSHOT_LIMIT = 12;
+const TREND_SNAPSHOTS_QUERY_KEY = [
+  ...QUERY_KEYS.ai.aiPaths.all,
+  'portable-engine',
+  'trend-snapshots',
+  { limit: TREND_SNAPSHOT_LIMIT },
+] as const;
 const portableEngineOutlineBadgeClassName = 'border-white/10 text-gray-300';
 const portableEngineInfoPanelClassName =
   'rounded-md border border-border/60 bg-black/20 p-2 text-xs text-gray-300';
@@ -172,38 +179,40 @@ function renderPortableEngineRecordCard({
   );
 }
 
-export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
-  const [data, setData] = useState<TrendSnapshotsPayload | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadSnapshots = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/ai-paths/portable-engine/trend-snapshots?limit=${TREND_SNAPSHOT_LIMIT}`,
-        {
-          method: 'GET',
-          cache: 'no-store',
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to load trend snapshots (${response.status}).`);
-      }
-      const payload = (await response.json()) as TrendSnapshotsPayload;
-      setData(payload);
-    } catch (cause) {
-      logClientError(cause);
-      setError(cause instanceof Error ? cause.message : 'Failed to load trend snapshots.');
-    } finally {
-      setIsLoading(false);
+const fetchTrendSnapshots = async (): Promise<TrendSnapshotsPayload> => {
+  const response = await fetch(
+    `/api/ai-paths/portable-engine/trend-snapshots?limit=${TREND_SNAPSHOT_LIMIT}`,
+    {
+      method: 'GET',
+      cache: 'no-store',
     }
-  }, []);
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load trend snapshots (${response.status}).`);
+  }
+  return (await response.json()) as TrendSnapshotsPayload;
+};
 
-  useEffect(() => {
-    void loadSnapshots();
-  }, [loadSnapshots]);
+export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
+  const snapshotsQuery = createSingleQueryV2<TrendSnapshotsPayload>({
+    queryKey: TREND_SNAPSHOTS_QUERY_KEY,
+    queryFn: fetchTrendSnapshots,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    meta: {
+      source: 'ai.aiPaths.PortableEngineTrendSnapshotsPanel.snapshots',
+      operation: 'detail',
+      resource: 'ai-paths.portable-engine.trend-snapshots',
+      domain: 'ai_paths',
+      queryKey: TREND_SNAPSHOTS_QUERY_KEY,
+      description: 'Loads portable engine trend snapshots.',
+      errorPresentation: 'inline',
+      tags: ['ai-paths', 'portable-engine', 'trend-snapshots'],
+    },
+  });
+  const data = snapshotsQuery.data ?? null;
+  const isLoading = snapshotsQuery.isFetching;
+  const error = snapshotsQuery.error?.message ?? null;
 
   const latestSnapshots = useMemo(() => (data?.snapshots ?? []).slice(-6).reverse(), [data]);
   const runExecution = data?.runExecution ?? {
@@ -266,7 +275,7 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             size='xs'
             variant='outline'
             onClick={() => {
-              void loadSnapshots();
+              void snapshotsQuery.refetch();
             }}
             disabled={isLoading}
           >

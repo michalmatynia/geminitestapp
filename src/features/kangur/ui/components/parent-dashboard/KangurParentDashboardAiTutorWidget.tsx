@@ -1,6 +1,7 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+/* eslint-disable max-lines, max-lines-per-function, consistent-return, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
+
 import { useLocale, useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
@@ -28,6 +29,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import {
   loadPersistedTutorVisibilityHidden,
   persistTutorVisibilityHidden,
@@ -35,7 +37,7 @@ import {
 } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -64,6 +66,44 @@ import {
   resolveCrossPagePersistenceFormState,
   resolveShouldLoadAiTutorUsage,
 } from './KangurParentDashboardAiTutorWidget.utils';
+
+type SaveAiTutorSettingsVariables = {
+  learnerId: string;
+  nextEnabled: boolean;
+  value: string;
+};
+
+const useSaveAiTutorSettingsMutation = (): MutationResult<
+  void,
+  SaveAiTutorSettingsVariables
+> =>
+  createMutationV2<void, SaveAiTutorSettingsVariables>({
+    mutationKey: ['kangur', 'ai-tutor', 'parent-dashboard', 'settings', 'save'],
+    mutationFn: async ({ value }) => {
+      await api.post('/api/settings', {
+        key: KANGUR_AI_TUTOR_SETTINGS_KEY,
+        value,
+      });
+      invalidateSettingsCache();
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateAllSettings(queryClient);
+      if (variables.nextEnabled) {
+        await queryClient.invalidateQueries({
+          queryKey: kangurKeys.aiTutor.usage(variables.learnerId),
+        });
+      }
+    },
+    meta: {
+      source: 'kangur.ui.KangurParentDashboardAiTutorWidget.saveSettings',
+      operation: 'update',
+      resource: 'kangur.ai-tutor.settings',
+      domain: 'kangur',
+      description: 'Saves learner AI tutor settings from the parent dashboard.',
+      errorPresentation: 'toast',
+      tags: ['kangur', 'ai-tutor', 'settings'],
+    },
+  });
 
 function useAiTutorVisibilityHidden(): boolean {
   const [isTutorHidden, setIsTutorHidden] = useState(() => loadPersistedTutorVisibilityHidden());
@@ -239,7 +279,7 @@ function useAiTutorConfigPanelState(): AiTutorConfigPanelState {
   const tutor = useOptionalKangurAiTutor();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
   const { entry: aiTutorSectionContent } = useKangurPageContentEntry('parent-dashboard-ai-tutor');
-  const queryClient = useQueryClient();
+  const saveAiTutorSettingsMutation = useSaveAiTutorSettingsMutation();
   const activeLearnerId = activeLearner?.id ?? null;
   const isTemporarilyDisabled = PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED;
   const isTutorHidden = useAiTutorVisibilityHidden();
@@ -344,17 +384,11 @@ function useAiTutorConfigPanelState(): AiTutorConfigPanelState {
         },
       },
       async () => {
-        await api.post('/api/settings', {
-          key: KANGUR_AI_TUTOR_SETTINGS_KEY,
+        await saveAiTutorSettingsMutation.mutateAsync({
+          learnerId: activeLearner.id,
+          nextEnabled: next.enabled,
           value: serializeSetting(nextStore),
         });
-        invalidateSettingsCache();
-        await invalidateAllSettings(queryClient);
-        if (next.enabled) {
-          await queryClient.invalidateQueries({
-            queryKey: kangurKeys.aiTutor.usage(activeLearner.id),
-          });
-        }
         setFeedback(tutorContent.parentDashboard.saveSuccess);
       },
       {
@@ -370,7 +404,7 @@ function useAiTutorConfigPanelState(): AiTutorConfigPanelState {
     canAccessDashboard,
     formState,
     isTemporarilyDisabled,
-    queryClient,
+    saveAiTutorSettingsMutation,
     settingsStoreMap,
     tutorContent.parentDashboard.saveError,
     tutorContent.parentDashboard.saveSuccess,

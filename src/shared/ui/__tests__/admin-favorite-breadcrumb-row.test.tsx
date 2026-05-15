@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
@@ -51,6 +52,25 @@ vi.mock('@/shared/ui/toast', () => ({
 
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const withQueryClient = (children: React.ReactNode): React.JSX.Element => (
+  <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+);
+
+const renderWithQueryClient = (children: React.ReactNode): ReturnType<typeof render> =>
+  render(withQueryClient(children));
+
 describe('AdminFavoriteBreadcrumbRow', () => {
   beforeEach(() => {
     mocks.apiPostMock.mockReset().mockResolvedValue({});
@@ -86,7 +106,7 @@ describe('AdminFavoriteBreadcrumbRow', () => {
   });
 
   it('adds the provided item id to admin favorites', async () => {
-    render(
+    renderWithQueryClient(
       <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
         <div>breadcrumbs</div>
       </AdminFavoriteBreadcrumbRow>
@@ -114,13 +134,15 @@ describe('AdminFavoriteBreadcrumbRow', () => {
       refetch: vi.fn(),
     });
 
-    render(
+    renderWithQueryClient(
       <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
         <div>breadcrumbs</div>
       </AdminFavoriteBreadcrumbRow>
     );
 
-    expect(screen.getByRole('button', { name: 'Remove Observation Post from admin favorites' })).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Remove Observation Post from admin favorites' })
+    ).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Remove Observation Post from admin favorites' })
@@ -141,7 +163,7 @@ describe('AdminFavoriteBreadcrumbRow', () => {
   it('resolves the favorite item from the current admin route when no explicit id is provided', async () => {
     vi.mocked(usePathname).mockReturnValue('/admin/system/logs');
 
-    render(
+    renderWithQueryClient(
       <AdminFavoriteBreadcrumbRow>
         <div>breadcrumbs</div>
       </AdminFavoriteBreadcrumbRow>
@@ -164,7 +186,7 @@ describe('AdminFavoriteBreadcrumbRow', () => {
   it('resolves nested admin routes to the closest favorite leaf', async () => {
     vi.mocked(usePathname).mockReturnValue('/admin/products/123');
 
-    render(
+    renderWithQueryClient(
       <AdminFavoriteBreadcrumbRow>
         <div>breadcrumbs</div>
       </AdminFavoriteBreadcrumbRow>
@@ -183,7 +205,7 @@ describe('AdminFavoriteBreadcrumbRow', () => {
   it('resolves direct agent runs routes using the matching admin nav leaf', async () => {
     vi.mocked(usePathname).mockReturnValue('/admin/agentcreator/runs');
 
-    render(
+    renderWithQueryClient(
       <AdminFavoriteBreadcrumbRow>
         <div>breadcrumbs</div>
       </AdminFavoriteBreadcrumbRow>
@@ -207,9 +229,11 @@ describe('AdminFavoriteBreadcrumbRow', () => {
     });
 
     const serverMarkup = renderToString(
-      <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
-        <div>breadcrumbs</div>
-      </AdminFavoriteBreadcrumbRow>
+      withQueryClient(
+        <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
+          <div>breadcrumbs</div>
+        </AdminFavoriteBreadcrumbRow>
+      )
     );
 
     mocks.useSettingsStoreMock.mockReturnValue({
@@ -229,9 +253,11 @@ describe('AdminFavoriteBreadcrumbRow', () => {
     await act(async () => {
       root = hydrateRoot(
         container,
-        <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
-          <div>breadcrumbs</div>
-        </AdminFavoriteBreadcrumbRow>,
+        withQueryClient(
+          <AdminFavoriteBreadcrumbRow itemId='system/logs' itemLabel='Observation Post'>
+            <div>breadcrumbs</div>
+          </AdminFavoriteBreadcrumbRow>
+        ),
         {
           onRecoverableError: (error) => {
             recoverableErrors.push(error.message);

@@ -2,7 +2,7 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Copy, Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Download, Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -24,13 +24,16 @@ import {
   type MilkbarSeoMeta,
   type MilkbarServiceCmsRecord,
 } from './milkbar-cms.types';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
 import { Alert, Badge, Button, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
 
 const ENDPOINT = '/api/v2/page-manager/milkbardesigners';
+const MILKBAR_CMS_SNAPSHOT_QUERY_KEY = ['page-manager', 'milkbardesigners', 'snapshot'] as const;
 
 const TABS = [
   { label: 'Page Content', value: 'content' },
@@ -42,6 +45,17 @@ const TABS = [
 ] as const;
 
 type MilkbarCmsTab = (typeof TABS)[number]['value'];
+type MilkbarCmsSavePayload = Pick<
+  MilkbarCmsSnapshot,
+  'localizedContent' | 'pageSettings' | 'projects' | 'services'
+>;
+type MilkbarInquiryStatusUpdate = {
+  email: string;
+  status: 'pending' | 'contacted';
+};
+type MilkbarInquiryStatusUpdateResponse = {
+  ok: boolean;
+};
 
 const linesToText = (lines: string[]): string => lines.join('\n');
 const textToLines = (value: string): string[] =>
@@ -60,6 +74,74 @@ const toOrderNumber = (value: string): number => {
 
 const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'] as const;
 const toRoman = (n: number): string => ROMAN[n - 1] ?? String(n);
+
+const getMetaDescriptionHint = (len: number): string => {
+  if (len > 160) return ' ⚠ too long';
+  if (len < 120) return ' ↑ too short';
+  return '';
+};
+
+const exportInquiriesCsv = (inquiries: MilkbarCmsSnapshot['inquiries']): void => {
+  const header = 'email,status,locale,source,createdAt';
+  const rows = inquiries.map((i) =>
+    [i.email, i.status, i.locale ?? '', i.source, i.createdAt ?? '']
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',')
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `milkbar-inquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const getSeoDisplayTitle = (title: string): string => {
+  if (title.length > 60) return `${title.slice(0, 60)}…`;
+  if (title.length > 0) return title;
+  return 'Untitled page';
+};
+
+const getSeoDisplayDesc = (description: string): string => {
+  if (description.length > 160) return `${description.slice(0, 160)}…`;
+  if (description.length > 0) return description;
+  return 'No description set.';
+};
+
+const getLocaleStatusDotClassName = ({
+  isPublished,
+  isUntranslated,
+}: {
+  isPublished: boolean;
+  isUntranslated: boolean;
+}): string => {
+  if (isUntranslated) return 'bg-amber-400';
+  if (isPublished) return 'bg-emerald-500';
+  return 'bg-white/20';
+};
+
+const getLocaleStatusLabel = ({
+  isPublished,
+  isUntranslated,
+}: {
+  isPublished: boolean;
+  isUntranslated: boolean;
+}): string => {
+  if (isUntranslated) return 'Not translated - identical to EN';
+  if (isPublished) return 'Published';
+  return 'Draft';
+};
+
+const getInquiryStatusActionLabel = (
+  isLoading: boolean,
+  status: 'pending' | 'contacted'
+): string => {
+  if (isLoading) return '...';
+  if (status === 'contacted') return 'Mark pending';
+  return 'Mark contacted';
+};
 
 const newProject = (index: number): MilkbarProjectCmsRecord => ({
   code: `MBD-${String(index + 1).padStart(3, '0')}`,
@@ -82,6 +164,75 @@ const newService = (index: number): MilkbarServiceCmsRecord => ({
   description: 'Service description pending.',
   order: index,
 });
+
+const fetchMilkbarCmsSnapshot = async (): Promise<MilkbarCmsSnapshot> =>
+  api.get<MilkbarCmsSnapshot>(ENDPOINT);
+
+const saveMilkbarCmsSnapshot = async (
+  payload: MilkbarCmsSavePayload
+): Promise<MilkbarCmsSnapshot> =>
+  api.put<MilkbarCmsSnapshot>(ENDPOINT, payload, { timeout: 120_000 });
+
+const updateMilkbarInquiryStatus = async (
+  payload: MilkbarInquiryStatusUpdate
+): Promise<MilkbarInquiryStatusUpdateResponse> =>
+  api.patch<MilkbarInquiryStatusUpdateResponse>(ENDPOINT, payload);
+
+const useMilkbarCmsSnapshotQuery = (): SingleQuery<MilkbarCmsSnapshot> =>
+  createSingleQueryV2<
+    MilkbarCmsSnapshot,
+    MilkbarCmsSnapshot,
+    typeof MILKBAR_CMS_SNAPSHOT_QUERY_KEY
+  >({
+    id: 'milkbardesigners-cms',
+    queryKey: MILKBAR_CMS_SNAPSHOT_QUERY_KEY,
+    queryFn: fetchMilkbarCmsSnapshot,
+    meta: {
+      source: 'features.page-manager.milkbardesigners.snapshot',
+      operation: 'detail',
+      resource: 'page-manager.milkbardesigners.cms',
+      domain: 'cms',
+      description: 'Loads Milkbardesigners CMS source-of-truth snapshot.',
+      errorPresentation: 'inline',
+      tags: ['page-manager', 'milkbardesigners'],
+    },
+  });
+
+const useSaveMilkbarCmsSnapshotMutation = (): MutationResult<
+  MilkbarCmsSnapshot,
+  MilkbarCmsSavePayload
+> =>
+  createMutationV2({
+    mutationKey: ['page-manager', 'milkbardesigners', 'save'],
+    mutationFn: saveMilkbarCmsSnapshot,
+    meta: {
+      source: 'features.page-manager.milkbardesigners.save',
+      operation: 'update',
+      resource: 'page-manager.milkbardesigners.cms',
+      domain: 'cms',
+      description: 'Saves Milkbardesigners CMS content to source and runtime databases.',
+      errorPresentation: 'toast',
+      tags: ['page-manager', 'milkbardesigners'],
+    },
+  });
+
+const useUpdateMilkbarInquiryStatusMutation = (): MutationResult<
+  MilkbarInquiryStatusUpdateResponse,
+  MilkbarInquiryStatusUpdate
+> =>
+  createMutationV2({
+    mutationKey: ['page-manager', 'milkbardesigners', 'inquiry-status'],
+    mutationFn: updateMilkbarInquiryStatus,
+    meta: {
+      source: 'features.page-manager.milkbardesigners.inquiryStatus',
+      operation: 'update',
+      resource: 'page-manager.milkbardesigners.inquiries',
+      domain: 'cms',
+      description: 'Updates Milkbardesigners runtime inquiry status.',
+      errorPresentation: 'toast',
+      tags: ['page-manager', 'milkbardesigners', 'inquiries'],
+    },
+  });
 
 function FieldInput({
   label,
@@ -154,6 +305,7 @@ function LocaleSwitcher({
       {MILKBAR_LOCALES.map((locale) => {
         const isPublished = publishedLocales.includes(locale);
         const isUntranslated = locale !== 'en' && (untranslatedLocales?.has(locale) ?? false);
+        const localeStatus = { isPublished, isUntranslated };
         return (
           <button
             key={locale}
@@ -167,20 +319,8 @@ function LocaleSwitcher({
           >
             {locale}
             <span
-              className={`inline-block size-1.5 rounded-full ${
-                isUntranslated
-                  ? 'bg-amber-400'
-                  : isPublished
-                    ? 'bg-emerald-500'
-                    : 'bg-white/20'
-              }`}
-              title={
-                isUntranslated
-                  ? 'Not translated — identical to EN'
-                  : isPublished
-                    ? 'Published'
-                    : 'Draft'
-              }
+              className={`inline-block size-1.5 rounded-full ${getLocaleStatusDotClassName(localeStatus)}`}
+              title={getLocaleStatusLabel(localeStatus)}
             />
           </button>
         );
@@ -191,6 +331,9 @@ function LocaleSwitcher({
 
 export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const { toast } = useToast();
+  const snapshotQuery = useMilkbarCmsSnapshotQuery();
+  const saveSnapshotMutation = useSaveMilkbarCmsSnapshotMutation();
+  const inquiryStatusMutation = useUpdateMilkbarInquiryStatusMutation();
   const [activeTab, setActiveTab] = useState<MilkbarCmsTab>('content');
   const [activeLocale, setActiveLocale] = useState<MilkbarLocale>('en');
   const [snapshot, setSnapshot] = useState<MilkbarCmsSnapshot | null>(null);
@@ -198,58 +341,65 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const [pageSettings, setPageSettings] = useState<MilkbarPageSettings>(DEFAULT_MILKBAR_PAGE_SETTINGS);
   const [projects, setProjects] = useState<MilkbarProjectCmsRecord[]>([]);
   const [services, setServices] = useState<MilkbarServiceCmsRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSnapshot = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
+  const applySnapshot = useCallback((nextSnapshot: MilkbarCmsSnapshot): void => {
     setError(null);
-    try {
-      const nextSnapshot = await api.get<MilkbarCmsSnapshot>(ENDPOINT);
-      setSnapshot(nextSnapshot);
-      setLocalizedContent(nextSnapshot.localizedContent);
-      setPageSettings(nextSnapshot.pageSettings);
-      setProjects(nextSnapshot.projects);
-      setServices(nextSnapshot.services);
-    } catch (loadError) {
-      setError(toErrorMessage(loadError));
-    } finally {
-      setIsLoading(false);
-    }
+    setSnapshot(nextSnapshot);
+    setLocalizedContent(nextSnapshot.localizedContent);
+    setPageSettings(nextSnapshot.pageSettings);
+    setProjects(nextSnapshot.projects);
+    setServices(nextSnapshot.services);
   }, []);
 
   useEffect(() => {
-    loadSnapshot().catch(() => undefined);
-  }, [loadSnapshot]);
+    if (snapshotQuery.data !== undefined) {
+      applySnapshot(snapshotQuery.data);
+    }
+  }, [applySnapshot, snapshotQuery.data]);
+
+  useEffect(() => {
+    if (snapshotQuery.error !== null) {
+      setError(toErrorMessage(snapshotQuery.error));
+    }
+  }, [snapshotQuery.error]);
+
+  const isLoading = snapshotQuery.isLoading && snapshot === null;
+  const isRefreshing = snapshotQuery.isFetching;
+  const isSaving = saveSnapshotMutation.isPending;
 
   const saveSnapshot = useCallback(async (): Promise<void> => {
-    setIsSaving(true);
     setError(null);
     try {
-      const nextSnapshot = await api.put<MilkbarCmsSnapshot>(
-        ENDPOINT,
-        { localizedContent, pageSettings, projects, services },
-        { timeout: 120_000 }
-      );
-      setSnapshot(nextSnapshot);
-      setLocalizedContent(nextSnapshot.localizedContent);
-      setPageSettings(nextSnapshot.pageSettings);
-      setProjects(nextSnapshot.projects);
-      setServices(nextSnapshot.services);
+      const nextSnapshot = await saveSnapshotMutation.mutateAsync({
+        localizedContent,
+        pageSettings,
+        projects,
+        services,
+      });
+      applySnapshot(nextSnapshot);
       toast('Milkbardesigners CMS saved.', { variant: 'success' });
     } catch (saveError) {
       const message = toErrorMessage(saveError);
       setError(message);
       toast(message, { variant: 'error' });
-    } finally {
-      setIsSaving(false);
     }
-  }, [localizedContent, pageSettings, projects, services, toast]);
+  }, [
+    applySnapshot,
+    localizedContent,
+    pageSettings,
+    projects,
+    saveSnapshotMutation,
+    services,
+    toast,
+  ]);
 
   const handleRefreshClick = useCallback((): void => {
-    loadSnapshot().catch(() => undefined);
-  }, [loadSnapshot]);
+    setError(null);
+    void snapshotQuery.refetch().catch((refreshError: unknown) => {
+      setError(toErrorMessage(refreshError));
+    });
+  }, [snapshotQuery]);
 
   const handleSaveClick = useCallback((): void => {
     saveSnapshot().catch(() => undefined);
@@ -273,6 +423,53 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     },
     []
   );
+
+  const updateNav = useCallback(
+    (patch: Partial<MilkbarPageContent['nav']>) => updateLocaleSection(activeLocale, 'nav', patch),
+    [activeLocale, updateLocaleSection]
+  );
+
+  const updateNavLink = useCallback(
+    (index: number, patch: Partial<MilkbarLinkItem>): void => {
+      setLocalizedContent((current) => ({
+        ...current,
+        [activeLocale]: {
+          ...current[activeLocale],
+          nav: {
+            ...current[activeLocale].nav,
+            links: current[activeLocale].nav.links.map((l, i) => i === index ? { ...l, ...patch } : l),
+          },
+        },
+      }));
+    },
+    [activeLocale]
+  );
+
+  const addNavLink = useCallback((): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        nav: {
+          ...current[activeLocale].nav,
+          links: [...current[activeLocale].nav.links, { label: 'new link', href: '#section' }],
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const removeNavLink = useCallback((index: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        nav: {
+          ...current[activeLocale].nav,
+          links: current[activeLocale].nav.links.filter((_, i) => i !== index),
+        },
+      },
+    }));
+  }, [activeLocale]);
 
   const updateHero = useCallback(
     (patch: Partial<MilkbarPageContent['hero']>) => updateLocaleSection(activeLocale, 'hero', patch),
@@ -571,6 +768,35 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     [activeLocale]
   );
 
+  const addFooterColumn = useCallback((): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        footer: {
+          ...current[activeLocale].footer,
+          columns: [
+            ...current[activeLocale].footer.columns,
+            { title: 'New column', links: [{ label: 'Link', href: '#' }] },
+          ],
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const removeFooterColumn = useCallback((colIndex: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        footer: {
+          ...current[activeLocale].footer,
+          columns: current[activeLocale].footer.columns.filter((_, ci) => ci !== colIndex),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
   const updateProject = useCallback(
     (index: number, patch: Partial<MilkbarProjectCmsRecord>): void => {
       setProjects((current) =>
@@ -618,6 +844,18 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     });
   }, []);
 
+  const handleInquiryStatusChange = useCallback(
+    async (email: string, status: 'pending' | 'contacted'): Promise<void> => {
+      try {
+        await inquiryStatusMutation.mutateAsync({ email, status });
+        await snapshotQuery.refetch();
+      } catch (patchError) {
+        toast(toErrorMessage(patchError), { variant: 'error' });
+      }
+    },
+    [inquiryStatusMutation, snapshotQuery, toast]
+  );
+
   const untranslatedLocales = useMemo((): Set<MilkbarLocale> => {
     const enJson = JSON.stringify(localizedContent.en);
     return new Set(
@@ -664,7 +902,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
             size='sm'
             icon={<RefreshCw className='size-4' />}
             onClick={handleRefreshClick}
-            disabled={isLoading || isSaving}
+            disabled={isRefreshing || isSaving}
           >
             Refresh
           </Button>
@@ -715,6 +953,10 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               </div>
               <ContentTab
                 pageContent={activePageContent}
+                updateNav={updateNav}
+                updateNavLink={updateNavLink}
+                addNavLink={addNavLink}
+                removeNavLink={removeNavLink}
                 updateHero={updateHero}
                 updateDrawing={updateDrawing}
                 updatePhilosophy={updatePhilosophy}
@@ -729,6 +971,8 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 updateCta={updateCta}
                 updateFooter={updateFooter}
                 updateFooterColumnTitle={updateFooterColumnTitle}
+                addFooterColumn={addFooterColumn}
+                removeFooterColumn={removeFooterColumn}
                 updateFooterLink={updateFooterLink}
                 addFooterLink={addFooterLink}
                 removeFooterLink={removeFooterLink}
@@ -752,6 +996,31 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setProjects((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateProject}
+              onDuplicate={(index) =>
+                setProjects((current) => {
+                  const src = current[index];
+                  const clone = { ...src, code: `${src.code}-copy`, name: `${src.name} (copy)` };
+                  const next = [...current];
+                  next.splice(index + 1, 0, clone);
+                  return next;
+                })
+              }
+              onMoveUp={(index) =>
+                setProjects((current) => {
+                  if (index === 0) return current;
+                  const next = [...current];
+                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                  return next;
+                })
+              }
+              onMoveDown={(index) =>
+                setProjects((current) => {
+                  if (index >= current.length - 1) return current;
+                  const next = [...current];
+                  [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                  return next;
+                })
+              }
             />
           ) : null}
           {activeTab === 'services' ? (
@@ -762,9 +1031,36 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setServices((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateService}
+              onDuplicate={(index) =>
+                setServices((current) => {
+                  const src = current[index];
+                  const clone = { ...src, code: `${src.code}-copy`, title: `${src.title} (copy)` };
+                  const next = [...current];
+                  next.splice(index + 1, 0, clone);
+                  return next;
+                })
+              }
+              onMoveUp={(index) =>
+                setServices((current) => {
+                  if (index === 0) return current;
+                  const next = [...current];
+                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                  return next;
+                })
+              }
+              onMoveDown={(index) =>
+                setServices((current) => {
+                  if (index >= current.length - 1) return current;
+                  const next = [...current];
+                  [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                  return next;
+                })
+              }
             />
           ) : null}
-          {activeTab === 'inquiries' ? <InquiriesTab snapshot={snapshot} /> : null}
+          {activeTab === 'inquiries' ? (
+            <InquiriesTab snapshot={snapshot} onStatusChange={handleInquiryStatusChange} />
+          ) : null}
           {activeTab === 'settings' ? (
             <SettingsTab
               pageSettings={pageSettings}
@@ -774,7 +1070,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               onTogglePublishedLocale={togglePublishedLocale}
             />
           ) : null}
-          {activeTab === 'status' ? <StatusTab snapshot={snapshot} /> : null}
+          {activeTab === 'status' ? <StatusTab snapshot={snapshot} localizedContent={localizedContent} /> : null}
         </div>
       )}
     </AdminPageManagerLayout>
@@ -787,6 +1083,10 @@ function PanelsIcon(): React.JSX.Element {
 
 function ContentTab({
   pageContent,
+  updateNav,
+  updateNavLink,
+  addNavLink,
+  removeNavLink,
   updateHero,
   updateDrawing,
   updatePhilosophy,
@@ -801,6 +1101,8 @@ function ContentTab({
   updateCta,
   updateFooter,
   updateFooterColumnTitle,
+  addFooterColumn,
+  removeFooterColumn,
   updateFooterLink,
   addFooterLink,
   removeFooterLink,
@@ -815,6 +1117,10 @@ function ContentTab({
   removeMetric,
 }: {
   pageContent: MilkbarPageContent;
+  updateNav: (patch: Partial<MilkbarPageContent['nav']>) => void;
+  updateNavLink: (index: number, patch: Partial<MilkbarLinkItem>) => void;
+  addNavLink: () => void;
+  removeNavLink: (index: number) => void;
   updateHero: (patch: Partial<MilkbarPageContent['hero']>) => void;
   updateDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => void;
   updatePhilosophy: (patch: Partial<MilkbarPageContent['philosophy']>) => void;
@@ -829,6 +1135,8 @@ function ContentTab({
   updateCta: (patch: Partial<MilkbarPageContent['cta']>) => void;
   updateFooter: (patch: Partial<MilkbarPageContent['footer']>) => void;
   updateFooterColumnTitle: (colIndex: number, title: string) => void;
+  addFooterColumn: () => void;
+  removeFooterColumn: (colIndex: number) => void;
   updateFooterLink: (colIndex: number, linkIndex: number, patch: Partial<MilkbarLinkItem>) => void;
   addFooterLink: (colIndex: number) => void;
   removeFooterLink: (colIndex: number, linkIndex: number) => void;
@@ -844,6 +1152,41 @@ function ContentTab({
 }): React.JSX.Element {
   return (
     <div className='space-y-4'>
+      <FormSection
+        title='Navigation'
+        subtitle={`${pageContent.nav.links.length} nav links`}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addNavLink}>
+            Add link
+          </Button>
+        }
+      >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Brand subtitle' value={pageContent.nav.brandSub} onChange={(brandSub) => updateNav({ brandSub })} description='Text after the brand name in the nav.' />
+          <FieldInput label='CTA label' value={pageContent.nav.ctaLabel} onChange={(ctaLabel) => updateNav({ ctaLabel })} description='Enquiry CTA button text.' />
+        </div>
+        <div className='space-y-1.5'>
+          {pageContent.nav.links.map((link, index) => (
+            <div key={`nav-link-${index}`} className='grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
+              <FieldInput label='Label' value={link.label} onChange={(label) => updateNavLink(index, { label })} />
+              <div className='flex items-end gap-1.5'>
+                <div className='flex-1'>
+                  <FieldInput label='Href' value={link.href} onChange={(href) => updateNavLink(index, { href })} />
+                </div>
+                <button
+                  type='button'
+                  onClick={() => removeNavLink(index)}
+                  className='mb-0.5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                  aria-label='Remove nav link'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </FormSection>
+
       <FormSection title='Hero' gridClassName='md:grid-cols-2'>
         <FieldInput label='Location line' value={pageContent.hero.location} onChange={(location) => updateHero({ location })} />
         <FieldInput label='Index label' value={pageContent.hero.indexLabel} onChange={(indexLabel) => updateHero({ indexLabel })} />
@@ -1046,15 +1389,33 @@ function ContentTab({
         <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
       </FormSection>
 
-      <FormSection title='Footer Columns' subtitle='Navigation link groups shown in the footer.'>
+      <FormSection
+        title='Footer Columns'
+        subtitle={`${pageContent.footer.columns.length} navigation groups`}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addFooterColumn}>
+            Add column
+          </Button>
+        }
+      >
         <div className='grid gap-4 md:grid-cols-3'>
           {pageContent.footer.columns.map((column, ci) => (
             <div key={`col-${ci}`} className='space-y-2 rounded-md border border-white/10 p-3'>
-              <FieldInput
-                label={`Column ${ci + 1} heading`}
-                value={column.title}
-                onChange={(title) => updateFooterColumnTitle(ci, title)}
-              />
+              <div className='flex items-center justify-between gap-2'>
+                <FieldInput
+                  label={`Column ${ci + 1} heading`}
+                  value={column.title}
+                  onChange={(title) => updateFooterColumnTitle(ci, title)}
+                />
+                <button
+                  type='button'
+                  onClick={() => removeFooterColumn(ci)}
+                  className='mt-5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                  aria-label={`Remove column ${ci + 1}`}
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
               <div className='space-y-1.5'>
                 {column.links.map((link, li) => (
                   <div key={`col-${ci}-link-${li}`} className='grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
@@ -1241,30 +1602,93 @@ function SettingsTab({
             label='Page title'
             value={pageSettings.seo[seoLocale].title}
             onChange={(title) => onUpdateSeo(seoLocale, { title })}
-            description='<title> tag — shown in browser tab and search results.'
+            description={`<title> tag — shown in browser tab and search results. ${pageSettings.seo[seoLocale].title.length}/60 chars${pageSettings.seo[seoLocale].title.length > 60 ? ' ⚠ too long' : ''}`}
           />
           <FieldInput
             label='OG title'
             value={pageSettings.seo[seoLocale].ogTitle}
             onChange={(ogTitle) => onUpdateSeo(seoLocale, { ogTitle })}
-            description='Social sharing card headline.'
+            description={`Social sharing card headline. ${pageSettings.seo[seoLocale].ogTitle.length}/60 chars${pageSettings.seo[seoLocale].ogTitle.length > 60 ? ' ⚠ too long' : ''}`}
           />
           <FieldTextarea
             label='Meta description'
             value={pageSettings.seo[seoLocale].description}
             onChange={(description) => onUpdateSeo(seoLocale, { description })}
-            description='Search result snippet — aim for 150–160 characters.'
+            description={`Search result snippet — aim for 150–160 chars. ${pageSettings.seo[seoLocale].description.length}/160 chars${getMetaDescriptionHint(pageSettings.seo[seoLocale].description.length)}`}
             rows={3}
           />
           <FieldTextarea
             label='OG description'
             value={pageSettings.seo[seoLocale].ogDescription}
             onChange={(ogDescription) => onUpdateSeo(seoLocale, { ogDescription })}
-            description='Social sharing card body text.'
+            description={`Social sharing card body text. ${pageSettings.seo[seoLocale].ogDescription.length}/160 chars${pageSettings.seo[seoLocale].ogDescription.length > 160 ? ' ⚠ too long' : ''}`}
             rows={3}
           />
         </div>
       </FormSection>
+
+      {/* SEO Search Preview */}
+      <FormSection
+        title='Search Result Preview'
+        subtitle='Approximate rendering of how this page appears in Google results.'
+        actions={
+          <div className='flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1'>
+            {MILKBAR_LOCALES.map((locale) => (
+              <button
+                key={locale}
+                type='button'
+                onClick={() => setSeoLocale(locale)}
+                className={`rounded px-3 py-1 text-xs font-semibold uppercase tracking-widest transition-colors ${
+                  seoLocale === locale ? 'bg-white/15 text-white' : 'text-muted-foreground hover:text-white'
+                }`}
+              >
+                {locale}
+              </button>
+            ))}
+          </div>
+        }
+      >
+        <SeoPreviewCard
+          title={pageSettings.seo[seoLocale].title}
+          description={pageSettings.seo[seoLocale].description}
+          locale={seoLocale}
+        />
+      </FormSection>
+    </div>
+  );
+}
+
+const MILKBAR_SITE_SLUG: Record<MilkbarLocale, string> = {
+  en: 'milkbardesigners.com',
+  de: 'milkbardesigners.com/de',
+  pl: 'milkbardesigners.com/pl',
+};
+
+function SeoPreviewCard({
+  title,
+  description,
+  locale,
+}: {
+  title: string;
+  description: string;
+  locale: MilkbarLocale;
+}): React.JSX.Element {
+  const displayTitle = getSeoDisplayTitle(title);
+  const displayDesc = getSeoDisplayDesc(description);
+  const displayUrl = MILKBAR_SITE_SLUG[locale];
+
+  return (
+    <div className='rounded-lg border border-white/10 bg-white/5 p-4'>
+      <p className='mb-1 text-[11px] uppercase tracking-widest text-muted-foreground'>
+        Google · {MILKBAR_LOCALE_LABELS[locale]}
+      </p>
+      <div className='max-w-xl space-y-0.5'>
+        <p className='truncate text-[13px] text-muted-foreground'>{displayUrl}</p>
+        <p className='text-[18px] font-normal leading-snug text-blue-400 underline decoration-blue-400/50'>
+          {displayTitle}
+        </p>
+        <p className='text-sm leading-relaxed text-muted-foreground'>{displayDesc}</p>
+      </div>
     </div>
   );
 }
@@ -1274,11 +1698,17 @@ function ProjectsTab({
   onAdd,
   onRemove,
   onUpdate,
+  onDuplicate,
+  onMoveUp,
+  onMoveDown,
 }: {
   projects: MilkbarProjectCmsRecord[];
   onAdd: () => void;
   onRemove: (index: number) => void;
   onUpdate: (index: number, patch: Partial<MilkbarProjectCmsRecord>) => void;
+  onDuplicate: (index: number) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
 }): React.JSX.Element {
   return (
     <FormSection
@@ -1293,13 +1723,38 @@ function ProjectsTab({
       {projects.map((project, index) => (
         <div key={`${project.code}-${index}`} className='space-y-3 rounded-md border border-white/10 p-4'>
           <div className='flex items-center justify-between gap-3'>
-            <SectionTitle
-              title={project.name.length > 0 ? project.name : project.code}
-              subtitle={project.code}
-            />
-            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
-              Remove
-            </Button>
+            <div className='flex items-center gap-1'>
+              <button
+                type='button'
+                onClick={() => onMoveUp(index)}
+                disabled={index === 0}
+                className='rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-30'
+                aria-label='Move project up'
+              >
+                <ChevronUp className='size-4' />
+              </button>
+              <button
+                type='button'
+                onClick={() => onMoveDown(index)}
+                disabled={index === projects.length - 1}
+                className='rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-30'
+                aria-label='Move project down'
+              >
+                <ChevronDown className='size-4' />
+              </button>
+              <SectionTitle
+                title={project.name.length > 0 ? project.name : project.code}
+                subtitle={`#${index + 1} · ${project.code}`}
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button type='button' variant='secondary' size='sm' icon={<Copy className='size-4' />} onClick={() => onDuplicate(index)}>
+                Duplicate
+              </Button>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
+                Remove
+              </Button>
+            </div>
           </div>
           <div className='grid gap-3 md:grid-cols-3'>
             <FieldInput label='Code' value={project.code} onChange={(code) => onUpdate(index, { code })} />
@@ -1332,17 +1787,17 @@ function ProjectsTab({
             <FieldInput
               label='Pos X'
               value={project.cameraPosition.x}
-              onChange={(x) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, x: Number(x) || 0 } })}
+              onChange={(x) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, x: toOrderNumber(x) } })}
             />
             <FieldInput
               label='Pos Y'
               value={project.cameraPosition.y}
-              onChange={(y) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, y: Number(y) || 0 } })}
+              onChange={(y) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, y: toOrderNumber(y) } })}
             />
             <FieldInput
               label='Pos Z'
               value={project.cameraPosition.z}
-              onChange={(z) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, z: Number(z) || 0 } })}
+              onChange={(z) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, z: toOrderNumber(z) } })}
             />
             <div className='md:col-span-6'>
               <span className='mb-1 block text-xs font-medium text-muted-foreground'>3D Viewer — Camera Target (x / y / z)</span>
@@ -1350,17 +1805,17 @@ function ProjectsTab({
             <FieldInput
               label='Tgt X'
               value={project.cameraTarget.x}
-              onChange={(x) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, x: Number(x) || 0 } })}
+              onChange={(x) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, x: toOrderNumber(x) } })}
             />
             <FieldInput
               label='Tgt Y'
               value={project.cameraTarget.y}
-              onChange={(y) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, y: Number(y) || 0 } })}
+              onChange={(y) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, y: toOrderNumber(y) } })}
             />
             <FieldInput
               label='Tgt Z'
               value={project.cameraTarget.z}
-              onChange={(z) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, z: Number(z) || 0 } })}
+              onChange={(z) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, z: toOrderNumber(z) } })}
             />
           </div>
         </div>
@@ -1374,11 +1829,17 @@ function ServicesTab({
   onAdd,
   onRemove,
   onUpdate,
+  onDuplicate,
+  onMoveUp,
+  onMoveDown,
 }: {
   services: MilkbarServiceCmsRecord[];
   onAdd: () => void;
   onRemove: (index: number) => void;
   onUpdate: (index: number, patch: Partial<MilkbarServiceCmsRecord>) => void;
+  onDuplicate: (index: number) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
 }): React.JSX.Element {
   return (
     <FormSection
@@ -1393,13 +1854,38 @@ function ServicesTab({
       {services.map((service, index) => (
         <div key={`${service.code}-${index}`} className='space-y-3 rounded-md border border-white/10 p-4'>
           <div className='flex items-center justify-between gap-3'>
-            <SectionTitle
-              title={service.title.length > 0 ? service.title : service.code}
-              subtitle={service.code}
-            />
-            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
-              Remove
-            </Button>
+            <div className='flex items-center gap-1'>
+              <button
+                type='button'
+                onClick={() => onMoveUp(index)}
+                disabled={index === 0}
+                className='rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-30'
+                aria-label='Move service up'
+              >
+                <ChevronUp className='size-4' />
+              </button>
+              <button
+                type='button'
+                onClick={() => onMoveDown(index)}
+                disabled={index === services.length - 1}
+                className='rounded p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-30'
+                aria-label='Move service down'
+              >
+                <ChevronDown className='size-4' />
+              </button>
+              <SectionTitle
+                title={service.title.length > 0 ? service.title : service.code}
+                subtitle={`#${index + 1} · ${service.code}`}
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button type='button' variant='secondary' size='sm' icon={<Copy className='size-4' />} onClick={() => onDuplicate(index)}>
+                Duplicate
+              </Button>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
+                Remove
+              </Button>
+            </div>
           </div>
           <div className='grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_8rem]'>
             <FieldInput label='Code' value={service.code} onChange={(code) => onUpdate(index, { code })} />
@@ -1416,15 +1902,82 @@ function ServicesTab({
   );
 }
 
-function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React.JSX.Element {
+type InquiryFilterStatus = 'all' | 'pending' | 'contacted';
+
+function InquiriesTab({
+  snapshot,
+  onStatusChange,
+}: {
+  snapshot: MilkbarCmsSnapshot | null;
+  onStatusChange: (email: string, status: 'pending' | 'contacted') => Promise<void>;
+}): React.JSX.Element {
   const inquiries = snapshot?.inquiries ?? [];
+  const [loadingEmail, setLoadingEmail] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<InquiryFilterStatus>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleToggle = async (email: string, current: string): Promise<void> => {
+    const next = current === 'contacted' ? 'pending' : 'contacted';
+    setLoadingEmail(email);
+    try {
+      await onStatusChange(email, next);
+    } finally {
+      setLoadingEmail(null);
+    }
+  };
+
+  const filtered = inquiries.filter((i) => {
+    if (filterStatus !== 'all' && i.status !== filterStatus) return false;
+    if (searchQuery.length > 0 && !i.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const pendingCount = inquiries.filter((i) => i.status === 'pending').length;
+
   return (
     <FormSection
       title='Inquiries'
-      subtitle={`${inquiries.length} latest records from the Milkbardesigners local runtime DB`}
+      subtitle={`${inquiries.length} total · ${pendingCount} pending`}
+      actions={
+        <Button
+          type='button'
+          variant='secondary'
+          size='sm'
+          icon={<Download className='size-4' />}
+          onClick={() => exportInquiriesCsv(inquiries)}
+          disabled={inquiries.length === 0}
+        >
+          Export CSV
+        </Button>
+      }
     >
-      {inquiries.length === 0 ? (
-        <p className='text-sm text-muted-foreground'>No inquiries found.</p>
+      <div className='flex flex-wrap items-center gap-2'>
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder='Search by email…'
+          className='h-8 w-56 text-sm'
+        />
+        <div className='flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1'>
+          {(['all', 'pending', 'contacted'] as InquiryFilterStatus[]).map((s) => (
+            <button
+              key={s}
+              type='button'
+              onClick={() => setFilterStatus(s)}
+              className={`rounded px-3 py-1 text-xs font-semibold capitalize transition-colors ${
+                filterStatus === s ? 'bg-white/15 text-white' : 'text-muted-foreground hover:text-white'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        {filtered.length !== inquiries.length ? (
+          <span className='text-xs text-muted-foreground'>{filtered.length} of {inquiries.length} shown</span>
+        ) : null}
+      </div>
+      {filtered.length === 0 ? (
+        <p className='text-sm text-muted-foreground'>No inquiries match the current filter.</p>
       ) : (
         <div className='overflow-hidden rounded-md border border-white/10'>
           <table className='w-full text-left text-sm'>
@@ -1435,16 +1988,31 @@ function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): Re
                 <th className='px-3 py-2'>Locale</th>
                 <th className='px-3 py-2'>Source</th>
                 <th className='px-3 py-2'>Created</th>
+                <th className='px-3 py-2' aria-label='Actions' />
               </tr>
             </thead>
             <tbody>
-              {inquiries.map((inquiry) => (
+              {filtered.map((inquiry) => (
                 <tr key={`${inquiry.email}-${inquiry.createdAt}`} className='border-t border-white/10'>
                   <td className='px-3 py-2 text-white'>{inquiry.email}</td>
-                  <td className='px-3 py-2'><Badge>{inquiry.status}</Badge></td>
-                  <td className='px-3 py-2 text-muted-foreground uppercase tracking-widest text-xs'>{inquiry.locale ?? '—'}</td>
+                  <td className='px-3 py-2'>
+                    <Badge variant={inquiry.status === 'contacted' ? 'success' : 'default'}>
+                      {inquiry.status}
+                    </Badge>
+                  </td>
+                  <td className='px-3 py-2 text-xs uppercase tracking-widest text-muted-foreground'>{inquiry.locale ?? '—'}</td>
                   <td className='px-3 py-2 text-muted-foreground'>{inquiry.source}</td>
                   <td className='px-3 py-2 text-muted-foreground'>{inquiry.createdAt ?? '-'}</td>
+                  <td className='px-3 py-2'>
+                    <button
+                      type='button'
+                      disabled={loadingEmail === inquiry.email}
+                      onClick={() => { void handleToggle(inquiry.email, inquiry.status); }}
+                      className='rounded border border-white/10 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-white/30 hover:text-white disabled:opacity-40'
+                    >
+                      {getInquiryStatusActionLabel(loadingEmail === inquiry.email, inquiry.status)}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1455,9 +2023,37 @@ function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): Re
   );
 }
 
+const ARCH_WEB_BASE_URL = 'http://localhost:3400';
+
 function StatusTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React.JSX.Element {
   return (
     <div className='grid gap-4 lg:grid-cols-2'>
+      <FormSection
+        title='View on Site'
+        subtitle='Open the live arch-web at each published locale.'
+      >
+        {snapshot === null ? (
+          <p className='text-sm text-muted-foreground'>Loading&hellip;</p>
+        ) : (
+          <div className='space-y-2'>
+            {snapshot.pageSettings.publishedLocales.map((locale) => (
+              <a
+                key={locale}
+                href={`${ARCH_WEB_BASE_URL}/${locale}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='flex items-center justify-between rounded-md border border-white/10 px-3 py-2 text-sm transition-colors hover:border-white/30 hover:bg-white/5'
+              >
+                <span className='font-medium uppercase tracking-widest text-white'>{locale}</span>
+                <span className='text-xs text-muted-foreground'>{ARCH_WEB_BASE_URL}/{locale} ↗</span>
+              </a>
+            ))}
+            {snapshot.pageSettings.publishedLocales.length === 0 ? (
+              <p className='text-xs text-muted-foreground'>No published locales — publish at least one locale in Settings.</p>
+            ) : null}
+          </div>
+        )}
+      </FormSection>
       <FormSection title='Database Sources'>
         <div className='space-y-3 text-sm'>
           <SourceStatusCard

@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { ArchLocale } from '@/lib/types';
+import type { ArchLocale, ArchPageContent } from '@/lib/types';
 import { ARCH_LOCALES } from '@/lib/types';
 
 type NavProps = {
   currentLocale: ArchLocale;
   publishedLocales: ArchLocale[];
+  content: ArchPageContent['nav'];
 };
 
-export default function Nav({ currentLocale, publishedLocales }: NavProps) {
+export default function Nav({ currentLocale, publishedLocales, content }: NavProps) {
   useEffect(() => {
     const nav = document.getElementById('topnav');
     if (!nav) return;
@@ -30,13 +31,12 @@ export default function Nav({ currentLocale, publishedLocales }: NavProps) {
         <a href={`/${currentLocale}`} className="brand">
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">Milk Bar Designers</span>
-          <span className="brand-sub">/ est. Amsterdam</span>
+          <span className="brand-sub">{content.brandSub}</span>
         </a>
         <div className="nav-links">
-          <a href="#practice">practice</a>
-          <a href="#projects">projects</a>
-          <a href="#process">process</a>
-          <a href="#studio">studio</a>
+          {content.links.map((link) => (
+            <a key={link.href} href={link.href}>{link.label}</a>
+          ))}
         </div>
         <div className="nav-end">
           {visibleLocales.length > 1 ? (
@@ -54,7 +54,7 @@ export default function Nav({ currentLocale, publishedLocales }: NavProps) {
             </div>
           ) : null}
           <a href="#contact" className="nav-cta">
-            <span>enquire</span>
+            <span>{content.ctaLabel}</span>
             <span className="arrow" aria-hidden="true" />
           </a>
         </div>

@@ -1,12 +1,16 @@
 'use client';
 
+/* eslint-disable max-lines-per-function */
+
 import { useCallback, useEffect, useRef } from 'react';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import type {
   NumberBalanceMatchStateSnapshotResponse,
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { UseNumberBalanceRushPollingRuntimeProps } from './NumberBalanceRushGame.types';
 import {
   resolveNumberBalanceRushPlayerSnapshot,
@@ -14,6 +18,39 @@ import {
 import {
   isTerminalMatchStatus,
 } from './NumberBalanceRushGame.utils';
+
+type LoadNumberBalanceMatchStateVariables = {
+  matchId: string;
+};
+
+const loadNumberBalanceMatchState = async ({
+  matchId,
+}: LoadNumberBalanceMatchStateVariables): Promise<NumberBalanceMatchStateSnapshotResponse> =>
+  api.post<NumberBalanceMatchStateSnapshotResponse>(
+    '/api/kangur/number-balance/state',
+    { matchId }
+  );
+
+const useLoadNumberBalanceMatchStateMutation = (): MutationResult<
+  NumberBalanceMatchStateSnapshotResponse,
+  LoadNumberBalanceMatchStateVariables
+> =>
+  createMutationV2<
+    NumberBalanceMatchStateSnapshotResponse,
+    LoadNumberBalanceMatchStateVariables
+  >({
+    mutationKey: ['kangur', 'number-balance', 'match', 'state'],
+    mutationFn: loadNumberBalanceMatchState,
+    meta: {
+      source: 'kangur.ui.NumberBalanceRushGame.pollState',
+      operation: 'polling',
+      resource: 'kangur.number-balance.match',
+      domain: 'kangur',
+      description: 'Polls the latest number balance match state.',
+      errorPresentation: 'silent',
+      tags: ['kangur', 'number-balance', 'match'],
+    },
+  });
 
 export function useNumberBalanceRushPollingRuntime({
   activeMatchId,
@@ -27,7 +64,8 @@ export function useNumberBalanceRushPollingRuntime({
   setScores,
   setServerOffsetMs,
   shouldPoll,
-}: UseNumberBalanceRushPollingRuntimeProps) {
+}: UseNumberBalanceRushPollingRuntimeProps): void {
+  const { mutateAsync: loadMatchStateAsync } = useLoadNumberBalanceMatchStateMutation();
   const lastServerTimeRef = useRef<number>(0);
 
   const syncMatchState = useCallback(
@@ -54,15 +92,16 @@ export function useNumberBalanceRushPollingRuntime({
 
   const pollState = useCallback(async (): Promise<void> => {
     const matchId = activeMatchIdRef.current;
-    if (!matchId || isTerminalMatchStatus(activeMatchStatusRef.current)) {
+    if (
+      typeof matchId !== 'string' ||
+      matchId.length === 0 ||
+      isTerminalMatchStatus(activeMatchStatusRef.current)
+    ) {
       return;
     }
 
     try {
-      const response = await api.post<NumberBalanceMatchStateSnapshotResponse>(
-        '/api/kangur/number-balance/state',
-        { matchId }
-      );
+      const response = await loadMatchStateAsync({ matchId });
       if (activeMatchIdRef.current !== matchId || isTerminalMatchStatus(activeMatchStatusRef.current)) {
         return;
       }
@@ -70,11 +109,13 @@ export function useNumberBalanceRushPollingRuntime({
     } catch (error) {
       void ErrorSystem.captureException(error);
     }
-  }, [activeMatchIdRef, activeMatchStatusRef, syncMatchState]);
+  }, [activeMatchIdRef, activeMatchStatusRef, loadMatchStateAsync, syncMatchState]);
 
   useEffect(() => {
-    activeMatchIdRef.current = activeMatchId;
-    activeMatchStatusRef.current = activeMatchStatus;
+    const matchIdRef = activeMatchIdRef;
+    const matchStatusRef = activeMatchStatusRef;
+    matchIdRef.current = activeMatchId;
+    matchStatusRef.current = activeMatchStatus;
   }, [activeMatchId, activeMatchIdRef, activeMatchStatus, activeMatchStatusRef]);
 
   useEffect(() => {

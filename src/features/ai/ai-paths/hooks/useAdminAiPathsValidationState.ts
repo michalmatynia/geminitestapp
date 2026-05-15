@@ -18,6 +18,7 @@ import {
 } from '@/shared/lib/ai-paths/core/validation-engine';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -48,6 +49,22 @@ const VALIDATION_STAGE_RANK = new Map<AiPathsValidationStage, number>(
   VALIDATION_STAGE_ORDER.map((stage, index) => [stage, index])
 );
 
+const fetchCentralDocsSnapshot = async (): Promise<CentralDocsSnapshotResponse> => {
+  const response = await fetch('/api/ai-paths/validation/docs-snapshot', {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new Error(`Central docs sync failed (${response.status}).`);
+  }
+  const payload = (await response.json()) as CentralDocsSnapshotResponse;
+  if (!payload?.snapshot || !Array.isArray(payload?.inferredCandidates)) {
+    throw new Error('Central docs sync returned invalid payload.');
+  }
+  return payload;
+};
+
 export function useAdminAiPathsValidationState() {
   const searchParams = useSearchParams();
   const requestedPathId = searchParams?.get('pathId')?.trim() ?? '';
@@ -55,6 +72,18 @@ export function useAdminAiPathsValidationState() {
   const focusNodeType = searchParams?.get('focusNodeType')?.trim() ?? '';
   const { toast } = useToast();
   const settingsQuery = useAiPathsSettingsQuery();
+  const centralDocsSnapshotMutation = createMutationV2<CentralDocsSnapshotResponse, void>({
+    mutationKey: ['ai-paths', 'validation', 'central-docs-snapshot'],
+    mutationFn: async () => fetchCentralDocsSnapshot(),
+    meta: {
+      source: 'features.ai.ai-paths.useAdminAiPathsValidationState.syncCentralDocs',
+      operation: 'fetch',
+      resource: 'ai-paths.validation.docs-snapshot',
+      domain: 'ai',
+      description: 'Fetch central AI Paths validation docs snapshot.',
+      errorPresentation: 'toast',
+    },
+  });
   const settingsParseErrorSignatureRef = useRef<string | null>(null);
   const parsedSettingsResult = useMemo(() => {
     try {
@@ -485,18 +514,7 @@ export function useAdminAiPathsValidationState() {
   const handleSyncFromCentralDocs = useCallback(async (): Promise<void> => {
     setSyncingCentralDocs(true);
     try {
-      const response = await fetch('/api/ai-paths/validation/docs-snapshot', {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-      });
-      if (!response.ok) {
-        throw new Error(`Central docs sync failed (${response.status}).`);
-      }
-      const payload = (await response.json()) as CentralDocsSnapshotResponse;
-      if (!payload?.snapshot || !Array.isArray(payload?.inferredCandidates)) {
-        throw new Error('Central docs sync returned invalid payload.');
-      }
+      const payload = await centralDocsSnapshotMutation.mutateAsync(undefined);
 
       const rejectedAssertionIds = new Set<string>(
         (validationDraft.inferredCandidates ?? [])
@@ -625,6 +643,7 @@ export function useAdminAiPathsValidationState() {
       setSyncingCentralDocs(false);
     }
   }, [
+    centralDocsSnapshotMutation,
     setDraftRules,
     toast,
     updateDraft,

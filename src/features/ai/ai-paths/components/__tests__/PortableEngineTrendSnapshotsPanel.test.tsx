@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -61,6 +62,22 @@ const buildPayload = () => ({
   ],
 });
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderPanel = (): ReturnType<typeof render> =>
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <PortableEngineTrendSnapshotsPanel />
+    </QueryClientProvider>
+  );
+
 describe('PortableEngineTrendSnapshotsPanel', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -73,7 +90,7 @@ describe('PortableEngineTrendSnapshotsPanel', () => {
       json: async () => buildPayload(),
     } as Response);
 
-    render(<PortableEngineTrendSnapshotsPanel />);
+    renderPanel();
 
     expect(await screen.findByText('Run execution telemetry')).toBeInTheDocument();
     expect(screen.getByText(/run failures 3/i)).toBeInTheDocument();
@@ -93,7 +110,7 @@ describe('PortableEngineTrendSnapshotsPanel', () => {
       json: async () => ({ ...payload, runExecution: undefined }),
     } as Response);
 
-    render(<PortableEngineTrendSnapshotsPanel />);
+    renderPanel();
 
     expect(await screen.findByText('Run execution telemetry')).toBeInTheDocument();
     expect(

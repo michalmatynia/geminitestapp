@@ -385,8 +385,21 @@ const normalizeFooterColumns = (value: unknown, fallback: MilkbarFooterColumn[])
   return next.length > 0 ? next : fallback;
 };
 
+const normalizeNavLinks = (input: unknown, fallback: MilkbarPageContent['nav']['links']): MilkbarPageContent['nav']['links'] => {
+  if (!Array.isArray(input)) return fallback;
+  const result = input
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((l) => ({
+      label: asString(l['label'], ''),
+      href: asString(l['href'], '#'),
+    }))
+    .filter((l) => l.label.length > 0);
+  return result.length > 0 ? result : fallback;
+};
+
 export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPageContent = DEFAULT_MILKBAR_PAGE_CONTENT): MilkbarPageContent => {
   const source = isRecord(input) ? input : {};
+  const nav = isRecord(source['nav']) ? source['nav'] : {};
   const hero = isRecord(source['hero']) ? source['hero'] : {};
   const drawing = isRecord(source['drawing']) ? source['drawing'] : {};
   const philosophy = isRecord(source['philosophy']) ? source['philosophy'] : {};
@@ -399,6 +412,11 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
   const footer = isRecord(source['footer']) ? source['footer'] : {};
 
   return {
+    nav: {
+      brandSub: asString(nav['brandSub'], fallback.nav.brandSub),
+      links: normalizeNavLinks(nav['links'], fallback.nav.links),
+      ctaLabel: asString(nav['ctaLabel'], fallback.nav.ctaLabel),
+    },
     hero: {
       location: asString(hero['location'], fallback.hero.location),
       indexLabel: asString(hero['indexLabel'], fallback.hero.indexLabel),
@@ -680,6 +698,22 @@ export async function saveMilkbarDesignersCmsSnapshot(
   await withRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
 
   return await getMilkbarDesignersCmsSnapshot();
+}
+
+export async function patchMilkbarInquiryStatus(
+  email: string,
+  status: 'pending' | 'contacted'
+): Promise<{ ok: boolean }> {
+  if (!email || typeof email !== 'string') throw badRequestError('email is required.');
+  if (status !== 'pending' && status !== 'contacted') throw badRequestError('status must be pending or contacted.');
+
+  await withRuntimeDb(async (db) => {
+    await db.collection(RUNTIME_INQUIRIES_COLLECTION).updateOne(
+      { email },
+      { $set: { status } }
+    );
+  });
+  return { ok: true };
 }
 
 // Expose for locale-keyed iteration in callers

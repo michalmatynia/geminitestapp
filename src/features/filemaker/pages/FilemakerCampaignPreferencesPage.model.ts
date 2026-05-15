@@ -4,10 +4,9 @@ import { useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import {
-  filemakerEmailCampaignPreferencesResponseSchema,
   type FilemakerEmailCampaignPreferenceStatus,
 } from '@/shared/contracts/filemaker';
-import { api, ApiError } from '@/shared/lib/api-client';
+import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import type {
@@ -16,6 +15,10 @@ import type {
   FilemakerCampaignPreferencesScope,
   FilemakerCampaignPreferencesStatusCopy,
 } from './FilemakerCampaignPreferencesPage.types';
+import {
+  usePreferencesActionMutation,
+  type PreferencesActionMutation,
+} from './FilemakerCampaignPreferencesPage.mutations';
 import type {
   FilemakerEmailCampaignPreferencesAction,
   FilemakerEmailCampaignPreferencesResponse,
@@ -41,6 +44,7 @@ type RecipientSummaryUpdateInput = Omit<RecipientActivityUpdateInput, 'current'>
 type PreferencesActionHandlerInput = {
   normalizedToken: string | null;
   isGlobalScope: boolean;
+  preferencesActionMutation: PreferencesActionMutation;
   toast: ReturnType<typeof useToast>['toast'];
   setIsSubmitting: Dispatch<SetStateAction<boolean>>;
   setLastResult: Dispatch<SetStateAction<FilemakerEmailCampaignPreferencesResponse | null>>;
@@ -105,20 +109,6 @@ const buildBlockedCopy = (
     ? 'This address is blocked because recent campaign delivery bounced. It cannot be restored from the self-service preferences page.'
     : 'This address is blocked by an administrator and cannot be restored from the self-service preferences page.',
 });
-
-const submitPreferencesAction = async (
-  token: string,
-  action: FilemakerEmailCampaignPreferencesAction
-): Promise<FilemakerEmailCampaignPreferencesResponse> => {
-  const response = await api.post<FilemakerEmailCampaignPreferencesResponse>(
-    '/api/filemaker/campaigns/preferences',
-    { token, action, source: 'public-preferences-page' },
-    { logError: false }
-  );
-  const parsed = filemakerEmailCampaignPreferencesResponseSchema.safeParse(response);
-  if (!parsed.success) throw new Error('Invalid preferences response.');
-  return parsed.data;
-};
 
 const resolveErrorMessage = (error: unknown): string => {
   if (error instanceof ApiError || error instanceof Error) return error.message;
@@ -239,7 +229,7 @@ const createPreferencesActionHandler =
       return;
     }
     input.setIsSubmitting(true);
-    submitPreferencesAction(input.normalizedToken, action).then(
+    input.preferencesActionMutation.mutateAsync({ token: input.normalizedToken, action }).then(
       (response) => {
         applyPreferencesResponse(response, action, input);
         input.setIsSubmitting(false);
@@ -263,6 +253,7 @@ export const useFilemakerCampaignPreferencesPageModel = ({
   initialRecipientSummary = null,
 }: FilemakerCampaignPreferencesPageProps): FilemakerCampaignPreferencesPageModel => {
   const { toast } = useToast();
+  const preferencesActionMutation = usePreferencesActionMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<FilemakerEmailCampaignPreferenceStatus>(initialStatus);
   const [reason, setReason] = useState<FilemakerEmailCampaignSuppressionReason | null>(initialReason);
@@ -276,6 +267,7 @@ export const useFilemakerCampaignPreferencesPageModel = ({
   const handleAction = createPreferencesActionHandler({
     normalizedToken,
     isGlobalScope,
+    preferencesActionMutation,
     toast,
     setIsSubmitting,
     setLastResult,

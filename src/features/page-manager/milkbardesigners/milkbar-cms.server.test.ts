@@ -38,6 +38,7 @@ import {
 } from './milkbar-cms.types';
 import {
   getMilkbarDesignersCmsSnapshot,
+  patchMilkbarInquiryStatus,
   saveMilkbarDesignersCmsSnapshot,
 } from './milkbar-cms.server';
 
@@ -385,6 +386,23 @@ describe('milkbar cms server', () => {
     expect(runtimeDb.collection('services').docs[0]?.['code']).toBe('S-01');
   });
 
+  it('normalizes caseStudy visibility flag correctly', async () => {
+    const snapshot = await saveMilkbarDesignersCmsSnapshot({
+      localizedContent: DEFAULT_MILKBAR_LOCALIZED_CONTENT,
+      pageSettings: {
+        ...DEFAULT_MILKBAR_PAGE_SETTINGS,
+        visibility: { ...DEFAULT_MILKBAR_PAGE_SETTINGS.visibility, caseStudy: false },
+      },
+      projects: [],
+      services: [],
+    });
+
+    expect(snapshot.pageSettings.visibility.caseStudy).toBe(false);
+    // All other flags should remain at their defaults
+    expect(snapshot.pageSettings.visibility.projects).toBe(true);
+    expect(snapshot.pageSettings.visibility.metrics).toBe(true);
+  });
+
   it('saves and reads pageSettings including section visibility and SEO metadata', async () => {
     const customSettings = {
       ...DEFAULT_MILKBAR_PAGE_SETTINGS,
@@ -430,6 +448,20 @@ describe('milkbar cms server', () => {
     expect('locale' in (noLocaleInquiry ?? {})).toBe(false);
   });
 
+  it('patchMilkbarInquiryStatus updates the status of an inquiry in the runtime DB', async () => {
+    runtimeDb = createFakeDb({
+      inquiries: [
+        { email: 'leads@example.com', createdAt: new Date('2026-05-15T10:00:00.000Z'), status: 'pending', source: 'cta-form' },
+      ],
+    });
+
+    const result = await patchMilkbarInquiryStatus('leads@example.com', 'contacted');
+
+    expect(result.ok).toBe(true);
+    const inquiry = runtimeDb.collection('inquiries').docs.find((d) => d['email'] === 'leads@example.com');
+    expect(inquiry?.['status']).toBe('contacted');
+  });
+
   it('normalizes footer column links from saved page content', async () => {
     const contentWithFooter = {
       ...DEFAULT_MILKBAR_PAGE_CONTENT,
@@ -459,5 +491,37 @@ describe('milkbar cms server', () => {
     expect(col?.links).toHaveLength(2);
     expect(col?.links[0]).toEqual({ label: 'Compliance', href: '/compliance' });
     expect(col?.links[1]).toEqual({ label: 'Massing', href: '/massing' });
+  });
+
+  it('normalizes nav content including links and ctaLabel across locales', async () => {
+    const deContent = {
+      ...DEFAULT_MILKBAR_PAGE_CONTENT,
+      nav: {
+        brandSub: '/ gegr. Amsterdam',
+        links: [
+          { label: 'Praxis', href: '#practice' },
+          { label: 'Projekte', href: '#projects' },
+        ],
+        ctaLabel: 'Anfragen',
+      },
+    };
+
+    const snapshot = await saveMilkbarDesignersCmsSnapshot({
+      localizedContent: { ...DEFAULT_MILKBAR_LOCALIZED_CONTENT, de: deContent },
+      pageSettings: DEFAULT_MILKBAR_PAGE_SETTINGS,
+      projects: [],
+      services: [],
+    });
+
+    const de = snapshot.localizedContent.de;
+    expect(de.nav.brandSub).toBe('/ gegr. Amsterdam');
+    expect(de.nav.ctaLabel).toBe('Anfragen');
+    expect(de.nav.links).toHaveLength(2);
+    expect(de.nav.links[0]).toEqual({ label: 'Praxis', href: '#practice' });
+    expect(de.nav.links[1]).toEqual({ label: 'Projekte', href: '#projects' });
+
+    // EN nav should be untouched
+    const en = snapshot.localizedContent.en;
+    expect(en.nav.ctaLabel).toBe(DEFAULT_MILKBAR_PAGE_CONTENT.nav.ctaLabel);
   });
 });

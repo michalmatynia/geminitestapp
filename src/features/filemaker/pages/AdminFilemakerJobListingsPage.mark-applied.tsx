@@ -10,15 +10,17 @@ import type {
   FilemakerJobListing,
 } from '../types';
 import {
-  getManualUnmarkTarget,
   hasTrimmedText,
+  type ManualUnmarkTarget,
   normalizeSearchInput,
 } from './AdminFilemakerJobListingsPage.components';
 import {
   useMarkAppliedMutation,
+  useResolveManualUnmarkTargetMutation,
   type ApplicationInfoPayload,
   type ManualMarkMutationVariables,
   type ManualMarkRequest,
+  type ResolveManualUnmarkTargetVariables,
 } from './AdminFilemakerJobListingsPage.mark-applied.mutation';
 
 type MarkAppliedButtonProps = {
@@ -68,7 +70,7 @@ const buildManualMarkRequest = (
 });
 
 const buildUnmarkRequest = (
-  target: NonNullable<Awaited<ReturnType<typeof getManualUnmarkTarget>>>
+  target: ManualUnmarkTarget
 ): ManualMarkRequest => ({
   url: `/api/filemaker/job-applications/${encodeURIComponent(target.applicationId)}`,
   method: 'PATCH',
@@ -81,9 +83,16 @@ const buildUnmarkRequest = (
 const resolveUnmarkRequest = async (
   listingId: string,
   normalizedPersonId: string,
-  mutableApplicationId: string | null
+  mutableApplicationId: string | null,
+  runResolveTarget: (
+    variables: ResolveManualUnmarkTargetVariables
+  ) => Promise<ManualUnmarkTarget | null>
 ): Promise<ManualMarkRequest> => {
-  const target = await getManualUnmarkTarget(normalizedPersonId, listingId, mutableApplicationId);
+  const target = await runResolveTarget({
+    listingId,
+    mutableApplicationId,
+    personId: normalizedPersonId,
+  });
   if (target === null) {
     throw new Error('Unable to resolve the applied application to unmark.');
   }
@@ -139,11 +148,19 @@ const buildMarkAppliedRequest = async (params: {
   props: MarkAppliedButtonProps;
   normalizedPersonId: string;
   applicationId: string | null;
+  runResolveTarget: (
+    variables: ResolveManualUnmarkTargetVariables
+  ) => Promise<ManualUnmarkTarget | null>;
 }): Promise<ManualMarkRequest> => {
   if (!params.isApplied) {
     return buildManualMarkRequest(params.props.listing, params.props.personId, params.props.personName);
   }
-  return resolveUnmarkRequest(params.props.listing.id, params.normalizedPersonId, params.applicationId);
+  return resolveUnmarkRequest(
+    params.props.listing.id,
+    params.normalizedPersonId,
+    params.applicationId,
+    params.runResolveTarget
+  );
 };
 
 const executeMarkAppliedToggle = async (input: {
@@ -213,6 +230,7 @@ const useMarkAppliedLocalState = (props: MarkAppliedButtonProps): MarkAppliedLoc
 const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedButtonState => {
   const { toast } = useToast();
   const markAppliedMutation = useMarkAppliedMutation();
+  const resolveUnmarkTargetMutation = useResolveManualUnmarkTargetMutation();
   const localState = useMarkAppliedLocalState(props);
 
   const handleResponse = useCallback(
@@ -235,6 +253,7 @@ const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedBu
       props,
       normalizedPersonId: localState.normalizedPersonId,
       applicationId: localState.applicationId,
+      runResolveTarget: (variables) => resolveUnmarkTargetMutation.mutateAsync(variables),
     });
     await executeMarkAppliedToggle({
       request,
@@ -252,6 +271,7 @@ const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedBu
     localState,
     markAppliedMutation,
     props,
+    resolveUnmarkTargetMutation,
     toast,
   ]);
 

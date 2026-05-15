@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   resolveCmsRuntimeValue,
@@ -14,49 +14,9 @@ import {
   parseRuntimeActionArgs,
 } from './ButtonBlock.helpers';
 
-export function ButtonBlock(): React.ReactNode {
-  const settings = useRequiredBlockSettings();
-  const runtime = useOptionalCmsRuntime();
-  const label = (settings['buttonLabel'] as string) || 'Button';
-  const link = (settings['buttonLink'] as string) || '#';
-  const style = (settings['buttonStyle'] as string) || 'solid';
-  const runtimeActionArgs = React.useMemo(
-    () => parseRuntimeActionArgs(settings['runtimeActionArgs']),
-    [settings]
-  );
-  const runtimeAction = React.useMemo(
-    () =>
-      resolveCmsRuntimeAction(runtime, settings['runtimeActionSource'], settings['runtimeActionPath']),
-    [runtime, settings]
-  );
-  const runtimeDisabledValue = React.useMemo(
-    () =>
-      resolveCmsRuntimeValue(
-        runtime,
-        settings['buttonDisabledSource'],
-        settings['buttonDisabledPath']
-      ),
-    [runtime, settings]
-  );
-  const isDisabled = React.useMemo(() => {
-    const hasRuntimeBinding =
-      typeof settings['buttonDisabledSource'] === 'string' &&
-      settings['buttonDisabledSource'].trim().length > 0 &&
-      typeof settings['buttonDisabledPath'] === 'string' &&
-      settings['buttonDisabledPath'].trim().length > 0;
+const BASE_CLASSES = 'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55';
 
-    if (!hasRuntimeBinding) {
-      return parseBoolean(settings['buttonDisabled']);
-    }
-
-    const disabledWhen = settings['buttonDisabledWhen'] === 'falsy' ? 'falsy' : 'truthy';
-    const resolvedTruthy = isRuntimeTruthyValue(runtimeDisabledValue);
-    return disabledWhen === 'truthy' ? resolvedTruthy : !resolvedTruthy;
-  }, [runtimeDisabledValue, settings]);
-
-  const baseClasses =
-    'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55';
-
+function getButtonStyles(settings: Record<string, unknown>): React.CSSProperties {
   const customStyles: React.CSSProperties = {};
   const fontFamily = settings['fontFamily'] as string | undefined;
   const fontSize = settings['fontSize'] as number | undefined;
@@ -67,55 +27,60 @@ export function ButtonBlock(): React.ReactNode {
   const borderRadius = settings['borderRadius'] as number | undefined;
   const borderWidth = settings['borderWidth'] as number | undefined;
 
-  if (fontFamily) customStyles.fontFamily = fontFamily;
-  if (fontSize && fontSize > 0) customStyles.fontSize = `${fontSize}px`;
-  if (fontWeight) customStyles.fontWeight = fontWeight;
-  if (textColor) customStyles.color = textColor;
-  if (bgColor) customStyles.backgroundColor = bgColor;
-  if (borderColor) customStyles.borderColor = borderColor;
-  if (borderRadius && borderRadius > 0) customStyles.borderRadius = `${borderRadius}px`;
-  if (borderWidth && borderWidth > 0) customStyles.borderWidth = `${borderWidth}px`;
+  if (fontFamily !== undefined) customStyles.fontFamily = fontFamily;
+  if (fontSize !== undefined && fontSize > 0) customStyles.fontSize = `${fontSize}px`;
+  if (fontWeight !== undefined) customStyles.fontWeight = fontWeight;
+  if (textColor !== undefined) customStyles.color = textColor;
+  if (bgColor !== undefined) customStyles.backgroundColor = bgColor;
+  if (borderColor !== undefined) customStyles.borderColor = borderColor;
+  if (borderRadius !== undefined && borderRadius > 0) customStyles.borderRadius = `${borderRadius}px`;
+  if (borderWidth !== undefined && borderWidth > 0) customStyles.borderWidth = `${borderWidth}px`;
+  
+  return customStyles;
+}
 
-  if (style === 'outline') {
-    if (runtimeAction || isDisabled) {
-      return (
-        <button
-          type='button'
-          onClick={() => runtimeAction?.(...runtimeActionArgs)}
-          disabled={isDisabled}
-          className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus-visible:ring-white`}
-          style={customStyles}
-          aria-label={label || 'Button'}
-          title={label || 'Button'}
-        >
-          {label}
-        </button>
-      );
+export function ButtonBlock(): React.JSX.Element {
+  const settings = useRequiredBlockSettings();
+  const runtime = useOptionalCmsRuntime();
+  
+  const label = (settings['buttonLabel'] as string) || 'Button';
+  const link = (settings['buttonLink'] as string) || '#';
+  const style = (settings['buttonStyle'] as string) || 'solid';
+  
+  const runtimeActionArgs = useMemo(() => parseRuntimeActionArgs(settings['runtimeActionArgs']), [settings]);
+  const runtimeAction = useMemo(() => resolveCmsRuntimeAction(runtime, settings['buttonDisabledSource'] as string, settings['buttonDisabledPath'] as string), [runtime, settings]);
+  const runtimeDisabledValue = useMemo(() => resolveCmsRuntimeValue(runtime, settings['buttonDisabledSource'] as string, settings['buttonDisabledPath'] as string), [runtime, settings]);
+  
+  const isDisabled = useMemo(() => {
+    const hasRuntimeBinding =
+      typeof settings['buttonDisabledSource'] === 'string' &&
+      (settings['buttonDisabledSource'] as string).trim().length > 0 &&
+      typeof settings['buttonDisabledPath'] === 'string' &&
+      (settings['buttonDisabledPath'] as string).trim().length > 0;
+
+    if (!hasRuntimeBinding) {
+      return parseBoolean(settings['buttonDisabled']);
     }
 
-    return (
-      <a
-        href={link}
-        className={`${baseClasses} cms-appearance-button-outline border-2 hover:text-current focus-visible:ring-white`}
-        style={customStyles}
-        aria-label={label || 'Link'}
-        title={label || 'Link'}
-      >
-        {label}
-      </a>
-    );
-  }
+    const disabledWhen = settings['buttonDisabledWhen'] === 'falsy' ? 'falsy' : 'truthy';
+    const resolvedTruthy = isRuntimeTruthyValue(runtimeDisabledValue);
+    return disabledWhen === 'truthy' ? resolvedTruthy : !resolvedTruthy;
+  }, [runtimeDisabledValue, settings]);
 
-  if (runtimeAction || isDisabled) {
+  const customStyles = getButtonStyles(settings);
+
+  const className = `${BASE_CLASSES} ${style === 'outline' ? 'cms-appearance-button-outline border-2 hover:text-current' : 'cms-appearance-button-primary border'} focus-visible:ring-white`.trim();
+
+  if (runtimeAction !== null || isDisabled) {
     return (
       <button
         type='button'
         onClick={() => runtimeAction?.(...runtimeActionArgs)}
-        disabled={isDisabled}
-        className={`${baseClasses} cms-appearance-button-primary border focus-visible:ring-white`}
+        disabled={!!isDisabled}
+        className={className}
         style={customStyles}
-        aria-label={label || 'Button'}
-        title={label || 'Button'}
+        aria-label={label}
+        title={label}
       >
         {label}
       </button>
@@ -125,10 +90,10 @@ export function ButtonBlock(): React.ReactNode {
   return (
     <a
       href={link}
-      className={`${baseClasses} cms-appearance-button-primary border focus-visible:ring-white`}
+      className={className}
       style={customStyles}
-      aria-label={label || 'Link'}
-      title={label || 'Link'}
+      aria-label={label}
+      title={label}
     >
       {label}
     </a>

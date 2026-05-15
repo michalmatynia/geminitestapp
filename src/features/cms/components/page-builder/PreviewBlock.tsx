@@ -622,255 +622,89 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   // --- Inline element blocks (Heading, Text, Image, etc) continue to be rendered here or in subsequent extraction ---
   if (block.type === 'Heading') {
-    const text = (resolvedSettings['headingText'] as string) || 'Heading';
-    const typoStyles = getBlockTypographyStyles(resolvedSettings);
-    return wrapBlock(
-      <div
-        {...selectableBlockProps}
-        className={buildContainerClass(
-          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
-          ''
-        )}
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <h2
-          className='text-2xl font-bold leading-tight tracking-tight md:text-3xl text-gray-200'
-          style={typoStyles}
-        >
-          {text}
-        </h2>
-      </div>
+    return (
+      <PreviewHeadingBlock
+        block={resolvedBlock}
+        containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, '')}
+        onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+        renderSelectionButton={renderBlockSelectionButton}
+        wrapInspector={wrapBlock}
+      />
     );
   }
 
   if (block.type === 'Text') {
-    const text = (resolvedSettings['textContent'] as string) || '';
-    const typoStyles = getBlockTypographyStyles(resolvedSettings);
-    if (!text.trim() && !showEditorChrome) return null;
-    return wrapBlock(
-      <div
-        {...selectableBlockProps}
-        className={buildContainerClass(
-          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
-          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
-        )}
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        {text ? (
-          <p className='text-base leading-relaxed text-gray-300 md:text-lg' style={typoStyles}>
-            {text}
-          </p>
-        ) : (
-          <p className='text-sm italic text-gray-500'>Add text content...</p>
-        )}
-      </div>
+    return (
+      <PreviewTextBlock
+        block={resolvedBlock}
+        isSelected={isSelected}
+        className={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
+        onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+        renderSelectionButton={renderBlockSelectionButton}
+      />
     );
   }
 
   if (block.type === 'Button') {
-    const label = (resolvedSettings['buttonLabel'] as string) || 'Button';
-    const style = (resolvedSettings['buttonStyle'] as string) || 'solid';
-    const hasRuntimeDisabledBinding =
-      typeof resolvedSettings['buttonDisabledSource'] === 'string' &&
-      resolvedSettings['buttonDisabledSource'].trim().length > 0 &&
-      typeof resolvedSettings['buttonDisabledPath'] === 'string' &&
-      resolvedSettings['buttonDisabledPath'].trim().length > 0;
-    const runtimeDisabledValue = hasRuntimeDisabledBinding
-      ? resolveCmsRuntimeValue(
-        runtime,
-        resolvedSettings['buttonDisabledSource'],
-        resolvedSettings['buttonDisabledPath']
-      )
-      : undefined;
-    const isDisabled = hasRuntimeDisabledBinding
-      ? resolvedSettings['buttonDisabledWhen'] === 'falsy'
-        ? !isTruthyRuntimeValue(runtimeDisabledValue)
-        : isTruthyRuntimeValue(runtimeDisabledValue)
-      : resolvedSettings['buttonDisabled'] === true ||
-        resolvedSettings['buttonDisabled'] === 'true';
-
-    return wrapBlock(
-      <div
-        {...selectableBlockProps}
-        className={buildContainerClass(
-          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
-          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
-        )}
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <button
-          type='button'
-          disabled={isDisabled}
-          className={`pointer-events-none inline-flex rounded-md px-6 py-2.5 text-sm font-semibold transition ${style === 'outline' ? 'border-2 border-white text-white' : 'bg-white text-gray-900'} ${isDisabled ? 'opacity-55' : ''}`}
-          aria-label={label || 'Preview button'}
-        >
-          {label}
-        </button>
-      </div>
+    return (
+        <PreviewButtonBlock
+            block={resolvedBlock}
+            runtime={runtime}
+            containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
+            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            renderSelectionButton={renderBlockSelectionButton}
+            wrapInspector={wrapBlock}
+        />
     );
   }
 
   if (block.type === 'Input') {
-    const value =
-      typeof resolvedSettings['inputValue'] === 'string' ? resolvedSettings['inputValue'] : '';
-    const placeholder =
-      typeof resolvedSettings['inputPlaceholder'] === 'string'
-        ? resolvedSettings['inputPlaceholder']
-        : '';
-    const inputAriaLabel =
-      typeof resolvedSettings['inputAriaLabel'] === 'string'
-        ? resolvedSettings['inputAriaLabel'].trim()
-        : '';
-
-    return wrapBlock(
-      <div
-        {...selectableBlockProps}
-        className={buildContainerClass(
-          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
-          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
-        )}
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <Input
-          readOnly
-          value={value}
-          placeholder={placeholder || 'Input'}
-          aria-label={inputAriaLabel || placeholder || 'Input field'}
-          className='pointer-events-none w-full'
-         title={placeholder || 'Input'}/>
-      </div>
+    return (
+        <PreviewInputBlock
+            block={resolvedBlock}
+            containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
+            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            renderSelectionButton={renderBlockSelectionButton}
+            wrapInspector={wrapBlock}
+        />
     );
   }
 
   if (block.type === 'Progress') {
-    const value =
-      typeof resolvedSettings['progressValue'] === 'number' ? resolvedSettings['progressValue'] : 0;
-    const max =
-      typeof resolvedSettings['progressMax'] === 'number' && resolvedSettings['progressMax'] > 0
-        ? resolvedSettings['progressMax']
-        : 100;
-    const height =
-      typeof resolvedSettings['progressHeight'] === 'number' &&
-      resolvedSettings['progressHeight'] > 0
-        ? resolvedSettings['progressHeight']
-        : 12;
-    const borderRadius =
-      typeof resolvedSettings['borderRadius'] === 'number' && resolvedSettings['borderRadius'] >= 0
-        ? resolvedSettings['borderRadius']
-        : 999;
-    const fillColor =
-      typeof resolvedSettings['fillColor'] === 'string' &&
-      resolvedSettings['fillColor'].trim().length > 0
-        ? resolvedSettings['fillColor']
-        : '#6366f1';
-    const trackColor =
-      typeof resolvedSettings['trackColor'] === 'string' &&
-      resolvedSettings['trackColor'].trim().length > 0
-        ? resolvedSettings['trackColor']
-        : '#e2e8f0';
-    const showPercentage =
-      resolvedSettings['showPercentage'] === true || resolvedSettings['showPercentage'] === 'true';
-    const percent = Math.max(0, Math.min(100, (value / max) * 100));
-
-    return wrapBlock(
-      <div
-        {...selectableBlockProps}
-        className={buildContainerClass(
-          `relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`,
-          `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`
-        )}
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <div className='w-full space-y-2'>
-          <div
-            className='w-full overflow-hidden'
-            style={{
-              backgroundColor: trackColor,
-              borderRadius: `${borderRadius}px`,
-              height: `${height}px`,
-            }}
-          >
-            <div
-              className='h-full transition-[width] duration-300 ease-out'
-              style={{
-                backgroundColor: fillColor,
-                borderRadius: `${borderRadius}px`,
-                width: `${percent}%`,
-              }}
-            />
-          </div>
-          {showPercentage ? (
-            <div className='text-right text-xs font-semibold text-gray-400'>
-              {Math.round(percent)}%
-            </div>
-          ) : null}
-        </div>
-      </div>
+    return (
+        <PreviewProgressBlock
+            block={resolvedBlock}
+            containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
+            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            renderSelectionButton={renderBlockSelectionButton}
+            wrapInspector={wrapBlock}
+        />
     );
   }
 
   if (block.type === 'AppEmbed') {
-    const appOption = getAppEmbedOption(
-      typeof resolvedSettings['appId'] === 'string'
-        ? resolvedSettings['appId']
-        : DEFAULT_APP_EMBED_ID
-    );
-    const title = ((resolvedSettings['title'] as string) || appOption?.label || 'App embed').trim();
-    const basePath = (resolvedSettings['basePath'] as string) || '';
-    const entryPage = (resolvedSettings['entryPage'] as string) || '';
-    const renderMode = appOption?.renderMode ?? 'iframe';
-
-    return wrapBlock(
-      <Card
-        variant='subtle'
-        padding='md'
-        {...selectableBlockProps}
-        className='relative group w-full border-border/40 bg-card/40 text-left'
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <div className='space-y-2'>
-          <div>
-            <div className='text-sm font-semibold text-white'>{title}</div>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-              {renderMode === 'internal-app' ? 'Internal app mount' : 'Iframe embed'}
-            </div>
-          </div>
-          <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
-            {renderMode === 'internal-app'
-              ? `Entry page: ${entryPage || 'default'}${
-                basePath ? ` · host page override: ${basePath}` : ' · host page: current CMS page'
-              }`
-              : 'Preview uses the published iframe URL at runtime.'}
-          </div>
-        </div>
-      </Card>
+    return (
+        <PreviewAppEmbedBlock
+            block={resolvedBlock}
+            containerClass='relative group w-full'
+            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            renderSelectionButton={renderBlockSelectionButton}
+            wrapInspector={wrapBlock}
+            selectableBlockProps={selectableBlockProps}
+        />
     );
   }
 
   if (block.type === 'KangurWidget') {
-    const widgetId =
-      typeof resolvedSettings['widgetId'] === 'string' ? resolvedSettings['widgetId'] : '';
-    const widgetLabel = getKangurWidgetLabel(widgetId);
-
-    return wrapBlock(
-      <Card
-        variant='subtle'
-        padding='md'
-        {...selectableBlockProps}
-        className='relative group w-full border-border/40 bg-card/40 text-left'
-      >
-        {renderBlockSelectionButton('left-2 top-2')}
-        <div className='space-y-2'>
-          <div className='text-sm font-semibold text-white'>{widgetLabel}</div>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-            Kangur runtime widget
-          </div>
-          <div className='rounded-xl border border-dashed border-border/40 bg-card/20 p-3 text-xs text-gray-400'>
-            This block renders dynamic Kangur app content at runtime. The surrounding layout stays
-            editable in the CMS builder.
-          </div>
-        </div>
-      </Card>
+    return (
+        <PreviewKangurWidgetBlock
+            block={resolvedBlock}
+            containerClass='relative group w-full'
+            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            renderSelectionButton={renderBlockSelectionButton}
+            wrapInspector={wrapBlock}
+            selectableBlockProps={selectableBlockProps}
+        />
     );
   }
 

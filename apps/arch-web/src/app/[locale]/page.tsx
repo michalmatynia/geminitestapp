@@ -102,7 +102,7 @@ export default async function LocalePage({ params }: PageProps) {
   return (
     <>
       <Cursor />
-      <Nav currentLocale={validLocale} publishedLocales={pageSettings.publishedLocales} />
+      <Nav currentLocale={validLocale} publishedLocales={pageSettings.publishedLocales} content={pageContent.nav} />
       <Hero content={pageContent.hero} />
       {vis.drawing ? (
         <FloorPlanSlotsProvider>

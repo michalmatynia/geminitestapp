@@ -95,7 +95,12 @@ export const executePathRun = async (
     }
   }
   const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
+  const perfLog = (label: string, start: number) => {
+    const elapsed = Date.now() - start;
+    debugQueueLog(`[ai-paths-executor] ${label} took ${elapsed}ms`);
+  };
 
+  const preflightStart = Date.now();
   let dbRunMissing = false;
   const monitor = createCancellationMonitor({
     runId: run.id,
@@ -106,6 +111,7 @@ export const executePathRun = async (
       dbRunMissing = true;
     },
   });
+  perfLog('preflight', preflightStart);
 
   const updateRunSnapshot = async (
     data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'errorMessage'>>
@@ -177,6 +183,7 @@ export const executePathRun = async (
     }
   });
 
+  const kernelConfigStart = Date.now();
   const {
     nodeTypes: runtimeKernelNodeTypesRaw,
     resolverIds: runtimeKernelCodeObjectResolverIdsRaw,
@@ -187,6 +194,7 @@ export const executePathRun = async (
     runId: run.id,
     runMetaRecord,
   });
+  perfLog('kernel-config', kernelConfigStart);
   const runtimeKernelNodeTypes = runtimeKernelNodeTypesRaw ?? undefined;
   const runtimeKernelCodeObjectResolverIds = runtimeKernelCodeObjectResolverIdsRaw ?? undefined;
 

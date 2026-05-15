@@ -75,6 +75,11 @@ export interface Inquiry {
 }
 
 export interface ArchPageContent {
+  nav: {
+    brandSub: string;
+    links: Array<{ label: string; href: string }>;
+    ctaLabel: string;
+  };
   hero: {
     location: string;
     indexLabel: string;

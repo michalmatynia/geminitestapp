@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   getMilkbarDesignersCmsSnapshot,
+  patchMilkbarInquiryStatus,
   saveMilkbarDesignersCmsSnapshot,
 } from '@/features/page-manager/milkbardesigners/milkbar-cms.server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -24,6 +25,21 @@ export const PUT = apiHandler(
   },
   {
     source: 'v2.page-manager.milkbardesigners.PUT',
+    requireAuth: true,
+  }
+);
+
+export const PATCH = apiHandler(
+  async (request: NextRequest) => {
+    const body = (await request.json()) as { email?: string; status?: string };
+    const result = await patchMilkbarInquiryStatus(
+      typeof body.email === 'string' ? body.email : '',
+      body.status === 'contacted' ? 'contacted' : 'pending'
+    );
+    return NextResponse.json(result);
+  },
+  {
+    source: 'v2.page-manager.milkbardesigners.PATCH',
     requireAuth: true,
   }
 );

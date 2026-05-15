@@ -48,91 +48,59 @@ const EXPLODER_SUBTAB_OPTIONS: Array<LabeledOptionDto<ExploderPatternSubTab>> = 
   { value: 'case_resolver_rules', label: 'Case Resolver' },
 ];
 
+const PatternTabs = ({ patternTab, patternTabLocked, setPatternTab }: { patternTab: string, patternTabLocked: boolean, setPatternTab: (v: string) => void }): React.JSX.Element | null => 
+  !patternTabLocked ? (
+    <SegmentedControl
+      size='md'
+      className='w-full max-w-md'
+      value={patternTab}
+      ariaLabel='Prompt engine pattern tabs'
+      onChange={setPatternTab}
+      options={PATTERN_TAB_OPTIONS}
+    />
+  ) : null;
+
+const ExploderTabs = ({ patternTab, exploderSubTab, exploderSubTabLocked, setExploderSubTab }: { patternTab: string, exploderSubTab: string, exploderSubTabLocked: boolean, setExploderSubTab: (v: string) => void }): React.JSX.Element | null =>
+  (patternTab === 'prompt_exploder' && !exploderSubTabLocked) ? (
+    <SegmentedControl
+      size='md'
+      className='w-full max-w-2xl'
+      value={exploderSubTab}
+      ariaLabel='Prompt exploder rule categories'
+      onChange={setExploderSubTab}
+      options={EXPLODER_SUBTAB_OPTIONS}
+    />
+  ) : null;
+
 export function PromptEngineFilters(): React.JSX.Element {
-  const { patternTab, patternTabLocked, exploderSubTab, exploderSubTabLocked, scopeLocked } =
-    usePromptEngineConfig();
-  const {
-    query,
-    setQuery,
-    severity,
-    setSeverity,
-    scope,
-    setScope,
-    includeDisabled,
-    setIncludeDisabled,
-  } = usePromptEngineFilters();
+  const { patternTab, patternTabLocked, exploderSubTab, exploderSubTabLocked, scopeLocked } = usePromptEngineConfig();
+  const { query, setQuery, severity, setSeverity, scope, setScope, includeDisabled, setIncludeDisabled } = usePromptEngineFilters();
   const { filteredDrafts } = usePromptEngineData();
   const { setPatternTab, setExploderSubTab } = usePromptEngineActions();
-  const activeTabLabel =
-    patternTab === 'core'
-      ? 'Core'
-      : exploderSubTab === 'image_studio_rules'
-        ? 'Image Studio Rules'
-        : exploderSubTab === 'case_resolver_rules'
-          ? 'Case Resolver Rules'
-          : 'Prompt Exploder Rules';
-  const showPatternTabSwitch = !patternTabLocked;
-  const showExploderSubTabSwitch = patternTab === 'prompt_exploder' && !exploderSubTabLocked;
+
+  const getActiveTabLabel = (tab: string, sub: string): string => {
+    if (tab === 'core') return 'Core';
+    if (sub === 'image_studio_rules') return 'Image Studio Rules';
+    if (sub === 'case_resolver_rules') return 'Case Resolver Rules';
+    return 'Prompt Exploder Rules';
+  };
 
   const filters: FilterField[] = [
-    {
-      key: 'severity',
-      label: 'Severity',
-      type: 'select',
-      options: SEVERITY_OPTIONS,
-    },
-    ...(scopeLocked
-      ? []
-      : [
-          {
-            key: 'scope',
-            label: 'Scope',
-            type: 'select',
-            options: SCOPE_OPTIONS,
-          } satisfies FilterField,
-        ]),
-    {
-      key: 'includeDisabled',
-      label: 'Include Disabled',
-      type: 'checkbox',
-    },
+    { key: 'severity', label: 'Severity', type: 'select', options: SEVERITY_OPTIONS },
+    ...(scopeLocked ? [] : [{ key: 'scope', label: 'Scope', type: 'select', options: SCOPE_OPTIONS } satisfies FilterField]),
+    { key: 'includeDisabled', label: 'Include Disabled', type: 'checkbox' },
   ];
 
   return (
     <div className='space-y-3'>
-      {showPatternTabSwitch ? (
-        <SegmentedControl
-          size='md'
-          className='w-full max-w-md'
-          value={patternTab}
-          ariaLabel='Prompt engine pattern tabs'
-          onChange={(value) => {
-            setPatternTab(value);
-          }}
-          options={PATTERN_TAB_OPTIONS}
-        />
-      ) : null}
-      {showExploderSubTabSwitch ? (
-        <SegmentedControl
-          size='md'
-          className='w-full max-w-2xl'
-          value={exploderSubTab}
-          ariaLabel='Prompt exploder rule categories'
-          onChange={(value) => {
-            setExploderSubTab(value);
-          }}
-          options={EXPLODER_SUBTAB_OPTIONS}
-        />
-      ) : null}
+      <PatternTabs patternTab={patternTab} patternTabLocked={patternTabLocked} setPatternTab={setPatternTab} />
+      <ExploderTabs patternTab={patternTab} exploderSubTab={exploderSubTab} exploderSubTabLocked={exploderSubTabLocked} setExploderSubTab={setExploderSubTab} />
 
       <div className='text-xs text-gray-400'>
         Showing <span className='text-gray-200'>{filteredDrafts.length}</span> pattern(s) in{' '}
-        <span className='text-gray-200'>{activeTabLabel}</span> list.
+        <span className='text-gray-200'>{getActiveTabLabel(patternTab, exploderSubTab)}</span> list.
         {scopeLocked && scope !== 'all' ? (
-          <>
-            {' '}
-            Scope: <span className='text-gray-200'>{PROMPT_VALIDATION_SCOPE_LABELS[scope]}</span>.
-          </>
+          <> {' '} Scope: <span className='text-gray-200'>{PROMPT_VALIDATION_SCOPE_LABELS[scope]}</span>.</>
         ) : null}
       </div>
 
@@ -148,17 +116,10 @@ export function PromptEngineFilters(): React.JSX.Element {
         }}
         onSearchChange={setQuery}
         onReset={() => {
-          setQuery('');
-          setSeverity('all');
-          if (!scopeLocked) {
-            setScope('all');
-          }
-          if (!patternTabLocked) {
-            setPatternTab('core');
-          }
-          if (!exploderSubTabLocked) {
-            setExploderSubTab('prompt_exploder_rules');
-          }
+          setQuery(''); setSeverity('all');
+          if (!scopeLocked) setScope('all');
+          if (!patternTabLocked) setPatternTab('core');
+          if (!exploderSubTabLocked) setExploderSubTab('prompt_exploder_rules');
           setIncludeDisabled(false);
         }}
         showHeader={false}

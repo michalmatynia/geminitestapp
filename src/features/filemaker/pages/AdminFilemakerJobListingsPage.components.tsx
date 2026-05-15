@@ -161,37 +161,6 @@ const resolveManualUnmarkFallback = (mutableApplicationId: string | null): Manua
   return fallbackId === undefined || fallbackId.length === 0 ? null : { applicationId: fallbackId };
 };
 
-const getManualUnmarkTarget = async (
-  personId: string,
-  listingId: string,
-  mutableApplicationId: string | null
-): Promise<ManualUnmarkTarget | null> => {
-  const normalizedPersonId = normalizeSearchInput(personId);
-  if (normalizedPersonId.length === 0) return null;
-
-  const query = new URLSearchParams({
-    jobListingId: listingId,
-    personId: normalizedPersonId,
-    limit: '100',
-  });
-
-  const response = await fetch(`/api/filemaker/job-applications?${query.toString()}`);
-  if (!response.ok) {
-    throw new Error(`Failed to load related applications (${response.status}).`);
-  }
-
-  const payload = (await response.json()) as unknown;
-  const applications = parseJobApplicationsPayload(payload);
-  const target = selectManualUnmarkTargetFromApplications(applications, normalizedPersonId);
-  if (target === null) {
-    return resolveManualUnmarkFallback(mutableApplicationId);
-  }
-
-  const resolvedId = target.applicationId.trim();
-  if (resolvedId.length === 0) return null;
-  return { ...target, applicationId: resolvedId };
-};
-
 function SalaryCell({ listing }: { listing: FilemakerJobListing }): ReactNode {
   const salaryText = getSalaryText(listing);
   if (salaryText === null) return null;
@@ -207,14 +176,16 @@ function ManualLogLabel({ method }: { method: string }): React.JSX.Element | nul
   return <span className='rounded bg-gray-800 px-1 py-0.5 text-[10px] text-gray-500'>manual</span>;
 }
 
-export type { EnrichedJobListing };
+export type { EnrichedJobListing, ManualUnmarkTarget };
 export {
   ApplicationLogTime,
   ManualLogLabel,
   SalaryCell,
-  getManualUnmarkTarget,
   getPersonDisplayName,
   hasTrimmedText,
   normalizeSearchInput,
+  parseJobApplicationsPayload,
+  resolveManualUnmarkFallback,
+  selectManualUnmarkTargetFromApplications,
   STATUS_VARIANT_MAP,
 };

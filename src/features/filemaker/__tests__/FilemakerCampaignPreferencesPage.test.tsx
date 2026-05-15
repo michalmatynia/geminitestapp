@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FilemakerCampaignPreferencesPage } from '../pages/FilemakerCampaignPreferencesPage';
@@ -22,6 +23,16 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     toast: vi.fn(),
   }),
 }));
+
+const renderWithQueryClient = (ui: React.ReactNode): ReturnType<typeof render> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      mutations: { retry: false },
+      queries: { retry: false },
+    },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+};
 
 const recipientSummary: FilemakerEmailCampaignRecipientActivitySummary = {
   emailAddress: 'jan@example.com',
@@ -61,7 +72,7 @@ const recipientSummary: FilemakerEmailCampaignRecipientActivitySummary = {
 
 describe('FilemakerCampaignPreferencesPage', () => {
   it('shows recipient reply activity from campaign mail replies', () => {
-    render(
+    renderWithQueryClient(
       <FilemakerCampaignPreferencesPage
         initialEmailAddress='jan@example.com'
         initialCampaignId='campaign-analytics'

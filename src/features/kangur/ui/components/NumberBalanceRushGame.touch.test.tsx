@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -74,6 +75,27 @@ vi.mock('@/shared/lib/api-client', () => ({
 import enMessages from '@/i18n/messages/en.json';
 import NumberBalanceRushGame from '@/features/kangur/ui/components/NumberBalanceRushGame';
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderNumberBalanceRushGame = (): ReturnType<typeof render> =>
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <NumberBalanceRushGame />
+      </NextIntlClientProvider>
+    </QueryClientProvider>
+  );
+
 describe('NumberBalanceRushGame touch interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -112,11 +134,7 @@ describe('NumberBalanceRushGame touch interactions', () => {
   });
 
   it('shows touch guidance and supports tap-to-zone moves', async () => {
-    render(
-      <NextIntlClientProvider locale='en' messages={enMessages}>
-        <NumberBalanceRushGame />
-      </NextIntlClientProvider>
-    );
+    renderNumberBalanceRushGame();
 
     await waitFor(() =>
       expect(screen.getByTestId('number-balance-touch-hint')).toHaveTextContent(

@@ -3,7 +3,9 @@
 import React, { useMemo, useState } from 'react';
 
 import { filemakerEmailCampaignUnsubscribeResponseSchema } from '@/shared/contracts/filemaker';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
 
@@ -17,6 +19,11 @@ type FilemakerCampaignUnsubscribePageProps = {
 };
 
 type TokenStatus = 'verified' | 'invalid' | 'none';
+type SubmitUnsubscribeVariables = {
+  activeToken: string | null;
+  normalizedCampaignId: string | null;
+  normalizedEmail: string;
+};
 
 type UnsubscribePageModel = {
   emailAddress: string;
@@ -49,6 +56,39 @@ const resolveErrorMessage = (error: unknown): string => {
   return 'Failed to submit the unsubscribe request.';
 };
 
+const submitUnsubscribe = async ({
+  activeToken,
+  normalizedCampaignId,
+  normalizedEmail,
+}: SubmitUnsubscribeVariables): Promise<FilemakerEmailCampaignUnsubscribeResponse> => {
+  const response = await api.post<FilemakerEmailCampaignUnsubscribeResponse>(
+    '/api/filemaker/campaigns/unsubscribe',
+    buildUnsubscribePayload(activeToken, normalizedEmail, normalizedCampaignId),
+    { logError: false }
+  );
+  const parsed = filemakerEmailCampaignUnsubscribeResponseSchema.safeParse(response);
+  if (!parsed.success) throw new Error('Invalid unsubscribe response.');
+  return parsed.data;
+};
+
+const useUnsubscribeMutation = (): MutationResult<
+  FilemakerEmailCampaignUnsubscribeResponse,
+  SubmitUnsubscribeVariables
+> =>
+  createMutationV2({
+    mutationKey: ['filemaker', 'campaigns', 'unsubscribe', 'submit'],
+    mutationFn: submitUnsubscribe,
+    meta: {
+      source: 'features.filemaker.campaignUnsubscribe.submit',
+      operation: 'action',
+      resource: 'filemaker.campaign-unsubscribe',
+      domain: 'filemaker',
+      description: 'Submits Filemaker campaign unsubscribe requests.',
+      errorPresentation: 'toast',
+      tags: ['filemaker', 'campaigns', 'unsubscribe'],
+    },
+  });
+
 const useUnsubscribePageModel = ({
   initialEmailAddress,
   initialCampaignId,
@@ -56,6 +96,7 @@ const useUnsubscribePageModel = ({
   hasValidSignedToken = false,
 }: FilemakerCampaignUnsubscribePageProps): UnsubscribePageModel => {
   const { toast } = useToast();
+  const unsubscribeMutation = useUnsubscribeMutation();
   const [emailAddress, setEmailAddress] = useState(initialEmailAddress ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] =
@@ -80,6 +121,7 @@ const useUnsubscribePageModel = ({
       setSubmittedResult,
       setTokenStatus,
       toast,
+      unsubscribeMutation,
     });
   };
 
@@ -112,6 +154,10 @@ type SubmitUnsubscribeRequestInput = {
   setSubmittedResult: (result: FilemakerEmailCampaignUnsubscribeResponse) => void;
   setTokenStatus: (status: TokenStatus) => void;
   toast: ReturnType<typeof useToast>['toast'];
+  unsubscribeMutation: MutationResult<
+    FilemakerEmailCampaignUnsubscribeResponse,
+    SubmitUnsubscribeVariables
+  >;
 };
 
 const submitUnsubscribeRequest = async ({
@@ -121,17 +167,16 @@ const submitUnsubscribeRequest = async ({
   setSubmittedResult,
   setTokenStatus,
   toast,
+  unsubscribeMutation,
 }: SubmitUnsubscribeRequestInput): Promise<void> => {
   try {
-    const response = await api.post<FilemakerEmailCampaignUnsubscribeResponse>(
-      '/api/filemaker/campaigns/unsubscribe',
-      buildUnsubscribePayload(activeToken, normalizedEmail, normalizedCampaignId),
-      { logError: false }
-    );
-    const parsed = filemakerEmailCampaignUnsubscribeResponseSchema.safeParse(response);
-    if (!parsed.success) throw new Error('Invalid unsubscribe response.');
-    setSubmittedResult(parsed.data);
-    toast(parsed.data.alreadySuppressed ? 'This address was already unsubscribed.' : 'You have been unsubscribed.', {
+    const response = await unsubscribeMutation.mutateAsync({
+      activeToken,
+      normalizedCampaignId,
+      normalizedEmail,
+    });
+    setSubmittedResult(response);
+    toast(response.alreadySuppressed ? 'This address was already unsubscribed.' : 'You have been unsubscribed.', {
       variant: 'success',
     });
     if (activeToken !== null) setTokenStatus('verified');

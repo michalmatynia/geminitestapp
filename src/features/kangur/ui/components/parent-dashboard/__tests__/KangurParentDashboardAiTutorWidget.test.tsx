@@ -22,6 +22,7 @@ const {
   queryClientMock,
   usageQueryState,
   useKangurPageContentEntryMock,
+  useMutationMock,
   useQueryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
@@ -65,10 +66,12 @@ const {
     },
   },
   useKangurPageContentEntryMock: vi.fn(),
+  useMutationMock: vi.fn(),
   useQueryMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
+  useMutation: useMutationMock,
   useQuery: useQueryMock,
   useQueryClient: () => queryClientMock,
 }));
@@ -124,6 +127,22 @@ describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    useMutationMock.mockImplementation((options: {
+      mutationFn: (variables: unknown) => Promise<unknown>;
+      onSuccess?: (
+        data: unknown,
+        variables: unknown,
+        context: unknown,
+        mutationContext: unknown
+      ) => Promise<void> | void;
+    }) => ({
+      isPending: false,
+      mutateAsync: async (variables: unknown) => {
+        const data = await options.mutationFn(variables);
+        await options.onSuccess?.(data, variables, undefined, undefined);
+        return data;
+      },
+    }));
     useQueryMock.mockImplementation(() => usageQueryState.value);
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,

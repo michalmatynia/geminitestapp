@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -27,6 +28,25 @@ vi.mock('@/shared/ui/primitives.public', async () => {
 });
 
 import { EcommerceDiscountCouponsPanel } from './EcommerceDiscountCouponsPanel';
+
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderDiscountCouponsPanel = (): ReturnType<typeof render> =>
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <EcommerceDiscountCouponsPanel />
+    </QueryClientProvider>
+  );
 
 describe('EcommerceDiscountCouponsPanel', () => {
   beforeEach(() => {
@@ -74,7 +94,7 @@ describe('EcommerceDiscountCouponsPanel', () => {
       },
     });
 
-    render(<EcommerceDiscountCouponsPanel />);
+    renderDiscountCouponsPanel();
 
     expect(await screen.findByText('WELCOME20')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'WELCOME25' } });
@@ -120,7 +140,7 @@ describe('EcommerceDiscountCouponsPanel', () => {
     });
     mocks.apiDelete.mockResolvedValue({ ok: true, code: 'WELCOME20' });
 
-    render(<EcommerceDiscountCouponsPanel />);
+    renderDiscountCouponsPanel();
 
     expect(await screen.findByText('WELCOME20')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));

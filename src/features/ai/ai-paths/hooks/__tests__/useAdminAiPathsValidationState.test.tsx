@@ -2,7 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook as renderHookBase, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode, AiPathsValidationRule, PathConfig } from '@/shared/contracts/ai-paths';
@@ -47,6 +49,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 }));
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+  logClientCatch: mocks.logClientErrorMock,
   logClientError: mocks.logClientErrorMock,
 }));
 
@@ -120,6 +123,24 @@ const buildSettings = (...configs: PathConfig[]) => [
     value: JSON.stringify(config),
   })),
 ];
+
+const renderHook: typeof renderHookBase = (callback, options) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  return renderHookBase(callback, {
+    ...options,
+    wrapper,
+  });
+};
 
 describe('useAdminAiPathsValidationState', () => {
   beforeEach(() => {

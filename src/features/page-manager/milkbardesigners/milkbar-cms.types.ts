@@ -40,6 +40,11 @@ export type MilkbarMetric = {
 };
 
 export type MilkbarPageContent = {
+  nav: {
+    brandSub: string;
+    links: MilkbarLinkItem[];
+    ctaLabel: string;
+  };
   hero: {
     location: string;
     indexLabel: string;
@@ -225,6 +230,16 @@ export type MilkbarCmsUpdateInput = {
 // ─── English defaults ───────────────────────────────────────────────────────
 
 export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
+  nav: {
+    brandSub: '/ est. Amsterdam',
+    links: [
+      { label: 'practice', href: '#practice' },
+      { label: 'projects', href: '#projects' },
+      { label: 'process', href: '#process' },
+      { label: 'studio', href: '#studio' },
+    ],
+    ctaLabel: 'enquire',
+  },
   hero: {
     location: 'Amsterdam / London / Zurich',
     indexLabel: 'Index - MMXXV',
@@ -398,6 +413,16 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
 // ─── German defaults ─────────────────────────────────────────────────────────
 
 const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
+  nav: {
+    brandSub: '/ gegr. Amsterdam',
+    links: [
+      { label: 'Praxis', href: '#practice' },
+      { label: 'Projekte', href: '#projects' },
+      { label: 'Prozess', href: '#process' },
+      { label: 'Studio', href: '#studio' },
+    ],
+    ctaLabel: 'Anfragen',
+  },
   hero: {
     location: 'Amsterdam / London / Zürich',
     indexLabel: 'Index - MMXXV',
@@ -571,6 +596,16 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
 // ─── Polish defaults ──────────────────────────────────────────────────────────
 
 const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
+  nav: {
+    brandSub: '/ zał. Amsterdam',
+    links: [
+      { label: 'Praktyka', href: '#practice' },
+      { label: 'Projekty', href: '#projects' },
+      { label: 'Proces', href: '#process' },
+      { label: 'Studio', href: '#studio' },
+    ],
+    ctaLabel: 'Zapytaj',
+  },
   hero: {
     location: 'Amsterdam / Londyn / Zurych',
     indexLabel: 'Indeks - MMXXV',

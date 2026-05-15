@@ -1,11 +1,15 @@
 'use client';
 
+/* eslint-disable max-lines-per-function */
+
 import { useCallback } from 'react';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import type {
   NumberBalanceMatchStateResponse,
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { UseNumberBalanceRushMatchActionsProps } from './NumberBalanceRushGame.types';
 import {
   copyNumberBalanceMatchId,
@@ -15,6 +19,62 @@ import {
   resetNumberBalanceRushMatchRuntimeState,
   applyNumberBalanceRushMatchStartResponse,
 } from './NumberBalanceRushGame.logic';
+
+type StartNumberBalanceMatchVariables =
+  | {
+      action: 'join';
+      matchId: string;
+    }
+  | {
+      action: 'create';
+      balancedProbability: number | undefined;
+      roundDurationMs: number;
+      tier: UseNumberBalanceRushMatchActionsProps['tier'];
+    };
+
+const startNumberBalanceMatch = async (
+  variables: StartNumberBalanceMatchVariables
+): Promise<NumberBalanceMatchStateResponse> => {
+  if (variables.action === 'join') {
+    return api.post<NumberBalanceMatchStateResponse>(
+      '/api/kangur/number-balance/join',
+      { matchId: variables.matchId }
+    );
+  }
+
+  return api.post<NumberBalanceMatchStateResponse>(
+    '/api/kangur/number-balance/create',
+    {
+      roundDurationMs: variables.roundDurationMs,
+      tier: variables.tier,
+      balancedProbability: variables.balancedProbability,
+    }
+  );
+};
+
+const useStartNumberBalanceMatchMutation = (): MutationResult<
+  NumberBalanceMatchStateResponse,
+  StartNumberBalanceMatchVariables
+> =>
+  createMutationV2<NumberBalanceMatchStateResponse, StartNumberBalanceMatchVariables>({
+    mutationKey: ['kangur', 'number-balance', 'match', 'start'],
+    mutationFn: startNumberBalanceMatch,
+    meta: {
+      source: 'kangur.ui.NumberBalanceRushGame.startMatch',
+      operation: 'create',
+      resource: 'kangur.number-balance.match',
+      domain: 'kangur',
+      description: 'Creates or joins a Kangur number balance multiplayer match.',
+      errorPresentation: 'inline',
+      tags: ['kangur', 'number-balance', 'match'],
+    },
+  });
+
+type NumberBalanceRushMatchActions = {
+  handleCopyMatchId: () => Promise<void>;
+  handleRetryMatch: () => void;
+  initMatch: (requestedMatchId?: string) => Promise<void>;
+};
 
 export function useNumberBalanceRushMatchActions({
   balancedProbability,
@@ -44,7 +104,9 @@ export function useNumberBalanceRushMatchActions({
   lastLoadedPuzzleStartRef,
   solveTimesRef,
   setServerOffsetMs,
-}: UseNumberBalanceRushMatchActionsProps) {
+}: UseNumberBalanceRushMatchActionsProps): NumberBalanceRushMatchActions {
+  const { mutateAsync: startMatchAsync } = useStartNumberBalanceMatchMutation();
+
   const initMatch = useCallback(async (requestedMatchId?: string) => {
     setIsLoading(true);
     resetNumberBalanceRushMatchRuntimeState({
@@ -65,19 +127,15 @@ export function useNumberBalanceRushMatchActions({
     });
 
     try {
-      const response = requestedMatchId
-        ? await api.post<NumberBalanceMatchStateResponse>(
-            '/api/kangur/number-balance/join',
-            { matchId: requestedMatchId }
-          )
-        : await api.post<NumberBalanceMatchStateResponse>(
-            '/api/kangur/number-balance/create',
-            {
+      const response =
+        typeof requestedMatchId === 'string' && requestedMatchId.length > 0
+          ? await startMatchAsync({ action: 'join', matchId: requestedMatchId })
+          : await startMatchAsync({
+              action: 'create',
               roundDurationMs: durationMs,
               tier,
               balancedProbability,
-            }
-          );
+            });
 
       applyNumberBalanceRushMatchStartResponse({
         response,
@@ -118,6 +176,7 @@ export function useNumberBalanceRushMatchActions({
     setSolves,
     setTrayTiles,
     solveTimesRef,
+    startMatchAsync,
     tier,
     translations,
   ]);
@@ -127,11 +186,12 @@ export function useNumberBalanceRushMatchActions({
   }, [initMatch, matchId]);
 
   const handleCopyMatchId = useCallback(async () => {
-    if (!match?.matchId) {
+    const currentMatchId = match?.matchId;
+    if (typeof currentMatchId !== 'string' || currentMatchId.length === 0) {
       return;
     }
     try {
-      setCopyStatus(await copyNumberBalanceMatchId(match.matchId));
+      setCopyStatus(await copyNumberBalanceMatchId(currentMatchId));
     } catch (error) {
       void ErrorSystem.captureException(error);
       setCopyStatus('error');

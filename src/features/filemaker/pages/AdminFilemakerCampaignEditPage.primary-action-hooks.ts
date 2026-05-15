@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
 
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignLaunchRunResponse,
   FilemakerEmailCampaignRunMode,
   FilemakerEmailCampaignTestSendResponse,
@@ -74,20 +77,83 @@ const resolveLaunchSuccessMessage = (
   return 'Campaign queued for delivery.';
 };
 
+type LaunchCampaignRunVariables = {
+  campaignId: string;
+  launchReason: string;
+  mode: FilemakerEmailCampaignRunMode;
+};
+
+const launchCampaignRun = async (
+  variables: LaunchCampaignRunVariables
+): Promise<FilemakerEmailCampaignLaunchRunResponse> =>
+  api.post<FilemakerEmailCampaignLaunchRunResponse>('/api/filemaker/campaigns/runs', variables);
+
+const useCampaignLaunchRunMutation = (): MutationResult<
+  FilemakerEmailCampaignLaunchRunResponse,
+  LaunchCampaignRunVariables
+> =>
+  createMutationV2({
+    mutationKey: ['filemaker', 'campaigns', 'runs', 'launch'],
+    mutationFn: launchCampaignRun,
+    meta: {
+      source: 'features.filemaker.campaignEdit.launchRun',
+      operation: 'create',
+      resource: 'filemaker.campaign-runs',
+      domain: 'filemaker',
+      description: 'Launches a Filemaker email campaign run.',
+      errorPresentation: 'toast',
+      tags: ['filemaker', 'campaigns', 'runs'],
+    },
+  });
+
+type SendCampaignTestEmailVariables = {
+  campaign: FilemakerEmailCampaign;
+  contentGroupRegistry: FilemakerEmailCampaignContentGroupRegistry;
+  recipientEmail: string;
+};
+
+const sendCampaignTestEmail = async (
+  variables: SendCampaignTestEmailVariables
+): Promise<FilemakerEmailCampaignTestSendResponse> =>
+  api.post<FilemakerEmailCampaignTestSendResponse>(
+    '/api/filemaker/campaigns/test-send',
+    variables
+  );
+
+const useCampaignTestEmailMutation = (): MutationResult<
+  FilemakerEmailCampaignTestSendResponse,
+  SendCampaignTestEmailVariables
+> =>
+  createMutationV2({
+    mutationKey: ['filemaker', 'campaigns', 'test-send'],
+    mutationFn: sendCampaignTestEmail,
+    meta: {
+      source: 'features.filemaker.campaignEdit.testEmail',
+      operation: 'action',
+      resource: 'filemaker.campaign-test-email',
+      domain: 'filemaker',
+      description: 'Sends a Filemaker email campaign test email.',
+      errorPresentation: 'toast',
+      tags: ['filemaker', 'campaigns', 'test-email'],
+    },
+  });
+
 export function useCampaignLaunchAction(
   input: CampaignLaunchActionInput
 ): CampaignEditActions['handleLaunch'] {
   const { buildPersistedCampaign, context, saveCampaign } = input;
+  const launchRunMutation = useCampaignLaunchRunMutation();
   return useCallback(
     async (mode: FilemakerEmailCampaignRunMode): Promise<void> => {
       const savedCampaign = await saveCampaign('');
       if (savedCampaign === null) return;
       context.draftState.setLaunchingMode(mode);
       try {
-        const response = await api.post<FilemakerEmailCampaignLaunchRunResponse>(
-          '/api/filemaker/campaigns/runs',
-          { campaignId: savedCampaign.id, mode, launchReason: resolveLaunchReason(mode) }
-        );
+        const response = await launchRunMutation.mutateAsync({
+          campaignId: savedCampaign.id,
+          mode,
+          launchReason: resolveLaunchReason(mode),
+        });
         if (mode === 'live') {
           const now = new Date().toISOString();
           context.draftState.setDraft(
@@ -106,7 +172,7 @@ export function useCampaignLaunchAction(
         context.draftState.setLaunchingMode(null);
       }
     },
-    [buildPersistedCampaign, context, saveCampaign]
+    [buildPersistedCampaign, context, launchRunMutation, saveCampaign]
   );
 }
 
@@ -114,6 +180,7 @@ export function useCampaignTestEmailAction(
   input: CampaignActionInput
 ): CampaignEditActions['handleSendTestEmail'] {
   const { buildPersistedCampaign, context } = input;
+  const testEmailMutation = useCampaignTestEmailMutation();
   return useCallback(async (): Promise<void> => {
     const recipientEmail = context.draftState.testRecipientEmailDraft.trim().toLowerCase();
     if (recipientEmail.length === 0) {
@@ -126,14 +193,11 @@ export function useCampaignTestEmailAction(
     }
     context.draftState.setIsTestSendPending(true);
     try {
-      const response = await api.post<FilemakerEmailCampaignTestSendResponse>(
-        '/api/filemaker/campaigns/test-send',
-        {
-          campaign: buildPersistedCampaign(),
-          contentGroupRegistry: context.registries.contentGroupRegistry,
-          recipientEmail,
-        }
-      );
+      const response = await testEmailMutation.mutateAsync({
+        campaign: buildPersistedCampaign(),
+        contentGroupRegistry: context.registries.contentGroupRegistry,
+        recipientEmail,
+      });
       context.draftState.setTestRecipientEmailDraft(recipientEmail);
       context.toast(`Test email sent to ${response.recipientEmail}. ${response.providerMessage}`, {
         variant: 'success',
@@ -146,7 +210,7 @@ export function useCampaignTestEmailAction(
     } finally {
       context.draftState.setIsTestSendPending(false);
     }
-  }, [buildPersistedCampaign, context]);
+  }, [buildPersistedCampaign, context, testEmailMutation]);
 }
 
 export function useCampaignDuplicateAction(

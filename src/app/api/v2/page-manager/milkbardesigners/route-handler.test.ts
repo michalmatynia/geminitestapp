@@ -5,18 +5,20 @@ const mocks = vi.hoisted(() => ({
   apiHandler: vi.fn((handler: unknown, _options: unknown) => handler),
   getMilkbarDesignersCmsSnapshot: vi.fn(),
   saveMilkbarDesignersCmsSnapshot: vi.fn(),
+  patchMilkbarInquiryStatus: vi.fn(),
 }));
 
 vi.mock('@/features/page-manager/milkbardesigners/milkbar-cms.server', () => ({
   getMilkbarDesignersCmsSnapshot: mocks.getMilkbarDesignersCmsSnapshot,
   saveMilkbarDesignersCmsSnapshot: mocks.saveMilkbarDesignersCmsSnapshot,
+  patchMilkbarInquiryStatus: mocks.patchMilkbarInquiryStatus,
 }));
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler: mocks.apiHandler,
 }));
 
-import { GET, PUT } from './route-handler';
+import { GET, PATCH, PUT } from './route-handler';
 
 const buildRequest = (body: unknown): NextRequest =>
   new Request('http://localhost/api/v2/page-manager/milkbardesigners', {
@@ -28,10 +30,11 @@ describe('v2 page-manager milkbardesigners route handler', () => {
   beforeEach(() => {
     mocks.getMilkbarDesignersCmsSnapshot.mockReset();
     mocks.saveMilkbarDesignersCmsSnapshot.mockReset();
+    mocks.patchMilkbarInquiryStatus.mockReset();
   });
 
-  it('wraps GET and PUT with authenticated page-manager sources', () => {
-    expect(mocks.apiHandler).toHaveBeenCalledTimes(2);
+  it('wraps GET, PUT, and PATCH with authenticated page-manager sources', () => {
+    expect(mocks.apiHandler).toHaveBeenCalledTimes(3);
     expect(mocks.apiHandler.mock.calls[0]?.[1]).toMatchObject({
       requireAuth: true,
       source: 'v2.page-manager.milkbardesigners.GET',
@@ -39,6 +42,10 @@ describe('v2 page-manager milkbardesigners route handler', () => {
     expect(mocks.apiHandler.mock.calls[1]?.[1]).toMatchObject({
       requireAuth: true,
       source: 'v2.page-manager.milkbardesigners.PUT',
+    });
+    expect(mocks.apiHandler.mock.calls[2]?.[1]).toMatchObject({
+      requireAuth: true,
+      source: 'v2.page-manager.milkbardesigners.PATCH',
     });
   });
 
@@ -77,5 +84,34 @@ describe('v2 page-manager milkbardesigners route handler', () => {
     expect(response.status).toBe(200);
     expect(body.pageContent.hero.lede).toBe('Updated');
     expect(mocks.saveMilkbarDesignersCmsSnapshot).toHaveBeenCalledWith(payload);
+  });
+
+  it('PATCH marks an inquiry as contacted', async () => {
+    mocks.patchMilkbarInquiryStatus.mockResolvedValue({ ok: true });
+
+    const request = new Request('http://localhost/api/v2/page-manager/milkbardesigners', {
+      method: 'PATCH',
+      body: JSON.stringify({ email: 'test@example.com', status: 'contacted' }),
+    }) as NextRequest;
+
+    const response = await PATCH(request);
+    const body = (await response.json()) as { ok: boolean };
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(mocks.patchMilkbarInquiryStatus).toHaveBeenCalledWith('test@example.com', 'contacted');
+  });
+
+  it('PATCH defaults to pending status when status is not contacted', async () => {
+    mocks.patchMilkbarInquiryStatus.mockResolvedValue({ ok: true });
+
+    const request = new Request('http://localhost/api/v2/page-manager/milkbardesigners', {
+      method: 'PATCH',
+      body: JSON.stringify({ email: 'other@example.com', status: 'pending' }),
+    }) as NextRequest;
+
+    await PATCH(request);
+
+    expect(mocks.patchMilkbarInquiryStatus).toHaveBeenCalledWith('other@example.com', 'pending');
   });
 });

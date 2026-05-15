@@ -1,6 +1,7 @@
-import Image from 'next/image';
-import React from 'react';
+'use client';
 
+import React from 'react';
+import Image from 'next/image';
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
 import {
   clampNumber,
@@ -10,115 +11,135 @@ import {
   toBoolean,
 } from './image-utils';
 
-export function ImageElementBlock(): React.ReactNode {
+type ImageSettings = {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  aspectRatio: string;
+  objectFit: React.CSSProperties['objectFit'];
+  objectPosition: string;
+  opacity: number;
+  blur: number;
+  grayscale: number;
+  brightness: number;
+  contrast: number;
+  scale: number;
+  rotate: number;
+  shape: string;
+  borderRadius: number;
+  borderWidth: number;
+  borderStyle: string;
+  borderColor: string;
+  overlayType: string;
+  overlayColor: string;
+  overlayOpacity: number;
+  overlayGradientFrom: string;
+  overlayGradientTo: string;
+  overlayGradientDirection: string;
+  transparencyMode: string;
+  transparencyDirection: string;
+  transparencyStrength: number;
+  clipOverflow: boolean;
+};
+
+const resolveImageSettings = (settings: Record<string, unknown>): ImageSettings => ({
+  src: (settings['src'] as string) || '',
+  alt: (settings['alt'] as string) || 'Image',
+  width: (settings['width'] as number) || 100,
+  height: (settings['height'] as number) || 0,
+  aspectRatio: (settings['aspectRatio'] as string) || 'auto',
+  objectFit: (settings['objectFit'] as React.CSSProperties['objectFit']) || 'cover',
+  objectPosition: resolveObjectPosition((settings['objectPosition'] as string) || 'center'),
+  opacity: clampNumber(settings['opacity'], 0, 100, 100),
+  blur: clampNumber(settings['blur'], 0, 20, 0),
+  grayscale: clampNumber(settings['grayscale'], 0, 100, 0),
+  brightness: clampNumber(settings['brightness'], 0, 200, 100),
+  contrast: clampNumber(settings['contrast'], 0, 200, 100),
+  scale: clampNumber(settings['scale'], 50, 200, 100),
+  rotate: clampNumber(settings['rotate'], -180, 180, 0),
+  shape: (settings['shape'] as string) || 'none',
+  borderRadius: (settings['borderRadius'] as number) || 0,
+  borderWidth: (settings['borderWidth'] as number) || 0,
+  borderStyle: (settings['borderStyle'] as string) || 'solid',
+  borderColor: (settings['borderColor'] as string) || '#ffffff',
+  overlayType: (settings['overlayType'] as string) || 'none',
+  overlayColor: (settings['overlayColor'] as string) || '#000000',
+  overlayOpacity: clampNumber(settings['overlayOpacity'], 0, 100, 0) / 100,
+  overlayGradientFrom: (settings['overlayGradientFrom'] as string) || '#000000',
+  overlayGradientTo: (settings['overlayGradientTo'] as string) || '#ffffff',
+  overlayGradientDirection: (settings['overlayGradientDirection'] as string) || 'to-bottom',
+  transparencyMode: (settings['transparencyMode'] as string) || 'none',
+  transparencyDirection: (settings['transparencyDirection'] as string) || 'bottom',
+  transparencyStrength: clampNumber(settings['transparencyStrength'], 0, 100, 0),
+  clipOverflow: toBoolean(settings['clipOverflow'], false),
+});
+
+export function ImageElementBlock(): React.JSX.Element | null {
   const { mediaStyles, stretch } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
-  const src = (settings['src'] as string) || '';
-  const alt = (settings['alt'] as string) || 'Image';
-  const width = (settings['width'] as number) || 100;
-  const height = (settings['height'] as number) || 0;
-  const aspectRatio = (settings['aspectRatio'] as string) || 'auto';
-  const objectFit = (settings['objectFit'] as React.CSSProperties['objectFit']) || 'cover';
-  const objectPosition = resolveObjectPosition((settings['objectPosition'] as string) || 'center');
-  const opacity = clampNumber(settings['opacity'], 0, 100, 100);
-  const blur = clampNumber(settings['blur'], 0, 20, 0);
-  const grayscale = clampNumber(settings['grayscale'], 0, 100, 0);
-  const brightness = clampNumber(settings['brightness'], 0, 200, 100);
-  const contrast = clampNumber(settings['contrast'], 0, 200, 100);
-  const scale = clampNumber(settings['scale'], 50, 200, 100);
-  const rotate = clampNumber(settings['rotate'], -180, 180, 0);
-  const shape = (settings['shape'] as string) || 'none';
-  const borderRadius = (settings['borderRadius'] as number) || 0;
-  const borderWidth = (settings['borderWidth'] as number) || 0;
-  const borderStyle = (settings['borderStyle'] as string) || 'solid';
-  const borderColor = (settings['borderColor'] as string) || '#ffffff';
-  const overlayType = (settings['overlayType'] as string) || 'none';
-  const overlayColor = (settings['overlayColor'] as string) || '#000000';
-  const overlayOpacity = clampNumber(settings['overlayOpacity'], 0, 100, 0) / 100;
-  const overlayGradientFrom = (settings['overlayGradientFrom'] as string) || '#000000';
-  const overlayGradientTo = (settings['overlayGradientTo'] as string) || '#ffffff';
-  const overlayGradientDirection = (settings['overlayGradientDirection'] as string) || 'to-bottom';
-  const transparencyMode = (settings['transparencyMode'] as string) || 'none';
-  const transparencyDirection = (settings['transparencyDirection'] as string) || 'bottom';
-  const transparencyStrength = clampNumber(settings['transparencyStrength'], 0, 100, 0);
-  const clipOverflow = toBoolean(settings['clipOverflow'], false);
+  const s = resolveImageSettings(settings);
 
   const wrapperStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
-    width: `${width}%`,
+    width: `${s.width}%`,
   };
-  if (height > 0) wrapperStyles.height = `${height}px`;
-  if (aspectRatio !== 'auto') wrapperStyles.aspectRatio = aspectRatio;
+  if (s.height > 0) wrapperStyles.height = `${s.height}px`;
+  if (s.aspectRatio !== 'auto') wrapperStyles.aspectRatio = s.aspectRatio;
   if (stretch) {
     wrapperStyles.width = '100%';
     wrapperStyles.height = '100%';
   }
-  if (borderWidth > 0 && borderStyle !== 'none') {
-    wrapperStyles.borderWidth = `${borderWidth}px`;
-    wrapperStyles.borderStyle = borderStyle;
-    wrapperStyles.borderColor = borderColor;
+  if (s.borderWidth > 0 && s.borderStyle !== 'none') {
+    wrapperStyles.borderWidth = `${s.borderWidth}px`;
+    wrapperStyles.borderStyle = s.borderStyle;
+    wrapperStyles.borderColor = s.borderColor;
   }
-  if (shape === 'circle') {
+  if (s.shape === 'circle') {
     wrapperStyles.borderRadius = '9999px';
     wrapperStyles.overflow = 'hidden';
-  } else if (shape === 'rounded' && borderRadius > 0) {
-    wrapperStyles.borderRadius = `${borderRadius}px`;
+  } else if (s.shape === 'rounded' && s.borderRadius > 0) {
+    wrapperStyles.borderRadius = `${s.borderRadius}px`;
     wrapperStyles.overflow = 'hidden';
   }
-  if (clipOverflow) {
+  if (s.clipOverflow) {
     wrapperStyles.overflow = 'hidden';
   }
-
-  const shadow = settings['imageShadow'] as Record<string, unknown> | undefined;
-  if (shadow) {
-    const x = (shadow['x'] as number) ?? 0;
-    const y = (shadow['y'] as number) ?? 0;
-    const blurShadow = (shadow['blur'] as number) ?? 0;
-    const spread = (shadow['spread'] as number) ?? 0;
-    const color = shadow['color'] as string | undefined;
-    if ((x || y || blurShadow || spread) && color) {
-      wrapperStyles.boxShadow = `${x}px ${y}px ${blurShadow}px ${spread}px ${color}`;
-    }
-  }
-
-  Object.assign(
-    wrapperStyles,
-    buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength)
-  );
 
   const filters: string[] = [];
-  if (blur > 0) filters.push(`blur(${blur}px)`);
-  if (grayscale > 0) filters.push(`grayscale(${grayscale / 100})`);
-  if (brightness !== 100) filters.push(`brightness(${brightness / 100})`);
-  if (contrast !== 100) filters.push(`contrast(${contrast / 100})`);
+  if (s.blur > 0) filters.push(`blur(${s.blur}px)`);
+  if (s.grayscale > 0) filters.push(`grayscale(${s.grayscale / 100})`);
+  if (s.brightness !== 100) filters.push(`brightness(${s.brightness / 100})`);
+  if (s.contrast !== 100) filters.push(`contrast(${s.contrast / 100})`);
 
   const transforms: string[] = [];
-  if (scale !== 100) transforms.push(`scale(${scale / 100})`);
-  if (rotate !== 0) transforms.push(`rotate(${rotate}deg)`);
+  if (s.scale !== 100) transforms.push(`scale(${s.scale / 100})`);
+  if (s.rotate !== 0) transforms.push(`rotate(${s.rotate}deg)`);
 
   const imageStyles: React.CSSProperties = {
     width: '100%',
     maxHeight: '100%',
-    objectFit,
-    objectPosition,
-    opacity: opacity / 100,
+    objectFit: s.objectFit,
+    objectPosition: s.objectPosition,
+    opacity: s.opacity / 100,
     filter: filters.length ? filters.join(' ') : undefined,
     transform: transforms.length ? transforms.join(' ') : undefined,
     display: 'block',
   };
+
   const overlayStyles: React.CSSProperties = {};
-  if (overlayType === 'solid') {
-    overlayStyles.backgroundColor = overlayColor;
-    overlayStyles.opacity = overlayOpacity;
-  } else if (overlayType === 'gradient') {
-    overlayStyles.backgroundImage = `linear-gradient(${resolveGradientDirection(overlayGradientDirection)}, ${overlayGradientFrom}, ${overlayGradientTo})`;
-    overlayStyles.opacity = overlayOpacity;
+  if (s.overlayType === 'solid') {
+    overlayStyles.backgroundColor = s.overlayColor;
+    overlayStyles.opacity = s.overlayOpacity;
+  } else if (s.overlayType === 'gradient') {
+    overlayStyles.backgroundImage = `linear-gradient(${resolveGradientDirection(s.overlayGradientDirection)}, ${s.overlayGradientFrom}, ${s.overlayGradientTo})`;
+    overlayStyles.opacity = s.overlayOpacity;
   }
   if (wrapperStyles.borderRadius) {
     overlayStyles.borderRadius = wrapperStyles.borderRadius as string;
   }
 
-  if (!src) {
+  if (!s.src) {
     return (
       <div
         className='cms-media cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center py-8 text-sm'
@@ -128,35 +149,30 @@ export function ImageElementBlock(): React.ReactNode {
       </div>
     );
   }
-  const useFill = stretch || height > 0 || aspectRatio !== 'auto';
-  const imageStylesForFill: React.CSSProperties = { ...imageStyles };
-  delete (imageStylesForFill as { width?: string | number }).width;
-  delete (imageStylesForFill as { height?: string | number }).height;
-
+  
+  const useFill = stretch || s.height > 0 || s.aspectRatio !== 'auto';
+  
   return (
     <div className='relative' style={wrapperStyles}>
       {useFill ? (
-        <Image src={src} alt={alt} fill style={imageStylesForFill} />
+        <Image src={s.src} alt={s.alt} fill style={imageStyles} />
       ) : (
         <Image
-          src={src}
-          alt={alt}
+          src={s.src}
+          alt={s.alt}
           width={1000}
           height={1000}
-          style={{
-            ...imageStyles,
-            height: 'auto',
-          }}
+          style={{ ...imageStyles, height: 'auto' }}
         />
       )}
-      {overlayType !== 'none' && (
+      {s.overlayType !== 'none' && (
         <div className='pointer-events-none absolute inset-0' style={overlayStyles} />
       )}
     </div>
   );
 }
 
-export function ImageBlock(): React.ReactNode {
+export function ImageBlock(): React.JSX.Element {
   const { mediaStyles, stretch } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
   const src = (settings['src'] as string) || '';
@@ -164,6 +180,7 @@ export function ImageBlock(): React.ReactNode {
   const width = (settings['width'] as number) || 100;
   const borderRadius = (settings['borderRadius'] as number) || 0;
   const clipOverflow = toBoolean(settings['clipOverflow'], false);
+
   const resolvedStyles: React.CSSProperties = {
     ...(mediaStyles ?? {}),
     ...(borderRadius > 0 ? { borderRadius: `${borderRadius}px` } : {}),
@@ -186,14 +203,14 @@ export function ImageBlock(): React.ReactNode {
     ...resolvedStyles,
     ...(clipOverflow ? { overflow: 'hidden' } : {}),
   };
+  
   const imageClassName = stretch
     ? 'block h-full w-full object-cover'
     : 'block h-auto w-full max-h-full object-cover';
-  const useFill = stretch;
 
   return (
     <div className='cms-media' style={wrapperStyles}>
-      {useFill ? (
+      {stretch ? (
         <Image src={src} alt={alt} fill className={imageClassName} />
       ) : (
         <Image src={src} alt={alt} width={1000} height={1000} className={imageClassName} />

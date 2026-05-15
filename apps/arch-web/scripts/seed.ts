@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-import { DEFAULT_ARCH_PAGE_CONTENT } from '../src/lib/pageContent.ts';
+import { DEFAULT_ARCH_PAGE_CONTENT, DEFAULT_ARCH_PAGE_SETTINGS } from '../src/lib/pageContent.ts';
 
 const DEFAULT_MONGODB_URI = 'mongodb://127.0.0.1:27022/arch_web_local';
 const DEFAULT_MONGODB_DB = 'arch_web_local';
@@ -77,24 +77,28 @@ const services = [
   {
     code: 'S-01',
     title: 'Compliance Intelligence',
+    emphasis: 'Intelligence',
     description: 'Automated cross-referencing against regulations in any European or international jurisdiction. Upload drawings, receive a full compliance report in minutes.',
     order: 0,
   },
   {
     code: 'S-02',
     title: 'Generative Massing',
+    emphasis: 'Massing',
     description: 'Input site constraints and programme. Receive thousands of optimised massing options, ranked by buildability and cost efficiency.',
     order: 1,
   },
   {
     code: 'S-03',
     title: 'Document Automation',
+    emphasis: 'Automation',
     description: 'Transform concept sketches into production drawing sets. AI drafts plans, sections and elevations with correct weights and annotations.',
     order: 2,
   },
   {
     code: 'S-04',
     title: 'Project Intelligence',
+    emphasis: 'Intelligence',
     description: 'Real-time budget forecasting and risk identification. An AI project manager that never sleeps and never misses a deadline.',
     order: 3,
   },
@@ -135,7 +139,14 @@ async function seed() {
       {
         $set: {
           key: 'home',
-          content: DEFAULT_ARCH_PAGE_CONTENT,
+          // New localised format — EN content seeded for all locales as bootstrap.
+          // Admin fills in DE/PL via Page Manager CMS, then publishes those locales.
+          localizedContent: {
+            en: DEFAULT_ARCH_PAGE_CONTENT,
+            de: DEFAULT_ARCH_PAGE_CONTENT,
+            pl: DEFAULT_ARCH_PAGE_CONTENT,
+          },
+          pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
           updatedAt: new Date(),
         },
         $setOnInsert: {

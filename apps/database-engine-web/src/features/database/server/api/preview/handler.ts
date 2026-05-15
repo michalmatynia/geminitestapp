@@ -23,9 +23,6 @@ import { MongoClient, type Db } from 'mongodb';
 import {
   databaseEngineManagedMongoApplicationSchema,
   mongoSourceSchema,
-  type DatabaseTableDetail,
-  type DatabaseIndexInfo,
-  type DatabaseColumnInfo,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';

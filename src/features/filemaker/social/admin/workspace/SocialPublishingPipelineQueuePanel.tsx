@@ -6,6 +6,8 @@ import { PauseIcon, PlayIcon, RefreshCwIcon } from 'lucide-react';
 import { Button, Card, ListPanel, LoadingState } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
@@ -100,6 +102,7 @@ type PipelineJobRecord = {
 };
 
 type PanelVariant = 'full' | 'compact';
+type PipelinePauseAction = 'pause' | 'resume';
 
 const normalizeQueueJobStatus = (status: string | null | undefined): string | null => {
   const normalized = status?.trim().toLowerCase();
@@ -144,6 +147,71 @@ const getActiveQueueProcessSummary = (
   };
 };
 
+const triggerSocialPipeline = async (): Promise<void> => {
+  await api.post('/api/filemaker/social-pipeline/trigger', undefined, {
+    timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+  });
+};
+
+const setSocialPipelinePauseState = async (action: PipelinePauseAction): Promise<void> => {
+  const endpoint =
+    action === 'resume'
+      ? '/api/filemaker/social-pipeline/resume'
+      : '/api/filemaker/social-pipeline/pause';
+  await api.post(endpoint, undefined, {
+    timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+  });
+};
+
+const deleteSocialPipelineJob = async (jobId: string): Promise<void> => {
+  await api.delete('/api/filemaker/social-pipeline/jobs', {
+    params: { id: jobId },
+    timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+  });
+};
+
+const useTriggerSocialPipelineMutation = (): MutationResult<void, void> =>
+  createMutationV2<void, void>({
+    mutationKey: ['filemaker', 'social-pipeline', 'trigger'],
+    mutationFn: async () => triggerSocialPipeline(),
+    meta: {
+      source: 'features.filemaker.social.SocialPublishingPipelineQueuePanel.trigger',
+      operation: 'action',
+      resource: 'filemaker.social-pipeline',
+      domain: 'files',
+      description: 'Trigger the Social Publishing runtime queue.',
+      errorPresentation: 'inline',
+    },
+  });
+
+const useToggleSocialPipelinePauseMutation = (): MutationResult<void, PipelinePauseAction> =>
+  createMutationV2<void, PipelinePauseAction>({
+    mutationKey: ['filemaker', 'social-pipeline', 'pause-state'],
+    mutationFn: async (action) => setSocialPipelinePauseState(action),
+    meta: {
+      source: 'features.filemaker.social.SocialPublishingPipelineQueuePanel.pauseState',
+      operation: 'action',
+      resource: 'filemaker.social-pipeline',
+      domain: 'files',
+      description: 'Pause or resume the Social Publishing runtime queue.',
+      errorPresentation: 'inline',
+    },
+  });
+
+const useDeleteSocialPipelineJobMutation = (): MutationResult<void, string> =>
+  createMutationV2<void, string>({
+    mutationKey: ['filemaker', 'social-pipeline', 'jobs', 'delete'],
+    mutationFn: async (jobId) => deleteSocialPipelineJob(jobId),
+    meta: {
+      source: 'features.filemaker.social.SocialPublishingPipelineQueuePanel.deleteJob',
+      operation: 'delete',
+      resource: 'filemaker.social-pipeline.job',
+      domain: 'files',
+      description: 'Delete a Social Publishing runtime queue job.',
+      errorPresentation: 'inline',
+    },
+  });
+
 export function SocialPublishingPipelineQueuePanel({
   variant = 'full',
 }: {
@@ -158,6 +226,9 @@ export function SocialPublishingPipelineQueuePanel({
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const refreshTimeoutRef = useRef<SafeTimerId | null>(null);
+  const triggerMutation = useTriggerSocialPipelineMutation();
+  const togglePauseMutation = useToggleSocialPipelinePauseMutation();
+  const deleteJobMutation = useDeleteSocialPipelineJobMutation();
   const activeProcessSummary = useMemo(
     () => (isCompactVariant ? status?.activeProcessSummary ?? null : getActiveQueueProcessSummary(jobs)),
     [isCompactVariant, jobs, status?.activeProcessSummary]
@@ -226,9 +297,7 @@ export function SocialPublishingPipelineQueuePanel({
   const handleTrigger = useCallback(async () => {
     setTriggering(true);
     try {
-      await api.post('/api/filemaker/social-pipeline/trigger', undefined, {
-        timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-      });
+      await triggerMutation.mutateAsync(undefined);
       safeClearTimeout(refreshTimeoutRef.current);
       refreshTimeoutRef.current = safeSetTimeout(() => {
         refreshTimeoutRef.current = null;
@@ -239,24 +308,19 @@ export function SocialPublishingPipelineQueuePanel({
     } finally {
       setTriggering(false);
     }
-  }, [fetchData]);
+  }, [fetchData, triggerMutation]);
 
   const handleTogglePause = useCallback(async () => {
     setTogglingPause(true);
     try {
-      const endpoint = status?.isPaused
-        ? '/api/filemaker/social-pipeline/resume'
-        : '/api/filemaker/social-pipeline/pause';
-      await api.post(endpoint, undefined, {
-        timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-      });
+      await togglePauseMutation.mutateAsync(status?.isPaused ? 'resume' : 'pause');
       await fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle pause.');
     } finally {
       setTogglingPause(false);
     }
-  }, [status?.isPaused, fetchData]);
+  }, [status?.isPaused, fetchData, togglePauseMutation]);
 
   const handleDeleteJob = useCallback(
     async (jobId: string) => {
@@ -271,10 +335,7 @@ export function SocialPublishingPipelineQueuePanel({
       setDeletingJobId(jobId);
       setError(null);
       try {
-        await api.delete('/api/filemaker/social-pipeline/jobs', {
-          params: { id: jobId },
-          timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-        });
+        await deleteJobMutation.mutateAsync(jobId);
         await fetchData();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to delete pipeline job.');
@@ -282,7 +343,7 @@ export function SocialPublishingPipelineQueuePanel({
         setDeletingJobId(null);
       }
     },
-    [fetchData]
+    [deleteJobMutation, fetchData]
   );
 
   const isPaused = status?.isPaused ?? false;

@@ -4,15 +4,14 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2, ChevronDown } fr
 import { cn } from '@/shared/utils/ui-utils';
 import { type KangurLessonSection, type KangurLessonSubsection } from '@/features/kangur/shared/contracts/kangur';
 
-type RowButtonProps = {
+// Subcomponents extracted for brevity and to resolve complexity limits
+const RowButton: React.FC<{
   onClick: () => void;
   disabled: boolean;
   title: string;
   icon: React.ElementType;
   className?: string;
-};
-
-const RowButton: React.FC<RowButtonProps> = ({ onClick, disabled, title, icon: Icon, className }) => (
+}> = ({ onClick, disabled, title, icon: Icon, className }) => (
   <Button
     type='button'
     size='icon'
@@ -92,7 +91,7 @@ export const SectionRow: React.FC<SectionRowProps> = ({
         </button>
         <div className='min-w-0 flex-1'>
           <div className='flex items-center gap-2'>
-            {section.emoji ? <span className='text-sm'>{section.emoji}</span> : null}
+            {section.emoji !== null && section.emoji !== undefined ? <span className='text-sm'>{section.emoji}</span> : null}
             <span className='text-sm font-semibold text-foreground'>{section.label}</span>
             <Badge variant='outline' className='text-[10px]'>{section.typeLabel}</Badge>
             {!isEnabled ? <Badge variant='secondary' className='text-[10px]'>Disabled</Badge> : null}

@@ -3,7 +3,7 @@ import { getDb } from '@/lib/mongodb';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json() as { email?: string };
+    const { email, locale } = await req.json() as { email?: string; locale?: string };
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
       status: 'pending',
       source: 'cta-form',
+      ...(locale !== undefined && { locale }),
     });
     return NextResponse.json({ message: 'Inquiry received' }, { status: 201 });
   } catch {

@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
@@ -38,6 +39,17 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 import { SocialPublishingPipelineQueuePanel } from './SocialPublishingPipelineQueuePanel';
+
+function render(ui: React.ReactElement): ReturnType<typeof rtlRender> {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 function createDeferred<T>(): {
   promise: Promise<T>;

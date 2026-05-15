@@ -8,7 +8,7 @@ import React, { startTransition, useCallback, useMemo, useState } from 'react';
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -38,6 +38,20 @@ type CvCreatePayload = {
   bodyBlocks: CvBlock[];
   personId: string;
   title: string;
+};
+
+type CvCreateResponse = {
+  cv: FilemakerCv;
+};
+
+type ExportCvPdfVariables = {
+  cvId: string;
+  fallbackFilename: string;
+};
+
+type ExportCvPdfResponse = {
+  blob: Blob;
+  filename: string;
 };
 
 /* eslint-disable complexity */
@@ -234,24 +248,62 @@ export function PersonCvsSection(): React.JSX.Element {
     websites,
   ]);
 
+  const createCvMutation = createMutationV2<CvCreateResponse, CvCreatePayload>({
+    mutationKey: ['filemaker', 'person-cvs', 'create'],
+    mutationFn: async (input) => {
+      const response = await fetch('/api/filemaker/cvs', {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          bodyBlocks: input.bodyBlocks,
+          personId: input.personId,
+          title: input.title,
+        }),
+      });
+      if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
+      return (await response.json()) as CvCreateResponse;
+    },
+    meta: {
+      source: 'features.filemaker.components.page.PersonCvsSection.createCv',
+      operation: 'create',
+      resource: 'filemaker.cv',
+      domain: 'files',
+      description: 'Create a Filemaker CV from the current person profile.',
+      errorPresentation: 'toast',
+    },
+  });
+  const exportCvPdfMutation = createMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
+    mutationKey: ['filemaker', 'person-cvs', 'export-pdf'],
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/filemaker/cvs/export-pdf', {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ cvId: variables.cvId }),
+      });
+      if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
+      return {
+        blob: await response.blob(),
+        filename: readDownloadFilename(response, variables.fallbackFilename),
+      };
+    },
+    meta: {
+      source: 'features.filemaker.components.page.PersonCvsSection.exportPdf',
+      operation: 'export',
+      resource: 'filemaker.cv-pdf',
+      domain: 'files',
+      description: 'Export a Filemaker CV PDF from the person CV list.',
+      errorPresentation: 'toast',
+    },
+  });
+
   const createCv = useCallback(async (input: CvCreatePayload): Promise<FilemakerCv> => {
-    const response = await fetch('/api/filemaker/cvs', {
-      method: 'POST',
-      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({
-        bodyBlocks: input.bodyBlocks,
-        personId: input.personId,
-        title: input.title,
-      }),
-    });
-    if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
-    const payload = (await response.json()) as { cv: FilemakerCv };
+    const payload = await createCvMutation.mutateAsync(input);
     queryClient.setQueryData<CvListResponse>(
       buildPersonCvsQueryKey(input.personId),
       (current) => appendCreatedCv(current, payload.cv)
     );
     return payload.cv;
-  }, [queryClient]);
+  }, [createCvMutation, queryClient]);
 
   const createCvFromProfile = useCallback(async (): Promise<FilemakerCv> => {
     return createCv(buildCvCreatePayloadFromProfile());
@@ -285,15 +337,12 @@ export function PersonCvsSection(): React.JSX.Element {
   );
 
   const exportCvPdf = useCallback(async (cv: FilemakerCv): Promise<void> => {
-    const response = await fetch('/api/filemaker/cvs/export-pdf', {
-      method: 'POST',
-      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ cvId: cv.id }),
+    const exported = await exportCvPdfMutation.mutateAsync({
+      cvId: cv.id,
+      fallbackFilename: `${formatCvTitle(cv)}.pdf`,
     });
-    if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
-    const filename = readDownloadFilename(response, `${formatCvTitle(cv)}.pdf`);
-    downloadBlob(await response.blob(), filename);
-  }, []);
+    downloadBlob(exported.blob, exported.filename);
+  }, [exportCvPdfMutation]);
 
   const handleExportPdf = useCallback(
     async (cv: FilemakerCv): Promise<void> => {

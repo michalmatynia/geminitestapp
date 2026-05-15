@@ -527,6 +527,7 @@ const mockFolders = [
 ];
 
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/shared/ui/primitives.public';
 
 const setupAdminFilemakerMailPagesTest = (): void => {
@@ -540,10 +541,18 @@ const setupAdminFilemakerMailPagesTest = (): void => {
 };
 
 const renderWithProviders = (ui: React.ReactNode) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
   return render(
-    <ToastProvider>
-      {ui}
-    </ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        {ui}
+      </ToastProvider>
+    </QueryClientProvider>
   );
 };
 

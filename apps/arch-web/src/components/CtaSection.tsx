@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { ArchPageContent } from '@/lib/types';
 
-export default function CtaSection({ content }: { content: ArchPageContent['cta'] }) {
+export default function CtaSection({ content, locale }: { content: ArchPageContent['cta']; locale?: string }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -15,7 +15,7 @@ export default function CtaSection({ content }: { content: ArchPageContent['cta'
       const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, locale }),
       });
       const data = await res.json() as { message?: string; error?: string };
       if (res.ok) {

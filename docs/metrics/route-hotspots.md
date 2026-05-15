@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-15'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-05-10T01:05:14.761Z
+Generated at: 2026-05-15T03:53:51.572Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -17,7 +17,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | Route | LOC |
 | --- | ---: |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 160 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 136 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 156 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 124 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 115 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 104 |
@@ -48,19 +48,19 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(frontend)/[...slug]/page.tsx` | 30 |
 | `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
 | `src/app/[locale]/(frontend)/login/page.tsx` | 26 |
-| `src/app/(admin)/admin/kangur/[...slug]/page.tsx` | 25 |
 | `src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx` | 24 |
 | `src/app/(admin)/admin/filemaker/campaigns/unsubscribe/page.tsx` | 24 |
+| `src/app/(admin)/admin/page-manager/studiq/[...slug]/page.tsx` | 21 |
 | `src/app/(admin)/admin/kangur/builder/page.tsx` | 19 |
 | `src/app/(frontend)/page.tsx` | 19 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 19 |
 | `src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/content-manager/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/observability/page.tsx` | 17 |
-| `src/app/(admin)/admin/kangur/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/settings/ai-tutor-content/page.tsx` | 17 |
 | `src/app/(admin)/admin/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/appearance/page.tsx` | 16 |
+| `src/app/(admin)/admin/kangur/documentation/page.tsx` | 16 |
 
 ## Recommended First Runtime Profiling Targets
 

@@ -3,7 +3,6 @@
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { Button, useToast } from '@/shared/ui/primitives.public';
 
 import type {
@@ -15,28 +14,12 @@ import {
   hasTrimmedText,
   normalizeSearchInput,
 } from './AdminFilemakerJobListingsPage.components';
-
-type ApplicationInfoPayload = {
-  application?: FilemakerJobApplication;
-};
-
-type ManualMarkRequest = {
-  url: string;
-  method: 'POST' | 'PATCH';
-  body: {
-    removeLogEntryId?: string;
-    status: 'draft' | 'ready' | 'applied' | 'rejected' | 'archived';
-    action?: 'mark_applied_manual';
-    jobListingId?: string;
-    jobTitle?: string;
-    organizationId?: string;
-    organizationName?: string | null;
-    personId?: string;
-    personName?: string;
-    sourceSite?: string | null;
-    sourceUrl?: string | null;
-  };
-};
+import {
+  useMarkAppliedMutation,
+  type ApplicationInfoPayload,
+  type ManualMarkMutationVariables,
+  type ManualMarkRequest,
+} from './AdminFilemakerJobListingsPage.mark-applied.mutation';
 
 type MarkAppliedButtonProps = {
   listing: FilemakerJobListing;
@@ -115,6 +98,18 @@ type MarkAppliedButtonState = {
   handleClick: () => Promise<void>;
 };
 
+type MarkAppliedLocalState = {
+  applicationId: string | null;
+  disabled: boolean;
+  isApplied: boolean;
+  isLoading: boolean;
+  normalizedPersonId: string;
+  setApplicationId: (value: string | null) => void;
+  setIsApplied: (value: boolean) => void;
+  setIsLoading: (value: boolean) => void;
+  title: string;
+};
+
 const applyResponseToButtonState = (input: {
   payload: ApplicationInfoPayload;
   wasApplied: boolean;
@@ -155,26 +150,23 @@ const executeMarkAppliedToggle = async (input: {
   request: ManualMarkRequest;
   wasApplied: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  runRequest: (variables: ManualMarkMutationVariables) => Promise<ApplicationInfoPayload>;
   onRequestSuccess: (payload: ApplicationInfoPayload) => void;
   onRequestError: (message: string) => void;
   onRefreshRequested: () => Promise<void> | void;
 }): Promise<void> => {
-  const { request, wasApplied, setIsLoading, onRequestSuccess, onRequestError, onRefreshRequested } = input;
+  const {
+    request,
+    wasApplied,
+    setIsLoading,
+    runRequest,
+    onRequestSuccess,
+    onRequestError,
+    onRefreshRequested,
+  } = input;
   setIsLoading(true);
   try {
-    const response = await fetch(request.url, {
-      method: request.method,
-      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(request.body),
-    });
-    if (!response.ok) {
-      throw new Error(
-        wasApplied
-          ? `Failed to unmark application (${response.status}).`
-          : `Failed to mark as applied (${response.status}).`
-      );
-    }
-    const payload = (await response.json()) as ApplicationInfoPayload;
+    const payload = await runRequest({ request, wasApplied });
     onRequestSuccess(payload);
     void onRefreshRequested();
   } catch (error) {
@@ -184,8 +176,7 @@ const executeMarkAppliedToggle = async (input: {
   }
 };
 
-const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedButtonState => {
-  const { toast } = useToast();
+const useMarkAppliedLocalState = (props: MarkAppliedButtonProps): MarkAppliedLocalState => {
   const [isLoading, setIsLoading] = useState(false);
   const [isApplied, setIsApplied] = useState(props.initialApplied);
   const [applicationId, setApplicationId] = useState(props.applicationId);
@@ -206,45 +197,69 @@ const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedBu
     isApplied,
     personLabel,
   });
+  return {
+    applicationId,
+    disabled,
+    isApplied,
+    isLoading,
+    normalizedPersonId,
+    setApplicationId,
+    setIsApplied,
+    setIsLoading,
+    title,
+  };
+};
+
+const useMarkAppliedButtonState = (props: MarkAppliedButtonProps): MarkAppliedButtonState => {
+  const { toast } = useToast();
+  const markAppliedMutation = useMarkAppliedMutation();
+  const localState = useMarkAppliedLocalState(props);
 
   const handleResponse = useCallback(
     (payload: ApplicationInfoPayload): void => {
       applyResponseToButtonState({
         payload,
-        wasApplied: isApplied,
-        setIsApplied,
-        setApplicationId,
+        wasApplied: localState.isApplied,
+        setIsApplied: localState.setIsApplied,
+        setApplicationId: localState.setApplicationId,
         onApplicationUpdated: props.onApplicationUpdated,
       });
     },
-    [isApplied, props.onApplicationUpdated]
+    [localState, props.onApplicationUpdated]
   );
 
   const handleClick = useCallback(async (): Promise<void> => {
-    if (disabled) return;
+    if (localState.disabled) return;
     const request = await buildMarkAppliedRequest({
-      isApplied,
+      isApplied: localState.isApplied,
       props,
-      normalizedPersonId,
-      applicationId,
+      normalizedPersonId: localState.normalizedPersonId,
+      applicationId: localState.applicationId,
     });
     await executeMarkAppliedToggle({
       request,
-      wasApplied: isApplied,
-      setIsLoading,
+      wasApplied: localState.isApplied,
+      setIsLoading: localState.setIsLoading,
+      runRequest: (variables) => markAppliedMutation.mutateAsync(variables),
       onRequestSuccess: handleResponse,
       onRequestError: (message: string) => {
         toast(message, { variant: 'error' });
       },
       onRefreshRequested: props.onRefreshRequested,
     });
-  }, [applicationId, disabled, handleResponse, isApplied, normalizedPersonId, props, toast]);
+  }, [
+    handleResponse,
+    localState,
+    markAppliedMutation,
+    props,
+    toast,
+  ]);
 
   return {
-    isLoading,
-    isApplied,
-    title,
-    disabled,
+    isLoading: localState.isLoading,
+    isApplied: localState.isApplied,
+    title: localState.title,
+    disabled: localState.disabled,
     handleClick,
   };
 };

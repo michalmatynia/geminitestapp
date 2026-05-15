@@ -2,7 +2,7 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { Copy, Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -11,6 +11,7 @@ import {
   MILKBAR_LOCALE_LABELS,
   MILKBAR_LOCALES,
   type MilkbarCmsSnapshot,
+  type MilkbarLinkItem,
   type MilkbarLocale,
   type MilkbarLocalizedContent,
   type MilkbarMetric,
@@ -57,6 +58,9 @@ const toOrderNumber = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'] as const;
+const toRoman = (n: number): string => ROMAN[n - 1] ?? String(n);
+
 const newProject = (index: number): MilkbarProjectCmsRecord => ({
   code: `MBD-${String(index + 1).padStart(3, '0')}`,
   name: 'New project',
@@ -74,6 +78,7 @@ const newProject = (index: number): MilkbarProjectCmsRecord => ({
 const newService = (index: number): MilkbarServiceCmsRecord => ({
   code: `S-${String(index + 1).padStart(2, '0')}`,
   title: 'New service',
+  emphasis: '',
   description: 'Service description pending.',
   order: index,
 });
@@ -137,15 +142,18 @@ function LocaleSwitcher({
   activeLocale,
   onLocaleChange,
   publishedLocales,
+  untranslatedLocales,
 }: {
   activeLocale: MilkbarLocale;
   onLocaleChange: (locale: MilkbarLocale) => void;
   publishedLocales: MilkbarLocale[];
+  untranslatedLocales?: Set<MilkbarLocale>;
 }): React.JSX.Element {
   return (
     <div className='flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1'>
       {MILKBAR_LOCALES.map((locale) => {
         const isPublished = publishedLocales.includes(locale);
+        const isUntranslated = locale !== 'en' && (untranslatedLocales?.has(locale) ?? false);
         return (
           <button
             key={locale}
@@ -160,9 +168,19 @@ function LocaleSwitcher({
             {locale}
             <span
               className={`inline-block size-1.5 rounded-full ${
-                isPublished ? 'bg-emerald-500' : 'bg-white/20'
+                isUntranslated
+                  ? 'bg-amber-400'
+                  : isPublished
+                    ? 'bg-emerald-500'
+                    : 'bg-white/20'
               }`}
-              title={isPublished ? 'Published' : 'Draft'}
+              title={
+                isUntranslated
+                  ? 'Not translated — identical to EN'
+                  : isPublished
+                    ? 'Published'
+                    : 'Draft'
+              }
             />
           </button>
         );
@@ -280,6 +298,29 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     (patch: Partial<MilkbarPageContent['process']>) => updateLocaleSection(activeLocale, 'process', patch),
     [activeLocale, updateLocaleSection]
   );
+  const updateCaseStudy = useCallback(
+    (patch: Partial<MilkbarPageContent['caseStudy']>) => updateLocaleSection(activeLocale, 'caseStudy', patch),
+    [activeLocale, updateLocaleSection]
+  );
+
+  const updateCaseStudyStat = useCallback(
+    (index: number, patch: Partial<MilkbarMetric>): void => {
+      setLocalizedContent((current) => {
+        const stats = current[activeLocale].caseStudy.stats.map((s, i) =>
+          i === index ? { ...s, ...patch } : s
+        );
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            caseStudy: { ...current[activeLocale].caseStudy, stats },
+          },
+        };
+      });
+    },
+    [activeLocale]
+  );
+
   const updateQuote = useCallback(
     (patch: Partial<MilkbarPageContent['quote']>) => updateLocaleSection(activeLocale, 'quote', patch),
     [activeLocale, updateLocaleSection]
@@ -341,6 +382,195 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     [activeLocale]
   );
 
+  const addMetric = useCallback((): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        metrics: [...current[activeLocale].metrics, { value: '0', suffix: '', label: 'New metric' }],
+      },
+    }));
+  }, [activeLocale]);
+
+  const removeMetric = useCallback((index: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        metrics: current[activeLocale].metrics.filter((_, i) => i !== index),
+      },
+    }));
+  }, [activeLocale]);
+
+  const addProcessStep = useCallback((): void => {
+    setLocalizedContent((current) => {
+      const steps = current[activeLocale].process.steps;
+      const next: MilkbarProcessStep = {
+        number: `${toRoman(steps.length + 1)}.`,
+        title: 'New step',
+        description: 'Step description.',
+      };
+      return {
+        ...current,
+        [activeLocale]: {
+          ...current[activeLocale],
+          process: { ...current[activeLocale].process, steps: [...steps, next] },
+        },
+      };
+    });
+  }, [activeLocale]);
+
+  const removeProcessStep = useCallback((index: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        process: {
+          ...current[activeLocale].process,
+          steps: current[activeLocale].process.steps.filter((_, i) => i !== index),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const addPrinciple = useCallback((): void => {
+    setLocalizedContent((current) => {
+      const principles = current[activeLocale].philosophy.principles;
+      const next: MilkbarPrinciple = {
+        number: `${toRoman(principles.length + 1)}.`,
+        title: 'New principle',
+        emphasis: '- principle',
+        description: 'Principle description.',
+      };
+      return {
+        ...current,
+        [activeLocale]: {
+          ...current[activeLocale],
+          philosophy: { ...current[activeLocale].philosophy, principles: [...principles, next] },
+        },
+      };
+    });
+  }, [activeLocale]);
+
+  const removePrinciple = useCallback((index: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        philosophy: {
+          ...current[activeLocale].philosophy,
+          principles: current[activeLocale].philosophy.principles.filter((_, i) => i !== index),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const addCaseStudyStat = useCallback((): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        caseStudy: {
+          ...current[activeLocale].caseStudy,
+          stats: [...current[activeLocale].caseStudy.stats, { value: '0', suffix: '', label: 'New stat' }],
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const removeCaseStudyStat = useCallback((index: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        caseStudy: {
+          ...current[activeLocale].caseStudy,
+          stats: current[activeLocale].caseStudy.stats.filter((_, i) => i !== index),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const updateFooterColumnTitle = useCallback(
+    (colIndex: number, title: string): void => {
+      setLocalizedContent((current) => {
+        const columns = current[activeLocale].footer.columns.map((col, i) =>
+          i === colIndex ? { ...col, title } : col
+        );
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            footer: { ...current[activeLocale].footer, columns },
+          },
+        };
+      });
+    },
+    [activeLocale]
+  );
+
+  const updateFooterLink = useCallback(
+    (colIndex: number, linkIndex: number, patch: Partial<MilkbarLinkItem>): void => {
+      setLocalizedContent((current) => {
+        const columns = current[activeLocale].footer.columns.map((col, ci) => {
+          if (ci !== colIndex) return col;
+          const links = col.links.map((link, li) =>
+            li === linkIndex ? { ...link, ...patch } : link
+          );
+          return { ...col, links };
+        });
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            footer: { ...current[activeLocale].footer, columns },
+          },
+        };
+      });
+    },
+    [activeLocale]
+  );
+
+  const addFooterLink = useCallback(
+    (colIndex: number): void => {
+      setLocalizedContent((current) => {
+        const columns = current[activeLocale].footer.columns.map((col, ci) =>
+          ci === colIndex
+            ? { ...col, links: [...col.links, { label: 'New link', href: '#' }] }
+            : col
+        );
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            footer: { ...current[activeLocale].footer, columns },
+          },
+        };
+      });
+    },
+    [activeLocale]
+  );
+
+  const removeFooterLink = useCallback(
+    (colIndex: number, linkIndex: number): void => {
+      setLocalizedContent((current) => {
+        const columns = current[activeLocale].footer.columns.map((col, ci) => {
+          if (ci !== colIndex) return col;
+          const links = col.links.filter((_, li) => li !== linkIndex);
+          return { ...col, links };
+        });
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            footer: { ...current[activeLocale].footer, columns },
+          },
+        };
+      });
+    },
+    [activeLocale]
+  );
+
   const updateProject = useCallback(
     (index: number, patch: Partial<MilkbarProjectCmsRecord>): void => {
       setProjects((current) =>
@@ -387,6 +617,22 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
       return { ...current, publishedLocales: next.length > 0 ? next : [locale] };
     });
   }, []);
+
+  const untranslatedLocales = useMemo((): Set<MilkbarLocale> => {
+    const enJson = JSON.stringify(localizedContent.en);
+    return new Set(
+      MILKBAR_LOCALES.filter((l) => l !== 'en' && JSON.stringify(localizedContent[l]) === enJson)
+    );
+  }, [localizedContent]);
+
+  const handleCopyFromEn = useCallback((): void => {
+    if (activeLocale === 'en') return;
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: { ...current.en },
+    }));
+    toast(`Copied English content to ${MILKBAR_LOCALE_LABELS[activeLocale]}.`, { variant: 'success' });
+  }, [activeLocale, toast]);
 
   const headerDescription = useMemo(() => {
     if (activeTab === 'projects') return 'Manage Milkbar project cards and 3D project metadata.';
@@ -450,10 +696,22 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                   activeLocale={activeLocale}
                   onLocaleChange={setActiveLocale}
                   publishedLocales={pageSettings.publishedLocales}
+                  untranslatedLocales={untranslatedLocales}
                 />
                 <span className='text-xs text-muted-foreground'>
                   Editing: <span className='font-medium text-white'>{MILKBAR_LOCALE_LABELS[activeLocale]}</span>
                 </span>
+                {activeLocale !== 'en' ? (
+                  <Button
+                    type='button'
+                    variant='secondary'
+                    size='sm'
+                    icon={<Copy className='size-3.5' />}
+                    onClick={handleCopyFromEn}
+                  >
+                    Copy from EN
+                  </Button>
+                ) : null}
               </div>
               <ContentTab
                 pageContent={activePageContent}
@@ -463,12 +721,26 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 updateServicesHeader={updateServicesHeader}
                 updateProjectsHeader={updateProjectsHeader}
                 updateProcess={updateProcess}
+                updateCaseStudy={updateCaseStudy}
+                updateCaseStudyStat={updateCaseStudyStat}
+                addCaseStudyStat={addCaseStudyStat}
+                removeCaseStudyStat={removeCaseStudyStat}
                 updateQuote={updateQuote}
                 updateCta={updateCta}
                 updateFooter={updateFooter}
+                updateFooterColumnTitle={updateFooterColumnTitle}
+                updateFooterLink={updateFooterLink}
+                addFooterLink={addFooterLink}
+                removeFooterLink={removeFooterLink}
                 updatePrinciple={updatePrinciple}
+                addPrinciple={addPrinciple}
+                removePrinciple={removePrinciple}
                 updateProcessStep={updateProcessStep}
+                addProcessStep={addProcessStep}
+                removeProcessStep={removeProcessStep}
                 updateMetric={updateMetric}
+                addMetric={addMetric}
+                removeMetric={removeMetric}
               />
             </>
           ) : null}
@@ -521,12 +793,26 @@ function ContentTab({
   updateServicesHeader,
   updateProjectsHeader,
   updateProcess,
+  updateCaseStudy,
+  updateCaseStudyStat,
+  addCaseStudyStat,
+  removeCaseStudyStat,
   updateQuote,
   updateCta,
   updateFooter,
+  updateFooterColumnTitle,
+  updateFooterLink,
+  addFooterLink,
+  removeFooterLink,
   updatePrinciple,
+  addPrinciple,
+  removePrinciple,
   updateProcessStep,
+  addProcessStep,
+  removeProcessStep,
   updateMetric,
+  addMetric,
+  removeMetric,
 }: {
   pageContent: MilkbarPageContent;
   updateHero: (patch: Partial<MilkbarPageContent['hero']>) => void;
@@ -535,12 +821,26 @@ function ContentTab({
   updateServicesHeader: (patch: Partial<MilkbarPageContent['services']>) => void;
   updateProjectsHeader: (patch: Partial<MilkbarPageContent['projects']>) => void;
   updateProcess: (patch: Partial<MilkbarPageContent['process']>) => void;
+  updateCaseStudy: (patch: Partial<MilkbarPageContent['caseStudy']>) => void;
+  updateCaseStudyStat: (index: number, patch: Partial<MilkbarMetric>) => void;
+  addCaseStudyStat: () => void;
+  removeCaseStudyStat: (index: number) => void;
   updateQuote: (patch: Partial<MilkbarPageContent['quote']>) => void;
   updateCta: (patch: Partial<MilkbarPageContent['cta']>) => void;
   updateFooter: (patch: Partial<MilkbarPageContent['footer']>) => void;
+  updateFooterColumnTitle: (colIndex: number, title: string) => void;
+  updateFooterLink: (colIndex: number, linkIndex: number, patch: Partial<MilkbarLinkItem>) => void;
+  addFooterLink: (colIndex: number) => void;
+  removeFooterLink: (colIndex: number, linkIndex: number) => void;
   updatePrinciple: (index: number, patch: Partial<MilkbarPrinciple>) => void;
+  addPrinciple: () => void;
+  removePrinciple: (index: number) => void;
   updateProcessStep: (index: number, patch: Partial<MilkbarProcessStep>) => void;
+  addProcessStep: () => void;
+  removeProcessStep: (index: number) => void;
   updateMetric: (index: number, patch: Partial<MilkbarMetric>) => void;
+  addMetric: () => void;
+  removeMetric: (index: number) => void;
 }): React.JSX.Element {
   return (
     <div className='space-y-4'>
@@ -577,14 +877,30 @@ function ContentTab({
         <FieldTextarea label='Closing line' value={pageContent.philosophy.closing} onChange={(closing) => updatePhilosophy({ closing })} rows={2} />
       </FormSection>
 
-      <FormSection title='Philosophy Principles'>
+      <FormSection
+        title='Philosophy Principles'
+        subtitle={`${pageContent.philosophy.principles.length} principles`}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addPrinciple}>
+            Add
+          </Button>
+        }
+      >
         {pageContent.philosophy.principles.map((principle, index) => (
-          <div key={`${principle.number}-${index}`} className='grid gap-3 rounded-md border border-white/10 p-3 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)]'>
-            <FieldInput label='No.' value={principle.number} onChange={(number) => updatePrinciple(index, { number })} />
-            <FieldInput label='Title' value={principle.title} onChange={(title) => updatePrinciple(index, { title })} />
-            <FieldInput label='Emphasis' value={principle.emphasis} onChange={(emphasis) => updatePrinciple(index, { emphasis })} />
-            <div className='md:col-span-3'>
-              <FieldTextarea label='Description' value={principle.description} onChange={(description) => updatePrinciple(index, { description })} rows={2} />
+          <div key={`${principle.number}-${index}`} className='space-y-2 rounded-md border border-white/10 p-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-xs font-medium text-muted-foreground'>Principle {index + 1}</span>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removePrinciple(index)}>
+                Remove
+              </Button>
+            </div>
+            <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)]'>
+              <FieldInput label='No.' value={principle.number} onChange={(number) => updatePrinciple(index, { number })} />
+              <FieldInput label='Title' value={principle.title} onChange={(title) => updatePrinciple(index, { title })} />
+              <FieldInput label='Emphasis' value={principle.emphasis} onChange={(emphasis) => updatePrinciple(index, { emphasis })} />
+              <div className='md:col-span-3'>
+                <FieldTextarea label='Description' value={principle.description} onChange={(description) => updatePrinciple(index, { description })} rows={2} />
+              </div>
             </div>
           </div>
         ))}
@@ -611,26 +927,97 @@ function ContentTab({
         <FieldInput label='Title' value={pageContent.process.title} onChange={(title) => updateProcess({ title })} />
         <FieldInput label='Emphasis' value={pageContent.process.emphasis} onChange={(emphasis) => updateProcess({ emphasis })} />
       </FormSection>
-      <FormSection title='Process Steps'>
+      <FormSection
+        title='Process Steps'
+        subtitle={`${pageContent.process.steps.length} steps`}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addProcessStep}>
+            Add
+          </Button>
+        }
+      >
         {pageContent.process.steps.map((step, index) => (
-          <div key={`${step.number}-${index}`} className='grid gap-3 rounded-md border border-white/10 p-3 md:grid-cols-[5rem_minmax(0,1fr)]'>
-            <FieldInput label='No.' value={step.number} onChange={(number) => updateProcessStep(index, { number })} />
-            <FieldInput label='Title' value={step.title} onChange={(title) => updateProcessStep(index, { title })} />
-            <div className='md:col-span-2'>
-              <FieldTextarea label='Description' value={step.description} onChange={(description) => updateProcessStep(index, { description })} rows={2} />
+          <div key={`${step.number}-${index}`} className='space-y-2 rounded-md border border-white/10 p-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-xs font-medium text-muted-foreground'>Step {index + 1}</span>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeProcessStep(index)}>
+                Remove
+              </Button>
+            </div>
+            <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)]'>
+              <FieldInput label='No.' value={step.number} onChange={(number) => updateProcessStep(index, { number })} />
+              <FieldInput label='Title' value={step.title} onChange={(title) => updateProcessStep(index, { title })} />
+              <div className='md:col-span-2'>
+                <FieldTextarea label='Description' value={step.description} onChange={(description) => updateProcessStep(index, { description })} rows={2} />
+              </div>
             </div>
           </div>
         ))}
       </FormSection>
 
-      <FormSection title='Metrics' gridClassName='md:grid-cols-2'>
+      <FormSection
+        title='Metrics'
+        subtitle={`${pageContent.metrics.length} headline figures`}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addMetric}>
+            Add
+          </Button>
+        }
+      >
         {pageContent.metrics.map((metric, index) => (
-          <div key={`${metric.label}-${index}`} className='grid gap-3 rounded-md border border-white/10 p-3 md:grid-cols-[7rem_5rem_minmax(0,1fr)]'>
-            <FieldInput label='Value' value={metric.value} onChange={(value) => updateMetric(index, { value })} />
-            <FieldInput label='Suffix' value={metric.suffix} onChange={(suffix) => updateMetric(index, { suffix })} />
-            <FieldInput label='Label' value={metric.label} onChange={(label) => updateMetric(index, { label })} />
+          <div key={`${metric.label}-${index}`} className='rounded-md border border-white/10 p-3'>
+            <div className='mb-2 flex items-center justify-between gap-2'>
+              <span className='text-xs font-medium text-muted-foreground'>Metric {index + 1}</span>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeMetric(index)}>
+                Remove
+              </Button>
+            </div>
+            <div className='grid gap-3 md:grid-cols-[7rem_5rem_minmax(0,1fr)]'>
+              <FieldInput label='Value' value={metric.value} onChange={(value) => updateMetric(index, { value })} />
+              <FieldInput label='Suffix' value={metric.suffix} onChange={(suffix) => updateMetric(index, { suffix })} />
+              <FieldInput label='Label' value={metric.label} onChange={(label) => updateMetric(index, { label })} />
+            </div>
           </div>
         ))}
+      </FormSection>
+
+      <FormSection title='Case Study' gridClassName='md:grid-cols-2'>
+        <FieldInput label='Eyebrow' value={pageContent.caseStudy.eyebrow} onChange={(eyebrow) => updateCaseStudy({ eyebrow })} />
+        <FieldInput label='Label' value={pageContent.caseStudy.label} onChange={(label) => updateCaseStudy({ label })} />
+        <FieldInput label='Title' value={pageContent.caseStudy.title} onChange={(title) => updateCaseStudy({ title })} />
+        <FieldInput label='Title emphasis' value={pageContent.caseStudy.titleEmphasis} onChange={(titleEmphasis) => updateCaseStudy({ titleEmphasis })} />
+        <FieldInput label='Heading' value={pageContent.caseStudy.heading} onChange={(heading) => updateCaseStudy({ heading })} />
+        <FieldInput label='Heading emphasis' value={pageContent.caseStudy.headingEmphasis} onChange={(headingEmphasis) => updateCaseStudy({ headingEmphasis })} />
+        <div className='md:col-span-2'>
+          <FieldTextarea label='Body paragraph' value={pageContent.caseStudy.body} onChange={(body) => updateCaseStudy({ body })} rows={3} />
+        </div>
+        <div className='md:col-span-2'>
+          <FormSection
+            title='Case Study Stats'
+            subtitle={`${pageContent.caseStudy.stats.length} figures`}
+            actions={
+              <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addCaseStudyStat}>
+                Add
+              </Button>
+            }
+          >
+            {pageContent.caseStudy.stats.map((stat, index) => (
+              <div key={`cs-stat-${index}`} className='rounded-md border border-white/10 p-2'>
+                <div className='mb-2 flex items-center justify-between gap-2'>
+                  <span className='text-xs text-muted-foreground'>Stat {index + 1}</span>
+                  <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeCaseStudyStat(index)}>
+                    Remove
+                  </Button>
+                </div>
+                <div className='grid gap-2 md:grid-cols-[6rem_4rem_minmax(0,1fr)]'>
+                  <FieldInput label='Value' value={stat.value} onChange={(value) => updateCaseStudyStat(index, { value })} />
+                  <FieldInput label='Suffix' value={stat.suffix} onChange={(suffix) => updateCaseStudyStat(index, { suffix })} />
+                  <FieldInput label='Label' value={stat.label} onChange={(label) => updateCaseStudyStat(index, { label })} />
+                </div>
+              </div>
+            ))}
+          </FormSection>
+        </div>
       </FormSection>
 
       <div className='grid gap-4 xl:grid-cols-2'>
@@ -658,6 +1045,57 @@ function ContentTab({
         <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
         <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
       </FormSection>
+
+      <FormSection title='Footer Columns' subtitle='Navigation link groups shown in the footer.'>
+        <div className='grid gap-4 md:grid-cols-3'>
+          {pageContent.footer.columns.map((column, ci) => (
+            <div key={`col-${ci}`} className='space-y-2 rounded-md border border-white/10 p-3'>
+              <FieldInput
+                label={`Column ${ci + 1} heading`}
+                value={column.title}
+                onChange={(title) => updateFooterColumnTitle(ci, title)}
+              />
+              <div className='space-y-1.5'>
+                {column.links.map((link, li) => (
+                  <div key={`col-${ci}-link-${li}`} className='grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
+                    <FieldInput
+                      label='Label'
+                      value={link.label}
+                      onChange={(label) => updateFooterLink(ci, li, { label })}
+                    />
+                    <div className='flex items-end gap-1.5'>
+                      <div className='flex-1'>
+                        <FieldInput
+                          label='Href'
+                          value={link.href}
+                          onChange={(href) => updateFooterLink(ci, li, { href })}
+                        />
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() => removeFooterLink(ci, li)}
+                        className='mb-0.5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                        aria-label='Remove link'
+                      >
+                        <Trash2 className='size-3.5' />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type='button'
+                variant='secondary'
+                size='sm'
+                icon={<Plus className='size-3.5' />}
+                onClick={() => addFooterLink(ci)}
+              >
+                Add link
+              </Button>
+            </div>
+          ))}
+        </div>
+      </FormSection>
     </div>
   );
 }
@@ -684,6 +1122,7 @@ function SettingsTab({
     projects: 'Projects — built work gallery',
     process: 'Process — four-step engagement flow',
     metrics: 'Metrics — headline numbers strip',
+    caseStudy: 'Case Study — Helios Tower compliance case study section',
     quote: 'Quote — studio principle pull-quote',
     cta: 'CTA — email enquiry form',
   };
@@ -880,11 +1319,49 @@ function ProjectsTab({
             <FieldInput label='Country' value={project.country} onChange={(country) => onUpdate(index, { country })} />
             <FieldInput label='Order' value={project.order} onChange={(order) => onUpdate(index, { order: toOrderNumber(order) })} />
             <div className='md:col-span-2'>
-              <FieldTextarea label='Stats' value={linesToText(project.stats)} onChange={(value) => onUpdate(index, { stats: textToLines(value) })} rows={3} />
+              <FieldTextarea label='Stats' value={linesToText(project.stats)} onChange={(value) => onUpdate(index, { stats: textToLines(value) })} rows={3} description='One stat per line, e.g. "32 floors".' />
             </div>
             <div className='md:col-span-3'>
               <FieldTextarea label='Description' value={project.description} onChange={(description) => onUpdate(index, { description })} rows={3} />
             </div>
+          </div>
+          <div className='mt-2 grid gap-3 md:grid-cols-6'>
+            <div className='md:col-span-6'>
+              <span className='mb-1 block text-xs font-medium text-muted-foreground'>3D Viewer — Camera Position (x / y / z)</span>
+            </div>
+            <FieldInput
+              label='Pos X'
+              value={project.cameraPosition.x}
+              onChange={(x) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, x: Number(x) || 0 } })}
+            />
+            <FieldInput
+              label='Pos Y'
+              value={project.cameraPosition.y}
+              onChange={(y) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, y: Number(y) || 0 } })}
+            />
+            <FieldInput
+              label='Pos Z'
+              value={project.cameraPosition.z}
+              onChange={(z) => onUpdate(index, { cameraPosition: { ...project.cameraPosition, z: Number(z) || 0 } })}
+            />
+            <div className='md:col-span-6'>
+              <span className='mb-1 block text-xs font-medium text-muted-foreground'>3D Viewer — Camera Target (x / y / z)</span>
+            </div>
+            <FieldInput
+              label='Tgt X'
+              value={project.cameraTarget.x}
+              onChange={(x) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, x: Number(x) || 0 } })}
+            />
+            <FieldInput
+              label='Tgt Y'
+              value={project.cameraTarget.y}
+              onChange={(y) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, y: Number(y) || 0 } })}
+            />
+            <FieldInput
+              label='Tgt Z'
+              value={project.cameraTarget.z}
+              onChange={(z) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, z: Number(z) || 0 } })}
+            />
           </div>
         </div>
       ))}
@@ -924,11 +1401,12 @@ function ServicesTab({
               Remove
             </Button>
           </div>
-          <div className='grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)_8rem]'>
+          <div className='grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)_minmax(0,1fr)_8rem]'>
             <FieldInput label='Code' value={service.code} onChange={(code) => onUpdate(index, { code })} />
             <FieldInput label='Title' value={service.title} onChange={(title) => onUpdate(index, { title })} />
+            <FieldInput label='Emphasis word' value={service.emphasis} onChange={(emphasis) => onUpdate(index, { emphasis })} description='Word within title rendered in italic.' />
             <FieldInput label='Order' value={service.order} onChange={(order) => onUpdate(index, { order: toOrderNumber(order) })} />
-            <div className='md:col-span-3'>
+            <div className='md:col-span-4'>
               <FieldTextarea label='Description' value={service.description} onChange={(description) => onUpdate(index, { description })} rows={3} />
             </div>
           </div>
@@ -954,6 +1432,7 @@ function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): Re
               <tr>
                 <th className='px-3 py-2'>Email</th>
                 <th className='px-3 py-2'>Status</th>
+                <th className='px-3 py-2'>Locale</th>
                 <th className='px-3 py-2'>Source</th>
                 <th className='px-3 py-2'>Created</th>
               </tr>
@@ -963,6 +1442,7 @@ function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): Re
                 <tr key={`${inquiry.email}-${inquiry.createdAt}`} className='border-t border-white/10'>
                   <td className='px-3 py-2 text-white'>{inquiry.email}</td>
                   <td className='px-3 py-2'><Badge>{inquiry.status}</Badge></td>
+                  <td className='px-3 py-2 text-muted-foreground uppercase tracking-widest text-xs'>{inquiry.locale ?? '—'}</td>
                   <td className='px-3 py-2 text-muted-foreground'>{inquiry.source}</td>
                   <td className='px-3 py-2 text-muted-foreground'>{inquiry.createdAt ?? '-'}</td>
                 </tr>

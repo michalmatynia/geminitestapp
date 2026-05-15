@@ -15,7 +15,7 @@ import React, {
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -199,6 +199,25 @@ type BatchDeleteOrganizationsResponse = {
   deletedOrganizationCount?: number;
   deletedOrganizationIds?: string[];
   missingOrganizationIds?: string[];
+};
+
+type DeleteOrganizationVariables = {
+  organizationId: string;
+};
+
+type BatchDeleteOrganizationsVariables = {
+  organizationIds: string[];
+};
+
+type OrganizationEmailScrapeVariables = {
+  maxPages: number;
+  organizationId: string;
+};
+
+type OrganizationWebsiteSocialScrapeVariables = {
+  maxPages: number;
+  maxSearchResults: number;
+  organizationId: string;
 };
 
 const buildOrganizationListQueryKey = (input: OrganizationListInput) =>
@@ -647,6 +666,116 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       setIsSelectingAllOrganizations(false);
     }
   }, [filters, query, sort, toast]);
+  const deleteOrganizationMutation = createMutationV2<void, DeleteOrganizationVariables>({
+    mutationKey: ['filemaker', 'organizations', 'delete'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/organizations/${encodeURIComponent(variables.organizationId)}`,
+        {
+          method: 'DELETE',
+          headers: withCsrfHeaders(),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to delete organisation (${response.status}).`);
+      }
+    },
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerOrganizationsListState.deleteOrganization',
+      operation: 'delete',
+      resource: 'filemaker.organization',
+      domain: 'files',
+      description: 'Delete a single imported Mongo Filemaker organisation.',
+      errorPresentation: 'toast',
+    },
+  });
+  const batchDeleteOrganizationsMutation = createMutationV2<
+    BatchDeleteOrganizationsResponse,
+    BatchDeleteOrganizationsVariables
+  >({
+    mutationKey: ['filemaker', 'organizations', 'batch-delete'],
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/filemaker/organizations/batch-delete', {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ organizationIds: variables.organizationIds }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete organisations (${response.status}).`);
+      }
+      return (await response.json()) as BatchDeleteOrganizationsResponse;
+    },
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerOrganizationsListState.batchDeleteOrganizations',
+      operation: 'delete',
+      resource: 'filemaker.organizations',
+      domain: 'files',
+      description: 'Batch delete imported Mongo Filemaker organisations and linked job listings.',
+      errorPresentation: 'toast',
+    },
+  });
+  const organizationEmailScrapeMutation = createMutationV2<
+    OrganizationEmailScrapeResponse,
+    OrganizationEmailScrapeVariables
+  >({
+    mutationKey: ['filemaker', 'organizations', 'email-scrape'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/organizations/${encodeURIComponent(variables.organizationId)}/email-scrape`,
+        {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ maxPages: variables.maxPages }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await readOrganizationEmailScrapeErrorMessage(response));
+      }
+      return (await response.json()) as OrganizationEmailScrapeResponse;
+    },
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerOrganizationsListState.emailScrape',
+      operation: 'action',
+      resource: 'filemaker.organization-email-scrape',
+      domain: 'files',
+      description: 'Scrape organization websites for email contacts from the organization list.',
+      errorPresentation: 'toast',
+    },
+  });
+  const organizationWebsiteSocialScrapeMutation = createMutationV2<
+    OrganizationWebsiteSocialScrapeResponse,
+    OrganizationWebsiteSocialScrapeVariables
+  >({
+    mutationKey: ['filemaker', 'organizations', 'website-social-scrape'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/organizations/${encodeURIComponent(
+          variables.organizationId
+        )}/website-social-scrape`,
+        {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            maxPages: variables.maxPages,
+            maxSearchResults: variables.maxSearchResults,
+          }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
+      }
+      return (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+    },
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerOrganizationsListState.websiteSocialScrape',
+      operation: 'action',
+      resource: 'filemaker.organization-website-social-scrape',
+      domain: 'files',
+      description: 'Scrape organization websites for websites and social profiles from the list.',
+      errorPresentation: 'toast',
+    },
+  });
   const launchOrganizationEmailScrape = useCallback(
     (organizationId: string): void => {
       if (organizationEmailScrapeInFlightRef.current.has(organizationId)) return;
@@ -654,18 +783,10 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       setOrganizationEmailScrapeState((current) => ({ ...current, [organizationId]: true }));
       void (async (): Promise<void> => {
         try {
-          const response = await fetch(
-            `/api/filemaker/organizations/${encodeURIComponent(organizationId)}/email-scrape`,
-            {
-              method: 'POST',
-              headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-              body: JSON.stringify({ maxPages: 8 }),
-            }
-          );
-          if (!response.ok) {
-            throw new Error(await readOrganizationEmailScrapeErrorMessage(response));
-          }
-          const result = (await response.json()) as OrganizationEmailScrapeResponse;
+          const result = await organizationEmailScrapeMutation.mutateAsync({
+            maxPages: 8,
+            organizationId,
+          });
           const scrapeToast = buildOrganizationEmailScrapeToast(result);
           toast(scrapeToast.message, { variant: scrapeToast.variant });
         } catch (error) {
@@ -682,7 +803,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         }
       })();
     },
-    [toast]
+    [organizationEmailScrapeMutation, toast]
   );
   const launchOrganizationWebsiteSocialScrape = useCallback(
     (organizationId: string): void => {
@@ -694,20 +815,11 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       }));
       void (async (): Promise<void> => {
         try {
-          const response = await fetch(
-            `/api/filemaker/organizations/${encodeURIComponent(
-              organizationId
-            )}/website-social-scrape`,
-            {
-              method: 'POST',
-              headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-              body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
-            }
-          );
-          if (!response.ok) {
-            throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
-          }
-          const result = (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+          const result = await organizationWebsiteSocialScrapeMutation.mutateAsync({
+            maxPages: 6,
+            maxSearchResults: 8,
+            organizationId,
+          });
           const scrapeToast = buildOrganizationWebsiteSocialScrapeToast(result);
           toast(scrapeToast.message, { variant: scrapeToast.variant });
         } catch (error) {
@@ -724,7 +836,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         }
       })();
     },
-    [toast]
+    [organizationWebsiteSocialScrapeMutation, toast]
   );
   const deleteOrganization = useCallback(
     (organization: FilemakerOrganization): void => {
@@ -734,16 +846,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         confirmText: 'Delete',
         isDangerous: true,
         onConfirm: async (): Promise<void> => {
-          const response = await fetch(
-            `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
-            {
-              method: 'DELETE',
-              headers: withCsrfHeaders(),
-            }
-          );
-          if (!response.ok) {
-            throw new Error(`Failed to delete organisation (${response.status}).`);
-          }
+          await deleteOrganizationMutation.mutateAsync({ organizationId: organization.id });
           removeMongoOrganizations([organization.id]);
           setOrganizationSelection(
             (current: OrganizationSelectionState): OrganizationSelectionState => {
@@ -758,7 +861,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         },
       });
     },
-    [confirm, removeMongoOrganizations, settingsStore, toast]
+    [confirm, deleteOrganizationMutation, removeMongoOrganizations, settingsStore, toast]
   );
   const deleteSelectedOrganizations = useCallback((): void => {
     const selectedIds = selectedOrganizationIdsFromState(organizationSelection);
@@ -776,15 +879,9 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       onConfirm: async (): Promise<void> => {
         setIsDeletingOrganizations(true);
         try {
-          const response = await fetch('/api/filemaker/organizations/batch-delete', {
-            method: 'POST',
-            headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ organizationIds: selectedIds }),
+          const result = await batchDeleteOrganizationsMutation.mutateAsync({
+            organizationIds: selectedIds,
           });
-          if (!response.ok) {
-            throw new Error(`Failed to delete organisations (${response.status}).`);
-          }
-          const result = (await response.json()) as BatchDeleteOrganizationsResponse;
           const deletedIds = new Set([
             ...(result.deletedOrganizationIds ?? []),
             ...(result.missingOrganizationIds ?? []),
@@ -817,7 +914,14 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         }
       },
     });
-  }, [confirm, organizationSelection, removeMongoOrganizations, settingsStore, toast]);
+  }, [
+    batchDeleteOrganizationsMutation,
+    confirm,
+    organizationSelection,
+    removeMongoOrganizations,
+    settingsStore,
+    toast,
+  ]);
   const renderNode = useOrganizationRenderNode({
     eventsById: organizationRelations.eventsById,
     jobListingsById: organizationRelations.jobListingsById,

@@ -88,18 +88,26 @@ const getRawIndex = (
     getFallbackIndexString(fallback)
   );
 
+const getSectionId = (dt: DataTransfer, f?: Partial<SectionDragData>): string | null => getFirstDragValue(dt, [DRAG_KEYS.SECTION_ID], f?.id ?? null);
+const getSectionType = (dt: DataTransfer, f?: Partial<SectionDragData>): string | null => getFirstDragValue(dt, [DRAG_KEYS.SECTION_TYPE], f?.type ?? null);
+const getSectionZone = (dt: DataTransfer, f?: Partial<SectionDragData>): PageZone | null => {
+  const rawZone = getFirstDragValue(dt, [DRAG_KEYS.SECTION_ZONE], f?.zone ?? null);
+  return resolveZone(rawZone, f?.zone ?? null);
+};
+const getSectionIndex = (dt: DataTransfer, f?: Partial<SectionDragData>): number | null => {
+  const rawIndex = getRawIndex(dt, f);
+  return typeof rawIndex === 'string' && rawIndex !== '' ? parseDragIndex(rawIndex) : (f?.index ?? null);
+};
+
 const extractSectionData = (
   dataTransfer: DataTransfer,
   fallback?: Partial<SectionDragData>
-): SectionDragData => {
-  const id = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ID], fallback?.id ?? null);
-  const type = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_TYPE], fallback?.type ?? null);
-  const rawZone = getFirstDragValue(dataTransfer, [DRAG_KEYS.SECTION_ZONE], fallback?.zone ?? null);
-  const zone = resolveZone(rawZone, fallback?.zone ?? null);
-  const rawIndex = getRawIndex(dataTransfer, fallback);
-  const index = typeof rawIndex === 'string' && rawIndex !== '' ? parseDragIndex(rawIndex) : (fallback?.index ?? null);
-  return { id, type, zone, index };
-};
+): SectionDragData => ({
+  id: getSectionId(dataTransfer, fallback),
+  type: getSectionType(dataTransfer, fallback),
+  zone: getSectionZone(dataTransfer, fallback),
+  index: getSectionIndex(dataTransfer, fallback),
+});
 
 export const readSectionDragData = (
   dataTransfer: DataTransfer,

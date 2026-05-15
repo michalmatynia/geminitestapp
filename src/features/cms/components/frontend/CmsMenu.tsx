@@ -39,7 +39,7 @@ function MenuListItem({ item, normPath, colors, menu }: { item: MenuItem, normPa
   
   const content = (
     <>
-      {menu.showItemImages && typeof item.imageUrl === 'string' && item.imageUrl !== '' && (
+      {menu.showItemImages && typeof item.imageUrl === 'string' && item.imageUrl.length > 0 && (
         <Image src={item.imageUrl} alt='' width={menu.itemImageSize} height={menu.itemImageSize} />
       )}
       <span>{item.label}</span>
@@ -70,22 +70,26 @@ function MenuList({ menu, normPath, colors, hydrated }: { menu: MenuSettings; no
   );
 }
 
-const getColors = (menu: MenuSettings, appMode: string | undefined): ColorSchemeColors => resolveStorefrontAppearanceTone({ 
-    background: menu.backgroundColor, 
-    text: menu.textColor, 
-    border: menu.borderColor, 
-    accent: menu.activeColor ?? menu.activeItemColor ?? menu.textColor
-}, appMode ?? 'default');
+const getColors = (menu: MenuSettings, appMode: string | undefined): ColorSchemeColors => {
+    const accent = menu.activeColor ?? (menu.activeItemColor ?? menu.textColor);
+    return resolveStorefrontAppearanceTone({ 
+        background: menu.backgroundColor ?? 'default-bg', 
+        text: menu.textColor ?? 'default-text', 
+        border: menu.borderColor ?? 'default-border', 
+        accent
+    }, appMode ?? 'default');
+};
 
 const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): React.CSSProperties => {
-  const isSticky = menu.stickyEnabled ?? false;
-  const isCollapsible = menu.collapsible ?? false;
+  const isSticky = menu.stickyEnabled === true;
+  const isCollapsible = menu.collapsible === true;
   const position = isSide ? 'fixed' : isSticky ? 'sticky' : 'relative';
-  const width = isSide
-    ? collapsed && isCollapsible
-      ? menu.collapsedWidth ?? '50px'
-      : menu.sideWidth ?? '200px'
-    : '100%';
+  
+  let width = '100%';
+  if (isSide) {
+      width = (collapsed && isCollapsible) ? (menu.collapsedWidth || '50px') : (menu.sideWidth || '200px');
+  }
+
   return {
     backgroundColor: 'inherit',
     color: 'inherit',
@@ -94,25 +98,31 @@ const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): R
   };
 };
 
-const getNavContainerStyle = (isSide: boolean, menu: MenuSettings): React.CSSProperties => ({
-  maxWidth: !isSide && (menu.fullWidth ?? false) ? undefined : (menu.maxWidth ?? undefined),
-  margin: !isSide && (menu.fullWidth ?? false) ? undefined : '0 auto',
-  display: 'flex',
-  flexDirection: menu.layoutStyle === 'vertical' || isSide ? 'column' : 'row',
-  gap: menu.itemGap ?? undefined,
-});
+const getNavContainerStyle = (isSide: boolean, menu: MenuSettings): React.CSSProperties => {
+  const fullWidth = menu.fullWidth === true;
+  return {
+    maxWidth: (!isSide && fullWidth) ? undefined : menu.maxWidth,
+    margin: (!isSide && fullWidth) ? undefined : '0 auto',
+    display: 'flex',
+    flexDirection: (menu.layoutStyle === 'vertical' || isSide) ? 'column' : 'row',
+    gap: menu.itemGap,
+  };
+};
 
-const NavContent = ({ menu, normPath, colors, hydrated, itemListId, collapsed, setCollapsed, trans }: { menu: MenuSettings, normPath: string, colors: ColorSchemeColors, hydrated: boolean, itemListId: string, collapsed: boolean, setCollapsed: (val: boolean) => void, trans: (key: string) => string }): React.JSX.Element => (
-  <div style={getNavContainerStyle(menu.menuPlacement === 'left' || menu.menuPlacement === 'right', menu)}>
-    {menu.collapsible && <MenuToggle id={itemListId} collapsed={collapsed} toggle={() => setCollapsed(!collapsed)} trans={trans} />}
-    <MenuList menu={menu} normPath={normPath} colors={colors} hydrated={hydrated} />
-    <CmsStorefrontAppearanceButtons 
-      tone={colors} 
-      className={(menu.menuPlacement === 'left' || menu.menuPlacement === 'right') ? 'mt-3' : 'ml-auto'} 
-      label={trans('siteAppearance')} 
-    />
-  </div>
-);
+function NavContent({ menu, normPath, colors, hydrated, itemListId, collapsed, setCollapsed, trans }: { menu: MenuSettings, normPath: string, colors: ColorSchemeColors, hydrated: boolean, itemListId: string, collapsed: boolean, setCollapsed: (val: boolean) => void, trans: (key: string) => string }): React.JSX.Element {
+  const isSide = menu.menuPlacement === 'left' || menu.menuPlacement === 'right';
+  return (
+    <div style={getNavContainerStyle(isSide, menu)}>
+        {menu.collapsible && <MenuToggle id={itemListId} collapsed={collapsed} toggle={() => setCollapsed(!collapsed)} trans={trans} />}
+        <MenuList menu={menu} normPath={normPath} colors={colors} hydrated={hydrated} />
+        <CmsStorefrontAppearanceButtons 
+            tone={colors} 
+            className={isSide ? 'mt-3' : 'ml-auto'} 
+            label={trans('siteAppearance')} 
+        />
+    </div>
+  );
+}
 
 export function CmsMenu({ menu, colorSchemes: _colorSchemes, animationsEnabled: _animationsEnabled = true }: CmsMenuProps): React.JSX.Element | null {
   const path = usePathname();

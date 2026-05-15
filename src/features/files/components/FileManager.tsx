@@ -32,44 +32,24 @@ export type FileManagerRuntimeValue = {
 export const FileManagerRuntimeContext = React.createContext<FileManagerRuntimeValue | null>(null);
 
 export default function FileManager(props: FileManagerProps): React.JSX.Element {
-  const {
-    onSelectFile,
-    mode,
-    selectionMode,
-    autoConfirmSelection,
-    showFolderFilter,
-    defaultFolder,
-    showBulkActions,
-    showTagSearch,
-    filepathFilter,
-  } = props;
-
-  const runtime = React.useContext(FileManagerRuntimeContext);
-  const resolvedOnSelectFile = onSelectFile ?? runtime?.onSelectFile;
-
   const providerProps = React.useMemo(() => {
     const config: Partial<React.ComponentProps<typeof FileManagerProvider>> = {};
-    if (resolvedOnSelectFile !== undefined) config.onSelectFile = resolvedOnSelectFile;
-    if (mode !== undefined) config.mode = mode;
-    if (selectionMode !== undefined) config.selectionMode = selectionMode;
-    if (autoConfirmSelection !== undefined) config.autoConfirmSelection = autoConfirmSelection;
-    if (showFolderFilter !== undefined) config.showFolderFilter = showFolderFilter;
-    if (defaultFolder !== undefined) config.defaultFolder = defaultFolder;
-    if (showBulkActions !== undefined) config.showBulkActions = showBulkActions;
-    if (showTagSearch !== undefined) config.showTagSearch = showTagSearch;
-    if (filepathFilter !== undefined) config.filepathFilter = filepathFilter;
+    const assignIfDefined = (key: keyof FileManagerProps): void => {
+      if (props[key] !== undefined) (config as unknown as Record<string, unknown>)[key] = props[key];
+    };
+    // ...
+
+    assignIfDefined('onSelectFile');
+    assignIfDefined('mode');
+    assignIfDefined('selectionMode');
+    assignIfDefined('autoConfirmSelection');
+    assignIfDefined('showFolderFilter');
+    assignIfDefined('defaultFolder');
+    assignIfDefined('showBulkActions');
+    assignIfDefined('showTagSearch');
+    assignIfDefined('filepathFilter');
     return config;
-  }, [
-    resolvedOnSelectFile,
-    mode,
-    selectionMode,
-    autoConfirmSelection,
-    showFolderFilter,
-    defaultFolder,
-    showBulkActions,
-    showTagSearch,
-    filepathFilter,
-  ]);
+  }, [props]);
 
 
   return (

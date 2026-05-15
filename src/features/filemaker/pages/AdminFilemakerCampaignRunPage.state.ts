@@ -1,9 +1,10 @@
 'use client';
 
-import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -41,6 +42,7 @@ import { useFilemakerCampaignRunActions } from './useFilemakerCampaignRunActions
 
 type SettingsStore = ReturnType<typeof useSettingsStore>;
 type Toast = ReturnType<typeof useToast>['toast'];
+const CAMPAIGN_RUN_MAIL_THREADS_QUERY_KEY = ['filemaker', 'campaign-run', 'mail-threads'] as const;
 
 type CampaignRunRegistries = {
   attemptRegistry: ReturnType<typeof parseFilemakerEmailCampaignDeliveryAttemptRegistry>;
@@ -166,46 +168,45 @@ const useLinkedMailThreads = ({
 > & {
   reloadLinkedMailThreads: () => Promise<void>;
 } => {
-  const [linkedMailThreads, setLinkedMailThreads] = useState<FilemakerMailThread[]>([]);
-  const [linkedMailThreadsError, setLinkedMailThreadsError] = useState<string | null>(null);
+  const queryKey = [...CAMPAIGN_RUN_MAIL_THREADS_QUERY_KEY, campaignId, activeRunId] as const;
+  const hasRunContext = activeRunId.length > 0 && campaignId.length > 0;
+  const linkedMailThreadsQuery = createSingleQueryV2<
+    CampaignMailThreadsResponse,
+    CampaignMailThreadsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async () => {
+      const search = new URLSearchParams({ campaignId, runId: activeRunId });
+      return fetchFilemakerMailJson<CampaignMailThreadsResponse>(
+        `/api/filemaker/mail/threads?${search.toString()}`
+      );
+    },
+    enabled: hasRunContext,
+    placeholderData: (previousData) => previousData,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignRunPage.linkedMailThreads',
+      operation: 'list',
+      resource: 'filemaker.campaign-run-mail-threads',
+      domain: 'files',
+      description: 'Load mail threads linked to a Filemaker campaign run.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasRunContext,
+    },
+  });
   const reloadLinkedMailThreads = useCallback(async (): Promise<void> => {
-    if (activeRunId.length === 0 || campaignId.length === 0) {
-      setLinkedMailThreads([]);
-      setLinkedMailThreadsError(null);
-      return;
-    }
-    const search = new URLSearchParams({ campaignId, runId: activeRunId });
-    setLinkedMailThreadsError(null);
-    const response = await fetchFilemakerMailJson<CampaignMailThreadsResponse>(
-      `/api/filemaker/mail/threads?${search.toString()}`
-    );
-    setLinkedMailThreads(response.threads);
-  }, [activeRunId, campaignId]);
+    if (!hasRunContext) return;
+    const result = await linkedMailThreadsQuery.refetch();
+    if (result.error !== null) throw result.error;
+  }, [hasRunContext, linkedMailThreadsQuery]);
 
-  useEffect(() => {
-    if (activeRunId.length === 0 || campaignId.length === 0) {
-      setLinkedMailThreads([]);
-      setLinkedMailThreadsError(null);
-      return undefined;
-    }
-    let isActive = true;
-    void reloadLinkedMailThreads()
-      .then(() => {
-        if (isActive) setLinkedMailThreadsError(null);
-      })
-      .catch((error: unknown) => {
-        if (!isActive) return;
-        setLinkedMailThreads([]);
-        setLinkedMailThreadsError(
-          error instanceof Error ? error.message : 'Failed to load linked mail threads.'
-        );
-      });
-    return () => {
-      isActive = false;
-    };
-  }, [activeRunId, campaignId, reloadLinkedMailThreads]);
-
-  return { linkedMailThreads, linkedMailThreadsError, reloadLinkedMailThreads };
+  return {
+    linkedMailThreads: hasRunContext ? linkedMailThreadsQuery.data?.threads ?? [] : [],
+    linkedMailThreadsError: linkedMailThreadsQuery.error?.message ?? null,
+    reloadLinkedMailThreads,
+  };
 };
 
 const useRepairMailFilingAction = ({
@@ -219,15 +220,26 @@ const useRepairMailFilingAction = ({
   settingsStore: SettingsStore;
   toast: Toast;
 }): Pick<AdminFilemakerCampaignRunPageState, 'handleRepairMailFiling' | 'isRepairingMailFiling'> => {
-  const [isRepairingMailFiling, setIsRepairingMailFiling] = useState(false);
+  const repairMailFilingMutation = createMutationV2<CampaignMailFilingRepairResponse, string>({
+    mutationKey: ['filemaker', 'campaign-runs', 'repair-mail-filing'],
+    mutationFn: async (runId) =>
+      fetchFilemakerMailJson<CampaignMailFilingRepairResponse>(
+        `/api/filemaker/campaigns/runs/${encodeURIComponent(runId)}/repair-mail-filing`,
+        { method: 'POST' }
+      ),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignRunPage.repairMailFiling',
+      operation: 'action',
+      resource: 'filemaker.campaign-run-mail-filing',
+      domain: 'files',
+      description: 'Repair mail filing links for a Filemaker campaign run.',
+      errorPresentation: 'toast',
+    },
+  });
   const handleRepairMailFiling = useCallback(async (): Promise<void> => {
     if (activeRunId.length === 0) return;
-    setIsRepairingMailFiling(true);
     try {
-      const result = await fetchFilemakerMailJson<CampaignMailFilingRepairResponse>(
-        `/api/filemaker/campaigns/runs/${encodeURIComponent(activeRunId)}/repair-mail-filing`,
-        { method: 'POST' }
-      );
+      const result = await repairMailFilingMutation.mutateAsync(activeRunId);
       settingsStore.refetch();
       await reloadLinkedMailThreads();
       toast(
@@ -236,11 +248,9 @@ const useRepairMailFilingAction = ({
       );
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Mail filing repair failed.', { variant: 'error' });
-    } finally {
-      setIsRepairingMailFiling(false);
     }
-  }, [activeRunId, reloadLinkedMailThreads, settingsStore, toast]);
-  return { handleRepairMailFiling, isRepairingMailFiling };
+  }, [activeRunId, reloadLinkedMailThreads, repairMailFilingMutation, settingsStore, toast]);
+  return { handleRepairMailFiling, isRepairingMailFiling: repairMailFilingMutation.isPending };
 };
 
 export const isLoadedCampaignRunPageState = (

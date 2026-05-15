@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { FilemakerMailAccount } from '../types';
 import type { CampaignEditToast } from './AdminFilemakerCampaignEditPage.model-types';
@@ -11,31 +11,34 @@ type FilemakerMailAccountsResponse = {
 };
 
 export function useCampaignEditMailAccounts(toast: CampaignEditToast): FilemakerMailAccount[] {
-  const [mailAccounts, setMailAccounts] = useState<FilemakerMailAccount[]>([]);
+  const mailAccountsQueryKey = ['filemaker', 'mail', 'accounts', 'campaign-edit'] as const;
+  const mailAccountsQuery = createSingleQueryV2<
+    FilemakerMailAccountsResponse,
+    FilemakerMailAccountsResponse,
+    typeof mailAccountsQueryKey
+  >({
+    queryKey: mailAccountsQueryKey,
+    queryFn: async ({ signal }) =>
+      api.get<FilemakerMailAccountsResponse>('/api/filemaker/mail/accounts', { signal }),
+    meta: {
+      source:
+        'features.filemaker.pages.AdminFilemakerCampaignEditPage.mail-accounts.useCampaignEditMailAccounts',
+      operation: 'list',
+      resource: 'filemaker.mail-accounts',
+      domain: 'files',
+      description: 'Load Filemaker mail accounts for campaign editing.',
+      errorPresentation: 'toast',
+    },
+  });
 
   useEffect(() => {
-    let isActive = true;
+    if (mailAccountsQuery.error === null) return;
+    const message =
+      mailAccountsQuery.error.message.length > 0
+        ? mailAccountsQuery.error.message
+        : 'Failed to load Filemaker mail accounts.';
+    toast(message, { variant: 'error' });
+  }, [mailAccountsQuery.error, toast]);
 
-    const loadMailAccounts = async (): Promise<void> => {
-      try {
-        const result = await api.get<FilemakerMailAccountsResponse>('/api/filemaker/mail/accounts');
-        if (isActive === false) return;
-        setMailAccounts(result.accounts);
-      } catch (error: unknown) {
-        if (isActive === false) return;
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Failed to load Filemaker mail accounts.', {
-          variant: 'error',
-        });
-      }
-    };
-
-    void loadMailAccounts();
-
-    return () => {
-      isActive = false;
-    };
-  }, [toast]);
-
-  return mailAccounts;
+  return mailAccountsQuery.data?.accounts ?? [];
 }

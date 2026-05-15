@@ -1,6 +1,12 @@
 import type { ArchPageContent, Project } from '@/lib/types';
 import IsometricThumbnail from './IsometricThumbnail';
 
+const FALLBACK_PROJECTS: Pick<Project, 'code' | 'name' | 'projectType' | 'city'>[] = [
+  { code: 'MBD-001', name: 'Helios Tower', projectType: 'Mixed-Use Tower', city: 'Zurich' },
+  { code: 'MBD-002', name: 'Kulturhaus', projectType: 'Cultural Centre', city: 'Amsterdam' },
+  { code: 'MBD-003', name: 'South Quarter', projectType: 'Residential Ensemble', city: 'Berlin' },
+];
+
 export default function BuiltWork({
   content,
   projects,
@@ -8,29 +14,7 @@ export default function BuiltWork({
   content: ArchPageContent['projects'];
   projects: Project[];
 }) {
-  const cards = [
-    {
-      project: projects[0],
-      fallbackCode: 'MBD — 001',
-      fallbackName: 'Helios Tower',
-      fallbackDesc: 'mixed-use, 32 stories',
-      fallbackCity: 'Zurich',
-    },
-    {
-      project: projects[1],
-      fallbackCode: 'MBD — 002',
-      fallbackName: 'Kulturhaus',
-      fallbackDesc: 'cultural pavilion, 4,200 m²',
-      fallbackCity: 'Amsterdam',
-    },
-    {
-      project: projects[2],
-      fallbackCode: 'MBD — 003',
-      fallbackName: 'South Quarter',
-      fallbackDesc: 'residential ensemble, 8,600 m²',
-      fallbackCity: 'Berlin',
-    },
-  ];
+  const displayProjects = projects.length > 0 ? projects : FALLBACK_PROJECTS;
 
   return (
     <section id="projects" className="projects-section projects-dark">
@@ -46,20 +30,20 @@ export default function BuiltWork({
         </div>
 
         <div className="projects-grid">
-          {cards.map(({ project, fallbackCode, fallbackName, fallbackDesc, fallbackCity }, i) => (
-            <a key={i} href="#" className={`project-card rev${i > 0 ? '' : ''}`} data-delay={i > 0 ? String(i) : undefined}>
+          {displayProjects.map((project, i) => (
+            <a key={project.code} href="#" className="project-card rev" data-delay={i > 0 ? String(i) : undefined}>
               <div className="project-frame">
                 <IsometricThumbnail projectIdx={i} />
               </div>
               <div className="project-meta">
                 <span className="project-num">
-                  {project?.code ? project.code.replace('-', ' — ') : fallbackCode} / 2024
+                  {project.code.replace('-', ' — ')} / 2024
                 </span>
                 <div className="project-name">
-                  {project?.name ?? fallbackName}
-                  <em>{fallbackDesc}</em>
+                  {project.name}
+                  <em>{project.projectType.toLowerCase()}</em>
                 </div>
-                <span className="project-loc">{project?.city ?? fallbackCity}</span>
+                <span className="project-loc">{project.city}</span>
               </div>
             </a>
           ))}

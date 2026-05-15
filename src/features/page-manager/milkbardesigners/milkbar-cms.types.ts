@@ -85,6 +85,16 @@ export type MilkbarPageContent = {
     steps: MilkbarProcessStep[];
   };
   metrics: MilkbarMetric[];
+  caseStudy: {
+    eyebrow: string;
+    label: string;
+    title: string;
+    titleEmphasis: string;
+    heading: string;
+    headingEmphasis: string;
+    body: string;
+    stats: MilkbarMetric[];
+  };
   quote: {
     eyebrow: string;
     text: string;
@@ -121,6 +131,7 @@ export type MilkbarSectionVisibility = {
   projects: boolean;
   process: boolean;
   metrics: boolean;
+  caseStudy: boolean;
   quote: boolean;
   cta: boolean;
 };
@@ -156,6 +167,7 @@ export type MilkbarProjectCmsRecord = {
 export type MilkbarServiceCmsRecord = {
   code: string;
   title: string;
+  emphasis: string;
   description: string;
   order: number;
 };
@@ -165,6 +177,7 @@ export type MilkbarInquiryCmsRecord = {
   createdAt: string | null;
   status: string;
   source: string;
+  locale?: string;
 };
 
 export type MilkbarCmsSourceStatus = {
@@ -312,6 +325,21 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     { value: '98', suffix: '.4%', label: 'Compliance check accuracy rate' },
     { value: '38', suffix: '', label: 'Active jurisdictional regulation models' },
   ],
+  caseStudy: {
+    eyebrow: '— 06 / case study',
+    label: 'helios tower',
+    title: 'Compliance',
+    titleEmphasis: 'at scale.',
+    heading: 'Six thousand drawings',
+    headingEmphasis: 'verified in three hours.',
+    body: 'A thirty-two-storey mixed-use development in Zurich required simultaneous compliance with Swiss federal, cantonal, and municipal building codes — three concurrent regulatory frames.',
+    stats: [
+      { value: '6,400', suffix: '', label: 'drawings audited' },
+      { value: '3', suffix: 'hrs', label: 'processing time' },
+      { value: '0', suffix: '', label: 'missed clauses' },
+      { value: '2.1', suffix: 'mo', label: 'manual equivalent' },
+    ],
+  },
   quote: {
     eyebrow: '- 07 / note',
     text: 'The measure of a great building is not what it shows',
@@ -470,6 +498,21 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
     { value: '98', suffix: '.4%', label: 'Genauigkeitsrate bei Konformitätsprüfungen' },
     { value: '38', suffix: '', label: 'Aktive Baurechtsmodelle' },
   ],
+  caseStudy: {
+    eyebrow: '— 06 / Fallstudie',
+    label: 'helios tower',
+    title: 'Compliance',
+    titleEmphasis: 'im Maßstab.',
+    heading: 'Sechstausend Zeichnungen',
+    headingEmphasis: 'verifiziert in drei Stunden.',
+    body: 'Ein 32-stöckiges Mischnutzungsprojekt in Zürich erforderte gleichzeitige Konformität mit schweizerischem Bundes-, Kantons- und Gemeinderecht — drei simultane Regulierungsrahmen.',
+    stats: [
+      { value: '6.400', suffix: '', label: 'Zeichnungen geprüft' },
+      { value: '3', suffix: 'Std', label: 'Verarbeitungszeit' },
+      { value: '0', suffix: '', label: 'verpasste Klauseln' },
+      { value: '2,1', suffix: 'Mo', label: 'manuelles Äquivalent' },
+    ],
+  },
   quote: {
     eyebrow: '- 07 / Anmerkung',
     text: 'Das Maß eines großen Gebäudes ist nicht, was es zeigt',
@@ -628,6 +671,21 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
     { value: '98', suffix: '.4%', label: 'Wskaźnik dokładności kontroli zgodności' },
     { value: '38', suffix: '', label: 'Aktywnych modeli regulacji jurysdykcyjnych' },
   ],
+  caseStudy: {
+    eyebrow: '— 06 / studium przypadku',
+    label: 'helios tower',
+    title: 'Zgodność',
+    titleEmphasis: 'na skalę.',
+    heading: 'Sześć tysięcy rysunków',
+    headingEmphasis: 'zweryfikowanych w trzy godziny.',
+    body: 'Trzydziestodwupiętrowy budynek wielofunkcyjny w Zurychu wymagał jednoczesnej zgodności z federalnym, kantonalnym i miejskim prawem budowlanym — trzy równoległe ramy regulacyjne.',
+    stats: [
+      { value: '6 400', suffix: '', label: 'rysunków skontrolowanych' },
+      { value: '3', suffix: 'godz', label: 'czas przetwarzania' },
+      { value: '0', suffix: '', label: 'przeoczonych klauzul' },
+      { value: '2,1', suffix: 'mies', label: 'ekwiwalent manualny' },
+    ],
+  },
   quote: {
     eyebrow: '- 07 / nota',
     text: 'Miarą wielkiego budynku nie jest to, co pokazuje',
@@ -699,6 +757,7 @@ export const DEFAULT_MILKBAR_PAGE_SETTINGS: MilkbarPageSettings = {
     projects: true,
     process: true,
     metrics: true,
+    caseStudy: true,
     quote: true,
     cta: true,
   },

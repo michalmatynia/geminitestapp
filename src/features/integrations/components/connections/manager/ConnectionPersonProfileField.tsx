@@ -8,6 +8,7 @@ import {
   SelectSimple,
   type SelectSimpleOption,
 } from '@/shared/ui/forms-and-actions.public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const NO_PERSON_VALUE = '__no_person__';
 
@@ -25,6 +26,13 @@ type FilemakerPersonOptionRecord = {
 type FilemakerPersonsResponse = {
   persons?: FilemakerPersonOptionRecord[];
 };
+
+type PersonOptionsQueryKey = readonly [
+  'integrations',
+  'connection-person-profile-field',
+  'persons',
+  string,
+];
 
 type ConnectionPersonProfileFieldProps = {
   idPrefix: string;
@@ -71,6 +79,18 @@ const toPersonOptions = (payload: unknown): SelectSimpleOption[] => {
     .filter((option): option is SelectSimpleOption => option !== null);
 };
 
+const fetchPersonOptions = async (
+  normalizedQuery: string,
+  signal: AbortSignal
+): Promise<SelectSimpleOption[]> => {
+  const params = new URLSearchParams({ pageSize: '48' });
+  if (normalizedQuery.length > 0) params.set('query', normalizedQuery);
+
+  const response = await fetch(`/api/filemaker/persons?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error('Failed to load persons.');
+  return toPersonOptions(await response.json());
+};
+
 const mergeOptions = (
   selectedId: string,
   selectedLabel: string,
@@ -93,39 +113,51 @@ const mergeOptions = (
   ];
 };
 
+const resolvePersonOptionsStatus = ({
+  isError,
+  isLoading,
+}: {
+  isError: boolean;
+  isLoading: boolean;
+}): 'idle' | 'loading' | 'error' => {
+  if (isLoading) return 'loading';
+  if (isError) return 'error';
+  return 'idle';
+};
+
 const usePersonOptions = (query: string): {
   options: SelectSimpleOption[];
   status: 'idle' | 'loading' | 'error';
 } => {
-  const [options, setOptions] = React.useState<SelectSimpleOption[]>([]);
-  const [status, setStatus] = React.useState<'idle' | 'loading' | 'error'>('idle');
+  const normalizedQuery = query.trim();
+  const personsQuery = createSingleQueryV2<SelectSimpleOption[], SelectSimpleOption[], PersonOptionsQueryKey>({
+    queryKey: [
+      'integrations',
+      'connection-person-profile-field',
+      'persons',
+      normalizedQuery,
+    ],
+    queryFn: async ({ signal }): Promise<SelectSimpleOption[]> =>
+      fetchPersonOptions(normalizedQuery, signal),
+    staleTime: 30_000,
+    retry: false,
+    meta: {
+      source: 'features.integrations.ConnectionPersonProfileField.usePersonOptions',
+      operation: 'list',
+      resource: 'filemaker.persons',
+      domain: 'integrations',
+      description: 'Loads Filemaker person options for integration job application profile selection.',
+      errorPresentation: 'inline',
+    },
+  });
 
-  React.useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({ pageSize: '48' });
-    const normalizedQuery = query.trim();
-    if (normalizedQuery.length > 0) params.set('query', normalizedQuery);
-
-    setStatus('loading');
-    fetch(`/api/filemaker/persons?${params.toString()}`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Failed to load persons.');
-        return response.json() as Promise<unknown>;
-      })
-      .then((payload) => {
-        setOptions(toPersonOptions(payload));
-        setStatus('idle');
-      })
-      .catch((error: unknown) => {
-        if ((error as { name?: string }).name === 'AbortError') return;
-        setOptions([]);
-        setStatus('error');
-      });
-
-    return () => controller.abort();
-  }, [query]);
-
-  return { options, status };
+  return {
+    options: personsQuery.data ?? [],
+    status: resolvePersonOptionsStatus({
+      isError: personsQuery.isError,
+      isLoading: personsQuery.isLoading,
+    }),
+  };
 };
 
 export function ConnectionPersonProfileField({

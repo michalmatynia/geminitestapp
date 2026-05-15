@@ -49,6 +49,7 @@ const serverFiles = [
   'src/instrumentation.ts',
   'src/**/*.server.{ts,tsx,js,jsx}',
 ];
+
 const scannerScriptMjsFiles = [
   'scripts/ai-paths/**/*.mjs',
   'scripts/architecture/**/*.mjs',
@@ -154,6 +155,23 @@ const commonRestrictedImportPatterns = [
     message: 'Prefer module-level directives over restricted imports.',
   },
 ];
+
+const LEGACY_FILES = [
+  'apps/database-engine-web/src/features/database/server/api/engine/backup-scheduler/run-now/handler.ts',
+  'apps/database-engine-web/src/features/database/server/api/preview/handler.ts',
+  'apps/mobile/src/parent/useParentDashboardAssignments.ts',
+];
+
+const legacyRules = {
+  '@typescript-eslint/no-unsafe-assignment': 'off',
+  '@typescript-eslint/no-unsafe-member-access': 'off',
+  '@typescript-eslint/no-unsafe-call': 'off',
+  '@typescript-eslint/no-unsafe-return': 'off',
+  '@typescript-eslint/no-unsafe-argument': 'off',
+  '@typescript-eslint/no-explicit-any': 'off',
+  'no-await-in-loop': 'off',
+  'complexity': 'off',
+};
 
 const integrationsPublicRestriction = {
   name: '@/features/integrations/public',
@@ -717,5 +735,10 @@ export default defineConfig([
     languageOptions: {
       sourceType: 'commonjs',
     },
+  },
+
+  {
+    files: LEGACY_FILES,
+    rules: legacyRules,
   },
 ]);

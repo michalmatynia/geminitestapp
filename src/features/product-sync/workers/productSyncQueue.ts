@@ -18,7 +18,7 @@ type ProductSyncQueueJobData = {
 
 const encodeJobIdPart = (value: string | null | undefined, fallback: string): string => {
   const normalized = value?.trim();
-  return normalized && normalized.length > 0 ? encodeURIComponent(normalized) : fallback;
+  return (normalized !== null && normalized.length > 0) ? encodeURIComponent(normalized) : fallback;
 };
 
 const queue = createManagedQueue<ProductSyncQueueJobData>({

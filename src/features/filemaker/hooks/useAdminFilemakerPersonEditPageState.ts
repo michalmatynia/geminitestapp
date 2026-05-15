@@ -8,6 +8,7 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from 'reac
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -72,6 +73,19 @@ type MongoFilemakerPersonResponse = {
   person: MongoFilemakerPerson;
 };
 
+const fetchMongoFilemakerPerson = async (
+  personId: string,
+  signal: AbortSignal
+): Promise<MongoFilemakerPersonResponse> => {
+  const response = await fetch(`/api/filemaker/persons/${encodeURIComponent(personId)}`, {
+    signal,
+  });
+  if (!response.ok) throw new Error(`Failed to load person (${response.status}).`);
+  return (await response.json()) as MongoFilemakerPersonResponse;
+};
+
+const arrayOrEmpty = <T,>(value: T[] | undefined): T[] => value ?? [];
+
 export type FilemakerPersonLinkedRecordKind =
   | 'any-param'
   | 'any-text'
@@ -85,6 +99,41 @@ type LinkedRecordPatchResponse = {
   kind: FilemakerPersonLinkedRecordKind;
   patch: FilemakerPersonLinkedRecordPatch;
   recordId: string;
+};
+
+type LinkedRecordUpdateVariables = {
+  kind: FilemakerPersonLinkedRecordKind;
+  patch: FilemakerPersonLinkedRecordPatch;
+  personId: string;
+  recordId: string;
+};
+
+type LinkedRecordDeleteVariables = {
+  kind: FilemakerPersonLinkedRecordKind;
+  personId: string;
+  recordId: string;
+};
+
+type MongoPersonEmailExtractionVariables = {
+  parserRules: ReturnType<typeof parseFilemakerEmailParserRulesFromPromptSettings>;
+  personId: string;
+  text: string;
+};
+
+type MongoPersonEmailExtractionResponse = {
+  createdEmailCount: number;
+  linkedEmailCount: number;
+  emails: FilemakerEmail[];
+};
+
+type MongoPersonSaveVariables = {
+  patch: Record<string, unknown>;
+  personId: string;
+};
+
+type MongoPersonSaveResponse = {
+  linkedAddresses?: FilemakerAddress[];
+  person: MongoFilemakerPerson;
 };
 
 const toEditableAddress = (
@@ -268,6 +317,29 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const [mongoLinkedWebsites, setMongoLinkedWebsites] = useState<MongoFilemakerWebsite[]>([]);
   const [isMongoPersonLoading, setIsMongoPersonLoading] = useState(false);
   const [isMongoPersonSaving, setIsMongoPersonSaving] = useState(false);
+  const mongoPersonQueryKey = ['filemaker', 'persons', 'detail', personId] as const;
+  const mongoPersonQuery = createSingleQueryV2<
+    MongoFilemakerPersonResponse,
+    MongoFilemakerPersonResponse,
+    typeof mongoPersonQueryKey
+  >({
+    queryKey: mongoPersonQueryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerPerson(personId, signal),
+    enabled: !isCreateMode && personId.length > 0,
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerPersonEditPageState.mongoPersonDetail',
+      operation: 'detail',
+      resource: 'filemaker.person',
+      domain: 'files',
+      description: 'Load imported Mongo Filemaker person detail and linked records.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasPersonId: personId.length > 0,
+      isCreateMode,
+    },
+  });
 
   const settingsPerson = useMemo(
     () => (isCreateMode ? null : (database.persons.find((p) => p.id === personId) ?? null)),
@@ -281,62 +353,56 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const [editableAddresses, setEditableAddresses] = useState<EditableAddress[]>([]);
   const [emailExtractionText, setEmailExtractionText] = useState('');
   const [phoneNumberExtractionText, setPhoneNumberExtractionText] = useState('');
+  const resetMongoPersonState = useCallback((): void => {
+    setMongoPerson(null);
+    setMongoLinkedAnyParams([]);
+    setMongoLinkedAnyTexts([]);
+    setMongoLinkedBankAccounts([]);
+    setMongoLinkedContracts([]);
+    setMongoLinkedDocuments([]);
+    setMongoLinkedEmails([]);
+    setMongoLinkedOccupations([]);
+    setMongoLinkedAddresses([]);
+    setMongoLinkedWebsites([]);
+    setIsMongoPersonLoading(false);
+  }, []);
+  const applyMongoPersonResponse = useCallback((response: MongoFilemakerPersonResponse): void => {
+    setMongoPerson(response.person);
+    setMongoLinkedAnyParams(arrayOrEmpty(response.linkedAnyParams));
+    setMongoLinkedAnyTexts(arrayOrEmpty(response.linkedAnyTexts));
+    setMongoLinkedBankAccounts(arrayOrEmpty(response.linkedBankAccounts));
+    setMongoLinkedContracts(arrayOrEmpty(response.linkedContracts));
+    setMongoLinkedDocuments(arrayOrEmpty(response.linkedDocuments));
+    setMongoLinkedEmails(arrayOrEmpty(response.linkedEmails));
+    setMongoLinkedOccupations(arrayOrEmpty(response.linkedOccupations));
+    setMongoLinkedAddresses(arrayOrEmpty(response.linkedAddresses));
+    setMongoLinkedWebsites(arrayOrEmpty(response.linkedWebsites));
+    setIsMongoPersonLoading(false);
+  }, []);
 
   useEffect(() => {
     if (isCreateMode) {
-      setMongoPerson(null);
-      setMongoLinkedAnyParams([]);
-      setMongoLinkedAnyTexts([]);
-      setMongoLinkedBankAccounts([]);
-      setMongoLinkedContracts([]);
-      setMongoLinkedDocuments([]);
-      setMongoLinkedEmails([]);
-      setMongoLinkedOccupations([]);
-      setMongoLinkedAddresses([]);
-      setMongoLinkedWebsites([]);
-      setIsMongoPersonLoading(false);
-      return undefined;
+      resetMongoPersonState();
+      return;
     }
-    const controller = new AbortController();
-    setIsMongoPersonLoading(true);
-    fetch(`/api/filemaker/persons/${encodeURIComponent(personId)}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerPersonResponse> => {
-        if (!response.ok) throw new Error(`Failed to load person (${response.status}).`);
-        return (await response.json()) as MongoFilemakerPersonResponse;
-      })
-      // eslint-disable-next-line complexity
-      .then((response: MongoFilemakerPersonResponse): void => {
-        setMongoPerson(response.person);
-        setMongoLinkedAnyParams(response.linkedAnyParams ?? []);
-        setMongoLinkedAnyTexts(response.linkedAnyTexts ?? []);
-        setMongoLinkedBankAccounts(response.linkedBankAccounts ?? []);
-        setMongoLinkedContracts(response.linkedContracts ?? []);
-        setMongoLinkedDocuments(response.linkedDocuments ?? []);
-        setMongoLinkedEmails(response.linkedEmails ?? []);
-        setMongoLinkedOccupations(response.linkedOccupations ?? []);
-        setMongoLinkedAddresses(response.linkedAddresses ?? []);
-        setMongoLinkedWebsites(response.linkedWebsites ?? []);
-        setIsMongoPersonLoading(false);
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        logClientError(error);
-        setMongoPerson(null);
-        setMongoLinkedAnyParams([]);
-        setMongoLinkedAnyTexts([]);
-        setMongoLinkedBankAccounts([]);
-        setMongoLinkedContracts([]);
-        setMongoLinkedDocuments([]);
-        setMongoLinkedEmails([]);
-        setMongoLinkedOccupations([]);
-        setMongoLinkedAddresses([]);
-        setMongoLinkedWebsites([]);
-        setIsMongoPersonLoading(false);
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [isCreateMode, personId]);
+    if (mongoPersonQuery.data !== undefined) {
+      applyMongoPersonResponse(mongoPersonQuery.data);
+      return;
+    }
+    if (mongoPersonQuery.error !== null) {
+      logClientError(mongoPersonQuery.error);
+      resetMongoPersonState();
+      return;
+    }
+    setIsMongoPersonLoading(mongoPersonQuery.isFetching);
+  }, [
+    applyMongoPersonResponse,
+    isCreateMode,
+    mongoPersonQuery.data,
+    mongoPersonQuery.error,
+    mongoPersonQuery.isFetching,
+    resetMongoPersonState,
+  ]);
 
   // eslint-disable-next-line max-lines-per-function
   useEffect(() => {
@@ -442,6 +508,30 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     },
     [updateSetting, toast]
   );
+
+  const mongoPersonSaveMutation = createMutationV2<
+    MongoPersonSaveResponse,
+    MongoPersonSaveVariables
+  >({
+    mutationKey: ['filemaker', 'persons', 'detail', 'save'],
+    mutationFn: async (variables) => {
+      const response = await fetch(`/api/filemaker/persons/${encodeURIComponent(variables.personId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variables.patch),
+      });
+      if (!response.ok) throw new Error(`Failed to save person (${response.status}).`);
+      return (await response.json()) as MongoPersonSaveResponse;
+    },
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerPersonEditPageState.mongoPersonSave',
+      operation: 'update',
+      resource: 'filemaker.person',
+      domain: 'files',
+      description: 'Save an imported Mongo Filemaker person from the edit page.',
+      errorPresentation: 'toast',
+    },
+  });
 
   // eslint-disable-next-line complexity,max-lines-per-function
   const handleSave = useCallback(async (): Promise<void> => {
@@ -561,10 +651,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
               streetNumber: addressForSave?.streetNumber ?? personDraft.streetNumber ?? '',
             }
           : {};
-        const response = await fetch(`/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const payload = await mongoPersonSaveMutation.mutateAsync({
+          personId: mongoPerson.id,
+          patch: {
             ...addressPatch,
             cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
             cvHeadline: personDraft.cvHeadline ?? '',
@@ -579,13 +668,8 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
             profileEducation: personDraft.profileEducation ?? [],
             profileJobExperience: personDraft.profileJobExperience ?? [],
             regon: personDraft.regon ?? '',
-          }),
+          },
         });
-        if (!response.ok) throw new Error(`Failed to save person (${response.status}).`);
-        const payload = (await response.json()) as {
-          linkedAddresses?: FilemakerAddress[];
-          person: MongoFilemakerPerson;
-        };
         setMongoPerson(payload.person);
         if (payload.linkedAddresses !== undefined) {
           setMongoLinkedAddresses(payload.linkedAddresses);
@@ -643,12 +727,44 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     editableAddresses,
     isCreateMode,
     mongoPerson,
+    mongoPersonSaveMutation,
     person,
     personDraft,
     persistDatabase,
     router,
     toast,
   ]);
+
+  const mongoPersonEmailExtractionMutation = createMutationV2<
+    MongoPersonEmailExtractionResponse,
+    MongoPersonEmailExtractionVariables
+  >({
+    mutationKey: ['filemaker', 'persons', 'emails', 'extract'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/persons/${encodeURIComponent(variables.personId)}/emails`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            parserRules: variables.parserRules,
+            text: variables.text,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to extract emails (${response.status}).`);
+      return (await response.json()) as MongoPersonEmailExtractionResponse;
+    },
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerPersonEditPageState.mongoPersonEmailExtraction',
+      operation: 'action',
+      resource: 'filemaker.person-email-extraction',
+      domain: 'files',
+      description: 'Extract and link emails for an imported Mongo Filemaker person.',
+      errorPresentation: 'toast',
+    },
+  });
 
   const handleExtractEmails = useCallback(async (): Promise<void> => {
     if (person === null || emailExtractionText.trim().length === 0) return;
@@ -659,23 +775,11 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     if (mongoPerson !== null) {
       setIsMongoPersonSaving(true);
       try {
-        const response = await fetch(
-          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/emails`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            parserRules: rules,
-            text: emailExtractionText,
-          }),
-        }
-      );
-        if (!response.ok) throw new Error(`Failed to extract emails (${response.status}).`);
-        const payload = (await response.json()) as {
-          createdEmailCount: number;
-          linkedEmailCount: number;
-          emails: FilemakerEmail[];
-        };
+        const payload = await mongoPersonEmailExtractionMutation.mutateAsync({
+          parserRules: rules,
+          personId: mongoPerson.id,
+          text: emailExtractionText,
+        });
         setMongoLinkedEmails(payload.emails);
         toast(
           `Extracted ${payload.createdEmailCount} new emails and linked ${payload.linkedEmailCount} emails.`,
@@ -707,7 +811,16 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`
     );
     setEmailExtractionText('');
-  }, [database, person, mongoPerson, emailExtractionText, persistDatabase, settingsStore, toast]);
+  }, [
+    database,
+    emailExtractionText,
+    mongoPerson,
+    mongoPersonEmailExtractionMutation,
+    persistDatabase,
+    person,
+    settingsStore,
+    toast,
+  ]);
 
   const applyLinkedRecordPatch = useCallback(
     (
@@ -799,6 +912,53 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     []
   );
 
+  const linkedRecordUpdateMutation = createMutationV2<
+    LinkedRecordPatchResponse,
+    LinkedRecordUpdateVariables
+  >({
+    mutationKey: ['filemaker', 'persons', 'linked-records', 'update'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/persons/${encodeURIComponent(variables.personId)}/linked-records/${encodeURIComponent(variables.kind)}/${encodeURIComponent(variables.recordId)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(variables.patch),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to update linked record (${response.status}).`);
+      return (await response.json()) as LinkedRecordPatchResponse;
+    },
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerPersonEditPageState.linkedRecordUpdate',
+      operation: 'update',
+      resource: 'filemaker.person-linked-record',
+      domain: 'files',
+      description: 'Update a linked Mongo Filemaker person record.',
+      errorPresentation: 'toast',
+    },
+  });
+  const linkedRecordDeleteMutation = createMutationV2<void, LinkedRecordDeleteVariables>({
+    mutationKey: ['filemaker', 'persons', 'linked-records', 'delete'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/persons/${encodeURIComponent(variables.personId)}/linked-records/${encodeURIComponent(variables.kind)}/${encodeURIComponent(variables.recordId)}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error(`Failed to delete linked record (${response.status}).`);
+    },
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerPersonEditPageState.linkedRecordDelete',
+      operation: 'delete',
+      resource: 'filemaker.person-linked-record',
+      domain: 'files',
+      description: 'Delete a linked Mongo Filemaker person record.',
+      errorPresentation: 'toast',
+    },
+  });
+
   const handleUpdateLinkedRecord = useCallback(
     async (
       kind: FilemakerPersonLinkedRecordKind,
@@ -813,16 +973,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       }
       setIsMongoPersonSaving(true);
       try {
-        const response = await fetch(
-          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/linked-records/${encodeURIComponent(kind)}/${encodeURIComponent(recordId)}`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(patch),
-          }
-        );
-        if (!response.ok) throw new Error(`Failed to update linked record (${response.status}).`);
-        const payload = (await response.json()) as LinkedRecordPatchResponse;
+        const payload = await linkedRecordUpdateMutation.mutateAsync({
+          kind,
+          patch,
+          personId: mongoPerson.id,
+          recordId,
+        });
         applyLinkedRecordPatch(payload.kind, payload.recordId, payload.patch);
         toast('Linked record updated.', { variant: 'success' });
       } catch (error: unknown) {
@@ -833,7 +989,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         setIsMongoPersonSaving(false);
       }
     },
-    [applyLinkedRecordPatch, mongoPerson, toast]
+    [applyLinkedRecordPatch, linkedRecordUpdateMutation, mongoPerson, toast]
   );
 
   const handleDeleteLinkedRecord = useCallback(
@@ -846,11 +1002,11 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       }
       setIsMongoPersonSaving(true);
       try {
-        const response = await fetch(
-          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/linked-records/${encodeURIComponent(kind)}/${encodeURIComponent(recordId)}`,
-          { method: 'DELETE' }
-        );
-        if (!response.ok) throw new Error(`Failed to delete linked record (${response.status}).`);
+        await linkedRecordDeleteMutation.mutateAsync({
+          kind,
+          personId: mongoPerson.id,
+          recordId,
+        });
         removeLinkedRecord(kind, recordId);
         toast('Linked record deleted.', { variant: 'success' });
       } catch (error: unknown) {
@@ -861,7 +1017,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         setIsMongoPersonSaving(false);
       }
     },
-    [mongoPerson, removeLinkedRecord, toast]
+    [linkedRecordDeleteMutation, mongoPerson, removeLinkedRecord, toast]
   );
 
   return {

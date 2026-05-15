@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/shared/ui/primitives.public';
+import { type KangurSubjectDefinition } from '@/features/kangur/lessons/lesson-types';
+import { KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import {
-  KANGUR_SUBJECTS,
   type KangurLessonSection,
   type KangurLessonSubsection,
 } from '@/features/kangur/shared/contracts/kangur';
@@ -22,7 +23,7 @@ export function AdminKangurLessonSectionsPanel({
   standalone?: boolean;
 }): React.JSX.Element {
   const sectionsQuery = useKangurLessonSections();
-  const sections: KangurLessonSection[] = Array.isArray(sectionsQuery.data) ? sectionsQuery.data : [];
+  const sections: KangurLessonSection[] = sectionsQuery.data ?? [];
   const isLoading = sectionsQuery.isLoading;
 
   const updateSections = useUpdateKangurLessonSections();
@@ -111,13 +112,12 @@ interface SectionsPanelContentProps {
   standalone: boolean;
 }
 
-function SectionsPanelContent(props: SectionsPanelContentProps): React.JSX.Element {
-    const { 
-        sections, isLoading, isSaving, sectionsBySubject, persistSections,
-        expandedSectionId, setExpandedSectionId, setEditingSection, setShowSectionModal,
-        setSubsectionParent, setEditingSubsection, setShowSubsectionModal, setDeleteTarget,
-        standalone 
-    } = props;
+function SectionsPanelContent({ 
+  sections, isLoading, isSaving, sectionsBySubject, persistSections,
+  expandedSectionId, setExpandedSectionId, setEditingSection, setShowSectionModal,
+  setSubsectionParent, setEditingSubsection, setShowSubsectionModal, setDeleteTarget,
+  standalone 
+}: SectionsPanelContentProps): React.JSX.Element {
     const { toast } = useToast();
 
     const handleMoveUp = async (idx: number, section: KangurLessonSection): Promise<void> => {
@@ -143,7 +143,7 @@ function SectionsPanelContent(props: SectionsPanelContentProps): React.JSX.Eleme
     };
 
     const handleToggleEnabled = async (section: KangurLessonSection): Promise<void> => {
-        const next = sections.map((s: KangurLessonSection) =>
+        const next = sections.map((s) =>
             s.id === section.id ? { ...s, enabled: !s.enabled } : s
         );
         if (await persistSections(next)) {
@@ -189,7 +189,7 @@ function SectionsPanelContent(props: SectionsPanelContentProps): React.JSX.Eleme
                     <LoadingState message='Loading sections...' />
                 ) : (
                     <div className='space-y-6'>
-                        {KANGUR_SUBJECTS.map((subject) => (
+                        {KANGUR_SUBJECTS.map((subject: KangurSubjectDefinition) => (
                             <SubjectSectionsGroup 
                                 key={subject.id}
                                 subjectLabel={subject.label}
@@ -199,22 +199,22 @@ function SectionsPanelContent(props: SectionsPanelContentProps): React.JSX.Eleme
                                 onMoveUp={handleMoveUp}
                                 onMoveDown={handleMoveDown}
                                 onToggleEnabled={handleToggleEnabled}
-                                onEdit={(section: KangurLessonSection) => {
+                                onEdit={(section) => {
                                     setEditingSection(section);
                                     setShowSectionModal(true);
                                 }}
-                                onDelete={(section: KangurLessonSection) => setDeleteTarget({ section })}
-                                onAddSubsection={(section: KangurLessonSection) => {
+                                onDelete={(section) => setDeleteTarget({ section })}
+                                onAddSubsection={(section) => {
                                     setSubsectionParent(section);
                                     setEditingSubsection(null);
                                     setShowSubsectionModal(true);
                                 }}
-                                onEditSubsection={(section: KangurLessonSection, sub: KangurLessonSubsection) => {
+                                onEditSubsection={(section, sub) => {
                                     setSubsectionParent(section);
                                     setEditingSubsection(sub);
                                     setShowSubsectionModal(true);
                                 }}
-                                onDeleteSubsection={(section: KangurLessonSection, subId: string) =>
+                                onDeleteSubsection={(section, subId) =>
                                     setDeleteTarget({ section, subsectionId: subId })
                                 }
                                 isSaving={isSaving}

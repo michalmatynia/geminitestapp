@@ -25,6 +25,6 @@ export const getInternationalizationProvider = async (): Promise<Internationaliz
     return explicit;
   }
 
-  await getAppDbProvider();
+  await (getAppDbProvider() as Promise<unknown>);
   return 'mongodb';
 };

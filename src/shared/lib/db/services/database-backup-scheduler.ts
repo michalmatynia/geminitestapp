@@ -38,6 +38,12 @@ import {
 
 /**
  * Executes the backup task for a single database target.
+ * 
+ * @param dbType - The database type (e.g., 'mongodb').
+ * @param currentTarget - The current schedule configuration for this target.
+ * @param now - Current execution time for schedule evaluation.
+ * @param checkedAt - ISO string timestamp of the current tick for metadata updates.
+ * @returns Result object containing the job ID if successful, updated target status, and a summary result.
  */
 async function processBackupTarget(
   dbType: DatabaseEngineBackupType,
@@ -88,6 +94,11 @@ const targetKeys: DatabaseEngineBackupType[] = ['mongodb'];
 
 /**
  * Ticks the database backup scheduler, processing all configured targets.
+ * Orchestrates the evaluation of backup schedules, triggers jobs, 
+ * and updates persistence for successfully queued tasks.
+ * 
+ * @param now - Current execution time for schedule evaluation.
+ * @returns Summary of triggered/skipped tasks.
  */
 export async function tickDatabaseBackupScheduler(
   now = new Date()

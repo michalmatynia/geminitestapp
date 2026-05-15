@@ -1,5 +1,7 @@
 import React from 'react';
-import { Badge } from '@/shared/ui/primitives.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { cn } from '@/shared/utils/ui-utils';
 import { type KangurLessonSection, type KangurLessonSubsection } from '@/features/kangur/shared/contracts/kangur';
 import { SectionRow } from './SectionRow';
 
@@ -53,14 +55,14 @@ export const SubjectSectionsGroup: React.FC<SubjectSectionsGroupProps> = ({
             section={section}
             isExpanded={expandedSectionId === section.id}
             onToggleExpand={() => onToggleExpand(expandedSectionId === section.id ? null : section.id)}
-            onMoveUp={async () => await onMoveUp(idx, section)}
-            onMoveDown={async () => await onMoveDown(idx, section)}
-            onToggleEnabled={async () => await onToggleEnabled(section)}
+            onMoveUp={() => void onMoveUp(idx, section)}
+            onMoveDown={() => void onMoveDown(idx, section)}
+            onToggleEnabled={() => void onToggleEnabled(section)}
             onEdit={() => onEdit(section)}
             onDelete={() => onDelete(section)}
             onAddSubsection={() => onAddSubsection(section)}
-            onEditSubsection={(sub: KangurLessonSubsection) => onEditSubsection(section, sub)}
-            onDeleteSubsection={(subId: string) => onDeleteSubsection(section, subId)}
+            onEditSubsection={(sub) => onEditSubsection(section, sub)}
+            onDeleteSubsection={(subId) => onDeleteSubsection(section, subId)}
             isFirst={idx === 0}
             isLast={idx === sections.length - 1}
             isSaving={isSaving}

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -117,6 +118,11 @@ type MongoFilemakerOrganizationResponse = {
   valueCatalog?: {
     values?: FilemakerValue[];
   };
+};
+
+type MongoOrganizationSaveVariables = {
+  organizationId: string;
+  patch: Record<string, unknown>;
 };
 
 const EMPTY_COUNTRIES: CountryOption[] = [];
@@ -385,6 +391,33 @@ const parseMongoFilemakerOrganizationResponse = async (
   return (await response.json()) as MongoFilemakerOrganizationResponse;
 };
 
+const fetchMongoFilemakerOrganization = async (
+  organizationId: string,
+  signal: AbortSignal
+): Promise<MongoFilemakerOrganizationResponse> => {
+  const response = await fetch(`/api/filemaker/organizations/${encodeURIComponent(organizationId)}`, {
+    signal,
+  });
+  return parseMongoFilemakerOrganizationResponse(response);
+};
+
+const runOrganizationWebsiteSocialScrape = async (
+  organizationId: string
+): Promise<OrganizationWebsiteSocialScrapeResponse> => {
+  const response = await fetch(
+    `/api/filemaker/organizations/${encodeURIComponent(organizationId)}/website-social-scrape`,
+    {
+      method: 'POST',
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
+  }
+  return (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+};
+
 /* eslint-disable complexity */
 const toLoadedMongoOrganizationState = (
   response: MongoFilemakerOrganizationResponse
@@ -460,57 +493,39 @@ function useMongoFilemakerOrganization(
   enabled: boolean,
   refreshKey: number
 ): MongoFilemakerOrganizationState {
-  const [state, setState] = useState<MongoFilemakerOrganizationState>(
-    EMPTY_MONGO_ORGANIZATION_STATE
-  );
+  const queryKey = ['filemaker', 'organizations', 'detail', organizationId, refreshKey] as const;
+  const organizationQuery = createSingleQueryV2<
+    MongoFilemakerOrganizationResponse,
+    MongoFilemakerOrganizationState,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerOrganization(organizationId, signal),
+    enabled,
+    select: toLoadedMongoOrganizationState,
+    placeholderData: (previousData) => previousData,
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerOrganizationEditPageState.useMongoFilemakerOrganization',
+      operation: 'detail',
+      resource: 'filemaker.organization',
+      domain: 'files',
+      description: 'Load imported Mongo Filemaker organization detail and linked records.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      enabled,
+      hasOrganizationId: organizationId.trim().length > 0,
+      refreshKey,
+    },
+  });
 
-  useEffect(() => {
-    if (!enabled) {
-      setState(EMPTY_MONGO_ORGANIZATION_STATE);
-      return undefined;
-    }
-    const controller = new AbortController();
-    setState((current: MongoFilemakerOrganizationState) => ({
-      ...current,
-      error: null,
-      isLoading: true,
-    }));
-    fetch(`/api/filemaker/organizations/${encodeURIComponent(organizationId)}`, {
-      signal: controller.signal,
-    })
-      .then(parseMongoFilemakerOrganizationResponse)
-      .then((response: MongoFilemakerOrganizationResponse): void => {
-        setState(toLoadedMongoOrganizationState(response));
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState({
-          error: error instanceof Error ? error.message : 'Failed to load Mongo organization.',
-          harvestProfiles: [],
-          importedDemands: [],
-          importedProfiles: [],
-          isLoading: false,
-          linkedAddresses: [],
-          linkedAnyParams: [],
-          linkedAnyTexts: [],
-          linkedBankAccounts: [],
-          linkedDocuments: [],
-          linkedEmails: [],
-          linkedEvents: [],
-          linkedPersons: [],
-          linkedWebsites: [],
-          organization: null,
-          relationshipSummary: null,
-          valueCatalog: [],
-        });
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [enabled, organizationId, refreshKey]);
-
-  return state;
+  if (!enabled) return EMPTY_MONGO_ORGANIZATION_STATE;
+  return {
+    ...(organizationQuery.data ?? EMPTY_MONGO_ORGANIZATION_STATE),
+    error: organizationQuery.error === null ? null : organizationQuery.error.message,
+    isLoading: organizationQuery.isFetching,
+  };
 }
 
 const resolveOrganizationSource = (input: {
@@ -541,7 +556,47 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [mongoOrganizationRefreshKey, setMongoOrganizationRefreshKey] = useState(0);
-  const [isWebsiteSocialScrapeRunning, setIsWebsiteSocialScrapeRunning] = useState(false);
+  const websiteSocialScrapeMutation = createMutationV2<
+    OrganizationWebsiteSocialScrapeResponse,
+    string
+  >({
+    mutationKey: ['filemaker', 'organizations', 'website-social-scrape'],
+    mutationFn: async (organizationId) => runOrganizationWebsiteSocialScrape(organizationId),
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerOrganizationEditPageState.websiteSocialScrape',
+      operation: 'action',
+      resource: 'filemaker.organization-website-social-scrape',
+      domain: 'files',
+      description: 'Run website and social discovery for a Filemaker organization.',
+      errorPresentation: 'toast',
+    },
+  });
+  const mongoOrganizationSaveMutation = createMutationV2<void, MongoOrganizationSaveVariables>({
+    mutationKey: ['filemaker', 'organizations', 'detail', 'save'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/organizations/${encodeURIComponent(variables.organizationId)}`,
+        {
+          body: JSON.stringify(variables.patch),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH',
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to save Mongo organization (${response.status}).`);
+      }
+    },
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerOrganizationEditPageState.mongoOrganizationSave',
+      operation: 'update',
+      resource: 'filemaker.organization',
+      domain: 'files',
+      description: 'Save imported Mongo Filemaker organization detail changes.',
+      errorPresentation: 'toast',
+    },
+  });
 
   const organizationId = decodeRouteParam(params['organizationId']);
   const isCreateMode = organizationId === 'new';
@@ -920,23 +975,23 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
     if (organizationSource === 'mongo') {
       try {
-	        const nextSettingsDatabase = applyOrganizationJobListings(
-	          database,
-	          organizationJobListingOwnerId.length > 0 ? organizationJobListingOwnerId : organization.id,
-	          jobListings,
-	          organizationJobListingOwnerIds
-	        );
-        const response = await fetch(
-          `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
+        const nextSettingsDatabase = applyOrganizationJobListings(
+          database,
+          organizationJobListingOwnerId.length > 0 ? organizationJobListingOwnerId : organization.id,
+          jobListings,
+          organizationJobListingOwnerIds
+        );
+        await mongoOrganizationSaveMutation.mutateAsync(
           {
-            body: JSON.stringify({
+            organizationId: organization.id,
+            patch: {
               addressId: defaultAddress?.addressId ?? orgDraft.addressId ?? '',
+              addresses: normalizedAddresses,
               city: defaultAddress?.city ?? orgDraft.city ?? '',
               cooperationStatus: orgDraft.cooperationStatus,
               country: defaultAddress?.country ?? orgDraft.country ?? '',
               countryId: defaultAddress?.countryId ?? orgDraft.countryId ?? '',
               establishedDate: orgDraft.establishedDate,
-              addresses: normalizedAddresses,
               jobBoardCompanyAddress: orgDraft.jobBoardCompanyAddress,
               jobBoardCompanyEmail: orgDraft.jobBoardCompanyEmail,
               jobBoardCompanyIndustry: orgDraft.jobBoardCompanyIndustry,
@@ -960,14 +1015,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
               streetNumber: defaultAddress?.streetNumber ?? orgDraft.streetNumber ?? '',
               taxId: orgDraft.taxId,
               tradingName: orgDraft.tradingName,
-            }),
-            headers: { 'Content-Type': 'application/json' },
-            method: 'PATCH',
+            },
           }
         );
-        if (!response.ok) {
-          throw new Error(`Failed to save Mongo organization (${response.status}).`);
-        }
         await updateSetting.mutateAsync({
           key: FILEMAKER_DATABASE_KEY,
           value: JSON.stringify(toPersistedFilemakerDatabase(nextSettingsDatabase)),
@@ -1025,6 +1075,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     isCreateMode,
     jobListings,
     legacyDemandRows,
+    mongoOrganizationSaveMutation,
     organization,
     organizationJobListingOwnerId,
     organizationJobListingOwnerIds,
@@ -1061,23 +1112,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   }, [database, organization, emailExtractionText, persistDatabase, settingsStore]);
 
   const handleWebsiteSocialScrape = useCallback(async (): Promise<void> => {
-    if (organization === null || isWebsiteSocialScrapeRunning) return;
-    setIsWebsiteSocialScrapeRunning(true);
+    if (organization === null || websiteSocialScrapeMutation.isPending) return;
     try {
-      const response = await fetch(
-        `/api/filemaker/organizations/${encodeURIComponent(
-          mongoOrganizationLookupId
-        )}/website-social-scrape`,
-        {
-          method: 'POST',
-          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
-      }
-      const result = (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+      const result = await websiteSocialScrapeMutation.mutateAsync(mongoOrganizationLookupId);
       const scrapeToast = buildOrganizationWebsiteSocialScrapeToast(result);
       toast(scrapeToast.message, { variant: scrapeToast.variant });
       setMongoOrganizationRefreshKey((current) => current + 1);
@@ -1085,10 +1122,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       toast(error instanceof Error ? error.message : 'Website/social scrape failed.', {
         variant: 'error',
       });
-    } finally {
-      setIsWebsiteSocialScrapeRunning(false);
     }
-  }, [isWebsiteSocialScrapeRunning, mongoOrganizationLookupId, organization, toast]);
+  }, [mongoOrganizationLookupId, organization, toast, websiteSocialScrapeMutation]);
 
   return {
     isCreateMode,
@@ -1126,7 +1161,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     handleSave,
     handleExtractEmails,
     handleWebsiteSocialScrape,
-    isWebsiteSocialScrapeRunning,
+    isWebsiteSocialScrapeRunning: websiteSocialScrapeMutation.isPending,
     updateSetting,
     router,
     isLoading,

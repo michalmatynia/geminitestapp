@@ -2,7 +2,9 @@
  * @vitest-environment jsdom
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -29,8 +31,8 @@ vi.mock('@/features/filemaker/social/hooks/useSocialPublishingPosts', () => ({
 
 vi.mock('@/features/filemaker/social/client-observability', () => ({
   logSocialPublishingClientError: (...args: unknown[]) => logSocialPublishingClientErrorMock(...args),
-
-  isRecoverableSocialPublishingClientFetchError: vi.fn().mockReturnValue(false),}));
+  isRecoverableSocialPublishingClientFetchError: vi.fn().mockReturnValue(false),
+}));
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
@@ -39,6 +41,19 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 import { useSocialContext } from './useSocialContext';
+
+const createQueryWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return function QueryWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+};
 
 describe('useSocialContext', () => {
   beforeEach(() => {
@@ -52,13 +67,15 @@ describe('useSocialContext', () => {
   });
 
   it('warns when no active post is selected', async () => {
-    const { result } = renderHook(() =>
-      useSocialContext({
-        activePost: null,
-        resolveDocReferences: () => [],
-        setContextSummary: vi.fn(),
-        buildSocialContext: () => ({ source: 'test' }),
-      })
+    const { result } = renderHook(
+      () =>
+        useSocialContext({
+          activePost: null,
+          resolveDocReferences: () => [],
+          setContextSummary: vi.fn(),
+          buildSocialContext: () => ({ source: 'test' }),
+        }),
+      { wrapper: createQueryWrapper() }
     );
 
     await expect(result.current.handleLoadContext()).resolves.toEqual({
@@ -82,13 +99,15 @@ describe('useSocialContext', () => {
     vi.stubGlobal('fetch', fetchMock);
     const setContextSummary = vi.fn();
 
-    const { result } = renderHook(() =>
-      useSocialContext({
-        activePost: { id: 'post-1' } as never,
-        resolveDocReferences: () => ['docs/alpha.mdx', 'docs/beta.mdx'],
-        setContextSummary,
-        buildSocialContext: () => ({ postId: 'post-1' }),
-      })
+    const { result } = renderHook(
+      () =>
+        useSocialContext({
+          activePost: { id: 'post-1' } as never,
+          resolveDocReferences: () => ['docs/alpha.mdx', 'docs/beta.mdx'],
+          setContextSummary,
+          buildSocialContext: () => ({ postId: 'post-1' }),
+        }),
+      { wrapper: createQueryWrapper() }
     );
 
     let response: Awaited<ReturnType<typeof result.current.handleLoadContext>> | undefined;
@@ -129,13 +148,15 @@ describe('useSocialContext', () => {
       })
     );
 
-    const { result } = renderHook(() =>
-      useSocialContext({
-        activePost: { id: 'post-2' } as never,
-        resolveDocReferences: () => [],
-        setContextSummary: vi.fn(),
-        buildSocialContext: () => ({ postId: 'post-2' }),
-      })
+    const { result } = renderHook(
+      () =>
+        useSocialContext({
+          activePost: { id: 'post-2' } as never,
+          resolveDocReferences: () => [],
+          setContextSummary: vi.fn(),
+          buildSocialContext: () => ({ postId: 'post-2' }),
+        }),
+      { wrapper: createQueryWrapper() }
     );
 
     await act(async () => {
@@ -163,13 +184,15 @@ describe('useSocialContext', () => {
     );
     const setContextSummary = vi.fn();
 
-    const { result } = renderHook(() =>
-      useSocialContext({
-        activePost: { id: 'post-3' } as never,
-        resolveDocReferences: () => ['docs/overview.mdx'],
-        setContextSummary,
-        buildSocialContext: () => ({ postId: 'post-3' }),
-      })
+    const { result } = renderHook(
+      () =>
+        useSocialContext({
+          activePost: { id: 'post-3' } as never,
+          resolveDocReferences: () => ['docs/overview.mdx'],
+          setContextSummary,
+          buildSocialContext: () => ({ postId: 'post-3' }),
+        }),
+      { wrapper: createQueryWrapper() }
     );
 
     await act(async () => {
@@ -197,13 +220,15 @@ describe('useSocialContext', () => {
     );
     const setContextSummary = vi.fn();
 
-    const { result } = renderHook(() =>
-      useSocialContext({
-        activePost: { id: 'post-4' } as never,
-        resolveDocReferences: () => ['docs/overview.mdx'],
-        setContextSummary,
-        buildSocialContext: () => ({ postId: 'post-4' }),
-      })
+    const { result } = renderHook(
+      () =>
+        useSocialContext({
+          activePost: { id: 'post-4' } as never,
+          resolveDocReferences: () => ['docs/overview.mdx'],
+          setContextSummary,
+          buildSocialContext: () => ({ postId: 'post-4' }),
+        }),
+      { wrapper: createQueryWrapper() }
     );
 
     await act(async () => {

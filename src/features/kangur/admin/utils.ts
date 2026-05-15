@@ -25,9 +25,9 @@ export const resolvePageSectionOptions = (
   sectionTitle?: string;
   sectionDescription?: string;
 } => ({
-  sectionKey: page?.sectionKey?.trim() || '',
-  sectionTitle: page?.sectionTitle?.trim() || '',
-  sectionDescription: page?.sectionDescription?.trim() || '',
+  sectionKey: (page?.sectionKey?.trim().length ?? 0) > 0 ? page?.sectionKey?.trim() : '',
+  sectionTitle: (page?.sectionTitle?.trim().length ?? 0) > 0 ? page?.sectionTitle?.trim() : '',
+  sectionDescription: (page?.sectionDescription?.trim().length ?? 0) > 0 ? page?.sectionDescription?.trim() : '',
 });
 
 type LessonRecipeFamily = 'time' | 'arithmetic' | 'geometry' | 'logic';
@@ -47,7 +47,13 @@ const LESSON_RECIPE_FAMILY_BY_COMPONENT_ID = new Map<KangurLessonComponentId, Le
 
 export const getLessonRecipeFamily = (
   componentId: KangurLessonComponentId | null | undefined
-): LessonRecipeFamily => (componentId ? LESSON_RECIPE_FAMILY_BY_COMPONENT_ID.get(componentId) : null) ?? 'logic';
+): LessonRecipeFamily => {
+  if (componentId != null) {
+    const family = LESSON_RECIPE_FAMILY_BY_COMPONENT_ID.get(componentId);
+    if (family != null) return family;
+  }
+  return 'logic';
+};
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -268,7 +274,7 @@ export const parseOptionalNumberInput = (
   min: number,
   max: number
 ): number | null => {
-  if (!value.trim()) {
+  if (value.trim() === '') {
     return null;
   }
 
@@ -285,6 +291,7 @@ export const insertAfterIndex = <T>(items: readonly T[], index: number, value: T
   nextItems.splice(index + 1, 0, value);
   return nextItems;
 };
+
 
 export const resolveInlineAccent = (
   type: KangurLessonInlineBlock['type']

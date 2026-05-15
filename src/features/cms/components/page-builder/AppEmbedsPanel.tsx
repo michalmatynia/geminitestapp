@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { APP_EMBED_OPTIONS } from '@/shared/lib/app-embeds';
 import { AppEmbedsProvider, useAppEmbeds } from '@/shared/providers/AppEmbedsProvider';
@@ -11,22 +11,31 @@ import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 export function AppEmbedsPanel({
   showHeader = true,
-}: { showHeader?: boolean } = {}): React.ReactNode {
-  const shouldShowHeader = showHeader;
-
+}: { showHeader?: boolean } = {}): React.JSX.Element {
   return (
     <AppEmbedsProvider>
-      <AppEmbedsPanelContent showHeader={shouldShowHeader} />
+      <AppEmbedsPanelContent showHeader={showHeader} />
     </AppEmbedsProvider>
   );
 }
 
-function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.ReactNode {
+function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.JSX.Element {
   const { enabled, toggleOption, save, isLoading, isSaving } = useAppEmbeds();
+
+  const handleSave = useCallback((): void => {
+    void save();
+  }, [save]);
 
   if (isLoading) {
     return <LoadingState message='Loading app embeds...' className='h-full' />;
   }
+
+  const items = APP_EMBED_OPTIONS.map((option) => ({
+    id: option.id,
+    title: option.label,
+    description: option.description,
+    original: option,
+  }));
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
@@ -40,13 +49,8 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
       )}
       <div className='flex-1 overflow-y-auto p-3'>
         <SimpleSettingsList
-          items={APP_EMBED_OPTIONS.map((option) => ({
-            id: option.id,
-            title: option.label,
-            description: option.description,
-            original: option,
-          }))}
-          renderActions={(item) => {
+          items={items}
+          renderActions={(item: typeof items[number]) => {
             const isEnabled = enabled.has(item.id);
             const checkboxId = `app-embed-enabled-${item.id}`;
             return (
@@ -76,7 +80,7 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
       </div>
       <div className='border-t border-border px-4 py-3'>
         <Button
-          onClick={() => void save()}
+          onClick={handleSave}
           loading={isSaving}
           loadingText='Saving...'
           className='w-full'

@@ -1,8 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
+import type { ArchLocale } from '@/lib/types';
+import { ARCH_LOCALES } from '@/lib/types';
 
-export default function Nav() {
+type NavProps = {
+  currentLocale: ArchLocale;
+  publishedLocales: ArchLocale[];
+};
+
+export default function Nav({ currentLocale, publishedLocales }: NavProps) {
   useEffect(() => {
     const nav = document.getElementById('topnav');
     if (!nav) return;
@@ -15,10 +22,12 @@ export default function Nav() {
     return () => document.removeEventListener('scroll', onScroll);
   }, []);
 
+  const visibleLocales = ARCH_LOCALES.filter((l) => publishedLocales.includes(l));
+
   return (
     <nav className="top" id="topnav">
       <div className="nav-row">
-        <a href="#" className="brand">
+        <a href={`/${currentLocale}`} className="brand">
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">Milk Bar Designers</span>
           <span className="brand-sub">/ est. Amsterdam</span>
@@ -29,10 +38,26 @@ export default function Nav() {
           <a href="#process">process</a>
           <a href="#studio">studio</a>
         </div>
-        <a href="#contact" className="nav-cta">
-          <span>enquire</span>
-          <span className="arrow" aria-hidden="true" />
-        </a>
+        <div className="nav-end">
+          {visibleLocales.length > 1 ? (
+            <div className="nav-locale-switcher" aria-label="Language">
+              {visibleLocales.map((locale) => (
+                <a
+                  key={locale}
+                  href={`/${locale}`}
+                  className={`nav-locale${currentLocale === locale ? ' active' : ''}`}
+                  aria-current={currentLocale === locale ? 'true' : undefined}
+                >
+                  {locale}
+                </a>
+              ))}
+            </div>
+          ) : null}
+          <a href="#contact" className="nav-cta">
+            <span>enquire</span>
+            <span className="arrow" aria-hidden="true" />
+          </a>
+        </div>
       </div>
     </nav>
   );

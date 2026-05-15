@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -86,18 +87,29 @@ function renderFields(
   } = {}
 ): void {
   function Wrapper(): React.JSX.Element {
+    const [queryClient] = React.useState(
+      () =>
+        new QueryClient({
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
+        })
+    );
     const [form, setForm] = React.useState({
       ...createEmptyConnectionForm(),
       ...(options.initialForm ?? {}),
     });
 
     return (
-      <ConnectionFormFields
-        integrationSlug={integrationSlug}
-        form={form}
-        setForm={setForm}
-        mode={options.mode ?? 'create'}
-      />
+      <QueryClientProvider client={queryClient}>
+        <ConnectionFormFields
+          integrationSlug={integrationSlug}
+          form={form}
+          setForm={setForm}
+          mode={options.mode ?? 'create'}
+        />
+      </QueryClientProvider>
     );
   }
 

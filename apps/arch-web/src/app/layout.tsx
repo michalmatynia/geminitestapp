@@ -1,4 +1,5 @@
-import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { Cormorant_Garamond, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -18,14 +19,14 @@ const jetbrains = JetBrains_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Milk Bar Designers — Architecture for the Built Environment',
-  description: 'A small studio working at the seam between architecture and machine learning — automating the administrative so practice returns to the considered drawing.',
-};
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') ?? '/en';
+  const localeMatch = /^\/(en|de|pl)/.exec(pathname);
+  const lang = localeMatch?.[1] ?? 'en';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${jetbrains.variable}`}>
+    <html lang={lang} className={`${cormorant.variable} ${jetbrains.variable}`}>
       <body>{children}</body>
     </html>
   );

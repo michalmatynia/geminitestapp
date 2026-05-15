@@ -11,7 +11,7 @@ import {
   FormField,
   FormSection,
 } from '@/shared/ui/forms-and-actions.public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
@@ -50,6 +50,21 @@ type CvPatchResponse = {
     canonicalEditMode?: string;
     ignoredFields?: string[];
   };
+};
+
+type SaveCvVariables = {
+  cvId: string;
+  patch: Record<string, unknown>;
+};
+
+type ExportCvPdfVariables = {
+  cvId: string;
+  fallbackFilename: string;
+};
+
+type ExportCvPdfResponse = {
+  blob: Blob;
+  filename: string;
 };
 
 const STATUS_OPTIONS: Array<{ label: string; value: FilemakerCvStatus }> = [
@@ -515,6 +530,49 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
       }),
     [previewBlocks, state.cv?.highlightTechnologyTerms]
   );
+  const saveCvMutation = createMutationV2<CvPatchResponse, SaveCvVariables>({
+    mutationKey: ['filemaker', 'cvs', 'detail', 'save'],
+    mutationFn: async (variables) => {
+      const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(variables.cvId)}`, {
+        method: 'PATCH',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(variables.patch),
+      });
+      if (!response.ok) throw new Error(`Failed to save CV (${response.status}).`);
+      return (await response.json()) as CvPatchResponse;
+    },
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCvEditPage.saveCv',
+      operation: 'update',
+      resource: 'filemaker.cv',
+      domain: 'files',
+      description: 'Save Filemaker CV editor changes.',
+      errorPresentation: 'toast',
+    },
+  });
+  const exportCvPdfMutation = createMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
+    mutationKey: ['filemaker', 'cvs', 'export-pdf'],
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/filemaker/cvs/export-pdf', {
+        method: 'POST',
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ cvId: variables.cvId }),
+      });
+      if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
+      return {
+        blob: await response.blob(),
+        filename: readDownloadFilename(response, variables.fallbackFilename),
+      };
+    },
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCvEditPage.exportPdf',
+      operation: 'export',
+      resource: 'filemaker.cv-pdf',
+      domain: 'files',
+      description: 'Export a Filemaker CV as a PDF from the editor.',
+      errorPresentation: 'toast',
+    },
+  });
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
@@ -560,10 +618,9 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
         selectedTechnicalEnvironment: [],
         experienceHighlightPatches: [],
       };
-    const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(state.cv.id)}`, {
-      method: 'PATCH',
-      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({
+    const payload = await saveCvMutation.mutateAsync({
+      cvId: state.cv.id,
+      patch: {
         ...(isScopedCv
           ? {
               coreStrengths: scopedTailoringPatch.coreStrengths,
@@ -576,10 +633,8 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
             }),
         status,
         title,
-      }),
+      },
     });
-    if (!response.ok) throw new Error(`Failed to save CV (${response.status}).`);
-    const payload = (await response.json()) as CvPatchResponse;
     if ((payload.meta?.ignoredFields ?? []).length > 0) {
       toast(`Ignored non-canonical fields: ${(payload.meta?.ignoredFields ?? []).join(', ')}.`);
     }
@@ -593,6 +648,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     patchExperienceHighlightsText,
     patchProfessionalSummary,
     patchTechnicalEnvironmentText,
+    saveCvMutation,
     state.cv,
     status,
     title,
@@ -641,15 +697,12 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     setIsExporting(true);
     try {
       const savedCv = await persistCurrentCv();
-      const response = await fetch('/api/filemaker/cvs/export-pdf', {
-        method: 'POST',
-        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ cvId: savedCv.id }),
-      });
-      if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
       const fallbackTitle = savedCv.title.trim().length > 0 ? savedCv.title : savedCv.id;
-      const filename = readDownloadFilename(response, `${fallbackTitle}.pdf`);
-      downloadBlob(await response.blob(), filename);
+      const exported = await exportCvPdfMutation.mutateAsync({
+        cvId: savedCv.id,
+        fallbackFilename: `${fallbackTitle}.pdf`,
+      });
+      downloadBlob(exported.blob, exported.filename);
       toast('CV PDF exported.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error);
@@ -659,7 +712,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     } finally {
       setIsExporting(false);
     }
-  }, [persistCurrentCv, state.cv, toast]);
+  }, [exportCvPdfMutation, persistCurrentCv, state.cv, toast]);
 
   if (state.cv === null) {
     return (

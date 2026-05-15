@@ -393,6 +393,7 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
   const services = isRecord(source['services']) ? source['services'] : {};
   const projects = isRecord(source['projects']) ? source['projects'] : {};
   const process = isRecord(source['process']) ? source['process'] : {};
+  const caseStudy = isRecord(source['caseStudy']) ? source['caseStudy'] : {};
   const quote = isRecord(source['quote']) ? source['quote'] : {};
   const cta = isRecord(source['cta']) ? source['cta'] : {};
   const footer = isRecord(source['footer']) ? source['footer'] : {};
@@ -443,6 +444,16 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       steps: normalizeProcessSteps(process['steps'], fallback.process.steps),
     },
     metrics: normalizeMetrics(source['metrics'], fallback.metrics),
+    caseStudy: {
+      eyebrow: asString(caseStudy['eyebrow'], fallback.caseStudy.eyebrow),
+      label: asString(caseStudy['label'], fallback.caseStudy.label),
+      title: asString(caseStudy['title'], fallback.caseStudy.title),
+      titleEmphasis: asString(caseStudy['titleEmphasis'], fallback.caseStudy.titleEmphasis),
+      heading: asString(caseStudy['heading'], fallback.caseStudy.heading),
+      headingEmphasis: asString(caseStudy['headingEmphasis'], fallback.caseStudy.headingEmphasis),
+      body: asString(caseStudy['body'], fallback.caseStudy.body),
+      stats: normalizeMetrics(caseStudy['stats'], fallback.caseStudy.stats),
+    },
     quote: {
       eyebrow: asString(quote['eyebrow'], fallback.quote.eyebrow),
       text: asString(quote['text'], fallback.quote.text),
@@ -498,6 +509,7 @@ const normalizeSectionVisibility = (input: unknown): MilkbarSectionVisibility =>
     projects: asBoolean(record['projects'], defaults.projects),
     process: asBoolean(record['process'], defaults.process),
     metrics: asBoolean(record['metrics'], defaults.metrics),
+    caseStudy: asBoolean(record['caseStudy'], defaults.caseStudy),
     quote: asBoolean(record['quote'], defaults.quote),
     cta: asBoolean(record['cta'], defaults.cta),
   };
@@ -569,6 +581,7 @@ const normalizeService = (input: unknown, index: number): MilkbarServiceCmsRecor
   return {
     code,
     title: asString(record['title'], code),
+    emphasis: asString(record['emphasis'], ''),
     description: asString(record['description'], 'Service description pending.'),
     order: asNumber(record['order'], index),
   };
@@ -613,12 +626,16 @@ const toOptionalIsoDate = (value: unknown): string | null => {
   return null;
 };
 
-const toInquiry = (record: AnyRecord): MilkbarInquiryCmsRecord => ({
-  email: asString(record['email'], ''),
-  createdAt: toOptionalIsoDate(record['createdAt']),
-  status: asString(record['status'], 'pending'),
-  source: asString(record['source'], 'unknown'),
-});
+const toInquiry = (record: AnyRecord): MilkbarInquiryCmsRecord => {
+  const localeRaw = record['locale'];
+  return {
+    email: asString(record['email'], ''),
+    createdAt: toOptionalIsoDate(record['createdAt']),
+    status: asString(record['status'], 'pending'),
+    source: asString(record['source'], 'unknown'),
+    ...(typeof localeRaw === 'string' && localeRaw.length > 0 && { locale: localeRaw }),
+  };
+};
 
 export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapshot> {
   const [status, sourceData, runtimeData] = await Promise.all([

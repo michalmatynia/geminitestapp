@@ -9,6 +9,8 @@ import {
 import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { Button } from '@/shared/ui/primitives.public';
 
@@ -25,6 +27,35 @@ type JobListingApplicationState = {
   onDeleteApplication: () => Promise<void>;
 };
 
+type DeleteApplicationVariables = {
+  applicationId: string;
+};
+
+const useDeleteApplicationMutation = (): MutationResult<void, DeleteApplicationVariables> =>
+  createMutationV2<void, DeleteApplicationVariables>({
+    mutationKey: ['filemaker', 'job-applications', 'delete'],
+    mutationFn: async (variables) => {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(variables.applicationId)}`,
+        {
+          method: 'DELETE',
+          headers: withCsrfHeaders({}),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to delete application (${response.status}).`);
+      }
+    },
+    meta: {
+      source: 'features.filemaker.components.shared.FilemakerJobListingMasterTreeNode.deleteApplication',
+      operation: 'delete',
+      resource: 'filemaker.job-application',
+      domain: 'files',
+      description: 'Delete a Filemaker job application from the listing tree action panel.',
+      errorPresentation: 'toast',
+    },
+  });
+
 export function useJobListingApplicationState(
   listing: EnrichedJobListing,
   onRefreshListings: () => Promise<void> | void
@@ -33,6 +64,7 @@ export function useJobListingApplicationState(
   const [isApplied, setIsApplied] = useState<boolean>(listing.isApplied);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteGen, setDeleteGen] = useState<number>(0);
+  const deleteApplicationMutation = useDeleteApplicationMutation();
 
   useEffect(() => {
     setApplicationId(listing.applicationId);
@@ -54,16 +86,7 @@ export function useJobListingApplicationState(
     if (!window.confirm('Delete this application record? This cannot be undone.')) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(
-        `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
-        {
-          method: 'DELETE',
-          headers: withCsrfHeaders({}),
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to delete application (${response.status}).`);
-      }
+      await deleteApplicationMutation.mutateAsync({ applicationId });
       setApplicationId(null);
       setIsApplied(false);
       setDeleteGen((value: number) => value + 1);
@@ -71,7 +94,7 @@ export function useJobListingApplicationState(
     } finally {
       setIsDeleting(false);
     }
-  }, [applicationId, onRefreshListings]);
+  }, [applicationId, deleteApplicationMutation, onRefreshListings]);
 
   return {
     applicationId,

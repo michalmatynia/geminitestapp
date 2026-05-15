@@ -1,3 +1,49 @@
+export type ArchLocale = 'en' | 'de' | 'pl';
+
+export const ARCH_LOCALES: ArchLocale[] = ['en', 'de', 'pl'];
+
+export const ARCH_LOCALE_LABELS: Record<ArchLocale, string> = {
+  en: 'EN',
+  de: 'DE',
+  pl: 'PL',
+};
+
+export const ARCH_LOCALE_NAMES: Record<ArchLocale, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  pl: 'Polski',
+};
+
+export function isArchLocale(value: unknown): value is ArchLocale {
+  return value === 'en' || value === 'de' || value === 'pl';
+}
+
+export type ArchSectionVisibility = {
+  drawing: boolean;
+  philosophy: boolean;
+  services: boolean;
+  projects: boolean;
+  process: boolean;
+  metrics: boolean;
+  caseStudy: boolean;
+  quote: boolean;
+  cta: boolean;
+};
+
+export type ArchSeoMeta = {
+  title: string;
+  description: string;
+  ogTitle: string;
+  ogDescription: string;
+};
+
+export type ArchPageSettings = {
+  visibility: ArchSectionVisibility;
+  seo: { [K in ArchLocale]: ArchSeoMeta };
+  defaultLocale: ArchLocale;
+  publishedLocales: ArchLocale[];
+};
+
 export interface Project {
   code: string;
   name: string;
@@ -9,12 +55,13 @@ export interface Project {
   order: number;
   status: 'published' | 'draft';
   cameraPosition: { x: number; y: number; z: number };
-  cameraTarget:   { x: number; y: number; z: number };
+  cameraTarget: { x: number; y: number; z: number };
 }
 
 export interface Service {
   code: string;
   title: string;
+  emphasis: string;
   description: string;
   order: number;
 }
@@ -24,6 +71,7 @@ export interface Inquiry {
   createdAt: Date;
   status: 'pending' | 'contacted';
   source: string;
+  locale?: string;
 }
 
 export interface ArchPageContent {
@@ -85,6 +133,16 @@ export interface ArchPageContent {
     suffix: string;
     label: string;
   }>;
+  caseStudy: {
+    eyebrow: string;
+    label: string;
+    title: string;
+    titleEmphasis: string;
+    heading: string;
+    headingEmphasis: string;
+    body: string;
+    stats: Array<{ value: string; suffix: string; label: string }>;
+  };
   quote: {
     eyebrow: string;
     text: string;

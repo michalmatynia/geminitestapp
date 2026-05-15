@@ -411,4 +411,53 @@ describe('milkbar cms server', () => {
     expect(snapshot.pageSettings.publishedLocales).toContain('de');
     expect(snapshot.pageSettings.seo.en.title).toBe('Custom EN title');
   });
+
+  it('preserves the locale field on inquiry records and omits it when absent', async () => {
+    runtimeDb = createFakeDb({
+      inquiries: [
+        { email: 'de@example.com', createdAt: new Date('2026-05-15T10:00:00.000Z'), status: 'pending', source: 'cta-form', locale: 'de' },
+        { email: 'no-locale@example.com', createdAt: new Date('2026-05-15T09:00:00.000Z'), status: 'pending', source: 'cta-form' },
+      ],
+    });
+
+    const snapshot = await getMilkbarDesignersCmsSnapshot();
+
+    const deInquiry = snapshot.inquiries.find((i) => i.email === 'de@example.com');
+    const noLocaleInquiry = snapshot.inquiries.find((i) => i.email === 'no-locale@example.com');
+
+    expect(deInquiry?.locale).toBe('de');
+    expect(noLocaleInquiry).toBeDefined();
+    expect('locale' in (noLocaleInquiry ?? {})).toBe(false);
+  });
+
+  it('normalizes footer column links from saved page content', async () => {
+    const contentWithFooter = {
+      ...DEFAULT_MILKBAR_PAGE_CONTENT,
+      footer: {
+        ...DEFAULT_MILKBAR_PAGE_CONTENT.footer,
+        columns: [
+          {
+            title: 'Services',
+            links: [
+              { label: 'Compliance', href: '/compliance' },
+              { label: 'Massing', href: '/massing' },
+            ],
+          },
+        ],
+      },
+    };
+
+    const snapshot = await saveMilkbarDesignersCmsSnapshot({
+      localizedContent: { ...DEFAULT_MILKBAR_LOCALIZED_CONTENT, en: contentWithFooter },
+      pageSettings: DEFAULT_MILKBAR_PAGE_SETTINGS,
+      projects: [],
+      services: [],
+    });
+
+    const col = snapshot.localizedContent.en.footer.columns[0];
+    expect(col?.title).toBe('Services');
+    expect(col?.links).toHaveLength(2);
+    expect(col?.links[0]).toEqual({ label: 'Compliance', href: '/compliance' });
+    expect(col?.links[1]).toEqual({ label: 'Massing', href: '/massing' });
+  });
 });

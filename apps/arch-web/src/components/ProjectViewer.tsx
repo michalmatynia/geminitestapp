@@ -164,11 +164,12 @@ export default function ProjectViewer({ projects }: Props) {
     let currentIdx = 0;
     let mode: RenderMode = 'solid';
 
-    const camTargets = [
-      { x: 22, y: 18, z: 22, ty: 8 },
-      { x: 20, y: 12, z: 20, ty: 5 },
-      { x: 18, y: 15, z: 18, ty: 6 },
-    ];
+    const camTargets = displayProjects.map((p) => ({
+      x: p.cameraPosition.x,
+      y: p.cameraPosition.y,
+      z: p.cameraPosition.z,
+      ty: p.cameraTarget.y,
+    }));
 
     function animateMat(mat: THREE.Material & { opacity: number }, to: number, durMs: number) {
       const startTime = Date.now(), from = mat.opacity;

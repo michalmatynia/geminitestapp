@@ -1,4 +1,4 @@
-import type { ArchPageContent } from './types';
+import type { ArchLocale, ArchPageContent, ArchPageSettings, ArchSeoMeta } from './types';
 
 export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
   hero: {
@@ -101,6 +101,21 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     { value: '98', suffix: '.4%', label: 'Compliance check accuracy rate' },
     { value: '38', suffix: '', label: 'Active jurisdictional regulation models' },
   ],
+  caseStudy: {
+    eyebrow: '— 06 / case study',
+    label: 'helios tower',
+    title: 'Compliance',
+    titleEmphasis: 'at scale.',
+    heading: 'Six thousand drawings',
+    headingEmphasis: 'verified in three hours.',
+    body: 'A thirty-two-storey mixed-use development in Zurich required simultaneous compliance with Swiss federal, cantonal, and municipal building codes — three concurrent regulatory frames.',
+    stats: [
+      { value: '6,400', suffix: '', label: 'drawings audited' },
+      { value: '3', suffix: 'hrs', label: 'processing time' },
+      { value: '0', suffix: '', label: 'missed clauses' },
+      { value: '2.1', suffix: 'mo', label: 'manual equivalent' },
+    ],
+  },
   quote: {
     eyebrow: '- 07 / note',
     text: 'The measure of a great building is not what it shows',
@@ -156,6 +171,47 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
   },
 };
 
+export const DEFAULT_ARCH_PAGE_SETTINGS: ArchPageSettings = {
+  visibility: {
+    drawing: true,
+    philosophy: true,
+    services: true,
+    projects: true,
+    process: true,
+    metrics: true,
+    caseStudy: true,
+    quote: true,
+    cta: true,
+  },
+  seo: {
+    en: {
+      title: 'Milk Bar Designers — Architecture & AI Studio',
+      description:
+        'A small studio working between architecture and machine learning, automating the administrative so practice returns to the considered drawing.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architecture drawn with quiet intelligence.',
+    },
+    de: {
+      title: 'Milk Bar Designers — Architektur & KI-Studio',
+      description:
+        'Ein kleines Studio zwischen Architektur und maschinellem Lernen – automatisiert das Administrative, damit die Praxis zum durchdachten Entwurf zurückkehren kann.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architektur gezeichnet mit stiller Intelligenz.',
+    },
+    pl: {
+      title: 'Milk Bar Designers — Pracownia architektury i AI',
+      description:
+        'Małe studio na pograniczu architektury i uczenia maszynowego – automatyzuje administrację, by praktyka mogła powrócić do przemyślanego rysunku.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architektura rysowana z cichą inteligencją.',
+    },
+  },
+  defaultLocale: 'en',
+  publishedLocales: ['en'],
+};
+
+// ─── Normalize helpers ────────────────────────────────────────────────────────
+
 type AnyRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is AnyRecord =>
@@ -163,6 +219,9 @@ const isRecord = (value: unknown): value is AnyRecord =>
 
 const asString = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+
+const asBoolean = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback;
 
 const asStringArray = (value: unknown, fallback: string[]): string[] => {
   if (!Array.isArray(value)) return fallback;
@@ -172,113 +231,271 @@ const asStringArray = (value: unknown, fallback: string[]): string[] => {
   return next.length > 0 ? next : fallback;
 };
 
+function normalizePrinciples(
+  value: unknown,
+  fallback: ArchPageContent['philosophy']['principles']
+): ArchPageContent['philosophy']['principles'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((p) => ({
+      number: asString(p['number'], ''),
+      title: asString(p['title'], ''),
+      emphasis: asString(p['emphasis'], ''),
+      description: asString(p['description'], ''),
+    }));
+  return result.length > 0 ? result : fallback;
+}
+
+function normalizeProcessSteps(
+  value: unknown,
+  fallback: ArchPageContent['process']['steps']
+): ArchPageContent['process']['steps'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((s) => ({
+      number: asString(s['number'], ''),
+      title: asString(s['title'], ''),
+      description: asString(s['description'], ''),
+    }));
+  return result.length > 0 ? result : fallback;
+}
+
+function normalizeMetrics(
+  value: unknown,
+  fallback: ArchPageContent['metrics']
+): ArchPageContent['metrics'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((m) => ({
+      value: asString(m['value'], ''),
+      suffix: asString(m['suffix'], ''),
+      label: asString(m['label'], ''),
+    }));
+  return result.length > 0 ? result : fallback;
+}
+
+function normalizeCaseStudyStats(
+  value: unknown,
+  fallback: ArchPageContent['caseStudy']['stats']
+): ArchPageContent['caseStudy']['stats'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((s) => ({
+      value: asString(s['value'], ''),
+      suffix: asString(s['suffix'], ''),
+      label: asString(s['label'], ''),
+    }));
+  return result.length > 0 ? result : fallback;
+}
+
+function normalizeFooterColumns(
+  value: unknown,
+  fallback: ArchPageContent['footer']['columns']
+): ArchPageContent['footer']['columns'] {
+  if (!Array.isArray(value)) return fallback;
+  const result = value
+    .filter((item): item is Record<string, unknown> => isRecord(item))
+    .map((col) => ({
+      title: asString(col['title'], ''),
+      links: Array.isArray(col['links'])
+        ? (col['links'] as unknown[])
+            .filter((l): l is Record<string, unknown> => isRecord(l))
+            .map((link) => ({
+              label: asString(link['label'], ''),
+              href: asString(link['href'], '#'),
+            }))
+        : [],
+    }));
+  return result.length > 0 ? result : fallback;
+}
+
 export function normalizeArchPageContent(input: unknown): ArchPageContent {
   const source = isRecord(input) ? input : {};
-  const hero = isRecord(source.hero) ? source.hero : {};
-  const drawing = isRecord(source.drawing) ? source.drawing : {};
-  const philosophy = isRecord(source.philosophy) ? source.philosophy : {};
-  const services = isRecord(source.services) ? source.services : {};
-  const projects = isRecord(source.projects) ? source.projects : {};
-  const process = isRecord(source.process) ? source.process : {};
-  const quote = isRecord(source.quote) ? source.quote : {};
-  const cta = isRecord(source.cta) ? source.cta : {};
-  const footer = isRecord(source.footer) ? source.footer : {};
+  const hero = isRecord(source['hero']) ? source['hero'] : {};
+  const drawing = isRecord(source['drawing']) ? source['drawing'] : {};
+  const philosophy = isRecord(source['philosophy']) ? source['philosophy'] : {};
+  const services = isRecord(source['services']) ? source['services'] : {};
+  const projects = isRecord(source['projects']) ? source['projects'] : {};
+  const process = isRecord(source['process']) ? source['process'] : {};
+  const caseStudy = isRecord(source['caseStudy']) ? source['caseStudy'] : {};
+  const quote = isRecord(source['quote']) ? source['quote'] : {};
+  const cta = isRecord(source['cta']) ? source['cta'] : {};
+  const footer = isRecord(source['footer']) ? source['footer'] : {};
+  const d = DEFAULT_ARCH_PAGE_CONTENT;
 
   return {
-    ...DEFAULT_ARCH_PAGE_CONTENT,
     hero: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.hero,
-      location: asString(hero.location, DEFAULT_ARCH_PAGE_CONTENT.hero.location),
-      indexLabel: asString(hero.indexLabel, DEFAULT_ARCH_PAGE_CONTENT.hero.indexLabel),
-      titleLines: asStringArray(hero.titleLines, DEFAULT_ARCH_PAGE_CONTENT.hero.titleLines),
-      lede: asString(hero.lede, DEFAULT_ARCH_PAGE_CONTENT.hero.lede),
-      primaryCtaLabel: asString(
-        hero.primaryCtaLabel,
-        DEFAULT_ARCH_PAGE_CONTENT.hero.primaryCtaLabel
-      ),
-      secondaryCtaLabel: asString(
-        hero.secondaryCtaLabel,
-        DEFAULT_ARCH_PAGE_CONTENT.hero.secondaryCtaLabel
-      ),
+      location: asString(hero['location'], d.hero.location),
+      indexLabel: asString(hero['indexLabel'], d.hero.indexLabel),
+      titleLines: asStringArray(hero['titleLines'], d.hero.titleLines),
+      lede: asString(hero['lede'], d.hero.lede),
+      primaryCtaLabel: asString(hero['primaryCtaLabel'], d.hero.primaryCtaLabel),
+      secondaryCtaLabel: asString(hero['secondaryCtaLabel'], d.hero.secondaryCtaLabel),
     },
     drawing: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.drawing,
-      eyebrow: asString(drawing.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.drawing.eyebrow),
-      title: asString(drawing.title, DEFAULT_ARCH_PAGE_CONTENT.drawing.title),
-      emphasis: asString(drawing.emphasis, DEFAULT_ARCH_PAGE_CONTENT.drawing.emphasis),
-      description: asString(drawing.description, DEFAULT_ARCH_PAGE_CONTENT.drawing.description),
-      ctaLabel: asString(drawing.ctaLabel, DEFAULT_ARCH_PAGE_CONTENT.drawing.ctaLabel),
-      hint: asString(drawing.hint, DEFAULT_ARCH_PAGE_CONTENT.drawing.hint),
+      eyebrow: asString(drawing['eyebrow'], d.drawing.eyebrow),
+      title: asString(drawing['title'], d.drawing.title),
+      emphasis: asString(drawing['emphasis'], d.drawing.emphasis),
+      description: asString(drawing['description'], d.drawing.description),
+      ctaLabel: asString(drawing['ctaLabel'], d.drawing.ctaLabel),
+      hint: asString(drawing['hint'], d.drawing.hint),
     },
     philosophy: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.philosophy,
-      eyebrow: asString(philosophy.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.philosophy.eyebrow),
-      title: asString(philosophy.title, DEFAULT_ARCH_PAGE_CONTENT.philosophy.title),
-      emphasis: asString(philosophy.emphasis, DEFAULT_ARCH_PAGE_CONTENT.philosophy.emphasis),
-      body: asString(philosophy.body, DEFAULT_ARCH_PAGE_CONTENT.philosophy.body),
-      closing: asString(philosophy.closing, DEFAULT_ARCH_PAGE_CONTENT.philosophy.closing),
-      caption: asString(philosophy.caption, DEFAULT_ARCH_PAGE_CONTENT.philosophy.caption),
-      principles: Array.isArray(philosophy.principles)
-        ? (philosophy.principles as ArchPageContent['philosophy']['principles'])
-        : DEFAULT_ARCH_PAGE_CONTENT.philosophy.principles,
+      eyebrow: asString(philosophy['eyebrow'], d.philosophy.eyebrow),
+      title: asString(philosophy['title'], d.philosophy.title),
+      emphasis: asString(philosophy['emphasis'], d.philosophy.emphasis),
+      body: asString(philosophy['body'], d.philosophy.body),
+      closing: asString(philosophy['closing'], d.philosophy.closing),
+      caption: asString(philosophy['caption'], d.philosophy.caption),
+      principles: normalizePrinciples(philosophy['principles'], d.philosophy.principles),
     },
     services: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.services,
-      eyebrow: asString(services.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.services.eyebrow),
-      label: asString(services.label, DEFAULT_ARCH_PAGE_CONTENT.services.label),
-      title: asString(services.title, DEFAULT_ARCH_PAGE_CONTENT.services.title),
-      emphasis: asString(services.emphasis, DEFAULT_ARCH_PAGE_CONTENT.services.emphasis),
+      eyebrow: asString(services['eyebrow'], d.services.eyebrow),
+      label: asString(services['label'], d.services.label),
+      title: asString(services['title'], d.services.title),
+      emphasis: asString(services['emphasis'], d.services.emphasis),
     },
     projects: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.projects,
-      eyebrow: asString(projects.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.projects.eyebrow),
-      label: asString(projects.label, DEFAULT_ARCH_PAGE_CONTENT.projects.label),
-      title: asString(projects.title, DEFAULT_ARCH_PAGE_CONTENT.projects.title),
-      emphasis: asString(projects.emphasis, DEFAULT_ARCH_PAGE_CONTENT.projects.emphasis),
+      eyebrow: asString(projects['eyebrow'], d.projects.eyebrow),
+      label: asString(projects['label'], d.projects.label),
+      title: asString(projects['title'], d.projects.title),
+      emphasis: asString(projects['emphasis'], d.projects.emphasis),
     },
     process: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.process,
-      eyebrow: asString(process.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.process.eyebrow),
-      label: asString(process.label, DEFAULT_ARCH_PAGE_CONTENT.process.label),
-      title: asString(process.title, DEFAULT_ARCH_PAGE_CONTENT.process.title),
-      emphasis: asString(process.emphasis, DEFAULT_ARCH_PAGE_CONTENT.process.emphasis),
-      steps: Array.isArray(process.steps)
-        ? (process.steps as ArchPageContent['process']['steps'])
-        : DEFAULT_ARCH_PAGE_CONTENT.process.steps,
+      eyebrow: asString(process['eyebrow'], d.process.eyebrow),
+      label: asString(process['label'], d.process.label),
+      title: asString(process['title'], d.process.title),
+      emphasis: asString(process['emphasis'], d.process.emphasis),
+      steps: normalizeProcessSteps(process['steps'], d.process.steps),
     },
-    metrics: Array.isArray(source.metrics)
-      ? (source.metrics as ArchPageContent['metrics'])
-      : DEFAULT_ARCH_PAGE_CONTENT.metrics,
+    metrics: normalizeMetrics(source['metrics'], d.metrics),
+    caseStudy: {
+      eyebrow: asString(caseStudy['eyebrow'], d.caseStudy.eyebrow),
+      label: asString(caseStudy['label'], d.caseStudy.label),
+      title: asString(caseStudy['title'], d.caseStudy.title),
+      titleEmphasis: asString(caseStudy['titleEmphasis'], d.caseStudy.titleEmphasis),
+      heading: asString(caseStudy['heading'], d.caseStudy.heading),
+      headingEmphasis: asString(caseStudy['headingEmphasis'], d.caseStudy.headingEmphasis),
+      body: asString(caseStudy['body'], d.caseStudy.body),
+      stats: normalizeCaseStudyStats(caseStudy['stats'], d.caseStudy.stats),
+    },
     quote: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.quote,
-      eyebrow: asString(quote.eyebrow, DEFAULT_ARCH_PAGE_CONTENT.quote.eyebrow),
-      text: asString(quote.text, DEFAULT_ARCH_PAGE_CONTENT.quote.text),
-      emphasis: asString(quote.emphasis, DEFAULT_ARCH_PAGE_CONTENT.quote.emphasis),
-      attribution: asString(quote.attribution, DEFAULT_ARCH_PAGE_CONTENT.quote.attribution),
+      eyebrow: asString(quote['eyebrow'], d.quote.eyebrow),
+      text: asString(quote['text'], d.quote.text),
+      emphasis: asString(quote['emphasis'], d.quote.emphasis),
+      attribution: asString(quote['attribution'], d.quote.attribution),
     },
     cta: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.cta,
-      title: asString(cta.title, DEFAULT_ARCH_PAGE_CONTENT.cta.title),
-      emphasis: asString(cta.emphasis, DEFAULT_ARCH_PAGE_CONTENT.cta.emphasis),
-      description: asString(cta.description, DEFAULT_ARCH_PAGE_CONTENT.cta.description),
-      emailPlaceholder: asString(
-        cta.emailPlaceholder,
-        DEFAULT_ARCH_PAGE_CONTENT.cta.emailPlaceholder
-      ),
-      submitLabel: asString(cta.submitLabel, DEFAULT_ARCH_PAGE_CONTENT.cta.submitLabel),
-      loadingLabel: asString(cta.loadingLabel, DEFAULT_ARCH_PAGE_CONTENT.cta.loadingLabel),
-      successMessage: asString(cta.successMessage, DEFAULT_ARCH_PAGE_CONTENT.cta.successMessage),
-      note: asString(cta.note, DEFAULT_ARCH_PAGE_CONTENT.cta.note),
+      title: asString(cta['title'], d.cta.title),
+      emphasis: asString(cta['emphasis'], d.cta.emphasis),
+      description: asString(cta['description'], d.cta.description),
+      emailPlaceholder: asString(cta['emailPlaceholder'], d.cta.emailPlaceholder),
+      submitLabel: asString(cta['submitLabel'], d.cta.submitLabel),
+      loadingLabel: asString(cta['loadingLabel'], d.cta.loadingLabel),
+      successMessage: asString(cta['successMessage'], d.cta.successMessage),
+      note: asString(cta['note'], d.cta.note),
     },
     footer: {
-      ...DEFAULT_ARCH_PAGE_CONTENT.footer,
-      brandName: asString(footer.brandName, DEFAULT_ARCH_PAGE_CONTENT.footer.brandName),
-      address: asString(footer.address, DEFAULT_ARCH_PAGE_CONTENT.footer.address),
-      tagline: asString(footer.tagline, DEFAULT_ARCH_PAGE_CONTENT.footer.tagline),
-      columns: Array.isArray(footer.columns)
-        ? (footer.columns as ArchPageContent['footer']['columns'])
-        : DEFAULT_ARCH_PAGE_CONTENT.footer.columns,
-      copyright: asString(footer.copyright, DEFAULT_ARCH_PAGE_CONTENT.footer.copyright),
+      brandName: asString(footer['brandName'], d.footer.brandName),
+      address: asString(footer['address'], d.footer.address),
+      tagline: asString(footer['tagline'], d.footer.tagline),
+      columns: normalizeFooterColumns(footer['columns'], d.footer.columns),
+      copyright: asString(footer['copyright'], d.footer.copyright),
     },
+  };
+}
+
+function normalizeSeoMeta(input: unknown, fallback: ArchSeoMeta): ArchSeoMeta {
+  const r = isRecord(input) ? input : {};
+  return {
+    title: asString(r['title'], fallback.title),
+    description: asString(r['description'], fallback.description),
+    ogTitle: asString(r['ogTitle'], fallback.ogTitle),
+    ogDescription: asString(r['ogDescription'], fallback.ogDescription),
+  };
+}
+
+function normalizeArchPageSettings(input: unknown): ArchPageSettings {
+  const r = isRecord(input) ? input : {};
+  const vis = isRecord(r['visibility']) ? r['visibility'] : {};
+  const seoRaw = isRecord(r['seo']) ? r['seo'] : {};
+  const d = DEFAULT_ARCH_PAGE_SETTINGS;
+
+  const defaultLocaleRaw = r['defaultLocale'];
+  const defaultLocale: ArchLocale =
+    defaultLocaleRaw === 'en' || defaultLocaleRaw === 'de' || defaultLocaleRaw === 'pl'
+      ? defaultLocaleRaw
+      : d.defaultLocale;
+
+  const publishedRaw = Array.isArray(r['publishedLocales']) ? r['publishedLocales'] : null;
+  const publishedLocales: ArchLocale[] = publishedRaw
+    ? (publishedRaw.filter((l) => l === 'en' || l === 'de' || l === 'pl') as ArchLocale[])
+    : d.publishedLocales;
+
+  return {
+    visibility: {
+      drawing: asBoolean(vis['drawing'], d.visibility.drawing),
+      philosophy: asBoolean(vis['philosophy'], d.visibility.philosophy),
+      services: asBoolean(vis['services'], d.visibility.services),
+      projects: asBoolean(vis['projects'], d.visibility.projects),
+      process: asBoolean(vis['process'], d.visibility.process),
+      metrics: asBoolean(vis['metrics'], d.visibility.metrics),
+      caseStudy: asBoolean(vis['caseStudy'], d.visibility.caseStudy),
+      quote: asBoolean(vis['quote'], d.visibility.quote),
+      cta: asBoolean(vis['cta'], d.visibility.cta),
+    },
+    seo: {
+      en: normalizeSeoMeta(seoRaw['en'], d.seo.en),
+      de: normalizeSeoMeta(seoRaw['de'], d.seo.de),
+      pl: normalizeSeoMeta(seoRaw['pl'], d.seo.pl),
+    },
+    defaultLocale,
+    publishedLocales: publishedLocales.length > 0 ? publishedLocales : d.publishedLocales,
+  };
+}
+
+// ─── Localized page data ──────────────────────────────────────────────────────
+
+export type ArchPageData = {
+  pageContent: ArchPageContent;
+  pageSettings: ArchPageSettings;
+};
+
+type PageContentDoc = {
+  localizedContent?: unknown;
+  content?: unknown;
+  pageSettings?: unknown;
+};
+
+export function resolveLocalizedContent(
+  doc: PageContentDoc | null,
+  locale: ArchLocale
+): ArchPageData {
+  if (doc === null) {
+    return {
+      pageContent: normalizeArchPageContent(null),
+      pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
+    };
+  }
+
+  // New format: { localizedContent: { en, de, pl }, pageSettings }
+  if (isRecord(doc.localizedContent)) {
+    const localized = doc.localizedContent as Record<string, unknown>;
+    // Fall back to EN if the requested locale isn't populated
+    const raw = localized[locale] ?? localized['en'];
+    return {
+      pageContent: normalizeArchPageContent(raw),
+      pageSettings: normalizeArchPageSettings(doc.pageSettings),
+    };
+  }
+
+  // Legacy format: { content: { ...EN content... } }
+  return {
+    pageContent: normalizeArchPageContent(doc.content),
+    pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
   };
 }

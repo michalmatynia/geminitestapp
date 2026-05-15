@@ -12,7 +12,6 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
   productId: optionalTrimmedQueryString(),
@@ -20,54 +19,66 @@ export const querySchema = z.object({
   tags: optionalCsvQueryStringArray(),
 });
 
-export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+const getProductDisplayName = (product: ProductWithImages): string =>
+  product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
 
-  const files = await imageFileService.listImageFiles({
-    filename: query.filename ?? undefined,
-    tags: query.tags ?? [],
-  });
-
-  const getProductDisplayName = (product: ProductWithImages): string =>
-    product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
-
-  let products: ProductWithImages[] = [];
-  let productRepoAvailable = true;
+async function fetchFilteredProducts(
+  productName: string | null | undefined
+): Promise<ProductWithImages[]> {
   try {
     const productRepository = await getProductRepository();
-    products = await productRepository.getProducts(
-      query.productName ? { search: query.productName } : {}
-    );
-  } catch (_error) {
-    void ErrorSystem.captureException(_error);
-    productRepoAvailable = false;
+    if (productName !== null && productName !== undefined && productName !== '') {
+      return await productRepository.getProducts({ search: productName });
+    }
+    return await productRepository.getProducts({});
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return [];
   }
-  const filteredProducts = query.productId
-    ? products.filter((product: ProductWithImages) => product.id === query.productId)
-    : products;
+}
 
-  const imageFileToProducts = new Map<string, Array<{ product: { id: string; name: string } }>>();
+function mapFilesToProducts(
+  products: ProductWithImages[],
+  productIdFilter: string | null | undefined
+): Map<string, Array<{ product: { id: string; name: string } }>> {
+  const map = new Map<string, Array<{ product: { id: string; name: string } }>>();
+  const filteredProducts =
+    productIdFilter !== null && productIdFilter !== undefined && productIdFilter !== ''
+      ? products.filter((p) => p.id === productIdFilter)
+      : products;
+
   for (const product of filteredProducts) {
     const name = getProductDisplayName(product);
     for (const image of product.images ?? []) {
-      if (!imageFileToProducts.has(image.imageFileId)) {
-        imageFileToProducts.set(image.imageFileId, []);
-      }
-      imageFileToProducts.get(image.imageFileId)?.push({
-        product: { id: product.id, name },
-      });
+      const existing = map.get(image.imageFileId) ?? [];
+      map.set(image.imageFileId, [...existing, { product: { id: product.id, name } }]);
     }
   }
+  return map;
+}
 
-  const allowedImageFileIds =
-    productRepoAvailable && (query.productId || query.productName)
-      ? new Set(imageFileToProducts.keys())
-      : null;
+const applyFileFiltering = (
+  file: ImageFileRecord,
+  isFilterActive: boolean,
+  imageFileToProducts: Map<string, Array<{ product: { id: string; name: string } }>>
+): boolean => (!isFilterActive || imageFileToProducts.has(file.id));
 
+export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+
+  const [files, products] = await Promise.all([
+    imageFileService.listImageFiles({
+      filename: query.filename ?? undefined,
+      tags: query.tags ?? [],
+    }),
+    fetchFilteredProducts(query.productName ?? null),
+  ]);
+
+  const imageFileToProducts = mapFilesToProducts(products, query.productId ?? null);
+  const filterActive = (query.productId ?? '') !== '' || (query.productName ?? '') !== '';
+  
   const result = files
-    .filter((file: ImageFileRecord) =>
-      allowedImageFileIds ? allowedImageFileIds.has(file.id) : true
-    )
+    .filter((f) => applyFileFiltering(f, filterActive, imageFileToProducts))
     .map((file: ImageFileRecord) => ({
       ...file,
       products: imageFileToProducts.get(file.id) ?? [],

@@ -12,9 +12,10 @@
 import { Archive, ArrowLeft, Eye, EyeOff, Forward, Paperclip, Reply, Star, StarOff, Trash2 } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import { useParams, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
@@ -71,6 +72,36 @@ type LoadThreadOptions = {
   preserveReplyDraft?: boolean;
 };
 
+type SendReplyVariables = {
+  accountId: string;
+  bcc: FilemakerMailParticipant[];
+  bodyHtml: string;
+  cc: FilemakerMailParticipant[];
+  inReplyTo: string | null;
+  subject: string;
+  threadId: string;
+  to: FilemakerMailParticipant[];
+};
+
+type ToggleThreadReadVariables = {
+  read: boolean;
+  threadId: string;
+};
+
+type ThreadActionVariables = {
+  threadId: string;
+};
+
+type ToggleMessageFlagVariables = {
+  flagged: boolean;
+  messageId: string;
+};
+
+type MoveMessageVariables = {
+  messageId: string;
+  targetRole: 'archive' | 'trash';
+};
+
 export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
@@ -86,11 +117,11 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [replySubject, setReplySubject] = useState('');
   const [replyInReplyTo, setReplyInReplyTo] = useState<string | null>(null);
   const [replyHtml, setReplyHtml] = useState('<p><br/></p>');
-  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isTogglingRead, setIsTogglingRead] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const preserveReplyDraftOnNextLoadRef = useRef(false);
   const accountId = searchParams.get('accountId');
   const mailboxPath = searchParams.get('mailboxPath');
   const rawOriginPanel = searchParams.get('panel');
@@ -226,50 +257,145 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     threadId,
   ]);
 
-  const load = useCallback(async (options?: LoadThreadOptions): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const result = await fetchJson<ThreadResponse>(
-        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`
-      );
-      setDetail(result.detail);
-      if (!options?.preserveReplyDraft) {
-        setReplyAccountId(result.replyDraft?.accountId ?? '');
-        setReplyTo(formatParticipants(result.replyDraft?.to ?? []));
-        setReplyCc('');
-        setReplyBcc('');
-        setReplySubject(result.replyDraft?.subject ?? result.detail.thread.subject);
-        setReplyHtml(result.replyDraft?.bodyHtml ?? '<p><br/></p>');
-        setReplyInReplyTo(result.replyDraft?.inReplyTo ?? null);
-      }
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to load mail thread.', {
-        variant: 'error',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [threadId, toast]);
-
+  const threadQueryKey = ['filemaker', 'mail', 'thread', threadId] as const;
+  const threadQuery = createSingleQueryV2<ThreadResponse, ThreadResponse, typeof threadQueryKey>({
+    queryKey: threadQueryKey,
+    queryFn: async ({ signal }) =>
+      fetchJson<ThreadResponse>(
+        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`,
+        { signal }
+      ),
+    enabled: threadId.length > 0,
+    refetchOnWindowFocus: false,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.thread',
+      operation: 'detail',
+      resource: 'filemaker.mail-thread',
+      domain: 'files',
+      description: 'Load Filemaker mail thread detail and reply draft.',
+      errorPresentation: 'toast',
+    },
+    telemetryContext: {
+      hasThreadId: threadId.length > 0,
+    },
+  });
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (threadQuery.data === undefined) return;
+    setDetail(threadQuery.data.detail);
+    if (!preserveReplyDraftOnNextLoadRef.current) {
+      setReplyAccountId(threadQuery.data.replyDraft?.accountId ?? '');
+      setReplyTo(formatParticipants(threadQuery.data.replyDraft?.to ?? []));
+      setReplyCc('');
+      setReplyBcc('');
+      setReplySubject(threadQuery.data.replyDraft?.subject ?? threadQuery.data.detail.thread.subject);
+      setReplyHtml(threadQuery.data.replyDraft?.bodyHtml ?? '<p><br/></p>');
+      setReplyInReplyTo(threadQuery.data.replyDraft?.inReplyTo ?? null);
+    }
+    preserveReplyDraftOnNextLoadRef.current = false;
+  }, [threadQuery.data]);
+  useEffect(() => {
+    if (threadQuery.error === null) return;
+    toast(threadQuery.error.message || 'Failed to load mail thread.', {
+      variant: 'error',
+    });
+  }, [threadQuery.error, toast]);
+  const load = useCallback(async (options?: LoadThreadOptions): Promise<void> => {
+    preserveReplyDraftOnNextLoadRef.current = Boolean(options?.preserveReplyDraft);
+    await threadQuery.refetch();
+  }, [threadQuery]);
+  const isLoading = threadQuery.isFetching;
+  const sendReplyMutation = createMutationV2<unknown, SendReplyVariables>({
+    mutationKey: ['filemaker', 'mail', 'send-reply'],
+    mutationFn: async (variables) =>
+      fetchJson('/api/filemaker/mail/send', {
+        method: 'POST',
+        body: JSON.stringify(variables),
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.sendReply',
+      operation: 'action',
+      resource: 'filemaker.mail-message',
+      domain: 'files',
+      description: 'Send a reply from the Filemaker mail thread page.',
+      errorPresentation: 'toast',
+    },
+  });
+  const toggleReadMutation = createMutationV2<unknown, ToggleThreadReadVariables>({
+    mutationKey: ['filemaker', 'mail', 'threads', 'toggle-read'],
+    mutationFn: async (variables) =>
+      fetchJson(`/api/filemaker/mail/threads/${encodeURIComponent(variables.threadId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ read: variables.read }),
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.toggleRead',
+      operation: 'update',
+      resource: 'filemaker.mail-thread',
+      domain: 'files',
+      description: 'Toggle read state for a Filemaker mail thread.',
+      errorPresentation: 'toast',
+    },
+  });
+  const deleteThreadMutation = createMutationV2<unknown, ThreadActionVariables>({
+    mutationKey: ['filemaker', 'mail', 'threads', 'delete'],
+    mutationFn: async (variables) =>
+      fetchJson(`/api/filemaker/mail/threads/${encodeURIComponent(variables.threadId)}`, {
+        method: 'DELETE',
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.deleteThread',
+      operation: 'delete',
+      resource: 'filemaker.mail-thread',
+      domain: 'files',
+      description: 'Delete a Filemaker mail thread.',
+      errorPresentation: 'toast',
+    },
+  });
+  const toggleFlagMutation = createMutationV2<unknown, ToggleMessageFlagVariables>({
+    mutationKey: ['filemaker', 'mail', 'messages', 'toggle-flag'],
+    mutationFn: async (variables) =>
+      fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(variables.messageId)}/flags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ flagged: variables.flagged }),
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.toggleMessageFlag',
+      operation: 'update',
+      resource: 'filemaker.mail-message',
+      domain: 'files',
+      description: 'Toggle the flagged state for a Filemaker mail message.',
+      errorPresentation: 'toast',
+    },
+  });
+  const moveMessageMutation = createMutationV2<unknown, MoveMessageVariables>({
+    mutationKey: ['filemaker', 'mail', 'messages', 'move'],
+    mutationFn: async (variables) =>
+      fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(variables.messageId)}/move`, {
+        method: 'POST',
+        body: JSON.stringify({ targetRole: variables.targetRole }),
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailThreadPage.moveMessage',
+      operation: 'action',
+      resource: 'filemaker.mail-message',
+      domain: 'files',
+      description: 'Move a Filemaker mail message to archive or trash.',
+      errorPresentation: 'toast',
+    },
+  });
 
   const handleReply = async (): Promise<void> => {
     setIsSending(true);
     try {
-      await fetchJson('/api/filemaker/mail/send', {
-        method: 'POST',
-        body: JSON.stringify({
-          accountId: replyAccountId,
-          threadId,
-          inReplyTo: replyInReplyTo,
-          to: parseFilemakerMailParticipantsInput(replyTo),
-          cc: parseFilemakerMailParticipantsInput(replyCc),
-          bcc: parseFilemakerMailParticipantsInput(replyBcc),
-          subject: replySubject,
-          bodyHtml: replyHtml,
-        }),
+      await sendReplyMutation.mutateAsync({
+        accountId: replyAccountId,
+        threadId,
+        inReplyTo: replyInReplyTo,
+        to: parseFilemakerMailParticipantsInput(replyTo),
+        cc: parseFilemakerMailParticipantsInput(replyCc),
+        bcc: parseFilemakerMailParticipantsInput(replyBcc),
+        subject: replySubject,
+        bodyHtml: replyHtml,
       });
       toast('Reply sent.', { variant: 'success' });
       await load();
@@ -288,13 +414,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     setIsTogglingRead(true);
     try {
       const markRead = detail.thread.unreadCount > 0;
-      await fetchJson(
-        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ read: markRead }),
-        }
-      );
+      await toggleReadMutation.mutateAsync({ read: markRead, threadId });
       toast(markRead ? 'Marked as read.' : 'Marked as unread.', { variant: 'success' });
       await load({ preserveReplyDraft: true });
       setSidebarRefreshKey((current) => current + 1);
@@ -310,10 +430,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const handleDelete = async (): Promise<void> => {
     setIsDeleting(true);
     try {
-      await fetchJson(
-        `/api/filemaker/mail/threads/${encodeURIComponent(threadId)}`,
-        { method: 'DELETE' }
-      );
+      await deleteThreadMutation.mutateAsync({ threadId });
       toast('Thread deleted.', { variant: 'success' });
       startTransition(() => { router.push(backHref); });
     } catch (error) {
@@ -330,10 +447,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const handleToggleFlag = useCallback(async (messageId: string, flagged: boolean): Promise<void> => {
     setPendingMessageAction(`${messageId}:flag`);
     try {
-      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/flags`, {
-        method: 'PATCH',
-        body: JSON.stringify({ flagged }),
-      });
+      await toggleFlagMutation.mutateAsync({ flagged, messageId });
       await load({ preserveReplyDraft: true });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to update flag.', {
@@ -342,7 +456,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     } finally {
       setPendingMessageAction(null);
     }
-  }, [load, toast]);
+  }, [load, toast, toggleFlagMutation]);
 
   const handleMoveMessage = useCallback(async (
     messageId: string,
@@ -350,10 +464,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   ): Promise<void> => {
     setPendingMessageAction(`${messageId}:${targetRole}`);
     try {
-      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/move`, {
-        method: 'POST',
-        body: JSON.stringify({ targetRole }),
-      });
+      await moveMessageMutation.mutateAsync({ messageId, targetRole });
       toast(targetRole === 'archive' ? 'Archived.' : 'Moved to trash.', { variant: 'success' });
       await load({ preserveReplyDraft: true });
       setSidebarRefreshKey((current) => current + 1);
@@ -364,7 +475,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     } finally {
       setPendingMessageAction(null);
     }
-  }, [load, toast]);
+  }, [load, moveMessageMutation, toast]);
 
   const isThreadUnread = (detail?.thread.unreadCount ?? 0) > 0;
 

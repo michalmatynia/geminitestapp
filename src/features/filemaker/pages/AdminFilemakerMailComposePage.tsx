@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
@@ -105,6 +106,27 @@ type ComposeAttachment = {
   dataBase64: string;
 };
 
+type SendMailVariables = {
+  accountId: string;
+  attachments: Array<{
+    contentType: string;
+    dataBase64: string;
+    fileName: string;
+  }>;
+  bcc: FilemakerMailParticipant[];
+  bodyHtml: string;
+  cc: FilemakerMailParticipant[];
+  overrideSuppression?: true;
+  subject: string;
+  to: FilemakerMailParticipant[];
+};
+
+type SendMailResponse = {
+  message: {
+    threadId: string;
+  };
+};
+
 const formatParticipants = (participants: FilemakerMailParticipant[]): string =>
   participants.map((entry) => entry.name ? `${entry.name} <${entry.address}>` : entry.address).join(', ');
 
@@ -120,7 +142,6 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [subject, setSubject] = useState('');
   const [bodyHtml, setBodyHtml] = useState(EMPTY_BODY_HTML);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const accountIdFromRoute = searchParams.get('accountId');
   const forwardThreadId = searchParams.get('forwardThreadId');
@@ -271,84 +292,107 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     setAttachments([]);
   }, [accountIdFromRoute, composeDraftResetKey]);
 
+  const accountsQueryKey = ['filemaker', 'mail', 'accounts'] as const;
+  const accountsQuery = createSingleQueryV2<AccountsResponse, AccountsResponse, typeof accountsQueryKey>({
+    queryKey: accountsQueryKey,
+    queryFn: async ({ signal }) =>
+      fetchJson<AccountsResponse>('/api/filemaker/mail/accounts', { signal }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailComposePage.accounts',
+      operation: 'list',
+      resource: 'filemaker.mail-accounts',
+      domain: 'files',
+      description: 'Load Filemaker mail accounts for compose.',
+      errorPresentation: 'toast',
+    },
+  });
   useEffect(() => {
-    const load = async (): Promise<void> => {
-      setIsLoading(true);
-      try {
-        const result = await fetchJson<AccountsResponse>('/api/filemaker/mail/accounts');
-        setAccounts(result.accounts);
-        setAccountId((current) => current || accountIdFromRoute || result.accounts[0]?.id || '');
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Failed to load mailbox accounts.', {
-          variant: 'error',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    void load();
-  }, [accountIdFromRoute, toast]);
-
+    if (accountsQuery.data === undefined) return;
+    setAccounts(accountsQuery.data.accounts);
+    setAccountId((current) => current || accountIdFromRoute || accountsQuery.data.accounts[0]?.id || '');
+  }, [accountIdFromRoute, accountsQuery.data]);
   useEffect(() => {
-    let isActive = true;
+    if (accountsQuery.error === null) return;
+    toast(accountsQuery.error.message || 'Failed to load mailbox accounts.', {
+      variant: 'error',
+    });
+  }, [accountsQuery.error, toast]);
 
-    if (!forwardThreadId) {
-      return () => {
-        isActive = false;
-      };
-    }
-
-    const loadForwardDraft = async (): Promise<void> => {
-      try {
-        const result = await fetchJson<ForwardDraftResponse>(
-          `/api/filemaker/mail/threads/${encodeURIComponent(forwardThreadId)}`
-        );
-        if (!isActive || !result.forwardDraft) {
-          return;
-        }
-
-        setAccountId(result.forwardDraft.accountId);
-        setTo(formatParticipants(result.forwardDraft.to));
-        setCc(formatParticipants(result.forwardDraft.cc));
-        setBcc(formatParticipants(result.forwardDraft.bcc));
-        setSubject(result.forwardDraft.subject);
-        setBodyHtml(result.forwardDraft.bodyHtml);
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-        toast(error instanceof Error ? error.message : 'Failed to load forward draft.', {
-          variant: 'error',
-        });
-      }
-    };
-
-    void loadForwardDraft();
-
-    return () => {
-      isActive = false;
-    };
-  }, [accountIdFromRoute, forwardThreadId, toast]);
+  const forwardDraftQueryKey = ['filemaker', 'mail', 'forward-draft', forwardThreadId ?? ''] as const;
+  const forwardDraftQuery = createSingleQueryV2<
+    ForwardDraftResponse,
+    ForwardDraftResponse,
+    typeof forwardDraftQueryKey
+  >({
+    queryKey: forwardDraftQueryKey,
+    queryFn: async ({ signal }) =>
+      fetchJson<ForwardDraftResponse>(
+        `/api/filemaker/mail/threads/${encodeURIComponent(forwardThreadId ?? '')}`,
+        { signal }
+      ),
+    enabled: Boolean(forwardThreadId),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailComposePage.forwardDraft',
+      operation: 'detail',
+      resource: 'filemaker.mail-forward-draft',
+      domain: 'files',
+      description: 'Load Filemaker mail forward draft for compose.',
+      errorPresentation: 'toast',
+    },
+    telemetryContext: {
+      hasForwardThreadId: Boolean(forwardThreadId),
+    },
+  });
+  useEffect(() => {
+    const forwardDraft = forwardDraftQuery.data?.forwardDraft;
+    if (forwardDraft === undefined || forwardDraft === null) return;
+    setAccountId(forwardDraft.accountId);
+    setTo(formatParticipants(forwardDraft.to));
+    setCc(formatParticipants(forwardDraft.cc));
+    setBcc(formatParticipants(forwardDraft.bcc));
+    setSubject(forwardDraft.subject);
+    setBodyHtml(forwardDraft.bodyHtml);
+  }, [forwardDraftQuery.data]);
+  useEffect(() => {
+    if (forwardDraftQuery.error === null) return;
+    toast(forwardDraftQuery.error.message || 'Failed to load forward draft.', {
+      variant: 'error',
+    });
+  }, [forwardDraftQuery.error, toast]);
+  const isLoading = accountsQuery.isFetching;
+  const sendMailMutation = createMutationV2<SendMailResponse, SendMailVariables>({
+    mutationKey: ['filemaker', 'mail', 'send-compose'],
+    mutationFn: async (variables) =>
+      fetchJson<SendMailResponse>('/api/filemaker/mail/send', {
+        method: 'POST',
+        body: JSON.stringify(variables),
+      }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerMailComposePage.sendMail',
+      operation: 'action',
+      resource: 'filemaker.mail-message',
+      domain: 'files',
+      description: 'Send a new Filemaker email from the compose page.',
+      errorPresentation: 'toast',
+    },
+  });
 
   const handleSend = async (options?: { overrideSuppression?: boolean }): Promise<void> => {
     setIsSending(true);
     try {
-      const result = await fetchJson<{ message: { threadId: string } }>('/api/filemaker/mail/send', {
-        method: 'POST',
-        body: JSON.stringify({
-          accountId,
-          to: parseFilemakerMailParticipantsInput(to),
-          cc: parseFilemakerMailParticipantsInput(cc),
-          bcc: parseFilemakerMailParticipantsInput(bcc),
-          subject,
-          bodyHtml,
-          attachments: attachments.map((entry) => ({
-            fileName: entry.fileName,
-            contentType: entry.contentType,
-            dataBase64: entry.dataBase64,
-          })),
-          ...(options?.overrideSuppression ? { overrideSuppression: true } : {}),
-        }),
+      const result = await sendMailMutation.mutateAsync({
+        accountId,
+        to: parseFilemakerMailParticipantsInput(to),
+        cc: parseFilemakerMailParticipantsInput(cc),
+        bcc: parseFilemakerMailParticipantsInput(bcc),
+        subject,
+        bodyHtml,
+        attachments: attachments.map((entry) => ({
+          fileName: entry.fileName,
+          contentType: entry.contentType,
+          dataBase64: entry.dataBase64,
+        })),
+        ...(options?.overrideSuppression ? { overrideSuppression: true } : {}),
       });
       toast('Email sent.', { variant: 'success' });
       const preserveRouteContext = !accountIdFromRoute || accountIdFromRoute === accountId;

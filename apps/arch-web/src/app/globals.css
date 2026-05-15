@@ -100,8 +100,27 @@ nav.top.scrolled { border-bottom-color: var(--rule-soft); }
 .nav-links a:hover { color: var(--ink); }
 .nav-links a:hover::after { right: 0; }
 
+.nav-end {
+  justify-self: end; display: flex; align-items: center; gap: 20px;
+}
+
+.nav-locale-switcher {
+  display: flex; align-items: center; gap: 2px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+}
+
+.nav-locale {
+  color: var(--ink-3); padding: 4px 6px; transition: color .2s;
+  border-radius: 2px; line-height: 1;
+}
+.nav-locale:hover { color: var(--ink); }
+.nav-locale.active {
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
 .nav-cta {
-  justify-self: end; display: inline-flex; align-items: center; gap: 10px;
+  display: inline-flex; align-items: center; gap: 10px;
   font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: lowercase;
   color: var(--ink); padding: 6px 0; border-bottom: 1px solid var(--ink);
 }
@@ -589,6 +608,8 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
   :root { --pad: 20px; }
   .nav-row { grid-template-columns: 1fr auto; gap: 16px; }
   .nav-links { display: none; }
+  .nav-locale-switcher { gap: 0; }
+  .nav-locale { padding: 4px 4px; }
   .hero { padding: 120px 0 60px; }
   .hero-foot { grid-template-columns: 1fr; gap: 40px; }
   .hero-actions { align-items: flex-start; }

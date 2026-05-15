@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const ts = require('typescript');
 
-const FACTORY_META_ROOTS = ['src'];
+const FACTORY_META_ROOTS = ['src', 'apps/mobile/src'];
 const FACTORY_META_EXTENSIONS = new Set(['.ts', '.tsx']);
 const REPO_CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.cjs', '.mjs']);
 const FACTORY_CALLS = new Set([
@@ -21,6 +21,8 @@ const FACTORY_CALLS = new Set([
   'useSaveMutationV2',
   'useOptimisticMutationV2',
   'useSingleQueryV2',
+  'useKangurMobileQueryV2',
+  'useKangurMobileMutationV2',
   'useEnsureQueryDataV2',
   'usePrefetchQueryV2',
   'useFetchQueryV2',
@@ -51,6 +53,12 @@ const FACTORY_META_CONFIG_WRAPPER_ALLOWLIST = new Set([
 ]);
 const FACTORY_META_REFERENCE_ALLOWLIST = new Set([
   'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsSamples.ts:useMutationV2',
+  'apps/mobile/src/query/kangurMobileQueryFactories.ts:useSingleQueryV2',
+  'apps/mobile/src/query/kangurMobileQueryFactories.ts:useMutationV2',
+]);
+const FACTORY_META_DEFAULT_DOMAIN_CALLS = new Set([
+  'useKangurMobileQueryV2',
+  'useKangurMobileMutationV2',
 ]);
 const RAW_QUERY_EXECUTION_METHODS = new Set(['fetchQuery', 'prefetchQuery', 'ensureQueryData']);
 const LOW_SIGNAL_DESCRIPTION_PATTERNS = [
@@ -90,6 +98,8 @@ const OPERATION_EXPECTATIONS = {
   useDeleteMutationV2: new Set(['delete', 'bulk']),
   useSaveMutationV2: new Set(['create', 'update', 'sync', 'action', 'save']),
   useSingleQueryV2: new Set(['detail', 'info', 'check', 'exists', 'polling', 'list', 'search']),
+  useKangurMobileQueryV2: new Set(['detail', 'info', 'check', 'exists', 'polling', 'list']),
+  useKangurMobileMutationV2: new Set(['action', 'upload']),
 };
 
 const normalizePath = (value) => value.replace(/\\/g, '/').replace(/^\.\//, '');
@@ -303,6 +313,10 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
   const isManualHelperCall = new Set(['prefetchQueryV2', 'fetchQueryV2', 'ensureQueryDataV2']).has(
     callName
   );
+  if (FACTORY_META_REFERENCE_ALLOWLIST.has(`${relFilePath}:${callName}`)) {
+    return;
+  }
+
   const isMultiQueryCall = MULTI_QUERY_CALLS.has(callName);
   const configArgIndex = isManualHelperCall ? 1 : 0;
   const configArg = callExpression.arguments[configArgIndex];
@@ -381,7 +395,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
   const metaObject = extractMetaObject(metaProperty);
   if (metaObject) {
     const domainProperty = findObjectProperty(metaObject, 'domain');
-    if (!domainProperty) {
+    if (!domainProperty && !FACTORY_META_DEFAULT_DOMAIN_CALLS.has(callName)) {
       issues.push({
         file: relFilePath,
         line,
@@ -412,9 +426,6 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
       }
     }
   } else {
-    if (FACTORY_META_REFERENCE_ALLOWLIST.has(`${relFilePath}:${callName}`)) {
-      return;
-    }
     issues.push({
       file: relFilePath,
       line,

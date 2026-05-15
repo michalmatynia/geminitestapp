@@ -189,7 +189,7 @@ export function useSearchQuery(
     staleTime: 15_000,
     meta: {
       source: 'kangur.mobile.duels.search',
-      operation: 'search',
+      operation: 'list',
       resource: 'kangur.mobile.duels.search',
       queryKey,
       description: 'Searches Kangur mobile duel opponents and sessions.',

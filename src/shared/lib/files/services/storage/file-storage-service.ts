@@ -66,6 +66,8 @@ type ConfiguredStorageUploadParams = {
   category: string | null;
   projectId: string | null;
   folder: string | null;
+  forceSource?: FileStorageSource | null;
+  fastCometBaseUrl?: string | null;
   writeLocalCopy: () => Promise<void>;
 };
 
@@ -113,6 +115,11 @@ const uploadFastCometConfiguredStorage = async (
   settings: FileStorageSettings,
   mirroredLocally: boolean
 ): Promise<ConfiguredStorageUploadResult> => {
+  const fastCometBaseUrl = params.fastCometBaseUrl?.trim() ?? '';
+  const fastComet =
+    fastCometBaseUrl.length > 0
+      ? { ...settings.fastComet, baseUrl: fastCometBaseUrl.replace(/\/$/, '') }
+      : settings.fastComet;
   try {
     const remotePath = await uploadToFastComet({
       buffer: params.buffer,
@@ -122,7 +129,7 @@ const uploadFastCometConfiguredStorage = async (
       category: params.category,
       projectId: params.projectId,
       folder: params.folder,
-      fastComet: settings.fastComet,
+      fastComet,
     });
     return {
       filepath: remotePath,
@@ -143,7 +150,8 @@ export const uploadToConfiguredStorage = async (
   params: ConfiguredStorageUploadParams
 ): Promise<ConfiguredStorageUploadResult> => {
   const settings = await getFileStorageSettings();
-  if (settings.source === 'local') return await writeLocalUpload(params);
+  const source = params.forceSource ?? settings.source;
+  if (source === 'local') return await writeLocalUpload(params);
 
   const shouldMirrorLocal = settings.fastComet.keepLocalCopy;
   await writeFastCometLocalMirror(params, shouldMirrorLocal);

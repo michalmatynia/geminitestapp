@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { validate3DFileAsync } from '@/features/viewer3d/utils/validateAsset3d';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { uploadAsset3DFile } from '../api';
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
@@ -9,6 +10,7 @@ import { Asset3DUploader as Asset3DUploaderView } from './Asset3DUploaderView';
 
 interface Asset3DUploaderContainerProps {
   className?: string;
+  storageProfile?: FileStorageProfile;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -92,7 +94,8 @@ const useDropHandler = (
 
 const useUploadHandler = (
   formState: Asset3DUploaderFormState,
-  onUpload: ReturnType<typeof useAdmin3DAssetsContext>['handleUpload']
+  onUpload: ReturnType<typeof useAdmin3DAssetsContext>['handleUpload'],
+  storageProfile: FileStorageProfile
 ): ((helpers?: { reportProgress: (loaded: number, total?: number) => void }) => Promise<void>) =>
   useCallback(async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
     const { file, name, description, category, tags, isPublic, setError, setIsUploading } = formState;
@@ -106,6 +109,7 @@ const useUploadHandler = (
         ...(category.trim().length > 0 && { category: category.trim() }),
         ...(tags.length > 0 && { tags }),
         isPublic,
+        storageProfile,
       }, (loaded, total) => helpers?.reportProgress(loaded, total));
       onUpload(uploaded);
     } catch (err) {
@@ -114,14 +118,17 @@ const useUploadHandler = (
     } finally {
       setIsUploading(false);
     }
-  }, [formState, onUpload]);
+  }, [formState, onUpload, storageProfile]);
 
-export function Asset3DUploaderContainer({ className }: Asset3DUploaderContainerProps): React.JSX.Element {
+export function Asset3DUploaderContainer({
+  className,
+  storageProfile = 'default',
+}: Asset3DUploaderContainerProps): React.JSX.Element {
   const { handleUpload: onUpload, setShowUploader, categories } = useAdmin3DAssetsContext();
   const formState = useAsset3DUploaderFormState();
   const handleFileSelect = useFileSelectHandler(formState);
   const handleDrop = useDropHandler(formState.setIsDragOver, handleFileSelect);
-  const handleUpload = useUploadHandler(formState, onUpload);
+  const handleUpload = useUploadHandler(formState, onUpload, storageProfile);
 
   return (
     <Asset3DUploaderView

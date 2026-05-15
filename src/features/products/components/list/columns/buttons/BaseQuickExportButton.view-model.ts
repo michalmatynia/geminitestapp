@@ -79,9 +79,10 @@ export const resolveBaseQuickExportButtonViewState = (
   input: BaseQuickExportButtonViewStateInput
 ): BaseQuickExportButtonViewState => {
   const trackedExportInFlight = resolveTrackedExportInFlight(input.trackedExportRunStatus);
-  const quickExportPending =
-    input.quickExportMutationPending || input.quickExportLocked || trackedExportInFlight;
-  const resolvedButtonStatus = input.trackedExportRunStatus ?? input.status;
+  const localExportPending = input.quickExportMutationPending || input.quickExportLocked;
+  const quickExportPending = localExportPending || trackedExportInFlight;
+  const resolvedButtonStatus =
+    input.trackedExportRunStatus ?? (localExportPending ? 'pending' : input.status);
   const normalizedStatus = normalizeMarketplaceStatus(resolvedButtonStatus);
   const isFailureState = FAILURE_STATUSES.has(normalizedStatus);
   const isServerInProgressState =
@@ -106,7 +107,7 @@ export const resolveBaseQuickExportButtonViewState = (
     resolvedLabel,
     shouldManageExistingListing,
     shouldUseFilledMarketplaceTone:
-      input.showMarketplaceBadge || input.trackedExportRunStatus !== null,
+      input.showMarketplaceBadge || input.trackedExportRunStatus !== null || localExportPending,
     isFailureState,
     recoveryContext: resolveRecoveryContext(input, isFailureState, resolvedButtonStatus),
   };

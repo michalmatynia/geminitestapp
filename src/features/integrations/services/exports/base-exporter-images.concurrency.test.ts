@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
@@ -30,6 +30,10 @@ const createProduct = (): ProductWithImages =>
   }) as ProductWithImages;
 
 describe('getProductImagesAsBase64 — cachedImages fast path', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('returns cachedImages immediately without processing any images', async () => {
     const cached = {
       '0': 'data:image/jpeg;base64,cachedSlot0',
@@ -74,5 +78,48 @@ describe('getProductImagesAsBase64 — cachedImages fast path', () => {
         concurrencyLimit: 1,
       })
     ).rejects.toThrow('Image processing aborted');
+  });
+
+  it('skips external images over the input processing limit before reading the body', async () => {
+    const diagnostics = { log: vi.fn() };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, {
+        headers: {
+          'content-length': '26000000',
+          'content-type': 'image/jpeg',
+        },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const productWithImageLink = {
+      ...createProduct(),
+      imageLinks: ['https://cdn.example.com/huge.jpg'],
+    } as ProductWithImages;
+
+    const result = await getProductImagesAsBase64(productWithImageLink, { diagnostics });
+
+    expect(result).toEqual({});
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/huge.jpg');
+    expect(diagnostics.log).toHaveBeenCalledWith(
+      'Skipping image: input exceeds Base export processing limit',
+      expect.objectContaining({
+        bytes: 26000000,
+        maxBytes: 25000000,
+      })
+    );
+  });
+
+  it('caps processed export images to keep Base export memory bounded', async () => {
+    const tinyPngDataUri =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+    const productWithManyImages = {
+      ...createProduct(),
+      imageLinks: Array.from({ length: 20 }, () => tinyPngDataUri),
+    } as ProductWithImages;
+
+    const result = await getProductImagesAsBase64(productWithManyImages);
+
+    expect(Object.keys(result)).toHaveLength(16);
   });
 });

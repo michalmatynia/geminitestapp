@@ -1,4 +1,5 @@
 import type { ArchPageContent, Service } from '@/lib/types';
+import { renderEmphasis } from '@/lib/renderEmphasis';
 
 const servicesMeta: Record<string, { num: string; meta: string; value: string }> = {
   'S-01': { num: 'i.', meta: 'Jurisdictions', value: '38 active' },
@@ -23,19 +24,18 @@ export default function Services({
             <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>{content.label}</span>
           </div>
           <h2 className="rev" data-delay="1">
-            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
+            {renderEmphasis(content.title, content.emphasis)}
           </h2>
         </div>
 
         <div className="practice-list">
           {services.map((svc) => {
             const meta = servicesMeta[svc.code] ?? { num: '—', meta: '', value: '' };
-            const titleMain = svc.emphasis ? svc.title.replace(svc.emphasis, '').trimEnd() : svc.title;
             return (
               <div className="practice-row" key={svc.code}>
                 <span className="practice-num">{meta.num}</span>
                 <h3 className="practice-title">
-                  {svc.emphasis ? <>{titleMain} <em>{svc.emphasis}</em></> : svc.title}
+                  {svc.emphasis ? renderEmphasis(svc.title, svc.emphasis) : svc.title}
                 </h3>
                 <p className="practice-desc">{svc.description}</p>
                 <div className="practice-meta">

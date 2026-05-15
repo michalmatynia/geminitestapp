@@ -106,6 +106,12 @@ const extractNativeOptions = (
   return { options, placeholder };
 };
 
+/**
+ * Select Component
+ * 
+ * Accessible select dropdown built on Radix UI. 
+ * Supports both a customized accessible mode (default) and a native fallback mode for specific routes.
+ */
 const Select: React.FC<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>> = (
   allProps
 ) => {
@@ -161,12 +167,14 @@ const Select: React.FC<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Roo
   );
 };
 
+/** SelectGroup: Groups related items within the Select content. */
 const SelectGroup = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Group>) => {
   const useNativeSelect = useNativeSelectMode();
   if (!useNativeSelect) return <SelectPrimitive.Group {...props} />;
   return <>{props.children}</>;
 };
 
+/** SelectValue: Displays the currently selected value within the SelectTrigger. */
 const SelectValue = (props: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>) => {
   const useNativeSelect = useNativeSelectMode();
   if (!useNativeSelect) return <SelectPrimitive.Value {...props} />;
@@ -202,6 +210,7 @@ const getNativeSelectTriggerProps = (
   return { ...nativeProps, ...passthroughProps } as React.SelectHTMLAttributes<HTMLSelectElement>;
 };
 
+/** SelectTrigger: The visual element that opens the select dropdown. */
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   SelectTriggerProps
@@ -293,6 +302,7 @@ const SelectTrigger = React.forwardRef<
 });
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
+/** SelectContent: Popover content container for Select items. */
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
@@ -327,6 +337,7 @@ const SelectContent = React.forwardRef<
 });
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
+/** SelectLabel: Heading for a group of items within the Select content. */
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
@@ -343,6 +354,7 @@ const SelectLabel = React.forwardRef<
 });
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
+/** SelectItem: A selectable item within the Select content. */
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
@@ -370,6 +382,7 @@ const SelectItem = React.forwardRef<
 });
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
+/** SelectSeparator: A horizontal line to visually separate items. */
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>

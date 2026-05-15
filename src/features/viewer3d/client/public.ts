@@ -1,5 +1,5 @@
 export { Viewer3D } from '../Viewer3DClient';
-export type { Viewer3DProps, LightingPreset, EnvironmentPreset } from '../components/Viewer3D';
+export type { Viewer3DProps, LightingPreset, EnvironmentPreset, OrbitControlsHandle } from '../components/Viewer3D';
 export { Asset3DUploader } from '../components/Asset3DUploader';
 export { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 export { Asset3DCard } from '../components/Asset3DCard';

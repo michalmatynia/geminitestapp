@@ -6,11 +6,10 @@ import { ARCH_LOCALES } from '@/lib/types';
 
 type NavProps = {
   currentLocale: ArchLocale;
-  publishedLocales: ArchLocale[];
   content: ArchPageContent['nav'];
 };
 
-export default function Nav({ currentLocale, publishedLocales, content }: NavProps) {
+export default function Nav({ currentLocale, content }: NavProps) {
   useEffect(() => {
     const nav = document.getElementById('topnav');
     if (!nav) return;
@@ -22,8 +21,6 @@ export default function Nav({ currentLocale, publishedLocales, content }: NavPro
     onScroll();
     return () => document.removeEventListener('scroll', onScroll);
   }, []);
-
-  const visibleLocales = ARCH_LOCALES.filter((l) => publishedLocales.includes(l));
 
   return (
     <nav className="top" id="topnav">
@@ -39,20 +36,18 @@ export default function Nav({ currentLocale, publishedLocales, content }: NavPro
           ))}
         </div>
         <div className="nav-end">
-          {visibleLocales.length > 1 ? (
-            <div className="nav-locale-switcher" aria-label="Language">
-              {visibleLocales.map((locale) => (
-                <a
-                  key={locale}
-                  href={`/${locale}`}
-                  className={`nav-locale${currentLocale === locale ? ' active' : ''}`}
-                  aria-current={currentLocale === locale ? 'true' : undefined}
-                >
-                  {locale}
-                </a>
-              ))}
-            </div>
-          ) : null}
+          <div className="nav-locale-switcher" aria-label="Language">
+            {ARCH_LOCALES.map((locale) => (
+              <a
+                key={locale}
+                href={`/${locale}`}
+                className={`nav-locale${currentLocale === locale ? ' active' : ''}`}
+                aria-current={currentLocale === locale ? 'true' : undefined}
+              >
+                {locale}
+              </a>
+            ))}
+          </div>
           <a href="#contact" className="nav-cta">
             <span>{content.ctaLabel}</span>
             <span className="arrow" aria-hidden="true" />

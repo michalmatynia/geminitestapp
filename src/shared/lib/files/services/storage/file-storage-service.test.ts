@@ -237,6 +237,49 @@ describe('file-storage-service', () => {
     });
   });
 
+  it('can force fastcomet storage with an alternate public base URL', async () => {
+    findOneMock
+      .mockResolvedValueOnce({ value: 'local' })
+      .mockResolvedValueOnce({
+        value: JSON.stringify({
+          baseUrl: 'https://sparksofsindri.com',
+          uploadEndpoint: 'https://sparksofsindri.com/upload',
+          keepLocalCopy: true,
+          timeoutMs: 5000,
+        }),
+      });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          filepath: 'https://sparksofsindri.com/uploads/cms/visualisation/image.png',
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const writeLocalCopy = vi.fn().mockResolvedValue(undefined);
+
+    const result = await uploadToConfiguredStorage({
+      buffer: Buffer.from('content'),
+      filename: 'image.png',
+      mimetype: 'image/png',
+      publicPath: '/uploads/cms/visualisation/image.png',
+      category: 'cms',
+      projectId: null,
+      folder: 'visualisation',
+      forceSource: 'fastcomet',
+      fastCometBaseUrl: 'https://milkbardesigners.com/',
+      writeLocalCopy,
+    });
+
+    expect(writeLocalCopy).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      filepath: 'https://milkbardesigners.com/uploads/cms/visualisation/image.png',
+      source: 'fastcomet',
+      mirroredLocally: true,
+    });
+  });
+
   it('uses the provided fastcomet config for direct uploads and falls back to baseUrl from JSON success', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

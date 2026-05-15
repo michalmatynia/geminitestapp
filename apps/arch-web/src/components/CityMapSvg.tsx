@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 const W = 800, H = 600;
+const STEP = 16;
 const MIN_Z = 1, MAX_Z = 6;
 const PX = W / 2, PY = H / 2;
 
@@ -10,8 +11,7 @@ const PX = W / 2, PY = H / 2;
 class Rand {
   private s: number;
   constructor(seed: number) { this.s = seed; }
-  n()                       { this.s = (this.s * 16807) % 2147483647; return (this.s - 1) / 2147483646; }
-  r(lo: number, hi: number) { return lo + this.n() * (hi - lo); }
+  n() { this.s = (this.s * 16807) % 2147483647; return (this.s - 1) / 2147483646; }
 }
 
 // ── Geometry ──────────────────────────────────────────────────────
@@ -40,15 +40,12 @@ function inLakeEllipse(px: number, py: number): boolean {
 // ── Road data ─────────────────────────────────────────────────────
 interface Road { pts: Pt[]; w: number; }
 
-// Major boulevards — slight organic drift
 const MAJOR: Road[] = [
   { pts: [[250,0],[253,85],[247,170],[255,255],[249,340],[257,425],[251,510],[255,600]], w: 10 },
   { pts: [[0,220],[85,217],[200,221],[335,218],[468,223],[600,219],[720,224],[800,221]], w: 9 },
-  // Haussmann diagonal NW→SE
   { pts: [[0,158],[65,188],[138,221],[215,270],[308,334],[400,398],[492,462],[578,524],[658,578],[728,600]], w: 7.5 },
 ];
 
-// Secondary streets
 const SECONDARY: Road[] = [
   { pts: [[72,0],[70,158],[74,220],[70,300],[74,462],[70,600]], w: 5 },
   { pts: [[150,0],[148,158],[152,600]], w: 4.5 },
@@ -64,7 +61,6 @@ const SECONDARY: Road[] = [
   { pts: [[0,550],[252,547],[538,542]], w: 4 },
 ];
 
-// Minor organic streets
 const MINOR: Road[] = [
   { pts: [[28,78],[70,102],[72,150]], w: 3 },
   { pts: [[150,298],[200,322],[250,342],[252,382]], w: 3 },
@@ -97,7 +93,6 @@ const LAKE = [
   'C 551 416 558 392 570 382 Z',
 ].join(' ');
 
-// Lake inner highlight path (slightly smaller, offset)
 const LAKE_HL = [
   'M 600 395',
   'C 628 382 662 378 696 390',
@@ -106,39 +101,62 @@ const LAKE_HL = [
   'C 758 548 740 562 720 568 Z',
 ].join(' ');
 
-// ── Buildings ─────────────────────────────────────────────────────
+// ── Building generation ───────────────────────────────────────────
 interface Bldg { x: number; y: number; w: number; h: number; a: number; }
+type Streets = 'open' | 'planned' | 'historic';
 
-function genBuildings(): Bldg[] {
+function genBuildings(
+  density: number,   // 0–100
+  spread: number,    // 0–100
+  plotSize: number,  // 0–100
+  exclusionRoads: Road[]
+): Bldg[] {
   const rnd = new Rand(27182);
   const out: Bldg[] = [];
-  const STEP = 16;
+
+  // density 0→100 maps to keepProb 0.10→0.88
+  const keepProb = 0.10 + (density / 100) * 0.78;
+  // plotSize 0→100 maps size range: 0=(0.15–0.33) 100=(0.45–0.90)
+  const minFrac = 0.15 + (plotSize / 100) * 0.30;
+  const maxFrac = 0.33 + (plotSize / 100) * 0.57;
+  const jitterAmt = spread / 100;
 
   for (let gx = 0; gx <= W - STEP; gx += STEP) {
     for (let gy = 0; gy <= H - STEP; gy += STEP) {
+      // Always consume 6 RNG values per non-excluded cell so density
+      // changes don't reshuffle layout for surviving buildings.
+      const r1 = rnd.n(); // density roll
+      const r2 = rnd.n(); // width
+      const r3 = rnd.n(); // height
+      const r4 = rnd.n(); // x jitter (-1..1 via 2*r-1)
+      const r5 = rnd.n(); // y jitter
+      const r6 = rnd.n(); // opacity
+
       const cx = gx + STEP / 2, cy = gy + STEP / 2;
 
-      // Lake & park exclusion
       if (inLakeEllipse(cx, cy)) continue;
-      if (gx >= 350 && gx < 600 && gy >= 0  && gy < 78)  continue; // north park
-      if (gx >= 148 && gx < 252 && gy >= 220 && gy < 298) continue; // central square
+      if (gx >= 350 && gx < 600 && gy >= 0 && gy < 78) continue;
+      if (gx >= 148 && gx < 252 && gy >= 220 && gy < 298) continue;
 
-      // Road clearance
       let onRoad = false;
-      for (const road of ALL_ROADS) {
+      for (const road of exclusionRoads) {
         if (distToPoly(cx, cy, road.pts) < road.w / 2 + 4) { onRoad = true; break; }
       }
       if (onRoad) continue;
+      if (r1 > keepProb) continue;
 
-      if (rnd.n() > 0.58) continue;
+      const bw = STEP * (minFrac + r2 * (maxFrac - minFrac));
+      const bh = STEP * (minFrac + r3 * (maxFrac - minFrac));
 
-      const bw = STEP * rnd.r(0.30, 0.70);
-      const bh = STEP * rnd.r(0.30, 0.70);
-      const bx = gx + rnd.r(1, STEP - bw - 1);
-      const by = gy + rnd.r(1, STEP - bh - 1);
+      const maxJw = Math.max(0, (STEP - bw) / 2 - 1);
+      const maxJh = Math.max(0, (STEP - bh) / 2 - 1);
+      const bx = gx + STEP / 2 - bw / 2 + (r4 * 2 - 1) * maxJw * jitterAmt;
+      const by = gy + STEP / 2 - bh / 2 + (r5 * 2 - 1) * maxJh * jitterAmt;
 
-      const nearMain = MAJOR.some(r => distToPoly(cx, cy, r.pts) < 75);
-      const a = rnd.r(nearMain ? 0.28 : 0.18, nearMain ? 0.45 : 0.32);
+      const nearMain = MAJOR.some(road => distToPoly(cx, cy, road.pts) < 75);
+      const a = nearMain
+        ? 0.28 + r6 * (0.45 - 0.28)
+        : 0.18 + r6 * (0.32 - 0.18);
 
       out.push({ x: bx, y: by, w: bw, h: bh, a });
     }
@@ -146,31 +164,126 @@ function genBuildings(): Bldg[] {
   return out;
 }
 
-const BLDGS = genBuildings();
-
 function pts2s(pts: Pt[]): string {
   return pts.map(([x, y]) => `${x},${y}`).join(' ');
 }
 
-// ── Component ─────────────────────────────────────────────────────
-export default function CityMapSvg() {
-  const targetRef = useRef(1);
-  const [zoom, setZoom]   = useState(1);
-  const rafRef  = useRef<number | null>(null);
-  const svgRef  = useRef<SVGSVGElement>(null);
+// ── Slider control ────────────────────────────────────────────────
+function SliderCtrl({
+  label, val, min, max, step, display, onChange,
+}: {
+  label: string; val: number; min: number; max: number; step: number;
+  display: string; onChange: (v: number) => void;
+}) {
+  return (
+    <div className="city-ctrl">
+      <div className="city-ctrl-header">
+        <span className="city-ctrl-label">{label}</span>
+        <span className="city-ctrl-val">{display}</span>
+      </div>
+      <input
+        type="range" className="city-ctrl-slider"
+        min={min} max={max} step={step} value={val}
+        onChange={e => onChange(Number(e.target.value))}
+      />
+    </div>
+  );
+}
 
-  // RAF-based lerp — smooth regardless of wheel event frequency
-  const animate = useCallback(() => {
-    setZoom(cur => {
-      const diff = targetRef.current - cur;
-      if (Math.abs(diff) < 0.0006) return targetRef.current;
-      rafRef.current = requestAnimationFrame(animate);
-      return cur + diff * 0.13;
-    });
+// ── Segmented control ─────────────────────────────────────────────
+function SegCtrl<T extends string>({
+  label, options, value, onChange,
+}: {
+  label: string; options: T[]; value: T; onChange: (v: T) => void;
+}) {
+  return (
+    <div className="city-ctrl">
+      <div className="city-ctrl-header">
+        <span className="city-ctrl-label">{label}</span>
+      </div>
+      <div className="city-ctrl-seg">
+        {options.map(opt => (
+          <button
+            key={opt}
+            className={`city-ctrl-seg-btn${value === opt ? ' active' : ''}`}
+            onClick={() => onChange(opt)}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────
+export default function CityMapSvg() {
+  const [density, setDensity]   = useState(60);
+  const [spread, setSpread]     = useState(80);
+  const [plotSize, setPlotSize] = useState(50);
+  const [streets, setStreets]   = useState<Streets>('historic');
+
+  // Zoom runs entirely off React state — direct DOM writes via groupRef
+  // so there are zero re-renders during the animation.
+  const zoomVal  = useRef(1);   // actual current zoom
+  const zoomVel  = useRef(0);   // spring velocity
+  const targetRef = useRef(1);  // desired zoom
+  const rafRef   = useRef<number | null>(null);
+  const svgRef   = useRef<SVGSVGElement>(null);
+  const groupRef = useRef<SVGGElement>(null);
+  // Only used for button disabled state — updated once per gesture end
+  const [btnState, setBtnState] = useState({ atMin: true, atMax: false });
+
+  const applyTransform = useCallback((z: number) => {
+    if (groupRef.current) {
+      groupRef.current.setAttribute(
+        'transform',
+        `translate(${PX} ${PY}) scale(${z}) translate(${-PX} ${-PY})`
+      );
+    }
   }, []);
+
+  const activeRoads = useMemo<Road[]>(() => {
+    if (streets === 'open')    return MAJOR;
+    if (streets === 'planned') return [...MAJOR, ...SECONDARY];
+    return ALL_ROADS;
+  }, [streets]);
+
+  const buildings = useMemo(
+    () => genBuildings(density, spread, plotSize, activeRoads),
+    [density, spread, plotSize, activeRoads]
+  );
+
+  const animate = useCallback(() => {
+    // Critically-damped spring: stiffness=0.14, damping=0.78
+    const force = (targetRef.current - zoomVal.current) * 0.14;
+    zoomVel.current = zoomVel.current * 0.78 + force;
+    zoomVal.current += zoomVel.current;
+    applyTransform(zoomVal.current);
+
+    const settled =
+      Math.abs(zoomVel.current) < 0.00015 &&
+      Math.abs(targetRef.current - zoomVal.current) < 0.00015;
+
+    if (settled) {
+      zoomVal.current = targetRef.current;
+      zoomVel.current = 0;
+      applyTransform(zoomVal.current);
+      setBtnState({
+        atMin: zoomVal.current <= MIN_Z + 0.05,
+        atMax: zoomVal.current >= MAX_Z - 0.05,
+      });
+    } else {
+      rafRef.current = requestAnimationFrame(animate);
+    }
+  }, [applyTransform]);
 
   const doZoom = useCallback((factor: number) => {
     targetRef.current = Math.max(MIN_Z, Math.min(MAX_Z, targetRef.current * factor));
+    setBtnState({
+      atMin: targetRef.current <= MIN_Z + 0.05,
+      atMax: targetRef.current >= MAX_Z - 0.05,
+    });
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(animate);
   }, [animate]);
@@ -188,10 +301,44 @@ export default function CityMapSvg() {
 
   useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
-  const tf = `translate(${PX} ${PY}) scale(${zoom}) translate(${-PX} ${-PY})`;
+  const renderSecondary = streets === 'planned' || streets === 'historic';
+  const renderMinor = streets === 'historic';
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── Parameter controls ── */}
+      <div className="city-controls">
+        <SliderCtrl
+          label="— buildings"
+          val={density} min={10} max={100} step={5}
+          display={`${density}%`}
+          onChange={setDensity}
+        />
+        <SliderCtrl
+          label="— spread"
+          val={spread} min={0} max={100} step={5}
+          display={`${spread}%`}
+          onChange={setSpread}
+        />
+        <SegCtrl<Streets>
+          label="— streets"
+          options={['open', 'planned', 'historic']}
+          value={streets}
+          onChange={setStreets}
+        />
+        <SliderCtrl
+          label="— plot size"
+          val={plotSize} min={0} max={100} step={5}
+          display={plotSize < 33 ? 'sm' : plotSize < 66 ? 'md' : 'lg'}
+          onChange={setPlotSize}
+        />
+      </div>
+
+      {/* ── Map area ── */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}>
+
+      {/* ── Map SVG ── */}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -205,51 +352,41 @@ export default function CityMapSvg() {
           </pattern>
         </defs>
 
-        <g transform={tf}>
-          {/* Ground */}
+        <g ref={groupRef} transform={`translate(${PX} ${PY}) scale(1) translate(${-PX} ${-PY})`}>
           <rect x={0} y={0} width={W} height={H} fill="#EDEBE8" />
 
-          {/* North park */}
           <rect x={350} y={0} width={250} height={78} fill="#E8E6E2" />
           <rect x={350} y={0} width={250} height={78} fill="url(#parkDots)" />
-          {/* Central square */}
           <rect x={148} y={220} width={104} height={78} fill="#E8E6E2" />
           <rect x={148} y={220} width={104} height={78} fill="url(#parkDots)" />
 
-          {/* Lake fill */}
           <path d={LAKE} fill="rgba(178,200,218,0.52)" />
-          {/* Lake edge */}
           <path d={LAKE} fill="none" stroke="rgba(26,25,24,0.10)" strokeWidth={0.8} />
-          {/* Lake shimmer */}
           <path d={LAKE_HL} fill="rgba(255,255,255,0.18)" />
 
-          {/* Building footprints */}
-          {BLDGS.map((b, i) => (
+          {buildings.map((b, i) => (
             <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h}
               fill={`rgba(26,25,24,${b.a.toFixed(3)})`}
               stroke="rgba(26,25,24,0.38)" strokeWidth={0.28} />
           ))}
 
-          {/* Minor roads */}
-          {MINOR.map((r, i) => (
+          {renderMinor && MINOR.map((r, i) => (
             <polyline key={i} points={pts2s(r.pts)} fill="none"
               stroke="#F5F3EF" strokeWidth={r.w}
               strokeLinecap="round" strokeLinejoin="round" />
           ))}
 
-          {/* Secondary roads — casing then fill */}
-          {SECONDARY.map((r, i) => (
+          {renderSecondary && SECONDARY.map((r, i) => (
             <polyline key={i} points={pts2s(r.pts)} fill="none"
               stroke="rgba(26,25,24,0.14)" strokeWidth={r.w + 3}
               strokeLinecap="round" strokeLinejoin="round" />
           ))}
-          {SECONDARY.map((r, i) => (
+          {renderSecondary && SECONDARY.map((r, i) => (
             <polyline key={`f${i}`} points={pts2s(r.pts)} fill="none"
               stroke="#F9F8F5" strokeWidth={r.w}
               strokeLinecap="round" strokeLinejoin="round" />
           ))}
 
-          {/* Major roads — casing then fill */}
           {MAJOR.map((r, i) => (
             <polyline key={i} points={pts2s(r.pts)} fill="none"
               stroke="rgba(26,25,24,0.20)" strokeWidth={r.w + 5}
@@ -261,7 +398,6 @@ export default function CityMapSvg() {
               strokeLinecap="round" strokeLinejoin="round" />
           ))}
 
-          {/* Scale bar */}
           <g opacity={0.42} transform={`translate(${W - 90},${H - 22})`}>
             <line x1={0} y1={0} x2={80} y2={0} stroke="rgba(26,25,24,0.6)" strokeWidth={0.5} />
             <line x1={0} y1={-4} x2={0} y2={4} stroke="rgba(26,25,24,0.6)" strokeWidth={0.5} />
@@ -271,7 +407,6 @@ export default function CityMapSvg() {
               fontSize={6.5} fill="rgba(26,25,24,0.55)" letterSpacing={1.2}>100 m</text>
           </g>
 
-          {/* North indicator */}
           <g transform="translate(18,18)" opacity={0.48}>
             <circle cx={0} cy={0} r={8} fill="none" stroke="rgba(26,25,24,0.35)" strokeWidth={0.5} />
             <path d="M0,-5.5 L2,0.5 L0,-1.8 L-2,0.5Z" fill="rgba(26,25,24,0.62)" />
@@ -283,10 +418,11 @@ export default function CityMapSvg() {
 
       <div className="city-zoom-btns">
         <button className="city-zoom-btn" onClick={() => doZoom(1.6)}
-          disabled={zoom >= MAX_Z - 0.05} aria-label="Zoom in">+</button>
+          disabled={btnState.atMax} aria-label="Zoom in">+</button>
         <button className="city-zoom-btn" onClick={() => doZoom(1 / 1.6)}
-          disabled={zoom <= MIN_Z + 0.05} aria-label="Zoom out">−</button>
+          disabled={btnState.atMin} aria-label="Zoom out">−</button>
       </div>
+      </div>{/* end map area */}
     </div>
   );
 }

@@ -130,6 +130,54 @@ describe('check-factory-meta script', () => {
     expect(issues).toEqual([]);
   });
 
+  it('allows Kangur mobile adapter calls to inherit the adapter domain', () => {
+    const issues = inspectFactoryMetaSourceFile(
+      `
+      useKangurMobileQueryV2({
+        queryKey: ['kangur-mobile', 'leaderboard'],
+        queryFn: async () => [],
+        meta: {
+          source: 'kangur.mobile.leaderboard.scores',
+          operation: 'list',
+          resource: 'kangur.mobile.leaderboard.scores',
+          description: 'Loads Kangur mobile leaderboard scores.',
+        },
+      });
+      `,
+      'apps/mobile/src/leaderboard/useKangurMobileLeaderboard.ts',
+      ts.ScriptKind.TS
+    );
+
+    expect(issues).toEqual([]);
+  });
+
+  it('still validates Kangur mobile adapter descriptions', () => {
+    const issues = inspectFactoryMetaSourceFile(
+      `
+      useKangurMobileQueryV2({
+        queryKey: ['kangur-mobile', 'leaderboard'],
+        queryFn: async () => [],
+        meta: {
+          source: 'kangur.mobile.leaderboard.scores',
+          operation: 'list',
+          resource: 'kangur.mobile.leaderboard.scores',
+          description: 'Loads list.',
+        },
+      });
+      `,
+      'apps/mobile/src/leaderboard/useKangurMobileLeaderboard.ts',
+      ts.ScriptKind.TS
+    );
+
+    expect(issues).toEqual([
+      expect.objectContaining({
+        file: 'apps/mobile/src/leaderboard/useKangurMobileLeaderboard.ts',
+        callName: 'useKangurMobileQueryV2',
+        message: expect.stringContaining('too generic'),
+      }),
+    ]);
+  });
+
   it('allows multi-query factories without a top-level queryKey', () => {
     const issues = inspectFactoryMetaSourceFile(
       `

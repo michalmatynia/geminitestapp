@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
+import { createManagedQueue, isRedisAvailable, type ManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 /**
@@ -121,9 +121,13 @@ export const stopBaseExportQueue = async (): Promise<void> => {
   await queue.stopWorker();
 };
 
-export const enqueueBaseExportJob = async (data: BaseExportJobData): Promise<string> => {
+const buildBaseExportJobId = (data: BaseExportJobData): string => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
-  const jobId = `export-${data.productId}-${data.connectionId}-${data.inventoryId}-${dedupeBucket}`;
+  return `export-${data.productId}-${data.connectionId}-${data.inventoryId}-${dedupeBucket}`;
+};
+
+export const enqueueBaseExportJob = async (data: BaseExportJobData): Promise<string> => {
+  const jobId = buildBaseExportJobId(data);
   const queuedJobId = await queue.enqueue(data, { jobId });
   await ErrorSystem.logInfo('Base export job queued', {
     service: buildBaseExportSource('queued'),
@@ -133,4 +137,76 @@ export const enqueueBaseExportJob = async (data: BaseExportJobData): Promise<str
     jobId: queuedJobId,
   });
   return queuedJobId;
+};
+
+export type BaseExportDispatchResult = {
+  dispatchMode: 'queued' | 'inline';
+  queueJobId: string;
+};
+
+const startInlineBaseExportJobInBackground = (
+  data: BaseExportJobData,
+  queueJobId: string,
+  reason: 'redis_unavailable' | 'enqueue_failed'
+): void => {
+  processBaseExportJob(data, queueJobId)
+    .then(async () => {
+      await ErrorSystem.logInfo('Base export job completed', {
+        service: buildBaseExportSource('complete'),
+        productId: data.productId,
+        runId: data.runId,
+        jobId: queueJobId,
+        dispatchReason: reason,
+      });
+    })
+    .catch(async (error: unknown) => {
+      await ErrorSystem.captureException(error, {
+        service: buildBaseExportSource('failed'),
+        productId: data.productId,
+        runId: data.runId,
+        jobId: queueJobId,
+        action: 'inline-background-failed',
+        dispatchReason: reason,
+      });
+    });
+};
+
+export const dispatchBaseExportJob = async (
+  data: BaseExportJobData
+): Promise<BaseExportDispatchResult> => {
+  if (!isRedisAvailable()) {
+    const queueJobId = `inline-${Date.now()}`;
+    await ErrorSystem.logInfo('Base export redis unavailable, running inline in background', {
+      service: buildBaseExportSource('queued'),
+      productId: data.productId,
+      connectionId: data.connectionId,
+      runId: data.runId,
+      jobId: queueJobId,
+    });
+    startInlineBaseExportJobInBackground(data, queueJobId, 'redis_unavailable');
+    return { dispatchMode: 'inline', queueJobId };
+  }
+
+  try {
+    const queueJobId = await enqueueBaseExportJob(data);
+    return { dispatchMode: 'queued', queueJobId };
+  } catch (error: unknown) {
+    ErrorSystem.captureException(error, {
+      service: buildBaseExportSource('failed'),
+      productId: data.productId,
+      runId: data.runId,
+      action: 'enqueue-failed',
+    }).catch(() => {});
+    const queueJobId = `inline-${Date.now()}`;
+    await ErrorSystem.logInfo('Base export enqueue failed, running inline in background', {
+      service: buildBaseExportSource('queued'),
+      productId: data.productId,
+      connectionId: data.connectionId,
+      runId: data.runId,
+      jobId: queueJobId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    startInlineBaseExportJobInBackground(data, queueJobId, 'enqueue_failed');
+    return { dispatchMode: 'inline', queueJobId };
+  }
 };

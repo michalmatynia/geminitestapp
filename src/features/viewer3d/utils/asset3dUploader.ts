@@ -20,7 +20,12 @@ import path from 'path';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DCreateInput, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { badRequestError } from '@/shared/errors/app-error';
-import { assets3dRoot } from '@/shared/lib/files/server-constants';
+import {
+  MILKBAR_CMS_MODELS_FOLDER,
+  MILKBAR_FASTCOMET_BASE_URL,
+  type FileStorageProfile,
+} from '@/shared/lib/files/constants';
+import { assets3dRoot, uploadsRoot } from '@/shared/lib/files/server-constants';
 import {
   deleteFileFromStorage,
   uploadToConfiguredStorage,
@@ -45,6 +50,8 @@ interface UploadOptions {
   isPublic?: boolean;
   /** Additional custom metadata */
   metadata?: Record<string, unknown>;
+  /** Storage profile for domain-specific public upload roots */
+  storageProfile?: FileStorageProfile;
 }
 
 /**
@@ -61,11 +68,20 @@ interface UploadOptions {
  * @param fileBuffer - Pre-read file buffer
  * @returns Object containing filename and storage filepath
  */
-async function prepareAssetStorage(file: File, fileBuffer: Buffer): Promise<{ filename: string; storedFilepath: string }> {
+async function prepareAssetStorage(
+  file: File,
+  fileBuffer: Buffer,
+  options: UploadOptions
+): Promise<{ filename: string; storedFilepath: string; publicPath: string }> {
   // Generate unique filename with timestamp to prevent collisions
   const filename = `${Date.now()}-${path.basename(file.name)}`;
-  const diskDir = assets3dRoot;
-  const publicDir = '/uploads/assets3d';
+  const isMilkbarCmsUpload = options.storageProfile === 'milkbarCms';
+  const diskDir = isMilkbarCmsUpload
+    ? path.join(uploadsRoot, 'cms', MILKBAR_CMS_MODELS_FOLDER)
+    : assets3dRoot;
+  const publicDir = isMilkbarCmsUpload
+    ? `/uploads/cms/${MILKBAR_CMS_MODELS_FOLDER}`
+    : '/uploads/assets3d';
   const publicPath = `${publicDir}/${filename}`;
   const localDiskPath = `${diskDir}/${filename}`;
 
@@ -75,9 +91,15 @@ async function prepareAssetStorage(file: File, fileBuffer: Buffer): Promise<{ fi
     filename,
     mimetype: file.type !== '' ? file.type : 'application/octet-stream',
     publicPath,
-    category: 'assets3d',
+    category: isMilkbarCmsUpload ? 'cms' : 'assets3d',
     projectId: null,
-    folder: null,
+    folder: isMilkbarCmsUpload ? MILKBAR_CMS_MODELS_FOLDER : null,
+    ...(isMilkbarCmsUpload
+      ? {
+          forceSource: 'fastcomet' as const,
+          fastCometBaseUrl: MILKBAR_FASTCOMET_BASE_URL,
+        }
+      : {}),
     // Also write to local disk for reindexing operations
     writeLocalCopy: async (): Promise<void> => {
       await fs.mkdir(diskDir, { recursive: true });
@@ -85,7 +107,7 @@ async function prepareAssetStorage(file: File, fileBuffer: Buffer): Promise<{ fi
     },
   });
 
-  return { filename, storedFilepath: storageResult.filepath };
+  return { filename, storedFilepath: storageResult.filepath, publicPath };
 }
 
 /**
@@ -116,12 +138,14 @@ function getAssetName(filename: string, nameOption?: string): string {
   return name !== '' ? name : filename;
 }
 
-function mapAssetOptionsToCreatePayload(
-  filename: string, 
-  storedFilepath: string, 
-  file: File, 
-  options: UploadOptions
-): Asset3DCreateInput {
+function mapAssetOptionsToCreatePayload(input: {
+  filename: string;
+  storedFilepath: string;
+  file: File;
+  options: UploadOptions;
+  publicPath: string;
+}): Asset3DCreateInput {
+  const { filename, storedFilepath, file, options, publicPath } = input;
   const mimeType = getAssetMimeType(file);
   const format = getAssetFormat(mimeType);
   const name = getAssetName(filename, options.name);
@@ -140,7 +164,14 @@ function mapAssetOptionsToCreatePayload(
     name,
     description: options.description ?? null,
     categoryId: options.category ?? null,
-    metadata: options.metadata ?? {},
+    metadata: {
+      ...(options.metadata ?? {}),
+      publicPath,
+      storageProfile: options.storageProfile ?? 'default',
+      ...(options.storageProfile === 'milkbarCms'
+        ? { publicBaseUrl: MILKBAR_FASTCOMET_BASE_URL }
+        : {}),
+    },
   };
 }
 
@@ -160,9 +191,19 @@ export async function uploadAsset3D(
   const safeOptions: UploadOptions = options ?? {};
   
   try {
-    const { filename, storedFilepath } = await prepareAssetStorage(file, fileBuffer);
+    const { filename, storedFilepath, publicPath } = await prepareAssetStorage(
+      file,
+      fileBuffer,
+      safeOptions
+    );
     const repository = getAsset3DRepository();
-    const payload = mapAssetOptionsToCreatePayload(filename, storedFilepath, file, safeOptions);
+    const payload = mapAssetOptionsToCreatePayload({
+      filename,
+      storedFilepath,
+      file,
+      options: safeOptions,
+      publicPath,
+    });
     const asset = await (repository.createAsset3D(payload));
 
     return asset;

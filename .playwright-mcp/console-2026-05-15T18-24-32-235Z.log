@@ -1,0 +1,31 @@
+[     692ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[     772ms] [LOG] [HMR] connected @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  311415ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  311747ms] [ERROR] ./src/components/CityMapSvg.tsx
+Error:   × Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ╭─[/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/arch-web/src/components/CityMapSvg.tsx:395:1]
+ 392 │       </div>
+ 393 │     </div>
+ 394 │   );
+ 395 │ }
+     · ▲
+     ╰────
+  × Expected '</', got '<eof>'
+     ╭─[/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/arch-web/src/components/CityMapSvg.tsx:395:3]
+ 393 │     </div>
+ 394 │   );
+ 395 │ }
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/CityMapSvg.tsx
+./src/components/Philosophy.tsx
+./src/app/[locale]/page.tsx @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:51
+[  315831ms] [LOG] [Fast Refresh] done in 4417ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  315883ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  316137ms] [LOG] [Fast Refresh] done in 253ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  321366ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27
+[  321696ms] [LOG] [Fast Refresh] done in 331ms @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/next-devtools/shared/forward-logs-shared.js:27

@@ -15,6 +15,7 @@ import type {
   Asset3DUpdateInput,
   Asset3DListFilters,
 } from '@/shared/contracts/viewer3d';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -63,6 +64,7 @@ interface UploadAssetData {
   category?: string;
   tags?: string[];
   isPublic?: boolean;
+  storageProfile?: FileStorageProfile;
 }
 
 function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): void {
@@ -72,6 +74,7 @@ function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): v
     ['category', data.category],
     ['tags', data.tags !== undefined && data.tags.length > 0 ? data.tags.join(',') : undefined],
     ['isPublic', data.isPublic !== undefined ? String(data.isPublic) : undefined],
+    ['storageProfile', data.storageProfile],
   ];
 
   entries.forEach(([key, value]) => {

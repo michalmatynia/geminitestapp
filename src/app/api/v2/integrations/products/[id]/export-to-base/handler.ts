@@ -4,7 +4,7 @@ import {
   LogCapture,
 } from '@/features/integrations/server';
 import { recoverStaleBaseExportRuns } from '@/features/integrations/services/base-export-run-recovery';
-import { enqueueBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
+import { dispatchBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
@@ -158,7 +158,7 @@ export async function postExportToBaseHandler(
     runId = run.id;
 
     // ── Enqueue for background processing ──
-    const jobId = await enqueueBaseExportJob({
+    const dispatch = await dispatchBaseExportJob({
       productId,
       connectionId: data.connectionId,
       inventoryId: resolvedInventoryId,
@@ -182,7 +182,8 @@ export async function postExportToBaseHandler(
       message: 'Export queued for processing',
       status: 'queued' as const,
       runId,
-      jobId,
+      jobId: dispatch.queueJobId,
+      dispatchMode: dispatch.dispatchMode,
       logs: logCapture.getLogs(),
     });
   } catch (error) {

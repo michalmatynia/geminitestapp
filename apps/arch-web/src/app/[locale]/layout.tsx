@@ -2,10 +2,6 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { isArchLocale } from '@/lib/types';
 
-export function generateStaticParams(): { locale: string }[] {
-  return [{ locale: 'en' }, { locale: 'de' }, { locale: 'pl' }];
-}
-
 export default async function LocaleLayout({
   children,
   params,

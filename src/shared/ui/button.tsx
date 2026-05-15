@@ -73,9 +73,13 @@ export interface ButtonProps
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants>,
     DataAttributes {
+  /** Renders the button as a child component instead of a button element */
   asChild?: boolean;
+  /** Optional icon to display before the label */
   icon?: React.ReactNode;
+  /** Whether the button is in a loading state */
   loading?: boolean;
+  /** Optional text to display while in a loading state */
   loadingText?: string;
 }
 

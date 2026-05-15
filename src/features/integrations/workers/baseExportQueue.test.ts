@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   createManagedQueueMock: vi.fn(),
+  isRedisAvailableMock: vi.fn(),
+  processBaseExportJobMock: vi.fn(),
   getPathRunRepositoryMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   logInfoMock: vi.fn(),
@@ -9,6 +11,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/shared/lib/queue', () => ({
   createManagedQueue: (...args: unknown[]) => mocks.createManagedQueueMock(...args),
+  isRedisAvailable: (...args: unknown[]) => mocks.isRedisAvailableMock(...args),
+}));
+
+vi.mock('./baseExportProcessor', () => ({
+  processBaseExportJob: (...args: unknown[]) => mocks.processBaseExportJobMock(...args),
 }));
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
@@ -26,9 +33,13 @@ describe('baseExportQueue', () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.createManagedQueueMock.mockReset();
+    mocks.isRedisAvailableMock.mockReset();
+    mocks.processBaseExportJobMock.mockReset();
     mocks.getPathRunRepositoryMock.mockReset();
     mocks.captureExceptionMock.mockReset();
     mocks.logInfoMock.mockReset();
+    mocks.isRedisAvailableMock.mockReturnValue(true);
+    mocks.processBaseExportJobMock.mockResolvedValue(undefined);
     mocks.createManagedQueueMock.mockImplementation((config: unknown) => ({
       startWorker: vi.fn(),
       stopWorker: vi.fn(),
@@ -110,7 +121,7 @@ describe('baseExportQueue', () => {
     expect(mocks.captureExceptionMock).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        service: 'base-export-queue',
+        service: 'integrations.base-export.failed',
         runId: 'run-1',
         jobId: 'job-1',
       })
@@ -130,5 +141,39 @@ describe('baseExportQueue', () => {
         message: 'Export failed: worker crashed',
       })
     );
+  });
+
+  const buildJobData = () => ({
+    productId: 'product-1',
+    connectionId: 'connection-1',
+    inventoryId: '4069',
+    templateId: 'template-1',
+    imagesOnly: false,
+    listingId: null,
+    externalListingId: null,
+    allowDuplicateSku: false,
+    exportImagesAsBase64: null,
+    imageBase64Mode: null,
+    imageTransform: null,
+    imageBaseUrl: 'http://localhost:3000',
+    requestId: null,
+    runId: 'run-1',
+    userId: 'user-1',
+  });
+
+  it('dispatches inline fallback in the background when Redis is unavailable', async () => {
+    mocks.isRedisAvailableMock.mockReturnValue(false);
+
+    const { dispatchBaseExportJob } = await import('./baseExportQueue');
+    const result = await dispatchBaseExportJob(buildJobData());
+
+    expect(result).toMatchObject({ dispatchMode: 'inline' });
+    expect(result.queueJobId).toMatch(/^inline-/);
+    await vi.waitFor(() => {
+      expect(mocks.processBaseExportJobMock).toHaveBeenCalledWith(
+        expect.objectContaining({ productId: 'product-1', runId: 'run-1' }),
+        result.queueJobId
+      );
+    });
   });
 });

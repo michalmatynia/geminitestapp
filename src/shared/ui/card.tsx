@@ -32,9 +32,16 @@ const cardVariants = cva('rounded-lg border text-card-foreground shadow-sm trans
     padding: 'none', // Card usually has children like CardHeader/Content which have their own padding
   },
 });
-
+/**
+ * Card Component
+ * 
+ * Container for grouping related content in a structured, visual block.
+ * Includes sub-components: CardHeader, CardTitle, CardDescription, CardContent, CardFooter.
+ */
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Visual variant of the card (e.g., default, subtle, glass) */
   variant?: CardVariant;
+  /** Padding level for the card container */
   padding?: CardPadding;
 }
 
@@ -45,6 +52,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 );
 Card.displayName = 'Card';
 
+/** CardHeader: Typically contains CardTitle and/or CardDescription. */
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div ref={ref} className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
@@ -52,7 +60,8 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardHeader.displayName = 'CardHeader';
 
-const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+/** CardTitle: Used for the heading of a card. */
+const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ children, className, ...props }, ref) => (
     <h3
       ref={ref}

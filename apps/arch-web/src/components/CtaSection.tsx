@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ArchPageContent } from '@/lib/types';
+import { renderEmphasis } from '@/lib/renderEmphasis';
 
 export default function CtaSection({ content, locale }: { content: ArchPageContent['cta']; locale?: string }) {
   const [email, setEmail] = useState('');
@@ -38,7 +39,7 @@ export default function CtaSection({ content, locale }: { content: ArchPageConte
       <div className="wrap">
         <div className="cta-inner">
           <h2 className="rev">
-            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
+            {renderEmphasis(content.title, content.emphasis)}
           </h2>
           <div className="cta-side rev" data-delay="1">
             <p>{content.description}</p>

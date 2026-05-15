@@ -23,10 +23,15 @@ export const DEFAULT_FASTCOMET_STORAGE_SERVER = 'sparksofsindri.com';
 export const DEFAULT_FASTCOMET_STORAGE_PORT = 443;
 export const DEFAULT_FASTCOMET_STORAGE_UPLOAD_PATH = '/api/uploads/index.php';
 export const DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP = '209.42.31.54';
+export const MILKBAR_FASTCOMET_BASE_URL = 'https://milkbardesigners.com';
+export const MILKBAR_CMS_VISUALISATION_FOLDER = 'visualisation';
+export const MILKBAR_CMS_MODELS_FOLDER = 'models';
 
 export const fileStorageSourceValues = ['local', 'fastcomet'] as const;
+export const fileStorageProfileValues = ['default', 'milkbarCms'] as const;
 
 export type FileStorageSource = (typeof fileStorageSourceValues)[number];
+export type FileStorageProfile = (typeof fileStorageProfileValues)[number];
 
 export type FastCometStorageConfig = {
   baseUrl: string;

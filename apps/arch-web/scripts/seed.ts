@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-import { DEFAULT_ARCH_PAGE_CONTENT, DEFAULT_ARCH_PAGE_SETTINGS } from '../src/lib/pageContent.ts';
+import { DEFAULT_ARCH_LOCALIZED_CONTENT, DEFAULT_ARCH_PAGE_SETTINGS } from '../src/lib/pageContent.ts';
 
 const DEFAULT_MONGODB_URI = 'mongodb://127.0.0.1:27022/arch_web_local';
 const DEFAULT_MONGODB_DB = 'arch_web_local';
@@ -139,16 +139,11 @@ async function seed() {
       {
         $set: {
           key: 'home',
-          // New localised format — EN content seeded for all locales as bootstrap.
-          // Admin fills in DE/PL via Page Manager CMS, then publishes those locales.
-          localizedContent: {
-            en: DEFAULT_ARCH_PAGE_CONTENT,
-            de: DEFAULT_ARCH_PAGE_CONTENT,
-            pl: DEFAULT_ARCH_PAGE_CONTENT,
-          },
+          localizedContent: DEFAULT_ARCH_LOCALIZED_CONTENT,
           pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
           updatedAt: new Date(),
         },
+        $unset: { content: '' },
         $setOnInsert: {
           createdAt: new Date(),
         },

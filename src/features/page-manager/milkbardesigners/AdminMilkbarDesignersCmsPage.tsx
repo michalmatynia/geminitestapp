@@ -2,8 +2,24 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { ChevronDown, ChevronUp, Copy, Download, Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, Plus, RefreshCw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { Admin3DAssetsPage } from '@/features/viewer3d/admin.public';
+import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
+import { useUploadCmsMedia } from '@/features/cms/hooks/useCmsQueries';
+import { uploadAsset3DFile } from '@/features/viewer3d/api';
+import { useAsset3DById, useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import type { OrbitControlsHandle } from '@/features/viewer3d/components/Viewer3D';
+import { Viewer3DSettingsPanel } from '@/features/viewer3d/components/Viewer3DSettingsPanel';
+import { Viewer3DStatusInfo } from '@/features/viewer3d/components/Viewer3DStatusInfo';
+import { Viewer3DProvider } from '@/features/viewer3d/context/Viewer3DContext';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
   DEFAULT_MILKBAR_LOCALIZED_CONTENT,
@@ -26,13 +42,18 @@ import {
 } from './milkbar-cms.types';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
+import {
+  MILKBAR_CMS_VISUALISATION_FOLDER,
+} from '@/shared/lib/files/constants';
 import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
 import { Alert, Badge, Button, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { ProductImageManager } from '@/shared/ui/image-slot-manager';
 import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
 
 const ENDPOINT = '/api/v2/page-manager/milkbardesigners';
+const PUSH_ENDPOINT = '/api/v2/page-manager/milkbardesigners/push-to-cloud';
 const MILKBAR_CMS_SNAPSHOT_QUERY_KEY = ['page-manager', 'milkbardesigners', 'snapshot'] as const;
 
 const TABS = [
@@ -40,6 +61,7 @@ const TABS = [
   { label: 'Projects', value: 'projects' },
   { label: 'Services', value: 'services' },
   { label: 'Inquiries', value: 'inquiries' },
+  { label: '3D Assets', value: '3d-assets' },
   { label: 'Settings', value: 'settings' },
   { label: 'Sync Status', value: 'status' },
 ] as const;
@@ -233,6 +255,33 @@ const useUpdateMilkbarInquiryStatusMutation = (): MutationResult<
       tags: ['page-manager', 'milkbardesigners', 'inquiries'],
     },
   });
+
+type PushToCloudOutcome = {
+  ok: boolean;
+  jobId: string | null;
+  mode: 'queue' | 'inline' | 'no-redis';
+  triggeredAt: string;
+  result?: { projectCount: number; serviceCount: number; updatedAt: string };
+  error?: string;
+};
+
+type PushQueueHealth = {
+  ok: boolean;
+  health: {
+    mode: 'queue' | 'inline' | 'no-redis';
+    redisAvailable: boolean;
+    workerState: string;
+    activeCount: number;
+    waitingCount: number;
+    failedCount: number;
+  };
+};
+
+const triggerPushToCloud = async (): Promise<PushToCloudOutcome> =>
+  api.post<PushToCloudOutcome>(PUSH_ENDPOINT, {});
+
+const fetchPushQueueHealth = async (): Promise<PushQueueHealth> =>
+  api.get<PushQueueHealth>(PUSH_ENDPOINT);
 
 function FieldInput({
   label,
@@ -903,6 +952,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     if (activeTab === 'projects') return 'Manage Milkbar project cards and 3D project metadata.';
     if (activeTab === 'services') return 'Manage the practice/service entries shown on the architecture website.';
     if (activeTab === 'inquiries') return 'Review incoming Milkbar website inquiries.';
+    if (activeTab === '3d-assets') return 'Upload and manage 3D models that can be assigned to projects.';
     if (activeTab === 'settings') return 'Section visibility, SEO metadata per locale, and publication controls.';
     if (activeTab === 'status') return 'Review Milkbar Mongo source configuration and record counts.';
     return 'Manage Milkbar page copy and section content.';
@@ -922,46 +972,48 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
         tabsList: [...TABS],
       }}
       headerActions={
-        <div className='flex items-center gap-2'>
-          {isDirty ? (
-            <span className='flex items-center gap-1.5 text-xs text-amber-400'>
-              <span className='inline-block size-1.5 rounded-full bg-amber-400' />
-              Unsaved changes
-            </span>
-          ) : null}
-          <Button
-            type='button'
-            variant='secondary'
-            size='sm'
-            icon={<RefreshCw className='size-4' />}
-            onClick={handleRefreshClick}
-            disabled={isRefreshing || isSaving}
-          >
-            Refresh
-          </Button>
-          {isDirty ? (
+        activeTab === '3d-assets' ? null : (
+          <div className='flex items-center gap-2'>
+            {isDirty ? (
+              <span className='flex items-center gap-1.5 text-xs text-amber-400'>
+                <span className='inline-block size-1.5 rounded-full bg-amber-400' />
+                Unsaved changes
+              </span>
+            ) : null}
             <Button
               type='button'
               variant='secondary'
               size='sm'
-              onClick={handleRevert}
-              disabled={isSaving}
+              icon={<RefreshCw className='size-4' />}
+              onClick={handleRefreshClick}
+              disabled={isRefreshing || isSaving}
             >
-              Revert
+              Refresh
             </Button>
-          ) : null}
-          <Button
-            type='button'
-            variant='solid'
-            size='sm'
-            icon={<Save className='size-4' />}
-            loading={isSaving}
-            onClick={handleSaveClick}
-            title='Save (⌘S)'
-          >
-            Save CMS
-          </Button>
-        </div>
+            {isDirty ? (
+              <Button
+                type='button'
+                variant='secondary'
+                size='sm'
+                onClick={handleRevert}
+                disabled={isSaving}
+              >
+                Revert
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              variant='solid'
+              size='sm'
+              icon={<Save className='size-4' />}
+              loading={isSaving}
+              onClick={handleSaveClick}
+              title='Save (⌘S)'
+            >
+              Save CMS
+            </Button>
+          </div>
+        )
       }
     >
       {error !== null ? (
@@ -1115,6 +1167,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               onTogglePublishedLocale={togglePublishedLocale}
             />
           ) : null}
+          {activeTab === '3d-assets' ? <Admin3DAssetsPage uploadStorageProfile='milkbarCms' /> : null}
           {activeTab === 'status' ? <StatusTab snapshot={snapshot} localizedContent={localizedContent} /> : null}
         </div>
       )}
@@ -1168,6 +1221,200 @@ function CollapsibleSection({
       </div>
       {open ? <div className='space-y-3 border-t border-white/10 p-4'>{children}</div> : null}
     </div>
+  );
+}
+
+const DRAWING_IMAGE_SLOT_COUNT = 4;
+
+const createDrawingImageSlotValues = (images: string[]): string[] =>
+  Array.from({ length: DRAWING_IMAGE_SLOT_COUNT }, (_, index) => images[index]?.trim() ?? '');
+
+const compactDrawingImageSlotValues = (values: string[]): string[] => {
+  const next = values.slice(0, DRAWING_IMAGE_SLOT_COUNT).map((value) => value.trim());
+  while (next.length > 0 && next[next.length - 1] === '') {
+    next.pop();
+  }
+  return next;
+};
+
+const createDrawingImageSelection = (src: string, index: number): ImageFileSelection => ({
+  id: `milkbar-drawing-image-${index}-${src}`,
+  filepath: src,
+  publicUrl: src,
+  url: src,
+  filename: src.split('/').pop() ?? `drawing-image-${index + 1}`,
+});
+
+const createDrawingManagedImageSlot = (
+  src: string,
+  index: number
+): ManagedImageSlot => {
+  const trimmed = src.trim();
+  if (trimmed.length === 0) return null;
+  return {
+    type: 'existing',
+    data: createDrawingImageSelection(trimmed, index),
+    previewUrl: trimmed,
+    slotId: `milkbar-drawing-image-slot-${index}`,
+  };
+};
+
+function DrawingImageSlotsField({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (images: string[]) => void;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const uploadMutation = useUploadCmsMedia();
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null);
+  const slotValues = useMemo(() => createDrawingImageSlotValues(value), [value]);
+
+  const setSlotValues = useCallback(
+    (nextValues: string[]): void => {
+      onChange(compactDrawingImageSlotValues(nextValues));
+    },
+    [onChange]
+  );
+
+  const setSlotValue = useCallback(
+    (index: number, nextValue: string): void => {
+      if (index < 0 || index >= DRAWING_IMAGE_SLOT_COUNT) return;
+      const nextValues = createDrawingImageSlotValues(value);
+      nextValues[index] = nextValue.trim();
+      setSlotValues(nextValues);
+    },
+    [setSlotValues, value]
+  );
+
+  const fillSlotsWithFilepaths = useCallback(
+    (filepaths: string[], preferredIndex: number | null): void => {
+      const accepted = filepaths
+        .map((filepath) => filepath.trim())
+        .filter((filepath) => filepath.length > 0);
+      if (accepted.length === 0) return;
+
+      const nextValues = createDrawingImageSlotValues(value);
+      let searchIndex = preferredIndex ?? 0;
+      accepted.forEach((filepath, fileIndex) => {
+        const targetIndex =
+          preferredIndex !== null && fileIndex === 0
+            ? preferredIndex
+            : nextValues.findIndex((entry, index) => index >= searchIndex && entry.length === 0);
+        if (targetIndex < 0 || targetIndex >= DRAWING_IMAGE_SLOT_COUNT) return;
+        nextValues[targetIndex] = filepath;
+        searchIndex = targetIndex + 1;
+      });
+      setSlotValues(nextValues);
+    },
+    [setSlotValues, value]
+  );
+
+  const uploadSlotFile = useCallback(
+    async (file: File, index: number): Promise<void> => {
+      try {
+        const uploaded = await uploadMutation.mutateAsync({
+          file,
+          folder: MILKBAR_CMS_VISUALISATION_FOLDER,
+          storageProfile: 'milkbarCms',
+        });
+        const filepath = uploaded.filepath.trim();
+        if (filepath.length === 0) {
+          toast('Upload completed without a media path.', { variant: 'error' });
+          return;
+        }
+        setSlotValue(index, filepath);
+        toast('Drawing image uploaded. Save the CMS snapshot to publish it.', {
+          variant: 'success',
+        });
+      } catch (error) {
+        toast(toErrorMessage(error), { variant: 'error' });
+      }
+    },
+    [setSlotValue, toast, uploadMutation]
+  );
+
+  const controller = useMemo<ProductImageManagerController>(
+    () => ({
+      imageSlots: slotValues.map(createDrawingManagedImageSlot),
+      imageLinks: slotValues,
+      imageBase64s: Array.from({ length: DRAWING_IMAGE_SLOT_COUNT }, () => ''),
+      setImageLinkAt: setSlotValue,
+      setImageBase64At: (): void => {
+        // Base64 storage is intentionally not used for arch-web CMS thumbnails.
+      },
+      handleSlotImageChange: (file: File | null, index: number): void => {
+        if (file === null) {
+          setSlotValue(index, '');
+          return;
+        }
+        void uploadSlotFile(file, index);
+      },
+      handleSlotDisconnectImage: (index: number): Promise<void> => {
+        setSlotValue(index, '');
+        return Promise.resolve();
+      },
+      setShowFileManager: (show: boolean): void => {
+        setActiveSlotIndex(null);
+        setMediaOpen(show);
+      },
+      setShowFileManagerForSlot: (index: number): void => {
+        setActiveSlotIndex(index);
+        setMediaOpen(true);
+      },
+      swapImageSlots: (fromIndex: number, toIndex: number): void => {
+        const nextValues = createDrawingImageSlotValues(value);
+        [nextValues[fromIndex], nextValues[toIndex]] = [nextValues[toIndex] ?? '', nextValues[fromIndex] ?? ''];
+        setSlotValues(nextValues);
+      },
+      setImagesReordering: (): void => {
+        // The shared image manager owns visual drag state.
+      },
+      isSlotImageLocked: (): boolean => uploadMutation.isPending,
+      slotImageLockedReason: 'Drawing image upload is in progress.',
+      slotLabels: Array.from(
+        { length: DRAWING_IMAGE_SLOT_COUNT },
+        (_, index) => `Drawing image ${index + 1}`
+      ),
+    }),
+    [setSlotValue, setSlotValues, slotValues, uploadMutation.isPending, uploadSlotFile, value]
+  );
+
+  return (
+    <FormField
+      label='Drawing thumbnails'
+      description='Shown below the “drag rooms to reassign programme” hint on arch-web.'
+    >
+      <div className='space-y-3'>
+        <ProductImageManager
+          controller={controller}
+          externalBaseUrl=''
+          chooseFileManagerButtonAriaLabel='Choose existing drawing images'
+          chooseFileManagerButtonLabel='Choose from media library'
+          onChooseFromFileManager={(): void => {
+            setActiveSlotIndex(null);
+            setMediaOpen(true);
+          }}
+          showDragHandle
+        />
+        <MediaLibraryPanel
+          open={mediaOpen}
+          onOpenChange={setMediaOpen}
+          selectionMode='multiple'
+          autoConfirmSelection
+          title='Drawing section images'
+          uploadButtonLabel='Upload drawing images'
+          uploadFolder={MILKBAR_CMS_VISUALISATION_FOLDER}
+          storageProfile='milkbarCms'
+          onSelect={(filepaths: string[]): void => {
+            fillSlotsWithFilepaths(filepaths, activeSlotIndex);
+            setMediaOpen(false);
+          }}
+        />
+      </div>
+    </FormField>
   );
 }
 
@@ -1328,6 +1575,10 @@ function ContentTab({
           <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
           <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
         </div>
+        <DrawingImageSlotsField
+          value={pageContent.drawing.thumbImages}
+          onChange={(thumbImages) => updateDrawing({ thumbImages })}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection id='philosophy' title='Philosophy' open={openSections.has('philosophy')} onToggle={toggleSection}>
@@ -1831,6 +2082,407 @@ function SeoPreviewCard({
   );
 }
 
+function ModelAssetLabel({ modelId }: { modelId: string }): React.JSX.Element {
+  const query = useAsset3DById(modelId);
+  const asset = query.data;
+
+  if (asset !== undefined) {
+    const name = asset.name !== '' ? asset.name : (asset.filename ?? modelId);
+    return (
+      <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-white/70'>
+        <Box className='size-3 shrink-0 text-blue-400/70' />
+        <span className='truncate'>{name}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className='min-w-0 truncate font-mono text-[10px] text-white/30'>
+      {modelId.slice(0, 8)}…
+    </span>
+  );
+}
+
+function ProjectAssetLibraryPickerModal({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (assetId: string) => void;
+  onClose: () => void;
+}): React.JSX.Element {
+  const [search, setSearch] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<Asset3DRecord | null>(null);
+  const [modelError, setModelError] = useState<string | null>(null);
+
+  const assetsQuery = useAssets3D({ search: search.trim().length > 0 ? search.trim() : undefined });
+  const assets: Asset3DRecord[] = assetsQuery.data ?? [];
+  const isLoading = assetsQuery.isPending;
+
+  const handleAssetClick = useCallback((asset: Asset3DRecord): void => {
+    setSelectedAsset(asset);
+    setModelError(null);
+  }, []);
+
+  const handleConfirm = useCallback((): void => {
+    if (selectedAsset === null) return;
+    onSelect(selectedAsset.id);
+    onClose();
+  }, [selectedAsset, onSelect, onClose]);
+
+  const modelUrl = selectedAsset !== null ? `/api/assets3d/${selectedAsset.id}/file` : '';
+
+  return (
+    <DetailModal isOpen title='Select 3D Asset from Library' onClose={onClose} size='xl'>
+      <div className='flex h-[640px] min-h-0 flex-col gap-3'>
+        <Input
+          placeholder='Search assets…'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className='flex min-h-0 flex-1 gap-4'>
+          <div className='flex w-60 shrink-0 flex-col gap-1.5 overflow-y-auto pr-1'>
+            {isLoading ? (
+              <p className='py-8 text-center text-xs text-muted-foreground'>Loading…</p>
+            ) : assets.length === 0 ? (
+              <p className='py-8 text-center text-xs text-muted-foreground'>No assets found.</p>
+            ) : (
+              assets.map((asset) => {
+                const displayName = asset.name !== '' ? asset.name : (asset.filename ?? asset.id);
+                const isSelected = selectedAsset?.id === asset.id;
+                return (
+                  <button
+                    key={asset.id}
+                    type='button'
+                    onClick={() => handleAssetClick(asset)}
+                    className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                      isSelected
+                        ? 'border-blue-500/60 bg-blue-500/10 text-white'
+                        : 'border-white/10 bg-white/5 text-muted-foreground hover:border-white/30 hover:text-white'
+                    }`}
+                  >
+                    <p className='truncate text-xs font-medium'>{displayName}</p>
+                    {asset.categoryId !== null && asset.categoryId !== undefined && asset.categoryId !== '' ? (
+                      <p className='mt-0.5 truncate text-[10px] text-blue-400/70'>{asset.categoryId}</p>
+                    ) : null}
+                    {asset.size !== undefined && asset.size > 0 ? (
+                      <p className='mt-0.5 text-[10px] text-white/30'>
+                        {asset.size < 1024 * 1024
+                          ? `${(asset.size / 1024).toFixed(1)} KB`
+                          : `${(asset.size / 1024 / 1024).toFixed(2)} MB`}
+                      </p>
+                    ) : null}
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <div className='relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-white/10 bg-black/40'>
+            {selectedAsset === null ? (
+              <div className='flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground'>
+                <Box className='size-10 opacity-30' />
+                <p className='text-sm'>Select an asset to preview</p>
+              </div>
+            ) : modelError !== null ? (
+              <div className='flex flex-1 flex-col items-center justify-center gap-2 text-red-400'>
+                <p className='text-sm'>Failed to load model</p>
+                <p className='text-xs text-muted-foreground'>{modelError}</p>
+              </div>
+            ) : (
+              <Viewer3DProvider key={selectedAsset.id}>
+                <Viewer3D
+                  modelUrl={modelUrl}
+                  onError={(err) => setModelError(err.message)}
+                  className='h-full w-full flex-1'
+                  allowUserControls
+                />
+              </Viewer3DProvider>
+            )}
+            {selectedAsset !== null ? (
+              <div className='border-t border-white/10 bg-black/20 px-3 py-1.5'>
+                <p className='truncate text-xs text-muted-foreground'>
+                  {selectedAsset.name !== '' ? selectedAsset.name : (selectedAsset.filename ?? '')}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className='flex items-center justify-end gap-2 border-t border-white/10 pt-3'>
+          <Button variant='ghost' size='sm' onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant='solid'
+            size='sm'
+            disabled={selectedAsset === null}
+            onClick={handleConfirm}
+            icon={<Library className='size-3.5' />}
+          >
+            Assign to Project
+          </Button>
+        </div>
+      </div>
+    </DetailModal>
+  );
+}
+
+function ProjectModel3DPreviewModal({
+  modelId,
+  projectName,
+  onClose,
+}: {
+  modelId: string;
+  projectName: string;
+  onClose: () => void;
+}): React.JSX.Element {
+  const [showSettings, setShowSettings] = useState(false);
+  const [modelError, setModelError] = useState<string | null>(null);
+  const modelUrl = `/api/assets3d/${modelId}/file`;
+
+  return (
+    <DetailModal isOpen title={`3D Preview — ${projectName}`} onClose={onClose} size='xl'>
+      <Viewer3DProvider>
+        <div className='flex h-[600px] min-h-0 flex-col'>
+          <div className='relative flex min-h-0 flex-1'>
+            <div className={`bg-black/40 ${showSettings ? 'flex-1 lg:w-2/3' : 'w-full flex-1'}`}>
+              {modelError !== null ? (
+                <div className='flex h-full items-center justify-center text-center text-red-400'>
+                  <div>
+                    <p>Failed to load 3D model</p>
+                    <p className='mt-2 text-sm text-gray-400'>{modelError}</p>
+                  </div>
+                </div>
+              ) : (
+                <Viewer3D
+                  modelUrl={modelUrl}
+                  onLoad={() => {}}
+                  onError={(error) => setModelError(error.message)}
+                  className='h-full w-full'
+                />
+              )}
+            </div>
+            {showSettings ? (
+              <div className='absolute bottom-0 right-0 top-0 z-10 w-full border-l border-border/60 bg-card/30 lg:static lg:w-1/3'>
+                <Viewer3DSettingsPanel />
+              </div>
+            ) : null}
+          </div>
+          <Viewer3DStatusInfo />
+          <div className='flex items-center justify-between border-t border-border/60 bg-muted/10 p-2'>
+            <Button
+              variant={showSettings ? 'secondary' : 'ghost'}
+              size='sm'
+              onClick={() => setShowSettings((v) => !v)}
+              className='h-8 text-xs'
+            >
+              <Settings2 className='mr-1.5 h-3.5 w-3.5' />
+              Settings
+            </Button>
+            <a href={`/api/assets3d/${modelId}/file`} download>
+              <Button variant='outline' size='sm' className='h-8 text-xs'>
+                <Download className='mr-1.5 h-3.5 w-3.5' />
+                Download
+              </Button>
+            </a>
+          </div>
+        </div>
+      </Viewer3DProvider>
+    </DetailModal>
+  );
+}
+
+function ProjectModel3DSection({
+  project,
+  projectIndex,
+  onUpdate,
+}: {
+  project: MilkbarProjectCmsRecord;
+  projectIndex: number;
+  onUpdate: (index: number, patch: Partial<MilkbarProjectCmsRecord>) => void;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [showInlineViewer, setShowInlineViewer] = useState(false);
+  const controlsRef = useRef<OrbitControlsHandle | null>(null);
+
+  const hasModel = project.modelAssetId !== undefined && project.modelAssetId !== '';
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file = event.target.files?.[0];
+      if (file === undefined) return;
+      setUploading(true);
+      setUploadProgress(0);
+      try {
+        const record = await uploadAsset3DFile(
+          file,
+          { name: `${project.code} — ${project.name}`, storageProfile: 'milkbarCms' },
+          (loaded, total) => {
+            if (total !== undefined) {
+              setUploadProgress(Math.round((loaded / total) * 100));
+            }
+          }
+        );
+        onUpdate(projectIndex, { modelAssetId: record.id });
+        toast({ title: '3D model uploaded', description: record.filename ?? file.name });
+      } catch (err) {
+        toast({ title: 'Upload failed', description: toErrorMessage(err), variant: 'destructive' });
+      } finally {
+        setUploading(false);
+        setUploadProgress(null);
+        if (fileInputRef.current !== null) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [project.code, project.name, projectIndex, onUpdate, toast]
+  );
+
+  const handleSyncCamera = useCallback((): void => {
+    const ctrl = controlsRef.current;
+    if (ctrl === null) return;
+    const pos = ctrl.object.position;
+    const tgt = ctrl.target;
+    onUpdate(projectIndex, {
+      cameraPosition: { x: Math.round(pos.x * 100) / 100, y: Math.round(pos.y * 100) / 100, z: Math.round(pos.z * 100) / 100 },
+      cameraTarget: { x: Math.round(tgt.x * 100) / 100, y: Math.round(tgt.y * 100) / 100, z: Math.round(tgt.z * 100) / 100 },
+    });
+    toast('Camera position synced to CMS fields.', { variant: 'success' });
+  }, [controlsRef, onUpdate, projectIndex, toast]);
+
+  return (
+    <>
+      <div className='flex flex-wrap items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2'>
+        <Box className='size-4 shrink-0 text-muted-foreground' />
+        <span className='text-xs font-medium text-muted-foreground'>3D Model</span>
+        {hasModel ? (
+          <>
+            <ModelAssetLabel modelId={project.modelAssetId as string} />
+            <Button
+              type='button'
+              size='sm'
+              variant={showInlineViewer ? 'secondary' : 'ghost'}
+              className='h-7 px-2 text-xs'
+              icon={<Eye className='size-3.5' />}
+              onClick={() => setShowInlineViewer((v) => !v)}
+            >
+              {showInlineViewer ? 'Hide 3D' : 'Show 3D'}
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='ghost'
+              className='h-7 px-2 text-xs'
+              icon={<Eye className='size-3.5' />}
+              onClick={() => setPreviewOpen(true)}
+            >
+              Full Preview
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='ghost'
+              className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
+              icon={<X className='size-3.5' />}
+              onClick={() => {
+                onUpdate(projectIndex, { modelAssetId: undefined });
+                setShowInlineViewer(false);
+              }}
+            >
+              Remove
+            </Button>
+          </>
+        ) : (
+          <span className='text-xs text-white/30'>No model attached</span>
+        )}
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.glb,.gltf'
+          className='hidden'
+          onChange={handleFileChange}
+        />
+        <Button
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='h-7 px-2 text-xs'
+          disabled={uploading}
+          icon={<Upload className='size-3.5' />}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading
+            ? uploadProgress !== null
+              ? `${uploadProgress}%`
+              : 'Uploading…'
+            : hasModel
+              ? 'Replace'
+              : 'Upload .glb / .gltf'}
+        </Button>
+        <Button
+          type='button'
+          size='sm'
+          variant={hasModel ? 'ghost' : 'secondary'}
+          className='h-7 px-2 text-xs'
+          icon={<Library className='size-3.5' />}
+          onClick={() => setPickerOpen(true)}
+        >
+          From Library
+        </Button>
+      </div>
+      {showInlineViewer && hasModel ? (
+        <div className='overflow-hidden rounded-md border border-white/10 bg-black/40'>
+          <Viewer3DProvider key={project.modelAssetId}>
+            <div className='relative h-72'>
+              <Viewer3D
+                modelUrl={`/api/assets3d/${project.modelAssetId as string}/file`}
+                settings={{ autoRotate: false, enableContactShadows: true, backgroundColor: '#0d0d14' }}
+                className='h-full w-full'
+                allowUserControls
+                controlsRef={controlsRef}
+              />
+            </div>
+            <div className='flex items-center justify-between border-t border-white/10 bg-black/20 px-3 py-1.5'>
+              <span className='text-[10px] text-muted-foreground'>
+                Orbit to frame — then sync position to CMS fields
+              </span>
+              <Button
+                type='button'
+                size='sm'
+                variant='secondary'
+                className='h-7 px-2 text-xs'
+                icon={<Camera className='size-3.5' />}
+                onClick={handleSyncCamera}
+              >
+                Sync Camera
+              </Button>
+            </div>
+          </Viewer3DProvider>
+        </div>
+      ) : null}
+      {previewOpen && hasModel ? (
+        <ProjectModel3DPreviewModal
+          modelId={project.modelAssetId as string}
+          projectName={project.name.length > 0 ? project.name : project.code}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
+      {pickerOpen ? (
+        <ProjectAssetLibraryPickerModal
+          onSelect={(assetId) => {
+            onUpdate(projectIndex, { modelAssetId: assetId });
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
 function ProjectsTab({
   projects,
   onAdd,
@@ -1956,6 +2608,7 @@ function ProjectsTab({
               onChange={(z) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, z: toOrderNumber(z) } })}
             />
           </div>
+          <ProjectModel3DSection project={project} projectIndex={index} onUpdate={onUpdate} />
         </div>
       ))}
     </FormSection>
@@ -2290,11 +2943,14 @@ function StatusTab({
           />
           <SourceStatusCard
             title='Milkbardesigners cloud'
-            subtitle='Later target for Database Manager sync'
+            subtitle='Push target — mirror of local runtime'
             status={snapshot?.sourceStatus.runtimeCloud}
           />
         </div>
       </FormSection>
+      <div className='lg:col-span-2'>
+        <PushToCloudPanel cloudConfigured={snapshot?.sourceStatus.runtimeCloud.configured === true} />
+      </div>
       <FormSection title='Record Counts'>
         <div className='grid gap-3 sm:grid-cols-2'>
           <CountBox label='Source projects' value={snapshot?.counts.sourceOfTruth.projects ?? 0} />
@@ -2370,5 +3026,127 @@ function CountBox({ label, value }: { label: string; value: number }): React.JSX
       <div className='text-2xl font-semibold text-white'>{value}</div>
       <div className='text-xs uppercase tracking-wide text-muted-foreground'>{label}</div>
     </div>
+  );
+}
+
+type PushPhase = 'idle' | 'pushing' | 'done' | 'error';
+
+function PushToCloudPanel({
+  cloudConfigured,
+}: {
+  cloudConfigured: boolean;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const [phase, setPhase] = useState<PushPhase>('idle');
+  const [lastOutcome, setLastOutcome] = useState<PushToCloudOutcome | null>(null);
+  const [queueActive, setQueueActive] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPoll = useCallback(() => {
+    if (pollRef.current !== null) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const startPoll = useCallback(() => {
+    stopPoll();
+    pollRef.current = setInterval(() => {
+      void fetchPushQueueHealth().then((res) => {
+        const active = res.health.activeCount > 0 || res.health.waitingCount > 0;
+        setQueueActive(active);
+        if (!active) {
+          stopPoll();
+          setPhase('done');
+        }
+      }).catch(() => {
+        stopPoll();
+      });
+    }, 1800);
+  }, [stopPoll]);
+
+  useEffect(() => () => stopPoll(), [stopPoll]);
+
+  const handlePush = useCallback(async () => {
+    if (!cloudConfigured) return;
+    setPhase('pushing');
+    setLastOutcome(null);
+    try {
+      const outcome = await triggerPushToCloud();
+      setLastOutcome(outcome);
+      if (!outcome.ok) {
+        setPhase('error');
+        toast({ title: 'Push failed', description: outcome.error ?? 'Unknown error', variant: 'destructive' });
+        return;
+      }
+      if (outcome.mode === 'queue') {
+        setQueueActive(true);
+        startPoll();
+      } else {
+        setPhase('done');
+        toast({ title: 'Push complete', description: `Inline: ${outcome.result?.projectCount ?? 0} projects, ${outcome.result?.serviceCount ?? 0} services.` });
+      }
+    } catch (err) {
+      setPhase('error');
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Push failed', description: msg, variant: 'destructive' });
+    }
+  }, [cloudConfigured, startPoll, toast]);
+
+  const isRunning = phase === 'pushing' || (phase === 'done' && queueActive);
+  const buttonLabel = isRunning ? 'Pushing…' : 'Push to Cloud';
+
+  return (
+    <FormSection
+      title='Push to Cloud'
+      subtitle='Mirror the local runtime database to the cloud runtime database via Redis queue.'
+    >
+      <div className='space-y-3'>
+        {!cloudConfigured ? (
+          <p className='text-xs text-muted-foreground'>
+            Cloud runtime is not configured. Set <code>ARCH_MONGODB_CLOUD_URI</code> and{' '}
+            <code>ARCH_MONGODB_CLOUD_DB</code> to enable this action.
+          </p>
+        ) : null}
+        <div className='flex items-center gap-3'>
+          <Button
+            onClick={() => { void handlePush(); }}
+            disabled={!cloudConfigured || isRunning}
+            size='sm'
+          >
+            <Upload className='mr-2 h-3.5 w-3.5' />
+            {buttonLabel}
+          </Button>
+          {phase === 'done' && !queueActive ? (
+            <Badge variant='success'>Done</Badge>
+          ) : null}
+          {phase === 'error' ? (
+            <Badge variant='destructive'>Failed</Badge>
+          ) : null}
+          {isRunning ? (
+            <span className='text-xs text-muted-foreground animate-pulse'>Queued in Redis…</span>
+          ) : null}
+        </div>
+        {lastOutcome !== null ? (
+          <div className='rounded-md border border-white/10 p-3 space-y-1 text-xs text-muted-foreground'>
+            <div>Mode: <span className='text-white'>{lastOutcome.mode}</span></div>
+            {lastOutcome.jobId ? <div>Job ID: <span className='font-mono text-white'>{lastOutcome.jobId}</span></div> : null}
+            {lastOutcome.result ? (
+              <>
+                <div>Projects pushed: <span className='text-white'>{lastOutcome.result.projectCount}</span></div>
+                <div>Services pushed: <span className='text-white'>{lastOutcome.result.serviceCount}</span></div>
+                <div>Completed at: <span className='text-white'>{lastOutcome.result.updatedAt}</span></div>
+              </>
+            ) : null}
+            {lastOutcome.error ? <div className='text-rose-400'>{lastOutcome.error}</div> : null}
+            {lastOutcome.triggeredAt ? <div>Triggered: <span className='text-white'>{lastOutcome.triggeredAt}</span></div> : null}
+          </div>
+        ) : null}
+        <p className='text-xs text-muted-foreground'>
+          Copies <code>page_content</code>, <code>projects</code>, and <code>services</code> from local
+          runtime to cloud. Runs as a BullMQ job when Redis is available; falls back to inline otherwise.
+        </p>
+      </div>
+    </FormSection>
   );
 }

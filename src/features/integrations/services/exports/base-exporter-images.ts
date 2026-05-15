@@ -66,6 +66,8 @@ const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([
 ]);
 
 const BASE_IMAGE_MAX_BYTES = 1_900_000;
+const BASE_IMAGE_MAX_INPUT_BYTES = 25_000_000;
+const BASE_IMAGE_MAX_EXPORT_COUNT = 16;
 const BASE_IMAGE_CLAMP_DIMENSIONS = [1600, 1400, 1200, 1000, 900, 800, 700, 600];
 const BASE_IMAGE_CLAMP_QUALITIES = [85, 75, 65, 55, 45];
 
@@ -116,6 +118,152 @@ const EXTENSION_MIME_TYPES = new Map<string, string>([
 const inferMimeFromExtension = (extension?: string | null): string | null => {
   if (!extension) return null;
   return EXTENSION_MIME_TYPES.get(extension) ?? null;
+};
+
+const parseContentLength = (value: string | null): number | null => {
+  if (value === null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const logOversizedInput = (
+  diagnostics: ImageExportLogger | undefined,
+  input: {
+    source: string;
+    sourceType: 'slot' | 'link' | 'mapped' | 'unknown';
+    index?: number;
+    bytes: number;
+    limit: number;
+  }
+): void => {
+  diagnostics?.log('Skipping image: input exceeds Base export processing limit', {
+    source: input.source,
+    sourceType: input.sourceType,
+    index: input.index,
+    bytes: input.bytes,
+    maxBytes: input.limit,
+  });
+};
+
+const normalizeDataUriImage = (
+  value: string,
+  options: {
+    diagnostics?: ImageExportLogger | undefined;
+    sourceType: 'slot' | 'link' | 'mapped' | 'unknown';
+    index?: number;
+  }
+): { buffer: Buffer; contentType: string | null } | null => {
+  const commaIndex = value.indexOf(',');
+  if (commaIndex < 0) return null;
+
+  const header = value.slice(0, commaIndex);
+  const payload = value.slice(commaIndex + 1);
+  const isBase64 = /;base64(?:;|$)/i.test(header);
+  const contentType = normalizeMimeType(header.slice('data:'.length).split(';')[0] ?? null);
+  const estimatedBytes = isBase64
+    ? Math.floor((payload.length * 3) / 4)
+    : Buffer.byteLength(payload, 'utf8');
+  if (estimatedBytes > BASE_IMAGE_MAX_INPUT_BYTES) {
+    logOversizedInput(options.diagnostics, {
+      source: 'data-uri',
+      sourceType: options.sourceType,
+      index: options.index,
+      bytes: estimatedBytes,
+      limit: BASE_IMAGE_MAX_INPUT_BYTES,
+    });
+    return null;
+  }
+
+  const buffer = isBase64
+    ? Buffer.from(payload, 'base64')
+    : Buffer.from(decodeURIComponent(payload), 'utf8');
+  return { buffer, contentType };
+};
+
+const readExternalImageBuffer = async (
+  url: string,
+  response: Response,
+  options: {
+    diagnostics?: ImageExportLogger | undefined;
+    sourceType: 'slot' | 'link' | 'mapped' | 'unknown';
+    index?: number;
+  }
+): Promise<Buffer | null> => {
+  const contentLength = parseContentLength(response.headers.get('content-length'));
+  if (contentLength !== null && contentLength > BASE_IMAGE_MAX_INPUT_BYTES) {
+    logOversizedInput(options.diagnostics, {
+      source: url,
+      sourceType: options.sourceType,
+      index: options.index,
+      bytes: contentLength,
+      limit: BASE_IMAGE_MAX_INPUT_BYTES,
+    });
+    return null;
+  }
+
+  const responseBody = response.body as ReadableStream<Uint8Array> | null;
+  if (responseBody === null) {
+    const arrayBuffer = await response.arrayBuffer();
+    if (arrayBuffer.byteLength > BASE_IMAGE_MAX_INPUT_BYTES) {
+      logOversizedInput(options.diagnostics, {
+        source: url,
+        sourceType: options.sourceType,
+        index: options.index,
+        bytes: arrayBuffer.byteLength,
+        limit: BASE_IMAGE_MAX_INPUT_BYTES,
+      });
+      return null;
+    }
+    return Buffer.from(arrayBuffer);
+  }
+
+  const reader = responseBody.getReader();
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
+  const readNextChunk = async (): Promise<Buffer | null> => {
+    const { done, value } = await reader.read();
+    if (done) return Buffer.concat(chunks, totalBytes);
+    totalBytes += value.byteLength;
+    if (totalBytes > BASE_IMAGE_MAX_INPUT_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      logOversizedInput(options.diagnostics, {
+        source: url,
+        sourceType: options.sourceType,
+        index: options.index,
+        bytes: totalBytes,
+        limit: BASE_IMAGE_MAX_INPUT_BYTES,
+      });
+      return null;
+    }
+    chunks.push(Buffer.from(value));
+    return readNextChunk();
+  };
+
+  return readNextChunk();
+};
+
+const readLocalImageBuffer = async (
+  filepath: string,
+  options: {
+    diagnostics?: ImageExportLogger | undefined;
+    sourceType: 'slot' | 'link' | 'mapped' | 'unknown';
+    index?: number;
+  }
+): Promise<Buffer | null> => {
+  const diskPath = getDiskPathFromPublicPath(filepath);
+  const stat = await fs.stat(diskPath);
+  if (stat.size > BASE_IMAGE_MAX_INPUT_BYTES) {
+    logOversizedInput(options.diagnostics, {
+      source: filepath,
+      sourceType: options.sourceType,
+      index: options.index,
+      bytes: stat.size,
+      limit: BASE_IMAGE_MAX_INPUT_BYTES,
+    });
+    return null;
+  }
+  return fs.readFile(diskPath);
 };
 
 const getImageSupportStatus = (
@@ -417,7 +565,17 @@ const imageToBase64DataUri = async (
     let metadataWidth: number | null = null;
     let metadataHeight: number | null = null;
 
-    if (hasScheme(filepath)) {
+    if (filepath.trim().toLowerCase().startsWith('data:')) {
+      const dataUri = normalizeDataUriImage(filepath, {
+        diagnostics,
+        sourceType,
+        index,
+      });
+      if (dataUri === null) return null;
+      buffer = dataUri.buffer;
+      contentType = dataUri.contentType ?? contentType;
+      originalBytes = buffer.length;
+    } else if (hasScheme(filepath)) {
       const response = await fetch(filepath);
       if (!response.ok) {
         diagnostics?.log('Failed to fetch external image', {
@@ -432,12 +590,22 @@ const imageToBase64DataUri = async (
       if (headerType) {
         contentType = headerType;
       }
-      const arrayBuffer = await response.arrayBuffer();
-      buffer = Buffer.from(arrayBuffer);
+      const fetchedBuffer = await readExternalImageBuffer(filepath, response, {
+        diagnostics,
+        sourceType,
+        index,
+      });
+      if (fetchedBuffer === null) return null;
+      buffer = fetchedBuffer;
       originalBytes = buffer.length;
     } else {
-      const diskPath = getDiskPathFromPublicPath(filepath);
-      buffer = await fs.readFile(diskPath);
+      const localBuffer = await readLocalImageBuffer(filepath, {
+        diagnostics,
+        sourceType,
+        index,
+      });
+      if (localBuffer === null) return null;
+      buffer = localBuffer;
       originalBytes = buffer.length;
     }
 
@@ -657,111 +825,102 @@ const imageToBase64DataUri = async (
   }
 };
 
-function createSemaphore(limit: number): {
-  acquire: () => Promise<void>;
-  release: () => void;
-} {
-  let running = 0;
-  const waiting: (() => void)[] = [];
-  return {
-    async acquire(): Promise<void> {
-      if (running >= limit) {
-        await new Promise<void>((resolve) => waiting.push(resolve));
-      }
-      running++;
-    },
-    release(): void {
-      running--;
-      waiting.shift()?.();
-    },
-  };
-}
+type BaseImageExportOptions = {
+  diagnostics?: ImageExportLogger | undefined;
+  outputMode?: ImageBase64Mode | undefined;
+  transform?: ImageTransformOptions | null;
+  concurrencyLimit?: number | undefined;
+  signal?: AbortSignal | undefined;
+  cachedImages?: Record<string, string> | undefined;
+};
 
-const DEFAULT_IMAGE_CONCURRENCY = 3;
+type BaseImageExportCandidate = {
+  filepath: string;
+  contentTypeHint: string | null;
+  sourceType: 'slot' | 'link';
+  index: number;
+};
+
+const isExportableImagePath = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const buildBaseImageExportCandidates = (product: ProductWithImages): BaseImageExportCandidate[] => {
+  const slotCandidates = product.images.flatMap<BaseImageExportCandidate>(
+    (imageSlot, slotIndex) => {
+      const filepath = imageSlot.imageFile.filepath;
+      if (!isExportableImagePath(filepath)) return [];
+      return [
+        {
+          filepath,
+          contentTypeHint: imageSlot.imageFile.mimetype,
+          sourceType: 'slot',
+          index: slotIndex,
+        },
+      ];
+    }
+  );
+  const processedSlotPaths = new Set(slotCandidates.map((candidate) => candidate.filepath));
+  const linkCandidates = (product.imageLinks ?? []).flatMap<BaseImageExportCandidate>(
+    (link, linkIndex) => {
+      if (!isExportableImagePath(link) || processedSlotPaths.has(link)) return [];
+      return [{ filepath: link, contentTypeHint: null, sourceType: 'link', index: linkIndex }];
+    }
+  );
+  return [...slotCandidates, ...linkCandidates];
+};
+
+const createBaseImageConversionOptions = (
+  candidate: BaseImageExportCandidate,
+  options: BaseImageExportOptions | undefined
+): NonNullable<Parameters<typeof imageToBase64DataUri>[1]> => {
+  const imageOptions: NonNullable<Parameters<typeof imageToBase64DataUri>[1]> = {
+    contentTypeHint: candidate.contentTypeHint,
+    diagnostics: options?.diagnostics,
+    sourceType: candidate.sourceType,
+    index: candidate.index,
+  };
+  if (options?.outputMode !== undefined) imageOptions.outputMode = options.outputMode;
+  if (options?.transform !== undefined && options.transform !== null) {
+    imageOptions.transform = options.transform;
+  }
+  return imageOptions;
+};
+
+const convertBaseImageExportCandidate = async (
+  candidate: BaseImageExportCandidate,
+  options: BaseImageExportOptions | undefined
+): Promise<string | null> => {
+  if (options?.signal?.aborted === true) {
+    throw new Error('Image processing aborted');
+  }
+  return imageToBase64DataUri(
+    candidate.filepath,
+    createBaseImageConversionOptions(candidate, options)
+  );
+};
 
 /**
  * Get product images as base64 data URIs
  */
 export const getProductImagesAsBase64 = async (
   product: ProductWithImages,
-  options?: {
-    diagnostics?: ImageExportLogger | undefined;
-    outputMode?: ImageBase64Mode | undefined;
-    transform?: ImageTransformOptions | null;
-    concurrencyLimit?: number | undefined;
-    signal?: AbortSignal | undefined;
-    cachedImages?: Record<string, string> | undefined;
-  }
+  options?: BaseImageExportOptions
 ): Promise<Record<string, string>> => {
-  if (options?.cachedImages) {
+  if (options?.cachedImages !== undefined) {
     return options.cachedImages;
   }
 
   const images: Record<string, string> = {};
-  const imageSlots = product.images || [];
-  const imageLinks = product.imageLinks || [];
-  const semaphore = createSemaphore(options?.concurrencyLimit ?? DEFAULT_IMAGE_CONCURRENCY);
-
-  const runWithLimit = async <T>(fn: () => Promise<T>): Promise<T> => {
-    if (options?.signal?.aborted) {
-      throw new Error('Image processing aborted');
-    }
-    await semaphore.acquire();
-    try {
-      return await fn();
-    } finally {
-      semaphore.release();
-    }
-  };
-
-  const slotTasks = imageSlots.map(async (imageSlot, slotIndex) => {
-    const filepath = imageSlot.imageFile?.filepath;
-    if (!filepath) return null;
-
-    return runWithLimit(async () => {
-      const base64 = await imageToBase64DataUri(filepath, {
-        contentTypeHint: imageSlot.imageFile?.mimetype ?? null,
-        diagnostics: options?.diagnostics,
-        sourceType: 'slot',
-        index: slotIndex,
-        ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
-        ...(options?.transform ? { transform: options.transform } : {}),
-      });
-      return base64 ? { base64, originalIndex: slotIndex, type: 'slot' } : null;
-    });
-  });
-
-  const linkTasks = imageLinks.map(async (link, linkIndex) => {
-    if (!link?.trim()) return null;
-
-    // Skip if we already have this as an uploaded image
-    const alreadyProcessed = imageSlots.some(
-      (slot: { imageFile?: { filepath?: string | null } | null }) =>
-        slot.imageFile?.filepath === link
-    );
-    if (alreadyProcessed) return null;
-
-    return runWithLimit(async () => {
-      const base64 = await imageToBase64DataUri(link, {
-        diagnostics: options?.diagnostics,
-        sourceType: 'link',
-        index: linkIndex,
-        ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
-        ...(options?.transform ? { transform: options.transform } : {}),
-      });
-      return base64 ? { base64, originalIndex: linkIndex, type: 'link' } : null;
-    });
-  });
-
-  const results = await Promise.all([...slotTasks, ...linkTasks]);
-
-  let outputIndex = 0;
-  for (const result of results) {
-    if (result?.base64) {
-      images[String(outputIndex)] = result.base64;
-      outputIndex++;
-    }
-  }
-
+  const candidates = buildBaseImageExportCandidates(product);
+  await candidates.reduce<Promise<void>>(
+    (previous, candidate) =>
+      previous.then(async () => {
+        if (Object.keys(images).length >= BASE_IMAGE_MAX_EXPORT_COUNT) return;
+        const base64 = await convertBaseImageExportCandidate(candidate, options);
+        if (base64 === null || base64.length === 0) return;
+        images[String(Object.keys(images).length)] = base64;
+      }),
+    Promise.resolve()
+  );
   return images;
 };

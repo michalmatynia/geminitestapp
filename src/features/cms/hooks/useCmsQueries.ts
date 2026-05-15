@@ -38,6 +38,7 @@ import type {
 } from '@/shared/contracts/cms';
 import type { IdInputDto } from '@/shared/contracts/base';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import {
   useDeleteMutationV2,
@@ -541,20 +542,46 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
   });
 }
 
+const appendOptionalUploadField = (
+  formData: FormData,
+  key: string,
+  value: string | null | undefined
+): void => {
+  const trimmed = value?.trim() ?? '';
+  if (trimmed.length > 0) {
+    formData.append(key, trimmed);
+  }
+};
+
 export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
-  { file: File; onProgress?: (loaded: number, total?: number) => void }
+  {
+    file: File;
+    onProgress?: (loaded: number, total?: number) => void;
+    folder?: string | null;
+    storageProfile?: FileStorageProfile;
+  }
   > {
   return useMutationV2({
     mutationFn: async ({
       file,
       onProgress,
+      folder,
+      storageProfile,
     }: {
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
+      folder?: string | null;
+      storageProfile?: FileStorageProfile;
     }): Promise<ImageFileRecord> => {
       const formData = new FormData();
       formData.append('file', file);
+      appendOptionalUploadField(formData, 'folder', folder);
+      appendOptionalUploadField(
+        formData,
+        'storageProfile',
+        storageProfile !== 'default' ? storageProfile : undefined
+      );
       const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
       const result = await uploadWithProgress<ImageFileRecord>('/api/cms/media', {
         formData,
@@ -562,7 +589,7 @@ export function useUploadCmsMedia(): CreateMutation<
       });
       if (!result.ok) {
         const data = result.data as { error?: string };
-        throw new Error(data?.error ?? 'Upload failed');
+        throw new Error(data.error ?? 'Upload failed');
       }
       return result.data;
     },

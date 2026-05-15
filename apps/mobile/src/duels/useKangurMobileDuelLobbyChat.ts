@@ -40,40 +40,59 @@ function appendMessage(
   };
 }
 
-function getChatQueryConfig(
-  isAuthenticated: boolean,
-  queryKey: readonly unknown[],
-  apiClient: DuelApiClient
-) {
-  return {
-    enabled: isAuthenticated,
-    queryKey,
-    queryFn: async (): Promise<KangurDuelLobbyChatListResponse> =>
-      await apiClient.listDuelLobbyChat({ limit: KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT }, { cache: 'no-store' }),
-    refetchInterval: 4_000,
-    staleTime: 8_000,
-    meta: {
-      source: 'kangur.mobile.duels.lobby-chat',
-      operation: 'list' as const,
-      resource: 'kangur.mobile.duels.lobby-chat',
-      queryKey,
-      description: 'Loads Kangur mobile duel lobby chat messages.',
-      tags: ['kangur-mobile', 'duels', 'chat'],
-    },
-  };
-}
-
 function getLearnerIdentity(user: KangurAuthSession['user']): string {
   return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
+}
+
+function useDuelLobbyChatSender({
+  refetchChat,
+  queryClient,
+  queryKey,
+  typedApiClient,
+}: {
+  refetchChat: () => Promise<unknown>;
+  queryClient: ReturnType<typeof useQueryClient>;
+  queryKey: readonly unknown[];
+  typedApiClient: DuelApiClient;
+}): {
+  isSending: boolean;
+  sendMessage: (message: string) => Promise<boolean>;
+} {
+  const [isSending, setIsSending] = useState(false);
+  const sendMessage = useCallback(
+    async (message: string): Promise<boolean> => {
+      const trimmed = message.trim();
+      if (trimmed === '') return false;
+      setIsSending(true);
+      try {
+        const response = await typedApiClient.sendDuelLobbyChatMessage(
+          { message: trimmed },
+          { cache: 'no-store' }
+        );
+        queryClient.setQueryData<KangurDuelLobbyChatListResponse>(queryKey, (cur) => {
+          const fallback = { messages: [], nextCursor: null, serverTime: new Date().toISOString() };
+          return appendMessage(cur ?? fallback, response.message);
+        });
+        return true;
+      } catch {
+        await refetchChat();
+        return false;
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [queryClient, queryKey, refetchChat, typedApiClient]
+  );
+
+  return { isSending, sendMessage };
 }
 
 export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResult => {
   const { copy } = useKangurMobileI18n();
   const queryClient = useQueryClient();
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
-  const typedApiClient = apiClient as DuelApiClient;
+  const typedApiClient = apiClient as unknown as DuelApiClient;
   const { isLoadingAuth, session } = useKangurMobileAuth();
-  const [isSending, setIsSending] = useState(false);
 
   const { status, user } = session;
   const isAuthenticated = status === 'authenticated';
@@ -84,28 +103,32 @@ export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResu
     [apiBaseUrl, user]
   );
 
-  const chatQuery = useKangurMobileQueryV2<KangurDuelLobbyChatListResponse>(
-    getChatQueryConfig(isAuthenticated, queryKey, typedApiClient)
-  );
+  const chatQuery = useKangurMobileQueryV2<KangurDuelLobbyChatListResponse>({
+    enabled: isAuthenticated,
+    queryKey,
+    queryFn: async (): Promise<KangurDuelLobbyChatListResponse> =>
+      await typedApiClient.listDuelLobbyChat(
+        { limit: KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT },
+        { cache: 'no-store' }
+      ),
+    refetchInterval: 4_000,
+    staleTime: 8_000,
+    meta: {
+      source: 'kangur.mobile.duels.lobby-chat',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.lobby-chat',
+      queryKey,
+      description: 'Loads Kangur mobile duel lobby chat messages.',
+      tags: ['kangur-mobile', 'duels', 'chat'],
+    },
+  });
 
-  const sendMessage = useCallback(async (message: string): Promise<boolean> => {
-    const trimmed = message.trim();
-    if (trimmed === '') return false;
-    setIsSending(true);
-    try {
-      const response = await typedApiClient.sendDuelLobbyChatMessage({ message: trimmed }, { cache: 'no-store' });
-      queryClient.setQueryData<KangurDuelLobbyChatListResponse>(queryKey, (cur) => {
-        const fallback = { messages: [], nextCursor: null, serverTime: new Date().toISOString() };
-        return appendMessage(cur ?? fallback, response.message);
-      });
-      return true;
-    } catch {
-      await chatQuery.refetch();
-      return false;
-    } finally {
-      setIsSending(false);
-    }
-  }, [typedApiClient, queryClient, queryKey, chatQuery]);
+  const { isSending, sendMessage } = useDuelLobbyChatSender({
+    refetchChat: chatQuery.refetch,
+    queryClient,
+    queryKey,
+    typedApiClient,
+  });
 
   return {
     error: resolveMobileDuelErrorMessage({

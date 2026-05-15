@@ -118,3 +118,28 @@ curl -I https://sparksofsindri.com/uploads/products/SKU/file.webp
 Expected: `200` with `Content-Type: image/...`. A `200` with
 `Content-Type: text/html` means the app is serving a fallback page instead of
 the uploaded file.
+
+## Milkbar Designers CMS Media
+
+Milkbar Designers CMS uploads use the same FastComet upload endpoint and token,
+but the app rewrites public upload URLs to:
+
+```text
+https://milkbardesigners.com/uploads/cms/...
+```
+
+For this to work, `milkbardesigners.com` must serve the same FastComet
+`public_html/uploads` tree, or the PHP upload endpoint/config must be deployed
+under the Milkbar domain with the same credentials.
+
+The app writes Milkbar CMS files to these public paths:
+
+```text
+/uploads/cms/visualisation  # images
+/uploads/cms/models         # .glb / .gltf assets
+```
+
+The FastComet `api/uploads/config.php` used by that endpoint must allow 3D
+model extensions and MIME types. The bundled `config.example.php` allows
+`glb`, `gltf`, `model/gltf-binary`, `model/gltf+json`, and the common
+`application/octet-stream` fallback, with a 100MB maximum file size.

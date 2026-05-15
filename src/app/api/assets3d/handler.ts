@@ -2,8 +2,13 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
+import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import {
+  fileStorageProfileValues,
+  type FileStorageProfile,
+} from '@/shared/lib/files/constants';
 import {
   optionalBooleanQuerySchema,
   optionalCsvQueryStringArray,
@@ -30,19 +35,63 @@ type Asset3DListQuery = {
   tags: string[];
 };
 
-async function listAssets3DCached(query: Asset3DListQuery) {
+const readStorageProfile = (value: FormDataEntryValue | null): FileStorageProfile => {
+  if (typeof value !== 'string' || value.trim().length === 0) return 'default';
+  const trimmed = value.trim();
+  if (fileStorageProfileValues.includes(trimmed as FileStorageProfile)) {
+    return trimmed as FileStorageProfile;
+  }
+  throw badRequestError('Invalid storage profile.', { storageProfile: trimmed });
+};
+
+const toAssetListFilters = (query: Asset3DListQuery): Asset3DListFilters => {
+  const filters: Asset3DListFilters = {};
+  const textFilters: Array<[keyof Pick<Asset3DListFilters, 'filename' | 'categoryId' | 'search'>, string | null]> = [
+    ['filename', query.filename],
+    ['categoryId', query.category],
+    ['search', query.search],
+  ];
+  textFilters.forEach(([key, value]) => {
+    if (value !== null && value.length > 0) {
+      filters[key] = value;
+    }
+  });
+  if (query.isPublic !== null) filters.isPublic = query.isPublic;
+  if (query.tags.length > 0) filters.tags = query.tags;
+  return filters;
+};
+
+async function listAssets3DCached(query: Asset3DListQuery): Promise<Asset3DRecord[]> {
   'use cache';
   applyCacheLife('swr60');
 
   const repository = getAsset3DRepository();
-  return repository.listAssets3D({
-    ...(query.filename ? { filename: query.filename } : {}),
-    ...(query.category ? { category: query.category } : {}),
-    ...(query.search ? { search: query.search } : {}),
-    ...(query.isPublic !== null ? { isPublic: query.isPublic } : {}),
-    ...(query.tags.length > 0 ? { tags: query.tags } : {}),
-  });
+  return repository.listAssets3D(toAssetListFilters(query));
 }
+
+const readOptionalFormText = (formData: FormData, key: string): string | null => {
+  const value = formData.get(key);
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const buildAssetUploadOptions = (formData: FormData): NonNullable<Parameters<typeof uploadAsset3D>[1]> => {
+  const name = readOptionalFormText(formData, 'name');
+  const description = readOptionalFormText(formData, 'description');
+  const category = readOptionalFormText(formData, 'category');
+  const tagsStr = readOptionalFormText(formData, 'tags');
+  const isPublicStr = readOptionalFormText(formData, 'isPublic');
+  const options: NonNullable<Parameters<typeof uploadAsset3D>[1]> = {
+    isPublic: isPublicStr === 'true',
+    storageProfile: readStorageProfile(formData.get('storageProfile')),
+  };
+  if (name !== null) options.name = name;
+  if (description !== null) options.description = description;
+  if (category !== null) options.category = category;
+  if (tagsStr !== null) options.tags = tagsStr.split(',').filter(Boolean);
+  return options;
+};
 
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
@@ -71,13 +120,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const file = formData.get('file') as File | null;
-  const name = formData.get('name') as string | null;
-  const description = formData.get('description') as string | null;
-  const category = formData.get('category') as string | null;
-  const tagsStr = formData.get('tags') as string | null;
-  const isPublicStr = formData.get('isPublic') as string | null;
-
-  if (!file) {
+  if (file === null) {
     throw badRequestError('No file provided');
   }
 
@@ -93,13 +136,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError(validation.error ?? 'Invalid file type');
   }
 
-  const asset = await uploadAsset3D(file, {
-    ...(name && { name }),
-    ...(description && { description }),
-    ...(category && { category }),
-    ...(tagsStr && { tags: tagsStr.split(',').filter(Boolean) }),
-    isPublic: isPublicStr === 'true',
-  });
+  const asset = await uploadAsset3D(file, buildAssetUploadOptions(formData));
 
   return NextResponse.json(asset, { status: 201 });
 }

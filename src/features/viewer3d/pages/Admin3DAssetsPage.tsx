@@ -4,6 +4,7 @@ import { Box, Upload } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { Button, Alert } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel, PanelHeader } from '@/shared/ui/templates.public';
 import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
@@ -23,6 +24,10 @@ const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = {
 };
 
 type Admin3DAssetsState = ReturnType<typeof useAdmin3DAssetsContext>;
+
+type Admin3DAssetsPageProps = {
+  uploadStorageProfile?: FileStorageProfile;
+};
 
 function Admin3DAssetsStats({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
   if (state.loading || state.assets.length === 0) return null;
@@ -65,12 +70,18 @@ function Admin3DAdvancedFilters({ state }: { state: Admin3DAssetsState }): React
   );
 }
 
-function Admin3DUploaderSection({ state }: { state: Admin3DAssetsState }): React.JSX.Element | null {
+function Admin3DUploaderSection({
+  state,
+  uploadStorageProfile = 'default',
+}: {
+  state: Admin3DAssetsState;
+  uploadStorageProfile?: FileStorageProfile;
+}): React.JSX.Element | null {
   if (!state.showUploader) return null;
   return (
     <FormSection title='Upload 3D Asset' actions={<Button variant='ghost' size='sm' onClick={() => state.setShowUploader(false)} className='h-7 text-xs'>Cancel</Button>} className='p-4 mb-6' variant='glass'>
       <div className='mt-4'>
-        <Asset3DUploader />
+        <Asset3DUploader storageProfile={uploadStorageProfile} />
       </div>
     </FormSection>
   );
@@ -108,7 +119,9 @@ function Admin3DAssetsModals({ state }: { state: Admin3DAssetsState }): React.JS
   );
 }
 
-function Admin3DAssetsContent(): React.JSX.Element {
+function Admin3DAssetsContent({
+  uploadStorageProfile = 'default',
+}: Admin3DAssetsPageProps): React.JSX.Element {
   const state = useAdmin3DAssetsContext();
   const columns = useAdmin3DAssetsColumns({
     setPreviewAsset: state.setPreviewAsset,
@@ -158,7 +171,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
       isLoading={state.loading}
     >
       <Admin3DAdvancedFilters state={state} />
-      <Admin3DUploaderSection state={state} />
+      <Admin3DUploaderSection state={state} uploadStorageProfile={uploadStorageProfile} />
       <Admin3DAssetsEmpty state={state} />
       <Admin3DAssetsGrid state={state} />
       <Admin3DAssetsModals state={state} />
@@ -166,10 +179,12 @@ function Admin3DAssetsContent(): React.JSX.Element {
   );
 }
 
-export function Admin3DAssetsPage(): React.JSX.Element {
+export function Admin3DAssetsPage({
+  uploadStorageProfile = 'default',
+}: Admin3DAssetsPageProps): React.JSX.Element {
   return (
     <Admin3DAssetsProvider>
-      <Admin3DAssetsContent />
+      <Admin3DAssetsContent uploadStorageProfile={uploadStorageProfile} />
     </Admin3DAssetsProvider>
   );
 }

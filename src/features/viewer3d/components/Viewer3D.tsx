@@ -49,6 +49,11 @@ import { Model3D } from './Model3D';
 export type LightingPreset = Asset3dLightingPreset;
 export type EnvironmentPreset = Asset3dEnvironmentPreset;
 
+export interface OrbitControlsHandle {
+  target: THREE.Vector3;
+  object: THREE.Camera;
+}
+
 export interface Viewer3DProps {
   modelUrl: string;
   settings?: Viewer3DSettings;
@@ -59,6 +64,7 @@ export interface Viewer3DProps {
   presentationMode?: boolean;
   allowUserControls?: boolean;
   captureRef?: React.MutableRefObject<(() => string | null) | null>;
+  controlsRef?: React.MutableRefObject<OrbitControlsHandle | null>;
 }
 
 interface ResolvedSettings {
@@ -180,16 +186,23 @@ function ViewerOrbitControls({
   allowUserControls,
   autoRotate,
   autoRotateSpeed,
+  controlsRef,
 }: {
   presentationMode: boolean;
   allowUserControls: boolean;
   autoRotate: boolean;
   autoRotateSpeed: number;
+  controlsRef?: React.MutableRefObject<OrbitControlsHandle | null>;
 }): React.JSX.Element | null {
   if (presentationMode || !allowUserControls) return null;
 
   return (
     <OrbitControls
+      ref={(instance) => {
+        if (controlsRef !== undefined) {
+          controlsRef.current = instance as OrbitControlsHandle | null;
+        }
+      }}
       autoRotate={autoRotate}
       autoRotateSpeed={autoRotateSpeed}
       enablePan={allowUserControls}
@@ -218,7 +231,7 @@ function ViewerCapture({
 }
 
 export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
-  const { modelUrl, settings: propSettings, className, onLoad, onError, autoFit = true, presentationMode = false, allowUserControls = true, captureRef } = props;
+  const { modelUrl, settings: propSettings, className, onLoad, onError, autoFit = true, presentationMode = false, allowUserControls = true, captureRef, controlsRef } = props;
   const s = useViewerSettings(propSettings);
 
   const modelNode = (
@@ -244,6 +257,7 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
           allowUserControls={allowUserControls}
           autoRotate={s.autoRotate}
           autoRotateSpeed={s.autoRotateSpeed}
+          controlsRef={controlsRef}
         />
         <ViewerEffects s={s} />
       </Canvas>

@@ -183,6 +183,214 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
   },
 };
 
+const DEFAULT_ARCH_PAGE_CONTENT_DE: ArchPageContent = {
+  nav: {
+    brandSub: '/ gegr. Amsterdam',
+    links: [
+      { label: 'Praxis', href: '#practice' },
+      { label: 'Projekte', href: '#projects' },
+      { label: 'Prozess', href: '#process' },
+      { label: 'Studio', href: '#studio' },
+    ],
+    ctaLabel: 'Anfragen',
+  },
+  hero: {
+    location: 'Amsterdam / London / Zürich',
+    indexLabel: 'Index - MMXXV',
+    titleLines: ['Architektur gezeichnet', 'mit stiller', 'Intelligenz.'],
+    lede: 'Ein kleines Studio zwischen Architektur und maschinellem Lernen – es automatisiert das Administrative, damit die Praxis zum durchdachten Entwurf zurückkehren kann.',
+    primaryCtaLabel: 'die Praxis entdecken',
+    secondaryCtaLabel: 'ausgewählte Projekte',
+  },
+  drawing: {
+    eyebrow: '- 01 / Zeichnung',
+    title: 'Jede Linie trägt',
+    emphasis: 'Absicht.',
+    description: 'Unsere Systeme analysieren architektonische Intentionen aus natürlicher Sprache, bestehenden Zeichnungen und standortbedingten Einschränkungen.',
+    ctaLabel: 'wie es funktioniert',
+    hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
+    thumbImages: [],
+  },
+  philosophy: {
+    eyebrow: '- 02 / Philosophie',
+    title: 'Die Disziplin des',
+    emphasis: 'Negativraums.',
+    body: 'In der Architektur ist das Mächtigste oft das, was fehlt. Die Leere zwischen Wänden definiert einen Raum. Die Pause zwischen Stützen erzeugt Rhythmus.',
+    closing: 'Wir fügen keine Komplexität hinzu. Wir reduzieren sie.',
+    caption: 'die produktive Leere',
+    principles: [
+      { number: 'i.', title: 'Reduzieren, dann verfeinern', emphasis: '- Zurückhaltung als Methode', description: 'Jeden redundanten Prozess entfernen, bevor das Verbleibende optimiert wird.' },
+      { number: 'ii.', title: 'Präzision vor Geschwindigkeit', emphasis: '- Genauigkeit ist nicht verhandelbar', description: 'Unsere Modelle werden mit Bauvorschriften aus achtunddreißig Rechtssystemen trainiert.' },
+      { number: 'iii.', title: 'Ergänzen, nie ersetzen', emphasis: '- der Architekt bleibt', description: 'Der Blick des Architekten ist unersetzlich.' },
+    ],
+  },
+  services: { eyebrow: '- 03 / Praxis', label: 'vier Systeme', title: 'Was wir leise automatisieren, damit die Praxis fortgeführt werden kann.', emphasis: 'leise automatisieren' },
+  projects: { eyebrow: '- 04 / Projekte', label: 'drei jüngste Notizen', title: 'Eine Auswahl realisierter Arbeiten, dargestellt durch die Studiosysteme.', emphasis: 'realisierter Arbeiten' },
+  process: {
+    eyebrow: '- 05 / Prozess',
+    label: 'vier Bewegungen',
+    title: 'Wie ein Auftrag sich entfaltet.',
+    emphasis: 'entfaltet.',
+    steps: [
+      { number: 'i.', title: 'Analyse', description: 'Wir erfassen Ihren bestehenden Arbeitsablauf: jeden Berührungspunkt, jedes Werkzeug, jede verschwendete Stunde.' },
+      { number: 'ii.', title: 'Konfiguration', description: 'Modelle werden auf Ihre Projekttypologie, Zeichnungskonventionen und die Baurechtsgebiete, in denen Sie tätig sind, trainiert.' },
+      { number: 'iii.', title: 'Integration', description: 'Die Systeme verbinden sich mit Revit, AutoCAD, ArchiCAD, Rhino.' },
+      { number: 'iv.', title: 'Verfeinerung', description: 'Mit jedem Projektzyklus erlernt das System Ihre Standards.' },
+    ],
+  },
+  metrics: [
+    { value: '340', suffix: '+', label: 'Projekte durch Studiosysteme verarbeitet' },
+    { value: '72', suffix: '%', label: 'Mittlere Reduktion der Dokumentationszeit' },
+    { value: '98', suffix: '.4%', label: 'Genauigkeitsrate bei Konformitätsprüfungen' },
+    { value: '38', suffix: '', label: 'Aktive Baurechtsmodelle' },
+  ],
+  caseStudy: {
+    eyebrow: '— 06 / Fallstudie',
+    label: 'helios tower',
+    title: 'Compliance',
+    titleEmphasis: 'im Maßstab.',
+    heading: 'Sechstausend Zeichnungen',
+    headingEmphasis: 'verifiziert in drei Stunden.',
+    body: 'Ein 32-stöckiges Mischnutzungsprojekt in Zürich erforderte gleichzeitige Konformität mit schweizerischem Bundes-, Kantons- und Gemeinderecht.',
+    stats: [
+      { value: '6.400', suffix: '', label: 'Zeichnungen geprüft' },
+      { value: '3', suffix: 'Std', label: 'Verarbeitungszeit' },
+      { value: '0', suffix: '', label: 'verpasste Klauseln' },
+      { value: '2,1', suffix: 'Mo', label: 'manuelles Äquivalent' },
+    ],
+  },
+  quote: { eyebrow: '- 07 / Anmerkung', text: 'Das Maß eines großen Gebäudes ist nicht, was es zeigt', emphasis: 'sondern was es weglässt.', attribution: 'Aus den Designprinzipien des Studios / 2024' },
+  cta: {
+    title: 'Bereit, das Unnötige zu eliminieren?',
+    emphasis: 'eliminieren',
+    description: 'Die Plätze im Pilotprogramm sind auf zwölf Büros pro Quartal begrenzt.',
+    emailPlaceholder: 'Ihre Büro-E-Mail',
+    messagePlaceholder: 'erzählen Sie uns von Ihrem Büro',
+    submitLabel: 'Anfrage senden',
+    loadingLabel: 'wird gesendet…',
+    successMessage: 'Eingegangen – wir melden uns innerhalb von fünf Werktagen.',
+    note: 'Keine Verpflichtung. Wöchentlich geprüft / Antwort innerhalb von fünf Werktagen.',
+  },
+  footer: {
+    brandName: 'Milk Bar Designers',
+    address: 'Herengracht 44\n1017 BS / Amsterdam\nNiederlande',
+    tagline: 'Ein kleines Studio, das Software für die Architektur entwirft und Architektur mit Softwareunterstützung gestaltet.',
+    columns: [
+      { title: 'Praxis', links: [{ label: 'Compliance', href: '#' }, { label: 'Baumasse', href: '#' }, { label: 'Dokumentation', href: '#' }, { label: 'Intelligenz', href: '#' }] },
+      { title: 'Studio', links: [{ label: 'Philosophie', href: '#' }, { label: 'Projekte', href: '#' }, { label: 'Forschung', href: '#' }, { label: 'Karriere', href: '#' }] },
+      { title: 'Kontakt', links: [{ label: 'hello@milkbar.studio', href: '#' }, { label: 'Amsterdam', href: '#' }, { label: 'London', href: '#' }, { label: 'Zürich', href: '#' }] },
+    ],
+    copyright: 'MMXXV / Milk Bar Designers B.V.',
+  },
+};
+
+const DEFAULT_ARCH_PAGE_CONTENT_PL: ArchPageContent = {
+  nav: {
+    brandSub: '/ zał. Amsterdam',
+    links: [
+      { label: 'Praktyka', href: '#practice' },
+      { label: 'Projekty', href: '#projects' },
+      { label: 'Proces', href: '#process' },
+      { label: 'Studio', href: '#studio' },
+    ],
+    ctaLabel: 'Zapytaj',
+  },
+  hero: {
+    location: 'Amsterdam / Londyn / Zurych',
+    indexLabel: 'Indeks - MMXXV',
+    titleLines: ['Architektura rysowana', 'z cichą', 'inteligencją.'],
+    lede: 'Małe studio na pograniczu architektury i uczenia maszynowego – automatyzujące administrację, by praktyka mogła powrócić do przemyślanego rysunku.',
+    primaryCtaLabel: 'poznaj pracownię',
+    secondaryCtaLabel: 'wybrane projekty',
+  },
+  drawing: {
+    eyebrow: '- 01 / rysunek',
+    title: 'Każda linia niesie',
+    emphasis: 'intencję.',
+    description: 'Nasze systemy odczytują architektoniczną intencję z języka naturalnego, istniejących rysunków i uwarunkowań terenu.',
+    ctaLabel: 'jak to działa',
+    hint: '- przeciągnij pomieszczenia, by przypisać program',
+    thumbImages: [],
+  },
+  philosophy: {
+    eyebrow: '- 02 / filozofia',
+    title: 'Dyscyplina',
+    emphasis: 'pustej przestrzeni.',
+    body: 'W architekturze to, czego nie ma, bywa najpotężniejsze. Pustka między ścianami definiuje pomieszczenie. Pauza między kolumnami tworzy rytm.',
+    closing: 'Nie dodajemy złożoności. Ją odejmujemy.',
+    caption: 'produktywna pustka',
+    principles: [
+      { number: 'i.', title: 'Redukuj, potem udoskonalaj', emphasis: '- powściągliwość jako metoda', description: 'Usuń każdy zbędny proces, zanim zaczniesz optymalizować to, co pozostało.' },
+      { number: 'ii.', title: 'Precyzja ponad szybkość', emphasis: '- dokładność jest niepodlegalna negocjacjom', description: 'Nasze modele są trenowane na przepisach budowlanych z trzydziestu ośmiu jurysdykcji.' },
+      { number: 'iii.', title: 'Uzupełniaj, nie zastępuj', emphasis: '- architekt pozostaje', description: 'Spojrzenie architekta jest niezastąpione.' },
+    ],
+  },
+  services: { eyebrow: '- 03 / praktyka', label: 'cztery systemy', title: 'Co cicho automatyzujemy, by praktyka mogła trwać.', emphasis: 'cicho automatyzujemy' },
+  projects: { eyebrow: '- 04 / projekty', label: 'trzy z ostatnich', title: 'Wybór zrealizowanych prac przedstawionych przez systemy studia.', emphasis: 'zrealizowanych prac' },
+  process: {
+    eyebrow: '- 05 / proces',
+    label: 'cztery ruchy',
+    title: 'Jak przebiega nasza współpraca.',
+    emphasis: 'przebiega.',
+    steps: [
+      { number: 'i.', title: 'Audyt', description: 'Mapujemy Twój obecny przepływ pracy: każdy punkt styku, każde narzędzie, każdą straconą godzinę.' },
+      { number: 'ii.', title: 'Konfiguracja', description: 'Modele są trenowane na typologii Twoich projektów, konwencjach rysunkowych i jurysdykcjach, w których budujesz.' },
+      { number: 'iii.', title: 'Integracja', description: 'Systemy łączą się z Revit, AutoCAD, ArchiCAD, Rhino.' },
+      { number: 'iv.', title: 'Doskonalenie', description: 'Z każdym cyklem projektowym system przyswaja Twoje standardy.' },
+    ],
+  },
+  metrics: [
+    { value: '340', suffix: '+', label: 'Projektów przetworzonych przez systemy studia' },
+    { value: '72', suffix: '%', label: 'Mediana redukcji czasu dokumentacji' },
+    { value: '98', suffix: '.4%', label: 'Wskaźnik dokładności kontroli zgodności' },
+    { value: '38', suffix: '', label: 'Aktywnych modeli regulacji jurysdykcyjnych' },
+  ],
+  caseStudy: {
+    eyebrow: '— 06 / studium przypadku',
+    label: 'helios tower',
+    title: 'Zgodność',
+    titleEmphasis: 'na skalę.',
+    heading: 'Sześć tysięcy rysunków',
+    headingEmphasis: 'zweryfikowanych w trzy godziny.',
+    body: 'Trzydziestodwupiętrowy budynek wielofunkcyjny w Zurychu wymagał jednoczesnej zgodności z federalnym, kantonalnym i miejskim prawem budowlanym.',
+    stats: [
+      { value: '6 400', suffix: '', label: 'rysunków skontrolowanych' },
+      { value: '3', suffix: 'godz', label: 'czas przetwarzania' },
+      { value: '0', suffix: '', label: 'przeoczonych klauzul' },
+      { value: '2,1', suffix: 'mies', label: 'ekwiwalent manualny' },
+    ],
+  },
+  quote: { eyebrow: '- 07 / nota', text: 'Miarą wielkiego budynku nie jest to, co pokazuje', emphasis: 'lecz to, co eliminuje.', attribution: 'Z zasad projektowych studia / 2024' },
+  cta: {
+    title: 'Gotowy wyeliminować zbędne?',
+    emphasis: 'wyeliminować',
+    description: 'Miejsca w programie pilotażowym są ograniczone do dwunastu pracowni na kwartał.',
+    emailPlaceholder: 'adres e-mail pracowni',
+    messagePlaceholder: 'opowiedz nam o swojej pracowni',
+    submitLabel: 'wyślij zapytanie',
+    loadingLabel: 'wysyłanie…',
+    successMessage: 'Otrzymano – odpiszemy w ciągu pięciu dni roboczych.',
+    note: 'Bez zobowiązań. Rozpatrywane co tydzień / odpowiedź w ciągu pięciu dni roboczych.',
+  },
+  footer: {
+    brandName: 'Milk Bar Designers',
+    address: 'Herengracht 44\n1017 BS / Amsterdam\nHolandia',
+    tagline: 'Małe studio projektujące oprogramowanie dla architektury i architekturę z pomocą oprogramowania.',
+    columns: [
+      { title: 'Praktyka', links: [{ label: 'Zgodność', href: '#' }, { label: 'Bryła', href: '#' }, { label: 'Dokumentacja', href: '#' }, { label: 'Inteligencja', href: '#' }] },
+      { title: 'Studio', links: [{ label: 'Filozofia', href: '#' }, { label: 'Projekty', href: '#' }, { label: 'Badania', href: '#' }, { label: 'Kariera', href: '#' }] },
+      { title: 'Kontakt', links: [{ label: 'hello@milkbar.studio', href: '#' }, { label: 'Amsterdam', href: '#' }, { label: 'Londyn', href: '#' }, { label: 'Zurych', href: '#' }] },
+    ],
+    copyright: 'MMXXV / Milk Bar Designers B.V.',
+  },
+};
+
+export const DEFAULT_ARCH_LOCALIZED_CONTENT: Record<ArchLocale, ArchPageContent> = {
+  en: DEFAULT_ARCH_PAGE_CONTENT,
+  de: DEFAULT_ARCH_PAGE_CONTENT_DE,
+  pl: DEFAULT_ARCH_PAGE_CONTENT_PL,
+};
+
 export const DEFAULT_ARCH_PAGE_SETTINGS: ArchPageSettings = {
   visibility: {
     drawing: true,
@@ -219,7 +427,7 @@ export const DEFAULT_ARCH_PAGE_SETTINGS: ArchPageSettings = {
     },
   },
   defaultLocale: 'en',
-  publishedLocales: ['en'],
+  publishedLocales: ['en', 'de', 'pl'],
 };
 
 // ─── Normalize helpers ────────────────────────────────────────────────────────
@@ -502,7 +710,6 @@ export type ArchPageData = {
 
 type PageContentDoc = {
   localizedContent?: unknown;
-  content?: unknown;
   pageSettings?: unknown;
 };
 
@@ -510,27 +717,19 @@ export function resolveLocalizedContent(
   doc: PageContentDoc | null,
   locale: ArchLocale
 ): ArchPageData {
-  if (doc === null) {
+  const localeDefault = DEFAULT_ARCH_LOCALIZED_CONTENT[locale];
+
+  if (doc === null || !isRecord(doc.localizedContent)) {
     return {
-      pageContent: normalizeArchPageContent(null),
+      pageContent: localeDefault,
       pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
     };
   }
 
-  // New format: { localizedContent: { en, de, pl }, pageSettings }
-  if (isRecord(doc.localizedContent)) {
-    const localized = doc.localizedContent as Record<string, unknown>;
-    // Fall back to EN if the requested locale isn't populated
-    const raw = localized[locale] ?? localized['en'];
-    return {
-      pageContent: normalizeArchPageContent(raw),
-      pageSettings: normalizeArchPageSettings(doc.pageSettings),
-    };
-  }
-
-  // Legacy format: { content: { ...EN content... } }
+  const localized = doc.localizedContent as Record<string, unknown>;
+  const raw = localized[locale] ?? localeDefault;
   return {
-    pageContent: normalizeArchPageContent(doc.content),
-    pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
+    pageContent: normalizeArchPageContent(raw),
+    pageSettings: normalizeArchPageSettings(doc.pageSettings),
   };
 }

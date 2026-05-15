@@ -1,5 +1,6 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { getDb } from '@/lib/mongodb';
 import { resolveLocalizedContent } from '@/lib/pageContent';
 import { isArchLocale, type ArchLocale, type Project, type Service } from '@/lib/types';
@@ -52,8 +53,8 @@ async function getPageData(locale: ArchLocale) {
   try {
     const db = await getDb();
     const doc = await db
-      .collection<{ localizedContent?: unknown; content?: unknown; pageSettings?: unknown }>('page_content')
-      .findOne({ key: 'home' }, { projection: { _id: 0, localizedContent: 1, content: 1, pageSettings: 1 } });
+      .collection<{ localizedContent?: unknown; pageSettings?: unknown }>('page_content')
+      .findOne({ key: 'home' }, { projection: { _id: 0, localizedContent: 1, pageSettings: 1 } });
     return resolveLocalizedContent(doc, locale);
   } catch {
     return resolveLocalizedContent(null, locale);
@@ -92,17 +93,12 @@ export default async function LocalePage({ params }: PageProps) {
     getPageData(validLocale),
   ]);
 
-  // Redirect unpublished locales to the default locale
-  if (!pageSettings.publishedLocales.includes(validLocale)) {
-    redirect(`/${pageSettings.defaultLocale}`);
-  }
-
   const vis = pageSettings.visibility;
 
   return (
     <>
       <Cursor />
-      <Nav currentLocale={validLocale} publishedLocales={pageSettings.publishedLocales} content={pageContent.nav} />
+      <Nav currentLocale={validLocale} content={pageContent.nav} />
       <Hero content={pageContent.hero} />
       {vis.drawing ? (
         <FloorPlanSlotsProvider>

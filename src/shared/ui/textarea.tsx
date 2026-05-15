@@ -25,12 +25,21 @@ const textareaVariants = cva(
     },
   }
 );
-
+/**
+ * Textarea Component
+ *
+ * Accessible, customizable multi-line text input supporting variants and sizes.
+ */
 export interface TextareaProps
   extends
     React.TextareaHTMLAttributes<HTMLTextAreaElement>,
     VariantProps<typeof textareaVariants>,
-    DataAttributes {}
+    DataAttributes {
+  /** Visual variant (default, subtle) */
+  variant?: 'default' | 'subtle';
+  /** Size variant (xs, sm, default) */
+  size?: 'xs' | 'sm' | 'default';
+}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   (

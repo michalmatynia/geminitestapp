@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   startImageStudioSequenceQueue: vi.fn(),
   startFilemakerSocialPipelineQueue: vi.fn(),
   startFilemakerSocialSchedulerQueue: vi.fn(),
+  startBaseExportQueue: vi.fn(),
   startPlaywrightListingQueue: vi.fn(),
   startProductAiJobQueue: vi.fn(),
   startProductFastCometImageUploadQueue: vi.fn(),
@@ -72,6 +73,7 @@ vi.mock('@/features/filemaker/server/filemaker-job-board-scrape-runtime', () => 
 }));
 
 vi.mock('@/server/queues/integrations', () => ({
+  startBaseExportQueue: mocks.startBaseExportQueue,
   startPlaywrightListingQueue: mocks.startPlaywrightListingQueue,
   startTraderaListingQueue: mocks.startTraderaListingQueue,
   startVintedListingQueue: mocks.startVintedListingQueue,
@@ -223,6 +225,7 @@ describe('initializeQueues', () => {
     await waitForStartup();
     initializeQueues();
 
+    expect(mocks.startBaseExportQueue).toHaveBeenCalledTimes(1);
     expect(mocks.startTraderaListingQueue).toHaveBeenCalledTimes(1);
     expect(mocks.startProductScrapeProfileQueue).toHaveBeenCalledTimes(1);
     expect(mocks.startAllWorkers).toHaveBeenCalledTimes(1);

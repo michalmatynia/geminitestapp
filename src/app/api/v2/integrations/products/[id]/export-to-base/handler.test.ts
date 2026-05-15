@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
-  enqueueBaseExportJobMock: vi.fn(),
+  dispatchBaseExportJobMock: vi.fn(),
   loadExportResourcesMock: vi.fn(),
   createExportRunMock: vi.fn(),
   recoverStaleBaseExportRunsMock: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock('@/features/integrations/server', () => ({
 }));
 
 vi.mock('@/features/integrations/workers/baseExportQueue', () => ({
-  enqueueBaseExportJob: (...args: unknown[]) => mocks.enqueueBaseExportJobMock(...args),
+  dispatchBaseExportJob: (...args: unknown[]) => mocks.dispatchBaseExportJobMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/base-export-run-recovery', () => ({
@@ -93,7 +93,10 @@ describe('integration product export-to-base handler', () => {
       },
     });
     mocks.recoverStaleBaseExportRunsMock.mockResolvedValue(0);
-    mocks.enqueueBaseExportJobMock.mockResolvedValue('job-1');
+    mocks.dispatchBaseExportJobMock.mockResolvedValue({
+      dispatchMode: 'queued',
+      queueJobId: 'job-1',
+    });
     mocks.getPathRunRepositoryMock.mockResolvedValue({
       createRunEvent: vi.fn().mockResolvedValue(undefined),
       updateRun: vi.fn().mockResolvedValue(undefined),
@@ -118,7 +121,7 @@ describe('integration product export-to-base handler', () => {
 
     expect(mocks.loadExportResourcesMock).not.toHaveBeenCalled();
     expect(mocks.createExportRunMock).not.toHaveBeenCalled();
-    expect(mocks.enqueueBaseExportJobMock).not.toHaveBeenCalled();
+    expect(mocks.dispatchBaseExportJobMock).not.toHaveBeenCalled();
     expect(mocks.initializeQueuesMock).toHaveBeenCalledTimes(1);
   });
 
@@ -141,9 +144,10 @@ describe('integration product export-to-base handler', () => {
       status: 'queued',
       runId: 'run-1',
       jobId: 'job-1',
+      dispatchMode: 'queued',
     });
     expect(mocks.initializeQueuesMock).toHaveBeenCalledTimes(1);
-    expect(mocks.enqueueBaseExportJobMock).toHaveBeenCalledWith(
+    expect(mocks.dispatchBaseExportJobMock).toHaveBeenCalledWith(
       expect.objectContaining({
         productId: 'product-1',
         connectionId: 'connection-1',

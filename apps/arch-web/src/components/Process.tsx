@@ -1,4 +1,5 @@
 import type { ArchPageContent } from '@/lib/types';
+import { renderEmphasis } from '@/lib/renderEmphasis';
 
 export default function Process({ content }: { content: ArchPageContent['process'] }) {
   return (
@@ -9,7 +10,7 @@ export default function Process({ content }: { content: ArchPageContent['process
             <span className="num rev">{content.eyebrow}</span>
             <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>{content.label}</span>
           </div>
-          <h2 className="rev" data-delay="1">{content.title.replace(content.emphasis, '')} <em>{content.emphasis}</em></h2>
+          <h2 className="rev" data-delay="1">{renderEmphasis(content.title, content.emphasis)}</h2>
         </div>
 
         <div className="proc-grid">

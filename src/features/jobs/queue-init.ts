@@ -18,6 +18,7 @@ import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/file
 import { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
 import { startFilemakerJobBoardScrapeQueue } from '@/features/filemaker/server/filemaker-job-board-scrape-runtime';
 import {
+  startBaseExportQueue,
   startPlaywrightListingQueue,
   startTraderaListingQueue,
   startVintedListingQueue,
@@ -90,6 +91,7 @@ const startProductScrapeProfileQueueRuntime = (): void => {
     });
 };
 const FEATURE_AWARE_STARTERS = [
+  startBaseExportQueue,
   startPlaywrightListingQueue,
   startTraderaListingQueue,
   startVintedListingQueue,

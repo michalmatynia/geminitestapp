@@ -1,4 +1,5 @@
 import type { ArchPageContent, Project } from '@/lib/types';
+import { renderEmphasis } from '@/lib/renderEmphasis';
 import IsometricThumbnail from './IsometricThumbnail';
 
 const FALLBACK_PROJECTS: Pick<Project, 'code' | 'name' | 'projectType' | 'city'>[] = [
@@ -25,7 +26,7 @@ export default function BuiltWork({
             <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>{content.label}</span>
           </div>
           <h2 className="rev" data-delay="1">
-            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
+            {renderEmphasis(content.title, content.emphasis)}
           </h2>
         </div>
 

@@ -57,9 +57,10 @@ export const getUploadTarget = ({
   }
 
   if (category === 'cms') {
+    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
     return {
-      diskDir: path.join(uploadsRoot, 'cms'),
-      publicDir: '/uploads/cms',
+      diskDir: safeFolder ? path.join(uploadsRoot, 'cms', safeFolder) : path.join(uploadsRoot, 'cms'),
+      publicDir: safeFolder ? `/uploads/cms/${safeFolder}` : '/uploads/cms',
     };
   }
 

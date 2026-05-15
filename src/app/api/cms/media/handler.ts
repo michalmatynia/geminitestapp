@@ -4,11 +4,32 @@ import { z } from 'zod';
 import { uploadFile } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import {
+  MILKBAR_CMS_VISUALISATION_FOLDER,
+  MILKBAR_FASTCOMET_BASE_URL,
+  fileStorageProfileValues,
+  type FileStorageProfile,
+} from '@/shared/lib/files/constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
-  return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;
+  return typeof entry === 'object' && 'arrayBuffer' in entry && 'size' in entry;
+};
+
+const readFormText = (formData: FormData, key: string): string | null => {
+  const value = formData.get(key);
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readStorageProfile = (formData: FormData): FileStorageProfile => {
+  const value = readFormText(formData, 'storageProfile') ?? 'default';
+  if (fileStorageProfileValues.includes(value as FileStorageProfile)) {
+    return value as FileStorageProfile;
+  }
+  throw badRequestError('Invalid storage profile.', { storageProfile: value });
 };
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -32,8 +53,26 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError('No file provided');
   }
 
+  const storageProfile = readStorageProfile(formData);
+  const isMilkbarCmsUpload = storageProfile === 'milkbarCms';
+  const folder = isMilkbarCmsUpload
+    ? MILKBAR_CMS_VISUALISATION_FOLDER
+    : readFormText(formData, 'folder');
+
   const uploads = await Promise.all(
-    files.map((file) => uploadFile(file, { category: 'cms', allowOrphanRecord: true }))
+    files.map((file) =>
+      uploadFile(file, {
+        category: 'cms',
+        allowOrphanRecord: true,
+        folder,
+        ...(isMilkbarCmsUpload
+          ? {
+              forceStorageSource: 'fastcomet',
+              fastCometBaseUrl: MILKBAR_FASTCOMET_BASE_URL,
+            }
+          : {}),
+      })
+    )
   );
   const payload = uploads.length === 1 ? uploads[0] : uploads;
   z.unknown().parse(payload);

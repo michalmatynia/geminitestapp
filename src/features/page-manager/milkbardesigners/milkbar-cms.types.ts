@@ -60,6 +60,7 @@ export type MilkbarPageContent = {
     description: string;
     ctaLabel: string;
     hint: string;
+    thumbImages: string[];
   };
   philosophy: {
     eyebrow: string;
@@ -167,6 +168,7 @@ export type MilkbarProjectCmsRecord = {
   status: 'published' | 'draft';
   cameraPosition: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
+  modelAssetId?: string | undefined;
 };
 
 export type MilkbarServiceCmsRecord = {
@@ -257,6 +259,7 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
       'Our systems parse architectural intent from natural language, existing drawings, and site constraint. They produce documentation a peer-reviewing architect would accept without amendment.',
     ctaLabel: 'how it works',
     hint: '- drag rooms to reassign programme',
+    thumbImages: [],
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -440,6 +443,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
       'Unsere Systeme analysieren architektonische Intentionen aus natürlicher Sprache, bestehenden Zeichnungen und standortbedingten Einschränkungen. Sie erzeugen Dokumentation, die ein prüfender Architekt unverändert akzeptieren würde.',
     ctaLabel: 'wie es funktioniert',
     hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
+    thumbImages: [],
   },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
@@ -623,6 +627,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
       'Nasze systemy odczytują architektoniczną intencję z języka naturalnego, istniejących rysunków i uwarunkowań terenu. Tworzą dokumentację, którą architekt weryfikujący przyjąłby bez poprawek.',
     ctaLabel: 'jak to działa',
     hint: '- przeciągnij pomieszczenia, by przypisać program',
+    thumbImages: [],
   },
   philosophy: {
     eyebrow: '- 02 / filozofia',

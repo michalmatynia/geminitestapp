@@ -252,10 +252,9 @@ async function readMilkbarCmsData(
     .collection(collections.pageContent)
     .findOne<{
       localizedContent?: unknown;
-      content?: unknown;
       pageSettings?: unknown;
       updatedAt?: Date | string | null;
-    }>({ key: PAGE_CONTENT_KEY });
+    }>({ key: PAGE_CONTENT_KEY }, { projection: { _id: 0, localizedContent: 1, pageSettings: 1, updatedAt: 1 } });
 
   const [projectDocs, serviceDocs, inquiryDocs] = await Promise.all([
     db
@@ -278,17 +277,9 @@ async function readMilkbarCmsData(
       : Promise.resolve([]),
   ]);
 
-  // Migration: accept legacy 'content' field (EN only) from pre-localization docs
-  const rawLocalized: unknown =
-    pageContentDoc?.localizedContent !== undefined
-      ? pageContentDoc.localizedContent
-      : pageContentDoc?.content !== undefined
-        ? { en: pageContentDoc.content }
-        : undefined;
-
   return {
     hasPageContent: pageContentDoc !== null,
-    localizedContent: normalizeLocalizedContent(rawLocalized),
+    localizedContent: normalizeLocalizedContent(pageContentDoc?.localizedContent),
     pageSettings: normalizePageSettings(pageContentDoc?.pageSettings),
     projects: normalizeProjects(projectDocs),
     services: normalizeServices(serviceDocs),
@@ -432,6 +423,7 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       description: asString(drawing['description'], fallback.drawing.description),
       ctaLabel: asString(drawing['ctaLabel'], fallback.drawing.ctaLabel),
       hint: asString(drawing['hint'], fallback.drawing.hint),
+      thumbImages: asStringArray(drawing['thumbImages'], fallback.drawing.thumbImages),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], fallback.philosophy.eyebrow),
@@ -589,6 +581,9 @@ const normalizeProject = (input: unknown, index: number): MilkbarProjectCmsRecor
     status: record['status'] === 'draft' ? 'draft' : 'published',
     cameraPosition: normalizeVector(record['cameraPosition'], { x: 20, y: 15, z: 20 }),
     cameraTarget: normalizeVector(record['cameraTarget'], { x: 0, y: 6, z: 0 }),
+    ...(typeof record['modelAssetId'] === 'string' && record['modelAssetId'].trim().length > 0
+      ? { modelAssetId: record['modelAssetId'].trim() }
+      : {}),
   };
 };
 
@@ -622,16 +617,8 @@ const normalizeServices = (input: unknown): MilkbarServiceCmsRecord[] => {
 const normalizeUpdateInput = (input: unknown): MilkbarCmsUpdateInput => {
   if (!isRecord(input)) throw badRequestError('Invalid Milkbar CMS payload.');
 
-  // Accept legacy pageContent field (pre-localization) as EN locale
-  const localizedRaw: unknown =
-    input['localizedContent'] !== undefined
-      ? input['localizedContent']
-      : input['pageContent'] !== undefined
-        ? { en: input['pageContent'] }
-        : undefined;
-
   return {
-    localizedContent: normalizeLocalizedContent(localizedRaw),
+    localizedContent: normalizeLocalizedContent(input['localizedContent']),
     pageSettings: normalizePageSettings(input['pageSettings']),
     projects: normalizeProjects(input['projects']),
     services: normalizeServices(input['services']),
@@ -704,8 +691,7 @@ export async function patchMilkbarInquiryStatus(
   email: string,
   status: 'pending' | 'contacted'
 ): Promise<{ ok: boolean }> {
-  if (!email || typeof email !== 'string') throw badRequestError('email is required.');
-  if (status !== 'pending' && status !== 'contacted') throw badRequestError('status must be pending or contacted.');
+  if (email.trim().length === 0) throw badRequestError('email is required.');
 
   await withRuntimeDb(async (db) => {
     await db.collection(RUNTIME_INQUIRIES_COLLECTION).updateOne(
@@ -714,6 +700,76 @@ export async function patchMilkbarInquiryStatus(
     );
   });
   return { ok: true };
+}
+
+async function withCloudRuntimeDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
+  const config = resolveArchMongoSourceConfig('cloud');
+  return await withMongoDb(config, 'Milkbardesigners cloud runtime', work);
+}
+
+export type MilkbarPushToCloudResult = {
+  collections: string[];
+  projectCount: number;
+  serviceCount: number;
+  updatedAt: string;
+};
+
+export type MilkbarPushProgress = {
+  step: number;
+  total: number;
+  phase: 'reading' | 'writing' | 'done';
+  message: string;
+};
+
+export async function pushMilkbarRuntimeToCloud(
+  onProgress?: (p: MilkbarPushProgress) => Promise<void>
+): Promise<MilkbarPushToCloudResult> {
+  const report = onProgress ?? (() => Promise.resolve());
+  const now = new Date();
+
+  await report({ step: 1, total: 4, phase: 'reading', message: 'Connecting to local runtime…' });
+
+  const localData = await withRuntimeDb((db) =>
+    readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)
+  );
+
+  await report({
+    step: 2,
+    total: 4,
+    phase: 'reading',
+    message: `Read ${localData.projects.length} projects, ${localData.services.length} services, page content`,
+  });
+
+  const updateInput: MilkbarCmsUpdateInput = {
+    localizedContent: localData.localizedContent,
+    pageSettings: localData.pageSettings,
+    projects: localData.projects,
+    services: localData.services,
+  };
+
+  await report({ step: 3, total: 4, phase: 'writing', message: 'Writing to cloud database…' });
+
+  await withCloudRuntimeDb((db) =>
+    writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now)
+  );
+
+  await report({
+    step: 4,
+    total: 4,
+    phase: 'done',
+    message: `Synced ${localData.projects.length} projects, ${localData.services.length} services`,
+  });
+
+  return {
+    collections: [
+      RUNTIME_PAGE_CONTENT_COLLECTION,
+      RUNTIME_PROJECTS_COLLECTION,
+      RUNTIME_SERVICES_COLLECTION,
+    ],
+    projectCount: localData.projects.length,
+    serviceCount: localData.services.length,
+    updatedAt: now.toISOString(),
+  };
 }
 
 // Expose for locale-keyed iteration in callers

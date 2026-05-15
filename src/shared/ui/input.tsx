@@ -25,12 +25,21 @@ const inputVariants = cva(
     },
   }
 );
-
+/**
+ * Input Component
+ *
+ * Accessible, customizable input field supporting multiple variants and sizes.
+ */
 export interface InputProps
   extends
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants>,
-    DataAttributes {}
+    DataAttributes {
+  /** Visual variant (default, subtle) */
+  variant?: 'default' | 'subtle';
+  /** Size variant (xs, sm, default) */
+  size?: 'xs' | 'sm' | 'default';
+}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (

@@ -26,6 +26,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import type { ImageFileCreateInput, ImageFileRecord } from '@/shared/contracts/files';
+import type { FileStorageSource } from '@/shared/lib/files/constants';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -128,6 +129,8 @@ export async function uploadFile(
     folder?: string | null | undefined;
     allowOrphanRecord?: boolean | undefined;
     filenameOverride?: string | null | undefined;
+    forceStorageSource?: FileStorageSource | null | undefined;
+    fastCometBaseUrl?: string | null | undefined;
     provider?: ProductDbProvider | undefined;
   }
 ): Promise<ImageFileRecord> {
@@ -176,6 +179,8 @@ export async function uploadFile(
       category: options?.category ?? null,
       projectId: options?.projectId ?? null,
       folder: options?.folder ?? null,
+      forceSource: options?.forceStorageSource ?? null,
+      fastCometBaseUrl: options?.fastCometBaseUrl ?? null,
       writeLocalCopy: async (): Promise<void> => {
         await fs.mkdir(diskDir, { recursive: true });
         await fs.writeFile(localDiskPath, fileBuffer);
@@ -195,6 +200,9 @@ export async function uploadFile(
         publicPath,
         storageSource,
         mirroredLocally: storageResult.mirroredLocally,
+        ...(options?.fastCometBaseUrl !== undefined && options.fastCometBaseUrl !== null
+          ? { publicBaseUrl: options.fastCometBaseUrl }
+          : {}),
       },
       size: file.size,
       storageProvider: storageSource === 'local' ? 'local' : 'fastcomet',

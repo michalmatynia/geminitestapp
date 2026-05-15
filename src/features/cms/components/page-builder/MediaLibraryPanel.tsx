@@ -6,6 +6,7 @@ import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { useToast } from '@/shared/ui/primitives.public';
 import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
@@ -30,6 +31,8 @@ interface MediaLibraryPanelProps {
   accept?: string;
   supportedFormatsLabel?: string;
   uploadButtonLabel?: string;
+  uploadFolder?: string | null;
+  storageProfile?: FileStorageProfile;
   filepathFilter?: (filepath: string) => boolean;
   filterUploadFiles?: (files: File[]) => File[];
   invalidSelectionMessage?: string;
@@ -48,6 +51,8 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     accept = 'image/*',
     supportedFormatsLabel = 'images',
     uploadButtonLabel = 'Upload images',
+    uploadFolder,
+    storageProfile,
     filepathFilter,
     filterUploadFiles,
     invalidSelectionMessage = 'The selected file is not supported here.',
@@ -92,6 +97,8 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
         const file = acceptedFiles[index]!;
         const result = await uploadMutation.mutateAsync({
           file,
+          folder: uploadFolder,
+          storageProfile,
           onProgress: (loaded: number, total?: number) => {
             if (!helpers) return;
             if (!total) return;

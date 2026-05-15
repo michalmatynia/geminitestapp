@@ -9,10 +9,10 @@ import { CmsStorefrontAppearanceButtons, resolveStorefrontAppearanceTone, useOpt
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
-import { 
-  isLocale, 
+import {
+  isLocale,
   MenuLink,
-  normalizePath, 
+  normalizePath,
 } from './cms-menu-utils';
 
 type CmsMenuProps = { menu: MenuSettings; colorSchemes?: Record<string, ColorSchemeColors>; animationsEnabled?: boolean; };
@@ -115,10 +115,10 @@ function NavContent({ menu, normPath, colors, hydrated, itemListId, collapsed, s
     <div style={getNavContainerStyle(isSide, menu)}>
         {menu.collapsible && <MenuToggle id={itemListId} collapsed={collapsed} toggle={() => setCollapsed(!collapsed)} trans={trans} />}
         <MenuList menu={menu} normPath={normPath} colors={colors} hydrated={hydrated} />
-        <CmsStorefrontAppearanceButtons 
-            tone={colors} 
-            className={isSide ? 'mt-3' : 'ml-auto'} 
-            label={trans('siteAppearance')} 
+        <CmsStorefrontAppearanceButtons
+            tone={colors}
+            className={isSide ? 'mt-3' : 'ml-auto'}
+            label={trans('siteAppearance')}
         />
     </div>
   );

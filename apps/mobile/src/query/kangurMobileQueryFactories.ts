@@ -1,4 +1,4 @@
-import type { QueryKey, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type { QueryKey, UseQueryResult } from '@tanstack/react-query';
 
 import {
   useMutationV2,
@@ -6,6 +6,7 @@ import {
   type MutationFactoryV2Config,
   type SingleQueryConfigV2,
 } from '@/shared/lib/query-factories-v2';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 
 type KangurMobileFactoryMetaInput = Omit<TanstackFactoryMeta, 'domain' | 'samplingRate'> &
@@ -56,7 +57,7 @@ export function useKangurMobileMutationV2<
   TError = Error,
 >(
   config: KangurMobileMutationConfig<TData, TVariables, TContext, TError>,
-): UseMutationResult<TData, TError, TVariables, TContext> {
+): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>({
     ...config,
     meta: toKangurMobileFactoryMeta(config.meta),

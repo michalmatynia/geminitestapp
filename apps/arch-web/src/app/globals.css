@@ -285,9 +285,73 @@ section { padding: 140px 0; position: relative; }
 .plan-modal-close:hover { color: var(--paper); }
 
 /* ─── CITY MAP ───────────────────────────────────────────────────── */
+
+/* controls strip */
+.city-controls {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: rgba(237,235,232,0.97);
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+.city-ctrl {
+  padding: 8px 10px 7px;
+  border-right: 1px solid var(--rule);
+  min-width: 0;
+}
+.city-ctrl:last-child { border-right: none; }
+.city-ctrl-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 5px;
+}
+.city-ctrl-label {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.city-ctrl-val {
+  font-family: var(--mono); font-size: 7px; letter-spacing: .10em;
+  color: var(--accent);
+}
+
+/* range slider */
+.city-ctrl-slider {
+  display: block; width: 100%; height: 2px;
+  -webkit-appearance: none; appearance: none;
+  background: rgba(26,25,24,0.16); outline: none; cursor: ew-resize;
+  border-radius: 0;
+}
+.city-ctrl-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 6px; height: 6px; background: var(--ink); cursor: ew-resize; border-radius: 0;
+}
+.city-ctrl-slider::-moz-range-thumb {
+  width: 6px; height: 6px; background: var(--ink); cursor: ew-resize;
+  border-radius: 0; border: none;
+}
+.city-ctrl-slider::-webkit-slider-runnable-track { background: rgba(26,25,24,0.16); height: 2px; }
+.city-ctrl-slider::-moz-range-track { background: rgba(26,25,24,0.16); height: 2px; }
+
+/* segmented buttons */
+.city-ctrl-seg {
+  display: flex; gap: 0;
+}
+.city-ctrl-seg-btn {
+  flex: 1; height: 14px;
+  font-family: var(--mono); font-size: 6.5px; letter-spacing: .18em;
+  text-transform: uppercase; cursor: pointer;
+  border: 1px solid rgba(26,25,24,0.20); border-right: none;
+  background: transparent; color: var(--ink-3); padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .10s, color .10s;
+}
+.city-ctrl-seg-btn:last-child { border-right: 1px solid rgba(26,25,24,0.20); }
+.city-ctrl-seg-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.city-ctrl-seg-btn.active + .city-ctrl-seg-btn { border-left-color: var(--ink); }
+.city-ctrl-seg-btn:hover:not(.active) { background: rgba(26,25,24,0.07); }
+
+/* zoom buttons */
 .city-zoom-btns {
   position: absolute; bottom: 32px; right: 10px;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; z-index: 2;
 }
 .city-zoom-btn {
   width: 22px; height: 22px;

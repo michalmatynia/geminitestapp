@@ -33,7 +33,7 @@ import {
   useUpdateUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateImageStudioProjects,
   invalidateImageStudioSlots,
@@ -89,7 +89,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const userPreferencesQuery = useUserPreferences();
   const updateUserPreferences = useUpdateUserPreferences();
   const queryClient = useQueryClient();
-  const createProjectMutation = createMutationV2<
+  const createProjectMutation = useMutationV2<
     CreateStudioProjectResult,
     CreateStudioProjectPayload
   >({
@@ -109,7 +109,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       await invalidateImageStudioProjects(queryClient);
     },
   });
-  const renameProjectMutation = createMutationV2<
+  const renameProjectMutation = useMutationV2<
     UpdateStudioProjectResult,
     UpdateStudioProjectPayload
   >({
@@ -132,7 +132,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       await invalidateImageStudioProjects(queryClient);
     },
   });
-  const deleteProjectMutation = createMutationV2<string, string>({
+  const deleteProjectMutation = useMutationV2<string, string>({
     mutationKey: QUERY_KEYS.imageStudio.all,
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
@@ -154,7 +154,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       await invalidateImageStudioSlots(queryClient, deletedProjectId);
     },
   });
-  const resizeProjectCanvasMutation = createMutationV2<
+  const resizeProjectCanvasMutation = useMutationV2<
     ResizeStudioProjectCanvasResult,
     ResizeStudioProjectCanvasPayload
   >({

@@ -93,6 +93,33 @@ const normalizeGroups = (data: unknown): DatabasePreviewGroup[] => {
     });
 };
 
+const normalizePreviewPayload = (
+  normalized: Record<string, unknown>,
+  rawStats: Record<string, string>,
+  input: DatabasePreviewRequest
+): DatabasePreviewPayload => {
+  const groups = normalizeGroups(normalized['groups'] ?? rawStats['groups']);
+  const tables = normalizeRecordArray(normalized['tables']) as DatabasePreviewTable[];
+  const tableRows = normalizeRecordArray(normalized['tableRows']) as DatabaseTablePreviewData[];
+  const tableDetails = normalizeRecordArray(normalized['tableDetails']) as DatabaseTableDetail[];
+  const total = normalized['total'];
+  const totalRows = rawStats['total'];
+  const finalPage = normalized['page'] ?? input.page;
+  const finalPageSize = normalized['pageSize'] ?? input.pageSize;
+  const databaseSize = toDatabaseSizeString(normalized['databaseSize']);
+
+  return {
+    groups,
+    tables,
+    tableRows,
+    tableDetails,
+    databaseSize,
+    total: parseTotal(total, totalRows),
+    page: parsePositiveInt(finalPage, input.page ?? 1),
+    pageSize: parsePositiveInt(finalPageSize, input.pageSize ?? 20),
+  };
+};
+
 export const getDatabasePreview = async (
   input: DatabasePreviewRequest
 ): Promise<ApiPayloadResult<DatabasePreviewPayload>> => {
@@ -101,35 +128,13 @@ export const getDatabasePreview = async (
     const normalized = getRawPayload(raw);
     const rawStats = normalizeStringRecord(normalized['stats']);
 
-    const groups = normalizeGroups(normalized['groups'] ?? rawStats['groups']);
-    const tables = normalizeRecordArray(normalized['tables']) as DatabasePreviewTable[];
-    const tableRows = normalizeRecordArray(normalized['tableRows']) as DatabaseTablePreviewData[];
-    const tableDetails = normalizeRecordArray(normalized['tableDetails']) as DatabaseTableDetail[];
-    const total = normalized['total'];
-    const totalRows = rawStats['total'];
-    const finalPage = normalized['page'] ?? input.page;
-    const finalPageSize = normalized['pageSize'] ?? input.pageSize;
-    const databaseSize = toDatabaseSizeString(normalized['databaseSize']);
-
-    const payload: DatabasePreviewPayload = {
-      groups,
-      tables,
-      tableRows,
-      tableDetails,
-      databaseSize,
-      total: parseTotal(total, totalRows),
-      page: parsePositiveInt(finalPage, input.page ?? 1),
-      pageSize: parsePositiveInt(finalPageSize, input.pageSize ?? 20),
-    };
+    const payload = normalizePreviewPayload(normalized, rawStats, input);
 
     return { ok: true, payload };
   } catch (error) {
     logClientError(error);
-    if (error instanceof ApiError) {
-      if (error.payload !== undefined && error.payload !== null) {
-        return { ok: false, payload: error.payload as DatabasePreviewPayload };
-      }
-      return { ok: false, payload: toFallbackErrorPayload(error) };
+    if (error instanceof ApiError && error.payload !== undefined && error.payload !== null) {
+      return { ok: false, payload: error.payload as DatabasePreviewPayload };
     }
     return { ok: false, payload: toFallbackErrorPayload(error) };
   }

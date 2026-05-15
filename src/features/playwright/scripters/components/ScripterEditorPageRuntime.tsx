@@ -5,7 +5,7 @@
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { type JSX, useCallback, useState } from 'react';
 
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Alert,
   Badge,
@@ -123,7 +123,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [definition, setDefinition] = useState<ScripterDefinition | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const registryQuery = createListQueryV2<
+  const registryQuery = useListQueryV2<
     ScripterRegistryListEntry,
     ScripterRegistryListEntry[],
     typeof SCRIPTER_REGISTRY_QUERY_KEY
@@ -141,7 +141,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       description: 'Loads Playwright scripter registry entries.',
     },
   });
-  const selectMutation = createMutationV2<ScripterDefinition, string>({
+  const selectMutation = useMutationV2<ScripterDefinition, string>({
     mutationKey: ['playwright', 'scripters', 'select'],
     mutationFn: async (id: string) => await apiGet(id),
     onSuccess: (fetched: ScripterDefinition, id: string): void => {
@@ -150,7 +150,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
     },
     meta: {
       source: 'playwright.scripters.ScripterEditorPageRuntime.select',
-      operation: 'detail',
+      operation: 'action',
       resource: 'playwright.scripters.definition',
       domain: 'playwright',
       mutationKey: ['playwright', 'scripters', 'select'],
@@ -158,7 +158,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       description: 'Loads a Playwright scripter definition for editing.',
     },
   });
-  const saveMutation = createMutationV2<ScripterDefinition, ScripterDefinition>({
+  const saveMutation = useMutationV2<ScripterDefinition, ScripterDefinition>({
     mutationKey: ['playwright', 'scripters', 'save'],
     mutationFn: async (input: ScripterDefinition) => await apiSave(input),
     invalidateKeys: [SCRIPTER_REGISTRY_QUERY_KEY],
@@ -177,7 +177,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       description: 'Saves a Playwright scripter definition.',
     },
   });
-  const deleteMutation = createMutationV2<void, string>({
+  const deleteMutation = useMutationV2<void, string>({
     mutationKey: ['playwright', 'scripters', 'delete'],
     mutationFn: async (id: string) => await apiDelete(id),
     invalidateKeys: [SCRIPTER_REGISTRY_QUERY_KEY],
@@ -198,7 +198,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       description: 'Deletes a Playwright scripter definition.',
     },
   });
-  const commitMutation = createMutationV2<void, string>({
+  const commitMutation = useMutationV2<void, string>({
     mutationKey: ['playwright', 'scripters', 'commit'],
     mutationFn: async (id: string) => await apiCommit(id),
     onSuccess: (): void => {

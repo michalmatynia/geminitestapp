@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -494,7 +494,7 @@ function useMongoFilemakerOrganization(
   refreshKey: number
 ): MongoFilemakerOrganizationState {
   const queryKey = ['filemaker', 'organizations', 'detail', organizationId, refreshKey] as const;
-  const organizationQuery = createSingleQueryV2<
+  const organizationQuery = useSingleQueryV2<
     MongoFilemakerOrganizationResponse,
     MongoFilemakerOrganizationState,
     typeof queryKey
@@ -556,7 +556,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const [mongoOrganizationRefreshKey, setMongoOrganizationRefreshKey] = useState(0);
-  const websiteSocialScrapeMutation = createMutationV2<
+  const websiteSocialScrapeMutation = useMutationV2<
     OrganizationWebsiteSocialScrapeResponse,
     string
   >({
@@ -572,7 +572,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       errorPresentation: 'toast',
     },
   });
-  const mongoOrganizationSaveMutation = createMutationV2<void, MongoOrganizationSaveVariables>({
+  const mongoOrganizationSaveMutation = useMutationV2<void, MongoOrganizationSaveVariables>({
     mutationKey: ['filemaker', 'organizations', 'detail', 'save'],
     mutationFn: async (variables) => {
       const response = await fetch(

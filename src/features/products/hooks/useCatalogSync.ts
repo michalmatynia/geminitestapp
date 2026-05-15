@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog } from '@/shared/contracts/products/catalogs';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
-import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -79,7 +79,7 @@ const useRuntimeReady = (): boolean => {
 };
 
 const useCatalogSyncQueries = (queriesEnabled: boolean): CatalogSyncQueries =>
-  createMultiQueryV2({
+  useMultiQueryV2({
     queries: [
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),

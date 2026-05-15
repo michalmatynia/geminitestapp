@@ -1,7 +1,7 @@
 'use client';
 
 import type { MutationResult } from '@/shared/contracts/ui/queries';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type { FilemakerJobApplication } from '../types';
@@ -50,7 +50,7 @@ export const useResolveManualUnmarkTargetMutation = (): MutationResult<
   ManualUnmarkTarget | null,
   ResolveManualUnmarkTargetVariables
 > =>
-  createMutationV2<ManualUnmarkTarget | null, ResolveManualUnmarkTargetVariables>({
+  useMutationV2<ManualUnmarkTarget | null, ResolveManualUnmarkTargetVariables>({
     mutationKey: ['filemaker', 'job-applications', 'manual-unmark-target'],
     mutationFn: async ({ listingId, mutableApplicationId, personId }) => {
       const normalizedPersonId = normalizeSearchInput(personId);
@@ -79,7 +79,7 @@ export const useResolveManualUnmarkTargetMutation = (): MutationResult<
     },
     meta: {
       source: 'features.filemaker.pages.AdminFilemakerJobListingsPage.resolveManualUnmarkTarget',
-      operation: 'fetch',
+      operation: 'action',
       resource: 'filemaker.job-application',
       domain: 'files',
       description: 'Resolve the Filemaker job application target for manual unmark applied.',
@@ -91,7 +91,7 @@ export const useMarkAppliedMutation = (): MutationResult<
   ApplicationInfoPayload,
   ManualMarkMutationVariables
 > =>
-  createMutationV2<ApplicationInfoPayload, ManualMarkMutationVariables>({
+  useMutationV2<ApplicationInfoPayload, ManualMarkMutationVariables>({
     mutationKey: ['filemaker', 'job-applications', 'manual-mark'],
     mutationFn: async ({ request, wasApplied }) => {
       const response = await fetch(request.url, {

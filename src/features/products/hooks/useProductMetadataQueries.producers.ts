@@ -1,7 +1,7 @@
 import type { Producer } from '@/shared/contracts/products/producers';
 import type { DeleteMutation, ListQuery, SaveMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 
 import {
@@ -14,7 +14,7 @@ import {
 
 export function useProducers(options?: ProductMetadataQueryOptions): ListQuery<Producer> {
   const queryKey = productMetadataKeys.producers();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<Producer[]> =>
       await api.get<Producer[]>('/api/v2/products/producers'),
@@ -37,7 +37,7 @@ export function useSaveProducerMutation(): SaveMutation<
   { id: string | undefined; data: { name: string; website: string | null } }
 > {
   const mutationKey = productMetadataKeys.producers();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }) =>
       hasMutationId(id)
         ? api.put<Producer>(`/api/v2/products/producers/${id}`, data)
@@ -60,7 +60,7 @@ export function useSaveProducerMutation(): SaveMutation<
 
 export function useDeleteProducerMutation(): DeleteMutation {
   const mutationKey = productMetadataKeys.producers();
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => api.delete<void>(`/api/v2/products/producers/${id}`),
     mutationKey,
     meta: {

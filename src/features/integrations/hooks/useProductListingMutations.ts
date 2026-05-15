@@ -15,9 +15,9 @@ import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/i
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateListingsBadgesAndQueues,
@@ -279,7 +279,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
   const mutationKey = listingBadgesQueryKey;
   const queryClient = useQueryClient();
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async (vars: GenericExportToBaseVariables): Promise<ExportResponse> => {
       const { productId, requestId, ...payload } = vars;
       const requestKey = requestId?.trim();
@@ -338,7 +338,7 @@ export function useGenericCreateListingMutation(): CreateMutation<
   ProductListingCreateResponse,
   ProductListingCreateVariables
   > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({
       productId,
       ...payload
@@ -371,7 +371,7 @@ export function useDeleteFromBaseMutation(
   const listingQueryKey = getProductListingsQueryKey(productId);
   const queryClient = useQueryClient();
 
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ listingId, inventoryId }: ProductListingDeleteFromBaseVariables) =>
       api.post<ProductListingDeleteFromBaseResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
@@ -470,7 +470,7 @@ export function useDeleteFromBaseMutation(
 }
 
 export function usePurgeListingMutation(productId: string): DeleteMutation {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (listingId: string) =>
       api.delete<void>(`/api/v2/integrations/products/${productId}/listings/${listingId}/purge`),
     mutationKey: getProductListingsQueryKey(productId),
@@ -492,7 +492,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
 export function useUpdateListingInventoryIdMutation(
   productId: string
 ): UpdateMutation<ProductListingUpdateResponse, ProductListingInventoryUpdateVariables> {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ listingId, inventoryId }: ProductListingInventoryUpdateVariables) =>
       api.patch<ProductListingUpdateResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}`,
@@ -516,7 +516,7 @@ export function useUpdateListingInventoryIdMutation(
 export function useSyncBaseImagesMutation(
   productId: string
 ): UpdateMutation<ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables> {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ listingId, inventoryId }: ProductListingSyncBaseImagesVariables) =>
       api.post<ProductListingSyncBaseImagesResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
@@ -542,7 +542,7 @@ export function useExportToBaseMutation(
   productId: string
 ): UpdateMutation<ExportResponse, ExportToBaseVariables> {
   const queryClient = useQueryClient();
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
       const { requestId, ...body } = payload;
       const requestKey = requestId?.trim();
@@ -597,7 +597,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
   ProductListingCreateResponse,
   ProductListingCreatePayload
 > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({
       integrationId,
       connectionId,
@@ -646,7 +646,7 @@ export function useLinkExistingTraderaListingMutation(productId: string): Create
   TraderaProductLinkExistingResponse,
   TraderaProductLinkExistingPayload
 > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ listingUrl, connectionId }: TraderaProductLinkExistingPayload) =>
       api.post<TraderaProductLinkExistingResponse>(
         `/api/v2/integrations/products/${productId}/tradera/link-existing`,
@@ -679,7 +679,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingRelistVariables) =>
       api.post<ProductListingRelistResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/relist`,
@@ -795,7 +795,7 @@ export function useMoveTraderaListingToUnsoldMutation(productId: string): Update
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingMoveToUnsoldVariables) =>
       api.post<ProductListingMoveToUnsoldResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/move-to-unsold`,
@@ -883,7 +883,7 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ listingId, browserMode, selectorProfile, skipImages }: ProductListingSyncVariables) =>
       api.post<ProductListingSyncResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/sync`,
@@ -974,7 +974,7 @@ export function useCheckTraderaStatusMutation(productId: string): UpdateMutation
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingSyncVariables) =>
       api.post<ProductListingSyncResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/check-status`,

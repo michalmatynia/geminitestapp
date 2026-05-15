@@ -124,6 +124,13 @@ const markBackupFailedSafely = async (jobId: string, message: string): Promise<v
   }
 };
 
+/**
+ * enqueueProductAiJob: Creates a new AI product job entry in the database.
+ * @param productId - The ID of the product this job is associated with.
+ * @param type - The type of AI job to create (e.g., 'db_backup').
+ * @param payload - Arbitrary data payload required by the specific job.
+ * @returns The newly created job record.
+ */
 export async function enqueueProductAiJob(
   productId: string,
   type: ProductAiJobType,
@@ -134,6 +141,11 @@ export async function enqueueProductAiJob(
   return toProductAiJob(record);
 }
 
+/**
+ * getProductAiJobs: Retrieves a list of AI product jobs.
+ * @param productId - Optional filter to limit results by product ID.
+ * @returns A list of job records with linked product data.
+ */
 export async function getProductAiJobs(
   productId?: string
 ): Promise<ProductAiJobWithProduct[]> {
@@ -145,6 +157,11 @@ export async function getProductAiJobs(
   }));
 }
 
+/**
+ * getProductAiJob: Fetches a specific AI product job by its ID.
+ * @param jobId - The unique identifier of the job to retrieve.
+ * @returns The job record, or null if not found.
+ */
 export async function getProductAiJob(jobId: string): Promise<ProductAiJobWithProduct | null> {
   const repository = await getProductAiJobRepository();
   const record = await repository.findJobById(jobId);
@@ -212,6 +229,11 @@ const recoverInterruptedBackupJobs = async (): Promise<void> => {
   }
 };
 
+/**
+ * processProductAiJob: Executes the AI product job logic, specifically handling MongoDB backup jobs.
+ * This includes updating the job status, performing the backup, and marking it as complete or failed.
+ * @param jobId - The unique identifier of the job to process.
+ */
 export async function processProductAiJob(jobId: string): Promise<ProductAiJob> {
   const repository = await getProductAiJobRepository();
   const record = await repository.findJobById(jobId);
@@ -280,6 +302,9 @@ const queue = createManagedQueue<DatabaseBackupQueueJobData>({
   },
 });
 
+/**
+ * startProductAiJobQueue: Ensures the job queue worker is initialized and running.
+ */
 export function startProductAiJobQueue(): void {
   queue.startWorker();
   void recoverInterruptedBackupJobs();

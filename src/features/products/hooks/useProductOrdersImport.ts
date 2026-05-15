@@ -1,7 +1,7 @@
 import type { BaseOrderImportPersistPayload, BaseOrderImportPersistResponse, BaseOrderImportPreviewPayload, BaseOrderImportPreviewResponse, BaseOrderImportStatusOption } from '@/shared/contracts/products/orders-import';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { productKeys } from '@/shared/lib/query-key-exports';
 import { useQuickImportBaseOrdersMutation as useSharedQuickImportBaseOrdersMutation } from '@/shared/hooks/useBaseOrderQuickImport';
 
@@ -19,7 +19,7 @@ export function useBaseOrderImportStatuses(connectionId: string): ListQuery<Base
   const queryKey = productOrdersImportKeys.statuses(
     trimmedConnectionId === '' ? null : trimmedConnectionId
   );
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<BaseOrderImportStatusOption[]> => {
       if (trimmedConnectionId === '') return [];
@@ -48,7 +48,7 @@ export function usePreviewBaseOrdersMutation(): MutationResult<
   BaseOrderImportPreviewPayload
 > {
   const mutationKey = productOrdersImportKeys.preview();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (payload) =>
       api.post<BaseOrderImportPreviewResponse>('/api/v2/products/orders-import/preview', payload),
     mutationKey,
@@ -69,7 +69,7 @@ export function useImportBaseOrdersMutation(): MutationResult<
   BaseOrderImportPersistPayload
 > {
   const mutationKey = productOrdersImportKeys.import();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (payload) =>
       api.post<BaseOrderImportPersistResponse>('/api/v2/products/orders-import/import', payload),
     mutationKey,

@@ -4,7 +4,7 @@ import { startTransition, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -170,7 +170,7 @@ const useLinkedMailThreads = ({
 } => {
   const queryKey = [...CAMPAIGN_RUN_MAIL_THREADS_QUERY_KEY, campaignId, activeRunId] as const;
   const hasRunContext = activeRunId.length > 0 && campaignId.length > 0;
-  const linkedMailThreadsQuery = createSingleQueryV2<
+  const linkedMailThreadsQuery = useSingleQueryV2<
     CampaignMailThreadsResponse,
     CampaignMailThreadsResponse,
     typeof queryKey
@@ -220,7 +220,7 @@ const useRepairMailFilingAction = ({
   settingsStore: SettingsStore;
   toast: Toast;
 }): Pick<AdminFilemakerCampaignRunPageState, 'handleRepairMailFiling' | 'isRepairingMailFiling'> => {
-  const repairMailFilingMutation = createMutationV2<CampaignMailFilingRepairResponse, string>({
+  const repairMailFilingMutation = useMutationV2<CampaignMailFilingRepairResponse, string>({
     mutationKey: ['filemaker', 'campaign-runs', 'repair-mail-filing'],
     mutationFn: async (runId) =>
       fetchFilemakerMailJson<CampaignMailFilingRepairResponse>(

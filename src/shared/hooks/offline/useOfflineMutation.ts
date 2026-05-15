@@ -13,7 +13,7 @@ import { useCallback } from 'react';
 // hooks internally. Opt out of React Compiler memoization here to avoid dev
 // runtime cache-size mismatches in compiled hook paths.
 
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -206,7 +206,7 @@ export function useOfflineMutation<
     tags: ['shared-hook', 'offline'],
   };
 
-  const mutation = createMutationV2<TData, TVariables, TContext, TError>({
+  const mutation = useMutationV2<TData, TVariables, TContext, TError>({
     mutationKey,
     meta: {
       ...defaultMeta,

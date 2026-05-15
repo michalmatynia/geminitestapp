@@ -38,6 +38,9 @@ export type MongoSettingDoc = MongoTimestampedSettingRecord<
   Date | string
 >;
 
+/**
+ * MongoUserDoc: Representation of a user document in MongoDB, typically managed by NextAuth/Auth.js.
+ */
 export interface MongoUserDoc {
   _id?: ObjectId;
   id?: string;
@@ -48,6 +51,9 @@ export interface MongoUserDoc {
   passwordHash?: string | null;
 }
 
+/**
+ * MongoAccountDoc: Representation of an authentication account document associated with a user.
+ */
 export interface MongoAccountDoc {
   _id?: ObjectId;
   id?: string;
@@ -64,6 +70,9 @@ export interface MongoAccountDoc {
   session_state?: string | null;
 }
 
+/**
+ * MongoAuthSecurityProfileDoc: Security-specific settings and MFA profile for user authentication.
+ */
 export interface MongoAuthSecurityProfileDoc {
   _id?: ObjectId;
   id?: string;
@@ -78,6 +87,9 @@ export interface MongoAuthSecurityProfileDoc {
   updatedAt?: Date | string;
 }
 
+/**
+ * MongoUserPreferencesDoc: User-level configuration and preferences for various platform features.
+ */
 export interface MongoUserPreferencesDoc {
   _id?: ObjectId;
   id?: string;

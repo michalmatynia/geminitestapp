@@ -1,4 +1,16 @@
+/**
+ * FileMaker Documents Import Parser
+ * 
+ * CSV/XLSX parsing and transformation for document import.
+ * Provides:
+ * - Parsing with auto-delimiter detection
+ * - Data normalization and UUID mapping
+ * - Header-based field validation
+ * - Standardized error reporting for import failures
+ */
+
 import Papa from 'papaparse';
+import { AppErrorCodes, AppError } from '@/shared/errors/app-error';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
@@ -66,8 +78,11 @@ const inferDelimiter = (text: string): Delimiter => {
 
 const hasDocumentHeader = (header: string[]): boolean => header.includes(FIELDS.legacyUuid);
 
-const buildMissingHeaderError = (format: LegacyDocumentRowsFormat): Error =>
-  new Error(`FileMaker document ${format} export is missing the UUID header.`);
+const buildMissingHeaderError = (format: LegacyDocumentRowsFormat): AppError =>
+  new AppError(`FileMaker document ${format} export is missing the mandatory UUID header. Ensure your exported file contains this column.`, {
+    code: AppErrorCodes.validation,
+    httpStatus: 400,
+  });
 
 const rowToObject = (header: readonly string[], row: string[]): LegacyDocumentRow =>
   Object.fromEntries(header.map((fieldName: string, index: number) => [fieldName, row[index] ?? '']));
@@ -111,7 +126,10 @@ export const parseFilemakerLegacyDocumentRows = (text: string): LegacyDocumentRo
   });
   if (parsed.errors.length > 0) {
     const firstError = parsed.errors[0]?.message ?? 'parse error';
-    throw new Error(`Invalid FileMaker document export: ${firstError}`);
+    throw new AppError(`Invalid FileMaker document export structure: ${firstError}`, {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   return rowsToLegacyDocumentRows(parsed.data, { format: 'CSV/TSV' });
 };
@@ -133,11 +151,17 @@ export const parseFilemakerLegacyDocumentWorkbookRows = async (
   });
   const sheetName = workbook.SheetNames[0];
   if (sheetName === undefined) {
-    throw new Error('FileMaker document XLSX export does not contain any worksheets.');
+    throw new AppError('The provided XLSX file does not contain any worksheets.', {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) {
-    throw new Error(`FileMaker document XLSX export is missing worksheet "${sheetName}".`);
+    throw new AppError(`The specified worksheet "${sheetName}" was not found in the XLSX export.`, {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
@@ -170,7 +194,7 @@ const hasDocumentContent = (document: ParsedLegacyDocument): boolean =>
   ].some((value: string | undefined): boolean => (value?.trim().length ?? 0) > 0);
 
 export const parseDocumentFromRow = (row: LegacyDocumentRow): ParsedLegacyDocument | null => {
-  const legacyUuid = normalizeLegacyUuid(row[FIELDS.legacyUuid]);
+  const legacyUuid = normalizeLegacyUuid(row[FIELDS.legacyUuid] ?? '');
   if (legacyUuid.length === 0) return null;
   const document: ParsedLegacyDocument = {
     codeA: optionalString(row[FIELDS.codeA]),

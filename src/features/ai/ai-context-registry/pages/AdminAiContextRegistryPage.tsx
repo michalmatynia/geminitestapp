@@ -12,7 +12,7 @@ import type {
   ContextSchemaResponse,
   ContextSearchResponse,
 } from '@/shared/contracts/ai-context-registry';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { PanelHeader } from '@/shared/ui/templates.public';
@@ -40,7 +40,7 @@ type ContextRegistrySearchState = {
   kindFilter: ContextNodeKind | 'all';
   query: string;
   runtimeRefsText: string;
-  searchQuery: ReturnType<typeof createListQueryV2<ContextSearchResponse, ContextSearchResponse>>;
+  searchQuery: ReturnType<typeof useListQueryV2<ContextSearchResponse, ContextSearchResponse>>;
   selectedId: string | null;
   selectedNode: ContextNode | null;
   setKindFilter: (kind: ContextNodeKind | 'all') => void;
@@ -82,7 +82,7 @@ const useContextRegistrySearchState = (): ContextRegistrySearchState => {
   const deferredQuery = useDeferredValue(query);
   const trimmedQuery = deferredQuery.trim();
 
-  const searchQuery = createListQueryV2<ContextSearchResponse, ContextSearchResponse>({
+  const searchQuery = useListQueryV2<ContextSearchResponse, ContextSearchResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.search(deferredQuery, kindFilter),
     queryFn: async () =>
       await postJson<ContextSearchResponse>('/api/ai/context/search', {
@@ -134,8 +134,8 @@ const useContextRegistrySearchState = (): ContextRegistrySearchState => {
 
 const useRelatedQuery = (
   selectedId: string | null
-): ReturnType<typeof createListQueryV2<ContextRelatedResponse, ContextRelatedResponse>> =>
-  createListQueryV2<ContextRelatedResponse, ContextRelatedResponse>({
+): ReturnType<typeof useListQueryV2<ContextRelatedResponse, ContextRelatedResponse>> =>
+  useListQueryV2<ContextRelatedResponse, ContextRelatedResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.related(selectedId),
     queryFn: async () => {
       if (selectedId === null) throw new Error('Select a node before loading related context.');
@@ -157,8 +157,8 @@ const useRelatedQuery = (
 
 const useSchemaQuery = (
   selectedNode: ContextNode | null
-): ReturnType<typeof createListQueryV2<ContextSchemaResponse, ContextSchemaResponse>> =>
-  createListQueryV2<ContextSchemaResponse, ContextSchemaResponse>({
+): ReturnType<typeof useListQueryV2<ContextSchemaResponse, ContextSchemaResponse>> =>
+  useListQueryV2<ContextSchemaResponse, ContextSchemaResponse>({
     queryKey: QUERY_KEYS.ai.contextRegistry.schema(selectedNode?.id ?? null),
     queryFn: async () => {
       if (selectedNode === null) {
@@ -185,7 +185,7 @@ const useBundleState = (input: {
   selectedId: string | null;
 }): {
   bundleQuery: ReturnType<
-    typeof createListQueryV2<ContextRegistryResolutionBundle, ContextRegistryResolutionBundle>
+    typeof useListQueryV2<ContextRegistryResolutionBundle, ContextRegistryResolutionBundle>
   >;
   bundleRequest: ContextBundleRequest | null;
   envelopePreview: unknown;
@@ -202,7 +202,7 @@ const useBundleState = (input: {
   }, [input.selectedId, runtimeRefs]);
 
   const bundleKey = JSON.stringify(bundleRequest ?? null);
-  const bundleQuery = createListQueryV2<
+  const bundleQuery = useListQueryV2<
     ContextRegistryResolutionBundle,
     ContextRegistryResolutionBundle
   >({

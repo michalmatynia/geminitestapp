@@ -12,7 +12,7 @@ export function TextAtomBlock(): React.JSX.Element | null {
   const settings = useRequiredBlockSettings();
   
   const text = typeof settings['text'] === 'string' ? settings['text'] : '';
-  const alignment = (settings['alignment'] as string) || 'left';
+  const alignment = (settings['alignment'] as string) === 'center' ? 'center' : (settings['alignment'] as string) === 'right' ? 'flex-end' : 'flex-start';
   const letterGap = typeof settings['letterGap'] === 'number' ? settings['letterGap'] : 0;
   const lineGap = typeof settings['lineGap'] === 'number' ? settings['lineGap'] : 0;
   const wrap = settings['wrap'] === 'nowrap' ? 'nowrap' : 'wrap';
@@ -32,13 +32,10 @@ export function TextAtomBlock(): React.JSX.Element | null {
 
   if (letters.length === 0) return null;
 
-  const justifyContent =
-    alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
-
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexWrap: wrap === 'nowrap' ? 'nowrap' : 'wrap',
-    justifyContent,
+    justifyContent: alignment,
     alignItems: 'baseline',
     columnGap: `${letterGap}px`,
     rowGap: `${lineGap}px`,

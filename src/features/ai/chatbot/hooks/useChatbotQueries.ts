@@ -5,7 +5,7 @@ import type {
   ChatbotSettingsResponse,
 } from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys, chatbotKeys } from '@/shared/lib/query-key-exports';
 
 import {
@@ -23,7 +23,7 @@ export function useChatbotSessions(options?: {
   enabled?: boolean;
 }): ListQuery<ChatbotSessionListItem> {
   const queryKey = chatbotKeys.sessions();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ChatbotSessionListItem[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>();
@@ -51,7 +51,7 @@ export function useChatbotSession(
   const queryKey = sessionId
     ? chatbotKeys.session(sessionId)
     : [...chatbotKeys.all, 'session', 'none'];
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: sessionId,
     queryKey,
     queryFn: async () => {
@@ -78,7 +78,7 @@ export function useChatbotSettings(
   options?: { enabled?: boolean }
 ): SingleQuery<ChatbotSettingsResponse> {
   const queryKey = chatbotKeys.settings.all(key);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: key,
     queryKey,
     queryFn: (): Promise<ChatbotSettingsResponse> =>
@@ -103,7 +103,7 @@ export function useChatbotModels(options?: {
   staleTime?: number;
 }): ListQuery<string> {
   const queryKey = brainKeys.models();
-  return createListQueryV2<string, string[]>({
+  return useListQueryV2<string, string[]>({
     queryKey,
     queryFn: async (): Promise<string[]> => {
       const response = await fetchChatbotModels();
@@ -133,7 +133,7 @@ export function useChatbotMemory(
   options?: { enabled?: boolean }
 ): SingleQuery<ChatbotMemoryItem[]> {
   const queryKey = chatbotKeys.memory(query);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: query || 'global',
     queryKey,
     queryFn: (): Promise<ChatbotMemoryItem[]> => fetchChatbotMemory(query ?? ''),

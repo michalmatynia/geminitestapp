@@ -32,7 +32,7 @@ vi.mock('@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries', () 
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createMutationV2: () => ({
+  useMutationV2: () => ({
     isPending: false,
     mutateAsync: vi.fn(),
   }),

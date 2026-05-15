@@ -12,7 +12,7 @@ import {
   invalidateListingBadges,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -37,7 +37,7 @@ export const useRunScrapeProfileMutation = (
 > => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  return createMutationV2<ProductScrapeProfileRunLaunchResponse, ProductScrapeProfileRunRequest>({
+  return useMutationV2<ProductScrapeProfileRunLaunchResponse, ProductScrapeProfileRunRequest>({
     mutationFn: runScrapeProfile,
     meta: {
       source: 'products.components.ProductScrapeProfilesModal.runScrapeProfile',

@@ -10,7 +10,7 @@ import type {
   ProductValidatorSettings,
 } from '@/shared/contracts/products/validation';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
 import * as api from '../api/settings';
@@ -38,7 +38,7 @@ export function useCategories(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductCategoryWithChildren> {
   const queryKey = productSettingsKeys.categoryTree(catalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.getCategories(catalogId),
     enabled: catalogId !== null && catalogId.length > 0 && (options?.enabled ?? true),
@@ -73,7 +73,7 @@ export function useCustomFields(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductCustomFieldDefinition> {
   const queryKey = productSettingsKeys.customFields();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: api.getCustomFields,
     enabled: options?.enabled ?? true,
@@ -103,7 +103,7 @@ export function useSimpleParameters(catalogId: string | null): ListQuery<Product
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
   const queryKey = productSettingsKeys.validatorSettings();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'global',
     queryKey,
     queryFn: api.getValidatorSettings,
@@ -122,7 +122,7 @@ export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
 
 export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
   const queryKey = productSettingsKeys.validatorPatterns();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: api.getValidationPatterns,
     staleTime: 5 * 60 * 1_000,
@@ -146,7 +146,7 @@ export function useProductValidatorConfig(
 ): SingleQuery<ProductValidatorConfig> {
   const id = includeDisabled ? 'config-all' : 'config-active';
   const queryKey = productSettingsKeys.validatorConfig(includeDisabled);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id,
     queryKey,
     queryFn: () => api.getProductValidatorConfig(includeDisabled),

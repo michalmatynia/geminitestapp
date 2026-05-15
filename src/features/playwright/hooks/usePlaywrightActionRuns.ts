@@ -8,7 +8,7 @@ import type {
 } from '@/shared/contracts/playwright-action-runs';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 
 const buildParams = (
@@ -47,7 +47,7 @@ export function usePlaywrightActionRuns(
   options?: { enabled?: boolean }
 ): ListQuery<PlaywrightActionRunSummary, PlaywrightActionRunListResponse> {
   const queryKey = playwrightKeys.actionRuns(filters);
-  return createListQueryV2<PlaywrightActionRunSummary, PlaywrightActionRunListResponse>({
+  return useListQueryV2<PlaywrightActionRunSummary, PlaywrightActionRunListResponse>({
     queryKey,
     queryFn: () => fetchPlaywrightActionRuns(filters),
     enabled: options?.enabled ?? true,
@@ -69,7 +69,7 @@ export function usePlaywrightActionRun(
 ): SingleQuery<PlaywrightActionRunDetailResponse> {
   const resolvedRunId = runId ?? '';
   const queryKey = playwrightKeys.actionRun(resolvedRunId);
-  return createSingleQueryV2<PlaywrightActionRunDetailResponse>({
+  return useSingleQueryV2<PlaywrightActionRunDetailResponse>({
     id: resolvedRunId,
     queryKey,
     queryFn: () => fetchPlaywrightActionRun(resolvedRunId),

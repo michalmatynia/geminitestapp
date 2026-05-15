@@ -119,15 +119,6 @@ export function useListQueryV2<TData, TQueryFnData = TData[]>(
   >;
 }
 
-/**
- * Function-style wrapper for useListQueryV2.
- */
-export function createListQueryV2<TData, TQueryFnData = TData[]>(
-  config: BaseQueryFactoryV2Config<TQueryFnData, Error, TQueryFnData>
-): ListQuery<TData, TQueryFnData> {
-  return useListQueryV2<TData, TQueryFnData>(config);
-}
-
 type SingleQueryEnabledPredicate = (query: unknown) => boolean;
 
 type TelemetrizedMultiQueryOptions<
@@ -255,25 +246,14 @@ export function useSingleQueryV2<
 }
 
 /**
- * Function-style wrapper for useSingleQueryV2.
- */
-export function createSingleQueryV2<
-  TData,
-  TTransformedData = TData,
-  TQueryKey extends QueryKey = QueryKey,
->(config: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>): SingleQuery<TTransformedData> {
-  return useSingleQueryV2(config);
-}
-
-/**
  * Factory for paginated list queries that keep previous data while loading.
  */
-export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = QueryKey>(
+export function usePaginatedListQueryV2<TItem, TQueryKey extends QueryKey = QueryKey>(
   config: SingleQueryConfigV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>
 ): SingleQuery<PaginatedResult<TItem>> {
   const { placeholderData, meta, ...rest } = config;
 
-  return createSingleQueryV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>({
+  return useSingleQueryV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>({
     ...rest,
     meta,
     placeholderData:
@@ -284,7 +264,7 @@ export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = Q
 /**
  * Factory for infinite queries.
  */
-export function createInfiniteQueryV2<
+export function useInfiniteQueryV2<
   TQueryFnData,
   TError = Error,
   TData = InfiniteData<TQueryFnData>,
@@ -322,7 +302,7 @@ export function createInfiniteQueryV2<
  * @param config - Configuration containing the list of queries and an optional combine function.
  * @returns The combined results of all queries.
  */
-export function createMultiQueryV2<
+export function useMultiQueryV2<
   TQueries extends readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
   TCombine = MultiQueryResultsV2<TQueries>,
 >(config: MultiQueryConfigV2<TQueries, TCombine>): TCombine {
@@ -346,7 +326,7 @@ export function createMultiQueryV2<
 /**
  * Factory for suspense-enabled single queries.
  */
-export function createSuspenseQueryV2<
+export function useSuspenseQueryV2<
   TQueryFnData,
   TError = Error,
   TData = TQueryFnData,
@@ -360,7 +340,7 @@ export function createSuspenseQueryV2<
 /**
  * Factory for suspense-enabled infinite queries.
  */
-export function createSuspenseInfiniteQueryV2<
+export function useSuspenseInfiniteQueryV2<
   TQueryFnData,
   TError = Error,
   TData = InfiniteData<TQueryFnData>,
@@ -395,7 +375,7 @@ export function createSuspenseInfiniteQueryV2<
 /**
  * Hook for executing multiple suspense queries in parallel.
  */
-export function createSuspenseMultiQueryV2<
+export function useSuspenseMultiQueryV2<
   TQueries extends readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 >(config: SuspenseMultiQueryConfigV2<TQueries, TCombine>): TCombine {
@@ -418,10 +398,10 @@ export function createSuspenseMultiQueryV2<
 }
 
 /**
- * Specialized factory for "Save" mutations that handle both creation and updates.
+ * Hook for "save" mutations that handle both creation and updates.
  * Switches between createFn and updateFn based on whether variables.id is present.
  */
-export function createSaveMutationV2<
+export function useSaveMutationV2<
   TData,
   TVariables extends { id?: string | null },
   TContext = unknown,
@@ -577,19 +557,10 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
 }
 
 /**
- * Function-style wrapper for useMutationV2.
- */
-export function createMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
-  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
-): MutationResult<TData, TVariables, TError> {
-  return useMutationV2<TData, TVariables, TContext, TError>(config);
-}
-
-/**
- * Factory for mutations that perform optimistic UI updates.
+ * Hook for mutations that perform optimistic UI updates.
  * Automatically handles canceling queries, setting data, and reverting on error.
  */
-export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
+export function useOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
   config: OptimisticMutationFactoryV2Config<TData, TVariables, TCacheData>
 ): MutationResult<TData, TVariables> {
   const { queryKey, updateFn, revertOnError, onMutate, onError, onSettled, meta, ...rest } = config;
@@ -741,31 +712,4 @@ export function useDeleteMutationV2<TData, TVariables, TContext = unknown, TErro
   config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
 ): MutationResult<TData, TVariables, TError> {
   return useMutationV2<TData, TVariables, TContext, TError>(config);
-}
-
-/**
- * Factory-style wrapper for 'create' mutations.
- */
-export function createCreateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
-  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
-): MutationResult<TData, TVariables, TError> {
-  return useCreateMutationV2<TData, TVariables, TContext, TError>(config);
-}
-
-/**
- * Factory-style wrapper for 'update' mutations.
- */
-export function createUpdateMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
-  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
-): MutationResult<TData, TVariables, TError> {
-  return useUpdateMutationV2<TData, TVariables, TContext, TError>(config);
-}
-
-/**
- * Factory-style wrapper for 'delete' mutations.
- */
-export function createDeleteMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
-  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
-): MutationResult<TData, TVariables, TError> {
-  return useDeleteMutationV2<TData, TVariables, TContext, TError>(config);
 }

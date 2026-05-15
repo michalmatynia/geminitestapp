@@ -8,15 +8,15 @@ import {
 } from '@/shared/lib/jobs/hooks/useJobMutations';
 import { jobKeys } from '@/shared/lib/jobs/hooks/useJobQueries';
 
-const createCreateMutationV2Mock = vi.hoisted(() => vi.fn());
-const createDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
+const useCreateMutationV2Mock = vi.hoisted(() => vi.fn());
+const useDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
 const updateChatbotJobMock = vi.hoisted(() => vi.fn());
 const clearChatbotJobsMock = vi.hoisted(() => vi.fn());
 const cancelListingMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createCreateMutationV2: createCreateMutationV2Mock,
-  createDeleteMutationV2: createDeleteMutationV2Mock,
+  useCreateMutationV2: useCreateMutationV2Mock,
+  useDeleteMutationV2: useDeleteMutationV2Mock,
 }));
 
 vi.mock('@/shared/lib/jobs/api', () => ({
@@ -27,14 +27,14 @@ vi.mock('@/shared/lib/jobs/api', () => ({
 
 describe('useJobMutations', () => {
   beforeEach(() => {
-    createCreateMutationV2Mock.mockReset();
-    createDeleteMutationV2Mock.mockReset();
+    useCreateMutationV2Mock.mockReset();
+    useDeleteMutationV2Mock.mockReset();
     updateChatbotJobMock.mockReset();
     clearChatbotJobsMock.mockReset();
     cancelListingMock.mockReset();
 
-    createCreateMutationV2Mock.mockReturnValue({ kind: 'create-mutation' });
-    createDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
+    useCreateMutationV2Mock.mockReturnValue({ kind: 'create-mutation' });
+    useDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
     updateChatbotJobMock.mockResolvedValue({ ok: true });
     clearChatbotJobsMock.mockResolvedValue({ ok: true });
     cancelListingMock.mockResolvedValue(undefined);
@@ -42,7 +42,7 @@ describe('useJobMutations', () => {
 
   it('builds the chatbot action mutation with the expected metadata and error transform', async () => {
     const { result } = renderHook(() => useChatbotJobMutation());
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'create-mutation' });
     expect(config.mutationKey).toEqual(jobKeys.all);
@@ -69,7 +69,7 @@ describe('useJobMutations', () => {
 
   it('builds clear and cancel delete mutations with the expected targets', async () => {
     const clearResult = renderHook(() => useClearChatbotJobsMutation());
-    const clearConfig = createDeleteMutationV2Mock.mock.calls[0]?.[0];
+    const clearConfig = useDeleteMutationV2Mock.mock.calls[0]?.[0];
 
     expect(clearResult.result.current).toEqual({ kind: 'delete-mutation' });
     expect(clearConfig.mutationKey).toEqual(jobKeys.all);
@@ -87,7 +87,7 @@ describe('useJobMutations', () => {
     );
 
     const cancelResult = renderHook(() => useCancelListingMutation());
-    const cancelConfig = createDeleteMutationV2Mock.mock.calls[1]?.[0];
+    const cancelConfig = useDeleteMutationV2Mock.mock.calls[1]?.[0];
 
     expect(cancelResult.result.current).toEqual({ kind: 'delete-mutation' });
     expect(cancelConfig.mutationKey).toEqual(jobKeys.integrations());

@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as telemetry from '@/shared/lib/observability/tanstack-telemetry';
 import {
-  createCreateMutationV2,
-  createMultiQueryV2,
+  useCreateMutationV2,
+  useMultiQueryV2,
   createMutationOptionsV2,
-  createMutationV2,
-  createOptimisticMutationV2,
+  useMutationV2,
+  useOptimisticMutationV2,
   createQueryOptionsV2,
-  createListQueryV2,
+  useListQueryV2,
   ensureQueryDataV2,
   fetchQueryV2,
   prefetchQueryV2,
@@ -46,7 +46,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createListQueryV2({
+        useListQueryV2({
           queryKey: ['products'],
           queryFn: async () => [{ id: '1' }],
           meta: {
@@ -82,7 +82,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createCreateMutationV2({
+        useCreateMutationV2({
           mutationFn: async (value: { name: string }) => ({ id: '1', ...value }),
           meta: {
             source: 'products.hooks.useCreateProduct',
@@ -117,7 +117,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createMultiQueryV2({
+        useMultiQueryV2({
           queries: [
             {
               queryKey: ['products', 'batch', 'one'],
@@ -191,7 +191,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createMutationV2<{ ok: boolean }, { id: string }>({
+        useMutationV2<{ ok: boolean }, { id: string }>({
           mutationFn: async () => ({ ok: true }),
           mutationKey: ['products', 'mutation', 'invalidate-keys'],
           invalidateKeys: [['products'], ['products', 'detail']],
@@ -247,7 +247,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createMutationV2<{ ok: boolean }, void>({
+        useMutationV2<{ ok: boolean }, void>({
           mutationFn: async () => ({ ok: true }),
           mutationKey: ['products', 'mutation', 'invalidate-order'],
           invalidate: async () => {
@@ -425,7 +425,7 @@ describe('query-factories-v2', () => {
 
     const { result } = renderHook(
       () =>
-        createOptimisticMutationV2<{ ok: boolean }, { delta: number }, { count: number }>({
+        useOptimisticMutationV2<{ ok: boolean }, { delta: number }, { count: number }>({
           queryKey: ['products', 'optimistic'],
           updateFn: (oldData, variables) => ({
             count: (oldData?.count ?? 0) + variables.delta,
@@ -450,7 +450,7 @@ describe('query-factories-v2', () => {
     expect(() =>
       renderHook(
         () =>
-          createListQueryV2({
+          useListQueryV2({
             queryKey: ['products'],
             queryFn: async () => [{ id: '1' }],
             meta: {

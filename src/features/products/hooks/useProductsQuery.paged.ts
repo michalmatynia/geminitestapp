@@ -8,7 +8,7 @@ import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/pro
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import {
-  createPaginatedListQueryV2,
+  usePaginatedListQueryV2,
   prefetchQueryV2,
   type PaginatedResult,
 } from '@/shared/lib/query-factories-v2';
@@ -137,7 +137,7 @@ export const useProductsPagedQuery = (input: {
   filters: UseProductsFilters;
   queryKey: ProductsPagedQueryKey;
 }): ProductsPagedQuery =>
-  createPaginatedListQueryV2<ProductWithImages>({
+  usePaginatedListQueryV2<ProductWithImages>({
     id: `${JSON.stringify(input.filters)}:paged`,
     queryKey: input.queryKey,
     queryFn: createProductsPagedQueryFn(input.filters, 'queryFn'),

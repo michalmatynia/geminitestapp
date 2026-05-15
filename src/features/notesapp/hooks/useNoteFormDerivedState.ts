@@ -11,7 +11,7 @@ import type {
   ThemeRecord,
 } from '@/shared/contracts/notes';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -116,7 +116,7 @@ export function useNoteFormDerivedState({
   const [selectedRelatedNotes, setSelectedRelatedNotes] =
     useState<RelatedNoteItem[]>(initialCombinedRelations);
 
-  const relatedNotesQueries = createMultiQueryV2({
+  const relatedNotesQueries = useMultiQueryV2({
     queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => {
       const queryKey = normalizeQueryKey(QUERY_KEYS.notes.detail(rel.id));
       return {
@@ -157,7 +157,7 @@ export function useNoteFormDerivedState({
   const [relatedNoteQuery, setRelatedNoteQuery] = useState('');
   const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
 
-  const relatedNoteSearchQuery = createListQueryV2<NoteWithRelations>({
+  const relatedNoteSearchQuery = useListQueryV2<NoteWithRelations>({
     queryKey: QUERY_KEYS.notes.search(relatedNoteQuery),
     queryFn: async (): Promise<NoteWithRelations[]> => {
       if (!relatedNoteQuery) return [];

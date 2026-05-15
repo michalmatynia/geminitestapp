@@ -11,6 +11,7 @@ import {
   type CssAnimationConfig,
 } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
 
@@ -95,9 +96,20 @@ export function ComponentSettingsProvider({
   const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
 
   // --- Handlers ---
+  /**
+   * Updates settings for a section and clears dependent properties.
+   * Logs failures with detailed context (sectionId, key) to improve observability.
+   */
   const handleSectionSettingChange = useCallback(
     (key: string, value: unknown): void => {
-      if (!selectedSection) return;
+      if (!selectedSection) {
+        logClientCatch(internalError('Cannot update section settings: no section selected'), {
+          source: 'cms.settings-context',
+          action: 'handleSectionSettingChange',
+          key,
+        });
+        return;
+      }
       dispatch({
         type: 'UPDATE_SECTION_SETTINGS',
         sectionId: selectedSection.id,
@@ -107,9 +119,26 @@ export function ComponentSettingsProvider({
     [selectedSection, dispatch]
   );
 
+  /**
+   * Updates settings for a block, dynamically routing to specific nest-level actions.
+   * Logs failures with component/parent ID context to aid debugging.
+   */
   const handleBlockSettingChange = useCallback(
     (key: string, value: unknown): void => {
-      if (!selectedBlock || !selectedParentSection) return;
+      if (!selectedBlock || !selectedParentSection) {
+        logClientCatch(
+          internalError('Cannot update block settings: block or parent section not found'),
+          {
+            source: 'cms.settings-context',
+            action: 'handleBlockSettingChange',
+            key,
+            blockId: selectedBlock?.id ?? null,
+            sectionId: selectedParentSection?.id ?? null,
+          }
+        );
+        return;
+      }
+
       const next = {
         [key]: value,
         ...(key === 'background' ? { backgroundColor: '' } : {}),
@@ -118,42 +147,16 @@ export function ComponentSettingsProvider({
           : {}),
       };
 
-      if (selectedParentBlock && selectedParentColumn) {
-        dispatch({
-          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
-          sectionId: selectedParentSection.id,
-          blockId: selectedBlock.id,
-          settings: next,
-        });
-      } else if (selectedParentBlock) {
-        dispatch({
-          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
-          sectionId: selectedParentSection.id,
-          blockId: selectedBlock.id,
-          settings: next,
-        });
-      } else if (selectedParentColumn) {
-        dispatch({
-          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
-          sectionId: selectedParentSection.id,
-          blockId: selectedBlock.id,
-          settings: next,
-        });
-      } else if (selectedParentRow) {
-        dispatch({
-          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
-          sectionId: selectedParentSection.id,
-          blockId: selectedBlock.id,
-          settings: next,
-        });
-      } else {
-        dispatch({
-          type: 'UPDATE_BLOCK_SETTINGS',
-          sectionId: selectedParentSection.id,
-          blockId: selectedBlock.id,
-          settings: next,
-        });
-      }
+      const actionType = (selectedParentBlock || selectedParentColumn || selectedParentRow)
+          ? 'UPDATE_NESTED_BLOCK_SETTINGS'
+          : 'UPDATE_BLOCK_SETTINGS';
+
+      dispatch({
+        type: actionType as any,
+        sectionId: selectedParentSection.id,
+        blockId: selectedBlock.id,
+        settings: next,
+      });
     },
     [
       selectedBlock,

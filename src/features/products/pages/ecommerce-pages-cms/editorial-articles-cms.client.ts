@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 
 import { api } from '@/shared/lib/api-client';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type EditorialArticleState = {
@@ -188,7 +188,7 @@ type EditorialArticlesStateSetter = Dispatch<SetStateAction<EditorialArticlesSta
 type ErrorSetter = Dispatch<SetStateAction<string | null>>;
 
 const useEditorialArticlesQuery = (): SingleQuery<EditorialArticlesState> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-editorial-articles',
     queryKey: EDITORIAL_ARTICLES_QUERY_KEY,
     queryFn: fetchEditorialArticles,
@@ -196,6 +196,8 @@ const useEditorialArticlesQuery = (): SingleQuery<EditorialArticlesState> =>
       source: 'products.ecommercePagesCms.editorialArticles.load',
       operation: 'detail',
       resource: 'products.ecommerce-pages-cms.editorial-articles',
+      domain: 'products',
+      description: 'Loads ecommerce editorial articles for page CMS.',
     },
   });
 
@@ -277,7 +279,7 @@ const useEditorialArticlesSaveAction = (input: {
   setError: ErrorSetter;
 }): Pick<EditorialArticlesController, 'handleSaveClick' | 'isSaving'> => {
   const { toast } = useToast();
-  const saveMutation = createMutationV2<EditorialArticlesState, EditorialArticleState[]>({
+  const saveMutation = useMutationV2<EditorialArticlesState, EditorialArticleState[]>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'editorial-articles', 'save'],
     mutationFn: (articles: EditorialArticleState[]): Promise<EditorialArticlesState> =>
       saveEditorialArticles(articles.map(normalizeEditorialArticleDraft)),
@@ -295,6 +297,8 @@ const useEditorialArticlesSaveAction = (input: {
       source: 'products.ecommercePagesCms.editorialArticles.save',
       operation: 'update',
       resource: 'products.ecommerce-pages-cms.editorial-articles',
+      domain: 'products',
+      description: 'Saves ecommerce editorial articles for page CMS.',
       errorPresentation: 'toast',
     },
   });
@@ -314,7 +318,7 @@ const useEditorialArticleImageUploadAction = (input: {
 }): Pick<EditorialArticlesController, 'uploadArticleImage' | 'uploadingIndex'> => {
   const { toast } = useToast();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
-  const uploadMutation = createMutationV2<
+  const uploadMutation = useMutationV2<
     EditorialArticleImage,
     { file: File; index: number }
   >({
@@ -340,6 +344,8 @@ const useEditorialArticleImageUploadAction = (input: {
       source: 'products.ecommercePagesCms.editorialArticles.image.upload',
       operation: 'update',
       resource: 'products.ecommerce-pages-cms.editorial-article-image',
+      domain: 'products',
+      description: 'Uploads an ecommerce editorial article image.',
       errorPresentation: 'toast',
     },
   });

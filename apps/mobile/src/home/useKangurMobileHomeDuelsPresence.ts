@@ -3,7 +3,6 @@ import type {
   KangurDuelLobbyPresenceResponse,
 } from '@kangur/contracts/kangur-duels';
 import {
-  useQuery,
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
@@ -22,6 +21,7 @@ import {
   persistKangurMobileHomeDuelPresence,
   resolvePersistedKangurMobileHomeDuelPresence,
 } from './persistedKangurMobileHomeDuelPresence';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 export type UseKangurMobileHomeDuelsPresenceResult = {
   actionError: string | null;
@@ -160,7 +160,7 @@ function usePresenceQuery(
     'presence',
   );
 
-  return useQuery({
+  return useKangurMobileQueryV2<KangurDuelLobbyPresenceResponse>({
     enabled: isQueryEnabled,
     queryKey: presenceQueryKey,
     queryFn: () =>
@@ -170,6 +170,14 @@ function usePresenceQuery(
       ),
     refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
     staleTime: 5000,
+    meta: {
+      source: 'kangur.mobile.home.duels.presence',
+      operation: 'list',
+      resource: 'kangur.mobile.home.duels.presence',
+      queryKey: presenceQueryKey,
+      description: 'Loads Kangur mobile home duel presence entries.',
+      tags: ['kangur-mobile', 'home', 'duels', 'presence'],
+    },
   });
 }
 

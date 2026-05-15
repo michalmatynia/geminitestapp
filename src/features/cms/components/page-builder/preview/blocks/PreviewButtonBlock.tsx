@@ -2,6 +2,8 @@ import React from 'react';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveCmsRuntimeValue } from '@/features/cms/components/frontend/CmsRuntimeContext';
 import { type BlockInstance } from '@/shared/contracts/cms';
+import { internalError } from '@/shared/errors/app-error';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type PreviewButtonBlockProps = {
   block: BlockInstance;
@@ -40,13 +42,26 @@ export const PreviewButtonBlock: React.FC<PreviewButtonBlockProps> = ({
     typeof resolvedSettings['buttonDisabledPath'] === 'string' &&
     (resolvedSettings['buttonDisabledPath'] as string).trim().length > 0;
 
-  const runtimeDisabledValue = hasRuntimeDisabledBinding
-    ? resolveCmsRuntimeValue(
-        runtime,
-        resolvedSettings['buttonDisabledSource'] as string,
-        resolvedSettings['buttonDisabledPath'] as string
-      )
-    : undefined;
+  let runtimeDisabledValue: unknown;
+  try {
+    runtimeDisabledValue = hasRuntimeDisabledBinding
+      ? resolveCmsRuntimeValue(
+          runtime,
+          resolvedSettings['buttonDisabledSource'] as string,
+          resolvedSettings['buttonDisabledPath'] as string
+        )
+      : undefined;
+  } catch (error) {
+    logClientCatch(internalError('Failed to resolve runtime binding for button disabled state'), {
+      source: 'cms.preview-blocks',
+      action: 'resolveRuntimeDisabledValue',
+      blockId: block.id,
+      bindingSource: resolvedSettings['buttonDisabledSource'],
+      path: resolvedSettings['buttonDisabledPath'],
+      cause: error instanceof Error ? error.message : String(error),
+    });
+    runtimeDisabledValue = undefined;
+  }
 
   const isDisabled = hasRuntimeDisabledBinding
     ? resolvedSettings['buttonDisabledWhen'] === 'falsy'
@@ -56,6 +71,7 @@ export const PreviewButtonBlock: React.FC<PreviewButtonBlockProps> = ({
       resolvedSettings['buttonDisabled'] === 'true';
 
   return wrapInspector(
+// ... rest of component
     <div
       onClick={onSelect}
       className={cn(

@@ -116,10 +116,40 @@ function DatabaseActionButtons({
       <Button asChild variant={isActive ? 'secondary' : 'outline'} size='xs'>
         <Link href={buildManagedMongoCrudHref(database.application, 'cloud')}>Cloud Tables</Link>
       </Button>
-      <ActionBtn disabled={isBackupDisabled} icon={DownloadIcon} label='Backup' onClick={() => backupManagedMongo(database.application)} />
-      <ActionBtn disabled={isPushDisabled} icon={CloudUploadIcon} label='Push' onClick={() => syncManagedMongo('local_to_cloud', database.application)} />
-      <ActionBtn disabled={isPullDisabled} icon={RefreshCwIcon} label='Pull' onClick={() => syncManagedMongo('cloud_to_local', database.application)} />
+      <ActionBtn
+        disabled={isBackupDisabled}
+        icon={DownloadIcon}
+        label='Backup'
+        onClick={() => {
+          void backupManagedMongo(database.application);
+        }}
+      />
+      <ActionBtn
+        disabled={isPushDisabled}
+        icon={CloudUploadIcon}
+        label='Push'
+        onClick={() => {
+          void syncManagedMongo('local_to_cloud', database.application);
+        }}
+      />
+      <ActionBtn
+        disabled={isPullDisabled}
+        icon={RefreshCwIcon}
+        label='Pull'
+        onClick={() => {
+          void syncManagedMongo('cloud_to_local', database.application);
+        }}
+      />
     </div>
+  );
+}
+
+function DatabaseSyncIssue({ issue }: { issue: string | null }): JSX.Element | null {
+  if (issue === null || issue === '') return null;
+  return (
+    <p className='mt-2 line-clamp-2 text-xs text-amber-100' title={issue}>
+      {issue}
+    </p>
   );
 }
 
@@ -149,9 +179,7 @@ function ManagedMongoDatabaseScopeCard({
           {isActive ? `Open ${SOURCE_LABELS[activeSource]}` : 'Available'}
         </Badge>
       </div>
-      {database.syncIssue !== null && database.syncIssue !== '' && (
-        <p className='mt-2 line-clamp-2 text-xs text-amber-100' title={database.syncIssue}>{database.syncIssue}</p>
-      )}
+      <DatabaseSyncIssue issue={database.syncIssue} />
       <DatabaseActionButtons
         database={database}
         isActive={isActive}
@@ -172,9 +200,9 @@ function ManagedMongoPanelHeader({
 }: {
   backupDisabled: boolean;
   syncDisabled: boolean;
-  backupManagedMongo: (app: DatabaseEngineManagedMongoApplication | 'all') => void;
+  backupManagedMongo: (app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
   refetchAll: () => void;
-  syncManagedMongo: (action: 'local_to_cloud' | 'cloud_to_local', app: DatabaseEngineManagedMongoApplication | 'all') => void;
+  syncManagedMongo: (action: 'local_to_cloud' | 'cloud_to_local', app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
 }): JSX.Element {
   return (
     <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -183,10 +211,25 @@ function ManagedMongoPanelHeader({
         <Button type='button' variant='outline' size='xs' onClick={refetchAll}>
           <RefreshCwIcon className='size-3.5' /> Refresh
         </Button>
-        <Button type='button' variant='outline' size='xs' disabled={backupDisabled} onClick={() => backupManagedMongo('all')}>
+        <Button
+          type='button'
+          variant='outline'
+          size='xs'
+          disabled={backupDisabled}
+          onClick={() => {
+            void backupManagedMongo('all');
+          }}
+        >
           <DownloadIcon className='size-3.5' /> Backup All
         </Button>
-        <Button type='button' size='xs' disabled={syncDisabled} onClick={() => syncManagedMongo('local_to_cloud', 'all')}>
+        <Button
+          type='button'
+          size='xs'
+          disabled={syncDisabled}
+          onClick={() => {
+            void syncManagedMongo('local_to_cloud', 'all');
+          }}
+        >
           <CloudUploadIcon className='size-3.5' /> Push All
         </Button>
       </div>
@@ -211,10 +254,13 @@ export function ManagedMongoScopePanel({
   const { canBackupAllLocal, canPushAllToCloud, backupStorage } = managedMongoDatabases;
   const { allowManualBackupRunNow, allowManualFullSync } = operationControls;
 
-  const backupDisabled = isBackingUpManagedMongo || !allowManualBackupRunNow || !canBackupAllLocal;
-  const syncDisabled = isSyncingManagedMongo || !allowManualFullSync || !canPushAllToCloud;
-  const cardBackupDisabled = isBackingUpManagedMongo || !allowManualBackupRunNow || !backupStorage.canWriteBackups;
-  const cardSyncDisabled = isSyncingManagedMongo || !allowManualFullSync;
+  const isBkpActive = isBackingUpManagedMongo || !allowManualBackupRunNow;
+  const isSyncActive = isSyncingManagedMongo || !allowManualFullSync;
+
+  const backupDisabled = isBkpActive || !canBackupAllLocal;
+  const syncDisabled = isSyncActive || !canPushAllToCloud;
+  const cardBackupDisabled = isBkpActive || !backupStorage.canWriteBackups;
+  const cardSyncDisabled = isSyncActive;
 
   return (
     <div className='space-y-3 rounded-md border border-white/10 bg-card/30 p-3'>

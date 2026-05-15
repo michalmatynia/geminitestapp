@@ -2,9 +2,9 @@ import type { ChatbotContextUploadResponse } from '@/shared/contracts/chatbot';
 import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
-  createCreateMutationV2,
-  createListQueryV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useListQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
@@ -13,7 +13,7 @@ import * as chatbotApi from '../api';
 
 export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
   const queryKey = QUERY_KEYS.ai.chatbot.settings.allSettings('global-context');
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: chatbotApi.fetchSettings,
     staleTime: 60_000,
@@ -33,7 +33,7 @@ export function useSaveChatbotContextMutation(): MutationResult<
   { key: string; value: string; errorLabel: string }
   > {
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('save-context');
-  return createUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
+  return useUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
     mutationFn: ({ key, value, errorLabel }) => chatbotApi.saveSetting(key, value, errorLabel),
     mutationKey,
     meta: {
@@ -53,7 +53,7 @@ export function useUploadChatbotContextPdfMutation(): MutationResult<
   { file: File; helpers?: FileUploadHelpers }
   > {
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('upload-context-pdf');
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ file, helpers }) =>
       chatbotApi.uploadChatbotContextPdf(file, (loaded: number, total?: number) =>
         helpers?.reportProgress(loaded, total)

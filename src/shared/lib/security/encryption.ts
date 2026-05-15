@@ -28,6 +28,14 @@ function getKey(keyEnv: string): Buffer {
   return key;
 }
 
+/**
+ * encryptSecret: Encrypts a string using AES-256-GCM authenticated encryption.
+ * 
+ * @param value - The plaintext string to encrypt.
+ * @param keyEnv - The name of the environment variable containing the 32-byte base64-encoded key.
+ * @returns A colon-delimited string containing the IV, auth tag, and encrypted payload in base64.
+ * @throws {ConfigurationError} If the encryption key is missing or invalid.
+ */
 export function encryptSecret(
   value: string,
   keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY'
@@ -40,6 +48,15 @@ export function encryptSecret(
   return [iv.toString('base64'), tag.toString('base64'), encrypted.toString('base64')].join(':');
 }
 
+/**
+ * decryptSecret: Decrypts an encrypted payload using AES-256-GCM.
+ * 
+ * @param payload - The colon-delimited base64 string containing IV, auth tag, and encrypted data.
+ * @param keyEnv - The name of the environment variable containing the 32-byte base64-encoded key.
+ * @returns The decrypted plaintext string.
+ * @throws {BadRequestError} If the payload format is invalid.
+ * @throws {ConfigurationError} If the encryption key is missing or invalid.
+ */
 export function decryptSecret(
   payload: string,
   keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY'

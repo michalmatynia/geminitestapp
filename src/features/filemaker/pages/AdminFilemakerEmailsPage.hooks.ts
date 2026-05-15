@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { FilemakerEmail, FilemakerEmailStatus } from '../types';
 
@@ -119,7 +119,7 @@ const fetchMongoFilemakerEmails = async (
 
 export function useMongoFilemakerEmails(input: EmailListInput): MongoFilemakerEmailsState {
   const queryKey = buildEmailListQueryKey(input);
-  const emailsQuery = createSingleQueryV2<
+  const emailsQuery = useSingleQueryV2<
     MongoFilemakerEmailsResponse,
     MongoFilemakerEmailsResponse,
     typeof queryKey

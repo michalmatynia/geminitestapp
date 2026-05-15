@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { type ImageStudioRunStatus, type ImageStudioRunRecord, type ImageStudioRunsResponse as RunsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
-import { createPaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { usePaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 
@@ -14,7 +14,7 @@ export function useImageStudioRuns() {
   const [statusFilter, setStatusFilter] = useState<'all' | ImageStudioRunStatus>('all');
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
-  const runsQuery = createPaginatedListQueryV2<ImageStudioRunRecord>({
+  const runsQuery = usePaginatedListQueryV2<ImageStudioRunRecord>({
     queryKey: QUERY_KEYS.imageStudio.runs({ status: statusFilter }),
     queryFn: async () => {
       const data = await api.get<RunsResponse>('/api/image-studio/runs', {

@@ -125,13 +125,17 @@ const parseChallengeRecord = (value: unknown): ChallengeRecord | null => {
 };
 
 const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to retrieve an auth challenge from MongoDB.');
+  }
   const mongo = await getMongoDb();
   return mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).findOne({ _id: id });
 };
 
 const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
-  if (!process.env['MONGODB_URI']) return;
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to set an auth challenge in MongoDB.');
+  }
   const mongo = await getMongoDb();
   await mongo
     .collection<ChallengeRecord>(CHALLENGES_COLLECTION)
@@ -139,7 +143,9 @@ const setMongoChallenge = async (record: ChallengeRecord): Promise<void> => {
 };
 
 const deleteMongoChallenge = async (id: string): Promise<void> => {
-  if (!process.env['MONGODB_URI']) return;
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to delete an auth challenge from MongoDB.');
+  }
   const mongo = await getMongoDb();
   await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).deleteOne({ _id: id });
 };
@@ -151,7 +157,9 @@ const setMemoryChallenge = (record: ChallengeRecord): void => {
 const deleteMemoryChallenge = (id: string): boolean => memoryChallenges.delete(id);
 
 const listMongoChallenges = async (): Promise<ChallengeRecord[]> => {
-  if (!process.env['MONGODB_URI']) return [];
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to list auth challenges from MongoDB.');
+  }
   const mongo = await getMongoDb();
   const rows = await mongo.collection<ChallengeRecord>(CHALLENGES_COLLECTION).find({}).toArray();
   return rows
@@ -333,7 +341,7 @@ export const createMagicLoginChallenge = async (input: {
     userId: input.userId,
     email: input.email,
     purpose: 'magic_login',
-    ttlMinutes: MAGIC_LOGIN_CHALLENGE_TTL_MINUTES,
+    ttlMinutes: MAGIC_LOGIN_CHALLENGE_CALLBACK_TTL_MINUTES,
     callbackUrl: input.callbackUrl,
   });
 

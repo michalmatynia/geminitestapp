@@ -6,16 +6,24 @@ import { KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metada
 import {
   type KangurLessonSection,
   type KangurLessonSubsection,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@/shared/contracts/kangur-lesson-sections';
 import { Button } from '@/shared/ui/primitives.public';
 import {
-  LoadingState,
-  renderKangurAdminWorkspaceIntroCard,
-} from '@/features/kangur/admin/utils/ui';
-import { useKangurLessonSections, useUpdateKangurLessonSections } from '@/features/kangur/hooks';
+  useKangurLessonSections,
+  useUpdateKangurLessonSections,
+} from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { renderKangurAdminWorkspaceIntroCard } from './KangurAdminWorkspaceIntroCard';
 import { KangurSectionModal, KangurSubsectionModal } from './KangurSectionModals';
 import { SubjectSectionsGroup } from './SubjectSectionsGroup';
+
+function LoadingState({ message }: { message: string }): React.JSX.Element {
+  return (
+    <div className='rounded-xl border border-dashed border-border/60 bg-background/40 p-6 text-center text-sm text-muted-foreground'>
+      {message}
+    </div>
+  );
+}
 
 export function AdminKangurLessonSectionsPanel({
   standalone = true,

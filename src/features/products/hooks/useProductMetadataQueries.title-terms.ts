@@ -4,7 +4,7 @@ import type {
 } from '@/shared/contracts/products/title-terms';
 import type { DeleteMutation, ListQuery, SaveMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateProductMetadata,
   invalidateProductTitleTerms,
@@ -48,7 +48,7 @@ export function useTitleTerms(
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const resolvedType = type ?? null;
   const queryKey = productMetadataKeys.titleTerms(resolvedCatalogId, resolvedType);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTitleTerm[]> => {
       if (resolvedCatalogId === null && !allowWithoutCatalog) return [];
@@ -84,7 +84,7 @@ export function useSaveTitleTermMutation(): SaveMutation<
   }
 > {
   const mutationKey = [...productMetadataKeys.all, 'title-terms', 'save'] as const;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }) =>
       hasMutationId(id)
         ? api.put<ProductTitleTerm>(`/api/v2/products/title-terms/${id}`, data)
@@ -113,7 +113,7 @@ export function useDeleteTitleTermMutation(): DeleteMutation<
   { id: string; catalogId?: string | null }
 > {
   const mutationKey = [...productMetadataKeys.all, 'title-terms', 'delete'] as const;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: async ({ id }): Promise<void> => {
       await api.delete<void>(`/api/v2/products/title-terms/${id}`);
     },

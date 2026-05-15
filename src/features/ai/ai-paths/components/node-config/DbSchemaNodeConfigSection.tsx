@@ -6,7 +6,7 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { dbApi } from '@/shared/lib/ai-paths/api';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Label, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
@@ -165,7 +165,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     formatAs: selectedNode.config?.db_schema?.formatAs ?? 'text',
   };
 
-  const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
+  const schemaQuery = useListQueryV2<SchemaData, SchemaData>({
     queryKey: QUERY_KEYS.system.databases.schema({ provider: schemaConfig.provider ?? 'auto' }),
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider: schemaConfig.provider });
@@ -187,7 +187,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       description: 'Loads databases schema.'},
   });
 
-  const browseQueryResult = createListQueryV2<
+  const browseQueryResult = useListQueryV2<
     { documents: Record<string, unknown>[]; total: number },
     { documents: Record<string, unknown>[]; total: number }
   >({

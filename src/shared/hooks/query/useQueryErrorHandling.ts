@@ -7,7 +7,7 @@ import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { ERROR_CATEGORY } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
 import { getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type {
   TanstackErrorPresentation,
   TanstackFactoryDomain,
@@ -352,7 +352,7 @@ export function useResilientQuery<TData>(
   const { toast } = useToast();
   const domain = options?.domain ?? 'global';
 
-  const query = createListQueryV2<unknown, TData>({
+  const query = useListQueryV2<unknown, TData>({
     queryKey,
     queryFn,
     retry: (failureCount: number, error: Error): boolean => {
@@ -424,7 +424,7 @@ export function useCircuitBreakerQuery<TData>(
     [circuitKey]
   );
 
-  return createListQueryV2<unknown, TData>({
+  return useListQueryV2<unknown, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const circuit = getCircuitState();

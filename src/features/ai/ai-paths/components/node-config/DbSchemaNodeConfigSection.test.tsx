@@ -66,7 +66,7 @@ vi.mock('@/shared/lib/query-keys', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (config: { meta?: { resource?: string }; queryKey: unknown }) => {
+  useListQueryV2: (config: { meta?: { resource?: string }; queryKey: unknown }) => {
     if (config.meta?.resource === 'databases.schema') {
       mockState.lastSchemaQueryKey = config.queryKey;
       return mockState.schemaQueryResult;

@@ -20,7 +20,7 @@ import {
   fetchPlaywrightSteps,
   fetchPlaywrightWebsites,
 } from '@/shared/lib/playwright/step-sequencer';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -30,7 +30,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 export function usePlaywrightSteps(options?: { enabled?: boolean }): ListQuery<PlaywrightStep> {
   const queryKey = playwrightKeys.steps();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightSteps,
     ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
@@ -48,7 +48,7 @@ export function usePlaywrightSteps(options?: { enabled?: boolean }): ListQuery<P
 
 export function useSavePlaywrightStepsMutation(): VoidMutation<{ steps: PlaywrightStep[] }> {
   const mutationKey = playwrightKeys.steps();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ steps }: { steps: PlaywrightStep[] }): Promise<void> => {
       await api.post<void>('/api/settings', {
         key: PLAYWRIGHT_STEPS_SETTINGS_KEY,
@@ -78,7 +78,7 @@ export function usePlaywrightStepSets(options?: {
   enabled?: boolean;
 }): ListQuery<PlaywrightStepSet> {
   const queryKey = playwrightKeys.stepSets();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightStepSets,
     ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
@@ -98,7 +98,7 @@ export function useSavePlaywrightStepSetsMutation(): VoidMutation<{
   stepSets: PlaywrightStepSet[];
 }> {
   const mutationKey = playwrightKeys.stepSets();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ stepSets }: { stepSets: PlaywrightStepSet[] }): Promise<void> => {
       await api.post<void>('/api/settings', {
         key: PLAYWRIGHT_STEP_SETS_SETTINGS_KEY,
@@ -128,7 +128,7 @@ export function usePlaywrightActions(options?: {
   enabled?: boolean;
 }): ListQuery<PlaywrightAction> {
   const queryKey = playwrightKeys.actions();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightActions,
     ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
@@ -148,7 +148,7 @@ export function useSavePlaywrightActionsMutation(): VoidMutation<{
   actions: PlaywrightAction[];
 }> {
   const mutationKey = playwrightKeys.actions();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ actions }: { actions: PlaywrightAction[] }): Promise<void> => {
       await api.post<void>('/api/settings', {
         key: PLAYWRIGHT_ACTIONS_SETTINGS_KEY,
@@ -178,7 +178,7 @@ export function usePlaywrightWebsites(options?: {
   enabled?: boolean;
 }): ListQuery<PlaywrightWebsite> {
   const queryKey = playwrightKeys.websites();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightWebsites,
     ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
@@ -198,7 +198,7 @@ export function useSavePlaywrightWebsitesMutation(): VoidMutation<{
   websites: PlaywrightWebsite[];
 }> {
   const mutationKey = playwrightKeys.websites();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ websites }: { websites: PlaywrightWebsite[] }): Promise<void> => {
       await api.post<void>('/api/settings', {
         key: PLAYWRIGHT_WEBSITES_SETTINGS_KEY,
@@ -228,7 +228,7 @@ export function usePlaywrightFlows(options?: {
   enabled?: boolean;
 }): ListQuery<PlaywrightFlow> {
   const queryKey = playwrightKeys.flows();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchPlaywrightFlows,
     ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
@@ -248,7 +248,7 @@ export function useSavePlaywrightFlowsMutation(): VoidMutation<{
   flows: PlaywrightFlow[];
 }> {
   const mutationKey = playwrightKeys.flows();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ flows }: { flows: PlaywrightFlow[] }): Promise<void> => {
       await api.post<void>('/api/settings', {
         key: PLAYWRIGHT_FLOWS_SETTINGS_KEY,

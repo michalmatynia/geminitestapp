@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import type { 
   KangurDuelLobbyResponse, 
   KangurDuelLobbyPresenceResponse, 
@@ -24,6 +24,7 @@ import type {
   KangurDuelLobbyChatCreateInput 
 } from '@kangur/contracts/kangur-duels-chat';
 import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 const MOBILE_DUEL_LOBBY_LIMIT = 12;
 const MOBILE_DUEL_PRESENCE_LIMIT = 24;
@@ -97,38 +98,74 @@ export interface DuelApiClient {
 }
 
 export function useLobbyQuery(apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string): UseQueryResult<KangurDuelLobbyResponse> {
-  return useQuery<KangurDuelLobbyResponse>({
-    queryKey: ['kangur-mobile', 'duels', 'lobby', apiBaseUrl, learnerIdentity],
+  const queryKey = ['kangur-mobile', 'duels', 'lobby', apiBaseUrl, learnerIdentity] as const;
+  return useKangurMobileQueryV2<KangurDuelLobbyResponse>({
+    queryKey,
     queryFn: () => apiClient.listDuelLobby({ limit: MOBILE_DUEL_LOBBY_LIMIT }, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_LOBBY_POLL_MS,
     staleTime: 10_000,
+    meta: {
+      source: 'kangur.mobile.duels.lobby',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.lobby',
+      queryKey,
+      description: 'Loads Kangur mobile public duel lobby entries.',
+      tags: ['kangur-mobile', 'duels', 'lobby'],
+    },
   });
 }
 
 export function usePresenceQuery(apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string, isAuthenticated: boolean): UseQueryResult<KangurDuelLobbyPresenceResponse> {
-  return useQuery<KangurDuelLobbyPresenceResponse>({
+  const queryKey = ['kangur-mobile', 'duels', 'presence', apiBaseUrl, learnerIdentity] as const;
+  return useKangurMobileQueryV2<KangurDuelLobbyPresenceResponse>({
     enabled: isAuthenticated,
-    queryKey: ['kangur-mobile', 'duels', 'presence', apiBaseUrl, learnerIdentity],
+    queryKey,
     queryFn: () => apiClient.pingDuelLobbyPresence({ limit: MOBILE_DUEL_PRESENCE_LIMIT }, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_PRESENCE_POLL_MS,
     staleTime: 10_000,
+    meta: {
+      source: 'kangur.mobile.duels.presence',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.presence',
+      queryKey,
+      description: 'Loads Kangur mobile duel lobby presence.',
+      tags: ['kangur-mobile', 'duels', 'presence'],
+    },
   });
 }
 
 export function useOpponentsQuery(apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string, isAuthenticated: boolean): UseQueryResult<KangurDuelOpponentsResponse> {
-  return useQuery<KangurDuelOpponentsResponse>({
+  const queryKey = ['kangur-mobile', 'duels', 'opponents', apiBaseUrl, learnerIdentity] as const;
+  return useKangurMobileQueryV2<KangurDuelOpponentsResponse>({
     enabled: isAuthenticated,
-    queryKey: ['kangur-mobile', 'duels', 'opponents', apiBaseUrl, learnerIdentity],
+    queryKey,
     queryFn: () => apiClient.listDuelOpponents({ limit: MOBILE_DUEL_OPPONENT_LIMIT }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.duels.opponents',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.opponents',
+      queryKey,
+      description: 'Loads Kangur mobile duel opponents.',
+      tags: ['kangur-mobile', 'duels', 'opponents'],
+    },
   });
 }
 
 export function useLeaderboardQuery(apiClient: DuelApiClient, apiBaseUrl: string): UseQueryResult<KangurDuelLeaderboardResponse> {
-  return useQuery<KangurDuelLeaderboardResponse>({
-    queryKey: ['kangur-mobile', 'duels', 'leaderboard', apiBaseUrl],
+  const queryKey = ['kangur-mobile', 'duels', 'leaderboard', apiBaseUrl] as const;
+  return useKangurMobileQueryV2<KangurDuelLeaderboardResponse>({
+    queryKey,
     queryFn: () => apiClient.getDuelLeaderboard({ limit: MOBILE_DUEL_LEADERBOARD_LIMIT, lookbackDays: MOBILE_DUEL_LEADERBOARD_LOOKBACK_DAYS }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.duels.leaderboard',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.leaderboard',
+      queryKey,
+      description: 'Loads Kangur mobile duel leaderboard.',
+      tags: ['kangur-mobile', 'duels', 'leaderboard'],
+    },
   });
 }
 
@@ -144,11 +181,20 @@ export function useSearchQuery(
   params: UseSearchQueryParams
 ): UseQueryResult<KangurDuelSearchResponse> {
   const { apiClient, apiBaseUrl, learnerIdentity, isAuthenticated, query } = params;
-  return useQuery<KangurDuelSearchResponse>({
+  const queryKey = ['kangur-mobile', 'duels', 'search', apiBaseUrl, learnerIdentity, query] as const;
+  return useKangurMobileQueryV2<KangurDuelSearchResponse>({
     enabled: isAuthenticated && query.length >= 2,
-    queryKey: ['kangur-mobile', 'duels', 'search', apiBaseUrl, learnerIdentity, query],
+    queryKey,
     queryFn: () => apiClient.searchDuels(query, { limit: MOBILE_DUEL_SEARCH_LIMIT }, { cache: 'no-store' }),
     staleTime: 15_000,
+    meta: {
+      source: 'kangur.mobile.duels.search',
+      operation: 'search',
+      resource: 'kangur.mobile.duels.search',
+      queryKey,
+      description: 'Searches Kangur mobile duel opponents and sessions.',
+      tags: ['kangur-mobile', 'duels', 'search'],
+    },
   });
 }
 

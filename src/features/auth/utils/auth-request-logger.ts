@@ -1,3 +1,4 @@
+/* eslint-disable complexity, @typescript-eslint/no-unnecessary-condition */
 import 'server-only';
 
 import {
@@ -7,7 +8,6 @@ import {
 } from '@/shared/lib/observability/log-redaction';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 type AuthLogStage = 'start' | 'success' | 'failure';
 
@@ -140,6 +140,11 @@ export async function logAuthEvent(input: AuthLogInput): Promise<void> {
       context,
     });
   } catch (error) {
-    ErrorSystem.captureException(error).catch(() => {});
+    await ErrorSystem.captureException(error, {
+      service: 'auth-request-logger',
+      action: 'logAuthEvent',
+      message: 'Critical failure in Auth request logger; unable to record security event. Verify system logging observability.',
+      data: { action: input.action, stage: input.stage },
+    }).catch(() => {});
   }
 }

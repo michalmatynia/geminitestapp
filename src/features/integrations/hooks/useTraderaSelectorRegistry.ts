@@ -17,9 +17,9 @@ import {
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createDeleteMutationV2,
-  createListQueryV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 
 export {
@@ -45,7 +45,7 @@ export function useTraderaSelectorRegistry(options?: {
       ? [...TRADERA_SELECTOR_REGISTRY_QUERY_KEY, { profile: normalizedProfile }]
       : TRADERA_SELECTOR_REGISTRY_QUERY_KEY;
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<TraderaSelectorRegistryListResponse> => {
       const data = await api.get<TraderaSelectorRegistryListResponse>(
@@ -70,7 +70,7 @@ export function useSyncTraderaSelectorRegistryMutation(): MutationResult<
   TraderaSelectorRegistrySyncResponse,
   TraderaSelectorRegistrySyncRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     TraderaSelectorRegistrySyncResponse,
     TraderaSelectorRegistrySyncRequest
   >({
@@ -100,7 +100,7 @@ export function useSaveTraderaSelectorRegistryEntryMutation(): MutationResult<
   TraderaSelectorRegistrySaveResponse,
   TraderaSelectorRegistrySaveRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     TraderaSelectorRegistrySaveResponse,
     TraderaSelectorRegistrySaveRequest
   >({
@@ -130,7 +130,7 @@ export function useDeleteTraderaSelectorRegistryEntryMutation(): MutationResult<
   TraderaSelectorRegistryDeleteResponse,
   TraderaSelectorRegistryDeleteRequest
 > {
-  return createDeleteMutationV2<
+  return useDeleteMutationV2<
     TraderaSelectorRegistryDeleteResponse,
     TraderaSelectorRegistryDeleteRequest
   >({
@@ -160,7 +160,7 @@ export function useMutateTraderaSelectorRegistryProfileMutation(): MutationResul
   TraderaSelectorRegistryProfileActionResponse,
   TraderaSelectorRegistryProfileActionRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     TraderaSelectorRegistryProfileActionResponse,
     TraderaSelectorRegistryProfileActionRequest
   >({

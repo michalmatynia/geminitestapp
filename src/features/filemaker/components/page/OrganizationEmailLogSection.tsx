@@ -4,7 +4,7 @@ import { ExternalLink, MailOpen, RefreshCw } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition } from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
@@ -128,7 +128,7 @@ export function OrganizationEmailLogSection(): React.JSX.Element {
   const { organization, emails } = useAdminFilemakerOrganizationEditPageStateContext();
   const organizationId = organization?.id ?? '';
   const emailLogQueryKey = [...ORGANIZATION_EMAIL_LOG_QUERY_KEY, organizationId] as const;
-  const emailLogQuery = createSingleQueryV2<
+  const emailLogQuery = useSingleQueryV2<
     FilemakerMailSearchResponse,
     FilemakerMailSearchResponse,
     typeof emailLogQueryKey

@@ -16,35 +16,6 @@ type UseProductFormValidatorLatestProductValuesArgs = {
   validatorPatterns: ProductValidationPattern[];
 };
 
-type LatestProductSourceQueryOptions = Parameters<typeof useListQueryV2>[0];
-
-const buildLatestProductSourceQueryOptions = ({
-  enabled,
-  queryKey,
-}: {
-  enabled: boolean;
-  queryKey: ReturnType<typeof QUERY_KEYS.products.validatorLatestProductSource>;
-}): LatestProductSourceQueryOptions => ({
-  queryKey,
-  queryFn: () =>
-    productsApi.getProducts(
-      { page: 1, pageSize: 2, advancedFilter: undefined, baseExported: undefined },
-      undefined,
-      { fresh: true }
-    ),
-  enabled,
-  staleTime: 0,
-  meta: {
-    source: 'products.hooks.useProductFormValidator',
-    operation: 'list',
-    resource: 'products.validator.latest-product-source',
-    domain: 'products',
-    queryKey,
-    tags: ['products', 'validator', 'latest-product-source'],
-    description: 'Loads products validator latest product source.',
-  },
-});
-
 export const useProductFormValidatorLatestProductValues = ({
   currentProductId,
   validatorEnabled,
@@ -55,12 +26,26 @@ export const useProductFormValidatorLatestProductValues = ({
     [validatorPatterns]
   );
   const latestProductsQueryKey = QUERY_KEYS.products.validatorLatestProductSource();
-  const latestProductsQuery = useListQueryV2(
-    buildLatestProductSourceQueryOptions({
-      enabled: validatorEnabled && needsLatestProductSource,
+  const latestProductsQuery = useListQueryV2({
+    queryKey: latestProductsQueryKey,
+    queryFn: () =>
+      productsApi.getProducts(
+        { page: 1, pageSize: 2, advancedFilter: undefined, baseExported: undefined },
+        undefined,
+        { fresh: true }
+      ),
+    enabled: validatorEnabled && needsLatestProductSource,
+    staleTime: 0,
+    meta: {
+      source: 'products.hooks.useProductFormValidator',
+      operation: 'list',
+      resource: 'products.validator.latest-product-source',
+      domain: 'products',
       queryKey: latestProductsQueryKey,
-    })
-  );
+      tags: ['products', 'validator', 'latest-product-source'],
+      description: 'Loads products validator latest product source.',
+    },
+  });
 
   return useMemo(
     () =>

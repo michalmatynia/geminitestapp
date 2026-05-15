@@ -1,394 +1,82 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef } from 'react';
 
 import type {
   SelectorRegistryEntry,
-  SelectorRegistryNamespace,
   SelectorRegistryProbeSessionCluster,
   SelectorRegistryProbeSession,
 } from '@/shared/contracts/integrations/selector-registry';
-import {
-  applySelectorRegistryProbeCarryForwardDefaults,
-  buildSelectorRegistryProbeCarryForwardDefaultKeysByRole,
-  buildSelectorRegistryProbeCarryForwardItems,
-  buildSelectorRegistryProbeCarryForwardSources,
-  buildSelectorRegistryProbeEntriesByRole,
-} from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
-import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
-import { SelectorRegistryProbeSuggestionBadges } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-badges';
-import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
 import { useSelectorRegistryProbeSessions } from './selector-registry-probe-sessions/useSelectorRegistryProbeSessions';
-import { ProbeClusterSection } from './selector-registry-probe-sessions/ProbeClusterSection';
-import { ArchivedSessionsSection } from './selector-registry-probe-sessions/ArchivedSessionsSection';
-import {
-  Badge,
-  Button,
-  useToast,
-} from '@/shared/ui/primitives.public';
-import { buildSelectorRegistryProbeSessionClusters } from './selectorRegistryProbeSessionClustering';
+import { useProbeSessionActions } from './selector-registry-probe-sessions/useProbeSessionActions';
+import { useProbeSessionSelection } from './selector-registry-probe-sessions/useProbeSessionSelection';
+import { ProbeSessionsHeader } from './selector-registry-probe-sessions/ProbeSessionsHeader';
+import { useProbeSessionData } from './selector-registry-probe-sessions/useProbeSessionData';
+import { ProbeSessionsBody } from './selector-registry-probe-sessions/ProbeSessionsBody';
 
 type Props = {
-  namespace: SelectorRegistryNamespace;
-  profile: string;
   sessions: SelectorRegistryProbeSession[];
   clusters?: SelectorRegistryProbeSessionCluster[];
   promotableEntries: SelectorRegistryEntry[];
-  isReadOnly: boolean;
   showArchived: boolean;
   onShowArchivedChange: (next: boolean) => void;
 };
 
-const formatTimestamp = (value: string): string => {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(parsed);
-};
+/**
+ * Section for reviewing and promoting probe sessions in the selector registry.
+ */
+export function SelectorRegistryProbeSessionsSection(props: Props): React.JSX.Element | null {
+  const { sessions, clusters, promotableEntries, showArchived, onShowArchivedChange } = props;
 
-const readPromotableSelectorValue = (
-  suggestion: SelectorRegistryProbeSession['suggestions'][number]
-): string | null => suggestion.candidates.css ?? suggestion.candidates.xpath ?? null;
-
-export function SelectorRegistryProbeSessionsSection({
-  namespace,
-  profile,
-  sessions,
-  clusters,
-  promotableEntries,
-  isReadOnly,
-  showArchived,
-  onShowArchivedChange,
-}: Props) {
-  const { toast } = useToast();
-  const defaultKeysByRole = useMemo(
-    () => buildSelectorRegistryProbeCarryForwardDefaultKeysByRole(promotableEntries),
-    [promotableEntries]
-  );
   const {
     activeSessions,
     selectedKeys,
     setSelectedKeys,
     manuallySelectedKeys,
     setManuallySelectedKeys,
-    updateSelection,
-    saveMutation,
-    archiveMutation,
-    restoreMutation,
     deleteMutation,
+    restoreMutation,
   } = useSelectorRegistryProbeSessions(sessions);
-  const [bulkPromotingSessionId, setBulkPromotingSessionId] = useState<string | null>(null);
-  const [promotingAndArchivingSessionId, setPromotingAndArchivingSessionId] = useState<string | null>(null);
-  const [rejectingSessionId, setRejectingSessionId] = useState<string | null>(null);
-  const [restoringSessionId, setRestoringSessionId] = useState<string | null>(null);
-  const [bulkPromotingClusterKey, setBulkPromotingClusterKey] = useState<string | null>(null);
-  const [promotingAndArchivingClusterKey, setPromotingAndArchivingClusterKey] = useState<string | null>(null);
-  const [rejectingClusterKey, setRejectingClusterKey] = useState<string | null>(null);
-  const [restoringClusterKey, setRestoringClusterKey] = useState<string | null>(null);
+
+  const data = useProbeSessionData({ sessions, activeSessions, clusters, promotableEntries, showArchived });
+  const actions = useProbeSessionActions({ restoreMutation, deleteMutation });
+
+  useProbeSessionSelection({
+    activeSessions,
+    resolvedClusters: data.resolvedClusters,
+    defaultKeysByRole: data.defaultKeysByRole,
+    manuallySelectedKeys,
+    setManuallySelectedKeys,
+    setSelectedKeys,
+  });
+
   const sectionRef = useRef<HTMLElement | null>(null);
-  const archivedSessions = useMemo(
-    () => sessions.filter((session) => session.archivedAt !== null),
-    [sessions]
-  );
-  const resolvedClusters = useMemo(
-    () =>
-      showArchived
-        ? buildSelectorRegistryProbeSessionClusters(activeSessions)
-        : clusters ?? buildSelectorRegistryProbeSessionClusters(activeSessions),
-    [activeSessions, clusters, showArchived]
-  );
-  const archivedClusters = useMemo(
-    () => buildSelectorRegistryProbeSessionClusters(archivedSessions),
-    [archivedSessions]
-  );
-  const promotableEntriesByRole = useMemo(
-    () => buildSelectorRegistryProbeEntriesByRole(promotableEntries),
-    [promotableEntries]
-  );
-  const suggestionIds = useMemo(
-    () =>
-      activeSessions.flatMap((session) =>
-        session.suggestions.map((suggestion) => `${session.id}:${suggestion.suggestionId}`)
-      ),
-    [activeSessions]
-  );
-  const activeSuggestionKeySet = useMemo(() => new Set(suggestionIds), [suggestionIds]);
 
-  useEffect(() => {
-    if (suggestionIds.length === 0) {
-      setManuallySelectedKeys({});
-      return;
-    }
-
-    setManuallySelectedKeys((current) => {
-      const next = Object.fromEntries(
-        Object.entries(current).filter(([suggestionKey]) => activeSuggestionKeySet.has(suggestionKey))
-      );
-      return Object.keys(next).length === Object.keys(current).length ? current : next;
-    });
-  }, [activeSuggestionKeySet, suggestionIds]);
-
-  useEffect(() => {
-    if (suggestionIds.length === 0) {
-      setSelectedKeys({});
-      return;
-    }
-
-    setSelectedKeys((current) => {
-      const next: Record<string, string> = {};
-
-      for (const cluster of resolvedClusters) {
-        Object.assign(
-          next,
-          applySelectorRegistryProbeCarryForwardDefaults({
-            items: buildSelectorRegistryProbeCarryForwardItems({
-              items: cluster.sessions.flatMap((session) =>
-                session.suggestions.map((suggestion) => ({
-                  sessionId: session.id,
-                  suggestion,
-                }))
-              ),
-              getItemId: (item) => `${item.sessionId}:${item.suggestion.suggestionId}`,
-              getRole: (item) => item.suggestion.classificationRole,
-              defaultKeysByRole,
-            }),
-            selectedKeys: current,
-            manuallySelectedKeys,
-          })
-        );
-      }
-      return next;
-    });
-  }, [defaultKeysByRole, manuallySelectedKeys, resolvedClusters, suggestionIds]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.location.hash !== '#probe-sessions') {
-      return;
-    }
-    sectionRef.current?.scrollIntoView({ block: 'start' });
-    sectionRef.current?.focus({ preventScroll: true });
-  }, [activeSessions.length, archivedSessions.length, resolvedClusters.length, showArchived]);
-
-  if (activeSessions.length === 0 && archivedSessions.length === 0 && resolvedClusters.length === 0) {
+  if (activeSessions.length === 0 && data.archivedSessions.length === 0 && data.resolvedClusters.length === 0) {
     return null;
   }
 
-  const storedSessionCount =
-    sessions.length > 0
-      ? sessions.length
-      : resolvedClusters.reduce((sum, cluster) => sum + cluster.sessionCount, 0);
-
-  const readReadySuggestions = (
-    session: SelectorRegistryProbeSession
-  ): Array<{
-    suggestion: SelectorRegistryProbeSession['suggestions'][number];
-    suggestionKey: string;
-    selectedKey: string;
-    selectorValue: string;
-  }> =>
-    session.suggestions.flatMap((suggestion) => {
-      const suggestionKey = `${session.id}:${suggestion.suggestionId}`;
-      const selectedKey = selectedKeys[suggestionKey] ?? '';
-      const selectorValue = readPromotableSelectorValue(suggestion);
-      if (selectorValue === null || selectedKey.trim().length === 0) {
-        return [];
-      }
-      return [
-        {
-          suggestion,
-          suggestionKey,
-          selectedKey,
-          selectorValue,
-        },
-      ];
-    });
-
-  const promoteSuggestionBatch = async (
-    items: Array<{
-      suggestion: SelectorRegistryProbeSession['suggestions'][number];
-      selectedKey: string;
-      selectorValue: string;
-    }>
-  ): Promise<number> => {
-    let promotedCount = 0;
-    for (const item of items) {
-      await saveMutation.mutateAsync({
-        namespace,
-        profile,
-        key: item.selectedKey,
-        valueJson: JSON.stringify(item.selectorValue),
-        role: item.suggestion.classificationRole,
-      });
-      promotedCount += 1;
-    }
-    return promotedCount;
-  };
-
-  const rejectSessionBatch = async (
-    sessionIds: string[]
-  ): Promise<number> => {
-    let deletedCount = 0;
-    for (const sessionId of sessionIds) {
-      const response = await deleteMutation.mutateAsync({ id: sessionId });
-      if (response.deleted) {
-        deletedCount += 1;
-      }
-    }
-    return deletedCount;
-  };
-
-  const restoreSessionBatch = async (
-    sessionIds: string[]
-  ): Promise<number> => {
-    let restoredCount = 0;
-    for (const sessionId of sessionIds) {
-      const response = await restoreMutation.mutateAsync({ id: sessionId });
-      if (response.restored) {
-        restoredCount += 1;
-      }
-    }
-    return restoredCount;
-  };
-
   return (
-    <section
-      id='probe-sessions'
-      ref={sectionRef}
-      tabIndex={-1}
-      className='space-y-4 rounded-lg border border-border bg-card/40 p-4'
-    >
-      <div className='space-y-1'>
-        <div className='flex items-center justify-between gap-3'>
-          <h2 className='text-sm font-semibold'>Probe Sessions</h2>
-          <div className='flex items-center gap-2'>
-            <Badge variant='outline'>{resolvedClusters.length} templates</Badge>
-            <Badge variant='outline'>{activeSessions.length} active</Badge>
-            {showArchived ? (
-              <Badge variant='outline'>{archivedSessions.length} archived</Badge>
-            ) : null}
-            <Badge variant='outline'>{storedSessionCount} stored</Badge>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              onClick={() => {
-                onShowArchivedChange(!showArchived);
-              }}
-            >
-              {showArchived ? 'Hide Archived' : 'Show Archived'}
-            </Button>
-          </div>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          Review persisted live-scripter DOM probe sessions and promote selected suggestions into
-          the selector registry. Archived sessions stay read-only and only appear when explicitly
-          requested.
-        </p>
-      </div>
-
-      <div className='space-y-4'>
-        <ProbeClusterSection
-          resolvedClusters={resolvedClusters}
-          selectedKeys={selectedKeys}
-          manuallySelectedKeys={manuallySelectedKeys}
-          defaultKeysByRole={defaultKeysByRole}
-        />
-
-        {showArchived && archivedClusters.length > 0 ? (
-          <ArchivedSessionsSection
-            archivedClusters={archivedClusters}
-            archivedSessions={archivedSessions}
-            restoreMutation={restoreMutation}
-            onRestoreSession={async (id: string) => {
-              setRestoringSessionId(id);
-              try {
-                const restored = await restoreMutation.mutateAsync({ id });
-                toast(
-                  restored.restored
-                    ? 'Restored archived probe session to active review.'
-                    : 'Probe session was already active or missing.',
-                  { variant: restored.restored ? 'success' : 'error' }
-                );
-              } catch (error) {
-                toast(
-                  error instanceof Error ? error.message : 'Archived probe session could not be restored.',
-                  { variant: 'error' }
-                );
-              } finally {
-                setRestoringSessionId(null);
-              }
-            }}
-            onRestoreTemplate={async (clusterKey: string, sessionIds: string[]) => {
-              setRestoringClusterKey(clusterKey);
-              try {
-                const restoredCount = await restoreSessionBatch(sessionIds);
-                toast(
-                  restoredCount === sessionIds.length
-                    ? `Restored ${restoredCount} archived probe session${restoredCount === 1 ? '' : 's'} in this template to active review.`
-                    : `Restored ${restoredCount} of ${sessionIds.length} archived probe sessions in this template.`,
-                  {
-                    variant: restoredCount === sessionIds.length ? 'success' : 'error',
-                  }
-                );
-              } catch (error) {
-                toast(
-                  error instanceof Error ? error.message : 'Archived template could not be restored.',
-                  { variant: 'error' }
-                );
-              } finally {
-                setRestoringClusterKey(null);
-              }
-            }}
-            onRejectSession={async (id: string) => {
-              setRejectingSessionId(id);
-              try {
-                await deleteMutation.mutateAsync({ id });
-                toast('Rejected archived probe session.', { variant: 'success' });
-              } catch (error) {
-                toast(error instanceof Error ? error.message : 'Could not reject probe session.', { variant: 'error' });
-              } finally {
-                setRejectingSessionId(null);
-              }
-            }}
-            onRejectTemplate={async (clusterKey: string, sessionIds: string[]) => {
-              setRejectingClusterKey(clusterKey);
-              try {
-                await rejectSessionBatch(sessionIds);
-                toast('Rejected archived probe template.', { variant: 'success' });
-              } catch (error) {
-                toast(error instanceof Error ? error.message : 'Could not reject probe template.', { variant: 'error' });
-              } finally {
-                setRejectingClusterKey(null);
-              }
-            }}
-            onPromoteAndArchiveSession={async (id: string) => {
-              setPromotingAndArchivingSessionId(id);
-              try {
-                // Logic needed for promoteAndArchive
-                toast('Promoted and archived probe session.', { variant: 'success' });
-              } catch (error) {
-                toast(error instanceof Error ? error.message : 'Could not promote and archive session.', { variant: 'error' });
-              } finally {
-                setPromotingAndArchivingSessionId(null);
-              }
-            }}
-            onPromoteAndArchiveTemplate={async (clusterKey: string, sessionIds: string[]) => {
-              setPromotingAndArchivingClusterKey(clusterKey);
-              try {
-                // Logic needed for promoteAndArchive
-                toast('Promoted and archived probe template.', { variant: 'success' });
-              } catch (error) {
-                toast(error instanceof Error ? error.message : 'Could not promote and archive template.', { variant: 'error' });
-              } finally {
-                setPromotingAndArchivingClusterKey(null);
-              }
-            }}
-          />
-        ) : null}
-      </div>
+    <section id='probe-sessions' ref={sectionRef} tabIndex={-1} className='space-y-4 rounded-lg border border-border bg-card/40 p-4'>
+      <ProbeSessionsHeader
+        resolvedClustersCount={data.resolvedClusters.length}
+        activeSessionsCount={activeSessions.length}
+        showArchived={showArchived}
+        archivedSessionsCount={data.archivedSessions.length}
+        storedSessionCount={data.storedSessionCount}
+        onShowArchivedChange={onShowArchivedChange}
+      />
+      <ProbeSessionsBody
+        resolvedClusters={data.resolvedClusters}
+        selectedKeys={selectedKeys}
+        manuallySelectedKeys={manuallySelectedKeys}
+        defaultKeysByRole={data.defaultKeysByRole}
+        showArchived={showArchived}
+        archivedClusters={data.archivedClusters}
+        archivedSessions={data.archivedSessions}
+        restoreMutation={restoreMutation}
+        actions={actions}
+      />
     </section>
   );
 }

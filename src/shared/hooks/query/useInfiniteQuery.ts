@@ -1,5 +1,5 @@
 import type { PaginatedResponse, Pagination } from '@/shared/contracts/http';
-import { createInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type {
   InfiniteData,
@@ -43,7 +43,7 @@ export function useInfiniteQueryWithPagination<TData>(
     ...queryOptions
   } = options ?? {};
 
-  return createInfiniteQueryV2<
+  return useInfiniteQueryV2<
     PaginatedResponse<TData>,
     Error,
     InfiniteData<PaginatedResponse<TData>>,

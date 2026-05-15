@@ -12,7 +12,7 @@ import type {
   AmazonSelectorRegistrySyncResponse,
 } from '@/shared/contracts/integrations/amazon-selector-registry';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/amazon/selectors';
 
@@ -64,12 +64,13 @@ export function useAmazonSelectorRegistry(options?: {
 }): SingleQuery<AmazonSelectorRegistryListResponse> {
   const profile = options?.profile ?? 'amazon';
   const queryKey = registryKey(profile);
-  return createSingleQueryV2<AmazonSelectorRegistryListResponse>({
+  return useSingleQueryV2<AmazonSelectorRegistryListResponse>({
     queryKey: registryKey(profile),
     queryFn: async (): Promise<AmazonSelectorRegistryListResponse> =>
       requestJson<AmazonSelectorRegistryListResponse>(buildUrl(profile)),
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useAmazonSelectorRegistry',
       operation: 'list',
       resource: 'amazon.selector-registry',
@@ -83,7 +84,7 @@ export function useSyncAmazonSelectorRegistryMutation(): MutationResult<
   AmazonSelectorRegistrySyncResponse,
   AmazonSelectorRegistrySyncRequest
 > {
-  return createMutationV2<AmazonSelectorRegistrySyncResponse, AmazonSelectorRegistrySyncRequest>({
+  return useMutationV2<AmazonSelectorRegistrySyncResponse, AmazonSelectorRegistrySyncRequest>({
     mutationFn: async (
       payload: AmazonSelectorRegistrySyncRequest
     ): Promise<AmazonSelectorRegistrySyncResponse> =>
@@ -94,6 +95,7 @@ export function useSyncAmazonSelectorRegistryMutation(): MutationResult<
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useSyncAmazonSelectorRegistryMutation',
       operation: 'create',
       resource: 'amazon.selector-registry.sync',
@@ -106,7 +108,7 @@ export function useSaveAmazonSelectorRegistryEntryMutation(): MutationResult<
   AmazonSelectorRegistrySaveResponse,
   AmazonSelectorRegistrySaveRequest
 > {
-  return createMutationV2<AmazonSelectorRegistrySaveResponse, AmazonSelectorRegistrySaveRequest>({
+  return useMutationV2<AmazonSelectorRegistrySaveResponse, AmazonSelectorRegistrySaveRequest>({
     mutationFn: async (
       payload: AmazonSelectorRegistrySaveRequest
     ): Promise<AmazonSelectorRegistrySaveResponse> =>
@@ -117,6 +119,7 @@ export function useSaveAmazonSelectorRegistryEntryMutation(): MutationResult<
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useSaveAmazonSelectorRegistryEntryMutation',
       operation: 'update',
       resource: 'amazon.selector-registry.entry',
@@ -129,7 +132,7 @@ export function useDeleteAmazonSelectorRegistryEntryMutation(): MutationResult<
   AmazonSelectorRegistryDeleteResponse,
   AmazonSelectorRegistryDeleteRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     AmazonSelectorRegistryDeleteResponse,
     AmazonSelectorRegistryDeleteRequest
   >({
@@ -143,6 +146,7 @@ export function useDeleteAmazonSelectorRegistryEntryMutation(): MutationResult<
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useDeleteAmazonSelectorRegistryEntryMutation',
       operation: 'delete',
       resource: 'amazon.selector-registry.entry',
@@ -155,7 +159,7 @@ export function useMutateAmazonSelectorRegistryProfileMutation(): MutationResult
   AmazonSelectorRegistryProfileActionResponse,
   AmazonSelectorRegistryProfileActionRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     AmazonSelectorRegistryProfileActionResponse,
     AmazonSelectorRegistryProfileActionRequest
   >({
@@ -169,6 +173,7 @@ export function useMutateAmazonSelectorRegistryProfileMutation(): MutationResult
     invalidateKeys: () => [['integrations', 'amazon', 'selectors']],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useMutateAmazonSelectorRegistryProfileMutation',
       operation: 'update',
       resource: 'amazon.selector-registry.profile',

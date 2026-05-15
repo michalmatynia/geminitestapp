@@ -15,7 +15,7 @@ import React, {
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -270,7 +270,7 @@ function useMongoFilemakerOrganizations(
 ): MongoFilemakerOrganizationsHookState {
   const queryClient = useQueryClient();
   const queryKey = buildOrganizationListQueryKey(input);
-  const organizationsQuery = createSingleQueryV2<
+  const organizationsQuery = useSingleQueryV2<
     MongoFilemakerOrganizationsResponse,
     MongoFilemakerOrganizationsResponse,
     typeof queryKey
@@ -666,7 +666,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       setIsSelectingAllOrganizations(false);
     }
   }, [filters, query, sort, toast]);
-  const deleteOrganizationMutation = createMutationV2<void, DeleteOrganizationVariables>({
+  const deleteOrganizationMutation = useMutationV2<void, DeleteOrganizationVariables>({
     mutationKey: ['filemaker', 'organizations', 'delete'],
     mutationFn: async (variables) => {
       const response = await fetch(
@@ -689,7 +689,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       errorPresentation: 'toast',
     },
   });
-  const batchDeleteOrganizationsMutation = createMutationV2<
+  const batchDeleteOrganizationsMutation = useMutationV2<
     BatchDeleteOrganizationsResponse,
     BatchDeleteOrganizationsVariables
   >({
@@ -714,7 +714,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       errorPresentation: 'toast',
     },
   });
-  const organizationEmailScrapeMutation = createMutationV2<
+  const organizationEmailScrapeMutation = useMutationV2<
     OrganizationEmailScrapeResponse,
     OrganizationEmailScrapeVariables
   >({
@@ -742,7 +742,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       errorPresentation: 'toast',
     },
   });
-  const organizationWebsiteSocialScrapeMutation = createMutationV2<
+  const organizationWebsiteSocialScrapeMutation = useMutationV2<
     OrganizationWebsiteSocialScrapeResponse,
     OrganizationWebsiteSocialScrapeVariables
   >({

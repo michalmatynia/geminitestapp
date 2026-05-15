@@ -3,17 +3,23 @@ import { getDb } from '@/lib/mongodb';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, locale } = await req.json() as { email?: string; locale?: string };
+    const { email, message, locale } = await req.json() as {
+      email?: string;
+      message?: string;
+      locale?: string;
+    };
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
-    const db = await getDb();
-    const existing = await db.collection('inquiries').findOne({ email });
-    if (existing) {
-      return NextResponse.json({ message: 'Already registered' }, { status: 200 });
+    if (!message || message.trim().length === 0) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
+
+    const db = await getDb();
     await db.collection('inquiries').insertOne({
       email,
+      message: message.trim(),
       createdAt: new Date(),
       status: 'pending',
       source: 'cta-form',

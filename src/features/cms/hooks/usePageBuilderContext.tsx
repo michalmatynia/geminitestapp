@@ -26,6 +26,7 @@ import {
   useVectorOverlay,
   type VectorOverlayResult,
 } from './page-builder/VectorOverlayContext';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 export { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection, useVectorOverlay };
@@ -74,12 +75,26 @@ export function PageBuilderProvider({
   initialState?: PageBuilderState;
 }): React.ReactNode {
   const policy = usePageBuilderPolicy();
-  const [state, dispatch] = useReducer(
+  const [state, rawDispatch] = useReducer(
     (currentState: PageBuilderState, action: PageBuilderAction): PageBuilderState =>
       policy.sanitizeState(pageBuilderReducer(currentState, action)),
     customInitialState,
     policy.sanitizeState
   );
+
+  const dispatch = useCallback((action: PageBuilderAction): void => {
+    try {
+      rawDispatch(action);
+    } catch (error) {
+      logClientCatch(error, {
+        source: 'cms.page-builder',
+        action: 'dispatch',
+        actionType: action.type,
+      });
+      throw error;
+    }
+  }, [rawDispatch]);
+
   const [vectorOverlay, setVectorOverlay] = useState<VectorOverlayRequest | null>(null);
 
   const openVectorOverlay = useCallback((request: VectorOverlayRequest): void => {

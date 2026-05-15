@@ -282,10 +282,18 @@ const usePresetSaveHandler = (input: PresetHandlersInput): Pick<
   return { handleSavePresetDialog };
 };
 
-export const usePresetHandlers = (input: PresetHandlersInput): PresetHandlers => ({
-  ...usePresetCrudHandlers(input),
-  ...usePresetDialogHandlers(input),
-  ...usePresetExportHandlers(input),
-  ...usePresetImportHandlers(input),
-  ...usePresetSaveHandler(input),
-});
+export const usePresetHandlers = (input: PresetHandlersInput): PresetHandlers => {
+  const crudHandlers = usePresetCrudHandlers(input);
+  const dialogHandlers = usePresetDialogHandlers(input);
+  const exportHandlers = usePresetExportHandlers(input);
+  const importHandlers = usePresetImportHandlers(input);
+  const saveHandler = usePresetSaveHandler(input);
+
+  return {
+    ...crudHandlers,
+    ...dialogHandlers,
+    ...exportHandlers,
+    ...importHandlers,
+    ...saveHandler,
+  };
+};

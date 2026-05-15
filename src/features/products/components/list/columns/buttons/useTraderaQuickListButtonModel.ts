@@ -19,7 +19,7 @@ import type {
   ProductListingsRecoveryContext,
 } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/toast';
 
 import {
@@ -181,7 +181,7 @@ const useTraderaQuickListClickHandler = (
 ): (() => void) => {
   const localFeedbackRef = useRef(input.localFeedback);
   localFeedbackRef.current = input.localFeedback;
-  const quickListMutation = createMutationV2<void, void>({
+  const quickListMutation = useMutationV2<void, void>({
     mutationKey: ['products', 'quick-list', 'tradera', input.productId],
     mutationFn: async (): Promise<void> =>
       runTraderaQuickListAction({

@@ -64,8 +64,8 @@ const mocks = vi.hoisted(() => ({
     };
   }),
   parsePromptEngineSettingsMock: vi.fn(() => ({ enabled: true, source: 'mock' })),
-  createListQueryV2Mock: vi.fn(() => state.schemaQueryResult),
-  createMutationV2Mock: vi.fn(),
+  useListQueryV2Mock: vi.fn(() => state.schemaQueryResult),
+  useMutationV2Mock: vi.fn(),
   ConfirmationModalMock: vi.fn(() => null),
 }));
 
@@ -114,10 +114,10 @@ vi.mock('@/shared/lib/prompt-engine/settings', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2:
-    mocks.createListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').createListQueryV2,
-  createMutationV2:
-    mocks.createMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createMutationV2,
+  useListQueryV2:
+    mocks.useListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').useListQueryV2,
+  useMutationV2:
+    mocks.useMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').useMutationV2,
 }));
 
 vi.mock('../../components/AiPathConfigContext', () => ({
@@ -270,8 +270,8 @@ beforeEach(() => {
     refetch: vi.fn(),
   };
   mocks.dbSchemaMock.mockResolvedValue({ ok: true, data: state.schemaQueryResult.data });
-  mocks.createListQueryV2Mock.mockImplementation(() => state.schemaQueryResult);
-  mocks.createMutationV2Mock.mockImplementation((config: {
+  mocks.useListQueryV2Mock.mockImplementation(() => state.schemaQueryResult);
+  mocks.useMutationV2Mock.mockImplementation((config: {
     mutationFn?: (variables: unknown) => Promise<unknown>;
     onSuccess?: (data: unknown, variables: unknown) => void | Promise<void>;
     onError?: (error: Error, variables: unknown) => void | Promise<void>;

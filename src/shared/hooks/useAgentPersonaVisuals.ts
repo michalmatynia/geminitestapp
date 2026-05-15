@@ -14,7 +14,7 @@ import { type UseQueryResult } from '@tanstack/react-query';
 
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /** Result type for agent persona visuals query */
@@ -59,7 +59,7 @@ export function useAgentPersonaVisuals(
         ? [...QUERY_KEYS.agentPersonas.details(), 'visuals', 'none']
         : [...QUERY_KEYS.agentPersonas.detail(normalizedPersonaId), 'visuals'];
 
-  return createListQueryV2<AgentPersona>({
+  return useListQueryV2<AgentPersona>({
     queryKey,
     queryFn: async (): Promise<AgentPersona[]> => {
       if (normalizedPersonaId === null) {

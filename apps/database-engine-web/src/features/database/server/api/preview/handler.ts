@@ -86,7 +86,7 @@ export async function postDatabasesPreviewHandler(
   });
   if (!parsed.ok) return parsed.response;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
   const body = z
     .object({
       backupName: z.string().optional(),
@@ -112,7 +112,7 @@ export async function postDatabasesPreviewHandler(
   const requestedSource = body.source ?? 'local';
   const usesManagedCurrent = previewMode === 'current' && requestedApplication !== undefined;
   
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
   const target = usesManagedCurrent ? null : resolvePreviewTarget(previewMode, body.backupName ?? '');
   const mongoUri = (target as any)?.mongoUri ?? '';
   const sourceDbName = (target as any)?.sourceDbName ?? '';

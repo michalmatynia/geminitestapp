@@ -16,7 +16,7 @@ import type {
 } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 
@@ -175,7 +175,7 @@ export const useKangurAssignments = (
   const queryClient = useQueryClient();
   const queryKey = resolveKangurAssignmentsQueryKey(query);
 
-  const assignmentsQuery = createListQueryV2<KangurAssignmentSnapshot, KangurAssignmentSnapshot[]>({
+  const assignmentsQuery = useListQueryV2<KangurAssignmentSnapshot, KangurAssignmentSnapshot[]>({
     queryKey,
     queryFn: () => fetchAssignments(query),
     enabled,

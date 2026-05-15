@@ -45,12 +45,12 @@ import {
   unwrapMutationResult,
 } from '@/shared/lib/mutation-error-handler';
 import {
-  createDeleteMutationV2,
-  createListQueryV2,
-  createSingleQueryV2,
-  createCreateMutationV2,
-  createUpdateMutationV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useCreateMutationV2,
+  useUpdateMutationV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { dbKeys } from '@/shared/lib/query-key-exports';
 
@@ -104,7 +104,7 @@ export const invalidateEngineManagedMongo = (queryClient: QueryClient): void => 
 
 export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfoResponse> {
   const queryKey = dbKeys.backups(dbType);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => fetchDatabaseBackups(dbType),
     meta: {
@@ -123,7 +123,7 @@ export function useCreateBackupMutation(): MutationResult<
   DatabaseType
   > {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
     mutationKey,
     meta: {
@@ -143,7 +143,7 @@ export function useRestoreBackupMutation(): MutationResult<
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
   > {
   const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (variables: {
       dbType: DatabaseType;
       backupName: string;
@@ -170,7 +170,7 @@ export function useUploadBackupMutation(): MutationResult<
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (variables: {
       dbType: DatabaseType;
       file: File;
@@ -194,7 +194,7 @@ export function useDeleteBackupMutation(): MutationResult<
   { dbType: DatabaseType; backupName: string }
   > {
   const mutationKey = dbKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
       deleteDatabaseBackup(variables.dbType, variables.backupName),
     mutationKey,
@@ -232,7 +232,7 @@ export function useDatabasePreview(input: {
     source,
   });
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: `${backupName ?? 'none'}:${mode ?? 'none'}:${type ?? 'none'}:${page ?? 1}:${pageSize ?? 0}`,
     queryKey,
     queryFn: async (): Promise<DatabasePreviewPayload> => {
@@ -285,7 +285,7 @@ export function useSqlQueryMutation(): MutationResult<
   }
   > {
   const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (input) => executeSqlQuery(input),
     mutationKey,
     meta: {
@@ -301,7 +301,7 @@ export function useSqlQueryMutation(): MutationResult<
 
 export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (input: CrudRequest) => executeCrudOperation(input),
     mutationKey,
     meta: {
@@ -319,7 +319,7 @@ export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
 
 export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
   const queryKey = dbKeys.schema({ provider: 'all', includeCounts: true });
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'all-collections',
     queryKey,
     queryFn: fetchAllCollectionsSchema,
@@ -337,7 +337,7 @@ export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
 
 export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse> {
   const queryKey = dbKeys.redisOverview({ limit });
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: `redis-overview-${limit}`,
     queryKey,
     queryFn: () => fetchRedisOverview(limit),
@@ -355,7 +355,7 @@ export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse
 
 export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusResponse> {
   const queryKey = dbKeys.engineStatus();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'engine-status',
     queryKey,
     queryFn: fetchDatabaseEngineStatus,
@@ -374,7 +374,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
 
 export function useDatabaseEngineMongoSource(): SingleQuery<DatabaseEngineMongoSourceStateResponse> {
   const queryKey = dbKeys.engineMongoSource();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'engine-mongo-source',
     queryKey,
     queryFn: getDatabaseEngineMongoSource,
@@ -393,7 +393,7 @@ export function useDatabaseEngineMongoSource(): SingleQuery<DatabaseEngineMongoS
 
 export function useDatabaseEngineManagedMongoDatabases(): SingleQuery<DatabaseEngineManagedMongoDatabasesResponse> {
   const queryKey = dbKeys.engineManagedMongo();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'engine-managed-mongo',
     queryKey,
     queryFn: getDatabaseEngineManagedMongoDatabases,
@@ -412,7 +412,7 @@ export function useDatabaseEngineManagedMongoDatabases(): SingleQuery<DatabaseEn
 
 export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBackupSchedulerStatusResponse> {
   const queryKey = dbKeys.engineBackupSchedulerStatus();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'engine-backup-scheduler-status',
     queryKey,
     queryFn: fetchDatabaseEngineBackupSchedulerStatus,
@@ -433,7 +433,7 @@ export function useDatabaseEngineOperationsJobs(
   limit = 30
 ): SingleQuery<DatabaseEngineOperationsJobsResponse> {
   const queryKey = dbKeys.engineOperationsJobs({ limit });
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: `engine-operations-jobs-${limit}`,
     queryKey,
     queryFn: () => fetchDatabaseEngineOperationsJobs(limit),
@@ -456,7 +456,7 @@ export function useDatabaseEngineProviderPreview(
   const queryKey = dbKeys.engineProviderPreview({
     collections: collections ?? [],
   });
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: `engine-provider-preview:${(collections ?? []).join(',')}`,
     queryKey,
     queryFn: () => fetchDatabaseEngineProviderPreview(collections),
@@ -481,7 +481,7 @@ export function useSyncDatabaseEngineMongoSourceMutation(): MutationResult<
   }
 > {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (input: {
       direction: DatabaseEngineMongoSyncDirection;
       application: DatabaseEngineManagedMongoApplicationTarget;
@@ -509,7 +509,7 @@ export function useBackupDatabaseEngineManagedMongoMutation(): MutationResult<
   DatabaseEngineManagedMongoApplicationTarget
 > {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (application: DatabaseEngineManagedMongoApplicationTarget) =>
       backupDatabaseEngineManagedMongo(application),
     mutationKey,
@@ -537,7 +537,7 @@ export function useSyncDatabaseEngineManagedMongoMutation(): MutationResult<
   }
 > {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (input: {
       direction: DatabaseEngineMongoSyncDirection;
       application: DatabaseEngineManagedMongoApplicationTarget;
@@ -569,7 +569,7 @@ export function useSetDatabaseEngineManagedMongoSyncDisabledMutation(): Mutation
   }
 > {
   const mutationKey = dbKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (input: {
       application: DatabaseEngineManagedMongoApplication;
       disabled: boolean;
@@ -594,7 +594,7 @@ export function useSetDatabaseEngineManagedMongoSyncDisabledMutation(): Mutation
 
 export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResponse, void> {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async (): Promise<DatabaseBackupResponse> => {
       const result = await createJsonBackup();
       return unwrapMutationResult(result, 'Failed to create JSON backup.');
@@ -614,7 +614,7 @@ export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResp
 
 export function useRestoreJsonBackupMutation(): UpdateMutation<DatabaseRestoreResponse, string> {
   const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (backupName: string): Promise<DatabaseRestoreResponse> => {
       const result = await restoreJsonBackup(backupName);
       return unwrapMutationResult(result, 'Failed to restore JSON backup.');
@@ -633,7 +633,7 @@ export function useRestoreJsonBackupMutation(): UpdateMutation<DatabaseRestoreRe
 
 export function useJsonBackups(): SingleQuery<{ backups: string[] }> {
   const queryKey = dbKeys.jsonBackups();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'json-backups',
     queryKey,
     queryFn: fetchJsonBackups,

@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
 
@@ -37,12 +37,12 @@ describe('query-factories-v2', () => {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  it('createListQueryV2 resolves GET request with params', async () => {
+  it('useListQueryV2 resolves GET request with params', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ items: ['x'] });
 
     const { result } = renderHook(
       () =>
-        createListQueryV2<{ items: string[] }, { items: string[] }>({
+        useListQueryV2<{ items: string[] }, { items: string[] }>({
           queryKey: ['items', 1],
           queryFn: () => api.get<{ items: string[] }>('/api/items', { params: { page: 1 } }),
           meta: {
@@ -64,12 +64,12 @@ describe('query-factories-v2', () => {
     expect(result.current.data).toEqual({ items: ['x'] });
   });
 
-  it('createListQueryV2 resolves POST request in queryFn when needed', async () => {
+  it('useListQueryV2 resolves POST request in queryFn when needed', async () => {
     vi.mocked(api.post).mockResolvedValueOnce({ ids: ['a', 'b'] });
 
     const { result } = renderHook(
       () =>
-        createListQueryV2<{ ids: string[] }, { ids: string[] }>({
+        useListQueryV2<{ ids: string[] }, { ids: string[] }>({
           queryKey: ['search', 'abc'],
           queryFn: () => api.post<{ ids: string[] }>('/api/search', { query: 'abc' }, {}),
           meta: {
@@ -90,12 +90,12 @@ describe('query-factories-v2', () => {
     expect(result.current.data).toEqual({ ids: ['a', 'b'] });
   });
 
-  it('createMutationV2 can invalidate keys via onSuccess', async () => {
+  it('useMutationV2 can invalidate keys via onSuccess', async () => {
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(
       () => {
         const client = queryClient;
-        return createMutationV2<{ ok: boolean }, { id: string }>({
+        return useMutationV2<{ ok: boolean }, { id: string }>({
           mutationFn: async () => ({ ok: true }),
           mutationKey: ['items', 'mutation'],
           meta: {

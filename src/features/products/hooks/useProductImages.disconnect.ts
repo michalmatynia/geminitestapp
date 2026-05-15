@@ -1,8 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { invalidateProducts } from './productCache';
@@ -10,8 +9,7 @@ import { invalidateProducts } from './productCache';
 export type DisconnectProductImage = (productId: string, imageFileId: string) => Promise<void>;
 
 export const useDisconnectProductImage = (): DisconnectProductImage => {
-  const queryClient = useQueryClient();
-  const disconnectImageMutation = createMutationV2<
+  const disconnectImageMutation = useMutationV2<
     void,
     { productId: string; imageFileId: string }
   >({
@@ -27,7 +25,7 @@ export const useDisconnectProductImage = (): DisconnectProductImage => {
       tags: ['products', 'images', 'disconnect'],
       description: 'Deletes products images.',
     },
-    onSuccess: async (): Promise<void> => {
+    invalidate: async (queryClient): Promise<void> => {
       await invalidateProducts(queryClient);
     },
   });

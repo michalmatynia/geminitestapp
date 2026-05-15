@@ -7,7 +7,7 @@ import { api } from '@/shared/lib/api-client';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { ProductTag } from '@/shared/contracts/products/tags';
-import { createMultiQueryV2, type QueryDescriptorV2 } from '@/shared/lib/query-factories-v2';
+import { useMultiQueryV2, type QueryDescriptorV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -66,7 +66,7 @@ const useDraftMetadataQueries = <T,>(
     }
   );
 
-  return createMultiQueryV2({ queries });
+  return useMultiQueryV2({ queries });
 };
 
 const listSimpleParameters = async (

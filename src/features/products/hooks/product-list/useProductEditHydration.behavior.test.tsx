@@ -11,13 +11,13 @@ import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const {
-  createSingleQueryV2Mock,
+  useSingleQueryV2Mock,
   fetchQueryV2Mock,
   prefetchQueryV2Mock,
   toastMock,
   preloadProductFormChunkMock,
 } = vi.hoisted(() => ({
-  createSingleQueryV2Mock: vi.fn(),
+  useSingleQueryV2Mock: vi.fn(),
   fetchQueryV2Mock: vi.fn(),
   prefetchQueryV2Mock: vi.fn(),
   toastMock: vi.fn(),
@@ -25,9 +25,9 @@ const {
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createSingleQueryV2: (...args: unknown[]) => createSingleQueryV2Mock(...args),
   fetchQueryV2: (...args: unknown[]) => fetchQueryV2Mock(...args),
   prefetchQueryV2: (...args: unknown[]) => prefetchQueryV2Mock(...args),
+  useSingleQueryV2: (...args: unknown[]) => useSingleQueryV2Mock(...args),
 }));
 
 vi.mock('@/shared/ui/toast', () => ({
@@ -97,7 +97,7 @@ describe('useProductEditHydration missing-product cleanup', () => {
     vi.clearAllMocks();
     window.history.replaceState({}, '', '/admin/products');
 
-    createSingleQueryV2Mock.mockReturnValue({
+    useSingleQueryV2Mock.mockReturnValue({
       data: undefined,
       error: null,
     });
@@ -186,7 +186,7 @@ describe('useProductEditHydration missing-product cleanup', () => {
   });
 
   it('closes an already-open editor when the live detail query reports a missing product', async () => {
-    createSingleQueryV2Mock.mockReturnValue({
+    useSingleQueryV2Mock.mockReturnValue({
       data: undefined,
       error: new ApiError('Product not found', 404),
     });
@@ -242,7 +242,7 @@ describe('useProductEditHydration missing-product cleanup', () => {
       { wrapper }
     );
 
-    const config = createSingleQueryV2Mock.mock.calls[0]?.[0] as
+    const config = useSingleQueryV2Mock.mock.calls[0]?.[0] as
       | { queryKey?: (id: string) => readonly unknown[] }
       | undefined;
 

@@ -126,4 +126,166 @@ const handleLease = async (
 
   return { run, leaseResult };
 };
-// ... rest of file remains documented implicitly by structure
+
+const handleBlockedLease = async (
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  repo: AiPathRunRepository,
+  ownerAgentId: string
+): Promise<void> => {
+  const failedAt = new Date();
+  const failedAtIso = failedAt.toISOString();
+  const { blockingOwnerAgentId, meta } = resolveLeaseFailureDetails(
+    run,
+    leaseResult,
+    ownerAgentId,
+    failedAtIso
+  );
+  const failed = await repo.updateRunIfStatus(run.id, ['running'], {
+    status: 'failed',
+    finishedAt: failedAtIso,
+    errorMessage: 'Run failed: execution lease is already owned by another worker.',
+    meta: {
+      ...(run.meta ?? {}),
+      executionLeaseFailure: meta,
+    },
+  });
+
+  if (!failed) return;
+
+  const failureError = internalError(
+    'Execution ownership could not be claimed due to lease contention.',
+    { runId: run.id, blockingOwnerAgentId, meta }
+  );
+
+  await recordBlockedLeaseFailure({
+    run,
+    repo,
+    failedAt,
+    failedAtIso,
+    blockingOwnerAgentId,
+    conflictingLease: leaseResult.conflictingLease ?? null,
+    ownerAgentId,
+  });
+
+  throw failureError;
+};
+
+const releaseExecutionLease = (
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  ownerAgentId: string
+): void => {
+  mutateAgentLease({
+    action: 'release',
+    resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+    scopeId: run.id,
+    ownerAgentId,
+    ownerRunId: run.id,
+    leaseId: leaseResult.lease?.leaseId ?? undefined,
+    reason: 'ai-path queue worker finished processing',
+  });
+};
+
+const processClaimedRun = async (
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  ownerAgentId: string,
+  signal?: AbortSignal
+): Promise<void> => {
+  try {
+    await recordRuntimeRunStarted({ runId: run.id });
+    await processRun(run, signal);
+  } finally {
+    releaseExecutionLease(run, leaseResult, ownerAgentId);
+  }
+};
+
+type QueueLeaseResultInput = {
+  data: AiPathRunJobData;
+  result: { run: ClaimedAiPathRun; leaseResult: ExecutionLeaseResult };
+  repo: AiPathRunRepository;
+  ownerAgentId: string;
+  signal?: AbortSignal;
+};
+
+const handleQueueLeaseResult = async ({
+  data,
+  result,
+  repo,
+  ownerAgentId,
+  signal,
+}: QueueLeaseResultInput): Promise<void> => {
+  const { run, leaseResult } = result;
+  if (leaseResult.ok === false) {
+    await handleBlockedLease(run, leaseResult, repo, ownerAgentId);
+    debugQueueLog(
+      `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${leaseResult.conflictingLease?.ownerAgentId ?? 'unknown-owner'}`
+    );
+    return;
+  }
+  await processClaimedRun(run, leaseResult, ownerAgentId, signal);
+};
+
+const runQueueJob = async (
+  data: AiPathRunJobData,
+  _jobId: string,
+  signal?: AbortSignal
+): Promise<void> => {
+  const repo = await getPathRunRepository();
+  const ownerAgentId = resolveQueueWorkerAgentId();
+  try {
+    const result = await handleLease(data.runId, repo, ownerAgentId);
+    if (result === null) return;
+    await handleQueueLeaseResult({ data, result, repo, ownerAgentId, signal });
+  } catch (error: unknown) {
+    throw internalError(`Unexpected failure processing queue job for run: ${data.runId}`, {
+      runId: data.runId,
+      jobId: _jobId,
+      cause: error,
+    });
+  }
+};
+
+export const queue = createManagedQueue<AiPathRunJobData>({
+  name: AI_PATH_RUN_QUEUE_NAME,
+  concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+  jobTimeoutMs: jobTimeout,
+  defaultJobOptions: {
+    attempts: 1,
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
+  workerOptions: {
+    stalledInterval: 30_000,
+    maxStalledCount: 2,
+  },
+  processor: runQueueJob,
+  onStalled: async (jobId, prevStatus) => {
+    void logSystemEvent({
+      level: 'warn',
+      source: LOG_SOURCE,
+      message: `Job stalled: ${jobId}`,
+      context: { jobId, prevStatus },
+    });
+  },
+  onFailed: async (_jobId, err, data) => {
+    try {
+      void ErrorSystem.captureException(err, {
+        service: LOG_SOURCE,
+        runId: data.runId,
+        jobId: _jobId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    } catch (importError) {
+      void ErrorSystem.captureException(importError);
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: 'Fatal queue error during failure logging',
+        error: importError,
+        context: { jobId: _jobId, runId: data.runId },
+      });
+    }
+  },
+});

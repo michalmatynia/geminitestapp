@@ -2,7 +2,7 @@ import { fetchSettingsCached, invalidateSettingsCache } from '@/shared/api/setti
 import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -17,7 +17,7 @@ export interface SettingsOfflineHookResult {
 }
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
-  const settingsQuery: ListQuery<SettingRecord, SettingRecord[]> = createListQueryV2<
+  const settingsQuery: ListQuery<SettingRecord, SettingRecord[]> = useListQueryV2<
     SettingRecord,
     SettingRecord[]
   >({

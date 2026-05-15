@@ -1,8 +1,8 @@
 import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
-import { useQuery } from '@tanstack/react-query';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 const MOBILE_HOME_DUELS_LEADERBOARD_LIMIT = 4;
 const MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS = 14;
@@ -56,15 +56,24 @@ export const useKangurMobileHomeDuelsLeaderboard = ({
   const { copy } = useKangurMobileI18n();
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
 
-  const leaderboardQuery = useQuery({
+  const queryKey = ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] as const;
+  const leaderboardQuery = useKangurMobileQueryV2({
     enabled,
-    queryKey: ['kangur-mobile', 'home', 'duels-leaderboard', apiBaseUrl] as const,
+    queryKey,
     queryFn: async () => apiClient.getDuelLeaderboard(
         { limit: MOBILE_HOME_DUELS_LEADERBOARD_LIMIT, lookbackDays: MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS },
         { cache: 'no-store' }
     ),
     refetchInterval: MOBILE_HOME_DUELS_LEADERBOARD_POLL_MS,
     staleTime: 15_000,
+    meta: {
+      source: 'kangur.mobile.home.duels.leaderboard',
+      operation: 'list',
+      resource: 'kangur.mobile.home.duels.leaderboard',
+      queryKey,
+      description: 'Loads Kangur mobile home duel leaderboard.',
+      tags: ['kangur-mobile', 'home', 'duels', 'leaderboard'],
+    },
   });
 
   return {

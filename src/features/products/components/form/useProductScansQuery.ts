@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
@@ -11,7 +12,7 @@ import type {
 } from '@/shared/contracts/product-scans';
 import { useState, useCallback } from 'react';
 import type { ProductScanAmazonCandidatePreview } from '@/features/products/lib/product-scan-amazon-candidates';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const PRODUCT_SCAN_ACTIVE_REFETCH_MS = 5_000;
 
@@ -161,7 +162,7 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
   } = useExtractAmazonCandidate({ productId, queryClient });
 
   const queryKey = QUERY_KEYS.products.scans(productId);
-  const query = createSingleQueryV2<ProductScanListResponse>({
+  const query = useSingleQueryV2<ProductScanListResponse>({
     queryKey,
     enabled: productId !== '',
     queryFn: async (): Promise<ProductScanListResponse> =>

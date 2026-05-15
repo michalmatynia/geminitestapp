@@ -68,6 +68,7 @@ export interface Service {
 
 export interface Inquiry {
   email: string;
+  message: string;
   createdAt: Date;
   status: 'pending' | 'contacted';
   source: string;
@@ -95,6 +96,7 @@ export interface ArchPageContent {
     description: string;
     ctaLabel: string;
     hint: string;
+    thumbImages: string[];
   };
   philosophy: {
     eyebrow: string;
@@ -159,6 +161,7 @@ export interface ArchPageContent {
     emphasis: string;
     description: string;
     emailPlaceholder: string;
+    messagePlaceholder: string;
     submitLabel: string;
     loadingLabel: string;
     successMessage: string;

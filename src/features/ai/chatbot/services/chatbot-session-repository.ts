@@ -1,3 +1,23 @@
+/**
+ * Chatbot Session Repository
+ * 
+ * Provides database operations for managing AI Chatbot sessions and message history.
+ * Handles the persistence of chat sessions, including message threads, metadata,
+ * user-specific settings, and persona-based routing.
+ * 
+ * Features:
+ * - Session Management: Supports CRUD operations for chat threads and historical records.
+ * - Normalization Pipeline: Enforces data integrity by normalizing dates, arrays, 
+ *   and records during read/write transitions (MongoDB Document <-> DTO).
+ * - Indexed Performance: Manages indices on critical fields (e.g., `updatedAt`, `personaId`)
+ *   to ensure efficient session retrieval.
+ * - Atomic Updates: Implements atomic message appending to ensure thread consistency.
+ * 
+ * Usage:
+ * Use this service to interact with the database layer for all chatbot session
+ * persistent operations. It abstracts raw MongoDB documents into defined DTOs.
+ */
+
 import 'server-only';
 
 import { randomUUID } from 'crypto';
@@ -13,9 +33,10 @@ import { parseChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/** Name of the collection storing chatbot session data. */
 const COLLECTION_NAME = 'chatbot_sessions';
 
+/** MongoDB document representation of a chat message. */
 type ChatMessageDocument = {
   id: string;
   sessionId: string;
@@ -29,6 +50,7 @@ type ChatMessageDocument = {
   metadata?: Record<string, unknown> | null;
 };
 
+/** MongoDB document representation of a chat session. */
 type ChatSessionDocument = {
   _id: string;
   id: string;
@@ -46,9 +68,11 @@ type ChatSessionDocument = {
   updatedAt: Date;
 };
 
+/** Utility to verify if a value is a plain record object. */
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** Normalizes arbitrary values into plain record objects. */
 const normalizeRecord = (value: unknown): Record<string, unknown> | undefined => {
   if (!isRecord(value)) return undefined;
   const serialized = JSON.stringify(value, (_key: string, entry: unknown) =>
@@ -59,6 +83,7 @@ const normalizeRecord = (value: unknown): Record<string, unknown> | undefined =>
   return isRecord(parsed) ? parsed : undefined;
 };
 
+/** Normalizes arrays by filtering out non-string/empty entries. */
 const normalizeStringArray = (value: unknown): string[] | undefined => {
   if (!Array.isArray(value)) return undefined;
   const normalized = value
@@ -67,6 +92,7 @@ const normalizeStringArray = (value: unknown): string[] | undefined => {
   return normalized;
 };
 
+/** Normalizes arrays by recursively processing record elements. */
 const normalizeObjectArray = (value: unknown): Array<Record<string, unknown>> | undefined => {
   if (!Array.isArray(value)) return undefined;
   const normalized = value
@@ -75,6 +101,7 @@ const normalizeObjectArray = (value: unknown): Array<Record<string, unknown>> | 
   return normalized;
 };
 
+/** Normalizes date inputs to valid Date instances. */
 const normalizeDate = (value: unknown, fallback: Date = new Date()): Date => {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value;
@@ -88,12 +115,14 @@ const normalizeDate = (value: unknown, fallback: Date = new Date()): Date => {
   return fallback;
 };
 
+/** Normalizes persona identifiers to string or null. */
 const normalizePersonaId = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
 
+/** Resolves the persona ID from the provided input options or existing settings. */
 const resolvePersonaId = (input: {
   personaId?: unknown;
   settings?: ChatbotSettingsPayload | Record<string, unknown> | null;
@@ -103,6 +132,7 @@ const resolvePersonaId = (input: {
   return settingsPersonaId ?? normalizePersonaId(input.personaId) ?? null;
 };
 
+/** Parses and normalizes chatbot settings payload from stored document data. */
 const normalizeStoredSettings = (
   value: unknown
 ): ChatbotSettingsPayload | undefined => {
@@ -116,6 +146,7 @@ const normalizeStoredSettings = (
   }
 };
 
+/** Converts a DB message document to the application-level DTO. */
 const toChatMessage = (message: ChatMessageDocument): ChatMessage => ({
   id: message.id,
   sessionId: message.sessionId,
@@ -133,6 +164,7 @@ const toChatMessage = (message: ChatMessageDocument): ChatMessage => ({
   ...(isRecord(message.metadata) ? { metadata: message.metadata } : {}),
 });
 
+/** Converts a DB session document to the application-level DTO. */
 const toChatSession = (session: ChatSessionDocument): ChatSession => {
   const messages = [...(Array.isArray(session.messages) ? session.messages : [])]
     .sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime())
@@ -160,6 +192,7 @@ const toChatSession = (session: ChatSessionDocument): ChatSession => {
   };
 };
 
+/** Converts application-level message DTOs to DB-compatible document formats. */
 const toMessageDocument = (
   sessionId: string,
   message: Partial<ChatMessage> & { role: ChatMessage['role']; content: string }
@@ -185,6 +218,7 @@ const toMessageDocument = (
   };
 };
 
+/** Batch-converts message DTOs to DB document format. */
 const toMessageDocuments = (sessionId: string, messages: ChatMessage[] | undefined): ChatMessageDocument[] =>
   Array.isArray(messages)
     ? messages.map((message: ChatMessage) => toMessageDocument(sessionId, message))
@@ -193,6 +227,7 @@ const toMessageDocuments = (sessionId: string, messages: ChatMessage[] | undefin
 let indexesReady = false;
 let indexesPromise: Promise<void> | null = null;
 
+/** Ensures necessary DB indices are present for efficient session queries. */
 const ensureSessionIndexes = async (): Promise<void> => {
   if (indexesReady) return;
   if (!indexesPromise) {
@@ -212,6 +247,7 @@ const ensureSessionIndexes = async (): Promise<void> => {
   await indexesPromise;
 };
 
+/** Retrieves the chatbot session collection, ensuring indices are established. */
 const getSessionsCollection = async () => {
   await ensureSessionIndexes();
   const db = await getMongoDb();
@@ -241,26 +277,17 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
 
   async findById(id: string): Promise<ChatSession | null> {
     const collection = await getSessionsCollection();
-    const session = await collection.findOne({
-      $or: [{ _id: id }, { id }],
-    });
+    const session = await collection.findOne({ $or: [{ _id: id }, { id }] });
     return session ? toChatSession(session) : null;
   },
 
   async findSessionIdByPersonaAndTitle(title: string, personaId: string): Promise<string | null> {
     const collection = await getSessionsCollection();
     const session = await collection.findOne(
-      {
-        personaId,
-        title,
-      },
-      {
-        projection: { _id: 1, id: 1 },
-      }
+      { personaId, title },
+      { projection: { _id: 1, id: 1 } }
     );
-    if (!session) {
-      return null;
-    }
+    if (!session) return null;
     return String(session.id ?? session._id);
   },
 
@@ -287,23 +314,20 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       createdAt,
       updatedAt: lastMessageAt ?? createdAt,
     };
-
     await collection.insertOne(document);
     return toChatSession(document);
   },
 
   async update(id: string, input: UpdateSessionInput): Promise<ChatSession | null> {
     const collection = await getSessionsCollection();
-    const existing = await collection.findOne({
-      $or: [{ _id: id }, { id }],
-    });
-    if (!existing) {
-      return null;
-    }
+    const existing = await collection.findOne({ $or: [{ _id: id }, { id }] });
+    if (!existing) return null;
 
     const now = new Date();
     const nextMessages =
-      input.messages !== undefined ? toMessageDocuments(existing.id ?? existing._id, input.messages) : undefined;
+      input.messages !== undefined
+        ? toMessageDocuments(existing.id ?? existing._id, input.messages)
+        : undefined;
     const nextLastMessageAt =
       nextMessages !== undefined
         ? (nextMessages[nextMessages.length - 1]?.createdAt ?? null)
@@ -319,11 +343,7 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       ...(input.metadata !== undefined ? { metadata: normalizeRecord(input.metadata) ?? null } : {}),
       ...(input.settings !== undefined ? { settings: nextSettings } : {}),
       ...(nextMessages !== undefined
-        ? {
-            messages: nextMessages,
-            messageCount: nextMessages.length,
-            lastMessageAt: nextLastMessageAt,
-          }
+        ? { messages: nextMessages, messageCount: nextMessages.length, lastMessageAt: nextLastMessageAt }
         : {}),
       personaId: resolvePersonaId({
         personaId: input.personaId ?? existing.personaId,
@@ -331,36 +351,22 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       }),
     };
 
-    await collection.updateOne(
-      {
-        $or: [{ _id: id }, { id }],
-      },
-      {
-        $set: updateDoc,
-      }
-    );
-
+    await collection.updateOne({ $or: [{ _id: id }, { id }] }, { $set: updateDoc });
     return this.findById(id);
   },
 
   async delete(id: string): Promise<boolean> {
     const collection = await getSessionsCollection();
-    const result = await collection.deleteOne({
-      $or: [{ _id: id }, { id }],
-    });
+    const result = await collection.deleteOne({ $or: [{ _id: id }, { id }] });
     return (result.deletedCount ?? 0) > 0;
   },
 
   async deleteMany(ids: string[]): Promise<number> {
-    if (ids.length === 0) {
-      return 0;
-    }
-
+    if (ids.length === 0) return 0;
     const collection = await getSessionsCollection();
     const result = await collection.deleteMany({
       $or: [{ _id: { $in: ids } }, { id: { $in: ids } }],
     });
-
     return result.deletedCount ?? 0;
   },
 
@@ -371,25 +377,14 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
     const collection = await getSessionsCollection();
     const messageDocument = toMessageDocument(id, message);
     const result = await collection.updateOne(
-      {
-        $or: [{ _id: id }, { id }],
-      },
+      { $or: [{ _id: id }, { id }] },
       {
         $push: { messages: messageDocument },
-        $set: {
-          updatedAt: messageDocument.createdAt,
-          lastMessageAt: messageDocument.createdAt,
-        },
-        $inc: {
-          messageCount: 1,
-        },
+        $set: { updatedAt: messageDocument.createdAt, lastMessageAt: messageDocument.createdAt },
+        $inc: { messageCount: 1 },
       }
     );
-
-    if ((result.matchedCount ?? 0) === 0) {
-      return null;
-    }
-
+    if ((result.matchedCount ?? 0) === 0) return null;
     return this.findById(id);
   },
 };

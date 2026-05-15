@@ -143,8 +143,8 @@ vi.mock('@/shared/lib/documentation/tooltips', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: () => mockState.settingsQuery,
-  createUpdateMutationV2: (config: {
+  useListQueryV2: () => mockState.settingsQuery,
+  useUpdateMutationV2: (config: {
     mutationFn: (payload: { key: string; value: string }) => Promise<void>;
   }) => ({
     isPending: false,

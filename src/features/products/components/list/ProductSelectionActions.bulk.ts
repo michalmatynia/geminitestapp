@@ -142,15 +142,25 @@ export const useProductSelectionBulkController = (
   input: BulkControllerInput
 ): ProductSelectionBulkController => {
   const { dialogs, selection } = input;
+  const archiveAction = useArchiveAction(input);
+  const batchEditActions = useBatchEditActions(selection, dialogs);
+  const bulkBaseSyncAction = useBulkBaseSyncAction(input);
+  const bulkEcommerceExportAction = useBulkEcommerceExportAction(input);
+  const imageConversionAction = useImageConversionAction(input);
+  const marketplaceDebrandAction = useMarketplaceDebrandAction(input);
+  const parsedMatchActions = useParsedMatchActions(input);
+  const quickExportActions = useQuickExportActions(input);
+  const selectionModalOpenActions = useSelectionModalOpenActions(input);
+
   return {
-    ...useArchiveAction(input),
-    ...useBatchEditActions(selection, dialogs),
-    ...useBulkBaseSyncAction(input),
-    ...useBulkEcommerceExportAction(input),
-    ...useImageConversionAction(input),
-    ...useMarketplaceDebrandAction(input),
-    ...useParsedMatchActions(input),
-    ...useQuickExportActions(input),
-    ...useSelectionModalOpenActions(input),
+    ...archiveAction,
+    ...batchEditActions,
+    ...bulkBaseSyncAction,
+    ...bulkEcommerceExportAction,
+    ...imageConversionAction,
+    ...marketplaceDebrandAction,
+    ...parsedMatchActions,
+    ...quickExportActions,
+    ...selectionModalOpenActions,
   };
 };

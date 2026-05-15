@@ -17,10 +17,10 @@ import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQu
 import { api } from '@/shared/lib/api-client';
 import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createListQueryV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal } from '@/shared/ui/feedback.public';
@@ -220,7 +220,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonRow | null>(null);
   const aiPathsSettingsQuery = useAiPathsSettingsQuery();
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRow>({
+  const triggerButtonsQuery = useListQueryV2<AiTriggerButtonRow>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonRow[]> => {
       const result = await triggerButtonsApi.list({ entityType: 'custom' });
@@ -254,7 +254,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }
   }, [triggerButtonsQuery.error, toast]);
 
-  const createMutation = createCreateMutationV2<
+  const createMutation = useCreateMutationV2<
     AiTriggerButtonRow,
     AiTriggerButtonCreatePayload
   >({
@@ -286,7 +286,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const updateMutation = createUpdateMutationV2<
+  const updateMutation = useUpdateMutationV2<
     AiTriggerButtonRow,
     {
       id: string;
@@ -335,7 +335,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const deleteMutation = createDeleteMutationV2<void, string>({
+  const deleteMutation = useDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
       const result = await triggerButtonsApi.delete(id);
@@ -363,7 +363,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = createUpdateMutationV2<AiTriggerButtonRow[], string[]>({
+  const reorderMutation = useUpdateMutationV2<AiTriggerButtonRow[], string[]>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
     mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRow[]> => {
       const result = await triggerButtonsApi.reorder({ orderedIds });
@@ -391,7 +391,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       void triggerButtonsQuery.refetch();
     },
   });
-  const cleanupFixturesMutation = createUpdateMutationV2<
+  const cleanupFixturesMutation = useUpdateMutationV2<
     TriggerButtonFixtureCleanupResult,
     void
   >({

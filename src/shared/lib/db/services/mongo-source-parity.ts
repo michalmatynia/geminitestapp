@@ -186,6 +186,16 @@ const fingerprintMongoDatabase = async (
   };
 };
 
+/**
+ * fingerprintMongoSource: Scans a MongoDB database and generates a fingerprint summarizing
+ * its collection structures, document contents (hashed), and indices.
+ * 
+ * @param source - The source context.
+ * @param dbName - The database name to scan.
+ * @param uri - Connection string for the source.
+ * @param excludedCollections - Set of collections to ignore.
+ * @returns A structured fingerprint representing the state of the database collections.
+ */
 const fingerprintMongoSource = async (
   source: MongoSource,
   dbName: string,
@@ -316,6 +326,16 @@ const compareCollectionFingerprint = (
   };
 };
 
+/**
+ * verifyMongoSourceParity: Compares MongoDB databases between two sources to detect data, structural, 
+ * or index discrepancies.
+ * 
+ * It generates fingerprints for both databases (including document hashes, index definitions, and collection options),
+ * performs a differential analysis, and returns a detailed verification report.
+ * 
+ * @param params - Contains configuration for both source and target connections.
+ * @returns A verification report detailing matching states and any identified mismatches.
+ */
 export const verifyMongoSourceParity = async (params: {
   source: MongoSource;
   target: MongoSource;

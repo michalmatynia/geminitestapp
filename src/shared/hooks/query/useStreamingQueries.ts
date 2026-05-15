@@ -3,7 +3,7 @@
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -76,7 +76,7 @@ export function useStreamingQuery<T>(
     };
   }, [connect]);
 
-  return createListQueryV2<T | null, T | null>({
+  return useListQueryV2<T | null, T | null>({
     queryKey,
     queryFn: async (): Promise<T | null> => await Promise.resolve(null), // Initial empty state
     enabled: false, // Disable automatic fetching since we use streaming
@@ -189,7 +189,7 @@ export function useSmartPolling<T>(
   const errorCountRef = useRef(0);
   const domain = options?.domain ?? 'global';
 
-  const query = createListQueryV2<T, T>({
+  const query = useListQueryV2<T, T>({
     queryKey,
     queryFn,
     refetchInterval: (): number | false => {

@@ -26,8 +26,8 @@ import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
+  useListQueryV2,
+  useSingleQueryV2,
   type QueryDescriptorV2,
 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
@@ -43,7 +43,7 @@ export function useIntegrations(options?: { enabled?: boolean }): ListQuery<Inte
     return z.array(integrationSchema).parse(data);
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     enabled: options?.enabled ?? true,
@@ -74,7 +74,7 @@ export function useIntegrationConnections(
     return z.array(integrationConnectionSchema).parse(data);
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     enabled: Boolean(integrationId) && (options?.enabled ?? true),
@@ -105,7 +105,7 @@ export function useProgrammableIntegrationConnections(
     return z.array(programmableIntegrationConnectionSchema).parse(data);
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     enabled: Boolean(integrationId) && (options?.enabled ?? true),
@@ -131,7 +131,7 @@ export function useConnectionSession(
     return sessionPayloadSchema.parse(data);
   };
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: connectionId,
     queryKey,
     queryFn,
@@ -155,7 +155,7 @@ export function useExportTemplates(): ListQuery<ImportExportTemplate> {
     return z.array(importExportTemplateSchema).parse(data);
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     meta: {
@@ -174,7 +174,7 @@ export function useActiveExportTemplate(): SingleQuery<BaseActiveTemplatePrefere
   const queryFn = async (): Promise<BaseActiveTemplatePreferenceResponse> =>
     api.get<BaseActiveTemplatePreferenceResponse>('/api/v2/integrations/exports/base/active-template');
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'active-export-template',
     queryKey,
     queryFn,

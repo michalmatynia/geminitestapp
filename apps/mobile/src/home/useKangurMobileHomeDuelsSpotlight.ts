@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import type { KangurDuelLobbyEntry, KangurDuelLobbyResponse, KangurDuelStatus } from '@kangur/contracts/kangur-duels';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
@@ -10,6 +10,7 @@ import {
 } from './homeDuelLobbyQuery';
 import type { DuelApiClient } from '../duels/useKangurMobileDuelsLobbyQueries';
 import type { KangurUser } from '@kangur/platform';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 const MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT = 4;
 
@@ -75,12 +76,21 @@ export const useKangurMobileHomeDuelsSpotlight = (options: UseKangurMobileHomeDu
   const { session } = useKangurMobileAuth();
   const learnerIdentity = resolveLearnerIdentity(session.user);
 
-  const spotlightQuery: UseQueryResult<KangurDuelLobbyResponse, Error> = useQuery<KangurDuelLobbyResponse, Error>({
+  const queryKey = buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'public');
+  const spotlightQuery: UseQueryResult<KangurDuelLobbyResponse, Error> = useKangurMobileQueryV2<KangurDuelLobbyResponse>({
     enabled,
-    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'public'),
+    queryKey,
     queryFn: () => fetchLobby(apiClient as DuelApiClient),
     refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.home.duels.spotlight',
+      operation: 'list',
+      resource: 'kangur.mobile.home.duels.spotlight',
+      queryKey,
+      description: 'Loads Kangur mobile home duel spotlight entries.',
+      tags: ['kangur-mobile', 'home', 'duels'],
+    },
   });
 
   const entries = processSpotlightEntries(spotlightQuery.data?.entries);

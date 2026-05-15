@@ -16,7 +16,7 @@ import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, marketplaceKeys } from '@/shared/lib/query-key-exports';
 
 type IntegrationQueryOptions = {
@@ -38,7 +38,7 @@ export function useIntegrationsWithConnections(
   const queryFn = async (): Promise<IntegrationWithConnections[]> =>
     api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections');
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     ...applyIntegrationQueryOptions(options),
@@ -61,7 +61,7 @@ export function useCategoryMappingsByConnection(
   const isEnabled = options?.enabled ?? Boolean(connectionId);
   const queryKey = marketplaceKeys.mappings(connectionId, 'all');
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () =>
       api.get<CategoryMappingWithDetails[]>(
@@ -87,7 +87,7 @@ export function useDefaultExportInventory(): SingleQuery<BaseDefaultInventoryPre
       '/api/v2/integrations/exports/base/default-inventory'
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'default-export-inventory',
     queryKey,
     queryFn,
@@ -112,7 +112,7 @@ export function useDefaultExportConnection(
       '/api/v2/integrations/exports/base/default-connection'
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'default-export-connection',
     queryKey,
     queryFn,
@@ -138,7 +138,7 @@ export function useDefaultTraderaConnection(
       '/api/v2/integrations/exports/tradera/default-connection'
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'default-tradera-connection',
     queryKey,
     queryFn,
@@ -162,7 +162,7 @@ export function useDefaultVintedConnection(): SingleQuery<VintedDefaultConnectio
       '/api/v2/integrations/exports/vinted/default-connection'
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'default-vinted-connection',
     queryKey,
     queryFn,
@@ -185,7 +185,7 @@ export function useDefault1688Connection(): SingleQuery<Scanner1688DefaultConnec
       '/api/v2/integrations/exports/1688/default-connection'
     );
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'default-1688-connection',
     queryKey,
     queryFn,
@@ -220,7 +220,7 @@ export function useBaseInventories(
     return Array.isArray(data.inventories) ? data.inventories : [];
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     enabled: enabled && Boolean(connectionId),
@@ -267,7 +267,7 @@ export function useBaseWarehouses(
     } satisfies BaseImportWarehousesPayload);
   };
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: inventoryId || null,
     queryKey,
     queryFn,

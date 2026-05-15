@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   apiPostMock,
-  createListQueryV2Mock,
+  useListQueryV2Mock,
   getProductsMock,
   setProducerIdsSpy,
   setValueSpy,
@@ -18,7 +18,7 @@ const {
   useProductValidatorIssuesMock,
 } = vi.hoisted(() => ({
   apiPostMock: vi.fn(),
-  createListQueryV2Mock: vi.fn(),
+  useListQueryV2Mock: vi.fn(),
   getProductsMock: vi.fn(),
   setProducerIdsSpy: vi.fn(),
   setValueSpy: vi.fn(),
@@ -30,8 +30,7 @@ const {
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (config: unknown) => createListQueryV2Mock(config),
-  useListQueryV2: (config: unknown) => createListQueryV2Mock(config),
+  useListQueryV2: (config: unknown) => useListQueryV2Mock(config),
 }));
 
 vi.mock('@/features/products/api/products', () => ({
@@ -237,7 +236,7 @@ describe('useProductFormValidator latest SKU source', () => {
     useProductValidatorIssuesMock.mockReturnValue({
       visibleFieldIssues: {},
     });
-    createListQueryV2Mock.mockReturnValue({
+    useListQueryV2Mock.mockReturnValue({
       data: [],
       isFetching: false,
     });
@@ -388,7 +387,7 @@ describe('useProductFormValidator latest SKU source', () => {
       wrapper: createWrapper(),
     });
 
-    const config = createListQueryV2Mock.mock.calls[0]?.[0] as {
+    const config = useListQueryV2Mock.mock.calls[0]?.[0] as {
       queryFn: () => Promise<unknown>;
       meta: {
         source: string;
@@ -462,7 +461,7 @@ describe('useProductFormValidator latest SKU source', () => {
       product: currentProduct,
       draft: null,
     });
-    createListQueryV2Mock.mockReturnValue({
+    useListQueryV2Mock.mockReturnValue({
       data: [currentProduct, previousProduct],
       isFetching: false,
     });
@@ -478,7 +477,7 @@ describe('useProductFormValidator latest SKU source', () => {
   });
 
   it('waits for the fresh refetch instead of using stale cached latest-product data', () => {
-    createListQueryV2Mock.mockReturnValue({
+    useListQueryV2Mock.mockReturnValue({
       data: [createProduct({ id: 'stale-product', sku: 'KEYCHA003' })],
       isFetching: true,
     });

@@ -19,9 +19,9 @@ import type {
 import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -39,7 +39,7 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>): UseMutationResu
 
   switch (operation) {
     case 'create':
-      return createCreateMutationV2<T, U>({
+      return useCreateMutationV2<T, U>({
         mutationFn: (payload: U) => api.post<T>(path, payload),
         mutationKey,
         meta: {
@@ -52,7 +52,7 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>): UseMutationResu
         invalidateKeys: invalidate as string[],
       });
     case 'update':
-      return createUpdateMutationV2<T, U & { id: string }>({
+      return useUpdateMutationV2<T, U & { id: string }>({
         mutationFn: ({ id, ...data }: U & { id: string }) => api.patch<T>(`${path}/${id}`, data),
         mutationKey,
         meta: {
@@ -65,7 +65,7 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>): UseMutationResu
         invalidateKeys: invalidate as InvalidationFn<T, U & { id: string }>,
       });
     case 'delete':
-      return createDeleteMutationV2<DeleteResponse, string>({
+      return useDeleteMutationV2<DeleteResponse, string>({
         mutationFn: (id: string) => api.delete<DeleteResponse>(`${path}/${id}`),
         mutationKey,
         meta: {
@@ -83,7 +83,7 @@ const createNoteMutation = <T, U>(config: MutationConfig<T, U>): UseMutationResu
 };
 
 export const useCreateNote = (): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> => createNoteMutation<NoteWithRelations, NoteCreateInput>({ path: '/api/notes', operation: 'create', resource: 'notes', mutationKey: QUERY_KEYS.notes.all });
-export const useUpdateNote = (): UseMutationResult<NoteWithRelations, Error, NoteUpdateInput & { id: string }> => createUpdateMutationV2<NoteWithRelations, NoteUpdateInput & { id: string }>({
+export const useUpdateNote = (): UseMutationResult<NoteWithRelations, Error, NoteUpdateInput & { id: string }> => useUpdateMutationV2<NoteWithRelations, NoteUpdateInput & { id: string }>({
     mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) => api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
     mutationKey: QUERY_KEYS.notes.all,
     meta: { source: 'notes.hooks.useUpdateNote', operation: 'update', resource: 'notes', domain: 'notes', mutationKey: QUERY_KEYS.notes.all, tags: ['notes', 'update'], description: 'Updates notes.'},
@@ -96,7 +96,7 @@ export const useUpdateNoteFolder = (): UseMutationResult<CategoryRecord, Error, 
 export const useDeleteNoteFolder = (): UseMutationResult<DeleteResponse, Error, string> => createNoteMutation<DeleteResponse, string>({ path: '/api/notes/categories', operation: 'delete', resource: 'categories', mutationKey: QUERY_KEYS.notes.all });
 
 export const useCreateNotebook = (): UseMutationResult<NotebookRecord, Error, NotebookCreateInput> => createNoteMutation<NotebookRecord, NotebookCreateInput>({ path: '/api/notes/notebooks', operation: 'create', resource: 'notebooks', mutationKey: QUERY_KEYS.notes.notebooks() });
-export const useUpdateNotebook = (): UseMutationResult<NotebookRecord, Error, NotebookUpdateInput & { id: string }> => createUpdateMutationV2<NotebookRecord, NotebookUpdateInput & { id: string }>({
+export const useUpdateNotebook = (): UseMutationResult<NotebookRecord, Error, NotebookUpdateInput & { id: string }> => useUpdateMutationV2<NotebookRecord, NotebookUpdateInput & { id: string }>({
     mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) => api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
     mutationKey: QUERY_KEYS.notes.notebooks(),
     meta: { source: 'notes.hooks.useUpdateNotebook', operation: 'update', resource: 'notebooks', domain: 'notes', mutationKey: QUERY_KEYS.notes.notebooks(), tags: ['notes', 'notebooks', 'update'], description: 'Updates notes notebooks.'},

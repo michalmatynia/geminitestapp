@@ -8,7 +8,7 @@ import React, { startTransition, useCallback, useMemo, useState } from 'react';
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -144,7 +144,7 @@ export function PersonCvsSection(): React.JSX.Element {
 
   const personId = person?.id ?? '';
   const cvsQueryKey = useMemo(() => buildPersonCvsQueryKey(personId), [personId]);
-  const cvsQuery = createSingleQueryV2<CvListResponse, CvListResponse, typeof cvsQueryKey>({
+  const cvsQuery = useSingleQueryV2<CvListResponse, CvListResponse, typeof cvsQueryKey>({
     queryKey: cvsQueryKey,
     queryFn: async ({ signal }) => readPersonCvs(personId, signal),
     enabled: personId.length > 0,
@@ -248,7 +248,7 @@ export function PersonCvsSection(): React.JSX.Element {
     websites,
   ]);
 
-  const createCvMutation = createMutationV2<CvCreateResponse, CvCreatePayload>({
+  const createCvMutation = useMutationV2<CvCreateResponse, CvCreatePayload>({
     mutationKey: ['filemaker', 'person-cvs', 'create'],
     mutationFn: async (input) => {
       const response = await fetch('/api/filemaker/cvs', {
@@ -272,7 +272,7 @@ export function PersonCvsSection(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const exportCvPdfMutation = createMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
+  const exportCvPdfMutation = useMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
     mutationKey: ['filemaker', 'person-cvs', 'export-pdf'],
     mutationFn: async (variables) => {
       const response = await fetch('/api/filemaker/cvs/export-pdf', {
@@ -288,7 +288,7 @@ export function PersonCvsSection(): React.JSX.Element {
     },
     meta: {
       source: 'features.filemaker.components.page.PersonCvsSection.exportPdf',
-      operation: 'export',
+      operation: 'action',
       resource: 'filemaker.cv-pdf',
       domain: 'files',
       description: 'Export a Filemaker CV PDF from the person CV list.',

@@ -4,7 +4,7 @@ import type {
   FileUploadEventsFilters,
 } from '@/shared/contracts/files';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { buildQueryParams } from './useFileUploadEvents.helpers';
 
@@ -14,7 +14,7 @@ export function useFileUploadEvents(
   filters: FileUploadEventsFilters
 ): SingleQuery<FileUploadEventsResponse> {
   const queryKey = QUERY_KEYS.system.uploadEvents.list(filters);
-  return createSingleQueryV2<FileUploadEventsResponse>({
+  return useSingleQueryV2<FileUploadEventsResponse>({
     queryKey,
     queryFn: async ({ signal }): Promise<FileUploadEventsResponse> => {
       const query = buildQueryParams(filters);

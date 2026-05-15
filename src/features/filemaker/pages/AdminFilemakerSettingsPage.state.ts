@@ -2,7 +2,7 @@ import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { SelectSimpleOption } from '@/shared/ui/forms-and-actions.public';
 import { useToast, type Toast } from '@/shared/ui/primitives.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -89,7 +89,7 @@ const buildPersonOptionsQueryKey = (normalizedQuery: string) =>
 const usePersonOptionsState = (personQuery: string): PersonOptionsState => {
   const normalizedQuery = personQuery.trim();
   const queryKey = buildPersonOptionsQueryKey(normalizedQuery);
-  const optionsQuery = createListQueryV2<SelectSimpleOption, SelectSimpleOption[]>({
+  const optionsQuery = useListQueryV2<SelectSimpleOption, SelectSimpleOption[]>({
     queryKey,
     queryFn: async ({ signal }) => fetchPersonOptions(normalizedQuery, signal),
     placeholderData: (previousData) => previousData ?? [],

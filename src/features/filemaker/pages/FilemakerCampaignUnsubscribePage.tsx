@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { filemakerEmailCampaignUnsubscribeResponseSchema } from '@/shared/contracts/filemaker';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
 
@@ -75,7 +75,7 @@ const useUnsubscribeMutation = (): MutationResult<
   FilemakerEmailCampaignUnsubscribeResponse,
   SubmitUnsubscribeVariables
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['filemaker', 'campaigns', 'unsubscribe', 'submit'],
     mutationFn: submitUnsubscribe,
     meta: {

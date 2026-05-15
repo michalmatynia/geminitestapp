@@ -83,7 +83,7 @@ describe('check-factory-meta script', () => {
   it('flags low-signal placeholder descriptions in factory metadata', () => {
     const issues = inspectFactoryMetaSourceFile(
       `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {
@@ -102,7 +102,7 @@ describe('check-factory-meta script', () => {
     expect(issues).toEqual([
       expect.objectContaining({
         file: 'src/features/products/hooks/useProductsQuery.ts',
-        callName: 'createListQueryV2',
+        callName: 'useListQueryV2',
         message: expect.stringContaining('too generic'),
       }),
     ]);
@@ -111,7 +111,7 @@ describe('check-factory-meta script', () => {
   it('allows concrete resource-specific descriptions in factory metadata', () => {
     const issues = inspectFactoryMetaSourceFile(
       `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {
@@ -133,7 +133,7 @@ describe('check-factory-meta script', () => {
   it('allows multi-query factories without a top-level queryKey', () => {
     const issues = inspectFactoryMetaSourceFile(
       `
-      createMultiQueryV2({
+      useMultiQueryV2({
         queries: [
           {
             queryKey: ['products', 'one'],
@@ -170,7 +170,7 @@ describe('check-factory-meta script', () => {
   it('allows multi-query descriptors that use shorthand queryKey properties', () => {
     const issues = inspectFactoryMetaSourceFile(
       `
-      createMultiQueryV2({
+      useMultiQueryV2({
         queries: ids.map((id) => {
           const queryKey = ['products', id] as const;
           return {
@@ -198,7 +198,7 @@ describe('check-factory-meta script', () => {
   it('flags top-level queryKey on multi-query factories and missing nested descriptions', () => {
     const issues = inspectFactoryMetaSourceFile(
       `
-      createMultiQueryV2({
+      useMultiQueryV2({
         queryKey: ['legacy-group'],
         queries: ids.map((id) => ({
           queryKey: ['products', id],
@@ -218,11 +218,11 @@ describe('check-factory-meta script', () => {
 
     expect(issues).toEqual([
       expect.objectContaining({
-        callName: 'createMultiQueryV2',
+        callName: 'useMultiQueryV2',
         message: expect.stringContaining('top-level `queryKey`'),
       }),
       expect.objectContaining({
-        callName: 'createMultiQueryV2',
+        callName: 'useMultiQueryV2',
         message: expect.stringContaining('missing `description` in multi-query descriptor'),
       }),
     ]);

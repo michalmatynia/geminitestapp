@@ -7,9 +7,9 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -23,7 +23,7 @@ import {
 
 export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: string }> {
   const queryKey = QUERY_KEYS.ai.aiPaths.settings();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async () => await fetchAiPathsSettingsCached({ bypassCache: true }),
     meta: {
@@ -39,7 +39,7 @@ export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: strin
 
 export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; value: string }> {
   const mutationKey = QUERY_KEYS.ai.aiPaths.mutation('update-setting');
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
       await updateAiPathsSetting(key, value);
       invalidateAiPathsSettingsCache();
@@ -59,7 +59,7 @@ export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; v
 
 export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonRecord[]> {
   const queryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     queryKey,
     queryFn: async () => {
       try {
@@ -102,7 +102,7 @@ export function useAiPathRuntimeAnalytics(
   enabled: boolean = true
 ): SingleQuery<AiPathRuntimeAnalyticsSummary> {
   const queryKey = QUERY_KEYS.ai.aiPaths.runtimeAnalytics(range);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     queryKey,
     queryFn: async () => {
       const response = aiPathRuntimeAnalyticsSummaryResponseSchema.parse(

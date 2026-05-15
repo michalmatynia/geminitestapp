@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { integrationKeys } from '@/shared/lib/query-key-exports';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
 const apiGetMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
+  useListQueryV2: useListQueryV2Mock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -31,13 +31,13 @@ import { fetchProductListings, useProductListings } from './useListingQueries';
 describe('useListingQueries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
     apiGetMock.mockResolvedValue([]);
   });
 
   it('configures product listings to refetch on every mount', async () => {
     const { result } = renderHook(() => useProductListings('product-1'));
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.queryKey).toEqual(integrationKeys.listings('product-1'));

@@ -167,6 +167,17 @@ export const resetEdgeTrafficGuardState = (): void => {
   lastCleanupAt = 0;
 };
 
+/**
+ * applyEdgeTrafficGuard: Implements edge-based request rate-limiting for public-facing pages.
+ * 
+ * It filters traffic based on user-agent, session status, and request burst activity.
+ * Suspicious User-Agents and high-frequency requests are subject to blocking via 
+ * temporary rate-limit windows.
+ * 
+ * @param request - The incoming NextRequest (minimal headers/nextUrl required).
+ * @param options - Configuration overrides for rate-limiting thresholds and block windows.
+ * @returns A NextResponse (429 Too Many Requests) if blocked, or null if the request is permitted.
+ */
 export const applyEdgeTrafficGuard = (
   request: Pick<NextRequest, 'headers' | 'method' | 'nextUrl'>,
   options?: EdgeTrafficGuardOptions

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
@@ -24,7 +24,7 @@ export function useSearchQuery<T>(
 ): UseQueryResult<T[], Error> {
   const { searchFn, minLength = 2, cacheTime = 5 * 60 * 1000, domain = 'global' } = config;
 
-  return createListQueryV2<T, T[]>({
+  return useListQueryV2<T, T[]>({
     queryKey: QUERY_KEYS.search.term(searchTerm),
     queryFn: (): Promise<T[]> => searchFn(searchTerm),
     enabled: searchTerm.length >= minLength,
@@ -121,7 +121,7 @@ export function usePaginatedSearch<T>(
   const enabled = options?.enabled !== false;
   const domain = options?.domain ?? 'global';
 
-  return createListQueryV2<
+  return useListQueryV2<
     { data: T[]; total: number; hasMore: boolean },
     { data: T[]; total: number; hasMore: boolean }
   >({
@@ -165,7 +165,7 @@ export function useSearchSuggestions(
   options?: { domain?: TanstackFactoryDomain }
 ): UseQueryResult<string[], Error> {
   const domain = options?.domain ?? 'global';
-  return createListQueryV2<string, string[]>({
+  return useListQueryV2<string, string[]>({
     queryKey: QUERY_KEYS.search.suggestions(searchTerm),
     queryFn: (): Promise<string[]> => getSuggestions(searchTerm),
     enabled: searchTerm.length >= 1,

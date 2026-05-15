@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
 
 const { apiGetMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
-  createSingleQueryV2: vi.fn(),
-  createUpdateMutationV2: vi.fn(),
+  useListQueryV2: useListQueryV2Mock,
+  useSingleQueryV2: vi.fn(),
+  useUpdateMutationV2: vi.fn(),
   prefetchQueryV2: vi.fn(),
 }));
 
@@ -34,7 +34,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
 describe('Kangur Mongo runtime placeholders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
   });
 
   it('configures lessons without built-in placeholder data', async () => {
@@ -47,7 +47,7 @@ describe('Kangur Mongo runtime placeholders', () => {
     const { result } = renderHook(() =>
       useKangurLessons({ subject: 'english', enabledOnly: true })
     );
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.placeholderData).toBeUndefined();
@@ -70,7 +70,7 @@ describe('Kangur Mongo runtime placeholders', () => {
         componentIds: ['english_adjectives', 'english_comparatives_superlatives'],
       })
     );
-    const config = createListQueryV2Mock.mock.calls.at(-1)?.[0];
+    const config = useListQueryV2Mock.mock.calls.at(-1)?.[0];
 
     await expect(config.queryFn()).resolves.toEqual(lessonsPayload);
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons', {
@@ -93,7 +93,7 @@ describe('Kangur Mongo runtime placeholders', () => {
     const { result } = renderHook(() =>
       useKangurLessonSections({ subject: 'english', enabledOnly: true })
     );
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.placeholderData).toBeUndefined();
@@ -115,7 +115,7 @@ describe('Kangur Mongo runtime placeholders', () => {
     const { result } = renderHook(() =>
       useKangurLessonsCatalog({ subject: 'english', enabledOnly: true })
     );
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.placeholderData(catalogPayload)).toEqual(catalogPayload);
@@ -152,7 +152,7 @@ describe('Kangur Mongo runtime placeholders', () => {
         componentIds: ['english_adjectives', 'english_comparatives_superlatives'],
       })
     );
-    const config = createListQueryV2Mock.mock.calls.at(-1)?.[0];
+    const config = useListQueryV2Mock.mock.calls.at(-1)?.[0];
 
     await expect(config.queryFn()).resolves.toEqual(catalogPayload);
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/lessons-catalog', {

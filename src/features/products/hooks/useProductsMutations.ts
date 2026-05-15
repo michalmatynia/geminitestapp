@@ -19,9 +19,9 @@ import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/co
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { delay } from '@/shared/utils/time-utils';
@@ -43,7 +43,7 @@ const isTransientError = (error: Error): boolean => {
 };
 
 export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: (formData: FormData) => createProduct(formData),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
@@ -64,7 +64,7 @@ export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> 
 }
 
 export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProductPayload> {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     mutationKey: QUERY_KEYS.products.all,
     retry: (failureCount, error) => failureCount < 2 && isTransientError(error),
@@ -85,7 +85,7 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
 }
 
 export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string> {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => deleteProduct(id),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
@@ -104,7 +104,7 @@ export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string>
 }
 
 export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: async (ids: string[]): Promise<void> => {
       const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));
       if (responses.some((response: { success: boolean }) => !response.success)) {
@@ -136,7 +136,7 @@ export function useBulkSetProductsArchivedState(): UpdateMutation<
   ProductBulkArchiveResponse,
   BulkSetProductsArchivedStateInput
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({
       productIds,
       archived,
@@ -168,7 +168,7 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<
   ProductBulkImagesBase64Response,
   string[]
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (productIds: string[]): Promise<ProductBulkImagesBase64Response> =>
       await api.post<ProductBulkImagesBase64Response>('/api/v2/products/images/base64', {
         productIds,
@@ -191,7 +191,7 @@ export function useBulkEditProductFields(): UpdateMutation<
   ProductBatchEditResponse,
   ProductBatchEditRequest
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (request: ProductBatchEditRequest): Promise<ProductBatchEditResponse> =>
       batchEditProducts(request),
     mutationKey: QUERY_KEYS.products.all,
@@ -221,7 +221,7 @@ export function useQueueMarketplaceCopyDebrandBatch(): UpdateMutation<
   ProductMarketplaceCopyDebrandBatchResponse,
   ProductMarketplaceCopyDebrandBatchRequest
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (
       request: ProductMarketplaceCopyDebrandBatchRequest
     ): Promise<ProductMarketplaceCopyDebrandBatchResponse> =>
@@ -249,7 +249,7 @@ export function useQueueMarketplaceCopyDebrandBatch(): UpdateMutation<
 }
 
 export function useDuplicateProduct(): CreateMutation<ProductWithImages, { id: string; sku: string }> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async ({ id, sku }): Promise<ProductWithImages> =>
       await api.post<ProductWithImages>(`/api/v2/products/${id}/duplicate`, { sku }),
     mutationKey: QUERY_KEYS.products.all,

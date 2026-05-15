@@ -116,10 +116,6 @@ const VIDEO_AUTOPLAY_OPTIONS = [
 ];
 
 
-// ---------------------------------------------------------------------------
-// Section definitions
-// ---------------------------------------------------------------------------
-
 export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
   AnnouncementBar: {
     type: 'AnnouncementBar',

@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Alert,
   Badge,
@@ -147,7 +147,7 @@ function usePricingSyncMutation({
   setResult,
   toast,
 }: UsePricingSyncMutationOptions): MutationResult<PricingSyncResponse, void> {
-  return createMutationV2<PricingSyncResponse, void>({
+  return useMutationV2<PricingSyncResponse, void>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'data-sync', 'pricing'],
     mutationFn: (): Promise<PricingSyncResponse> =>
       api.post<PricingSyncResponse>(PRICING_SYNC_ENDPOINT, undefined, {

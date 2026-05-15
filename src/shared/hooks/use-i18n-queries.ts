@@ -17,7 +17,7 @@ import type {
 } from '@/shared/contracts/internationalization';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { getCurrencies, getCountries, getLanguages } from '@/shared/lib/api/i18n-api';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /** Query keys for internationalization data */
@@ -29,7 +29,7 @@ const i18nKeys = QUERY_KEYS.internationalization;
  */
 export function useCurrencies(): ListQuery<CurrencyOption> {
   const queryKey = i18nKeys.currencies();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: getCurrencies,
     meta: {
@@ -44,7 +44,7 @@ export function useCurrencies(): ListQuery<CurrencyOption> {
 
 export function useCountries(): ListQuery<CountryOption> {
   const queryKey = i18nKeys.countries();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: getCountries,
     meta: {
@@ -59,7 +59,7 @@ export function useCountries(): ListQuery<CountryOption> {
 
 export function useLanguages(): ListQuery<Language> {
   const queryKey = i18nKeys.languages();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: getLanguages,
     meta: {

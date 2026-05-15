@@ -3,7 +3,7 @@
 import { ArrowRight, GitPullRequest, Loader2 } from 'lucide-react';
 import { type JSX } from 'react';
 
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ScripterCommitDiff, ScripterDiffEntry } from '../commit-diff';
@@ -120,7 +120,7 @@ export type ScripterDiffPanelProps = {
 
 // eslint-disable-next-line max-lines-per-function
 export function ScripterDiffPanel({ scripterId }: ScripterDiffPanelProps): JSX.Element {
-  const diffMutation = createMutationV2<DiffResponse, string>({
+  const diffMutation = useMutationV2<DiffResponse, string>({
     mutationKey: ['playwright', 'scripters', scripterId, 'diff'],
     mutationFn: async (targetScripterId: string) => await callDiff(targetScripterId),
     meta: {

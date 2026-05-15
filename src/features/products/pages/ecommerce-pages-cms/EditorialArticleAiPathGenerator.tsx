@@ -9,7 +9,7 @@ import {
   type EditorialArticleState,
   type GeneratedEditorialArticleState,
 } from './editorial-articles-cms.client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Button,
   Input,
@@ -45,7 +45,7 @@ const useEditorialArticleAiGenerator = ({
   const { toast } = useToast();
   const [imageUrl, setImageUrl] = useState('');
   const [prompt, setPrompt] = useState('');
-  const generateMutation = createMutationV2<
+  const generateMutation = useMutationV2<
     GeneratedEditorialArticleState,
     EditorialArticleAiGenerateInput
   >({
@@ -62,6 +62,8 @@ const useEditorialArticleAiGenerator = ({
       source: 'products.ecommercePagesCms.editorialArticles.generate',
       operation: 'action',
       resource: 'products.ecommerce-pages-cms.editorial-article-generate',
+      domain: 'products',
+      description: 'Generates an ecommerce editorial article with AI.',
       errorPresentation: 'toast',
     },
   });

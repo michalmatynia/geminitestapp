@@ -14,7 +14,7 @@ import type {
   ProductParseActionsMatchResponse,
 } from '@/shared/contracts/products';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
-import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { invalidateProductsAndCounts } from './productCache';
@@ -48,7 +48,7 @@ export function useMatchProductParseActions(): UpdateMutation<
   ProductParseActionsMatchResponse,
   ProductParseActionsMatchRequest
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (
       request: ProductParseActionsMatchRequest
     ): Promise<ProductParseActionsMatchResponse> => matchProductParseActions(request),
@@ -69,7 +69,7 @@ export function useMarkParsedTraderaMatchesClosed(): UpdateMutation<
   ProductParseActionsMarkTraderaClosedResponse,
   ProductParseActionsMarkTraderaClosedRequest
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (
       request: ProductParseActionsMarkTraderaClosedRequest
     ): Promise<ProductParseActionsMarkTraderaClosedResponse> =>

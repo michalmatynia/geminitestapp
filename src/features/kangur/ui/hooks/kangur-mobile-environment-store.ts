@@ -1,3 +1,19 @@
+/**
+ * Kangur Mobile Environment Store
+ * 
+ * Provides a high-performance, synchronized view of the client's device capabilities
+ * (pointer type, viewport dimensions) using `useSyncExternalStore`.
+ * 
+ * Architectural Patterns:
+ * - Singleton State: Maintains a reactive, shared state across all lesson components.
+ * - Media Query Listeners: Orchestrates multiple observers (resize, orientation, media changes)
+ *   to ensure the environment snapshot is updated accurately.
+ * - Server-Side Compatibility: Uses SSR-friendly defaults to prevent hydration mismatches
+ *   between the server-rendered HTML and client-side hydration.
+ * - State Subscription: Implements a classic pub/sub registry to manage multiple
+ *   react subscribers for optimal performance during screen interactions.
+ */
+
 'use client';
 
 import { useSyncExternalStore } from 'react';

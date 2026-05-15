@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useProductScan1688ReviewState } from '@/features/products/components/scans/useProductScan1688ReviewState';
 import { ProductFormScansHeader } from './ProductFormScansHeader';

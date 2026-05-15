@@ -8,9 +8,23 @@ import {
 import type { SelectorRegistryProbeSession } from '@/shared/contracts/integrations/selector-registry';
 import {
   applySelectorRegistryProbeCarryForwardManualSelection,
+  type SelectorRegistryProbeCarryForwardItem,
 } from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
 
-export function useSelectorRegistryProbeSessions(sessions: SelectorRegistryProbeSession[]) {
+export type SelectorRegistryProbeSessionsResult = {
+  activeSessions: SelectorRegistryProbeSession[];
+  selectedKeys: Record<string, string>;
+  setSelectedKeys: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  manuallySelectedKeys: Record<string, boolean>;
+  setManuallySelectedKeys: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  updateSelection: (itemId: string, selectedKey: string, clusterItems: SelectorRegistryProbeCarryForwardItem[]) => void;
+  saveMutation: ReturnType<typeof useSaveSelectorRegistryEntryMutation>;
+  archiveMutation: ReturnType<typeof useArchiveSelectorRegistryProbeSessionMutation>;
+  restoreMutation: ReturnType<typeof useRestoreSelectorRegistryProbeSessionMutation>;
+  deleteMutation: ReturnType<typeof useDeleteSelectorRegistryProbeSessionMutation>;
+};
+
+export function useSelectorRegistryProbeSessions(sessions: SelectorRegistryProbeSession[]): SelectorRegistryProbeSessionsResult {
   const saveMutation = useSaveSelectorRegistryEntryMutation();
   const archiveMutation = useArchiveSelectorRegistryProbeSessionMutation();
   const restoreMutation = useRestoreSelectorRegistryProbeSessionMutation();
@@ -42,7 +56,7 @@ export function useSelectorRegistryProbeSessions(sessions: SelectorRegistryProbe
     });
   }, [activeSuggestionKeySet]);
 
-  const updateSelection = (itemId: string, selectedKey: string, clusterItems: any[]) => {
+  const updateSelection = (itemId: string, selectedKey: string, clusterItems: SelectorRegistryProbeCarryForwardItem[]): void => {
     const nextState = applySelectorRegistryProbeCarryForwardManualSelection({
       items: clusterItems,
       selectedKeys,

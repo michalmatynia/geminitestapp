@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { FilemakerMailAccount } from '../types';
 import type { CampaignEditToast } from './AdminFilemakerCampaignEditPage.model-types';
@@ -12,7 +12,7 @@ type FilemakerMailAccountsResponse = {
 
 export function useCampaignEditMailAccounts(toast: CampaignEditToast): FilemakerMailAccount[] {
   const mailAccountsQueryKey = ['filemaker', 'mail', 'accounts', 'campaign-edit'] as const;
-  const mailAccountsQuery = createSingleQueryV2<
+  const mailAccountsQuery = useSingleQueryV2<
     FilemakerMailAccountsResponse,
     FilemakerMailAccountsResponse,
     typeof mailAccountsQueryKey

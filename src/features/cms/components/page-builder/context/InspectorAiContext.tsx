@@ -6,7 +6,7 @@ import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { internalError } from '@/shared/errors/app-error';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui/primitives.public';
-
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useInspectorAiContextPreview } from './useInspectorAiContextPreview';
 import { useInspectorAiGeneration } from './useInspectorAiGeneration';
@@ -29,10 +29,28 @@ export type {
 const InspectorAiStateContext = createContext<InspectorAiStateContextValue | null>(null);
 const InspectorAiActionsContext = createContext<InspectorAiActionsContextValue | null>(null);
 
+type InspectorAiGeneration = ReturnType<typeof useInspectorAiGeneration>;
+type InspectorAiPreview = ReturnType<typeof useInspectorAiContextPreview>;
+type InspectorAiBrainAssignment = ReturnType<typeof useBrainAssignment>['assignment'];
+
+type InspectorAiStateValueParams = {
+  generation: InspectorAiGeneration;
+  preview: InspectorAiPreview;
+  brainAssignment: InspectorAiBrainAssignment;
+  customCssValue: InspectorAiProviderProps['customCssValue'];
+  customCssAiConfig: InspectorAiProviderProps['customCssAiConfig'];
+  contentAiAllowedKeys: string[];
+};
+
 export function useInspectorAiState(): InspectorAiStateContextValue {
   const context = useContext(InspectorAiStateContext);
   if (!context) {
-    throw internalError('useInspectorAiState must be used within an InspectorAiProvider');
+    const error = internalError('useInspectorAiState must be used within an InspectorAiProvider');
+    logClientCatch(error, {
+      source: 'cms.inspector-ai-context',
+      action: 'useInspectorAiState',
+    });
+    throw error;
   }
   return context;
 }
@@ -40,10 +58,16 @@ export function useInspectorAiState(): InspectorAiStateContextValue {
 export function useInspectorAiActions(): InspectorAiActionsContextValue {
   const context = useContext(InspectorAiActionsContext);
   if (!context) {
-    throw internalError('useInspectorAiActions must be used within an InspectorAiProvider');
+    const error = internalError('useInspectorAiActions must be used within an InspectorAiProvider');
+    logClientCatch(error, {
+      source: 'cms.inspector-ai-context',
+      action: 'useInspectorAiActions',
+    });
+    throw error;
   }
   return context;
 }
+
 
 export function InspectorAiProvider({
   children,
@@ -79,7 +103,14 @@ export function InspectorAiProvider({
     toast,
   });
 
-  const stateValue = useInspectorAiStateValue(generation, preview, brainAssignment, customCssValue, customCssAiConfig, contentAiAllowedKeys);
+  const stateValue = useInspectorAiStateValue({
+    generation,
+    preview,
+    brainAssignment,
+    customCssValue,
+    customCssAiConfig,
+    contentAiAllowedKeys,
+  });
   const actionsValue = useInspectorAiActionsValue(generation, preview, onUpdateCustomCssAiConfig);
 
   return (
@@ -92,16 +123,16 @@ export function InspectorAiProvider({
 }
 
 function useInspectorAiStateValue(
-  params: {
-    generation: ReturnType<typeof useInspectorAiGeneration>;
-    preview: ReturnType<typeof useInspectorAiContextPreview>;
-    brainAssignment: any;
-    customCssValue: any;
-    customCssAiConfig: any;
-    contentAiAllowedKeys: string[];
-  }
+  params: InspectorAiStateValueParams
 ): InspectorAiStateContextValue {
-  const { generation, preview, brainAssignment, customCssValue, customCssAiConfig, contentAiAllowedKeys } = params;
+  const {
+    generation,
+    preview,
+    brainAssignment,
+    customCssValue,
+    customCssAiConfig,
+    contentAiAllowedKeys,
+  } = params;
   return useMemo(
     () => ({
       cssAiLoading: generation.cssAiLoading,
@@ -132,9 +163,9 @@ function useInspectorAiStateValue(
 }
 
 function useInspectorAiActionsValue(
-  generation: ReturnType<typeof useInspectorAiGeneration>,
-  preview: ReturnType<typeof useInspectorAiContextPreview>,
-  onUpdateCustomCssAiConfig: any
+  generation: InspectorAiGeneration,
+  preview: InspectorAiPreview,
+  onUpdateCustomCssAiConfig: InspectorAiProviderProps['onUpdateCustomCssAiConfig']
 ): InspectorAiActionsContextValue {
   return useMemo(
     () => ({

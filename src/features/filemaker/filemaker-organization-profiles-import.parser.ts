@@ -11,6 +11,7 @@
  */
 
 import Papa from 'papaparse';
+import { AppErrorCodes, AppError } from '@/shared/errors/app-error';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
@@ -92,8 +93,11 @@ const normalizeMatrixCell = (value: unknown): string => normalizeString(value);
 const hasProfileHeader = (header: string[]): boolean =>
   header.includes(FIELDS.legacyUuid) && header.includes(FIELDS.legacyOrganizationUuid);
 
-const buildMissingHeaderError = (format: LegacyOrganizationProfileRowsFormat): Error =>
-  new Error(`FileMaker organization profile ${format} export is missing the UUID or UUID_Related header.`);
+const buildMissingHeaderError = (format: LegacyOrganizationProfileRowsFormat): AppError =>
+  new AppError(`FileMaker organization profile ${format} export is missing the UUID or UUID_Related header.`, {
+    code: AppErrorCodes.validation,
+    httpStatus: 400,
+  });
 
 const rowToObject = (
   header: readonly string[],
@@ -109,8 +113,8 @@ const findHeaderRowIndex = (rows: string[][]): number =>
 
 const looksLikeHeaderlessProfileRows = (rows: string[][]): boolean =>
   rows.slice(0, HEADER_SCAN_LIMIT).some((row: string[]): boolean => {
-    const legacyUuid = normalizeLegacyUuid(row[13]);
-    const legacyOrganizationUuid = normalizeLegacyUuid(row[14]);
+    const legacyUuid = normalizeLegacyUuid(row[13] ?? '');
+    const legacyOrganizationUuid = normalizeLegacyUuid(row[14] ?? '');
     return (
       row.length >= HEADERLESS_PROFILE_FIELDS.length &&
       legacyUuid.length > 0 &&
@@ -151,7 +155,10 @@ export const parseFilemakerLegacyOrganizationProfileRows = (
   });
   if (parsed.errors.length > 0) {
     const firstError = parsed.errors[0]?.message ?? 'parse error';
-    throw new Error(`Invalid FileMaker organization profile export: ${firstError}`);
+    throw new AppError(`Invalid FileMaker organization profile export: ${firstError}`, {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   return rowsToLegacyOrganizationProfileRows(parsed.data, { format: 'CSV/TSV' });
 };
@@ -173,11 +180,17 @@ export const parseFilemakerLegacyOrganizationProfileWorkbookRows = async (
   });
   const sheetName = workbook.SheetNames[0];
   if (sheetName === undefined) {
-    throw new Error('FileMaker organization profile XLSX export does not contain any worksheets.');
+    throw new AppError('FileMaker organization profile XLSX export does not contain any worksheets.', {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) {
-    throw new Error(`FileMaker organization profile XLSX export is missing worksheet "${sheetName}".`);
+    throw new AppError(`FileMaker organization profile XLSX export is missing worksheet "${sheetName}".`, {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
   }
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
@@ -196,11 +209,11 @@ const optionalString = (value: unknown): string | undefined => {
 export const parseOrganizationProfileFromRow = (
   row: LegacyOrganizationProfileRow
 ): ParsedLegacyOrganizationProfile | null => {
-  const legacyUuid = normalizeLegacyUuid(row[FIELDS.legacyUuid]);
-  const legacyOrganizationUuid = normalizeLegacyUuid(row[FIELDS.legacyOrganizationUuid]);
+  const legacyUuid = normalizeLegacyUuid(row[FIELDS.legacyUuid] ?? '');
+  const legacyOrganizationUuid = normalizeLegacyUuid(row[FIELDS.legacyOrganizationUuid] ?? '');
   if (legacyUuid.length === 0 || legacyOrganizationUuid.length === 0) return null;
 
-  const legacyValueUuids = OPTION_FIELDS.map((field: string): string => normalizeLegacyUuid(row[field]))
+  const legacyValueUuids = OPTION_FIELDS.map((field: string): string => normalizeLegacyUuid(row[field] ?? ''))
     .filter((valueUuid: string): boolean => valueUuid.length > 0);
   if (legacyValueUuids.length === 0) return null;
 

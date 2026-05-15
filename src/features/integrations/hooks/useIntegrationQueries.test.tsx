@@ -5,14 +5,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { integrationKeys } from '@/shared/lib/query-key-exports';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
-const createSingleQueryV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useSingleQueryV2Mock = vi.hoisted(() => vi.fn());
 const apiGetMock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
-  createSingleQueryV2: createSingleQueryV2Mock,
+  useListQueryV2: useListQueryV2Mock,
+  useSingleQueryV2: useSingleQueryV2Mock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -33,14 +33,14 @@ import {
 describe('useIntegrationQueries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
-    createSingleQueryV2Mock.mockReturnValue({ kind: 'single-query' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useSingleQueryV2Mock.mockReturnValue({ kind: 'single-query' });
     apiGetMock.mockResolvedValue([]);
   });
 
   it('uses an extended timeout for integrations list requests', async () => {
     const { result } = renderHook(() => useIntegrations());
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.queryKey).toEqual(integrationKeys.all);
@@ -53,19 +53,19 @@ describe('useIntegrationQueries', () => {
 
   it('supports disabling integrations list and connections queries explicitly', () => {
     renderHook(() => useIntegrations({ enabled: false }));
-    const integrationsConfig = createListQueryV2Mock.mock.calls[0]?.[0];
+    const integrationsConfig = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(integrationsConfig.enabled).toBe(false);
 
     renderHook(() => useIntegrationConnections('integration-1', { enabled: false }));
-    const connectionsConfig = createListQueryV2Mock.mock.calls[1]?.[0];
+    const connectionsConfig = useListQueryV2Mock.mock.calls[1]?.[0];
 
     expect(connectionsConfig.enabled).toBe(false);
   });
 
   it('uses the extended timeout for integration connections and skips empty ids', async () => {
     const withId = renderHook(() => useIntegrationConnections('integration-1'));
-    const withIdConfig = createListQueryV2Mock.mock.calls[0]?.[0];
+    const withIdConfig = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(withId.result.current).toEqual({ kind: 'list-query' });
     expect(withIdConfig.queryKey).toEqual(integrationKeys.connections('integration-1'));
@@ -79,7 +79,7 @@ describe('useIntegrationQueries', () => {
     apiGetMock.mockClear();
 
     renderHook(() => useIntegrationConnections(undefined));
-    const withoutIdConfig = createListQueryV2Mock.mock.calls[1]?.[0];
+    const withoutIdConfig = useListQueryV2Mock.mock.calls[1]?.[0];
 
     expect(withoutIdConfig.enabled).toBe(false);
     await expect(withoutIdConfig.queryFn()).resolves.toEqual([]);
@@ -90,7 +90,7 @@ describe('useIntegrationQueries', () => {
     apiGetMock.mockResolvedValue({ connectionId: 'conn-tradera-1' });
 
     const { result } = renderHook(() => useDefaultTraderaConnection());
-    const config = createSingleQueryV2Mock.mock.calls[0]?.[0];
+    const config = useSingleQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'single-query' });
     expect(config.queryKey).toEqual(integrationKeys.selection.traderaDefaultConnection());
@@ -105,7 +105,7 @@ describe('useIntegrationQueries', () => {
     apiGetMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
 
     const { result } = renderHook(() => useDefaultVintedConnection());
-    const config = createSingleQueryV2Mock.mock.calls[0]?.[0];
+    const config = useSingleQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'single-query' });
     expect(config.queryKey).toEqual(integrationKeys.selection.vintedDefaultConnection());

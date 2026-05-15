@@ -14,7 +14,7 @@ import {
 } from '@/features/kangur/observability/client';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   kangurGameLibraryPageDataSchema,
@@ -176,7 +176,7 @@ const fetchGameLibraryPage = async (
 const createKangurGameLibraryPageQuery = (
   options?: GameLibraryPageQueryOptions
 ): ListQuery<KangurGameLibraryPageData, KangurGameLibraryPageData> =>
-  createListQueryV2<KangurGameLibraryPageData, KangurGameLibraryPageData>({
+  useListQueryV2<KangurGameLibraryPageData, KangurGameLibraryPageData>({
     queryKey: [
       ...QUERY_KEYS.kangur.gameLibraryPage(),
       resolveGameLibraryPageFilters(options),

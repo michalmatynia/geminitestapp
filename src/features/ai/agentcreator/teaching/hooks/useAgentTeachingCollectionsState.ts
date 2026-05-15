@@ -15,14 +15,34 @@ import {
 } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+export interface AgentTeachingCollectionsState {
+  collections: AgentTeachingEmbeddingCollectionRecord[];
+  agents: AgentTeachingAgentRecord[];
+  embeddingModels: string[];
+  isLoading: boolean;
+  saving: boolean;
+  deleting: boolean;
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
+  editing: AgentTeachingEmbeddingCollectionRecord | null;
+  draft: Partial<AgentTeachingEmbeddingCollectionRecord>;
+  setDraft: React.Dispatch<React.SetStateAction<Partial<AgentTeachingEmbeddingCollectionRecord>>>;
+  itemToDelete: AgentTeachingEmbeddingCollectionRecord | null;
+  setItemToDelete: (item: AgentTeachingEmbeddingCollectionRecord | null) => void;
+  openCreate: () => void;
+  openEdit: (item: AgentTeachingEmbeddingCollectionRecord) => void;
+  closeModal: () => void;
+  handleSave: () => Promise<void>;
+  handleDelete: () => Promise<void>;
+  usedByCount: (collectionId: string) => number;
+}
 
-export function useAgentTeachingCollectionsState() {
+export function useAgentTeachingCollectionsState(): AgentTeachingCollectionsState {
   const { toast } = useToast();
   const { collections, agents, embeddingModelId, isLoading } = useAgentTeachingQueriesContext();
   const embeddingModels = useMemo(() => {
     const normalized = embeddingModelId.trim();
-    if (normalized) return [normalized];
-    return [];
+    return normalized !== '' ? [normalized] : [];
   }, [embeddingModelId]);
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertEmbeddingCollectionMutation();
@@ -57,25 +77,27 @@ export function useAgentTeachingCollectionsState() {
     setDraft({});
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     const name = draft.name?.trim();
-    if (!name) {
+    if (name === undefined || name === '') {
       toast('Collection name is required.', { variant: 'error' });
       return;
     }
-    const embeddingModel = draft.embeddingModel?.trim();
-    if (!embeddingModel) {
+    const embeddingModel = draft.embeddingModel?.trim() ?? '';
+    if (embeddingModel === '') {
       toast('Embedding model is required.', { variant: 'error' });
       return;
     }
     try {
       await upsert({
-        ...(editing?.id ? { id: editing.id } : {}),
+        id: editing?.id,
         name,
         description: typeof draft.description === 'string' ? draft.description : null,
         embeddingModel,
       });
-      toast(editing ? 'Collection updated.' : 'Collection created.', { variant: 'success' });
+      toast(editing !== null ? 'Collection updated.' : 'Collection created.', {
+        variant: 'success',
+      });
       closeModal();
     } catch (error) {
       logClientError(error);
@@ -85,8 +107,8 @@ export function useAgentTeachingCollectionsState() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!itemToDelete) return;
+  const handleDelete = async (): Promise<void> => {
+    if (itemToDelete === null) return;
     try {
       await remove({ id: itemToDelete.id });
       toast('Collection deleted.', { variant: 'success' });
@@ -102,9 +124,8 @@ export function useAgentTeachingCollectionsState() {
 
   const usedByCount = useCallback(
     (collectionId: string): number =>
-      agents.filter((agent: AgentTeachingAgentRecord) =>
-        (agent.collectionIds ?? []).includes(collectionId)
-      ).length,
+      agents.filter((agent: AgentTeachingAgentRecord) => agent.collectionIds.includes(collectionId))
+        .length,
     [agents]
   );
 

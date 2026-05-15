@@ -8,7 +8,7 @@ import {
 } from '@/shared/contracts/integrations/tradera-parameter-mapper';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useTraderaParameterMapperParameters(
@@ -21,7 +21,7 @@ export function useTraderaParameterMapperParameters(
     { catalogId: normalizedCatalogId || null },
   ] as const;
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
       if (!normalizedCatalogId) {
@@ -47,7 +47,7 @@ export function useTraderaParameterMapperParameters(
 }
 
 export function useFetchTraderaParameterMapperCatalogMutation() {
-  return createMutationV2<
+  return useMutationV2<
     TraderaParameterMapperCatalogFetchResponse,
     TraderaParameterMapperCatalogFetchRequest
   >({

@@ -1,7 +1,7 @@
 import type { SystemActivityResponseDto as SystemActivityResponse } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { activityKeys } from '@/shared/lib/query-key-exports';
 
 export function useSystemActivity(
@@ -9,7 +9,7 @@ export function useSystemActivity(
 ): SingleQuery<SystemActivityResponse> {
   const { page = 1, pageSize = 10, search, type } = params;
   const queryKey = activityKeys.list({ page, pageSize, search, type });
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'system-activity',
     queryKey,
     queryFn: () =>

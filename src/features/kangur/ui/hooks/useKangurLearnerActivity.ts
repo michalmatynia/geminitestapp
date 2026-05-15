@@ -26,6 +26,7 @@ import { isKangurAuthStatusError } from '@/features/kangur/services/status-error
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
 import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurOptionalSubjectKey } from '@/features/kangur/ui/hooks/useKangurOptionalSubjectKey';
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 const kangurPlatform = getKangurPlatform();
 const DEFAULT_PING_INTERVAL_MS = 45_000;

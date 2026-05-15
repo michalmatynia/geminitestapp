@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { executeSqlQuery } from '../api';
 import { useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
@@ -106,7 +106,7 @@ export function useCrudPanelState(props: {
     [tableDetails, selectedTable]
   );
 
-  const rowsQuery = createListQueryV2<CrudRowsResult, CrudRowsResult>({
+  const rowsQuery = useListQueryV2<CrudRowsResult, CrudRowsResult>({
     queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize, application, source }),
     enabled: selectedTable !== '',
     queryFn: async () => {

@@ -16,8 +16,8 @@ import {
 } from '@/shared/contracts/products/product';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
+  useListQueryV2,
+  useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -51,7 +51,7 @@ export function useProducts(
     return z.array(productSchema).parse(data) as ProductWithImages[];
   };
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
@@ -82,7 +82,7 @@ export function useProductsCount(
   const queryFn = async (context: { signal: AbortSignal }): Promise<number> =>
     countProducts(filters, context.signal);
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id,
     queryKey,
     queryFn,

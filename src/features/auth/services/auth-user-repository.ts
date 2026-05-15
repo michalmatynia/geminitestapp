@@ -25,8 +25,9 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
   });
   if (!process.env['MONGODB_URI']) {
     await logSystemEvent({
-      level: 'warn',
-      message: '[AUTH-REPO] MONGODB_URI missing',
+      level: 'error',
+      message: '[AUTH-REPO] Database configuration error: MONGODB_URI is not defined.',
+      context: { email: normalized, provider },
     });
     return null;
   }
@@ -52,10 +53,14 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
 
 export const findAuthUserById = async (userId: string): Promise<AuthUserRecord | null> => {
   requireAuthProvider(await getAuthDataProvider());
-  if (!process.env['MONGODB_URI']) return null;
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to find auth user by ID.');
+  }
   const db = await getMongoDb();
   const { ObjectId } = await import('mongodb');
-  if (!ObjectId.isValid(userId)) return null;
+  if (!ObjectId.isValid(userId)) {
+    throw new Error(`Invalid User Identifier: The provided user ID '${userId}' is not a valid MongoDB ObjectId.`);
+  }
   const user = await db.collection<MongoUserDoc>('users').findOne({ _id: new ObjectId(userId) });
   if (!user || !user.email) return null;
   return {
@@ -69,8 +74,11 @@ export const findAuthUserById = async (userId: string): Promise<AuthUserRecord |
 };
 
 export const listAuthUsers = async (limit = 500): Promise<AuthUserRecord[]> => {
-  requireAuthProvider(await getAuthDataProvider());
-  if (!process.env['MONGODB_URI']) return [];
+  const provider = await getAuthDataProvider();
+  requireAuthProvider(provider);
+  if (!process.env['MONGODB_URI']) {
+    throw new Error('Database Configuration Error: MONGODB_URI is required to list auth users.');
+  }
   const db = await getMongoDb();
   const docs = await db
     .collection<MongoUserDoc & { _id: import('mongodb').ObjectId }>('users')

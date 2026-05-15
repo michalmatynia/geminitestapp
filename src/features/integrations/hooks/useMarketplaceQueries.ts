@@ -4,7 +4,7 @@ import type { ExternalTag, TagMappingWithDetails } from '@/shared/contracts/inte
 export { useCategoryMappingsByConnection } from '@/shared/hooks/useIntegrationQueries';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -16,7 +16,7 @@ export function useExternalCategories(
 ): ListQuery<ExternalCategory> {
   const queryScope = marketplace ?? connectionId;
   const queryKey = marketplaceKeys.categories(queryScope);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => {
       const params = new URLSearchParams();
@@ -48,7 +48,7 @@ export function useCategoryMappings(
   const isMarketplaceScoped = marketplace === 'tradera';
   const scopedCatalogId = isMarketplaceScoped ? null : catalogId;
   const queryKey = marketplaceKeys.mappings(queryScope, scopedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
       if (
@@ -88,7 +88,7 @@ export function useCategoryMappings(
 
 export function useExternalProducers(connectionId: string): ListQuery<ExternalProducer> {
   const queryKey = marketplaceKeys.producers(connectionId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
@@ -106,7 +106,7 @@ export function useExternalProducers(connectionId: string): ListQuery<ExternalPr
 
 export function useProducerMappings(connectionId: string): ListQuery<ProducerMappingWithDetails> {
   const queryKey = marketplaceKeys.producerMappings(connectionId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () =>
       api.get<ProducerMappingWithDetails[]>(
@@ -126,7 +126,7 @@ export function useProducerMappings(connectionId: string): ListQuery<ProducerMap
 
 export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
   const queryKey = marketplaceKeys.tags(connectionId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
     enabled: Boolean(connectionId),
@@ -143,7 +143,7 @@ export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
 
 export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDetails> {
   const queryKey = marketplaceKeys.tagMappings(connectionId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () =>
       api.get<TagMappingWithDetails[]>(
@@ -167,7 +167,7 @@ export function useMarketplaceBadgeStatus(
   enabled: boolean = true
 ): { status: string | null; isFetching: boolean } {
   const queryKey = QUERY_KEYS.integrations.listings(productId);
-  const { data: listings, isFetching } = createListQueryV2<
+  const { data: listings, isFetching } = useListQueryV2<
     ProductListingWithDetails,
     ProductListingWithDetails[]
   >({

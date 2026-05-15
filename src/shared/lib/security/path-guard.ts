@@ -14,12 +14,13 @@ import path from 'path';
 import { badRequestError } from '@/shared/errors/app-error';
 
 /**
- * Hardens filesystem path operations by ensuring that user/dynamic input 
- * does not result in path traversal outside an expected root directory.
- * @param root - The root directory to constrain access within
- * @param userInput - User-provided path input to validate
- * @returns Secure resolved path within the root directory
- * @throws BadRequestError if path traversal is attempted
+ * getSecurePath: Securely resolves a filesystem path by ensuring it stays within a designated root directory,
+ * effectively preventing path traversal vulnerabilities (e.g., ../../etc/passwd).
+ * 
+ * @param root - The base directory to which all operations must be confined.
+ * @param userInput - The dynamic/user-provided path input to be resolved.
+ * @returns The absolute, normalized path within the root directory.
+ * @throws {BadRequestError} If the resolved path attempts to escape the root directory.
  */
 export const getSecurePath = (root: string, userInput: string): string => {
   /** Normalize and resolve the root directory path */

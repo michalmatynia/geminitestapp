@@ -5,8 +5,9 @@ import type { ArchPageContent } from '@/lib/types';
 
 export default function CtaSection({ content, locale }: { content: ArchPageContent['cta']; locale?: string }) {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,20 +16,20 @@ export default function CtaSection({ content, locale }: { content: ArchPageConte
       const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, locale }),
+        body: JSON.stringify({ email, message, locale }),
       });
       const data = await res.json() as { message?: string; error?: string };
       if (res.ok) {
         setStatus('done');
-        setMessage(data.message ?? 'received');
         setEmail('');
+        setMessage('');
       } else {
         setStatus('error');
-        setMessage(data.error ?? 'Something went wrong');
+        setErrorMsg(data.error ?? 'Something went wrong');
       }
     } catch {
       setStatus('error');
-      setMessage('Failed to submit. Please try again.');
+      setErrorMsg('Failed to submit. Please try again.');
     }
   };
 
@@ -45,15 +46,31 @@ export default function CtaSection({ content, locale }: { content: ArchPageConte
               <p className="cta-success">{content.successMessage}</p>
             ) : (
               <form className="cta-form" onSubmit={handleSubmit}>
-                <input
-                  className="cta-input"
-                  type="email"
-                  placeholder={content.emailPlaceholder}
-                  aria-label="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
+                <div className="cta-field">
+                  <input
+                    className="cta-input"
+                    type="email"
+                    placeholder={content.emailPlaceholder}
+                    aria-label="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="cta-field">
+                  <textarea
+                    className="cta-input cta-textarea"
+                    placeholder={content.messagePlaceholder}
+                    aria-label="message"
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    required
+                    rows={4}
+                  />
+                </div>
+                {status === 'error' && (
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)', margin: '0' }}>{errorMsg}</p>
+                )}
                 <button type="submit" className="cta-submit" disabled={status === 'loading'}>
                   <span>{status === 'loading' ? content.loadingLabel : content.submitLabel}</span>
                   <span style={{ position: 'relative', width: '18px', height: '1px', background: 'currentColor', display: 'inline-block' }}>
@@ -61,9 +78,6 @@ export default function CtaSection({ content, locale }: { content: ArchPageConte
                   </span>
                 </button>
               </form>
-            )}
-            {status === 'error' && (
-              <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)' }}>{message}</p>
             )}
             <p className="cta-note">{content.note}</p>
           </div>

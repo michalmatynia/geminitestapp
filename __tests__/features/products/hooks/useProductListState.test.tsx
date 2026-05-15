@@ -129,6 +129,8 @@ vi.mock('@/features/products/hooks/useProductData', () => ({
     setCatalogFilter: vi.fn(),
     baseExported: '',
     setBaseExported: vi.fn(),
+    includeArchived: false,
+    parsedMatchProductIds: [],
     loadError: null,
     isLoading: false,
     isFetching: false,
@@ -216,11 +218,11 @@ vi.mock('@/shared/lib/api-client', () => {
 });
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createSingleQueryV2: () => ({
+  useSingleQueryV2: () => ({
     data: undefined,
     error: null,
   }),
-  createListQueryV2: () => ({
+  useListQueryV2: () => ({
     data: [],
     error: null,
   }),

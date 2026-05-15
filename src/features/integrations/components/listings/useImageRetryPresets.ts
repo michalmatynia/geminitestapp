@@ -5,11 +5,11 @@ import {
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/public';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const useImageRetryPresets = (): ImageRetryPreset[] => {
-  const { data: presets = getDefaultImageRetryPresets() } = createListQueryV2<
+  const { data: presets = getDefaultImageRetryPresets() } = useListQueryV2<
     ImageRetryPreset[],
     ImageRetryPreset[]
   >({

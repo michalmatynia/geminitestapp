@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState, startTransition } fro
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button, Checkbox, Input, useToast } from '@/shared/ui/primitives.public';
@@ -315,7 +315,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   const [hydratedEventId, setHydratedEventId] = useState<string | null>(null);
   const shouldLoadImportedEvent = event === null && eventId.length > 0 && eventId !== 'new';
   const importedEventQueryKey = ['filemaker', 'events', 'imported-detail', eventId] as const;
-  const importedEventQuery = createSingleQueryV2<
+  const importedEventQuery = useSingleQueryV2<
     ImportedEventResponse,
     ImportedEventResponse,
     typeof importedEventQueryKey

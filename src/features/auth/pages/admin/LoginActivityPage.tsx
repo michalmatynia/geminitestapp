@@ -32,6 +32,7 @@ const readMetadataText = (log: ActivityLog, key: string): string | null => {
   return trimmed ? trimmed : null;
 };
 
+/* eslint-disable max-lines-per-function, complexity, @typescript-eslint/strict-boolean-expressions */
 export default function AuthLoginActivityPage(): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');

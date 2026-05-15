@@ -12,14 +12,14 @@ import {
   useSocialPublishingImageAddonsBatchJobs,
 } from './useSocialPublishingImageAddons';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
-const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiGetMock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
-  createUpdateMutationV2: createUpdateMutationV2Mock,
+  useListQueryV2: useListQueryV2Mock,
+  useUpdateMutationV2: useUpdateMutationV2Mock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -61,8 +61,8 @@ const addonPayload = [
 describe('useSocialPublishingImageAddons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
-    createUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     apiGetMock.mockResolvedValue(addonPayload);
     apiPostMock.mockResolvedValue({});
   });
@@ -75,7 +75,7 @@ describe('useSocialPublishingImageAddons', () => {
       })
     );
 
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.queryKey).toEqual(
@@ -103,7 +103,7 @@ describe('useSocialPublishingImageAddons', () => {
       })
     );
 
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(config.queryKey).toEqual(
       QUERY_KEYS.socialPublishing.imageAddons({
@@ -164,7 +164,7 @@ describe('useSocialPublishingImageAddons', () => {
       })
     );
 
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     await expect(config.queryFn()).resolves.toEqual(jobsPayload);

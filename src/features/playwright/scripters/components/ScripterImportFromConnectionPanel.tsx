@@ -3,7 +3,7 @@
 import { DownloadCloud, Loader2 } from 'lucide-react';
 import { type JSX, useEffect, useState } from 'react';
 
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ConnectionImportResult } from '../from-connection';
@@ -44,7 +44,7 @@ export function ScripterImportFromConnectionPanel({
 }: ScripterImportFromConnectionPanelProps): JSX.Element {
   const [selectedId, setSelectedId] = useState<string>('');
   const [expanded, setExpanded] = useState(false);
-  const connectionsQuery = createListQueryV2<
+  const connectionsQuery = useListQueryV2<
     ListedProgrammableConnection,
     ListedProgrammableConnection[]
   >({
@@ -62,7 +62,7 @@ export function ScripterImportFromConnectionPanel({
       description: 'Loads programmable connections for scripter import.',
     },
   });
-  const importMutation = createMutationV2<ConnectionImportResult, string>({
+  const importMutation = useMutationV2<ConnectionImportResult, string>({
     mutationKey: ['playwright', 'scripters', 'import-from-connection'],
     mutationFn: async (connectionId: string) => await apiImport(connectionId),
     onSuccess: (result: ConnectionImportResult): void => {

@@ -23,9 +23,9 @@ const mocks = vi.hoisted(() => ({
   getAiPathRunMock: vi.fn(),
   useAiPathsTriggerButtonsQueryMock: vi.fn(),
   toastMock: vi.fn(),
-  createListQueryV2Mock: vi.fn(),
-  createMutationV2Mock: vi.fn(),
-  createDeleteMutationV2Mock: vi.fn(),
+  useListQueryV2Mock: vi.fn(),
+  useMutationV2Mock: vi.fn(),
+  useDeleteMutationV2Mock: vi.fn(),
   refetchSettingsMock: vi.fn(),
   refetchRunsMock: vi.fn(),
   refetchQueueStatusMock: vi.fn(),
@@ -55,12 +55,12 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2:
-    mocks.createListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').createListQueryV2,
-  createMutationV2:
-    mocks.createMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createMutationV2,
-  createDeleteMutationV2:
-    mocks.createDeleteMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').createDeleteMutationV2,
+  useListQueryV2:
+    mocks.useListQueryV2Mock as typeof import('@/shared/lib/query-factories-v2').useListQueryV2,
+  useMutationV2:
+    mocks.useMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').useMutationV2,
+  useDeleteMutationV2:
+    mocks.useDeleteMutationV2Mock as typeof import('@/shared/lib/query-factories-v2').useDeleteMutationV2,
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -140,9 +140,9 @@ describe('Job Queue open-after-trigger flow', () => {
     mocks.getAiPathRunMock.mockReset();
     mocks.useAiPathsTriggerButtonsQueryMock.mockReset();
     mocks.toastMock.mockReset();
-    mocks.createListQueryV2Mock.mockReset();
-    mocks.createMutationV2Mock.mockReset();
-    mocks.createDeleteMutationV2Mock.mockReset();
+    mocks.useListQueryV2Mock.mockReset();
+    mocks.useMutationV2Mock.mockReset();
+    mocks.useDeleteMutationV2Mock.mockReset();
     mocks.refetchSettingsMock.mockReset();
     mocks.refetchRunsMock.mockReset();
     mocks.refetchQueueStatusMock.mockReset();
@@ -156,7 +156,7 @@ describe('Job Queue open-after-trigger flow', () => {
     mocks.refetchRunsMock.mockResolvedValue(undefined);
     mocks.refetchQueueStatusMock.mockResolvedValue(undefined);
 
-    mocks.createListQueryV2Mock.mockImplementation((config: { queryKey?: unknown }) => {
+    mocks.useListQueryV2Mock.mockImplementation((config: { queryKey?: unknown }) => {
       const queryKey = JSON.stringify(config?.queryKey ?? []);
       if (queryKey.includes('"settings"')) {
         return {
@@ -197,8 +197,8 @@ describe('Job Queue open-after-trigger flow', () => {
       variables: undefined,
       mutateAsync: vi.fn().mockResolvedValue(undefined),
     };
-    mocks.createMutationV2Mock.mockReturnValue(baseMutationValue);
-    mocks.createDeleteMutationV2Mock.mockReturnValue(baseMutationValue);
+    mocks.useMutationV2Mock.mockReturnValue(baseMutationValue);
+    mocks.useDeleteMutationV2Mock.mockReturnValue(baseMutationValue);
     mocks.getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {

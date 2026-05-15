@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -73,7 +73,7 @@ const fetchMongoFilemakerWebsites = async (
 
 function useMongoFilemakerWebsites(input: WebsiteListInput): WebsiteListState {
   const queryKey = buildWebsiteListQueryKey(input);
-  const websitesQuery = createSingleQueryV2<
+  const websitesQuery = useSingleQueryV2<
     MongoFilemakerWebsitesResponse,
     MongoFilemakerWebsitesResponse,
     typeof queryKey

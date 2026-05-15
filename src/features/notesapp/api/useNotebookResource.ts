@@ -4,7 +4,7 @@ import {
   type NotebookRecord,
 } from '@/shared/contracts/notes';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-key-exports';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import {
@@ -21,7 +21,7 @@ export function useNotebookResource(): {
 } {
   const queryKey = QUERY_KEYS.notes.notebooks();
 
-  const listQuery = createListQueryV2<NotebookRecord>({
+  const listQuery = useListQueryV2<NotebookRecord>({
     queryKey,
     queryFn: async (): Promise<NotebookRecord[]> => {
       const data = await api.get<NotebookRecord[]>('/api/notes/notebooks');

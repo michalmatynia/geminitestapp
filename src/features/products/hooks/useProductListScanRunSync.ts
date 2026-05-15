@@ -17,7 +17,7 @@ import {
 import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeClearInterval, safeSetInterval, type SafeTimerId } from '@/shared/lib/timers';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
@@ -103,7 +103,7 @@ const useProductScanRunStatusQuery = ({
   normalizedProductIds: readonly string[];
 }): SingleQuery<ProductScanListResponse> => {
   const queryKey = QUERY_KEYS.products.scansLatest(normalizedProductIds);
-  return createSingleQueryV2<ProductScanListResponse>({
+  return useSingleQueryV2<ProductScanListResponse>({
     queryKey,
     enabled: enabled && normalizedProductIds.length > 0,
     queryFn: async () =>

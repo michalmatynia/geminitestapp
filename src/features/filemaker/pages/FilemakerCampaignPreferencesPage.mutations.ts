@@ -5,7 +5,7 @@ import {
 } from '@/shared/contracts/filemaker';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import type {
   FilemakerEmailCampaignPreferencesAction,
@@ -37,7 +37,7 @@ const submitPreferencesAction = async (
 };
 
 export const usePreferencesActionMutation = (): PreferencesActionMutation =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['filemaker', 'campaigns', 'preferences', 'submit'],
     mutationFn: async ({ action, token }) => submitPreferencesAction(token, action),
     meta: {

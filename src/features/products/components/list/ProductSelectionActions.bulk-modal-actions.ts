@@ -129,11 +129,17 @@ export const useSelectionModalOpenActions = (
   | 'handleOpenBatchEdit'
   | 'handleOpenMarketplaceCopyDebrand'
   | 'handleScanAmazonAsin'
-> => ({
-  ...useBulkSyncSetupOpenAction(input),
-  ...useEditModalOpenActions(input),
-  ...useListingModalOpenActions(input),
-});
+> => {
+  const bulkSyncSetupOpenAction = useBulkSyncSetupOpenAction(input);
+  const editModalOpenActions = useEditModalOpenActions(input);
+  const listingModalOpenActions = useListingModalOpenActions(input);
+
+  return {
+    ...bulkSyncSetupOpenAction,
+    ...editModalOpenActions,
+    ...listingModalOpenActions,
+  };
+};
 
 export const useBatchEditActions = (
   selection: ProductSelectionBaseController,

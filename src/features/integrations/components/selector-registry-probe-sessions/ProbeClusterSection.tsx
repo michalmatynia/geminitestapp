@@ -7,17 +7,16 @@ import {
 } from '@/shared/ui/primitives.public';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 
+export type ProbeClusterSectionProps = {
+  resolvedClusters: SelectorRegistryProbeSessionCluster[];
+};
+
+/**
+ * Renders the active probe session clusters.
+ */
 export const ProbeClusterSection = ({
   resolvedClusters,
-  selectedKeys,
-  manuallySelectedKeys,
-  defaultKeysByRole,
-}: {
-  resolvedClusters: SelectorRegistryProbeSessionCluster[];
-  selectedKeys: Record<string, string>;
-  manuallySelectedKeys: Record<string, boolean>;
-  defaultKeysByRole: Record<string, string[]>;
-}): React.JSX.Element => {
+}: ProbeClusterSectionProps): React.JSX.Element => {
   return (
     <div className='space-y-4'>
       {resolvedClusters.map((cluster) => (
@@ -42,7 +41,6 @@ export const ProbeClusterSection = ({
               </div>
             </div>
           </div>
-          {/* Detailed session rendering will go here */}
         </div>
       ))}
     </div>

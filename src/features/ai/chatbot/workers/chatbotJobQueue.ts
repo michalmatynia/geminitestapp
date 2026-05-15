@@ -1,8 +1,31 @@
+/**
+ * Chatbot Job Queue Worker
+ * 
+ * Manages the background processing of AI chatbot inference jobs.
+ * This module integrates with the platform's queueing infrastructure to 
+ * ensure reliable, resilient execution of chat-based tasks.
+ * 
+ * Features:
+ * - Managed Queue: Orchestrates the worker lifecycle for chatbot inference jobs.
+ * - Resilience: Implements exponential backoff and retries for transient failures.
+ * - Persistence Integration: Updates job status in the repository throughout 
+ *   the job lifecycle (pending -> running -> completed/failed).
+ * - Observability: Provides detailed logging and error capture for all 
+ *   queue operations and processor-level failures.
+ * 
+ * Usage:
+ * Invoked by the global task runner. Use `enqueueChatbotJob` to add jobs
+ * to the background processing stream.
+ */
+
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/ai/chatbot/workers/chatbot-job-processor';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
+
+const LOG_SOURCE = 'chatbot-job-queue';
 
 /**
  * Builds a standardized source string for logging: 'ai.chatbot.job.<action>'
@@ -23,19 +46,27 @@ const queue = createManagedQueue<ChatbotJobData>({
   },
   processor: async (data) => {
     const job = await chatbotJobRepository.findById(data.jobId);
-    if (job?.status !== 'pending') return;
+    if (!job) {
+      throw new AppError(`Chatbot job not found during processing: ${data.jobId}`, {
+        code: AppErrorCodes.notFound,
+        httpStatus: 404,
+        meta: { jobId: data.jobId },
+      });
+    }
+    
+    if (job.status !== 'pending') return;
 
     await chatbotJobRepository.update(job.id, {
       status: 'running',
       startedAt: new Date(),
     });
 
-    void ErrorSystem.logInfo('Processing job', { service: buildChatbotSource('processing'), jobId: data.jobId });
+    void ErrorSystem.logInfo('Processing chatbot job', { service: buildChatbotSource('processing'), jobId: data.jobId });
     await processJob(data.jobId);
-    void ErrorSystem.logInfo('Job completed', { service: buildChatbotSource('completed'), jobId: data.jobId });
+    void ErrorSystem.logInfo('Chatbot job completed', { service: buildChatbotSource('completed'), jobId: data.jobId });
   },
   onFailed: async (_jobId, error, data) => {
-    const message = error instanceof Error ? error.message : 'Job failed.';
+    const errorMessage = error instanceof Error ? error.message : 'Job failed.';
 
     void ErrorSystem.captureException(error, {
       service: buildChatbotSource('failed'),
@@ -45,7 +76,7 @@ const queue = createManagedQueue<ChatbotJobData>({
     await chatbotJobRepository.update(data.jobId, {
       status: 'failed',
       finishedAt: new Date(),
-      errorMessage: message,
+      errorMessage,
     });
   },
 });
@@ -58,25 +89,28 @@ const isChatbotEnabled = async (): Promise<boolean> => {
   return brain.enabled;
 };
 
+/**
+ * Initializes or tears down the chatbot worker based on feature configuration.
+ */
 export const startChatbotJobQueue = (): void => {
   if (reconcileInFlight) return;
+  /* eslint-disable require-atomic-updates */
   reconcileInFlight = (async (): Promise<void> => {
     let enabled: boolean;
     try {
       enabled = await isChatbotEnabled();
     } catch (error) {
-      void ErrorSystem.captureException(error);
       void ErrorSystem.captureException(error, {
-        service: 'chatbot-job-queue',
+        service: LOG_SOURCE,
         action: 'validateBrainGate',
       });
       return;
     }
     if (!enabled) {
       if (workerStarted) {
-        await queue.stopWorker().catch(async (error) => {
+        await queue.stopWorker().catch(async (error: unknown) => {
           void ErrorSystem.captureException(error, {
-            service: 'chatbot-job-queue',
+            service: LOG_SOURCE,
             action: 'stopWorker',
           });
         });
@@ -85,18 +119,33 @@ export const startChatbotJobQueue = (): void => {
       return;
     }
     if (workerStarted) return;
-    queue.startWorker();
     workerStarted = true;
+    queue.startWorker();
   })().finally(() => {
     reconcileInFlight = null;
   });
 };
 
+/**
+ * Halts the background worker.
+ */
 export const stopChatbotJobQueue = (): void => {
   void queue.stopWorker();
   workerStarted = false;
 };
 
+/**
+ * Queues a job for background processing.
+ */
 export const enqueueChatbotJob = async (jobId: string): Promise<void> => {
-  await queue.enqueue({ jobId });
+  try {
+    await queue.enqueue({ jobId }, { jobId });
+  } catch (error) {
+    throw new AppError(`Failed to enqueue chatbot job: ${jobId}`, {
+        code: AppErrorCodes.internal,
+        httpStatus: 500,
+        cause: error,
+        meta: { jobId }
+    });
+  }
 };

@@ -12,7 +12,7 @@ import type {
   Supplier1688SelectorRegistrySyncResponse,
 } from '@/shared/contracts/integrations/supplier-1688-selector-registry';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/1688/selectors';
 
@@ -67,12 +67,13 @@ export function useSupplier1688SelectorRegistry(options?: {
 }): SingleQuery<Supplier1688SelectorRegistryListResponse> {
   const profile = options?.profile ?? '1688';
   const queryKey = registryKey(profile);
-  return createSingleQueryV2<Supplier1688SelectorRegistryListResponse>({
+  return useSingleQueryV2<Supplier1688SelectorRegistryListResponse>({
     queryKey,
     queryFn: async (): Promise<Supplier1688SelectorRegistryListResponse> =>
       requestJson<Supplier1688SelectorRegistryListResponse>(buildUrl(profile)),
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useSupplier1688SelectorRegistry',
       operation: 'list',
       resource: 'supplier-1688.selector-registry',
@@ -86,7 +87,7 @@ export function useSyncSupplier1688SelectorRegistryMutation(): MutationResult<
   Supplier1688SelectorRegistrySyncResponse,
   Supplier1688SelectorRegistrySyncRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     Supplier1688SelectorRegistrySyncResponse,
     Supplier1688SelectorRegistrySyncRequest
   >({
@@ -100,6 +101,7 @@ export function useSyncSupplier1688SelectorRegistryMutation(): MutationResult<
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useSyncSupplier1688SelectorRegistryMutation',
       operation: 'create',
       resource: 'supplier-1688.selector-registry.sync',
@@ -112,7 +114,7 @@ export function useSaveSupplier1688SelectorRegistryEntryMutation(): MutationResu
   Supplier1688SelectorRegistrySaveResponse,
   Supplier1688SelectorRegistrySaveRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     Supplier1688SelectorRegistrySaveResponse,
     Supplier1688SelectorRegistrySaveRequest
   >({
@@ -126,6 +128,7 @@ export function useSaveSupplier1688SelectorRegistryEntryMutation(): MutationResu
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useSaveSupplier1688SelectorRegistryEntryMutation',
       operation: 'update',
       resource: 'supplier-1688.selector-registry.entry',
@@ -138,7 +141,7 @@ export function useDeleteSupplier1688SelectorRegistryEntryMutation(): MutationRe
   Supplier1688SelectorRegistryDeleteResponse,
   Supplier1688SelectorRegistryDeleteRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     Supplier1688SelectorRegistryDeleteResponse,
     Supplier1688SelectorRegistryDeleteRequest
   >({
@@ -152,6 +155,7 @@ export function useDeleteSupplier1688SelectorRegistryEntryMutation(): MutationRe
     invalidateKeys: (_data, variables) => [registryKey(variables.profile)],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useDeleteSupplier1688SelectorRegistryEntryMutation',
       operation: 'delete',
       resource: 'supplier-1688.selector-registry.entry',
@@ -164,7 +168,7 @@ export function useMutateSupplier1688SelectorRegistryProfileMutation(): Mutation
   Supplier1688SelectorRegistryProfileActionResponse,
   Supplier1688SelectorRegistryProfileActionRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     Supplier1688SelectorRegistryProfileActionResponse,
     Supplier1688SelectorRegistryProfileActionRequest
   >({
@@ -178,6 +182,7 @@ export function useMutateSupplier1688SelectorRegistryProfileMutation(): Mutation
     invalidateKeys: () => [['integrations', '1688', 'selectors']],
     meta: {
       ...baseMeta,
+      domain: 'integrations',
       source: 'integrations.hooks.useMutateSupplier1688SelectorRegistryProfileMutation',
       operation: 'update',
       resource: 'supplier-1688.selector-registry.profile',

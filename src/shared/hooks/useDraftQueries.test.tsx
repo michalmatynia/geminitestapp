@@ -7,24 +7,24 @@ import type { ProductDraft } from '@/shared/contracts/products/drafts';
 
 const {
   apiGetMock,
-  createCreateMutationV2Mock,
-  createDeleteMutationV2Mock,
-  createListQueryV2Mock,
-  createUpdateMutationV2Mock,
+  useCreateMutationV2Mock,
+  useDeleteMutationV2Mock,
+  useListQueryV2Mock,
+  useUpdateMutationV2Mock,
 } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
-  createCreateMutationV2Mock: vi.fn(),
-  createDeleteMutationV2Mock: vi.fn(),
-  createListQueryV2Mock: vi.fn(),
-  createUpdateMutationV2Mock: vi.fn(),
+  useCreateMutationV2Mock: vi.fn(),
+  useDeleteMutationV2Mock: vi.fn(),
+  useListQueryV2Mock: vi.fn(),
+  useUpdateMutationV2Mock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (config: unknown) => createListQueryV2Mock(config),
-  createSingleQueryV2: vi.fn(),
-  createCreateMutationV2: (config: unknown) => createCreateMutationV2Mock(config),
-  createDeleteMutationV2: (config: unknown) => createDeleteMutationV2Mock(config),
-  createUpdateMutationV2: (config: unknown) => createUpdateMutationV2Mock(config),
+  useListQueryV2: (config: unknown) => useListQueryV2Mock(config),
+  useSingleQueryV2: vi.fn(),
+  useCreateMutationV2: (config: unknown) => useCreateMutationV2Mock(config),
+  useDeleteMutationV2: (config: unknown) => useDeleteMutationV2Mock(config),
+  useUpdateMutationV2: (config: unknown) => useUpdateMutationV2Mock(config),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -68,16 +68,16 @@ const createDraft = (overrides: Partial<ProductDraft> = {}): ProductDraft =>
 describe('useDraftQueries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
-    createCreateMutationV2Mock.mockReturnValue({ kind: 'create-mutation' });
-    createUpdateMutationV2Mock.mockReturnValue({ kind: 'update-mutation' });
-    createDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useCreateMutationV2Mock.mockReturnValue({ kind: 'create-mutation' });
+    useUpdateMutationV2Mock.mockReturnValue({ kind: 'update-mutation' });
+    useDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
     apiGetMock.mockResolvedValue([]);
   });
 
   it('keeps drafts queries enabled by default', async () => {
     const { result } = renderHook(() => useDraftQueries());
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
     const signal = new AbortController().signal;
 
     expect(result.current).toEqual({ kind: 'list-query' });
@@ -93,14 +93,14 @@ describe('useDraftQueries', () => {
 
   it('lets callers defer the initial drafts request', () => {
     renderHook(() => useDraftQueries(undefined, { enabled: false }));
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(config.enabled).toBe(false);
   });
 
   it('hydrates draft list caches after creating a scrape template', async () => {
     renderHook(() => useCreateDraftMutation());
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
     const draft = createDraft();
     const existingDraft = createDraft({ id: 'standard-draft', draftKind: 'standard' });
     const invalidateQueriesMock = vi.fn().mockResolvedValue(undefined);
@@ -128,7 +128,7 @@ describe('useDraftQueries', () => {
 
   it('updates cached draft lists after changing a draft to a scrape template', async () => {
     renderHook(() => useUpdateDraftMutation());
-    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
+    const config = useUpdateMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
     const savedDraft = createDraft();
     const staleDraft = createDraft({ draftKind: 'standard', scrapeProfileId: null });
     const invalidateQueriesMock = vi.fn().mockResolvedValue(undefined);
@@ -152,7 +152,7 @@ describe('useDraftQueries', () => {
 
   it('removes deleted drafts from cached draft lists before refetching', async () => {
     renderHook(() => useDeleteDraftMutation());
-    const config = createDeleteMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
+    const config = useDeleteMutationV2Mock.mock.calls[0]?.[0] as MutationConfig;
     const draft = createDraft();
     const invalidateQueriesMock = vi.fn().mockResolvedValue(undefined);
     const removeQueriesMock = vi.fn();

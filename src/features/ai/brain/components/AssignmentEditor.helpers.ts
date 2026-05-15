@@ -1,18 +1,31 @@
+/**
+ * Assignment Editor Helpers
+ * 
+ * Utility functions and constants for managing the Brain assignment editor.
+ * Provides:
+ * - Provider and vendor metadata mapping.
+ * - Credential configuration helpers.
+ * - Logic for filtering available model families.
+ * - Type definitions for assignment state patches.
+ */
+
 import type { BrainModelDescriptor, BrainModelVendor } from '@/shared/contracts/ai-brain';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { SelectSimpleOption } from '@/shared/contracts/ui/controls';
-import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import type { BrainModelFamily } from '@/shared/lib/ai-brain/settings';
 
 import type { AiBrainAssignment, AiBrainProvider } from '../settings';
 
+/** Patch handler function signature for updating assignment state. */
 export type AssignmentPatchHandler = (patch: Partial<AiBrainAssignment>) => void;
 
+/** Supported provider options for assignment selection. */
 export const providerOptions: Array<LabeledOptionDto<AiBrainProvider>> = [
   { value: 'model', label: 'Model' },
   { value: 'agent', label: 'Agent' },
 ];
 
+/** Maps model vendor keys to human-readable labels. */
 export const VENDOR_LABELS: Record<BrainModelVendor, string> = {
   openai: 'GPT',
   anthropic: 'Claude',
@@ -20,6 +33,7 @@ export const VENDOR_LABELS: Record<BrainModelVendor, string> = {
   ollama: 'Ollama',
 };
 
+/** Tailwind CSS class mapping for model vendor UI styling. */
 export const VENDOR_COLORS: Record<BrainModelVendor, string> = {
   openai: 'border-emerald-600/60 text-emerald-300',
   anthropic: 'border-amber-600/60 text-amber-300',
@@ -27,6 +41,7 @@ export const VENDOR_COLORS: Record<BrainModelVendor, string> = {
   ollama: 'border-gray-600/60 text-gray-400',
 };
 
+/** API key format hints per model vendor. */
 export const API_KEY_PLACEHOLDERS: Record<BrainModelVendor, string> = {
   openai: 'sk-...',
   anthropic: 'sk-ant-...',
@@ -34,13 +49,21 @@ export const API_KEY_PLACEHOLDERS: Record<BrainModelVendor, string> = {
   ollama: '',
 };
 
+/**
+ * Returns the active list of allowed providers.
+ * If no providers are explicitly allowed, defaults to all available options.
+ */
 export const getActiveAllowedProviders = (
   allowedProviders: AiBrainProvider[] | undefined
 ): AiBrainProvider[] =>
-  allowedProviders !== undefined && allowedProviders.length > 0
+  (allowedProviders !== undefined && allowedProviders.length > 0)
     ? allowedProviders
     : providerOptions.map((option) => option.value);
 
+/**
+ * Filters the list of model quick-picks based on the selected model family.
+ * Returns the original list if no family filter is applied.
+ */
 export const filterQuickPicksByFamily = (
   modelQuickPicks: SelectSimpleOption[],
   modelDescriptors: Record<string, BrainModelDescriptor>,
@@ -49,20 +72,6 @@ export const filterQuickPicksByFamily = (
   if (modelFamily === undefined) return modelQuickPicks;
   return modelQuickPicks.filter((option) => {
     const descriptor = modelDescriptors[option.value];
-    return descriptor === undefined || descriptor.family === modelFamily;
+    return descriptor?.family === modelFamily;
   });
 };
-
-export const resolveProvider = (
-  assignmentProvider: AiBrainProvider,
-  activeAllowedProviders: AiBrainProvider[]
-): AiBrainProvider =>
-  activeAllowedProviders.includes(assignmentProvider)
-    ? assignmentProvider
-    : (activeAllowedProviders[0] ?? assignmentProvider);
-
-export const resolveSelectedVendor = (
-  resolvedProvider: AiBrainProvider,
-  modelId: string
-): BrainModelVendor | null =>
-  resolvedProvider === 'model' && modelId.trim().length > 0 ? inferBrainModelVendor(modelId) : null;

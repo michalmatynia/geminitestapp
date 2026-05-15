@@ -10,7 +10,7 @@ import {
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useCreateMutationV2, useDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateAnalytics,
   invalidateSystemActivity,
@@ -23,7 +23,7 @@ import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 // out of React Compiler memoization to avoid dev cache-size mismatches.
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, ClearLogsTarget> {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (target: ClearLogsTarget) =>
       api.delete<ClearLogsResponse>('/api/system/logs', {
         params: { target },
@@ -63,7 +63,7 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, ClearL
 }
 
 export function useRebuildIndexesMutation(): UpdateMutation<MongoRebuildIndexesResponse, void> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: async () =>
       mongoRebuildIndexesResponseSchema.parse(
         await api.post<MongoRebuildIndexesResponse>('/api/system/diagnostics/mongo-indexes')
@@ -84,7 +84,7 @@ export function useRebuildIndexesMutation(): UpdateMutation<MongoRebuildIndexesR
 export function useRunLogInsight(
   contextRegistry?: ContextRegistryConsumerEnvelope | null
 ): UpdateMutation<AiInsightResponse, void> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: () =>
       api.post<AiInsightResponse>('/api/system/logs/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
@@ -105,7 +105,7 @@ export function useRunLogInsight(
 export function useInterpretLog(
   contextRegistry?: ContextRegistryConsumerEnvelope | null
 ): UpdateMutation<AiInsightResponse, string> {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: (logId: string) =>
       api.post<AiInsightResponse>('/api/system/logs/interpret', {
         logId,

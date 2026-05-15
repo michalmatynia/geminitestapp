@@ -3,7 +3,7 @@ import type { BulkProducerMappingRequest } from '@/shared/contracts/integrations
 import type { BulkTagMappingRequest } from '@/shared/contracts/integrations/listings';
 import type { MarketplaceBulkUpsertResponse, MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateMarketplaceCategories,
   invalidateMarketplaceMappings,
@@ -15,7 +15,7 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useFetchExternalCategoriesMutation() {
-  return createMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
+  return useMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
     mutationFn: (payload: MarketplaceConnectionRequest) =>
       api.post<MarketplaceFetchResponse>('/api/marketplace/categories/fetch', payload, {
@@ -35,7 +35,7 @@ export function useFetchExternalCategoriesMutation() {
 }
 
 export function useSaveMappingsMutation() {
-  return createUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkCategoryMappingRequest>({
+  return useUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkCategoryMappingRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-mappings'),
     mutationFn: (payload: BulkCategoryMappingRequest) =>
       api.post<MarketplaceBulkUpsertResponse>('/api/marketplace/mappings/bulk', payload),
@@ -53,7 +53,7 @@ export function useSaveMappingsMutation() {
 }
 
 export function useFetchExternalProducersMutation() {
-  return createMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
+  return useMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-producers'),
     mutationFn: (payload: MarketplaceConnectionRequest) =>
       api.post<MarketplaceFetchResponse>('/api/marketplace/producers/fetch', payload),
@@ -71,7 +71,7 @@ export function useFetchExternalProducersMutation() {
 }
 
 export function useSaveProducerMappingsMutation() {
-  return createUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkProducerMappingRequest>({
+  return useUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkProducerMappingRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-producer-mappings'),
     mutationFn: (payload: BulkProducerMappingRequest) =>
       api.post<MarketplaceBulkUpsertResponse>(
@@ -92,7 +92,7 @@ export function useSaveProducerMappingsMutation() {
 }
 
 export function useFetchExternalTagsMutation() {
-  return createMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
+  return useMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-tags'),
     mutationFn: (payload: MarketplaceConnectionRequest) =>
       api.post<MarketplaceFetchResponse>('/api/marketplace/tags/fetch', payload),
@@ -110,7 +110,7 @@ export function useFetchExternalTagsMutation() {
 }
 
 export function useSaveTagMappingsMutation() {
-  return createUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkTagMappingRequest>({
+  return useUpdateMutationV2<MarketplaceBulkUpsertResponse, BulkTagMappingRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-tag-mappings'),
     mutationFn: (payload: BulkTagMappingRequest) =>
       api.post<MarketplaceBulkUpsertResponse>(

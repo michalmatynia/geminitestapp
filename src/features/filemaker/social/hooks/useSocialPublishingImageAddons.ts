@@ -12,7 +12,7 @@ import {
   type SocialPublishingImageAddon,
 } from '@/shared/contracts/social-publishing-image-addons';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type SocialImageAddonsQueryOptions = {
@@ -60,7 +60,7 @@ const fetchSocialImageAddons = async (
 export const useSocialPublishingImageAddons = (
   options?: SocialImageAddonsQueryOptions
 ): ListQuery<SocialPublishingImageAddon, SocialPublishingImageAddon[]> =>
-  createListQueryV2<SocialPublishingImageAddon, SocialPublishingImageAddon[]>({
+  useListQueryV2<SocialPublishingImageAddon, SocialPublishingImageAddon[]>({
     queryKey: QUERY_KEYS.socialPublishing.imageAddons({
       limit: options?.limit ?? null,
       ids: normalizeAddonIds(options?.ids),
@@ -102,7 +102,7 @@ export const useCreateSocialPublishingImageAddon = (): MutationResult<
   SocialPublishingImageAddon,
   CreateSocialPublishingImageAddonPayload
 > =>
-  createUpdateMutationV2<SocialPublishingImageAddon, CreateSocialPublishingImageAddonPayload>({
+  useUpdateMutationV2<SocialPublishingImageAddon, CreateSocialPublishingImageAddonPayload>({
     mutationKey: [...QUERY_KEYS.socialPublishing.imageAddons({ limit: null }), 'create'],
     mutationFn: async (
       payload: CreateSocialPublishingImageAddonPayload
@@ -125,7 +125,7 @@ export const useBatchCaptureSocialPublishingImageAddons = (): MutationResult<
   SocialPublishingImageAddonsBatchResult,
   SocialPublishingImageAddonsBatchPayload
 > =>
-  createUpdateMutationV2<SocialPublishingImageAddonsBatchResult, SocialPublishingImageAddonsBatchPayload>({
+  useUpdateMutationV2<SocialPublishingImageAddonsBatchResult, SocialPublishingImageAddonsBatchPayload>({
     mutationKey: [...QUERY_KEYS.socialPublishing.imageAddons({ limit: null }), 'batch'],
     mutationFn: async (
       payload: SocialPublishingImageAddonsBatchPayload
@@ -179,7 +179,7 @@ export const fetchSocialPublishingImageAddonsBatchJobs = async (
 export const useSocialPublishingImageAddonsBatchJobs = (
   options?: SocialImageAddonsBatchJobsQueryOptions
 ): ListQuery<SocialPublishingImageAddonsBatchJob, SocialPublishingImageAddonsBatchJobs> =>
-  createListQueryV2<SocialPublishingImageAddonsBatchJob, SocialPublishingImageAddonsBatchJobs>({
+  useListQueryV2<SocialPublishingImageAddonsBatchJob, SocialPublishingImageAddonsBatchJobs>({
     queryKey: [
       ...SOCIAL_PUBLISHING_IMAGE_ADDONS_BATCH_JOBS_QUERY_KEY,
       { limit: options?.limit ?? 5 },
@@ -206,7 +206,7 @@ export const useStartBatchCaptureSocialPublishingImageAddons = (): MutationResul
   SocialPublishingImageAddonsBatchJob,
   SocialPublishingImageAddonsBatchPayload
 > =>
-  createUpdateMutationV2<SocialPublishingImageAddonsBatchJob, SocialPublishingImageAddonsBatchPayload>({
+  useUpdateMutationV2<SocialPublishingImageAddonsBatchJob, SocialPublishingImageAddonsBatchPayload>({
     mutationKey: [...QUERY_KEYS.socialPublishing.imageAddons({ limit: null }), 'batch-start'],
     mutationFn: async (
       payload: SocialPublishingImageAddonsBatchPayload

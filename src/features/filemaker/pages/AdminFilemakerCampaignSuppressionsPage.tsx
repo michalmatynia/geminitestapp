@@ -5,7 +5,7 @@ import { useRouter } from 'nextjs-toploader/app';
 import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { PanelHeader } from '@/shared/ui/templates.public';
 import { Button, useToast } from '@/shared/ui/primitives.public';
@@ -63,7 +63,7 @@ function useUnsuppressHandler(
 } {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const removeSuppressionMutation = createMutationV2<void, string>({
+  const removeSuppressionMutation = useMutationV2<void, string>({
     mutationKey: ['filemaker', 'campaign-suppressions', 'remove'],
     mutationFn: async (emailAddress) => removeSuppressionEntry(emailAddress),
     meta: {
@@ -109,7 +109,7 @@ function useColdPruneHandler(settingsStore: SettingsStore): {
   isPruningCold: boolean;
 } {
   const { toast } = useToast();
-  const pruneColdMutation = createMutationV2<ColdPruneResponse, void>({
+  const pruneColdMutation = useMutationV2<ColdPruneResponse, void>({
     mutationKey: ['filemaker', 'campaign-suppressions', 'prune-cold'],
     mutationFn: async () => pruneColdSuppressionEntries(),
     meta: {

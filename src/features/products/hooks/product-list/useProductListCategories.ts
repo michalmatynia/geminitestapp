@@ -22,7 +22,7 @@ import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID } from '@/shared/lib/products/default-category-tree';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -142,7 +142,7 @@ export function useProductListCategories({
     [categoryLookupCatalogIds]
   );
 
-  const categoryBatchQuery = createListQueryV2<ProductCategory, Record<string, ProductCategory[]>>({
+  const categoryBatchQuery = useListQueryV2<ProductCategory, Record<string, ProductCategory[]>>({
     queryKey: batchCategoryQueryKey,
     queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> =>
       fetchProductCategoryBatch(categoryLookupCatalogIds, signal),

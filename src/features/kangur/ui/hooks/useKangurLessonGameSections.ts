@@ -11,7 +11,7 @@ import {
 } from '@/shared/contracts/kangur-lesson-game-sections';
 import type { KangurLessonComponentId } from '@/shared/contracts/kangur-lesson-constants';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LessonGameSectionsQueryOptions = {
@@ -76,7 +76,7 @@ const fetchLessonGameSections = async (
 const createLessonGameSectionsQuery = (
   options?: LessonGameSectionsQueryOptions
 ): ListQuery<KangurLessonGameSection, KangurLessonGameSection[]> =>
-  createListQueryV2<KangurLessonGameSection, KangurLessonGameSection[]>({
+  useListQueryV2<KangurLessonGameSection, KangurLessonGameSection[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonGameSections(),
       resolveLessonGameSectionsQueryFilters(options),
@@ -115,7 +115,7 @@ export const useReplaceKangurLessonGameSections = (): MutationResult<
   KangurLessonGameSection[],
   KangurLessonGameSectionsReplacePayload
 > =>
-  createUpdateMutationV2<
+  useUpdateMutationV2<
     KangurLessonGameSection[],
     KangurLessonGameSectionsReplacePayload
   >({

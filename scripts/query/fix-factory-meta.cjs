@@ -9,20 +9,20 @@ const EXTENSIONS = new Set(['.ts', '.tsx']);
 const IGNORED_DIRS = new Set(['node_modules', '.next', '__tests__', 'dist']);
 const IGNORED_FILES = new Set(['src/shared/lib/query-factories-v2.ts']);
 const FACTORY_CALLS = new Set([
-  'createListQueryV2',
-  'createSingleQueryV2',
-  'createPaginatedListQueryV2',
-  'createInfiniteQueryV2',
-  'createMultiQueryV2',
-  'createSuspenseQueryV2',
-  'createSuspenseInfiniteQueryV2',
-  'createSuspenseMultiQueryV2',
-  'createMutationV2',
-  'createCreateMutationV2',
-  'createUpdateMutationV2',
-  'createDeleteMutationV2',
-  'createSaveMutationV2',
-  'createOptimisticMutationV2',
+  'useListQueryV2',
+  'usePaginatedListQueryV2',
+  'useInfiniteQueryV2',
+  'useMultiQueryV2',
+  'useSuspenseQueryV2',
+  'useSuspenseInfiniteQueryV2',
+  'useSuspenseMultiQueryV2',
+  'useMutationV2',
+  'useCreateMutationV2',
+  'useUpdateMutationV2',
+  'useDeleteMutationV2',
+  'useSaveMutationV2',
+  'useOptimisticMutationV2',
+  'useSingleQueryV2',
   'useEnsureQueryDataV2',
   'usePrefetchQueryV2',
   'useFetchQueryV2',
@@ -302,7 +302,7 @@ const fixFactoryMetaSourceText = (rawText, relFilePath, scriptKind = getScriptKi
         const configArgIndex = MANUAL_HELPER_CALLS.has(callName) ? 1 : 0;
         const configArg = node.arguments[configArgIndex];
         if (configArg && ts.isObjectLiteralExpression(configArg)) {
-          if (callName === 'createMultiQueryV2' || callName === 'createSuspenseMultiQueryV2') {
+          if (callName === 'useMultiQueryV2' || callName === 'useSuspenseMultiQueryV2') {
             const topLevelQueryKeyProperty = findObjectProperty(configArg, 'queryKey');
             if (topLevelQueryKeyProperty) {
               edits.push(createPropertyRemovalEdit(topLevelQueryKeyProperty, text));

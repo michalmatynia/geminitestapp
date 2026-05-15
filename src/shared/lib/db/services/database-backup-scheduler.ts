@@ -47,6 +47,15 @@ export { evaluateBackupTargetSchedule };
  * @param checkedAt - ISO string timestamp of the current tick for metadata updates.
  * @returns Result object containing the job ID if successful, updated target status, and a summary result.
  */
+/**
+ * processBackupTarget: Evaluates a single backup target's schedule and enqueues a job if due.
+ * 
+ * @param dbType - The database type (e.g., 'mongodb').
+ * @param currentTarget - The schedule configuration for this target.
+ * @param now - Current execution time for evaluation.
+ * @param checkedAt - ISO string timestamp of the current tick for metadata updates.
+ * @returns Result object containing the new job ID, updated schedule status, and internal results.
+ */
 async function processBackupTarget(
   dbType: DatabaseEngineBackupType,
   currentTarget: DatabaseEngineBackupTargetSchedule,
@@ -184,4 +193,73 @@ export async function getDatabaseBackupSchedulerStatus(
     lastCheckedAt: schedule.lastCheckedAt,
     targets,
   };
+}
+
+/**
+ * updateBackupTargetStatus: Persists an update to a specific backup target's state.
+ * 
+ * @param dbType - The database type.
+ * @param patch - Partial updates to the target's schedule configuration.
+ */
+async function updateBackupTargetStatus(
+  dbType: DatabaseEngineBackupType,
+  patch: Partial<DatabaseEngineBackupTargetSchedule>
+): Promise<void> {
+  const schedule = await getDatabaseEngineBackupSchedule();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const current = (schedule as any)[dbType] as DatabaseEngineBackupTargetSchedule | undefined;
+  if (!current) return;
+  const updated = { ...current, ...patch };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await persistBackupSchedule({ ...schedule, [dbType]: updated } as any);
+}
+
+export async function markDatabaseBackupJobQueued(
+  dbType: DatabaseEngineBackupType,
+  jobId: string
+): Promise<void> {
+  await updateBackupTargetStatus(dbType, { lastStatus: 'queued', lastJobId: jobId });
+}
+
+/**
+ * markDatabaseBackupJobRunning: Transitions the target's backup status to 'running'.
+ */
+export async function markDatabaseBackupJobRunning(
+  dbType: DatabaseEngineBackupType,
+  jobId: string
+): Promise<void> {
+  await updateBackupTargetStatus(dbType, { lastStatus: 'running', lastJobId: jobId });
+}
+
+/**
+ * markDatabaseBackupJobSucceeded: Transitions the target's backup status to 'success' 
+ * and clears any previous error states.
+ */
+export async function markDatabaseBackupJobSucceeded(
+  dbType: DatabaseEngineBackupType,
+  jobId: string
+): Promise<void> {
+  await updateBackupTargetStatus(dbType, {
+    lastStatus: 'success',
+    lastRunAt: new Date().toISOString(),
+    lastJobId: jobId,
+    lastError: null,
+  });
+}
+
+/**
+ * markDatabaseBackupJobFailed: Transitions the target's backup status to 'failed' 
+ * and records the error message.
+ */
+export async function markDatabaseBackupJobFailed(
+  dbType: DatabaseEngineBackupType,
+  jobId: string,
+  message: string
+): Promise<void> {
+  await updateBackupTargetStatus(dbType, {
+    lastStatus: 'failed',
+    lastRunAt: new Date().toISOString(),
+    lastJobId: jobId,
+    lastError: message,
+  });
 }

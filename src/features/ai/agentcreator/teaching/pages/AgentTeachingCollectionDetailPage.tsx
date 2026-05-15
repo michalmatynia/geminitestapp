@@ -3,7 +3,10 @@
 import { Trash2, BookOpen } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingEmbeddingDocumentListItem,
+} from '@/shared/contracts/agent-teaching';
 import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
 import { Button, Badge } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel, ConfirmModal, PanelHeader } from '@/shared/ui/templates.public';
@@ -127,12 +130,15 @@ function DocumentActions({
 
 type CollectionDetailState = ReturnType<typeof useAgentTeachingCollectionDetailState>;
 
-const getCollectionName = (collection: CollectionDetailState['collection']): string =>
-  collection.name;
+const getCollectionName = (collection: AgentTeachingEmbeddingCollectionRecord | null): string =>
+  collection?.name ?? 'Loading...';
 
 const buildCollectionActions = (
-  collection: CollectionDetailState['collection']
+  collection: AgentTeachingEmbeddingCollectionRecord | null
 ): React.ComponentProps<typeof PanelHeader>['actions'] => {
+  if (collection === null) {
+    return [];
+  }
   return [
     {
       key: 'model',

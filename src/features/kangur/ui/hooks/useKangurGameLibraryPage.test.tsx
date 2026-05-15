@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultKangurGames, createKangurGameLibraryPageDataFromGames } from '@/features/kangur/games';
 import { useKangurGameLibraryPage } from '@/features/kangur/ui/hooks/useKangurGameLibraryPage';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
 
 const { apiGetMock, ApiErrorMock } = vi.hoisted(() => {
   class MockApiError extends Error {
@@ -24,7 +24,7 @@ const { apiGetMock, ApiErrorMock } = vi.hoisted(() => {
 });
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
+  useListQueryV2: useListQueryV2Mock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 describe('useKangurGameLibraryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
   });
 
   it('configures the query without placeholder library data', async () => {
@@ -47,7 +47,7 @@ describe('useKangurGameLibraryPage', () => {
     apiGetMock.mockResolvedValue(payload);
 
     const { result } = renderHook(() => useKangurGameLibraryPage({ subject: 'maths' }));
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.placeholderData).toBeUndefined();
@@ -58,7 +58,7 @@ describe('useKangurGameLibraryPage', () => {
     apiGetMock.mockRejectedValue(new ApiErrorMock('Not Found', 404));
 
     renderHook(() => useKangurGameLibraryPage());
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     await expect(config.queryFn()).rejects.toBeInstanceOf(ApiErrorMock);
     expect(config.placeholderData).toBeUndefined();
@@ -72,7 +72,7 @@ describe('useKangurGameLibraryPage', () => {
     apiGetMock.mockResolvedValue(payload);
 
     renderHook(() => useKangurGameLibraryPage({ gameId: 'division_groups' }));
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(config.queryKey).toEqual([
       'kangur',
@@ -98,7 +98,7 @@ describe('useKangurGameLibraryPage', () => {
     apiGetMock.mockResolvedValue(payload);
 
     renderHook(() => useKangurGameLibraryPage({ launchableOnly: true }));
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(config.queryKey).toEqual([
       'kangur',

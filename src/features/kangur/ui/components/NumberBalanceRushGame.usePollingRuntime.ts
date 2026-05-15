@@ -10,7 +10,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { UseNumberBalanceRushPollingRuntimeProps } from './NumberBalanceRushGame.types';
 import {
   resolveNumberBalanceRushPlayerSnapshot,
@@ -35,7 +35,7 @@ const useLoadNumberBalanceMatchStateMutation = (): MutationResult<
   NumberBalanceMatchStateSnapshotResponse,
   LoadNumberBalanceMatchStateVariables
 > =>
-  createMutationV2<
+  useMutationV2<
     NumberBalanceMatchStateSnapshotResponse,
     LoadNumberBalanceMatchStateVariables
   >({
@@ -43,7 +43,7 @@ const useLoadNumberBalanceMatchStateMutation = (): MutationResult<
     mutationFn: loadNumberBalanceMatchState,
     meta: {
       source: 'kangur.ui.NumberBalanceRushGame.pollState',
-      operation: 'polling',
+      operation: 'action',
       resource: 'kangur.number-balance.match',
       domain: 'kangur',
       description: 'Polls the latest number balance match state.',

@@ -4,7 +4,7 @@ import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 export type RowSelectionState = Record<string, boolean>;
 export type SetStateAction<TState> = TState | ((previousState: TState) => TState);
@@ -53,7 +53,7 @@ const useCachedSelectionState = <TState,>(
   initialData: TState
 ): [TState, (action: SetStateAction<TState>) => void] => {
   const queryClient = useQueryClient();
-  const { data = initialData } = createSingleQueryV2<TState>({
+  const { data = initialData } = useSingleQueryV2<TState>({
     queryKey,
     queryFn: () => Promise.resolve(initialData),
     initialData,

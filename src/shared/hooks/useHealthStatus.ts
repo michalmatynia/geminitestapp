@@ -12,7 +12,7 @@
 
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 interface HealthStatus {
@@ -20,7 +20,7 @@ interface HealthStatus {
 }
 
 export function useHealthStatus(): SingleQuery<HealthStatus> {
-  return createSingleQueryV2<HealthStatus>({
+  return useSingleQueryV2<HealthStatus>({
     id: 'health-status',
     queryKey: QUERY_KEYS.health.status(),
     queryFn: async (): Promise<HealthStatus> => await api.get<HealthStatus>('/api/health'),

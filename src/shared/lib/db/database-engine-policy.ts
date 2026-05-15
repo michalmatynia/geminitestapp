@@ -1,12 +1,19 @@
 /**
  * Database Engine Policy
  * 
- * Central manager for Database Engine policies, service routing, and backup schedules.
- * This module handles:
- * - Retrieving and parsing global database engine policies.
- * - Managing service-to-provider and collection-to-provider routing maps.
- * - Providing normalized backup schedules and operational controls.
- * - Caching of all database engine configurations with configurable TTLs.
+ * Central management service for the Database Engine, providing dynamic runtime
+ * configuration for database access, service routing, and maintenance policies.
+ * 
+ * Architecture:
+ * - Policy Definitions: Governs operational constraints (e.g., routing strictness, 
+ *   automatic migration/backfill allowances).
+ * - Multi-tenant Routing: Manages mappings for both service-level (e.g., 'auth', 'cms') 
+ *   and collection-level routing, allowing the system to direct traffic between 
+ *   different providers (MongoDB or Redis).
+ * - Caching: Leverages `SafeDatabaseCache` to store configurations fetched from the 
+ *   'settings' MongoDB collection, minimizing database pressure during frequent policy checks.
+ * - Resilience: Implements observability-instrumented error reporting, ensuring 
+ *   that failures in configuration loading or parsing are logged for system monitoring.
  */
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -101,7 +108,10 @@ const isValidServiceRoute = (value: string): value is DatabaseEngineServiceRoute
   value === 'integrations' ||
   value === 'cms';
 
-/** Parses a raw value into a plain object Record from JSON. */
+/** 
+ * Safely parses raw configuration settings from the database into a plain object.
+ * Returns null if the provided input is invalid or not a valid JSON-serializable object.
+ */
 const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
   if (!raw) return null;
   const text = typeof raw === 'string' ? raw : JSON.stringify(raw);
@@ -121,7 +131,10 @@ const parseJsonObject = (raw: unknown): Record<string, unknown> | null => {
   }
 };
 
-/** Normalizes raw input into a DatabaseEnginePolicy. */
+/** 
+ * Normalizes raw settings data into a strict `DatabaseEnginePolicy` object.
+ * Enforces default settings for missing or malformed configuration fields.
+ */
 const parsePolicy = (raw: unknown): DatabaseEnginePolicy => {
   const parsed = parseJsonObject(raw);
   if (!parsed) return { ...DEFAULT_DATABASE_ENGINE_POLICY };
@@ -139,7 +152,10 @@ const parsePolicy = (raw: unknown): DatabaseEnginePolicy => {
   };
 };
 
-/** Parses raw input into a service routing map. */
+/** 
+ * Parses raw settings into a mapping of services to specific database providers.
+ * Filters out invalid services or provider types to maintain configuration integrity.
+ */
 const parseServiceRouteMap = (
   raw: unknown
 ): Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> => {
@@ -155,7 +171,10 @@ const parseServiceRouteMap = (
   return result;
 };
 
-/** Parses raw input into a collection routing map. */
+/** 
+ * Parses raw settings into a mapping of collections to specific database providers.
+ * Sanitizes keys/values to match the expected schema.
+ */
 const parseCollectionRouteMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   const parsed = parseJsonObject(raw);
   if (!parsed) return {};
@@ -169,15 +188,18 @@ const parseCollectionRouteMap = (raw: unknown): Record<string, DatabaseEnginePro
   return result;
 };
 
-/** Parses raw input into a backup schedule. */
+/** Parses raw settings into a `DatabaseEngineBackupSchedule` definition. */
 const parseBackupSchedule = (raw: unknown): DatabaseEngineBackupSchedule =>
   normalizeDatabaseEngineBackupSchedule(raw);
 
-/** Parses raw input into operation controls. */
+/** Parses raw settings into `DatabaseEngineOperationControls` definitions. */
 const parseOperationControls = (raw: unknown): DatabaseEngineOperationControls =>
   normalizeDatabaseEngineOperationControls(raw);
 
-/** Directly reads a settings value from MongoDB. */
+/**
+ * Low-level utility for reading a string setting from the MongoDB settings store.
+ * Ensures the database source is properly initialized before query execution.
+ */
 const readMongoSetting = async (key: string): Promise<string | null> => {
   await applyActiveMongoSourceEnv();
   if (!process.env['MONGODB_URI']) return null;
@@ -199,11 +221,16 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   }
 };
 
-/** Reads a setting value, currently defaulting to MongoDB settings. */
+/** Resolves a settings value. */
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
 /**
- * Retrieves the global Database Engine policy.
+ * Retrieves the active `DatabaseEnginePolicy` from the cached store.
+ */
+/**
+ * getDatabaseEnginePolicy: Retrieves the global Database Engine policy configuration, 
+ * using cached settings from the database where possible.
+ * 
  * @returns The active DatabaseEnginePolicy.
  */
 export async function getDatabaseEnginePolicy(): Promise<DatabaseEnginePolicy> {
@@ -214,8 +241,7 @@ export async function getDatabaseEnginePolicy(): Promise<DatabaseEnginePolicy> {
 }
 
 /**
- * Retrieves the service-to-provider routing map.
- * @returns A partial record of service routes to providers.
+ * Retrieves the current service-level routing map from the cached store.
  */
 export async function getDatabaseEngineServiceRouteMap(): Promise<
   Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
@@ -227,8 +253,7 @@ export async function getDatabaseEngineServiceRouteMap(): Promise<
 }
 
 /**
- * Retrieves the collection-to-provider routing map.
- * @returns A record of collection names to providers.
+ * Retrieves the current collection-level routing map from the cached store.
  */
 export async function getDatabaseEngineCollectionRouteMap(): Promise<
   Record<string, DatabaseEngineProvider>
@@ -240,8 +265,12 @@ export async function getDatabaseEngineCollectionRouteMap(): Promise<
 }
 
 /**
- * Retrieves the normalized backup schedule.
- * @returns The DatabaseEngineBackupSchedule.
+ * Retrieves the current backup schedule from the cached store.
+ */
+/**
+ * getDatabaseEngineBackupSchedule: Retrieves the configured backup schedule for all targets.
+ * 
+ * @returns The DatabaseEngineBackupSchedule record.
  */
 export async function getDatabaseEngineBackupSchedule(): Promise<DatabaseEngineBackupSchedule> {
   return backupScheduleCache.get(async () => {
@@ -251,8 +280,12 @@ export async function getDatabaseEngineBackupSchedule(): Promise<DatabaseEngineB
 }
 
 /**
- * Retrieves the normalized operation controls.
- * @returns The DatabaseEngineOperationControls.
+ * Retrieves the current operational controls from the cached store.
+ */
+/**
+ * getDatabaseEngineOperationControls: Retrieves the current manual operation control flags.
+ * 
+ * @returns The DatabaseEngineOperationControls configuration.
  */
 export async function getDatabaseEngineOperationControls(): Promise<DatabaseEngineOperationControls> {
   return operationControlsCache.get(async () => {
@@ -263,32 +296,33 @@ export async function getDatabaseEngineOperationControls(): Promise<DatabaseEngi
 }
 
 /**
- * Resolves the configured provider for a specific service route.
+ * Resolves the configured provider for a given service (e.g., 'auth' -> 'mongodb').
+ * Returns null if no explicit route exists, leaving resolution to the caller.
+ */
+/**
+ * getDatabaseEngineServiceProvider: Resolves the database provider (e.g., 'mongodb' or 'redis')
+ * for a specific engine service, considering routing maps and fallback policies.
  * 
- * @param service - The service route (e.g., 'auth', 'cms').
- * @returns The resolved provider or null if no explicit route is configured.
+ * @param service - The service route identifier (e.g., 'auth', 'cms').
+ * @returns The assigned DatabaseEngineProvider, or undefined if no specific route exists.
  */
 export async function getDatabaseEngineServiceProvider(
   service: DatabaseEngineServiceRoute
-): Promise<DatabaseEngineProvider | null> {
+): Promise<DatabaseEngineProvider | undefined> {
   const map = await getDatabaseEngineServiceRouteMap();
   return map[service] ?? null;
 }
 
-/**
- * Checks if a primary database provider (like MongoDB) is correctly configured in the environment.
- * 
- * @param provider - The primary provider to check.
- * @returns True if configured.
- */
+/** Checks if a primary database provider is correctly configured in the environment. */
 export const isPrimaryProviderConfigured = (provider: DatabaseEnginePrimaryProvider): boolean =>
   provider === 'mongodb' ? Boolean(process.env['MONGODB_URI']) : false;
 
-/** Checks if the Redis provider is configured in the environment. */
+/** Checks if the Redis provider is available in the environment. */
 export const isRedisProviderConfigured = (): boolean => Boolean(process.env['REDIS_URL']);
 
 /**
- * Invalidates all caches for database engine policies and routes.
+ * Forces invalidation of all cached database engine configurations. 
+ * Use this after administrative updates to database settings.
  */
 export const invalidateDatabaseEnginePolicyCache = (): void => {
   policyCache.invalidate();

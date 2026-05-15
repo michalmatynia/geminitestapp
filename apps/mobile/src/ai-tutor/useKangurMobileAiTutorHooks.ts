@@ -1,5 +1,4 @@
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   KangurAiTutorChatResponse,
   KangurAiTutorConversationContext,
@@ -7,6 +6,10 @@ import type {
 } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorContent } from '../../../../src/shared/contracts/kangur-ai-tutor-content';
 import type { KangurAiTutorNativeGuideStore } from '../../../../src/shared/contracts/kangur-ai-tutor-native-guide';
+import {
+  useKangurMobileMutationV2,
+  useKangurMobileQueryV2,
+} from '../query/kangurMobileQueryFactories';
 
 export type KangurMobileAiTutorQuickAction = {
   id: string;
@@ -106,25 +109,59 @@ export const useKangurMobileAiTutorQueries = ({
   locale: 'de' | 'en' | 'pl';
   userId: string;
 }): KangurMobileAiTutorQueries => {
-  const contentQuery = useQuery<KangurAiTutorContent, Error>({
+  const contentQueryKey = ['kangur-mobile', 'ai-tutor', 'content', apiBaseUrl, locale] as const;
+  const nativeGuideQueryKey = [
+    'kangur-mobile',
+    'ai-tutor',
+    'native-guide',
+    apiBaseUrl,
+    locale,
+  ] as const;
+  const usageQueryKey = ['kangur-mobile', 'ai-tutor', 'usage', apiBaseUrl, userId] as const;
+
+  const contentQuery = useKangurMobileQueryV2<KangurAiTutorContent>({
     enabled: canLoadTutorCatalog,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'content', apiBaseUrl, locale],
+    queryKey: contentQueryKey,
     queryFn: () => fetchTutorContent(apiBaseUrl, locale),
     staleTime: 300_000,
+    meta: {
+      source: 'kangur.mobile.ai-tutor.content',
+      operation: 'detail',
+      resource: 'kangur.mobile.ai-tutor.content',
+      queryKey: contentQueryKey,
+      description: 'Loads Kangur mobile AI tutor content.',
+      tags: ['kangur-mobile', 'ai-tutor', 'content'],
+    },
   });
 
-  const nativeGuideQuery = useQuery<KangurAiTutorNativeGuideStore, Error>({
+  const nativeGuideQuery = useKangurMobileQueryV2<KangurAiTutorNativeGuideStore>({
     enabled: canLoadTutorCatalog,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'native-guide', apiBaseUrl, locale],
+    queryKey: nativeGuideQueryKey,
     queryFn: () => fetchTutorNativeGuide(apiBaseUrl, locale),
     staleTime: 300_000,
+    meta: {
+      source: 'kangur.mobile.ai-tutor.native-guide',
+      operation: 'detail',
+      resource: 'kangur.mobile.ai-tutor.native-guide',
+      queryKey: nativeGuideQueryKey,
+      description: 'Loads Kangur mobile AI tutor native guide.',
+      tags: ['kangur-mobile', 'ai-tutor', 'native-guide'],
+    },
   });
 
-  const usageQuery = useQuery<TutorUsageQueryResult, Error>({
+  const usageQuery = useKangurMobileQueryV2<TutorUsageQueryResult>({
     enabled: enabled && isAuthenticated && !isRestoringAuth,
-    queryKey: ['kangur-mobile', 'ai-tutor', 'usage', apiBaseUrl, userId],
+    queryKey: usageQueryKey,
     queryFn: () => fetchTutorUsage(apiBaseUrl, locale),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.ai-tutor.usage',
+      operation: 'detail',
+      resource: 'kangur.mobile.ai-tutor.usage',
+      queryKey: usageQueryKey,
+      description: 'Loads Kangur mobile AI tutor usage summary.',
+      tags: ['kangur-mobile', 'ai-tutor', 'usage'],
+    },
   });
 
   return { contentQuery, nativeGuideQuery, usageQuery };
@@ -139,7 +176,9 @@ export const useKangurMobileAiTutorMutation = ({
   context: KangurAiTutorConversationContext;
   locale: 'de' | 'en' | 'pl';
 }): UseMutationResult<KangurAiTutorChatResponse, Error, KangurMobileAiTutorQuickAction> => {
-  return useMutation<KangurAiTutorChatResponse, Error, KangurMobileAiTutorQuickAction>({
+  const mutationKey = ['kangur-mobile', 'ai-tutor', 'chat', apiBaseUrl, locale] as const;
+  return useKangurMobileMutationV2<KangurAiTutorChatResponse, KangurMobileAiTutorQuickAction>({
+    mutationKey,
     mutationFn: async (
       action: KangurMobileAiTutorQuickAction,
     ): Promise<KangurAiTutorChatResponse> => {
@@ -167,6 +206,14 @@ export const useKangurMobileAiTutorMutation = ({
 
       const data = (await response.json()) as unknown;
       return data as KangurAiTutorChatResponse;
+    },
+    meta: {
+      source: 'kangur.mobile.ai-tutor.chat',
+      operation: 'action',
+      resource: 'kangur.mobile.ai-tutor.chat',
+      mutationKey,
+      description: 'Sends Kangur mobile AI tutor chat prompts.',
+      tags: ['kangur-mobile', 'ai-tutor', 'chat'],
     },
   });
 };

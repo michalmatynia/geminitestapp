@@ -9,13 +9,14 @@ import {
   type KangurLeaderboardUserFilter,
 } from '@kangur/core';
 import { type KangurScore } from '@kangur/contracts/kangur';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { type KangurAuthSession } from '@kangur/platform';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 type UseKangurMobileLeaderboardOptions = {
   enabled?: boolean;
@@ -42,12 +43,21 @@ const LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'] as const;
 
 function useLeaderboardScoresQuery(enabled: boolean): UseQueryResult<KangurScore[], Error> {
   const { apiClient, apiBaseUrl } = useKangurMobileRuntime();
-  return useQuery({
+  const queryKey = ['kangur-mobile', 'leaderboard', apiBaseUrl] as const;
+  return useKangurMobileQueryV2({
     enabled,
-    queryKey: ['kangur-mobile', 'leaderboard', apiBaseUrl],
+    queryKey,
     queryFn: async () =>
       apiClient.listScores({ sort: '-score', limit: 100 }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.leaderboard.scores',
+      operation: 'list',
+      resource: 'kangur.mobile.leaderboard.scores',
+      queryKey,
+      description: 'Loads Kangur mobile leaderboard scores.',
+      tags: ['kangur-mobile', 'leaderboard', 'scores'],
+    },
   });
 }
 

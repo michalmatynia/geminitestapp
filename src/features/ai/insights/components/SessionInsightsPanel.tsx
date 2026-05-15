@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button, Input } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 type SessionInsightResponse = {
   insight: string;
@@ -23,7 +23,7 @@ export function SessionInsightsPanel(): React.JSX.Element {
   const [sessionId, setSessionId] = useState('');
   const [insight, setInsight] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const generateInsightMutation = createMutationV2<SessionInsightResponse, string>({
+  const generateInsightMutation = useMutationV2<SessionInsightResponse, string>({
     mutationKey: ['ai-insights', 'session', 'generate'],
     mutationFn: async (sessionIdInput) => generateSessionInsight(sessionIdInput),
     meta: {

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT,
   KANGUR_DUELS_LOBBY_CHAT_MAX_MESSAGE_LENGTH,
@@ -13,6 +13,7 @@ import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { resolveMobileDuelErrorMessage } from './mobileDuelErrorMessages';
 import { type DuelApiClient } from './useKangurMobileDuelsLobbyQueries';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 export interface UseKangurMobileDuelLobbyChatResult {
   error: string | null;
@@ -43,7 +44,7 @@ function getChatQueryConfig(
   isAuthenticated: boolean,
   queryKey: readonly unknown[],
   apiClient: DuelApiClient
-): UseQueryOptions<KangurDuelLobbyChatListResponse, Error> {
+) {
   return {
     enabled: isAuthenticated,
     queryKey,
@@ -51,6 +52,14 @@ function getChatQueryConfig(
       await apiClient.listDuelLobbyChat({ limit: KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT }, { cache: 'no-store' }),
     refetchInterval: 4_000,
     staleTime: 8_000,
+    meta: {
+      source: 'kangur.mobile.duels.lobby-chat',
+      operation: 'list' as const,
+      resource: 'kangur.mobile.duels.lobby-chat',
+      queryKey,
+      description: 'Loads Kangur mobile duel lobby chat messages.',
+      tags: ['kangur-mobile', 'duels', 'chat'],
+    },
   };
 }
 
@@ -75,7 +84,7 @@ export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResu
     [apiBaseUrl, user]
   );
 
-  const chatQuery = useQuery<KangurDuelLobbyChatListResponse, Error>(
+  const chatQuery = useKangurMobileQueryV2<KangurDuelLobbyChatListResponse>(
     getChatQueryConfig(isAuthenticated, queryKey, typedApiClient)
   );
 

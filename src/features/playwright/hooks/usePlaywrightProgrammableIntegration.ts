@@ -9,9 +9,9 @@ import { integrationSchema } from '@/shared/contracts/integrations/base';
 import { programmableIntegrationConnectionSchema } from '@/shared/contracts/integrations/connections';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createMutationV2,
-  createSingleQueryV2,
+  useListQueryV2,
+  useMutationV2,
+  useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 
@@ -27,7 +27,7 @@ export function usePlaywrightProgrammableIntegration(options?: {
   programmableIntegration: Integration | null;
 } {
   const queryKey = playwrightKeys.programmableIntegration();
-  const integrationQuery = createSingleQueryV2<Integration | null>({
+  const integrationQuery = useSingleQueryV2<Integration | null>({
     id: 'playwright-programmable',
     queryKey,
     queryFn: async (): Promise<Integration | null> => {
@@ -57,7 +57,7 @@ export function usePlaywrightProgrammableConnections(options?: {
 }): ListQuery<ProgrammableIntegrationConnection> {
   const queryKey = playwrightKeys.programmableConnections();
 
-  return createListQueryV2<ProgrammableIntegrationConnection>({
+  return useListQueryV2<ProgrammableIntegrationConnection>({
     queryKey,
     queryFn: async (): Promise<ProgrammableIntegrationConnection[]> => {
       const data = await api.get<ProgrammableIntegrationConnection[]>(
@@ -84,7 +84,7 @@ export function useUpsertPlaywrightProgrammableConnection(): MutationResult<
 > {
   const mutationKey = playwrightKeys.programmableConnections();
 
-  return createMutationV2<
+  return useMutationV2<
     ProgrammableIntegrationConnection,
     UpsertPlaywrightProgrammableConnectionVariables
   >({

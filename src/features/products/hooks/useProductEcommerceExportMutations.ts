@@ -6,14 +6,14 @@ import type {
 } from '@/shared/contracts/integrations/ecommerce-export';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useExportProductToEcommerce(): UpdateMutation<
   EcommerceProductExportResponse,
   string
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (productId: string): Promise<EcommerceProductExportResponse> =>
       api.post<EcommerceProductExportResponse>(
         `/api/v2/integrations/products/${productId}/export-to-ecommerce`
@@ -35,7 +35,7 @@ export function useDeleteProductFromEcommerce(): UpdateMutation<
   EcommerceProductDeleteResponse,
   string
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (productId: string): Promise<EcommerceProductDeleteResponse> =>
       api.delete<EcommerceProductDeleteResponse>(
         `/api/v2/integrations/products/${productId}/delete-from-ecommerce`
@@ -57,7 +57,7 @@ export function useBulkExportProductsToEcommerce(): UpdateMutation<
   EcommerceProductBulkExportResponse,
   EcommerceProductBulkExportRequest
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (
       request: EcommerceProductBulkExportRequest
     ): Promise<EcommerceProductBulkExportResponse> =>

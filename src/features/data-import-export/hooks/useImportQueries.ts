@@ -11,12 +11,12 @@ import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createListQueryV2,
-  createMutationV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useMutationV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   importExportKeys,
@@ -33,7 +33,7 @@ export type { CatalogRecord };
 
 export function useIntegrationConnections(): ListQuery<IntegrationWithConnections> {
   const queryKey = integrationKeys.withConnections();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections'),
     meta: {
@@ -49,7 +49,7 @@ export function useIntegrationConnections(): ListQuery<IntegrationWithConnection
 
 export function useCatalogs(): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
     meta: {
@@ -65,7 +65,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
 
 export function useProductParameters(catalogId: string | null): ListQuery<ProductParameter> {
   const queryKey = productMetadataKeys.parameters(catalogId ?? null);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
       if (!catalogId) return [];
@@ -90,7 +90,7 @@ export function useProductSimpleParameters(
   catalogId: string | null
 ): ListQuery<ProductSimpleParameter> {
   const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
       if (!catalogId) return [];
@@ -112,7 +112,7 @@ export function useProductSimpleParameters(
 
 export function useProductCustomFields(): ListQuery<ProductCustomFieldDefinition> {
   const queryKey = productMetadataKeys.customFields();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCustomFieldDefinition[]> =>
       await api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
@@ -134,7 +134,7 @@ export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
   const endpoint = scope === 'import' ? '/api/v2/templates/import' : '/api/v2/templates/export';
   const queryKey = importExportKeys.templates(scope);
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.get<Template[]>(endpoint, { cache: 'no-store' }),
     meta: {
@@ -164,7 +164,7 @@ export function useImportPreference<T>(
   options?: ImportPreferenceOptions<T>
 ): SingleQuery<T> {
   const queryKey = importExportKeys.pref(key);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: key,
     queryKey,
     queryFn: async (): Promise<T> => {
@@ -196,7 +196,7 @@ export function useSavePreferenceMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.preferences();
 
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({
       endpoint,
       data,
@@ -233,7 +233,7 @@ export function useTemplateMutation(
   const endpoint = scope === 'import' ? '/api/v2/templates/import' : '/api/v2/templates/export';
   const mutationKey = importExportKeys.templates(scope);
 
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({
       data,
       isDelete = false,
@@ -263,7 +263,7 @@ export function useInventories(
   enabled: boolean = true
 ): ListQuery<BaseInventory> {
   const queryKey = importExportKeys.inventories(connectionId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
       const normalizedConnectionId = connectionId.trim();
@@ -298,7 +298,7 @@ export function useWarehouses(
   enabled: boolean = true
 ): SingleQuery<BaseImportWarehousesResponse> {
   const queryKey = importExportKeys.warehouses(inventoryId, connectionId, includeAll);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: inventoryId || null,
     queryKey,
     queryFn: () => {
@@ -332,7 +332,7 @@ export function useImportParameterCache(
   enabled: boolean = true
 ): SingleQuery<ImportParameterCacheResponse> {
   const queryKey = importExportKeys.pref('parameter-cache');
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'parameter-cache',
     queryKey,
     queryFn: () =>
@@ -357,7 +357,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.lists();
 
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: async ({
       inventoryId,
       connectionId,
@@ -412,7 +412,7 @@ export function useImportList(
   enabled: boolean = true
 ): SingleQuery<BaseImportListResponse> {
   const queryKey = importExportKeys.importList(inventoryId, params);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: inventoryId || null,
     queryKey,
     queryFn: () => {
@@ -466,7 +466,7 @@ export function useImportMutation(): MutationResult<
   BaseImportRunStartPayload
   > {
   const mutationKey = importExportKeys.lists();
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: (params) => {
       const normalizedConnectionId = params.connectionId.trim();
       if (!normalizedConnectionId) {
@@ -508,7 +508,7 @@ export function useImportRun(
       includeItems: options?.includeItems ?? null,
     })}`
   );
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: runId || null,
     queryKey,
     queryFn: () => {
@@ -549,7 +549,7 @@ export function useResumeImportRunMutation(
   BaseImportRunResumePayload
 > {
   const mutationKey = importExportKeys.run(runId || '__none__');
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (params) =>
       api.post<BaseImportStartResponse>(
         `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}/resume`,
@@ -571,7 +571,7 @@ export function useCancelImportRunMutation(
   runId: string
 ): MutationResult<BaseImportStartResponse, void> {
   const mutationKey = importExportKeys.run(runId || '__none__');
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: () =>
       api.post<BaseImportStartResponse>(
         `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}/cancel`,
@@ -602,7 +602,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.preferences();
 
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async (params: {
       exportActiveTemplateId?: string | null;
       exportInventoryId?: string | null;
@@ -687,7 +687,7 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.preferences();
 
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({
       connectionId,
     }: BaseDefaultConnectionPreferencePayload): Promise<BaseDefaultConnectionPreferenceResponse> => {
@@ -718,7 +718,7 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
 
 export function useClearInventoryMutation(): MutationResult<void, void> {
   const mutationKey = importExportKeys.inventories(undefined);
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: async () => {
       await Promise.all([
         api.post<BaseSampleProductResponse>('/api/v2/integrations/imports/base/sample-product', {

@@ -41,7 +41,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: vi.fn((options: Record<string, unknown>) => {
+  useListQueryV2: vi.fn((options: Record<string, unknown>) => {
     mockState.createListQueryCalls.push(options);
     const resource = (options.meta as { resource?: string } | undefined)?.resource;
     if (resource === 'ai-paths-settings') {
@@ -67,8 +67,8 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
       refetch: vi.fn(),
     };
   }),
-  createMutationV2: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  createDeleteMutationV2: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useMutationV2: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useDeleteMutationV2: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 import { useJobQueueDataLayer } from '../useJobQueueDataLayer';

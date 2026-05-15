@@ -17,7 +17,7 @@ import {
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import { invalidateProductsAndCounts, invalidateImageStudioSlots } from './productCache';
 
@@ -49,7 +49,7 @@ export function useSendToStudioMutation(): MutationResult<
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const queryClient = useQueryClient();
 
-  return createMutationV2<ProductStudioSendResponse, SendToStudioVariables>({
+  return useMutationV2<ProductStudioSendResponse, SendToStudioVariables>({
     meta: {
       source: 'products.hooks.useSendToStudioMutation',
       operation: 'create',
@@ -87,7 +87,7 @@ export function useAcceptVariantMutation(): MutationResult<
 > {
   const queryClient = useQueryClient();
 
-  return createMutationV2<ProductStudioProductResponse, AcceptVariantVariables>({
+  return useMutationV2<ProductStudioProductResponse, AcceptVariantVariables>({
     meta: {
       source: 'products.hooks.useAcceptVariantMutation',
       operation: 'update',
@@ -116,7 +116,7 @@ export function useRotateImageSlotMutation(): MutationResult<
 > {
   const queryClient = useQueryClient();
 
-  return createMutationV2<ProductStudioProductResponse, RotateImageSlotVariables>({
+  return useMutationV2<ProductStudioProductResponse, RotateImageSlotVariables>({
     meta: {
       source: 'products.hooks.useRotateImageSlotMutation',
       operation: 'update',

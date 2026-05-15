@@ -34,8 +34,11 @@ const SESSION_COOKIE_NAMES = [
 ];
 
 /**
- * Check if request has an active session cookie
- * Used to determine if CSRF protection should be enforced
+ * hasSessionCookie: Detects if the request includes an active session cookie.
+ * This is used to conditionally enable CSRF protection only for requests involving authenticated sessions.
+ * 
+ * @param request - The incoming NextRequest.
+ * @returns True if a known session cookie exists in the request.
  */
 export const hasSessionCookie = (request: NextRequest): boolean =>
   SESSION_COOKIE_NAMES.some((name: string) => Boolean(request.cookies.get(name)));
@@ -54,8 +57,10 @@ const toBase64Url = (bytes: Uint8Array): string => {
 };
 
 /**
- * Generate cryptographically secure CSRF token
- * Prefers crypto.randomUUID, falls back to crypto.getRandomValues, then Math.random
+ * generateCsrfToken: Generates a cryptographically secure, URL-safe random string to be used as a CSRF token.
+ * It prioritizes crypto.randomUUID where available for maximum security.
+ * 
+ * @returns A randomly generated token string.
  */
 export const generateCsrfToken = (): string => {
   if (globalThis.crypto?.randomUUID) {
@@ -70,13 +75,19 @@ export const generateCsrfToken = (): string => {
 };
 
 /**
- * Extract CSRF token from request cookies
+ * getCsrfTokenFromRequest: Extracts the CSRF token from the 'csrf-token' cookie.
+ * 
+ * @param request - The incoming NextRequest.
+ * @returns The token string if present, otherwise null.
  */
 export const getCsrfTokenFromRequest = (request: NextRequest): string | null =>
   request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
 
 /**
- * Extract CSRF token from request headers
+ * getCsrfTokenFromHeaders: Extracts the CSRF token from the 'x-csrf-token' header.
+ * 
+ * @param request - The incoming NextRequest.
+ * @returns The token string if present, otherwise null.
  */
 export const getCsrfTokenFromHeaders = (request: NextRequest): string | null =>
   request.headers.get(CSRF_HEADER_NAME) ?? null;

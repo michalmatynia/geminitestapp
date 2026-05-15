@@ -291,7 +291,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     return {
       ok: false,
       conflict: false,
-      error: message,
+      error: `Normalization failed for mutation ${input.mutationId} at revision ${input.expectedRevision}: ${message}`,
     };
   }
   const normalizedMutationId = input.mutationId.trim();
@@ -456,7 +456,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       return {
         ok: false,
         conflict: false,
-        error: message,
+        error: `Persistence failure for detached documents (Mutation: ${input.mutationId}): ${message}`,
       };
     }
     if (!detachedDocumentsResponse.ok) {
@@ -484,7 +484,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       return {
         ok: false,
         conflict: false,
-        error: message,
+        error: `API rejection for detached documents (Mutation: ${input.mutationId}, Status: ${detachedDocumentsResponse.status}): ${message}`,
       };
     }
   }
@@ -570,10 +570,20 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     });
   } catch (error: unknown) {
     logClientError(error);
+    const message = error instanceof Error ? error.message : 'Failed to persist workspace.';
+    logCaseResolverWorkspaceEvent({
+      source: input.source,
+      action: 'persist_failed',
+      durationMs: Date.now() - startedAt,
+      expectedRevision: input.expectedRevision,
+      message,
+      mutationId: input.mutationId,
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
+    });
     return {
       ok: false,
       conflict: false,
-      error: error instanceof Error ? error.message : 'Failed to persist workspace.',
+      error: `API communication failure during persistence for mutation ${input.mutationId} at revision ${input.expectedRevision}: ${message}`,
     };
   }
 

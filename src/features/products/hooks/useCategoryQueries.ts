@@ -1,7 +1,7 @@
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
 import {
@@ -35,7 +35,7 @@ export function useProductCategoriesForCatalogs(
  */
 export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCategoryWithChildren> {
   const queryKey = productSettingsKeys.categoryTree(catalogId ?? null);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (typeof catalogId !== 'string' || catalogId === '') return [];

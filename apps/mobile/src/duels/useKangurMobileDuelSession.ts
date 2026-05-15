@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import type {
   KangurDuelChoice,
   KangurDuelPlayer,
@@ -18,6 +18,7 @@ import { createMobileDuelSpectatorId, resolveCurrentQuestion } from './useKangur
 import { toSessionErrorMessage } from './useKangurMobileDuelSession.errors';
 import { type DuelApiClient } from './useKangurMobileDuelsLobbyQueries';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 const MOBILE_DUEL_SESSION_POLL_MS = 4_000;
 const MOBILE_DUEL_HEARTBEAT_MS = 15_000;
@@ -128,22 +129,38 @@ function useDuelQueries({
   playerQuery: UseQueryResult<KangurDuelStateResponse, Error>;
   spectatorQuery: UseQueryResult<KangurDuelSpectatorStateResponse, Error>;
 } {
-  const playerQuery = useQuery<KangurDuelStateResponse, Error>({
+  const playerQuery = useKangurMobileQueryV2<KangurDuelStateResponse>({
     enabled: hasSessionId && isAuthenticated && !isSpectating,
     queryKey: playerKey,
     queryFn: async (): Promise<KangurDuelStateResponse> =>
       apiClient.getDuelState(normalizedSessionId, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
     staleTime: 2_000,
+    meta: {
+      source: 'kangur.mobile.duels.session.player',
+      operation: 'detail',
+      resource: 'kangur.mobile.duels.session.player',
+      queryKey: playerKey,
+      description: 'Loads Kangur mobile duel player session state.',
+      tags: ['kangur-mobile', 'duels', 'session'],
+    },
   });
 
-  const spectatorQuery = useQuery<KangurDuelSpectatorStateResponse, Error>({
+  const spectatorQuery = useKangurMobileQueryV2<KangurDuelSpectatorStateResponse>({
     enabled: hasSessionId && isSpectating,
     queryKey: spectatorKey,
     queryFn: async (): Promise<KangurDuelSpectatorStateResponse> =>
       apiClient.getDuelSpectatorState(normalizedSessionId, { spectatorId }, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
     staleTime: 2_000,
+    meta: {
+      source: 'kangur.mobile.duels.session.spectator',
+      operation: 'detail',
+      resource: 'kangur.mobile.duels.session.spectator',
+      queryKey: spectatorKey,
+      description: 'Loads Kangur mobile duel spectator session state.',
+      tags: ['kangur-mobile', 'duels', 'session'],
+    },
   });
 
   return { playerQuery, spectatorQuery };

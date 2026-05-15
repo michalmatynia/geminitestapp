@@ -17,7 +17,7 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import {
   useAiPathGraph,
@@ -157,7 +157,7 @@ export function useDatabaseNodeConfigState() {
     [settingsMap.data]
   );
 
-  const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
+  const schemaQuery = useListQueryV2<SchemaData, SchemaData>({
     queryKey: ['ai-paths', 'database', 'schema'] as const,
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema();
@@ -174,7 +174,7 @@ export function useDatabaseNodeConfigState() {
       description: 'Loads database schema.'},
   });
 
-  const schemaSyncMutation = createMutationV2<void, string | undefined>({
+  const schemaSyncMutation = useMutationV2<void, string | undefined>({
     mutationFn: async (_provider) => {
       await dbApi.schema();
     },

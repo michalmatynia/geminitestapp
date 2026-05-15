@@ -4,11 +4,11 @@ import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/
 import type { QueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createListQueryV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { draftKeys } from '@/shared/lib/query-key-exports';
 
@@ -63,7 +63,7 @@ export function useDraftQueries(
 ): ListQuery<ProductDraft> {
   const queryKey = draftListKey(notebookId);
 
-  return createListQueryV2<ProductDraft>({
+  return useListQueryV2<ProductDraft>({
     queryKey,
     queryFn: (context) =>
       api.get<ProductDraft[]>('/api/drafts', {
@@ -89,7 +89,7 @@ export function useDraftQueries(
 export function useDraft(id: string | null): SingleQuery<ProductDraft> {
   const queryKey = draftKeys.detail(id ?? 'none');
 
-  return createSingleQueryV2<ProductDraft>({
+  return useSingleQueryV2<ProductDraft>({
     id,
     queryKey: (draftId) => draftKeys.detail(draftId),
     queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`),
@@ -107,7 +107,7 @@ export function useDraft(id: string | null): SingleQuery<ProductDraft> {
 }
 
 export function useCreateDraftMutation(): MutationResult<ProductDraft, CreateProductDraftInput> {
-  return createCreateMutationV2<ProductDraft, CreateProductDraftInput>({
+  return useCreateMutationV2<ProductDraft, CreateProductDraftInput>({
     mutationFn: (data) => api.post<ProductDraft>('/api/drafts', data),
     meta: {
       source: 'shared.hooks.useCreateDraftMutation',
@@ -128,7 +128,7 @@ export function useUpdateDraftMutation(): MutationResult<
   ProductDraft,
   IdDataDto<UpdateProductDraftInput>
 > {
-  return createUpdateMutationV2<ProductDraft, IdDataDto<UpdateProductDraftInput>>({
+  return useUpdateMutationV2<ProductDraft, IdDataDto<UpdateProductDraftInput>>({
     mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {
       source: 'shared.hooks.useUpdateDraftMutation',
@@ -146,7 +146,7 @@ export function useUpdateDraftMutation(): MutationResult<
 }
 
 export function useDeleteDraftMutation(): MutationResult<void, string> {
-  return createDeleteMutationV2<void, string>({
+  return useDeleteMutationV2<void, string>({
     mutationFn: (id) => api.delete<void>(`/api/drafts/${id}`),
     meta: {
       source: 'shared.hooks.useDeleteDraftMutation',

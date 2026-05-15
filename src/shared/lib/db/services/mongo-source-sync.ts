@@ -382,6 +382,14 @@ const probePreflightEndpoint = async (
   }
 };
 
+/**
+ * inspectApplicationSyncReadiness: Conducts pre-flight checks for a specific application's sync readiness,
+ * including endpoint reachability probes and configuration validation.
+ * 
+ * @param application - The application to inspect.
+ * @param direction - The sync direction being prepared.
+ * @returns An array of error strings if checks fail, or empty if ready.
+ */
 const inspectApplicationSyncReadiness = async (
   application: MongoBackupApplication,
   direction: DatabaseEngineMongoSyncDirection
@@ -434,6 +442,16 @@ const assertAllApplicationsSyncReady = async (
   );
 };
 
+/**
+ * prepareMongoSyncContext: Builds the synchronization context for a given application,
+ * resolving configurations, pre-sync backups, and archive paths.
+ * 
+ * @param application - The application being synced.
+ * @param timestamp - Numeric epoch timestamp to anchor the context.
+ * @param direction - The sync direction.
+ * @returns A fully populated MongoSyncContext object.
+ * @throws {ConfigurationError} If sync pre-conditions aren't met or config is missing.
+ */
 const prepareMongoSyncContext = async (
   application: MongoBackupApplication,
   timestamp: number,
@@ -788,6 +806,17 @@ const runMongoTransfer = async (
   };
 };
 
+/**
+ * syncMongoSources: Coordinates and executes the synchronization of MongoDB data between sources (e.g., local to cloud or vice-versa).
+ * It performs pre-flight readiness checks, acquires a synchronization lock to ensure serial execution,
+ * runs the data transfers, and captures the resulting synchronization snapshot and parity verification.
+ * 
+ * @param direction - The synchronization direction ('local_to_cloud' or 'cloud_to_local').
+ * @param applicationTarget - The specific application target ('all' or a specific app ID).
+ * @returns A summary object representing the synchronization process outcome and verification status.
+ * @throws {ForbiddenError} If synchronization is attempted in a production environment.
+ * @throws {ConfigurationError} If synchronization pre-flight checks fail.
+ */
 export async function syncMongoSources(
   direction: DatabaseEngineMongoSyncDirection,
   applicationTarget: DatabaseEngineManagedMongoApplicationTarget = 'all'

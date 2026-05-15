@@ -12,7 +12,7 @@ import {
 } from '@/features/filemaker/social/client-observability';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { SocialPublishingPost } from '@/shared/contracts/social-publishing-posts';
 
 const MAX_PERSISTED_CONTEXT_SUMMARY_CHARS = 8000;
@@ -151,12 +151,12 @@ const useLoadSocialContextMutation = (): MutationResult<
   LoadSocialContextResponse,
   LoadSocialContextVariables
 > =>
-  createMutationV2<LoadSocialContextResponse, LoadSocialContextVariables>({
+  useMutationV2<LoadSocialContextResponse, LoadSocialContextVariables>({
     mutationKey: ['filemaker', 'social-posts', 'context'],
     mutationFn: fetchSocialContext,
     meta: {
       source: 'features.filemaker.social.admin.workspace.useSocialContext',
-      operation: 'fetch',
+      operation: 'action',
       resource: 'filemaker.social-post.context',
       domain: 'files',
       description: 'Load documentation context for a Filemaker social publishing post.',

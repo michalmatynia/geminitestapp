@@ -3,7 +3,7 @@
 import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
@@ -23,7 +23,7 @@ export function useDependentQueries<T1, T2, T3>(
 } {
   const domain = options?.domain ?? 'global';
 
-  const first = createListQueryV2<T1, T1>({
+  const first = useListQueryV2<T1, T1>({
     queryKey: normalizeQueryKey(firstQuery.queryKey),
     queryFn: firstQuery.queryFn,
     enabled: firstQuery.enabled !== false,
@@ -36,7 +36,7 @@ export function useDependentQueries<T1, T2, T3>(
       description: 'Loads dependent query.'},
   });
 
-  const second = createListQueryV2<T2, T2>({
+  const second = useListQueryV2<T2, T2>({
     queryKey: normalizeQueryKey([...secondQuery.queryKey, first.data]),
     queryFn: () => secondQuery.queryFn(first.data!),
     enabled: Boolean(first.data) && first.isSuccess,
@@ -49,7 +49,7 @@ export function useDependentQueries<T1, T2, T3>(
       description: 'Loads dependent query.'},
   });
 
-  const third = createListQueryV2<T3, T3>({
+  const third = useListQueryV2<T3, T3>({
     queryKey: normalizeQueryKey(
       thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__']
     ),
@@ -100,7 +100,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(
 } {
   const domain = options?.domain ?? 'global';
   const keys = Object.keys(queries) as Array<keyof T>;
-  const queryResults = createMultiQueryV2({
+  const queryResults = useMultiQueryV2({
     queries: keys.map((key) => ({
       queryKey: normalizeQueryKey(queries[key].queryKey),
       queryFn: queries[key].queryFn,
@@ -188,7 +188,7 @@ export function useConditionalQuery<T>(
     return true;
   }, [conditions]);
 
-  return createListQueryV2<T, T>({
+  return useListQueryV2<T, T>({
     queryKey: normalizeQueryKey(queryKey),
     queryFn,
     enabled,

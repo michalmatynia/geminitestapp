@@ -250,6 +250,13 @@ const runMongoBackup = async (params: {
   }
 };
 
+/**
+ * createMongoBackup: Triggers a manual MongoDB backup, validating runtime environments and disk space before execution.
+ * 
+ * @returns A summary object indicating the backup's success, file path, and any associated warnings.
+ * @throws {ForbiddenError} If executed in a production environment.
+ * @throws {OperationFailedError} If disk space is insufficient.
+ */
 export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   assertBackupsAllowed();
   const timestamp = Date.now();
@@ -322,6 +329,12 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   };
 };
 
+/**
+ * createMongoApplicationLocalBackup: Initiates a local database backup for a specific application.
+ * 
+ * @param application - The managed application to backup.
+ * @returns Details about the generated backup archive and logs.
+ */
 export const createMongoApplicationLocalBackup = async (
   application: DatabaseEngineManagedMongoApplication
 ): Promise<DatabaseBackupResult> => {
@@ -347,6 +360,13 @@ export const createMongoApplicationLocalBackup = async (
   };
 };
 
+/**
+ * createMongoManagedBackup: Handles backup operations for a managed MongoDB instance (e.g., cloud-hosted or remote).
+ * 
+ * @param application - The managed application.
+ * @param applicationTarget - The specific target (local or cloud).
+ * @returns Details about the generated backup archive and logs.
+ */
 export const createMongoManagedBackup = async (
   application: DatabaseEngineManagedMongoApplicationTarget = 'all'
 ): Promise<DatabaseBackupResult> => {
@@ -386,6 +406,12 @@ export const createMongoManagedBackup = async (
   };
 };
 
+/**
+ * createMongoSourceBackup: Orchestrates the backup process for a defined MongoDB source (e.g., as part of a sync pre-flight).
+ * 
+ * @param params - Source configuration details including application, source type, URI, database name, and descriptor.
+ * @returns Details about the generated backup archive and logs.
+ */
 export const createMongoSourceBackup = async (params: {
   application?: MongoBackupApplication;
   source: MongoSource;

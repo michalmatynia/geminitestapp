@@ -11,7 +11,7 @@ import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { ApiError } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -108,7 +108,7 @@ export function usePageAiAssistant() {
     ];
   }, [pageAiPrompt, pageAiTask, pageContext]);
 
-  const generatePageAiMutation = createMutationV2<
+  const generatePageAiMutation = useMutationV2<
     { accumulated: string; provider: 'model' | 'agent' },
     {
       messages: ChatMessage[];

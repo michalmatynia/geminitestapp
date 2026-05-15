@@ -8,7 +8,7 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from 'reac
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -318,7 +318,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const [isMongoPersonLoading, setIsMongoPersonLoading] = useState(false);
   const [isMongoPersonSaving, setIsMongoPersonSaving] = useState(false);
   const mongoPersonQueryKey = ['filemaker', 'persons', 'detail', personId] as const;
-  const mongoPersonQuery = createSingleQueryV2<
+  const mongoPersonQuery = useSingleQueryV2<
     MongoFilemakerPersonResponse,
     MongoFilemakerPersonResponse,
     typeof mongoPersonQueryKey
@@ -509,7 +509,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     [updateSetting, toast]
   );
 
-  const mongoPersonSaveMutation = createMutationV2<
+  const mongoPersonSaveMutation = useMutationV2<
     MongoPersonSaveResponse,
     MongoPersonSaveVariables
   >({
@@ -735,7 +735,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     toast,
   ]);
 
-  const mongoPersonEmailExtractionMutation = createMutationV2<
+  const mongoPersonEmailExtractionMutation = useMutationV2<
     MongoPersonEmailExtractionResponse,
     MongoPersonEmailExtractionVariables
   >({
@@ -912,7 +912,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     []
   );
 
-  const linkedRecordUpdateMutation = createMutationV2<
+  const linkedRecordUpdateMutation = useMutationV2<
     LinkedRecordPatchResponse,
     LinkedRecordUpdateVariables
   >({
@@ -939,7 +939,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       errorPresentation: 'toast',
     },
   });
-  const linkedRecordDeleteMutation = createMutationV2<void, LinkedRecordDeleteVariables>({
+  const linkedRecordDeleteMutation = useMutationV2<void, LinkedRecordDeleteVariables>({
     mutationKey: ['filemaker', 'persons', 'linked-records', 'delete'],
     mutationFn: async (variables) => {
       const response = await fetch(

@@ -15,7 +15,7 @@
 import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { createOptimisticMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useOptimisticMutationV2 } from '@/shared/lib/query-factories-v2';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -30,7 +30,7 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
   mutationFn: (variables: TVariables) => Promise<TData>,
   config: OptimisticUpdateConfig<TCacheData, TVariables>
 ): UseMutationResult<TData, TError, TVariables, { previousData: TCacheData | undefined }> {
-  return createOptimisticMutationV2<TData, TVariables, TCacheData>({
+  return useOptimisticMutationV2<TData, TVariables, TCacheData>({
     queryKey: config.queryKey,
     updateFn: config.updateFn,
     revertOnError: config.revertOnError,

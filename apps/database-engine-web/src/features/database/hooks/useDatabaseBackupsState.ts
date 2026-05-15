@@ -56,8 +56,6 @@ const buildRestoreMeta = (payload: DatabaseRestoreResponse): string => {
   return lines.join('\n');
 };
 
-const readPayload = <T,>(result: { payload: unknown }): T => result.payload as T;
-
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, max-lines-per-function
 export function useDatabaseBackupsState() {
   const router = useRouter();
@@ -224,7 +222,7 @@ export function useDatabaseBackupsState() {
         truncateBeforeRestore: truncate,
       });
       const { ok } = result;
-      const payload = readPayload<DatabaseRestoreResponse>(result);
+      const payload = result.payload as DatabaseRestoreResponse;
       const log = String(payload.log ?? 'No log available.');
 
       if (!ok) {
@@ -263,7 +261,7 @@ ${String(error)}`);
     try {
       const result = await createBackup.mutateAsync(activeTab);
       const { ok } = result;
-      const payload = readPayload<DatabaseBackupResponse>(result);
+      const payload = result.payload as DatabaseBackupResponse;
       const log = String(payload.log ?? 'No log available.');
 
       if (!ok) {

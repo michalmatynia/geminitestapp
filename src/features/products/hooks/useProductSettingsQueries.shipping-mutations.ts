@@ -4,7 +4,7 @@ import type {
   ProductShippingGroupUpdateInput,
 } from '@/shared/contracts/products/shipping-groups';
 import type { SaveMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
-import { createDeleteMutationV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateCatalogScopedData } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
@@ -50,7 +50,7 @@ export function useSaveShippingGroupMutation(): SaveMutation<
   SaveShippingGroupPayload
 > {
   const mutationKey = productSettingsKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: SaveShippingGroupPayload) => {
       if (hasPersistedId(id)) {
         return api.updateShippingGroup(id, toShippingGroupUpdatePayload(data));
@@ -79,7 +79,7 @@ export function useDeleteShippingGroupMutation(): UpdateMutation<
   { id: string; catalogId: string | null }
 > {
   const mutationKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteShippingGroup(id),
     mutationKey,
     meta: {

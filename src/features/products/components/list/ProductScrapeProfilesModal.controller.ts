@@ -35,7 +35,7 @@ import {
 } from './ProductScrapeProfilesModal.storage';
 import { useRunScrapeProfileMutation } from './ProductScrapeProfilesModal.mutation';
 import { useProductScrapeProfileRunHandler } from './ProductScrapeProfilesModal.run-handler';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
   useProductScrapeProfileRuntimeActionSetting,
   type ProductScrapeProfileRuntimeActionSetting,
@@ -135,7 +135,7 @@ const useScrapeProfileFormState = (
 const useScrapeProfilesQuery = (
   isOpen: boolean
 ): UseQueryResult<ProductScrapeProfilesListResponse, Error> =>
-  createSingleQueryV2<ProductScrapeProfilesListResponse>({
+  useSingleQueryV2<ProductScrapeProfilesListResponse>({
     queryKey: SCRAPE_PROFILES_QUERY_KEY,
     queryFn: fetchScrapeProfiles,
     enabled: isOpen,

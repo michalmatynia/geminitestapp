@@ -371,6 +371,7 @@ export const executePathRun = async (
       | 'canceled'
       | null = null;
 
+    const evalStart = Date.now();
     const latestRuntimeSnapshot: RuntimeState = await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
@@ -460,6 +461,7 @@ export const executePathRun = async (
         runtimeHaltReason = halt.reason;
       },
     });
+    perfLog('graph-evaluation', evalStart);
 
     stateManager.setLatestSnapshot(latestRuntimeSnapshot);
     if (pendingIntermediateSave) {

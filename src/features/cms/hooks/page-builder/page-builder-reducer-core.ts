@@ -16,6 +16,8 @@ import {
   cloneSectionSubtree,
   moveSectionSubtree,
 } from './section-hierarchy';
+import { internalError } from '@/shared/errors/app-error';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type {
   PageBuilderState,
@@ -202,6 +204,11 @@ export function reducePageBuilderStateCore(
     }
 
     default:
+      logClientCatch(internalError(`Unhandled page builder action: ${action.type}`), {
+        source: 'cms.page-builder',
+        action: 'reducePageBuilderStateCore',
+        actionType: action.type,
+      });
       return state;
   }
 }

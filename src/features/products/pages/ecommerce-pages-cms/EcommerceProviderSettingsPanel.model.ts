@@ -8,7 +8,7 @@ import {
 } from '@/shared/contracts/integrations/ecommerce-provider-settings';
 import { api } from '@/shared/lib/api-client';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
@@ -88,7 +88,7 @@ const saveProviderSettings = ({
   );
 
 const useProviderSettingsQuery = (): SingleQuery<ProviderSettingsResponse> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-provider-settings',
     queryKey: PROVIDER_SETTINGS_QUERY_KEY,
     queryFn: fetchProviderSettings,
@@ -96,6 +96,8 @@ const useProviderSettingsQuery = (): SingleQuery<ProviderSettingsResponse> =>
       source: 'products.ecommercePagesCms.providerSettings.load',
       operation: 'detail',
       resource: 'products.ecommerce-pages-cms.provider-settings',
+      domain: 'products',
+      description: 'Loads ecommerce provider settings for page CMS.',
     },
   });
 
@@ -165,7 +167,7 @@ function useSaveProviderSettings(args: {
     settings,
     toast,
   } = args;
-  const saveMutation = createMutationV2<
+  const saveMutation = useMutationV2<
     ProviderSettingsWriteResponse,
     SaveProviderSettingsVariables
   >({
@@ -191,6 +193,8 @@ function useSaveProviderSettings(args: {
       source: 'products.ecommercePagesCms.providerSettings.save',
       operation: 'update',
       resource: 'products.ecommerce-pages-cms.provider-settings',
+      domain: 'products',
+      description: 'Saves ecommerce provider settings for page CMS.',
       errorPresentation: 'toast',
     },
   });

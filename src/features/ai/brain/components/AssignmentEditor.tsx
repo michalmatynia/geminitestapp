@@ -1,5 +1,21 @@
 'use client';
 
+/**
+ * Assignment Editor Component
+ * 
+ * Main UI component for configuring AI Brain assignments.
+ * Manages the form state and orchestration of model selection,
+ * provider-specific settings, and credential management.
+ * 
+ * Features:
+ * - Dynamic Form Generation: Renders fields based on the selected provider/vendor.
+ * - State Management: Handles patching and validation of assignment configurations.
+ * - Reactive UI: Updates based on selected AI model family and vendor.
+ * 
+ * Usage:
+ * Typically used within the Brain routing or assignment management pages.
+ */
+
 import React from 'react';
 
 import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
@@ -20,20 +36,23 @@ import {
 } from './AssignmentEditor.fields';
 import {
   type AssignmentPatchHandler,
-  filterQuickPicksByFamily,
-  getActiveAllowedProviders,
   providerOptions,
-  resolveProvider,
-  resolveSelectedVendor,
 } from './AssignmentEditor.helpers';
 
 type AssignmentEditorProps = {
+  /** The current assignment state to edit */
   assignment: AiBrainAssignment;
+  /** Callback for when the assignment state changes */
   onChange: (next: AiBrainAssignment) => void;
+  /** Whether the editor is in read-only mode */
   readOnly?: boolean;
+  /** Optional filter for available providers */
   allowedProviders?: AiBrainProvider[];
+  /** Flag to show system prompt editing section */
   showSystemPrompt?: boolean;
+  /** Flag to show model ID input field */
   showModelIdInput?: boolean;
+  /** Model family filter */
   modelFamily?: BrainModelFamily;
 };
 
@@ -52,6 +71,9 @@ type AssignmentEditorFieldsProps = {
   updateField: AssignmentPatchHandler;
 };
 
+/**
+ * Field for configuring max token limit.
+ */
 function MaxTokensField(props: {
   assignment: AiBrainAssignment;
   disabled: boolean;
@@ -74,6 +96,9 @@ function MaxTokensField(props: {
   );
 }
 
+/**
+ * Conditionally displays an API key field for override scenarios.
+ */
 function OptionalApiKeyField(props: {
   assignment: AiBrainAssignment;
   disabled: boolean;

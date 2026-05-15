@@ -15,7 +15,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
@@ -258,7 +258,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   ]);
 
   const threadQueryKey = ['filemaker', 'mail', 'thread', threadId] as const;
-  const threadQuery = createSingleQueryV2<ThreadResponse, ThreadResponse, typeof threadQueryKey>({
+  const threadQuery = useSingleQueryV2<ThreadResponse, ThreadResponse, typeof threadQueryKey>({
     queryKey: threadQueryKey,
     queryFn: async ({ signal }) =>
       fetchJson<ThreadResponse>(
@@ -304,7 +304,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     await threadQuery.refetch();
   }, [threadQuery]);
   const isLoading = threadQuery.isFetching;
-  const sendReplyMutation = createMutationV2<unknown, SendReplyVariables>({
+  const sendReplyMutation = useMutationV2<unknown, SendReplyVariables>({
     mutationKey: ['filemaker', 'mail', 'send-reply'],
     mutationFn: async (variables) =>
       fetchJson('/api/filemaker/mail/send', {
@@ -320,7 +320,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const toggleReadMutation = createMutationV2<unknown, ToggleThreadReadVariables>({
+  const toggleReadMutation = useMutationV2<unknown, ToggleThreadReadVariables>({
     mutationKey: ['filemaker', 'mail', 'threads', 'toggle-read'],
     mutationFn: async (variables) =>
       fetchJson(`/api/filemaker/mail/threads/${encodeURIComponent(variables.threadId)}`, {
@@ -336,7 +336,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const deleteThreadMutation = createMutationV2<unknown, ThreadActionVariables>({
+  const deleteThreadMutation = useMutationV2<unknown, ThreadActionVariables>({
     mutationKey: ['filemaker', 'mail', 'threads', 'delete'],
     mutationFn: async (variables) =>
       fetchJson(`/api/filemaker/mail/threads/${encodeURIComponent(variables.threadId)}`, {
@@ -351,7 +351,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const toggleFlagMutation = createMutationV2<unknown, ToggleMessageFlagVariables>({
+  const toggleFlagMutation = useMutationV2<unknown, ToggleMessageFlagVariables>({
     mutationKey: ['filemaker', 'mail', 'messages', 'toggle-flag'],
     mutationFn: async (variables) =>
       fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(variables.messageId)}/flags`, {
@@ -367,7 +367,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const moveMessageMutation = createMutationV2<unknown, MoveMessageVariables>({
+  const moveMessageMutation = useMutationV2<unknown, MoveMessageVariables>({
     mutationKey: ['filemaker', 'mail', 'messages', 'move'],
     mutationFn: async (variables) =>
       fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(variables.messageId)}/move`, {

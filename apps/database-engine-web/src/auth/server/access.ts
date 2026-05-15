@@ -272,7 +272,11 @@ const resolveEffectiveRole = (
     defaultRole ??
     roleList.find((role) => role.id === 'viewer') ??
     roleList[0] ??
-    DEFAULT_AUTH_ROLES[0]!;
+    DEFAULT_AUTH_ROLES[0];
+
+  if (!fallbackRole) {
+    throw new Error('No auth roles available');
+  }
 
   return { role: fallbackRole, roleAssigned: false };
 };

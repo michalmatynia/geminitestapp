@@ -87,8 +87,8 @@ vi.mock('nextjs-toploader/app', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: () => mockState.triggerButtonsQuery,
-  createCreateMutationV2: (config: {
+  useListQueryV2: () => mockState.triggerButtonsQuery,
+  useCreateMutationV2: (config: {
     mutationFn: (variables: unknown) => Promise<unknown>;
     onSuccess?: (result: unknown) => void;
     onError?: (error: unknown) => void;
@@ -99,7 +99,7 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
     },
     mutateAsync: (variables: unknown) => runMutation(config, variables),
   }),
-  createUpdateMutationV2: (config: {
+  useUpdateMutationV2: (config: {
     mutationFn: (variables: unknown) => Promise<unknown>;
     onSuccess?: (result: unknown) => void;
     onError?: (error: unknown) => void;
@@ -110,7 +110,7 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
     },
     mutateAsync: (variables: unknown) => runMutation(config, variables),
   }),
-  createDeleteMutationV2: (config: {
+  useDeleteMutationV2: (config: {
     mutationFn: (variables: unknown) => Promise<unknown>;
     onSuccess?: (result: unknown) => void;
     onError?: (error: unknown) => void;

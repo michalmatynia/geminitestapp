@@ -5,7 +5,7 @@ import type {
   AgentRunRecord,
 } from '@/shared/contracts/agent-runtime';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 
 import * as api from '../api/client';
@@ -14,7 +14,7 @@ export { agentRunsKeys };
 
 export function useAgentRuns(): ListQuery<AgentRunRecord> {
   const queryKey = agentRunsKeys.lists();
-  return createListQueryV2<AgentRunRecord, AgentRunRecord[]>({
+  return useListQueryV2<AgentRunRecord, AgentRunRecord[]>({
     queryKey,
     queryFn: api.getAgentRuns,
     meta: {
@@ -31,7 +31,7 @@ export function useAgentRuns(): ListQuery<AgentRunRecord> {
 
 export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserSnapshotRecord> {
   const queryKey = agentRunsKeys.snapshots(runId ?? '');
-  return createListQueryV2<AgentBrowserSnapshotRecord, AgentBrowserSnapshotRecord[]>({
+  return useListQueryV2<AgentBrowserSnapshotRecord, AgentBrowserSnapshotRecord[]>({
     queryKey,
     queryFn: () =>
       runId !== null ? api.getAgentSnapshots(runId) : Promise.reject(new Error('runId is null')),
@@ -53,7 +53,7 @@ export function useAgentLogs(
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentBrowserLogRecord> {
   const queryKey = agentRunsKeys.logs(runId ?? '');
-  return createListQueryV2<AgentBrowserLogRecord, AgentBrowserLogRecord[]>({
+  return useListQueryV2<AgentBrowserLogRecord, AgentBrowserLogRecord[]>({
     queryKey,
     queryFn: () =>
       runId !== null ? api.getAgentLogs(runId) : Promise.reject(new Error('runId is null')),
@@ -76,7 +76,7 @@ export function useAgentAudits(
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentAuditLogRecord> {
   const queryKey = agentRunsKeys.audits(runId ?? '');
-  return createListQueryV2<AgentAuditLogRecord, AgentAuditLogRecord[]>({
+  return useListQueryV2<AgentAuditLogRecord, AgentAuditLogRecord[]>({
     queryKey,
     queryFn: () =>
       runId !== null ? api.getAgentAudits(runId) : Promise.reject(new Error('runId is null')),

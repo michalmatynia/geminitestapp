@@ -9,7 +9,7 @@ import {
 } from '@/features/kangur/observability/client';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LessonSectionsQueryOptions = KangurLessonCollectionFilterDto & {
@@ -78,7 +78,7 @@ export const fetchKangurLessonSections = async (
 const createLessonSectionsQuery = (
   options?: LessonSectionsQueryOptions
 ): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
-  createListQueryV2<KangurLessonSection, KangurLessonSection[]>({
+  useListQueryV2<KangurLessonSection, KangurLessonSection[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonSections(),
       resolveLessonSectionsQueryFilters(options),
@@ -117,7 +117,7 @@ export const useUpdateKangurLessonSections = (): MutationResult<
   KangurLessonSection[],
   KangurLessonSection[]
 > =>
-  createUpdateMutationV2<KangurLessonSection[], KangurLessonSection[]>({
+  useUpdateMutationV2<KangurLessonSection[], KangurLessonSection[]>({
     mutationKey: [...QUERY_KEYS.kangur.lessonSections(), 'update'],
     mutationFn: async (sections: KangurLessonSection[]): Promise<KangurLessonSection[]> =>
       await api.post<KangurLessonSection[]>('/api/kangur/lesson-sections', { sections }),

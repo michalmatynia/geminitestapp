@@ -12,9 +12,9 @@ import type {
   ProductValidatorImportResult as ImportValidationPatternsResult,
 } from '@/shared/contracts/validator-import';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
@@ -26,7 +26,7 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
   Partial<ProductValidatorSettings>
 > {
   const mutationKey = productSettingsKeys.validatorSettings();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: api.updateValidatorSettings,
     mutationKey,
     meta: {
@@ -49,7 +49,7 @@ export function useCreateValidationPatternMutation(): CreateMutation<
   CreateValidationPatternPayload
 > {
   const mutationKey = productSettingsKeys.validatorPatterns();
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: api.createValidationPattern,
     mutationKey,
     meta: {
@@ -72,7 +72,7 @@ export function useUpdateValidationPatternMutation(): UpdateMutation<
   IdDataDto<UpdateValidationPatternPayload>
 > {
   const mutationKey = productSettingsKeys.validatorPatterns();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ id, data }: IdDataDto<UpdateValidationPatternPayload>) =>
       api.updateValidationPattern(id, data),
     mutationKey,
@@ -93,7 +93,7 @@ export function useUpdateValidationPatternMutation(): UpdateMutation<
 
 export function useDeleteValidationPatternMutation(): DeleteMutation {
   const mutationKey = productSettingsKeys.validatorPatterns();
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => api.deleteValidationPattern(id),
     mutationKey,
     meta: {
@@ -116,7 +116,7 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updates: ReorderValidationPatternUpdatePayload[] }
 > {
   const mutationKey = productSettingsKeys.validatorPatterns();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (payload: { updates: ReorderValidationPatternUpdatePayload[] }) =>
       api.reorderValidationPatterns(payload),
     mutationKey,
@@ -140,7 +140,7 @@ export function useImportValidationPatternsMutation(): UpdateMutation<
   ImportValidationPatternsPayload
 > {
   const mutationKey = productSettingsKeys.validatorPatterns();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (payload: ImportValidationPatternsPayload) => api.importValidationPatterns(payload),
     mutationKey,
     meta: {

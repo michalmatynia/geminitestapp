@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/kangur';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -150,7 +150,7 @@ const fetchLessonDocument = async (
 const createKangurLessonsQuery = (
   options?: LessonsQueryOptions
 ): ListQuery<KangurLesson, KangurLesson[]> =>
-  createListQueryV2<KangurLesson, KangurLesson[]>({
+  useListQueryV2<KangurLesson, KangurLesson[]>({
     queryKey: [...QUERY_KEYS.kangur.lessons(), resolveLessonsQueryFilters(options)],
     queryFn: async (): Promise<KangurLesson[]> => await fetchKangurLessons(options),
     select: (lessons) => filterLessons(lessons, options),
@@ -185,7 +185,7 @@ export const useKangurLessonDocuments = (options?: {
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, options?.locale);
 
-  return createListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+  return useListQueryV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     queryKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }],
     queryFn: async () => await fetchLessonDocuments(resolvedLocale),
     placeholderData: () => ({}),
@@ -240,7 +240,7 @@ const invalidateKangurLessons = (queryClient: { invalidateQueries: (args: { quer
 };
 
 export const useUpdateKangurLessons = (): MutationResult<KangurLesson[], KangurLesson[]> =>
-  createUpdateMutationV2<KangurLesson[], KangurLesson[]>({
+  useUpdateMutationV2<KangurLesson[], KangurLesson[]>({
     mutationKey: [...QUERY_KEYS.kangur.lessons(), 'update'],
     mutationFn: async (lessons: KangurLesson[]): Promise<KangurLesson[]> =>
       await api.post<KangurLesson[]>('/api/kangur/lessons', { lessons }),
@@ -264,7 +264,7 @@ export const useUpdateKangurLessonDocuments = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonDocumentsLocale(routeLocale, locale);
 
-  return createUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
+  return useUpdateMutationV2<KangurLessonDocumentStore, KangurLessonDocumentStore>({
     mutationKey: [...QUERY_KEYS.kangur.lessonDocuments(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (
       documents: KangurLessonDocumentStore

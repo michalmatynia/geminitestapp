@@ -17,7 +17,7 @@ import type {
 } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
@@ -60,7 +60,7 @@ export function useBrainModels(options?: {
   staleTime?: number;
 }): SingleQuery<BrainModelsResponse> {
   const queryKey = brainKeys.models();
-  return createSingleQueryV2<BrainModelsResponse>({
+  return useSingleQueryV2<BrainModelsResponse>({
     queryKey,
     queryFn: () => api.get<BrainModelsResponse>('/api/brain/models'),
     id: 'brain-models',
@@ -85,7 +85,7 @@ export function useBrainOperationsOverview(options?: {
 }): SingleQuery<BrainOperationsOverviewResponse> {
   const range = options?.range ?? '1h';
   const queryKey = brainKeys.operationsOverview(range);
-  return createSingleQueryV2<BrainOperationsOverviewResponse>({
+  return useSingleQueryV2<BrainOperationsOverviewResponse>({
     queryKey,
     queryFn: () =>
       api.get<BrainOperationsOverviewResponse>('/api/brain/operations/overview', {
@@ -109,7 +109,7 @@ export function useBrainOperationsOverview(options?: {
 
 export function useBrainAnalyticsSummary(enabled: boolean = true): SingleQuery<AnalyticsSummary> {
   const queryKey = brainKeys.analyticsSummary();
-  return createSingleQueryV2<AnalyticsSummary>({
+  return useSingleQueryV2<AnalyticsSummary>({
     queryKey,
     queryFn: () =>
       api.get<AnalyticsSummary>('/api/analytics/summary', {
@@ -132,7 +132,7 @@ export function useBrainAnalyticsSummary(enabled: boolean = true): SingleQuery<A
 
 export function useBrainLogMetrics(enabled: boolean = true): SingleQuery<SystemLogMetrics> {
   const queryKey = brainKeys.logMetrics();
-  return createSingleQueryV2<SystemLogMetrics>({
+  return useSingleQueryV2<SystemLogMetrics>({
     queryKey,
     queryFn: async (): Promise<SystemLogMetrics> => {
       const data = await api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
@@ -161,7 +161,7 @@ export function useBrainInsights(
   enabled: boolean = true
 ): SingleQuery<InsightsSnapshot> {
   const queryKey = brainKeys.insights();
-  return createSingleQueryV2<InsightsSnapshot>({
+  return useSingleQueryV2<InsightsSnapshot>({
     queryKey,
     queryFn: () => fetchBrainInsightsSnapshot({ includeRuntimeAnalytics }),
     id: 'insights',
@@ -183,7 +183,7 @@ export function useBrainRuntimeAnalytics(
   enabled: boolean = true
 ): SingleQuery<AiPathRuntimeAnalyticsSummary> {
   const queryKey = brainKeys.runtimeAnalytics();
-  return createSingleQueryV2<AiPathRuntimeAnalyticsSummary>({
+  return useSingleQueryV2<AiPathRuntimeAnalyticsSummary>({
     queryKey,
     queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
       const data = aiPathRuntimeAnalyticsSummaryResponseSchema.parse(

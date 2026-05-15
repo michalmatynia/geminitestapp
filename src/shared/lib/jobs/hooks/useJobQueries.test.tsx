@@ -10,8 +10,8 @@ import {
   useTraderaQueueHealth,
 } from '@/shared/lib/jobs/hooks/useJobQueries';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
-const createSingleQueryV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useSingleQueryV2Mock = vi.hoisted(() => vi.fn());
 const getIntegrationJobsMock = vi.hoisted(() => vi.fn());
 const getChatbotJobsMock = vi.hoisted(() => vi.fn());
 const getBaseImportRunsMock = vi.hoisted(() => vi.fn());
@@ -19,8 +19,8 @@ const getBaseImportQueueHealthMock = vi.hoisted(() => vi.fn());
 const getTraderaQueueHealthMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
-  createSingleQueryV2: createSingleQueryV2Mock,
+  useListQueryV2: useListQueryV2Mock,
+  useSingleQueryV2: useSingleQueryV2Mock,
 }));
 
 vi.mock('@/shared/lib/jobs/api', () => ({
@@ -33,16 +33,16 @@ vi.mock('@/shared/lib/jobs/api', () => ({
 
 describe('useJobQueries', () => {
   beforeEach(() => {
-    createListQueryV2Mock.mockReset();
-    createSingleQueryV2Mock.mockReset();
+    useListQueryV2Mock.mockReset();
+    useSingleQueryV2Mock.mockReset();
     getIntegrationJobsMock.mockReset();
     getChatbotJobsMock.mockReset();
     getBaseImportRunsMock.mockReset();
     getBaseImportQueueHealthMock.mockReset();
     getTraderaQueueHealthMock.mockReset();
 
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
-    createSingleQueryV2Mock.mockReturnValue({ kind: 'single-query' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useSingleQueryV2Mock.mockReturnValue({ kind: 'single-query' });
     getIntegrationJobsMock.mockResolvedValue([{ id: 'listing-job-1' }]);
     getChatbotJobsMock.mockResolvedValue({ jobs: [] });
     getBaseImportRunsMock.mockResolvedValue([{ id: 'run-1', status: 'queued' }]);
@@ -52,7 +52,7 @@ describe('useJobQueries', () => {
 
   it('configures the integration jobs query and active-listing polling policy', async () => {
     const { result } = renderHook(() => useIntegrationJobs());
-    const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const config = useListQueryV2Mock.mock.calls[0]?.[0];
     const signal = new AbortController().signal;
 
     expect(result.current).toEqual({ kind: 'list-query' });
@@ -101,7 +101,7 @@ describe('useJobQueries', () => {
 
   it('configures chatbot and queue-health queries with the expected keys and fetchers', async () => {
     const chatbotHook = renderHook(() => useChatbotJobs('failed'));
-    const chatbotConfig = createSingleQueryV2Mock.mock.calls[0]?.[0];
+    const chatbotConfig = useSingleQueryV2Mock.mock.calls[0]?.[0];
 
     expect(chatbotHook.result.current).toEqual({ kind: 'single-query' });
     expect(chatbotConfig.id).toBe('failed');
@@ -116,7 +116,7 @@ describe('useJobQueries', () => {
     expect(getChatbotJobsMock).toHaveBeenCalledWith('failed');
 
     const baseImportRunsHook = renderHook(() => useBaseImportRuns(100));
-    const baseImportRunsConfig = createListQueryV2Mock.mock.calls[0]?.[0];
+    const baseImportRunsConfig = useListQueryV2Mock.mock.calls[0]?.[0];
 
     expect(baseImportRunsHook.result.current).toEqual({ kind: 'list-query' });
     expect(baseImportRunsConfig.queryKey).toEqual(jobKeys.baseImportRuns(100));
@@ -144,7 +144,7 @@ describe('useJobQueries', () => {
     ).toBe(5000);
 
     const baseImportHook = renderHook(() => useBaseImportQueueHealth());
-    const baseImportConfig = createSingleQueryV2Mock.mock.calls[1]?.[0];
+    const baseImportConfig = useSingleQueryV2Mock.mock.calls[1]?.[0];
 
     expect(baseImportHook.result.current).toEqual({ kind: 'single-query' });
     expect(baseImportConfig.id).toBe('base-import-health');
@@ -161,7 +161,7 @@ describe('useJobQueries', () => {
     expect(getBaseImportQueueHealthMock).toHaveBeenCalledTimes(1);
 
     const traderaHook = renderHook(() => useTraderaQueueHealth());
-    const traderaConfig = createSingleQueryV2Mock.mock.calls[2]?.[0];
+    const traderaConfig = useSingleQueryV2Mock.mock.calls[2]?.[0];
 
     expect(traderaHook.result.current).toEqual({ kind: 'single-query' });
     expect(traderaConfig.id).toBe('tradera-health');

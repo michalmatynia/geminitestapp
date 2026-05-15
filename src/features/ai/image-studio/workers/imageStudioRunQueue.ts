@@ -418,11 +418,11 @@ const materializeRunOutputSlots = async (params: {
     }
 
     if (!generationSlotId) {
-      throw new Error(
-        `Failed to materialize generation slot for run ${params.run.id} output ${outputIndex}.`
+      throw new AppError(
+        `Failed to materialize generation slot for run ${params.run.id} output ${outputIndex}.`,
+        { code: AppErrorCodes.internal, httpStatus: 500 }
       );
     }
-
     if (sourceContext.sourceSlotIds.length > 0) {
       for (const sourceSlotId of sourceContext.sourceSlotIds) {
         await upsertImageStudioSlotLink({
@@ -514,7 +514,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
     try {
       const result = await executeImageStudioRun(run.request);
       if (!Array.isArray(result.outputs) || result.outputs.length === 0) {
-        throw new Error('Image API run produced no output images.');
+        throw new AppError('Image API run produced no output images.', {
+            code: AppErrorCodes.externalService,
+            httpStatus: 502,
+        });
       }
       const finishedAt = new Date().toISOString();
       const createdSlotIds = await materializeRunOutputSlots({
@@ -647,8 +650,9 @@ const isImageStudioEnabled = async (): Promise<boolean> => {
 const assertImageStudioEnabled = async (): Promise<void> => {
   const enabled = await isImageStudioEnabled();
   if (enabled) return;
-  throw new Error(
-    'Image Studio is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.'
+  throw new AppError(
+    'Image Studio is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.',
+    { code: AppErrorCodes.forbidden, httpStatus: 403 }
   );
 };
 

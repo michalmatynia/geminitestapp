@@ -4,7 +4,7 @@ import { useQueryClient, type Query, type UseQueryResult } from '@tanstack/react
 import { useCallback } from 'react';
 
 import { fetchLiteSettingsCached } from '@/shared/api/settings-client';
-import { createListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
@@ -277,7 +277,7 @@ export function useAdaptiveQuery<T>(
   const strategy = cacheStrategies[dataType];
   const domain = options?.domain ?? 'global';
 
-  return createListQueryV2<T, T>({
+  return useListQueryV2<T, T>({
     queryKey,
     queryFn,
     ...strategy,

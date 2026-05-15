@@ -1,5 +1,6 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { asRecord } from '@/shared/utils/type-utils';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
 const MONGO_OPERATIONS = new Set<string>([
   'find',
@@ -34,7 +35,11 @@ function validateOperation(op: unknown): MongoCommandInput['operation'] {
       return normalized as MongoCommandInput['operation'];
     }
   }
-  throw new Error('Command must include a supported "operation"');
+  throw new AppError(`Command must include a supported "operation". Got: ${typeof op}`, {
+    code: AppErrorCodes.validation,
+    httpStatus: 400,
+    meta: { op },
+  });
 }
 
 function parseInputBody(input: RawMongoCommand): Omit<MongoCommandInput, 'collection' | 'operation'> {
@@ -52,16 +57,28 @@ export function parseMongoCommandInput(raw: string): MongoCommandInput {
   } catch (error) {
     const normalizedError = error instanceof Error ? error : new Error('Invalid command JSON payload');
     logClientError(normalizedError);
-    throw new Error('Command must be valid JSON.');
+    throw new AppError('Command must be valid JSON.', {
+        code: AppErrorCodes.badRequest,
+        httpStatus: 400,
+        cause: error,
+    });
   }
 
   const input = parsed as RawMongoCommand | null | undefined;
   if (input === null || typeof input !== 'object' || Array.isArray(input)) {
-    throw new Error('Command must be a JSON object.');
+    throw new AppError('Command must be a JSON object.', {
+        code: AppErrorCodes.badRequest,
+        httpStatus: 400,
+    });
   }
 
   const collection = typeof input.collection === 'string' ? input.collection.trim() : '';
-  if (collection.length === 0) throw new Error('Command must include a "collection" string.');
+  if (collection.length === 0) {
+    throw new AppError('Command must include a non-empty "collection" string.', {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+    });
+  }
 
   return {
     collection,

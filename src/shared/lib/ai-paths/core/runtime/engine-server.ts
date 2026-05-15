@@ -1,3 +1,23 @@
+/**
+ * Engine Server: AI Path Evaluation Orchestrator
+ * 
+ * Central server-side entry point for AI automation graph evaluation.
+ * This module bridges the abstract graph evaluation core with concrete
+ * Node Runtime implementations (e.g., Prompt, Model, Database handlers).
+ * 
+ * Features:
+ * - Runtime Kernel Orchestration: Initializes the runtime kernel with necessary 
+ *   handler registries and legacy bridges.
+ * - Concurrency Handling: Manages MongoDB client acquisition and observability 
+ *   hooks for performance monitoring.
+ * - Abstraction Layer: Bridges the gap between the `engine-core` and platform-specific
+ *   Node Runtime execution logic.
+ * 
+ * Usage:
+ * This module is invoked by the server-side AI Path runner. Use this as the 
+ * top-level evaluator for all AI-automation workflows.
+ */
+
 import 'server-only';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
@@ -8,6 +28,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { resolveAiPathsRuntimeCodeObjectHandler } from './code-object-resolver-registry';
 import { evaluateGraphInternal } from './engine-core';
 import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
+
 import {
   handleAudioOscillator,
   handleAudioSpeaker,
@@ -55,10 +76,13 @@ import { createNodeCodeObjectV3ContractResolver } from './node-code-object-v3-le
 import { createNodeRuntimeHandlerCatalog } from './node-runtime-handler-catalog';
 import { createNodeRuntimeKernel, toNodeRuntimeResolutionTelemetry } from './node-runtime-kernel';
 
-
-// Re-export types from core
+// Re-export core evaluation interfaces for external callers
 export * from './engine-core';
 
+/**
+ * Registry of all available runtime handlers for AI Path nodes.
+ * Used by the runtime kernel to resolve execution logic per node type.
+ */
 const SERVER_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   prompt: handlePrompt,
   model: handleModel,
@@ -104,19 +128,27 @@ const SERVER_HANDLER_CATALOG = createNodeRuntimeHandlerCatalog({
   canvas_output: handleCanvasOutput,
 });
 
+/** Resolves a legacy handler by node type ID. */
 const resolveLegacyHandler = (type: string): NodeHandler | null => {
   return SERVER_HANDLER_CATALOG.resolveLegacyHandler(type);
 };
+
+/** List of native code object handler IDs for runtime validation. */
 export const SERVER_NATIVE_CODE_OBJECT_HANDLER_IDS: readonly string[] = Object.freeze([
   ...SERVER_HANDLER_CATALOG.nativeCodeObjectHandlerIds,
 ]);
 
+/** Default resolver for code objects based on V3 contract metadata. */
 const defaultResolveCodeObjectHandler = createNodeCodeObjectV3ContractResolver({
   resolveNativeCodeObjectHandler: SERVER_HANDLER_CATALOG.resolveNativeCodeObjectHandler,
 });
 
 let processStartedAtMs: number | null = null;
 
+/**
+ * Server-side evaluation entry point.
+ * Normalizes graph inputs and triggers the execution pipeline.
+ */
 export async function evaluateGraphServer(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
   edges?: Edge[],

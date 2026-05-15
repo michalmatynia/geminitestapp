@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -92,7 +92,7 @@ const useCampaignRunActionMutation = (): MutationResult<
   CampaignRunActionResult,
   CampaignRunActionVariables
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['filemaker', 'campaigns', 'runs', 'action'],
     mutationFn: executeCampaignRunAction,
     meta: {

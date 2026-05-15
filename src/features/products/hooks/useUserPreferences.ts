@@ -4,7 +4,7 @@
 import { useState } from 'react';
 
 import type { ProductListPreferences } from '@/shared/contracts/products/filters';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import {
   fetchUserPreferences,
@@ -30,7 +30,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
   const [localPreferenceOverrides, setLocalPreferenceOverrides] = useState<
     Partial<ProductListPreferences>
   >({});
-  const query = createSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
+  const query = useSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
     queryFn: (context) => fetchUserPreferences(context.signal),

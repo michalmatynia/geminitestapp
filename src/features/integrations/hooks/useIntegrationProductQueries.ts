@@ -10,8 +10,8 @@ import type {
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createPaginatedListQueryV2,
+  useListQueryV2,
+  usePaginatedListQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -59,7 +59,7 @@ const normalizeCatalogId = (catalogId: string | null | undefined): string | null
 
 export function useIntegrationCatalogs(): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<CatalogRecord[]> =>
       await api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
@@ -84,7 +84,7 @@ export function useIntegrationProductCategories(
   const queryKey = productMetadataKeys.categories(
     shouldLoadAllCategories ? 'all' : normalizedCatalogId
   );
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
       if (normalizedCatalogId === null && !shouldLoadAllCategories) return [];
@@ -110,7 +110,7 @@ export function useIntegrationProductCategories(
 export function useIntegrationProductTags(catalogId?: string): ListQuery<ProductTag> {
   const normalizedCatalogId = normalizeCatalogId(catalogId);
   const queryKey = productMetadataKeys.tags(normalizedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTag[]> => {
       if (normalizedCatalogId === null) return [];
@@ -132,7 +132,7 @@ export function useIntegrationProductTags(catalogId?: string): ListQuery<Product
 
 export function useIntegrationProductProducers(): ListQuery<Producer> {
   const queryKey = productMetadataKeys.producers();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<Producer[]> =>
       await api.get<Producer[]>('/api/v2/products/producers'),
@@ -159,7 +159,7 @@ export function useIntegrationProductsWithCount(
 } {
   const enabled = options.enabled ?? true;
   const queryKey = getProductsPagedQueryKey(filters);
-  const query = createPaginatedListQueryV2<ProductWithImages>({
+  const query = usePaginatedListQueryV2<ProductWithImages>({
     id: `${JSON.stringify(filters)}:paged`,
     queryKey,
     queryFn: async () => {

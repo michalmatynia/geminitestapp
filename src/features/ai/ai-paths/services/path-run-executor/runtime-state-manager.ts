@@ -14,7 +14,6 @@ import type {
 import { sanitizeRuntimeState } from '../path-run-executor.logic';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 export interface PathRunRuntimeStateManagerParams {
   run: AiPathRunRecord;
   initialRuntimeState: RuntimeState;
@@ -24,25 +23,35 @@ export interface PathRunRuntimeStateManagerParams {
   resolvedRunStartedAt: string;
 }
 
+const MAX_HISTORY_ENTRIES_PER_NODE = 50;
+
 export class PathRunRuntimeStateManager {
   private latestSnapshot: RuntimeState | null = null;
   private historyEntriesByNode = new Map<string, RuntimeHistoryEntry[]>();
   private nodeStatusOverrides = new Map<string, RuntimeState['nodeStatuses'][string]>();
+  private memoizedSnapshot: RuntimeState | null = null;
+  private isDirty = true;
 
   constructor(private params: PathRunRuntimeStateManagerParams) {}
 
   setLatestSnapshot(snapshot: RuntimeState | null): void {
     this.latestSnapshot = snapshot;
+    this.isDirty = true;
   }
 
   appendHistoryEntry(nodeId: string, entry: RuntimeHistoryEntry): void {
     const entries = this.historyEntriesByNode.get(nodeId) ?? [];
     entries.push(entry);
+    if (entries.length > MAX_HISTORY_ENTRIES_PER_NODE) {
+      entries.shift();
+    }
     this.historyEntriesByNode.set(nodeId, entries);
+    this.isDirty = true;
   }
 
   setNodeStatus(nodeId: string, status: RuntimeState['nodeStatuses'][string]): void {
     this.nodeStatusOverrides.set(nodeId, status);
+    this.isDirty = true;
   }
 
   private async loadRunNodesForRuntimeRepair(): Promise<AiPathRunNodeRecord[]> {
@@ -55,13 +64,16 @@ export class PathRunRuntimeStateManager {
   }
 
   async buildCurrentRuntimeStateSnapshot(): Promise<RuntimeState> {
+    if (!this.isDirty && this.memoizedSnapshot) {
+      return this.memoizedSnapshot;
+    }
+
     const currentRun = {
       ...this.params.run,
       status: 'running' as const,
       startedAt: this.params.resolvedRunStartedAt,
     };
 
-    // The partial update from our local tracking
     const localUpdate: Partial<RuntimeState> = {
       inputs: this.params.accInputs,
       outputs: this.params.accOutputs,
@@ -69,7 +81,6 @@ export class PathRunRuntimeStateManager {
       history: Object.fromEntries(this.historyEntriesByNode),
     };
 
-    // Reconcile the initial state with the latest engine snapshot (if any) and our local updates
     const updates: Partial<RuntimeState>[] = [];
     if (this.latestSnapshot) {
       updates.push(this.latestSnapshot);
@@ -78,7 +89,6 @@ export class PathRunRuntimeStateManager {
 
     const reconciled = reconcileRuntimeState(this.params.initialRuntimeState, updates);
 
-    // Ensure the currentRun is correctly set
     const candidate: RuntimeState = {
       ...reconciled,
       currentRun,
@@ -89,6 +99,8 @@ export class PathRunRuntimeStateManager {
       runNodes: await this.loadRunNodesForRuntimeRepair(),
     });
 
-    return sanitizeRuntimeState(repaired.runtimeState);
+    this.memoizedSnapshot = sanitizeRuntimeState(repaired.runtimeState);
+    this.isDirty = false;
+    return this.memoizedSnapshot;
   }
 }

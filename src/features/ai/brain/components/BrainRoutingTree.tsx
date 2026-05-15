@@ -1,3 +1,23 @@
+/**
+ * Brain Routing Tree Component
+ * 
+ * Manages the hierarchical routing and capability mapping for the AI Brain.
+ * Provides a specialized view that combines feature-based grouping with
+ * individual AI capability assignments.
+ * 
+ * Features:
+ * - Hierarchical Visualization: Displays Brain features grouped by domain,
+ *   with drill-down capabilities for specific features and model assignments.
+ * - Interaction: Provides toggles for enabling/disabling capabilities and
+ *   hooks for editing assignment details.
+ * - Contextual State: Uses `BrainRoutingProvider` to synchronize routing settings
+ *   across the AI configuration workspace.
+ * 
+ * Usage:
+ * Embedded in the main AI Brain management page to allow admins to define
+ * complex routing logic across different system capabilities.
+ */
+
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
@@ -9,7 +29,6 @@ import {
 } from '@/shared/lib/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
 
-import { getBrainCapabilityDefinition } from '../settings';
 import {
   buildBrainRoutingMasterNodes,
   createBrainRoutingCapabilityNodeMap,
@@ -28,25 +47,35 @@ import {
 } from './BrainRoutingContext';
 import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
 
+import { getBrainCapabilityDefinition } from '../settings';
 import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
 import type { AiBrainFeature } from '../settings';
 
 const hasAssignmentApiKeyOverride = (assignment: AiBrainAssignment): boolean =>
   typeof assignment.apiKey === 'string' && assignment.apiKey.trim().length > 0;
 
+/** Props for the BrainRoutingTree component. */
 export interface BrainRoutingTreeProps {
+  /** Global AI Brain settings. */
   settings?: AiBrainSettings;
+  /** Effective assignment state for features. */
   effectiveAssignments?: Record<AiBrainFeature, AiBrainAssignment>;
+  /** Effective assignment state for specific capabilities. */
   effectiveCapabilityAssignments?: Record<AiBrainCapabilityKey, AiBrainAssignment>;
+  /** Callback for toggling feature-level activation. */
   onToggleFeatureEnabled?: (feature: AiBrainFeature, enabled: boolean) => void;
+  /** Callback for toggling capability-level activation. */
   onToggleEnabled?: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
+  /** Callback to trigger editing for a specific capability. */
   onEdit?: (capability: AiBrainCapabilityKey) => void;
+  /** UI pending state indicator. */
   isPending?: boolean;
 }
 
 type RoutingStateContext = ReturnType<typeof useOptionalBrainRoutingStateContext>;
 type RoutingActionsContext = ReturnType<typeof useOptionalBrainRoutingActionsContext>;
 
+/** Resolved set of properties required for routing tree operations. */
 type ResolvedBrainRoutingTreeProps = Required<
   Pick<
     BrainRoutingTreeProps,
@@ -61,6 +90,7 @@ type ResolvedBrainRoutingTreeProps = Required<
   isPending: boolean;
 };
 
+/** Arguments for node rendering functions. */
 type BrainRoutingNodeRendererProps = {
   capabilityByNodeId: Map<string, AiBrainCapabilityKey>;
   featureByNodeId: Map<string, (typeof ROUTING_GROUPS)[number]>;
@@ -95,7 +125,6 @@ const resolveEffectiveCapabilityAssignments = (
   requireRoutingValue(
     props.effectiveCapabilityAssignments ?? stateContext?.effectiveCapabilityAssignments
   );
-
 const resolveToggleFeatureEnabled = (
   props: BrainRoutingTreeProps,
   actionsContext: RoutingActionsContext
@@ -152,22 +181,13 @@ function BrainRoutingNodeRenderer(props: BrainRoutingNodeRendererProps): React.J
   const featureGroup = featureByNodeId.get(input.node.id);
   if (featureGroup !== undefined) {
     return (
-      <BrainRoutingFeatureNodeItemRenderer
-        featureGroup={featureGroup}
-        input={input}
-        runtime={runtime}
-      />
+      <BrainRoutingFeatureNodeItemRenderer featureGroup={featureGroup} input={input} runtime={runtime} />
     );
   }
-
   const capability = capabilityByNodeId.get(input.node.id);
   if (capability === undefined) return null;
   return (
-    <BrainRoutingCapabilityNodeRenderer
-      capability={capability}
-      input={input}
-      runtime={runtime}
-    />
+    <BrainRoutingCapabilityNodeRenderer capability={capability} input={input} runtime={runtime} />
   );
 }
 
@@ -240,18 +260,17 @@ export function BrainRoutingTree(props: BrainRoutingTreeProps): React.JSX.Elemen
   });
 
   const renderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
-      return (
-        <BrainRoutingNodeRenderer
-          capabilityByNodeId={capabilityByNodeId}
-          featureByNodeId={featureByNodeId}
-          input={input}
-          runtime={runtime}
-        />
-      );
-    },
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <BrainRoutingNodeRenderer
+        capabilityByNodeId={capabilityByNodeId}
+        featureByNodeId={featureByNodeId}
+        input={input}
+        runtime={runtime}
+      />
+    ),
     [capabilityByNodeId, featureByNodeId, runtime]
   );
+
   const capabilityNodeRuntimeValue = useMemo(
     () => ({
       onToggleEnabled: runtime.onToggleEnabled,

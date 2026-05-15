@@ -17,7 +17,7 @@ import {
   fetchPlaywrightRun,
   type PlaywrightNodeRunSnapshot,
 } from '@/shared/lib/ai-paths/api/client/agent';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 export type LiveTraderaAction = 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
 
@@ -286,7 +286,7 @@ export const useTraderaLiveExecution = (
     'live-execution',
     pendingTarget?.runId ?? 'none',
   ] as const;
-  const query = createSingleQueryV2<TraderaLiveRunQueryResult>({
+  const query = useSingleQueryV2<TraderaLiveRunQueryResult>({
     queryKey,
     enabled: Boolean(pendingTarget),
     queryFn: async (): Promise<TraderaLiveRunQueryResult> => {

@@ -7,12 +7,16 @@ import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtim
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { internalError } from '@/shared/errors/app-error';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveDurationMs } from '@/features/ai/ai-paths/workers/ai-path-run-queue-utils';
 
 const LOG_SOURCE = 'ai-path-run-processor';
 
+/**
+ * Orchestrates the execution of a single AI path run.
+ * Manages run state updates, analytics logging, and failure recovery.
+ */
 export const processRun = async (
   run: AiPathRunRecord,
   signal?: AbortSignal
@@ -68,13 +72,14 @@ export const processRun = async (
     });
     return;
   } catch (error: unknown) {
-    const wrappedError = internalError(`AI-Paths run execution failed: ${run.id}`, {
-      runId: run.id,
-      pathId: run.pathId,
-      action: 'executePathRun',
+    const wrappedError = new AppError(`Execution failed for path run: ${run.id}`, {
+      code: AppErrorCodes.operationFailed,
+      httpStatus: 500,
+      meta: { runId: run.id, pathId: run.pathId, action: 'executePathRun' },
       cause: error,
       critical: true,
     });
+    
     void ErrorSystem.captureException(wrappedError, {
       service: 'ai-paths-queue',
       pathRunId: run.id,
@@ -82,8 +87,9 @@ export const processRun = async (
     });
     
     const latest = await repo.findRunById(run.id);
-    if (latest !== null && isTerminalAiPathRunStatus(latest.status)) return;
-    if (latest !== null && latest.status !== 'running' && latest.status !== 'queued') return;
+    if (latest !== null && (isTerminalAiPathRunStatus(latest.status) || (latest.status !== 'running' && latest.status !== 'queued'))) {
+      return;
+    }
     
     await handleFailure(run, wrappedError, latest, runStartMs, repo);
   }
@@ -91,13 +97,13 @@ export const processRun = async (
 
 const handleFailure = async (
   run: AiPathRunRecord,
-  error: unknown,
+  error: AppError,
   latest: AiPathRunRecord | null,
   runStartMs: number,
   repo: Awaited<ReturnType<typeof getPathRunRepository>>
 ): Promise<void> => {
-  const errorMessage = error instanceof Error ? error.message : 'Run failed.';
-  const errorContext = (error as any)?.meta ?? {};
+  const errorMessage = error.message;
+  const errorContext = error.meta ?? {};
   
   const finishedAt = new Date();
   await repo.finalizeRun(run.id, 'failed', {

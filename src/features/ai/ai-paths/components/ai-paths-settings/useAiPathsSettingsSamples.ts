@@ -1,21 +1,18 @@
 'use client';
 'use no memo';
 
-import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui/base';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/contracts/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths/api';
-import { createMutationOptionsV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { fetchQueryV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 
-// This hook delegates into query-factory wrappers that call TanStack Query
-// hooks internally. Keep it on the plain hook runtime to avoid React Compiler
-// dev cache-size mismatches in AI Paths settings.
+// This hook composes query-factory wrappers and stays out of React Compiler memoization.
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
@@ -229,36 +226,25 @@ function useSampleMutation<TData, TVariables>({
   onSuccess,
   onError,
 }: SampleMutationConfig<TData, TVariables>) {
-  const attemptRef = useRef(0);
-  const mutationQueryClient = useQueryClient();
-
-  return useMutation<TData, Error, TVariables>(
-    createMutationOptionsV2<TData, TVariables>(
-      {
-        mutationKey,
-        mutationFn: async (variables: TVariables) => await mutationFn(variables),
-        meta,
-        ...(onSuccess
-          ? {
-              onSuccess: (data: TData, variables: TVariables): void => {
-                onSuccess(data, variables);
-              },
-            }
-          : {}),
-        ...(onError
-          ? {
-              onError: (error: Error, variables: TVariables): void => {
-                onError(error, variables);
-              },
-            }
-          : {}),
-      },
-      {
-        queryClient: mutationQueryClient,
-        attemptRef,
-      }
-    )
-  );
+  return useMutationV2<TData, TVariables>({
+    mutationKey,
+    mutationFn: async (variables: TVariables) => await mutationFn(variables),
+    meta,
+    ...(onSuccess
+      ? {
+          onSuccess: (data: TData, variables: TVariables): void => {
+            onSuccess(data, variables);
+          },
+        }
+      : {}),
+    ...(onError
+      ? {
+          onError: (error: Error, variables: TVariables): void => {
+            onError(error, variables);
+          },
+        }
+      : {}),
+  });
 }
 
 export function useAiPathsSettingsSamples({

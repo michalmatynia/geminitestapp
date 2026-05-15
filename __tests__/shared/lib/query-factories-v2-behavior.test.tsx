@@ -3,9 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import {
-  createInfiniteQueryV2,
-  createListQueryV2,
-  createSingleQueryV2,
+  useInfiniteQueryV2,
+  useListQueryV2,
+  useSingleQueryV2,
   type MultiQueryResultsV2,
   type QueryDescriptorV2,
   type SuspenseMultiQueryResultsV2,
@@ -39,7 +39,7 @@ describe('query-factories-v2 behavior', () => {
     const fetcher = vi.fn(async () => ['a', 'b']);
     const { result } = renderHook(
       () =>
-        createListQueryV2<string, string[]>({
+        useListQueryV2<string, string[]>({
           queryKey: ['legacy', 'list'],
           queryFn: fetcher,
           enabled: true,
@@ -61,7 +61,7 @@ describe('query-factories-v2 behavior', () => {
     const fetcher = vi.fn(async () => ['a', 'b']);
     const { result } = renderHook(
       () =>
-        createListQueryV2<string, string[]>({
+        useListQueryV2<string, string[]>({
           queryKey: ['legacy', 'override'],
           queryFn: fetcher,
           enabled: false,
@@ -82,7 +82,7 @@ describe('query-factories-v2 behavior', () => {
     const fetcher = vi.fn(async () => ({ id: '1' }));
     const { result } = renderHook(
       () =>
-        createSingleQueryV2<{ id: string }>({
+        useSingleQueryV2<{ id: string }>({
           id: '1',
           queryKey: (id: string) => ['legacy', 'detail', id],
           queryFn: fetcher,
@@ -105,7 +105,7 @@ describe('query-factories-v2 behavior', () => {
     const fetcher = vi.fn(async () => ({ ok: true }));
     const { result } = renderHook(
       () =>
-        createSingleQueryV2<{ ok: boolean }>({
+        useSingleQueryV2<{ ok: boolean }>({
           queryKey: ['legacy', 'single', 'ungated'],
           queryFn: fetcher,
           meta: {
@@ -127,7 +127,7 @@ describe('query-factories-v2 behavior', () => {
 
     const { result } = renderHook(
       () =>
-        createListQueryV2<string, string[]>({
+        useListQueryV2<string, string[]>({
           queryKey: ['legacy', 'refetch-guards'],
           queryFn: fetcher,
           refetchInterval: -100,
@@ -158,7 +158,7 @@ describe('query-factories-v2 behavior', () => {
 
     const { result } = renderHook(
       () =>
-        createSingleQueryV2<{ id: string }>({
+        useSingleQueryV2<{ id: string }>({
           id: null,
           queryKey: (id: string) => ['legacy', 'detail', id],
           queryFn: fetcher,
@@ -218,7 +218,7 @@ describe('query-factories-v2 behavior', () => {
   it('supports TanStack v5 infinite-query options shape', async () => {
     const { result } = renderHook(
       () =>
-        createInfiniteQueryV2<{ items: string[] }>({
+        useInfiniteQueryV2<{ items: string[] }>({
           queryKey: ['legacy', 'infinite'],
           initialPageParam: 0,
           queryFn: async ({ pageParam }) => ({ items: [String(pageParam)] }),

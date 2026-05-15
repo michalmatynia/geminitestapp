@@ -5,7 +5,7 @@ import type { ProductParameter, ProductSimpleParameter } from '@/shared/contract
 import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import {
   normalizeOptionalIdentifier,
@@ -22,7 +22,7 @@ export function useParameters(
   const allowWithoutCatalog = options?.allowWithoutCatalog ?? false;
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.parameters(resolvedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
       if (resolvedCatalogId === null && !allowWithoutCatalog) return [];
@@ -51,7 +51,7 @@ export function useCustomFields(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductCustomFieldDefinition> {
   const queryKey = productMetadataKeys.customFields();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCustomFieldDefinition[]> =>
       await api.get<ProductCustomFieldDefinition[]>('/api/v2/products/custom-fields', {
@@ -79,7 +79,7 @@ export function useSimpleParameters(
   const normalizedCatalogId = catalogId?.trim() ?? '';
   const queryCatalogId = normalizedCatalogId.length > 0 ? normalizedCatalogId : null;
   const queryKey = productMetadataKeys.simpleParameters(queryCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
       if (queryCatalogId === null && !allowWithoutCatalog) return [];
@@ -106,7 +106,7 @@ export function useSimpleParameters(
 
 export function useLanguages(): ListQuery<Language> {
   const queryKey = productMetadataKeys.languages();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<Language[]> => getLanguages(),
     ...STABLE_METADATA_QUERY_OPTIONS,
@@ -126,7 +126,7 @@ export function usePriceGroups(
   options?: ProductMetadataQueryOptions
 ): ListQuery<PriceGroupWithDetails> {
   const queryKey = productMetadataKeys.priceGroups();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<PriceGroupWithDetails[]> =>
       await api.get<PriceGroupWithDetails[]>('/api/v2/products/metadata/price-groups'),

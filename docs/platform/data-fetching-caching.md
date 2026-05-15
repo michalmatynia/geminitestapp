@@ -41,15 +41,15 @@ consistent.
 
 | Factory | Purpose |
 | :--- | :--- |
-| `createListQueryV2` | Fetching arrays or collections of items. |
-| `createSingleQueryV2` | Fetching a single item by ID. |
-| `createPaginatedListQueryV2` | Fetching paginated lists with count metadata. |
-| `createInfiniteQueryV2` | Infinite scrolling lists (e.g., logs, chats). |
-| `createMultiQueryV2` | Fetching multiple independent queries in parallel. |
-| `createSuspenseQueryV2` | Suspense-enabled single query. |
-| `createMutationV2` | Standard mutations (CREATE, UPDATE, DELETE). |
-| `createOptimisticMutationV2` | Mutations with automatic optimistic UI updates and rollback. |
-| `createSaveMutationV2` | Helper for "upsert" logic (POST if new, PUT if exists). |
+| `useListQueryV2` | Fetching arrays or collections of items. |
+| `useSingleQueryV2` | Fetching a single item by ID. |
+| `usePaginatedListQueryV2` | Fetching paginated lists with count metadata. |
+| `useInfiniteQueryV2` | Infinite scrolling lists (e.g., logs, chats). |
+| `useMultiQueryV2` | Fetching multiple independent queries in parallel. |
+| `useSuspenseQueryV2` | Suspense-enabled single query. |
+| `useMutationV2` | Standard mutations (CREATE, UPDATE, DELETE). |
+| `useOptimisticMutationV2` | Mutations with automatic optimistic UI updates and rollback. |
+| `useSaveMutationV2` | Helper for "upsert" logic (POST if new, PUT if exists). |
 | `ensureQueryDataV2` | Telemetrized manual ensure/fetch-if-missing helper. |
 | `fetchQueryV2` | Telemetrized manual fetching (async/await). |
 | `prefetchQueryV2` | Telemetrized manual prefetching. |
@@ -107,7 +107,7 @@ invalidate: async (queryClient, data, variables) => {
 export function useProducts(filters: ProductFilters) {
   const queryKey = QUERY_KEYS.products.list(filters);
   
-  return createListQueryV2<Product[]>({
+  return useListQueryV2<Product[]>({
     queryKey,
     queryFn: () => api.getProducts(filters),
     staleTime: 60_000,
@@ -127,7 +127,7 @@ export function useProducts(filters: ProductFilters) {
 
 ```typescript
 export function useUpdateProductMutation() {
-  return createOptimisticMutationV2<Product, UpdateProductInput>({
+  return useOptimisticMutationV2<Product, UpdateProductInput>({
     mutationFn: (data) => api.updateProduct(data),
     queryKey: QUERY_KEYS.products.detail(data.id),
     updateFn: (old, newData) => ({ ...old, ...newData }), // Optimistic apply
@@ -199,7 +199,7 @@ When refactoring legacy `useQuery` or `useMutation` hooks:
 4.  **Add Metadata**: Populate `meta` with accurate source, resource, domain,
     and a useful description.
 5.  **Remove Manual Cache Logic**: Replace ad hoc success handlers with
-    `invalidateKeys`, `invalidate`, or `createOptimisticMutationV2`.
+    `invalidateKeys`, `invalidate`, or `useOptimisticMutationV2`.
 6.  **Replace Raw Manual Query Calls**: Migrate direct
     `queryClient.fetchQuery`, `queryClient.prefetchQuery`, and
     `queryClient.ensureQueryData` usage to the corresponding v2 helpers.

@@ -37,9 +37,9 @@ import {
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createDeleteMutationV2,
-  createListQueryV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/selectors';
@@ -101,7 +101,7 @@ export function useSelectorRegistry(options?: {
 }): ListQuery<SelectorRegistryListResponse, SelectorRegistryListResponse> {
   const queryKey = buildSelectorRegistryQueryKey(options);
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<SelectorRegistryListResponse> => {
       const params = buildSelectorRegistryParams(options);
@@ -129,7 +129,7 @@ export function useSyncSelectorRegistryMutation(): MutationResult<
   SelectorRegistrySyncResponse,
   SelectorRegistrySyncRequest
 > {
-  return createMutationV2<SelectorRegistrySyncResponse, SelectorRegistrySyncRequest>({
+  return useMutationV2<SelectorRegistrySyncResponse, SelectorRegistrySyncRequest>({
     mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'sync'],
     mutationFn: async (
       payload: SelectorRegistrySyncRequest
@@ -153,7 +153,7 @@ export function useSaveSelectorRegistryEntryMutation(): MutationResult<
   SelectorRegistrySaveResponse,
   SelectorRegistrySaveRequest
 > {
-  return createMutationV2<SelectorRegistrySaveResponse, SelectorRegistrySaveRequest>({
+  return useMutationV2<SelectorRegistrySaveResponse, SelectorRegistrySaveRequest>({
     mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'save'],
     mutationFn: async (
       payload: SelectorRegistrySaveRequest
@@ -177,7 +177,7 @@ export function useDeleteSelectorRegistryEntryMutation(): MutationResult<
   SelectorRegistryDeleteResponse,
   SelectorRegistryDeleteRequest
 > {
-  return createDeleteMutationV2<SelectorRegistryDeleteResponse, SelectorRegistryDeleteRequest>({
+  return useDeleteMutationV2<SelectorRegistryDeleteResponse, SelectorRegistryDeleteRequest>({
     mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'delete'],
     mutationFn: async (
       payload: SelectorRegistryDeleteRequest
@@ -203,7 +203,7 @@ export function useSaveSelectorRegistryProbeSessionMutation(): MutationResult<
   SelectorRegistryProbeSessionSaveResponse,
   SelectorRegistryProbeSessionSaveRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     SelectorRegistryProbeSessionSaveResponse,
     SelectorRegistryProbeSessionSaveRequest
   >({
@@ -233,7 +233,7 @@ export function useDeleteSelectorRegistryProbeSessionMutation(): MutationResult<
   SelectorRegistryProbeSessionDeleteResponse,
   SelectorRegistryProbeSessionDeleteRequest
 > {
-  return createDeleteMutationV2<
+  return useDeleteMutationV2<
     SelectorRegistryProbeSessionDeleteResponse,
     SelectorRegistryProbeSessionDeleteRequest
   >({
@@ -265,7 +265,7 @@ export function useArchiveSelectorRegistryProbeSessionMutation(): MutationResult
   SelectorRegistryProbeSessionArchiveResponse,
   SelectorRegistryProbeSessionArchiveRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     SelectorRegistryProbeSessionArchiveResponse,
     SelectorRegistryProbeSessionArchiveRequest
   >({
@@ -295,7 +295,7 @@ export function useRestoreSelectorRegistryProbeSessionMutation(): MutationResult
   SelectorRegistryProbeSessionRestoreResponse,
   SelectorRegistryProbeSessionRestoreRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     SelectorRegistryProbeSessionRestoreResponse,
     SelectorRegistryProbeSessionRestoreRequest
   >({
@@ -325,7 +325,7 @@ export function useMutateSelectorRegistryProfileMutation(): MutationResult<
   SelectorRegistryProfileActionResponse,
   SelectorRegistryProfileActionRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     SelectorRegistryProfileActionResponse,
     SelectorRegistryProfileActionRequest
   >({
@@ -359,7 +359,7 @@ export function useClassifySelectorRoleMutation(): MutationResult<
   SelectorRegistryProfileActionResponse,
   ClassifyRolePayload
 > {
-  return createMutationV2<SelectorRegistryProfileActionResponse, ClassifyRolePayload>({
+  return useMutationV2<SelectorRegistryProfileActionResponse, ClassifyRolePayload>({
     mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'classify-role'],
     mutationFn: async (payload: ClassifyRolePayload): Promise<SelectorRegistryProfileActionResponse> => {
       const data = await api.patch<SelectorRegistryProfileActionResponse>(ENDPOINT, {
@@ -384,7 +384,7 @@ export function useProbeSelectorMutation(): MutationResult<
   SelectorRegistryProbeResponse,
   SelectorRegistryProbeRequest
 > {
-  return createMutationV2<SelectorRegistryProbeResponse, SelectorRegistryProbeRequest>({
+  return useMutationV2<SelectorRegistryProbeResponse, SelectorRegistryProbeRequest>({
     mutationKey: [...SELECTOR_REGISTRY_QUERY_KEY, 'probe'],
     mutationFn: async (
       payload: SelectorRegistryProbeRequest
@@ -407,7 +407,7 @@ export function useClassifyProbeSuggestionsMutation(): MutationResult<
   SelectorRegistryClassifySuggestionsResponse,
   SelectorRegistryClassifySuggestionsRequest
 > {
-  return createMutationV2<
+  return useMutationV2<
     SelectorRegistryClassifySuggestionsResponse,
     SelectorRegistryClassifySuggestionsRequest
   >({

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import type { MutationResult } from '@/shared/contracts/ui/queries';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { Button } from '@/shared/ui/primitives.public';
 
@@ -32,7 +32,7 @@ type DeleteApplicationVariables = {
 };
 
 const useDeleteApplicationMutation = (): MutationResult<void, DeleteApplicationVariables> =>
-  createMutationV2<void, DeleteApplicationVariables>({
+  useMutationV2<void, DeleteApplicationVariables>({
     mutationKey: ['filemaker', 'job-applications', 'delete'],
     mutationFn: async (variables) => {
       const response = await fetch(

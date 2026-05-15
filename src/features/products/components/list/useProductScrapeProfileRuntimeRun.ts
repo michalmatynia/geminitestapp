@@ -15,7 +15,7 @@ import {
   invalidateListingBadges,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -125,7 +125,7 @@ const useTrackedRuntimeRunId = (): [
 
 const useRuntimeRunQuery = (trackedRunId: string | null): ProductScrapeProfileRuntimeRun | null => {
   const queryKey = [...RUNTIME_RUN_QUERY_KEY, trackedRunId ?? 'active'] as const;
-  const query = createSingleQueryV2<ProductScrapeProfileRuntimeSnapshot>({
+  const query = useSingleQueryV2<ProductScrapeProfileRuntimeSnapshot>({
     queryKey,
     queryFn: () => fetchScrapeProfileRuntimeSnapshot(trackedRunId),
     refetchInterval: (queryResult) =>
@@ -204,7 +204,7 @@ const useRuntimeRunMutations = (
   resumeRun: (runId: string) => void;
 } => {
   const { toast } = useToast();
-  const pauseMutation = createMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
+  const pauseMutation = useMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
     mutationFn: pauseScrapeProfileRuntimeRun,
     meta: {
       source: 'products.components.useProductScrapeProfileRuntimeRun.pause',
@@ -225,7 +225,7 @@ const useRuntimeRunMutations = (
       });
     },
   });
-  const resumeMutation = createMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
+  const resumeMutation = useMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
     mutationFn: resumeScrapeProfileRuntimeRun,
     meta: {
       source: 'products.components.useProductScrapeProfileRuntimeRun.resume',

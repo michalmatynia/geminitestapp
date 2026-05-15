@@ -25,9 +25,9 @@ import {
 } from '@/shared/lib/ai-paths/optimistic-run-queue';
 import { fetchAiPathsSettingsByKeysCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
-  createDeleteMutationV2,
-  createListQueryV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -108,7 +108,7 @@ export function useJobQueueDataLayer({
   toast,
 }: JobQueueDataLayerParams): JobQueueDataLayerResult {
   const [optimisticRunsRevision, setOptimisticRunsRevision] = useState(0);
-  const aiPathsSettingsQuery = createListQueryV2<
+  const aiPathsSettingsQuery = useListQueryV2<
     Array<{ key: string; value: string }>,
     Array<{ key: string; value: string }>
   >({
@@ -172,7 +172,7 @@ export function useJobQueueDataLayer({
     [autoRefreshInterval, effectiveAutoRefreshEnabled, isBurstRefreshActive]
   );
 
-  const runsQuery = createListQueryV2<AiPathRunListResult, AiPathRunListResult>({
+  const runsQuery = useListQueryV2<AiPathRunListResult, AiPathRunListResult>({
     queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
@@ -232,7 +232,7 @@ export function useJobQueueDataLayer({
     },
   });
 
-  const queueStatusQuery = createListQueryV2<QueueStatusPayload, QueueStatusPayload>({
+  const queueStatusQuery = useListQueryV2<QueueStatusPayload, QueueStatusPayload>({
     queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({
       visibility: normalizedVisibility,
     }),
@@ -324,7 +324,7 @@ export function useJobQueueDataLayer({
     setOptimisticRunsRevision((prev) => prev + 1);
   }, []);
 
-  const clearRunsMutation = createDeleteMutationV2<
+  const clearRunsMutation = useDeleteMutationV2<
     { deleted: number; scope: 'all' | 'terminal' },
     'terminal' | 'all'
   >({
@@ -355,7 +355,7 @@ export function useJobQueueDataLayer({
     },
   });
 
-  const cancelRunMutation = createMutationV2<unknown, string>({
+  const cancelRunMutation = useMutationV2<unknown, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.cancel-run'),
     mutationFn: async (id: string) => {
       const res = await cancelAiPathRun(id);
@@ -377,7 +377,7 @@ export function useJobQueueDataLayer({
     },
   });
 
-  const deleteRunMutation = createDeleteMutationV2<void, string>({
+  const deleteRunMutation = useDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
     mutationFn: async (id: string) => {
       const res = await removeAiPathRun(id);

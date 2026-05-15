@@ -4,7 +4,7 @@ import { CheckCircle2, Cloud, Database, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { EcommercePricingSyncPanel } from './EcommercePricingSyncPanel';
 import {
   Alert,
@@ -193,7 +193,7 @@ function CategoriesSyncPanel(): React.JSX.Element {
   const { toast } = useToast();
   const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const syncMutation = createMutationV2<SyncResponse, void>({
+  const syncMutation = useMutationV2<SyncResponse, void>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'data-sync', 'categories'],
     mutationFn: (): Promise<SyncResponse> =>
       api.post<SyncResponse>(SYNC_ENDPOINT, undefined, {

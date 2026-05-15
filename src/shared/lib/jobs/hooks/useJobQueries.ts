@@ -4,7 +4,7 @@ import type { ChatbotJobsResponse } from '@/shared/contracts/chatbot';
 import type { BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
 
 import {
@@ -19,7 +19,7 @@ import {
 
 export function useIntegrationJobs(): ListQuery<ProductJob> {
   const queryKey = jobKeys.integrations();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: ({ signal }) => getIntegrationJobs(signal),
     refetchInterval: (query: Query<ProductJob[], Error, ProductJob[], readonly unknown[]>) => {
@@ -61,7 +61,7 @@ export { jobKeys };
 
 export function useChatbotJobs(scope: string = 'all'): SingleQuery<ChatbotJobsResponse> {
   const queryKey = jobKeys.chatbot(scope);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: scope,
     queryKey,
     queryFn: () => getChatbotJobs(scope),
@@ -78,7 +78,7 @@ export function useChatbotJobs(scope: string = 'all'): SingleQuery<ChatbotJobsRe
 
 export function useTraderaQueueHealth(): SingleQuery<TraderaQueueHealthResponse> {
   const queryKey = jobKeys.traderaQueueHealth();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'tradera-health',
     queryKey,
     queryFn: getTraderaQueueHealth,
@@ -97,7 +97,7 @@ export function useTraderaQueueHealth(): SingleQuery<TraderaQueueHealthResponse>
 
 export function useBaseImportQueueHealth(): SingleQuery<BaseImportQueueHealthResponse> {
   const queryKey = jobKeys.baseImportQueueHealth();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'base-import-health',
     queryKey,
     queryFn: getBaseImportQueueHealth,
@@ -117,7 +117,7 @@ export function useBaseImportQueueHealth(): SingleQuery<BaseImportQueueHealthRes
 
 export function useBaseImportRuns(limit: number = 100): ListQuery<BaseImportRunRecord> {
   const queryKey = jobKeys.baseImportRuns(limit);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: ({ signal }) => getBaseImportRuns(limit, signal),
     refetchInterval: (query: Query<BaseImportRunRecord[], Error, BaseImportRunRecord[], readonly unknown[]>) => {

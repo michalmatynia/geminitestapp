@@ -9,7 +9,7 @@ import { TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '@/shared/lib/ai-paths
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function usePaletteWithTriggerButtons({
@@ -18,7 +18,7 @@ export function usePaletteWithTriggerButtons({
   enabled?: boolean;
 } = {}): NodeDefinition[] {
   const queryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord>({
+  const triggerButtonsQuery = useListQueryV2<AiTriggerButtonRecord>({
     queryKey,
     queryFn: async () => {
       const response = await triggerButtonsApi.list({ entityType: 'custom' });

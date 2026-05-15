@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { viewer3dKeys } from '@/shared/lib/query-key-exports';
 
 const ASSET_LIST_STALE_TIME_MS = 60_000;
@@ -66,7 +66,7 @@ export function useFileAsset3dList(filters: Asset3DListFilters): ListQuery<Asset
   );
 
   const queryKey = viewer3dKeys.list(normalizedFilters);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => fetchAssets3D(normalizedFilters),
     staleTime: ASSET_LIST_STALE_TIME_MS,

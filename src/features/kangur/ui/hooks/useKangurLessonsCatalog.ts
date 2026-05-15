@@ -13,7 +13,7 @@ import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LessonsCatalogQueryOptions = KangurLessonCollectionFilterDto & {
@@ -97,7 +97,7 @@ export const prefetchKangurLessonsCatalog = async (
 export const useKangurLessonsCatalog = (
   options?: LessonsCatalogQueryOptions
 ): ListQuery<KangurLessonsCatalog, KangurLessonsCatalog> =>
-  createListQueryV2<KangurLessonsCatalog, KangurLessonsCatalog>({
+  useListQueryV2<KangurLessonsCatalog, KangurLessonsCatalog>({
     queryKey: createKangurLessonsCatalogQueryKey(options),
     queryFn: async (): Promise<KangurLessonsCatalog> => await fetchKangurLessonsCatalog(options),
     enabled: options?.enabled ?? true,

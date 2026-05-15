@@ -780,6 +780,19 @@ function parseEnvList(key) {
     .filter(Boolean);
 }
 
+/**
+ * createScraperGuard: Factory function for generating a traffic guard instance to mitigate scraping.
+ * 
+ * It manages rate limiting state either in Redis (if available) or memory.
+ * Features:
+ * - Rate-limits requests based on IP and Path.
+ * - Supports strict/normal tiers for Page and API requests.
+ * - Supports bot/suspicious IP allowlists and blocklists.
+ * - Automatic state cleanup for memory-based tracking.
+ * 
+ * @param config - Guard configuration (enabled, limits, block durations, etc.).
+ * @returns An object providing a `check` method for incoming requests.
+ */
 function createScraperGuard(config) {
   const isRedisAvailable = Boolean(process.env.REDIS_URL);
   let redis = null;
@@ -808,6 +821,10 @@ function createScraperGuard(config) {
 
   const REDIS_PREFIX = 'scraper_guard:';
 
+  /**
+   * getFromStorage: Retrieves current bucket and block state for a given key from Redis or memory.
+   * @param key - The bucket key (typically ip:path).
+   */
   async function getFromStorage(key) {
     if (redis) {
       try {
@@ -829,6 +846,14 @@ function createScraperGuard(config) {
     };
   }
 
+  /**
+   * saveToStorage: Persists updated bucket and block state to Redis or memory storage.
+   * @param key - The bucket key.
+   * @param bucket - The rate limit bucket state.
+   * @param blockedUntil - Timestamp when the block expires.
+   * @param windowMs - Time window for the rate limit.
+   * @param blockMs - Duration of the block.
+   */
   async function saveToStorage(key, bucket, blockedUntil, windowMs, blockMs) {
     if (redis) {
       try {

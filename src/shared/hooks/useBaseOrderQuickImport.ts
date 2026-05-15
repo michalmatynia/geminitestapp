@@ -1,7 +1,7 @@
 import type { BaseOrderImportQuickImportPayload, BaseOrderImportQuickImportResponse } from '@/shared/contracts/products/orders-import';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { productKeys } from '@/shared/lib/query-key-exports';
 
 const productOrdersImportKeys = {
@@ -14,7 +14,7 @@ export function useQuickImportBaseOrdersMutation(): MutationResult<
   BaseOrderImportQuickImportPayload
 > {
   const mutationKey = productOrdersImportKeys.quickImport();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: (payload) =>
       api.post<BaseOrderImportQuickImportResponse>(
         '/api/v2/products/orders-import/quick-import',

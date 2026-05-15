@@ -12,7 +12,7 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -113,7 +113,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
 
-  const settingsQuery = createListQueryV2<
+  const settingsQuery = useListQueryV2<
     Array<{ key: string; value: string }>,
     Array<{ key: string; value: string }>
   >({
@@ -132,7 +132,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       tags: ['ai-paths', 'node-config', 'regex'],
       description: 'Loads ai paths settings.'},
   });
-  const updateSettingMutation = createUpdateMutationV2<void, { key: string; value: string }>({
+  const updateSettingMutation = useUpdateMutationV2<void, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('regex.update-setting'),
     mutationFn: async (payload: { key: string; value: string }): Promise<void> => {
       await updateAiPathsSetting(payload.key, payload.value);

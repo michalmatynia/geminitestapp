@@ -7,7 +7,7 @@ import type {
 } from '@/shared/contracts/products/categories';
 import type { ProductTag } from '@/shared/contracts/products/tags';
 import type { DeleteMutation, SaveMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
-import { createDeleteMutationV2, createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useMutationV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateCatalogScopedData,
   invalidatePriceGroups,
@@ -66,7 +66,7 @@ const toCategoryCreatePayload = (
 
 export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceGroup> {
   const mutationKey = productSettingsKeys.priceGroups();
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (group: PriceGroup) => api.updatePriceGroup(group),
     mutationKey,
     meta: {
@@ -86,7 +86,7 @@ export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceG
 
 export function useDeletePriceGroupMutation(): DeleteMutation {
   const mutationKey = productSettingsKeys.priceGroups();
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => api.deletePriceGroup(id),
     mutationKey,
     meta: {
@@ -106,7 +106,7 @@ export function useDeletePriceGroupMutation(): DeleteMutation {
 
 export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
   const mutationKey = productSettingsKeys.priceGroups();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) =>
       api.savePriceGroup(id, data),
     mutationKey,
@@ -127,7 +127,7 @@ export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
 
 export function useDeleteCatalogMutation(): DeleteMutation {
   const mutationKey = productSettingsKeys.catalogs();
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => api.deleteCatalog(id),
     mutationKey,
     meta: {
@@ -147,7 +147,7 @@ export function useDeleteCatalogMutation(): DeleteMutation {
 
 export function useSaveCatalogMutation(): SaveMutation<Catalog> {
   const mutationKey = productSettingsKeys.catalogs();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) => {
       if (hasPersistedId(id)) return api.updateCatalog(id, data);
       return api.createCatalog(data);
@@ -170,7 +170,7 @@ export function useSaveCatalogMutation(): SaveMutation<Catalog> {
 
 export function useSaveCategoryMutation(): SaveMutation<ProductCategory, SaveCategoryPayload> {
   const mutationKey = productSettingsKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: SaveCategoryPayload) => {
       if (hasPersistedId(id)) return api.updateCategory(id, toCategoryUpdatePayload(data));
       return api.createCategory(toCategoryCreatePayload(data));
@@ -197,7 +197,7 @@ export function useDeleteCategoryMutation(): UpdateMutation<
   { id: string; catalogId: string | null }
 > {
   const mutationKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
     mutationKey,
     meta: {
@@ -220,7 +220,7 @@ export function useReorderCategoryMutation(): UpdateMutation<
   ReorderCategoryPayload
 > {
   const mutationKey = productSettingsKeys.all;
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: (payload: ReorderCategoryPayload) => api.reorderCategory(payload),
     mutationKey,
     meta: {
@@ -241,7 +241,7 @@ export function useReorderCategoryMutation(): UpdateMutation<
 
 export function useSaveTagMutation(): SaveMutation<ProductTag, SaveTagPayload> {
   const mutationKey = productSettingsKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: SaveTagPayload) => {
       if (hasPersistedId(id)) return api.updateTag(id, data);
       return api.createTag(data);
@@ -268,7 +268,7 @@ export function useDeleteTagMutation(): UpdateMutation<
   { id: string; catalogId: string | null }
 > {
   const mutationKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
     mutationKey,
     meta: {

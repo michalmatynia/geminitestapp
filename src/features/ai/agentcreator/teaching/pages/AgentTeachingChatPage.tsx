@@ -26,6 +26,33 @@ import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { AgentSidebar, ChatPane } from '../components/AgentTeachingChatComponents';
 
+function useTeachingChatState(agents: AgentTeachingAgentRecord[]) {
+  const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
+  const [input, setInput] = React.useState('');
+  const [messages, setMessages] = React.useState<SimpleChatMessage[]>([]);
+  const [lastSources, setLastSources] = React.useState<AgentTeachingChatSource[]>([]);
+
+  const selectedAgent = React.useMemo(
+    () =>
+      selectedAgentId.length > 0
+        ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
+        : null,
+    [agents, selectedAgentId]
+  );
+
+  return {
+    selectedAgentId,
+    setSelectedAgentId,
+    input,
+    setInput,
+    messages,
+    setMessages,
+    lastSources,
+    setLastSources,
+    selectedAgent,
+  };
+}
+
 function AgentTeachingChatPageContent(): React.JSX.Element {
   const { toast } = useToast();
   const {
@@ -38,20 +65,19 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
   const chatMutation = useTeachingChatMutation();
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
 
-  const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
-  const [input, setInput] = React.useState('');
-  const [messages, setMessages] = React.useState<SimpleChatMessage[]>([]);
-  const [lastSources, setLastSources] = React.useState<AgentTeachingChatSource[]>([]);
+  const {
+    selectedAgentId,
+    setSelectedAgentId,
+    input,
+    setInput,
+    messages,
+    setMessages,
+    lastSources,
+    setLastSources,
+    selectedAgent,
+  } = useTeachingChatState(agents);
 
   const sending = chatMutation.isPending;
-
-  const selectedAgent = React.useMemo(
-    () =>
-      selectedAgentId.length > 0
-        ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
-        : null,
-    [agents, selectedAgentId]
-  );
 
   const registrySource = React.useMemo(
     () => ({

@@ -23,9 +23,9 @@ import type {
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateIntegrationConnections,
@@ -38,7 +38,7 @@ export function useCreateIntegration(): MutationResult<
   { name: string; slug: string }
   > {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createMutationV2<Integration, { name: string; slug: string }>({
+  return useMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/v2/integrations', variables),
     mutationKey,
     meta: {
@@ -104,7 +104,7 @@ const refreshIntegrationConnectionQueries = async (
 
 export function useUpsertConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
+  return useMutationV2<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
     mutationFn: async (variables): Promise<IntegrationConnection> => {
       const hasConnection = Boolean(variables.connectionId);
       const url = hasConnection
@@ -134,7 +134,7 @@ export function useUpsertConnection() {
 
 export function useUpsertProgrammableConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<
+  return useMutationV2<
     ProgrammableIntegrationConnection,
     UpsertConnectionVariables & { id?: string }
   >({
@@ -175,7 +175,7 @@ type DeleteConnectionVariables = {
 
 export function useDeleteConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
+  return useDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
     mutationFn: ({
       connectionId,
       userPassword,
@@ -206,7 +206,7 @@ export function useDeleteConnection() {
 
 export function useTestConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<TestConnectionResponse, IntegrationConnectionTestVariables>({
+  return useMutationV2<TestConnectionResponse, IntegrationConnectionTestVariables>({
     mutationFn: ({
       integrationId,
       connectionId,
@@ -238,7 +238,7 @@ export function useTestConnection() {
 
 export function useDisconnectAllegro() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+  return useMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
     mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
       api.post<IntegrationDisconnectResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/disconnect`,
@@ -261,7 +261,7 @@ export function useDisconnectAllegro() {
 
 export function useDisconnectLinkedIn() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+  return useMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
     mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
       api.post<IntegrationDisconnectResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/linkedin/disconnect`,
@@ -284,7 +284,7 @@ export function useDisconnectLinkedIn() {
 
 export function useDisconnectGoogle() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+  return useMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
     mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
       api.post<IntegrationDisconnectResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/google/disconnect`,
@@ -307,7 +307,7 @@ export function useDisconnectGoogle() {
 
 export function useBaseApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationBaseApiResponse, IntegrationBaseApiRequest>({
+  return useMutationV2<IntegrationBaseApiResponse, IntegrationBaseApiRequest>({
     mutationFn: ({ integrationId, connectionId, ...rest }) =>
       api.post<IntegrationBaseApiResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/base/request`,
@@ -328,7 +328,7 @@ export function useBaseApiRequest() {
 
 export function useAllegroApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createMutationV2<IntegrationAllegroApiResponse, IntegrationAllegroApiRequest>({
+  return useMutationV2<IntegrationAllegroApiResponse, IntegrationAllegroApiRequest>({
     mutationFn: ({ integrationId, connectionId, ...rest }) =>
       api.post<IntegrationAllegroApiResponse>(
         `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
@@ -353,7 +353,7 @@ export function useAllegroApiRequest() {
 
 export function useUpdatePreferredTemplate() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     BaseActiveTemplatePreferenceResponse,
     BaseActiveTemplatePreferencePayload
   >({
@@ -376,7 +376,7 @@ export function useUpdatePreferredTemplate() {
 
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createMutationV2<BaseSyncAllImagesResponse, void>({
+  return useMutationV2<BaseSyncAllImagesResponse, void>({
     mutationFn: () =>
       api.post<BaseSyncAllImagesResponse>('/api/v2/integrations/images/sync-base/all', {}),
     mutationKey,
@@ -393,7 +393,7 @@ export function useSyncAllBaseImagesMutation() {
 
 export function useUpdatePreferredInventory() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     BaseDefaultInventoryPreferenceResponse,
     BaseDefaultInventoryPreferencePayload
   >({
@@ -415,7 +415,7 @@ export function useUpdatePreferredInventory() {
 }
 
 export function useUpdateDefaultExportConnection() {
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     BaseDefaultConnectionPreferenceResponse,
     BaseDefaultConnectionPreferencePayload
   >({
@@ -440,7 +440,7 @@ export function useUpdateDefaultExportConnection() {
 }
 
 export function useUpdateDefaultTraderaConnection() {
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     TraderaDefaultConnectionPreferenceResponse,
     TraderaDefaultConnectionPreferencePayload
   >({
@@ -463,7 +463,7 @@ export function useUpdateDefaultTraderaConnection() {
 }
 
 export function useUpdateDefaultVintedConnection() {
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     VintedDefaultConnectionPreferenceResponse,
     VintedDefaultConnectionPreferencePayload
   >({

@@ -1,10 +1,16 @@
 import type { ArchPageContent } from '@/lib/types';
+import CityMapSvg from './CityMapSvg';
 
 export default function Philosophy({ content }: { content: ArchPageContent['philosophy'] }) {
   return (
     <section className="philosophy" id="studio">
       <div className="wrap">
         <div className="phil-grid">
+          <div className="phil-figure rev" data-delay="2">
+            <CityMapSvg />
+            <span className="phil-caption">{content.caption}</span>
+          </div>
+
           <div className="phil-text">
             <span className="label rev">{content.eyebrow}</span>
             <h2 className="rev" data-delay="1" style={{ marginTop: '18px' }}>
@@ -14,10 +20,6 @@ export default function Philosophy({ content }: { content: ArchPageContent['phil
               {content.body}
             </p>
             <p className="rev" data-delay="3">{content.closing}</p>
-          </div>
-
-          <div className="phil-figure rev" data-delay="2">
-            <span className="phil-caption">{content.caption}</span>
           </div>
         </div>
 

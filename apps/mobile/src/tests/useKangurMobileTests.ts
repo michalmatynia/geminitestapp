@@ -1,9 +1,9 @@
 import { KANGUR_TEST_QUESTIONS_SETTING_KEY, kangurTestQuestionStoreSchema, type KangurTestQuestion, type KangurTestQuestionStore, type KangurTestSuite } from '@kangur/contracts/kangur-tests';
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 type KangurLiteSettingRecord = {
   key: string;
@@ -131,8 +131,9 @@ export const useKangurMobileTests = (
   const { copy } = useKangurMobileI18n();
   const focusToken = (rawFocusToken?.trim().toLowerCase()) ?? null;
 
-  const settingsQuery = useQuery({
-    queryKey: ['kangur-mobile', 'tests', 'lite-settings', apiBaseUrl],
+  const queryKey = ['kangur-mobile', 'tests', 'lite-settings', apiBaseUrl] as const;
+  const settingsQuery = useKangurMobileQueryV2({
+    queryKey,
     queryFn: async (): Promise<KangurLiteSettingRecord[]> => {
       const response = await fetch(`${apiBaseUrl}/api/settings/lite`, {
         cache: 'no-store',
@@ -151,6 +152,14 @@ export const useKangurMobileTests = (
       });
     },
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.tests.lite-settings',
+      operation: 'list',
+      resource: 'kangur.mobile.tests.lite-settings',
+      queryKey,
+      description: 'Loads Kangur mobile test suite lite settings.',
+      tags: ['kangur-mobile', 'tests', 'settings'],
+    },
   });
 
   const questionStore = useMemo(() => {

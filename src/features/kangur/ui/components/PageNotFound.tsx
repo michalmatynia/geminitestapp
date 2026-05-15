@@ -26,7 +26,7 @@ import {
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const kangurPlatform = getKangurPlatform();
@@ -110,7 +110,7 @@ export function PageNotFound(): React.JSX.Element {
   }, [basePath, requestedPath, unknownPageLabel]);
 
   const queryKey = QUERY_KEYS.auth.user();
-  const { data: authData, isFetched } = createSingleQueryV2<PageNotFoundAuthState>({
+  const { data: authData, isFetched } = useSingleQueryV2<PageNotFoundAuthState>({
     queryKey,
     queryFn: () =>
       withKangurClientError<PageNotFoundAuthState>(

@@ -1,7 +1,7 @@
 {
   "summary": {
-    "generatedAt": "2026-05-15T00:11:50.071Z",
-    "scannedFileCount": 3216,
+    "generatedAt": "2026-05-15T06:12:11.360Z",
+    "scannedFileCount": 3234,
     "duplicateNameClusterCount": 2,
     "propSignatureClusterCount": 5,
     "tokenSimilarityClusterCount": 1,
@@ -11,11 +11,11 @@
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 2252
+        "count": 2266
       },
       {
         "family": "Section",
-        "count": 224
+        "count": 228
       },
       {
         "family": "Page",
@@ -85,7 +85,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 2593
+        "count": 2611
       },
       {
         "domain": "app",

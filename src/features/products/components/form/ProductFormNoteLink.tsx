@@ -6,7 +6,7 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import type { NoteWithRelations, RelatedNote } from '@/shared/contracts/notes';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -18,7 +18,7 @@ type NotesLookupResult = RelatedNote[];
 
 function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: boolean } {
   const q = query.trim();
-  const res = createListQueryV2<NoteWithRelations[], NoteWithRelations[]>({
+  const res = useListQueryV2<NoteWithRelations[], NoteWithRelations[]>({
     queryKey: QUERY_KEYS.notes.search(q),
     queryFn: () =>
       api.get<NoteWithRelations[]>('/api/notes', {
@@ -42,7 +42,7 @@ function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: b
 
 function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading: boolean } {
   const ids = noteIds.filter(Boolean);
-  const res = createListQueryV2<NotesLookupResult, NotesLookupResult>({
+  const res = useListQueryV2<NotesLookupResult, NotesLookupResult>({
     queryKey: QUERY_KEYS.notes.lookup(ids),
     queryFn: () =>
       api.get<NotesLookupResult>('/api/notes/lookup', {

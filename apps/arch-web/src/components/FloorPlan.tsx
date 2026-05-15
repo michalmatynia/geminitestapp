@@ -70,12 +70,17 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
   const [dragId,     setDragId]     = useState<string | null>(null);
   const [dragPos,    setDragPos]    = useState<{ x: number; y: number } | null>(null);
   const [hoverId,    setHoverId]    = useState<string | null>(null);
+  const [mouseRoomId, setMouseRoomId] = useState<string | null>(null);
   const [flashSet,   setFlash]      = useState<Set<string>>(new Set());
+  const [modalSrc, setModalSrc] = useState<string | null>(null);
+  const [planHoverX, setPlanHoverX] = useState(0);
+  const [planHovering, setPlanHovering] = useState(false);
 
-  const svgRef     = useRef<SVGSVGElement>(null);
-  const rafRef     = useRef<number | null>(null);
-  const slotsRef   = useRef<Slots>(INITIAL_SLOTS);
-  const displayRef = useRef<Room[]>(computeRooms(INITIAL_SLOTS));
+  const svgRef      = useRef<SVGSVGElement>(null);
+  const planWrapRef = useRef<HTMLDivElement>(null);
+  const rafRef      = useRef<number | null>(null);
+  const slotsRef    = useRef<Slots>(INITIAL_SLOTS);
+  const displayRef  = useRef<Room[]>(computeRooms(INITIAL_SLOTS));
 
   useEffect(() => { slotsRef.current   = slots;   });
   useEffect(() => { displayRef.current = display; });
@@ -180,6 +185,26 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
     setDragId(null); setDragPos(null); setHoverId(null);
   }, []);
 
+  const onPlanMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const wrap = planWrapRef.current;
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const svgX = (e.clientX - rect.left) / rect.width * VW;
+    setPlanHoverX(Math.max(20, Math.min(VW - 20, svgX)));
+  }, []);
+
+  const onPlanMouseEnter = useCallback(() => setPlanHovering(true), []);
+  const onPlanMouseLeave = useCallback(() => setPlanHovering(false), []);
+
+  const closeModal = useCallback(() => setModalSrc(null), []);
+
+  useEffect(() => {
+    if (!modalSrc) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalSrc, closeModal]);
+
   const walls     = wallsFromRooms(display);
   const dragging  = dragId !== null;
   const dragRoom  = display.find(r => r.id === dragId);
@@ -197,10 +222,33 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
             </p>
             <a href="#practice" className="btn-quiet rev" data-delay="3">{content.ctaLabel} ↘</a>
             <p className="plan-hint rev" data-delay="4">{content.hint}</p>
+
+            {content.thumbImages.length > 0 && (
+              <div className="plan-thumbs rev" data-delay="5">
+                {content.thumbImages.slice(0, 4).map((src, i) => (
+                  <button
+                    key={i}
+                    className="plan-thumb plan-thumb--filled"
+                    onClick={() => setModalSrc(src)}
+                    aria-label={`View reference image ${i + 1}`}
+                  >
+                    <img src={src} alt={`Reference ${i + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="plan-col">
-          <div className="plan-wrap rev" data-delay="1" id="planWrap">
+          <div
+            ref={planWrapRef}
+            className="plan-wrap rev"
+            data-delay="1"
+            id="planWrap"
+            onMouseMove={onPlanMouseMove}
+            onMouseEnter={onPlanMouseEnter}
+            onMouseLeave={onPlanMouseLeave}
+          >
             <svg
               ref={svgRef}
               className="plan-svg"
@@ -217,27 +265,30 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
 
               {/* ── Room spaces ── fill animated during redraw */}
               {display.map(room => {
-                const isSrc   = dragId   === room.id;
-                const isTgt   = hoverId  === room.id;
+                const isSrc   = dragId      === room.id;
+                const isTgt   = hoverId     === room.id;
+                const isOver  = !dragging && mouseRoomId === room.id;
                 const isFlash = flashSet.has(room.id);
                 const cx = room.x + room.w / 2;
                 const cy = room.y + room.h / 2;
                 const areaM2   = Math.round(room.w * SVG_TO_M * room.h * SVG_TO_M);
                 const showArea = room.h > 55 && room.w > 70;
 
-                const fillA = isFlash ? 0.16 : isTgt ? 0.11 : isSrc ? 0.07 : 0.5;
+                const fillA = isFlash ? 0.16 : isTgt ? 0.11 : isSrc ? 0.07 : isOver ? 0.72 : 0.5;
                 const inkA  = isSrc ? 0.18 : 0.72;
 
                 return (
                   <g key={room.id}>
                     <rect
                       x={room.x} y={room.y} width={room.w} height={room.h}
-                      fill={`rgba(236,234,230,${fillA})`}
+                      fill={`rgba(206,202,196,${fillA})`}
                       stroke={!animating && isTgt ? 'var(--accent)' : 'none'}
                       strokeWidth=".7"
                       strokeDasharray={!animating && isTgt ? '4 3' : undefined}
                       style={{ cursor: 'grab' }}
                       onPointerDown={(e) => onDown(e, room.id)}
+                      onPointerEnter={() => setMouseRoomId(room.id)}
+                      onPointerLeave={() => setMouseRoomId(null)}
                     />
                     <text
                       x={cx} y={showArea ? cy - 9 : cy}
@@ -328,8 +379,11 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
                 </g>
               )}
 
-              {/* North indicator */}
-              <g transform="translate(60,330)">
+              {/* North indicator — follows mouse X on hover */}
+              <g
+                transform={`translate(${planHovering && !dragging ? planHoverX : 60},330)`}
+                style={{ transition: planHovering && !dragging ? 'transform 0.06s linear' : 'transform 0.3s ease-out' }}
+              >
                 <circle cx="0" cy="0" r="8" fill="none" stroke="var(--ink-3)" strokeWidth=".5" />
                 <path d="M0,-6 L2,0 L0,-1 L-2,0Z" fill="var(--ink)" />
                 <text x="0" y="-11" textAnchor="middle" className="plan-label"
@@ -337,6 +391,7 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
               </g>
               <text className="plan-title" x="440" y="334" textAnchor="end">A-001 · Ground</text>
             </svg>
+
           </div>
           <div className="interior-viewer-panel rev" data-delay="2">
             <InteriorViewer />
@@ -344,6 +399,17 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
           </div>
         </div>
       </div>
+      {modalSrc && (
+        <div className="plan-modal" onClick={closeModal} role="dialog" aria-modal="true">
+          <button className="plan-modal-close" onClick={closeModal} aria-label="Close">✕</button>
+          <img
+            src={modalSrc}
+            alt="Reference image"
+            className="plan-modal-img"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
     </section>
   );
 }

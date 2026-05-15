@@ -120,6 +120,7 @@ vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
 }));
 
 vi.mock('react-hook-form', () => ({
+  useWatch: () => hookMocks.watch(),
   useFormContext: () => ({
     watch: hookMocks.watch,
     getValues: hookMocks.getValues,
@@ -143,7 +144,7 @@ vi.mock('@/features/products/hooks/useProductValidatorIssues', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: () => ({
+  useListQueryV2: () => ({
     data: [],
     isLoading: false,
     isFetching: false,

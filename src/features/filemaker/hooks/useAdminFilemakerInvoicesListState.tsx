@@ -14,7 +14,7 @@ import React, {
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { FilemakerInvoiceMasterTreeNode } from '../components/shared/FilemakerInvoiceMasterTreeNode';
@@ -127,7 +127,7 @@ const fetchMongoFilemakerInvoices = async (
 
 function useMongoFilemakerInvoices(input: InvoiceListInput): MongoFilemakerInvoicesState {
   const queryKey = buildInvoiceListQueryKey(input);
-  const invoicesQuery = createSingleQueryV2<
+  const invoicesQuery = useSingleQueryV2<
     MongoFilemakerInvoicesResponse,
     MongoFilemakerInvoicesResponse,
     typeof queryKey
@@ -205,7 +205,7 @@ function useInvoicePdfExport(toast: ReturnType<typeof useToast>['toast']): {
   exportingInvoiceId: string | null;
   handleExportInvoicePdf: (invoiceId: string) => void;
 } {
-  const exportInvoicePdfMutation = createMutationV2<InvoicePdfExportResult, string>({
+  const exportInvoicePdfMutation = useMutationV2<InvoicePdfExportResult, string>({
     mutationKey: ['filemaker', 'invoices', 'export-pdf'],
     mutationFn: async (invoiceId) => {
       const response = await fetch('/api/filemaker/invoices/export-pdf', {

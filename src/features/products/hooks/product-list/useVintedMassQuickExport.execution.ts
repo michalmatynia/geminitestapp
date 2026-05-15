@@ -15,7 +15,7 @@ import {
   invalidateProductListingsAndBadges,
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import type { useToast } from '@/shared/ui/toast';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -254,7 +254,7 @@ export const useVintedMassQuickExportExecutor = ({
     total: 0,
     errors: 0,
   });
-  const massExportMutation = createMutationV2<void, string[]>({
+  const massExportMutation = useMutationV2<void, string[]>({
     mutationKey: ['products', 'mass-quick-export', 'vinted'],
     mutationFn: async (productIds: string[]): Promise<void> => {
       if (productIds.length === 0) return;

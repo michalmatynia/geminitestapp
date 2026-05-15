@@ -75,25 +75,34 @@ export const isMongoSingleWriterConflictError = (error: unknown): boolean => {
 };
 
 /**
- * Executes a MongoDB write operation with retry logic and queuing.
- * Operations with the same `queueKey` are serialized to prevent concurrent 
- * conflict errors.
+ * Executes a MongoDB write operation with retry logic and serial execution queuing.
  * 
- * @param operation - The async operation to execute.
- * @param options - Optional configuration for retry behavior.
- * @returns The result of the operation.
- * @throws The original error if max attempts are exceeded or if it's not a conflict error.
+ * Conflict Resolution Strategy:
+ * 1. Serialized Execution: All operations using the same `queueKey` are placed in a 
+ *    promise chain. This ensures that one write finishes (or errors out) before 
+ *    the next begins, significantly reducing conflict frequency.
+ * 2. Automatic Retries: If an operation still fails due to a "single-writer" 
+ *    conflict (see `isMongoSingleWriterConflictError`), it is automatically 
+ *    retried using exponential backoff.
+ * 3. Serialization Cleanup: Uses a tail-cleanup mechanism to remove completed 
+ *    queues from memory once the promise chain reaches the final operation.
+ * 
+ * @param operation - The async operation (write) to be executed.
+ * @param options - Configuration for serialization, retry count, and backoff timing.
+ * @returns The successful result of the operation.
+ * @throws The original error if the max attempts are reached, or if the error 
+ *         is not identified as a recoverable conflict.
  */
 export const executeMongoWriteWithRetry = async <T>(
   operation: () => Promise<T>,
   options?: {
-    /** Maximum number of attempts (including the first). */
+    /** Maximum number of retry attempts allowed before giving up. Defaults to 4. */
     maxAttempts?: number;
-    /** Key to identify the serialization queue. */
+    /** Key to identify the serialization queue for related operations. Defaults to 'mongodb-single-writer'. */
     queueKey?: string;
-    /** Initial retry delay in milliseconds. */
+    /** Base retry delay in milliseconds before exponential backoff kicks in. Defaults to 25ms. */
     retryDelayMs?: number;
-    /** Maximum retry delay in milliseconds. */
+    /** Upper bound for the backoff delay to prevent indefinite wait times. Defaults to 150ms. */
     maxRetryDelayMs?: number;
   }
 ): Promise<T> => {

@@ -3,7 +3,7 @@ import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import { AUTH_SETTINGS_KEYS, type AuthRole } from '@/features/auth/utils/auth-management';
 import { type AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -46,7 +46,7 @@ export function useSettingsController(): SettingsControllerReturn {
   const [defaultDirty, setDefaultDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
 
-  const mfaSetupMutation = createMutationV2({
+  const mfaSetupMutation = useMutationV2({
     mutationKey: QUERY_KEYS.auth.mutation('mfa.setup'),
     mutationFn: setupMfa,
     meta: {
@@ -57,7 +57,7 @@ export function useSettingsController(): SettingsControllerReturn {
       description: 'Setup MFA for the user',
     },
   });
-  const mfaVerifyMutation = createMutationV2({
+  const mfaVerifyMutation = useMutationV2({
     mutationKey: QUERY_KEYS.auth.mutation('mfa.verify'),
     mutationFn: verifyMfa,
     meta: {
@@ -68,7 +68,7 @@ export function useSettingsController(): SettingsControllerReturn {
       description: 'Verify MFA for the user',
     },
   });
-  const mfaDisableMutation = createMutationV2({
+  const mfaDisableMutation = useMutationV2({
     mutationKey: QUERY_KEYS.auth.mutation('mfa.disable'),
     mutationFn: disableMfa,
     meta: {

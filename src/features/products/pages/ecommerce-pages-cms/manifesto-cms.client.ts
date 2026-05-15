@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 
 import { api } from '@/shared/lib/api-client';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type ManifestoState = {
@@ -127,7 +127,7 @@ type ManifestoStateSetter = Dispatch<SetStateAction<ManifestoState | null>>;
 type ErrorSetter = Dispatch<SetStateAction<string | null>>;
 
 const useManifestoQuery = (): SingleQuery<ManifestoState> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-manifesto',
     queryKey: MANIFESTO_QUERY_KEY,
     queryFn: fetchManifesto,
@@ -179,7 +179,7 @@ const useManifestoSaveAction = (input: {
   setManifesto: ManifestoStateSetter;
 }): Pick<ManifestoController, 'handleSaveClick' | 'isSaving'> => {
   const { toast } = useToast();
-  const saveMutation = createMutationV2<ManifestoState, ManifestoState>({
+  const saveMutation = useMutationV2<ManifestoState, ManifestoState>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'manifesto', 'save'],
     mutationFn: saveManifesto,
     onSuccess: (nextManifesto: ManifestoState): void => {
@@ -219,7 +219,7 @@ const useManifestoBackgroundUploadAction = (input: {
   updateField: ManifestoController['updateField'];
 }): Pick<ManifestoController, 'handleUploadBackgroundClick' | 'isUploadingBackground'> => {
   const { toast } = useToast();
-  const uploadMutation = createMutationV2<ManifestoBackgroundImage, File>({
+  const uploadMutation = useMutationV2<ManifestoBackgroundImage, File>({
     mutationKey: MANIFESTO_BACKGROUND_UPLOAD_MUTATION_KEY,
     mutationFn: uploadManifestoBackground,
     onSuccess: (image: ManifestoBackgroundImage): void => {

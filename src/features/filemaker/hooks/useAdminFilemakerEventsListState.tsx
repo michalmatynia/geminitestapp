@@ -12,7 +12,7 @@ import React, {
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import { FilemakerEventMasterTreeNode } from '../components/shared/FilemakerEventMasterTreeNode';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -93,7 +93,7 @@ const fetchMongoFilemakerEvents = async (
 
 function useMongoFilemakerEvents(input: EventListInput): MongoFilemakerEventsState {
   const queryKey = buildEventListQueryKey(input);
-  const eventsQuery = createSingleQueryV2<
+  const eventsQuery = useSingleQueryV2<
     MongoFilemakerEventsResponse,
     MongoFilemakerEventsResponse,
     typeof queryKey

@@ -9,7 +9,7 @@ import type { CaseResolverOcrModelsResponse } from '@/shared/contracts/case-reso
 import type { CaseResolverSettings } from '@/shared/contracts/case-resolver/workspace';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AdminAiEyebrow, AdminCaseResolverBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
@@ -38,7 +38,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const modelsQuery = createListQueryV2<
+  const modelsQuery = useListQueryV2<
     CaseResolverOcrModelsResponse,
     CaseResolverOcrModelsResponse
   >({

@@ -3,7 +3,7 @@
 import { Building2, CalendarDays, ExternalLink, UserRound } from 'lucide-react';
 import React from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { FormActions, FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
@@ -69,7 +69,7 @@ const readWebsiteDetail = async (
 
 export function useWebsiteDetail(websiteId: string): WebsiteDetailState {
   const queryKey = ['filemaker', 'websites', 'detail', websiteId] as const;
-  const websiteQuery = createSingleQueryV2<MongoFilemakerWebsiteDetail, MongoFilemakerWebsiteDetail, typeof queryKey>({
+  const websiteQuery = useSingleQueryV2<MongoFilemakerWebsiteDetail, MongoFilemakerWebsiteDetail, typeof queryKey>({
     queryKey,
     queryFn: async ({ signal }) => readWebsiteDetail(websiteId, signal),
     enabled: websiteId.trim().length > 0,

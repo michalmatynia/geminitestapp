@@ -1,7 +1,7 @@
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY, type PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 import { useSavePlaywrightPersonasMutation as useSavePlaywrightPersonasMutationShared } from '@/shared/hooks/usePlaywrightPersonas';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -12,7 +12,7 @@ export function usePlaywrightPersonas(options?: {
   enabled?: boolean;
 }): ListQuery<PlaywrightPersona> {
   const queryKey = playwrightKeys.personas();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();

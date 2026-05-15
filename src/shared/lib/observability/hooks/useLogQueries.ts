@@ -9,7 +9,7 @@ import type {
 import { mongoDiagnosticsResponseSchema } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
 export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
@@ -17,7 +17,7 @@ export { useSystemActivity } from '@/shared/hooks/useSystemActivity';
 
 export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsResponse> {
   const queryKey = logsKeys.list(filters);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'system-logs',
     queryKey,
     queryFn: () =>
@@ -57,7 +57,7 @@ export function useSystemLogMetrics(
   filters: Omit<LogFilters, 'page' | 'pageSize'>
 ): SingleQuery<SystemLogMetricsResponse> {
   const queryKey = logsKeys.metrics(filters);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'system-log-metrics',
     queryKey,
     queryFn: () =>
@@ -93,7 +93,7 @@ export function useSystemLogMetrics(
 
 export function useMongoDiagnostics(): SingleQuery<MongoDiagnosticsResponse> {
   const queryKey = diagnosticsKeys.mongo();
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'mongo-diagnostics',
     queryKey,
     queryFn: async () =>
@@ -115,7 +115,7 @@ export function useLogInsights(
   options: { limit?: number; enabled?: boolean } = {}
 ): SingleQuery<AiInsightsResponse> {
   const queryKey = logsKeys.insights(options.limit);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: 'log-insights',
     queryKey,
     queryFn: () =>

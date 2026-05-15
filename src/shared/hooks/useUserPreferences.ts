@@ -11,7 +11,7 @@ import {
 } from '@/shared/contracts/auth';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -57,7 +57,7 @@ const hasPreferenceChanged = (
 export function useUserPreferences(
   options?: UserPreferencesQueryOptions
 ): SingleQuery<UserPreferences> {
-  return createSingleQueryV2<UserPreferences>({
+  return useSingleQueryV2<UserPreferences>({
     id: 'current-user-preferences',
     enabled: options?.enabled ?? true,
     queryKey: userPreferencesQueryKey,
@@ -91,7 +91,7 @@ export function useUserPreferences(
 export function useUpdateUserPreferences(): MutationResult<UserPreferences, UserPreferencesUpdate> {
   const queryClient = useQueryClient();
 
-  return createUpdateMutationV2<UserPreferences, UserPreferencesUpdate>({
+  return useUpdateMutationV2<UserPreferences, UserPreferencesUpdate>({
     mutationKey: QUERY_KEYS.userPreferences.mutation('update'),
     mutationFn: (data: UserPreferencesUpdate) => {
       const validation = userPreferencesUpdateSchema.safeParse(data);

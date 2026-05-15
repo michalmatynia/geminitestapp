@@ -1,6 +1,6 @@
 import type { ProductCustomFieldDefinition } from '@/shared/contracts/products/custom-fields';
 import type { SaveMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
-import { createDeleteMutationV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductCustomFields } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
@@ -17,7 +17,7 @@ export function useSaveCustomFieldMutation(): SaveMutation<
   SaveCustomFieldPayload
 > {
   const mutationKey = productSettingsKeys.customFields();
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: SaveCustomFieldPayload) => {
       if (hasPersistedId(id)) return api.updateCustomField(id, data);
       return api.createCustomField(data);
@@ -40,7 +40,7 @@ export function useSaveCustomFieldMutation(): SaveMutation<
 
 export function useDeleteCustomFieldMutation(): UpdateMutation<void, { id: string }> {
   const mutationKey = productSettingsKeys.customFields();
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ id }: { id: string }) => api.deleteCustomField(id),
     mutationKey,
     meta: {

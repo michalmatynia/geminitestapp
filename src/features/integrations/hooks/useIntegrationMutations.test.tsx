@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const createMutationV2Mock = vi.hoisted(() => vi.fn());
-const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
+const useMutationV2Mock = vi.hoisted(() => vi.fn());
+const useUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 const apiPutMock = vi.hoisted(() => vi.fn());
 
@@ -14,8 +14,8 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
   return {
     ...actual,
-    createMutationV2: createMutationV2Mock,
-    createUpdateMutationV2: createUpdateMutationV2Mock,
+    useMutationV2: useMutationV2Mock,
+    useUpdateMutationV2: useUpdateMutationV2Mock,
   };
 });
 
@@ -36,15 +36,15 @@ import {
 describe('useIntegrationMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createMutationV2Mock.mockReturnValue({ kind: 'mutation' });
-    createUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    useMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    useUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     apiPostMock.mockResolvedValue({ connectionId: 'conn-tradera-1' });
     apiPutMock.mockResolvedValue({ id: 'conn-tradera-1' });
   });
 
   it('updates the connection cache immediately after editing a connection', async () => {
     const { result } = renderHook(() => useUpsertConnection());
-    const config = createMutationV2Mock.mock.calls[0]?.[0];
+    const config = useMutationV2Mock.mock.calls[0]?.[0];
     const setQueryDataMock = vi.fn();
     const invalidateQueriesMock = vi.fn().mockResolvedValue(undefined);
 
@@ -101,7 +101,7 @@ describe('useIntegrationMutations', () => {
 
   it('posts Tradera preferred connection updates to the dedicated endpoint', async () => {
     const { result } = renderHook(() => useUpdateDefaultTraderaConnection());
-    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useUpdateMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'mutation' });
     expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.selection.traderaDefaultConnection());
@@ -121,7 +121,7 @@ describe('useIntegrationMutations', () => {
   it('posts Vinted preferred connection updates to the dedicated endpoint', async () => {
     apiPostMock.mockResolvedValue({ connectionId: 'conn-vinted-1' });
     const { result } = renderHook(() => useUpdateDefaultVintedConnection());
-    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useUpdateMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'mutation' });
     expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.selection.vintedDefaultConnection());
@@ -141,7 +141,7 @@ describe('useIntegrationMutations', () => {
   it('flattens manual test payload fields and uses timeout as request config', async () => {
     apiPostMock.mockResolvedValue({ ok: true, steps: [] });
     const { result } = renderHook(() => useTestConnection());
-    const config = createMutationV2Mock.mock.calls[0]?.[0];
+    const config = useMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'mutation' });
     expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.connections());

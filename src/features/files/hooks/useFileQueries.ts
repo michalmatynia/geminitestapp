@@ -2,9 +2,9 @@ import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateFiles } from '@/shared/lib/query-invalidation';
 import { fileKeys } from '@/shared/lib/query-key-exports';
@@ -13,7 +13,7 @@ export { fileKeys };
 
 export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile> {
   const queryKey = fileKeys.list(params);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => api.get<ExpandedImageFile[]>(`/api/files?${params}`),
     meta: {
@@ -28,7 +28,7 @@ export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile
 }
 
 export function useDeleteFile(): DeleteMutation {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: async (fileId: string): Promise<void> => {
       await api.delete(`/api/files/${fileId}`);
     },
@@ -49,7 +49,7 @@ export function useUpdateFileTags(): UpdateMutation<
   ExpandedImageFile,
   { id: string; tags: string[] }
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ id, tags }: { id: string; tags: string[] }) =>
       api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
     mutationKey: fileKeys.all,

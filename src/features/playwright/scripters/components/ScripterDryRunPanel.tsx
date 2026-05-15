@@ -3,7 +3,7 @@
 import { Loader2, Play, Save } from 'lucide-react';
 import { type JSX } from 'react';
 
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ScripterImportSourceResult } from '../scripter-import-source';
@@ -36,7 +36,7 @@ export function ScripterDryRunPanel({
   onCommit,
   committing,
 }: ScripterDryRunPanelProps): JSX.Element {
-  const dryRunMutation = createMutationV2<ScripterImportSourceResult, string>({
+  const dryRunMutation = useMutationV2<ScripterImportSourceResult, string>({
     mutationKey: ['playwright', 'scripters', scripterId, 'dry-run'],
     mutationFn: async (targetScripterId: string) => await callDryRun(targetScripterId),
     meta: {

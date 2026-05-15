@@ -18,7 +18,7 @@ import {
 } from '@/shared/lib/ai-paths/core/validation-engine';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -72,12 +72,12 @@ export function useAdminAiPathsValidationState() {
   const focusNodeType = searchParams?.get('focusNodeType')?.trim() ?? '';
   const { toast } = useToast();
   const settingsQuery = useAiPathsSettingsQuery();
-  const centralDocsSnapshotMutation = createMutationV2<CentralDocsSnapshotResponse, void>({
+  const centralDocsSnapshotMutation = useMutationV2<CentralDocsSnapshotResponse, void>({
     mutationKey: ['ai-paths', 'validation', 'central-docs-snapshot'],
     mutationFn: async () => fetchCentralDocsSnapshot(),
     meta: {
       source: 'features.ai.ai-paths.useAdminAiPathsValidationState.syncCentralDocs',
-      operation: 'fetch',
+      operation: 'action',
       resource: 'ai-paths.validation.docs-snapshot',
       domain: 'ai',
       description: 'Fetch central AI Paths validation docs snapshot.',

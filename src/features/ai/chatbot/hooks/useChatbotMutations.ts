@@ -8,9 +8,9 @@ import type {
 } from '@/shared/contracts/chatbot';
 import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateChatbotSession,
@@ -37,7 +37,7 @@ export function useCreateChatbotSession(): CreateMutation<
   > {
   const mutationKey = chatbotQueryKeys.mutation('create-session');
 
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: createChatbotSession,
     mutationKey,
     meta: {
@@ -61,7 +61,7 @@ export function useUpdateSessionTitle(): UpdateMutation<
   > {
   const mutationKey = chatbotQueryKeys.mutation('update-session-title');
 
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
       updateChatbotSessionTitle(sessionId, title),
     mutationKey,
@@ -86,7 +86,7 @@ export function useUpdateSessionTitle(): UpdateMutation<
 export function useDeleteChatbotSession(): UpdateMutation<ChatbotSessionDeleteResponse, string> {
   const mutationKey = chatbotQueryKeys.mutation('delete-session');
 
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: deleteChatbotSession,
     mutationKey,
     meta: {
@@ -110,7 +110,7 @@ export function useDeleteChatbotSession(): UpdateMutation<ChatbotSessionDeleteRe
 export function useDeleteChatbotSessions(): UpdateMutation<ChatbotSessionDeleteResponse, string[]> {
   const mutationKey = chatbotQueryKeys.mutation('delete-sessions');
 
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: deleteChatbotSessions,
     mutationKey,
     meta: {
@@ -143,7 +143,7 @@ export function useSendChatMessage(): UpdateMutation<
   Parameters<typeof sendChatbotMessage>[0]
   > {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: sendChatbotMessage,
     mutationKey,
     meta: {
@@ -166,7 +166,7 @@ export function useSaveChatbotSettings(): UpdateMutation<
   > {
   const mutationKey = chatbotQueryKeys.mutation('save-settings');
 
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: ({
       key,
       settings,

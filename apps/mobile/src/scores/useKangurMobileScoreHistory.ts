@@ -1,9 +1,9 @@
 import type { KangurScore } from '@kangur/contracts/kangur';
-import { useQuery } from '@tanstack/react-query';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { resolveKangurMobileScoreScope } from '../profile/mobileScoreScope';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 type UseKangurMobileScoreHistoryOptions = {
   enabled?: boolean;
@@ -35,17 +35,19 @@ export const useKangurMobileScoreHistory = (
   const isEnabled = checkIsEnabled(options.enabled, session.status, scoreScope);
   const isRestoringAuth = isLoadingAuth && session.status !== 'authenticated';
 
-  const scoresQuery = useQuery({
+  const queryKey = [
+    'kangur-mobile',
+    'scores',
+    apiBaseUrl,
+    scoreScope?.identityKey ?? 'anonymous',
+    sort,
+    limit,
+  ] as const;
+
+  const scoresQuery = useKangurMobileQueryV2({
     enabled: isEnabled,
     placeholderData: isEnabled ? options.placeholderData : undefined,
-    queryKey: [
-      'kangur-mobile',
-      'scores',
-      apiBaseUrl,
-      scoreScope?.identityKey ?? 'anonymous',
-      sort,
-      limit,
-    ],
+    queryKey,
     queryFn: async () =>
       apiClient.listScores(
         {
@@ -58,6 +60,14 @@ export const useKangurMobileScoreHistory = (
         },
       ),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.scores.history',
+      operation: 'list',
+      resource: 'kangur.mobile.scores.history',
+      queryKey,
+      description: 'Loads Kangur mobile score history.',
+      tags: ['kangur-mobile', 'scores'],
+    },
   });
 
   return {

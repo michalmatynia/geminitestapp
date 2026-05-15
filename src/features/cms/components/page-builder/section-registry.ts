@@ -30,17 +30,30 @@ import { COLUMN_ALLOWED_BLOCK_TYPES, ROW_ALLOWED_BLOCK_TYPES } from './registry/
 import { SECTION_DEFINITIONS } from './registry/section-definitions';
 
 import type { SectionDefinition, BlockDefinition, PageZone } from '../../types/page-builder';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export function getSectionDefinition(type: string): SectionDefinition | undefined {
-  return SECTION_DEFINITIONS[type];
+  const def = SECTION_DEFINITIONS[type];
+  if (!def) {
+    logClientCatch(new Error(`Section definition not found: ${type}`), {
+      source: 'cms.section-registry',
+      action: 'getSectionDefinition',
+      type,
+    });
+  }
+  return def;
 }
 
 export function getBlockDefinition(type: string): BlockDefinition | undefined {
-  return BLOCK_DEFINITIONS[type];
+  const def = BLOCK_DEFINITIONS[type];
+  if (!def) {
+    logClientCatch(new Error(`Block definition not found: ${type}`), {
+      source: 'cms.section-registry',
+      action: 'getBlockDefinition',
+      type,
+    });
+  }
+  return def;
 }
 
 export function getAllSectionTypes(): SectionDefinition[] {

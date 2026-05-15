@@ -26,7 +26,7 @@ import {
 } from './milkbar-cms.types';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
 import { Alert, Badge, Button, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
@@ -179,7 +179,7 @@ const updateMilkbarInquiryStatus = async (
   api.patch<MilkbarInquiryStatusUpdateResponse>(ENDPOINT, payload);
 
 const useMilkbarCmsSnapshotQuery = (): SingleQuery<MilkbarCmsSnapshot> =>
-  createSingleQueryV2<
+  useSingleQueryV2<
     MilkbarCmsSnapshot,
     MilkbarCmsSnapshot,
     typeof MILKBAR_CMS_SNAPSHOT_QUERY_KEY
@@ -202,7 +202,7 @@ const useSaveMilkbarCmsSnapshotMutation = (): MutationResult<
   MilkbarCmsSnapshot,
   MilkbarCmsSavePayload
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['page-manager', 'milkbardesigners', 'save'],
     mutationFn: saveMilkbarCmsSnapshot,
     meta: {
@@ -220,7 +220,7 @@ const useUpdateMilkbarInquiryStatusMutation = (): MutationResult<
   MilkbarInquiryStatusUpdateResponse,
   MilkbarInquiryStatusUpdate
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['page-manager', 'milkbardesigners', 'inquiry-status'],
     mutationFn: updateMilkbarInquiryStatus,
     meta: {
@@ -1145,29 +1145,27 @@ function CollapsibleSection({
 }): React.JSX.Element {
   return (
     <div className='rounded-lg border border-white/10'>
-      <button
-        type='button'
-        onClick={() => onToggle(id)}
-        className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5'
-        aria-expanded={open}
-      >
-        <div>
-          <span className='text-sm font-semibold text-white'>{title}</span>
-          {subtitle !== undefined && subtitle.length > 0 ? (
-            <span className='ml-2 text-xs text-muted-foreground'>{subtitle}</span>
-          ) : null}
-        </div>
-        <div className='flex items-center gap-2'>
-          {actions !== undefined && open ? (
-            <span onClick={(e) => e.stopPropagation()} className='contents'>
-              {actions}
-            </span>
-          ) : null}
+      <div className='flex w-full items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-white/5'>
+        <button
+          type='button'
+          onClick={() => onToggle(id)}
+          className='flex min-w-0 flex-1 items-center gap-3 text-left'
+          aria-expanded={open}
+        >
+          <div className='min-w-0'>
+            <span className='text-sm font-semibold text-white'>{title}</span>
+            {subtitle !== undefined && subtitle.length > 0 ? (
+              <span className='ml-2 text-xs text-muted-foreground'>{subtitle}</span>
+            ) : null}
+          </div>
           <ChevronDown
             className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           />
-        </div>
-      </button>
+        </button>
+        {actions !== undefined && open ? (
+          <div className='flex items-center gap-2'>{actions}</div>
+        ) : null}
+      </div>
       {open ? <div className='space-y-3 border-t border-white/10 p-4'>{children}</div> : null}
     </div>
   );

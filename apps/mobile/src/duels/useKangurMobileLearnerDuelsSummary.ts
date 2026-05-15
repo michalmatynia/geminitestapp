@@ -1,10 +1,10 @@
 import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 import { toDuelsSummaryErrorMessage } from './useKangurMobileLearnerDuelsSummary.errors';
 import { useSummaryIdentity } from './useDuelsSummaryIdentity';
 import { useDuelsSummaryRematch } from './useDuelsSummaryRematch';
@@ -53,18 +53,34 @@ export const useKangurMobileLearnerDuelsSummary = ({
     [apiBaseUrl, learnerIdentity, leaderboardLimit, leaderboardLookbackDays, opponentsLimit],
   );
 
-  const leaderboardQuery = useQuery({
+  const leaderboardQuery = useKangurMobileQueryV2({
     enabled: isAuthenticated,
     queryKey: queryKeyBase.leaderboard,
     queryFn: async () => apiClient.getDuelLeaderboard({ limit: leaderboardLimit, lookbackDays: leaderboardLookbackDays }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.duels.summary.leaderboard',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.leaderboard',
+      queryKey: queryKeyBase.leaderboard,
+      description: 'Loads Kangur mobile duel leaderboard summary.',
+      tags: ['kangur-mobile', 'duels', 'leaderboard'],
+    },
   });
 
-  const opponentsQuery = useQuery({
+  const opponentsQuery = useKangurMobileQueryV2({
     enabled: isAuthenticated,
     queryKey: queryKeyBase.opponents,
     queryFn: async () => apiClient.listDuelOpponents({ limit: opponentsLimit }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.duels.summary.opponents',
+      operation: 'list',
+      resource: 'kangur.mobile.duels.opponents',
+      queryKey: queryKeyBase.opponents,
+      description: 'Loads Kangur mobile duel opponents summary.',
+      tags: ['kangur-mobile', 'duels', 'opponents'],
+    },
   });
 
   const { rank: currentRank, entry: currentEntry } = resolveLearnerRank(activeLearnerId, leaderboardQuery.data?.entries ?? []);

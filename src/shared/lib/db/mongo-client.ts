@@ -370,11 +370,15 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
     attachMongoObservability(resolvedClient);
     return resolvedClient;
   } catch (error) {
+    const isInflight = clientPromiseByKey.has(clientCacheKey);
     // Log failures via runtime error reporting to maintain observability into connection issues.
     void reportRuntimeCatch(error, {
       source: 'db.mongo-client',
       action: 'getMongoClient',
+      clientCacheKey,
+      isInflight,
       hasMongoUri: Boolean(process.env['MONGODB_URI']),
+      message: `Failed to establish connection for source: ${sourceConfig.source}`,
     });
     // Remove the failed promise so that subsequent calls can retry.
     clientPromiseByKey.delete(clientCacheKey);

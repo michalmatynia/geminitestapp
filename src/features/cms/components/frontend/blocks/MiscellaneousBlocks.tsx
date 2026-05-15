@@ -10,19 +10,19 @@ import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layo
 
 export function AnnouncementBlock(): React.JSX.Element | null {
   const settings = useRequiredBlockSettings();
-  const text = (settings['text'] as string) || '';
-  const link = (settings['link'] as string) || '';
+  const text = typeof settings['text'] === 'string' ? settings['text'].trim() : '';
+  const link = typeof settings['link'] === 'string' ? settings['link'].trim() : '';
   
-  if (text.trim() === '') return null;
+  if (text === '') return null;
   
   const typoStyles = useMemo(() => getBlockTypographyStyles(settings), [settings]);
 
-  if (link.trim() !== '') {
+  if (link !== '') {
     return (
       <a
         href={link}
         className='text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100'
-        style={typoStyles}
+        style={typoStyles as React.CSSProperties}
         aria-label={text}
         title={text}
       >
@@ -32,7 +32,7 @@ export function AnnouncementBlock(): React.JSX.Element | null {
   }
 
   return (
-    <span className='text-sm text-[var(--cms-appearance-page-text)]' style={typoStyles}>
+    <span className='text-sm text-[var(--cms-appearance-page-text)]' style={typoStyles as React.CSSProperties}>
       {text}
     </span>
   );
@@ -40,15 +40,17 @@ export function AnnouncementBlock(): React.JSX.Element | null {
 
 export function DividerBlock(): React.JSX.Element {
   const settings = useRequiredBlockSettings();
-  const style = (settings['dividerStyle'] as string) || 'solid';
-  const thickness = (settings['thickness'] as number) || 1;
-  const color = (settings['dividerColor'] as string) || '#4b5563';
+  const style = typeof settings['dividerStyle'] === 'string' ? settings['dividerStyle'] : 'solid';
+  const thickness = typeof settings['thickness'] === 'number' ? settings['thickness'] : 1;
+  const color = typeof settings['dividerColor'] === 'string' ? settings['dividerColor'] : '#4b5563';
+
+  const validStyle = (style === 'solid' || style === 'dashed' || style === 'dotted') ? style : 'solid';
 
   return (
     <hr
       className='my-2 border-0'
       style={{
-        borderTopStyle: (style === 'solid' || style === 'dashed' || style === 'dotted') ? style : 'solid',
+        borderTopStyle: validStyle,
         borderTopWidth: `${thickness}px`,
         borderTopColor: color,
       }}
@@ -58,8 +60,8 @@ export function DividerBlock(): React.JSX.Element {
 
 export function SocialLinksBlock(): React.JSX.Element {
   const settings = useRequiredBlockSettings();
-  const platforms = (settings['platforms'] as string) || '';
-  const links = useMemo(() => platforms.split(',').map((l) => l.trim()).filter(Boolean), [platforms]);
+  const platforms = typeof settings['platforms'] === 'string' ? settings['platforms'] : '';
+  const links = useMemo(() => platforms.split(',').map((l) => l.trim()).filter((l) => l !== ''), [platforms]);
 
   if (links.length === 0) {
     return <p className='cms-appearance-muted-text text-sm'>Add social media URLs in settings</p>;
@@ -102,15 +104,64 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 export function IconBlock(): React.JSX.Element {
   const settings = useRequiredBlockSettings();
-  const iconName = (settings['iconName'] as string) || 'Star';
-  const iconSize = (settings['iconSize'] as number) || 24;
-  const iconColor = (settings['iconColor'] as string) || '#ffffff';
+  const iconName = typeof settings['iconName'] === 'string' ? settings['iconName'] : 'Star';
+  const iconSize = typeof settings['iconSize'] === 'number' ? settings['iconSize'] : 24;
+  const iconColor = typeof settings['iconColor'] === 'string' ? settings['iconColor'] : '#ffffff';
 
   const IconComponent = ICON_MAP[iconName] ?? Circle;
 
   return (
     <div className='flex items-center justify-center'>
       <IconComponent size={iconSize} color={iconColor} strokeWidth={2} />
+    </div>
+  );
+}
+
+export function VideoEmbedBlock(): React.ReactNode {
+  const settings = useRequiredBlockSettings();
+  const url = (settings['url'] as string) || '';
+  const aspectRatio = (settings['aspectRatio'] as string) || '16:9';
+  const autoplay = (settings['autoplay'] as string) === 'yes';
+
+  let embedUrl: string | null = null;
+  if (url) {
+    const ytMatch = url.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/
+    );
+    if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+    else {
+      const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+      else if (url.includes('embed') || url.includes('player')) embedUrl = url;
+    }
+  }
+
+  const paddingBottom = aspectRatio === '4:3' ? '75%' : aspectRatio === '1:1' ? '100%' : '56.25%';
+
+  const containerStyle: React.CSSProperties = {
+    paddingBottom,
+  };
+
+  if (!embedUrl) {
+    return (
+      <div
+        className='cms-media cms-appearance-subtle-surface cms-appearance-muted-text flex items-center justify-center py-8 text-sm'
+        style={containerStyle}
+      >
+        Enter a video URL
+      </div>
+    );
+  }
+
+  return (
+    <div className='cms-media relative w-full' style={containerStyle}>
+      <iframe
+        className='absolute inset-0 h-full w-full'
+        src={`${embedUrl}${autoplay ? '?autoplay=1&mute=1' : ''}`}
+        title='Embedded video'
+        allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+        allowFullScreen
+      />
     </div>
   );
 }

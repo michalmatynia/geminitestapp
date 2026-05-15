@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   apiPostMock,
-  createListQueryV2Mock,
+  useListQueryV2Mock,
   getProductsMock,
   setCategoryIdSpy,
   setProducerIdsSpy,
@@ -19,7 +19,7 @@ const {
   useUpdateValidatorSettingsMutationMock,
 } = vi.hoisted(() => ({
   apiPostMock: vi.fn(),
-  createListQueryV2Mock: vi.fn(),
+  useListQueryV2Mock: vi.fn(),
   getProductsMock: vi.fn(),
   setCategoryIdSpy: vi.fn(),
   setProducerIdsSpy: vi.fn(),
@@ -32,8 +32,7 @@ const {
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: (config: unknown) => createListQueryV2Mock(config),
-  useListQueryV2: (config: unknown) => createListQueryV2Mock(config),
+  useListQueryV2: (config: unknown) => useListQueryV2Mock(config),
 }));
 
 vi.mock('@/features/products/api/products', () => ({
@@ -181,7 +180,7 @@ describe('useProductFormValidator auto accept', () => {
     useUpdateValidatorSettingsMutationMock.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue(undefined),
     });
-    createListQueryV2Mock.mockReturnValue({ data: [], isFetching: false });
+    useListQueryV2Mock.mockReturnValue({ data: [], isFetching: false });
     getProductsMock.mockResolvedValue([]);
     apiPostMock.mockResolvedValue({});
   });

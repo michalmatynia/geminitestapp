@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 
@@ -184,7 +184,7 @@ function useContactLogController(
     ...ORGANIZATION_CONTACT_LOGS_QUERY_KEY,
     { organizationId: normalizedOrganizationId, page, query },
   ] as const;
-  const contactLogsQuery = createSingleQueryV2<
+  const contactLogsQuery = useSingleQueryV2<
     MongoFilemakerContactLogsResponse,
     MongoFilemakerContactLogsResponse,
     typeof queryKey

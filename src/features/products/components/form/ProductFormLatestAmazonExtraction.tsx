@@ -1,4 +1,5 @@
 'use client';
+'use no memo';
 
 import { useContext, useEffect, useMemo, useState } from 'react';
 
@@ -16,7 +17,7 @@ import { ProductFormParameterContext } from '@/features/products/context/Product
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { resolveScanQualityHintLabels } from './ProductFormLatestAmazonExtraction.helpers';
@@ -30,7 +31,7 @@ const resolveProductId = (product: ProductWithImages | null | undefined): string
 
 const useAmazonProductScans = (productId: string): ProductScanRecord[] => {
   const queryKey = QUERY_KEYS.products.scans(productId);
-  const latestAmazonScanQuery = createSingleQueryV2<ProductScanListResponse>({
+  const latestAmazonScanQuery = useSingleQueryV2<ProductScanListResponse>({
     queryKey,
     enabled: productId.length > 0,
     queryFn: async () =>

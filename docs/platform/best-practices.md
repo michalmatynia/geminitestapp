@@ -141,7 +141,7 @@ export type AiNode = AiNodeDto;
 
 ### 4. Explicit Type Safety in Factories
 
-When using query and mutation factories (`createListQueryV2`, `createMutationV2`), always provide explicit types or ensure the generic inference is clean. Avoid using `any` casts unless absolutely necessary for complex tuple inference.
+When using query and mutation factories (`useListQueryV2`, `useMutationV2`), always provide explicit types or ensure the generic inference is clean. Avoid using `any` casts unless absolutely necessary for complex tuple inference.
 
 ✅ **Good:** Typed success callbacks
 

@@ -17,7 +17,7 @@ import { useEditorialArticlesController } from './editorial-articles-cms.client'
 import { useManifestoController } from './manifesto-cms.client';
 import { api } from '@/shared/lib/api-client';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -93,7 +93,7 @@ const uploadLogo = async (file: File, logoAlt: string): Promise<LogoState> => {
 };
 
 const useLogoCmsQuery = (): SingleQuery<LogoState> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-logo',
     queryKey: LOGO_QUERY_KEY,
     queryFn: fetchLogo,
@@ -115,7 +115,7 @@ const useLogoUploadMutation = ({
   setSelectedFile,
   toast,
 }: LogoUploadMutationOptions): MutationResult<LogoState, LogoUploadVariables> =>
-  createMutationV2<LogoState, LogoUploadVariables>({
+  useMutationV2<LogoState, LogoUploadVariables>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'logo', 'upload'],
     mutationFn: ({ file, logoAlt }: LogoUploadVariables): Promise<LogoState> =>
       uploadLogo(file, logoAlt),

@@ -7,7 +7,7 @@ import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/con
 import { internalError } from '@/shared/errors/app-error';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -211,7 +211,7 @@ ${schemeContext}`;
     []
   );
 
-  const generateSchemeMutation = createMutationV2({
+  const generateSchemeMutation = useMutationV2({
     mutationKey: QUERY_KEYS.cms.mutation('page-builder.generate-scheme-ai'),
     mutationFn: async (payload: {
       provider: 'model' | 'agent';

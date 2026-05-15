@@ -24,7 +24,7 @@ export function AgentListItem(props: {
   resolveCollectionName: ResolveCollectionFn;
 }): React.JSX.Element {
   const { agent, isSelected, onSelect, resolveCollectionName } = props;
-  const collectionNames = (agent.collectionIds ?? []).map(resolveCollectionName).join(', ');
+  const collectionNames = agent.collectionIds.map(resolveCollectionName).join(', ');
 
   return (
     <Button
@@ -153,6 +153,87 @@ export function AgentSidebar(props: {
   );
 }
 
+export function ChatHeader(props: {
+  sending: boolean;
+  hasMessages: boolean;
+  onClear: () => void;
+}): React.JSX.Element {
+  const { sending, hasMessages, onClear } = props;
+  return (
+    <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'justify-between')}>
+      <div className='text-sm font-semibold text-white'>Chat</div>
+      <Button
+        type='button'
+        variant='outline'
+        onClick={onClear}
+        disabled={sending || !hasMessages}
+      >
+        Clear
+      </Button>
+    </div>
+  );
+}
+
+export function ChatInput(props: {
+  input: string;
+  setInput: (val: string) => void;
+  sending: boolean;
+  selectedAgent: AgentTeachingAgentRecord | null;
+  handleSend: () => void;
+}): React.JSX.Element {
+  const { input, setInput, sending, selectedAgent, handleSend } = props;
+  return (
+    <FormField label='Message'>
+      <Textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder='Ask something that should be answered from your embedded knowledge…'
+        className='min-h-[90px]'
+        disabled={sending || selectedAgent === null}
+        aria-label='Ask something that should be answered from your embedded knowledge…'
+        title='Ask something that should be answered from your embedded knowledge…'
+      />
+      <div className='flex justify-end gap-2 mt-2'>
+        <Button
+          type='button'
+          onClick={handleSend}
+          disabled={sending || selectedAgent === null || input.trim().length === 0}
+          loading={sending}
+          loadingText='Thinking…'
+        >
+          Send
+        </Button>
+      </div>
+    </FormField>
+  );
+}
+
+export function ChatSources(props: {
+  lastSources: AgentTeachingChatSource[];
+  resolveCollectionName: ResolveCollectionFn;
+}): React.JSX.Element {
+  const { lastSources, resolveCollectionName } = props;
+  return (
+    <FormSection title='Retrieved sources' variant='subtle' className='p-3'>
+      {lastSources.length === 0 ? (
+        <div className='mt-2 text-sm text-gray-400'>
+          No sources retrieved yet (or below min score).
+        </div>
+      ) : (
+        <div className='mt-2 space-y-2'>
+          {lastSources.map((src) => (
+            <SourceCard
+              key={src.documentId}
+              src={src}
+              resolveCollectionName={resolveCollectionName}
+            />
+          ))}
+        </div>
+      )}
+    </FormSection>
+  );
+}
+
 export function ChatPane(props: {
   selectedAgent: AgentTeachingAgentRecord | null;
   messages: SimpleChatMessage[];
@@ -186,63 +267,27 @@ export function ChatPane(props: {
       }
       className='p-4 lg:col-span-2 space-y-4'
     >
-      <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'justify-between')}>
-        <div className='text-sm font-semibold text-white'>Chat</div>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={() => {
-            setMessages([]);
-            setLastSources([]);
-          }}
-          disabled={sending || messages.length === 0}
-        >
-          Clear
-        </Button>
-      </div>
+      <ChatHeader
+        sending={sending}
+        hasMessages={messages.length > 0}
+        onClear={() => {
+          setMessages([]);
+          setLastSources([]);
+        }}
+      />
 
       <ChatMessageList messages={messages} />
 
-      <FormField label='Message'>
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder='Ask something that should be answered from your embedded knowledge…'
-          className='min-h-[90px]'
-          disabled={sending || selectedAgent === null}
-          aria-label='Ask something that should be answered from your embedded knowledge…'
-          title='Ask something that should be answered from your embedded knowledge…'
-        />
-        <div className='flex justify-end gap-2 mt-2'>
-          <Button
-            type='button'
-            onClick={() => handleSend()}
-            disabled={sending || selectedAgent === null || input.trim().length === 0}
-            loading={sending}
-            loadingText='Thinking…'
-          >
-            Send
-          </Button>
-        </div>
-      </FormField>
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        sending={sending}
+        selectedAgent={selectedAgent}
+        handleSend={handleSend}
+      />
 
-      <FormSection title='Retrieved sources' variant='subtle' className='p-3'>
-        {lastSources.length === 0 ? (
-          <div className='mt-2 text-sm text-gray-400'>
-            No sources retrieved yet (or below min score).
-          </div>
-        ) : (
-          <div className='mt-2 space-y-2'>
-            {lastSources.map((src) => (
-              <SourceCard
-                key={src.documentId}
-                src={src}
-                resolveCollectionName={resolveCollectionName}
-              />
-            ))}
-          </div>
-        )}
-      </FormSection>
+      <ChatSources lastSources={lastSources} resolveCollectionName={resolveCollectionName} />
     </FormSection>
   );
 }
+

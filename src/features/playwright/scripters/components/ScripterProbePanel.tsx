@@ -3,7 +3,7 @@
 import { Crosshair, Loader2, RotateCw } from 'lucide-react';
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card, Input, Label } from '@/shared/ui/primitives.public';
 
 import { computeSelectorForElement } from '../iframe-selector';
@@ -56,7 +56,7 @@ export function ScripterProbePanel({
   const [selector, setSelector] = useState('');
   const [evaluation, setEvaluation] = useState<ProbeEvaluateResult | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const closeProbeMutation = createMutationV2<void, string>({
+  const closeProbeMutation = useMutationV2<void, string>({
     mutationKey: ['playwright', 'scripters', 'probe', 'close'],
     mutationFn: async (sessionId: string) => await probeClose(sessionId),
     meta: {
@@ -69,7 +69,7 @@ export function ScripterProbePanel({
       description: 'Closes a Playwright scripter probe session.',
     },
   });
-  const startProbeMutation = createMutationV2<ProbeStartResult, string>({
+  const startProbeMutation = useMutationV2<ProbeStartResult, string>({
     mutationKey: ['playwright', 'scripters', 'probe', 'start'],
     mutationFn: async (targetUrl: string) => await probeStart(targetUrl),
     onSuccess: (result: ProbeStartResult): void => {
@@ -85,7 +85,7 @@ export function ScripterProbePanel({
       description: 'Starts a Playwright scripter probe session.',
     },
   });
-  const evaluateProbeMutation = createMutationV2<
+  const evaluateProbeMutation = useMutationV2<
     ProbeEvaluateResult,
     { sessionId: string; selector: string }
   >({

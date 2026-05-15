@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -20,7 +19,7 @@ import type {
 } from '@/shared/contracts/integrations/preferences';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
-import { createQueryOptionsV2 } from '@/shared/lib/query-factories-v2';
+import { useMultiQueryV2, type QueryDescriptorV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { resolveIntegrationSelectionErrorMessage } from '@/features/integrations/utils/integration-selection-error';
 
@@ -107,7 +106,7 @@ export function useIntegrationSelection(
     connectionId: initialConnectionId?.trim() || null,
   });
 
-  const preferredBaseConnectionOptions = createQueryOptionsV2({
+  const preferredBaseConnectionOptions = {
     queryKey: integrationSelectionKeys.defaultConnection,
     queryFn: fetchPreferredBaseConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -124,8 +123,8 @@ export function useIntegrationSelection(
       domain: 'integrations',
       tags: ['integrations', 'selection', 'preferred-connection'],
     },
-  });
-  const preferredTraderaConnectionOptions = createQueryOptionsV2({
+  } satisfies QueryDescriptorV2<BaseDefaultConnectionPreferenceResponse>;
+  const preferredTraderaConnectionOptions = {
     queryKey: integrationSelectionKeys.traderaDefaultConnection,
     queryFn: fetchPreferredTraderaConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -142,8 +141,8 @@ export function useIntegrationSelection(
       domain: 'integrations',
       tags: ['integrations', 'selection', 'preferred-tradera-connection'],
     },
-  });
-  const integrationsWithConnectionsOptions = createQueryOptionsV2({
+  } satisfies QueryDescriptorV2<TraderaDefaultConnectionPreferenceResponse>;
+  const integrationsWithConnectionsOptions = {
     queryKey: integrationSelectionKeys.withConnections,
     queryFn: fetchIntegrationsWithConnections,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -160,8 +159,8 @@ export function useIntegrationSelection(
       domain: 'integrations',
       tags: ['integrations', 'selection', 'list'],
     },
-  });
-  const preferredVintedConnectionOptions = createQueryOptionsV2({
+  } satisfies QueryDescriptorV2<IntegrationWithConnections[]>;
+  const preferredVintedConnectionOptions = {
     queryKey: integrationSelectionKeys.vintedDefaultConnection,
     queryFn: fetchPreferredVintedConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
@@ -178,17 +177,14 @@ export function useIntegrationSelection(
       domain: 'integrations',
       tags: ['integrations', 'selection', 'preferred-vinted-connection'],
     },
-  });
-  // Why: keep query hook calls explicit here. Delegating through a plain helper that
-  // internally calls hooks is fragile under the current React/Next compiler path and
-  // was causing hook-order mismatches in the listing modal.
-  const results = useQueries({
+  } satisfies QueryDescriptorV2<VintedDefaultConnectionPreferenceResponse>;
+  const results = useMultiQueryV2({
     queries: [
       preferredBaseConnectionOptions,
       preferredTraderaConnectionOptions,
       integrationsWithConnectionsOptions,
       preferredVintedConnectionOptions,
-    ],
+    ] as const,
   });
 
   const preferredConnectionQuery = results[0];

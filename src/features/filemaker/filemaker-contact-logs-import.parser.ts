@@ -1,4 +1,16 @@
+/**
+ * FileMaker Contact Logs Import Parser
+ * 
+ * CSV/XLSX parsing and transformation for contact log imports.
+ * Provides:
+ * - Parsing with auto-delimiter detection
+ * - Data normalization and UUID mapping
+ * - Header-based field validation
+ * - Standardized error reporting for import failures
+ */
+
 import Papa from 'papaparse';
+import { AppErrorCodes, AppError } from '@/shared/errors/app-error';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
@@ -74,15 +86,33 @@ const inferDelimiter = (text: string): Delimiter => {
   return best.score > 0 ? best.delimiter : ',';
 };
 
+/**
+ * Parses FileMaker legacy contact log rows.
+ * 
+ * @param text - The raw CSV/TSV input string.
+ * @returns An array of normalized contact log rows.
+ * @throws AppError if CSV parsing fails or file format is invalid.
+ */
 export const parseFilemakerLegacyContactLogRows = (text: string): LegacyContactLogRow[] => {
   const normalizedText = text.replace(/^\uFEFF/, '').replaceAll('\u0000', '');
+  const delimiter = inferDelimiter(normalizedText);
+  if (delimiter === '\t') {
+    const rows = normalizedText
+      .split(FILEMAKER_LINE_BREAK_PATTERN)
+      .map((line: string): string[] => line.split('\t'));
+    return rowsToLegacyContactLogRows(rows, { format: 'CSV/TSV' });
+  }
   const parsed = Papa.parse<string[]>(normalizedText, {
-    delimiter: inferDelimiter(normalizedText),
+    delimiter,
     skipEmptyLines: 'greedy',
   });
   if (parsed.errors.length > 0) {
-    const firstError = parsed.errors[0]?.message ?? 'parse error';
-    throw new Error(`Invalid FileMaker contact log export: ${firstError}`);
+    const firstError = parsed.errors[0]?.message ?? 'Unknown parsing error';
+    throw new AppError(`Invalid FileMaker contact log export: ${firstError}`, {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+        meta: { firstError }
+    });
   }
   return rowsToLegacyContactLogRows(parsed.data, { format: 'CSV/TSV' });
 };
@@ -155,10 +185,16 @@ const buildContactLogValues = (row: LegacyContactLogRow): ParsedLegacyContactLog
     return legacyValueUuid === undefined ? null : { kind: valueField.kind, legacyValueUuid };
   }).filter((value): value is ParsedLegacyContactLogValue => value !== null);
 
+/**
+ * Transforms a single legacy row into a parsed contact log object.
+ * 
+ * @param row - The raw parsed row from the FileMaker export.
+ * @returns The parsed object, or null if the row lacks a valid UUID.
+ */
 export const parseContactLogFromRow = (
   row: LegacyContactLogRow
 ): ParsedLegacyContactLog | null => {
-  const legacyUuid = normalizeLegacyUuid(row[FILEMAKER_CONTACT_LOG_FIELDS.uuid]);
+  const legacyUuid = normalizeLegacyUuid(row[FILEMAKER_CONTACT_LOG_FIELDS.uuid] ?? '');
   if (legacyUuid.length === 0) return null;
 
   const legacyUuids = readContactLogLegacyUuidFields(row);

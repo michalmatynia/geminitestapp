@@ -7,16 +7,14 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const parseJsonObject = (content: string): unknown => {
   try {
-    const parsed: unknown = JSON.parse(content);
-    return parsed;
+    return JSON.parse(content) as unknown;
   } catch (error) {
     logClientError(error);
     const start = content.indexOf('{');
     const end = content.lastIndexOf('}');
     if (start === -1 || end <= start) return null;
     try {
-      const parsed: unknown = JSON.parse(content.slice(start, end + 1));
-      return parsed;
+      return JSON.parse(content.slice(start, end + 1)) as unknown;
     } catch (innerError) {
       logClientError(innerError);
       return null;

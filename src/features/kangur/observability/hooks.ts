@@ -4,7 +4,7 @@ import { kangurKnowledgeGraphStatusResponseSchema, kangurObservabilitySummaryRes
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
 
 export { kangurKeys };
@@ -14,7 +14,7 @@ export function useKangurObservabilitySummary(
 ): SingleQuery<KangurObservabilitySummary> {
   const queryKey = kangurKeys.observability.summary(range);
 
-  return createSingleQueryV2<KangurObservabilitySummaryResponse, KangurObservabilitySummary>({
+  return useSingleQueryV2<KangurObservabilitySummaryResponse, KangurObservabilitySummary>({
     id: range,
     queryKey,
     queryFn: () =>
@@ -46,7 +46,7 @@ export function useKangurKnowledgeGraphStatus(
 ): SingleQuery<KangurKnowledgeGraphStatusSnapshot> {
   const queryKey = kangurKeys.observability.knowledgeGraphStatus(graphKey);
 
-  return createSingleQueryV2<
+  return useSingleQueryV2<
     KangurKnowledgeGraphStatusResponse,
     KangurKnowledgeGraphStatusSnapshot
   >({

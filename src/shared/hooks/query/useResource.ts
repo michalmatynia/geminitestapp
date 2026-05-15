@@ -1,10 +1,10 @@
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createListQueryV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
@@ -29,7 +29,7 @@ export function useResource<T extends { id: string }>(
   const domain = options?.domain ?? 'global';
 
   // List all items
-  const list = createListQueryV2<T, T[]>({
+  const list = useListQueryV2<T, T[]>({
     queryKey,
     queryFn: () => api.get<T[]>(resourcePath),
     staleTime: 0,
@@ -44,7 +44,7 @@ export function useResource<T extends { id: string }>(
   });
 
   // Create a new item
-  const create = createCreateMutationV2<T, Partial<T>>({
+  const create = useCreateMutationV2<T, Partial<T>>({
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'create'),
     mutationFn: (data: Partial<T>) => api.post<T>(resourcePath, data),
     invalidateKeys: [queryKey],
@@ -59,7 +59,7 @@ export function useResource<T extends { id: string }>(
   });
 
   // Update an existing item
-  const update = createUpdateMutationV2<T, { id: string } & Partial<T>>({
+  const update = useUpdateMutationV2<T, { id: string } & Partial<T>>({
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'update'),
     mutationFn: ({ id, ...data }: { id: string } & Partial<T>) =>
       api.patch<T>(`${resourcePath}/${id}`, data),
@@ -82,7 +82,7 @@ export function useResource<T extends { id: string }>(
   });
 
   // Delete an item
-  const remove = createDeleteMutationV2<void, string>({
+  const remove = useDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'delete'),
     mutationFn: (id: string) => api.delete<void>(`${resourcePath}/${id}`),
     invalidate: (queryClient, _, id) => {

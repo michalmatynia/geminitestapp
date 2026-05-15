@@ -9,7 +9,7 @@ import { Button, Card, ListPanel, LoadingState } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
@@ -173,7 +173,7 @@ const deleteSocialPipelineJob = async (jobId: string): Promise<void> => {
 };
 
 const useTriggerSocialPipelineMutation = (): MutationResult<void, void> =>
-  createMutationV2<void, void>({
+  useMutationV2<void, void>({
     mutationKey: ['filemaker', 'social-pipeline', 'trigger'],
     mutationFn: async () => triggerSocialPipeline(),
     meta: {
@@ -187,7 +187,7 @@ const useTriggerSocialPipelineMutation = (): MutationResult<void, void> =>
   });
 
 const useToggleSocialPipelinePauseMutation = (): MutationResult<void, PipelinePauseAction> =>
-  createMutationV2<void, PipelinePauseAction>({
+  useMutationV2<void, PipelinePauseAction>({
     mutationKey: ['filemaker', 'social-pipeline', 'pause-state'],
     mutationFn: async (action) => setSocialPipelinePauseState(action),
     meta: {
@@ -201,7 +201,7 @@ const useToggleSocialPipelinePauseMutation = (): MutationResult<void, PipelinePa
   });
 
 const useDeleteSocialPipelineJobMutation = (): MutationResult<void, string> =>
-  createMutationV2<void, string>({
+  useMutationV2<void, string>({
     mutationKey: ['filemaker', 'social-pipeline', 'jobs', 'delete'],
     mutationFn: async (jobId) => deleteSocialPipelineJob(jobId),
     meta: {

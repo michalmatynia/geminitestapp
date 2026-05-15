@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import type { KangurDuelLobbyEntry, KangurDuelLobbyResponse } from '@kangur/contracts/kangur-duels';
 import { useEffect, useMemo } from 'react';
 import type { KangurAuthSession, KangurUser } from '@kangur/platform';
@@ -17,6 +17,7 @@ import {
   resolvePersistedKangurMobileHomeDuelInvites,
 } from './persistedKangurMobileHomeDuelInvites';
 import type { DuelApiClient } from '../duels/useKangurMobileDuelsLobbyQueries';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 type UseKangurMobileHomeDuelsInvitesResult = {
   error: string | null;
@@ -95,13 +96,22 @@ function usePrivateEntriesQuery(
   apiClient: DuelApiClient,
   learnerIdentity: string,
 ): UseQueryResult<KangurDuelLobbyResponse, Error> {
-  return useQuery<KangurDuelLobbyResponse, Error>({
+  const queryKey = buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'private');
+  return useKangurMobileQueryV2<KangurDuelLobbyResponse>({
     enabled,
-    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(apiBaseUrl, learnerIdentity, 'private'),
+    queryKey,
     queryFn: async (): Promise<KangurDuelLobbyResponse> =>
       await apiClient.listDuelLobby({ limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT, visibility: 'private' }, { cache: 'no-store' }),
     refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
     staleTime: 10_000,
+    meta: {
+      source: 'kangur.mobile.home.duels.invites',
+      operation: 'list',
+      resource: 'kangur.mobile.home.duels.invites',
+      queryKey,
+      description: 'Loads Kangur mobile private duel invites.',
+      tags: ['kangur-mobile', 'home', 'duels', 'invites'],
+    },
   });
 }
 

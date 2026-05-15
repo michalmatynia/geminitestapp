@@ -19,8 +19,8 @@ import {
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useUpdateMutationV2,
   useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -113,7 +113,7 @@ const createLessonTemplatesQuery = (
   options: LessonTemplatesQueryOptions | undefined,
   resolvedLocale: string
 ): ListQuery<KangurLessonTemplate, KangurLessonTemplate[]> =>
-  createListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
+  useListQueryV2<KangurLessonTemplate, KangurLessonTemplate[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonTemplates(),
       resolveLessonTemplatesQueryFilters(options, resolvedLocale),
@@ -206,7 +206,7 @@ export const useUpdateKangurLessonTemplates = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveLessonTemplatesLocale(routeLocale, locale);
 
-  return createUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
+  return useUpdateMutationV2<KangurLessonTemplate[], KangurLessonTemplate[]>({
     mutationKey: [...QUERY_KEYS.kangur.lessonTemplates(), { locale: resolvedLocale }, 'update'],
     mutationFn: async (templates: KangurLessonTemplate[]): Promise<KangurLessonTemplate[]> =>
       await api.post<KangurLessonTemplate[]>('/api/kangur/lesson-templates', {

@@ -19,7 +19,7 @@
  * considered accepted technical debt to maintain functional stability.
  */
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { Href } from 'expo-router';
 import type { KangurAssignmentSnapshot } from '@kangur/contracts/kangur';
@@ -27,6 +27,7 @@ import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { createKangurLessonHref } from '../lessons/lessonHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import type { KangurMobileParentAssignmentItem, KangurMobileParentAssignmentMonitoring } from './parent-dashboard-types';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 /**
  * Reduces assignment snapshots into a consolidated monitoring summary object.
@@ -93,15 +94,24 @@ export function useParentDashboardAssignments(
 } {
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
   
-  const assignmentsQuery = useQuery<KangurAssignmentSnapshot[], Error>({
+  const queryKey = ['kangur-mobile', 'parent-dashboard', 'assignments', apiBaseUrl, selectedLearnerId ?? 'none'] as const;
+  const assignmentsQuery = useKangurMobileQueryV2<KangurAssignmentSnapshot[]>({
     enabled: canAccessDashboard && selectedLearnerId !== null,
-    queryKey: ['kangur-mobile', 'parent-dashboard', 'assignments', apiBaseUrl, selectedLearnerId ?? 'none'],
+    queryKey,
     queryFn: async (): Promise<KangurAssignmentSnapshot[]> => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = await (apiClient as any).listAssignments({ includeArchived: false }, { cache: 'no-store' });
       return (Array.isArray(data) ? data : []) as KangurAssignmentSnapshot[];
     },
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.parent.assignments',
+      operation: 'list',
+      resource: 'kangur.mobile.parent.assignments',
+      queryKey,
+      description: 'Loads Kangur mobile parent dashboard assignments.',
+      tags: ['kangur-mobile', 'parent-dashboard', 'assignments'],
+    },
   });
 
   const assignmentSnapshots = assignmentsQuery.data ?? [];

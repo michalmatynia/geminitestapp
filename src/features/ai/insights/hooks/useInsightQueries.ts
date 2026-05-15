@@ -18,12 +18,12 @@ import type {
 } from '@/shared/contracts/ai-insights';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useCreateMutationV2, useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, AiInsightsResponse> {
   const queryKey = QUERY_KEYS.ai.insights.analytics();
-  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
+  return useListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
       api.get<AiInsightsResponse>('/api/analytics/insights', {
@@ -42,7 +42,7 @@ export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, AiInsigh
 
 export function useLogInsightsQuery(): ListQuery<AiInsightRecord, AiInsightsResponse> {
   const queryKey = QUERY_KEYS.ai.insights.logs();
-  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
+  return useListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
       api.get<AiInsightsResponse>('/api/system/logs/insights', {
@@ -64,7 +64,7 @@ export function useRuntimeAnalyticsInsightsQuery(): ListQuery<
   AiInsightsResponse
 > {
   const queryKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
-  return createListQueryV2<AiInsightRecord, AiInsightsResponse>({
+  return useListQueryV2<AiInsightRecord, AiInsightsResponse>({
     queryKey,
     queryFn: () =>
       api.get<AiInsightsResponse>('/api/ai-paths/runtime-analytics/insights', {
@@ -84,7 +84,7 @@ export function useRuntimeAnalyticsInsightsQuery(): ListQuery<
 export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord | null, void> {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.analytics();
-  return createCreateMutationV2<AiInsightRecord | null, void>({
+  return useCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
       const data = await api.post<AiInsightResponse>('/api/analytics/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
@@ -107,7 +107,7 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
 export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | null, void> {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.logs();
-  return createCreateMutationV2<AiInsightRecord | null, void>({
+  return useCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
       const data = await api.post<AiInsightResponse>('/api/system/logs/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),
@@ -133,7 +133,7 @@ export function useRunRuntimeAnalyticsInsightMutation(): MutationResult<
   > {
   const contextRegistry = useOptionalContextRegistryPageEnvelope();
   const mutationKey = QUERY_KEYS.ai.insights.runtimeAnalytics();
-  return createCreateMutationV2<AiInsightRecord | null, void>({
+  return useCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
       const data = await api.post<AiInsightResponse>('/api/ai-paths/runtime-analytics/insights', {
         ...(contextRegistry ? { contextRegistry } : {}),

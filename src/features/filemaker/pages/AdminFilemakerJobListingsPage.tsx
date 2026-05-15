@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 import { filemakerJobListingSchema } from '@/shared/contracts/filemaker';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -99,7 +99,7 @@ const fetchJobListings = async (
 
 function useJobListings(input: JobListingsInput): JobListingsState {
   const queryKey = buildJobListingsQueryKey(input);
-  const jobListingsQuery = createSingleQueryV2<
+  const jobListingsQuery = useSingleQueryV2<
     JobListingsResponse,
     JobListingsResponse,
     typeof queryKey

@@ -25,10 +25,10 @@ import type { ListQuery, SingleQuery, DeleteMutation, UpdateMutation } from '@/s
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateAsset3d as sharedInvalidateAsset3d,
@@ -97,7 +97,7 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
   );
 
   const queryKey = asset3dKeys.list(normalizedFilters);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: () => fetchAssets3D(normalizedFilters),
     staleTime: ASSET_LIST_STALE_TIME_MS,
@@ -117,7 +117,7 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
 
 export function useAsset3DCategories(): ListQuery<string> {
   const queryKey = asset3dKeys.categories();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchCategories,
     staleTime: ASSET_METADATA_STALE_TIME_MS,
@@ -137,7 +137,7 @@ export function useAsset3DCategories(): ListQuery<string> {
 
 export function useAsset3DTags(): ListQuery<string> {
   const queryKey = asset3dKeys.tags();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: fetchTags,
     staleTime: ASSET_METADATA_STALE_TIME_MS,
@@ -157,7 +157,7 @@ export function useAsset3DTags(): ListQuery<string> {
 
 export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
   const queryKey = asset3dKeys.detail(id);
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id,
     queryKey,
     queryFn: () => api.get<Asset3DRecord>(`/api/assets3d/${id}`),
@@ -178,7 +178,7 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
 }
 
 export function useDeleteAsset3DMutation(): DeleteMutation {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: (id: string) => api.delete<void>(`/api/assets3d/${id}`),
     mutationKey: asset3dKeys.all,
     meta: {
@@ -204,7 +204,7 @@ export function useReindexAssets3DMutation(): UpdateMutation<
   },
   void
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: () => reindexAssets3DFromDisk(),
     mutationKey: asset3dKeys.all,
     meta: {

@@ -8,7 +8,7 @@ import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { DataAttributes } from '@/shared/contracts/ui/base';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   useAdminFavorites,
   type AdminFavoriteCandidate,
@@ -80,7 +80,7 @@ const useUpdateAdminFavoritesMutation = (): MutationResult<
   void,
   UpdateAdminFavoritesVariables
 > =>
-  createMutationV2<void, UpdateAdminFavoritesVariables>({
+  useMutationV2<void, UpdateAdminFavoritesVariables>({
     mutationKey: ['settings', 'admin-favorites', 'update'],
     mutationFn: updateAdminFavorites,
     meta: {

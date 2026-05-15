@@ -4,7 +4,7 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import type { ProductScrapeProfilesListResponse } from '@/shared/contracts/products/scrape-profiles';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
   FormField,
   FormSection,
@@ -205,7 +205,7 @@ function ValidationControlsField(props: {
 
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const info = useDraftCreatorBasicInfo();
-  const scrapeProfilesQuery = createSingleQueryV2<ProductScrapeProfilesListResponse>({
+  const scrapeProfilesQuery = useSingleQueryV2<ProductScrapeProfilesListResponse>({
     queryKey: SCRAPE_PROFILES_QUERY_KEY,
     queryFn: fetchScrapeProfiles,
     staleTime: 60_000,

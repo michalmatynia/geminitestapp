@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 
 import { api } from '@/shared/lib/api-client';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type CollectionCardSelectorType = 'all' | 'category' | 'theme' | 'custom';
@@ -142,14 +142,14 @@ type CollectionCardsStateSetter = Dispatch<SetStateAction<CollectionCardsState |
 type ErrorSetter = Dispatch<SetStateAction<string | null>>;
 
 const useCollectionCardsQuery = (): SingleQuery<CollectionCardsState> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-collection-cards',
     queryKey: COLLECTION_CARDS_QUERY_KEY,
     queryFn: fetchCollectionCards,
     meta: {
       source: 'products.ecommercePagesCms.collectionCards.load',
       operation: 'detail',
-      resource: 'products.ecommerce-pages-cms.collection-cards',
+      resource: 'products.ecommerce-pages-cms.collection-cards', domain: 'products', description: 'Loads ecommerce collection cards for page CMS.',
     },
   });
 
@@ -229,7 +229,7 @@ const useCollectionCardsSaveAction = (input: {
   setError: ErrorSetter;
 }): Pick<CollectionCardsController, 'handleSaveClick' | 'isSaving'> => {
   const { toast } = useToast();
-  const saveMutation = createMutationV2<CollectionCardsState, CollectionCardState[]>({
+  const saveMutation = useMutationV2<CollectionCardsState, CollectionCardState[]>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'collection-cards', 'save'],
     mutationFn: saveCollectionCards,
     onSuccess: (nextCards: CollectionCardsState): void => {
@@ -251,7 +251,8 @@ const useCollectionCardsSaveAction = (input: {
     meta: {
       source: 'products.ecommercePagesCms.collectionCards.save',
       operation: 'update',
-      resource: 'products.ecommerce-pages-cms.collection-cards',
+      resource: 'products.ecommerce-pages-cms.collection-cards', domain: 'products',
+      description: 'Saves ecommerce collection cards for page CMS.',
       errorPresentation: 'toast',
     },
   });
@@ -271,7 +272,7 @@ const useCollectionCardImageUploadAction = (input: {
 }): Pick<CollectionCardsController, 'uploadCardImage' | 'uploadingIndex'> => {
   const { toast } = useToast();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
-  const uploadMutation = createMutationV2<
+  const uploadMutation = useMutationV2<
     CollectionCardImage,
     { file: File; index: number }
   >({
@@ -296,7 +297,8 @@ const useCollectionCardImageUploadAction = (input: {
     meta: {
       source: 'products.ecommercePagesCms.collectionCards.image.upload',
       operation: 'update',
-      resource: 'products.ecommerce-pages-cms.collection-card-image',
+      resource: 'products.ecommerce-pages-cms.collection-card-image', domain: 'products',
+      description: 'Uploads an ecommerce collection card image.',
       errorPresentation: 'toast',
     },
   });

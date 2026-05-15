@@ -37,7 +37,7 @@ import {
 } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { kangurKeys } from '@/shared/lib/query-key-exports';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -77,7 +77,7 @@ const useSaveAiTutorSettingsMutation = (): MutationResult<
   void,
   SaveAiTutorSettingsVariables
 > =>
-  createMutationV2<void, SaveAiTutorSettingsVariables>({
+  useMutationV2<void, SaveAiTutorSettingsVariables>({
     mutationKey: ['kangur', 'ai-tutor', 'parent-dashboard', 'settings', 'save'],
     mutationFn: async ({ value }) => {
       await api.post('/api/settings', {
@@ -147,7 +147,7 @@ function useAiTutorUsageState({
   hasUsageError: boolean;
 } {
   const isUsageQueryReady = useAiTutorDeferredUsageQueryReady(shouldLoadUsage);
-  const { data, isLoading, isError } = createSingleQueryV2<KangurAiTutorUsageResponse>({
+  const { data, isLoading, isError } = useSingleQueryV2<KangurAiTutorUsageResponse>({
     id: activeLearnerId,
     queryKey: kangurKeys.aiTutor.usage(activeLearnerId),
     queryFn: async () => {

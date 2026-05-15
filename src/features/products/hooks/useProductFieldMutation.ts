@@ -4,7 +4,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductPatchInput } from '@/shared/contracts/products/io';
 import type { UpdateMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { getProductDetailQueryKey } from './productCache';
@@ -157,7 +157,7 @@ export function useUpdateProductField(): UpdateMutation<
 > {
   const queryClient = useQueryClient();
 
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     ProductWithImages,
     ProductFieldUpdateInput,
     ProductFieldUpdateContext

@@ -56,9 +56,9 @@ import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
-  createDeleteMutationV2,
-  createUpdateMutationV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateNoteDetail } from '@/shared/lib/query-invalidation';
 import { noteKeys } from '@/shared/lib/query-key-exports';
@@ -224,7 +224,7 @@ export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Erro
 
 export const useUpdateNoteRelationsMutation = (noteId: string) => {
   const mutationKey = QUERY_KEYS.notes.detail(noteId);
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     void,
     {
       relationsFrom?: string[];
@@ -247,7 +247,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
 
 export const useCreateNoteFileMutation = (noteId?: string) => {
   const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
-  return createMutationV2<
+  return useMutationV2<
     NoteFileRecord,
     {
       slotIndex: number;
@@ -302,7 +302,7 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
   const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
-  return createDeleteMutationV2<DeleteResponse, number>({
+  return useDeleteMutationV2<DeleteResponse, number>({
     mutationFn: (slotIndex) => {
       if (!noteId) throw new ApiError('Note ID is required for file deletion', 400);
       return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);

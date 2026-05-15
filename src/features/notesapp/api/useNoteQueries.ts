@@ -16,7 +16,7 @@ import type {
 } from '@/shared/contracts/notes';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
 
 export type { FetchNotesParams };
@@ -34,7 +34,7 @@ const createNoteQuery = <T>(
   resource: string,
   options?: QueryOptions
 ): ListQuery<T> =>
-  createListQueryV2({
+  useListQueryV2({
     queryKey,
     queryFn: fetchFn,
     enabled: options?.enabled ?? true,
@@ -120,7 +120,7 @@ const buildNotesUrl = (params: FetchNotesParams): string => {
 
 export function useNotes(params: FetchNotesParams, options?: QueryOptions): ListQuery<NoteWithRelations> {
   const queryKey = noteKeys.list(params);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<NoteWithRelations[]> => {
       const data = await api.get<NoteWithRelations[]>(buildNotesUrl(params));
@@ -142,7 +142,7 @@ export function useNotes(params: FetchNotesParams, options?: QueryOptions): List
 
 export function useNote(noteId: string | null, options?: QueryOptions): SingleQuery<NoteWithRelations | null> {
   const queryKey = noteKeys.detail(noteId ?? 'none');
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     queryKey,
     queryFn: async (): Promise<NoteWithRelations | null> => {
       if (noteId === null || noteId === '') return null;
@@ -165,7 +165,7 @@ export function useNote(noteId: string | null, options?: QueryOptions): SingleQu
 
 export function useRelatedNotes(noteId: string | null, options?: QueryOptions): ListQuery<RelatedNote> {
   const queryKey = noteKeys.related(noteId ?? 'none');
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<RelatedNote[]> => {
       if (noteId === null || noteId === '') return [];
@@ -190,7 +190,7 @@ export function useNotesLookup(noteIds: string[], options?: QueryOptions): ListQ
   const ids = noteIds.filter((id) => typeof id === 'string' && id.trim() !== '');
   const queryKey = noteKeys.lookup(ids);
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<RelatedNote[]> => {
       if (ids.length === 0) return [];

@@ -6,9 +6,11 @@ import React from 'react';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import type { AnimationPreset, AnimationTrigger } from '@/shared/contracts/gsap';
 import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
+import { internalError } from '@/shared/errors/app-error';
 import { Input, Label, RadioGroup, RadioGroupItem } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { AdvancedSection } from './animation/AdvancedSection';
 import { AnimationConfigProvider } from './animation/AnimationConfigContext';
@@ -70,7 +72,18 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.duration}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = Number(e.target.value);
+                  if (Number.isNaN(value)) {
+                    logClientCatch(internalError('Invalid duration input'), {
+                      source: 'cms.animation-panel',
+                      action: 'updateDuration',
+                      rawValue: e.target.value,
+                    });
+                    return;
+                  }
+                  onChange({ duration: value });
+                }}
                aria-label='Duration (s)' title='Duration (s)'/>
             </FormField>
             <FormField label='Delay (s)'>
@@ -80,7 +93,18 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.delay}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ delay: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = Number(e.target.value);
+                  if (Number.isNaN(value)) {
+                    logClientCatch(internalError('Invalid delay input'), {
+                      source: 'cms.animation-panel',
+                      action: 'updateDelay',
+                      rawValue: e.target.value,
+                    });
+                    return;
+                  }
+                  onChange({ delay: value });
+                }}
                aria-label='Delay (s)' title='Delay (s)'/>
             </FormField>
           </div>

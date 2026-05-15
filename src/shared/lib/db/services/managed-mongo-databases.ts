@@ -179,6 +179,15 @@ export const resolveOptionalManagedMongoSourceConfig = async (
   }
 };
 
+/**
+ * createManagedMongoClient: Creates a new authenticated MongoClient for a specific managed MongoDB source.
+ * It resolves the source configuration, establishes a connection, and returns the client and database instances.
+ * 
+ * @param application - The managed MongoDB application target.
+ * @param source - The source environment (local or cloud).
+ * @returns An object containing the MongoClient, Db instance, database name, and applied configuration.
+ * @throws {ConfigurationError} If the requested source is not properly configured.
+ */
 export const createManagedMongoClient = async (
   application: DatabaseEngineManagedMongoApplication,
   source: MongoSource
@@ -428,6 +437,12 @@ const inspectBackupStorage = async (): Promise<DatabaseEngineBackupStorage> => {
   }
 };
 
+/**
+ * getManagedMongoDatabasesStatus: Discovers and aggregates status/metadata for all managed MongoDB databases.
+ * It queries each application's local and cloud sources to assess their health, connectivity, and statistics.
+ * 
+ * @returns A comprehensive response containing database status, stats, and any identified system issues.
+ */
 export async function getManagedMongoDatabasesStatus(): Promise<DatabaseEngineManagedMongoDatabasesResponse> {
   const [syncControls, backupStorage] = await Promise.all([
     getManagedMongoSyncControls(),

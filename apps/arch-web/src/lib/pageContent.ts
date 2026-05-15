@@ -28,6 +28,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
       'Our systems parse architectural intent from natural language, existing drawings, and site constraint. They produce documentation a peer-reviewing architect would accept without amendment.',
     ctaLabel: 'how it works',
     hint: '- drag rooms to reassign programme',
+    thumbImages: [],
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -138,6 +139,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     description:
       'Pilot programme places are limited to twelve practices per quarter. Enquiries are reviewed weekly.',
     emailPlaceholder: 'your practice email',
+    messagePlaceholder: 'tell us about your practice and what you would like to automate',
     submitLabel: 'send enquiry',
     loadingLabel: 'sending...',
     successMessage: "received - we'll be in touch within five working days.",
@@ -374,6 +376,7 @@ export function normalizeArchPageContent(input: unknown): ArchPageContent {
       description: asString(drawing['description'], d.drawing.description),
       ctaLabel: asString(drawing['ctaLabel'], d.drawing.ctaLabel),
       hint: asString(drawing['hint'], d.drawing.hint),
+      thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], d.philosophy.eyebrow),
@@ -425,6 +428,7 @@ export function normalizeArchPageContent(input: unknown): ArchPageContent {
       emphasis: asString(cta['emphasis'], d.cta.emphasis),
       description: asString(cta['description'], d.cta.description),
       emailPlaceholder: asString(cta['emailPlaceholder'], d.cta.emailPlaceholder),
+      messagePlaceholder: asString(cta['messagePlaceholder'], d.cta.messagePlaceholder),
       submitLabel: asString(cta['submitLabel'], d.cta.submitLabel),
       loadingLabel: asString(cta['loadingLabel'], d.cta.loadingLabel),
       successMessage: asString(cta['successMessage'], d.cta.successMessage),

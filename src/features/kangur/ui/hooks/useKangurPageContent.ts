@@ -9,7 +9,7 @@ import {
   type KangurPageContentEntry,
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
-import { createSingleQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { isRecoverableKangurClientFetchError } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -84,7 +84,8 @@ export const prefetchKangurPageContentStore = async (
       source: 'kangur.hooks.prefetchKangurPageContentStore',
       description: 'Prefetches Kangur page content.',
       domain: 'kangur',
-    },  })();
+    },
+  })();
 
   return queryClient.getQueryState(queryKey)?.status === 'success';
 };
@@ -96,11 +97,20 @@ export const useKangurPageContentStore = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveKangurPageContentLocale(locale, routeLocale);
 
-  return createSingleQueryV2<KangurPageContentStore>({
+  return useSingleQueryV2<KangurPageContentStore>({
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
-    meta: createKangurPageContentQueryMeta(resolvedLocale),
+    meta: {
+      source: 'kangur.hooks.useKangurPageContentStore',
+      operation: 'list',
+      resource: 'kangur.page-content',
+      domain: 'kangur',
+      queryKey: createKangurPageContentQueryKey(resolvedLocale),
+      tags: ['kangur', 'page-content'],
+      description: 'Loads Kangur page content.',
+      errorPresentation: 'silent',
+    },
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnReconnect: false,

@@ -16,7 +16,7 @@ type ApiGetMock = (
 
 const mocks = vi.hoisted(() => ({
   apiGetMock: vi.fn<ApiGetMock>().mockResolvedValue([]),
-  createMultiQueryV2Mock: vi.fn<CreateMultiQuery>(() => []),
+  useMultiQueryV2Mock: vi.fn<CreateMultiQuery>(() => []),
   getCategoriesFlatMock: vi.fn<(catalogId: string | null) => Promise<[]>>()
     .mockResolvedValue([]),
   getParametersMock: vi.fn<(catalogId: string | null) => Promise<[]>>()
@@ -40,14 +40,14 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createMultiQueryV2: (input: CreateMultiQueryInput) =>
-    mocks.createMultiQueryV2Mock(input),
+  useMultiQueryV2: (input: CreateMultiQueryInput) =>
+    mocks.useMultiQueryV2Mock(input),
 }));
 
 import { useDraftMetadata } from './useDraftMetadata';
 
 const readCreateMultiQueryInput = (callIndex: number): CreateMultiQueryInput => {
-  const call = mocks.createMultiQueryV2Mock.mock.calls[callIndex];
+  const call = mocks.useMultiQueryV2Mock.mock.calls[callIndex];
   if (call === undefined) throw new Error(`Missing query call ${callIndex}`);
   return call[0];
 };

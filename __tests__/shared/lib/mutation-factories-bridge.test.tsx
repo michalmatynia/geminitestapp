@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
+  useCreateMutationV2,
+  useDeleteMutationV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
@@ -35,7 +35,7 @@ describe('mutation-factories-v2', () => {
     const invalidateFn = vi.fn();
     const { result } = renderHook(
       () =>
-        createCreateMutationV2<{ id: string; name: string }, { name: string }>({
+        useCreateMutationV2<{ id: string; name: string }, { name: string }>({
           mutationFn: async (payload: { name: string }) => ({ id: '1', name: payload.name }),
           meta: {
             source: 'tests.shared.mutation-factories-v2.create',
@@ -57,7 +57,7 @@ describe('mutation-factories-v2', () => {
     const invalidateFn = vi.fn();
     const updateHook = renderHook(
       () =>
-        createUpdateMutationV2<
+        useUpdateMutationV2<
           { id: string; data: { name: string } },
           { id: string; data: { name: string } }
         >({
@@ -77,7 +77,7 @@ describe('mutation-factories-v2', () => {
 
     const deleteHook = renderHook(
       () =>
-        createDeleteMutationV2<{ deleted: string }, string>({
+        useDeleteMutationV2<{ deleted: string }, string>({
           mutationFn: async (id: string) => ({ deleted: id }),
           meta: {
             source: 'tests.shared.mutation-factories-v2.delete',

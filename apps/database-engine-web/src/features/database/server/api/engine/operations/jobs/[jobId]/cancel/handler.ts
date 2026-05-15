@@ -12,7 +12,9 @@ type DatabaseEngineCancelableJob = {
 };
 
 const isDatabaseEngineCancelableJob = (value: unknown): value is DatabaseEngineCancelableJob => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
   const record = value as Record<string, unknown>;
   const productId = record['productId'];
   return (
@@ -34,7 +36,7 @@ export async function postHandler(
   await assertDatabaseEngineOperationEnabled('allowOperationJobCancellation');
 
   const { jobId } = params;
-  if (!jobId) {
+  if (jobId === '') {
     throw badRequestError('Job id is required.');
   }
 

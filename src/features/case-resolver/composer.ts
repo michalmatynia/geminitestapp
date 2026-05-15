@@ -28,6 +28,7 @@ import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type Cas
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { stripHtml } from './utils/text-sanitization';
+import { JOIN_VALUE_MAP, resolveNodeMeta, resolveSourceOutputValue } from './composer-utils';
 
 
 export type CaseResolverPlainTextTransformInput = {
@@ -41,172 +42,7 @@ export type CaseResolverCompileOptions = {
   transformPlainTextOutput?: (input: CaseResolverPlainTextTransformInput) => string;
 };
 
-// Maps a CaseResolverJoinMode to the literal string inserted between values.
-const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
-  newline: '\n',
-  tab: '\t',
-  space: ' ',
-  none: '',
-};
-
-// Named port constants derived from the shared contract so port comparisons
-// are centralised and survive contract renames.
-const DOCUMENT_WYSIWYG_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
-const DOCUMENT_PLAINTEXT_CONTENT_PORT =
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
-const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
-const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
-
-// Merges DEFAULT_CASE_RESOLVER_NODE_META with any stored overrides for the
-// given node, so callers always receive a fully-populated meta object.
-const resolveNodeMeta = (
-  nodeId: string,
-  nodeMeta: Record<string, CaseResolverNodeMeta>
-): CaseResolverNodeMeta => ({
-  ...DEFAULT_CASE_RESOLVER_NODE_META,
-  ...(nodeMeta[nodeId] ?? {}),
-});
-
-// Returns the stored edge meta or the default if none exists.
-const resolveEdgeMeta = (
-  edgeId: string,
-  edgeMeta: Record<string, CaseResolverEdgeMeta>
-): CaseResolverEdgeMeta => edgeMeta[edgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
-
-
-// Extracts the plain-text content from a node's config. Prefers the prompt
-// template; falls back to the notes text. Returns '' when neither is set.
-const resolveNodeText = (node: AiNode): string => {
-  const promptTemplate = node.config?.prompt?.template;
-  if (typeof promptTemplate === 'string' && promptTemplate.trim().length > 0) {
-    return stripHtml(promptTemplate);
-  }
-  const noteText = node.config?.notes?.text;
-  if (typeof noteText === 'string' && noteText.trim().length > 0) {
-    return stripHtml(noteText);
-  }
-  return '';
-};
-
-// Same as resolveNodeText but preserves HTML markup (used for wysiwygText).
-const resolveNodeWysiwygText = (node: AiNode): string => {
-  const promptTemplate = node.config?.prompt?.template;
-  if (typeof promptTemplate === 'string' && promptTemplate.trim().length > 0) {
-    return promptTemplate;
-  }
-  const noteText = node.config?.notes?.text;
-  if (typeof noteText === 'string' && noteText.trim().length > 0) {
-    return noteText;
-  }
-  return '';
-};
-
-// Applies quote mode, surround prefix/suffix, trailing newline, AND an
-// optional HTML color wrapper (skipped for explanatory nodes).
-const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
-  const wrappedValue = wrapByQuoteModeWithoutColor(value, meta);
-  if (!wrappedValue) return wrappedValue;
-  const canApplyHtmlColorWrapper = meta.role !== 'explanatory';
-  const normalizedColor =
-    canApplyHtmlColorWrapper &&
-    typeof meta.textColor === 'string' &&
-    /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(meta.textColor.trim())
-      ? meta.textColor.trim()
-      : '';
-  if (!normalizedColor) return wrappedValue;
-  return `<span style="color: ${normalizedColor};">${wrappedValue}</span>`;
-};
-
-// Same as wrapByQuoteMode but without the color <span> wrapper — used when
-// producing plain-text output that must not contain HTML.
-const wrapByQuoteModeWithoutColor = (value: string, meta: CaseResolverNodeMeta): string => {
-  if (!value) return value;
-  const quotedValue =
-    meta.quoteMode === 'double' ? `"${value}"` : meta.quoteMode === 'single' ? `'${value}'` : value;
-  return `${meta.surroundPrefix}${quotedValue}${meta.surroundSuffix}${
-    meta.appendTrailingNewline ? '\n' : ''
-  }`;
-};
-
-// Sorts node IDs top-to-bottom, left-to-right by canvas position so the
-// compilation visit order is deterministic and visually intuitive.
-const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
-  [...nodes]
-    .sort((left: AiNode, right: AiNode) => {
-      if (left.position.y !== right.position.y) return left.position.y - right.position.y;
-      if (left.position.x !== right.position.x) return left.position.x - right.position.x;
-      return left.id.localeCompare(right.id);
-    })
-    .map((node: AiNode) => node.id);
-
-// Concatenates `value` onto `current` using the separator for `joinMode`.
-// Returns the non-empty side unchanged when the other side is empty.
-const appendWithJoin = (current: string, value: string, joinMode: CaseResolverJoinMode): string => {
-  if (!value) return current;
-  if (!current) return value;
-  return `${current}${JOIN_VALUE_MAP[joinMode]}${value}`;
-};
-
-// Sorts edges by the canvas position of their source node so that when
-// multiple edges arrive at the same target the merge order is predictable.
-const sortEdgesBySourcePosition = (edges: CaseResolverEdge[], nodeById: Map<string, AiNode>): CaseResolverEdge[] => {
-  return [...edges].sort((left: CaseResolverEdge, right: CaseResolverEdge) => {
-    const leftNode = left.source ? nodeById.get(left.source) : undefined;
-    const rightNode = right.source ? nodeById.get(right.source) : undefined;
-    if (leftNode && rightNode) {
-      if (leftNode.position.y !== rightNode.position.y) {
-        return leftNode.position.y - rightNode.position.y;
-      }
-      if (leftNode.position.x !== rightNode.position.x) {
-        return leftNode.position.x - rightNode.position.x;
-      }
-      if (leftNode.id !== rightNode.id) {
-        return leftNode.id.localeCompare(rightNode.id);
-      }
-    } else if (leftNode || rightNode) {
-      return leftNode ? -1 : 1;
-    }
-    return left.id.localeCompare(right.id);
-  });
-};
-
-// Picks the correct output string from a source node's compiled outputs based
-// on which named port the edge is connected to. Falls back to `fallback` when
-// the port name is unrecognised.
-const resolveSourceOutputValue = (
-  sourceOutputs:
-    | {
-        wysiwygText: string;
-        plaintextContent: string;
-        plainText: string;
-        wysiwygContent: string;
-      }
-    | null
-    | undefined,
-  fromPort: string | null | undefined,
-  fallback: 'wysiwygText' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
-): string => {
-  if (!sourceOutputs) return '';
-  if (fromPort === DOCUMENT_WYSIWYG_TEXT_PORT) {
-    return sourceOutputs.wysiwygText;
-  }
-  if (fromPort === DOCUMENT_PLAINTEXT_CONTENT_PORT) {
-    return sourceOutputs.plaintextContent;
-  }
-  if (fromPort === DOCUMENT_PLAIN_TEXT_PORT) {
-    return sourceOutputs.plainText;
-  }
-  if (fromPort === DOCUMENT_WYSIWYG_CONTENT_PORT) {
-    return sourceOutputs.wysiwygContent;
-  }
-  if (fallback === 'plainText') {
-    return sourceOutputs.plainText;
-  }
-  if (fallback === 'wysiwygContent') {
-    return sourceOutputs.wysiwygContent;
-  }
-  return fallback === 'wysiwygText' ? sourceOutputs.wysiwygText : sourceOutputs.plaintextContent;
-};
+// JOIN_VALUE_MAP, DOCUMENT_*_PORT, resolveNodeMeta, resolveEdgeMeta, resolveNodeText, resolveNodeWysiwygText, wrapByQuoteMode, wrapByQuoteModeWithoutColor, sortNodeIdsByPosition, appendWithJoin, sortEdgesBySourcePosition, resolveSourceOutputValue are now in composer-utils.ts
 
 const isWysiwygTextInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_WYSIWYG_TEXT_PORT;
@@ -446,24 +282,22 @@ export const compileCaseResolverPrompt = (
           });
         }
       }
-      let wysiwygContentOutput = meta.role === 'explanatory' ? incomingWysiwygContent.value : '';
-      if (
-        meta.role === 'explanatory' &&
-        meta.includeInOutput &&
-        nodeWysiwygText.trim().length > 0
-      ) {
-        const joinMode: CaseResolverJoinMode =
-          incomingWysiwygContent.firstJoinMode ||
-          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ||
-          'newline';
-        wysiwygContentOutput = appendWithJoin(wysiwygContentOutput, nodeWysiwygText, joinMode);
-      }
+      const nodeOutput = computeNodeOutput(
+        node,
+        meta,
+        {
+          plainText: { value: incomingPlainText.value, firstJoinMode: incomingPlainText.firstJoinMode },
+          plaintextContent: { value: incomingPlaintextContent.value, firstJoinMode: incomingPlaintextContent.firstJoinMode },
+          wysiwygContent: { value: incomingWysiwygContent.value, firstJoinMode: incomingWysiwygContent.firstJoinMode },
+        },
+        options.transformPlainTextOutput
+      );
 
       outputsByNode[node.id] = {
         wysiwygText: wrappedWysiwygTextOutput,
-        plaintextContent: plaintextContentOutput,
-        plainText: plainTextOutput,
-        wysiwygContent: wysiwygContentOutput,
+        plaintextContent: nodeOutput.plaintextContent,
+        plainText: nodeOutput.plainText,
+        wysiwygContent: nodeOutput.wysiwygContent,
       };
 
       segments.push({
@@ -481,26 +315,12 @@ export const compileCaseResolverPrompt = (
       });
     });
 
-    const flowPrompt = (() => {
-      const leafNodeIds = visitOrder
-        .map((entry): string => entry.nodeId)
-        .filter((nodeId: string): boolean => {
-          const outgoing = outgoingByNode.get(nodeId) ?? [];
-          return !outgoing.some((edge: CaseResolverEdge): boolean => {
-            const targetNodeId = edge.target;
-            return typeof targetNodeId === 'string' && visitedNodeIds.has(targetNodeId);
-          });
-        });
-      const dedupedLeafOutputs: string[] = [];
-      const seenLeafOutputs = new Set<string>();
-      leafNodeIds.forEach((nodeId: string): void => {
-        const output = outputsByNode[nodeId]?.plaintextContent?.trim();
-        if (!output || seenLeafOutputs.has(output)) return;
-        seenLeafOutputs.add(output);
-        dedupedLeafOutputs.push(output);
-      });
-      return dedupedLeafOutputs.join('\n\n').trim();
-    })();
+    const flowPrompt = resolveLeafNodePrompt(
+        visitOrder,
+        outgoingByNode,
+        visitedNodeIds,
+        outputsByNode
+    );
 
     return {
       combinedContent: flowPrompt || '',

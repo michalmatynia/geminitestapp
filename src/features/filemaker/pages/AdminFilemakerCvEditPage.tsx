@@ -11,7 +11,7 @@ import {
   FormField,
   FormSection,
 } from '@/shared/ui/forms-and-actions.public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
@@ -318,7 +318,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   const routePersonId = useMemo(() => decodeRouteParam(params['personId']), [params]);
   const cvId = useMemo(() => decodeRouteParam(params['cvId']), [params]);
   const cvQueryKey = ['filemaker', 'cvs', 'detail', cvId] as const;
-  const cvQuery = createSingleQueryV2<FilemakerCv, FilemakerCv, typeof cvQueryKey>({
+  const cvQuery = useSingleQueryV2<FilemakerCv, FilemakerCv, typeof cvQueryKey>({
     queryKey: cvQueryKey,
     queryFn: async ({ signal }) => loadCv(cvId, signal),
     enabled: cvId.length > 0,
@@ -530,7 +530,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
       }),
     [previewBlocks, state.cv?.highlightTechnologyTerms]
   );
-  const saveCvMutation = createMutationV2<CvPatchResponse, SaveCvVariables>({
+  const saveCvMutation = useMutationV2<CvPatchResponse, SaveCvVariables>({
     mutationKey: ['filemaker', 'cvs', 'detail', 'save'],
     mutationFn: async (variables) => {
       const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(variables.cvId)}`, {
@@ -550,7 +550,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
       errorPresentation: 'toast',
     },
   });
-  const exportCvPdfMutation = createMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
+  const exportCvPdfMutation = useMutationV2<ExportCvPdfResponse, ExportCvPdfVariables>({
     mutationKey: ['filemaker', 'cvs', 'export-pdf'],
     mutationFn: async (variables) => {
       const response = await fetch('/api/filemaker/cvs/export-pdf', {
@@ -566,7 +566,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     },
     meta: {
       source: 'features.filemaker.pages.AdminFilemakerCvEditPage.exportPdf',
-      operation: 'export',
+      operation: 'action',
       resource: 'filemaker.cv-pdf',
       domain: 'files',
       description: 'Export a Filemaker CV as a PDF from the editor.',

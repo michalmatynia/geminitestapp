@@ -18,7 +18,7 @@ import type {
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
-  createUpdateMutationV2,
+  useUpdateMutationV2,
   useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -52,7 +52,7 @@ export function useUpdateGoogleOAuthCredentials(): MutationResult<
   GoogleOAuthCredentialsStatus,
   UpdateGoogleOAuthCredentialsInput
 > {
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     GoogleOAuthCredentialsStatus,
     UpdateGoogleOAuthCredentialsInput
   >({

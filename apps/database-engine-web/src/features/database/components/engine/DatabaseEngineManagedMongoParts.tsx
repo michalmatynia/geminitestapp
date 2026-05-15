@@ -1,13 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import {
-  CloudUploadIcon,
   DatabaseIcon,
-  DownloadIcon,
-  PencilIcon,
-  PowerIcon,
-  RefreshCwIcon,
 } from 'lucide-react';
 import type { JSX } from 'react';
 
@@ -16,14 +10,17 @@ import type {
   DatabaseEngineManagedMongoApplicationTarget,
   DatabaseEngineManagedMongoCollectionStats,
   DatabaseEngineManagedMongoDatabase,
-  DatabaseEngineManagedMongoDatabasesResponse,
   DatabaseEngineManagedMongoEndpoint,
   DatabaseEngineMongoPendingSyncRequest,
   MongoSource,
 } from '@/shared/contracts/database';
 import { StatusBadge } from '@/shared/ui/data-display.public';
-import { Button, Card } from '@/shared/ui/primitives.public';
-import { buildManagedMongoCrudHref } from '../crud/ManagedMongoScopePanel';
+import { Card } from '@/shared/ui/primitives.public';
+
+import { ManagedDatabaseCardActions } from './ManagedDatabaseCardActions';
+import { ManagedMongoSummaryCard } from './ManagedMongoSummaryCard';
+
+export { ManagedDatabaseCardActions, ManagedMongoSummaryCard };
 
 const SOURCE_LABELS: Record<MongoSource, string> = {
   local: 'Local',
@@ -160,106 +157,6 @@ export function ManagedDatabaseCardHeader({
   );
 }
 
-export function ManagedDatabaseCardActions({
-  database,
-  isBackupDisabled,
-  isPushDisabled,
-  isPullDisabled,
-  isPushing,
-  isPulling,
-  isTogglingSync,
-  backupManagedMongo,
-  setManagedMongoSyncDisabled,
-  syncManagedMongo,
-}: {
-  database: DatabaseEngineManagedMongoDatabase;
-  isBackupDisabled: boolean;
-  isPushDisabled: boolean;
-  isPullDisabled: boolean;
-  isPushing: boolean;
-  isPulling: boolean;
-  isTogglingSync: boolean;
-  backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void> | void;
-  setManagedMongoSyncDisabled: (
-    application: DatabaseEngineManagedMongoApplication,
-    disabled: boolean
-  ) => Promise<void> | void;
-  syncManagedMongo: (
-    direction: 'local_to_cloud' | 'cloud_to_local',
-    application: DatabaseEngineManagedMongoApplicationTarget
-  ) => Promise<void> | void;
-}): JSX.Element {
-  return (
-    <div className='flex flex-wrap gap-2'>
-      <Button asChild type='button' variant='outline' size='sm'>
-        <Link href={buildManagedMongoCrudHref(database.application, 'local')}>
-          <PencilIcon className='size-3.5' />
-          Local Tables
-        </Link>
-      </Button>
-      <Button asChild type='button' variant='outline' size='sm'>
-        <Link href={buildManagedMongoCrudHref(database.application, 'cloud')}>
-          <PencilIcon className='size-3.5' />
-          Cloud Tables
-        </Link>
-      </Button>
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        disabled={isBackupDisabled}
-        onClick={() => {
-          void backupManagedMongo(database.application);
-        }}
-      >
-        <DownloadIcon className='size-3.5' />
-        Backup
-      </Button>
-      <Button
-        type='button'
-        size='sm'
-        disabled={isPushDisabled}
-        loading={isPushing}
-        loadingText='Pushing...'
-        onClick={() => {
-          void syncManagedMongo('local_to_cloud', database.application);
-        }}
-      >
-        <CloudUploadIcon className='size-3.5' />
-        Push
-      </Button>
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        disabled={isTogglingSync}
-        loading={isTogglingSync}
-        loadingText={database.syncDisabled ? 'Enabling...' : 'Disabling...'}
-        onClick={() => {
-          void setManagedMongoSyncDisabled(database.application, !database.syncDisabled);
-        }}
-      >
-        <PowerIcon className='size-3.5' />
-        {database.syncDisabled ? 'Enable Sync' : 'Disable Sync'}
-      </Button>
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        disabled={isPullDisabled}
-        loading={isPulling}
-        loadingText='Pulling...'
-        onClick={() => {
-          void syncManagedMongo('cloud_to_local', database.application);
-        }}
-      >
-        <RefreshCwIcon className='size-3.5' />
-        Pull
-      </Button>
-    </div>
-  );
-}
-
 export function ManagedDatabaseCard({
   database,
   backupDisabled,
@@ -314,94 +211,3 @@ export function ManagedDatabaseCard({
   );
 }
 
-export function ManagedMongoSummaryCard({
-  managedMongoDatabases,
-  backupDisabled,
-  syncDisabled,
-  pullDisabled,
-  isPushingAll,
-  isPullingAll,
-  refetchAll,
-  backupManagedMongo,
-  syncManagedMongo,
-}: {
-  managedMongoDatabases: DatabaseEngineManagedMongoDatabasesResponse;
-  backupDisabled: boolean;
-  syncDisabled: boolean;
-  pullDisabled: boolean;
-  isPushingAll: boolean;
-  isPullingAll: boolean;
-  refetchAll: () => void;
-  backupManagedMongo: (application: DatabaseEngineManagedMongoApplicationTarget) => Promise<void> | void;
-  syncManagedMongo: (
-    direction: 'local_to_cloud' | 'cloud_to_local',
-    application: DatabaseEngineManagedMongoApplicationTarget
-  ) => Promise<void> | void;
-}): JSX.Element {
-  return (
-    <Card variant='subtle' padding='md' className='space-y-3 border-white/10'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div className='space-y-1 text-xs text-gray-300'>
-          <p>Backup root: {managedMongoDatabases.backupRoot}</p>
-          <p>
-            Backup free: {formatBytes(managedMongoDatabases.backupStorage.availableBytes)} /
-            required {formatBytes(managedMongoDatabases.backupStorage.requiredFreeBytes)}
-          </p>
-          <p>Last checked: {managedMongoDatabases.timestamp}</p>
-        </div>
-        <div className='flex flex-wrap gap-2'>
-          <Button type='button' variant='outline' size='sm' onClick={refetchAll}>
-            <RefreshCwIcon className='size-3.5' />
-            Refresh
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            disabled={backupDisabled}
-            onClick={() => {
-              void backupManagedMongo('all');
-            }}
-          >
-            <DownloadIcon className='size-3.5' />
-            Backup All
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            disabled={syncDisabled}
-            loading={isPushingAll}
-            loadingText='Pushing all...'
-            onClick={() => {
-              void syncManagedMongo('local_to_cloud', 'all');
-            }}
-          >
-            <CloudUploadIcon className='size-3.5' />
-            Push All
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            disabled={pullDisabled}
-            loading={isPullingAll}
-            loadingText='Pulling all...'
-            onClick={() => {
-              void syncManagedMongo('cloud_to_local', 'all');
-            }}
-          >
-            <RefreshCwIcon className='size-3.5' />
-            Pull All
-          </Button>
-        </div>
-      </div>
-      {managedMongoDatabases.issues.length > 0 && (
-        <div className='space-y-1 rounded-md border border-amber-400/30 bg-amber-500/10 p-3 text-xs text-amber-100'>
-          {managedMongoDatabases.issues.map((issue: string) => (
-            <p key={issue}>{issue}</p>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}

@@ -4,9 +4,9 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
-  createDeleteMutationV2,
-  createPaginatedListQueryV2,
-  createCreateMutationV2,
+  useDeleteMutationV2,
+  usePaginatedListQueryV2,
+  useCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 
@@ -46,7 +46,7 @@ export function useEmbeddingDocuments(
   }
 
   const queryKey = agentTeachingKeys.documents(collectionId);
-  return createPaginatedListQueryV2<AgentTeachingEmbeddingDocumentListItem>({
+  return usePaginatedListQueryV2<AgentTeachingEmbeddingDocumentListItem>({
     id: collectionId,
     queryKey,
     queryFn: () => fetchEmbeddingDocs(collectionId),
@@ -84,7 +84,7 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
   AddEmbeddingDocumentVariables
 > {
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<
+  return useCreateMutationV2<
     AgentTeachingEmbeddingDocumentListItem,
     AddEmbeddingDocumentVariables
   >({
@@ -111,7 +111,7 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
   DeleteEmbeddingDocumentVariables
 > {
   const mutationKey = agentTeachingKeys.collections();
-  return createDeleteMutationV2<void, DeleteEmbeddingDocumentVariables>({
+  return useDeleteMutationV2<void, DeleteEmbeddingDocumentVariables>({
     mutationFn: ({ collectionId, documentId }: DeleteEmbeddingDocumentVariables) =>
       deleteEmbeddingDocument(collectionId, documentId),
     mutationKey,

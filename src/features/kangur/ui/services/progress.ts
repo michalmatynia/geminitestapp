@@ -53,6 +53,7 @@ import {
   saveProgress,
   type KangurProgressStorageOptions,
 } from './progress.persistence';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 // Re-export modular parts
 export * from './progress.contracts';
@@ -462,6 +463,13 @@ export function recordKangurOpenedTask(
   const title = input.title.trim();
   const href = input.href.trim();
   if (!title || !href) {
+    logClientCatch(new Error('Failed to record opened task: missing title or href'), {
+      source: 'kangur.progress',
+      action: 'recordKangurOpenedTask',
+      kind: input.kind,
+      title,
+      href,
+    });
     return;
   }
 
@@ -475,13 +483,24 @@ export function recordKangurOpenedTask(
     ...current.filter((entry) => `${entry.kind}::${entry.href}` !== key),
   ].slice(0, OPENED_TASKS_LIMIT);
 
-  saveProgress(
-    normalizeKangurProgressState({
-      ...progress,
-      openedTasks: next,
-    }),
-    options
-  );
+  try {
+    saveProgress(
+        normalizeKangurProgressState({
+          ...progress,
+          openedTasks: next,
+        }),
+        options
+    );
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'kangur.progress',
+      action: 'recordKangurOpenedTask',
+      message: 'Failed to persist task history',
+      kind: input.kind,
+      title,
+      href,
+    });
+  }
 }
 
 type KangurLessonPanelProgressInput = {
@@ -794,6 +813,11 @@ export function recordKangurLessonPanelProgress(
 ): void {
   const normalized = normalizeLessonPanelProgressInput(input);
   if (!normalized) {
+    logClientCatch(new Error('Failed to record lesson panel progress: invalid input normalization'), {
+      source: 'kangur.progress',
+      action: 'recordKangurLessonPanelProgress',
+      input,
+    });
     return;
   }
   const progress = loadProgress(options);
@@ -809,14 +833,24 @@ export function recordKangurLessonPanelProgress(
   if (!nextSection) {
     return;
   }
-  saveLessonPanelSectionState({
-    progress,
-    existingLesson,
-    lessonKey: normalized.lessonKey,
-    sectionId: normalized.sectionId,
-    nextSection,
-    options,
-  });
+  try {
+    saveLessonPanelSectionState({
+      progress,
+      existingLesson,
+      lessonKey: normalized.lessonKey,
+      sectionId: normalized.sectionId,
+      nextSection,
+      options,
+    });
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'kangur.progress',
+      action: 'recordKangurLessonPanelProgress',
+      message: 'Failed to persist lesson panel progress',
+      lessonKey: normalized.lessonKey,
+      sectionId: normalized.sectionId,
+    });
+  }
 }
 
 export function recordKangurLessonPanelTime(
@@ -825,6 +859,11 @@ export function recordKangurLessonPanelTime(
 ): void {
   const normalized = normalizeLessonPanelTimeInput(input);
   if (!normalized) {
+    logClientCatch(new Error('Failed to record lesson panel time: invalid input normalization'), {
+      source: 'kangur.progress',
+      action: 'recordKangurLessonPanelTime',
+      input,
+    });
     return;
   }
 
@@ -838,12 +877,22 @@ export function recordKangurLessonPanelTime(
     existingSection,
     normalized,
   });
-  saveLessonPanelSectionState({
-    progress,
-    existingLesson,
-    lessonKey: normalized.lessonKey,
-    sectionId: normalized.sectionId,
-    nextSection,
-    options,
-  });
+  try {
+    saveLessonPanelSectionState({
+      progress,
+      existingLesson,
+      lessonKey: normalized.lessonKey,
+      sectionId: normalized.sectionId,
+      nextSection,
+      options,
+    });
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'kangur.progress',
+      action: 'recordKangurLessonPanelTime',
+      message: 'Failed to persist lesson panel time',
+      lessonKey: normalized.lessonKey,
+      sectionId: normalized.sectionId,
+    });
+  }
 }

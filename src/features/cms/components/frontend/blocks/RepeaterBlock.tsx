@@ -42,12 +42,12 @@ export function RepeaterBlock(): React.JSX.Element | null {
   const collectionPath = settings['collectionPath'];
   
   const items = useMemo(
-    () => resolveCmsRuntimeCollection(runtime, collectionSource as string, collectionPath as string),
+    () => resolveCmsRuntimeCollection(runtime, collectionSource as string, collectionPath as string) as unknown[],
     [collectionPath, collectionSource, runtime]
   );
   
   const itemLimit = resolvePositiveNumber(settings['itemLimit'], 0);
-  const visibleItems = itemLimit > 0 ? items.slice(0, itemLimit) : items;
+  const visibleItems: unknown[] = itemLimit > 0 ? items.slice(0, itemLimit) : items;
   
   const emptyMessage = typeof settings['emptyMessage'] === 'string' && settings['emptyMessage'].trim().length > 0
     ? settings['emptyMessage'].trim()

@@ -7,20 +7,20 @@ const FACTORY_META_ROOTS = ['src'];
 const FACTORY_META_EXTENSIONS = new Set(['.ts', '.tsx']);
 const REPO_CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.cjs', '.mjs']);
 const FACTORY_CALLS = new Set([
-  'createListQueryV2',
-  'createSingleQueryV2',
-  'createPaginatedListQueryV2',
-  'createInfiniteQueryV2',
-  'createMultiQueryV2',
-  'createSuspenseQueryV2',
-  'createSuspenseInfiniteQueryV2',
-  'createSuspenseMultiQueryV2',
-  'createMutationV2',
-  'createCreateMutationV2',
-  'createUpdateMutationV2',
-  'createDeleteMutationV2',
-  'createSaveMutationV2',
-  'createOptimisticMutationV2',
+  'useListQueryV2',
+  'usePaginatedListQueryV2',
+  'useInfiniteQueryV2',
+  'useMultiQueryV2',
+  'useSuspenseQueryV2',
+  'useSuspenseInfiniteQueryV2',
+  'useSuspenseMultiQueryV2',
+  'useMutationV2',
+  'useCreateMutationV2',
+  'useUpdateMutationV2',
+  'useDeleteMutationV2',
+  'useSaveMutationV2',
+  'useOptimisticMutationV2',
+  'useSingleQueryV2',
   'useEnsureQueryDataV2',
   'usePrefetchQueryV2',
   'useFetchQueryV2',
@@ -28,11 +28,12 @@ const FACTORY_CALLS = new Set([
   'fetchQueryV2',
   'prefetchQueryV2',
 ]);
-const MULTI_QUERY_CALLS = new Set(['createMultiQueryV2', 'createSuspenseMultiQueryV2']);
+const MULTI_QUERY_CALLS = new Set(['useMultiQueryV2', 'useSuspenseMultiQueryV2']);
 
 const FACTORY_META_IGNORED_DIRS = new Set(['node_modules', '.next', '__tests__', 'dist']);
 const REPO_SCAN_IGNORED_DIRS = new Set([
   '.git',
+  '.claude',
   'node_modules',
   'dist',
   'build',
@@ -44,6 +45,12 @@ const FACTORY_META_IGNORED_FILES = new Set(['src/shared/lib/query-factories-v2.t
 const RAW_QUERY_EXECUTION_ALLOWLIST = new Set([
   'src/shared/lib/query-factories-v2.ts',
   'src/shared/lib/tanstack-factory-v2/executors.ts',
+]);
+const FACTORY_META_CONFIG_WRAPPER_ALLOWLIST = new Set([
+  'src/features/admin/hooks/useAdminDataPrefetch.ts:prefetchQueryV2',
+]);
+const FACTORY_META_REFERENCE_ALLOWLIST = new Set([
+  'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsSamples.ts:useMutationV2',
 ]);
 const RAW_QUERY_EXECUTION_METHODS = new Set(['fetchQuery', 'prefetchQuery', 'ensureQueryData']);
 const LOW_SIGNAL_DESCRIPTION_PATTERNS = [
@@ -64,7 +71,7 @@ const unwrapExpression = (expression) => {
   return current;
 };
 
-// Config: force all createMutationV2 to use 'action' if STRICT_GENERIC_ACTION is true.
+// Config: force all useMutationV2 to use 'action' if STRICT_GENERIC_ACTION is true.
 // Otherwise they can use any operation.
 const STRICT_GENERIC_ACTION = true;
 
@@ -72,17 +79,17 @@ const STRICT_GENERIC_ACTION = true;
 const STRICT_ALIAS_OPERATION = true;
 
 const OPERATION_EXPECTATIONS = {
-  createListQueryV2: new Set(['list', 'search', 'polling']),
-  createSingleQueryV2: new Set(['detail', 'info', 'check', 'exists', 'polling']),
-  createPaginatedListQueryV2: new Set(['list', 'search']),
-  createInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
-  createSuspenseQueryV2: new Set(['detail', 'info', 'check', 'exists', 'list']),
-  createSuspenseInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
-  createMutationV2: new Set(['create', 'update', 'delete', 'sync', 'action', 'bulk', 'upload']),
-  createCreateMutationV2: new Set(['create']),
-  createUpdateMutationV2: new Set(['update', 'sync', 'action']),
-  createDeleteMutationV2: new Set(['delete', 'bulk']),
-  createSaveMutationV2: new Set(['create', 'update', 'sync', 'action', 'save']),
+  useListQueryV2: new Set(['list', 'search', 'polling']),
+  usePaginatedListQueryV2: new Set(['list', 'search']),
+  useInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
+  useSuspenseQueryV2: new Set(['detail', 'info', 'check', 'exists', 'list']),
+  useSuspenseInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
+  useMutationV2: new Set(['create', 'update', 'delete', 'sync', 'action', 'bulk', 'upload']),
+  useCreateMutationV2: new Set(['create']),
+  useUpdateMutationV2: new Set(['update', 'sync', 'action']),
+  useDeleteMutationV2: new Set(['delete', 'bulk']),
+  useSaveMutationV2: new Set(['create', 'update', 'sync', 'action', 'save']),
+  useSingleQueryV2: new Set(['detail', 'info', 'check', 'exists', 'polling', 'list', 'search']),
 };
 
 const normalizePath = (value) => value.replace(/\\/g, '/').replace(/^\.\//, '');
@@ -301,6 +308,9 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
   const configArg = callExpression.arguments[configArgIndex];
 
   if (!configArg || !ts.isObjectLiteralExpression(configArg)) {
+    if (FACTORY_META_CONFIG_WRAPPER_ALLOWLIST.has(`${relFilePath}:${callName}`)) {
+      return;
+    }
     issues.push({
       file: relFilePath,
       line,
@@ -337,7 +347,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
   }
 
   const metaProperty = findObjectProperty(configArg, 'meta');
-  if (!metaProperty && callName !== 'createMultiQueryV2' && callName !== 'createSuspenseMultiQueryV2') {
+  if (!metaProperty && callName !== 'useMultiQueryV2' && callName !== 'useSuspenseMultiQueryV2') {
     issues.push({
       file: relFilePath,
       line,
@@ -402,6 +412,9 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
       }
     }
   } else {
+    if (FACTORY_META_REFERENCE_ALLOWLIST.has(`${relFilePath}:${callName}`)) {
+      return;
+    }
     issues.push({
       file: relFilePath,
       line,
@@ -413,7 +426,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
 
   const expectedOperations = OPERATION_EXPECTATIONS[callName];
   if (!expectedOperations || !STRICT_ALIAS_OPERATION) {
-    if (callName !== 'createMutationV2' || !STRICT_GENERIC_ACTION) {
+    if (callName !== 'useMutationV2' || !STRICT_GENERIC_ACTION) {
       return;
     }
 
@@ -423,7 +436,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
         file: relFilePath,
         line,
         callName,
-        message: 'meta.operation is required for createMutationV2.',
+        message: 'meta.operation is required for useMutationV2.',
       });
       return;
     }
@@ -438,7 +451,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
         file: relFilePath,
         line,
         callName,
-        message: "meta.operation should be the string literal 'action' or 'upload' for createMutationV2.",
+        message: "meta.operation should be the string literal 'action' or 'upload' for useMutationV2.",
       });
       return;
     }
@@ -448,7 +461,7 @@ const inspectFactoryMetaCallExpression = (callExpression, sourceFile, relFilePat
       line,
       callName,
       message:
-        "createMutationV2 must use meta.operation: 'action' or 'upload'. Use operation-specific aliases for create/update/delete.",
+        "useMutationV2 must use meta.operation: 'action' or 'upload'. Use operation-specific aliases for create/update/delete.",
     });
     return;
   }

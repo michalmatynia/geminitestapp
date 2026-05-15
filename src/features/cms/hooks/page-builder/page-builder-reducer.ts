@@ -5,6 +5,7 @@ import type {
   PageBuilderSnapshot,
   PageBuilderState,
 } from '../../types/page-builder';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const HISTORY_LIMIT = 50;
 
@@ -33,55 +34,64 @@ export function pageBuilderReducer(
   state: PageBuilderState,
   action: PageBuilderAction
 ): PageBuilderState {
-  if (action.type === 'UNDO') {
-    if (state.history.past.length === 0) return state;
-    const previous = state.history.past[state.history.past.length - 1]!;
-    const past = state.history.past.slice(0, -1);
-    const future = [makeSnapshot(state), ...state.history.future];
-    return {
-      ...state,
-      currentPage: previous.currentPage,
-      sections: previous.sections,
-      selectedNodeId: null,
-      history: { past, future },
-    };
-  }
+  try {
+    if (action.type === 'UNDO') {
+      if (state.history.past.length === 0) return state;
+      const previous = state.history.past[state.history.past.length - 1]!;
+      const past = state.history.past.slice(0, -1);
+      const future = [makeSnapshot(state), ...state.history.future];
+      return {
+        ...state,
+        currentPage: previous.currentPage,
+        sections: previous.sections,
+        selectedNodeId: null,
+        history: { past, future },
+      };
+    }
 
-  if (action.type === 'REDO') {
-    if (state.history.future.length === 0) return state;
-    const next = state.history.future[0]!;
-    const future = state.history.future.slice(1);
+    if (action.type === 'REDO') {
+      if (state.history.future.length === 0) return state;
+      const next = state.history.future[0]!;
+      const future = state.history.future.slice(1);
+      const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
+      return {
+        ...state,
+        currentPage: next.currentPage,
+        sections: next.sections,
+        selectedNodeId: null,
+        history: { past, future },
+      };
+    }
+
+    const nextState = reducePageBuilderStateCore(state, action);
+
+    if (nextState === state) return state;
+
+    if (action.type === 'SET_CURRENT_PAGE') {
+      return {
+        ...nextState,
+        history: { past: [], future: [] },
+      };
+    }
+
+    if (HISTORY_IGNORED_ACTIONS.has(action.type)) {
+      return {
+        ...nextState,
+        history: state.history,
+      };
+    }
+
     const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
     return {
-      ...state,
-      currentPage: next.currentPage,
-      sections: next.sections,
-      selectedNodeId: null,
-      history: { past, future },
-    };
-  }
-
-  const nextState = reducePageBuilderStateCore(state, action);
-
-  if (nextState === state) return state;
-
-  if (action.type === 'SET_CURRENT_PAGE') {
-    return {
       ...nextState,
-      history: { past: [], future: [] },
+      history: { past, future: [] },
     };
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'cms.page-builder',
+      action: 'pageBuilderReducer',
+      actionType: action.type,
+    });
+    throw error;
   }
-
-  if (HISTORY_IGNORED_ACTIONS.has(action.type)) {
-    return {
-      ...nextState,
-      history: state.history,
-    };
-  }
-
-  const past = [...state.history.past, makeSnapshot(state)].slice(-HISTORY_LIMIT);
-  return {
-    ...nextState,
-    history: { past, future: [] },
-  };
 }

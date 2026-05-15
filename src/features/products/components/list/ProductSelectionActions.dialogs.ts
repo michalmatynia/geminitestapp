@@ -142,7 +142,12 @@ const useBulkSyncDialogController = (): BulkSyncDialogController => {
   };
 };
 
-export const useProductSelectionDialogController = (): ProductSelectionDialogController => ({
-  ...useListingDialogController(),
-  ...useBulkSyncDialogController(),
-});
+export const useProductSelectionDialogController = (): ProductSelectionDialogController => {
+  const listingDialogController = useListingDialogController();
+  const bulkSyncDialogController = useBulkSyncDialogController();
+
+  return {
+    ...listingDialogController,
+    ...bulkSyncDialogController,
+  };
+};

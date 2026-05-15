@@ -125,10 +125,10 @@ function useNavTreeNodeHandlers({
     if (item.action !== undefined) {
       item.action();
     }
-    if (href === null && hasChildren) {
+    if (hasChildren) {
       onToggleOpen(item.id);
     }
-  }, [hasChildren, href, item, onToggleOpen]);
+  }, [hasChildren, item, onToggleOpen]);
 
   const handleLinkIntent = useCallback((): void => {
     if (href !== null) {

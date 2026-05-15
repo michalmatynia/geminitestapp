@@ -12,9 +12,9 @@ import {
 } from '@/shared/contracts/social-publishing-posts';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
-  createListQueryV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
+  useListQueryV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -95,7 +95,7 @@ export const fetchSocialPublishingPostById = async (id: string): Promise<SocialP
 export const useSocialPublishingPosts = (
   options?: SocialPostsQueryOptions
 ): ListQuery<SocialPublishingPost, SocialPublishingPost[]> =>
-  createListQueryV2<SocialPublishingPost, SocialPublishingPost[]>({
+  useListQueryV2<SocialPublishingPost, SocialPublishingPost[]>({
     queryKey: QUERY_KEYS.socialPublishing.posts({
       scope: options?.scope ?? 'public',
       limit: options?.limit ?? null,
@@ -120,7 +120,7 @@ export const useSocialPublishingPosts = (
 export const useSocialPublishingPostsPage = (
   options: SocialPostsPageQueryOptions
 ): SingleQuery<SocialPublishingPostsPageResult> =>
-  createSingleQueryV2<SocialPublishingPostsPageResult>({
+  useSingleQueryV2<SocialPublishingPostsPageResult>({
     id: `admin:${options.page}:${options.pageSize}:${options.search ?? ''}:${options.status ?? 'all'}`,
     queryKey: QUERY_KEYS.socialPublishing.posts({
       scope: 'admin',
@@ -150,7 +150,7 @@ export const useSocialPublishingPost = (
   id: string | null,
   options?: { enabled?: boolean }
 ): SingleQuery<SocialPublishingPost> =>
-  createSingleQueryV2<SocialPublishingPost>({
+  useSingleQueryV2<SocialPublishingPost>({
     id: id ?? null,
     queryKey: QUERY_KEYS.socialPublishing.post(id),
     queryFn: async (): Promise<SocialPublishingPost> => {
@@ -185,7 +185,7 @@ export const useSaveSocialPublishingPost = (): MutationResult<
   SocialPublishingPost,
   Partial<SocialPublishingPost>
 > =>
-  createUpdateMutationV2<SocialPublishingPost, Partial<SocialPublishingPost>>({
+  useUpdateMutationV2<SocialPublishingPost, Partial<SocialPublishingPost>>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'save'],
     mutationFn: async (post: Partial<SocialPublishingPost>): Promise<SocialPublishingPost> =>
       await api.post<SocialPublishingPost>('/api/filemaker/social-posts', { post }),
@@ -204,7 +204,7 @@ export const usePatchSocialPublishingPost = (): MutationResult<
   SocialPublishingPost,
   { id: string; updates: Partial<SocialPublishingPost> }
 > =>
-  createUpdateMutationV2<SocialPublishingPost, { id: string; updates: Partial<SocialPublishingPost> }>({
+  useUpdateMutationV2<SocialPublishingPost, { id: string; updates: Partial<SocialPublishingPost> }>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'patch'],
     mutationFn: async ({
       id,
@@ -226,7 +226,7 @@ export const usePatchSocialPublishingPost = (): MutationResult<
   });
 
 export const useDeleteSocialPublishingPost = (): MutationResult<SocialPublishingPost, string> =>
-  createUpdateMutationV2<SocialPublishingPost, string>({
+  useUpdateMutationV2<SocialPublishingPost, string>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'delete'],
     mutationFn: async (postId: string): Promise<SocialPublishingPost> => {
       try {
@@ -286,7 +286,7 @@ export const useGenerateSocialPublishingPost = (): MutationResult<
   SocialPublishingQueuedJobTriggerResponse,
   SocialPublishingPostGenerationPayload
 > =>
-  createUpdateMutationV2<SocialPublishingQueuedJobTriggerResponse, SocialPublishingPostGenerationPayload>({
+  useUpdateMutationV2<SocialPublishingQueuedJobTriggerResponse, SocialPublishingPostGenerationPayload>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'generate'],
     mutationFn: async (payload): Promise<SocialPublishingQueuedJobTriggerResponse> =>
       await api.post('/api/filemaker/social-posts/generate', payload, { timeout: 180_000 }),
@@ -311,7 +311,7 @@ export const usePublishSocialPublishingPost = (): MutationResult<
   SocialPublishingPost,
   SocialPublishingPostPublishInput
 > =>
-  createUpdateMutationV2<SocialPublishingPost, SocialPublishingPostPublishInput>({
+  useUpdateMutationV2<SocialPublishingPost, SocialPublishingPostPublishInput>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'publish'],
     mutationFn: async ({ id, mode, skipImages }: SocialPublishingPostPublishInput): Promise<SocialPublishingPost> =>
       await api.post<SocialPublishingPost>(`/api/filemaker/social-posts/${id}/publish`, {
@@ -335,7 +335,7 @@ export type SocialPublishingPostUnpublishInput = {
 };
 
 export const useUnpublishSocialPublishingPost = (): MutationResult<SocialPublishingPost, SocialPublishingPostUnpublishInput> =>
-  createUpdateMutationV2<SocialPublishingPost, SocialPublishingPostUnpublishInput>({
+  useUpdateMutationV2<SocialPublishingPost, SocialPublishingPostUnpublishInput>({
     mutationKey: [...QUERY_KEYS.socialPublishing.posts({ scope: 'admin', limit: null }), 'unpublish'],
     mutationFn: async ({ id, keepLocal }: SocialPublishingPostUnpublishInput): Promise<SocialPublishingPost> =>
       await api.post<SocialPublishingPost>(`/api/filemaker/social-posts/${id}/unpublish`, {

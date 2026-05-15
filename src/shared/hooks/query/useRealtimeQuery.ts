@@ -3,7 +3,7 @@
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -37,7 +37,7 @@ export function useRealtimeQuery<TData>(
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const domain = config?.domain ?? 'global';
 
-  const query = createListQueryV2<TData, TData>({
+  const query = useListQueryV2<TData, TData>({
     queryKey,
     queryFn,
     enabled: config?.enabled !== false,

@@ -16,7 +16,7 @@ describe('fix-factory-meta script', () => {
   it('adds a generated description when meta.description is missing', () => {
     const output = fixFactoryMetaSourceText(
       `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {
@@ -37,7 +37,7 @@ describe('fix-factory-meta script', () => {
   it('rewrites legacy generated descriptions to the newer style', () => {
     const output = fixFactoryMetaSourceText(
       `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {
@@ -60,7 +60,7 @@ describe('fix-factory-meta script', () => {
   it('cleans malformed standalone comma lines before applying edits', () => {
     const output = fixFactoryMetaSourceText(
       `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {
@@ -84,7 +84,7 @@ describe('fix-factory-meta script', () => {
   it('does not insert synthetic top-level query keys for multi-query factories', () => {
     const output = fixFactoryMetaSourceText(
       `
-      createMultiQueryV2({
+      useMultiQueryV2({
         queries: [
           {
             queryKey: ['products', 'one'],
@@ -111,7 +111,7 @@ describe('fix-factory-meta script', () => {
   it('adds descriptions inside mapped multi-query descriptors and removes the dead top-level queryKey', () => {
     const output = fixFactoryMetaSourceText(
       `
-      createMultiQueryV2({
+      useMultiQueryV2({
         queryKey: ['legacy-group'],
         queries: ids.map((id) => ({
           queryKey: ['products', id],
@@ -135,7 +135,7 @@ describe('fix-factory-meta script', () => {
 
   it('preserves custom descriptions that are already concrete', () => {
     const source = `
-      createListQueryV2({
+      useListQueryV2({
         queryKey: ['products'],
         queryFn: async () => [],
         meta: {

@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { type Collection, ObjectId } from 'mongodb';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -7,13 +7,11 @@ import {
   databaseEngineManagedMongoApplicationSchema,
   mongoSourceSchema,
 } from '@/shared/contracts/database';
-import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { createManagedMongoClient } from '@/shared/lib/db/services/managed-mongo-databases';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 const MONGO_COLLECTION_NAME_MAX_LENGTH = 255;
 const isValidMongoCollectionName = (value: string): boolean => {
@@ -56,74 +54,29 @@ const databaseCrudRequestSchema = z.union([
     type: z.enum(['mongodb', 'auto']).optional().default('auto'),
     application: databaseEngineManagedMongoApplicationSchema.optional(),
     source: mongoSourceSchema.optional(),
-    data: z.record(z.string(), z.unknown()).optional(),
     primaryKey: nonEmptyRecordSchema,
   }),
 ]);
 
-export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  await assertDatabaseEngineManageAccess();
-  if (process.env['NODE_ENV'] === 'production') {
-    throw forbiddenError('Database operations are disabled in production.');
-  }
-
-  const parsedBody = await parseJsonBody(req, databaseCrudRequestSchema, {
-    logPrefix: 'database-engine-web.databases.crud',
-  });
-  if (!parsedBody.ok) {
-    return parsedBody.response;
-  }
-
-  const parsed = parsedBody.data;
-  const { table, operation, data, primaryKey, application, source } = parsed;
-  return handleMongoCrud(table, operation, data, primaryKey, application, source);
-}
-
-function toObjectId(value: unknown): unknown {
-  if (typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)) {
-    try {
-      return new ObjectId(value);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      return value;
-    }
-  }
-  return value;
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const toDate = (value: unknown): unknown => {
+const toObjectId = (value: unknown): unknown => {
   if (typeof value !== 'string') return value;
-  const timestamp = Date.parse(value);
-  return Number.isNaN(timestamp) ? value : new Date(timestamp);
+  try {
+    return ObjectId.createFromHexString(value);
+  } catch (_e) {
+    return value;
+  }
 };
 
 const normalizeMongoCrudValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map(normalizeMongoCrudValue);
-  }
-  if (!isRecord(value)) {
-    return value;
-  }
-
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(normalizeMongoCrudValue);
   const entries = Object.entries(value);
-  if (entries.length === 1 && typeof value['$oid'] === 'string') {
-    return toObjectId(value['$oid']);
-  }
-  if (entries.length === 1 && typeof value['$date'] === 'string') {
-    return toDate(value['$date']);
-  }
-
   return Object.fromEntries(
     entries.map(([key, nestedValue]) => [key, normalizeMongoCrudValue(nestedValue)])
   );
 };
 
-const normalizeMongoCrudDocument = (
-  data: Record<string, unknown>
-): Record<string, unknown> =>
+const normalizeMongoCrudDocument = (data: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(
     Object.entries(data).map(([key, value]) => [key, normalizeMongoCrudValue(value)])
   );
@@ -148,67 +101,126 @@ const stripImmutableMongoFields = (
   return sanitized;
 };
 
-async function handleMongoCrud(
-  collectionName: string,
-  operation: 'insert' | 'update' | 'delete',
-  data?: Record<string, unknown>,
-  primaryKey?: Record<string, unknown>,
-  application?: z.infer<typeof databaseEngineManagedMongoApplicationSchema>,
-  source?: z.infer<typeof mongoSourceSchema>
+interface MongoCrudParams {
+  collectionName: string;
+  operation: 'insert' | 'update' | 'delete';
+  data?: Record<string, unknown>;
+  primaryKey?: Record<string, unknown>;
+  application?: z.infer<typeof databaseEngineManagedMongoApplicationSchema>;
+  source?: z.infer<typeof mongoSourceSchema>;
+}
+
+/**
+ * performInsert: Validates insert data, normalizes it, and executes the collection.insertOne operation.
+ */
+async function performInsert(
+  collection: Collection,
+  data?: Record<string, unknown>
 ): Promise<Response> {
-  const managedMongo = application !== undefined
-    ? await createManagedMongoClient(application, source ?? 'local')
-    : null;
+  if (!data || Object.keys(data).length === 0) {
+    throw badRequestError('Data is required for insert.');
+  }
+  const insertData = normalizeMongoCrudDocument(data);
+  const result = await collection.insertOne(insertData);
+  return NextResponse.json({
+    success: result.acknowledged,
+    rowCount: result.acknowledged ? 1 : 0,
+    returning: [{ _id: result.insertedId, ...insertData }],
+  });
+}
+
+/**
+ * performUpdate: Validates update data and primary key, sanitizes immutable fields, 
+ * and executes the collection.updateOne operation.
+ */
+async function performUpdate(
+  collection: Collection,
+  data?: Record<string, unknown>,
+  primaryKey?: Record<string, unknown>
+): Promise<Response> {
+  if (!data || Object.keys(data).length === 0) {
+    throw badRequestError('Data is required for update.');
+  }
+  if (!primaryKey || Object.keys(primaryKey).length === 0) {
+    throw badRequestError('Primary key is required for update.');
+  }
+  const updateData = stripImmutableMongoFields(data, primaryKey);
+  if (Object.keys(updateData).length === 0) {
+    throw badRequestError('At least one non-primary-key field is required for update.');
+  }
+  const result = await collection.updateOne(buildPrimaryKeyFilter(primaryKey), {
+    $set: normalizeMongoCrudDocument(updateData),
+  });
+  return NextResponse.json({
+    success: result.acknowledged,
+    rowCount: result.modifiedCount,
+  });
+}
+
+/**
+ * performDelete: Validates the primary key and executes the collection.deleteOne operation.
+ */
+async function performDelete(
+  collection: Collection,
+  primaryKey?: Record<string, unknown>
+): Promise<Response> {
+  if (!primaryKey || Object.keys(primaryKey).length === 0) {
+    throw badRequestError('Primary key is required for delete.');
+  }
+  const result = await collection.deleteOne(buildPrimaryKeyFilter(primaryKey));
+  return NextResponse.json({
+    success: result.acknowledged,
+    rowCount: result.deletedCount,
+  });
+}
+
+async function resolveMongoCollection(
+  managedMongo: Awaited<ReturnType<typeof createManagedMongoClient>> | null,
+  collectionName: string
+): Promise<Collection> {
   const mongoClient = managedMongo?.client ?? (await getMongoClient());
   const dbName = managedMongo?.dbName ?? process.env['MONGODB_DB'] ?? 'stardb';
   const db = managedMongo?.db ?? mongoClient.db(dbName);
-  const collection = db.collection(collectionName);
+  return db.collection(collectionName);
+}
+
+/**
+ * handleMongoCrud: Orchestrates CRUD operations (insert, update, delete) on a target MongoDB collection.
+ * It manages client connections (including managed database clients), normalizes input documents,
+ * and executes the requested MongoDB operation.
+ */
+async function handleMongoCrud(params: MongoCrudParams): Promise<Response> {
+  const { collectionName, operation, data, primaryKey, application, source } = params;
+  const managedMongo =
+    application !== undefined
+      ? await createManagedMongoClient(application, source ?? 'local')
+      : null;
 
   try {
-    if (operation === 'insert') {
-      if (!data || Object.keys(data).length === 0) {
-        throw badRequestError('Data is required for insert.');
-      }
-      const insertData = normalizeMongoCrudDocument(data);
-      const result = await collection.insertOne(insertData);
-      return NextResponse.json({
-        success: result.acknowledged,
-        rowCount: result.acknowledged ? 1 : 0,
-        returning: [{ _id: result.insertedId, ...insertData }],
-      });
-    }
+    const collection = await resolveMongoCollection(managedMongo, collectionName);
 
-    if (operation === 'update') {
-      if (!data || Object.keys(data).length === 0) {
-        throw badRequestError('Data is required for update.');
-      }
-      if (!primaryKey || Object.keys(primaryKey).length === 0) {
-        throw badRequestError('Primary key is required for update.');
-      }
-      const updateData = stripImmutableMongoFields(data, primaryKey);
-      if (Object.keys(updateData).length === 0) {
-        throw badRequestError('At least one non-primary-key field is required for update.');
-      }
-      const result = await collection.updateOne(buildPrimaryKeyFilter(primaryKey), {
-        $set: normalizeMongoCrudDocument(updateData),
-      });
-      return NextResponse.json({
-        success: result.acknowledged,
-        rowCount: result.modifiedCount,
-      });
-    }
-
-    if (!primaryKey || Object.keys(primaryKey).length === 0) {
-      throw badRequestError('Primary key is required for delete.');
-    }
-    const result = await collection.deleteOne(buildPrimaryKeyFilter(primaryKey));
-    return NextResponse.json({
-      success: result.acknowledged,
-      rowCount: result.deletedCount,
-    });
+    if (operation === 'insert') return await performInsert(collection, data);
+    if (operation === 'update') return await performUpdate(collection, data, primaryKey);
+    return await performDelete(collection, primaryKey);
   } finally {
     if (managedMongo !== null) {
       await managedMongo.client.close().catch(() => undefined);
     }
   }
+}
+
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+
+  const body = await parseJsonBody(req, ctx);
+  const parsed = databaseCrudRequestSchema.parse(body);
+
+  return handleMongoCrud({
+    collectionName: parsed.table,
+    operation: parsed.operation,
+    data: 'data' in parsed ? parsed.data : undefined,
+    primaryKey: 'primaryKey' in parsed ? parsed.primaryKey : undefined,
+    application: parsed.application,
+    source: parsed.source,
+  });
 }

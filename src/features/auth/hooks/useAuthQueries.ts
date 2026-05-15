@@ -18,10 +18,10 @@ import type {
 import type { SingleQuery, UpdateMutation, CreateMutation, MutationResult } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
 import {
-  createDeleteMutationV2,
-  createSingleQueryV2,
-  createUpdateMutationV2,
-  createCreateMutationV2,
+  useDeleteMutationV2,
+  useSingleQueryV2,
+  useUpdateMutationV2,
+  useCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAuthSecurity, invalidateUsers } from '@/shared/lib/query-invalidation';
 import { authKeys } from '@/shared/lib/query-key-exports';
@@ -35,7 +35,7 @@ const AUTH_ROLE_SETTINGS_QUERY_KEY = [...authKeys.all, 'role-settings'] as const
 
 export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResponse> {
   const queryKey = authKeys.users.all;
-  return createSingleQueryV2<AuthUsersResponse>({
+  return useSingleQueryV2<AuthUsersResponse>({
     id: 'auth-users',
     queryKey,
     queryFn: fetchAuthUsers,
@@ -53,7 +53,7 @@ export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResp
 }
 
 export function useAuthRoleSettings(enabled: boolean = true): SingleQuery<AuthRoleSettings> {
-  return createSingleQueryV2<AuthRoleSettings>({
+  return useSingleQueryV2<AuthRoleSettings>({
     id: 'auth-role-settings',
     queryKey: AUTH_ROLE_SETTINGS_QUERY_KEY,
     queryFn: fetchAuthRoleSettings,
@@ -74,7 +74,7 @@ export function useAuthRoleSettings(enabled: boolean = true): SingleQuery<AuthRo
 export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUserSecurityProfile> {
   const hasUserId = userId !== undefined && userId !== null && userId !== '';
   const queryKey = hasUserId ? authKeys.users.security(userId) : authKeys.users.security('');
-  return createSingleQueryV2<AuthUserSecurityProfile>({
+  return useSingleQueryV2<AuthUserSecurityProfile>({
     id: userId ?? 'auth-user-security',
     queryKey,
     queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId ?? ''),
@@ -98,7 +98,7 @@ export function useUpdateAuthUser(): UpdateMutation<
     input: { name?: string | null; email?: string | null; emailVerified?: boolean | null };
   }
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({
       userId,
       input,
@@ -131,7 +131,7 @@ export function useUpdateAuthUserRoles(): UpdateMutation<
   AuthRoleSettings,
   { userRoles: AuthUserRoleMap }
 > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({
       userRoles,
     }: {
@@ -163,7 +163,7 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
     input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean };
   }
   > {
-  return createUpdateMutationV2({
+  return useUpdateMutationV2({
     mutationFn: async ({
       userId,
       input,
@@ -200,7 +200,7 @@ export function useDeleteAuthUser(): UpdateMutation<
   { id: string; deleted: boolean },
   { userId: string }
   > {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: async ({
       userId,
     }: {
@@ -228,7 +228,7 @@ export function useMockSignIn(): MutationResult<
   { ok: boolean; payload: { ok?: boolean; message?: string } },
   { email: string; password: string }
   > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: mockSignIn,
     mutationKey: authKeys.users.all,
     meta: {
@@ -251,7 +251,7 @@ export function useRegisterUser(): CreateMutation<
     emailVerified?: boolean | undefined;
   }
   > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: registerUser,
     mutationKey: authKeys.users.all,
     meta: {

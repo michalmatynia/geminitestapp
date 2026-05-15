@@ -1,5 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render as renderWithTestingLibrary, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
@@ -317,6 +318,25 @@ vi.mock('@/shared/ui/toast', () => ({
 }));
 
 import { ProductSelectionActions } from './ProductSelectionActions';
+
+const render = (ui: React.ReactElement): ReturnType<typeof renderWithTestingLibrary> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return renderWithTestingLibrary(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+};
 
 describe('ProductSelectionActions', () => {
   beforeEach(() => {

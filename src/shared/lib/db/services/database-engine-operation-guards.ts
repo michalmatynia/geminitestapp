@@ -31,9 +31,14 @@ const gateLabels: Record<DatabaseEngineOperationGate, string> = {
 };
 
 /**
- * Asserts that a database engine operation is enabled
- * @param gate - The operation gate to check
- * @throws ForbiddenError if the operation is not allowed
+ * assertDatabaseEngineOperationEnabled: Validates that a specific, sensitive database operation 
+ * is globally enabled according to current Database Engine controls.
+ * 
+ * This should be called at the start of any privileged operation (e.g., API route handlers)
+ * to ensure that manual or sensitive actions are permitted by system-wide configuration.
+ * 
+ * @param gate - The key of the operation control to check.
+ * @throws {ForbiddenError} If the specific operation is disabled in the system policy.
  */
 export async function assertDatabaseEngineOperationEnabled(
   gate: DatabaseEngineOperationGate

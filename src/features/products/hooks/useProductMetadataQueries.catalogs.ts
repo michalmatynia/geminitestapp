@@ -9,7 +9,7 @@ import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-
 import type { ProductTag } from '@/shared/contracts/products/tags';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 import {
@@ -40,7 +40,7 @@ const resolveFilterTagsTags = (catalogId: string | null): string[] =>
 
 export function useCatalogs(options?: ProductMetadataQueryOptions): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<CatalogRecord[]> =>
       await api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
@@ -64,7 +64,7 @@ export function useCategories(
 ): ListQuery<ProductCategory> {
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.categories(resolvedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
       if (resolvedCatalogId === null) return [];
@@ -98,7 +98,7 @@ export function useCategoriesForCatalogs(
     normalizedCatalogIds,
   ]);
 
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
       if (normalizedCatalogIds.length === 0) return [];
@@ -132,7 +132,7 @@ export function useTags(
 ): ListQuery<ProductTag> {
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.tags(resolvedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTag[]> => {
       if (resolvedCatalogId === null) return [];
@@ -160,7 +160,7 @@ export function useFilterTags(
 ): ListQuery<ProductTag> {
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.tags(resolvedCatalogId ?? '__all__');
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTag[]> => {
       if (resolvedCatalogId !== null) {
@@ -186,7 +186,7 @@ export function useFilterTags(
 
 export function useAllTags(options?: ProductMetadataQueryOptions): ListQuery<ProductTag> {
   const queryKey = productMetadataKeys.tags('__all__');
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTag[]> =>
       await api.get<ProductTag[]>('/api/v2/products/tags/all'),
@@ -210,7 +210,7 @@ export function useShippingGroups(
 ): ListQuery<ProductShippingGroup> {
   const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const queryKey = productMetadataKeys.shippingGroups(resolvedCatalogId);
-  return createListQueryV2({
+  return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductShippingGroup[]> => {
       if (resolvedCatalogId === null) return [];
@@ -236,7 +236,7 @@ export function useMultiTags(
   catalogIds: string[],
   options?: ProductMetadataQueryOptions
 ): UseQueryResult<ProductTag[]>[] {
-  return createMultiQueryV2({
+  return useMultiQueryV2({
     queries: catalogIds.map((catalogId: string) => {
       const queryKey = normalizeQueryKey(productMetadataKeys.tags(catalogId));
       return {

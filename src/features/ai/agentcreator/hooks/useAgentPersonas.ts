@@ -4,7 +4,7 @@ import type { AgentPersona } from '@/shared/contracts/agents';
 import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { api } from '@/shared/lib/api-client';
-import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentPersonas } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -19,7 +19,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   Error,
   { personas: AgentPersona[] }
   > {
-  return createUpdateMutationV2<void, { personas: AgentPersona[] }>({
+  return useUpdateMutationV2<void, { personas: AgentPersona[] }>({
     mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
       const canonicalPersonas = normalizeAgentPersonas(personas);

@@ -1,6 +1,6 @@
 import type { ChatbotJobActionResponse } from '@/shared/contracts/chatbot';
 import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui/queries';
-import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useCreateMutationV2, useDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import { updateChatbotJob, clearChatbotJobs, cancelListing } from '../api';
 import { jobKeys } from './useJobQueries';
@@ -9,7 +9,7 @@ export function useChatbotJobMutation(): UpdateMutation<
   ChatbotJobActionResponse,
   { jobId: string; action: 'retry' | 'cancel' }
 > {
-  return createCreateMutationV2({
+  return useCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,
     transformError: (error: unknown): Error =>
@@ -29,7 +29,7 @@ export function useChatbotJobMutation(): UpdateMutation<
 }
 
 export function useClearChatbotJobsMutation(): VoidMutation<{ scope: string }> {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ scope }) => clearChatbotJobs(scope).then(() => {}),
     mutationKey: jobKeys.all,
     transformError: (error: unknown): Error =>
@@ -47,7 +47,7 @@ export function useClearChatbotJobsMutation(): VoidMutation<{ scope: string }> {
 }
 
 export function useCancelListingMutation(): VoidMutation<{ productId: string; listingId: string }> {
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ productId, listingId }) => cancelListing(productId, listingId),
     mutationKey: jobKeys.integrations(),
     transformError: (error: unknown): Error =>

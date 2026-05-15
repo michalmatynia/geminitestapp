@@ -12,8 +12,8 @@ import type {
 } from '@/shared/contracts/product-sync';
 import { api } from '@/shared/lib/api-client';
 import {
-  createMutationV2,
-  createSingleQueryV2,
+  useMutationV2,
+  useSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   productKeys,
@@ -35,7 +35,7 @@ export function useProductBaseSyncPreview(
   const queryKey = productKeys.baseSyncPreview(productId);
   const enabled = options?.enabled ?? true;
 
-  return createSingleQueryV2({
+  return useSingleQueryV2({
     id: productId,
     queryKey,
     queryFn: async (): Promise<ProductSyncPreview> =>
@@ -61,7 +61,7 @@ export function useRunProductBaseSyncMutation(): MutationResult<
   ProductSyncSingleProductResponse,
   { productId: string }
 > {
-  return createMutationV2({
+  return useMutationV2({
     mutationKey: productSettingsKeys.syncProfiles(),
     mutationFn: async ({
       productId,
@@ -97,7 +97,7 @@ export function useBulkProductBaseSyncMutation(): MutationResult<
   ProductSyncBulkResponse,
   ProductSyncBulkRequest
 > {
-  return createMutationV2({
+  return useMutationV2({
     mutationKey: productSettingsKeys.syncProfiles(),
     mutationFn: async (input: ProductSyncBulkRequest): Promise<ProductSyncBulkResponse> =>
       api.post<ProductSyncBulkResponse>('/api/v2/products/sync/bulk', input),

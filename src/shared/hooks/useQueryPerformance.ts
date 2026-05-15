@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { UndefinedInitialDataOptions, UseQueryResult } from '@tanstack/react-query';
 
@@ -99,7 +99,7 @@ export function useQueryWithPerformance<TData>(
 ): UseQueryResult<TData, Error> {
   const keyString = JSON.stringify(queryKey);
 
-  return createListQueryV2<TData, TData>({
+  return useListQueryV2<TData, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const startTime = Date.now();

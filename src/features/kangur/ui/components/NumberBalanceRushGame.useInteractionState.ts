@@ -15,7 +15,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { ZoneId, UseNumberBalanceRushInteractionStateProps } from './NumberBalanceRushGame.types';
 import {
   resolveNumberBalanceRushAverageSolve,
@@ -62,7 +62,7 @@ const useSubmitNumberBalanceSolveMutation = (): MutationResult<
   NumberBalanceSolveResponse,
   SubmitNumberBalanceSolveVariables
 > =>
-  createMutationV2<NumberBalanceSolveResponse, SubmitNumberBalanceSolveVariables>({
+  useMutationV2<NumberBalanceSolveResponse, SubmitNumberBalanceSolveVariables>({
     mutationKey: ['kangur', 'number-balance', 'solve'],
     mutationFn: submitNumberBalanceSolve,
     meta: {

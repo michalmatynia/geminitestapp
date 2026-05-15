@@ -63,4 +63,104 @@ const readPositiveIntegerEnv = (key: string, fallback: number): number => {
  * Defaults to 5 minutes to balance consistency and performance.
  */
 const PROVIDER_CACHE_TTL_MS = readPositiveIntegerEnv('APP_DB_PROVIDER_CACHE_TTL_MS', 5 * 60_000);
-// ... (rest of file remains same)
+
+const providerSettingCache = new SafeDatabaseCache<AppDbProvider | null>({
+  ttlMs: PROVIDER_CACHE_TTL_MS,
+  source: 'db.app-db-provider',
+  action: 'getAppDbProviderSetting',
+});
+
+const resolvedProviderCache = new SafeDatabaseCache<AppDbProvider>({
+  ttlMs: 60000,
+  source: 'db.app-db-provider',
+  action: 'getAppDbProvider',
+});
+
+const normalizeProvider = (value?: string | null): AppDbProvider | null => {
+  if (!value) return null;
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'mongodb') return 'mongodb';
+  return null;
+};
+
+const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
+  await applyActiveMongoSourceEnv();
+  if (!process.env['MONGODB_URI']) return null;
+  try {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>('settings')
+      .findOne({
+        $or: [{ _id: APP_DB_PROVIDER_SETTING_KEY }, { key: APP_DB_PROVIDER_SETTING_KEY }],
+      });
+    return normalizeProvider(doc?.value ?? null);
+  } catch (error) {
+    void reportRuntimeCatch(error, {
+      source: 'db.app-db-provider',
+      action: 'readMongoAppProviderSetting',
+      settingKey: APP_DB_PROVIDER_SETTING_KEY,
+    });
+    return null;
+  }
+};
+
+export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> => {
+  return providerSettingCache.get(async () => {
+    await applyActiveMongoSourceEnv();
+    if (process.env['APP_DB_PROVIDER']) {
+      const envProvider = normalizeProvider(process.env['APP_DB_PROVIDER']);
+      if (envProvider) return envProvider;
+    }
+    return readMongoAppProviderSetting();
+  });
+};
+
+export const getAppDbProvider = async (): Promise<AppDbProvider> => {
+  return resolvedProviderCache.get(async () => {
+    await applyActiveMongoSourceEnv();
+
+    const [policy, routeProvider] = await Promise.all([
+      getDatabaseEnginePolicy(),
+      getDatabaseEngineServiceProvider('app'),
+    ]);
+    let result: AppDbProvider;
+
+    if (routeProvider) {
+      if (routeProvider === 'redis') {
+        throw internalError('Database Engine route "app" cannot target Redis. Use MongoDB.');
+      }
+      if (routeProvider !== 'mongodb') {
+        throw internalError(
+          `Database Engine route "app" targets "${routeProvider}" but only MongoDB is supported.`
+        );
+      }
+      if (!isPrimaryProviderConfigured(routeProvider)) {
+        throw internalError(
+          `Database Engine route "app" targets "${routeProvider}" but it is not configured in environment variables.`
+        );
+      }
+      result = routeProvider;
+    } else if (policy.requireExplicitServiceRouting) {
+      throw internalError(
+        'Database Engine requires explicit service routing for "app". Configure it in Workflow Database -> Database Engine.'
+      );
+    } else {
+      const setting = await getAppDbProviderSetting();
+      if (setting === 'mongodb' || process.env['MONGODB_URI']) {
+        if (!process.env['MONGODB_URI']) {
+          throw internalError('App provider is set to MongoDB but MONGODB_URI is missing.');
+        }
+        result = 'mongodb';
+      } else {
+        throw internalError('No database provider is configured. Set MONGODB_URI.');
+      }
+    }
+
+    return result;
+  });
+};
+
+export const invalidateAppDbProviderCache = (): void => {
+  providerSettingCache.invalidate();
+  resolvedProviderCache.invalidate();
+};

@@ -8,10 +8,10 @@ import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-cont
 import type { ChatMessageDto as ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
-  createDeleteMutationV2,
-  createListQueryV2,
-  createUpdateMutationV2,
-  createMutationV2,
+  useDeleteMutationV2,
+  useListQueryV2,
+  useUpdateMutationV2,
+  useMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 
@@ -38,7 +38,7 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
   { collectionId: string; queryText: string; topK?: number; minScore?: number }
   > {
   const mutationKey = agentTeachingKeys.collections();
-  return createMutationV2<
+  return useMutationV2<
     AgentTeachingChatSource[],
     { collectionId: string; queryText: string; topK?: number; minScore?: number }
   >({
@@ -75,7 +75,7 @@ export function useTeachingChatMutation(): MutationResult<
   { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   > {
   const mutationKey = agentTeachingKeys.agents();
-  return createMutationV2<
+  return useMutationV2<
     AgentTeachingChatResponse,
     { agentId: string; messages: SimpleChatMessage[]; contextRegistry?: ContextRegistryConsumerEnvelope | null }
   >({
@@ -104,7 +104,7 @@ export function useTeachingAgents(options?: {
   enabled?: boolean;
 }): ListQuery<AgentTeachingAgentRecord> {
   const queryKey = agentTeachingKeys.agents();
-  return createListQueryV2<AgentTeachingAgentRecord>({
+  return useListQueryV2<AgentTeachingAgentRecord>({
     queryKey,
     queryFn: getTeachingAgents,
     enabled: options?.enabled ?? true,
@@ -121,7 +121,7 @@ export function useTeachingAgents(options?: {
 
 export function useTeachingCollections(): ListQuery<AgentTeachingEmbeddingCollectionRecord> {
   const queryKey = agentTeachingKeys.collections();
-  return createListQueryV2<AgentTeachingEmbeddingCollectionRecord>({
+  return useListQueryV2<AgentTeachingEmbeddingCollectionRecord>({
     queryKey,
     queryFn: getEmbeddingCollections,
     meta: {
@@ -140,7 +140,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
   Partial<AgentTeachingAgentRecord> & { name: string }
   > {
   const mutationKey = agentTeachingKeys.agents();
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     AgentTeachingAgentRecord,
     Partial<AgentTeachingAgentRecord> & { name: string }
   >({
@@ -160,7 +160,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
 
 export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: string }> {
   const mutationKey = agentTeachingKeys.agents();
-  return createDeleteMutationV2<void, { id: string }>({
+  return useDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteTeachingAgent(id),
     mutationKey,
     meta: {
@@ -180,7 +180,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
   > {
   const mutationKey = agentTeachingKeys.collections();
-  return createUpdateMutationV2<
+  return useUpdateMutationV2<
     AgentTeachingEmbeddingCollectionRecord,
     Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
   >({
@@ -200,7 +200,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
 
 export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { id: string }> {
   const mutationKey = agentTeachingKeys.collections();
-  return createDeleteMutationV2<void, { id: string }>({
+  return useDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteEmbeddingCollection(id),
     mutationKey,
     meta: {

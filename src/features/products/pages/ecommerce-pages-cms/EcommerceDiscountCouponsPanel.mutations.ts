@@ -2,7 +2,7 @@
 
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import {
   buildCouponPayload,
@@ -44,12 +44,12 @@ const deleteDiscountCoupon = async ({ code }: DeleteCouponVariables): Promise<vo
 };
 
 export const useLoadDiscountCouponsMutation = (): MutationResult<CouponsResponse, void> =>
-  createMutationV2<CouponsResponse, void>({
+  useMutationV2<CouponsResponse, void>({
     mutationKey: ['products', 'ecommerce-pages', 'discount-coupons', 'load'],
     mutationFn: loadDiscountCoupons,
     meta: {
       source: 'products.ecommercePages.discountCoupons.load',
-      operation: 'detail',
+      operation: 'action',
       resource: 'products.ecommerce.discount-coupons',
       domain: 'products',
       description: 'Loads ecommerce discount coupons.',
@@ -62,7 +62,7 @@ export const useSaveDiscountCouponMutation = (): MutationResult<
   CouponWriteResponse,
   SaveCouponVariables
 > =>
-  createMutationV2<CouponWriteResponse, SaveCouponVariables>({
+  useMutationV2<CouponWriteResponse, SaveCouponVariables>({
     mutationKey: ['products', 'ecommerce-pages', 'discount-coupons', 'save'],
     mutationFn: saveDiscountCoupon,
     meta: {
@@ -80,7 +80,7 @@ export const useDeleteDiscountCouponMutation = (): MutationResult<
   void,
   DeleteCouponVariables
 > =>
-  createMutationV2<void, DeleteCouponVariables>({
+  useMutationV2<void, DeleteCouponVariables>({
     mutationKey: ['products', 'ecommerce-pages', 'discount-coupons', 'delete'],
     mutationFn: deleteDiscountCoupon,
     meta: {

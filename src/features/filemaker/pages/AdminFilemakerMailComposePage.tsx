@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState, startTransition } from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
@@ -293,7 +293,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   }, [accountIdFromRoute, composeDraftResetKey]);
 
   const accountsQueryKey = ['filemaker', 'mail', 'accounts'] as const;
-  const accountsQuery = createSingleQueryV2<AccountsResponse, AccountsResponse, typeof accountsQueryKey>({
+  const accountsQuery = useSingleQueryV2<AccountsResponse, AccountsResponse, typeof accountsQueryKey>({
     queryKey: accountsQueryKey,
     queryFn: async ({ signal }) =>
       fetchJson<AccountsResponse>('/api/filemaker/mail/accounts', { signal }),
@@ -319,7 +319,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   }, [accountsQuery.error, toast]);
 
   const forwardDraftQueryKey = ['filemaker', 'mail', 'forward-draft', forwardThreadId ?? ''] as const;
-  const forwardDraftQuery = createSingleQueryV2<
+  const forwardDraftQuery = useSingleQueryV2<
     ForwardDraftResponse,
     ForwardDraftResponse,
     typeof forwardDraftQueryKey
@@ -360,7 +360,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     });
   }, [forwardDraftQuery.error, toast]);
   const isLoading = accountsQuery.isFetching;
-  const sendMailMutation = createMutationV2<SendMailResponse, SendMailVariables>({
+  const sendMailMutation = useMutationV2<SendMailResponse, SendMailVariables>({
     mutationKey: ['filemaker', 'mail', 'send-compose'],
     mutationFn: async (variables) =>
       fetchJson<SendMailResponse>('/api/filemaker/mail/send', {

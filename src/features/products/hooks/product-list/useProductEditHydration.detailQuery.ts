@@ -1,4 +1,4 @@
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
@@ -11,7 +11,7 @@ export const useEditingProductDetailQuery = (
   editingProduct: ProductWithImages | null
 ): SingleQuery<ProductWithImages> => {
   const editingProductId = editingProduct?.id ?? 'none';
-  return createSingleQueryV2<ProductWithImages>({
+  return useSingleQueryV2<ProductWithImages>({
     id: editingProduct?.id,
     queryKey: (id) =>
       id !== 'none'

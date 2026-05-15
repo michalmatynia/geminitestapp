@@ -1,7 +1,7 @@
 import type { AiInsightNotificationsResponse as NotificationsResponse } from '@/shared/contracts/ai-insights';
 import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createDeleteMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
@@ -9,7 +9,7 @@ export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 export const useAiInsightsNotifications = (
   params?: { enabled?: boolean } | void
 ): SingleQuery<NotificationsResponse> =>
-  createSingleQueryV2<NotificationsResponse>({
+  useSingleQueryV2<NotificationsResponse>({
     id: 'ai-insights-notifications',
     queryKey: aiNotificationsQueryKey,
     queryFn: () =>
@@ -26,7 +26,7 @@ export const useAiInsightsNotifications = (
   });
 
 export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
-  return createDeleteMutationV2<void, void>({
+  return useDeleteMutationV2<void, void>({
     mutationFn: () => api.delete<void>('/api/ai-insights/notifications'),
     mutationKey: aiNotificationsQueryKey,
     meta: {

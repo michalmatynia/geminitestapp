@@ -1,6 +1,6 @@
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { SaveMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
-import { createDeleteMutationV2, createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useMutationV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateCatalogScopedData, invalidateProductsAndCounts } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
@@ -19,7 +19,7 @@ type SaveParameterPayload = {
 
 export function useSaveParameterMutation(): SaveMutation<ProductParameter, SaveParameterPayload> {
   const mutationKey = productSettingsKeys.all;
-  return createMutationV2({
+  return useMutationV2({
     mutationFn: ({ id, data }: SaveParameterPayload) => {
       if (hasPersistedId(id)) return api.updateParameter(id, data);
       return api.createParameter(data);
@@ -46,7 +46,7 @@ export function useDeleteParameterMutation(): UpdateMutation<
   { id: string; catalogId: string | null }
 > {
   const queryKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
     mutationKey: queryKey,
     meta: {
@@ -72,7 +72,7 @@ export function useDeleteParametersMutation(): UpdateMutation<
   DeleteParametersPayload
 > {
   const mutationKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
+  return useDeleteMutationV2({
     mutationFn: ({ parameterIds }: DeleteParametersPayload) => api.deleteParameters(parameterIds),
     mutationKey,
     meta: {

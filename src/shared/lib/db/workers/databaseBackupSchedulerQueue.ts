@@ -1,3 +1,23 @@
+/**
+ * Database Backup Scheduler Queue
+ * 
+ * Manages periodic database backup tasks using BullMQ.
+ * 
+ * Architecture:
+ * - Managed Queue: Uses `createManagedQueue` to leverage standardized queuing,
+ *   observability, and fault-tolerance features.
+ * - Scheduler Lifecycle:
+ *   - Startup Tick: Executes an immediate backup pass upon worker start.
+ *   - Periodic Tick: Manages a repeating job based on `DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS` 
+ *     that triggers the backup service.
+ * - Dynamic Configuration: Interrogates `DatabaseEngineBackupSchedule` to determine
+ *   whether the repeat scheduler should be enabled or disabled, ensuring that backup 
+ *   schedules can be changed at runtime via database settings.
+ * - Synchronization: Implements a global state guard (`queueState`) to ensure
+ *   that the worker and scheduler tasks are initialized exactly once in 
+ *   Next.js hot-reloading environments.
+ */
+
 import 'server-only';
 
 import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
@@ -85,10 +105,10 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       );
     }
   } catch (error) {
-    void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
       service: 'database-backup-scheduler-queue',
       action: 'unregisterRepeatScheduler',
+      message: 'Failed to unregister repeatable backup job',
     });
   } finally {
     queueState.schedulerRegistered = false;
@@ -119,12 +139,12 @@ const syncRepeatSchedulerRegistration = (): void => {
       );
       queueState.schedulerRegistered = true;
     } catch (error) {
-      void ErrorSystem.captureException(error);
-      queueState.schedulerRegistered = false;
       void ErrorSystem.captureException(error, {
         service: 'database-backup-scheduler-queue',
         action: 'registerScheduler',
+        message: 'Failed to register repeatable backup job',
       });
+      queueState.schedulerRegistered = false;
     } finally {
       queueState.schedulerSyncInFlight = false;
     }
@@ -153,6 +173,7 @@ export const startDatabaseBackupSchedulerQueue = (): void => {
         void ErrorSystem.captureException(error, {
           service: 'database-backup-scheduler-queue',
           action: 'enqueueStartupTick',
+          message: 'Failed to enqueue initial backup tick job',
         });
       });
   }

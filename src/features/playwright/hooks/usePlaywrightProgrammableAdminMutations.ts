@@ -1,7 +1,7 @@
 'use client';
 
 import type { MutationResult, VoidMutation } from '@/shared/contracts/ui/queries';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { api } from '@/shared/lib/api-client';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
 
@@ -40,7 +40,7 @@ export function usePromotePlaywrightBrowserOwnership(): MutationResult<
 > {
   const mutationKey = playwrightKeys.programmableConnections();
 
-  return createMutationV2<
+  return useMutationV2<
     PromotePlaywrightBrowserOwnershipResponse,
     PromotePlaywrightBrowserOwnershipVariables
   >({
@@ -68,7 +68,7 @@ export function useCleanupPlaywrightBrowserPersistence(): VoidMutation<
 > {
   const mutationKey = playwrightKeys.programmableConnections();
 
-  return createMutationV2<void, CleanupPlaywrightBrowserPersistenceVariables>({
+  return useMutationV2<void, CleanupPlaywrightBrowserPersistenceVariables>({
     mutationFn: ({ connectionId }) =>
       api.post(
         `/api/playwright/programmable/connections/${connectionId}/cleanup-browser-persistence`,
@@ -94,7 +94,7 @@ export function useCleanupAllPlaywrightBrowserPersistence(): MutationResult<
 > {
   const mutationKey = playwrightKeys.programmableConnections();
 
-  return createMutationV2<CleanupAllPlaywrightBrowserPersistenceResponse, void>({
+  return useMutationV2<CleanupAllPlaywrightBrowserPersistenceResponse, void>({
     mutationFn: () =>
       api.post<CleanupAllPlaywrightBrowserPersistenceResponse>(
         '/api/playwright/programmable/connections/cleanup-browser-persistence',
@@ -120,7 +120,7 @@ export function useTestPlaywrightProgrammableConnection(): MutationResult<
 > {
   const mutationKey = playwrightKeys.programmableConnections();
 
-  return createMutationV2<Record<string, unknown>, TestPlaywrightProgrammableConnectionVariables>({
+  return useMutationV2<Record<string, unknown>, TestPlaywrightProgrammableConnectionVariables>({
     mutationFn: ({ connectionId, executionMode = 'dry_run', scriptType }) =>
       api.post<Record<string, unknown>>('/api/playwright/programmable/test', {
         connectionId,

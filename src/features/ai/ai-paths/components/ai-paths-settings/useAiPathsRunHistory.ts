@@ -18,7 +18,7 @@ import {
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { Toast } from '@/shared/contracts/ui/base';
 
@@ -345,7 +345,7 @@ export function useAiPathsRunHistory({
     runHistoryActions.setRunHistoryNodeId(firstHistoryOption.id);
   }, [runDetail?.run?.id, runDetailHistoryOptions, runHistoryActions, runHistoryNodeId]);
 
-  const runsQuery = createListQueryV2<
+  const runsQuery = useListQueryV2<
     { ok: boolean; data: { runs: AiPathRunRecord[] } },
     { ok: boolean; data: { runs: AiPathRunRecord[] } }
   >({

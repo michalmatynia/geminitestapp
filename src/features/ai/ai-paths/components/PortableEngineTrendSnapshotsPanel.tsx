@@ -3,7 +3,7 @@
 import { RefreshCcwIcon } from 'lucide-react';
 import { Fragment, useMemo } from 'react';
 
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Badge, Button, Card, Skeleton } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -194,7 +194,7 @@ const fetchTrendSnapshots = async (): Promise<TrendSnapshotsPayload> => {
 };
 
 export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
-  const snapshotsQuery = createSingleQueryV2<TrendSnapshotsPayload>({
+  const snapshotsQuery = useSingleQueryV2<TrendSnapshotsPayload>({
     queryKey: TREND_SNAPSHOTS_QUERY_KEY,
     queryFn: fetchTrendSnapshots,
     staleTime: 30_000,

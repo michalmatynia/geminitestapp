@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type BackgroundState = {
@@ -68,7 +68,7 @@ const saveBackground = async (
 };
 
 const useBackgroundQuery = (): SingleQuery<BackgroundState> =>
-  createSingleQueryV2({
+  useSingleQueryV2({
     id: 'ecommerce-pages-background',
     queryKey: BACKGROUND_QUERY_KEY,
     queryFn: fetchBackground,
@@ -88,7 +88,7 @@ const useSaveBackgroundMutation = ({
   setError,
   toast,
 }: SaveBackgroundMutationOptions): MutationResult<BackgroundState, boolean> =>
-  createMutationV2<BackgroundState, boolean>({
+  useMutationV2<BackgroundState, boolean>({
     mutationKey: ['products', 'ecommerce-pages-cms', 'background', 'save'],
     mutationFn: saveBackground,
     onSuccess: (nextBackground: BackgroundState): void => {

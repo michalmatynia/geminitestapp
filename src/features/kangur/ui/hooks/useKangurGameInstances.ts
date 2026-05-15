@@ -13,7 +13,7 @@ import {
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type KangurGameInstancesQueryOptions = {
@@ -75,7 +75,7 @@ const fetchGameInstances = async (
 const createKangurGameInstancesQuery = (
   options?: KangurGameInstancesQueryOptions
 ): ListQuery<KangurGameInstance, KangurGameInstance[]> =>
-  createListQueryV2<KangurGameInstance, KangurGameInstance[]>({
+  useListQueryV2<KangurGameInstance, KangurGameInstance[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.gameInstances(),
       resolveGameInstancesQueryFilters(options),
@@ -113,7 +113,7 @@ export const useReplaceKangurGameInstances = (): MutationResult<
   KangurGameInstance[],
   KangurGameInstancesReplacePayload
 > =>
-  createUpdateMutationV2<KangurGameInstance[], KangurGameInstancesReplacePayload>({
+  useUpdateMutationV2<KangurGameInstance[], KangurGameInstancesReplacePayload>({
     mutationKey: [...QUERY_KEYS.kangur.gameInstances(), 'update'],
     mutationFn: async (
       input: KangurGameInstancesReplacePayload

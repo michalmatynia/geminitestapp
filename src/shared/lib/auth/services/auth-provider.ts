@@ -17,7 +17,6 @@ import { internalError } from '@/shared/errors/app-error';
 import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
-  getDatabaseEnginePolicy,
   getDatabaseEngineServiceProvider,
   isPrimaryProviderConfigured,
 } from '@/shared/lib/db/database-engine-policy';
@@ -74,49 +73,50 @@ const ensureAvailableAuthProvider = (provider: AuthDbProvider): AuthDbProvider =
   throw internalError(`Auth provider "${provider}" is not configured in environment variables.`);
 };
 
-// Auth provider must be deterministic and never fail.
+/**
+ * getAuthDataProvider: Determines the authoritative database provider for authentication data.
+ * It follows a prioritized resolution order:
+ * 1. Environment variable (AUTH_DB_PROVIDER)
+ * 2. MongoDB settings collection
+ * 3. Database Engine policy/routing
+ * 4. System-wide default application provider
+ * 
+ * @returns The resolved AuthDbProvider.
+ * @throws {InternalError} If the resolved provider is not properly configured or routing is invalid.
+ */
 export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
+  const appProvider = await getAppDbProvider();
+
   const envProvider = normalizeProvider(process.env['AUTH_DB_PROVIDER']);
   if (envProvider) {
+    warnAuthProviderDrift(appProvider, envProvider, 'env');
     return ensureAvailableAuthProvider(envProvider);
   }
-  const mongoSetting = await readMongoAuthProvider();
-  if (mongoSetting) {
-    return ensureAvailableAuthProvider(mongoSetting);
+
+  const mongoProvider = await readMongoAuthProvider();
+  if (mongoProvider) {
+    warnAuthProviderDrift(appProvider, mongoProvider, 'mongo-setting');
+    return ensureAvailableAuthProvider(mongoProvider);
   }
 
-  const policy = await getDatabaseEnginePolicy();
-  const routeProvider = await getDatabaseEngineServiceProvider('auth');
+  const routeProvider = normalizeProvider(await getDatabaseEngineServiceProvider('auth'));
   if (routeProvider) {
-    if (routeProvider === 'redis') {
-      throw internalError('Database Engine route "auth" cannot target Redis. Configure MongoDB.');
-    }
-    if (routeProvider !== 'mongodb') {
-      throw internalError(
-        `Database Engine route "auth" targets "${routeProvider}" but only MongoDB is supported.`
-      );
-    }
+    warnAuthProviderDrift(appProvider, routeProvider, 'route-map');
     return ensureAvailableAuthProvider(routeProvider);
   }
 
-  if (policy.requireExplicitServiceRouting) {
-    throw internalError(
-      'Database Engine requires explicit routing for "auth". Configure it in Workflow Database -> Database Engine.'
-    );
-  }
-
-  const appProvider = await getAppDbProvider();
-  const defaultProvider: AuthDbProvider = appProvider;
-  warnAuthProviderDrift(appProvider, defaultProvider, 'default');
-  return ensureAvailableAuthProvider(defaultProvider);
+  warnAuthProviderDrift(appProvider, appProvider, 'default');
+  return ensureAvailableAuthProvider(appProvider);
 };
 
+/**
+ * requireAuthProvider: Validates that a provider can be utilized in the current environment
+ * (e.g., checks for presence of connection strings).
+ *
+ * @param provider - The AuthDbProvider to validate.
+ * @returns The validated provider.
+ * @throws {InternalError} If the provider's connection requirements (e.g., MONGODB_URI) are missing.
+ */
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {
-  if (provider === 'mongodb' && !process.env['MONGODB_URI']) {
-    throw internalError(
-      'Auth provider is set to MongoDB but MONGODB_URI is missing. Configure Database Engine routing before continuing.'
-    );
-  }
-
-  return provider;
-};
+  return ensureAvailableAuthProvider(provider);
+}

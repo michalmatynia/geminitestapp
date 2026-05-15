@@ -1,2 +1,0 @@
-Remaining lint errors: 1 (unnecessary condition in ProductSyncSettings.tsx)
-Remaining lint errors: 1 (unnecessary condition in productSyncQueue.ts)

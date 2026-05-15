@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {
@@ -92,7 +92,7 @@ const useCampaignLaunchRunMutation = (): MutationResult<
   FilemakerEmailCampaignLaunchRunResponse,
   LaunchCampaignRunVariables
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['filemaker', 'campaigns', 'runs', 'launch'],
     mutationFn: launchCampaignRun,
     meta: {
@@ -124,7 +124,7 @@ const useCampaignTestEmailMutation = (): MutationResult<
   FilemakerEmailCampaignTestSendResponse,
   SendCampaignTestEmailVariables
 > =>
-  createMutationV2({
+  useMutationV2({
     mutationKey: ['filemaker', 'campaigns', 'test-send'],
     mutationFn: sendCampaignTestEmail,
     meta: {

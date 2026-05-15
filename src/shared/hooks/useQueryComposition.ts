@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
@@ -15,7 +15,7 @@ export function useNormalizedQuery<T extends { id: string }>(
   selectMany: (ids: string[]) => T[];
   normalized: { byId: Record<string, T>; allIds: string[] } | undefined;
 } {
-  const query = createListQueryV2<T, T[]>({
+  const query = useListQueryV2<T, T[]>({
     queryKey,
     queryFn,
     select: (data: T[]) => data, // Keep original data structure for the main query result
@@ -72,7 +72,7 @@ export function useComposedQuery<T, R>(
   transformer: (data: T) => R,
   dependencies: readonly unknown[] = []
 ): UseQueryResult<R, Error> {
-  return createListQueryV2<R, R>({
+  return useListQueryV2<R, R>({
     queryKey: [...baseQuery.queryKey, 'composed', ...dependencies],
     queryFn: async (): Promise<R> => transformer(await baseQuery.queryFn()),
     meta: {
@@ -96,7 +96,7 @@ export function useAggregatedQuery<T, R>(
   error: unknown;
 } {
   const queryResults = queries.map(({ queryKey, queryFn }) =>
-    createListQueryV2<T, T>({
+    useListQueryV2<T, T>({
       queryKey,
       queryFn,
       meta: {

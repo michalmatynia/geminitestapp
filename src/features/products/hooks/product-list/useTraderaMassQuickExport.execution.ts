@@ -6,7 +6,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { persistTraderaQuickListFeedback } from '@/features/integrations/product-integrations-adapter';
 import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { integrationSelectionQueryKeys } from '@/features/integrations/product-integrations-adapter';
@@ -204,7 +204,7 @@ export const useTraderaMassQuickExportExecutor = ({
     total: 0,
     errors: 0,
   });
-  const massExportMutation = createMutationV2<void, string[]>({
+  const massExportMutation = useMutationV2<void, string[]>({
     mutationKey: ['products', 'mass-quick-export', 'tradera'],
     mutationFn: async (productIds: string[]): Promise<void> => {
       if (productIds.length === 0) return;

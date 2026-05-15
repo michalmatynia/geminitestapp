@@ -115,8 +115,8 @@ const resolveMongoSourceOverviewModel = (
 const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): string[] => {
   const hasValue = (value: string | null): value is string =>
     value !== null && value !== '';
-  const applicationTransfers = lastSync.applicationTransfers ?? [];
-  const preSyncBackups = lastSync.preSyncBackups ?? [];
+  const applicationTransfers = lastSync.applicationTransfers;
+  const preSyncBackups = lastSync.preSyncBackups;
   const metrics = [`Synced at: ${lastSync.syncedAt}`, `Direction: ${lastSync.direction}`];
 
   if (hasValue(lastSync.archivePath)) {
@@ -156,7 +156,7 @@ export type MongoApplicationTransferSummary = {
 
 const getBackupApplication = (
   backup: DatabaseEngineMongoSyncBackup
-): DatabaseEngineManagedMongoApplication => backup.application ?? 'geminitestapp';
+): DatabaseEngineManagedMongoApplication => backup.application;
 
 const resolveTransferFromVerification = (
   application: DatabaseEngineManagedMongoApplication,
@@ -180,7 +180,7 @@ const resolveApplicationTransfer = (
   lastSync: DatabaseEngineMongoLastSync,
   application: DatabaseEngineManagedMongoApplication
 ): DatabaseEngineMongoSyncApplicationTransfer | null => {
-  const applicationTransfers = lastSync.applicationTransfers ?? [];
+  const applicationTransfers = lastSync.applicationTransfers;
   const transferFromList = applicationTransfers.find(
     (item) => item.application === application
   );
@@ -213,7 +213,7 @@ export const buildMongoApplicationTransferSummaries = (
 ): MongoApplicationTransferSummary[] =>
   MANAGED_APPLICATIONS.map(({ application, label }) => {
     const transfer = resolveApplicationTransfer(lastSync, application);
-    const backups = (lastSync.preSyncBackups ?? []).filter(
+    const backups = lastSync.preSyncBackups.filter(
       (backup) => getBackupApplication(backup) === application
     );
 

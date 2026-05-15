@@ -7,7 +7,7 @@ import { type Dispatch, type SetStateAction } from 'react';
 import { type MarketplaceBadgeEntry, type ListingBadgesPayload } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -346,7 +346,7 @@ export function useIntegrationListingBadges(
   );
   const badgeStateRef = useRef<IntegrationListingBadgeState>(EMPTY_INTEGRATION_LISTING_BADGE_STATE);
 
-  const listingsBadgeQuery = createListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
+  const listingsBadgeQuery = useListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {

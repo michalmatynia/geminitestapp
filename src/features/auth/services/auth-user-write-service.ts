@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { hash } from 'bcryptjs';
+import type { Collection, ObjectId } from 'mongodb';
 
 import type { AuthUserRecord } from '@/shared/contracts/auth';
 import { conflictError } from '@/shared/errors/app-error';
@@ -32,43 +33,53 @@ const normalizeOptionalName = (value: string | null | undefined): string | null 
 };
 
 const isMongoDuplicateKeyError = (error: unknown): boolean => {
-  const code =
-    typeof error === 'object' && error !== null && 'code' in error
-      ? (error as { code?: unknown }).code
-      : null;
-  const message =
-    error instanceof Error
-      ? error.message.toLowerCase()
-      : typeof error === 'string'
-        ? error.toLowerCase()
-        : '';
-  return code === 11000 || message.includes('e11000') || message.includes('duplicate key');
+  if (typeof error !== 'object' || error === null) return false;
+  const err = error as { code?: unknown };
+  if (err.code === 11000) return true;
+
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return message.includes('e11000') || message.includes('duplicate key');
 };
 
-const getMongoUsersCollection = async () =>
+const getMongoUsersCollection = async (): Promise<Collection<MongoUserDoc>> =>
   (await getMongoDb()).collection<MongoUserDoc>(AUTH_USERS_COLLECTION);
 
 let ensureMongoAuthUserIndexesPromise: Promise<void> | null = null;
 
+const createIndexes = async (): Promise<void> => {
+  const collection = await getMongoUsersCollection();
+  await collection.createIndex(
+    { email: 1 },
+    {
+      name: AUTH_USERS_EMAIL_UNIQUE_INDEX,
+      unique: true,
+      partialFilterExpression: { email: { $type: 'string' } },
+    }
+  );
+};
+
 const ensureMongoAuthUserIndexes = async (): Promise<void> => {
-  if (!ensureMongoAuthUserIndexesPromise) {
-    ensureMongoAuthUserIndexesPromise = (async () => {
-      const collection = await getMongoUsersCollection();
-      await collection.createIndex(
-        { email: 1 },
-        {
-          name: AUTH_USERS_EMAIL_UNIQUE_INDEX,
-          unique: true,
-          partialFilterExpression: { email: { $type: 'string' } },
-        }
-      );
-    })().catch((error) => {
-      ensureMongoAuthUserIndexesPromise = null;
-      throw error;
-    });
+  if (ensureMongoAuthUserIndexesPromise !== null) {
+    return ensureMongoAuthUserIndexesPromise;
   }
 
-  return ensureMongoAuthUserIndexesPromise;
+  const promise = (async () => {
+    try {
+      await createIndexes();
+    } catch (error) {
+      ensureMongoAuthUserIndexesPromise = null;
+      throw error;
+    }
+  })();
+
+  ensureMongoAuthUserIndexesPromise = promise;
+  return promise;
+};
+
+const checkDbConfig = (mongoUri: string | null | undefined, context: string): void => {
+  if (mongoUri === null || mongoUri === undefined || mongoUri === '') {
+    throw new Error(`Database Configuration Error: MONGODB_URI is required ${context}.`);
+  }
 };
 
 export const createAuthUserWithEmail = async (input: {
@@ -86,9 +97,7 @@ export const createAuthUserWithEmail = async (input: {
   const duplicateErrorMessage = input.duplicateErrorMessage;
   void provider;
 
-  if (!process.env['MONGODB_URI']) {
-    throw new Error('MongoDB is not configured.');
-  }
+  checkDbConfig(process.env['MONGODB_URI'], 'for creating authentication users');
 
   const now = new Date();
   const collection = await getMongoUsersCollection();
@@ -114,9 +123,9 @@ export const createAuthUserWithEmail = async (input: {
     };
   } catch (error) {
     if (isMongoDuplicateKeyError(error)) {
-      throw conflictError(duplicateErrorMessage ?? 'User already exists.', { email });
+      throw conflictError(duplicateErrorMessage ?? `User with email '${email}' already exists.`, { email });
     }
-    throw error;
+    throw new Error(`Failed to create authentication user for email '${email}': ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -145,22 +154,26 @@ export const ensureAuthUserWithEmail = async (input: {
   };
 };
 
-export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUserRecord | null> => {
-  requireAuthProvider(await getAuthDataProvider());
-  const verifiedAt = new Date();
-
-  if (!process.env['MONGODB_URI']) {
-    return null;
-  }
-
-  const mongo = await getMongoDb();
+const getUserIdOrThrow = async (userId: string): Promise<ObjectId> => {
   const { ObjectId } = await import('mongodb');
   if (!ObjectId.isValid(userId)) {
-    return null;
+    throw new Error(`Invalid User Identifier: The provided user ID '${userId}' is not a valid MongoDB ObjectId.`);
   }
+  return new ObjectId(userId);
+};
+
+export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUserRecord | null> => {
+  const provider = await getAuthDataProvider();
+  requireAuthProvider(provider);
+  const verifiedAt = new Date();
+
+  checkDbConfig(process.env['MONGODB_URI'], 'to mark user email as verified');
+
+  const mongo = await getMongoDb();
+  const id = await getUserIdOrThrow(userId);
 
   await mongo.collection<MongoUserDoc>('users').updateOne(
-    { _id: new ObjectId(userId) },
+    { _id: id },
     {
       $set: {
         emailVerified: verifiedAt,
@@ -169,28 +182,25 @@ export const markAuthUserEmailVerified = async (userId: string): Promise<AuthUse
     }
   );
 
-  return findAuthUserById(userId);
+  const user = await findAuthUserById(userId);
+  return user;
 };
 
 export const setAuthUserPassword = async (
   userId: string,
   password: string
 ): Promise<AuthUserRecord | null> => {
-  requireAuthProvider(await getAuthDataProvider());
+  const provider = await getAuthDataProvider();
+  requireAuthProvider(provider);
   const passwordHash = await hash(password, 12);
 
-  if (!process.env['MONGODB_URI']) {
-    return null;
-  }
+  checkDbConfig(process.env['MONGODB_URI'], 'to set a user password');
 
   const mongo = await getMongoDb();
-  const { ObjectId } = await import('mongodb');
-  if (!ObjectId.isValid(userId)) {
-    return null;
-  }
+  const id = await getUserIdOrThrow(userId);
 
   await mongo.collection<MongoUserDoc>('users').updateOne(
-    { _id: new ObjectId(userId) },
+    { _id: id },
     {
       $set: {
         passwordHash,
@@ -199,5 +209,6 @@ export const setAuthUserPassword = async (
     }
   );
 
-  return findAuthUserById(userId);
+  const user = await findAuthUserById(userId);
+  return user;
 };

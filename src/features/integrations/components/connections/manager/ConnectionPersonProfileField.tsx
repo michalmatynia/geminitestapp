@@ -8,7 +8,7 @@ import {
   SelectSimple,
   type SelectSimpleOption,
 } from '@/shared/ui/forms-and-actions.public';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const NO_PERSON_VALUE = '__no_person__';
 
@@ -130,7 +130,7 @@ const usePersonOptions = (query: string): {
   status: 'idle' | 'loading' | 'error';
 } => {
   const normalizedQuery = query.trim();
-  const personsQuery = createSingleQueryV2<SelectSimpleOption[], SelectSimpleOption[], PersonOptionsQueryKey>({
+  const personsQuery = useSingleQueryV2<SelectSimpleOption[], SelectSimpleOption[], PersonOptionsQueryKey>({
     queryKey: [
       'integrations',
       'connection-person-profile-field',

@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -66,7 +66,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
   const updateTitleMutation = useUpdateSessionTitle();
   const deleteSessionMutation = useDeleteChatbotSession();
   const deleteSessionsMutation = useDeleteChatbotSessions();
-  const selectAllMatchingMutation = createMutationV2({
+  const selectAllMatchingMutation = useMutationV2({
     mutationKey: QUERY_KEYS.ai.chatbot.mutation('sessions.select-all-matching'),
     mutationFn: chatbotApi.fetchChatbotSessionIds,
     meta: {

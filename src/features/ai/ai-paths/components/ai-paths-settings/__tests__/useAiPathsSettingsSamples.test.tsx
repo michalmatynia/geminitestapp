@@ -14,28 +14,6 @@ const mockState = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ id: 'query-client' }),
-  useMutation: (config: {
-    mutationKey?: unknown;
-    mutationFn: (variables: unknown) => Promise<unknown>;
-    onSuccess?: (data: unknown, variables: unknown) => void;
-    onError?: (error: Error, variables: unknown) => void;
-  }) => {
-    const serializedKey = JSON.stringify(config.mutationKey ?? '');
-    const isParser = serializedKey.includes('fetch-parser-sample');
-    return {
-      isPending: isParser ? mockState.parserPending : mockState.updaterPending,
-      mutateAsync: async (variables: unknown) => {
-        try {
-          const result = await config.mutationFn(variables);
-          config.onSuccess?.(result, variables);
-          return result;
-        } catch (error) {
-          config.onError?.(error as Error, variables);
-          throw error;
-        }
-      },
-    };
-  },
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
@@ -60,20 +38,29 @@ vi.mock('@/shared/lib/ai-paths/api', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createMutationOptionsV2: (config: {
+  useMutationV2: (config: {
     mutationKey?: unknown;
-    mutationFn: (variables: unknown, context: { queryClient: unknown }) => Promise<unknown>;
+    mutationFn: (variables: unknown) => Promise<unknown>;
     meta?: unknown;
     onSuccess?: (data: unknown, variables: unknown) => void;
     onError?: (error: Error, variables: unknown) => void;
-  }) => ({
-    mutationKey: config.mutationKey,
-    meta: config.meta,
-    mutationFn: async (variables: unknown) =>
-      await config.mutationFn(variables, { queryClient: { id: 'query-client' } }),
-    onSuccess: config.onSuccess,
-    onError: config.onError,
-  }),
+  }) => {
+    const serializedKey = JSON.stringify(config.mutationKey ?? '');
+    const isParser = serializedKey.includes('fetch-parser-sample');
+    return {
+      isPending: isParser ? mockState.parserPending : mockState.updaterPending,
+      mutateAsync: async (variables: unknown) => {
+        try {
+          const result = await config.mutationFn(variables);
+          config.onSuccess?.(result, variables);
+          return result;
+        } catch (error) {
+          config.onError?.(error as Error, variables);
+          throw error;
+        }
+      },
+    };
+  },
   fetchQueryV2: (_queryClient: unknown, options: Record<string, unknown>) => {
     mockState.fetchQueryCalls.push(options);
     return async () => {

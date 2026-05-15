@@ -1,6 +1,6 @@
 import { fetchAgentPersonaMemory, type FetchAgentPersonaMemoryParams } from '@/features/ai/agentcreator/api/persona-memory';
 import type { PersonaMemorySearchResponse } from '@/shared/contracts/persona-memory';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -9,7 +9,7 @@ export function useAgentPersonaMemory(
   personaId: string,
   params: FetchAgentPersonaMemoryParams
 ): UseQueryResult<PersonaMemorySearchResponse, Error> {
-  return createListQueryV2<PersonaMemorySearchResponse, PersonaMemorySearchResponse>({
+  return useListQueryV2<PersonaMemorySearchResponse, PersonaMemorySearchResponse>({
     queryKey: QUERY_KEYS.agentPersonas.memory(personaId, params),
     queryFn: () => fetchAgentPersonaMemory(personaId, params),
     enabled: Boolean(personaId),

@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const createCreateMutationV2Mock = vi.hoisted(() => vi.fn());
-const createDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
+const useCreateMutationV2Mock = vi.hoisted(() => vi.fn());
+const useDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiDeleteMock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 const queryClientMock = vi.hoisted(() => ({
@@ -29,8 +29,8 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
   return {
     ...actual,
-    createCreateMutationV2: createCreateMutationV2Mock,
-    createDeleteMutationV2: createDeleteMutationV2Mock,
+    useCreateMutationV2: useCreateMutationV2Mock,
+    useDeleteMutationV2: useDeleteMutationV2Mock,
   };
 });
 
@@ -53,8 +53,8 @@ import {
 describe('useProductListingMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createCreateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
-    createDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
+    useCreateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    useDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
     apiDeleteMock.mockResolvedValue(undefined);
     apiPostMock.mockResolvedValue({
       queued: true,
@@ -130,7 +130,7 @@ describe('useProductListingMutations', () => {
     );
 
     const { result } = renderHook(() => useDeleteFromBaseMutation('product-1'));
-    const config = createDeleteMutationV2Mock.mock.calls[0]?.[0];
+    const config = useDeleteMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'delete-mutation' });
 
@@ -177,7 +177,7 @@ describe('useProductListingMutations', () => {
     const productDetailEditQueryKey = QUERY_KEYS.products.detailEdit('product-1');
 
     const { result } = renderHook(() => usePurgeListingMutation('product-1'));
-    const config = createDeleteMutationV2Mock.mock.calls[0]?.[0];
+    const config = useDeleteMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'delete-mutation' });
 
@@ -201,7 +201,7 @@ describe('useProductListingMutations', () => {
 
   it('posts Playwright relist browser-mode overrides to the relist endpoint', async () => {
     const { result } = renderHook(() => useRelistTraderaMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'mutation' });
     expect(config.mutationKey).toEqual(QUERY_KEYS.integrations.listings('product-1'));
@@ -254,7 +254,7 @@ describe('useProductListingMutations', () => {
     );
 
     renderHook(() => useRelistTraderaMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await config.onMutate({ listingId: 'listing-1', browserMode: 'headed' });
 
@@ -343,7 +343,7 @@ describe('useProductListingMutations', () => {
     });
 
     renderHook(() => useRelistTraderaMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await config.onMutate({ listingId: 'listing-1', browserMode: 'headed' });
 
@@ -432,7 +432,7 @@ describe('useProductListingMutations', () => {
     });
 
     renderHook(() => useRelistTraderaMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await expect(
       config.mutationFn({
@@ -540,7 +540,7 @@ describe('useProductListingMutations', () => {
     });
 
     renderHook(() => useSyncTraderaMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await expect(
       config.mutationFn({
@@ -656,7 +656,7 @@ describe('useProductListingMutations', () => {
     });
 
     renderHook(() => useCheckTraderaStatusMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await config.onMutate({ listingId: 'listing-1' });
 
@@ -742,7 +742,7 @@ describe('useProductListingMutations', () => {
     });
 
     renderHook(() => useCheckTraderaStatusMutation('product-1'));
-    const config = createCreateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useCreateMutationV2Mock.mock.calls[0]?.[0];
 
     await expect(
       config.mutationFn({

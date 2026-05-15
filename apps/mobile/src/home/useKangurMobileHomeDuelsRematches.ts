@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
 import { useMemo, useState } from 'react';
 
@@ -13,6 +13,7 @@ import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { resolveMobileDuelErrorMessage } from '../duels/mobileDuelErrorMessages';
 import type { DuelApiClient } from '../duels/useKangurMobileDuelsLobbyQueries';
+import { useKangurMobileQueryV2 } from '../query/kangurMobileQueryFactories';
 
 const MOBILE_HOME_DUELS_REMATCH_LIMIT = 4;
 
@@ -68,11 +69,19 @@ export const useKangurMobileHomeDuelsRematches = ({
   const isQueryEnabled = enabled && isAuthenticated;
   const rematchesQueryKey = ['kangur-mobile', 'home', 'duels-rematches', apiBaseUrl, learnerIdentity] as const;
 
-  const rematchesQuery = useQuery({
+  const rematchesQuery = useKangurMobileQueryV2({
     enabled: isQueryEnabled,
     queryKey: rematchesQueryKey,
     queryFn: async () => apiClient.listDuelOpponents({ limit: MOBILE_HOME_DUELS_REMATCH_LIMIT }, { cache: 'no-store' }),
     staleTime: 30_000,
+    meta: {
+      source: 'kangur.mobile.home.duels.rematches',
+      operation: 'list',
+      resource: 'kangur.mobile.home.duels.rematches',
+      queryKey: rematchesQueryKey,
+      description: 'Loads Kangur mobile home duel rematch opponents.',
+      tags: ['kangur-mobile', 'home', 'duels', 'rematches'],
+    },
   });
 
   const opponents = useMemo(

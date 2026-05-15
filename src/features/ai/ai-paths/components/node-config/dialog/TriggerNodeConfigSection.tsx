@@ -7,7 +7,7 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
 import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { Card } from '@/shared/ui/primitives.public';
@@ -18,7 +18,7 @@ const triggerButtonsQueryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
 
 // Query for trigger buttons (always called)
 const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => {
-  return createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
+  return useListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: triggerButtonsQueryKey,
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list({ entityType: 'custom' });

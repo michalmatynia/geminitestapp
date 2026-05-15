@@ -5,13 +5,13 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const createListQueryV2Mock = vi.hoisted(() => vi.fn());
-const createUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
+const useListQueryV2Mock = vi.hoisted(() => vi.fn());
+const useUpdateMutationV2Mock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
-  createListQueryV2: createListQueryV2Mock,
-  createUpdateMutationV2: createUpdateMutationV2Mock,
+  useListQueryV2: useListQueryV2Mock,
+  useUpdateMutationV2: useUpdateMutationV2Mock,
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -28,14 +28,14 @@ import {
 describe('useSocialPublishingPosts mutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
-    createUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
+    useListQueryV2Mock.mockReturnValue({ kind: 'list-query' });
+    useUpdateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     apiPostMock.mockResolvedValue({ id: 'post-1', status: 'published' });
   });
 
   it('uses an extended timeout for publish requests', async () => {
     const { result } = renderHook(() => usePublishSocialPublishingPost());
-    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useUpdateMutationV2Mock.mock.calls[0]?.[0];
 
     expect(result.current).toEqual({ kind: 'mutation' });
 
@@ -54,7 +54,7 @@ describe('useSocialPublishingPosts mutations', () => {
 
   it('uses a longer timeout for unpublish requests', async () => {
     renderHook(() => useUnpublishSocialPublishingPost());
-    const config = createUpdateMutationV2Mock.mock.calls[0]?.[0];
+    const config = useUpdateMutationV2Mock.mock.calls[0]?.[0];
 
     await config.mutationFn({
       id: 'post-1',

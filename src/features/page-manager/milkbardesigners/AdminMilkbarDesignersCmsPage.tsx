@@ -265,23 +265,21 @@ type PushToCloudOutcome = {
   error?: string;
 };
 
-type PushQueueHealth = {
+type PushJobStatus = {
   ok: boolean;
-  health: {
-    mode: 'queue' | 'inline' | 'no-redis';
-    redisAvailable: boolean;
-    workerState: string;
-    activeCount: number;
-    waitingCount: number;
-    failedCount: number;
-  };
+  jobStatus: {
+    state: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' | 'unknown';
+    progress: { step: number; total: number; phase: string; message: string } | null;
+    failedReason?: string;
+    result?: { projectCount: number; serviceCount: number; updatedAt: string };
+  } | null;
 };
 
 const triggerPushToCloud = async (): Promise<PushToCloudOutcome> =>
   api.post<PushToCloudOutcome>(PUSH_ENDPOINT, {});
 
-const fetchPushQueueHealth = async (): Promise<PushQueueHealth> =>
-  api.get<PushQueueHealth>(PUSH_ENDPOINT);
+const fetchJobStatus = async (jobId: string): Promise<PushJobStatus> =>
+  api.get<PushJobStatus>(`${PUSH_ENDPOINT}?jobId=${encodeURIComponent(jobId)}`);
 
 function FieldInput({
   label,
@@ -3029,7 +3027,32 @@ function CountBox({ label, value }: { label: string; value: number }): React.JSX
   );
 }
 
-type PushPhase = 'idle' | 'pushing' | 'done' | 'error';
+type PushPhase = 'idle' | 'enqueuing' | 'active' | 'done' | 'error';
+
+type LiveProgress = {
+  step: number;
+  total: number;
+  phase: string;
+  message: string;
+};
+
+const PUSH_STEPS_TOTAL = 4;
+
+const getPushProgressPct = (progress: LiveProgress | null): number => {
+  if (!progress) return 0;
+  return Math.round((progress.step / PUSH_STEPS_TOTAL) * 100);
+};
+
+function PushProgressBar({ pct }: { pct: number }): React.JSX.Element {
+  return (
+    <div className='h-1 w-full overflow-hidden rounded-full bg-white/10'>
+      <div
+        className='h-full rounded-full bg-emerald-500 transition-all duration-500'
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
 
 function PushToCloudPanel({
   cloudConfigured,
@@ -3039,8 +3062,11 @@ function PushToCloudPanel({
   const { toast } = useToast();
   const [phase, setPhase] = useState<PushPhase>('idle');
   const [lastOutcome, setLastOutcome] = useState<PushToCloudOutcome | null>(null);
-  const [queueActive, setQueueActive] = useState(false);
+  const [progress, setProgress] = useState<LiveProgress | null>(null);
+  const [finalResult, setFinalResult] = useState<PushToCloudOutcome['result'] | null>(null);
+  const [failedReason, setFailedReason] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeJobId = useRef<string | null>(null);
 
   const stopPoll = useCallback(() => {
     if (pollRef.current !== null) {
@@ -3049,65 +3075,83 @@ function PushToCloudPanel({
     }
   }, []);
 
-  const startPoll = useCallback(() => {
+  const startJobPoll = useCallback((jobId: string) => {
     stopPoll();
+    activeJobId.current = jobId;
     pollRef.current = setInterval(() => {
-      void fetchPushQueueHealth().then((res) => {
-        const active = res.health.activeCount > 0 || res.health.waitingCount > 0;
-        setQueueActive(active);
-        if (!active) {
+      void fetchJobStatus(jobId).then((res) => {
+        const js = res.jobStatus;
+        if (!js) return;
+
+        if (js.progress) setProgress(js.progress);
+
+        if (js.state === 'completed') {
           stopPoll();
+          setProgress({ step: PUSH_STEPS_TOTAL, total: PUSH_STEPS_TOTAL, phase: 'done', message: 'Sync complete' });
+          if (js.result) setFinalResult(js.result);
           setPhase('done');
+        } else if (js.state === 'failed') {
+          stopPoll();
+          setFailedReason(js.failedReason ?? 'Job failed');
+          setPhase('error');
+          toast({ title: 'Push failed', description: js.failedReason ?? 'Job failed in queue', variant: 'destructive' });
         }
-      }).catch(() => {
-        stopPoll();
-      });
-    }, 1800);
-  }, [stopPoll]);
+      }).catch(() => { /* transient — keep polling */ });
+    }, 800);
+  }, [stopPoll, toast]);
 
   useEffect(() => () => stopPoll(), [stopPoll]);
 
   const handlePush = useCallback(async () => {
     if (!cloudConfigured) return;
-    setPhase('pushing');
+    setPhase('enqueuing');
     setLastOutcome(null);
+    setProgress(null);
+    setFinalResult(null);
+    setFailedReason(null);
     try {
       const outcome = await triggerPushToCloud();
       setLastOutcome(outcome);
       if (!outcome.ok) {
         setPhase('error');
+        setFailedReason(outcome.error ?? 'Unknown error');
         toast({ title: 'Push failed', description: outcome.error ?? 'Unknown error', variant: 'destructive' });
         return;
       }
-      if (outcome.mode === 'queue') {
-        setQueueActive(true);
-        startPoll();
+      if (outcome.mode === 'queue' && outcome.jobId) {
+        setPhase('active');
+        startJobPoll(outcome.jobId);
       } else {
+        // inline — result is immediate
+        setProgress({ step: PUSH_STEPS_TOTAL, total: PUSH_STEPS_TOTAL, phase: 'done', message: 'Sync complete (inline)' });
+        if (outcome.result) setFinalResult(outcome.result);
         setPhase('done');
-        toast({ title: 'Push complete', description: `Inline: ${outcome.result?.projectCount ?? 0} projects, ${outcome.result?.serviceCount ?? 0} services.` });
+        toast({ title: 'Push complete', description: `${outcome.result?.projectCount ?? 0} projects, ${outcome.result?.serviceCount ?? 0} services.` });
       }
     } catch (err) {
       setPhase('error');
       const msg = err instanceof Error ? err.message : String(err);
+      setFailedReason(msg);
       toast({ title: 'Push failed', description: msg, variant: 'destructive' });
     }
-  }, [cloudConfigured, startPoll, toast]);
+  }, [cloudConfigured, startJobPoll, toast]);
 
-  const isRunning = phase === 'pushing' || (phase === 'done' && queueActive);
-  const buttonLabel = isRunning ? 'Pushing…' : 'Push to Cloud';
+  const isRunning = phase === 'enqueuing' || phase === 'active';
+  const pct = getPushProgressPct(progress);
 
   return (
     <FormSection
       title='Push to Cloud'
       subtitle='Mirror the local runtime database to the cloud runtime database via Redis queue.'
     >
-      <div className='space-y-3'>
+      <div className='space-y-4'>
         {!cloudConfigured ? (
           <p className='text-xs text-muted-foreground'>
             Cloud runtime is not configured. Set <code>ARCH_MONGODB_CLOUD_URI</code> and{' '}
             <code>ARCH_MONGODB_CLOUD_DB</code> to enable this action.
           </p>
         ) : null}
+
         <div className='flex items-center gap-3'>
           <Button
             onClick={() => { void handlePush(); }}
@@ -3115,33 +3159,52 @@ function PushToCloudPanel({
             size='sm'
           >
             <Upload className='mr-2 h-3.5 w-3.5' />
-            {buttonLabel}
+            {phase === 'enqueuing' ? 'Enqueuing…' : phase === 'active' ? 'Pushing…' : 'Push to Cloud'}
           </Button>
-          {phase === 'done' && !queueActive ? (
-            <Badge variant='success'>Done</Badge>
-          ) : null}
-          {phase === 'error' ? (
-            <Badge variant='destructive'>Failed</Badge>
-          ) : null}
-          {isRunning ? (
-            <span className='text-xs text-muted-foreground animate-pulse'>Queued in Redis…</span>
-          ) : null}
+          {phase === 'done' ? <Badge variant='success'>Done</Badge> : null}
+          {phase === 'error' ? <Badge variant='destructive'>Failed</Badge> : null}
         </div>
-        {lastOutcome !== null ? (
-          <div className='rounded-md border border-white/10 p-3 space-y-1 text-xs text-muted-foreground'>
-            <div>Mode: <span className='text-white'>{lastOutcome.mode}</span></div>
-            {lastOutcome.jobId ? <div>Job ID: <span className='font-mono text-white'>{lastOutcome.jobId}</span></div> : null}
-            {lastOutcome.result ? (
-              <>
-                <div>Projects pushed: <span className='text-white'>{lastOutcome.result.projectCount}</span></div>
-                <div>Services pushed: <span className='text-white'>{lastOutcome.result.serviceCount}</span></div>
-                <div>Completed at: <span className='text-white'>{lastOutcome.result.updatedAt}</span></div>
-              </>
-            ) : null}
-            {lastOutcome.error ? <div className='text-rose-400'>{lastOutcome.error}</div> : null}
-            {lastOutcome.triggeredAt ? <div>Triggered: <span className='text-white'>{lastOutcome.triggeredAt}</span></div> : null}
+
+        {(isRunning || phase === 'done' || phase === 'error') && progress !== null ? (
+          <div className='space-y-2 rounded-md border border-white/10 p-3'>
+            <div className='flex items-center justify-between text-xs'>
+              <span className='text-white'>{progress.message}</span>
+              <span className='tabular-nums text-muted-foreground'>{progress.step}/{progress.total}</span>
+            </div>
+            <PushProgressBar pct={pct} />
           </div>
         ) : null}
+
+        {isRunning && progress === null ? (
+          <div className='space-y-2 rounded-md border border-white/10 p-3'>
+            <div className='flex items-center justify-between text-xs'>
+              <span className='animate-pulse text-muted-foreground'>
+                {phase === 'enqueuing' ? 'Waiting for worker…' : 'Starting…'}
+              </span>
+              <span className='tabular-nums text-muted-foreground'>0/{PUSH_STEPS_TOTAL}</span>
+            </div>
+            <PushProgressBar pct={0} />
+          </div>
+        ) : null}
+
+        {phase === 'done' && finalResult !== null ? (
+          <div className='rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1 text-xs'>
+            <div className='font-medium text-emerald-400'>Sync complete</div>
+            <div className='text-muted-foreground'>
+              {finalResult.projectCount} projects · {finalResult.serviceCount} services · {finalResult.updatedAt}
+            </div>
+            {lastOutcome?.jobId ? (
+              <div className='text-muted-foreground font-mono'>job: {lastOutcome.jobId}</div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {phase === 'error' && failedReason !== null ? (
+          <div className='rounded-md border border-rose-500/20 bg-rose-500/5 p-3 text-xs text-rose-400'>
+            {failedReason}
+          </div>
+        ) : null}
+
         <p className='text-xs text-muted-foreground'>
           Copies <code>page_content</code>, <code>projects</code>, and <code>services</code> from local
           runtime to cloud. Runs as a BullMQ job when Redis is available; falls back to inline otherwise.

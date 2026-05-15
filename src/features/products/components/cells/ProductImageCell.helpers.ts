@@ -41,19 +41,20 @@ export const DEFAULT_NOTE_COLOR = '#f5e7c3';
 export const hasImageUrl = (value: string | null): value is string =>
   value !== null && value !== '';
 
+const OPTIMIZABLE_REMOTE_IMAGE_HOSTS = new Set([
+  'ik.imagekit.io',
+  'upload.cdn.baselinker.com',
+  'milkbardesigners.com',
+  'uploads.milkbardesigners.com',
+]);
+
 export const shouldSkipOptimization = (url: string): boolean => {
   if (url.startsWith('data:') || url.startsWith('blob:')) return true;
   if (url.startsWith('/')) return false;
 
   try {
     const { hostname } = new URL(url);
-    if (
-      hostname === 'ik.imagekit.io' ||
-      hostname === 'upload.cdn.baselinker.com' ||
-      hostname === 'milkbardesigners.com'
-    ) {
-      return false;
-    }
+    if (OPTIMIZABLE_REMOTE_IMAGE_HOSTS.has(hostname)) return false;
   } catch {
     return true;
   }

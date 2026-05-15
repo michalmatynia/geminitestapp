@@ -951,7 +951,17 @@ export const upsertFilemakerMailAccount = async (
     await upsertSecretSettingValue(nextAccount.dkimPrivateKeySettingKey, draft.dkimPrivateKey);
   }
 
-  await storage.ensureMailIndexes();
+  await storage.ensureMailIndexes().catch((error: unknown) => {
+    void logSystemEvent({
+      level: 'warn',
+      source: 'filemaker-mail-account',
+      message: 'Mail account saved, but account index maintenance failed.',
+      context: {
+        accountId: nextAccount.id,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    }).catch(() => {});
+  });
 
   const dmarcAlignment = evaluateFilemakerMailAccountDmarcAlignment({
     emailAddress: nextAccount.emailAddress,

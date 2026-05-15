@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { Project } from '@/lib/types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -16,7 +16,7 @@ const fallbackProjects: Project[] = [
   { code: 'MBD-003', name: 'South Quarter', projectType: 'Residential Ensemble', city: 'Berlin', country: 'DE', stats: ['3 Volumes · 8,600 m²', 'Residential · Berlin, DE'], description: '', order: 2, status: 'published', cameraPosition: { x: 18, y: 15, z: 18 }, cameraTarget: { x: 0, y: 6, z: 0 } },
 ];
 
-export default function ProjectViewer({ projects }: Props) {
+function ProjectViewer({ projects }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<{ loadProject: (i: number) => void; setMode: (m: RenderMode) => void; zoom: (factor: number) => void } | null>(null);
@@ -381,3 +381,5 @@ export default function ProjectViewer({ projects }: Props) {
     </section>
   );
 }
+
+export default memo(ProjectViewer);

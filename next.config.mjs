@@ -399,6 +399,12 @@ const nextConfig = {
         port: '',
         pathname: '/milkbardesigners.com/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'uploads.milkbardesigners.com',
+        port: '',
+        pathname: '/uploads/**',
+      },
     ],
   },
   async headers() {

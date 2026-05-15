@@ -2,7 +2,7 @@
 
 import { Megaphone } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import React, { startTransition, useDeferredValue, useMemo, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -207,23 +207,83 @@ const useCampaignColumns = (
         onOpenRun: (runId: string): void => { openCampaignRun(router, runId); },
         onDuplicateCampaign: (campaign: FilemakerEmailCampaign): void => { void actions.duplicateCampaign(campaign); },
         onToggleArchiveCampaign: (campaign: FilemakerEmailCampaign): void => { void actions.toggleArchiveCampaign(campaign); },
+        onToggleCampaignRunState: (campaign: FilemakerEmailCampaign): void => { void actions.toggleCampaignRunState(campaign); },
         onDeleteCampaign: actions.deleteCampaign,
       }),
     [actions, router, settings.deliveryRegistry]
   );
 
-const usePageActions = (router: Router): PanelAction[] =>
+const CAMPAIGN_EXPORT_HEADERS = [
+  'name', 'status', 'subject', 'mailAccountId', 'launchMode', 'isLaunchReady',
+  'previewCount', 'nextAutomationAt', 'totalRuns', 'deliveryRatePercent',
+  'openRatePercent', 'clickRatePercent', 'bounceRatePercent', 'unsubscribeCount',
+  'coldSuppressed', 'lastLaunchedAt', 'lastEvaluatedAt', 'updatedAt',
+];
+
+const escapeCampaignCsvCell = (value: string): string => {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+};
+
+const buildCampaignsCsv = (rows: CampaignRow[]): string => {
+  const dataRows = rows.map((row) =>
+    [
+      row.campaign.name,
+      row.campaign.status,
+      row.campaign.subject,
+      row.campaign.mailAccountId ?? '',
+      row.campaign.launch.mode,
+      row.isLaunchReady ? 'yes' : 'no',
+      String(row.previewCount),
+      row.nextAutomationAt ?? '',
+      String(row.analytics.totalRuns),
+      String(row.analytics.deliveryRatePercent),
+      String(row.analytics.openRatePercent),
+      String(row.analytics.clickRatePercent),
+      String(row.analytics.bounceRatePercent),
+      String(row.analytics.unsubscribeCount),
+      String(row.coldSuppressionCount),
+      row.campaign.lastLaunchedAt ?? '',
+      row.campaign.lastEvaluatedAt ?? '',
+      row.campaign.updatedAt ?? '',
+    ]
+      .map((v) => escapeCampaignCsvCell(String(v)))
+      .join(',')
+  );
+  return [CAMPAIGN_EXPORT_HEADERS.join(','), ...dataRows].join('\n');
+};
+
+const downloadCampaignsCsv = (rows: CampaignRow[]): void => {
+  const csv = buildCampaignsCsv(rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'filemaker-campaigns.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const usePageActions = (router: Router, rows: CampaignRow[]): PanelAction[] =>
   useMemo(
     () => [
       {
         key: 'create',
-        label: 'New Campaign',
+        label: 'Email Creator',
         icon: <Megaphone className='size-4' />,
-        onClick: (): void => { openCampaign(router, 'new'); },
+        onClick: (): void => { startTransition(() => { router.push('/admin/filemaker/campaigns/create'); }); },
+        variant: 'default' as const,
+      },
+      {
+        key: 'export-csv',
+        label: `Export CSV${rows.length > 0 ? ` (${rows.length})` : ''}`,
+        variant: 'outline' as const,
+        disabled: rows.length === 0,
+        onClick: (): void => { downloadCampaignsCsv(rows); },
       },
       ...buildFilemakerNavActions(router, 'campaigns'),
     ],
-    [router]
+    [router, rows]
   );
 
 export const useAdminFilemakerCampaignsPageModel = (): AdminFilemakerCampaignsPageModel => {
@@ -247,7 +307,7 @@ export const useAdminFilemakerCampaignsPageModel = (): AdminFilemakerCampaignsPa
   });
   const columns = useCampaignColumns(settings, router, campaignActions);
   const deliverabilitySummary = useMemo(() => buildCampaignDeliverabilitySummary(rows), [rows]);
-  const pageActions = usePageActions(router);
+  const pageActions = usePageActions(router, rows);
   return {
     actions: pageActions,
     columns,

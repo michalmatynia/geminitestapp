@@ -34,9 +34,12 @@ export {
 } from './campaign-edit-sections/CampaignInsightsSections';
 import {
   CAMPAIGN_STATUS_OPTIONS,
+  EMAIL_STATUS_OPTIONS,
   formatCommaSeparatedValues,
   parseCommaSeparatedValues,
   LAUNCH_MODE_OPTIONS,
+  RECURRING_FREQUENCY_OPTIONS,
+  WEEKDAY_OPTIONS,
 } from './AdminFilemakerCampaignEditPage.utils';
 
 import { useCampaignEditContext } from './AdminFilemakerCampaignEditPage.context';
@@ -323,6 +326,7 @@ export function ContentSection(): React.JSX.Element {
   const initialMode: 'builder' | 'html' = blocks.length > 0 || !activeBodyHtml ? 'builder' : 'html';
   const [mode, setMode] = React.useState<'builder' | 'html'>(initialMode);
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+  const [showHtmlPreview, setShowHtmlPreview] = React.useState(false);
 
   const updateActiveGroupVariant = React.useCallback(
     (update: (variant: FilemakerEmailCampaignContentVariant) => FilemakerEmailCampaignContentVariant): void => {
@@ -803,27 +807,57 @@ export function ContentSection(): React.JSX.Element {
               builder remains the source of truth and will recompile HTML on save.
             </div>
           ) : null}
-          <DocumentWysiwygEditor
-            engineInstance='filemaker_email'
-            showBrand
-            value={activeBodyHtml ?? ''}
-            onChange={(value) => {
-              if (editingGroupContent) {
-                updateActiveGroupVariant((variant) =>
-                  createFilemakerEmailCampaignContentVariant({
-                    ...variant,
-                    bodyHtml: value || null,
-                  })
-                );
-                return;
-              }
-              updateCampaignDraft(setDraft, (current) => ({
-                ...current,
-                bodyHtml: value || null,
-              }));
-            }}
-            placeholder='Write your campaign email...'
-          />
+          <div className='flex items-center justify-end'>
+            <Button
+              type='button'
+              size='sm'
+              variant={showHtmlPreview ? 'default' : 'outline'}
+              onClick={(): void => { setShowHtmlPreview((prev) => !prev); }}
+            >
+              {showHtmlPreview ? 'Hide Preview' : 'Show Preview'}
+            </Button>
+          </div>
+          <div className={showHtmlPreview ? 'grid gap-4 lg:grid-cols-2' : undefined}>
+            <DocumentWysiwygEditor
+              engineInstance='filemaker_email'
+              showBrand
+              value={activeBodyHtml ?? ''}
+              onChange={(value) => {
+                if (editingGroupContent) {
+                  updateActiveGroupVariant((variant) =>
+                    createFilemakerEmailCampaignContentVariant({
+                      ...variant,
+                      bodyHtml: value || null,
+                    })
+                  );
+                  return;
+                }
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  bodyHtml: value || null,
+                }));
+              }}
+              placeholder='Write your campaign email...'
+            />
+            {showHtmlPreview ? (
+              <div className='rounded-md border border-border/60 bg-card/20 p-2'>
+                <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+                  Preview
+                </div>
+                {activeBodyHtml ? (
+                  <iframe
+                    title='HTML email preview'
+                    srcDoc={activeBodyHtml}
+                    className='h-[640px] w-full rounded border border-border/40 bg-white'
+                  />
+                ) : (
+                  <div className='flex h-[640px] items-center justify-center rounded border border-dashed border-border/40 text-xs text-gray-500'>
+                    Add HTML content to see a preview.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
         </TabsContent>
       </Tabs>
       <FormField
@@ -930,67 +964,105 @@ export function CampaignTestSendSection(): React.JSX.Element {
 export function AudienceSection(): React.JSX.Element {
   const { draft, setDraft, organizationOptions, eventOptions, partyOptions } = useCampaignEditContext();
 
+  const excludeManualIds = draft.audience.excludePartyReferences
+    .filter((ref) => ref.kind === (draft.audience.partyKinds[0] ?? 'person'))
+    .map((ref) => ref.id);
+
   return (
     <div className='space-y-4'>
       <AudienceSourceSection />
-      <FormSection title='Audience Filters' className='space-y-4 p-4'>
+      <FormSection title='Audience Segments' className='space-y-4 p-4'>
         <div className='flex flex-wrap gap-2 text-[10px]'>
           <Badge variant='outline'>Organizations: {organizationOptions.length}</Badge>
           <Badge variant='outline'>Events: {eventOptions.length}</Badge>
           <Badge variant='outline'>Parties: {partyOptions.length}</Badge>
         </div>
         <div className='grid gap-4 md:grid-cols-2'>
-          <FormField label='Organization IDs'>
-            <Input
-              value={formatCommaSeparatedValues(draft.audience.organizationIds)}
-              onChange={(event) => {
+          <div className='md:col-span-2'>
+            <MultiSelect
+              label='Organizations'
+              ariaLabel='Filter by organizations'
+              options={organizationOptions}
+              selected={draft.audience.organizationIds}
+              onChange={(values) => {
                 updateCampaignDraft(setDraft, (current) => ({
                   ...current,
-                  audience: {
-                    ...current.audience,
-                    organizationIds: parseCommaSeparatedValues(event.target.value),
-                  },
+                  audience: { ...current.audience, organizationIds: values },
                 }));
               }}
+              placeholder='All organizations (no filter)'
+              searchPlaceholder='Search organizations...'
             />
-          </FormField>
-          <FormField label='Event IDs'>
-            <Input
-              value={formatCommaSeparatedValues(draft.audience.eventIds)}
-              onChange={(event) => {
+          </div>
+          <div className='md:col-span-2'>
+            <MultiSelect
+              label='Events'
+              ariaLabel='Filter by events'
+              options={eventOptions}
+              selected={draft.audience.eventIds}
+              onChange={(values) => {
                 updateCampaignDraft(setDraft, (current) => ({
                   ...current,
-                  audience: {
-                    ...current.audience,
-                    eventIds: parseCommaSeparatedValues(event.target.value),
-                  },
+                  audience: { ...current.audience, eventIds: values },
                 }));
               }}
+              placeholder='All events (no filter)'
+              searchPlaceholder='Search events...'
             />
-          </FormField>
-          <FormField label='Countries'>
+          </div>
+          <div className='md:col-span-2'>
+            <MultiSelect
+              label='Email statuses'
+              ariaLabel='Filter by email status'
+              options={EMAIL_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              selected={draft.audience.emailStatuses}
+              onChange={(values) => {
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  audience: { ...current.audience, emailStatuses: values as FilemakerEmailCampaign['audience']['emailStatuses'] },
+                }));
+              }}
+              placeholder='All statuses (active + inactive + unverified)'
+              searchPlaceholder='Search statuses...'
+            />
+          </div>
+          <FormField label='Countries (comma-separated codes)'>
             <Input
               value={formatCommaSeparatedValues(draft.audience.countries)}
               onChange={(event) => {
                 updateCampaignDraft(setDraft, (current) => ({
                   ...current,
-                  audience: {
-                    ...current.audience,
-                    countries: parseCommaSeparatedValues(event.target.value),
-                  },
+                  audience: { ...current.audience, countries: parseCommaSeparatedValues(event.target.value) },
                 }));
               }}
             />
           </FormField>
-          <FormField label='Cities'>
+          <FormField label='Cities (comma-separated)'>
             <Input
               value={formatCommaSeparatedValues(draft.audience.cities)}
               onChange={(event) => {
                 updateCampaignDraft(setDraft, (current) => ({
                   ...current,
+                  audience: { ...current.audience, cities: parseCommaSeparatedValues(event.target.value) },
+                }));
+              }}
+            />
+          </FormField>
+          <FormField
+            label='Exclude party IDs (comma-separated)'
+            description='Recipients in this list will be removed from the audience even if they otherwise qualify.'
+          >
+            <Input
+              placeholder='e.g. 123, 456'
+              value={formatCommaSeparatedValues(excludeManualIds)}
+              onChange={(event) => {
+                const ids = parseCommaSeparatedValues(event.target.value);
+                const kind = draft.audience.partyKinds[0] ?? 'person';
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
                   audience: {
                     ...current.audience,
-                    cities: parseCommaSeparatedValues(event.target.value),
+                    excludePartyReferences: ids.map((id) => ({ id, kind })),
                   },
                 }));
               }}
@@ -1014,6 +1086,24 @@ export function AudienceSection(): React.JSX.Element {
               }}
             />
           </FormField>
+          <FormField
+            label='Deduplicate by email'
+            description='When enabled, each email address appears at most once in the audience even if it is linked to multiple records.'
+          >
+            <div className='flex min-h-10 items-center gap-2 rounded-md border border-border/60 px-3'>
+              <Checkbox
+                aria-label='Deduplicate audience by email address'
+                checked={draft.audience.dedupeByEmail}
+                onCheckedChange={(checked) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    audience: { ...current.audience, dedupeByEmail: checked === true },
+                  }));
+                }}
+              />
+              <span className='text-sm'>Dedupe by email</span>
+            </div>
+          </FormField>
         </div>
       </FormSection>
     </div>
@@ -1022,8 +1112,11 @@ export function AudienceSection(): React.JSX.Element {
 
 export function LaunchSection(): React.JSX.Element {
   const { draft, setDraft } = useCampaignEditContext();
+  const isRecurring = draft.launch.mode === 'recurring';
+
   return (
     <FormSection title='Launch Rules' className='space-y-4 p-4'>
+      {/* Mode + scheduling */}
       <div className='grid gap-4 md:grid-cols-2'>
         <FormField label='Launch mode'>
           <SelectSimple
@@ -1054,10 +1147,7 @@ export function LaunchSection(): React.JSX.Element {
             onChange={(event) => {
               updateCampaignDraft(setDraft, (current) => ({
                 ...current,
-                launch: {
-                  ...current.launch,
-                  scheduledAt: event.target.value || null,
-                },
+                launch: { ...current.launch, scheduledAt: event.target.value || null },
               }));
             }}
           />
@@ -1083,15 +1173,54 @@ export function LaunchSection(): React.JSX.Element {
             onChange={(event) => {
               updateCampaignDraft(setDraft, (current) => ({
                 ...current,
-                launch: {
-                  ...current.launch,
-                  timezone: event.target.value || null,
-                },
+                launch: { ...current.launch, timezone: event.target.value || null },
               }));
             }}
           />
         </FormField>
       </div>
+
+      {/* Approval + weekday guards */}
+      <div className='grid gap-4 md:grid-cols-2'>
+        <FormField
+          label='Require approval before launch'
+          description='When enabled, a campaign must be explicitly approved before it can be dispatched.'
+        >
+          <div className='flex min-h-10 items-center gap-2 rounded-md border border-border/60 px-3'>
+            <Checkbox
+              aria-label='Require approval before launch'
+              checked={draft.launch.requireApproval}
+              onCheckedChange={(checked) => {
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  launch: { ...current.launch, requireApproval: checked === true },
+                }));
+              }}
+            />
+            <span className='text-sm'>Require approval</span>
+          </div>
+        </FormField>
+        <FormField
+          label='Only weekdays'
+          description='Restrict automated launches to Monday – Friday regardless of any other time windows.'
+        >
+          <div className='flex min-h-10 items-center gap-2 rounded-md border border-border/60 px-3'>
+            <Checkbox
+              aria-label='Only launch on weekdays'
+              checked={draft.launch.onlyWeekdays}
+              onCheckedChange={(checked) => {
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  launch: { ...current.launch, onlyWeekdays: checked === true },
+                }));
+              }}
+            />
+            <span className='text-sm'>Weekdays only</span>
+          </div>
+        </FormField>
+      </div>
+
+      {/* Global delivery time window */}
       <div className='grid gap-4 md:grid-cols-4'>
         <FormField label='Allowed hour start'>
           <Input
@@ -1157,40 +1286,180 @@ export function LaunchSection(): React.JSX.Element {
             }}
           />
         </FormField>
-        <FormField label='Recurring weekdays'>
-          <Input
-            value={formatCommaSeparatedValues((draft.launch.recurring?.weekdays ?? []).map(String))}
-            onChange={(event) => {
-              updateCampaignDraft(setDraft, (current) => ({
-                ...current,
-                launch: {
-                  ...current.launch,
-                  recurring: {
-                    ...(current.launch.recurring ?? defaultRecurringRule()),
-                    weekdays: parseCommaSeparatedValues(event.target.value)
-                      .map((value) => Number.parseInt(value, 10))
-                      .filter((value) => Number.isInteger(value) && value >= 0 && value <= 6),
-                  },
-                },
-              }));
-            }}
-          />
-        </FormField>
       </div>
+
+      {/* Recurring rule */}
+      {isRecurring && (
+        <div className='space-y-3 rounded-md border border-border/60 bg-card/20 p-3'>
+          <div className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
+            Recurring Schedule
+          </div>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <FormField label='Frequency'>
+              <SelectSimple
+                ariaLabel='Recurring frequency'
+                value={draft.launch.recurring?.frequency ?? 'weekly'}
+                onValueChange={(value) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    launch: {
+                      ...current.launch,
+                      recurring: {
+                        ...(current.launch.recurring ?? defaultRecurringRule()),
+                        frequency: value as 'daily' | 'weekly' | 'monthly',
+                      },
+                    },
+                  }));
+                }}
+                options={RECURRING_FREQUENCY_OPTIONS}
+              />
+            </FormField>
+            <FormField label='Interval' description='Run every N occurrences (e.g. every 2 weeks).'>
+              <Input
+                type='number'
+                min={1}
+                value={String(draft.launch.recurring?.interval ?? 1)}
+                onChange={(event) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    launch: {
+                      ...current.launch,
+                      recurring: {
+                        ...(current.launch.recurring ?? defaultRecurringRule()),
+                        interval: Number.parseInt(event.target.value, 10) || 1,
+                      },
+                    },
+                  }));
+                }}
+              />
+            </FormField>
+            <div className='md:col-span-2'>
+              <MultiSelect
+                label='Weekdays'
+                ariaLabel='Recurring weekdays'
+                options={WEEKDAY_OPTIONS}
+                selected={(draft.launch.recurring?.weekdays ?? []).map(String)}
+                onChange={(values) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    launch: {
+                      ...current.launch,
+                      recurring: {
+                        ...(current.launch.recurring ?? defaultRecurringRule()),
+                        weekdays: values
+                          .map((v) => Number.parseInt(v, 10))
+                          .filter((v) => v >= 0 && v <= 6),
+                      },
+                    },
+                  }));
+                }}
+                placeholder='All weekdays'
+                searchPlaceholder='Search days...'
+              />
+            </div>
+            <FormField label='Recurring hour start' description='Start of the send window within each recurrence.'>
+              <Input
+                type='number'
+                min={0}
+                max={23}
+                value={draft.launch.recurring?.hourStart == null ? '' : String(draft.launch.recurring.hourStart)}
+                onChange={(event) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    launch: {
+                      ...current.launch,
+                      recurring: {
+                        ...(current.launch.recurring ?? defaultRecurringRule()),
+                        hourStart:
+                          event.target.value.trim() === ''
+                            ? null
+                            : Number.parseInt(event.target.value, 10) || null,
+                      },
+                    },
+                  }));
+                }}
+              />
+            </FormField>
+            <FormField label='Recurring hour end' description='End of the send window within each recurrence.'>
+              <Input
+                type='number'
+                min={0}
+                max={23}
+                value={draft.launch.recurring?.hourEnd == null ? '' : String(draft.launch.recurring.hourEnd)}
+                onChange={(event) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    launch: {
+                      ...current.launch,
+                      recurring: {
+                        ...(current.launch.recurring ?? defaultRecurringRule()),
+                        hourEnd:
+                          event.target.value.trim() === ''
+                            ? null
+                            : Number.parseInt(event.target.value, 10) || null,
+                      },
+                    },
+                  }));
+                }}
+              />
+            </FormField>
+          </div>
+        </div>
+      )}
     </FormSection>
   );
 }
 
+const CSV_HEADERS = ['email', 'name', 'partyKind', 'partyId', 'emailStatus', 'country', 'city', 'emailId'];
+
+const escapeCsvCell = (value: string): string => {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+};
+
+const buildAudienceCsv = (recipients: ReturnType<typeof useCampaignEditContext>['preview']['recipients']): string => {
+  const rows = recipients.map((r) =>
+    [r.email, r.partyName, r.partyKind, r.partyId, r.emailStatus, r.country, r.city, r.emailId]
+      .map((v) => escapeCsvCell(String(v ?? '')))
+      .join(',')
+  );
+  return [CSV_HEADERS.join(','), ...rows].join('\n');
+};
+
+const downloadCsv = (content: string, filename: string): void => {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 export function AudiencePreviewSection(): React.JSX.Element {
-  const { preview, launchEvaluation } = useCampaignEditContext();
+  const { draft, preview, launchEvaluation } = useCampaignEditContext();
+
+  const handleExport = React.useCallback((): void => {
+    const csv = buildAudienceCsv(preview.recipients);
+    const safeName = draft.name.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'campaign';
+    downloadCsv(csv, `audience-${safeName}.csv`);
+  }, [draft.name, preview.recipients]);
+
   return (
     <FormSection title='Audience Preview' className='space-y-4 p-4'>
-      <div className='flex flex-wrap gap-2 text-[10px]'>
-        <Badge variant='outline'>Recipients: {preview.recipients.length}</Badge>
-        <Badge variant='outline'>Excluded: {preview.excludedCount}</Badge>
-        <Badge variant='outline'>Suppressed: {preview.suppressedCount}</Badge>
-        <Badge variant='outline'>Deduped: {preview.dedupedCount}</Badge>
-        <Badge variant='outline'>Linked emails: {preview.totalLinkedEmailCount}</Badge>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='flex flex-wrap gap-2 text-[10px]'>
+          <Badge variant='outline'>Recipients: {preview.recipients.length}</Badge>
+          <Badge variant='outline'>Excluded: {preview.excludedCount}</Badge>
+          <Badge variant='outline'>Suppressed: {preview.suppressedCount}</Badge>
+          <Badge variant='outline'>Deduped: {preview.dedupedCount}</Badge>
+          <Badge variant='outline'>Linked emails: {preview.totalLinkedEmailCount}</Badge>
+        </div>
+        {preview.recipients.length > 0 ? (
+          <Button type='button' variant='outline' size='sm' onClick={handleExport}>
+            Export CSV ({preview.recipients.length})
+          </Button>
+        ) : null}
       </div>
       <div className='rounded-md border border-border/60 bg-card/25 p-3 text-sm text-gray-300'>
         {launchEvaluation.isEligible ? (

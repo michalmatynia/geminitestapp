@@ -1,4 +1,4 @@
-import type { ArchLocale, ArchPageContent, ArchPageSettings, ArchSeoMeta } from './types';
+import { ARCH_LOCALES, type ArchLocale, type ArchPageContent, type ArchPageSettings, type ArchSeoMeta } from './types';
 
 export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
   nav: {
@@ -548,7 +548,10 @@ function normalizeFooterColumns(
   return result.length > 0 ? result : fallback;
 }
 
-export function normalizeArchPageContent(input: unknown): ArchPageContent {
+export function normalizeArchPageContent(
+  input: unknown,
+  fallback: ArchPageContent = DEFAULT_ARCH_PAGE_CONTENT
+): ArchPageContent {
   const source = isRecord(input) ? input : {};
   const nav = isRecord(source['nav']) ? source['nav'] : {};
   const hero = isRecord(source['hero']) ? source['hero'] : {};
@@ -561,7 +564,7 @@ export function normalizeArchPageContent(input: unknown): ArchPageContent {
   const quote = isRecord(source['quote']) ? source['quote'] : {};
   const cta = isRecord(source['cta']) ? source['cta'] : {};
   const footer = isRecord(source['footer']) ? source['footer'] : {};
-  const d = DEFAULT_ARCH_PAGE_CONTENT;
+  const d = fallback;
 
   return {
     nav: {
@@ -708,28 +711,42 @@ export type ArchPageData = {
   pageSettings: ArchPageSettings;
 };
 
+export type ArchLocalizedPageData = {
+  localizedContent: Record<ArchLocale, ArchPageContent>;
+  pageSettings: ArchPageSettings;
+};
+
 type PageContentDoc = {
   localizedContent?: unknown;
   pageSettings?: unknown;
 };
 
+export function resolveArchPageData(doc: PageContentDoc | null): ArchLocalizedPageData {
+  const localizedSource =
+    doc !== null && isRecord(doc.localizedContent)
+      ? (doc.localizedContent as Record<string, unknown>)
+      : {};
+
+  const localizedContent = ARCH_LOCALES.reduce((acc, locale) => {
+    const localeDefault = DEFAULT_ARCH_LOCALIZED_CONTENT[locale];
+    acc[locale] = normalizeArchPageContent(localizedSource[locale] ?? localeDefault, localeDefault);
+    return acc;
+  }, {} as Record<ArchLocale, ArchPageContent>);
+
+  return {
+    localizedContent,
+    pageSettings: doc === null ? DEFAULT_ARCH_PAGE_SETTINGS : normalizeArchPageSettings(doc.pageSettings),
+  };
+}
+
 export function resolveLocalizedContent(
   doc: PageContentDoc | null,
   locale: ArchLocale
 ): ArchPageData {
-  const localeDefault = DEFAULT_ARCH_LOCALIZED_CONTENT[locale];
+  const { localizedContent, pageSettings } = resolveArchPageData(doc);
 
-  if (doc === null || !isRecord(doc.localizedContent)) {
-    return {
-      pageContent: localeDefault,
-      pageSettings: DEFAULT_ARCH_PAGE_SETTINGS,
-    };
-  }
-
-  const localized = doc.localizedContent as Record<string, unknown>;
-  const raw = localized[locale] ?? localeDefault;
   return {
-    pageContent: normalizeArchPageContent(raw),
-    pageSettings: normalizeArchPageSettings(doc.pageSettings),
+    pageContent: localizedContent[locale],
+    pageSettings,
   };
 }

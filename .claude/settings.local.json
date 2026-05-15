@@ -104,7 +104,10 @@
       "Bash(sed -n '58,68p' \"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/ecom-web/src/app/contact/ContactPageClient.tsx\")",
       "Bash(jobs *)",
       "Bash(node_modules/.bin/vitest run *)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit --skipLibCheck)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit --skipLibCheck)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_evaluate"
     ]
   }
 }

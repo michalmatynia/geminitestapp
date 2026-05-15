@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 import React from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { Alert, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -122,6 +122,22 @@ function MailClientPageTabs({
   );
 }
 
+function MailClientPageLoadAlert({
+  loadError,
+}: {
+  loadError: string | null;
+}): React.JSX.Element | null {
+  if (loadError === null) return null;
+
+  return (
+    <Alert
+      variant='warning'
+      title='Email client data is unavailable'
+      description={loadError}
+    />
+  );
+}
+
 export function AdminFilemakerMailClientPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -173,6 +189,7 @@ export function AdminFilemakerMailClientPage(): React.JSX.Element {
           loadMailboxData
         )}
       />
+      <MailClientPageLoadAlert loadError={state.loadError} />
       <MailClientPageTabs
         actions={actions}
         activeTab={activeTab}

@@ -21,6 +21,7 @@ type CampaignColumnActions = {
   onOpenRun: (runId: string) => void;
   onDuplicateCampaign: (campaign: FilemakerEmailCampaign) => void;
   onToggleArchiveCampaign: (campaign: FilemakerEmailCampaign) => void;
+  onToggleCampaignRunState: (campaign: FilemakerEmailCampaign) => void;
   onDeleteCampaign: (campaign: FilemakerEmailCampaign) => void;
 };
 
@@ -49,6 +50,21 @@ const CampaignNameCell = ({ row }: CampaignCellContext): React.JSX.Element => {
   );
 };
 
+const CampaignApprovalBadge = ({ campaign }: { campaign: FilemakerEmailCampaign }): React.JSX.Element | null => {
+  if (!campaign.launch.requireApproval) return null;
+  const isApproved = (campaign.approvalGrantedAt ?? '').length > 0;
+  return (
+    <Badge
+      variant='outline'
+      className={isApproved ? 'text-[10px] border-emerald-500/50 text-emerald-300' : 'text-[10px] border-amber-500/50 text-amber-300'}
+    >
+      {isApproved
+        ? `Approved${campaign.approvedBy != null ? ` — ${campaign.approvedBy}` : ''}`
+        : 'Needs Approval'}
+    </Badge>
+  );
+};
+
 const CampaignStatusCell = ({ row }: CampaignCellContext): React.JSX.Element => {
   const failureMessage = row.original.schedulerFailureMessage;
   return (
@@ -56,6 +72,7 @@ const CampaignStatusCell = ({ row }: CampaignCellContext): React.JSX.Element => 
       <Badge variant='outline' className='text-[10px] capitalize'>
         {row.original.campaign.status}
       </Badge>
+      <CampaignApprovalBadge campaign={row.original.campaign} />
       <div className='text-[11px] text-gray-500'>
         {row.original.isLaunchReady ? 'Ready to launch' : 'Blocked by launch conditions'}
       </div>
@@ -154,6 +171,12 @@ const createLatestRunColumn = (
   },
 });
 
+const resolveRunStateToggleLabel = (status: FilemakerEmailCampaign['status']): string | null => {
+  if (status === 'active') return 'Pause Campaign';
+  if (status === 'draft' || status === 'paused') return 'Activate Campaign';
+  return null;
+};
+
 const createActionsColumn = (actions: CampaignColumnActions): ColumnDef<CampaignRow> => ({
   id: 'actions',
   header: (): React.JSX.Element => <div className='text-right'>Actions</div>,
@@ -173,6 +196,11 @@ const createActionsColumn = (actions: CampaignColumnActions): ColumnDef<Campaign
           <DropdownMenuItem onSelect={(event: Event): void => { event.preventDefault(); actions.onDuplicateCampaign(row.original.campaign); }}>
             Duplicate Campaign
           </DropdownMenuItem>
+          {resolveRunStateToggleLabel(row.original.campaign.status) !== null ? (
+            <DropdownMenuItem onSelect={(event: Event): void => { event.preventDefault(); actions.onToggleCampaignRunState(row.original.campaign); }}>
+              {resolveRunStateToggleLabel(row.original.campaign.status)}
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem onSelect={(event: Event): void => { event.preventDefault(); actions.onToggleArchiveCampaign(row.original.campaign); }}>
             {row.original.campaign.status === 'archived' ? 'Restore Draft' : 'Archive Campaign'}
           </DropdownMenuItem>

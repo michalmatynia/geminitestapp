@@ -130,7 +130,7 @@ const createMockCollection = <T extends MockDocument>(seed: T[] = []) => {
       const doc = docs.find((entry) => matchesFilter(entry, filter));
       return doc ? clone(doc) : null;
     },
-    find(filter: Record<string, unknown>) {
+    find(filter: Record<string, unknown> = {}) {
       return createMockCursor(docs.filter((entry) => matchesFilter(entry, filter)));
     },
     async countDocuments(filter: Record<string, unknown>): Promise<number> {
@@ -448,6 +448,9 @@ describe('filemaker mail service - accounts and sending', () => {
     });
 
     const stored = await getFilemakerMailAccount('account-1');
+    const accountSettingsDocs = mongoHarness.docs<MockDocument>(
+      'filemaker_mail_account_settings'
+    );
 
     expect(first.emailAddress).toBe('support@example.com');
     expect(first.replyToEmail).toBe('replies@example.com');
@@ -460,6 +463,15 @@ describe('filemaker mail service - accounts and sending', () => {
         emailAddress: 'support@example.com',
         replyToEmail: 'replies@example.com',
         folderAllowlist: ['INBOX'],
+      })
+    );
+    expect(accountSettingsDocs).toHaveLength(1);
+    expect(accountSettingsDocs[0]).toEqual(
+      expect.objectContaining({
+        _id: 'account-1',
+        id: 'account-1',
+        name: 'Support Mailbox',
+        emailAddress: 'support@example.com',
       })
     );
     expect(secretProvider.upsertValue).toHaveBeenCalledTimes(4);
@@ -531,9 +543,32 @@ describe('filemaker mail service - accounts and sending', () => {
     expect(secretProvider.upsertValue).toHaveBeenCalledTimes(2);
   });
 
+  it('loads mailbox accounts from the permanent account settings collection', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const { getFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    const stored = await getFilemakerMailAccount('account-1');
+    const accountSettingsDocs = mongoHarness.docs<MockDocument>(
+      'filemaker_mail_account_settings'
+    );
+
+    expect(stored.emailAddress).toBe('support@example.com');
+    expect(accountSettingsDocs).toHaveLength(1);
+    expect(accountSettingsDocs[0]).toEqual(
+      expect.objectContaining({
+        _id: 'account-1',
+        id: 'account-1',
+        name: 'Support Inbox',
+      })
+    );
+  });
+
   it('preserves existing secret setting keys when updating an account with blank passwords', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [
+    mongoHarness.seed('filemaker_mail_account_settings', [
       {
         ...createMailAccountDoc(),
         imapPasswordSettingKey: 'imap-custom-key',
@@ -809,7 +844,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('downloads IMAP messages, stores them, and updates sync state', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
 
     const client = createMockImapClient({
@@ -883,7 +918,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
     const result = await syncFilemakerMailAccount('account-1');
 
-    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_account_settings');
     const threadDocs = mongoHarness.docs<MockDocument>('filemaker_mail_threads');
     const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
     const syncStateDocs = mongoHarness.docs<MockDocument>('filemaker_mail_sync_states');
@@ -939,7 +974,7 @@ describe('filemaker mail service - accounts and sending', () => {
     });
 
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [
+    mongoHarness.seed('filemaker_mail_account_settings', [
       {
         ...createMailAccountDoc(),
         imapPasswordSettingKey: 'imap-custom-key',
@@ -979,7 +1014,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('replays the initial mailbox sync when sync state exists but no messages were stored', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     mongoHarness.seed('filemaker_mail_sync_states', [
       {
         _id: 'sync-state-1',
@@ -1074,7 +1109,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('keeps syncing available folders when another configured folder fails', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [
+    mongoHarness.seed('filemaker_mail_account_settings', [
       {
         ...createMailAccountDoc(),
         folderAllowlist: ['INBOX', 'Broken'],
@@ -1132,7 +1167,7 @@ describe('filemaker mail service - accounts and sending', () => {
     const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
 
     const result = await syncFilemakerMailAccount('account-1');
-    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_account_settings');
     const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
 
     expect(result).toEqual(
@@ -1164,7 +1199,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('inherits campaign context for inbound replies matched to an existing campaign thread', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     mongoHarness.seed('filemaker_mail_threads', [
       {
         _id: 'campaign-thread-1',
@@ -1256,7 +1291,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('records IMAP sync errors on the account and returns the failure message', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
 
     const client = createMockImapClient({
@@ -1273,7 +1308,7 @@ describe('filemaker mail service - accounts and sending', () => {
     const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
 
     const result = await syncFilemakerMailAccount('account-1');
-    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_account_settings');
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -1296,7 +1331,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('records IMAP command response details when the provider rejects sync', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
 
     const connectError = Object.assign(new Error('Command failed'), {
@@ -1318,7 +1353,7 @@ describe('filemaker mail service - accounts and sending', () => {
     const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
 
     const result = await syncFilemakerMailAccount('account-1');
-    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_account_settings');
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -1343,7 +1378,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
   it('records IMAP search failures without advancing the mailbox sync state', async () => {
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_account_settings', [createMailAccountDoc()]);
     getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
 
     const client = createMockImapClient({
@@ -1367,7 +1402,7 @@ describe('filemaker mail service - accounts and sending', () => {
     const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
 
     const result = await syncFilemakerMailAccount('account-1');
-    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_accounts');
+    const accountDocs = mongoHarness.docs<MockDocument>('filemaker_mail_account_settings');
     const syncStateDocs = mongoHarness.docs<MockDocument>('filemaker_mail_sync_states');
 
     expect(result).toEqual(
@@ -1396,7 +1431,7 @@ describe('filemaker mail service - accounts and sending', () => {
     findProviderForKeyMock.mockResolvedValue(null);
 
     const mongoHarness = createMongoHarness();
-    mongoHarness.seed('filemaker_mail_accounts', [
+    mongoHarness.seed('filemaker_mail_account_settings', [
       {
         _id: 'account-1',
         id: 'account-1',

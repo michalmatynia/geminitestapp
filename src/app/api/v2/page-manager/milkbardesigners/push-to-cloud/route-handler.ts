@@ -1,9 +1,10 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
+  getJobProgress,
   getMilkbarPushQueueHealth,
   triggerMilkbarPushToCloud,
 } from '@/features/page-manager/milkbardesigners/milkbar-push-to-cloud-queue';
@@ -22,7 +23,12 @@ export const POST = apiHandler(
 );
 
 export const GET = apiHandler(
-  async () => {
+  async (req: NextRequest) => {
+    const jobId = new URL(req.url).searchParams.get('jobId');
+    if (jobId !== null && jobId.trim().length > 0) {
+      const jobStatus = await getJobProgress(jobId.trim());
+      return NextResponse.json({ ok: true, jobStatus });
+    }
     const health = await getMilkbarPushQueueHealth();
     return NextResponse.json({ ok: true, health });
   },

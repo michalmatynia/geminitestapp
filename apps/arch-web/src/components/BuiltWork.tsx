@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { ArchPageContent, Project } from '@/lib/types';
 import { renderEmphasis } from '@/lib/renderEmphasis';
 import IsometricThumbnail from './IsometricThumbnail';
@@ -8,7 +9,7 @@ const FALLBACK_PROJECTS: Pick<Project, 'code' | 'name' | 'projectType' | 'city'>
   { code: 'MBD-003', name: 'South Quarter', projectType: 'Residential Ensemble', city: 'Berlin' },
 ];
 
-export default function BuiltWork({
+function BuiltWork({
   content,
   projects,
 }: {
@@ -53,3 +54,5 @@ export default function BuiltWork({
     </section>
   );
 }
+
+export default memo(BuiltWork);

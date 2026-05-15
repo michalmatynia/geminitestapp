@@ -4,8 +4,10 @@ import { ShieldAlert, Activity } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
+import { api } from '@/shared/lib/api-client';
+import { useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button } from '@/shared/ui/primitives.public';
+import { Badge, Button, useToast } from '@/shared/ui/primitives.public';
 import { InsetPanel, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';
@@ -50,9 +52,50 @@ import type {
    @typescript-eslint/strict-boolean-expressions
  */
 
+type SchedulerTickResponse = {
+  evaluatedCampaignCount: number;
+  dueCampaignCount: number;
+  launchedRunCount: number;
+};
+
+function useSchedulerTrigger(): { trigger: () => void; isPending: boolean } {
+  const { toast } = useToast();
+  const settingsStore = useSettingsStore();
+  const mutation = useMutationV2<SchedulerTickResponse, void>({
+    mutationKey: ['filemaker', 'campaigns', 'scheduler', 'trigger'],
+    mutationFn: async () => api.post<SchedulerTickResponse>('/api/filemaker/campaigns/scheduler', {}),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignControlCentrePage.useSchedulerTrigger',
+      operation: 'create',
+      resource: 'filemaker.campaign-scheduler',
+      domain: 'filemaker',
+      description: 'Manually trigger the campaign scheduler tick.',
+      errorPresentation: 'toast',
+    },
+  });
+  const trigger = React.useCallback((): void => {
+    mutation.mutate(undefined, {
+      onSuccess: (data) => {
+        const launches = data.launchedRunCount;
+        const msg =
+          launches > 0
+            ? `Scheduler tick complete. Evaluated ${data.evaluatedCampaignCount} campaigns, launched ${launches} run${launches === 1 ? '' : 's'}.`
+            : `Scheduler tick complete. Evaluated ${data.evaluatedCampaignCount} campaigns — no runs due.`;
+        toast(msg, { variant: 'success' });
+        settingsStore.refetch();
+      },
+      onError: (error) => {
+        toast(error instanceof Error ? error.message : 'Scheduler trigger failed.', { variant: 'error' });
+      },
+    });
+  }, [mutation, settingsStore, toast]);
+  return { trigger, isPending: mutation.isPending };
+}
+
 export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
+  const schedulerTrigger = useSchedulerTrigger();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
 
@@ -506,6 +549,17 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
           title='Automation Scheduler'
           description='Monitor the campaign scheduler, upcoming automated launches, and launch failures caught on the last tick.'
           size='sm'
+          actions={
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              disabled={schedulerTrigger.isPending}
+              onClick={schedulerTrigger.trigger}
+            >
+              {schedulerTrigger.isPending ? 'Running…' : 'Trigger Scheduler Now'}
+            </Button>
+          }
         />
         <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
           <InsetPanel padding='md' className='space-y-2'>

@@ -9,6 +9,8 @@ import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigCon
 
 type StateExpectedType = NonNullable<StateConfig['expectedType']>;
 
+const ANY_STATE_EXPECTED_TYPE_VALUE = '__any__';
+
 const normalizeStateExpectedType = (value: string): StateExpectedType | undefined => {
   switch (value) {
     case 'string':
@@ -163,7 +165,10 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Expected value type (optional)</Label>
-        <Select value={stateConfig.expectedType ?? ''} onValueChange={handleExpectedTypeChange}>
+        <Select
+          value={stateConfig.expectedType ?? ANY_STATE_EXPECTED_TYPE_VALUE}
+          onValueChange={handleExpectedTypeChange}
+        >
           <SelectTrigger
             className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'
             aria-label='Expected value type'
@@ -171,7 +176,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
             <SelectValue placeholder='Any type' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Any type</SelectItem>
+            <SelectItem value={ANY_STATE_EXPECTED_TYPE_VALUE}>Any type</SelectItem>
             <SelectItem value='string'>string</SelectItem>
             <SelectItem value='number'>number</SelectItem>
             <SelectItem value='boolean'>boolean</SelectItem>

@@ -35,7 +35,7 @@ const getCampaignBreadcrumbCurrent = (input: {
   draftName: string;
   isCreateMode: boolean;
 }): string => {
-  if (input.isCreateMode) return 'New Campaign';
+  if (input.isCreateMode) return 'Email Creator';
   return input.draftName.length > 0 ? input.draftName : 'Edit';
 };
 
@@ -84,11 +84,11 @@ function CampaignEditHeader({
 }): React.JSX.Element {
   return (
     <SectionHeader
-      title={context.isCreateMode ? 'Create Campaign' : 'Edit Campaign'}
+      title={context.isCreateMode ? 'Email Creator' : 'Edit Campaign'}
       description='Configure sender account, campaign content, audience rules, launch conditions, and recent run monitoring.'
       eyebrow={
         <AdminFilemakerBreadcrumbs
-          parent={{ label: 'Campaigns', href: '/admin/filemaker/campaigns' }}
+          parent={{ label: 'Email Campaigns', href: '/admin/filemaker/campaigns' }}
           current={getCampaignBreadcrumbCurrent({
             draftName: context.draft.name,
             isCreateMode: context.isCreateMode,
@@ -135,6 +135,20 @@ function CampaignEditBadges({
       <Badge variant='outline' className='text-[10px]'>
         Last Evaluated: {formatTimestamp(context.draft.lastEvaluatedAt)}
       </Badge>
+      {context.draft.launch.requireApproval ? (
+        <Badge
+          variant='outline'
+          className={
+            (context.draft.approvalGrantedAt ?? '').length > 0
+              ? 'text-[10px] border-emerald-500/50 text-emerald-300'
+              : 'text-[10px] border-amber-500/50 text-amber-300'
+          }
+        >
+          {(context.draft.approvalGrantedAt ?? '').length > 0
+            ? `Approved${context.draft.approvedBy !== null && context.draft.approvedBy !== undefined ? ` by ${context.draft.approvedBy}` : ''}`
+            : 'Approval Required'}
+        </Badge>
+      ) : null}
     </div>
   );
 }

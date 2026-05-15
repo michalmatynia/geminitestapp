@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { Queue } from 'bullmq';
+
 import {
   createManagedQueue,
   isRedisAvailable,
@@ -10,12 +12,15 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import {
   pushMilkbarRuntimeToCloud,
+  type MilkbarPushProgress,
   type MilkbarPushToCloudResult,
 } from './milkbar-cms.server';
 
 export type MilkbarPushJobData = {
   triggeredAt: string;
 };
+
+export type MilkbarPushJobProgress = MilkbarPushProgress;
 
 type PushJobHealthSnapshot = {
   mode: 'queue' | 'inline' | 'no-redis';
@@ -24,6 +29,13 @@ type PushJobHealthSnapshot = {
   activeCount: number;
   waitingCount: number;
   failedCount: number;
+};
+
+export type MilkbarPushJobStatus = {
+  state: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' | 'unknown';
+  progress: MilkbarPushJobProgress | null;
+  failedReason?: string;
+  result?: MilkbarPushToCloudResult;
 };
 
 let _queue: ManagedQueue<MilkbarPushJobData> | null = null;
@@ -36,21 +48,30 @@ export function getMilkbarPushToCloudQueue(): ManagedQueue<MilkbarPushJobData> {
       jobTimeoutMs: 90_000,
       processor: async (
         data: MilkbarPushJobData,
-        jobId: string
+        jobId: string,
+        _signal?: AbortSignal,
+        helpers?: { updateProgress: (p: unknown) => Promise<void> }
       ): Promise<MilkbarPushToCloudResult> => {
         void logSystemEvent({
           level: 'info',
           source: 'milkbar-push-to-cloud',
-          message: `[milkbar-push-to-cloud] job ${jobId} starting, triggered at ${data.triggeredAt}`,
+          message: `[milkbar-push-to-cloud] job ${jobId} starting`,
           context: { jobId, triggeredAt: data.triggeredAt },
         });
-        const result = await pushMilkbarRuntimeToCloud();
+
+        const result = await pushMilkbarRuntimeToCloud(async (p: MilkbarPushProgress) => {
+          if (helpers) {
+            await helpers.updateProgress(p);
+          }
+        });
+
         void logSystemEvent({
           level: 'info',
           source: 'milkbar-push-to-cloud',
           message: `[milkbar-push-to-cloud] job ${jobId} complete — ${result.projectCount} projects, ${result.serviceCount} services pushed`,
           context: { jobId, updatedAt: result.updatedAt },
         });
+
         return result;
       },
     });
@@ -58,6 +79,43 @@ export function getMilkbarPushToCloudQueue(): ManagedQueue<MilkbarPushJobData> {
   }
   return _queue;
 }
+
+export async function getJobProgress(jobId: string): Promise<MilkbarPushJobStatus | null> {
+  if (!isRedisAvailable()) return null;
+
+  const queue = getMilkbarPushToCloudQueue();
+  const q = queue.getQueue() as Queue | null;
+  if (!q) return null;
+
+  const job = await q.getJob(jobId);
+  if (!job) return null;
+
+  const state = await job.getState();
+  const validStates = ['waiting', 'active', 'completed', 'failed', 'delayed'] as const;
+  const safeState = validStates.includes(state as typeof validStates[number])
+    ? (state as MilkbarPushJobStatus['state'])
+    : 'unknown';
+
+  return {
+    state: safeState,
+    progress: isProgressShape(job.progress) ? job.progress : null,
+    ...(safeState === 'failed' ? { failedReason: job.failedReason } : {}),
+    ...(safeState === 'completed' && isResult(job.returnvalue)
+      ? { result: job.returnvalue as MilkbarPushToCloudResult }
+      : {}),
+  };
+}
+
+const isProgressShape = (v: unknown): v is MilkbarPushJobProgress =>
+  typeof v === 'object' &&
+  v !== null &&
+  typeof (v as Record<string, unknown>)['step'] === 'number' &&
+  typeof (v as Record<string, unknown>)['message'] === 'string';
+
+const isResult = (v: unknown): v is MilkbarPushToCloudResult =>
+  typeof v === 'object' &&
+  v !== null &&
+  typeof (v as Record<string, unknown>)['projectCount'] === 'number';
 
 export async function triggerMilkbarPushToCloud(): Promise<{
   ok: boolean;

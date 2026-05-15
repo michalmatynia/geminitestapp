@@ -26,10 +26,24 @@ describe('requireFilemakerMailAdminSession', () => {
     await expect(requireFilemakerMailAdminSession()).resolves.toBeUndefined();
   });
 
+  it('allows sessions with settings management permission', async () => {
+    readOptionalServerAuthSessionMock.mockResolvedValue({
+      user: {
+        email: 'settings-admin@example.com',
+        isElevated: false,
+        permissions: ['settings.manage'],
+        role: 'editor',
+      },
+    });
+
+    await expect(requireFilemakerMailAdminSession()).resolves.toBeUndefined();
+  });
+
   it('rejects non-elevated or missing sessions', async () => {
     readOptionalServerAuthSessionMock.mockResolvedValueOnce({
       user: {
         email: 'user@example.com',
+        permissions: ['products.manage'],
         role: 'user',
       },
     });

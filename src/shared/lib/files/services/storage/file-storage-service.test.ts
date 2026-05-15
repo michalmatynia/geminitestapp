@@ -280,6 +280,56 @@ describe('file-storage-service', () => {
     });
   });
 
+  it('can force fastcomet storage with a profile-specific endpoint override', async () => {
+    findOneMock
+      .mockResolvedValueOnce({ value: 'local' })
+      .mockResolvedValueOnce({
+        value: JSON.stringify({
+          baseUrl: 'https://sparksofsindri.com',
+          uploadEndpoint: 'https://sparksofsindri.com/upload',
+          keepLocalCopy: true,
+          timeoutMs: 5000,
+        }),
+      });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          filepath: 'https://milkbardesigners.com/uploads/cms/visualisation/image.png',
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const writeLocalCopy = vi.fn().mockResolvedValue(undefined);
+
+    const result = await uploadToConfiguredStorage({
+      buffer: Buffer.from('content'),
+      filename: 'image.png',
+      mimetype: 'image/png',
+      publicPath: '/uploads/cms/visualisation/image.png',
+      category: 'cms',
+      projectId: null,
+      folder: 'visualisation',
+      forceSource: 'fastcomet',
+      fastCometConfig: {
+        baseUrl: 'https://uploads.milkbardesigners.com/',
+        uploadEndpoint: 'https://milkbardesigners.com/api/uploads/index.php/',
+        deleteEndpoint: 'https://milkbardesigners.com/api/uploads/delete/index.php/',
+        server: 'milkbardesigners.com',
+        resolveIp: '209.42.31.54',
+      },
+      writeLocalCopy,
+    });
+
+    expect(writeLocalCopy).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://milkbardesigners.com/api/uploads/index.php');
+    expect(result).toEqual({
+      filepath: 'https://uploads.milkbardesigners.com/uploads/cms/visualisation/image.png',
+      source: 'fastcomet',
+      mirroredLocally: true,
+    });
+  });
+
   it('uses the provided fastcomet config for direct uploads and falls back to baseUrl from JSON success', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

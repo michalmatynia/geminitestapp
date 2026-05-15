@@ -1,8 +1,8 @@
 'use client';
 
-import { ShieldOff, UserX } from 'lucide-react';
+import { Download, ShieldOff, Upload, UserX } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -28,7 +28,46 @@ import {
   type SuppressionEntry,
 } from './AdminFilemakerCampaignSuppressionsPage.helpers';
 
+type BulkImportResponse = { addedCount: number; skippedCount: number };
+
 type SettingsStore = ReturnType<typeof useSettingsStore>;
+
+const escapeCsvCell = (value: string): string => {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+};
+
+const SUPPRESSION_CSV_HEADERS = ['emailAddress', 'reason', 'createdAt', 'updatedAt', 'id'];
+
+const LIKELY_HEADER_PATTERNS = /^(email|emailaddress|address|e-mail)$/i;
+
+const parseEmailAddressesFromCsv = (text: string): string[] => {
+  const lines = text.split(/\r?\n/);
+  const results: string[] = [];
+  for (const line of lines) {
+    const firstCell = line.split(',')[0] ?? '';
+    const cleaned = firstCell.replace(/^"|"$/g, '').trim().toLowerCase();
+    if (cleaned.length === 0 || LIKELY_HEADER_PATTERNS.test(cleaned)) continue;
+    results.push(cleaned);
+  }
+  return results;
+};
+
+const downloadSuppressionsCsv = (entries: SuppressionEntry[]): void => {
+  const rows = entries.map((e) =>
+    [e.emailAddress, e.reason, e.createdAt, e.updatedAt, e.id]
+      .map((v) => escapeCsvCell(String(v ?? '')))
+      .join(',')
+  );
+  const csv = [SUPPRESSION_CSV_HEADERS.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'campaign-suppressions.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 function useSuppressionRegistryData(query: string): {
   filteredEntries: SuppressionEntry[];
@@ -136,6 +175,76 @@ function useColdPruneHandler(settingsStore: SettingsStore): {
   return { handlePruneColdRecipients, isPruningCold: pruneColdMutation.isPending };
 }
 
+function useBulkImportHandler(settingsStore: SettingsStore): {
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleImportClick: () => void;
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isImporting: boolean;
+} {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const bulkImportMutation = useMutationV2<BulkImportResponse, string[]>({
+    mutationKey: ['filemaker', 'campaign-suppressions', 'bulk-import'],
+    mutationFn: async (emailAddresses) => {
+      const response = await fetch('/api/filemaker/campaigns/suppressions', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ emailAddresses }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+        throw new Error(payload.error?.message ?? `Import failed (HTTP ${response.status}).`);
+      }
+      return response.json() as Promise<BulkImportResponse>;
+    },
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignSuppressionsPage.bulkImport',
+      operation: 'create',
+      resource: 'filemaker.campaign-suppression',
+      domain: 'files',
+      description: 'Bulk import email suppressions from CSV.',
+      errorPresentation: 'toast',
+    },
+  });
+
+  const handleImportClick = useCallback((): void => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0];
+      if (file === undefined) return;
+      event.target.value = '';
+      const reader = new FileReader();
+      reader.onload = (e): void => {
+        const text = typeof e.target?.result === 'string' ? e.target.result : '';
+        const emailAddresses = parseEmailAddressesFromCsv(text);
+        if (emailAddresses.length === 0) {
+          toast('No valid email addresses found in the CSV file.', { variant: 'error' });
+          return;
+        }
+        bulkImportMutation.mutate(emailAddresses, {
+          onSuccess: (data) => {
+            toast(
+              `Import complete. Added: ${data.addedCount}, already suppressed: ${data.skippedCount}.`,
+              { variant: data.addedCount > 0 ? 'success' : 'warning' }
+            );
+            if (data.addedCount > 0) settingsStore.refetch();
+          },
+          onError: (error) => {
+            toast(error instanceof Error ? error.message : 'Import failed.', { variant: 'error' });
+          },
+        });
+      };
+      reader.readAsText(file);
+    },
+    [bulkImportMutation, settingsStore, toast]
+  );
+
+  return { fileInputRef, handleImportClick, handleFileChange, isImporting: bulkImportMutation.isPending };
+}
+
 export function AdminFilemakerCampaignSuppressionsPage(): React.JSX.Element {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -144,6 +253,7 @@ export function AdminFilemakerCampaignSuppressionsPage(): React.JSX.Element {
     useSuppressionRegistryData(query);
   const { ConfirmationModal, handleUnsuppress } = useUnsuppressHandler(settingsStore, setPendingAddress);
   const { handlePruneColdRecipients, isPruningCold } = useColdPruneHandler(settingsStore);
+  const { fileInputRef, handleImportClick, handleFileChange, isImporting } = useBulkImportHandler(settingsStore);
   const columns = useMemo(
     () => createSuppressionColumns(handleUnsuppress, pendingAddress),
     [handleUnsuppress, pendingAddress]
@@ -157,16 +267,46 @@ export function AdminFilemakerCampaignSuppressionsPage(): React.JSX.Element {
         icon={<ShieldOff className='size-4' />}
         actions={buildFilemakerNavActions(router, 'suppressions')}
         customActions={
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            disabled={isPruningCold}
-            onClick={() => { void handlePruneColdRecipients(); }}
-          >
-            <UserX className='mr-2 size-3.5' />
-            {isPruningCold ? 'Pruning...' : 'Run Cold Prune'}
-          </Button>
+          <div className='flex items-center gap-2'>
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='.csv,.txt'
+              className='hidden'
+              onChange={handleFileChange}
+            />
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              disabled={isImporting}
+              onClick={handleImportClick}
+            >
+              <Upload className='mr-2 size-3.5' />
+              {isImporting ? 'Importing...' : 'Import CSV'}
+            </Button>
+            {suppressionEntries.length > 0 ? (
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                onClick={() => { downloadSuppressionsCsv(suppressionEntries); }}
+              >
+                <Download className='mr-2 size-3.5' />
+                Export CSV ({suppressionEntries.length})
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              disabled={isPruningCold}
+              onClick={() => { void handlePruneColdRecipients(); }}
+            >
+              <UserX className='mr-2 size-3.5' />
+              {isPruningCold ? 'Pruning...' : 'Run Cold Prune'}
+            </Button>
+          </div>
         }
       />
       <SuppressionSummaryBar

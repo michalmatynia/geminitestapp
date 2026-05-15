@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { makeProjectGroup } from '@/lib/projectModels';
 
 // Isometric direction: camera up-right-back, matching the interactive viewer's angle
 const ISO_DIR = new THREE.Vector3(1, 0.72, 1).normalize();
 
-export default function IsometricThumbnail({ projectIdx }: { projectIdx: number }) {
+function IsometricThumbnail({ projectIdx }: { projectIdx: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -76,3 +76,5 @@ export default function IsometricThumbnail({ projectIdx }: { projectIdx: number 
     />
   );
 }
+
+export default memo(IsometricThumbnail);

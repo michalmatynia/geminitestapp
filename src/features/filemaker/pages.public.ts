@@ -16,6 +16,7 @@ export * from './pages/AdminFilemakerMailPage';
 export * from './pages/AdminFilemakerMailComposePage';
 export * from './pages/AdminFilemakerMailThreadPage';
 export * from './pages/AdminFilemakerCampaignsPage';
+export * from './pages/AdminFilemakerCampaignCreatePage';
 export * from './pages/AdminFilemakerCampaignControlCentrePage';
 export * from './pages/AdminFilemakerCampaignSuppressionsPage';
 export * from './pages/AdminFilemakerPersonEditPage';

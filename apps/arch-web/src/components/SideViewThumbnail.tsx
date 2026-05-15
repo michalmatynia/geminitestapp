@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { makeProjectGroup } from '@/lib/projectModels';
 
@@ -12,7 +12,7 @@ interface State {
   canvas: HTMLCanvasElement;
 }
 
-export default function SideViewThumbnail({ projectIdx }: { projectIdx: number }) {
+function SideViewThumbnail({ projectIdx }: { projectIdx: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef  = useRef<State | null>(null);
   const renderRef = useRef<(() => void) | null>(null);
@@ -109,3 +109,5 @@ export default function SideViewThumbnail({ projectIdx }: { projectIdx: number }
     />
   );
 }
+
+export default memo(SideViewThumbnail);

@@ -103,7 +103,7 @@ describe('buildAdminNav', () => {
       (entry) =>
         entry.id === 'integrations/marketplaces/tradera/selectors' &&
         entry.label === 'Selector Registry' &&
-        entry.href === '/admin/integrations/selectors?namespace=tradera'
+        entry.href === '/admin/integrations/marketplaces/tradera/selectors'
     );
 
     expect(item).not.toBeNull();
@@ -122,6 +122,13 @@ describe('buildAdminNav', () => {
         entry.label === 'Import' &&
         entry.href === '/admin/products/import'
     );
+    const aggregatorsItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/aggregators' &&
+        entry.label === 'Aggregators' &&
+        entry.href === '/admin/integrations/aggregators/base-com/import-export'
+    );
     const baseExportItem = findNavItem(
       nav,
       (entry) =>
@@ -138,11 +145,12 @@ describe('buildAdminNav', () => {
     );
 
     expect(productImportItem).not.toBeNull();
+    expect(aggregatorsItem).not.toBeNull();
     expect(baseExportItem).not.toBeNull();
     expect(baseCategoryMappingItem).not.toBeNull();
   });
 
-  it('includes the Filemaker email client and separates it from email records', () => {
+  it('includes the Filemaker email client, composer, creator, and records entries', () => {
     const nav = buildAdminNav({
       onOpenChat: () => undefined,
       onCreatePageClick: () => undefined,
@@ -155,6 +163,34 @@ describe('buildAdminNav', () => {
         entry.label === 'Email Client' &&
         entry.href === '/admin/filemaker/mail-client'
     );
+    const composeEmailItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/mail/compose' &&
+        entry.label === 'Compose Email' &&
+        entry.href === '/admin/filemaker/mail/compose'
+    );
+    const mailSettingsItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/mail' &&
+        entry.label === 'Mail Settings' &&
+        entry.href === '/admin/filemaker/mail'
+    );
+    const emailCreatorItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/campaigns/create' &&
+        entry.label === 'Email Creator' &&
+        entry.href === '/admin/filemaker/campaigns/create'
+    );
+    const emailCampaignsItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/campaigns' &&
+        entry.label === 'Email Campaigns' &&
+        entry.href === '/admin/filemaker/campaigns'
+    );
     const emailRecordsItem = findNavItem(
       nav,
       (entry) =>
@@ -164,6 +200,70 @@ describe('buildAdminNav', () => {
     );
 
     expect(emailClientItem).not.toBeNull();
+    expect(mailSettingsItem).not.toBeNull();
+    expect(composeEmailItem).not.toBeNull();
+    expect(emailCreatorItem).not.toBeNull();
+    expect(emailCampaignsItem).not.toBeNull();
     expect(emailRecordsItem).not.toBeNull();
+  });
+
+  it('includes all restored Filemaker operational entry points', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const expectedEntries = [
+      ['filemaker/job-listings', 'Job Listings', '/admin/filemaker/job-listings'],
+      ['filemaker/websites', 'Websites', '/admin/filemaker/websites'],
+      ['filemaker/lexicon', 'Lexicon', '/admin/filemaker/lexicon'],
+      ['filemaker/goal-automation', 'Goal Automation', '/admin/filemaker/goal-automation'],
+    ] as const;
+
+    expectedEntries.forEach(([id, label, href]) => {
+      const item = findNavItem(
+        nav,
+        (entry) => entry.id === id && entry.label === label && entry.href === href
+      );
+
+      expect(item).not.toBeNull();
+    });
+  });
+
+  it('includes restored non-Filemaker operational entry points', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const expectedEntries = [
+      ['workspace/context-registry', 'Context Registry', '/admin/context-registry'],
+      ['workspace/ai-insights', 'AI Insights', '/admin/ai-insights'],
+      ['ai/case-resolver/cases', 'Cases', '/admin/case-resolver/cases'],
+      ['ai/agentcreator/personas', 'Personas', '/admin/agentcreator/personas'],
+      ['ai/ai-paths/trigger-buttons', 'Trigger Buttons', '/admin/ai-paths/trigger-buttons'],
+      ['content/cms/pages', 'Pages', '/admin/cms/pages'],
+      ['content/notes/notebooks', 'Notebooks', '/admin/notes/notebooks'],
+      ['page-manager/kangur/lessons-manager', 'Lessons Manager', '/admin/kangur/lessons-manager'],
+      ['commerce/products/pages', 'Product Pages', '/admin/products/pages'],
+      ['commerce/products/title-terms', 'Title Terms', '/admin/products/title-terms'],
+      ['integrations/marketplaces/allegro/messages', 'Messages', '/admin/integrations/marketplaces/allegro/messages'],
+      ['integrations/marketplaces/playwright/script', 'Script', '/admin/integrations/marketplaces/playwright/script'],
+      ['playwright/step-sequencer', 'Step Sequencer', '/admin/playwright/step-sequencer'],
+      ['playwright/action-runs', 'Action Runs', '/admin/playwright/action-runs'],
+      ['image-studio/ui-presets', 'UI Presets', '/admin/image-studio/ui-presets'],
+      ['system/auth/users', 'Users', '/admin/auth/users'],
+      ['system/settings/storage', 'Storage', '/admin/settings/storage'],
+      ['system/validator/lists', 'Lists', '/admin/validator/lists'],
+    ] as const;
+
+    expectedEntries.forEach(([id, label, href]) => {
+      const item = findNavItem(
+        nav,
+        (entry) => entry.id === id && entry.label === label && entry.href === href
+      );
+
+      expect(item).not.toBeNull();
+    });
   });
 });

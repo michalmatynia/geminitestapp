@@ -128,6 +128,8 @@ export type CampaignEditActions = {
   handleDuplicateCampaign: () => Promise<void>;
   handleToggleArchiveCampaign: () => Promise<void>;
   handleDeleteCampaign: () => void;
+  handleGrantApproval: () => Promise<void>;
+  handleRevokeApproval: () => Promise<void>;
   handleAddSuppressionEntry: () => Promise<void>;
   handleRemoveSuppressionEntry: (emailAddress: string) => Promise<void>;
 };

@@ -68,8 +68,16 @@ type ConfiguredStorageUploadParams = {
   folder: string | null;
   forceSource?: FileStorageSource | null;
   fastCometBaseUrl?: string | null;
+  fastCometConfig?: FastCometStorageOverrides | null;
   writeLocalCopy: () => Promise<void>;
 };
+
+export type FastCometStorageOverrides = Partial<
+  Pick<
+    FastCometStorageConfig,
+    'baseUrl' | 'uploadEndpoint' | 'deleteEndpoint' | 'server' | 'port' | 'resolveIp'
+  >
+>;
 
 type ConfiguredStorageUploadResult = {
   filepath: string;
@@ -115,11 +123,10 @@ const uploadFastCometConfiguredStorage = async (
   settings: FileStorageSettings,
   mirroredLocally: boolean
 ): Promise<ConfiguredStorageUploadResult> => {
-  const fastCometBaseUrl = params.fastCometBaseUrl?.trim() ?? '';
-  const fastComet =
-    fastCometBaseUrl.length > 0
-      ? { ...settings.fastComet, baseUrl: fastCometBaseUrl.replace(/\/$/, '') }
-      : settings.fastComet;
+  const fastComet = applyFastCometUploadOverrides(settings.fastComet, {
+    baseUrl: params.fastCometBaseUrl,
+    overrides: params.fastCometConfig,
+  });
   try {
     const remotePath = await uploadToFastComet({
       buffer: params.buffer,
@@ -144,6 +151,63 @@ const uploadFastCometConfiguredStorage = async (
       cause: error,
     });
   }
+};
+
+const normalizeOverrideUrl = (value: string): string => value.trim().replace(/\/$/, '');
+
+const applyLegacyFastCometBaseUrlOverride = (
+  baseConfig: FastCometStorageConfig,
+  baseUrl?: string | null
+): FastCometStorageConfig => {
+  const fastCometBaseUrl = baseUrl?.trim() ?? '';
+  if (fastCometBaseUrl.length === 0) return baseConfig;
+  return { ...baseConfig, baseUrl: normalizeOverrideUrl(fastCometBaseUrl) };
+};
+
+const readFastCometStringUrlOverride = (value: string | undefined): string | undefined =>
+  value === undefined ? undefined : normalizeOverrideUrl(value);
+
+const readFastCometDeleteEndpointOverride = (value: string | null | undefined): string | null | undefined =>
+  value === undefined || value === null ? value : normalizeOverrideUrl(value);
+
+const buildFastCometUrlOverrides = (
+  overrides: FastCometStorageOverrides
+): FastCometStorageOverrides => {
+  const baseUrl = readFastCometStringUrlOverride(overrides.baseUrl);
+  const uploadEndpoint = readFastCometStringUrlOverride(overrides.uploadEndpoint);
+  const deleteEndpoint = readFastCometDeleteEndpointOverride(overrides.deleteEndpoint);
+  return {
+    ...(baseUrl !== undefined ? { baseUrl } : {}),
+    ...(uploadEndpoint !== undefined ? { uploadEndpoint } : {}),
+    ...(deleteEndpoint !== undefined ? { deleteEndpoint } : {}),
+  };
+};
+
+const buildFastCometConnectionOverrides = (
+  overrides: FastCometStorageOverrides
+): FastCometStorageOverrides => ({
+  ...(overrides.server !== undefined ? { server: overrides.server } : {}),
+  ...(overrides.port !== undefined ? { port: overrides.port } : {}),
+  ...(overrides.resolveIp !== undefined ? { resolveIp: overrides.resolveIp } : {}),
+});
+
+const applyFastCometUploadOverrides = (
+  baseConfig: FastCometStorageConfig,
+  input: {
+    baseUrl?: string | null;
+    overrides?: FastCometStorageOverrides | null;
+  }
+): FastCometStorageConfig => {
+  const next = applyLegacyFastCometBaseUrlOverride(baseConfig, input.baseUrl);
+
+  const overrides = input.overrides ?? null;
+  if (overrides === null) return next;
+
+  return {
+    ...next,
+    ...buildFastCometUrlOverrides(overrides),
+    ...buildFastCometConnectionOverrides(overrides),
+  };
 };
 
 export const uploadToConfiguredStorage = async (

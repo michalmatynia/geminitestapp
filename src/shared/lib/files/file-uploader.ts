@@ -45,6 +45,7 @@ import {
   deleteFromConfiguredStorage,
   getPublicPathFromStoredPath,
   uploadToConfiguredStorage,
+  type FastCometStorageOverrides,
 } from './services/storage/file-storage-service';
 
 /**
@@ -131,6 +132,7 @@ export async function uploadFile(
     filenameOverride?: string | null | undefined;
     forceStorageSource?: FileStorageSource | null | undefined;
     fastCometBaseUrl?: string | null | undefined;
+    fastCometConfig?: FastCometStorageOverrides | null | undefined;
     provider?: ProductDbProvider | undefined;
   }
 ): Promise<ImageFileRecord> {
@@ -181,6 +183,7 @@ export async function uploadFile(
       folder: options?.folder ?? null,
       forceSource: options?.forceStorageSource ?? null,
       fastCometBaseUrl: options?.fastCometBaseUrl ?? null,
+      fastCometConfig: options?.fastCometConfig ?? null,
       writeLocalCopy: async (): Promise<void> => {
         await fs.mkdir(diskDir, { recursive: true });
         await fs.writeFile(localDiskPath, fileBuffer);
@@ -188,6 +191,8 @@ export async function uploadFile(
     });
     storedFilepath = storageResult.filepath;
     storageSource = storageResult.source;
+    const fastCometPublicBaseUrl =
+      options?.fastCometBaseUrl ?? options?.fastCometConfig?.baseUrl ?? null;
 
     const imageFileRepository = await getImageFileRepository(options?.provider);
     const recordInput: ImageFileCreateInput = {
@@ -200,8 +205,8 @@ export async function uploadFile(
         publicPath,
         storageSource,
         mirroredLocally: storageResult.mirroredLocally,
-        ...(options?.fastCometBaseUrl !== undefined && options.fastCometBaseUrl !== null
-          ? { publicBaseUrl: options.fastCometBaseUrl }
+        ...(fastCometPublicBaseUrl !== null
+          ? { publicBaseUrl: fastCometPublicBaseUrl }
           : {}),
       },
       size: file.size,

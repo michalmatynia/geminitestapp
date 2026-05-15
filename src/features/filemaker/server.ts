@@ -146,6 +146,7 @@ export {
  * Campaign suppression list utilities
  */
 export {
+  bulkImportFilemakerMailSuppressions,
   filterFilemakerMailSuppressionEntries,
   findFilemakerMailSuppressionEntry,
   isFilemakerMailAddressSuppressed,

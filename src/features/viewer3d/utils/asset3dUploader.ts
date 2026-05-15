@@ -22,7 +22,6 @@ import type { Asset3DCreateInput, Asset3DRecord } from '@/shared/contracts/viewe
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   MILKBAR_CMS_MODELS_FOLDER,
-  MILKBAR_FASTCOMET_BASE_URL,
   type FileStorageProfile,
 } from '@/shared/lib/files/constants';
 import { assets3dRoot, uploadsRoot } from '@/shared/lib/files/server-constants';
@@ -30,6 +29,7 @@ import {
   deleteFileFromStorage,
   uploadToConfiguredStorage,
 } from '@/shared/lib/files/services/image-file-service';
+import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
@@ -54,6 +54,47 @@ interface UploadOptions {
   storageProfile?: FileStorageProfile;
 }
 
+type MilkbarFastCometUploadOptions = {
+  forceSource: 'fastcomet';
+  fastCometBaseUrl: string;
+  fastCometConfig: ReturnType<typeof resolveMilkbarFastCometStorageProfile>['fastCometConfig'];
+};
+
+type AssetStorageTarget = {
+  diskDir: string;
+  publicDir: string;
+  category: string;
+  folder: string | null;
+  fastCometUploadOptions: MilkbarFastCometUploadOptions | Record<string, never>;
+};
+
+function resolveAssetStorageTarget(
+  storageProfile: FileStorageProfile | undefined
+): AssetStorageTarget {
+  if (storageProfile === 'milkbarCms') {
+    const milkbarStorage = resolveMilkbarFastCometStorageProfile();
+    return {
+      diskDir: path.join(uploadsRoot, 'cms', MILKBAR_CMS_MODELS_FOLDER),
+      publicDir: `/uploads/cms/${MILKBAR_CMS_MODELS_FOLDER}`,
+      category: 'cms',
+      folder: MILKBAR_CMS_MODELS_FOLDER,
+      fastCometUploadOptions: {
+        forceSource: 'fastcomet' as const,
+        fastCometBaseUrl: milkbarStorage.publicBaseUrl,
+        fastCometConfig: milkbarStorage.fastCometConfig,
+      },
+    };
+  }
+
+  return {
+    diskDir: assets3dRoot,
+    publicDir: '/uploads/assets3d',
+    category: 'assets3d',
+    folder: null,
+    fastCometUploadOptions: {},
+  };
+}
+
 /**
  * Prepares and stores a 3D asset file to configured storage
  * Handles both local disk and cloud storage uploads
@@ -75,13 +116,8 @@ async function prepareAssetStorage(
 ): Promise<{ filename: string; storedFilepath: string; publicPath: string }> {
   // Generate unique filename with timestamp to prevent collisions
   const filename = `${Date.now()}-${path.basename(file.name)}`;
-  const isMilkbarCmsUpload = options.storageProfile === 'milkbarCms';
-  const diskDir = isMilkbarCmsUpload
-    ? path.join(uploadsRoot, 'cms', MILKBAR_CMS_MODELS_FOLDER)
-    : assets3dRoot;
-  const publicDir = isMilkbarCmsUpload
-    ? `/uploads/cms/${MILKBAR_CMS_MODELS_FOLDER}`
-    : '/uploads/assets3d';
+  const storageTarget = resolveAssetStorageTarget(options.storageProfile);
+  const { diskDir, publicDir } = storageTarget;
   const publicPath = `${publicDir}/${filename}`;
   const localDiskPath = `${diskDir}/${filename}`;
 
@@ -91,15 +127,10 @@ async function prepareAssetStorage(
     filename,
     mimetype: file.type !== '' ? file.type : 'application/octet-stream',
     publicPath,
-    category: isMilkbarCmsUpload ? 'cms' : 'assets3d',
+    category: storageTarget.category,
     projectId: null,
-    folder: isMilkbarCmsUpload ? MILKBAR_CMS_MODELS_FOLDER : null,
-    ...(isMilkbarCmsUpload
-      ? {
-          forceSource: 'fastcomet' as const,
-          fastCometBaseUrl: MILKBAR_FASTCOMET_BASE_URL,
-        }
-      : {}),
+    folder: storageTarget.folder,
+    ...storageTarget.fastCometUploadOptions,
     // Also write to local disk for reindexing operations
     writeLocalCopy: async (): Promise<void> => {
       await fs.mkdir(diskDir, { recursive: true });
@@ -169,7 +200,7 @@ function mapAssetOptionsToCreatePayload(input: {
       publicPath,
       storageProfile: options.storageProfile ?? 'default',
       ...(options.storageProfile === 'milkbarCms'
-        ? { publicBaseUrl: MILKBAR_FASTCOMET_BASE_URL }
+        ? { publicBaseUrl: resolveMilkbarFastCometStorageProfile().publicBaseUrl }
         : {}),
     },
   };

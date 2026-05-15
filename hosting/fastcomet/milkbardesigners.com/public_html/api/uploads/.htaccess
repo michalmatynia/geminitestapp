@@ -1,0 +1,7 @@
+Options -Indexes
+PassengerEnabled off
+
+<FilesMatch "^(bootstrap|config|config\.example)\.php$">
+  Require all denied
+</FilesMatch>
+

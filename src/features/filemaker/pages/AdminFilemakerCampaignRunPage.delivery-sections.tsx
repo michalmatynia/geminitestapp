@@ -1,7 +1,8 @@
 'use client';
 
+import { Download } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { Badge, Button } from '@/shared/ui/primitives.public';
 
@@ -13,6 +14,33 @@ import type {
   FilemakerMailThread,
 } from '../types';
 import { formatTimestamp } from './filemaker-page-utils';
+
+const escapeCsvCell = (value: string): string => {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+};
+
+const DELIVERY_CSV_HEADERS = ['emailAddress', 'status', 'failureCategory', 'provider', 'sentAt', 'nextRetryAt', 'updatedAt', 'lastError'];
+
+const buildDeliveriesCsv = (deliveries: FilemakerEmailCampaignDelivery[]): string => {
+  const rows = deliveries.map((d) =>
+    [d.emailAddress, d.status, d.failureCategory, d.provider, d.sentAt, d.nextRetryAt, d.updatedAt, d.lastError]
+      .map((v) => escapeCsvCell(String(v ?? '')))
+      .join(',')
+  );
+  return [DELIVERY_CSV_HEADERS.join(','), ...rows].join('\n');
+};
+
+const downloadDeliveriesCsv = (deliveries: FilemakerEmailCampaignDelivery[], filename: string): void => {
+  const csv = buildDeliveriesCsv(deliveries);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 const campaignHasAssignedMailAccount = (campaign: FilemakerEmailCampaign): boolean =>
   typeof campaign.mailAccountId === 'string' && campaign.mailAccountId.length > 0;
@@ -145,9 +173,22 @@ export function DeliveriesSection({
   deliveries: FilemakerEmailCampaignDelivery[];
   linkedMailThreadByDeliveryId: Map<string, FilemakerMailThread>;
 }): React.JSX.Element {
+  const handleExport = useCallback((): void => {
+    const filename = `deliveries-${campaign.name.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'campaign'}.csv`;
+    downloadDeliveriesCsv(deliveries, filename);
+  }, [campaign.name, deliveries]);
+
   return (
     <section className='rounded-xl border border-gray-200 bg-white p-5 shadow-sm'>
-      <h2 className='text-sm font-semibold text-gray-900'>Deliveries</h2>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <h2 className='text-sm font-semibold text-gray-900'>Deliveries</h2>
+        {deliveries.length > 0 ? (
+          <Button type='button' size='sm' variant='outline' onClick={handleExport}>
+            <Download className='mr-2 size-3.5' />
+            Export CSV ({deliveries.length})
+          </Button>
+        ) : null}
+      </div>
       <div className='mt-4 space-y-3'>
         {deliveries.length === 0 ? (
           <p className='text-sm text-gray-500'>No deliveries were created for this run.</p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export type Slots = [string, string, string, string];
@@ -13,5 +13,6 @@ export function useFloorPlanSlots() { return useContext(FloorPlanCtx); }
 
 export function FloorPlanSlotsProvider({ children }: { children: ReactNode }) {
   const [slots, setSlots] = useState<Slots>(INITIAL_SLOTS);
-  return <FloorPlanCtx.Provider value={{ slots, setSlots }}>{children}</FloorPlanCtx.Provider>;
+  const value = useMemo(() => ({ slots, setSlots }), [slots]);
+  return <FloorPlanCtx.Provider value={value}>{children}</FloorPlanCtx.Provider>;
 }

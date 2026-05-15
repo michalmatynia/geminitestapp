@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useFloorPlanSlots, type Slots } from '@/lib/floorPlanContext';
@@ -490,7 +490,7 @@ interface State {
   group:    THREE.Group | null;
 }
 
-export default function InteriorViewer() {
+function InteriorViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef   = useRef<HTMLDivElement>(null);
   const stateRef  = useRef<State | null>(null);
@@ -622,3 +622,5 @@ export default function InteriorViewer() {
     </div>
   );
 }
+
+export default memo(InteriorViewer);

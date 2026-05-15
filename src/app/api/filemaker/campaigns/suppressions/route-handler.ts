@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { deleteHandler, getHandler, postHandler } from './handler';
+import { deleteHandler, getHandler, postHandler, putHandler } from './handler';
 
 export const GET = apiHandler(getHandler, {
   source: 'filemaker.campaigns.suppressions.GET',
@@ -16,5 +16,10 @@ export const DELETE = apiHandler(deleteHandler, {
 
 export const POST = apiHandler(postHandler, {
   source: 'filemaker.campaigns.suppressions.POST',
+  requireAuth: true,
+});
+
+export const PUT = apiHandler(putHandler, {
+  source: 'filemaker.campaigns.suppressions.PUT',
   requireAuth: true,
 });

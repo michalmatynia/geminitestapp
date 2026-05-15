@@ -1,0 +1,346 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Milk Bar Designers / est. Amsterdam" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - generic [ref=e6]: Milk Bar Designers
+        - generic [ref=e7]: / est. Amsterdam
+      - generic [ref=e8]:
+        - link "practice" [ref=e9] [cursor=pointer]:
+          - /url: "#practice"
+        - link "projects" [ref=e10] [cursor=pointer]:
+          - /url: "#projects"
+        - link "process" [ref=e11] [cursor=pointer]:
+          - /url: "#process"
+        - link "studio" [ref=e12] [cursor=pointer]:
+          - /url: "#studio"
+      - generic [ref=e13]:
+        - generic "Language" [ref=e14]:
+          - button "en" [pressed] [ref=e15] [cursor=pointer]
+          - button "de" [ref=e16] [cursor=pointer]
+          - button "pl" [ref=e17] [cursor=pointer]
+        - link "enquire" [ref=e18] [cursor=pointer]:
+          - /url: "#contact"
+          - generic [ref=e19]: enquire
+  - banner [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Amsterdam / London / Zurich
+        - generic [ref=e26]: Index - MMXXV
+      - heading "Architecture drawn with quiet intelligence." [level=1] [ref=e27]:
+        - generic [ref=e29]: Architecture drawn
+        - emphasis [ref=e32]: with quiet
+        - emphasis [ref=e35]: intelligence.
+      - generic [ref=e36]:
+        - paragraph [ref=e37]: A small studio working between architecture and machine learning, automating the administrative so practice returns to the considered drawing.
+        - generic [ref=e38]:
+          - link "see the practice" [ref=e39] [cursor=pointer]:
+            - /url: "#practice"
+            - generic [ref=e40]: see the practice
+          - link "selected projects ↘" [ref=e43] [cursor=pointer]:
+            - /url: "#projects"
+  - generic [ref=e46]:
+    - generic [ref=e47]:
+      - generic [ref=e48]: "- 01 / drawing"
+      - heading "Every line carries intent." [level=2] [ref=e49]:
+        - text: Every line carries
+        - emphasis [ref=e50]: intent.
+      - paragraph [ref=e51]: Our systems parse architectural intent from natural language, existing drawings, and site constraint. They produce documentation a peer-reviewing architect would accept without amendment.
+      - link "how it works ↘" [ref=e52] [cursor=pointer]:
+        - /url: "#practice"
+      - paragraph [ref=e53]: "- drag rooms to reassign programme"
+    - generic [ref=e54]:
+      - img "Interactive floor plan — drag rooms to rearrange" [ref=e56]:
+        - generic [ref=e58]:
+          - generic: Living
+          - generic: 36 m²
+        - generic [ref=e60]:
+          - generic: Bedroom
+          - generic: 58 m²
+        - generic [ref=e62]:
+          - generic: Studio
+          - generic: 86 m²
+        - generic [ref=e64]:
+          - generic: Amenity
+          - generic: 47 m²
+        - generic [ref=e66]: 18,000
+        - generic [ref=e70]: "N"
+        - generic [ref=e71]: A-001 · Ground
+      - generic "Interactive interior view of the studio floor plan with furniture" [ref=e74]
+  - generic [ref=e76]:
+    - generic [ref=e77]:
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - generic [ref=e83]: — buildings
+                - generic [ref=e84]: 60%
+              - slider [ref=e85]: "60"
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]: — spread
+                - generic [ref=e89]: 80%
+              - slider [ref=e90]: "80"
+            - generic [ref=e91]:
+              - generic [ref=e93]: — streets
+              - generic [ref=e94]:
+                - button "open" [ref=e95] [cursor=pointer]
+                - button "planned" [ref=e96] [cursor=pointer]
+                - button "historic" [ref=e97] [cursor=pointer]
+            - generic [ref=e98]:
+              - generic [ref=e99]:
+                - generic [ref=e100]: — plot size
+                - generic [ref=e101]: md
+              - slider [ref=e102]: "50"
+          - generic [ref=e103]:
+            - img "Interactive city map — top view" [ref=e104]:
+              - generic [ref=e105]:
+                - generic [ref=e786]: 100 m
+                - generic [ref=e790]: "N"
+            - generic [ref=e791]:
+              - button "Zoom in" [ref=e792] [cursor=pointer]: +
+              - button "Zoom out" [disabled]: −
+        - generic: the productive void
+      - generic [ref=e793]:
+        - text: "- 02 / philosophy"
+        - heading "The discipline of negative space." [level=2] [ref=e794]:
+          - text: The discipline of
+          - emphasis [ref=e795]: negative space.
+        - paragraph [ref=e796]: In architecture, the most powerful element is often what is absent. The void between walls defines a room. The pause between columns creates rhythm. We hold our software to the same standard.
+        - paragraph [ref=e797]: We do not add complexity. We subtract it.
+    - generic [ref=e798]:
+      - generic [ref=e799]:
+        - generic [ref=e800]: i.
+        - generic [ref=e801]:
+          - text: Reduce, then refine
+          - emphasis [ref=e802]: "- restraint as method"
+        - paragraph [ref=e803]: Remove every redundant process before optimising what remains. Complexity is never a solution; it is a symptom.
+      - generic [ref=e804]:
+        - generic [ref=e805]: ii.
+        - generic [ref=e806]:
+          - text: Precision over speed
+          - emphasis [ref=e807]: "- accuracy is non-negotiable"
+        - paragraph [ref=e808]: Our models are trained on building codes across thirty-eight jurisdictions. Output is verified against the canon before it leaves the studio.
+      - generic [ref=e809]:
+        - generic [ref=e810]: iii.
+        - generic [ref=e811]:
+          - text: Augment, never replace
+          - emphasis [ref=e812]: "- the architect remains"
+        - paragraph [ref=e813]: The architect eye is irreplaceable. We automate the administrative so creativity operates unencumbered by the regulatory.
+  - generic [ref=e816]:
+    - generic [ref=e817]:
+      - generic [ref=e818]: "- 03 / practice"
+      - generic [ref=e819]: four systems
+    - heading "What we quietly automate, so practice can resume." [level=2] [ref=e820]:
+      - text: What we
+      - emphasis [ref=e821]: quietly automate
+      - text: ", so practice can resume."
+  - generic [ref=e824]:
+    - generic [ref=e825]:
+      - generic [ref=e826]:
+        - generic [ref=e827]: "- 04 / projects"
+        - generic [ref=e828]: three of recent note
+      - heading "A selection of built work rendered through the studio systems." [level=2] [ref=e829]:
+        - text: A selection of
+        - emphasis [ref=e830]: built work
+        - text: rendered through the studio systems.
+    - generic [ref=e831]:
+      - link "MBD — 001 / 2024 Helios Tower mixed-use tower Zurich" [ref=e832] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e835]:
+          - generic [ref=e836]: MBD — 001 / 2024
+          - generic [ref=e837]:
+            - text: Helios Tower
+            - emphasis [ref=e838]: mixed-use tower
+          - generic [ref=e839]: Zurich
+      - link "MBD — 002 / 2024 Kulturhaus cultural centre Amsterdam" [ref=e840] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e843]:
+          - generic [ref=e844]: MBD — 002 / 2024
+          - generic [ref=e845]:
+            - text: Kulturhaus
+            - emphasis [ref=e846]: cultural centre
+          - generic [ref=e847]: Amsterdam
+      - link "MBD — 003 / 2024 South Quarter residential ensemble Berlin" [ref=e848] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e851]:
+          - generic [ref=e852]: MBD — 003 / 2024
+          - generic [ref=e853]:
+            - text: South Quarter
+            - emphasis [ref=e854]: residential ensemble
+          - generic [ref=e855]: Berlin
+  - generic [ref=e857]:
+    - generic [ref=e858]:
+      - generic [ref=e859]: — 04b / interactive
+      - paragraph [ref=e860]: 3d model viewer
+      - heading "Explore the work in three dimensions." [level=3] [ref=e861]:
+        - text: Explore the
+        - emphasis [ref=e862]: work in three dimensions.
+      - generic [ref=e863]:
+        - button "MBD — 001 Helios Tower Zurich · Mixed-Use Tower" [ref=e864] [cursor=pointer]:
+          - generic [ref=e865]: MBD — 001
+          - generic [ref=e866]: Helios Tower
+          - generic [ref=e867]: Zurich · Mixed-Use Tower
+        - button "MBD — 002 Kulturhaus Amsterdam · Cultural Centre" [ref=e868] [cursor=pointer]:
+          - generic [ref=e869]: MBD — 002
+          - generic [ref=e870]: Kulturhaus
+          - generic [ref=e871]: Amsterdam · Cultural Centre
+        - button "MBD — 003 South Quarter Berlin · Residential Ensemble" [ref=e872] [cursor=pointer]:
+          - generic [ref=e873]: MBD — 003
+          - generic [ref=e874]: South Quarter
+          - generic [ref=e875]: Berlin · Residential Ensemble
+      - generic [ref=e876]:
+        - generic [ref=e877]: render mode
+        - generic [ref=e878]:
+          - button "wireframe" [ref=e879] [cursor=pointer]
+          - button "solid" [ref=e880] [cursor=pointer]
+          - button "textured" [ref=e881] [cursor=pointer]
+    - generic [ref=e882]:
+      - generic "Interactive 3D architectural model" [ref=e883]
+      - generic [ref=e884]:
+        - generic [ref=e885]: MBD-001
+        - generic [ref=e886]: 32 Floors · 42,000 m²
+        - generic [ref=e887]: Mixed-Use · Zurich, CH
+      - generic [ref=e888]:
+        - button "Zoom in" [ref=e889] [cursor=pointer]: +
+        - button "Zoom out" [ref=e890] [cursor=pointer]: −
+      - generic [ref=e891]:
+        - img [ref=e892]
+        - text: drag to orbit
+  - generic [ref=e896]:
+    - generic [ref=e897]:
+      - generic [ref=e898]:
+        - generic [ref=e899]: "- 05 / process"
+        - generic [ref=e900]: four movements
+      - heading "How an engagement unfolds." [level=2] [ref=e901]:
+        - text: How an engagement
+        - emphasis [ref=e902]: unfolds.
+    - generic [ref=e903]:
+      - generic [ref=e904]:
+        - img [ref=e906]
+        - generic [ref=e908]: i.
+        - heading "Audit" [level=3] [ref=e909]
+        - paragraph [ref=e910]: "We map your existing workflow: every touchpoint, every tool, every wasted hour. The picture is usually clarifying."
+      - generic [ref=e911]:
+        - img [ref=e913]
+        - generic [ref=e915]: ii.
+        - heading "Configure" [level=3] [ref=e916]
+        - paragraph [ref=e917]: Models are trained on your project typology, drawing conventions, and the jurisdictions in which you build.
+      - generic [ref=e918]:
+        - img [ref=e920]
+        - generic [ref=e922]: iii.
+        - heading "Integrate" [level=3] [ref=e923]
+        - paragraph [ref=e924]: The systems plug into Revit, AutoCAD, ArchiCAD, Rhino. No workflow disruption; new capability appears in place.
+      - generic [ref=e925]:
+        - img [ref=e927]
+        - generic [ref=e929]: iv.
+        - heading "Refine" [level=3] [ref=e930]
+        - paragraph [ref=e931]: With each project cycle the system learns your standards. Output improves quietly, continuously, and without ceremony.
+  - generic [ref=e934]:
+    - generic [ref=e935]:
+      - generic [ref=e936]:
+        - generic [ref=e937]: "340"
+        - generic [ref=e938]: +
+      - generic [ref=e939]: Projects processed through studio systems
+    - generic [ref=e940]:
+      - generic [ref=e941]:
+        - generic [ref=e942]: "72"
+        - generic [ref=e943]: "%"
+      - generic [ref=e944]: Median reduction in documentation hours
+    - generic [ref=e945]:
+      - generic [ref=e946]:
+        - generic [ref=e947]: "98"
+        - generic [ref=e948]: .4%
+      - generic [ref=e949]: Compliance check accuracy rate
+    - generic [ref=e950]:
+      - generic [ref=e952]: "38"
+      - generic [ref=e953]: Active jurisdictional regulation models
+  - generic [ref=e956]:
+    - generic [ref=e957]: "- 07 / note"
+    - generic [ref=e958]:
+      - blockquote [ref=e959]:
+        - text: The measure of a great building is not what it shows
+        - emphasis [ref=e961]: but what it eliminates.
+      - generic [ref=e962]: From the studio design principles / 2024
+  - generic [ref=e965]:
+    - heading "Ready to eliminate the unnecessary?" [level=2] [ref=e966]:
+      - text: Ready to
+      - emphasis [ref=e967]: eliminate
+      - text: the unnecessary?
+    - generic [ref=e968]:
+      - paragraph [ref=e969]: Pilot programme places are limited to twelve practices per quarter. Enquiries are reviewed weekly.
+      - generic [ref=e970]:
+        - textbox "email" [ref=e972]:
+          - /placeholder: your practice email
+        - textbox "message" [ref=e974]:
+          - /placeholder: tell us about your practice and what you would like to automate
+        - button "send enquiry" [ref=e975] [cursor=pointer]:
+          - generic [ref=e976]: send enquiry
+      - paragraph [ref=e979]: No obligation. Reviewed weekly / response within five working days.
+  - contentinfo [ref=e980]:
+    - generic [ref=e981]:
+      - generic [ref=e982]:
+        - generic [ref=e983]:
+          - generic [ref=e986]: Milk Bar Designers
+          - paragraph [ref=e987]:
+            - generic [ref=e988]: Herengracht 44
+            - generic [ref=e989]: 1017 BS / Amsterdam
+            - generic [ref=e990]: The Netherlands
+          - paragraph [ref=e991]: A small studio designing software for architecture, and architecture with the help of software.
+        - generic [ref=e992]:
+          - heading "Practice" [level=4] [ref=e993]
+          - list [ref=e994]:
+            - listitem [ref=e995]:
+              - link "Compliance" [ref=e996] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e997]:
+              - link "Massing" [ref=e998] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e999]:
+              - link "Documentation" [ref=e1000] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1001]:
+              - link "Intelligence" [ref=e1002] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e1003]:
+          - heading "Studio" [level=4] [ref=e1004]
+          - list [ref=e1005]:
+            - listitem [ref=e1006]:
+              - link "Philosophy" [ref=e1007] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1008]:
+              - link "Projects" [ref=e1009] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1010]:
+              - link "Research" [ref=e1011] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1012]:
+              - link "Careers" [ref=e1013] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e1014]:
+          - heading "Contact" [level=4] [ref=e1015]
+          - list [ref=e1016]:
+            - listitem [ref=e1017]:
+              - link "hello@milkbar.studio" [ref=e1018] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1019]:
+              - link "Amsterdam" [ref=e1020] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1021]:
+              - link "London" [ref=e1022] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e1023]:
+              - link "Zurich" [ref=e1024] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e1025]:
+        - generic [ref=e1026]: MMXXV / Milk Bar Designers B.V.
+        - generic [ref=e1027]:
+          - link "Privacy" [ref=e1028] [cursor=pointer]:
+            - /url: "#"
+          - link "Terms" [ref=e1029] [cursor=pointer]:
+            - /url: "#"
+          - link "Index" [ref=e1030] [cursor=pointer]:
+            - /url: "#"
+  - button "Open Next.js Dev Tools" [ref=e1036] [cursor=pointer]:
+    - img [ref=e1037]

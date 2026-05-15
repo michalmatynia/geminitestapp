@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { useSession } from 'next-auth/react';
+
 import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { useMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -263,6 +265,69 @@ export function useCampaignArchiveAction(
     } catch (error: unknown) {
       logClientError(error);
       context.toast(error instanceof Error ? error.message : 'Failed to update campaign status.', {
+        variant: 'error',
+      });
+    }
+  }, [buildPersistedCampaign, context]);
+}
+
+export function useCampaignGrantApprovalAction(
+  input: CampaignActionInput
+): CampaignEditActions['handleGrantApproval'] {
+  const { buildPersistedCampaign, context } = input;
+  const { data: session } = useSession();
+  return useCallback(async (): Promise<void> => {
+    if (context.route.isCreateMode) return;
+    const approvedBy =
+      session?.user?.name ??
+      session?.user?.email ??
+      'Admin';
+    const nextCampaign = buildPersistedCampaign({
+      approvalGrantedAt: new Date().toISOString(),
+      approvedBy,
+    });
+    const nextCampaigns = sortCampaignsByName(
+      context.registries.campaignRegistry.campaigns
+        .filter((campaign) => campaign.id !== nextCampaign.id)
+        .concat(nextCampaign)
+    );
+    try {
+      await context.persistence.persistCampaignRegistry(nextCampaigns);
+      context.draftState.setDraft(nextCampaign);
+      context.toast(`Campaign approved by ${approvedBy}.`, { variant: 'success' });
+      context.settingsStore.refetch();
+    } catch (error: unknown) {
+      logClientError(error);
+      context.toast(error instanceof Error ? error.message : 'Failed to grant approval.', {
+        variant: 'error',
+      });
+    }
+  }, [buildPersistedCampaign, context, session]);
+}
+
+export function useCampaignRevokeApprovalAction(
+  input: CampaignActionInput
+): CampaignEditActions['handleRevokeApproval'] {
+  const { buildPersistedCampaign, context } = input;
+  return useCallback(async (): Promise<void> => {
+    if (context.route.isCreateMode) return;
+    const nextCampaign = buildPersistedCampaign({
+      approvalGrantedAt: null,
+      approvedBy: null,
+    });
+    const nextCampaigns = sortCampaignsByName(
+      context.registries.campaignRegistry.campaigns
+        .filter((campaign) => campaign.id !== nextCampaign.id)
+        .concat(nextCampaign)
+    );
+    try {
+      await context.persistence.persistCampaignRegistry(nextCampaigns);
+      context.draftState.setDraft(nextCampaign);
+      context.toast('Campaign approval revoked.', { variant: 'success' });
+      context.settingsStore.refetch();
+    } catch (error: unknown) {
+      logClientError(error);
+      context.toast(error instanceof Error ? error.message : 'Failed to revoke approval.', {
         variant: 'error',
       });
     }

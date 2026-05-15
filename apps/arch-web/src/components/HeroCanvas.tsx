@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-export default function HeroCanvas() {
+function HeroCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -367,3 +367,5 @@ export default function HeroCanvas() {
     />
   );
 }
+
+export default memo(HeroCanvas);

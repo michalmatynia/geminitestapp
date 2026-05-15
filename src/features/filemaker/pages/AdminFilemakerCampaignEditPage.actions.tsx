@@ -22,6 +22,8 @@ type CampaignEditPendingState = {
 type CampaignEditActionHandlers = {
   handleDeleteCampaign: CampaignEditContextValue['handleDeleteCampaign'];
   handleDuplicateCampaign: CampaignEditContextValue['handleDuplicateCampaign'];
+  handleGrantApproval: CampaignEditContextValue['handleGrantApproval'];
+  handleRevokeApproval: CampaignEditContextValue['handleRevokeApproval'];
   handleLaunch: CampaignEditContextValue['handleLaunch'];
   handleToggleArchiveCampaign: CampaignEditContextValue['handleToggleArchiveCampaign'];
   saveCampaign: CampaignEditContextValue['saveCampaign'];
@@ -120,6 +122,36 @@ function CampaignEditDeleteButton({
   );
 }
 
+function CampaignEditApprovalButton({
+  disabled,
+  draft,
+  handleGrantApproval,
+  handleRevokeApproval,
+  isCreateMode,
+}: Pick<CampaignEditActionsProps, 'draft' | 'handleGrantApproval' | 'handleRevokeApproval' | 'isCreateMode'> & {
+  disabled: boolean;
+}): React.JSX.Element | null {
+  if (isCreateMode || !draft.launch.requireApproval) return null;
+  const isApproved = (draft.approvalGrantedAt ?? '').length > 0;
+  return (
+    <Button
+      type='button'
+      variant={isApproved ? 'outline' : 'default'}
+      size='sm'
+      disabled={disabled}
+      onClick={(): void => {
+        if (isApproved) {
+          void handleRevokeApproval();
+        } else {
+          void handleGrantApproval();
+        }
+      }}
+    >
+      {isApproved ? 'Revoke Approval' : 'Approve Campaign'}
+    </Button>
+  );
+}
+
 function CampaignEditDryRunButton({
   disabled,
   handleLaunch,
@@ -181,6 +213,8 @@ export function CampaignEditActions({
   draft,
   handleDeleteCampaign,
   handleDuplicateCampaign,
+  handleGrantApproval,
+  handleRevokeApproval,
   handleLaunch,
   handleToggleArchiveCampaign,
   isCreateMode,
@@ -214,6 +248,13 @@ export function CampaignEditActions({
       <CampaignEditDeleteButton
         disabled={disabled}
         handleDeleteCampaign={handleDeleteCampaign}
+        isCreateMode={isCreateMode}
+      />
+      <CampaignEditApprovalButton
+        disabled={disabled}
+        draft={draft}
+        handleGrantApproval={handleGrantApproval}
+        handleRevokeApproval={handleRevokeApproval}
         isCreateMode={isCreateMode}
       />
       <CampaignEditDryRunButton disabled={disabled} handleLaunch={handleLaunch} />

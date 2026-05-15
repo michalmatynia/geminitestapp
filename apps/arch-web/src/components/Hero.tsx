@@ -1,9 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import type { ArchPageContent } from '@/lib/types';
-
-const HeroCanvas = dynamic(() => import('./HeroCanvas'), { ssr: false });
+import HeroCanvas from './HeroCanvas';
 
 export default function Hero({ content }: { content: ArchPageContent['hero'] }) {
   return (

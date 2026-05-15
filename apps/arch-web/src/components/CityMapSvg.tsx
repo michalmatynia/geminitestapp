@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { memo, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 const W = 800, H = 600;
 const STEP = 16;
@@ -217,7 +217,7 @@ function SegCtrl<T extends string>({
 }
 
 // ── Main component ─────────────────────────────────────────────────
-export default function CityMapSvg() {
+function CityMapSvg() {
   const [density, setDensity]   = useState(60);
   const [spread, setSpread]     = useState(80);
   const [plotSize, setPlotSize] = useState(50);
@@ -225,8 +225,7 @@ export default function CityMapSvg() {
 
   // Zoom runs entirely off React state — direct DOM writes via groupRef
   // so there are zero re-renders during the animation.
-  const zoomVal  = useRef(1);   // actual current zoom
-  const zoomVel  = useRef(0);   // spring velocity
+  const zoomVal   = useRef(1);  // actual current zoom
   const targetRef = useRef(1);  // desired zoom
   const rafRef   = useRef<number | null>(null);
   const svgRef   = useRef<SVGSVGElement>(null);
@@ -255,19 +254,13 @@ export default function CityMapSvg() {
   );
 
   const animate = useCallback(() => {
-    // Critically-damped spring: stiffness=0.14, damping=0.78
-    const force = (targetRef.current - zoomVal.current) * 0.14;
-    zoomVel.current = zoomVel.current * 0.78 + force;
-    zoomVal.current += zoomVel.current;
+    // Pure lerp — no velocity accumulation, so there is no initial-frame punch.
+    // Factor 0.04 gives a ~1.5 s glide to the target at 60 fps.
+    zoomVal.current += (targetRef.current - zoomVal.current) * 0.04;
     applyTransform(zoomVal.current);
 
-    const settled =
-      Math.abs(zoomVel.current) < 0.00015 &&
-      Math.abs(targetRef.current - zoomVal.current) < 0.00015;
-
-    if (settled) {
+    if (Math.abs(targetRef.current - zoomVal.current) < 0.0005) {
       zoomVal.current = targetRef.current;
-      zoomVel.current = 0;
       applyTransform(zoomVal.current);
       setBtnState({
         atMin: zoomVal.current <= MIN_Z + 0.05,
@@ -293,7 +286,7 @@ export default function CityMapSvg() {
     if (!el) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
-      doZoom(e.deltaY < 0 ? 1.18 : 1 / 1.18);
+      doZoom(e.deltaY < 0 ? 1.07 : 1 / 1.07);
     };
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
@@ -417,12 +410,14 @@ export default function CityMapSvg() {
       </svg>
 
       <div className="city-zoom-btns">
-        <button className="city-zoom-btn" onClick={() => doZoom(1.6)}
+        <button className="city-zoom-btn" onClick={() => doZoom(1.25)}
           disabled={btnState.atMax} aria-label="Zoom in">+</button>
-        <button className="city-zoom-btn" onClick={() => doZoom(1 / 1.6)}
+        <button className="city-zoom-btn" onClick={() => doZoom(1 / 1.25)}
           disabled={btnState.atMin} aria-label="Zoom out">−</button>
       </div>
       </div>{/* end map area */}
     </div>
   );
 }
+
+export default memo(CityMapSvg);

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -146,7 +146,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     fireEvent.click(screen.getByRole('button', { name: 'Back to Recent' }));
@@ -205,7 +205,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     fireEvent.click(screen.getByRole('button', { name: 'Back to Search' }));
@@ -317,7 +317,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await waitFor(() => {
       expect(screen.getByLabelText('Subject')).toHaveValue('Fwd: Hello');
@@ -432,7 +432,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    const { rerender } = render(<AdminFilemakerMailComposePage />);
+    const { rerender } = renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await waitFor(() => {
       expect(screen.getByLabelText('Subject')).toHaveValue('Fwd: Hello');
@@ -518,12 +518,14 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
+    await screen.findByRole('option', { name: 'Sales inbox' });
     fireEvent.change(screen.getByLabelText('Mailbox account'), {
       target: { value: 'account-2' },
     });
+    expect(screen.getByLabelText('Mailbox account')).toHaveValue('account-2');
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Cross-account follow-up' },
     });
@@ -590,7 +592,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    const { rerender } = render(<AdminFilemakerMailComposePage />);
+    const { rerender } = renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     fireEvent.change(screen.getByLabelText('To'), {
@@ -723,7 +725,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailThreadPage />);
+    renderWithProviders(<AdminFilemakerMailThreadPage />);
 
     await screen.findByText('Alice');
     fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
@@ -772,7 +774,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByLabelText('Mailbox account');
     await waitFor(() => {
@@ -849,7 +851,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     const sidebar = screen.getByText('Mail Navigation').closest('section');
@@ -943,7 +945,7 @@ describe('AdminFilemakerMail pages compose flows', () => {
       throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
     });
 
-    render(<AdminFilemakerMailComposePage />);
+    renderWithProviders(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
     const sidebar = screen.getByText('Mail Navigation').closest('section');

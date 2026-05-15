@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import {
+  bulkImportFilemakerMailSuppressions,
   loadFilemakerMailSuppressionEntries,
   pruneFilemakerCampaignColdRecipients,
   removeFilemakerMailSuppressionEntry,
@@ -13,6 +14,9 @@ import type { FilemakerEmailCampaignSuppressionEntry } from '@/features/filemake
 
 const deleteBodySchema = z.object({
   emailAddress: z.string().trim().min(1, 'emailAddress is required'),
+});
+const putBodySchema = z.object({
+  emailAddresses: z.array(z.string().trim().min(1)).min(1, 'At least one email address is required'),
 });
 const pruneBodySchema = z.object({
   minSendsWithoutEngagement: z.number().int().min(1).max(100).optional(),
@@ -44,6 +48,20 @@ export async function deleteHandler(
     );
   }
   return NextResponse.json({ removed: true, entry: result.entry });
+}
+
+export async function putHandler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
+  await assertSettingsManageAccess();
+  const body = (await req.json()) as unknown;
+  const { emailAddresses } = putBodySchema.parse(body);
+  const result = await bulkImportFilemakerMailSuppressions({
+    emailAddresses,
+    actor: 'admin-csv-import',
+  });
+  return NextResponse.json(result);
 }
 
 export async function postHandler(

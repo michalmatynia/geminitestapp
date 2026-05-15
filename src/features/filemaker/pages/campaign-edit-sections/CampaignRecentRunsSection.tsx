@@ -1,5 +1,6 @@
 'use client';
 
+import { Download } from 'lucide-react';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import type {
@@ -15,7 +16,49 @@ import type { FilemakerEmailCampaignRunMetrics } from '../../types/campaigns';
 import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.context';
 import { getRunActions } from '../AdminFilemakerCampaignEditPage.utils';
 import { formatTimestamp } from '../filemaker-page-utils';
-import { startTransition, type ReactElement } from 'react';
+import { startTransition, useCallback, type ReactElement } from 'react';
+
+const RUN_CSV_HEADERS = ['runId', 'mode', 'status', 'recipients', 'delivered', 'failed', 'skipped', 'progressPercent', 'createdAt', 'completedAt'];
+
+const escapeRunCsvCell = (value: string): string => {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+};
+
+const downloadRunsCsv = (
+  runs: FilemakerEmailCampaignRun[],
+  getDeliveries: (runId: string) => FilemakerEmailCampaignDelivery[],
+  campaignName: string
+): void => {
+  const rows = runs.map((run) => {
+    const runDeliveries = getDeliveries(run.id);
+    const metrics: FilemakerEmailCampaignRunMetrics =
+      runDeliveries.length > 0
+        ? summarizeFilemakerEmailCampaignRunDeliveries(runDeliveries)
+        : {
+            recipientCount: run.recipientCount,
+            deliveredCount: run.deliveredCount,
+            failedCount: run.failedCount,
+            skippedCount: run.skippedCount,
+          };
+    const processed = metrics.deliveredCount + metrics.failedCount + metrics.skippedCount;
+    const progressPercent = metrics.recipientCount > 0 ? Math.round((processed / metrics.recipientCount) * 100) : 0;
+    return [
+      run.id, run.mode, run.status,
+      String(metrics.recipientCount), String(metrics.deliveredCount), String(metrics.failedCount), String(metrics.skippedCount),
+      `${progressPercent}%`,
+      run.createdAt ?? '', run.completedAt ?? '',
+    ].map((v) => escapeRunCsvCell(String(v))).join(',');
+  });
+  const csv = [RUN_CSV_HEADERS.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `runs-${campaignName.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'campaign'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 type RecentRunCardProps = {
   run: FilemakerEmailCampaignRun;
@@ -123,6 +166,7 @@ export const RecentRunsSection = (): ReactElement => {
     isRunActionPending,
     isUpdatePending,
     router,
+    draft,
   } = useCampaignEditContext();
 
   const openRunMonitor = (runId: string): void => {
@@ -131,8 +175,24 @@ export const RecentRunsSection = (): ReactElement => {
     });
   };
 
+  const handleExportRuns = useCallback((): void => {
+    downloadRunsCsv(
+      recentRuns,
+      (runId) => getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId),
+      draft.name
+    );
+  }, [deliveryRegistry, draft.name, recentRuns]);
+
   return (
     <FormSection title='Recent Runs' className='space-y-4 p-4'>
+      {recentRuns.length > 0 ? (
+        <div className='flex justify-end'>
+          <Button type='button' size='sm' variant='outline' onClick={handleExportRuns}>
+            <Download className='mr-2 size-3.5' />
+            Export CSV ({recentRuns.length})
+          </Button>
+        </div>
+      ) : null}
       {recentRuns.length === 0 ? (
         <div className='text-sm text-gray-500'>
           No runs yet. Create a dry run or launch the campaign to start monitoring progress.

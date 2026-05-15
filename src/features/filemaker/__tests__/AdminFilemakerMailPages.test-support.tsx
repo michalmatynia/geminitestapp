@@ -547,13 +547,15 @@ const renderWithProviders = (ui: React.ReactNode) => {
       mutations: { retry: false },
     },
   });
-  return render(
+  const ProviderWrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        {ui}
+        {children}
       </ToastProvider>
     </QueryClientProvider>
   );
+
+  return render(ui, { wrapper: ProviderWrapper });
 };
 
 export {

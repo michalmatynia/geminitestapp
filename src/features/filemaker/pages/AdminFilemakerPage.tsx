@@ -1,6 +1,6 @@
 'use client';
 
-import { BriefcaseBusiness, Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, Megaphone, Settings2, Share2, ShieldAlert, Tags, Users } from 'lucide-react';
+import { BotMessageSquare, BriefcaseBusiness, Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, MailPlus, Megaphone, Settings2, Share2, ShieldAlert, Tags, Users } from 'lucide-react';
 import React, { startTransition } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -27,8 +27,11 @@ const FILEMAKER_PAGE_ACTIONS = [
     Icon: Building2,
   },
   { key: 'mail', label: 'Email Client', href: '/admin/filemaker/mail-client', Icon: Mail },
+  { key: 'mail-settings', label: 'Mail Settings', href: '/admin/filemaker/mail', Icon: Settings2 },
+  { key: 'compose-email', label: 'Compose Email', href: '/admin/filemaker/mail/compose', Icon: MailPlus },
   { key: 'invoices', label: 'Invoices Page', href: '/admin/filemaker/invoices', Icon: FileText },
-  { key: 'campaigns', label: 'Campaigns Page', href: '/admin/filemaker/campaigns', Icon: Megaphone },
+  { key: 'email-creator', label: 'Email Creator', href: '/admin/filemaker/campaigns/create', Icon: Megaphone },
+  { key: 'campaigns', label: 'Email Campaigns', href: '/admin/filemaker/campaigns', Icon: Megaphone },
   {
     key: 'control-centre',
     label: 'Control Centre',
@@ -46,6 +49,12 @@ const FILEMAKER_PAGE_ACTIONS = [
     label: 'Social Publishing',
     href: '/admin/filemaker/social',
     Icon: Share2,
+  },
+  {
+    key: 'goal-automation',
+    label: 'Goal Automation',
+    href: '/admin/filemaker/goal-automation',
+    Icon: BotMessageSquare,
   },
   { key: 'events', label: 'Events Page', href: '/admin/filemaker/events', Icon: CalendarDays },
   { key: 'values', label: 'Values Page', href: '/admin/filemaker/values', Icon: Tags },

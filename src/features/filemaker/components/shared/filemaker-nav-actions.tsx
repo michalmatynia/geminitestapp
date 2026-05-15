@@ -1,5 +1,6 @@
 import {
   BotMessageSquare,
+  BriefcaseBusiness,
   Building2,
   BookOpen,
   CalendarDays,
@@ -8,6 +9,7 @@ import {
   Mail,
   Megaphone,
   FileText,
+  Share2,
   ShieldAlert,
   ShieldOff,
   Tags,
@@ -25,14 +27,17 @@ type FilemakerPageKey =
   | 'organizations'
   | 'emails'
   | 'invoices'
+  | 'job-listings'
   | 'websites'
   | 'mail'
+  | 'mail-settings'
   | 'events'
   | 'values'
   | 'lexicon'
   | 'campaigns'
   | 'control-centre'
   | 'suppressions'
+  | 'social'
   | 'goal-automation'
   | 'manage';
 
@@ -72,6 +77,13 @@ const NAV_ITEMS: Array<{
     variant: 'outline',
   },
   {
+    key: 'job-listings',
+    label: 'Job Listings',
+    href: '/admin/filemaker/job-listings',
+    icon: <BriefcaseBusiness className='size-4' />,
+    variant: 'outline',
+  },
+  {
     key: 'websites',
     label: 'Websites',
     href: '/admin/filemaker/websites',
@@ -82,6 +94,13 @@ const NAV_ITEMS: Array<{
     key: 'mail',
     label: 'Email Client',
     href: '/admin/filemaker/mail-client',
+    icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'mail-settings',
+    label: 'Mail Settings',
+    href: '/admin/filemaker/mail',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },
@@ -108,7 +127,7 @@ const NAV_ITEMS: Array<{
   },
   {
     key: 'campaigns',
-    label: 'Campaigns',
+    label: 'Email Campaigns',
     href: '/admin/filemaker/campaigns',
     icon: <Megaphone className='size-4' />,
     variant: 'outline',
@@ -125,6 +144,13 @@ const NAV_ITEMS: Array<{
     label: 'Suppressions',
     href: '/admin/filemaker/campaigns/suppressions',
     icon: <ShieldOff className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'social',
+    label: 'Social Publishing',
+    href: '/admin/filemaker/social',
+    icon: <Share2 className='size-4' />,
     variant: 'outline',
   },
   {

@@ -212,12 +212,22 @@ const GOAL_TEMPLATES: { label: string; goal: string }[] = [
   },
 ];
 
-const EVALUATOR_OPTIONS: { value: string; label: string }[] = [
-  { value: '', label: 'Disabled' },
+const DISABLED_EVALUATOR_VALUE = 'disabled';
+
+type EvaluatorInputSource = 'screenshot' | 'html' | 'text_content';
+type EvaluatorSelectValue = EvaluatorInputSource | typeof DISABLED_EVALUATOR_VALUE;
+
+const EVALUATOR_OPTIONS: { value: EvaluatorSelectValue; label: string }[] = [
+  { value: DISABLED_EVALUATOR_VALUE, label: 'Disabled' },
   { value: 'screenshot', label: 'Screenshot' },
   { value: 'html', label: 'Full page HTML' },
   { value: 'text_content', label: 'Page text' },
 ];
+
+const coerceMaxIterations = (value: string): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(10, Math.max(1, parsed)) : 5;
+};
 
 export type FilemakerGoalAutomationPanelProps = {
   defaultUrl?: string;
@@ -240,7 +250,8 @@ export function FilemakerGoalAutomationPanel({
     }
   }, [defaultUrl]);
   const [maxIterations, setMaxIterations] = useState(5);
-  const [evaluatorInputSource, setEvaluatorInputSource] = useState<string>('screenshot');
+  const [evaluatorInputSource, setEvaluatorInputSource] =
+    useState<EvaluatorSelectValue>('screenshot');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -273,9 +284,9 @@ export function FilemakerGoalAutomationPanel({
       goal,
       maxIterations,
       evaluatorInputSource:
-        evaluatorInputSource === ''
+        evaluatorInputSource === DISABLED_EVALUATOR_VALUE
           ? null
-          : (evaluatorInputSource as 'screenshot' | 'html' | 'text_content'),
+          : evaluatorInputSource,
       systemPrompt: systemPrompt.trim() !== '' ? systemPrompt.trim() : null,
     });
   };
@@ -340,9 +351,7 @@ export function FilemakerGoalAutomationPanel({
               min={1}
               max={10}
               value={maxIterations}
-              onChange={(e) =>
-                setMaxIterations(Math.min(10, Math.max(1, Number(e.target.value) || 5)))
-              }
+              onChange={(e) => setMaxIterations(coerceMaxIterations(e.target.value))}
               className='w-24'
               disabled={isRunning}
             />
@@ -352,7 +361,7 @@ export function FilemakerGoalAutomationPanel({
             <Label>Evaluator</Label>
             <Select
               value={evaluatorInputSource}
-              onValueChange={setEvaluatorInputSource}
+              onValueChange={(value) => setEvaluatorInputSource(value as EvaluatorSelectValue)}
               disabled={isRunning}
             >
               <SelectTrigger className='w-44'>

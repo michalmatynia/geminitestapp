@@ -7,9 +7,20 @@ import { ARCH_LOCALES } from '@/lib/types';
 type NavProps = {
   currentLocale: ArchLocale;
   content: ArchPageContent['nav'];
+  publishedLocales?: ArchLocale[];
+  onLocaleChange?: (locale: ArchLocale) => void;
 };
 
-export default function Nav({ currentLocale, content }: NavProps) {
+export default function Nav({
+  currentLocale,
+  content,
+  publishedLocales,
+  onLocaleChange,
+}: NavProps) {
+  const localeOptions = Array.from(
+    new Set([...(publishedLocales?.length ? publishedLocales : ARCH_LOCALES), currentLocale])
+  );
+
   useEffect(() => {
     const nav = document.getElementById('topnav');
     if (!nav) return;
@@ -21,6 +32,11 @@ export default function Nav({ currentLocale, content }: NavProps) {
     onScroll();
     return () => document.removeEventListener('scroll', onScroll);
   }, []);
+
+  const handleLocaleClick = (locale: ArchLocale) => {
+    if (!onLocaleChange) return;
+    onLocaleChange(locale);
+  };
 
   return (
     <nav className="top" id="topnav">
@@ -37,15 +53,17 @@ export default function Nav({ currentLocale, content }: NavProps) {
         </div>
         <div className="nav-end">
           <div className="nav-locale-switcher" aria-label="Language">
-            {ARCH_LOCALES.map((locale) => (
-              <a
+            {localeOptions.map((locale) => (
+              <button
                 key={locale}
-                href={`/${locale}`}
+                type="button"
                 className={`nav-locale${currentLocale === locale ? ' active' : ''}`}
-                aria-current={currentLocale === locale ? 'true' : undefined}
+                aria-current={currentLocale === locale ? 'page' : undefined}
+                aria-pressed={currentLocale === locale}
+                onClick={() => handleLocaleClick(locale)}
               >
                 {locale}
-              </a>
+              </button>
             ))}
           </div>
           <a href="#contact" className="nav-cta">

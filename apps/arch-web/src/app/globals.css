@@ -111,7 +111,9 @@ nav.top.scrolled { border-bottom-color: var(--rule-soft); }
 
 .nav-locale {
   color: var(--ink-3); padding: 4px 6px; transition: color .2s;
-  border-radius: 2px; line-height: 1;
+  appearance: none; background: transparent; border: 0; border-bottom: 1px solid transparent;
+  border-radius: 2px; cursor: pointer; font: inherit; letter-spacing: inherit; line-height: 1;
+  text-transform: inherit;
 }
 .nav-locale:hover { color: var(--ink); }
 .nav-locale.active {
@@ -701,12 +703,11 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 .foot-bot-links a:hover { color: var(--ink); }
 
 /* ─── REVEAL ─────────────────────────────────────────────────────── */
-.rev { opacity: 0; transform: translateY(18px); transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1); }
-.rev.in { opacity: 1; transform: none; }
-.rev[data-delay="1"] { transition-delay: .08s; }
-.rev[data-delay="2"] { transition-delay: .16s; }
-.rev[data-delay="3"] { transition-delay: .24s; }
-.rev[data-delay="4"] { transition-delay: .32s; }
+/* GSAP ScrollTrigger owns all .rev animations — CSS only sets the initial hidden state */
+.rev { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .rev { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+}
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────────── */
 @media (max-width: 1024px) {

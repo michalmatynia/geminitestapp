@@ -10,6 +10,8 @@ export const getWorkspaceNav = (): NavItem => ({
     { id: 'workspace/front-manage', label: 'Front Manage', href: '/admin/front-manage' },
     { id: 'workspace/import', label: 'Import', href: '/admin/import' },
     { id: 'workspace/files', label: 'Files', href: '/admin/files' },
+    { id: 'workspace/context-registry', label: 'Context Registry', href: '/admin/context-registry' },
+    { id: 'workspace/ai-insights', label: 'AI Insights', href: '/admin/ai-insights' },
     {
       id: 'workspace/databases',
       label: 'Workflow Database',

@@ -40,10 +40,29 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',
   '/admin/filemaker/organizations': 'Search and review Filemaker organizations.',
   '/admin/filemaker/invoices': 'Search imported Filemaker invoices and export PDF invoices.',
+  '/admin/filemaker/job-listings':
+    'Review Filemaker job listings and their linked organization workflows.',
+  '/admin/filemaker/websites':
+    'Review and manage Filemaker website records linked to organizations.',
   '/admin/filemaker/events': 'Search and review Filemaker events with linked organizations.',
   '/admin/filemaker/values': 'Search and review hierarchical Filemaker values.',
+  '/admin/filemaker/lexicon': 'Manage Filemaker lexicon entries and terminology.',
+  '/admin/filemaker/goal-automation':
+    'Configure Filemaker goal automation workflows and AI-assisted actions.',
   '/admin/filemaker/mail-client':
     'Open the Filemaker email client dashboard for mailbox health, recent activity, and mailbox actions.',
+  '/admin/filemaker/mail':
+    'Manage Filemaker mailbox account settings, folder browsing, search, and synced mail threads.',
+  '/admin/filemaker/mail/compose':
+    'Compose and send a one-off Filemaker email with account selection, rich text content, and attachments.',
+  '/admin/filemaker/campaigns/create':
+    'Create a Filemaker email campaign before configuring audience, content, and launch rules in the Email Creator.',
+  '/admin/filemaker/campaigns':
+    'Manage Filemaker email campaigns and open the Email Creator for campaign content, audience, delivery, and testing.',
+  '/admin/filemaker/campaigns/control-centre':
+    'Monitor Filemaker campaign runs, retries, delivery health, and filing repairs.',
+  '/admin/filemaker/campaigns/suppressions':
+    'Manage campaign suppressions, blocked recipients, and unsubscribe controls.',
   '/admin/filemaker/social':
     'Prepare reusable social posts with images, scheduling, AI generation, and publishing connections.',
   '/admin/filemaker/emails': 'Search and review Filemaker email records and relationship links.',

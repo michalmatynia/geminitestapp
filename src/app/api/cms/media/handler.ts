@@ -6,10 +6,10 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   MILKBAR_CMS_VISUALISATION_FOLDER,
-  MILKBAR_FASTCOMET_BASE_URL,
   fileStorageProfileValues,
   type FileStorageProfile,
 } from '@/shared/lib/files/constants';
+import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -58,6 +58,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const folder = isMilkbarCmsUpload
     ? MILKBAR_CMS_VISUALISATION_FOLDER
     : readFormText(formData, 'folder');
+  const milkbarStorage = isMilkbarCmsUpload ? resolveMilkbarFastCometStorageProfile() : null;
 
   const uploads = await Promise.all(
     files.map((file) =>
@@ -68,7 +69,8 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         ...(isMilkbarCmsUpload
           ? {
               forceStorageSource: 'fastcomet',
-              fastCometBaseUrl: MILKBAR_FASTCOMET_BASE_URL,
+              fastCometBaseUrl: milkbarStorage?.publicBaseUrl,
+              fastCometConfig: milkbarStorage?.fastCometConfig,
             }
           : {}),
       })

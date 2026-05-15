@@ -121,16 +121,15 @@ the uploaded file.
 
 ## Milkbar Designers CMS Media
 
-Milkbar Designers CMS uploads use the same FastComet upload endpoint and token,
-but the app rewrites public upload URLs to:
+Milkbar Designers CMS uploads use the same FastComet token, but the app uses
+the Milkbar-specific FastComet PHP endpoint and rewrites public upload URLs to:
 
 ```text
-https://milkbardesigners.com/uploads/cms/...
+https://uploads.milkbardesigners.com/uploads/cms/...
 ```
 
-For this to work, `milkbardesigners.com` must serve the same FastComet
-`public_html/uploads` tree, or the PHP upload endpoint/config must be deployed
-under the Milkbar domain with the same credentials.
+For this to work, keep `milkbardesigners.com` on Vercel and point a storage
+subdomain such as `uploads.milkbardesigners.com` at the FastComet account.
 
 The app writes Milkbar CMS files to these public paths:
 
@@ -143,3 +142,13 @@ The FastComet `api/uploads/config.php` used by that endpoint must allow 3D
 model extensions and MIME types. The bundled `config.example.php` allows
 `glb`, `gltf`, `model/gltf-binary`, `model/gltf+json`, and the common
 `application/octet-stream` fallback, with a 100MB maximum file size.
+
+A copy-ready Milkbar-specific scaffold is available here:
+
+```text
+hosting/fastcomet/milkbardesigners.com/public_html/
+```
+
+Copy the contents of that `public_html/` directory into the FastComet document
+root for `milkbardesigners.com`, then create `api/uploads/config.php` from the
+included `config.example.php`.

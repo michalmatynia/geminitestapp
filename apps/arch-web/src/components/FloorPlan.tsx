@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { memo, useRef, useState, useCallback, useEffect } from 'react';
 import { useFloorPlanSlots } from '@/lib/floorPlanContext';
 import type { ArchPageContent } from '@/lib/types';
 import InteriorViewer from './InteriorViewer';
@@ -61,7 +61,7 @@ function wallsFromRooms(rooms: Room[]): Wall[] {
 const ss  = (t: number) => t * t * (3 - 2 * t);
 const co3 = (t: number) => 1 - Math.pow(1 - t, 3);
 
-export default function FloorPlan({ content }: { content: ArchPageContent['drawing'] }) {
+function PlanInteractivePanel() {
   const { setSlots: publishSlots } = useFloorPlanSlots();
   const [slots,      setSlots]      = useState<Slots>(INITIAL_SLOTS);
   const [display,    setDisplay]    = useState<Room[]>(() => computeRooms(INITIAL_SLOTS));
@@ -72,7 +72,6 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
   const [hoverId,    setHoverId]    = useState<string | null>(null);
   const [mouseRoomId, setMouseRoomId] = useState<string | null>(null);
   const [flashSet,   setFlash]      = useState<Set<string>>(new Set());
-  const [modalSrc, setModalSrc] = useState<string | null>(null);
   const [planHoverX, setPlanHoverX] = useState(0);
   const [planHovering, setPlanHovering] = useState(false);
 
@@ -196,50 +195,13 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
   const onPlanMouseEnter = useCallback(() => setPlanHovering(true), []);
   const onPlanMouseLeave = useCallback(() => setPlanHovering(false), []);
 
-  const closeModal = useCallback(() => setModalSrc(null), []);
-
-  useEffect(() => {
-    if (!modalSrc) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [modalSrc, closeModal]);
-
   const walls     = wallsFromRooms(display);
   const dragging  = dragId !== null;
   const dragRoom  = display.find(r => r.id === dragId);
   const animating = wallDraw < 0.98;
 
   return (
-    <section className="drawing-section">
-      <div className="wrap">
-        <div className="drawing-grid">
-          <div className="drawing-copy">
-            <span className="label rev">{content.eyebrow}</span>
-            <h2 className="rev" data-delay="1">{content.title} <em>{content.emphasis}</em></h2>
-            <p className="rev" data-delay="2">
-              {content.description}
-            </p>
-            <a href="#practice" className="btn-quiet rev" data-delay="3">{content.ctaLabel} ↘</a>
-            <p className="plan-hint rev" data-delay="4">{content.hint}</p>
-
-            {content.thumbImages.length > 0 && (
-              <div className="plan-thumbs rev" data-delay="5">
-                {content.thumbImages.slice(0, 4).map((src, i) => (
-                  <button
-                    key={i}
-                    className="plan-thumb plan-thumb--filled"
-                    onClick={() => setModalSrc(src)}
-                    aria-label={`View reference image ${i + 1}`}
-                  >
-                    <img src={src} alt={`Reference ${i + 1}`} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="plan-col">
+    <div className="plan-col">
           <div
             ref={planWrapRef}
             className="plan-wrap rev"
@@ -396,7 +358,54 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
           <div className="interior-viewer-panel rev" data-delay="2">
             <InteriorViewer />
           </div>
+    </div>
+  );
+}
+
+const MemoizedPlanInteractivePanel = memo(PlanInteractivePanel);
+
+export default function FloorPlan({ content }: { content: ArchPageContent['drawing'] }) {
+  const [modalSrc, setModalSrc] = useState<string | null>(null);
+
+  const closeModal = useCallback(() => setModalSrc(null), []);
+
+  useEffect(() => {
+    if (!modalSrc) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalSrc, closeModal]);
+
+  return (
+    <section className="drawing-section">
+      <div className="wrap">
+        <div className="drawing-grid">
+          <div className="drawing-copy">
+            <span className="label rev">{content.eyebrow}</span>
+            <h2 className="rev" data-delay="1">{content.title} <em>{content.emphasis}</em></h2>
+            <p className="rev" data-delay="2">
+              {content.description}
+            </p>
+            <a href="#practice" className="btn-quiet rev" data-delay="3">{content.ctaLabel} ↘</a>
+            <p className="plan-hint rev" data-delay="4">{content.hint}</p>
+
+            {content.thumbImages.length > 0 && (
+              <div className="plan-thumbs rev" data-delay="5">
+                {content.thumbImages.slice(0, 4).map((src, i) => (
+                  <button
+                    key={i}
+                    className="plan-thumb plan-thumb--filled"
+                    onClick={() => setModalSrc(src)}
+                    aria-label={`View reference image ${i + 1}`}
+                  >
+                    <img src={src} alt={`Reference ${i + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          <MemoizedPlanInteractivePanel />
         </div>
       </div>
       {modalSrc && (

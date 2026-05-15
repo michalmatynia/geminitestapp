@@ -56,6 +56,7 @@ type PersistCampaignDeletionOptions = {
 export type CampaignActionHandlers = {
   duplicateCampaign: (campaign: FilemakerEmailCampaign) => Promise<void>;
   toggleArchiveCampaign: (campaign: FilemakerEmailCampaign) => Promise<void>;
+  toggleCampaignRunState: (campaign: FilemakerEmailCampaign) => Promise<void>;
   deleteCampaign: (campaign: FilemakerEmailCampaign) => void;
 };
 
@@ -77,6 +78,9 @@ export const buildCampaignActionHandlers = (context: CampaignActionContext): Cam
   },
   toggleArchiveCampaign: async (campaign: FilemakerEmailCampaign): Promise<void> => {
     await toggleArchiveCampaign(context, campaign);
+  },
+  toggleCampaignRunState: async (campaign: FilemakerEmailCampaign): Promise<void> => {
+    await toggleCampaignRunState(context, campaign);
   },
   deleteCampaign: (campaign: FilemakerEmailCampaign): void => {
     confirmCampaignDeletion({ context, campaign });
@@ -174,6 +178,50 @@ const deleteCampaign = async ({ context, campaign }: CampaignDeletionOptions): P
   } catch (error: unknown) {
     logClientError(error);
     context.toast(error instanceof Error ? error.message : 'Failed to delete campaign.', { variant: 'error' });
+  }
+};
+
+const resolveNextRunState = (
+  status: FilemakerEmailCampaign['status']
+): FilemakerEmailCampaign['status'] | null => {
+  if (status === 'draft' || status === 'paused') return 'active';
+  if (status === 'active') return 'paused';
+  return null;
+};
+
+const resolveRunStateToggleLabel = (status: FilemakerEmailCampaign['status']): string => {
+  if (status === 'active') return 'paused';
+  return 'active';
+};
+
+const toggleCampaignRunState = async (
+  context: CampaignActionContext,
+  campaign: FilemakerEmailCampaign
+): Promise<void> => {
+  const nextStatus = resolveNextRunState(campaign.status);
+  if (nextStatus === null) return;
+  const nextCampaign: FilemakerEmailCampaign = {
+    ...campaign,
+    status: nextStatus,
+    updatedAt: new Date().toISOString(),
+  };
+  try {
+    const nextCampaigns = context.settings.campaignRegistry.campaigns
+      .filter((entry: FilemakerEmailCampaign): boolean => entry.id !== campaign.id)
+      .concat(nextCampaign)
+      .sort(sortCampaignsByName);
+    await persistCampaignRegistry(context.updateSetting, nextCampaigns);
+    context.toast(
+      `Campaign set to ${resolveRunStateToggleLabel(campaign.status)}.`,
+      { variant: 'success' }
+    );
+    context.settingsStore.refetch();
+  } catch (error: unknown) {
+    logClientError(error);
+    context.toast(
+      error instanceof Error ? error.message : 'Failed to update campaign status.',
+      { variant: 'error' }
+    );
   }
 };
 

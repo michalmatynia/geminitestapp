@@ -7,7 +7,9 @@ import type {
 import {
   useCampaignArchiveAction,
   useCampaignDuplicateAction,
+  useCampaignGrantApprovalAction,
   useCampaignLaunchAction,
+  useCampaignRevokeApprovalAction,
   useCampaignSaveAction,
   useCampaignTestEmailAction,
 } from './AdminFilemakerCampaignEditPage.primary-action-hooks';
@@ -27,6 +29,8 @@ export function useCampaignEditActions(context: CampaignEditActionContext): Camp
   const handleSendTestEmail = useCampaignTestEmailAction(campaignActionInput);
   const handleDuplicateCampaign = useCampaignDuplicateAction(campaignActionInput);
   const handleToggleArchiveCampaign = useCampaignArchiveAction(campaignActionInput);
+  const handleGrantApproval = useCampaignGrantApprovalAction(campaignActionInput);
+  const handleRevokeApproval = useCampaignRevokeApprovalAction(campaignActionInput);
   const handleDeleteCampaign = useCampaignDeleteAction(context);
   const suppressionActions = useCampaignSuppressionActions(context);
   return {
@@ -35,6 +39,8 @@ export function useCampaignEditActions(context: CampaignEditActionContext): Camp
     handleSendTestEmail,
     handleDuplicateCampaign,
     handleToggleArchiveCampaign,
+    handleGrantApproval,
+    handleRevokeApproval,
     handleDeleteCampaign,
     ...suppressionActions,
   };

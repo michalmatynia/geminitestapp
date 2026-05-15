@@ -12,6 +12,7 @@ import React, {
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import { FilemakerPersonMasterTreeNode } from '../components/shared/FilemakerPersonMasterTreeNode';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -32,6 +33,15 @@ import {
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
 const BANK_FILTERS = new Set(['with_bank', 'without_bank']);
 const ORGANIZATION_FILTERS = new Set(['with_organizations', 'without_organizations']);
+const FILEMAKER_PERSONS_QUERY_KEY = ['filemaker', 'persons'] as const;
+
+type PersonListInput = {
+  filters: PersonFilters;
+  page: number;
+  pageSize: number;
+  query: string;
+  sort: PersonSortOption;
+};
 
 const normalizeSelectFilter = <T extends string>(
   value: string,
@@ -72,13 +82,7 @@ function useDebouncedValue(value: string, delayMs: number): string {
   return debouncedValue;
 }
 
-const buildPersonListParams = (input: {
-  filters: PersonFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-  sort: PersonSortOption;
-}): URLSearchParams => {
+const buildPersonListParams = (input: PersonListInput): URLSearchParams => {
   const params = new URLSearchParams({
     address: input.filters.address,
     bank: input.filters.bank,
@@ -93,46 +97,51 @@ const buildPersonListParams = (input: {
   return params;
 };
 
-function useMongoFilemakerPersons(input: {
-  filters: PersonFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-  sort: PersonSortOption;
-}): MongoFilemakerPersonsState {
-  const { filters, page, pageSize, query, sort } = input;
-  const [state, setState] = useState<MongoFilemakerPersonsState>({
-    ...EMPTY_PERSONS_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildPersonListQueryKey = (input: PersonListInput) =>
+  [...FILEMAKER_PERSONS_QUERY_KEY, input] as const;
+
+const fetchMongoFilemakerPersons = async (
+  input: PersonListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerPersonsResponse> => {
+  const params = buildPersonListParams(input);
+  const response = await fetch(`/api/filemaker/persons?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load persons (${response.status}).`);
+  return (await response.json()) as MongoFilemakerPersonsResponse;
+};
+
+function useMongoFilemakerPersons(input: PersonListInput): MongoFilemakerPersonsState {
+  const queryKey = buildPersonListQueryKey(input);
+  const personsQuery = createSingleQueryV2<
+    MongoFilemakerPersonsResponse,
+    MongoFilemakerPersonsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerPersons(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_PERSONS_RESPONSE,
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerPersonsListState.useMongoFilemakerPersons',
+      operation: 'list',
+      resource: 'filemaker.persons',
+      domain: 'files',
+      description: 'Load imported Filemaker persons for the admin persons list.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      filters: input.filters,
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+      sort: input.sort,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildPersonListParams({ filters, page, pageSize, query, sort });
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/persons?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerPersonsResponse> => {
-        if (!response.ok) throw new Error(`Failed to load persons (${response.status}).`);
-        return (await response.json()) as MongoFilemakerPersonsResponse;
-      })
-      .then((response: MongoFilemakerPersonsResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load persons.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [filters, page, pageSize, query, sort]);
-
-  return state;
+  return {
+    ...(personsQuery.data ?? EMPTY_PERSONS_RESPONSE),
+    error: personsQuery.error === null ? null : personsQuery.error.message,
+    isLoading: personsQuery.isFetching,
+  };
 }
 
 function usePersonActions(router: ReturnType<typeof useRouter>): {

@@ -1,8 +1,8 @@
 trackId,title,category,defaultSelected,overallStatus,latestGeneratedAt,auditStatus,classifyStatus,planStatus,dryRunStatus,applyStatus
-products-parameter-integrity,Products parameter integrity,data,true,failed,2026-05-10T01:05:02.191Z,passed,failed,manual,not-selected,manual
-products-category-schema-normalization,Products category and schema normalization,data,true,failed,2026-05-10T01:05:02.191Z,not-configured,failed,manual,not-selected,passed
-ui-consolidation,UI consolidation,ui,true,passed,2026-05-10T01:05:02.191Z,passed,not-configured,manual,not-selected,manual
-application-performance,Application performance,performance,true,failed,2026-05-10T01:05:02.191Z,passed,failed,manual,not-selected,manual
-testing-quality-baseline,Testing quality baseline,testing,false,no-data,,not-selected,not-selected,not-selected,not-selected,not-selected
-image-studio-product-integration,Image Studio product integration,quality,false,passed,2026-04-30T04:59:45.752Z,not-selected,not-selected,not-selected,passed,not-selected
-repo-quality-baseline,Repository quality baseline,quality,true,failed,2026-05-10T01:05:02.191Z,failed,failed,manual,not-selected,manual
+products-parameter-integrity,Products parameter integrity,data,true,no-data,,not-selected,no-data,no-data,no-data,no-data
+products-category-schema-normalization,Products category and schema normalization,data,true,no-data,,not-selected,no-data,no-data,no-data,no-data
+ui-consolidation,UI consolidation,ui,true,failed,2026-05-14T23:11:20.592Z,failed,no-data,no-data,no-data,no-data
+application-performance,Application performance,performance,true,no-data,,not-selected,no-data,no-data,no-data,no-data
+testing-quality-baseline,Testing quality baseline,testing,false,no-data,,not-selected,no-data,no-data,no-data,no-data
+image-studio-product-integration,Image Studio product integration,quality,false,no-data,,not-selected,no-data,no-data,no-data,no-data
+repo-quality-baseline,Repository quality baseline,quality,true,no-data,,not-selected,no-data,no-data,no-data,no-data

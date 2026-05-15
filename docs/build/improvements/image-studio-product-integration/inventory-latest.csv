@@ -1,2 +1,1 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-dry-run,image-studio-product-regression-tests,Run Product modal and Image Studio integration regression tests,passed,automatic,false,test:image-studio-product,,2026-04-30T04:59:45.752Z,artifacts/improvements/dry-run-report.json

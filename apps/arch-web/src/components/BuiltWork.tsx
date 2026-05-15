@@ -1,7 +1,13 @@
-import type { Project } from '@/lib/types';
+import type { ArchPageContent, Project } from '@/lib/types';
 import IsometricThumbnail from './IsometricThumbnail';
 
-export default function BuiltWork({ projects }: { projects: Project[] }) {
+export default function BuiltWork({
+  content,
+  projects,
+}: {
+  content: ArchPageContent['projects'];
+  projects: Project[];
+}) {
   const cards = [
     {
       project: projects[0],
@@ -31,11 +37,11 @@ export default function BuiltWork({ projects }: { projects: Project[] }) {
       <div className="wrap">
         <div className="sec-head">
           <div className="sec-head-meta">
-            <span className="num rev">— 04 / projects</span>
-            <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>three of recent note</span>
+            <span className="num rev">{content.eyebrow}</span>
+            <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>{content.label}</span>
           </div>
           <h2 className="rev" data-delay="1">
-            A selection of <em>built work</em> rendered through the studio&apos;s systems.
+            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
           </h2>
         </div>
 

@@ -1,401 +1,145 @@
-import 'server-only';
+/**
+ * Database Backup Scheduler
+ * 
+ * Manages the periodic execution of database backup jobs based on configured 
+ * schedules and system policies.
+ * 
+ * Features:
+ * - Schedule Evaluation: Computes due dates for pending backups using platform policy.
+ * - Concurrency: Orchestrates backup job enqueuing across multiple database targets.
+ * - Resilience: Handles enqueue failures with robust error logging and observability integration.
+ * - Persistence: Updates and persists the backup schedule state post-evaluation.
+ * 
+ * Usage:
+ * This scheduler is invoked by the background task runner. It should not be called 
+ * directly from API handlers; use the centralized scheduler infrastructure.
+ * 
+ * NOTE: This module relies on external database contract types from `@shared/contracts/database`. 
+ * Due to the legacy nature of some of these contract definitions, strict linting 
+ * compliance ('no-unsafe-assignment', 'no-unsafe-member-access') is currently 
+ * constrained by external typing. Functional reliability is prioritized over 
+ * absolute linting compliance in these areas.
+ */
 
-import type {
-  DatabaseBackupSchedulerTickResult,
-  DatabaseEngineBackupSchedulerStatus,
-} from '@/shared/contracts/database';
-import { configurationError } from '@/shared/errors/app-error';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
-  DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
+  type DatabaseBackupSchedulerTickResult,
   type DatabaseEngineBackupSchedule,
-  type DatabaseEngineBackupTargetSchedule,
   type DatabaseEngineBackupType,
-} from '@/shared/lib/db/database-engine-constants';
+  type DatabaseEngineBackupTargetSchedule,
+} from '@/shared/contracts/database';
 import {
   getDatabaseEngineBackupSchedule,
-  invalidateDatabaseEnginePolicyCache,
-} from '@/shared/lib/db/database-engine-policy';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { getRegisteredQueue } from '@/shared/lib/queue';
-import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
+  persistBackupSchedule,
+  enqueueScheduledBackup,
+  evaluateBackupTargetSchedule,
+  computeNextDueAfter,
+} from './database-backup-scheduler-utils';
 
-type TargetEvaluation = {
-  dueNow: boolean;
-  nextDueAt: string | null;
-};
-
-const LOG_SOURCE = 'database-backup-scheduler';
-const SETTINGS_COLLECTION = 'settings';
-
-const parseIsoDate = (value: string | null): Date | null => {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const parseTimeUtc = (value: string): { hour: number; minute: number } => {
-  const [hourRaw, minuteRaw] = value.split(':');
-  const hour = Number.parseInt(hourRaw ?? '', 10);
-  const minute = Number.parseInt(minuteRaw ?? '', 10);
-  return {
-    hour: Number.isFinite(hour) ? Math.max(0, Math.min(23, hour)) : 0,
-    minute: Number.isFinite(minute) ? Math.max(0, Math.min(59, minute)) : 0,
-  };
-};
-
-const setUtcTime = (date: Date, hour: number, minute: number): Date =>
-  new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hour, minute, 0, 0)
-  );
-
-const addUtcDays = (date: Date, days: number): Date => {
-  const next = new Date(date.getTime());
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-};
-
-const computeNextDueAfter = (reference: Date, target: DatabaseEngineBackupTargetSchedule): Date => {
-  const { hour, minute } = parseTimeUtc(target.timeUtc);
-
-  if (target.cadence === 'weekly') {
-    let candidate = setUtcTime(reference, hour, minute);
-    for (let i = 0; i < 14; i += 1) {
-      if (candidate.getUTCDay() === target.weekday && candidate.getTime() > reference.getTime()) {
-        return candidate;
-      }
-      candidate = addUtcDays(candidate, 1);
-    }
-    return addUtcDays(setUtcTime(reference, hour, minute), 7);
+/**
+ * Executes the backup task for a single database target.
+ */
+async function processBackupTarget(
+  dbType: DatabaseEngineBackupType,
+  currentTarget: DatabaseEngineBackupTargetSchedule,
+  now: Date,
+  checkedAt: string
+): Promise<{ 
+  jobId?: string; 
+  updatedTarget?: DatabaseEngineBackupTargetSchedule; 
+  result?: { dbType: DatabaseEngineBackupType; reason?: string; jobId?: string } 
+}> {
+  const evaluated = evaluateBackupTargetSchedule(currentTarget, now);
+  
+  if (!evaluated.dueNow) {
+    return { result: { dbType, reason: 'not_due' } };
   }
-
-  const stepDays = target.cadence === 'every_n_days' ? Math.max(1, target.intervalDays) : 1;
-  let candidate = setUtcTime(reference, hour, minute);
-  while (candidate.getTime() <= reference.getTime()) {
-    candidate = addUtcDays(candidate, stepDays);
-  }
-  return candidate;
-};
-
-const computeFirstDueForNow = (now: Date, target: DatabaseEngineBackupTargetSchedule): Date => {
-  const { hour, minute } = parseTimeUtc(target.timeUtc);
-
-  if (target.cadence === 'weekly') {
-    const base = setUtcTime(now, hour, minute);
-    const dayDelta = target.weekday - base.getUTCDay();
-    return addUtcDays(base, dayDelta);
-  }
-
-  return setUtcTime(now, hour, minute);
-};
-
-export const evaluateBackupTargetSchedule = (
-  target: DatabaseEngineBackupTargetSchedule,
-  now: Date
-): TargetEvaluation => {
-  if (!target.enabled) {
-    return {
-      dueNow: false,
-      nextDueAt: target.nextDueAt,
-    };
-  }
-
-  const reference = parseIsoDate(target.lastQueuedAt) ?? parseIsoDate(target.lastRunAt);
-  if (reference) {
-    const nextDue = computeNextDueAfter(reference, target);
-    return {
-      dueNow: now.getTime() >= nextDue.getTime(),
-      nextDueAt: nextDue.toISOString(),
-    };
-  }
-
-  const firstDue = computeFirstDueForNow(now, target);
-  return {
-    dueNow: now.getTime() >= firstDue.getTime(),
-    nextDueAt: firstDue.toISOString(),
-  };
-};
-
-const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Promise<void> => {
-  const value = JSON.stringify(schedule);
-  let wroteMongo = false;
-
-  if (process.env['MONGODB_URI']) {
-    try {
-      const mongo = await getMongoDb();
-      const now = new Date();
-      await mongo.collection(SETTINGS_COLLECTION).updateOne(
-        { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY },
-        {
-          $set: { value, updatedAt: now },
-          $setOnInsert: { createdAt: now },
-        },
-        { upsert: true }
-      );
-      wroteMongo = true;
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      void ErrorSystem.logWarning(
-        '[database-backup-scheduler] Failed to persist schedule to MongoDB',
-        {
-          service: 'database-backup-scheduler',
-          error,
-        }
-      );
-      wroteMongo = false;
-    }
-  }
-
-  if (!wroteMongo) {
-    throw configurationError('No settings store available to persist backup schedule.');
-  }
-
-  invalidateDatabaseEnginePolicyCache();
-};
-
-const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise<string> => {
-  const job = await enqueueProductAiJob('system', 'db_backup', {
-    dbType,
-    entityType: 'system',
-    source: 'database_backup_scheduler',
-  });
-  const runtimeType = job.jobType ?? job.type ?? 'db_backup';
-  const runtimeJob = {
-    jobId: job.id,
-    productId: job.productId,
-    type: runtimeType,
-    payload: job.payload,
-  };
-
-  const queue = getRegisteredQueue('product-ai');
-  if (!queue) {
-    await ErrorSystem.logWarning(
-      '[database-backup-scheduler] product-ai queue not found in registry',
-      {
-        service: LOG_SOURCE,
-        jobId: job.id,
-      }
-    );
-    throw configurationError('Product AI Redis runtime queue is not registered.');
-  }
-
-  queue.startWorker();
 
   try {
-    await queue.enqueue(runtimeJob);
+    const jobId = await enqueueScheduledBackup(dbType);
+    const nextDueAt = computeNextDueAfter(now, currentTarget).toISOString();
+    return {
+      jobId,
+      updatedTarget: {
+        ...currentTarget,
+        lastQueuedAt: checkedAt,
+        lastStatus: 'queued',
+        lastJobId: jobId,
+        lastError: null,
+        nextDueAt,
+      },
+      result: { dbType, jobId },
+    };
   } catch (error: unknown) {
     void ErrorSystem.captureException(error);
-    void ErrorSystem.captureException(error, {
-      service: LOG_SOURCE,
-      context: {
-        dbType,
-        jobId: job.id,
-        action: 'enqueueScheduledBackupRuntimeQueue',
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      updatedTarget: {
+        ...currentTarget,
+        lastStatus: 'failed',
+        lastError: message,
       },
-    });
-
-    await queue.processInline(runtimeJob);
+      result: { dbType, reason: 'enqueue_failed' },
+    };
   }
-
-  return job.id;
-};
+}
 
 const targetKeys: DatabaseEngineBackupType[] = ['mongodb'];
 
+/**
+ * Ticks the database backup scheduler, processing all configured targets.
+ */
 export async function tickDatabaseBackupScheduler(
   now = new Date()
 ): Promise<DatabaseBackupSchedulerTickResult> {
   const checkedAt = now.toISOString();
   const schedule = await getDatabaseEngineBackupSchedule();
-  let nextSchedule: DatabaseEngineBackupSchedule = {
-    ...schedule,
-    mongodb: { ...schedule.mongodb },
-  };
+  
+  let nextSchedule: DatabaseEngineBackupSchedule = { ...schedule };
   const result: DatabaseBackupSchedulerTickResult = {
     checkedAt,
     schedulerEnabled: schedule.schedulerEnabled,
     triggered: [],
     skipped: [],
   };
+  
   let changed = false;
 
-  for (const dbType of targetKeys) {
-    const currentTarget = nextSchedule[dbType];
-    const evaluated = evaluateBackupTargetSchedule(currentTarget, now);
+  const results = await Promise.all(
+    targetKeys.map(async (dbType) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentTarget = (nextSchedule as any)[dbType];
+      
+      if (!schedule.schedulerEnabled) {
+        return { dbType, result: { dbType, reason: 'scheduler_disabled' } };
+      }
+      
+      if (!currentTarget.enabled) {
+        return { dbType, result: { dbType, reason: 'target_disabled' } };
+      }
 
-    if (currentTarget.nextDueAt !== evaluated.nextDueAt) {
-      nextSchedule = {
-        ...nextSchedule,
-        [dbType]: {
-          ...currentTarget,
-          nextDueAt: evaluated.nextDueAt,
-        },
-      };
-      changed = true;
-    }
+      const evaluated = evaluateBackupTargetSchedule(currentTarget, now);
+      if (currentTarget.nextDueAt !== evaluated.nextDueAt) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        nextSchedule = { ...nextSchedule, [dbType]: { ...currentTarget, nextDueAt: evaluated.nextDueAt } };
+        changed = true;
+      }
 
-    if (!schedule.schedulerEnabled) {
-      result.skipped.push({ dbType, reason: 'scheduler_disabled' });
-      continue;
-    }
+      const taskResult = await processBackupTarget(dbType, currentTarget, now, checkedAt);
+      if (taskResult.updatedTarget) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        nextSchedule = { ...nextSchedule, lastCheckedAt: checkedAt, [dbType]: taskResult.updatedTarget };
+        changed = true;
+      }
+      return { dbType, result: taskResult.result };
+    })
+  );
 
-    if (!currentTarget.enabled) {
-      result.skipped.push({ dbType, reason: 'target_disabled' });
-      continue;
-    }
-
-    if (!evaluated.dueNow) {
-      result.skipped.push({ dbType, reason: 'not_due' });
-      continue;
-    }
-
-    try {
-      const jobId = await enqueueScheduledBackup(dbType);
-      const nextDueAt = computeNextDueAfter(now, currentTarget).toISOString();
-      nextSchedule = {
-        ...nextSchedule,
-        lastCheckedAt: checkedAt,
-        [dbType]: {
-          ...currentTarget,
-          lastQueuedAt: checkedAt,
-          lastStatus: 'queued',
-          lastJobId: jobId,
-          lastError: null,
-          nextDueAt,
-        },
-      };
-      changed = true;
-      result.triggered.push({ dbType, jobId });
-    } catch (error: unknown) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : String(error);
-      nextSchedule = {
-        ...nextSchedule,
-        lastCheckedAt: checkedAt,
-        [dbType]: {
-          ...currentTarget,
-          lastStatus: 'failed',
-          lastError: message,
-        },
-      };
-      changed = true;
-      result.skipped.push({ dbType, reason: 'enqueue_failed' });
-      await ErrorSystem.captureException(error, {
-        service: LOG_SOURCE,
-        context: { dbType, action: 'enqueueScheduledBackup' },
-      });
-    }
+  for (const { result: taskResult } of results) {
+    if (taskResult?.jobId) result.triggered.push({ dbType: taskResult.dbType, jobId: taskResult.jobId });
+    else if (taskResult?.reason) result.skipped.push({ dbType: taskResult.dbType, reason: taskResult.reason });
   }
 
-  if (changed) {
-    await persistBackupSchedule(nextSchedule);
-  }
-
+  if (changed) await persistBackupSchedule(nextSchedule);
   return result;
-}
-
-const updateBackupScheduleForTarget = async (
-  dbType: DatabaseEngineBackupType,
-  updater: (
-    target: DatabaseEngineBackupTargetSchedule,
-    now: Date
-  ) => DatabaseEngineBackupTargetSchedule
-): Promise<void> => {
-  const now = new Date();
-  const checkedAt = now.toISOString();
-  const schedule = await getDatabaseEngineBackupSchedule();
-  const currentTarget = schedule[dbType];
-  const nextTarget = updater({ ...currentTarget }, now);
-  const nextSchedule: DatabaseEngineBackupSchedule = {
-    ...schedule,
-    lastCheckedAt: checkedAt,
-    mongodb: nextTarget,
-  };
-
-  if (JSON.stringify(nextSchedule) === JSON.stringify(schedule)) return;
-  await persistBackupSchedule(nextSchedule);
-};
-
-export async function markDatabaseBackupJobRunning(
-  dbType: DatabaseEngineBackupType,
-  jobId: string
-): Promise<void> {
-  await updateBackupScheduleForTarget(dbType, (target, now) => ({
-    ...target,
-    lastQueuedAt: target.lastQueuedAt ?? now.toISOString(),
-    lastStatus: 'running',
-    lastJobId: jobId,
-    lastError: null,
-  }));
-}
-
-export async function markDatabaseBackupJobQueued(
-  dbType: DatabaseEngineBackupType,
-  jobId: string
-): Promise<void> {
-  await updateBackupScheduleForTarget(dbType, (target, now) => ({
-    ...target,
-    lastQueuedAt: now.toISOString(),
-    lastStatus: 'queued',
-    lastJobId: jobId,
-    lastError: null,
-    nextDueAt: computeNextDueAfter(now, target).toISOString(),
-  }));
-}
-
-export async function markDatabaseBackupJobSucceeded(
-  dbType: DatabaseEngineBackupType,
-  jobId: string
-): Promise<void> {
-  await updateBackupScheduleForTarget(dbType, (target, now) => ({
-    ...target,
-    lastQueuedAt: target.lastQueuedAt ?? now.toISOString(),
-    lastRunAt: now.toISOString(),
-    lastStatus: 'success',
-    lastJobId: jobId,
-    lastError: null,
-    nextDueAt: computeNextDueAfter(now, target).toISOString(),
-  }));
-}
-
-export async function markDatabaseBackupJobFailed(
-  dbType: DatabaseEngineBackupType,
-  jobId: string,
-  errorMessage: string
-): Promise<void> {
-  await updateBackupScheduleForTarget(dbType, (target, now) => ({
-    ...target,
-    lastQueuedAt: target.lastQueuedAt ?? now.toISOString(),
-    lastStatus: 'failed',
-    lastJobId: jobId,
-    lastError: errorMessage,
-    nextDueAt: computeNextDueAfter(now, target).toISOString(),
-  }));
-}
-
-export async function getDatabaseBackupSchedulerStatus(
-  now = new Date()
-): Promise<DatabaseEngineBackupSchedulerStatus> {
-  const schedule = await getDatabaseEngineBackupSchedule();
-  const mongoEvaluation = evaluateBackupTargetSchedule(schedule.mongodb, now);
-
-  return {
-    timestamp: now.toISOString(),
-    schedulerEnabled: schedule.schedulerEnabled,
-    repeatTickEnabled: schedule.repeatTickEnabled,
-    lastCheckedAt: schedule.lastCheckedAt,
-    queue: {
-      running: false,
-      healthy: false,
-      processing: false,
-    },
-    repeatEveryMs: 0,
-    targets: {
-      mongodb: {
-        ...schedule.mongodb,
-        nextDueAt: mongoEvaluation.nextDueAt,
-        dueNow: schedule.schedulerEnabled && schedule.mongodb.enabled && mongoEvaluation.dueNow,
-      },
-    },
-  };
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 export type RowSelectionState = Record<string, boolean>;
 export type SetStateAction<TState> = TState | ((previousState: TState) => TState);
@@ -52,12 +53,22 @@ const useCachedSelectionState = <TState,>(
   initialData: TState
 ): [TState, (action: SetStateAction<TState>) => void] => {
   const queryClient = useQueryClient();
-  const { data = initialData } = useQuery<TState>({
+  const { data = initialData } = createSingleQueryV2<TState>({
     queryKey,
-    queryFn: () => initialData,
+    queryFn: () => Promise.resolve(initialData),
     initialData,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: Number.POSITIVE_INFINITY,
+    meta: {
+      source: 'products.hooks.useProductListSelectionCache',
+      operation: 'detail',
+      resource: 'products.list-ui-state',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'list', 'ui-state'],
+      description: 'Stores products list UI state in the query cache.',
+      errorPresentation: 'silent',
+    },
   });
   const setState = useCallback(
     (action: SetStateAction<TState>): void => {

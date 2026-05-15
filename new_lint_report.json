@@ -1,4 +1,22 @@
 
 > libapp2@0.1.0 lint
-> cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint src --no-error-on-unmatched-pattern --max-warnings 0 --format json
+> cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint src --no-error-on-unmatched-pattern --format json
 
+
+Oops! Something went wrong! :(
+
+ESLint: 10.0.3
+
+TypeError: Cannot read properties of undefined (reading 'match')
+Occurred while linting /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/kangur/admin/components/AdminKangurLessonSectionsPanel.tsx:122
+Rule: "max-lines-per-function"
+    at processFunction (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/rules/max-lines-per-function.js:207:15)
+    at ruleErrorHandler (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:645:33)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-visitor.js:76:46
+    at Array.forEach (<anonymous>)
+    at SourceCodeVisitor.callSync (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-visitor.js:76:30)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-traverser.js:291:18
+    at Array.forEach (<anonymous>)
+    at SourceCodeTraverser.traverseSync (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/source-code-traverser.js:290:10)
+    at runRules (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:686:12)
+    at #flatVerifyWithoutProcessors (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/eslint/lib/linter/linter.js:1248:4)

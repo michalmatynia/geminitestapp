@@ -21,10 +21,10 @@ async function executeScoreSync(
   input: SyncInput,
   data: PracticeData,
 ): Promise<void> {
-  const { apiClient, locale, runStartedAt, session, queryClient } = data;
+  const { apiClient, locale, runStartedAt, session } = data;
   const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
   
-  if (!session?.user) return;
+  if (!session.user) return;
 
   await apiClient.createScore({
     player_name: resolvePracticePlayerName({ user: session.user }, locale),
@@ -37,9 +37,26 @@ async function executeScoreSync(
   });
   
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
-    queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
+    data.queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
+    data.queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
   ]);
+}
+
+/**
+ * Handles the authentication state for score synchronization.
+ */
+function handleAuthRequired(
+  data: PracticeData,
+  setPendingScoreSync: (val: SyncInput | null) => void,
+  input: SyncInput
+): void {
+  const { locale, isLoadingAuth, setScoreSyncState } = data;
+  if (isLoadingAuth) {
+    setPendingScoreSync(input);
+    setScoreSyncState(buildAwaitingAuthRetryState(locale));
+  } else {
+    setScoreSyncState(buildLocalOnlySyncState('auth', locale));
+  }
 }
 
 async function performSync(
@@ -47,15 +64,10 @@ async function performSync(
   data: PracticeData,
   setPendingScoreSync: (val: SyncInput | null) => void,
 ): Promise<void> {
-  const { locale, session, setScoreSyncState, isLoadingAuth } = data;
+  const { locale, session, setScoreSyncState } = data;
 
-  if (session?.status !== 'authenticated') {
-    if (isLoadingAuth) {
-      setPendingScoreSync(input);
-      setScoreSyncState(buildAwaitingAuthRetryState(locale));
-    } else {
-      setScoreSyncState(buildLocalOnlySyncState('auth', locale));
-    }
+  if (session.status !== 'authenticated') {
+    handleAuthRequired(data, setPendingScoreSync, input);
     return;
   }
 
@@ -66,7 +78,7 @@ async function performSync(
     await executeScoreSync(input, data);
     setScoreSyncState(buildSyncedState(locale));
   } catch (error) {
-    const status = (error as { status?: number })?.status;
+    const status = (error as { status?: number }).status;
     const isExpectedError = status === 401 || status === 403 || error instanceof TypeError;
     setScoreSyncState(isExpectedError ? buildLocalOnlySyncState('expected-error', locale) : buildUnexpectedSyncFailureState(locale));
   }
@@ -75,7 +87,7 @@ async function performSync(
 export function useKangurPracticeActions(data: PracticeData): KangurPracticeActionsResult {
   const { 
     setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, 
-    runId, questions, operation, progressStore, correctAnswers, currentIndex, selectedChoice
+    questions, operation, progressStore, correctAnswers, currentIndex, selectedChoice
   } = data;
   
   const pendingScoreSyncRef = useRef<SyncInput | null>(null);
@@ -100,13 +112,13 @@ export function useKangurPracticeActions(data: PracticeData): KangurPracticeActi
       setCorrectAnswers(nextCorrectAnswers);
       setCompletion(result);
       setSelectedChoice(null);
-      void syncScoreRecord({ correctAnswers: nextCorrectAnswers, completedRunId: runId, operation, totalQuestions: questions.length });
+      void syncScoreRecord({ correctAnswers: nextCorrectAnswers, completedRunId: data.runId, operation, totalQuestions: questions.length });
     } else {
       setCorrectAnswers(nextCorrectAnswers);
       setCurrentIndex((c: number) => c + 1);
       setSelectedChoice(null);
     }
-  }, [questions, currentIndex, selectedChoice, correctAnswers, runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
+  }, [questions, currentIndex, selectedChoice, correctAnswers, data.runId, syncScoreRecord, setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, operation, progressStore]);
 
   return { handleNext, syncScoreRecord };
 }

@@ -1,10 +1,10 @@
 import type React from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import type { ProductScrapeProfilesListResponse } from '@/shared/contracts/products/scrape-profiles';
 import { api } from '@/shared/lib/api-client';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
   FormField,
   FormSection,
@@ -205,10 +205,19 @@ function ValidationControlsField(props: {
 
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const info = useDraftCreatorBasicInfo();
-  const scrapeProfilesQuery = useQuery({
+  const scrapeProfilesQuery = createSingleQueryV2<ProductScrapeProfilesListResponse>({
     queryKey: SCRAPE_PROFILES_QUERY_KEY,
     queryFn: fetchScrapeProfiles,
     staleTime: 60_000,
+    meta: {
+      source: 'drafter.components.DraftCreatorDraftInfoSection',
+      operation: 'list',
+      resource: 'products.scrape-profiles',
+      domain: 'drafter',
+      queryKey: SCRAPE_PROFILES_QUERY_KEY,
+      tags: ['drafter', 'scrape-profiles'],
+      description: 'Loads product scrape profiles for draft templates.',
+    },
   });
   const scrapeProfileOptions = buildScrapeProfileOptions(scrapeProfilesQuery.data?.profiles ?? []);
 

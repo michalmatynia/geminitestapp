@@ -2,18 +2,14 @@
 
 import { useMemo } from 'react';
 import { useLocale } from 'next-intl';
-import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
-import {
-  attachTanstackFactoryMeta,
-  resolveTanstackFactoryMeta,
-} from '@/shared/lib/observability/tanstack-telemetry';
-import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { isRecoverableKangurClientFetchError } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -100,13 +96,11 @@ export const useKangurPageContentStore = (
   const routeLocale = useLocale();
   const resolvedLocale = resolveKangurPageContentLocale(locale, routeLocale);
 
-  return useQuery<KangurPageContentStore, Error>({
+  return createSingleQueryV2<KangurPageContentStore>({
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
-    meta: attachTanstackFactoryMeta(
-      resolveTanstackFactoryMeta(createKangurPageContentQueryMeta(resolvedLocale))
-    ),
+    meta: createKangurPageContentQueryMeta(resolvedLocale),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnReconnect: false,

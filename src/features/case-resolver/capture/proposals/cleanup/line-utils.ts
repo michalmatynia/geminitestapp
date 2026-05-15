@@ -5,7 +5,6 @@
  * Provides token normalization and organization name detection.
  */
 
-import { normalizeCaseResolverComparable } from '../../utils';
 import { CAPTURE_ORGANIZATION_HINTS } from './constants';
 import { lineContainsComparableHint } from './hint-utils';
 

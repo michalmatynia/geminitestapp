@@ -1,0 +1,31 @@
+  const handleSaveSubsection = async (): Promise<void> => {
+    if (!subsectionParent) return;
+
+    const id = subsectionForm.id.trim() || `subsection_${Date.now()}`;
+    const nextSubsection: KangurLessonSubsection = {
+      id,
+      label: subsectionForm.label,
+      typeLabel: subsectionForm.typeLabel || 'Subsection',
+      sortOrder: subsectionForm.sortOrder,
+      enabled: subsectionForm.enabled,
+      componentIds: parseComponentIds(subsectionForm.componentIds),
+    };
+
+    const nextSections = sections.map((s) =>
+      s.id === subsectionParent.id
+        ? {
+            ...s,
+            subsections: editingSubsection
+              ? s.subsections.map((sub) => (sub.id === editingSubsection.id ? nextSubsection : sub))
+              : [...s.subsections, nextSubsection],
+          }
+        : s
+    );
+
+    if (await persistSections(nextSections)) {
+      toast(editingSubsection ? 'Subsection updated.' : 'Subsection added.', { variant: 'success' });
+      setShowSubsectionModal(false);
+      setSubsectionParent(null);
+      setEditingSubsection(null);
+    }
+  };

@@ -6,13 +6,13 @@ import React, {
   startTransition,
   useCallback,
   useDeferredValue,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import { FilemakerEventMasterTreeNode } from '../components/shared/FilemakerEventMasterTreeNode';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -31,6 +31,14 @@ import {
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
 const ORGANIZATION_FILTERS = new Set(['with_organizations', 'without_organizations']);
 const STATUS_FILTERS = new Set(['active', 'discontinued']);
+const FILEMAKER_EVENTS_QUERY_KEY = ['filemaker', 'events'] as const;
+
+type EventListInput = {
+  filters: EventFilters;
+  page: number;
+  pageSize: number;
+  query: string;
+};
 
 const normalizeSelectFilter = <T extends string>(
   value: string,
@@ -56,12 +64,7 @@ const normalizeFilterValue = (key: string, value: unknown): Partial<EventFilters
   return normalizer ? normalizer(typeof value === 'string' ? value : '') : {};
 };
 
-const buildEventListParams = (input: {
-  filters: EventFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-}): URLSearchParams => {
+const buildEventListParams = (input: EventListInput): URLSearchParams => {
   const params = new URLSearchParams({
     address: input.filters.address,
     organization: input.filters.organization,
@@ -75,45 +78,50 @@ const buildEventListParams = (input: {
   return params;
 };
 
-function useMongoFilemakerEvents(input: {
-  filters: EventFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-}): MongoFilemakerEventsState {
-  const { filters, page, pageSize, query } = input;
-  const [state, setState] = useState<MongoFilemakerEventsState>({
-    ...EMPTY_EVENTS_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildEventListQueryKey = (input: EventListInput) =>
+  [...FILEMAKER_EVENTS_QUERY_KEY, input] as const;
+
+const fetchMongoFilemakerEvents = async (
+  input: EventListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerEventsResponse> => {
+  const params = buildEventListParams(input);
+  const response = await fetch(`/api/filemaker/events?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load events (${response.status}).`);
+  return (await response.json()) as MongoFilemakerEventsResponse;
+};
+
+function useMongoFilemakerEvents(input: EventListInput): MongoFilemakerEventsState {
+  const queryKey = buildEventListQueryKey(input);
+  const eventsQuery = createSingleQueryV2<
+    MongoFilemakerEventsResponse,
+    MongoFilemakerEventsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerEvents(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_EVENTS_RESPONSE,
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerEventsListState.useMongoFilemakerEvents',
+      operation: 'list',
+      resource: 'filemaker.events',
+      domain: 'files',
+      description: 'Load imported Filemaker events for the admin events list.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      filters: input.filters,
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildEventListParams({ filters, page, pageSize, query });
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/events?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerEventsResponse> => {
-        if (!response.ok) throw new Error(`Failed to load events (${response.status}).`);
-        return (await response.json()) as MongoFilemakerEventsResponse;
-      })
-      .then((response: MongoFilemakerEventsResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load events.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [filters, page, pageSize, query]);
-
-  return state;
+  return {
+    ...(eventsQuery.data ?? EMPTY_EVENTS_RESPONSE),
+    error: eventsQuery.error === null ? null : eventsQuery.error.message,
+    isLoading: eventsQuery.isFetching,
+  };
 }
 
 function useEventActions(router: ReturnType<typeof useRouter>): {

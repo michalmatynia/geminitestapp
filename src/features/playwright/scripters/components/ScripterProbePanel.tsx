@@ -3,6 +3,7 @@
 import { Crosshair, Loader2, RotateCw } from 'lucide-react';
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card, Input, Label } from '@/shared/ui/primitives.public';
 
 import { computeSelectorForElement } from '../iframe-selector';
@@ -42,73 +43,119 @@ const probeClose = async (sessionId: string): Promise<void> => {
   await fetch(`/api/playwright/scripters/probe/${sessionId}/close`, { method: 'POST' });
 };
 
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+// eslint-disable-next-line max-lines-per-function, complexity
 export function ScripterProbePanel({
   initialUrl = '',
   onSelectorChosen,
 }: ScripterProbePanelProps): JSX.Element {
   const [url, setUrl] = useState(initialUrl);
   const [session, setSession] = useState<ProbeState>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selector, setSelector] = useState('');
   const [evaluation, setEvaluation] = useState<ProbeEvaluateResult | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const closeProbeMutation = createMutationV2<void, string>({
+    mutationKey: ['playwright', 'scripters', 'probe', 'close'],
+    mutationFn: async (sessionId: string) => await probeClose(sessionId),
+    meta: {
+      source: 'playwright.scripters.ScripterProbePanel.close',
+      operation: 'action',
+      resource: 'playwright.scripters.probe.close',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'probe', 'close'],
+      tags: ['playwright', 'scripters', 'probe'],
+      description: 'Closes a Playwright scripter probe session.',
+    },
+  });
+  const startProbeMutation = createMutationV2<ProbeStartResult, string>({
+    mutationKey: ['playwright', 'scripters', 'probe', 'start'],
+    mutationFn: async (targetUrl: string) => await probeStart(targetUrl),
+    onSuccess: (result: ProbeStartResult): void => {
+      setSession(result);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterProbePanel.start',
+      operation: 'action',
+      resource: 'playwright.scripters.probe.start',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'probe', 'start'],
+      tags: ['playwright', 'scripters', 'probe'],
+      description: 'Starts a Playwright scripter probe session.',
+    },
+  });
+  const evaluateProbeMutation = createMutationV2<
+    ProbeEvaluateResult,
+    { sessionId: string; selector: string }
+  >({
+    mutationKey: ['playwright', 'scripters', 'probe', 'evaluate'],
+    mutationFn: async (variables: { sessionId: string; selector: string }) =>
+      await probeEvaluate(variables.sessionId, variables.selector),
+    onSuccess: (result: ProbeEvaluateResult): void => {
+      setEvaluation(result);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterProbePanel.evaluate',
+      operation: 'action',
+      resource: 'playwright.scripters.probe.evaluate',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'probe', 'evaluate'],
+      tags: ['playwright', 'scripters', 'probe'],
+      description: 'Evaluates a selector in a Playwright scripter probe session.',
+    },
+  });
+  const activeError =
+    closeProbeMutation.error ?? startProbeMutation.error ?? evaluateProbeMutation.error;
+  const error = activeError !== null ? toErrorMessage(activeError) : null;
+  const busy =
+    closeProbeMutation.isPending || startProbeMutation.isPending || evaluateProbeMutation.isPending;
 
   useEffect(() => {
     return () => {
-      if (session) void probeClose(session.sessionId);
+      if (session !== null) void probeClose(session.sessionId);
     };
   }, [session]);
 
   useEffect(() => {
     const iframe = iframeRef.current;
-    if (!iframe || !session) return;
+    if (iframe === null || session === null) return undefined;
     const handleLoad = (): void => {
       const doc = iframe.contentDocument;
-      if (!doc) return;
+      if (doc === null) return;
       const handleClick = (event: MouseEvent): void => {
         event.preventDefault();
         event.stopPropagation();
         const target = event.target as Element | null;
-        if (!target) return;
+        if (target === null) return;
         const computed = computeSelectorForElement(target);
         setSelector(computed);
       };
       doc.addEventListener('click', handleClick, true);
-      doc.body?.style.setProperty('cursor', 'crosshair');
+      doc.body.style.setProperty('cursor', 'crosshair');
     };
     iframe.addEventListener('load', handleLoad);
     return () => iframe.removeEventListener('load', handleLoad);
   }, [session]);
 
-  const startProbe = useCallback(async () => {
-    setBusy(true);
-    setError(null);
+  const startProbe = useCallback((): void => {
     setEvaluation(null);
-    try {
-      if (session) await probeClose(session.sessionId);
-      const result = await probeStart(url);
-      setSession(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
+    if (session !== null) {
+      closeProbeMutation.mutate(session.sessionId, {
+        onSuccess: () => startProbeMutation.mutate(url),
+      });
+      return;
     }
-  }, [session, url]);
+    startProbeMutation.mutate(url);
+  }, [closeProbeMutation, session, startProbeMutation, url]);
 
-  const evaluateSelector = useCallback(async () => {
-    if (!session || !selector.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await probeEvaluate(session.sessionId, selector);
-      setEvaluation(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }, [session, selector]);
+  const evaluateSelector = useCallback((): void => {
+    if (session === null || selector.trim() === '') return;
+    evaluateProbeMutation.mutate({
+      sessionId: session.sessionId,
+      selector,
+    });
+  }, [evaluateProbeMutation, session, selector]);
 
   return (
     <Card className='space-y-3 p-3'>
@@ -124,19 +171,19 @@ export function ScripterProbePanel({
             className='font-mono text-sm'
           />
         </div>
-        <Button type='button' size='sm' onClick={startProbe} disabled={busy || !url}>
+        <Button type='button' size='sm' onClick={startProbe} disabled={busy || url.trim() === ''}>
           {busy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <RotateCw className='mr-2 size-4' />}
           {session ? 'Reload probe' : 'Start probe'}
         </Button>
       </div>
 
-      {error ? <Alert variant='destructive'>{error}</Alert> : null}
+      {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
 
       {session ? (
         <>
           <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
             <Badge variant='outline'>session {session.sessionId.slice(0, 8)}</Badge>
-            <span>{session.title || session.finalUrl}</span>
+            <span>{session.title.trim() !== '' ? session.title : session.finalUrl}</span>
           </div>
           <div className='h-[420px] overflow-hidden rounded border border-border/40'>
             <iframe
@@ -162,14 +209,20 @@ export function ScripterProbePanel({
                 />
               </div>
             </div>
-            <Button type='button' size='sm' variant='outline' onClick={evaluateSelector} disabled={busy || !selector}>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              onClick={evaluateSelector}
+              disabled={busy || selector.trim() === ''}
+            >
               Try
             </Button>
             <Button
               type='button'
               size='sm'
               onClick={() => onSelectorChosen(selector)}
-              disabled={!selector}
+              disabled={selector.trim() === ''}
             >
               Use selector
             </Button>
@@ -211,7 +264,9 @@ export function ScripterProbePanel({
                   <ul className='space-y-1 text-xs'>
                     {evaluation.preview.map((item, idx) => (
                       <li key={idx} className='rounded bg-muted/40 p-1 font-mono'>
-                        {item.textSnippet || item.outerHtmlSnippet}
+                        {item.textSnippet.trim() !== ''
+                          ? item.textSnippet
+                          : item.outerHtmlSnippet}
                       </li>
                     ))}
                   </ul>

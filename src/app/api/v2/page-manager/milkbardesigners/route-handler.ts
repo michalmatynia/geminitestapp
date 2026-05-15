@@ -19,7 +19,7 @@ export const GET = apiHandler(
 
 export const PUT = apiHandler(
   async (request: NextRequest) => {
-    const body = await request.json();
+    const body: unknown = await request.json();
     return NextResponse.json(await saveMilkbarDesignersCmsSnapshot(body));
   },
   {

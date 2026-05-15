@@ -1,8 +1,11 @@
 'use client';
 
-import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
-import { type JSX, useCallback, useEffect, useState } from 'react';
+/* eslint-disable max-lines */
 
+import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { type JSX, useCallback, useState } from 'react';
+
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Alert,
   Badge,
@@ -37,11 +40,13 @@ const blankDefinition = (id = 'new-scripter'): ScripterDefinition => ({
   fieldMap: { bindings: { title: { path: 'name' } } },
 });
 
+const SCRIPTER_REGISTRY_QUERY_KEY = ['playwright', 'scripters', 'registry'] as const;
+
 const apiList = async (): Promise<ScripterRegistryListEntry[]> => {
   const res = await fetch('/api/playwright/scripters');
   if (!res.ok) throw new Error(`List failed (${res.status})`);
   const json = (await res.json()) as { scripters: ScripterRegistryListEntry[] };
-  return json.scripters ?? [];
+  return json.scripters;
 };
 
 const apiGet = async (id: string): Promise<ScripterDefinition> => {
@@ -80,6 +85,14 @@ const apiCommit = async (id: string): Promise<void> => {
   }
 };
 
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const toPositiveVersion = (value: string): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+};
+
 const newStep = (kind: ScripterExtractionStep['kind']): ScripterExtractionStep => {
   const id = `${kind}-${Math.random().toString(36).slice(2, 7)}`;
   switch (kind) {
@@ -100,135 +113,200 @@ const newStep = (kind: ScripterExtractionStep['kind']): ScripterExtractionStep =
       };
     case 'paginate':
       return { id, kind, strategy: 'queryParam', queryParam: 'page', maxPages: 5 };
+    default:
+      return { id, kind: 'goto', url: 'https://example.com/products' };
   }
 };
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function ScripterEditorPageRuntime(): JSX.Element {
-  const [list, setList] = useState<ScripterRegistryListEntry[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [definition, setDefinition] = useState<ScripterDefinition | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [committing, setCommitting] = useState(false);
-
-  const refreshList = useCallback(async () => {
-    try {
-      setList(await apiList());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, []);
-
-  useEffect(() => {
-    void refreshList();
-  }, [refreshList]);
-
-  const select = useCallback(async (id: string) => {
-    setBusy(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const fetched = await apiGet(id);
+  const registryQuery = createListQueryV2<
+    ScripterRegistryListEntry,
+    ScripterRegistryListEntry[],
+    typeof SCRIPTER_REGISTRY_QUERY_KEY
+  >({
+    queryKey: SCRIPTER_REGISTRY_QUERY_KEY,
+    queryFn: apiList,
+    staleTime: 30_000,
+    meta: {
+      source: 'playwright.scripters.ScripterEditorPageRuntime.registry',
+      operation: 'list',
+      resource: 'playwright.scripters.registry',
+      domain: 'playwright',
+      queryKey: SCRIPTER_REGISTRY_QUERY_KEY,
+      tags: ['playwright', 'scripters', 'registry'],
+      description: 'Loads Playwright scripter registry entries.',
+    },
+  });
+  const selectMutation = createMutationV2<ScripterDefinition, string>({
+    mutationKey: ['playwright', 'scripters', 'select'],
+    mutationFn: async (id: string) => await apiGet(id),
+    onSuccess: (fetched: ScripterDefinition, id: string): void => {
       setSelectedId(id);
       setDefinition(fetched);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }, []);
-
-  const createNew = (): void => {
-    const draft = blankDefinition(`scripter-${Date.now().toString(36)}`);
-    setSelectedId(null);
-    setDefinition(draft);
-  };
-
-  const save = async (): Promise<void> => {
-    if (!definition) return;
-    setBusy(true);
-    setError(null);
-    setInfo(null);
-    try {
-      const saved = await apiSave(definition);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterEditorPageRuntime.select',
+      operation: 'detail',
+      resource: 'playwright.scripters.definition',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'select'],
+      tags: ['playwright', 'scripters', 'definition'],
+      description: 'Loads a Playwright scripter definition for editing.',
+    },
+  });
+  const saveMutation = createMutationV2<ScripterDefinition, ScripterDefinition>({
+    mutationKey: ['playwright', 'scripters', 'save'],
+    mutationFn: async (input: ScripterDefinition) => await apiSave(input),
+    invalidateKeys: [SCRIPTER_REGISTRY_QUERY_KEY],
+    onSuccess: (saved: ScripterDefinition): void => {
       setSelectedId(saved.id);
+      setDefinition(saved);
       setInfo(`Saved scripter "${saved.id}" v${saved.version}`);
-      await refreshList();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const remove = async (id: string): Promise<void> => {
-    if (!window.confirm(`Delete scripter "${id}"?`)) return;
-    setBusy(true);
-    try {
-      await apiDelete(id);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterEditorPageRuntime.save',
+      operation: 'update',
+      resource: 'playwright.scripters.definition',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'save'],
+      tags: ['playwright', 'scripters', 'definition', 'save'],
+      description: 'Saves a Playwright scripter definition.',
+    },
+  });
+  const deleteMutation = createMutationV2<void, string>({
+    mutationKey: ['playwright', 'scripters', 'delete'],
+    mutationFn: async (id: string) => await apiDelete(id),
+    invalidateKeys: [SCRIPTER_REGISTRY_QUERY_KEY],
+    onSuccess: (_data: void, id: string): void => {
       if (selectedId === id) {
         setSelectedId(null);
         setDefinition(null);
       }
-      await refreshList();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
+      setInfo(`Deleted scripter "${id}"`);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterEditorPageRuntime.delete',
+      operation: 'delete',
+      resource: 'playwright.scripters.definition',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'delete'],
+      tags: ['playwright', 'scripters', 'definition', 'delete'],
+      description: 'Deletes a Playwright scripter definition.',
+    },
+  });
+  const commitMutation = createMutationV2<void, string>({
+    mutationKey: ['playwright', 'scripters', 'commit'],
+    mutationFn: async (id: string) => await apiCommit(id),
+    onSuccess: (): void => {
+      setInfo('Drafts committed');
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterEditorPageRuntime.commit',
+      operation: 'action',
+      resource: 'playwright.scripters.commit',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'commit'],
+      tags: ['playwright', 'scripters', 'commit'],
+      description: 'Commits Playwright scripter import drafts.',
+    },
+  });
+  const list = registryQuery.data ?? [];
+  const activeError =
+    registryQuery.error ??
+    selectMutation.error ??
+    saveMutation.error ??
+    deleteMutation.error ??
+    commitMutation.error;
+  const error = activeError !== null ? toErrorMessage(activeError) : null;
+  const busy = selectMutation.isPending || saveMutation.isPending || deleteMutation.isPending;
+  const committing = commitMutation.isPending;
+
+  const resetActionState = useCallback((): void => {
+    setInfo(null);
+    selectMutation.reset();
+    saveMutation.reset();
+    deleteMutation.reset();
+    commitMutation.reset();
+  }, [commitMutation, deleteMutation, saveMutation, selectMutation]);
+
+  const select = useCallback(
+    (id: string): void => {
+      resetActionState();
+      selectMutation.mutate(id);
+    },
+    [resetActionState, selectMutation]
+  );
+
+  const createNew = (): void => {
+    const draft = blankDefinition(`scripter-${Date.now().toString(36)}`);
+    resetActionState();
+    setSelectedId(null);
+    setDefinition(draft);
   };
 
-  const commit = async (): Promise<void> => {
-    if (!selectedId) return;
-    setCommitting(true);
-    setError(null);
-    setInfo(null);
-    try {
-      await apiCommit(selectedId);
-      setInfo('Drafts committed');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setCommitting(false);
-    }
+  const save = (): void => {
+    if (definition === null) return;
+    resetActionState();
+    saveMutation.mutate(definition);
+  };
+
+  const remove = (id: string): void => {
+    if (window.confirm(`Delete scripter "${id}"?`) === false) return;
+    resetActionState();
+    deleteMutation.mutate(id);
+  };
+
+  const commit = (): void => {
+    if (selectedId === null) return;
+    resetActionState();
+    commitMutation.mutate(selectedId);
   };
 
   const updateDefinition = (patch: Partial<ScripterDefinition>): void => {
-    if (!definition) return;
+    if (definition === null) return;
     setDefinition({ ...definition, ...patch });
   };
 
   const updateStep = (index: number, step: ScripterExtractionStep): void => {
-    if (!definition) return;
+    if (definition === null) return;
     const steps = [...definition.steps];
     steps[index] = step;
     setDefinition({ ...definition, steps });
   };
 
   const moveStep = (index: number, direction: -1 | 1): void => {
-    if (!definition) return;
+    if (definition === null) return;
     const steps = [...definition.steps];
     const target = index + direction;
     if (target < 0 || target >= steps.length) return;
-    [steps[index], steps[target]] = [steps[target]!, steps[index]!];
+    const currentStep = steps[index];
+    const targetStep = steps[target];
+    if (currentStep === undefined || targetStep === undefined) return;
+    steps[index] = targetStep;
+    steps[target] = currentStep;
     setDefinition({ ...definition, steps });
   };
 
   const removeStep = (index: number): void => {
-    if (!definition) return;
+    if (definition === null) return;
     setDefinition({ ...definition, steps: definition.steps.filter((_, i) => i !== index) });
   };
 
   const updateFieldMap = (fieldMap: FieldMap): void => {
-    if (!definition) return;
+    if (definition === null) return;
     setDefinition({ ...definition, fieldMap });
   };
 
   const insertSelectorIntoFirstExtractList = (selector: string): void => {
-    if (!definition) return;
+    if (definition === null) return;
     const steps = definition.steps.map((step) => {
-      if (step.kind === 'extractList' && !step.itemSelector) {
+      const shouldUseSelector =
+        step.kind === 'extractList' && step.itemSelector.trim() === '';
+      if (shouldUseSelector) {
         return { ...step, itemSelector: selector };
       }
       return step;
@@ -261,7 +339,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
                 <button
                   type='button'
                   className='flex-1 truncate text-left'
-                  onClick={() => void select(entry.id)}
+                  onClick={() => select(entry.id)}
                 >
                   <div className='truncate font-medium'>{entry.id}</div>
                   <div className='truncate text-xs text-muted-foreground'>{entry.siteHost}</div>
@@ -273,7 +351,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
                   type='button'
                   size='icon'
                   variant='ghost'
-                  onClick={() => void remove(entry.id)}
+                  onClick={() => remove(entry.id)}
                   aria-label={`Delete ${entry.id}`}
                 >
                   <Trash2 className='size-4 text-destructive' />
@@ -285,8 +363,8 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       </aside>
 
       <main className='space-y-4'>
-        {error ? <Alert variant='destructive'>{error}</Alert> : null}
-        {info ? <Alert>{info}</Alert> : null}
+        {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+        {info !== null ? <Alert>{info}</Alert> : null}
 
         <ScripterImportFromConnectionPanel
           onImported={({ definition: imported, warnings }) => {
@@ -297,7 +375,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
           }}
         />
 
-        {definition ? (
+        {definition !== null ? (
           <>
             <Card className='space-y-3 p-3'>
               <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
@@ -310,7 +388,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
                   <Input
                     type='number'
                     value={definition.version}
-                    onChange={(e) => updateDefinition({ version: Number(e.target.value) || 1 })}
+                    onChange={(e) => updateDefinition({ version: toPositiveVersion(e.target.value) })}
                   />
                 </div>
                 <div className='space-y-1'>
@@ -402,7 +480,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
               />
             </Card>
 
-            {selectedId ? (
+            {selectedId !== null ? (
               <>
                 <ScripterDryRunPanel
                   scripterId={selectedId}

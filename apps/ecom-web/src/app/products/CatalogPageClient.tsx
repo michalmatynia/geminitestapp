@@ -1094,6 +1094,7 @@ export function CatalogPageClient({
       observer.observe(el);
       return () => observer.disconnect();
     }
+    return undefined;
   }, []);
   // For static source: apply all filters/sort client-side. For mentios: server already did it.
   const displayProducts = useMemo(() => {

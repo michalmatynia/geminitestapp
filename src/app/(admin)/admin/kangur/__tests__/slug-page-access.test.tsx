@@ -32,7 +32,11 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  AdminKangurPageShell: ({ slug }: { slug?: string[] }) => <div data-testid='admin-kangur-shell'>{JSON.stringify(slug ?? [])}</div>,
+  AdminKangurPageShell: ({ basePath, slug }: { basePath?: string; slug?: string[] }) => (
+    <div data-testid='admin-kangur-shell'>
+      {JSON.stringify({ basePath, slug: slug ?? [] })}
+    </div>
+  ),
 }));
 
 describe('admin Kangur slug page access', () => {
@@ -44,7 +48,17 @@ describe('admin Kangur slug page access', () => {
     });
   });
 
-  it('blocks the games slug for non-super-admin sessions', async () => {
+  it('redirects legacy Kangur slug routes into Page Manager', async () => {
+    const { default: AdminKangurSlugPage } = await import('@/app/(admin)/admin/kangur/[...slug]/page');
+
+    await AdminKangurSlugPage({
+      params: Promise.resolve({ slug: ['games'] }),
+    });
+
+    expect(redirectMock).toHaveBeenCalledWith('/admin/page-manager/studiq/games');
+  });
+
+  it('blocks the Page Manager StudiQ games slug for non-super-admin sessions', async () => {
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
@@ -53,7 +67,9 @@ describe('admin Kangur slug page access', () => {
       },
     });
 
-    const { default: AdminKangurSlugPage } = await import('@/app/(admin)/admin/kangur/[...slug]/page');
+    const { default: AdminKangurSlugPage } = await import(
+      '@/app/(admin)/admin/page-manager/studiq/[...slug]/page'
+    );
 
     await expect(
       AdminKangurSlugPage({
@@ -62,7 +78,7 @@ describe('admin Kangur slug page access', () => {
     ).rejects.toThrow('notFound');
   });
 
-  it('keeps the games slug for exact super-admin sessions', async () => {
+  it('keeps the Page Manager StudiQ games slug for exact super-admin sessions', async () => {
     authMock.mockResolvedValue({
       expires: '2099-01-01T00:00:00.000Z',
       user: {
@@ -71,7 +87,9 @@ describe('admin Kangur slug page access', () => {
       },
     });
 
-    const { default: AdminKangurSlugPage } = await import('@/app/(admin)/admin/kangur/[...slug]/page');
+    const { default: AdminKangurSlugPage } = await import(
+      '@/app/(admin)/admin/page-manager/studiq/[...slug]/page'
+    );
     const page = await AdminKangurSlugPage({
       params: Promise.resolve({ slug: ['games'] }),
     });

@@ -21,9 +21,13 @@ vi.mock('@/features/products/api', () => ({
   getProductIds: (...args: unknown[]) => getProductIdsMock(...args),
 }));
 
-vi.mock('@/shared/lib/query-factories-v2', () => ({
-  fetchQueryV2: (...args: unknown[]) => fetchQueryV2Mock(...args),
-}));
+vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/query-factories-v2')>();
+  return {
+    ...actual,
+    fetchQueryV2: (...args: unknown[]) => fetchQueryV2Mock(...args),
+  };
+});
 
 vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),

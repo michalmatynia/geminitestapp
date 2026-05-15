@@ -5,7 +5,7 @@
  * Provides date extraction and validation for document metadata.
  */
 
-import { extractCaseResolverDocumentDate } from '../utils';
+import { extractCaseResolverDocumentDate } from '../../../settings';
 
 /**
  * Checks if a line contains a valid document date
@@ -16,5 +16,5 @@ import { extractCaseResolverDocumentDate } from '../utils';
  */
 export const hasValidDocumentDate = (line: string): boolean => {
   const date = extractCaseResolverDocumentDate(line);
-  return date !== null && date !== undefined;
+  return date !== null;
 };

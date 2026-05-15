@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+
 import type { FilemakerEmail, FilemakerEmailStatus } from '../types';
 
 export type EmailLinkCounts = {
@@ -49,6 +51,15 @@ export const DEFAULT_EMAIL_PAGE_SIZE = 100;
 export const EMAIL_PAGE_SIZE_OPTIONS = [50, 100, 200, 500];
 export const DEFAULT_EMAIL_SORT: EmailSortOption = 'email_asc';
 
+type EmailListInput = {
+  page: number;
+  pageSize: number;
+  query: string;
+  sort: EmailSortOption;
+};
+
+const FILEMAKER_EMAILS_QUERY_KEY = ['filemaker', 'emails'] as const;
+
 const EMPTY_EMAILS_RESPONSE: MongoFilemakerEmailsResponse = {
   collectionCount: 0,
   emails: [],
@@ -83,12 +94,7 @@ export function useDebouncedValue(value: string, delayMs: number): string {
   return debouncedValue;
 }
 
-const buildEmailListParams = (input: {
-  page: number;
-  pageSize: number;
-  query: string;
-  sort: EmailSortOption;
-}): URLSearchParams => {
+const buildEmailListParams = (input: EmailListInput): URLSearchParams => {
   const params = new URLSearchParams({
     page: String(input.page),
     pageSize: String(input.pageSize),
@@ -98,43 +104,48 @@ const buildEmailListParams = (input: {
   return params;
 };
 
-export function useMongoFilemakerEmails(input: {
-  page: number;
-  pageSize: number;
-  query: string;
-  sort: EmailSortOption;
-}): MongoFilemakerEmailsState {
-  const { page, pageSize, query, sort } = input;
-  const [state, setState] = useState<MongoFilemakerEmailsState>({
-    ...EMPTY_EMAILS_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildEmailListQueryKey = (input: EmailListInput) =>
+  [...FILEMAKER_EMAILS_QUERY_KEY, input] as const;
+
+const fetchMongoFilemakerEmails = async (
+  input: EmailListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerEmailsResponse> => {
+  const params = buildEmailListParams(input);
+  const response = await fetch(`/api/filemaker/emails?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load emails (${response.status}).`);
+  return (await response.json()) as MongoFilemakerEmailsResponse;
+};
+
+export function useMongoFilemakerEmails(input: EmailListInput): MongoFilemakerEmailsState {
+  const queryKey = buildEmailListQueryKey(input);
+  const emailsQuery = createSingleQueryV2<
+    MongoFilemakerEmailsResponse,
+    MongoFilemakerEmailsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerEmails(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_EMAILS_RESPONSE,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerEmailsPage.useMongoFilemakerEmails',
+      operation: 'list',
+      resource: 'filemaker.emails',
+      domain: 'files',
+      description: 'Load imported Filemaker emails for the admin emails table.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+      sort: input.sort,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildEmailListParams({ page, pageSize, query, sort });
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/emails?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerEmailsResponse> => {
-        if (!response.ok) throw new Error(`Failed to load emails (${response.status}).`);
-        return (await response.json()) as MongoFilemakerEmailsResponse;
-      })
-      .then((response: MongoFilemakerEmailsResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load emails.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [page, pageSize, query, sort]);
-
-  return state;
+  return {
+    ...(emailsQuery.data ?? EMPTY_EMAILS_RESPONSE),
+    error: emailsQuery.error === null ? null : emailsQuery.error.message,
+    isLoading: emailsQuery.isFetching,
+  };
 }

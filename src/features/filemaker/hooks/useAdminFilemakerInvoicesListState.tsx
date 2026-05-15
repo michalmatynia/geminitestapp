@@ -1,18 +1,20 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import { Settings } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, {
   startTransition,
   useCallback,
   useDeferredValue,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { FilemakerInvoiceMasterTreeNode } from '../components/shared/FilemakerInvoiceMasterTreeNode';
@@ -31,6 +33,19 @@ import {
 
 const ORGANIZATION_FILTERS = new Set(['with_organizations', 'without_organizations']);
 const PAYMENT_FILTERS = new Set(['paid', 'unpaid']);
+const FILEMAKER_INVOICES_QUERY_KEY = ['filemaker', 'invoices'] as const;
+
+type InvoiceListInput = {
+  filters: InvoiceFilters;
+  page: number;
+  pageSize: number;
+  query: string;
+};
+
+type InvoicePdfExportResult = {
+  blob: Blob;
+  filename: string;
+};
 
 const normalizeSelectFilter = <T extends string>(
   value: string,
@@ -53,12 +68,7 @@ const normalizeFilterValue = (key: string, value: unknown): Partial<InvoiceFilte
   return normalizer ? normalizer(typeof value === 'string' ? value : '') : {};
 };
 
-const buildInvoiceListParams = (input: {
-  filters: InvoiceFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-}): URLSearchParams => {
+const buildInvoiceListParams = (input: InvoiceListInput): URLSearchParams => {
   const params = new URLSearchParams({
     organization: input.filters.organization,
     page: String(input.page),
@@ -102,45 +112,51 @@ const downloadBlob = (blob: Blob, filename: string): void => {
   URL.revokeObjectURL(url);
 };
 
-function useMongoFilemakerInvoices(input: {
-  filters: InvoiceFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-}): MongoFilemakerInvoicesState {
-  const { filters, page, pageSize, query } = input;
-  const [state, setState] = useState<MongoFilemakerInvoicesState>({
-    ...EMPTY_INVOICES_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildInvoiceListQueryKey = (input: InvoiceListInput) =>
+  [...FILEMAKER_INVOICES_QUERY_KEY, input] as const;
+
+const fetchMongoFilemakerInvoices = async (
+  input: InvoiceListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerInvoicesResponse> => {
+  const params = buildInvoiceListParams(input);
+  const response = await fetch(`/api/filemaker/invoices?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load invoices (${response.status}).`);
+  return (await response.json()) as MongoFilemakerInvoicesResponse;
+};
+
+function useMongoFilemakerInvoices(input: InvoiceListInput): MongoFilemakerInvoicesState {
+  const queryKey = buildInvoiceListQueryKey(input);
+  const invoicesQuery = createSingleQueryV2<
+    MongoFilemakerInvoicesResponse,
+    MongoFilemakerInvoicesResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerInvoices(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_INVOICES_RESPONSE,
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerInvoicesListState.useMongoFilemakerInvoices',
+      operation: 'list',
+      resource: 'filemaker.invoices',
+      domain: 'files',
+      description: 'Load imported Filemaker invoices for the admin invoices list.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      filters: input.filters,
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildInvoiceListParams({ filters, page, pageSize, query });
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/invoices?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerInvoicesResponse> => {
-        if (!response.ok) throw new Error(`Failed to load invoices (${response.status}).`);
-        return (await response.json()) as MongoFilemakerInvoicesResponse;
-      })
-      .then((response: MongoFilemakerInvoicesResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load invoices.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [filters, page, pageSize, query]);
-
-  return state;
+  return {
+    ...(invoicesQuery.data ?? EMPTY_INVOICES_RESPONSE),
+    error: invoicesQuery.error === null ? null : invoicesQuery.error.message,
+    isLoading: invoicesQuery.isFetching,
+  };
 }
 
 function useInvoiceActions(router: ReturnType<typeof useRouter>): PanelAction[] {
@@ -189,34 +205,52 @@ function useInvoicePdfExport(toast: ReturnType<typeof useToast>['toast']): {
   exportingInvoiceId: string | null;
   handleExportInvoicePdf: (invoiceId: string) => void;
 } {
-  const [exportingInvoiceId, setExportingInvoiceId] = useState<string | null>(null);
-  const handleExportInvoicePdf = useCallback(
-    (invoiceId: string): void => {
-      setExportingInvoiceId(invoiceId);
-      fetch('/api/filemaker/invoices/export-pdf', {
+  const exportInvoicePdfMutation = createMutationV2<InvoicePdfExportResult, string>({
+    mutationKey: ['filemaker', 'invoices', 'export-pdf'],
+    mutationFn: async (invoiceId) => {
+      const response = await fetch('/api/filemaker/invoices/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoiceId }),
-      })
-        .then(async (response: Response): Promise<void> => {
-          if (!response.ok) throw new Error(`Failed to export invoice (${response.status}).`);
-          const filename = readDownloadFilename(response, `invoice-${invoiceId}.pdf`);
-          downloadBlob(await response.blob(), filename);
+      });
+      if (!response.ok) throw new Error(`Failed to export invoice (${response.status}).`);
+      return {
+        blob: await response.blob(),
+        filename: readDownloadFilename(response, `invoice-${invoiceId}.pdf`),
+      };
+    },
+    meta: {
+      source: 'features.filemaker.hooks.useAdminFilemakerInvoicesListState.useInvoicePdfExport',
+      operation: 'action',
+      resource: 'filemaker.invoice-pdf-export',
+      domain: 'files',
+      description: 'Export a Filemaker invoice PDF from the admin invoices list.',
+      errorPresentation: 'toast',
+    },
+  });
+  const handleExportInvoicePdf = useCallback(
+    (invoiceId: string): void => {
+      exportInvoicePdfMutation.mutate(invoiceId, {
+        onSuccess: (result): void => {
+          downloadBlob(result.blob, result.filename);
           toast('Invoice PDF exported.', { variant: 'success' });
-        })
-        .catch((error: unknown): void => {
+        },
+        onError: (error: Error): void => {
           toast(error instanceof Error ? error.message : 'Failed to export invoice PDF.', {
             variant: 'error',
           });
-        })
-        .finally((): void => {
-          setExportingInvoiceId(null);
-        });
+        },
+      });
     },
-    [toast]
+    [exportInvoicePdfMutation, toast]
   );
 
-  return { exportingInvoiceId, handleExportInvoicePdf };
+  return {
+    exportingInvoiceId: exportInvoicePdfMutation.isPending
+      ? exportInvoicePdfMutation.variables
+      : null,
+    handleExportInvoicePdf,
+  };
 }
 
 function useInvoiceListControlHandlers({

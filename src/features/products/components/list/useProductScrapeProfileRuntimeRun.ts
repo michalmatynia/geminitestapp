@@ -1,11 +1,12 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   ProductScrapeProfileRuntimeRun,
+  ProductScrapeProfileRuntimeRunResponse,
   ProductScrapeProfileRuntimeSnapshot,
   ProductScrapeProfileRuntimeStatus,
   ProductScrapeProfileRunQueuedResponse,
@@ -14,6 +15,7 @@ import {
   invalidateListingBadges,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/toast';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -122,8 +124,9 @@ const useTrackedRuntimeRunId = (): [
 };
 
 const useRuntimeRunQuery = (trackedRunId: string | null): ProductScrapeProfileRuntimeRun | null => {
-  const query = useQuery<ProductScrapeProfileRuntimeSnapshot>({
-    queryKey: [...RUNTIME_RUN_QUERY_KEY, trackedRunId ?? 'active'],
+  const queryKey = [...RUNTIME_RUN_QUERY_KEY, trackedRunId ?? 'active'] as const;
+  const query = createSingleQueryV2<ProductScrapeProfileRuntimeSnapshot>({
+    queryKey,
     queryFn: () => fetchScrapeProfileRuntimeSnapshot(trackedRunId),
     refetchInterval: (queryResult) =>
       isProductScrapeProfileRuntimeRunActive(queryResult.state.data?.run ?? null)
@@ -131,6 +134,15 @@ const useRuntimeRunQuery = (trackedRunId: string | null): ProductScrapeProfileRu
         : false,
     retry: false,
     staleTime: 1_000,
+    meta: {
+      source: 'products.components.useProductScrapeProfileRuntimeRun',
+      operation: 'polling',
+      resource: 'products.scrape-profiles.runtime-run',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'scrape-profiles', 'runtime'],
+      description: 'Polls the active product scrape profile runtime run.',
+    },
   });
   return query.data?.run ?? null;
 };
@@ -192,8 +204,16 @@ const useRuntimeRunMutations = (
   resumeRun: (runId: string) => void;
 } => {
   const { toast } = useToast();
-  const pauseMutation = useMutation({
+  const pauseMutation = createMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
     mutationFn: pauseScrapeProfileRuntimeRun,
+    meta: {
+      source: 'products.components.useProductScrapeProfileRuntimeRun.pause',
+      operation: 'update',
+      resource: 'products.scrape-profiles.runtime-run',
+      domain: 'products',
+      tags: ['products', 'scrape-profiles', 'runtime', 'pause'],
+      description: 'Pauses a product scrape profile runtime run.',
+    },
     onSuccess: (response) => {
       rememberRun(response.run);
       toast('Scrape profile run paused.', { variant: 'warning' });
@@ -205,8 +225,16 @@ const useRuntimeRunMutations = (
       });
     },
   });
-  const resumeMutation = useMutation({
+  const resumeMutation = createMutationV2<ProductScrapeProfileRuntimeRunResponse, string>({
     mutationFn: resumeScrapeProfileRuntimeRun,
+    meta: {
+      source: 'products.components.useProductScrapeProfileRuntimeRun.resume',
+      operation: 'update',
+      resource: 'products.scrape-profiles.runtime-run',
+      domain: 'products',
+      tags: ['products', 'scrape-profiles', 'runtime', 'resume'],
+      description: 'Resumes a product scrape profile runtime run.',
+    },
     onSuccess: (response) => {
       rememberRun(response.run);
       toast('Scrape profile run resumed.', { variant: 'success' });

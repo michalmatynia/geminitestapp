@@ -60,6 +60,20 @@ vi.mock('@/shared/lib/ai-paths/api', () => ({
 }));
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
+  createMutationOptionsV2: (config: {
+    mutationKey?: unknown;
+    mutationFn: (variables: unknown, context: { queryClient: unknown }) => Promise<unknown>;
+    meta?: unknown;
+    onSuccess?: (data: unknown, variables: unknown) => void;
+    onError?: (error: Error, variables: unknown) => void;
+  }) => ({
+    mutationKey: config.mutationKey,
+    meta: config.meta,
+    mutationFn: async (variables: unknown) =>
+      await config.mutationFn(variables, { queryClient: { id: 'query-client' } }),
+    onSuccess: config.onSuccess,
+    onError: config.onError,
+  }),
   fetchQueryV2: (_queryClient: unknown, options: Record<string, unknown>) => {
     mockState.fetchQueryCalls.push(options);
     return async () => {

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Repository quality baseline Improvement Track
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
 - Track id: `repo-quality-baseline`
 - Category: `quality`
 - Included in default read-only bundle: yes
-- Overall status: `failed`
-- Latest report timestamp: 2026-05-10T01:05:02.191Z
+- Overall status: `no-data`
+- Latest report timestamp: not available
 
 ## Purpose
 
@@ -37,22 +37,15 @@ Runs the core read-only quality checks that establish the current repository bas
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `failed` | 2 | 2 | 0 | 1 | 0 |
-| `classify` | `failed` | 2 | 2 | 0 | 2 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
-| `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `apply` | `no-data` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-| Phase | Status | Mode | Step | Command |
-| --- | --- | --- | --- | --- |
-| `audit` | `passed` | `automatic` | `repo-quality-api-error-sources` | `check:api-error-sources` |
-| `audit` | `failed` | `automatic` | `repo-quality-canonical-sitewide` | `canonical:check:sitewide` |
-| `classify` | `failed` | `automatic` | `repo-quality-lint` | `quality:baseline:lint` |
-| `classify` | `failed` | `automatic` | `repo-quality-typecheck` | `quality:baseline:typecheck` |
-| `plan` | `manual` | `manual` | `repo-quality-baseline-plan` | manual |
-| `apply` | `manual` | `manual` | `repo-quality-baseline-apply` | manual |
+- No step data is available for this track yet.
 
 ## Related Docs
 

@@ -11,6 +11,7 @@ import {
   FormField,
   FormSection,
 } from '@/shared/ui/forms-and-actions.public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
@@ -301,6 +302,26 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   const { toast } = useToast();
   const routePersonId = useMemo(() => decodeRouteParam(params['personId']), [params]);
   const cvId = useMemo(() => decodeRouteParam(params['cvId']), [params]);
+  const cvQueryKey = ['filemaker', 'cvs', 'detail', cvId] as const;
+  const cvQuery = createSingleQueryV2<FilemakerCv, FilemakerCv, typeof cvQueryKey>({
+    queryKey: cvQueryKey,
+    queryFn: async ({ signal }) => loadCv(cvId, signal),
+    enabled: cvId.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCvEditPage.cvDetail',
+      operation: 'detail',
+      resource: 'filemaker.cv',
+      domain: 'files',
+      description: 'Load Filemaker CV detail for the CV editor.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasCvId: cvId.length > 0,
+    },
+  });
   const [state, setState] = useState<CvDetailState>({
     cv: null,
     error: null,
@@ -319,53 +340,48 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    setState({ cv: null, error: null, isLoading: true });
-    loadCv(cvId, controller.signal)
-      .then((cv: FilemakerCv): void => {
-        const normalizedBlocks = normalizeCvBlocks(cv.bodyBlocks);
-        setState({ cv, error: null, isLoading: false });
-        setTitle(cv.title);
-        setStatus(cv.status);
-        setBlocks(normalizedBlocks);
-        setSelectedBlockId(firstBlockId(normalizedBlocks));
-        setPatchProfessionalSummary(cv.tailoringPatch?.professionalSummary ?? '');
-        setPatchCoreStrengthsText(joinLines(cv.tailoringPatch?.coreStrengths ?? cv.coreStrengths));
-        setPatchTechnicalEnvironmentText(
-          joinLines(
-            cv.tailoringPatch?.selectedTechnicalEnvironment ??
-              cv.selectedTechnicalEnvironment
-          )
-        );
-        setPatchExperienceHighlightsText(
-          buildExperienceHighlightsTextMap(
-            cv.tailoringPatch?.experienceHighlightPatches ?? cv.experienceHighlightPatches
-          )
-        );
-        setRemovedExperiencePatchKeys([]);
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        logClientError(error);
-        setState({
-          cv: null,
-          error: error instanceof Error ? error.message : 'Failed to load CV.',
-          isLoading: false,
-        });
-        setTitle('');
-        setStatus('draft');
-        setBlocks([]);
-        setSelectedBlockId(null);
-        setPatchProfessionalSummary('');
-        setPatchCoreStrengthsText('');
-        setPatchTechnicalEnvironmentText('');
-        setPatchExperienceHighlightsText({});
-        setRemovedExperiencePatchKeys([]);
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [cvId]);
+    if (cvQuery.data !== undefined) {
+      const normalizedBlocks = normalizeCvBlocks(cvQuery.data.bodyBlocks);
+      setState({ cv: cvQuery.data, error: null, isLoading: false });
+      setTitle(cvQuery.data.title);
+      setStatus(cvQuery.data.status);
+      setBlocks(normalizedBlocks);
+      setSelectedBlockId(firstBlockId(normalizedBlocks));
+      setPatchProfessionalSummary(cvQuery.data.tailoringPatch?.professionalSummary ?? '');
+      setPatchCoreStrengthsText(
+        joinLines(cvQuery.data.tailoringPatch?.coreStrengths ?? cvQuery.data.coreStrengths)
+      );
+      setPatchTechnicalEnvironmentText(
+        joinLines(
+          cvQuery.data.tailoringPatch?.selectedTechnicalEnvironment ??
+            cvQuery.data.selectedTechnicalEnvironment
+        )
+      );
+      setPatchExperienceHighlightsText(
+        buildExperienceHighlightsTextMap(
+          cvQuery.data.tailoringPatch?.experienceHighlightPatches ??
+            cvQuery.data.experienceHighlightPatches
+        )
+      );
+      setRemovedExperiencePatchKeys([]);
+      return;
+    }
+    if (cvQuery.error !== null) {
+      logClientError(cvQuery.error);
+      setState({ cv: null, error: cvQuery.error.message, isLoading: false });
+      setTitle('');
+      setStatus('draft');
+      setBlocks([]);
+      setSelectedBlockId(null);
+      setPatchProfessionalSummary('');
+      setPatchCoreStrengthsText('');
+      setPatchTechnicalEnvironmentText('');
+      setPatchExperienceHighlightsText({});
+      setRemovedExperiencePatchKeys([]);
+      return;
+    }
+    setState({ cv: null, error: null, isLoading: cvQuery.isFetching });
+  }, [cvQuery.data, cvQuery.error, cvQuery.isFetching]);
 
   const personId = state.cv?.personId ?? routePersonId;
   const tailoringPatch = state.cv?.tailoringPatch ?? null;

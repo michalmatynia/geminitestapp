@@ -161,25 +161,36 @@ export function useTagMappings(connectionId: string): ListQuery<TagMappingWithDe
   });
 }
 
-import { useQuery } from '@tanstack/react-query';
-
 export function useMarketplaceBadgeStatus(
   productId: string,
   marketplace: string,
   enabled: boolean = true
 ): { status: string | null; isFetching: boolean } {
-  const { data: listings, isFetching } = useQuery<ProductListingWithDetails[]>({
-    queryKey: QUERY_KEYS.integrations.listings(productId),
+  const queryKey = QUERY_KEYS.integrations.listings(productId);
+  const { data: listings, isFetching } = createListQueryV2<
+    ProductListingWithDetails,
+    ProductListingWithDetails[]
+  >({
+    queryKey,
     queryFn: () =>
       api.get<ProductListingWithDetails[]>(
         `/api/v2/integrations/products/${productId}/listings`,
         { cache: 'no-store' }
-      ),
+    ),
     enabled: enabled && Boolean(productId),
     staleTime: 30000,
+    meta: {
+      source: 'integrations.hooks.useMarketplaceBadgeStatus',
+      operation: 'list',
+      resource: 'integrations.product-listings',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'badges'],
+      description: 'Loads marketplace listing status badges for a product.',
+    },
   });
 
-  const status = (listings ?? []).find((l) => l.integration?.slug === marketplace)?.status ?? null;
+  const status = (listings ?? []).find((l) => l.integration.slug === marketplace)?.status ?? null;
 
   return { status, isFetching };
 }

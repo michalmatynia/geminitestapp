@@ -1,7 +1,1 @@
 phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
-audit,repo-quality-api-error-sources,Check API error source coverage,passed,automatic,false,check:api-error-sources,docs/metrics/api-error-sources-latest.json|docs/metrics/api-error-sources-latest.md,2026-05-10T01:05:02.191Z,artifacts/improvements/audit-report.json
-audit,repo-quality-canonical-sitewide,Check canonical sitewide coverage,failed,automatic,false,canonical:check:sitewide,,2026-05-10T01:05:02.191Z,artifacts/improvements/audit-report.json
-classify,repo-quality-lint,Run source lint baseline,failed,automatic,false,quality:baseline:lint,,2026-05-09T23:06:53.666Z,artifacts/improvements/classify-report.json
-classify,repo-quality-typecheck,Run typecheck baseline,failed,automatic,false,quality:baseline:typecheck,,2026-05-09T23:06:53.666Z,artifacts/improvements/classify-report.json
-plan,repo-quality-baseline-plan,Review baseline results and decide follow-up validation,manual,manual,false,,,2026-05-09T23:06:54.268Z,artifacts/improvements/plan-report.json
-apply,repo-quality-baseline-apply,Apply repo-wide quality fixes manually,manual,manual,true,,,2026-04-15T10:54:26.139Z,artifacts/improvements/apply-report.json

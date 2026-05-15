@@ -1,21 +1,31 @@
 'use client';
 
-import { Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+/* eslint-disable max-lines, max-lines-per-function, complexity */
+
+import { Globe, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  DEFAULT_MILKBAR_PAGE_CONTENT,
+  DEFAULT_MILKBAR_LOCALIZED_CONTENT,
+  DEFAULT_MILKBAR_PAGE_SETTINGS,
+  MILKBAR_LOCALE_LABELS,
+  MILKBAR_LOCALES,
   type MilkbarCmsSnapshot,
+  type MilkbarLocale,
+  type MilkbarLocalizedContent,
   type MilkbarMetric,
   type MilkbarPageContent,
+  type MilkbarPageSettings,
   type MilkbarPrinciple,
   type MilkbarProcessStep,
   type MilkbarProjectCmsRecord,
+  type MilkbarSectionVisibility,
+  type MilkbarSeoMeta,
   type MilkbarServiceCmsRecord,
 } from './milkbar-cms.types';
 import { api } from '@/shared/lib/api-client';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
-import { Alert, Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { Alert, Badge, Button, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
 
@@ -26,6 +36,7 @@ const TABS = [
   { label: 'Projects', value: 'projects' },
   { label: 'Services', value: 'services' },
   { label: 'Inquiries', value: 'inquiries' },
+  { label: 'Settings', value: 'settings' },
   { label: 'Sync Status', value: 'status' },
 ] as const;
 
@@ -40,6 +51,11 @@ const textToLines = (value: string): string[] =>
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
+
+const toOrderNumber = (value: string): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const newProject = (index: number): MilkbarProjectCmsRecord => ({
   code: `MBD-${String(index + 1).padStart(3, '0')}`,
@@ -110,7 +126,47 @@ function SectionTitle({
   return (
     <div className='space-y-1'>
       <h3 className='text-sm font-semibold text-white'>{title}</h3>
-      {subtitle ? <p className='text-xs text-muted-foreground'>{subtitle}</p> : null}
+      {subtitle !== undefined && subtitle.length > 0 ? (
+        <p className='text-xs text-muted-foreground'>{subtitle}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function LocaleSwitcher({
+  activeLocale,
+  onLocaleChange,
+  publishedLocales,
+}: {
+  activeLocale: MilkbarLocale;
+  onLocaleChange: (locale: MilkbarLocale) => void;
+  publishedLocales: MilkbarLocale[];
+}): React.JSX.Element {
+  return (
+    <div className='flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1'>
+      {MILKBAR_LOCALES.map((locale) => {
+        const isPublished = publishedLocales.includes(locale);
+        return (
+          <button
+            key={locale}
+            type='button'
+            onClick={() => onLocaleChange(locale)}
+            className={`relative flex items-center gap-1.5 rounded px-3 py-1 text-xs font-semibold uppercase tracking-widest transition-colors ${
+              activeLocale === locale
+                ? 'bg-white/15 text-white'
+                : 'text-muted-foreground hover:text-white'
+            }`}
+          >
+            {locale}
+            <span
+              className={`inline-block size-1.5 rounded-full ${
+                isPublished ? 'bg-emerald-500' : 'bg-white/20'
+              }`}
+              title={isPublished ? 'Published' : 'Draft'}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -118,8 +174,10 @@ function SectionTitle({
 export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<MilkbarCmsTab>('content');
+  const [activeLocale, setActiveLocale] = useState<MilkbarLocale>('en');
   const [snapshot, setSnapshot] = useState<MilkbarCmsSnapshot | null>(null);
-  const [pageContent, setPageContent] = useState<MilkbarPageContent>(DEFAULT_MILKBAR_PAGE_CONTENT);
+  const [localizedContent, setLocalizedContent] = useState<MilkbarLocalizedContent>(DEFAULT_MILKBAR_LOCALIZED_CONTENT);
+  const [pageSettings, setPageSettings] = useState<MilkbarPageSettings>(DEFAULT_MILKBAR_PAGE_SETTINGS);
   const [projects, setProjects] = useState<MilkbarProjectCmsRecord[]>([]);
   const [services, setServices] = useState<MilkbarServiceCmsRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +190,8 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     try {
       const nextSnapshot = await api.get<MilkbarCmsSnapshot>(ENDPOINT);
       setSnapshot(nextSnapshot);
-      setPageContent(nextSnapshot.pageContent);
+      setLocalizedContent(nextSnapshot.localizedContent);
+      setPageSettings(nextSnapshot.pageSettings);
       setProjects(nextSnapshot.projects);
       setServices(nextSnapshot.services);
     } catch (loadError) {
@@ -152,11 +211,12 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     try {
       const nextSnapshot = await api.put<MilkbarCmsSnapshot>(
         ENDPOINT,
-        { pageContent, projects, services },
+        { localizedContent, pageSettings, projects, services },
         { timeout: 120_000 }
       );
       setSnapshot(nextSnapshot);
-      setPageContent(nextSnapshot.pageContent);
+      setLocalizedContent(nextSnapshot.localizedContent);
+      setPageSettings(nextSnapshot.pageSettings);
       setProjects(nextSnapshot.projects);
       setServices(nextSnapshot.services);
       toast('Milkbardesigners CMS saved.', { variant: 'success' });
@@ -167,89 +227,124 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     } finally {
       setIsSaving(false);
     }
-  }, [pageContent, projects, services, toast]);
+  }, [localizedContent, pageSettings, projects, services, toast]);
 
-  const updateHero = useCallback((patch: Partial<MilkbarPageContent['hero']>) => {
-    setPageContent((current) => ({ ...current, hero: { ...current.hero, ...patch } }));
-  }, []);
+  const handleRefreshClick = useCallback((): void => {
+    loadSnapshot().catch(() => undefined);
+  }, [loadSnapshot]);
 
-  const updateDrawing = useCallback((patch: Partial<MilkbarPageContent['drawing']>) => {
-    setPageContent((current) => ({ ...current, drawing: { ...current.drawing, ...patch } }));
-  }, []);
+  const handleSaveClick = useCallback((): void => {
+    saveSnapshot().catch(() => undefined);
+  }, [saveSnapshot]);
 
-  const updatePhilosophy = useCallback((patch: Partial<MilkbarPageContent['philosophy']>) => {
-    setPageContent((current) => ({
-      ...current,
-      philosophy: { ...current.philosophy, ...patch },
-    }));
-  }, []);
+  // ── Locale-aware content updaters ──────────────────────────────────────────
 
-  const updateServicesHeader = useCallback((patch: Partial<MilkbarPageContent['services']>) => {
-    setPageContent((current) => ({ ...current, services: { ...current.services, ...patch } }));
-  }, []);
+  const updateLocaleSection = useCallback(
+    <K extends keyof MilkbarPageContent>(
+      locale: MilkbarLocale,
+      section: K,
+      patch: Partial<MilkbarPageContent[K]>
+    ): void => {
+      setLocalizedContent((current) => ({
+        ...current,
+        [locale]: {
+          ...current[locale],
+          [section]: { ...(current[locale][section] as object), ...patch },
+        },
+      }));
+    },
+    []
+  );
 
-  const updateProjectsHeader = useCallback((patch: Partial<MilkbarPageContent['projects']>) => {
-    setPageContent((current) => ({ ...current, projects: { ...current.projects, ...patch } }));
-  }, []);
-
-  const updateProcess = useCallback((patch: Partial<MilkbarPageContent['process']>) => {
-    setPageContent((current) => ({ ...current, process: { ...current.process, ...patch } }));
-  }, []);
-
-  const updateQuote = useCallback((patch: Partial<MilkbarPageContent['quote']>) => {
-    setPageContent((current) => ({ ...current, quote: { ...current.quote, ...patch } }));
-  }, []);
-
-  const updateCta = useCallback((patch: Partial<MilkbarPageContent['cta']>) => {
-    setPageContent((current) => ({ ...current, cta: { ...current.cta, ...patch } }));
-  }, []);
-
-  const updateFooter = useCallback((patch: Partial<MilkbarPageContent['footer']>) => {
-    setPageContent((current) => ({ ...current, footer: { ...current.footer, ...patch } }));
-  }, []);
+  const updateHero = useCallback(
+    (patch: Partial<MilkbarPageContent['hero']>) => updateLocaleSection(activeLocale, 'hero', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateDrawing = useCallback(
+    (patch: Partial<MilkbarPageContent['drawing']>) => updateLocaleSection(activeLocale, 'drawing', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updatePhilosophy = useCallback(
+    (patch: Partial<MilkbarPageContent['philosophy']>) => updateLocaleSection(activeLocale, 'philosophy', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateServicesHeader = useCallback(
+    (patch: Partial<MilkbarPageContent['services']>) => updateLocaleSection(activeLocale, 'services', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateProjectsHeader = useCallback(
+    (patch: Partial<MilkbarPageContent['projects']>) => updateLocaleSection(activeLocale, 'projects', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateProcess = useCallback(
+    (patch: Partial<MilkbarPageContent['process']>) => updateLocaleSection(activeLocale, 'process', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateQuote = useCallback(
+    (patch: Partial<MilkbarPageContent['quote']>) => updateLocaleSection(activeLocale, 'quote', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateCta = useCallback(
+    (patch: Partial<MilkbarPageContent['cta']>) => updateLocaleSection(activeLocale, 'cta', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateFooter = useCallback(
+    (patch: Partial<MilkbarPageContent['footer']>) => updateLocaleSection(activeLocale, 'footer', patch),
+    [activeLocale, updateLocaleSection]
+  );
 
   const updatePrinciple = useCallback(
     (index: number, patch: Partial<MilkbarPrinciple>): void => {
-      setPageContent((current) => {
-        const principles = current.philosophy.principles.map((principle, principleIndex) =>
-          principleIndex === index ? { ...principle, ...patch } : principle
+      setLocalizedContent((current) => {
+        const principles = current[activeLocale].philosophy.principles.map((p, i) =>
+          i === index ? { ...p, ...patch } : p
         );
         return {
           ...current,
-          philosophy: { ...current.philosophy, principles },
+          [activeLocale]: {
+            ...current[activeLocale],
+            philosophy: { ...current[activeLocale].philosophy, principles },
+          },
         };
       });
     },
-    []
+    [activeLocale]
   );
 
   const updateProcessStep = useCallback(
     (index: number, patch: Partial<MilkbarProcessStep>): void => {
-      setPageContent((current) => {
-        const steps = current.process.steps.map((step, stepIndex) =>
-          stepIndex === index ? { ...step, ...patch } : step
+      setLocalizedContent((current) => {
+        const steps = current[activeLocale].process.steps.map((s, i) =>
+          i === index ? { ...s, ...patch } : s
         );
-        return { ...current, process: { ...current.process, steps } };
+        return {
+          ...current,
+          [activeLocale]: {
+            ...current[activeLocale],
+            process: { ...current[activeLocale].process, steps },
+          },
+        };
       });
     },
-    []
+    [activeLocale]
   );
 
-  const updateMetric = useCallback((index: number, patch: Partial<MilkbarMetric>): void => {
-    setPageContent((current) => {
-      const metrics = current.metrics.map((metric, metricIndex) =>
-        metricIndex === index ? { ...metric, ...patch } : metric
-      );
-      return { ...current, metrics };
-    });
-  }, []);
+  const updateMetric = useCallback(
+    (index: number, patch: Partial<MilkbarMetric>): void => {
+      setLocalizedContent((current) => {
+        const metrics = current[activeLocale].metrics.map((m, i) =>
+          i === index ? { ...m, ...patch } : m
+        );
+        return { ...current, [activeLocale]: { ...current[activeLocale], metrics } };
+      });
+    },
+    [activeLocale]
+  );
 
   const updateProject = useCallback(
     (index: number, patch: Partial<MilkbarProjectCmsRecord>): void => {
       setProjects((current) =>
-        current.map((project, projectIndex) =>
-          projectIndex === index ? { ...project, ...patch } : project
-        )
+        current.map((project, i) => (i === index ? { ...project, ...patch } : project))
       );
     },
     []
@@ -258,21 +353,51 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const updateService = useCallback(
     (index: number, patch: Partial<MilkbarServiceCmsRecord>): void => {
       setServices((current) =>
-        current.map((service, serviceIndex) =>
-          serviceIndex === index ? { ...service, ...patch } : service
-        )
+        current.map((service, i) => (i === index ? { ...service, ...patch } : service))
       );
     },
     []
   );
 
+  // ── Settings updaters ───────────────────────────────────────────────────────
+
+  const updateVisibility = useCallback((patch: Partial<MilkbarSectionVisibility>): void => {
+    setPageSettings((current) => ({
+      ...current,
+      visibility: { ...current.visibility, ...patch },
+    }));
+  }, []);
+
+  const updateSeo = useCallback((locale: MilkbarLocale, patch: Partial<MilkbarSeoMeta>): void => {
+    setPageSettings((current) => ({
+      ...current,
+      seo: { ...current.seo, [locale]: { ...current.seo[locale], ...patch } },
+    }));
+  }, []);
+
+  const updateDefaultLocale = useCallback((locale: MilkbarLocale): void => {
+    setPageSettings((current) => ({ ...current, defaultLocale: locale }));
+  }, []);
+
+  const togglePublishedLocale = useCallback((locale: MilkbarLocale, published: boolean): void => {
+    setPageSettings((current) => {
+      const next = published
+        ? [...new Set([...current.publishedLocales, locale])]
+        : current.publishedLocales.filter((l) => l !== locale);
+      return { ...current, publishedLocales: next.length > 0 ? next : [locale] };
+    });
+  }, []);
+
   const headerDescription = useMemo(() => {
     if (activeTab === 'projects') return 'Manage Milkbar project cards and 3D project metadata.';
     if (activeTab === 'services') return 'Manage the practice/service entries shown on the architecture website.';
     if (activeTab === 'inquiries') return 'Review incoming Milkbar website inquiries.';
+    if (activeTab === 'settings') return 'Section visibility, SEO metadata per locale, and publication controls.';
     if (activeTab === 'status') return 'Review Milkbar Mongo source configuration and record counts.';
     return 'Manage Milkbar page copy and section content.';
   }, [activeTab]);
+
+  const activePageContent = localizedContent[activeLocale];
 
   return (
     <AdminPageManagerLayout
@@ -292,7 +417,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
             variant='secondary'
             size='sm'
             icon={<RefreshCw className='size-4' />}
-            onClick={() => void loadSnapshot()}
+            onClick={handleRefreshClick}
             disabled={isLoading || isSaving}
           >
             Refresh
@@ -303,41 +428,56 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
             size='sm'
             icon={<Save className='size-4' />}
             loading={isSaving}
-            onClick={() => void saveSnapshot()}
+            onClick={handleSaveClick}
           >
             Save CMS
           </Button>
         </div>
       }
     >
-      {error ? <Alert variant='error' title='Milkbardesigners CMS error' description={error} /> : null}
+      {error !== null ? (
+        <Alert variant='error' title='Milkbardesigners CMS error' description={error} />
+      ) : null}
       {isLoading ? (
         <LoadingPanel>Loading Milkbardesigners CMS...</LoadingPanel>
       ) : (
         <div className='space-y-4'>
           {activeTab === 'content' ? (
-            <ContentTab
-              pageContent={pageContent}
-              updateHero={updateHero}
-              updateDrawing={updateDrawing}
-              updatePhilosophy={updatePhilosophy}
-              updateServicesHeader={updateServicesHeader}
-              updateProjectsHeader={updateProjectsHeader}
-              updateProcess={updateProcess}
-              updateQuote={updateQuote}
-              updateCta={updateCta}
-              updateFooter={updateFooter}
-              updatePrinciple={updatePrinciple}
-              updateProcessStep={updateProcessStep}
-              updateMetric={updateMetric}
-            />
+            <>
+              <div className='flex items-center gap-3'>
+                <Globe className='size-4 text-muted-foreground' />
+                <LocaleSwitcher
+                  activeLocale={activeLocale}
+                  onLocaleChange={setActiveLocale}
+                  publishedLocales={pageSettings.publishedLocales}
+                />
+                <span className='text-xs text-muted-foreground'>
+                  Editing: <span className='font-medium text-white'>{MILKBAR_LOCALE_LABELS[activeLocale]}</span>
+                </span>
+              </div>
+              <ContentTab
+                pageContent={activePageContent}
+                updateHero={updateHero}
+                updateDrawing={updateDrawing}
+                updatePhilosophy={updatePhilosophy}
+                updateServicesHeader={updateServicesHeader}
+                updateProjectsHeader={updateProjectsHeader}
+                updateProcess={updateProcess}
+                updateQuote={updateQuote}
+                updateCta={updateCta}
+                updateFooter={updateFooter}
+                updatePrinciple={updatePrinciple}
+                updateProcessStep={updateProcessStep}
+                updateMetric={updateMetric}
+              />
+            </>
           ) : null}
           {activeTab === 'projects' ? (
             <ProjectsTab
               projects={projects}
               onAdd={() => setProjects((current) => [...current, newProject(current.length)])}
               onRemove={(index) =>
-                setProjects((current) => current.filter((_, currentIndex) => currentIndex !== index))
+                setProjects((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateProject}
             />
@@ -347,12 +487,21 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               services={services}
               onAdd={() => setServices((current) => [...current, newService(current.length)])}
               onRemove={(index) =>
-                setServices((current) => current.filter((_, currentIndex) => currentIndex !== index))
+                setServices((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateService}
             />
           ) : null}
           {activeTab === 'inquiries' ? <InquiriesTab snapshot={snapshot} /> : null}
+          {activeTab === 'settings' ? (
+            <SettingsTab
+              pageSettings={pageSettings}
+              onUpdateVisibility={updateVisibility}
+              onUpdateSeo={updateSeo}
+              onUpdateDefaultLocale={updateDefaultLocale}
+              onTogglePublishedLocale={togglePublishedLocale}
+            />
+          ) : null}
           {activeTab === 'status' ? <StatusTab snapshot={snapshot} /> : null}
         </div>
       )}
@@ -496,6 +645,10 @@ function ContentTab({
           <FieldInput label='Emphasis' value={pageContent.cta.emphasis} onChange={(emphasis) => updateCta({ emphasis })} />
           <FieldTextarea label='Description' value={pageContent.cta.description} onChange={(description) => updateCta({ description })} rows={2} />
           <FieldTextarea label='Note' value={pageContent.cta.note} onChange={(note) => updateCta({ note })} rows={2} />
+          <FieldInput label='Email placeholder' value={pageContent.cta.emailPlaceholder} onChange={(emailPlaceholder) => updateCta({ emailPlaceholder })} />
+          <FieldInput label='Submit label' value={pageContent.cta.submitLabel} onChange={(submitLabel) => updateCta({ submitLabel })} />
+          <FieldInput label='Loading label' value={pageContent.cta.loadingLabel} onChange={(loadingLabel) => updateCta({ loadingLabel })} />
+          <FieldInput label='Success message' value={pageContent.cta.successMessage} onChange={(successMessage) => updateCta({ successMessage })} />
         </FormSection>
       </div>
 
@@ -504,6 +657,174 @@ function ContentTab({
         <FieldInput label='Copyright' value={pageContent.footer.copyright} onChange={(copyright) => updateFooter({ copyright })} />
         <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
         <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
+      </FormSection>
+    </div>
+  );
+}
+
+function SettingsTab({
+  pageSettings,
+  onUpdateVisibility,
+  onUpdateSeo,
+  onUpdateDefaultLocale,
+  onTogglePublishedLocale,
+}: {
+  pageSettings: MilkbarPageSettings;
+  onUpdateVisibility: (patch: Partial<MilkbarSectionVisibility>) => void;
+  onUpdateSeo: (locale: MilkbarLocale, patch: Partial<MilkbarSeoMeta>) => void;
+  onUpdateDefaultLocale: (locale: MilkbarLocale) => void;
+  onTogglePublishedLocale: (locale: MilkbarLocale, published: boolean) => void;
+}): React.JSX.Element {
+  const [seoLocale, setSeoLocale] = useState<MilkbarLocale>('en');
+
+  const SECTION_LABELS: Record<keyof MilkbarSectionVisibility, string> = {
+    drawing: 'Drawing — interactive floor plan section',
+    philosophy: 'Philosophy — principles and body copy',
+    services: 'Services — practice offerings grid',
+    projects: 'Projects — built work gallery',
+    process: 'Process — four-step engagement flow',
+    metrics: 'Metrics — headline numbers strip',
+    quote: 'Quote — studio principle pull-quote',
+    cta: 'CTA — email enquiry form',
+  };
+
+  return (
+    <div className='space-y-4'>
+      {/* Section Visibility */}
+      <FormSection
+        title='Section Visibility'
+        subtitle='Toggle which page sections are rendered on the live site.'
+      >
+        <div className='grid gap-3 sm:grid-cols-2'>
+          {(Object.keys(SECTION_LABELS) as (keyof MilkbarSectionVisibility)[]).map((key) => (
+            <div
+              key={key}
+              className='flex items-center justify-between gap-4 rounded-md border border-white/10 p-3'
+            >
+              <div>
+                <div className='text-sm font-medium text-white capitalize'>{key}</div>
+                <div className='text-xs text-muted-foreground'>{SECTION_LABELS[key]}</div>
+              </div>
+              <Switch
+                checked={pageSettings.visibility[key]}
+                onCheckedChange={(checked) => onUpdateVisibility({ [key]: checked })}
+                aria-label={`Toggle ${key} section`}
+              />
+            </div>
+          ))}
+        </div>
+      </FormSection>
+
+      {/* Locale Publication Controls */}
+      <div className='grid gap-4 lg:grid-cols-2'>
+        <FormSection title='Default Locale' subtitle='Language served to visitors with no locale preference.'>
+          <div className='flex gap-2'>
+            {MILKBAR_LOCALES.map((locale) => (
+              <button
+                key={locale}
+                type='button'
+                onClick={() => onUpdateDefaultLocale(locale)}
+                className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold uppercase tracking-widest transition-colors ${
+                  pageSettings.defaultLocale === locale
+                    ? 'border-white/40 bg-white/10 text-white'
+                    : 'border-white/10 text-muted-foreground hover:border-white/20 hover:text-white'
+                }`}
+              >
+                {locale}
+                <div className='text-[10px] font-normal normal-case tracking-normal text-muted-foreground'>
+                  {MILKBAR_LOCALE_LABELS[locale]}
+                </div>
+              </button>
+            ))}
+          </div>
+        </FormSection>
+
+        <FormSection title='Published Locales' subtitle='Languages visible to the public. At least one must be published.'>
+          <div className='space-y-2'>
+            {MILKBAR_LOCALES.map((locale) => {
+              const isPublished = pageSettings.publishedLocales.includes(locale);
+              const isDefault = pageSettings.defaultLocale === locale;
+              return (
+                <div
+                  key={locale}
+                  className='flex items-center justify-between gap-4 rounded-md border border-white/10 p-3'
+                >
+                  <div>
+                    <div className='flex items-center gap-2 text-sm font-medium text-white'>
+                      <span className='uppercase tracking-widest'>{locale}</span>
+                      <span className='text-xs font-normal text-muted-foreground'>{MILKBAR_LOCALE_LABELS[locale]}</span>
+                      {isDefault ? (
+                        <Badge variant='outline' className='text-[10px]'>default</Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isPublished}
+                    onCheckedChange={(checked) => onTogglePublishedLocale(locale, checked)}
+                    aria-label={`Publish ${MILKBAR_LOCALE_LABELS[locale]}`}
+                    disabled={isDefault && isPublished}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <p className='text-xs text-muted-foreground'>
+            The default locale cannot be unpublished.
+          </p>
+        </FormSection>
+      </div>
+
+      {/* SEO Metadata per Locale */}
+      <FormSection
+        title='SEO Metadata'
+        subtitle='Search engine and social metadata per language.'
+        actions={
+          <div className='flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1'>
+            {MILKBAR_LOCALES.map((locale) => (
+              <button
+                key={locale}
+                type='button'
+                onClick={() => setSeoLocale(locale)}
+                className={`rounded px-3 py-1 text-xs font-semibold uppercase tracking-widest transition-colors ${
+                  seoLocale === locale
+                    ? 'bg-white/15 text-white'
+                    : 'text-muted-foreground hover:text-white'
+                }`}
+              >
+                {locale}
+              </button>
+            ))}
+          </div>
+        }
+      >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput
+            label='Page title'
+            value={pageSettings.seo[seoLocale].title}
+            onChange={(title) => onUpdateSeo(seoLocale, { title })}
+            description='<title> tag — shown in browser tab and search results.'
+          />
+          <FieldInput
+            label='OG title'
+            value={pageSettings.seo[seoLocale].ogTitle}
+            onChange={(ogTitle) => onUpdateSeo(seoLocale, { ogTitle })}
+            description='Social sharing card headline.'
+          />
+          <FieldTextarea
+            label='Meta description'
+            value={pageSettings.seo[seoLocale].description}
+            onChange={(description) => onUpdateSeo(seoLocale, { description })}
+            description='Search result snippet — aim for 150–160 characters.'
+            rows={3}
+          />
+          <FieldTextarea
+            label='OG description'
+            value={pageSettings.seo[seoLocale].ogDescription}
+            onChange={(ogDescription) => onUpdateSeo(seoLocale, { ogDescription })}
+            description='Social sharing card body text.'
+            rows={3}
+          />
+        </div>
       </FormSection>
     </div>
   );
@@ -533,7 +854,10 @@ function ProjectsTab({
       {projects.map((project, index) => (
         <div key={`${project.code}-${index}`} className='space-y-3 rounded-md border border-white/10 p-4'>
           <div className='flex items-center justify-between gap-3'>
-            <SectionTitle title={project.name || project.code} subtitle={project.code} />
+            <SectionTitle
+              title={project.name.length > 0 ? project.name : project.code}
+              subtitle={project.code}
+            />
             <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
               Remove
             </Button>
@@ -554,7 +878,7 @@ function ProjectsTab({
             <FieldInput label='Type' value={project.projectType} onChange={(projectType) => onUpdate(index, { projectType })} />
             <FieldInput label='City' value={project.city} onChange={(city) => onUpdate(index, { city })} />
             <FieldInput label='Country' value={project.country} onChange={(country) => onUpdate(index, { country })} />
-            <FieldInput label='Order' value={project.order} onChange={(order) => onUpdate(index, { order: Number(order) || 0 })} />
+            <FieldInput label='Order' value={project.order} onChange={(order) => onUpdate(index, { order: toOrderNumber(order) })} />
             <div className='md:col-span-2'>
               <FieldTextarea label='Stats' value={linesToText(project.stats)} onChange={(value) => onUpdate(index, { stats: textToLines(value) })} rows={3} />
             </div>
@@ -592,7 +916,10 @@ function ServicesTab({
       {services.map((service, index) => (
         <div key={`${service.code}-${index}`} className='space-y-3 rounded-md border border-white/10 p-4'>
           <div className='flex items-center justify-between gap-3'>
-            <SectionTitle title={service.title || service.code} subtitle={service.code} />
+            <SectionTitle
+              title={service.title.length > 0 ? service.title : service.code}
+              subtitle={service.code}
+            />
             <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-4' />} onClick={() => onRemove(index)}>
               Remove
             </Button>
@@ -600,7 +927,7 @@ function ServicesTab({
           <div className='grid gap-3 md:grid-cols-[8rem_minmax(0,1fr)_8rem]'>
             <FieldInput label='Code' value={service.code} onChange={(code) => onUpdate(index, { code })} />
             <FieldInput label='Title' value={service.title} onChange={(title) => onUpdate(index, { title })} />
-            <FieldInput label='Order' value={service.order} onChange={(order) => onUpdate(index, { order: Number(order) || 0 })} />
+            <FieldInput label='Order' value={service.order} onChange={(order) => onUpdate(index, { order: toOrderNumber(order) })} />
             <div className='md:col-span-3'>
               <FieldTextarea label='Description' value={service.description} onChange={(description) => onUpdate(index, { description })} rows={3} />
             </div>
@@ -614,7 +941,10 @@ function ServicesTab({
 function InquiriesTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React.JSX.Element {
   const inquiries = snapshot?.inquiries ?? [];
   return (
-    <FormSection title='Inquiries' subtitle={`${inquiries.length} latest records from arch_web_local`}>
+    <FormSection
+      title='Inquiries'
+      subtitle={`${inquiries.length} latest records from the Milkbardesigners local runtime DB`}
+    >
       {inquiries.length === 0 ? (
         <p className='text-sm text-muted-foreground'>No inquiries found.</p>
       ) : (
@@ -650,26 +980,85 @@ function StatusTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React
     <div className='grid gap-4 lg:grid-cols-2'>
       <FormSection title='Database Sources'>
         <div className='space-y-3 text-sm'>
-          <div className='rounded-md border border-white/10 p-3'>
-            <div className='font-medium text-white'>Local</div>
-            <div className='mt-1 text-muted-foreground'>{snapshot?.sourceStatus.local.uriLabel ?? 'Not configured'}</div>
-            <div className='mt-1 text-xs text-muted-foreground'>DB: {snapshot?.sourceStatus.local.dbName ?? '-'}</div>
-          </div>
-          <div className='rounded-md border border-white/10 p-3'>
-            <div className='font-medium text-white'>Cloud</div>
-            <div className='mt-1 text-muted-foreground'>{snapshot?.sourceStatus.cloud.uriLabel ?? 'Not configured'}</div>
-            <div className='mt-1 text-xs text-muted-foreground'>DB: {snapshot?.sourceStatus.cloud.dbName ?? '-'}</div>
-          </div>
+          <SourceStatusCard
+            title='GeminiTest App local'
+            subtitle='Source of truth'
+            status={snapshot?.sourceStatus.sourceOfTruth}
+          />
+          <SourceStatusCard
+            title='Milkbardesigners local'
+            subtitle='Runtime mirror tested by the website'
+            status={snapshot?.sourceStatus.runtimeLocal}
+          />
+          <SourceStatusCard
+            title='Milkbardesigners cloud'
+            subtitle='Later target for Database Manager sync'
+            status={snapshot?.sourceStatus.runtimeCloud}
+          />
         </div>
       </FormSection>
       <FormSection title='Record Counts'>
-        <div className='grid gap-3 sm:grid-cols-3'>
-          <CountBox label='Projects' value={snapshot?.counts.projects ?? 0} />
-          <CountBox label='Services' value={snapshot?.counts.services ?? 0} />
-          <CountBox label='Inquiries' value={snapshot?.counts.inquiries ?? 0} />
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <CountBox label='Source projects' value={snapshot?.counts.sourceOfTruth.projects ?? 0} />
+          <CountBox label='Source services' value={snapshot?.counts.sourceOfTruth.services ?? 0} />
+          <CountBox label='Runtime projects' value={snapshot?.counts.runtimeLocal.projects ?? 0} />
+          <CountBox label='Runtime services' value={snapshot?.counts.runtimeLocal.services ?? 0} />
+          <CountBox label='Runtime inquiries' value={snapshot?.counts.runtimeLocal.inquiries ?? 0} />
         </div>
-        <p className='text-xs text-muted-foreground'>Last page content update: {snapshot?.updatedAt ?? 'not saved yet'}</p>
+        <p className='text-xs text-muted-foreground'>
+          Editable content source:{' '}
+          {snapshot?.contentSource === 'runtimeFallback'
+            ? 'runtime fallback until the first source-of-truth save'
+            : 'GeminiTest App local source of truth'}
+        </p>
+        <p className='text-xs text-muted-foreground'>
+          Last page content update: {snapshot?.updatedAt ?? 'not saved yet'}
+        </p>
+        {snapshot !== null ? (
+          <div className='mt-2 space-y-1'>
+            <p className='text-xs font-medium text-white'>Published locales:</p>
+            <div className='flex gap-1.5'>
+              {MILKBAR_LOCALES.map((locale) => {
+                const isPublished = snapshot.pageSettings.publishedLocales.includes(locale);
+                const isDefault = snapshot.pageSettings.defaultLocale === locale;
+                return (
+                  <Badge
+                    key={locale}
+                    variant={isPublished ? 'success' : 'outline'}
+                    className='uppercase'
+                  >
+                    {locale}{isDefault ? ' ★' : ''}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </FormSection>
+    </div>
+  );
+}
+
+function SourceStatusCard({
+  title,
+  subtitle,
+  status,
+}: {
+  title: string;
+  subtitle: string;
+  status: MilkbarCmsSnapshot['sourceStatus']['sourceOfTruth'] | undefined;
+}): React.JSX.Element {
+  return (
+    <div className='rounded-md border border-white/10 p-3'>
+      <div className='flex items-center justify-between gap-3'>
+        <div className='font-medium text-white'>{title}</div>
+        <Badge variant={status?.configured === true ? 'success' : 'outline'}>
+          {status?.configured === true ? 'Configured' : 'Not configured'}
+        </Badge>
+      </div>
+      <div className='mt-1 text-xs text-muted-foreground'>{subtitle}</div>
+      <div className='mt-2 text-muted-foreground'>{status?.uriLabel ?? 'Not configured'}</div>
+      <div className='mt-1 text-xs text-muted-foreground'>DB: {status?.dbName ?? '-'}</div>
     </div>
   );
 }

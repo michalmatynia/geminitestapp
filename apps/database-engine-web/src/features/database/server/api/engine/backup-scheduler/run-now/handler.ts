@@ -19,14 +19,50 @@ import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/d
 import { logSystemError } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-const resolveTargets = (
-  _dbType: DatabaseEngineBackupRunNowRequest['dbType']
-): Array<'mongodb'> => {
-  return ['mongodb'];
-};
+const resolveTargets = (_dbType: DatabaseEngineBackupRunNowRequest['dbType']): Array<'mongodb'> => ['mongodb'];
 
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
+
+interface JobResult {
+  dbType: 'mongodb';
+  jobId: string;
+  processedInline: boolean;
+}
+
+/**
+ * Handles the enqueuing and processing of a single backup job.
+ * Extracted to allow concurrent execution and cleaner error handling.
+ */
+async function runBackupTask(dbType: 'mongodb'): Promise<JobResult> {
+  const job = await enqueueProductAiJob('system', 'db_backup', {
+    dbType,
+    entityType: 'system',
+    source: 'database_engine_manual_backup',
+  });
+
+  try {
+    await markDatabaseBackupJobQueued(dbType, job.id);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+  }
+
+  try {
+    const runtimeType = job.jobType ?? job.type ?? 'db_backup';
+    await enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload);
+    return { dbType, jobId: job.id, processedInline: false };
+  } catch (enqueueError: unknown) {
+    void ErrorSystem.captureException(enqueueError);
+    await logSystemError({
+      message: '[databases.engine.backup-scheduler.run-now] Failed to enqueue backup job, falling back to inline',
+      error: enqueueError,
+      source: 'api/databases/engine/backup-scheduler/run-now',
+      context: { jobId: job.id, dbType },
+    });
+
+    await processProductAiJob(job.id);
+    return { dbType, jobId: job.id, processedInline: true };
+  }
+}
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
@@ -40,61 +76,23 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const parsed = await parseJsonBody(req, runNowSchema, {
     logPrefix: 'database-engine-web.databases.engine.backup-scheduler.run-now.POST',
   });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
+  if (!parsed.ok) return parsed.response;
 
   const targets = resolveTargets(parsed.data.dbType);
   if (targets.length === 0) {
     throw badRequestError('No database targets selected for backup.');
   }
 
-  const queued: Array<{ dbType: 'mongodb'; jobId: string }> = [];
-  const inlineProcessed: Array<{ dbType: 'mongodb'; jobId: string }> = [];
   startProductAiJobQueue();
 
-  for (const dbType of targets) {
-    const job = await enqueueProductAiJob('system', 'db_backup', {
-      dbType,
-      entityType: 'system',
-      source: 'database_engine_manual_backup',
-    });
-    queued.push({ dbType, jobId: job.id });
-
-    try {
-      await markDatabaseBackupJobQueued(dbType, job.id);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-    
-      // Keep manual queue action resilient even if schedule metadata update fails.
-    }
-
-    try {
-      const runtimeType = job.jobType ?? job.type ?? 'db_backup';
-      await enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload);
-    } catch (enqueueError: unknown) {
-      void ErrorSystem.captureException(enqueueError);
-      await logSystemError({
-        message:
-          '[databases.engine.backup-scheduler.run-now] Failed to enqueue db backup job to runtime queue, falling back to inline processing',
-        error: enqueueError,
-        source: 'api/databases/engine/backup-scheduler/run-now',
-        context: { jobId: job.id, dbType },
-      });
-
-      await processProductAiJob(job.id);
-      inlineProcessed.push({ dbType, jobId: job.id });
-    }
-  }
+  const results = await Promise.all(targets.map(runBackupTask));
 
   return NextResponse.json(
     {
       success: true,
-      queued,
-      inlineProcessed,
+      queued: results.filter((r) => !r.processedInline).map(({ dbType, jobId }) => ({ dbType, jobId })),
+      inlineProcessed: results.filter((r) => r.processedInline).map(({ dbType, jobId }) => ({ dbType, jobId })),
     },
-    {
-      headers: { 'Cache-Control': 'no-store' },
-    }
+    { headers: { 'Cache-Control': 'no-store' } }
   );
 }

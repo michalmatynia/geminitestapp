@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 
@@ -20,6 +21,7 @@ import { formatTimestamp } from '../../pages/filemaker-page-utils';
 import { ContactLogControls } from './OrganizationContactLogsSection.controls';
 
 const CONTACT_LOG_PAGE_SIZE = 25;
+const ORGANIZATION_CONTACT_LOGS_QUERY_KEY = ['filemaker', 'organization-contact-logs'] as const;
 
 const emptyResponse = (): MongoFilemakerContactLogsResponse => ({
   contactLogs: [],
@@ -176,49 +178,62 @@ function useContactLogController(
   organizationId: string | null,
   query: string
 ): ContactLogController {
-  const [response, setResponse] = useState<MongoFilemakerContactLogsResponse>(emptyResponse);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadPage = useCallback(
-    async (page: number, signal: AbortSignal): Promise<void> => {
-      if (organizationId === null) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await fetchJson<MongoFilemakerContactLogsResponse>(
-          buildContactLogsUrl({ organizationId, page, query }),
-          signal
-        );
-        setResponse(result);
-      } catch (loadError: unknown) {
-        if (signal.aborted) return;
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load contact logs.');
-      } finally {
-        if (!signal.aborted) setIsLoading(false);
-      }
+  const [page, setPage] = useState(1);
+  const normalizedOrganizationId = organizationId ?? '';
+  const queryKey = [
+    ...ORGANIZATION_CONTACT_LOGS_QUERY_KEY,
+    { organizationId: normalizedOrganizationId, page, query },
+  ] as const;
+  const contactLogsQuery = createSingleQueryV2<
+    MongoFilemakerContactLogsResponse,
+    MongoFilemakerContactLogsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) =>
+      fetchJson<MongoFilemakerContactLogsResponse>(
+        buildContactLogsUrl({ organizationId: normalizedOrganizationId, page, query }),
+        signal
+      ),
+    enabled: organizationId !== null,
+    placeholderData: (previousData) => previousData ?? emptyResponse(),
+    meta: {
+      source:
+        'features.filemaker.components.page.OrganizationContactLogsSection.useContactLogController',
+      operation: 'list',
+      resource: 'filemaker.organization-contact-logs',
+      domain: 'files',
+      description: 'Load Filemaker contact logs linked to the current organization.',
+      errorPresentation: 'inline',
     },
-    [organizationId, query]
-  );
+    telemetryContext: {
+      hasOrganizationId: organizationId !== null,
+      page,
+      queryLength: query.length,
+    },
+  });
 
   useEffect(() => {
-    if (organizationId === null) return undefined;
-    const controller = new AbortController();
-    void loadPage(1, controller.signal);
-    return () => {
-      controller.abort();
-    };
-  }, [loadPage, organizationId]);
+    setPage(1);
+  }, [organizationId, query]);
 
   const loadRequestedPage = useCallback(
-    (page: number): void => {
-      const controller = new AbortController();
-      void loadPage(page, controller.signal);
+    (requestedPage: number): void => {
+      if (requestedPage === contactLogsQuery.data?.page) {
+        void contactLogsQuery.refetch();
+        return;
+      }
+      setPage(requestedPage);
     },
-    [loadPage]
+    [contactLogsQuery]
   );
 
-  return { error, isLoading, loadRequestedPage, response };
+  return {
+    error: contactLogsQuery.error === null ? null : contactLogsQuery.error.message,
+    isLoading: contactLogsQuery.isFetching,
+    loadRequestedPage,
+    response: contactLogsQuery.data ?? emptyResponse(),
+  };
 }
 
 export function OrganizationContactLogsSection(): React.JSX.Element | null {

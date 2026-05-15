@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Image Studio product integration Improvement Track
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
 - Track id: `image-studio-product-integration`
 - Category: `quality`
 - Included in default read-only bundle: no
-- Overall status: `passed`
-- Latest report timestamp: 2026-04-30T04:59:45.752Z
+- Overall status: `no-data`
+- Latest report timestamp: not available
 
 ## Purpose
 
@@ -39,16 +39,14 @@ Verifies Product modal handoff to Image Studio, Studio project persistence, gene
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `dry-run` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `apply` | `no-data` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-| Phase | Status | Mode | Step | Command |
-| --- | --- | --- | --- | --- |
-| `dry-run` | `passed` | `automatic` | `image-studio-product-regression-tests` | `test:image-studio-product` |
+- No step data is available for this track yet.
 
 ## Related Docs
 

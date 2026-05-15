@@ -5,10 +5,9 @@ import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 const AUTH_SESSION_UNAUTH_CACHE_TTL_MS = (() => {
   const raw = process.env['AUTH_SESSION_UNAUTH_CACHE_TTL_MS'];
-  if (!raw) return 2_000;
+  if (raw === undefined || raw.length === 0) return 2_000;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return 2_000;
   return parsed;
@@ -38,11 +37,9 @@ type AuthSessionGlobalState = {
 const globalForAuthSessionMemo = globalThis as typeof globalThis & AuthSessionGlobalState;
 
 const getAuthSessionMemoState = (): AuthSessionMemoState => {
-  if (!globalForAuthSessionMemo.__authSessionMemoState) {
-    globalForAuthSessionMemo.__authSessionMemoState = {
-      unauthSession: null,
-    };
-  }
+  globalForAuthSessionMemo.__authSessionMemoState ??= {
+    unauthSession: null,
+  };
   return globalForAuthSessionMemo.__authSessionMemoState;
 };
 
@@ -57,23 +54,26 @@ const attachServerTiming = (
   entries: Record<string, number | null | undefined>
 ): void => {
   const value = buildServerTiming(entries);
-  if (!value) return;
+  if (value.length === 0) return;
   response.headers.set('Server-Timing', value);
 };
 
 const hasSessionTokenCookie = (req: NextRequest): boolean => {
   const rawCookie = req.headers.get('cookie') ?? '';
-  if (!rawCookie) return false;
+  if (rawCookie.length === 0) return false;
   return SESSION_COOKIE_NAMES.some((cookieName) => rawCookie.includes(`${cookieName}=`));
 };
 
-const buildUnauthSessionResponse = (
-  status: number,
-  body: string,
-  cacheHeader: string,
-  requestStart: number,
-  cacheDurationMs: number
-): Response => {
+type UnauthSessionResponseParams = {
+  status: number;
+  body: string;
+  cacheHeader: string;
+  requestStart: number;
+  cacheDurationMs: number;
+};
+
+const buildUnauthSessionResponse = (params: UnauthSessionResponseParams): Response => {
+  const { status, body, cacheHeader, requestStart, cacheDurationMs } = params;
   const response = new NextResponse(body, {
     status,
     headers: {
@@ -93,36 +93,49 @@ const logAuthEventInBackground = (input: Parameters<typeof logAuthEvent>[0]): vo
   void logAuthEvent(input).catch(() => undefined);
 };
 
+function handleSessionCache(req: NextRequest, requestStart: number): Response | null {
+  const isSessionRequest = req.nextUrl.pathname.endsWith('/session');
+  if (!isSessionRequest || hasSessionTokenCookie(req)) {
+    return null;
+  }
+
+  const cacheStart = performance.now();
+  const state = getAuthSessionMemoState();
+  const cached = state.unauthSession;
+  const now = Date.now();
+
+  if (cached !== null && now - cached.ts <= AUTH_SESSION_UNAUTH_CACHE_TTL_MS) {
+    return buildUnauthSessionResponse({
+      status: cached.status,
+      body: cached.body,
+      cacheHeader: 'hit',
+      requestStart,
+      cacheDurationMs: performance.now() - cacheStart,
+    });
+  }
+
+  const nextEntry: AuthSessionMemoEntry = {
+    status: 200,
+    body: 'null',
+    ts: now,
+  };
+  state.unauthSession = nextEntry;
+
+  return buildUnauthSessionResponse({
+    status: nextEntry.status,
+    body: nextEntry.body,
+    cacheHeader: 'miss',
+    requestStart,
+    cacheDurationMs: performance.now() - cacheStart,
+  });
+}
+
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = performance.now();
-  const isSessionRequest = req.nextUrl.pathname.endsWith('/session');
-  if (isSessionRequest && !hasSessionTokenCookie(req)) {
-    const cacheStart = performance.now();
-    const state = getAuthSessionMemoState();
-    const cached = state.unauthSession;
-    const now = Date.now();
-    if (cached && now - cached.ts <= AUTH_SESSION_UNAUTH_CACHE_TTL_MS) {
-      return buildUnauthSessionResponse(
-        cached.status,
-        cached.body,
-        'hit',
-        requestStart,
-        performance.now() - cacheStart
-      );
-    }
-    const nextEntry: AuthSessionMemoEntry = {
-      status: 200,
-      body: 'null',
-      ts: now,
-    };
-    state.unauthSession = nextEntry;
-    return buildUnauthSessionResponse(
-      nextEntry.status,
-      nextEntry.body,
-      'miss',
-      requestStart,
-      performance.now() - cacheStart
-    );
+
+  const cachedResponse = handleSessionCache(req, requestStart);
+  if (cachedResponse !== null) {
+    return cachedResponse;
   }
 
   logAuthEventInBackground({ req, action: 'auth.nextauth', stage: 'start' });
@@ -135,7 +148,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
       stage: 'success',
       status: response.status,
     });
-    if (isSessionRequest) {
+    if (req.nextUrl.pathname.endsWith('/session')) {
       attachServerTiming(response, {
         total: performance.now() - requestStart,
         handler: performance.now() - handlerStart,

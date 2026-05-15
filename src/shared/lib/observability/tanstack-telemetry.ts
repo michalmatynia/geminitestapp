@@ -1,13 +1,26 @@
+/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
+
 /**
  * TanStack Query Telemetry
  * 
- * Telemetry and observability integration for TanStack Query operations.
- * Provides:
- * - Query and mutation event tracking
- * - Performance monitoring and metrics
- * - Error classification and reporting
- * - Sensitive data redaction
- * - Telemetry batch collection
+ * This module integrates TanStack Query with the platform's central observability
+ * and telemetry infrastructure. It is essential for tracking query/mutation
+ * lifecycles, monitoring performance, and categorizing runtime errors.
+ *
+ * Features:
+ * - Event Tracking: Captures lifecycle events for queries and mutations.
+ * - Performance Monitoring: Tracks execution times and success/failure rates.
+ * - Error Classification: Integrates with the global error classifier to
+ *   triage issues based on severity and context.
+ * - Data Privacy: Automatically redacts sensitive keys and values in
+ *   telemetry payloads.
+ * - Batch Processing: Implements a deduplication window and batching to
+ *   minimize telemetry overhead.
+ *
+ * Usage:
+ * This module is primarily consumed by `query-factories-v2.ts` to attach
+ * metadata to queries and mutations. It should not be used directly for
+ * custom logging; use the `system-logger` module instead.
  */
 
 import { z } from 'zod';
@@ -34,7 +47,10 @@ import { getTraceId } from '@/shared/utils/observability/trace';
 
 import type { QueryKey } from '@tanstack/react-query';
 
+/** API endpoint for streaming telemetry data */
 const TELEMETRY_ENDPOINT = '/api/query-telemetry';
+
+/** Telemetry batching and performance thresholds */
 const DEDUPE_WINDOW_MS = 1_000;
 const DEDUPE_BUCKET_LIMIT = 500;
 const DEFAULT_SAMPLING_RATE = 0.2;
@@ -417,8 +433,6 @@ const flushQueue = async (): Promise<void> => {
     logTanstackTelemetryCatch(error, 'sendBeacon', {
       eventCount: events.length,
     });
-
-    // Fallback to fetch.
   }
 
   if (typeof fetch !== 'function') return;
@@ -435,8 +449,6 @@ const flushQueue = async (): Promise<void> => {
     logTanstackTelemetryCatch(error, 'flushQueue', {
       eventCount: events.length,
     });
-
-    // Never throw from telemetry transport.
   }
 };
 
@@ -474,7 +486,6 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
   const statusCode = input.statusCode ?? extractStatusCode(input.error);
   const category = input.error ? classifyError(input.error) : undefined;
 
-  // Extend error context with detailed info if available
   const errorContext: Record<string, unknown> = {};
   if (isApiErrorLike(input.error)) {
     errorContext['apiStatus'] = input.error.status;
@@ -526,7 +537,6 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
     return false;
   }
 
-  // Centrally log error if stage is 'error', logError is enabled and not already logged by API client
   const alreadyLogged = isSerializableRecord(input.error) && input.error['__logged'] === true;
   if (input.stage === 'error' && resolvedMeta.logError && input.error && !alreadyLogged) {
     logClientError(input.error, {

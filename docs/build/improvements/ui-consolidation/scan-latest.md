@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI consolidation Improvement Track
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
 - Track id: `ui-consolidation`
 - Category: `ui`
 - Included in default read-only bundle: yes
-- Overall status: `passed`
-- Latest report timestamp: 2026-05-10T01:05:02.191Z
+- Overall status: `failed`
+- Latest report timestamp: 2026-05-14T23:11:20.592Z
 
 ## Purpose
 
@@ -38,19 +38,17 @@ Runs the shared UI consolidation guardrail so broad improvement sweeps account f
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `classify` | `not-configured` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
-| `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `audit` | `failed` | 1 | 1 | 0 | 1 | 0 |
+| `classify` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `apply` | `no-data` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `audit` | `passed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
-| `plan` | `manual` | `manual` | `ui-consolidation-plan` | manual |
-| `apply` | `manual` | `manual` | `ui-consolidation-apply` | manual |
+| `audit` | `failed` | `automatic` | `ui-consolidation-guardrail` | `check:ui-consolidation` |
 
 ## Related Docs
 

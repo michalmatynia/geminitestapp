@@ -1,5 +1,7 @@
 import { MongoClient } from 'mongodb';
 
+import { DEFAULT_ARCH_PAGE_CONTENT } from '../src/lib/pageContent.ts';
+
 const DEFAULT_MONGODB_URI = 'mongodb://127.0.0.1:27022/arch_web_local';
 const DEFAULT_MONGODB_DB = 'arch_web_local';
 
@@ -108,6 +110,7 @@ async function seed() {
     await db.collection('projects').createIndex({ code: 1 }, { unique: true });
     await db.collection('services').createIndex({ code: 1 }, { unique: true });
     await db.collection('inquiries').createIndex({ email: 1 }, { unique: true });
+    await db.collection('page_content').createIndex({ key: 1 }, { unique: true });
 
     await Promise.all(
       projects.map((project) =>
@@ -127,9 +130,24 @@ async function seed() {
         )
       )
     );
+    await db.collection('page_content').updateOne(
+      { key: 'home' },
+      {
+        $set: {
+          key: 'home',
+          content: DEFAULT_ARCH_PAGE_CONTENT,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
 
     console.log(`✓ Upserted ${projects.length} projects`);
     console.log(`✓ Upserted ${services.length} services`);
+    console.log('✓ Upserted Milkbar home page content');
     console.log('Database ready.');
   } finally {
     await client.close();

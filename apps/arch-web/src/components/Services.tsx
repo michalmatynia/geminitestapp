@@ -1,4 +1,4 @@
-import type { Service } from '@/lib/types';
+import type { ArchPageContent, Service } from '@/lib/types';
 
 const servicesMeta: Record<string, { num: string; meta: string; value: string }> = {
   'S-01': { num: 'i.', meta: 'Jurisdictions', value: '38 active' },
@@ -21,7 +21,13 @@ const descMap: Record<string, string> = {
   'S-04': 'Real-time budget forecasting and risk identification. An assistant project manager that surfaces the questions worth asking — and the deadlines worth defending.',
 };
 
-export default function Services({ services }: { services: Service[] }) {
+export default function Services({
+  content,
+  services,
+}: {
+  content: ArchPageContent['services'];
+  services: Service[];
+}) {
   const displayServices = services.length > 0 ? services : [
     { code: 'S-01', title: 'Compliance Intelligence', description: descMap['S-01'], order: 0 },
     { code: 'S-02', title: 'Generative Massing', description: descMap['S-02'], order: 1 },
@@ -34,11 +40,11 @@ export default function Services({ services }: { services: Service[] }) {
       <div className="wrap">
         <div className="sec-head">
           <div className="sec-head-meta">
-            <span className="num rev">— 03 / practice</span>
-            <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>four systems</span>
+            <span className="num rev">{content.eyebrow}</span>
+            <span className="label rev" data-delay="1" style={{ color: 'var(--ink-3)' }}>{content.label}</span>
           </div>
           <h2 className="rev" data-delay="1">
-            What we <em>quietly automate</em>, so practice can resume.
+            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
           </h2>
         </div>
 

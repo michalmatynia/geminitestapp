@@ -1,8 +1,9 @@
 'use client';
 
 import { Building2, CalendarDays, ExternalLink, UserRound } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { FormActions, FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
@@ -67,33 +68,29 @@ const readWebsiteDetail = async (
 };
 
 export function useWebsiteDetail(websiteId: string): WebsiteDetailState {
-  const [state, setState] = useState<WebsiteDetailState>({
-    error: null,
-    isLoading: true,
-    website: null,
+  const queryKey = ['filemaker', 'websites', 'detail', websiteId] as const;
+  const websiteQuery = createSingleQueryV2<MongoFilemakerWebsiteDetail, MongoFilemakerWebsiteDetail, typeof queryKey>({
+    queryKey,
+    queryFn: async ({ signal }) => readWebsiteDetail(websiteId, signal),
+    enabled: websiteId.trim().length > 0,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerWebsiteEditPage.useWebsiteDetail',
+      operation: 'detail',
+      resource: 'filemaker.website',
+      domain: 'files',
+      description: 'Load imported Filemaker website detail for the admin website page.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasWebsiteId: websiteId.trim().length > 0,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ error: null, isLoading: true, website: null });
-    readWebsiteDetail(websiteId, controller.signal)
-      .then((website: MongoFilemakerWebsiteDetail): void => {
-        setState({ error: null, isLoading: false, website });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState({
-          error: error instanceof Error ? error.message : 'Failed to load website.',
-          isLoading: false,
-          website: null,
-        });
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [websiteId]);
-
-  return state;
+  return {
+    error: websiteQuery.error === null ? null : websiteQuery.error.message,
+    isLoading: websiteQuery.isFetching,
+    website: websiteQuery.data ?? null,
+  };
 }
 
 function WebsiteBreadcrumbs(): React.JSX.Element {

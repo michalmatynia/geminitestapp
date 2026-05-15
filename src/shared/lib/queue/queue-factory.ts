@@ -1,13 +1,14 @@
 /**
  * Queue Factory
  * 
- * Factory for creating and managing BullMQ queues.
- * Provides:
- * - Queue creation with Redis connection
- * - Worker management and lifecycle
- * - Queue health monitoring
- * - Queue registry integration
- * - Server-only queue operations
+ * Centralized factory for creating and managing BullMQ queues.
+ * This factory abstracts the complexities of:
+ * - Redis connection management (shared via `getRedisConnection`).
+ * - Worker lifecycle: Managing starting, stopping, and handling job timeouts.
+ * - Observability: Automatically attaches error handlers, slow-job tracking, 
+ *   and system-level events for all managed queues.
+ * - Inline Fallback: Seamlessly falls back to inline execution when Redis is unavailable.
+ * - Health Monitoring: Provides a standard `QueueHealthStatus` interface for admin monitoring.
  */
 
 import 'server-only';
@@ -30,6 +31,9 @@ type BullMqWorkerConnection = NonNullable<ConstructorParameters<typeof Worker>[2
 const transientErrorLoggedAt = new Map<string, number>();
 const TRANSIENT_ERROR_LOG_COOLDOWN_MS = 30_000;
 
+/**
+ * Heuristic to identify recoverable transport-level Redis errors (e.g., socket resets).
+ */
 const isTransientRedisTransportError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
   const code = (error as NodeJS.ErrnoException).code;
@@ -48,6 +52,9 @@ const isTransientRedisTransportError = (error: unknown): boolean => {
   );
 };
 
+/**
+ * Prevents log saturation by enforcing a cooldown period for specific error messages per queue.
+ */
 const shouldLogTransientQueueError = (queueName: string, message: string): boolean => {
   const key = `${queueName}:${message}`;
   const now = Date.now();
@@ -57,6 +64,12 @@ const shouldLogTransientQueueError = (queueName: string, message: string): boole
   return true;
 };
 
+/**
+ * Creates and registers a new managed queue instance.
+ * 
+ * @param config - Queue configuration defining name, processor, and operational parameters (concurrency, timeouts).
+ * @returns An instance of `ManagedQueue` for interacting with the queue and managing worker lifecycle.
+ */
 export function createManagedQueue<TJobData>(
   config: QueueConfig<TJobData>
 ): ManagedQueue<TJobData> {
@@ -65,6 +78,9 @@ export function createManagedQueue<TJobData>(
   let workerStarted = false;
   let lastProcessTime = 0;
 
+  /**
+   * Lazily initializes the BullMQ queue instance and attaches internal observability listeners.
+   */
   const ensureQueue = (): Queue | null => {
     if (queue) return queue;
     const connection = getRedisConnection();
@@ -98,12 +114,18 @@ export function createManagedQueue<TJobData>(
     return queue;
   };
 
+  /**
+   * Executes the job processor function immediately. Used when Redis/Queues are unavailable.
+   */
   const processInline = async (data: TJobData): Promise<unknown> => {
     return config.processor(data, `inline-${Date.now()}`, undefined, {
       updateProgress: async () => {},
     });
   };
 
+  /**
+   * Enqueues a job into the queue, or falls back to inline processing if Redis is unavailable.
+   */
   const enqueue = async (
     data: TJobData,
     opts?: Partial<import('bullmq').JobsOptions> & {
@@ -113,7 +135,6 @@ export function createManagedQueue<TJobData>(
   ): Promise<string> => {
     const q = ensureQueue();
     if (!q) {
-      // Fallback: process inline when Redis is not available
       await processInline(data);
       return `inline-${Date.now()}`;
     }
@@ -136,6 +157,10 @@ export function createManagedQueue<TJobData>(
     }
   };
 
+  /**
+   * Initializes the BullMQ worker.
+   * Handles per-job timeouts using `AbortController` and logs performance metrics.
+   */
   const startWorker = (): void => {
     if (workerStarted) return;
     const connection = getRedisConnection();
@@ -292,6 +317,9 @@ export function createManagedQueue<TJobData>(
     });
   };
 
+  /**
+   * Gracefully shuts down the worker and queue instance.
+   */
   const stopWorker = async (): Promise<void> => {
     if (worker) {
       await worker.close();
@@ -309,6 +337,9 @@ export function createManagedQueue<TJobData>(
     });
   };
 
+  /**
+   * Aggregates job counts and worker state to expose queue health metrics.
+   */
   const getHealthStatus = async (): Promise<QueueHealthStatus> => {
     const q = ensureQueue();
     if (!q) {

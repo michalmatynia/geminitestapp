@@ -6,8 +6,10 @@ import * as telemetry from '@/shared/lib/observability/tanstack-telemetry';
 import {
   createCreateMutationV2,
   createMultiQueryV2,
+  createMutationOptionsV2,
   createMutationV2,
   createOptimisticMutationV2,
+  createQueryOptionsV2,
   createListQueryV2,
   ensureQueryDataV2,
   fetchQueryV2,
@@ -156,6 +158,34 @@ describe('query-factories-v2', () => {
     );
   });
 
+  it('builds telemetrized query options without invoking a TanStack hook', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const options = createQueryOptionsV2({
+      queryKey: ['products', 'options'],
+      queryFn: async () => ['option-data'],
+      meta: {
+        source: 'tests.shared.query-factories-v2.query-options',
+        operation: 'list',
+        resource: 'products.options',
+      },
+    });
+
+    await expect(options.queryFn({ queryKey: options.queryKey } as never)).resolves.toEqual([
+      'option-data',
+    ]);
+
+    expect(options.queryKey).toEqual(['products', 'options']);
+    expect(options.meta.tanstackFactoryV2Meta?.source).toBe(
+      'tests.shared.query-factories-v2.query-options'
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query-batch',
+        stage: 'success',
+      })
+    );
+  });
+
   it('invalidates keys declared via invalidateKeys', async () => {
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -178,6 +208,38 @@ describe('query-factories-v2', () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['products'] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['products', 'detail'] });
+  });
+
+  it('builds telemetrized mutation options for direct useMutation callers', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const options = createMutationOptionsV2<{ ok: boolean }, { id: string }>(
+      {
+        mutationFn: async (variables) => ({ ok: variables.id === '1' }),
+        mutationKey: ['products', 'mutation', 'options'],
+        meta: {
+          source: 'tests.shared.query-factories-v2.mutation-options',
+          operation: 'action',
+          resource: 'products.mutation-options',
+        },
+      },
+      {
+        queryClient,
+        attemptRef: { current: 0 },
+      }
+    );
+
+    await expect(options.mutationFn?.({ id: '1' })).resolves.toEqual({ ok: true });
+
+    expect(options.mutationKey).toEqual(['products', 'mutation', 'options']);
+    expect(options.meta?.tanstackFactoryV2Meta?.source).toBe(
+      'tests.shared.query-factories-v2.mutation-options'
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'mutation',
+        stage: 'success',
+      })
+    );
   });
 
   it('awaits invalidate before onSuccess', async () => {

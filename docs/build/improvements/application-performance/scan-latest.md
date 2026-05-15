@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Application performance Improvement Track
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
 - Track id: `application-performance`
 - Category: `performance`
 - Included in default read-only bundle: yes
-- Overall status: `failed`
-- Latest report timestamp: 2026-05-10T01:05:02.191Z
+- Overall status: `no-data`
+- Latest report timestamp: not available
 
 ## Purpose
 
@@ -39,20 +39,15 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `audit` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `classify` | `failed` | 1 | 1 | 0 | 1 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
-| `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `apply` | `no-data` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 
-| Phase | Status | Mode | Step | Command |
-| --- | --- | --- | --- | --- |
-| `audit` | `passed` | `automatic` | `application-performance-fast-gate` | `perf:ops:fast` |
-| `classify` | `failed` | `automatic` | `application-performance-baseline` | `perf:ops:baseline` |
-| `plan` | `manual` | `manual` | `application-performance-plan` | manual |
-| `apply` | `manual` | `manual` | `application-performance-apply` | manual |
+- No step data is available for this track yet.
 
 ## Related Docs
 

@@ -10,10 +10,11 @@
  * - Observability integration for persona queries
  */
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /** Result type for agent persona visuals query */
@@ -53,11 +54,13 @@ export function useAgentPersonaVisuals(
     return createServerFallbackResult(normalizedPersonaId);
   }
 
-  return useQuery<AgentPersona[], Error>({
-    queryKey:
+  const queryKey =
       normalizedPersonaId === null
         ? [...QUERY_KEYS.agentPersonas.details(), 'visuals', 'none']
-        : [...QUERY_KEYS.agentPersonas.detail(normalizedPersonaId), 'visuals'],
+        : [...QUERY_KEYS.agentPersonas.detail(normalizedPersonaId), 'visuals'];
+
+  return createListQueryV2<AgentPersona>({
+    queryKey,
     queryFn: async (): Promise<AgentPersona[]> => {
       if (normalizedPersonaId === null) {
         return [];
@@ -82,5 +85,15 @@ export function useAgentPersonaVisuals(
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'shared.hooks.useAgentPersonaVisuals',
+      operation: 'list',
+      resource: 'agent-personas.visuals',
+      domain: 'agent_creator',
+      queryKey,
+      tags: ['agent-personas', 'visuals'],
+      description: 'Loads optional agent persona visual data.',
+      errorPresentation: 'silent',
+    },
   });
 }

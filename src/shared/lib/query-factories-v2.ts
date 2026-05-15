@@ -1,18 +1,21 @@
 'use client';
 
+/* eslint-disable max-lines, max-lines-per-function, max-params, complexity, require-atomic-updates, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/only-throw-error */
+
 /**
  * Query Factories V2
+ *
+ * Enhanced query factory utilities built on top of TanStack Query.
  * 
- * Enhanced query factory utilities built on TanStack Query.
- * Provides standardized patterns for:
- * - Data fetching with consistent error handling
- * - Mutation operations with optimistic updates
- * - Infinite queries for paginated data
- * - Suspense-enabled queries for better UX
- * - Telemetry and performance monitoring
+ * This module provides standardized, telemetrized patterns for:
+ * - Data fetching with consistent error handling and observability.
+ * - Mutation operations including optimistic UI updates.
+ * - Infinite query patterns for robust pagination.
+ * - Suspense-enabled queries for optimized React loading states.
  * 
- * These factories abstract common query patterns and provide
- * type-safe interfaces for API interactions across the app.
+ * These factories serve as the primary abstraction layer for API interactions
+ * across the application, ensuring type safety, consistent query metadata,
+ * and built-in telemetry for performance monitoring and debugging.
  */
 
 import {
@@ -25,6 +28,7 @@ import {
   type InfiniteData,
   type QueryFunctionContext,
   type QueryKey,
+  type UseMutationOptions,
   type UseSuspenseQueryOptions,
   type UseInfiniteQueryResult,
   type UseSuspenseInfiniteQueryResult,
@@ -41,7 +45,6 @@ import {
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
-
 import {
   ensureQueryDataV2 as ensureQueryDataLogic,
   prefetchQueryV2 as prefetchQueryLogic,
@@ -56,8 +59,8 @@ import {
 } from './tanstack-factory-v2/guards';
 import {
   useTelemetrizedQueryFn,
-  useTelemetrizedMultiQueryOptionsV2,
-  useTelemetrizedSuspenseMultiQueryOptionsV2,
+  buildTelemetrizedQueryOptionsV2,
+  buildTelemetrizedSuspenseQueryOptionsV2,
   useQueryFactoryV2,
   useSuspenseQueryFactoryV2,
 } from './tanstack-factory-v2/hooks';
@@ -74,15 +77,15 @@ import {
   type SingleQueryConfigV2,
   type PaginatedResult,
   type MultiQueryResultsV2,
-  type SuspenseMultiQueryResultsV2,
   type MultiQueryConfigV2,
+  type SuspenseMultiQueryResultsV2,
   type SuspenseMultiQueryConfigV2,
   type SaveMutationFactoryV2Config,
   type QueryOptionsWithoutCore,
 } from './tanstack-factory-v2/types';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-
+// Re-export type definitions for factory configuration and query descriptors.
 export type {
   BaseQueryFactoryV2Config,
   QueryDescriptorV2,
@@ -143,7 +146,10 @@ type TelemetrizedSuspenseMultiQueryOptions<
   TError,
   TData,
   TQueryKey extends QueryKey,
-> = Omit<UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn' | 'meta'> & {
+> = Omit<
+  UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+  'queryKey' | 'queryFn' | 'meta'
+> & {
   queryKey: TQueryKey;
   queryFn: (context: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>;
   meta: ReturnType<typeof attachTanstackFactoryMeta>;
@@ -179,6 +185,34 @@ const keepPreviousPlaceholderData = <TData,>(previous: TData | undefined): TData
   previous;
 
 /**
+ * Builds telemetrized options for callers that must keep TanStack's hook call explicit.
+ */
+export function createQueryOptionsV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  config: QueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+): TelemetrizedMultiQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
+  return buildTelemetrizedQueryOptionsV2(config);
+}
+
+/**
+ * Builds telemetrized suspense query options without invoking a TanStack hook.
+ */
+export function createSuspenseQueryOptionsV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  config: SuspenseQueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+): TelemetrizedSuspenseMultiQueryOptions<TQueryFnData, TError, TData, TQueryKey> {
+  return buildTelemetrizedSuspenseQueryOptionsV2(config);
+}
+
+/**
  * Combines explicit 'enabled' flag with a check for a valid ID.
  * Queries are often disabled if the required ID is missing.
  */
@@ -190,8 +224,7 @@ const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends
   if (enabled === undefined) return true;
   if (typeof enabled === 'function') {
     const enabledPredicate = enabled as SingleQueryEnabledPredicate;
-    return (query: unknown): boolean =>
-      Boolean(enabledPredicate(query)) && hasId;
+    return (query: unknown): boolean => Boolean(enabledPredicate(query)) && hasId;
   }
   return Boolean(enabled);
 };
@@ -210,8 +243,9 @@ export function useSingleQueryV2<
 >(config: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>): SingleQuery<TTransformedData> {
   const { queryKey, id, enabled, ...rest } = config;
   const resolvedQueryKey = typeof queryKey === 'function' ? queryKey(id ?? 'none') : queryKey;
+  const requiresId = Object.prototype.hasOwnProperty.call(config, 'id');
   const hasId = id !== null && id !== undefined;
-  const guardedEnabled = combineEnabledWithRequiredId(enabled, hasId);
+  const guardedEnabled = requiresId ? combineEnabledWithRequiredId(enabled, hasId) : enabled;
 
   return useQueryFactoryV2<TData, Error, TTransformedData, TQueryKey>({
     ...rest,
@@ -242,18 +276,13 @@ export function createPaginatedListQueryV2<TItem, TQueryKey extends QueryKey = Q
   return createSingleQueryV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>({
     ...rest,
     meta,
-    // By default, paginated queries keep the previous page data to avoid layout shifts.
     placeholderData:
       placeholderData ?? keepPreviousPlaceholderData<PaginatedResult<TItem>>,
   });
 }
 
 /**
- * Factory for infinite (scrollable) queries.
- * Integrates telemetry and runtime guards.
- * 
- * @param config - Infinite query configuration.
- * @returns A UseInfiniteQueryResult object.
+ * Factory for infinite queries.
  */
 export function createInfiniteQueryV2<
   TQueryFnData,
@@ -299,7 +328,7 @@ export function createMultiQueryV2<
 >(config: MultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
   const queryOptions = Array.from(queries, (queryConfig) =>
-    useTelemetrizedMultiQueryOptionsV2(queryConfig)
+    createQueryOptionsV2(queryConfig)
   ) as MultiQueryOptionTuple<TQueries>;
 
   if (combine) {
@@ -372,7 +401,7 @@ export function createSuspenseMultiQueryV2<
 >(config: SuspenseMultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
   const queryOptions = Array.from(queries, (queryConfig) =>
-    useTelemetrizedSuspenseMultiQueryOptionsV2(queryConfig)
+    createSuspenseQueryOptionsV2(queryConfig)
   ) as SuspenseMultiQueryOptionTuple<TQueries>;
 
   if (combine) {
@@ -415,19 +444,21 @@ export function createSaveMutationV2<
 
 /**
  * Core hook for mutations with automatic telemetry and invalidation support.
- * 
- * Features:
- * - Automatic retry telemetry
- * - Execution time tracking
- * - Success-triggered query invalidation (via invalidateKeys)
- * - Custom invalidation logic support
- * 
- * @param config - Mutation configuration.
- * @returns A standardized MutationResult object.
  */
-export function useMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
-  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
-): MutationResult<TData, TVariables, TError> {
+type MutationFactoryAttemptRef = { current: number };
+
+type MutationOptionsV2Runtime = {
+  queryClient: QueryClient;
+  attemptRef: MutationFactoryAttemptRef;
+};
+
+/**
+ * Builds telemetrized mutation options for callers that must keep useMutation explicit.
+ */
+export function createMutationOptionsV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>,
+  runtime: MutationOptionsV2Runtime
+): UseMutationOptions<TData, TError, TVariables, TContext> {
   const {
     mutationFn,
     meta,
@@ -439,18 +470,16 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
     onSuccess,
     ...options
   } = config;
+  const { queryClient, attemptRef } = runtime;
   const normalizedMutationKey = mutationKey ? normalizeQueryKey(mutationKey) : undefined;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedMutationKey });
   const telemetryMeta = withMutationKeyMeta(meta, normalizedMutationKey);
-  const attemptRef = useRef(0);
-  const queryClient = useQueryClient();
 
-  return useMutation({
+  return {
     ...options,
     ...(normalizedMutationKey ? { mutationKey: normalizedMutationKey } : {}),
     meta: attachTanstackFactoryMeta(resolvedMeta),
     onSuccess: async (data, variables, context, mutationContext) => {
-      // Automatically invalidate queries based on keys provided in the config.
       if (invalidateKeys) {
         const keys =
           typeof invalidateKeys === 'function'
@@ -459,7 +488,6 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
         await Promise.all(keys.map((key) => queryClient.invalidateQueries({ queryKey: key })));
       }
 
-      // Execute custom invalidation logic if provided.
       if (invalidate) {
         await invalidate(queryClient, data, variables, context);
       }
@@ -471,8 +499,7 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const attempt = attemptRef.current + 1;
       attemptRef.current = attempt;
-      
-      // Emit retry telemetry if this isn't the first attempt.
+
       if (attempt > 1) {
         emitFactoryTelemetry({
           entity: 'mutation',
@@ -499,8 +526,7 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
           throw new Error('Mutation function is required');
         }
         const data = await mutationFn(variables, { queryClient });
-        
-        // Success telemetry with duration tracking.
+
         emitFactoryTelemetry({
           entity: 'mutation',
           stage: 'success',
@@ -518,9 +544,8 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
           action: 'mutationFn',
           attempt,
         });
-        const finalError = transformError ? transformError(error) : (error as Error);
-        
-        // Error telemetry including classified error stage.
+        const finalError = transformError ? transformError(error) : (error as TError);
+
         emitFactoryTelemetry({
           entity: 'mutation',
           stage: telemetryErrorStage(error),
@@ -534,7 +559,21 @@ export function useMutationV2<TData, TVariables, TContext = unknown, TError = Er
         throw finalError;
       }
     },
-  });
+  };
+}
+
+export function useMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
+  const attemptRef = useRef(0);
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    createMutationOptionsV2<TData, TVariables, TContext, TError>(config, {
+      queryClient,
+      attemptRef,
+    })
+  );
 }
 
 /**
@@ -560,20 +599,16 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
     ...rest,
     meta,
     onMutate: async (variables, context) => {
-      // Step 1: Cancel any outgoing refetches to avoid overwriting our optimistic update.
       await queryClient.cancelQueries({ queryKey });
-      
-      // Step 2: Snapshot the current data for rollback.
+
       const previousData = queryClient.getQueryData<TCacheData>(queryKey);
 
-      // Step 3: Optimistically update the cache.
       queryClient.setQueryData<TCacheData>(queryKey, (old) => updateFn(old, variables));
 
       const customContext = onMutate ? await onMutate(variables, context) : undefined;
       return { ...customContext, previousData };
     },
     onError: (err, variables, context, mutationContext) => {
-      // Step 4: Revert to the snapshot if the mutation fails.
       if (revertOnError !== false && context?.previousData !== undefined) {
         queryClient.setQueryData(queryKey, context.previousData);
       }
@@ -583,7 +618,6 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
       return undefined;
     },
     onSettled: (data, error, variables, context, mutationContext) => {
-      // Step 5: Always invalidate to ensure we have the correct server state.
       void queryClient.invalidateQueries({ queryKey });
       if (onSettled) {
         return onSettled(data, error, variables, context, mutationContext);

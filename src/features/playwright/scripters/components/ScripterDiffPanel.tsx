@@ -1,8 +1,9 @@
 'use client';
 
 import { ArrowRight, GitPullRequest, Loader2 } from 'lucide-react';
-import { type JSX, useState } from 'react';
+import { type JSX } from 'react';
 
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ScripterCommitDiff, ScripterDiffEntry } from '../commit-diff';
@@ -29,6 +30,10 @@ const callDiff = async (scripterId: string): Promise<DiffResponse> => {
 const fmt = (value: number | string | null | undefined): string =>
   value === null || value === undefined || value === '' ? '—' : String(value);
 
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+// eslint-disable-next-line max-lines-per-function
 const DiffSection = ({
   title,
   entries,
@@ -59,7 +64,7 @@ const DiffSection = ({
               <th className='px-2 py-1 text-left'>#</th>
               <th className='px-2 py-1 text-left'>key</th>
               <th className='px-2 py-1 text-left'>draft</th>
-              {showExisting ? <th className='px-2 py-1 text-left'>existing</th> : null}
+              {showExisting === true ? <th className='px-2 py-1 text-left'>existing</th> : null}
               <th className='px-2 py-1 text-left'>changed</th>
             </tr>
           </thead>
@@ -72,7 +77,7 @@ const DiffSection = ({
                   <div className='font-medium'>{fmt(entry.draftName)}</div>
                   <div className='text-[10px] text-muted-foreground'>{fmt(entry.draftPrice)}</div>
                 </td>
-                {showExisting ? (
+                {showExisting === true ? (
                   <td className='px-2 py-1'>
                     {entry.existing ? (
                       <>
@@ -113,33 +118,41 @@ export type ScripterDiffPanelProps = {
   scripterId: string;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function ScripterDiffPanel({ scripterId }: ScripterDiffPanelProps): JSX.Element {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<DiffResponse | null>(null);
-
-  const run = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    try {
-      setData(await callDiff(scripterId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const diffMutation = createMutationV2<DiffResponse, string>({
+    mutationKey: ['playwright', 'scripters', scripterId, 'diff'],
+    mutationFn: async (targetScripterId: string) => await callDiff(targetScripterId),
+    meta: {
+      source: 'playwright.scripters.ScripterDiffPanel.diff',
+      operation: 'action',
+      resource: 'playwright.scripters.diff',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', scripterId, 'diff'],
+      tags: ['playwright', 'scripters', 'diff'],
+      description: 'Runs a Playwright scripter catalog diff preview.',
+    },
+  });
+  const data = diffMutation.data ?? null;
+  const error = diffMutation.error ? toErrorMessage(diffMutation.error) : null;
+  const busy = diffMutation.isPending;
 
   return (
     <Card className='space-y-3 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <h3 className='text-sm font-semibold'>Catalog impact preview</h3>
-        <Button type='button' size='sm' variant='outline' onClick={run} disabled={busy}>
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          onClick={() => diffMutation.mutate(scripterId)}
+          disabled={busy}
+        >
           {busy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <GitPullRequest className='mr-2 size-4' />}
           Diff against catalog
         </Button>
       </div>
-      {error ? <Alert variant='destructive'>{error}</Alert> : null}
+      {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
       {data ? (
         <div className='space-y-2'>
           <div className='flex flex-wrap gap-2 text-xs'>

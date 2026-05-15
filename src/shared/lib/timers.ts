@@ -31,6 +31,7 @@ export type IntervalTaskHandle = {
 /**
  * Sets a recurring interval with safe cleanup handling.
  * Wrapper around native setInterval with consistent typing.
+ * 
  * @param callback - Function to execute on each interval
  * @param ms - Interval duration in milliseconds
  * @param args - Arguments to pass to callback
@@ -48,6 +49,8 @@ export const safeSetInterval = (
 /**
  * Clears a recurring interval with null/undefined safety.
  * Handles cleanup gracefully even with invalid timer IDs.
+ * 
+ * @param id - The timer ID to clear
  */
 export const safeClearInterval = (id: SafeTimerId | undefined | null): void => {
   if (id === undefined || id === null) return;
@@ -56,7 +59,12 @@ export const safeClearInterval = (id: SafeTimerId | undefined | null): void => {
 };
 
 /**
- * Sets a one-off timeout.
+ * Sets a one-off timeout using a wrapper around native setTimeout.
+ * 
+ * @param callback - Function to execute after the delay
+ * @param ms - Delay in milliseconds
+ * @param args - Arguments to pass to callback
+ * @returns Timer ID for the timeout
  */
 export const safeSetTimeout = (
   callback: (...args: unknown[]) => void,
@@ -68,7 +76,10 @@ export const safeSetTimeout = (
 };
 
 /**
- * Clears a one-off timeout.
+ * Clears a one-off timeout with null/undefined safety.
+ * Handles cleanup gracefully even with invalid timer IDs.
+ * 
+ * @param id - The timer ID to clear
  */
 export const safeClearTimeout = (id: SafeTimerId | undefined | null): void => {
   if (id === undefined || id === null) return;
@@ -76,11 +87,22 @@ export const safeClearTimeout = (id: SafeTimerId | undefined | null): void => {
   method(id);
 };
 
+/**
+ * Safely requests an animation frame if running in a browser environment.
+ * 
+ * @param callback - The function to call when the browser is ready
+ * @returns The request ID
+ */
 export const safeRequestAnimationFrame = (callback: FrameRequestCallback): number => {
   if (typeof window === 'undefined') return -1;
   return window.requestAnimationFrame(callback);
 };
 
+/**
+ * Safely cancels an animation frame request if running in a browser environment.
+ * 
+ * @param id - The ID returned by safeRequestAnimationFrame
+ */
 export const safeCancelAnimationFrame = (id: number | null | undefined): void => {
   if (id === null || id === undefined || id === -1) return;
   if (typeof window === 'undefined') return;
@@ -89,6 +111,12 @@ export const safeCancelAnimationFrame = (id: number | null | undefined): void =>
 
 /**
  * Starts an interval and returns a handle that can cancel it.
+ * Convenient wrapper for managing interval lifecycles.
+ * 
+ * @param callback - Function to execute on each interval
+ * @param ms - Interval duration in milliseconds
+ * @param args - Arguments to pass to callback
+ * @returns Handle containing ID and cancel function
  */
 export const startIntervalTask = (
   callback: (...args: unknown[]) => void,

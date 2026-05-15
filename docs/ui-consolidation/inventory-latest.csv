@@ -1294,6 +1294,7 @@ src/features/kangur/ui/components/AddingSynthesisGame.i18n.test.tsx,feature,feat
 src/features/kangur/ui/components/KangurLaunchableGameRuntime.tsx,feature,feature:kangur,Unknown,KangurLaunchableGameRuntime.tsx,137,true,0,0,onFinish|runtime
 src/features/kangur/ui/components/KangurPracticeGameChrome.test.tsx,feature,feature:kangur,Unknown,KangurPracticeGameChrome.test.tsx,137,false,0,0,
 src/features/products/components/list/ProductScrapeProfilesModal.form-fields.tsx,feature,feature:products,Unknown,ProductScrapeProfilesModal.form-fields.tsx,137,true,0,4,limitError|limitInput|onLimitInputChange
+src/features/admin/components/menu/content-system.tsx,feature,feature:admin,Unknown,content-system.tsx,136,false,0,0,
 src/features/case-resolver/components/list/sections/CaseListSorting.tsx,feature,feature:case-resolver,Unknown,CaseListSorting.tsx,136,false,0,2,
 src/features/cms/components/slugs/AttachSlugModal.tsx,feature,feature:cms,Modal,AttachSlugModal.tsx,136,true,0,4,alreadyAssignedIds|isOpen|items|loading|onAttach|onClose
 src/features/filemaker/social/admin/workspace/SocialCaptureBrowserTreePanel.tsx,feature,feature:filemaker,Panel,SocialCaptureBrowserTreePanel.tsx,136,true,0,0,active|disabled
@@ -1311,7 +1312,6 @@ src/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter.tsx,f
 src/features/notesapp/components/NoteForm.tsx,feature,feature:notesapp,Form,NoteForm.tsx,135,true,0,2,
 src/features/playwright/components/live-scripter/LiveScripterSelectorBindingFields.tsx,feature,feature:playwright,Unknown,LiveScripterSelectorBindingFields.tsx,135,true,0,1,selectedSelector|selectedSelectorKey|selectorCandidates|setSelectedSelectorKey
 src/shared/lib/document-editor/components/DocumentWysiwygEditor.tsx,shared,shared-lib,Unknown,DocumentWysiwygEditor.tsx,135,true,0,1,
-src/features/admin/components/menu/content-system.tsx,feature,feature:admin,Unknown,content-system.tsx,134,false,0,0,
 src/features/ai/ai-paths/components/CanvasBoardUIContext.tsx,feature,feature:ai,Unknown,CanvasBoardUIContext.tsx,134,true,0,0,children|value
 src/features/cms/components/page-builder/theme/ThemeAiSection.tsx,feature,feature:cms,Section,ThemeAiSection.tsx,134,true,0,2,
 src/features/filemaker/components/shared/FilemakerJobListingMasterTreeNode.test.tsx,feature,feature:filemaker,Unknown,FilemakerJobListingMasterTreeNode.test.tsx,134,false,0,0,
@@ -2311,6 +2311,7 @@ src/features/filemaker/components/FilemakerMailSidebarNode.tsx,feature,feature:f
 src/features/filemaker/components/page/OrganizationWebsitesSection.test.tsx,feature,feature:filemaker,Unknown,OrganizationWebsitesSection.test.tsx,45,false,0,0,
 src/features/files/components/file-manager/FileManagerContent.tsx,feature,feature:files,Unknown,FileManagerContent.tsx,45,true,0,1,
 src/features/files/components/file-manager/asset-preview/AssetPreviewComponents.tsx,feature,feature:files,Unknown,AssetPreviewComponents.tsx,45,false,0,3,
+src/features/files/components/file-manager/content/Asset3DList.tsx,feature,feature:files,List,Asset3DList.tsx,45,false,0,1,assets3d|onPreview
 src/features/integrations/components/listings/IntegrationAccountSummary.test.tsx,feature,feature:integrations,Unknown,IntegrationAccountSummary.test.tsx,45,false,0,0,
 src/features/integrations/components/listings/product-listings-modal/ProductListingsError.tsx,feature,feature:integrations,Unknown,ProductListingsError.tsx,45,false,0,2,
 src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx,feature,feature:integrations,Unknown,CategoryMapperSelectCell.tsx,45,false,0,1,
@@ -2457,7 +2458,6 @@ src/shared/ui/AdminPageLayout.tsx,shared-ui,shared-ui,Unknown,AdminPageLayout.ts
 src/features/cms/components/frontend/blocks/HeadingBlock.tsx,feature,feature:cms,Unknown,HeadingBlock.tsx,36,false,0,0,
 src/features/cms/components/frontend/sections/SectionBlockContext.tsx,feature,feature:cms,Unknown,SectionBlockContext.tsx,36,true,0,0,blocks|children|sectionId|settings
 src/features/files/components/file-manager/FileManagerHeader.tsx,feature,feature:files,Header,FileManagerHeader.tsx,36,true,1,1,
-src/features/files/components/file-manager/content/Asset3DList.tsx,feature,feature:files,List,Asset3DList.tsx,36,false,0,1,assets3d|onPreview
 src/features/kangur/ui/components/AgenticLessonQuickCheck.touch.test.tsx,feature,feature:kangur,Unknown,AgenticLessonQuickCheck.touch.test.tsx,36,false,0,0,
 src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx,feature,feature:kangur,Unknown,KangurAiTutorGuidedCallout.tsx,36,true,0,0,
 src/features/products/components/list/columns/buttons/ProductListOpenIntegrationsButton.tsx,feature,feature:products,Unknown,ProductListOpenIntegrationsButton.tsx,36,true,0,0,onClick|onFocus|onMouseEnter

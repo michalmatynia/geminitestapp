@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { Db, Collection } from 'mongodb';
 
 import type {
   CollectionSchema,
@@ -19,7 +20,6 @@ import {
 } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 const MONGO_SCHEMA_CONCURRENCY = 8;
 
 export const querySchema = z.object({
@@ -38,109 +38,72 @@ const toSchemaSource = (schema: SchemaResponse): Record<string, unknown> => ({
 
 async function mapWithConcurrency<T, R>(
   items: T[],
-  concurrency: number,
-  worker: (item: T, index: number) => Promise<R>
+  _concurrency: number,
+  worker: (item: T) => Promise<R>
 ): Promise<R[]> {
-  if (items.length === 0) return [];
-  const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
-  const results: Array<R | null> = Array.from({ length: items.length }, () => null);
-  let nextIndex = 0;
+  return Promise.all(items.map(worker));
+}
 
-  const runWorker = async (): Promise<void> => {
-    while (true) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-      if (currentIndex >= items.length) return;
-      const item = items[currentIndex]!;
-      results[currentIndex] = await worker(item, currentIndex);
-    }
-  };
+function getFieldType(value: unknown): string {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  if (value instanceof Date) return 'date';
+  if (typeof value === 'object' && (value as { constructor?: { name?: string } }).constructor?.name === 'ObjectId') {
+    return 'ObjectId';
+  }
+  return typeof value;
+}
 
-  await Promise.all(Array.from({ length: safeConcurrency }, () => runWorker()));
-  return results.map((value: R | null): R => {
-    if (value === null) {
-      throw new Error('Schema concurrency mapping produced an incomplete result.');
+async function getCollectionSchema(coll: Collection, includeCounts: boolean): Promise<CollectionSchema> {
+  const sample = await coll.find({}).limit(10).toArray();
+  const fieldTypes = new Map<string, Set<string>>();
+
+  for (const doc of sample) {
+    for (const [key, value] of Object.entries(doc)) {
+      const types = fieldTypes.get(key) ?? new Set();
+      types.add(getFieldType(value));
+      fieldTypes.set(key, types);
     }
-    return value;
+  }
+
+  const fields: FieldInfo[] = Array.from(fieldTypes.entries()).map(([name, types]) => ({
+    name,
+    type: Array.from(types).length === 1 ? Array.from(types)[0] ?? 'unknown' : Array.from(types).join(' | '),
+    isId: name === '_id',
+  }));
+
+  fields.sort((a, b) => {
+    if (a.name === '_id') return -1;
+    if (b.name === '_id') return 1;
+    return a.name.localeCompare(b.name);
   });
+
+  const entry: CollectionSchema = { name: coll.collectionName, fields };
+
+  if (includeCounts) {
+    try {
+      entry.documentCount = await coll.estimatedDocumentCount();
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+    }
+  }
+
+  return entry;
 }
 
 async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
-  const db = await getMongoDb();
+  const db: Db = await getMongoDb();
   const collectionInfos = (await db.listCollections().toArray()).filter(
     (info) => !info.name.startsWith('system.')
   );
+
   const collections = await mapWithConcurrency(
     collectionInfos,
     MONGO_SCHEMA_CONCURRENCY,
-    async (info) => {
-      const collName = info.name;
-      const coll = db.collection(collName);
-      const sample = await coll.find({}).limit(10).toArray();
-
-      const fieldTypes = new Map<string, Set<string>>();
-
-      for (const doc of sample) {
-        for (const [key, value] of Object.entries(doc)) {
-          if (!fieldTypes.has(key)) {
-            fieldTypes.set(key, new Set());
-          }
-          const typeSet = fieldTypes.get(key)!;
-          if (value === null) {
-            typeSet.add('null');
-          } else if (Array.isArray(value)) {
-            typeSet.add('array');
-          } else if (value instanceof Date) {
-            typeSet.add('date');
-          } else if (
-            typeof value === 'object' &&
-            (value as { constructor?: { name?: string } })?.constructor?.name === 'ObjectId'
-          ) {
-            typeSet.add('ObjectId');
-          } else {
-            typeSet.add(typeof value);
-          }
-        }
-      }
-
-      const fields: FieldInfo[] = [];
-      for (const [name, types] of fieldTypes) {
-        const typeArray = Array.from(types);
-        const fieldType =
-          typeArray.length === 1 ? (typeArray[0] ?? 'unknown') : typeArray.join(' | ');
-        const fieldInfo: FieldInfo = {
-          name,
-          type: fieldType,
-        };
-        if (name === '_id') {
-          fieldInfo.isId = true;
-        }
-        fields.push(fieldInfo);
-      }
-
-      fields.sort((a: FieldInfo, b: FieldInfo) => {
-        if (a.name === '_id') return -1;
-        if (b.name === '_id') return 1;
-        return a.name.localeCompare(b.name);
-      });
-
-      const entry: CollectionSchema = { name: collName, fields };
-
-      if (includeCounts) {
-        try {
-          entry.documentCount = await coll.estimatedDocumentCount();
-        } catch (error) {
-          void ErrorSystem.captureException(error);
-        
-          // Best-effort count only.
-        }
-      }
-
-      return entry;
-    }
+    async (info) => getCollectionSchema(db.collection(info.name), includeCounts)
   );
 
-  collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
+  collections.sort((a, b) => a.name.localeCompare(b.name));
   return { provider: 'mongodb', collections };
 }
 
@@ -158,42 +121,27 @@ const enrichCollections = (
   }));
 };
 
-const filterCollectionsToAiPathsAllowlist = (schema: SchemaResponse): SchemaResponse => {
-  const filteredCollections = schema.collections.filter((collection: CollectionSchema) =>
-    isCollectionAllowed(collection.name)
-  );
+const filterCollectionsToAiPathsAllowlist = (schema: SchemaResponse): SchemaResponse => ({
+  ...schema,
+  collections: schema.collections.filter((collection: CollectionSchema) => isCollectionAllowed(collection.name)),
+});
 
-  return {
-    ...schema,
-    collections: filteredCollections,
-  };
-};
-
-export async function getDatabasesSchemaHandler(
-  request: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function getDatabasesSchemaHandler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { isInternal } = await assertDatabaseEngineManageAccessOrAiPathsInternal(request);
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const providerParam = query.provider ?? 'auto';
-  const includeCounts = query.includeCounts === true;
+  const includeCounts = Boolean(query.includeCounts);
 
   if (providerParam === 'all') {
     const mongoSchema = await getMongoSchema(includeCounts);
-    const visibleMongoSchema = isInternal
-      ? filterCollectionsToAiPathsAllowlist(mongoSchema)
-      : mongoSchema;
-    const payload: SchemaResponse = {
+    const visibleMongoSchema = isInternal ? filterCollectionsToAiPathsAllowlist(mongoSchema) : mongoSchema;
+    return NextResponse.json({
       provider: 'multi',
       collections: enrichCollections(visibleMongoSchema, 'mongodb'),
-      sources: {
-        mongodb: toSchemaSource(visibleMongoSchema),
-      },
-    };
-    return NextResponse.json(payload);
+      sources: { mongodb: toSchemaSource(visibleMongoSchema) },
+    });
   }
 
   const schema = await getMongoSchema(includeCounts);
-  const visibleSchema = isInternal ? filterCollectionsToAiPathsAllowlist(schema) : schema;
-  return NextResponse.json(visibleSchema);
+  return NextResponse.json(isInternal ? filterCollectionsToAiPathsAllowlist(schema) : schema);
 }

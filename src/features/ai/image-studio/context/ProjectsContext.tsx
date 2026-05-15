@@ -1,6 +1,6 @@
 'use client';
 
-import { type UseQueryResult, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type UseQueryResult, useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
@@ -33,6 +33,7 @@ import {
   useUpdateUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateImageStudioProjects,
   invalidateImageStudioSlots,
@@ -88,21 +89,28 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const userPreferencesQuery = useUserPreferences();
   const updateUserPreferences = useUpdateUserPreferences();
   const queryClient = useQueryClient();
-  const createProjectMutation = useMutation<
+  const createProjectMutation = createMutationV2<
     CreateStudioProjectResult,
-    Error,
     CreateStudioProjectPayload
   >({
     mutationKey: QUERY_KEYS.imageStudio.all,
     mutationFn: (data: CreateStudioProjectPayload) =>
       api.post<CreateStudioProjectResult>('/api/image-studio/projects', data),
+    meta: {
+      source: 'image-studio.context.ProjectsProvider.createProject',
+      operation: 'create',
+      resource: 'image-studio.projects',
+      domain: 'image_studio',
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      tags: ['image-studio', 'projects'],
+      description: 'Creates an image studio project.',
+    },
     onSuccess: async (): Promise<void> => {
       await invalidateImageStudioProjects(queryClient);
     },
   });
-  const renameProjectMutation = useMutation<
+  const renameProjectMutation = createMutationV2<
     UpdateStudioProjectResult,
-    Error,
     UpdateStudioProjectPayload
   >({
     mutationKey: QUERY_KEYS.imageStudio.all,
@@ -111,11 +119,20 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         `/api/image-studio/projects/${encodeURIComponent(projectId)}`,
         { projectId: nextProjectId }
       ),
+    meta: {
+      source: 'image-studio.context.ProjectsProvider.renameProject',
+      operation: 'update',
+      resource: 'image-studio.projects',
+      domain: 'image_studio',
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      tags: ['image-studio', 'projects'],
+      description: 'Renames an image studio project.',
+    },
     onSuccess: async (): Promise<void> => {
       await invalidateImageStudioProjects(queryClient);
     },
   });
-  const deleteProjectMutation = useMutation<string, Error, string>({
+  const deleteProjectMutation = createMutationV2<string, string>({
     mutationKey: QUERY_KEYS.imageStudio.all,
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
@@ -123,14 +140,22 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       });
       return id;
     },
+    meta: {
+      source: 'image-studio.context.ProjectsProvider.deleteProject',
+      operation: 'delete',
+      resource: 'image-studio.projects',
+      domain: 'image_studio',
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      tags: ['image-studio', 'projects'],
+      description: 'Deletes an image studio project.',
+    },
     onSuccess: async (deletedProjectId: string): Promise<void> => {
       await invalidateImageStudioProjects(queryClient);
       await invalidateImageStudioSlots(queryClient, deletedProjectId);
     },
   });
-  const resizeProjectCanvasMutation = useMutation<
+  const resizeProjectCanvasMutation = createMutationV2<
     ResizeStudioProjectCanvasResult,
-    Error,
     ResizeStudioProjectCanvasPayload
   >({
     mutationKey: QUERY_KEYS.imageStudio.all,
@@ -176,6 +201,15 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         canvasWidthPx,
         canvasHeightPx,
       };
+    },
+    meta: {
+      source: 'image-studio.context.ProjectsProvider.resizeProjectCanvas',
+      operation: 'update',
+      resource: 'image-studio.projects.canvas',
+      domain: 'image_studio',
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      tags: ['image-studio', 'projects', 'canvas'],
+      description: 'Updates image studio project canvas dimensions.',
     },
     onSuccess: async (
       result: ResizeStudioProjectCanvasResult,

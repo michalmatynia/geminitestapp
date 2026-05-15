@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
@@ -11,6 +11,7 @@ import type {
 } from '@/shared/contracts/product-scans';
 import { useState, useCallback } from 'react';
 import type { ProductScanAmazonCandidatePreview } from '@/features/products/lib/product-scan-amazon-candidates';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const PRODUCT_SCAN_ACTIVE_REFETCH_MS = 5_000;
 
@@ -159,13 +160,23 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
     handleExtractAmazonCandidate,
   } = useExtractAmazonCandidate({ productId, queryClient });
 
-  const query = useQuery<ProductScanListResponse, Error>({
-    queryKey: QUERY_KEYS.products.scans(productId),
+  const queryKey = QUERY_KEYS.products.scans(productId);
+  const query = createSingleQueryV2<ProductScanListResponse>({
+    queryKey,
     enabled: productId !== '',
     queryFn: async (): Promise<ProductScanListResponse> =>
       api.get<ProductScanListResponse>(`/api/v2/products/${productId}/scans`, {
         cache: 'no-store',
       }),
+    meta: {
+      source: 'products.components.form.useProductScansQuery',
+      operation: 'list',
+      resource: 'products.scans',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'scans'],
+      description: 'Loads product scans for the product form.',
+    },
     refetchInterval: (q) => {
       return hasActiveProductScans(q.state.data?.scans) ? PRODUCT_SCAN_ACTIVE_REFETCH_MS : false;
     },

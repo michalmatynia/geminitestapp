@@ -1,16 +1,18 @@
-export default function Quote() {
+import type { ArchPageContent } from '@/lib/types';
+
+export default function Quote({ content }: { content: ArchPageContent['quote'] }) {
   return (
     <div className="quote-sec">
       <div className="wrap">
         <div className="quote-grid">
-          <span className="num rev">— 07 / note</span>
+          <span className="num rev">{content.eyebrow}</span>
           <div>
             <blockquote className="rev" data-delay="1">
-              The measure of a great building is not what it shows
-              <span>but <em>what it eliminates.</em></span>
+              {content.text}
+              <span><em>{content.emphasis}</em></span>
             </blockquote>
             <div className="q-attr rev" data-delay="2">
-              From the studio&apos;s design principles · 2024
+              {content.attribution}
             </div>
           </div>
         </div>

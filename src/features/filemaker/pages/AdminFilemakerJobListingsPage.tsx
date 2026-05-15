@@ -5,15 +5,14 @@ import React, {
   startTransition,
   useCallback,
   useDeferredValue,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { z } from 'zod';
 
 import { filemakerJobListingSchema } from '@/shared/contracts/filemaker';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -59,61 +58,77 @@ type JobListingsState = {
   total: number;
 };
 
-function useJobListings(
-  query: string,
-  status: string,
-  personId: string,
-  refreshTick: number
-): JobListingsState {
-  const [state, setState] = useState<JobListingsState>({
-    error: null,
-    isLoading: true,
-    listings: [],
-    total: 0,
+type JobListingsInput = {
+  personId: string;
+  query: string;
+  refreshTick: number;
+  status: string;
+};
+
+const EMPTY_JOB_LISTINGS_RESPONSE: JobListingsResponse = {
+  listings: [],
+  total: 0,
+};
+
+const FILEMAKER_JOB_LISTINGS_QUERY_KEY = ['filemaker', 'job-listings'] as const;
+
+const buildJobListingsParams = (input: JobListingsInput): URLSearchParams => {
+  const params = new URLSearchParams();
+  if (input.query.length > 0) params.set('query', input.query);
+  if (input.status.length > 0) params.set('status', input.status);
+  if (input.personId.length > 0) params.set('personId', input.personId);
+  return params;
+};
+
+const buildJobListingsQueryKey = (input: JobListingsInput) =>
+  [...FILEMAKER_JOB_LISTINGS_QUERY_KEY, input] as const;
+
+const fetchJobListings = async (
+  input: JobListingsInput,
+  signal: AbortSignal
+): Promise<JobListingsResponse> => {
+  const params = buildJobListingsParams(input);
+  const response = await fetch(`/api/filemaker/job-listings?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load job listings (${response.status}).`);
+  const parsedResponse = jobListingsResponseSchema.safeParse((await response.json()) as unknown);
+  if (!parsedResponse.success) {
+    throw new Error('Invalid job listings response format.');
+  }
+  return parsedResponse.data;
+};
+
+function useJobListings(input: JobListingsInput): JobListingsState {
+  const queryKey = buildJobListingsQueryKey(input);
+  const jobListingsQuery = createSingleQueryV2<
+    JobListingsResponse,
+    JobListingsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchJobListings(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_JOB_LISTINGS_RESPONSE,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerJobListingsPage.useJobListings',
+      operation: 'list',
+      resource: 'filemaker.job-listings',
+      domain: 'files',
+      description: 'Load Filemaker job listings for the admin job listings page.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasPersonFilter: input.personId.length > 0,
+      queryLength: input.query.length,
+      refreshTick: input.refreshTick,
+      status: input.status,
+    },
   });
-  const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-
-    const params = new URLSearchParams();
-    if (query.length > 0) params.set('query', query);
-    if (status.length > 0) params.set('status', status);
-    if (personId.length > 0) params.set('personId', personId);
-
-    fetch(`/api/filemaker/job-listings?${params.toString()}`, { signal: controller.signal })
-      .then(async (response): Promise<JobListingsResponse> => {
-        if (!response.ok) throw new Error(`Failed to load job listings (${response.status}).`);
-        const parsedResponse = jobListingsResponseSchema.safeParse(
-          (await response.json()) as unknown
-        );
-        if (!parsedResponse.success) {
-          throw new Error('Invalid job listings response format.');
-        }
-        return parsedResponse.data;
-      })
-      .then((data): void => {
-        setState({ error: null, isLoading: false, listings: data.listings, total: data.total });
-      })
-      .catch((err: unknown): void => {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        setState((current) => ({
-          ...current,
-          error: err instanceof Error ? err.message : 'Unknown error',
-          isLoading: false,
-        }));
-      });
-
-    return (): void => {
-      controller.abort();
-    };
-  }, [query, status, personId, refreshTick]);
-
-  return state;
+  return {
+    error: jobListingsQuery.error === null ? null : jobListingsQuery.error.message,
+    isLoading: jobListingsQuery.isFetching,
+    listings: jobListingsQuery.data?.listings ?? [],
+    total: jobListingsQuery.data?.total ?? 0,
+  };
 }
 
 type UsePageDataStateResult = {
@@ -147,12 +162,12 @@ const usePageDataState = (): UsePageDataStateResult => {
   const defaultPersonName = jobApplicationSettings.defaultPersonName.trim();
   const hasDefaultPerson = defaultPersonId.length > 0;
 
-  const { error, isLoading, listings, total } = useJobListings(
+  const { error, isLoading, listings, total } = useJobListings({
+    personId: defaultPersonId,
     query,
     status,
-    defaultPersonId,
-    refreshTick
-  );
+    refreshTick,
+  });
 
   const requestRefreshListings = useCallback((): void => {
     setRefreshTick((value) => value + 1);

@@ -14,7 +14,7 @@ export { agentRunsKeys };
 
 export function useAgentRuns(): ListQuery<AgentRunRecord> {
   const queryKey = agentRunsKeys.lists();
-  return createListQueryV2<AgentRunRecord>({
+  return createListQueryV2<AgentRunRecord, AgentRunRecord[]>({
     queryKey,
     queryFn: api.getAgentRuns,
     meta: {
@@ -24,15 +24,17 @@ export function useAgentRuns(): ListQuery<AgentRunRecord> {
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'list'],
-      description: 'Loads agent runs.'},
+      description: 'Loads agent runs.',
+    },
   });
 }
 
 export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserSnapshotRecord> {
   const queryKey = agentRunsKeys.snapshots(runId ?? '');
-  return createListQueryV2<AgentBrowserSnapshotRecord>({
+  return createListQueryV2<AgentBrowserSnapshotRecord, AgentBrowserSnapshotRecord[]>({
     queryKey,
-    queryFn: () => (runId !== null ? api.getAgentSnapshots(runId) : Promise.reject(new Error('runId is null'))),
+    queryFn: () =>
+      runId !== null ? api.getAgentSnapshots(runId) : Promise.reject(new Error('runId is null')),
     enabled: runId !== null,
     meta: {
       source: 'agentRuns.hooks.useAgentSnapshots',
@@ -41,7 +43,8 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentBrowserS
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'snapshots'],
-      description: 'Loads agent runs snapshots.'},
+      description: 'Loads agent runs snapshots.',
+    },
   });
 }
 
@@ -50,9 +53,10 @@ export function useAgentLogs(
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentBrowserLogRecord> {
   const queryKey = agentRunsKeys.logs(runId ?? '');
-  return createListQueryV2<AgentBrowserLogRecord>({
+  return createListQueryV2<AgentBrowserLogRecord, AgentBrowserLogRecord[]>({
     queryKey,
-    queryFn: () => (runId !== null ? api.getAgentLogs(runId) : Promise.reject(new Error('runId is null'))),
+    queryFn: () =>
+      runId !== null ? api.getAgentLogs(runId) : Promise.reject(new Error('runId is null')),
     enabled: runId !== null,
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
@@ -62,7 +66,8 @@ export function useAgentLogs(
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'logs'],
-      description: 'Polls agent runs logs.'},
+      description: 'Polls agent runs logs.',
+    },
   });
 }
 
@@ -71,9 +76,10 @@ export function useAgentAudits(
   options?: { refetchInterval?: number | false }
 ): ListQuery<AgentAuditLogRecord> {
   const queryKey = agentRunsKeys.audits(runId ?? '');
-  return createListQueryV2<AgentAuditLogRecord>({
+  return createListQueryV2<AgentAuditLogRecord, AgentAuditLogRecord[]>({
     queryKey,
-    queryFn: () => (runId !== null ? api.getAgentAudits(runId) : Promise.reject(new Error('runId is null'))),
+    queryFn: () =>
+      runId !== null ? api.getAgentAudits(runId) : Promise.reject(new Error('runId is null')),
     enabled: runId !== null,
     refetchInterval: options?.refetchInterval ?? false,
     meta: {
@@ -83,6 +89,7 @@ export function useAgentAudits(
       domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'audits'],
-      description: 'Polls agent runs audits.'},
+      description: 'Polls agent runs audits.',
+    },
   });
 }

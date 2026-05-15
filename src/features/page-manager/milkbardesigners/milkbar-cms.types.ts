@@ -1,3 +1,15 @@
+/* eslint-disable max-lines */
+
+export type MilkbarLocale = 'en' | 'de' | 'pl';
+
+export const MILKBAR_LOCALES: MilkbarLocale[] = ['en', 'de', 'pl'];
+
+export const MILKBAR_LOCALE_LABELS: Record<MilkbarLocale, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  pl: 'Polski',
+};
+
 export type MilkbarLinkItem = {
   label: string;
   href: string;
@@ -98,6 +110,35 @@ export type MilkbarPageContent = {
   };
 };
 
+export type MilkbarLocalizedContent = {
+  [K in MilkbarLocale]: MilkbarPageContent;
+};
+
+export type MilkbarSectionVisibility = {
+  drawing: boolean;
+  philosophy: boolean;
+  services: boolean;
+  projects: boolean;
+  process: boolean;
+  metrics: boolean;
+  quote: boolean;
+  cta: boolean;
+};
+
+export type MilkbarSeoMeta = {
+  title: string;
+  description: string;
+  ogTitle: string;
+  ogDescription: string;
+};
+
+export type MilkbarPageSettings = {
+  visibility: MilkbarSectionVisibility;
+  seo: { [K in MilkbarLocale]: MilkbarSeoMeta };
+  defaultLocale: MilkbarLocale;
+  publishedLocales: MilkbarLocale[];
+};
+
 export type MilkbarProjectCmsRecord = {
   code: string;
   name: string;
@@ -127,38 +168,48 @@ export type MilkbarInquiryCmsRecord = {
 };
 
 export type MilkbarCmsSourceStatus = {
-  local: {
-    configured: boolean;
-    dbName: string | null;
-    uriLabel: string | null;
-  };
-  cloud: {
-    configured: boolean;
-    dbName: string | null;
-    uriLabel: string | null;
-  };
+  sourceOfTruth: MilkbarMongoSourceStatus;
+  runtimeLocal: MilkbarMongoSourceStatus;
+  runtimeCloud: MilkbarMongoSourceStatus;
+};
+
+export type MilkbarMongoSourceStatus = {
+  configured: boolean;
+  dbName: string | null;
+  uriLabel: string | null;
 };
 
 export type MilkbarCmsSnapshot = {
   ok: true;
-  pageContent: MilkbarPageContent;
+  localizedContent: MilkbarLocalizedContent;
+  pageSettings: MilkbarPageSettings;
   projects: MilkbarProjectCmsRecord[];
   services: MilkbarServiceCmsRecord[];
   inquiries: MilkbarInquiryCmsRecord[];
   sourceStatus: MilkbarCmsSourceStatus;
   counts: {
-    projects: number;
-    services: number;
-    inquiries: number;
+    sourceOfTruth: {
+      projects: number;
+      services: number;
+    };
+    runtimeLocal: {
+      projects: number;
+      services: number;
+      inquiries: number;
+    };
   };
+  contentSource: 'sourceOfTruth' | 'runtimeFallback';
   updatedAt: string | null;
 };
 
 export type MilkbarCmsUpdateInput = {
-  pageContent: MilkbarPageContent;
+  localizedContent: MilkbarLocalizedContent;
+  pageSettings: MilkbarPageSettings;
   projects: MilkbarProjectCmsRecord[];
   services: MilkbarServiceCmsRecord[];
 };
+
+// ─── English defaults ───────────────────────────────────────────────────────
 
 export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
   hero: {
@@ -275,7 +326,7 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     emailPlaceholder: 'your practice email',
     submitLabel: 'send enquiry',
     loadingLabel: 'sending...',
-    successMessage: "received - we'll be in touch within five working days.",
+    successMessage: 'received - we will be in touch within five working days.',
     note: 'No obligation. Reviewed weekly / response within five working days.',
   },
   footer: {
@@ -314,4 +365,366 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     ],
     copyright: 'MMXXV / Milk Bar Designers B.V.',
   },
+};
+
+// ─── German defaults ─────────────────────────────────────────────────────────
+
+const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
+  hero: {
+    location: 'Amsterdam / London / Zürich',
+    indexLabel: 'Index - MMXXV',
+    titleLines: ['Architektur gezeichnet', 'mit stiller', 'Intelligenz.'],
+    lede:
+      'Ein kleines Studio zwischen Architektur und maschinellem Lernen – es automatisiert das Administrative, damit die Praxis zum durchdachten Entwurf zurückkehren kann.',
+    primaryCtaLabel: 'die Praxis entdecken',
+    secondaryCtaLabel: 'ausgewählte Projekte',
+  },
+  drawing: {
+    eyebrow: '- 01 / Zeichnung',
+    title: 'Jede Linie trägt',
+    emphasis: 'Absicht.',
+    description:
+      'Unsere Systeme analysieren architektonische Intentionen aus natürlicher Sprache, bestehenden Zeichnungen und standortbedingten Einschränkungen. Sie erzeugen Dokumentation, die ein prüfender Architekt unverändert akzeptieren würde.',
+    ctaLabel: 'wie es funktioniert',
+    hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
+  },
+  philosophy: {
+    eyebrow: '- 02 / Philosophie',
+    title: 'Die Disziplin des',
+    emphasis: 'Negativraums.',
+    body:
+      'In der Architektur ist das Mächtigste oft das, was fehlt. Die Leere zwischen Wänden definiert einen Raum. Die Pause zwischen Stützen erzeugt Rhythmus. Unsere Software messen wir an denselben Maßstäben.',
+    closing: 'Wir fügen keine Komplexität hinzu. Wir reduzieren sie.',
+    caption: 'die produktive Leere',
+    principles: [
+      {
+        number: 'i.',
+        title: 'Reduzieren, dann verfeinern',
+        emphasis: '- Zurückhaltung als Methode',
+        description:
+          'Jeden redundanten Prozess entfernen, bevor das Verbleibende optimiert wird. Komplexität ist nie eine Lösung; sie ist ein Symptom.',
+      },
+      {
+        number: 'ii.',
+        title: 'Präzision vor Geschwindigkeit',
+        emphasis: '- Genauigkeit ist nicht verhandelbar',
+        description:
+          'Unsere Modelle werden mit Bauvorschriften aus achtunddreißig Rechtssystemen trainiert. Ergebnisse werden vor dem Verlassen des Studios gegen den Kanon geprüft.',
+      },
+      {
+        number: 'iii.',
+        title: 'Ergänzen, nie ersetzen',
+        emphasis: '- der Architekt bleibt',
+        description:
+          'Der Blick des Architekten ist unersetzlich. Wir automatisieren das Administrative, damit Kreativität ohne regulatorische Last wirken kann.',
+      },
+    ],
+  },
+  services: {
+    eyebrow: '- 03 / Praxis',
+    label: 'vier Systeme',
+    title: 'Was wir leise automatisieren, damit die Praxis fortgeführt werden kann.',
+    emphasis: 'leise automatisieren',
+  },
+  projects: {
+    eyebrow: '- 04 / Projekte',
+    label: 'drei jüngste Notizen',
+    title: 'Eine Auswahl realisierter Arbeiten, dargestellt durch die Studiosysteme.',
+    emphasis: 'realisierter Arbeiten',
+  },
+  process: {
+    eyebrow: '- 05 / Prozess',
+    label: 'vier Bewegungen',
+    title: 'Wie ein Auftrag sich entfaltet.',
+    emphasis: 'entfaltet.',
+    steps: [
+      {
+        number: 'i.',
+        title: 'Analyse',
+        description:
+          'Wir erfassen Ihren bestehenden Arbeitsablauf: jeden Berührungspunkt, jedes Werkzeug, jede verschwendete Stunde. Das Bild ist meist erhellend.',
+      },
+      {
+        number: 'ii.',
+        title: 'Konfiguration',
+        description:
+          'Modelle werden auf Ihre Projekttypologie, Zeichnungskonventionen und die Baurechtsgebiete, in denen Sie tätig sind, trainiert.',
+      },
+      {
+        number: 'iii.',
+        title: 'Integration',
+        description:
+          'Die Systeme verbinden sich mit Revit, AutoCAD, ArchiCAD, Rhino. Kein Eingriff in den Arbeitsablauf; neue Fähigkeit entsteht an Ort und Stelle.',
+      },
+      {
+        number: 'iv.',
+        title: 'Verfeinerung',
+        description:
+          'Mit jedem Projektzyklus erlernt das System Ihre Standards. Die Qualität steigt still, kontinuierlich und ohne Aufwand.',
+      },
+    ],
+  },
+  metrics: [
+    { value: '340', suffix: '+', label: 'Projekte durch Studiosysteme verarbeitet' },
+    { value: '72', suffix: '%', label: 'Mittlere Reduktion der Dokumentationszeit' },
+    { value: '98', suffix: '.4%', label: 'Genauigkeitsrate bei Konformitätsprüfungen' },
+    { value: '38', suffix: '', label: 'Aktive Baurechtsmodelle' },
+  ],
+  quote: {
+    eyebrow: '- 07 / Anmerkung',
+    text: 'Das Maß eines großen Gebäudes ist nicht, was es zeigt',
+    emphasis: 'sondern was es weglässt.',
+    attribution: 'Aus den Designprinzipien des Studios / 2024',
+  },
+  cta: {
+    title: 'Bereit, das Unnötige zu eliminieren?',
+    emphasis: 'eliminieren',
+    description:
+      'Die Plätze im Pilotprogramm sind auf zwölf Büros pro Quartal begrenzt. Anfragen werden wöchentlich geprüft.',
+    emailPlaceholder: 'Ihre Büro-E-Mail',
+    submitLabel: 'Anfrage senden',
+    loadingLabel: 'wird gesendet…',
+    successMessage: 'Eingegangen – wir melden uns innerhalb von fünf Werktagen.',
+    note: 'Keine Verpflichtung. Wöchentlich geprüft / Antwort innerhalb von fünf Werktagen.',
+  },
+  footer: {
+    brandName: 'Milk Bar Designers',
+    address: 'Herengracht 44\n1017 BS / Amsterdam\nNiederlande',
+    tagline:
+      'Ein kleines Studio, das Software für die Architektur entwirft und Architektur mit Softwareunterstützung gestaltet.',
+    columns: [
+      {
+        title: 'Praxis',
+        links: [
+          { label: 'Compliance', href: '#' },
+          { label: 'Baumasse', href: '#' },
+          { label: 'Dokumentation', href: '#' },
+          { label: 'Intelligenz', href: '#' },
+        ],
+      },
+      {
+        title: 'Studio',
+        links: [
+          { label: 'Philosophie', href: '#' },
+          { label: 'Projekte', href: '#' },
+          { label: 'Forschung', href: '#' },
+          { label: 'Karriere', href: '#' },
+        ],
+      },
+      {
+        title: 'Kontakt',
+        links: [
+          { label: 'hello@milkbar.studio', href: '#' },
+          { label: 'Amsterdam', href: '#' },
+          { label: 'London', href: '#' },
+          { label: 'Zürich', href: '#' },
+        ],
+      },
+    ],
+    copyright: 'MMXXV / Milk Bar Designers B.V.',
+  },
+};
+
+// ─── Polish defaults ──────────────────────────────────────────────────────────
+
+const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
+  hero: {
+    location: 'Amsterdam / Londyn / Zurych',
+    indexLabel: 'Indeks - MMXXV',
+    titleLines: ['Architektura rysowana', 'z cichą', 'inteligencją.'],
+    lede:
+      'Małe studio na pograniczu architektury i uczenia maszynowego – automatyzujące administrację, by praktyka mogła powrócić do przemyślanego rysunku.',
+    primaryCtaLabel: 'poznaj pracownię',
+    secondaryCtaLabel: 'wybrane projekty',
+  },
+  drawing: {
+    eyebrow: '- 01 / rysunek',
+    title: 'Każda linia niesie',
+    emphasis: 'intencję.',
+    description:
+      'Nasze systemy odczytują architektoniczną intencję z języka naturalnego, istniejących rysunków i uwarunkowań terenu. Tworzą dokumentację, którą architekt weryfikujący przyjąłby bez poprawek.',
+    ctaLabel: 'jak to działa',
+    hint: '- przeciągnij pomieszczenia, by przypisać program',
+  },
+  philosophy: {
+    eyebrow: '- 02 / filozofia',
+    title: 'Dyscyplina',
+    emphasis: 'pustej przestrzeni.',
+    body:
+      'W architekturze to, czego nie ma, bywa najpotężniejsze. Pustka między ścianami definiuje pomieszczenie. Pauza między kolumnami tworzy rytm. Tym samym standardom poddajemy nasze oprogramowanie.',
+    closing: 'Nie dodajemy złożoności. Ją odejmujemy.',
+    caption: 'produktywna pustka',
+    principles: [
+      {
+        number: 'i.',
+        title: 'Redukuj, potem udoskonalaj',
+        emphasis: '- powściągliwość jako metoda',
+        description:
+          'Usuń każdy zbędny proces, zanim zaczniesz optymalizować to, co pozostało. Złożoność nigdy nie jest rozwiązaniem; jest objawem.',
+      },
+      {
+        number: 'ii.',
+        title: 'Precyzja ponad szybkość',
+        emphasis: '- dokładność jest niepodlegalna negocjacjom',
+        description:
+          'Nasze modele są trenowane na przepisach budowlanych z trzydziestu ośmiu jurysdykcji. Wyniki są weryfikowane względem kanonu przed opuszczeniem studia.',
+      },
+      {
+        number: 'iii.',
+        title: 'Uzupełniaj, nie zastępuj',
+        emphasis: '- architekt pozostaje',
+        description:
+          'Spojrzenie architekta jest niezastąpione. Automatyzujemy administrację, by kreatywność działała swobodnie, bez regulacyjnych ograniczeń.',
+      },
+    ],
+  },
+  services: {
+    eyebrow: '- 03 / praktyka',
+    label: 'cztery systemy',
+    title: 'Co cicho automatyzujemy, by praktyka mogła trwać.',
+    emphasis: 'cicho automatyzujemy',
+  },
+  projects: {
+    eyebrow: '- 04 / projekty',
+    label: 'trzy z ostatnich',
+    title: 'Wybór zrealizowanych prac przedstawionych przez systemy studia.',
+    emphasis: 'zrealizowanych prac',
+  },
+  process: {
+    eyebrow: '- 05 / proces',
+    label: 'cztery ruchy',
+    title: 'Jak przebiega nasza współpraca.',
+    emphasis: 'przebiega.',
+    steps: [
+      {
+        number: 'i.',
+        title: 'Audyt',
+        description:
+          'Mapujemy Twój obecny przepływ pracy: każdy punkt styku, każde narzędzie, każdą straconą godzinę. Obraz bywa zaskakująco klarowny.',
+      },
+      {
+        number: 'ii.',
+        title: 'Konfiguracja',
+        description:
+          'Modele są trenowane na typologii Twoich projektów, konwencjach rysunkowych i jurysdykcjach, w których budujesz.',
+      },
+      {
+        number: 'iii.',
+        title: 'Integracja',
+        description:
+          'Systemy łączą się z Revit, AutoCAD, ArchiCAD, Rhino. Żadnych zakłóceń w pracy; nowa możliwość pojawia się na swoim miejscu.',
+      },
+      {
+        number: 'iv.',
+        title: 'Doskonalenie',
+        description:
+          'Z każdym cyklem projektowym system przyswaja Twoje standardy. Jakość rośnie cicho, nieprzerwanie i bez fanfar.',
+      },
+    ],
+  },
+  metrics: [
+    { value: '340', suffix: '+', label: 'Projektów przetworzonych przez systemy studia' },
+    { value: '72', suffix: '%', label: 'Mediana redukcji czasu dokumentacji' },
+    { value: '98', suffix: '.4%', label: 'Wskaźnik dokładności kontroli zgodności' },
+    { value: '38', suffix: '', label: 'Aktywnych modeli regulacji jurysdykcyjnych' },
+  ],
+  quote: {
+    eyebrow: '- 07 / nota',
+    text: 'Miarą wielkiego budynku nie jest to, co pokazuje',
+    emphasis: 'lecz to, co eliminuje.',
+    attribution: 'Z zasad projektowych studia / 2024',
+  },
+  cta: {
+    title: 'Gotowy wyeliminować zbędne?',
+    emphasis: 'wyeliminować',
+    description:
+      'Miejsca w programie pilotażowym są ograniczone do dwunastu pracowni na kwartał. Zapytania rozpatrujemy co tydzień.',
+    emailPlaceholder: 'adres e-mail pracowni',
+    submitLabel: 'wyślij zapytanie',
+    loadingLabel: 'wysyłanie…',
+    successMessage: 'Otrzymano – odpiszemy w ciągu pięciu dni roboczych.',
+    note: 'Bez zobowiązań. Rozpatrywane co tydzień / odpowiedź w ciągu pięciu dni roboczych.',
+  },
+  footer: {
+    brandName: 'Milk Bar Designers',
+    address: 'Herengracht 44\n1017 BS / Amsterdam\nHolandia',
+    tagline:
+      'Małe studio projektujące oprogramowanie dla architektury i architekturę z pomocą oprogramowania.',
+    columns: [
+      {
+        title: 'Praktyka',
+        links: [
+          { label: 'Zgodność', href: '#' },
+          { label: 'Bryła', href: '#' },
+          { label: 'Dokumentacja', href: '#' },
+          { label: 'Inteligencja', href: '#' },
+        ],
+      },
+      {
+        title: 'Studio',
+        links: [
+          { label: 'Filozofia', href: '#' },
+          { label: 'Projekty', href: '#' },
+          { label: 'Badania', href: '#' },
+          { label: 'Kariera', href: '#' },
+        ],
+      },
+      {
+        title: 'Kontakt',
+        links: [
+          { label: 'hello@milkbar.studio', href: '#' },
+          { label: 'Amsterdam', href: '#' },
+          { label: 'Londyn', href: '#' },
+          { label: 'Zurych', href: '#' },
+        ],
+      },
+    ],
+    copyright: 'MMXXV / Milk Bar Designers B.V.',
+  },
+};
+
+// ─── Composed defaults ────────────────────────────────────────────────────────
+
+export const DEFAULT_MILKBAR_LOCALIZED_CONTENT: MilkbarLocalizedContent = {
+  en: DEFAULT_MILKBAR_PAGE_CONTENT,
+  de: DEFAULT_MILKBAR_PAGE_CONTENT_DE,
+  pl: DEFAULT_MILKBAR_PAGE_CONTENT_PL,
+};
+
+export const DEFAULT_MILKBAR_PAGE_SETTINGS: MilkbarPageSettings = {
+  visibility: {
+    drawing: true,
+    philosophy: true,
+    services: true,
+    projects: true,
+    process: true,
+    metrics: true,
+    quote: true,
+    cta: true,
+  },
+  seo: {
+    en: {
+      title: 'Milk Bar Designers — Architecture & AI Studio',
+      description:
+        'A small studio working between architecture and machine learning, automating the administrative so practice returns to the considered drawing.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architecture drawn with quiet intelligence.',
+    },
+    de: {
+      title: 'Milk Bar Designers — Architektur & KI-Studio',
+      description:
+        'Ein kleines Studio zwischen Architektur und maschinellem Lernen – es automatisiert das Administrative, damit die Praxis zum durchdachten Entwurf zurückkehren kann.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architektur gezeichnet mit stiller Intelligenz.',
+    },
+    pl: {
+      title: 'Milk Bar Designers — Pracownia architektury i AI',
+      description:
+        'Małe studio na pograniczu architektury i uczenia maszynowego – automatyzujące administrację, by praktyka mogła powrócić do przemyślanego rysunku.',
+      ogTitle: 'Milk Bar Designers',
+      ogDescription: 'Architektura rysowana z cichą inteligencją.',
+    },
+  },
+  defaultLocale: 'en',
+  publishedLocales: ['en'],
 };

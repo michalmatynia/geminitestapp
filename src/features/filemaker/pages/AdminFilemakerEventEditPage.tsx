@@ -1,4 +1,4 @@
-/* eslint-disable complexity, consistent-return, max-lines, max-lines-per-function, @typescript-eslint/no-shadow, @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/no-shadow, @typescript-eslint/strict-boolean-expressions */
 'use client';
 
 import { useRouter } from 'nextjs-toploader/app';
@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState, startTransition } fro
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { Badge, Button, Checkbox, Input, useToast } from '@/shared/ui/primitives.public';
@@ -86,6 +87,47 @@ type ImportedEventState = {
   linkedContracts: FilemakerContract[];
   linkedDocuments: FilemakerDocument[];
   linkedWebsites: MongoFilemakerWebsite[];
+};
+
+type ImportedEventResponse = Omit<ImportedEventState, 'error' | 'isLoading'>;
+
+const EMPTY_IMPORTED_EVENT_RESPONSE: ImportedEventResponse = {
+  event: null,
+  linkedAddresses: [],
+  linkedAnyParams: [],
+  linkedAnyTexts: [],
+  linkedBankAccounts: [],
+  linkedContracts: [],
+  linkedDocuments: [],
+  linkedWebsites: [],
+};
+
+const loadImportedEvent = async (
+  eventId: string,
+  signal: AbortSignal
+): Promise<ImportedEventResponse> => {
+  const response = await fetch(`/api/filemaker/events/${encodeURIComponent(eventId)}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load event (${response.status}).`);
+  const payload = (await response.json()) as {
+    event: MongoFilemakerEvent;
+    linkedAddresses?: FilemakerAddress[];
+    linkedAnyParams?: FilemakerAnyParam[];
+    linkedAnyTexts?: FilemakerAnyText[];
+    linkedBankAccounts?: FilemakerBankAccount[];
+    linkedContracts?: FilemakerContract[];
+    linkedDocuments?: FilemakerDocument[];
+    linkedWebsites?: MongoFilemakerWebsite[];
+  };
+  return {
+    event: payload.event,
+    linkedAddresses: payload.linkedAddresses ?? [],
+    linkedAnyParams: payload.linkedAnyParams ?? [],
+    linkedAnyTexts: payload.linkedAnyTexts ?? [],
+    linkedBankAccounts: payload.linkedBankAccounts ?? [],
+    linkedContracts: payload.linkedContracts ?? [],
+    linkedDocuments: payload.linkedDocuments ?? [],
+    linkedWebsites: payload.linkedWebsites ?? [],
+  };
 };
 
 function ImportedEventDetails(props: {
@@ -271,92 +313,35 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [linkedOrganizationIds, setLinkedOrganizationIds] = useState<string[]>([]);
   const [hydratedEventId, setHydratedEventId] = useState<string | null>(null);
-  const [importedEventState, setImportedEventState] = useState<ImportedEventState>({
-    error: null,
-    event: null,
-    isLoading: false,
-    linkedAddresses: [],
-    linkedAnyParams: [],
-    linkedAnyTexts: [],
-    linkedBankAccounts: [],
-    linkedContracts: [],
-    linkedDocuments: [],
-    linkedWebsites: [],
+  const shouldLoadImportedEvent = event === null && eventId.length > 0 && eventId !== 'new';
+  const importedEventQueryKey = ['filemaker', 'events', 'imported-detail', eventId] as const;
+  const importedEventQuery = createSingleQueryV2<
+    ImportedEventResponse,
+    ImportedEventResponse,
+    typeof importedEventQueryKey
+  >({
+    queryKey: importedEventQueryKey,
+    queryFn: async ({ signal }) => loadImportedEvent(eventId, signal),
+    enabled: shouldLoadImportedEvent,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerEventEditPage.importedEvent',
+      operation: 'detail',
+      resource: 'filemaker.imported-event',
+      domain: 'files',
+      description: 'Load imported Filemaker event details when the event is not in settings.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasEventId: eventId.length > 0,
+      isNewRoute: eventId === 'new',
+    },
   });
-
-  useEffect(() => {
-    if (event !== null || eventId.length === 0 || eventId === 'new') return;
-    const controller = new AbortController();
-    setImportedEventState({
-      error: null,
-      event: null,
-      isLoading: true,
-      linkedAddresses: [],
-      linkedAnyParams: [],
-      linkedAnyTexts: [],
-      linkedBankAccounts: [],
-      linkedContracts: [],
-      linkedDocuments: [],
-      linkedWebsites: [],
-    });
-    fetch(`/api/filemaker/events/${encodeURIComponent(eventId)}`, { signal: controller.signal })
-      .then(async (
-        response: Response
-      ): Promise<{
-        event: MongoFilemakerEvent;
-        linkedAddresses?: FilemakerAddress[];
-        linkedAnyParams?: FilemakerAnyParam[];
-        linkedAnyTexts?: FilemakerAnyText[];
-        linkedBankAccounts?: FilemakerBankAccount[];
-        linkedContracts?: FilemakerContract[];
-        linkedDocuments?: FilemakerDocument[];
-        linkedWebsites?: MongoFilemakerWebsite[];
-      }> => {
-        if (!response.ok) throw new Error(`Failed to load event (${response.status}).`);
-        return (await response.json()) as {
-          event: MongoFilemakerEvent;
-          linkedAddresses?: FilemakerAddress[];
-          linkedAnyParams?: FilemakerAnyParam[];
-          linkedAnyTexts?: FilemakerAnyText[];
-          linkedBankAccounts?: FilemakerBankAccount[];
-          linkedContracts?: FilemakerContract[];
-          linkedDocuments?: FilemakerDocument[];
-          linkedWebsites?: MongoFilemakerWebsite[];
-        };
-      })
-      .then((response): void => {
-        setImportedEventState({
-          error: null,
-          event: response.event,
-          isLoading: false,
-          linkedAddresses: response.linkedAddresses ?? [],
-          linkedAnyParams: response.linkedAnyParams ?? [],
-          linkedAnyTexts: response.linkedAnyTexts ?? [],
-          linkedBankAccounts: response.linkedBankAccounts ?? [],
-          linkedContracts: response.linkedContracts ?? [],
-          linkedDocuments: response.linkedDocuments ?? [],
-          linkedWebsites: response.linkedWebsites ?? [],
-        });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setImportedEventState({
-          error: error instanceof Error ? error.message : 'Failed to load imported event.',
-          event: null,
-          isLoading: false,
-          linkedAddresses: [],
-          linkedAnyParams: [],
-          linkedAnyTexts: [],
-          linkedBankAccounts: [],
-          linkedContracts: [],
-          linkedDocuments: [],
-          linkedWebsites: [],
-        });
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [event, eventId]);
+  const importedEventData = importedEventQuery.data ?? EMPTY_IMPORTED_EVENT_RESPONSE;
+  const importedEventState: ImportedEventState = {
+    ...importedEventData,
+    error: importedEventQuery.error === null ? null : importedEventQuery.error.message,
+    isLoading: shouldLoadImportedEvent && importedEventQuery.isFetching,
+  };
 
   useEffect(() => {
     if (!event) return;

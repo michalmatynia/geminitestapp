@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { SelectSimpleOption } from '@/shared/ui/forms-and-actions.public';
 import { useToast, type Toast } from '@/shared/ui/primitives.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -38,11 +39,7 @@ export type AdminFilemakerSettingsPageState = {
   settings: FilemakerJobApplicationSettings;
 };
 
-const createInitialPersonOptionsState = (): PersonOptionsState => ({
-  error: null,
-  isLoading: false,
-  options: [],
-});
+const FILEMAKER_PERSON_OPTIONS_QUERY_KEY = ['filemaker', 'settings', 'person-options'] as const;
 
 const showSaveError = (error: Error, toast: Toast): void => {
   logClientError(error, {
@@ -67,44 +64,54 @@ const createPersonChangeHandler =
     setSettings({ defaultPersonId: value, defaultPersonName: selectedOption?.label ?? value });
   };
 
+const buildPersonOptionsParams = (normalizedQuery: string): URLSearchParams => {
+  const params = new URLSearchParams({ pageSize: String(PERSONS_PAGE_SIZE) });
+  if (normalizedQuery.length > 0) params.set('query', normalizedQuery);
+  return params;
+};
+
+const fetchPersonOptions = async (
+  normalizedQuery: string,
+  signal: AbortSignal
+): Promise<SelectSimpleOption[]> => {
+  const params = buildPersonOptionsParams(normalizedQuery);
+  const response = await fetch(`/api/filemaker/persons?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load persons (${response.status}).`);
+  return toPersonOptions(await response.json());
+};
+
+const buildPersonOptionsQueryKey = (normalizedQuery: string) =>
+  [
+    ...FILEMAKER_PERSON_OPTIONS_QUERY_KEY,
+    { pageSize: PERSONS_PAGE_SIZE, query: normalizedQuery },
+  ] as const;
+
 const usePersonOptionsState = (personQuery: string): PersonOptionsState => {
-  const [state, setState] = useState<PersonOptionsState>(createInitialPersonOptionsState);
+  const normalizedQuery = personQuery.trim();
+  const queryKey = buildPersonOptionsQueryKey(normalizedQuery);
+  const optionsQuery = createListQueryV2<SelectSimpleOption, SelectSimpleOption[]>({
+    queryKey,
+    queryFn: async ({ signal }) => fetchPersonOptions(normalizedQuery, signal),
+    placeholderData: (previousData) => previousData ?? [],
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerSettingsPage.usePersonOptionsState',
+      operation: 'list',
+      resource: 'filemaker.person-options',
+      domain: 'files',
+      description: 'Load Filemaker person options for settings default person selection.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      pageSize: PERSONS_PAGE_SIZE,
+      queryLength: normalizedQuery.length,
+    },
+  });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = new URLSearchParams({ pageSize: String(PERSONS_PAGE_SIZE) });
-    const normalizedQuery = personQuery.trim();
-    if (normalizedQuery.length > 0) params.set('query', normalizedQuery);
-    setState((current: PersonOptionsState): PersonOptionsState => ({
-      ...current,
-      error: null,
-      isLoading: true,
-    }));
-    fetch(`/api/filemaker/persons?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<unknown> => {
-        if (!response.ok) throw new Error(`Failed to load persons (${response.status}).`);
-        return await response.json();
-      })
-      .then((payload: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState({ error: null, isLoading: false, options: toPersonOptions(payload) });
-      })
-      .catch((error: unknown): void => {
-        if ((error as { name?: string }).name === 'AbortError') return;
-        logClientError(error, {
-          context: { source: 'AdminFilemakerSettingsPage', action: 'load-persons' },
-        });
-        setState({
-          error: error instanceof Error ? error.message : 'Failed to load persons.',
-          isLoading: false,
-          options: [],
-        });
-      });
-
-    return () => controller.abort();
-  }, [personQuery]);
-
-  return state;
+  return {
+    error: optionsQuery.error === null ? null : optionsQuery.error.message,
+    isLoading: optionsQuery.isFetching,
+    options: optionsQuery.data ?? [],
+  };
 };
 
 export const useAdminFilemakerSettingsPageState = (): AdminFilemakerSettingsPageState => {

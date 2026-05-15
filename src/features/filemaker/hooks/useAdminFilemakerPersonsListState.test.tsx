@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -67,6 +68,22 @@ const listResponse = {
   totalPages: 1,
 };
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const createWrapper = (): React.ComponentType<React.PropsWithChildren> => {
+  const queryClient = createTestQueryClient();
+  return function TestQueryProvider(props: React.PropsWithChildren): React.JSX.Element {
+    return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
+  };
+};
+
 describe('useAdminFilemakerPersonsListState', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -94,7 +111,9 @@ describe('useAdminFilemakerPersonsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerPersonsListState());
+    const { result } = renderHook(() => useAdminFilemakerPersonsListState(), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

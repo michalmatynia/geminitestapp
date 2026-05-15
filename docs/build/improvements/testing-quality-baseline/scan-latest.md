@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Testing quality baseline Improvement Track
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
@@ -39,10 +39,10 @@ Tracks the testing inventory and quality snapshot so broader improvement work st
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `apply` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `classify` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `no-data` | 0 | 0 | 0 | 0 | 0 |
+| `apply` | `no-data` | 0 | 0 | 0 | 0 | 0 |
 
 ## Latest Steps
 

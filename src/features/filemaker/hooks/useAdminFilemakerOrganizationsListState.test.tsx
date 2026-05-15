@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -113,6 +114,30 @@ const emptyListResponse = {
   totalCount: 0,
 };
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const createWrapper = (): React.ComponentType<React.PropsWithChildren> => {
+  const queryClient = createTestQueryClient();
+  return function TestQueryProvider(props: React.PropsWithChildren): React.JSX.Element {
+    return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
+  };
+};
+
+const renderOrganizationsHook = () =>
+  renderHook(() => useAdminFilemakerOrganizationsListState(), {
+    wrapper: createWrapper(),
+  });
+
 const linkedJobListing = {
   createdAt: '2026-04-28T10:05:00.000Z',
   description: 'Build commerce software',
@@ -217,7 +242,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -245,7 +270,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -277,9 +302,9 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
-    await waitFor(() => expect(mocks.buildFilemakerOrganizationListNodesMock).toHaveBeenCalled());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     const options = mocks.buildFilemakerOrganizationListNodesMock.mock.calls.at(-1)?.[1] as {
       jobListingsByOrganizationId?: Map<string, unknown[]>;
     };
@@ -307,7 +332,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -345,7 +370,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -373,7 +398,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -409,7 +434,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -449,7 +474,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -522,7 +547,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -577,7 +602,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -605,7 +630,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+    const { result } = renderOrganizationsHook();
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

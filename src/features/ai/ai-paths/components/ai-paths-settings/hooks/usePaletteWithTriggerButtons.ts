@@ -2,7 +2,6 @@
 'use no memo';
 
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { NodeDefinition } from '@/shared/contracts/ai-paths-core/nodes';
@@ -10,6 +9,7 @@ import { TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS } from '@/shared/lib/ai-paths
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { derivePaletteNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { triggerButtonsApi } from '@/shared/lib/ai-paths/api';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function usePaletteWithTriggerButtons({
@@ -17,14 +17,24 @@ export function usePaletteWithTriggerButtons({
 }: {
   enabled?: boolean;
 } = {}): NodeDefinition[] {
-  const triggerButtonsQuery = useQuery<AiTriggerButtonRecord[]>({
-    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
+  const queryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord>({
+    queryKey,
     queryFn: async () => {
       const response = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!response.ok) throw new Error(response.error);
       return response.data;
     },
     enabled,
+    meta: {
+      source: 'ai.ai-paths.settings.usePaletteWithTriggerButtons',
+      operation: 'list',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'ai_paths',
+      queryKey,
+      tags: ['ai-paths', 'trigger-buttons', 'palette'],
+      description: 'Loads custom trigger buttons for the AI Paths palette.',
+    },
   });
 
   return useMemo<NodeDefinition[]>(() => {

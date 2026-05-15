@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import type { ArchPageContent } from '@/lib/types';
 
-export default function CtaSection() {
+export default function CtaSection({ content }: { content: ArchPageContent['cta'] }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -36,25 +37,25 @@ export default function CtaSection() {
       <div className="wrap">
         <div className="cta-inner">
           <h2 className="rev">
-            Ready to <em>eliminate</em><br />the unnecessary?
+            {content.title.replace(content.emphasis, '')}<em>{content.emphasis}</em>
           </h2>
           <div className="cta-side rev" data-delay="1">
-            <p>Pilot programme places are limited to twelve practices per quarter. Enquiries are reviewed weekly.</p>
+            <p>{content.description}</p>
             {status === 'done' ? (
-              <p className="cta-success">received ↗ — we&apos;ll be in touch within five working days.</p>
+              <p className="cta-success">{content.successMessage}</p>
             ) : (
               <form className="cta-form" onSubmit={handleSubmit}>
                 <input
                   className="cta-input"
                   type="email"
-                  placeholder="your practice email"
+                  placeholder={content.emailPlaceholder}
                   aria-label="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
                 />
                 <button type="submit" className="cta-submit" disabled={status === 'loading'}>
-                  <span>{status === 'loading' ? 'sending…' : 'send enquiry'}</span>
+                  <span>{status === 'loading' ? content.loadingLabel : content.submitLabel}</span>
                   <span style={{ position: 'relative', width: '18px', height: '1px', background: 'currentColor', display: 'inline-block' }}>
                     <span style={{ position: 'absolute', right: 0, top: '-3px', width: '6px', height: '6px', borderTop: '1px solid currentColor', borderRight: '1px solid currentColor', transform: 'rotate(45deg)', display: 'block' }} />
                   </span>
@@ -64,7 +65,7 @@ export default function CtaSection() {
             {status === 'error' && (
               <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)' }}>{message}</p>
             )}
-            <p className="cta-note">No obligation. Reviewed weekly · response within five working days.</p>
+            <p className="cta-note">{content.note}</p>
           </div>
         </div>
       </div>

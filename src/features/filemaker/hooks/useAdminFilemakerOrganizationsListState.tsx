@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'nextjs-toploader/app';
 import React, {
   startTransition,
@@ -14,6 +15,7 @@ import React, {
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -64,6 +66,17 @@ const ORGANIZATION_APPLIED_ADVANCED_FILTER_STORAGE_KEY =
   'filemakerOrganizationAppliedAdvancedFilter';
 const ORGANIZATION_APPLIED_ADVANCED_FILTER_PRESET_STORAGE_KEY =
   'filemakerOrganizationAppliedAdvancedFilterPresetId';
+const FILEMAKER_ORGANIZATIONS_QUERY_KEY = ['filemaker', 'organizations'] as const;
+
+type OrganizationListInput = {
+  filters: OrganizationFilters;
+  page: number;
+  pageSize: number;
+  query: string;
+  refreshKey: number;
+  sort: OrganizationSortOption;
+};
+type OrganizationListParamsInput = Omit<OrganizationListInput, 'refreshKey'>;
 
 const normalizeSelectFilter = <T extends string>(
   value: string,
@@ -159,13 +172,7 @@ const persistAppliedAdvancedFilterState = (state: {
   }
 };
 
-const buildOrganizationListParams = (input: {
-  filters: OrganizationFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-  sort: OrganizationSortOption;
-}): URLSearchParams => {
+const buildOrganizationListParams = (input: OrganizationListParamsInput): URLSearchParams => {
   const params = new URLSearchParams({
     address: input.filters.address,
     bank: input.filters.bank,
@@ -194,50 +201,82 @@ type BatchDeleteOrganizationsResponse = {
   missingOrganizationIds?: string[];
 };
 
-// eslint-disable-next-line max-lines-per-function
-function useMongoFilemakerOrganizations(input: {
-  filters: OrganizationFilters;
-  page: number;
-  pageSize: number;
-  query: string;
-  refreshKey: number;
-  sort: OrganizationSortOption;
-}): MongoFilemakerOrganizationsHookState {
-  const { filters, page, pageSize, query, refreshKey, sort } = input;
-  const [state, setState] = useState<MongoFilemakerOrganizationsState>({
-    ...EMPTY_ORGANIZATIONS_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildOrganizationListQueryKey = (input: OrganizationListInput) =>
+  [...FILEMAKER_ORGANIZATIONS_QUERY_KEY, input] as const;
+
+const removeOrganizationsFromResponse = (
+  current: MongoFilemakerOrganizationsResponse,
+  organizationIdSet: ReadonlySet<string>
+): MongoFilemakerOrganizationsResponse => {
+  const organizations = current.organizations.filter(
+    (organization: FilemakerOrganization): boolean => !organizationIdSet.has(organization.id)
+  );
+  const removedCount = current.organizations.length - organizations.length;
+  const totalCount = Math.max(0, current.totalCount - removedCount);
+  return {
+    ...current,
+    collectionCount: Math.max(0, current.collectionCount - removedCount),
+    linkedEventsByOrganizationId: Object.fromEntries(
+      Object.entries(current.linkedEventsByOrganizationId).filter(
+        ([organizationId]: [string, FilemakerEvent[]]): boolean =>
+          !organizationIdSet.has(organizationId)
+      )
+    ),
+    linkedJobListingsByOrganizationId: Object.fromEntries(
+      Object.entries(current.linkedJobListingsByOrganizationId).filter(
+        ([organizationId]: [string, FilemakerJobListing[]]): boolean =>
+          !organizationIdSet.has(organizationId)
+      )
+    ),
+    organizations,
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / current.pageSize)),
+  };
+};
+
+const fetchMongoFilemakerOrganizations = async (
+  input: OrganizationListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerOrganizationsResponse> => {
+  const params = buildOrganizationListParams(input);
+  const response = await fetch(`/api/filemaker/organizations?${params.toString()}`, { signal });
+  if (!response.ok) {
+    throw new Error(`Failed to load organisations (${response.status}).`);
+  }
+  return (await response.json()) as MongoFilemakerOrganizationsResponse;
+};
+
+function useMongoFilemakerOrganizations(
+  input: OrganizationListInput
+): MongoFilemakerOrganizationsHookState {
+  const queryClient = useQueryClient();
+  const queryKey = buildOrganizationListQueryKey(input);
+  const organizationsQuery = createSingleQueryV2<
+    MongoFilemakerOrganizationsResponse,
+    MongoFilemakerOrganizationsResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerOrganizations(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_ORGANIZATIONS_RESPONSE,
+    meta: {
+      source:
+        'features.filemaker.hooks.useAdminFilemakerOrganizationsListState.useMongoFilemakerOrganizations',
+      operation: 'list',
+      resource: 'filemaker.organizations',
+      domain: 'files',
+      description: 'Load imported Filemaker organisations for the admin organisations list.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      filters: input.filters,
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+      refreshKey: input.refreshKey,
+      sort: input.sort,
+    },
   });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildOrganizationListParams({ filters, page, pageSize, query, sort });
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/organizations?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerOrganizationsResponse> => {
-        if (!response.ok) {
-          // API request to load organizations list returned an error status
-          throw new Error(`Failed to load organisations (${response.status}).`);
-        }
-        return (await response.json()) as MongoFilemakerOrganizationsResponse;
-      })
-      .then((response: MongoFilemakerOrganizationsResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load organisations.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [filters, page, pageSize, query, refreshKey, sort]);
-
   const removeOrganizations = useCallback((organizationIds: readonly string[]): void => {
     const organizationIdSet = new Set(
       organizationIds
@@ -245,35 +284,18 @@ function useMongoFilemakerOrganizations(input: {
         .filter((organizationId: string): boolean => organizationId.length > 0)
     );
     if (organizationIdSet.size === 0) return;
-    setState((current: MongoFilemakerOrganizationsState): MongoFilemakerOrganizationsState => {
-      const organizations = current.organizations.filter(
-        (organization: FilemakerOrganization): boolean => !organizationIdSet.has(organization.id)
-      );
-      const removedCount = current.organizations.length - organizations.length;
-      const totalCount = Math.max(0, current.totalCount - removedCount);
-      return {
-        ...current,
-        collectionCount: Math.max(0, current.collectionCount - removedCount),
-        linkedEventsByOrganizationId: Object.fromEntries(
-          Object.entries(current.linkedEventsByOrganizationId).filter(
-            ([organizationId]: [string, FilemakerEvent[]]): boolean =>
-              !organizationIdSet.has(organizationId)
-          )
-        ),
-        linkedJobListingsByOrganizationId: Object.fromEntries(
-          Object.entries(current.linkedJobListingsByOrganizationId).filter(
-            ([organizationId]: [string, FilemakerJobListing[]]): boolean =>
-              !organizationIdSet.has(organizationId)
-          )
-        ),
-        organizations,
-        totalCount,
-        totalPages: Math.max(1, Math.ceil(totalCount / current.pageSize)),
-      };
+    queryClient.setQueryData<MongoFilemakerOrganizationsResponse>(queryKey, (current) => {
+      if (current === undefined) return current;
+      return removeOrganizationsFromResponse(current, organizationIdSet);
     });
-  }, []);
+  }, [queryClient, queryKey]);
 
-  return { ...state, removeOrganizations };
+  return {
+    ...(organizationsQuery.data ?? EMPTY_ORGANIZATIONS_RESPONSE),
+    error: organizationsQuery.error === null ? null : organizationsQuery.error.message,
+    isLoading: organizationsQuery.isFetching,
+    removeOrganizations,
+  };
 }
 
 const loadOrganizationIdsForSelection = async (input: {

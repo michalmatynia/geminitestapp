@@ -14,10 +14,8 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
-import { Button, Textarea, useToast, Card } from '@/shared/ui/primitives.public';
-import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
-import { LoadingState, CompactEmptyState, PageLayout, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
-import { cn } from '@/shared/utils/ui-utils';
+import { useToast } from '@/shared/ui/primitives.public';
+import { PageLayout, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import {
@@ -26,7 +24,7 @@ import {
 } from '../context-registry/chat-page';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { AgentSidebar, ChatPane } from '../components/AgentTeachingChatComponents';
 
 function AgentTeachingChatPageContent(): React.JSX.Element {
   const { toast } = useToast();
@@ -47,9 +45,13 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
 
   const sending = chatMutation.isPending;
 
-  const selectedAgent: AgentTeachingAgentRecord | null = selectedAgentId
-    ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
-    : null;
+  const selectedAgent = React.useMemo(
+    () =>
+      selectedAgentId.length > 0
+        ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
+        : null,
+    [agents, selectedAgentId]
+  );
 
   const registrySource = React.useMemo(
     () => ({
@@ -64,15 +66,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
         lastSources,
       }),
     }),
-    [
-      agents,
-      chatModelId,
-      collections,
-      embeddingModelId,
-      lastSources,
-      messages,
-      selectedAgent,
-    ]
+    [agents, chatModelId, collections, embeddingModelId, lastSources, messages, selectedAgent]
   );
 
   useRegisterContextRegistryPageSource('agent-teaching-chat-state', registrySource);
@@ -83,12 +77,12 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
   };
 
   const handleSend = async (): Promise<void> => {
-    if (!selectedAgentId) {
+    if (selectedAgentId.length === 0) {
       toast('Select a learner agent first.', { variant: 'error' });
       return;
     }
     const content = input.trim();
-    if (!content) return;
+    if (content.length === 0) return;
 
     const nextMessages: SimpleChatMessage[] = [...messages, { role: 'user', content }];
     setMessages(nextMessages);
@@ -101,15 +95,12 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
         messages: nextMessages,
         contextRegistry,
       });
-      setMessages((prev: SimpleChatMessage[]) => [
-        ...prev,
-        { role: 'assistant', content: data.message },
-      ]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.message }]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
-      setMessages((prev: SimpleChatMessage[]) => [
+      setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Error: failed to generate response.' },
       ]);
@@ -122,142 +113,31 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
       eyebrow={<AdminAgentTeachingBreadcrumbs current='Chat' className='mb-2' />}
       description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
     >
-
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
-        <FormSection title='Learner Agents' className='p-4 lg:col-span-1 space-y-4'>
-          {loadingAgents ? (
-            <LoadingState message='Loading agents…' className='py-8' size='sm' />
-          ) : agents.length === 0 ? (
-            <CompactEmptyState
-              title='No agents'
-              description='Create a learner agent first.'
-              className='py-8'
-             />
-          ) : (
-            <div className='space-y-2'>
-              {agents.map((agent: AgentTeachingAgentRecord) => (
-                <Button
-                  key={agent.id}
-                  variant='ghost'
-                  className={cn(
-                    'w-full flex-col items-start gap-1 rounded-md border p-3 text-left transition h-auto font-normal',
-                    agent.id === selectedAgentId
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15'
-                      : 'border-border bg-card/40 text-gray-200 hover:bg-card/60'
-                  )}
-                  onClick={(): void => {
-                    setSelectedAgentId(agent.id);
-                    setMessages([]);
-                    setLastSources([]);
-                  }}
-                >
-                  <div className='font-medium text-sm'>{agent.name}</div>
-                  <div className='text-[11px] text-gray-400'>
-                    LLM: {agent.llmModel} • Embed: {agent.embeddingModel}
-                  </div>
-                  <div className='text-[11px] text-gray-500'>
-                    Collections:{' '}
-                    {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
-                  </div>
-                </Button>
-              ))}
-            </div>
-          )}
-        </FormSection>
+        <AgentSidebar
+          agents={agents}
+          loadingAgents={loadingAgents}
+          selectedAgentId={selectedAgentId}
+          setSelectedAgentId={setSelectedAgentId}
+          resolveCollectionName={resolveCollectionName}
+          setMessages={setMessages}
+          setLastSources={setLastSources}
+        />
 
-        <FormSection
-          title='Chat'
-          description={selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
-          className='p-4 lg:col-span-2 space-y-4'
-        >
-          <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'justify-between')}>
-            <div className='text-sm font-semibold text-white'>Chat</div>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={(): void => {
-                setMessages([]);
-                setLastSources([]);
-              }}
-              disabled={sending || messages.length === 0}
-            >
-              Clear
-            </Button>
-          </div>
-
-          <div className='h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3 mt-4'>
-            {messages.length === 0 ? (
-              <div className='text-sm text-gray-400'>
-                Start chatting. The server will embed your question, retrieve top sources, and
-                answer with citations.
-              </div>
-            ) : (
-              <div className='space-y-3'>
-                {messages.map((msg: SimpleChatMessage, idx: number) => (
-                  <div key={`${msg.role}-${idx}`} className='space-y-1'>
-                    <div className='text-[11px] text-gray-500'>{msg.role}</div>
-                    <div className='whitespace-pre-wrap text-sm text-gray-200'>{msg.content}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <FormField label='Message'>
-            <Textarea
-              value={input}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-              placeholder='Ask something that should be answered from your embedded knowledge…'
-              className='min-h-[90px]'
-              disabled={sending || !selectedAgentId}
-             aria-label='Ask something that should be answered from your embedded knowledge…' title='Ask something that should be answered from your embedded knowledge…'/>
-            <div className='flex justify-end gap-2 mt-2'>
-              <Button
-                type='button'
-                onClick={() => void handleSend()}
-                disabled={sending || !selectedAgentId || !input.trim()}
-                loading={sending}
-                loadingText='Thinking…'
-              >
-                Send
-              </Button>
-            </div>
-          </FormField>
-
-          <FormSection title='Retrieved sources' variant='subtle' className='p-3'>
-            {lastSources.length === 0 ? (
-              <div className='mt-2 text-sm text-gray-400'>
-                No sources retrieved yet (or below min score).
-              </div>
-            ) : (
-              <div className='mt-2 space-y-2'>
-                {lastSources.map((src: AgentTeachingChatSource) => (
-                  <Card
-                    key={src.documentId}
-                    variant='subtle-compact'
-                    padding='sm'
-                    className='bg-card/50'
-                  >
-                    <div className='flex items-center justify-between gap-2'>
-                      <div className='text-xs text-gray-300'>
-                        [doc:{src.documentId}] • {resolveCollectionName(src.collectionId)}
-                      </div>
-                      <div className='text-[11px] text-gray-500'>score {src.score.toFixed(3)}</div>
-                    </div>
-                    {src.metadata?.title ? (
-                      <div className='mt-1 text-[11px] text-gray-400'>
-                        Title: {src.metadata.title}
-                      </div>
-                    ) : null}
-                    <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
-                      {src.text}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </FormSection>
-        </FormSection>
+        <ChatPane
+          selectedAgent={selectedAgent}
+          messages={messages}
+          setMessages={setMessages}
+          lastSources={lastSources}
+          setLastSources={setLastSources}
+          sending={sending}
+          input={input}
+          setInput={setInput}
+          handleSend={() => {
+            void handleSend();
+          }}
+          resolveCollectionName={resolveCollectionName}
+        />
       </div>
     </PageLayout>
   );

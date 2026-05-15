@@ -5,6 +5,7 @@ import { useRouter } from 'nextjs-toploader/app';
 import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { PanelHeader } from '@/shared/ui/templates.public';
 import { Button, useToast } from '@/shared/ui/primitives.public';
@@ -21,6 +22,7 @@ import {
   filterSuppressions,
   pruneColdSuppressionEntries,
   removeSuppressionEntry,
+  type ColdPruneResponse,
   SuppressionRegistryTable,
   SuppressionSummaryBar,
   type SuppressionEntry,
@@ -61,6 +63,18 @@ function useUnsuppressHandler(
 } {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
+  const removeSuppressionMutation = createMutationV2<void, string>({
+    mutationKey: ['filemaker', 'campaign-suppressions', 'remove'],
+    mutationFn: async (emailAddress) => removeSuppressionEntry(emailAddress),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignSuppressionsPage.removeSuppression',
+      operation: 'delete',
+      resource: 'filemaker.campaign-suppression',
+      domain: 'files',
+      description: 'Remove an email address from Filemaker campaign suppressions.',
+      errorPresentation: 'toast',
+    },
+  });
   const handleUnsuppress = useCallback(
     (entry: SuppressionEntry): void => {
       confirm({
@@ -71,7 +85,7 @@ function useUnsuppressHandler(
         onConfirm: async (): Promise<void> => {
           setPendingAddress(entry.emailAddress);
           try {
-            await removeSuppressionEntry(entry.emailAddress);
+            await removeSuppressionMutation.mutateAsync(entry.emailAddress);
             toast(`Removed suppression for ${entry.emailAddress}.`, { variant: 'success' });
             settingsStore.refetch();
           } catch (error: unknown) {
@@ -85,7 +99,7 @@ function useUnsuppressHandler(
         },
       });
     },
-    [confirm, settingsStore, toast]
+    [confirm, removeSuppressionMutation, settingsStore, toast]
   );
   return { ConfirmationModal, handleUnsuppress };
 }
@@ -95,11 +109,21 @@ function useColdPruneHandler(settingsStore: SettingsStore): {
   isPruningCold: boolean;
 } {
   const { toast } = useToast();
-  const [isPruningCold, setIsPruningCold] = useState(false);
+  const pruneColdMutation = createMutationV2<ColdPruneResponse, void>({
+    mutationKey: ['filemaker', 'campaign-suppressions', 'prune-cold'],
+    mutationFn: async () => pruneColdSuppressionEntries(),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignSuppressionsPage.pruneCold',
+      operation: 'action',
+      resource: 'filemaker.campaign-suppression-cold-prune',
+      domain: 'files',
+      description: 'Add cold recipients to Filemaker campaign suppressions.',
+      errorPresentation: 'toast',
+    },
+  });
   const handlePruneColdRecipients = useCallback(async (): Promise<void> => {
-    setIsPruningCold(true);
     try {
-      const result = await pruneColdSuppressionEntries();
+      const result = await pruneColdMutation.mutateAsync(undefined);
       toast(`Cold prune added ${result.addedCount} suppressions.`, { variant: 'success' });
       settingsStore.refetch();
     } catch (error: unknown) {
@@ -107,11 +131,9 @@ function useColdPruneHandler(settingsStore: SettingsStore): {
       toast(error instanceof Error ? error.message : 'Failed to run cold-recipient prune.', {
         variant: 'error',
       });
-    } finally {
-      setIsPruningCold(false);
     }
-  }, [settingsStore, toast]);
-  return { handlePruneColdRecipients, isPruningCold };
+  }, [pruneColdMutation, settingsStore, toast]);
+  return { handlePruneColdRecipients, isPruningCold: pruneColdMutation.isPending };
 }
 
 export function AdminFilemakerCampaignSuppressionsPage(): React.JSX.Element {

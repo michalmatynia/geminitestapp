@@ -1,4 +1,6 @@
-export default function Footer() {
+import type { ArchPageContent } from '@/lib/types';
+
+export default function Footer({ content }: { content: ArchPageContent['footer'] }) {
   return (
     <footer>
       <div className="wrap">
@@ -6,43 +8,30 @@ export default function Footer() {
           <div className="foot-brand">
             <div className="brand" style={{ marginBottom: '4px' }}>
               <span className="brand-mark" aria-hidden="true" />
-              <span className="brand-name">Milk Bar Designers</span>
+              <span className="brand-name">{content.brandName}</span>
             </div>
-            <p className="addr">Herengracht 44<br />1017 BS · Amsterdam<br />The Netherlands</p>
-            <p>A small studio designing software for architecture, and architecture with the help of software.</p>
+            <p className="addr">
+              {content.address.split('\n').map((line) => (
+                <span key={line}>{line}<br /></span>
+              ))}
+            </p>
+            <p>{content.tagline}</p>
           </div>
 
-          <div className="foot-col">
-            <h4>Practice</h4>
-            <ul>
-              <li><a href="#">Compliance</a></li>
-              <li><a href="#">Massing</a></li>
-              <li><a href="#">Documentation</a></li>
-              <li><a href="#">Intelligence</a></li>
-            </ul>
-          </div>
-          <div className="foot-col">
-            <h4>Studio</h4>
-            <ul>
-              <li><a href="#">Philosophy</a></li>
-              <li><a href="#">Projects</a></li>
-              <li><a href="#">Research</a></li>
-              <li><a href="#">Careers</a></li>
-            </ul>
-          </div>
-          <div className="foot-col">
-            <h4>Contact</h4>
-            <ul>
-              <li><a href="#">hello@milkbar.studio</a></li>
-              <li><a href="#">Amsterdam</a></li>
-              <li><a href="#">London</a></li>
-              <li><a href="#">Zurich</a></li>
-            </ul>
-          </div>
+          {content.columns.map((column) => (
+            <div className="foot-col" key={column.title}>
+              <h4>{column.title}</h4>
+              <ul>
+                {column.links.map((link) => (
+                  <li key={`${column.title}-${link.label}`}><a href={link.href}>{link.label}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         <div className="foot-bot">
-          <span>© MMXXV · Milk Bar Designers B.V.</span>
+          <span>{content.copyright}</span>
           <div className="foot-bot-links">
             <a href="#">Privacy</a>
             <a href="#">Terms</a>

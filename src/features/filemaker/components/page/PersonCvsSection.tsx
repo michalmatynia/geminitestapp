@@ -3,10 +3,12 @@
 /* eslint-disable max-lines */
 
 import { Download, ExternalLink, Eye, FileText, Loader2, Plus } from 'lucide-react';
-import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { startTransition, useCallback, useMemo, useState } from 'react';
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -26,6 +28,10 @@ type CvListState = {
   cvs: FilemakerCv[];
   error: string | null;
   isLoading: boolean;
+};
+
+type CvListResponse = {
+  cvs: FilemakerCv[];
 };
 
 type CvCreatePayload = {
@@ -76,6 +82,29 @@ const formatCvSourceSuffix = (cv: FilemakerCv): string => {
   return '';
 };
 
+const FILEMAKER_PERSON_CVS_QUERY_KEY = ['filemaker', 'person-cvs'] as const;
+
+const buildPersonCvsQueryKey = (personId: string) =>
+  [...FILEMAKER_PERSON_CVS_QUERY_KEY, personId] as const;
+
+const readPersonCvs = async (personId: string, signal: AbortSignal): Promise<CvListResponse> => {
+  const response = await fetch(`/api/filemaker/cvs?personId=${encodeURIComponent(personId)}`, {
+    signal,
+  });
+  if (!response.ok) throw new Error(`Failed to load CVs (${response.status}).`);
+  return (await response.json()) as CvListResponse;
+};
+
+const appendCreatedCv = (
+  current: CvListResponse | undefined,
+  cv: FilemakerCv
+): CvListResponse => ({
+  cvs: [
+    cv,
+    ...(current?.cvs ?? []).filter((existing: FilemakerCv): boolean => existing.id !== cv.id),
+  ],
+});
+
 /* eslint-disable complexity, max-lines-per-function */
 export function PersonCvsSection(): React.JSX.Element {
   const {
@@ -93,17 +122,38 @@ export function PersonCvsSection(): React.JSX.Element {
     websites,
   } = useAdminFilemakerPersonEditPageStateContext();
   const { toast } = useToast();
-  const [state, setState] = useState<CvListState>({
-    cvs: [],
-    error: null,
-    isLoading: true,
-  });
+  const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isExportingGeneratedPdf, setIsExportingGeneratedPdf] = useState(false);
   const [exportingCvId, setExportingCvId] = useState<string | null>(null);
 
   const personId = person?.id ?? '';
+  const cvsQueryKey = useMemo(() => buildPersonCvsQueryKey(personId), [personId]);
+  const cvsQuery = createSingleQueryV2<CvListResponse, CvListResponse, typeof cvsQueryKey>({
+    queryKey: cvsQueryKey,
+    queryFn: async ({ signal }) => readPersonCvs(personId, signal),
+    enabled: personId.length > 0,
+    meta: {
+      source: 'features.filemaker.components.page.PersonCvsSection.cvs',
+      operation: 'list',
+      resource: 'filemaker.person-cvs',
+      domain: 'files',
+      description: 'Load Filemaker CVs linked to the current person.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasPersonId: personId.length > 0,
+    },
+  });
+  const state = useMemo<CvListState>(
+    () => ({
+      cvs: cvsQuery.data?.cvs ?? [],
+      error: cvsQuery.error === null ? null : cvsQuery.error.message,
+      isLoading: personId.length > 0 && cvsQuery.isFetching,
+    }),
+    [cvsQuery.data?.cvs, cvsQuery.error, cvsQuery.isFetching, personId.length]
+  );
   const personName = useMemo(
     () =>
       person !== null
@@ -114,37 +164,6 @@ export function PersonCvsSection(): React.JSX.Element {
         : 'Person',
     [person, personDraft.firstName, personDraft.lastName]
   );
-
-  useEffect(() => {
-    if (personId.length === 0) {
-      setState({ cvs: [], error: null, isLoading: false });
-      return undefined;
-    }
-    const controller = new AbortController();
-    setState((current) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/cvs?personId=${encodeURIComponent(personId)}`, {
-      signal: controller.signal,
-    })
-      .then(async (response: Response): Promise<{ cvs: FilemakerCv[] }> => {
-        if (!response.ok) throw new Error(`Failed to load CVs (${response.status}).`);
-        return (await response.json()) as { cvs: FilemakerCv[] };
-      })
-      .then((response: { cvs: FilemakerCv[] }): void => {
-        setState({ cvs: response.cvs, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        logClientError(error);
-        setState({
-          cvs: [],
-          error: error instanceof Error ? error.message : 'Failed to load CVs.',
-          isLoading: false,
-        });
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [personId]);
 
   const openCv = useCallback(
     (cv: FilemakerCv): void => {
@@ -227,17 +246,12 @@ export function PersonCvsSection(): React.JSX.Element {
     });
     if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
     const payload = (await response.json()) as { cv: FilemakerCv };
-    setState((current: CvListState): CvListState => ({
-      ...current,
-      cvs: [
-        payload.cv,
-        ...current.cvs.filter((existing: FilemakerCv): boolean => existing.id !== payload.cv.id),
-      ],
-      error: null,
-      isLoading: false,
-    }));
+    queryClient.setQueryData<CvListResponse>(
+      buildPersonCvsQueryKey(input.personId),
+      (current) => appendCreatedCv(current, payload.cv)
+    );
     return payload.cv;
-  }, []);
+  }, [queryClient]);
 
   const createCvFromProfile = useCallback(async (): Promise<FilemakerCv> => {
     return createCv(buildCvCreatePayloadFromProfile());

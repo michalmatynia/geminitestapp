@@ -7,7 +7,6 @@
 // timer for terminal feedback. Returns a stable readonly map of per-product
 // scan feedback objects suitable for row-level runtime snapshots.
 
-import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -18,8 +17,10 @@ import {
 import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeClearInterval, safeSetInterval, type SafeTimerId } from '@/shared/lib/timers';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 
 const ACTIVE_SCAN_POLL_INTERVAL_MS = 3_000;
 const TERMINAL_SCAN_FEEDBACK_TTL_MS = 15_000;
@@ -100,9 +101,10 @@ const useProductScanRunStatusQuery = ({
 }: {
   enabled: boolean;
   normalizedProductIds: readonly string[];
-}): ReturnType<typeof useQuery<ProductScanListResponse>> =>
-  useQuery<ProductScanListResponse>({
-    queryKey: QUERY_KEYS.products.scansLatest(normalizedProductIds),
+}): SingleQuery<ProductScanListResponse> => {
+  const queryKey = QUERY_KEYS.products.scansLatest(normalizedProductIds);
+  return createSingleQueryV2<ProductScanListResponse>({
+    queryKey,
     enabled: enabled && normalizedProductIds.length > 0,
     queryFn: async () =>
       await api.get<ProductScanListResponse>('/api/v2/products/scans/latest', {
@@ -117,7 +119,17 @@ const useProductScanRunStatusQuery = ({
     refetchOnReconnect: false,
     retry: 1,
     refetchInterval: (query) => resolveRefetchInterval(query.state.data?.scans ?? []),
+    meta: {
+      source: 'products.hooks.useProductListScanRunSync',
+      operation: 'polling',
+      resource: 'products.scans.latest',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'scans', 'runtime'],
+      description: 'Polls latest product scan run status for visible products.',
+    },
   });
+};
 
 export function useProductListScanRunSync({
   enabled = true,

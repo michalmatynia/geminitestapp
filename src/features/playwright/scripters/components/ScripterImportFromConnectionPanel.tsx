@@ -1,8 +1,9 @@
 'use client';
 
 import { DownloadCloud, Loader2 } from 'lucide-react';
-import { type JSX, useCallback, useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ConnectionImportResult } from '../from-connection';
@@ -12,7 +13,7 @@ const apiListConnections = async (): Promise<ListedProgrammableConnection[]> => 
   const res = await fetch('/api/playwright/scripters/connections');
   if (!res.ok) throw new Error(`List connections failed (${res.status})`);
   const body = (await res.json()) as { connections: ListedProgrammableConnection[] };
-  return body.connections ?? [];
+  return body.connections;
 };
 
 const apiImport = async (
@@ -30,49 +31,71 @@ const apiImport = async (
   return (await res.json()) as ConnectionImportResult;
 };
 
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
 export type ScripterImportFromConnectionPanelProps = {
   onImported: (result: ConnectionImportResult) => void;
 };
 
+// eslint-disable-next-line max-lines-per-function, complexity
 export function ScripterImportFromConnectionPanel({
   onImported,
 }: ScripterImportFromConnectionPanelProps): JSX.Element {
-  const [connections, setConnections] = useState<ListedProgrammableConnection[] | null>(null);
   const [selectedId, setSelectedId] = useState<string>('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-
-  const loadConnections = useCallback(async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const list = await apiListConnections();
-      setConnections(list);
-      if (list.length > 0 && !selectedId) setSelectedId(list[0]!.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }, [selectedId]);
+  const connectionsQuery = createListQueryV2<
+    ListedProgrammableConnection,
+    ListedProgrammableConnection[]
+  >({
+    queryKey: ['playwright', 'scripters', 'connections'],
+    queryFn: apiListConnections,
+    enabled: expanded,
+    staleTime: 60_000,
+    meta: {
+      source: 'playwright.scripters.ScripterImportFromConnectionPanel.connections',
+      operation: 'list',
+      resource: 'playwright.scripters.connections',
+      domain: 'playwright',
+      queryKey: ['playwright', 'scripters', 'connections'],
+      tags: ['playwright', 'scripters', 'connections'],
+      description: 'Loads programmable connections for scripter import.',
+    },
+  });
+  const importMutation = createMutationV2<ConnectionImportResult, string>({
+    mutationKey: ['playwright', 'scripters', 'import-from-connection'],
+    mutationFn: async (connectionId: string) => await apiImport(connectionId),
+    onSuccess: (result: ConnectionImportResult): void => {
+      onImported(result);
+    },
+    meta: {
+      source: 'playwright.scripters.ScripterImportFromConnectionPanel.import',
+      operation: 'action',
+      resource: 'playwright.scripters.import-from-connection',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', 'import-from-connection'],
+      tags: ['playwright', 'scripters', 'connections', 'import'],
+      description: 'Imports a Playwright scripter from a programmable connection.',
+    },
+  });
+  const connections = connectionsQuery.data ?? null;
+  const errorSource = connectionsQuery.error ?? importMutation.error;
+  const error = errorSource !== null ? toErrorMessage(errorSource) : null;
+  const busy = connectionsQuery.isFetching || importMutation.isPending;
 
   useEffect(() => {
-    if (expanded && !connections) void loadConnections();
-  }, [expanded, connections, loadConnections]);
-
-  const doImport = async (): Promise<void> => {
-    if (!selectedId) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await apiImport(selectedId);
-      onImported(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
+    if (connections !== null && connections.length > 0 && selectedId === '') {
+      const firstConnection = connections[0];
+      if (firstConnection !== undefined) {
+        setSelectedId(firstConnection.id);
+      }
     }
+  }, [connections, selectedId]);
+
+  const doImport = (): void => {
+    const normalizedSelectedId = selectedId.trim();
+    if (normalizedSelectedId === '') return;
+    importMutation.mutate(normalizedSelectedId);
   };
 
   return (
@@ -92,17 +115,17 @@ export function ScripterImportFromConnectionPanel({
       </button>
       {expanded ? (
         <div className='space-y-2'>
-          {error ? <Alert variant='destructive'>{error}</Alert> : null}
-          {busy && !connections ? (
+          {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+          {busy && connections === null ? (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Loader2 className='size-4 animate-spin' />
               Loading connections…
             </div>
           ) : null}
-          {connections?.length === 0 ? (
+          {connections !== null && connections.length === 0 ? (
             <Alert>No programmable connections available to import.</Alert>
           ) : null}
-          {connections && connections.length > 0 ? (
+          {connections !== null && connections.length > 0 ? (
             <div className='flex flex-wrap items-end gap-2'>
               <select
                 value={selectedId}
@@ -120,7 +143,7 @@ export function ScripterImportFromConnectionPanel({
                 type='button'
                 size='sm'
                 onClick={doImport}
-                disabled={busy || !selectedId}
+                disabled={busy || selectedId.trim() === ''}
               >
                 {busy ? (
                   <Loader2 className='mr-2 size-4 animate-spin' />

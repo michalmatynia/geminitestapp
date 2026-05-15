@@ -2,8 +2,9 @@
 
 import { ExternalLink, MailOpen, RefreshCw } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { startTransition, useCallback, useEffect, useState } from 'react';
+import React, { startTransition } from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
@@ -11,8 +12,10 @@ import { buildFilemakerMailThreadHref } from '../FilemakerMailSidebar.helpers';
 import { useAdminFilemakerOrganizationEditPageStateContext } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import type { FilemakerMailSearchResponse, FilemakerMailSearchResultGroup } from '../../types';
 
-const fetchJson = async <T,>(url: string): Promise<T> => {
-  const response = await fetch(url, { headers: { 'content-type': 'application/json' } });
+const ORGANIZATION_EMAIL_LOG_QUERY_KEY = ['filemaker', 'organization-email-log'] as const;
+
+const fetchJson = async <T,>(url: string, signal: AbortSignal): Promise<T> => {
+  const response = await fetch(url, { headers: { 'content-type': 'application/json' }, signal });
   if (!response.ok) throw new Error(`Request failed (${response.status})`);
   return (await response.json()) as T;
 };
@@ -123,29 +126,35 @@ function EmailLogContent(props: {
 
 export function OrganizationEmailLogSection(): React.JSX.Element {
   const { organization, emails } = useAdminFilemakerOrganizationEditPageStateContext();
-  const [result, setResult] = useState<FilemakerMailSearchResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadEmailLog = useCallback(async (): Promise<void> => {
-    if (organization === null) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetchJson<FilemakerMailSearchResponse>(
-        `/api/filemaker/mail/organizations/${encodeURIComponent(organization.id)}/email-log`
-      );
-      setResult(response);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Failed to load email log.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [organization]);
-
-  useEffect(() => {
-    void loadEmailLog();
-  }, [loadEmailLog]);
+  const organizationId = organization?.id ?? '';
+  const emailLogQueryKey = [...ORGANIZATION_EMAIL_LOG_QUERY_KEY, organizationId] as const;
+  const emailLogQuery = createSingleQueryV2<
+    FilemakerMailSearchResponse,
+    FilemakerMailSearchResponse,
+    typeof emailLogQueryKey
+  >({
+    queryKey: emailLogQueryKey,
+    queryFn: async ({ signal }) =>
+      fetchJson<FilemakerMailSearchResponse>(
+        `/api/filemaker/mail/organizations/${encodeURIComponent(organizationId)}/email-log`,
+        signal
+      ),
+    enabled: organization !== null,
+    meta: {
+      source:
+        'features.filemaker.components.page.OrganizationEmailLogSection.OrganizationEmailLogSection',
+      operation: 'list',
+      resource: 'filemaker.organization-email-log',
+      domain: 'files',
+      description: 'Load received email log entries linked to the current organization.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      hasOrganizationId: organization !== null,
+    },
+  });
+  const result = emailLogQuery.data ?? null;
+  const error = emailLogQuery.error === null ? null : emailLogQuery.error.message;
 
   return (
     <FormSection title='EMAIL LOG' className='space-y-4 p-4'>
@@ -163,14 +172,14 @@ export function OrganizationEmailLogSection(): React.JSX.Element {
           size='sm'
           variant='outline'
           onClick={() => {
-            void loadEmailLog();
+            void emailLogQuery.refetch();
           }}
         >
           <RefreshCw className='mr-1.5 size-3.5' />
           Refresh
         </Button>
       </div>
-      <EmailLogContent error={error} isLoading={isLoading} result={result} />
+      <EmailLogContent error={error} isLoading={emailLogQuery.isFetching} result={result} />
     </FormSection>
   );
 }

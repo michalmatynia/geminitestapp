@@ -1,8 +1,9 @@
 'use client';
 
 import { Loader2, Play, Save } from 'lucide-react';
-import { type JSX, useState } from 'react';
+import { type JSX } from 'react';
 
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
 
 import type { ScripterImportSourceResult } from '../scripter-import-source';
@@ -26,46 +27,61 @@ const callDryRun = async (scripterId: string): Promise<ScripterImportSourceResul
   return (await res.json()) as ScripterImportSourceResult;
 };
 
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+// eslint-disable-next-line max-lines-per-function, complexity
 export function ScripterDryRunPanel({
   scripterId,
   onCommit,
   committing,
 }: ScripterDryRunPanelProps): JSX.Element {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ScripterImportSourceResult | null>(null);
-
-  const run = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    try {
-      setResult(await callDryRun(scripterId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const dryRunMutation = createMutationV2<ScripterImportSourceResult, string>({
+    mutationKey: ['playwright', 'scripters', scripterId, 'dry-run'],
+    mutationFn: async (targetScripterId: string) => await callDryRun(targetScripterId),
+    meta: {
+      source: 'playwright.scripters.ScripterDryRunPanel.run',
+      operation: 'action',
+      resource: 'playwright.scripters.dry-run',
+      domain: 'playwright',
+      mutationKey: ['playwright', 'scripters', scripterId, 'dry-run'],
+      tags: ['playwright', 'scripters', 'dry-run'],
+      description: 'Runs a Playwright scripter dry-run preview.',
+    },
+  });
+  const result = dryRunMutation.data ?? null;
+  const error = dryRunMutation.error ? toErrorMessage(dryRunMutation.error) : null;
+  const busy = dryRunMutation.isPending;
 
   return (
     <Card className='space-y-3 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <h3 className='text-sm font-semibold'>Dry-run preview</h3>
         <div className='flex gap-2'>
-          <Button type='button' size='sm' variant='outline' onClick={run} disabled={busy}>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            onClick={() => dryRunMutation.mutate(scripterId)}
+            disabled={busy}
+          >
             {busy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Play className='mr-2 size-4' />}
             Run preview
           </Button>
-          {onCommit && result ? (
-            <Button type='button' size='sm' onClick={onCommit} disabled={committing}>
-              {committing ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
+          {onCommit !== undefined && result !== null ? (
+            <Button type='button' size='sm' onClick={onCommit} disabled={committing === true}>
+              {committing === true ? (
+                <Loader2 className='mr-2 size-4 animate-spin' />
+              ) : (
+                <Save className='mr-2 size-4' />
+              )}
               Commit drafts
             </Button>
           ) : null}
         </div>
       </div>
 
-      {error ? <Alert variant='destructive'>{error}</Alert> : null}
+      {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
 
       {result ? (
         <>
@@ -91,7 +107,7 @@ export function ScripterDryRunPanel({
                 {result.drafts.map((draft) => (
                   <tr key={draft.index} className='border-t border-border/30'>
                     <td className='px-2 py-1 text-muted-foreground'>{draft.index}</td>
-                    <td className='px-2 py-1 font-medium'>{draft.draft.name ?? '—'}</td>
+                    <td className='px-2 py-1 font-medium'>{draft.draft.name}</td>
                     <td className='px-2 py-1'>{draft.draft.price ?? '—'}</td>
                     <td className='px-2 py-1 font-mono'>{draft.draft.sku ?? '—'}</td>
                     <td className='px-2 py-1'>

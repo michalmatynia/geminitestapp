@@ -20,9 +20,8 @@ import type {
 } from '@/shared/contracts/integrations/preferences';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { api } from '@/shared/lib/api-client';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { createQueryOptionsV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useTelemetrizedMultiQueryOptionsV2 } from '@/shared/lib/tanstack-factory-v2/hooks';
 import { resolveIntegrationSelectionErrorMessage } from '@/features/integrations/utils/integration-selection-error';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
@@ -108,8 +107,8 @@ export function useIntegrationSelection(
     connectionId: initialConnectionId?.trim() || null,
   });
 
-  const preferredBaseConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
-    queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
+  const preferredBaseConnectionOptions = createQueryOptionsV2({
+    queryKey: integrationSelectionKeys.defaultConnection,
     queryFn: fetchPreferredBaseConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
@@ -126,8 +125,8 @@ export function useIntegrationSelection(
       tags: ['integrations', 'selection', 'preferred-connection'],
     },
   });
-  const preferredTraderaConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
-    queryKey: normalizeQueryKey(integrationSelectionKeys.traderaDefaultConnection),
+  const preferredTraderaConnectionOptions = createQueryOptionsV2({
+    queryKey: integrationSelectionKeys.traderaDefaultConnection,
     queryFn: fetchPreferredTraderaConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
@@ -144,8 +143,8 @@ export function useIntegrationSelection(
       tags: ['integrations', 'selection', 'preferred-tradera-connection'],
     },
   });
-  const integrationsWithConnectionsOptions = useTelemetrizedMultiQueryOptionsV2({
-    queryKey: normalizeQueryKey(integrationSelectionKeys.withConnections),
+  const integrationsWithConnectionsOptions = createQueryOptionsV2({
+    queryKey: integrationSelectionKeys.withConnections,
     queryFn: fetchIntegrationsWithConnections,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
@@ -162,8 +161,8 @@ export function useIntegrationSelection(
       tags: ['integrations', 'selection', 'list'],
     },
   });
-  const preferredVintedConnectionOptions = useTelemetrizedMultiQueryOptionsV2({
-    queryKey: normalizeQueryKey(integrationSelectionKeys.vintedDefaultConnection),
+  const preferredVintedConnectionOptions = createQueryOptionsV2({
+    queryKey: integrationSelectionKeys.vintedDefaultConnection,
     queryFn: fetchPreferredVintedConnection,
     staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
     gcTime: INTEGRATION_SELECTION_GC_TIME_MS,

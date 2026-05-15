@@ -5,14 +5,12 @@ import {
   getCaseResolverWorkspaceRevision,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
-import { type CaseResolverWorkspaceDetachedPayload } from './workspace-persistence-detached.types';
 
 export const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 =
   'case_resolver_workspace_detached_documents_v2';
 const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA =
   CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2;
 const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS = 6_000;
-const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS = 2_000;
 
 /**
  * Zod schema for a single detached document file entry.
@@ -66,53 +64,29 @@ const normalizeWhitespace = (value: string): string => value.replace(/\s+/g, ' '
 
 const stripHtmlTags = (value: string): string => value.replace(/<[^>]*>/g, ' ');
 
-const resolveLightweightDocumentText = (file: CaseResolverWorkspace['files'][number]): string => {
-  const plainText =
-    typeof file.documentContentPlainText === 'string' ? file.documentContentPlainText : '';
-  if (plainText.trim().length > 0) {
-    return truncate(
-      normalizeWhitespace(plainText),
-      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
-    );
-  }
-  const markdown =
-    typeof file.documentContentMarkdown === 'string' ? file.documentContentMarkdown : '';
-  if (markdown.trim().length > 0) {
-    return truncate(
-      normalizeWhitespace(markdown),
-      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
-    );
-  }
-  const html = typeof file.documentContentHtml === 'string' ? file.documentContentHtml : '';
-  if (html.trim().length > 0) {
-    return truncate(
-      normalizeWhitespace(stripHtmlTags(html)),
-      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
-    );
-  }
-  const content = typeof file.documentContent === 'string' ? file.documentContent : '';
-  if (content.trim().length > 0) {
-    return truncate(
-      normalizeWhitespace(content),
-      CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS
-    );
+const resolveTextContent = (file: CaseResolverWorkspace['files'][number]): string => {
+  const sources = [
+    file.documentContentPlainText,
+    file.documentContentMarkdown,
+    file.documentContentHtml,
+    file.documentContent,
+  ];
+
+  for (const source of sources) {
+    if (typeof source === 'string' && source.trim().length > 0) {
+      return source.includes('<') ? stripHtmlTags(source) : source;
+    }
   }
   return '';
 };
 
-const normalizeScanSlotsForLightweightSearch = (
-  scanSlots: CaseResolverWorkspace['files'][number]['scanSlots']
-): CaseResolverWorkspace['files'][number]['scanSlots'] =>
-  scanSlots.map((slot): CaseResolverWorkspace['files'][number]['scanSlots'][number] => {
-    const ocrText = typeof slot.ocrText === 'string' ? slot.ocrText.trim() : '';
-    return {
-      ...slot,
-      ocrText:
-        ocrText.length > 0
-          ? truncate(ocrText, CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS)
-          : '',
-    };
-  });
+const resolveLightweightDocumentText = (file: CaseResolverWorkspace['files'][number]): string => {
+  const text = resolveTextContent(file);
+  return text.trim().length > 0
+    ? truncate(normalizeWhitespace(text), CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS)
+    : '';
+};
+
 
 
 const resolveDetachedDocumentsEntry = (
@@ -152,26 +126,6 @@ const resolveDetachedDocumentsEntry = (
   return entry;
 };
 
-const normalizeDetachedFiles = (
-  input: unknown
-): CaseResolverWorkspaceDetachedDocumentsPayload['files'] => {
-  if (!Array.isArray(input)) return [];
-  const seen = new Set<string>();
-  
-  return input
-    .map((entry: unknown): CaseResolverWorkspaceDetachedDocumentsFileEntry | null => {
-      const result = DetachedFileEntrySchema.safeParse(entry);
-      if (!result.success) return null;
-      
-      const fileEntry = result.data;
-      if (seen.has(fileEntry.id)) return null;
-      seen.add(fileEntry.id);
-      
-      return fileEntry;
-    })
-    .filter((entry): entry is CaseResolverWorkspaceDetachedDocumentsFileEntry => Boolean(entry));
-};
-
 export const buildCaseResolverWorkspaceDetachedDocumentsPayload = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspaceDetachedDocumentsPayload => ({
@@ -193,21 +147,20 @@ export const buildCaseResolverWorkspaceDetachedDocumentsPayload = (
     ),
 });
 
-export const stripCaseResolverWorkspaceDetachedDocuments = (
-  workspace: CaseResolverWorkspace
-): CaseResolverWorkspace => {
-  if (!Array.isArray(workspace.files) || workspace.files.length === 0) return workspace;
-  return {
-    ...workspace,
-    files: workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
+const stripDetachedDocumentFields = (file: CaseResolverWorkspace['files'][number]): CaseResolverWorkspace['files'][number] => {
       if (file.fileType !== 'document' && file.fileType !== 'scanfile') return file;
+
       const fileRecord: Record<string, unknown> = { ...file };
-      delete fileRecord['documentContent'];
-      delete fileRecord['documentContentHtml'];
-      delete fileRecord['documentContentMarkdown'];
-      delete fileRecord['originalDocumentContent'];
-      delete fileRecord['explodedDocumentContent'];
-      delete fileRecord['ocrText'];
+      const keysToRemove = [
+        'documentContent',
+        'documentContentHtml',
+        'documentContentMarkdown',
+        'originalDocumentContent',
+        'explodedDocumentContent',
+        'ocrText',
+      ];
+      keysToRemove.forEach((key) => delete fileRecord[key]);
+
       if (file.fileType === 'document') {
         const lightweightText = resolveLightweightDocumentText(file);
         if (lightweightText.length > 0) {
@@ -216,25 +169,19 @@ export const stripCaseResolverWorkspaceDetachedDocuments = (
           delete fileRecord['documentContentPlainText'];
         }
       }
-      if (file.fileType === 'scanfile') {
-        const scanSlots = Array.isArray(file.scanSlots) ? file.scanSlots : [];
-        if (scanSlots.length > 0) {
-          fileRecord['scanSlots'] = normalizeScanSlotsForLightweightSearch(scanSlots);
-        } else {
-          delete fileRecord['scanSlots'];
-        }
-        const lightweightText = resolveLightweightDocumentText(file);
-        if (lightweightText.length > 0) {
-          fileRecord['documentContentPlainText'] = lightweightText;
-        } else {
-          delete fileRecord['documentContentPlainText'];
-        }
-      }
-      return coerceDetachedWorkspaceFile(fileRecord);
-    }),
-  };
-};
 
+      return fileRecord as CaseResolverWorkspace['files'][number];
+    };
+
+    export const stripCaseResolverWorkspaceDetachedDocuments = (
+      workspace: CaseResolverWorkspace
+    ): CaseResolverWorkspace => {
+      if (!Array.isArray(workspace.files) || workspace.files.length === 0) return workspace;
+      return {
+        ...workspace,
+        files: workspace.files.map(stripDetachedDocumentFields),
+      };
+    };
 export const parseCaseResolverWorkspaceDetachedDocumentsPayload = (
   raw: string | null | undefined
 ): CaseResolverWorkspaceDetachedDocumentsPayload | null => {

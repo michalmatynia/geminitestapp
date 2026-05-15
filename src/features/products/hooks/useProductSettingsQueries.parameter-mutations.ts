@@ -72,7 +72,7 @@ export function useDeleteParametersMutation(): UpdateMutation<
   DeleteParametersPayload
 > {
   const mutationKey = productSettingsKeys.all;
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: ({ parameterIds }: DeleteParametersPayload) => api.deleteParameters(parameterIds),
     mutationKey,
     meta: {

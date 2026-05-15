@@ -45,7 +45,8 @@ function runPrefetch<TQueryFnData, TQueryKey extends QueryKey>(
   action: string,
   config: PrefetchConfig<TQueryFnData, TQueryKey>
 ): void {
-  runTask(prefetchQueryV2(queryClient, config)(), action);
+  const prefetchTask = prefetchQueryV2(queryClient, config);
+  runTask(prefetchTask(), action);
 }
 
 async function fetchJson(url: string): Promise<unknown> {

@@ -6,11 +6,11 @@ import React, {
   startTransition,
   useCallback,
   useDeferredValue,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
 
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -27,6 +27,15 @@ type WebsiteListState = MongoFilemakerWebsitesResponse & {
   isLoading: boolean;
 };
 
+type WebsiteListInput = {
+  linkFilter: WebsiteLinkFilter;
+  page: number;
+  pageSize: number;
+  query: string;
+};
+
+const FILEMAKER_WEBSITES_QUERY_KEY = ['filemaker', 'websites'] as const;
+
 const EMPTY_WEBSITES_RESPONSE: MongoFilemakerWebsitesResponse = {
   collectionCount: 0,
   filters: { links: 'all' },
@@ -39,12 +48,7 @@ const EMPTY_WEBSITES_RESPONSE: MongoFilemakerWebsitesResponse = {
   websites: [],
 };
 
-const buildWebsiteListParams = (input: {
-  linkFilter: WebsiteLinkFilter;
-  page: number;
-  pageSize: number;
-  query: string;
-}): URLSearchParams => {
+const buildWebsiteListParams = (input: WebsiteListInput): URLSearchParams => {
   const params = new URLSearchParams({
     links: input.linkFilter,
     page: String(input.page),
@@ -54,44 +58,50 @@ const buildWebsiteListParams = (input: {
   return params;
 };
 
-function useMongoFilemakerWebsites(input: {
-  linkFilter: WebsiteLinkFilter;
-  page: number;
-  pageSize: number;
-  query: string;
-}): WebsiteListState {
-  const [state, setState] = useState<WebsiteListState>({
-    ...EMPTY_WEBSITES_RESPONSE,
-    error: null,
-    isLoading: true,
+const buildWebsiteListQueryKey = (input: WebsiteListInput) =>
+  [...FILEMAKER_WEBSITES_QUERY_KEY, input] as const;
+
+const fetchMongoFilemakerWebsites = async (
+  input: WebsiteListInput,
+  signal: AbortSignal
+): Promise<MongoFilemakerWebsitesResponse> => {
+  const params = buildWebsiteListParams(input);
+  const response = await fetch(`/api/filemaker/websites?${params.toString()}`, { signal });
+  if (!response.ok) throw new Error(`Failed to load websites (${response.status}).`);
+  return (await response.json()) as MongoFilemakerWebsitesResponse;
+};
+
+function useMongoFilemakerWebsites(input: WebsiteListInput): WebsiteListState {
+  const queryKey = buildWebsiteListQueryKey(input);
+  const websitesQuery = createSingleQueryV2<
+    MongoFilemakerWebsitesResponse,
+    MongoFilemakerWebsitesResponse,
+    typeof queryKey
+  >({
+    queryKey,
+    queryFn: async ({ signal }) => fetchMongoFilemakerWebsites(input, signal),
+    placeholderData: (previousData) => previousData ?? EMPTY_WEBSITES_RESPONSE,
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerWebsitesPage.useMongoFilemakerWebsites',
+      operation: 'list',
+      resource: 'filemaker.websites',
+      domain: 'files',
+      description: 'Load imported Filemaker website records for the admin websites table.',
+      errorPresentation: 'inline',
+    },
+    telemetryContext: {
+      linkFilter: input.linkFilter,
+      page: input.page,
+      pageSize: input.pageSize,
+      queryLength: input.query.length,
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const params = buildWebsiteListParams(input);
-    setState((current: WebsiteListState) => ({ ...current, error: null, isLoading: true }));
-    fetch(`/api/filemaker/websites?${params.toString()}`, { signal: controller.signal })
-      .then(async (response: Response): Promise<MongoFilemakerWebsitesResponse> => {
-        if (!response.ok) throw new Error(`Failed to load websites (${response.status}).`);
-        return (await response.json()) as MongoFilemakerWebsitesResponse;
-      })
-      .then((response: MongoFilemakerWebsitesResponse): void => {
-        setState({ ...response, error: null, isLoading: false });
-      })
-      .catch((error: unknown): void => {
-        if (controller.signal.aborted) return;
-        setState((current: WebsiteListState) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to load websites.',
-          isLoading: false,
-        }));
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [input]);
-
-  return state;
+  return {
+    ...(websitesQuery.data ?? EMPTY_WEBSITES_RESPONSE),
+    error: websitesQuery.error === null ? null : websitesQuery.error.message,
+    isLoading: websitesQuery.isFetching,
+  };
 }
 
 type WebsiteListPanelInput = {

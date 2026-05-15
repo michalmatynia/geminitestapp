@@ -128,7 +128,7 @@ export function useTelemetrizedQueryFn<
   return createTelemetrizedQueryFnInternal(config, normalizedQueryKey, useRef(0));
 }
 
-export function useTelemetrizedMultiQueryOptionsV2<
+export function buildTelemetrizedQueryOptionsV2<
   TQueryFnData,
   TError = Error,
   TData = TQueryFnData,
@@ -164,7 +164,7 @@ export function useTelemetrizedMultiQueryOptionsV2<
   };
 }
 
-export function useTelemetrizedSuspenseMultiQueryOptionsV2<
+export function buildTelemetrizedSuspenseQueryOptionsV2<
   TQueryFnData,
   TError = Error,
   TData = TQueryFnData,

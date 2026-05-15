@@ -333,10 +333,19 @@ export async function invalidateMongoClientCache(): Promise<void> {
 
 /**
  * Retrieves an established MongoClient instance for the specified source.
- * Clients are cached by source and URI.
  * 
- * @param preferredSource - Optional preferred source (local vs cloud).
- * @returns Connected MongoClient instance.
+ * This function serves as the entry point for all MongoDB interactions. It implements:
+ * 1. Source-aware URI resolution: Uses environment variables or explicit source overrides.
+ * 2. Connection Caching: Clients are cached per URI and source using a global `Map`, 
+ *    preventing excessive connection creation, which is vital in hot-reloading (Next.js) environments.
+ * 3. Concurrent Request Deduplication: Uses a `Map` of promises to ensure that multiple
+ *    simultaneous calls for the same database configuration result in only a single connection attempt.
+ * 4. Observability Instrumentation: Every new connection is instrumented with event listeners 
+ *    that report command performance, failures, and pool status to the system logger.
+ * 
+ * @param preferredSource - Optional configuration override (e.g., local vs cloud).
+ * @returns A promise that resolves to an active, connected MongoClient instance.
+ * @throws If MONGODB_URI is misconfigured or if connection establishment fails.
  */
 export async function getMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
@@ -345,10 +354,11 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
   const clientByKey = getMongoClientByKeyStore();
   const clientPromiseByKey = getMongoClientPromiseByKeyStore();
 
+  // Return cached instance if available.
   const cachedClient = clientByKey.get(clientCacheKey);
   if (cachedClient) return cachedClient;
 
-  // Deduplicate connection attempts.
+  // Deduplicate connection attempts: If an attempt is already in-flight, return the existing promise.
   if (!clientPromiseByKey.has(clientCacheKey)) {
     const { MongoClient } = getMongoClientCtor();
     clientPromiseByKey.set(clientCacheKey, new MongoClient(uri, getMongoClientOptions()).connect());
@@ -360,11 +370,13 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
     attachMongoObservability(resolvedClient);
     return resolvedClient;
   } catch (error) {
+    // Log failures via runtime error reporting to maintain observability into connection issues.
     void reportRuntimeCatch(error, {
       source: 'db.mongo-client',
       action: 'getMongoClient',
       hasMongoUri: Boolean(process.env['MONGODB_URI']),
     });
+    // Remove the failed promise so that subsequent calls can retry.
     clientPromiseByKey.delete(clientCacheKey);
     throw error;
   }
@@ -372,10 +384,14 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
 
 /**
  * Retrieves a MongoDB Db instance for the specified source.
- * Automatically resolves the database name from environment or source config.
  * 
- * @param preferredSource - Optional preferred source (local vs cloud).
- * @returns Established Db instance.
+ * This helper simplifies database access by wrapping `getMongoClient` and 
+ * returning the specific database handle. It prioritizes the database name
+ * resolved from the `preferredSource` configuration, falling back to 
+ * `MONGODB_DB` or 'app'.
+ * 
+ * @param preferredSource - Optional configuration override for source routing.
+ * @returns A handle to the target MongoDB database instance.
  */
 export async function getMongoDb(preferredSource?: MongoSource): Promise<Db> {
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);

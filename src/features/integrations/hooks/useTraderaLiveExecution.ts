@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
@@ -18,6 +17,7 @@ import {
   fetchPlaywrightRun,
   type PlaywrightNodeRunSnapshot,
 } from '@/shared/lib/ai-paths/api/client/agent';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 export type LiveTraderaAction = 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
 
@@ -263,13 +263,31 @@ const buildLiveTraderaExecutionState = (
   };
 };
 
+const isPollingLiveRunStatus = (status: PlaywrightNodeRunSnapshot['status']): boolean =>
+  status === 'queued' || status === 'running';
+
+const resolveLiveRunRefetchInterval = (
+  pendingTarget: PendingTraderaLiveTarget | null,
+  result: TraderaLiveRunQueryResult | undefined
+): number | false => {
+  if (pendingTarget === null || result?.missing === true) return false;
+  const status = result?.run?.status;
+  return status === undefined || isPollingLiveRunStatus(status) ? 1_000 : false;
+};
+
 export const useTraderaLiveExecution = (
   listing: TraderaLiveExecutionSource
 ): LiveTraderaExecutionState | null => {
   const pendingTarget = useMemo(() => resolvePendingLiveTarget(listing), [listing]);
 
-  const query = useQuery({
-    queryKey: ['integrations', 'tradera', 'live-execution', pendingTarget?.runId ?? 'none'],
+  const queryKey = [
+    'integrations',
+    'tradera',
+    'live-execution',
+    pendingTarget?.runId ?? 'none',
+  ] as const;
+  const query = createSingleQueryV2<TraderaLiveRunQueryResult>({
+    queryKey,
     enabled: Boolean(pendingTarget),
     queryFn: async (): Promise<TraderaLiveRunQueryResult> => {
       if (!pendingTarget) return { run: null, missing: false };
@@ -278,21 +296,25 @@ export const useTraderaLiveExecution = (
         if (isPlaywrightRunNotFoundMessage(response.error)) {
           return { run: null, missing: true };
         }
-        throw new Error(response.error ?? 'Failed to load Playwright run.');
+        throw new Error(response.error);
       }
       return { run: response.data.run, missing: false };
     },
     staleTime: 0,
     refetchOnMount: 'always',
-    refetchInterval: (activeQuery) => {
-      if (!pendingTarget) return false;
-      const result = activeQuery.state.data;
-      if (result?.missing) return false;
-      const run = result?.run;
-      return !run || run.status === 'queued' || run.status === 'running' ? 1_000 : false;
-    },
+    refetchInterval: (activeQuery) =>
+      resolveLiveRunRefetchInterval(pendingTarget, activeQuery.state.data),
     refetchIntervalInBackground: false,
     retry: false,
+    meta: {
+      source: 'integrations.hooks.useTraderaLiveExecution',
+      operation: 'polling',
+      resource: 'tradera.live-execution',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'tradera', 'live-execution'],
+      description: 'Polls a Tradera Playwright live execution run.',
+    },
   });
 
   return useMemo(() => {

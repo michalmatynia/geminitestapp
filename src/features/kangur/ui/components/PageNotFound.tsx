@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
@@ -27,6 +26,7 @@ import {
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const kangurPlatform = getKangurPlatform();
@@ -109,8 +109,9 @@ export function PageNotFound(): React.JSX.Element {
     });
   }, [basePath, requestedPath, unknownPageLabel]);
 
-  const { data: authData, isFetched } = useQuery<PageNotFoundAuthState>({
-    queryKey: QUERY_KEYS.auth.user(),
+  const queryKey = QUERY_KEYS.auth.user();
+  const { data: authData, isFetched } = createSingleQueryV2<PageNotFoundAuthState>({
+    queryKey,
     queryFn: () =>
       withKangurClientError<PageNotFoundAuthState>(
         {
@@ -124,6 +125,16 @@ export function PageNotFound(): React.JSX.Element {
         },
         { fallback: { user: null, isAuthenticated: false } }
       ),
+    meta: {
+      source: 'kangur.components.PageNotFound',
+      operation: 'detail',
+      resource: 'auth.user',
+      domain: 'kangur',
+      queryKey,
+      tags: ['kangur', 'auth', 'page-not-found'],
+      description: 'Loads auth state for the Kangur not found page.',
+      errorPresentation: 'silent',
+    },
   });
 
   return (

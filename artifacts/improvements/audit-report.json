@@ -1,0 +1,30 @@
+{
+  "kind": "general-improvement-report",
+  "generatedAt": "2026-05-14T23:11:20.592Z",
+  "phase": "audit",
+  "executionMode": "executed",
+  "allowWrite": false,
+  "selectedTrackIds": [
+    "ui-consolidation"
+  ],
+  "reportPath": "artifacts/improvements/audit-report.json",
+  "steps": [
+    {
+      "id": "ui-consolidation-guardrail",
+      "title": "Run UI consolidation guardrail",
+      "trackId": "ui-consolidation",
+      "phase": "audit",
+      "mode": "automatic",
+      "writes": false,
+      "status": "failed",
+      "outputs": [
+        "docs/ui-consolidation/scan-latest.md",
+        "docs/ui-consolidation/scan-latest.json",
+        "docs/ui-consolidation/inventory-latest.csv"
+      ],
+      "instructions": [],
+      "script": "check:ui-consolidation",
+      "durationMs": 5123
+    }
+  ]
+}

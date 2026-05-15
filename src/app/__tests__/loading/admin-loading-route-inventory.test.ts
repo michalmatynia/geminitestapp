@@ -17,6 +17,7 @@ const adminSectionRoutesWithNestedPages = [
   'integrations',
   'kangur',
   'notes',
+  'page-manager',
   'products',
   'prompt-engine',
   'prompt-exploder',

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-10T01:05:02.194Z",
+  "generatedAt": "2026-05-14T23:11:20.594Z",
   "track": {
     "id": "ui-consolidation",
     "title": "UI consolidation",
@@ -100,21 +100,21 @@
     "category": "ui",
     "defaultSelected": true,
     "description": "Runs the shared UI consolidation guardrail so broad improvement sweeps account for cross-feature component convergence, not only data and repo baselines.",
-    "overallStatus": "passed",
-    "latestGeneratedAt": "2026-05-10T01:05:02.191Z",
+    "overallStatus": "failed",
+    "latestGeneratedAt": "2026-05-14T23:11:20.592Z",
     "docDir": "docs/build/improvements/ui-consolidation",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-05-10T01:05:02.191Z",
+        "generatedAt": "2026-05-14T23:11:20.592Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
         "stepCount": 1,
         "automaticStepCount": 1,
         "manualStepCount": 0,
-        "passedStepCount": 1,
-        "failedStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 1,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [
@@ -130,7 +130,7 @@
             "phase": "audit",
             "mode": "automatic",
             "writes": false,
-            "status": "passed",
+            "status": "failed",
             "outputs": [
               "docs/ui-consolidation/scan-latest.md",
               "docs/ui-consolidation/scan-latest.json",
@@ -138,17 +138,18 @@
             ],
             "instructions": [],
             "script": "check:ui-consolidation",
-            "durationMs": 6316
+            "durationMs": 5123
           }
         ],
-        "status": "passed"
+        "status": "failed"
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-05-09T23:06:53.666Z",
-        "reportPath": "artifacts/improvements/classify-report.json",
-        "executionMode": "executed",
-        "allowWrite": false,
+        "status": "no-data",
+        "generatedAt": null,
+        "reportPath": null,
+        "executionMode": null,
+        "allowWrite": null,
         "stepCount": 0,
         "automaticStepCount": 0,
         "manualStepCount": 0,
@@ -157,48 +158,15 @@
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-configured"
+        "steps": []
       },
       {
         "phase": "plan",
-        "generatedAt": "2026-05-09T23:06:54.268Z",
-        "reportPath": "artifacts/improvements/plan-report.json",
-        "executionMode": "planned",
-        "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 0,
-        "manualStepCount": 1,
-        "passedStepCount": 0,
-        "failedStepCount": 0,
-        "blockedStepCount": 0,
-        "plannedStepCount": 0,
-        "outputs": [],
-        "steps": [
-          {
-            "id": "ui-consolidation-plan",
-            "title": "Review the latest shared UI convergence surface",
-            "trackId": "ui-consolidation",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Use docs/ui-consolidation/scan-latest.md as the current shared backlog.",
-              "Prefer migrating to existing shared templates before inventing a new abstraction.",
-              "Keep follow-up migrations inside the owning feature docs once the work stops being cross-feature."
-            ]
-          }
-        ],
-        "status": "manual"
-      },
-      {
-        "phase": "dry-run",
-        "generatedAt": "2026-04-30T04:59:45.752Z",
-        "reportPath": "artifacts/improvements/dry-run-report.json",
-        "executionMode": "executed",
-        "allowWrite": false,
+        "status": "no-data",
+        "generatedAt": null,
+        "reportPath": null,
+        "executionMode": null,
+        "allowWrite": null,
         "stepCount": 0,
         "automaticStepCount": 0,
         "manualStepCount": 0,
@@ -207,40 +175,41 @@
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [],
-        "status": "not-selected"
+        "steps": []
       },
       {
-        "phase": "apply",
-        "generatedAt": "2026-04-15T10:54:26.139Z",
-        "reportPath": "artifacts/improvements/apply-report.json",
-        "executionMode": "executed",
-        "allowWrite": true,
-        "stepCount": 1,
+        "phase": "dry-run",
+        "status": "no-data",
+        "generatedAt": null,
+        "reportPath": null,
+        "executionMode": null,
+        "allowWrite": null,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "ui-consolidation-apply",
-            "title": "Apply UI consolidation changes through targeted feature migrations",
-            "trackId": "ui-consolidation",
-            "phase": "apply",
-            "mode": "manual",
-            "writes": true,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "This track intentionally stops at the shared backlog and guardrail surface.",
-              "Implement migrations in the owning feature areas instead of using the improvement runner for blind UI rewrites."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": []
+      },
+      {
+        "phase": "apply",
+        "status": "no-data",
+        "generatedAt": null,
+        "reportPath": null,
+        "executionMode": null,
+        "allowWrite": null,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": []
       }
     ]
   }

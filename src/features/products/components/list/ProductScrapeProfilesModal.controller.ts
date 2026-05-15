@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  type UseQueryResult,
-} from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
@@ -38,6 +35,7 @@ import {
 } from './ProductScrapeProfilesModal.storage';
 import { useRunScrapeProfileMutation } from './ProductScrapeProfilesModal.mutation';
 import { useProductScrapeProfileRunHandler } from './ProductScrapeProfilesModal.run-handler';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
   useProductScrapeProfileRuntimeActionSetting,
   type ProductScrapeProfileRuntimeActionSetting,
@@ -137,11 +135,20 @@ const useScrapeProfileFormState = (
 const useScrapeProfilesQuery = (
   isOpen: boolean
 ): UseQueryResult<ProductScrapeProfilesListResponse, Error> =>
-  useQuery<ProductScrapeProfilesListResponse, Error>({
+  createSingleQueryV2<ProductScrapeProfilesListResponse>({
     queryKey: SCRAPE_PROFILES_QUERY_KEY,
     queryFn: fetchScrapeProfiles,
     enabled: isOpen,
     staleTime: 60_000,
+    meta: {
+      source: 'products.components.ProductScrapeProfilesModal',
+      operation: 'list',
+      resource: 'products.scrape-profiles',
+      domain: 'products',
+      queryKey: SCRAPE_PROFILES_QUERY_KEY,
+      tags: ['products', 'scrape-profiles'],
+      description: 'Loads product scrape profiles for the scrape modal.',
+    },
   });
 
 const useProductScrapeProfileQueries = (

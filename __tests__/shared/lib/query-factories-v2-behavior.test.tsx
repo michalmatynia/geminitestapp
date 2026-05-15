@@ -101,6 +101,27 @@ describe('query-factories-v2 behavior', () => {
     expect(result.current.data).toEqual({ id: '1' });
   });
 
+  it('runs single query without id gating when no id field is supplied', async () => {
+    const fetcher = vi.fn(async () => ({ ok: true }));
+    const { result } = renderHook(
+      () =>
+        createSingleQueryV2<{ ok: boolean }>({
+          queryKey: ['legacy', 'single', 'ungated'],
+          queryFn: fetcher,
+          meta: {
+            source: 'tests.shared.query-factories-v2.single-ungated',
+            operation: 'detail',
+            resource: 'legacy.single-ungated',
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.data).toEqual({ ok: true });
+  });
+
   it('applies guarded refetch defaults and sanitizes invalid polling values', async () => {
     const fetcher = vi.fn(async () => ['a']);
 

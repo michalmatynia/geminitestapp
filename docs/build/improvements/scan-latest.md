@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-05-10'
+last_reviewed: '2026-05-14'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # Improvement Operations Portfolio
 
-Generated at: 2026-05-10T01:05:02.194Z
+Generated at: 2026-05-14T23:11:20.594Z
 
 ## Snapshot
 
 - Total tracks: 7
 - Default read-only tracks: 5
-- Tracks with data: 6
-- Failed tracks: 4
+- Tracks with data: 1
+- Failed tracks: 1
 - Attention tracks: 0
 
 ## Canonical Bundles
@@ -28,26 +28,19 @@ Generated at: 2026-05-10T01:05:02.194Z
 
 ## Latest Read-Only Batch
 
-- Generated at: 2026-05-09T23:06:54.304Z
-- Selected tracks: products-parameter-integrity, products-category-schema-normalization, ui-consolidation, application-performance, repo-quality-baseline
-
-| Phase | Status | Duration (ms) | Report |
-| --- | --- | ---: | --- |
-| `audit` | `failed` | 14679 | `artifacts/improvements/audit-report.json` |
-| `classify` | `failed` | 147818 | `artifacts/improvements/classify-report.json` |
-| `plan` | `passed` | 569 | `artifacts/improvements/plan-report.json` |
+- No `artifacts/improvements/read-only-batch-report.json` data is available yet.
 
 ## Track Coverage
 
 | Track | Category | Default | Overall | Latest Report | README | Scan |
 | --- | --- | --- | --- | --- | --- | --- |
-| `products-parameter-integrity` | `data` | yes | `failed` | 2026-05-10T01:05:02.191Z | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
-| `products-category-schema-normalization` | `data` | yes | `failed` | 2026-05-10T01:05:02.191Z | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
-| `ui-consolidation` | `ui` | yes | `passed` | 2026-05-10T01:05:02.191Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
-| `application-performance` | `performance` | yes | `failed` | 2026-05-10T01:05:02.191Z | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
+| `products-parameter-integrity` | `data` | yes | `no-data` | not available | [README](./products-parameter-integrity/README.md) | [scan](./products-parameter-integrity/scan-latest.md) |
+| `products-category-schema-normalization` | `data` | yes | `no-data` | not available | [README](./products-category-schema-normalization/README.md) | [scan](./products-category-schema-normalization/scan-latest.md) |
+| `ui-consolidation` | `ui` | yes | `failed` | 2026-05-14T23:11:20.592Z | [README](./ui-consolidation/README.md) | [scan](./ui-consolidation/scan-latest.md) |
+| `application-performance` | `performance` | yes | `no-data` | not available | [README](./application-performance/README.md) | [scan](./application-performance/scan-latest.md) |
 | `testing-quality-baseline` | `testing` | no | `no-data` | not available | [README](./testing-quality-baseline/README.md) | [scan](./testing-quality-baseline/scan-latest.md) |
-| `image-studio-product-integration` | `quality` | no | `passed` | 2026-04-30T04:59:45.752Z | [README](./image-studio-product-integration/README.md) | [scan](./image-studio-product-integration/scan-latest.md) |
-| `repo-quality-baseline` | `quality` | yes | `failed` | 2026-05-10T01:05:02.191Z | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
+| `image-studio-product-integration` | `quality` | no | `no-data` | not available | [README](./image-studio-product-integration/README.md) | [scan](./image-studio-product-integration/scan-latest.md) |
+| `repo-quality-baseline` | `quality` | yes | `no-data` | not available | [README](./repo-quality-baseline/README.md) | [scan](./repo-quality-baseline/scan-latest.md) |
 
 ## Notes
 

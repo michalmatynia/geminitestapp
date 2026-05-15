@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -17,6 +16,7 @@ import { ProductFormParameterContext } from '@/features/products/context/Product
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductScanListResponse, ProductScanRecord } from '@/shared/contracts/product-scans';
 import { api } from '@/shared/lib/api-client';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { resolveScanQualityHintLabels } from './ProductFormLatestAmazonExtraction.helpers';
@@ -29,14 +29,24 @@ const resolveProductId = (product: ProductWithImages | null | undefined): string
   product?.id.trim() ?? '';
 
 const useAmazonProductScans = (productId: string): ProductScanRecord[] => {
-  const latestAmazonScanQuery = useQuery<ProductScanListResponse, Error>({
-    queryKey: QUERY_KEYS.products.scans(productId),
+  const queryKey = QUERY_KEYS.products.scans(productId);
+  const latestAmazonScanQuery = createSingleQueryV2<ProductScanListResponse>({
+    queryKey,
     enabled: productId.length > 0,
     queryFn: async () =>
       await api.get<ProductScanListResponse>(`/api/v2/products/${productId}/scans`, {
         cache: 'no-store',
         params: { limit: 10 },
       }),
+    meta: {
+      source: 'products.components.ProductFormLatestAmazonExtraction',
+      operation: 'list',
+      resource: 'products.scans',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'scans', 'amazon'],
+      description: 'Loads recent product scans for Amazon extraction suggestions.',
+    },
   });
 
   return useMemo(

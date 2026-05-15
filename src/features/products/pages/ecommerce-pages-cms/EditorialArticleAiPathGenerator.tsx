@@ -5,9 +5,11 @@ import { useState } from 'react';
 
 import {
   generateEditorialArticleFromAiPath,
+  type EditorialArticleAiGenerateInput,
   type EditorialArticleState,
   type GeneratedEditorialArticleState,
 } from './editorial-articles-cms.client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Button,
   Input,
@@ -42,15 +44,33 @@ const useEditorialArticleAiGenerator = ({
 }: EditorialArticleAiPathGeneratorProps): GeneratorController => {
   const { toast } = useToast();
   const [imageUrl, setImageUrl] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState('');
+  const generateMutation = createMutationV2<
+    GeneratedEditorialArticleState,
+    EditorialArticleAiGenerateInput
+  >({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'editorial-articles', 'generate'],
+    mutationFn: generateEditorialArticleFromAiPath,
+    onSuccess: (article: GeneratedEditorialArticleState): void => {
+      onGenerated(article);
+      toast('Article generated with Gemma Vision.', { variant: 'success' });
+    },
+    onError: (error: Error): void => {
+      toast(toErrorMessage(error), { variant: 'error' });
+    },
+    meta: {
+      source: 'products.ecommercePagesCms.editorialArticles.generate',
+      operation: 'action',
+      resource: 'products.ecommerce-pages-cms.editorial-article-generate',
+      errorPresentation: 'toast',
+    },
+  });
   const canGenerate = prompt.trim().length > 0 && !disabled;
 
   const handleGenerateClick = (): void => {
-    if (!canGenerate || isGenerating) return;
+    if (!canGenerate || generateMutation.isPending) return;
     const trimmedImageUrl = imageUrl.trim();
-    setIsGenerating(true);
-    generateEditorialArticleFromAiPath({
+    generateMutation.mutate({
       draft: {
         body: draft.body,
         excerpt: draft.excerpt,
@@ -59,22 +79,14 @@ const useEditorialArticleAiGenerator = ({
       },
       ...(trimmedImageUrl.length > 0 ? { imageUrl: trimmedImageUrl } : {}),
       prompt,
-    })
-      .then((article) => {
-        onGenerated(article);
-        toast('Article generated with Gemma Vision.', { variant: 'success' });
-      })
-      .catch((error: unknown) => {
-        toast(toErrorMessage(error), { variant: 'error' });
-      })
-      .finally(() => setIsGenerating(false));
+    });
   };
 
   return {
     canGenerate,
     handleGenerateClick,
     imageUrl,
-    isGenerating,
+    isGenerating: generateMutation.isPending,
     prompt,
     setImageUrl,
     setPrompt,

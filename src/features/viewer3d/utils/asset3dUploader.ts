@@ -163,7 +163,7 @@ export async function uploadAsset3D(
     const { filename, storedFilepath } = await prepareAssetStorage(file, fileBuffer);
     const repository = getAsset3DRepository();
     const payload = mapAssetOptionsToCreatePayload(filename, storedFilepath, file, safeOptions);
-    const asset = await repository.createAsset3D(payload);
+    const asset = await (repository.createAsset3D(payload));
 
     return asset;
   } catch (error) {

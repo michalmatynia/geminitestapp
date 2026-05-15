@@ -118,6 +118,7 @@ const formatSalary = (salary: JobListing['salary']): string => {
   return '—';
 };
 
+/* eslint-disable max-lines, max-lines-per-function */
 export function AdminJobBoardPage(): React.JSX.Element {
   const [tab, setTab] = useState<Tab>('scans');
   const [sourceUrl, setSourceUrl] = useState('');

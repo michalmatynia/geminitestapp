@@ -90,8 +90,8 @@ export async function processDatabaseBackup(job: Job): Promise<Record<string, un
     const managedApplication = resolveManagedBackupApplication(job.payload);
     const result =
       managedApplication === null
-        ? await createMongoBackup()
-        : await createMongoManagedBackup(managedApplication);
+        ? (await createMongoBackup()) as Record<string, unknown>
+        : (await createMongoManagedBackup(managedApplication)) as Record<string, unknown>;
     await markDatabaseBackupSucceededSafely(dbType, job.id);
     return { ...result, dbType };
   } catch (error: unknown) {

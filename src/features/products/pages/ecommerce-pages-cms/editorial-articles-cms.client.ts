@@ -1,8 +1,11 @@
+/* eslint-disable max-lines */
 'use client';
 
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type EditorialArticleState = {
@@ -58,6 +61,8 @@ type EditorialArticleImageUploadResponse = {
   };
 };
 
+type EditorialArticleImage = EditorialArticleImageUploadResponse['image'];
+
 export type EditorialArticlesController = {
   addArticle: (article: EditorialArticleState) => void;
   articles: EditorialArticleState[];
@@ -76,6 +81,11 @@ export type EditorialArticlesController = {
 const EDITORIAL_ARTICLES_ENDPOINT = '/api/v2/products/pages/editorial-articles';
 const EDITORIAL_ARTICLE_GENERATE_ENDPOINT = `${EDITORIAL_ARTICLES_ENDPOINT}/generate`;
 const EDITORIAL_ARTICLE_IMAGE_ENDPOINT = `${EDITORIAL_ARTICLES_ENDPOINT}/image`;
+const EDITORIAL_ARTICLES_QUERY_KEY = [
+  'products',
+  'ecommerce-pages-cms',
+  'editorial-articles',
+] as const;
 const MAX_ARTICLE_COUNT = 12;
 
 const EMPTY_EDITORIAL_ARTICLES_STATE: EditorialArticlesState = {
@@ -152,7 +162,7 @@ const saveEditorialArticles = async (
 
 const uploadEditorialArticleImage = async (
   file: File
-): Promise<EditorialArticleImageUploadResponse['image']> => {
+): Promise<EditorialArticleImage> => {
   const formData = new FormData();
   formData.append('file', file);
   const response = await api.post<EditorialArticleImageUploadResponse>(
@@ -177,6 +187,18 @@ export const generateEditorialArticleFromAiPath = async (
 type EditorialArticlesStateSetter = Dispatch<SetStateAction<EditorialArticlesState | null>>;
 type ErrorSetter = Dispatch<SetStateAction<string | null>>;
 
+const useEditorialArticlesQuery = (): SingleQuery<EditorialArticlesState> =>
+  createSingleQueryV2({
+    id: 'ecommerce-pages-editorial-articles',
+    queryKey: EDITORIAL_ARTICLES_QUERY_KEY,
+    queryFn: fetchEditorialArticles,
+    meta: {
+      source: 'products.ecommercePagesCms.editorialArticles.load',
+      operation: 'detail',
+      resource: 'products.ecommerce-pages-cms.editorial-articles',
+    },
+  });
+
 const useEditorialArticlesData = (): {
   editorialArticles: EditorialArticlesState | null;
   error: string | null;
@@ -187,26 +209,27 @@ const useEditorialArticlesData = (): {
 } => {
   const [editorialArticles, setEditorialArticles] =
     useState<EditorialArticlesState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const editorialArticlesQuery = useEditorialArticlesQuery();
 
   const loadArticles = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
     setError(null);
-    try {
-      setEditorialArticles(await fetchEditorialArticles());
-    } catch (loadError: unknown) {
-      setError(toErrorMessage(loadError));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await editorialArticlesQuery.refetch();
+  }, [editorialArticlesQuery]);
 
   useEffect(() => {
-    loadArticles().catch(() => undefined);
-  }, [loadArticles]);
+    if (editorialArticlesQuery.data === undefined) return;
+    setEditorialArticles(editorialArticlesQuery.data);
+  }, [editorialArticlesQuery.data]);
 
-  return { editorialArticles, error, isLoading, loadArticles, setEditorialArticles, setError };
+  return {
+    editorialArticles,
+    error: error ?? (editorialArticlesQuery.error ? toErrorMessage(editorialArticlesQuery.error) : null),
+    isLoading: editorialArticlesQuery.isLoading,
+    loadArticles,
+    setEditorialArticles,
+    setError,
+  };
 };
 
 const useEditorialArticleMutators = (input: {
@@ -254,26 +277,35 @@ const useEditorialArticlesSaveAction = (input: {
   setError: ErrorSetter;
 }): Pick<EditorialArticlesController, 'handleSaveClick' | 'isSaving'> => {
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
+  const saveMutation = createMutationV2<EditorialArticlesState, EditorialArticleState[]>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'editorial-articles', 'save'],
+    mutationFn: (articles: EditorialArticleState[]): Promise<EditorialArticlesState> =>
+      saveEditorialArticles(articles.map(normalizeEditorialArticleDraft)),
+    onSuccess: (nextArticles: EditorialArticlesState): void => {
+      input.setEditorialArticles(nextArticles);
+      toast('Lore & Drops articles saved and mirrored.', { variant: 'success' });
+    },
+    onError: (saveError: Error): void => {
+      const message = toErrorMessage(saveError);
+      input.setError(message);
+      toast(message, { variant: 'error' });
+    },
+    invalidateKeys: [EDITORIAL_ARTICLES_QUERY_KEY],
+    meta: {
+      source: 'products.ecommercePagesCms.editorialArticles.save',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.editorial-articles',
+      errorPresentation: 'toast',
+    },
+  });
 
   const handleSaveClick = useCallback((): void => {
     const articles = input.editorialArticles?.articles ?? [];
-    setIsSaving(true);
     input.setError(null);
-    saveEditorialArticles(articles.map(normalizeEditorialArticleDraft))
-      .then((nextArticles) => {
-        input.setEditorialArticles(nextArticles);
-        toast('Lore & Drops articles saved and mirrored.', { variant: 'success' });
-      })
-      .catch((saveError: unknown) => {
-        const message = toErrorMessage(saveError);
-        input.setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setIsSaving(false));
-  }, [input, toast]);
+    saveMutation.mutate(articles);
+  }, [input, saveMutation]);
 
-  return { handleSaveClick, isSaving };
+  return { handleSaveClick, isSaving: saveMutation.isPending };
 };
 
 const useEditorialArticleImageUploadAction = (input: {
@@ -282,22 +314,41 @@ const useEditorialArticleImageUploadAction = (input: {
 }): Pick<EditorialArticlesController, 'uploadArticleImage' | 'uploadingIndex'> => {
   const { toast } = useToast();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const uploadMutation = createMutationV2<
+    EditorialArticleImage,
+    { file: File; index: number }
+  >({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'editorial-articles', 'image', 'upload'],
+    mutationFn: ({ file }: { file: File; index: number }): Promise<EditorialArticleImage> =>
+      uploadEditorialArticleImage(file),
+    onSuccess: (
+      image: EditorialArticleImage,
+      variables: { file: File; index: number }
+    ): void => {
+      input.updateArticle(variables.index, { imageUrl: image.remoteUrl });
+      toast('Lore article image uploaded. Save articles to publish the URL.', { variant: 'success' });
+    },
+    onError: (uploadError: Error): void => {
+      const message = toErrorMessage(uploadError);
+      input.setError(message);
+      toast(message, { variant: 'error' });
+    },
+    onSettled: (): void => {
+      setUploadingIndex(null);
+    },
+    meta: {
+      source: 'products.ecommercePagesCms.editorialArticles.image.upload',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.editorial-article-image',
+      errorPresentation: 'toast',
+    },
+  });
 
   const uploadArticleImage = useCallback((index: number, file: File): void => {
     setUploadingIndex(index);
     input.setError(null);
-    uploadEditorialArticleImage(file)
-      .then((image) => {
-        input.updateArticle(index, { imageUrl: image.remoteUrl });
-        toast('Lore article image uploaded. Save articles to publish the URL.', { variant: 'success' });
-      })
-      .catch((uploadError: unknown) => {
-        const message = toErrorMessage(uploadError);
-        input.setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setUploadingIndex(null));
-  }, [input, toast]);
+    uploadMutation.mutate({ file, index });
+  }, [input, uploadMutation]);
 
   return { uploadArticleImage, uploadingIndex };
 };

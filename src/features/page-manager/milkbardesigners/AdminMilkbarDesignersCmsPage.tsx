@@ -872,6 +872,33 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     toast(`Copied English content to ${MILKBAR_LOCALE_LABELS[activeLocale]}.`, { variant: 'success' });
   }, [activeLocale, toast]);
 
+  const isDirty = useMemo((): boolean => {
+    if (snapshot === null) return false;
+    return (
+      JSON.stringify(localizedContent) !== JSON.stringify(snapshot.localizedContent) ||
+      JSON.stringify(pageSettings) !== JSON.stringify(snapshot.pageSettings) ||
+      JSON.stringify(projects) !== JSON.stringify(snapshot.projects) ||
+      JSON.stringify(services) !== JSON.stringify(snapshot.services)
+    );
+  }, [snapshot, localizedContent, pageSettings, projects, services]);
+
+  const handleRevert = useCallback((): void => {
+    if (snapshot === null) return;
+    applySnapshot(snapshot);
+    toast('Reverted to last saved state.', { variant: 'success' });
+  }, [snapshot, applySnapshot, toast]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (!isSaving && !isRefreshing) handleSaveClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSaving, isRefreshing, handleSaveClick]);
+
   const headerDescription = useMemo(() => {
     if (activeTab === 'projects') return 'Manage Milkbar project cards and 3D project metadata.';
     if (activeTab === 'services') return 'Manage the practice/service entries shown on the architecture website.';
@@ -896,6 +923,12 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
       }}
       headerActions={
         <div className='flex items-center gap-2'>
+          {isDirty ? (
+            <span className='flex items-center gap-1.5 text-xs text-amber-400'>
+              <span className='inline-block size-1.5 rounded-full bg-amber-400' />
+              Unsaved changes
+            </span>
+          ) : null}
           <Button
             type='button'
             variant='secondary'
@@ -906,6 +939,17 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
           >
             Refresh
           </Button>
+          {isDirty ? (
+            <Button
+              type='button'
+              variant='secondary'
+              size='sm'
+              onClick={handleRevert}
+              disabled={isSaving}
+            >
+              Revert
+            </Button>
+          ) : null}
           <Button
             type='button'
             variant='solid'
@@ -913,6 +957,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
             icon={<Save className='size-4' />}
             loading={isSaving}
             onClick={handleSaveClick}
+            title='Save (⌘S)'
           >
             Save CMS
           </Button>
@@ -1081,6 +1126,53 @@ function PanelsIcon(): React.JSX.Element {
   return <span className='inline-block size-4 rounded border border-current/60' aria-hidden='true' />;
 }
 
+function CollapsibleSection({
+  id,
+  title,
+  subtitle,
+  actions,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+  open: boolean;
+  onToggle: (id: string) => void;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className='rounded-lg border border-white/10'>
+      <button
+        type='button'
+        onClick={() => onToggle(id)}
+        className='flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5'
+        aria-expanded={open}
+      >
+        <div>
+          <span className='text-sm font-semibold text-white'>{title}</span>
+          {subtitle !== undefined && subtitle.length > 0 ? (
+            <span className='ml-2 text-xs text-muted-foreground'>{subtitle}</span>
+          ) : null}
+        </div>
+        <div className='flex items-center gap-2'>
+          {actions !== undefined && open ? (
+            <span onClick={(e) => e.stopPropagation()} className='contents'>
+              {actions}
+            </span>
+          ) : null}
+          <ChevronDown
+            className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </button>
+      {open ? <div className='space-y-3 border-t border-white/10 p-4'>{children}</div> : null}
+    </div>
+  );
+}
+
 function ContentTab({
   pageContent,
   updateNav,
@@ -1150,11 +1242,36 @@ function ContentTab({
   addMetric: () => void;
   removeMetric: (index: number) => void;
 }): React.JSX.Element {
+  const ALL_SECTIONS = ['nav', 'hero', 'drawing', 'philosophy', 'services', 'projects', 'process', 'metrics', 'caseStudy', 'quote', 'cta', 'footer'] as const;
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(ALL_SECTIONS));
+
+  const toggleSection = useCallback((id: string): void => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
+
+  const allOpen = openSections.size === ALL_SECTIONS.length;
+
   return (
-    <div className='space-y-4'>
-      <FormSection
+    <div className='space-y-3'>
+      <div className='flex justify-end'>
+        <button
+          type='button'
+          onClick={() => setOpenSections(allOpen ? new Set() : new Set(ALL_SECTIONS))}
+          className='text-xs text-muted-foreground transition-colors hover:text-white'
+        >
+          {allOpen ? 'Collapse all' : 'Expand all'}
+        </button>
+      </div>
+      <CollapsibleSection
+        id='nav'
         title='Navigation'
         subtitle={`${pageContent.nav.links.length} nav links`}
+        open={openSections.has('nav')}
+        onToggle={toggleSection}
         actions={
           <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addNavLink}>
             Add link
@@ -1185,44 +1302,54 @@ function ContentTab({
             </div>
           ))}
         </div>
-      </FormSection>
+      </CollapsibleSection>
 
-      <FormSection title='Hero' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Location line' value={pageContent.hero.location} onChange={(location) => updateHero({ location })} />
-        <FieldInput label='Index label' value={pageContent.hero.indexLabel} onChange={(indexLabel) => updateHero({ indexLabel })} />
-        <FieldTextarea
-          label='Headline lines'
-          value={linesToText(pageContent.hero.titleLines)}
-          onChange={(value) => updateHero({ titleLines: textToLines(value) })}
-          description='One headline line per row.'
-          rows={3}
-        />
-        <FieldTextarea label='Lede' value={pageContent.hero.lede} onChange={(lede) => updateHero({ lede })} rows={3} />
-        <FieldInput label='Primary CTA' value={pageContent.hero.primaryCtaLabel} onChange={(primaryCtaLabel) => updateHero({ primaryCtaLabel })} />
-        <FieldInput label='Secondary CTA' value={pageContent.hero.secondaryCtaLabel} onChange={(secondaryCtaLabel) => updateHero({ secondaryCtaLabel })} />
-      </FormSection>
+      <CollapsibleSection id='hero' title='Hero' open={openSections.has('hero')} onToggle={toggleSection}>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Location line' value={pageContent.hero.location} onChange={(location) => updateHero({ location })} />
+          <FieldInput label='Index label' value={pageContent.hero.indexLabel} onChange={(indexLabel) => updateHero({ indexLabel })} />
+          <FieldTextarea
+            label='Headline lines'
+            value={linesToText(pageContent.hero.titleLines)}
+            onChange={(value) => updateHero({ titleLines: textToLines(value) })}
+            description='One headline line per row.'
+            rows={3}
+          />
+          <FieldTextarea label='Lede' value={pageContent.hero.lede} onChange={(lede) => updateHero({ lede })} rows={3} />
+          <FieldInput label='Primary CTA' value={pageContent.hero.primaryCtaLabel} onChange={(primaryCtaLabel) => updateHero({ primaryCtaLabel })} />
+          <FieldInput label='Secondary CTA' value={pageContent.hero.secondaryCtaLabel} onChange={(secondaryCtaLabel) => updateHero({ secondaryCtaLabel })} />
+        </div>
+      </CollapsibleSection>
 
-      <FormSection title='Drawing Section' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Eyebrow' value={pageContent.drawing.eyebrow} onChange={(eyebrow) => updateDrawing({ eyebrow })} />
-        <FieldInput label='Title' value={pageContent.drawing.title} onChange={(title) => updateDrawing({ title })} />
-        <FieldInput label='Emphasis' value={pageContent.drawing.emphasis} onChange={(emphasis) => updateDrawing({ emphasis })} />
-        <FieldInput label='CTA label' value={pageContent.drawing.ctaLabel} onChange={(ctaLabel) => updateDrawing({ ctaLabel })} />
-        <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
-        <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
-      </FormSection>
+      <CollapsibleSection id='drawing' title='Drawing Section' open={openSections.has('drawing')} onToggle={toggleSection}>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Eyebrow' value={pageContent.drawing.eyebrow} onChange={(eyebrow) => updateDrawing({ eyebrow })} />
+          <FieldInput label='Title' value={pageContent.drawing.title} onChange={(title) => updateDrawing({ title })} />
+          <FieldInput label='Emphasis' value={pageContent.drawing.emphasis} onChange={(emphasis) => updateDrawing({ emphasis })} />
+          <FieldInput label='CTA label' value={pageContent.drawing.ctaLabel} onChange={(ctaLabel) => updateDrawing({ ctaLabel })} />
+          <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
+          <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
+        </div>
+      </CollapsibleSection>
 
-      <FormSection title='Philosophy' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Eyebrow' value={pageContent.philosophy.eyebrow} onChange={(eyebrow) => updatePhilosophy({ eyebrow })} />
-        <FieldInput label='Title' value={pageContent.philosophy.title} onChange={(title) => updatePhilosophy({ title })} />
-        <FieldInput label='Emphasis' value={pageContent.philosophy.emphasis} onChange={(emphasis) => updatePhilosophy({ emphasis })} />
-        <FieldInput label='Figure caption' value={pageContent.philosophy.caption} onChange={(caption) => updatePhilosophy({ caption })} />
-        <FieldTextarea label='Body' value={pageContent.philosophy.body} onChange={(body) => updatePhilosophy({ body })} rows={3} />
-        <FieldTextarea label='Closing line' value={pageContent.philosophy.closing} onChange={(closing) => updatePhilosophy({ closing })} rows={2} />
-      </FormSection>
+      <CollapsibleSection id='philosophy' title='Philosophy' open={openSections.has('philosophy')} onToggle={toggleSection}>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Eyebrow' value={pageContent.philosophy.eyebrow} onChange={(eyebrow) => updatePhilosophy({ eyebrow })} />
+          <FieldInput label='Title' value={pageContent.philosophy.title} onChange={(title) => updatePhilosophy({ title })} />
+          <FieldInput label='Emphasis' value={pageContent.philosophy.emphasis} onChange={(emphasis) => updatePhilosophy({ emphasis })} />
+          <FieldInput label='Figure caption' value={pageContent.philosophy.caption} onChange={(caption) => updatePhilosophy({ caption })} />
+          <FieldTextarea label='Body' value={pageContent.philosophy.body} onChange={(body) => updatePhilosophy({ body })} rows={3} />
+          <FieldTextarea label='Closing line' value={pageContent.philosophy.closing} onChange={(closing) => updatePhilosophy({ closing })} rows={2} />
+        </div>
 
-      <FormSection
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        id='philosophy'
         title='Philosophy Principles'
         subtitle={`${pageContent.philosophy.principles.length} principles`}
+        open={openSections.has('philosophy')}
+        onToggle={toggleSection}
         actions={
           <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addPrinciple}>
             Add
@@ -1247,38 +1374,43 @@ function ContentTab({
             </div>
           </div>
         ))}
-      </FormSection>
+      </CollapsibleSection>
 
-      <div className='grid gap-4 xl:grid-cols-2'>
-        <FormSection title='Practice Header' gridClassName='md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.services.eyebrow} onChange={(eyebrow) => updateServicesHeader({ eyebrow })} />
-          <FieldInput label='Label' value={pageContent.services.label} onChange={(label) => updateServicesHeader({ label })} />
-          <FieldInput label='Title' value={pageContent.services.title} onChange={(title) => updateServicesHeader({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.services.emphasis} onChange={(emphasis) => updateServicesHeader({ emphasis })} />
-        </FormSection>
-        <FormSection title='Projects Header' gridClassName='md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.projects.eyebrow} onChange={(eyebrow) => updateProjectsHeader({ eyebrow })} />
-          <FieldInput label='Label' value={pageContent.projects.label} onChange={(label) => updateProjectsHeader({ label })} />
-          <FieldInput label='Title' value={pageContent.projects.title} onChange={(title) => updateProjectsHeader({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.projects.emphasis} onChange={(emphasis) => updateProjectsHeader({ emphasis })} />
-        </FormSection>
-      </div>
+      <CollapsibleSection id='services' title='Services &amp; Projects Headers' open={openSections.has('services')} onToggle={toggleSection}>
+        <div className='grid gap-4 xl:grid-cols-2'>
+          <FormSection title='Practice Header' gridClassName='md:grid-cols-2'>
+            <FieldInput label='Eyebrow' value={pageContent.services.eyebrow} onChange={(eyebrow) => updateServicesHeader({ eyebrow })} />
+            <FieldInput label='Label' value={pageContent.services.label} onChange={(label) => updateServicesHeader({ label })} />
+            <FieldInput label='Title' value={pageContent.services.title} onChange={(title) => updateServicesHeader({ title })} />
+            <FieldInput label='Emphasis' value={pageContent.services.emphasis} onChange={(emphasis) => updateServicesHeader({ emphasis })} />
+          </FormSection>
+          <FormSection title='Projects Header' gridClassName='md:grid-cols-2'>
+            <FieldInput label='Eyebrow' value={pageContent.projects.eyebrow} onChange={(eyebrow) => updateProjectsHeader({ eyebrow })} />
+            <FieldInput label='Label' value={pageContent.projects.label} onChange={(label) => updateProjectsHeader({ label })} />
+            <FieldInput label='Title' value={pageContent.projects.title} onChange={(title) => updateProjectsHeader({ title })} />
+            <FieldInput label='Emphasis' value={pageContent.projects.emphasis} onChange={(emphasis) => updateProjectsHeader({ emphasis })} />
+          </FormSection>
+        </div>
+      </CollapsibleSection>
 
-      <FormSection title='Process' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Eyebrow' value={pageContent.process.eyebrow} onChange={(eyebrow) => updateProcess({ eyebrow })} />
-        <FieldInput label='Label' value={pageContent.process.label} onChange={(label) => updateProcess({ label })} />
-        <FieldInput label='Title' value={pageContent.process.title} onChange={(title) => updateProcess({ title })} />
-        <FieldInput label='Emphasis' value={pageContent.process.emphasis} onChange={(emphasis) => updateProcess({ emphasis })} />
-      </FormSection>
-      <FormSection
-        title='Process Steps'
+      <CollapsibleSection
+        id='process'
+        title='Process'
         subtitle={`${pageContent.process.steps.length} steps`}
+        open={openSections.has('process')}
+        onToggle={toggleSection}
         actions={
           <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addProcessStep}>
-            Add
+            Add step
           </Button>
         }
       >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Eyebrow' value={pageContent.process.eyebrow} onChange={(eyebrow) => updateProcess({ eyebrow })} />
+          <FieldInput label='Label' value={pageContent.process.label} onChange={(label) => updateProcess({ label })} />
+          <FieldInput label='Title' value={pageContent.process.title} onChange={(title) => updateProcess({ title })} />
+          <FieldInput label='Emphasis' value={pageContent.process.emphasis} onChange={(emphasis) => updateProcess({ emphasis })} />
+        </div>
         {pageContent.process.steps.map((step, index) => (
           <div key={`${step.number}-${index}`} className='space-y-2 rounded-md border border-white/10 p-3'>
             <div className='flex items-center justify-between gap-2'>
@@ -1296,11 +1428,14 @@ function ContentTab({
             </div>
           </div>
         ))}
-      </FormSection>
+      </CollapsibleSection>
 
-      <FormSection
+      <CollapsibleSection
+        id='metrics'
         title='Metrics'
         subtitle={`${pageContent.metrics.length} headline figures`}
+        open={openSections.has('metrics')}
+        onToggle={toggleSection}
         actions={
           <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addMetric}>
             Add
@@ -1322,82 +1457,87 @@ function ContentTab({
             </div>
           </div>
         ))}
-      </FormSection>
+      </CollapsibleSection>
 
-      <FormSection title='Case Study' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Eyebrow' value={pageContent.caseStudy.eyebrow} onChange={(eyebrow) => updateCaseStudy({ eyebrow })} />
-        <FieldInput label='Label' value={pageContent.caseStudy.label} onChange={(label) => updateCaseStudy({ label })} />
-        <FieldInput label='Title' value={pageContent.caseStudy.title} onChange={(title) => updateCaseStudy({ title })} />
-        <FieldInput label='Title emphasis' value={pageContent.caseStudy.titleEmphasis} onChange={(titleEmphasis) => updateCaseStudy({ titleEmphasis })} />
-        <FieldInput label='Heading' value={pageContent.caseStudy.heading} onChange={(heading) => updateCaseStudy({ heading })} />
-        <FieldInput label='Heading emphasis' value={pageContent.caseStudy.headingEmphasis} onChange={(headingEmphasis) => updateCaseStudy({ headingEmphasis })} />
-        <div className='md:col-span-2'>
-          <FieldTextarea label='Body paragraph' value={pageContent.caseStudy.body} onChange={(body) => updateCaseStudy({ body })} rows={3} />
+      <CollapsibleSection
+        id='caseStudy'
+        title='Case Study'
+        subtitle={`${pageContent.caseStudy.stats.length} stats`}
+        open={openSections.has('caseStudy')}
+        onToggle={toggleSection}
+        actions={
+          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addCaseStudyStat}>
+            Add stat
+          </Button>
+        }
+      >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Eyebrow' value={pageContent.caseStudy.eyebrow} onChange={(eyebrow) => updateCaseStudy({ eyebrow })} />
+          <FieldInput label='Label' value={pageContent.caseStudy.label} onChange={(label) => updateCaseStudy({ label })} />
+          <FieldInput label='Title' value={pageContent.caseStudy.title} onChange={(title) => updateCaseStudy({ title })} />
+          <FieldInput label='Title emphasis' value={pageContent.caseStudy.titleEmphasis} onChange={(titleEmphasis) => updateCaseStudy({ titleEmphasis })} />
+          <FieldInput label='Heading' value={pageContent.caseStudy.heading} onChange={(heading) => updateCaseStudy({ heading })} />
+          <FieldInput label='Heading emphasis' value={pageContent.caseStudy.headingEmphasis} onChange={(headingEmphasis) => updateCaseStudy({ headingEmphasis })} />
+          <div className='md:col-span-2'>
+            <FieldTextarea label='Body paragraph' value={pageContent.caseStudy.body} onChange={(body) => updateCaseStudy({ body })} rows={3} />
+          </div>
         </div>
-        <div className='md:col-span-2'>
-          <FormSection
-            title='Case Study Stats'
-            subtitle={`${pageContent.caseStudy.stats.length} figures`}
-            actions={
-              <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addCaseStudyStat}>
-                Add
+        {pageContent.caseStudy.stats.map((stat, index) => (
+          <div key={`cs-stat-${index}`} className='rounded-md border border-white/10 p-2'>
+            <div className='mb-2 flex items-center justify-between gap-2'>
+              <span className='text-xs text-muted-foreground'>Stat {index + 1}</span>
+              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeCaseStudyStat(index)}>
+                Remove
               </Button>
-            }
-          >
-            {pageContent.caseStudy.stats.map((stat, index) => (
-              <div key={`cs-stat-${index}`} className='rounded-md border border-white/10 p-2'>
-                <div className='mb-2 flex items-center justify-between gap-2'>
-                  <span className='text-xs text-muted-foreground'>Stat {index + 1}</span>
-                  <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeCaseStudyStat(index)}>
-                    Remove
-                  </Button>
-                </div>
-                <div className='grid gap-2 md:grid-cols-[6rem_4rem_minmax(0,1fr)]'>
-                  <FieldInput label='Value' value={stat.value} onChange={(value) => updateCaseStudyStat(index, { value })} />
-                  <FieldInput label='Suffix' value={stat.suffix} onChange={(suffix) => updateCaseStudyStat(index, { suffix })} />
-                  <FieldInput label='Label' value={stat.label} onChange={(label) => updateCaseStudyStat(index, { label })} />
-                </div>
-              </div>
-            ))}
+            </div>
+            <div className='grid gap-2 md:grid-cols-[6rem_4rem_minmax(0,1fr)]'>
+              <FieldInput label='Value' value={stat.value} onChange={(value) => updateCaseStudyStat(index, { value })} />
+              <FieldInput label='Suffix' value={stat.suffix} onChange={(suffix) => updateCaseStudyStat(index, { suffix })} />
+              <FieldInput label='Label' value={stat.label} onChange={(label) => updateCaseStudyStat(index, { label })} />
+            </div>
+          </div>
+        ))}
+      </CollapsibleSection>
+
+      <CollapsibleSection id='quote' title='Quote' open={openSections.has('quote')} onToggle={toggleSection}>
+        <div className='grid gap-4 xl:grid-cols-2'>
+          <FormSection title='Quote' gridClassName='md:grid-cols-2'>
+            <FieldInput label='Eyebrow' value={pageContent.quote.eyebrow} onChange={(eyebrow) => updateQuote({ eyebrow })} />
+            <FieldInput label='Attribution' value={pageContent.quote.attribution} onChange={(attribution) => updateQuote({ attribution })} />
+            <FieldTextarea label='Text' value={pageContent.quote.text} onChange={(text) => updateQuote({ text })} rows={2} />
+            <FieldTextarea label='Emphasis' value={pageContent.quote.emphasis} onChange={(emphasis) => updateQuote({ emphasis })} rows={2} />
+          </FormSection>
+          <FormSection title='CTA' gridClassName='md:grid-cols-2'>
+            <FieldInput label='Title' value={pageContent.cta.title} onChange={(title) => updateCta({ title })} />
+            <FieldInput label='Emphasis' value={pageContent.cta.emphasis} onChange={(emphasis) => updateCta({ emphasis })} />
+            <FieldTextarea label='Description' value={pageContent.cta.description} onChange={(description) => updateCta({ description })} rows={2} />
+            <FieldTextarea label='Note' value={pageContent.cta.note} onChange={(note) => updateCta({ note })} rows={2} />
+            <FieldInput label='Email placeholder' value={pageContent.cta.emailPlaceholder} onChange={(emailPlaceholder) => updateCta({ emailPlaceholder })} />
+            <FieldInput label='Submit label' value={pageContent.cta.submitLabel} onChange={(submitLabel) => updateCta({ submitLabel })} />
+            <FieldInput label='Loading label' value={pageContent.cta.loadingLabel} onChange={(loadingLabel) => updateCta({ loadingLabel })} />
+            <FieldInput label='Success message' value={pageContent.cta.successMessage} onChange={(successMessage) => updateCta({ successMessage })} />
           </FormSection>
         </div>
-      </FormSection>
+      </CollapsibleSection>
 
-      <div className='grid gap-4 xl:grid-cols-2'>
-        <FormSection title='Quote' gridClassName='md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.quote.eyebrow} onChange={(eyebrow) => updateQuote({ eyebrow })} />
-          <FieldInput label='Attribution' value={pageContent.quote.attribution} onChange={(attribution) => updateQuote({ attribution })} />
-          <FieldTextarea label='Text' value={pageContent.quote.text} onChange={(text) => updateQuote({ text })} rows={2} />
-          <FieldTextarea label='Emphasis' value={pageContent.quote.emphasis} onChange={(emphasis) => updateQuote({ emphasis })} rows={2} />
-        </FormSection>
-        <FormSection title='CTA' gridClassName='md:grid-cols-2'>
-          <FieldInput label='Title' value={pageContent.cta.title} onChange={(title) => updateCta({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.cta.emphasis} onChange={(emphasis) => updateCta({ emphasis })} />
-          <FieldTextarea label='Description' value={pageContent.cta.description} onChange={(description) => updateCta({ description })} rows={2} />
-          <FieldTextarea label='Note' value={pageContent.cta.note} onChange={(note) => updateCta({ note })} rows={2} />
-          <FieldInput label='Email placeholder' value={pageContent.cta.emailPlaceholder} onChange={(emailPlaceholder) => updateCta({ emailPlaceholder })} />
-          <FieldInput label='Submit label' value={pageContent.cta.submitLabel} onChange={(submitLabel) => updateCta({ submitLabel })} />
-          <FieldInput label='Loading label' value={pageContent.cta.loadingLabel} onChange={(loadingLabel) => updateCta({ loadingLabel })} />
-          <FieldInput label='Success message' value={pageContent.cta.successMessage} onChange={(successMessage) => updateCta({ successMessage })} />
-        </FormSection>
-      </div>
-
-      <FormSection title='Footer' gridClassName='md:grid-cols-2'>
-        <FieldInput label='Brand name' value={pageContent.footer.brandName} onChange={(brandName) => updateFooter({ brandName })} />
-        <FieldInput label='Copyright' value={pageContent.footer.copyright} onChange={(copyright) => updateFooter({ copyright })} />
-        <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
-        <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
-      </FormSection>
-
-      <FormSection
-        title='Footer Columns'
-        subtitle={`${pageContent.footer.columns.length} navigation groups`}
+      <CollapsibleSection
+        id='footer'
+        title='Footer'
+        subtitle={`${pageContent.footer.columns.length} nav columns`}
+        open={openSections.has('footer')}
+        onToggle={toggleSection}
         actions={
           <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addFooterColumn}>
             Add column
           </Button>
         }
       >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FieldInput label='Brand name' value={pageContent.footer.brandName} onChange={(brandName) => updateFooter({ brandName })} />
+          <FieldInput label='Copyright' value={pageContent.footer.copyright} onChange={(copyright) => updateFooter({ copyright })} />
+          <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
+          <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
+        </div>
         <div className='grid gap-4 md:grid-cols-3'>
           {pageContent.footer.columns.map((column, ci) => (
             <div key={`col-${ci}`} className='space-y-2 rounded-md border border-white/10 p-3'>
@@ -1456,7 +1596,7 @@ function ContentTab({
             </div>
           ))}
         </div>
-      </FormSection>
+      </CollapsibleSection>
     </div>
   );
 }
@@ -2025,7 +2165,91 @@ function InquiriesTab({
 
 const ARCH_WEB_BASE_URL = 'http://localhost:3400';
 
-function StatusTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React.JSX.Element {
+const CONTENT_SECTION_KEYS = [
+  'nav', 'hero', 'drawing', 'philosophy', 'services', 'projects',
+  'process', 'caseStudy', 'quote', 'cta', 'footer',
+] as const;
+
+const getTranslationPctColor = (pct: number): string => {
+  if (pct === 100) return 'text-emerald-400';
+  if (pct >= 50) return 'text-amber-400';
+  return 'text-rose-400';
+};
+
+const getTranslationBarColor = (pct: number): string => {
+  if (pct === 100) return 'bg-emerald-500';
+  if (pct >= 50) return 'bg-amber-400';
+  return 'bg-rose-500';
+};
+
+function TranslationCompletenessPanel({
+  localizedContent,
+}: {
+  localizedContent: MilkbarLocalizedContent;
+}): React.JSX.Element {
+  const nonEnLocales = MILKBAR_LOCALES.filter((l) => l !== 'en');
+
+  return (
+    <FormSection
+      title='Translation Completeness'
+      subtitle='Sections still identical to EN are untranslated.'
+    >
+      <div className='space-y-3'>
+        {nonEnLocales.map((locale) => {
+          const sectionStatuses = CONTENT_SECTION_KEYS.map((key) => ({
+            key,
+            translated: JSON.stringify(localizedContent[locale][key]) !== JSON.stringify(localizedContent.en[key]),
+          }));
+          const translatedCount = sectionStatuses.filter((s) => s.translated).length;
+          const total = sectionStatuses.length;
+          const pct = Math.round((translatedCount / total) * 100);
+
+          return (
+            <div key={locale} className='rounded-md border border-white/10 p-3 space-y-2'>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-sm font-medium uppercase tracking-widest text-white'>
+                  {locale} — {MILKBAR_LOCALE_LABELS[locale]}
+                </span>
+                <span className={`text-xs font-semibold ${getTranslationPctColor(pct)}`}>
+                  {translatedCount}/{total} sections · {pct}%
+                </span>
+              </div>
+              <div className='h-1.5 w-full overflow-hidden rounded-full bg-white/10'>
+                <div
+                  className={`h-full rounded-full transition-all ${getTranslationBarColor(pct)}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className='flex flex-wrap gap-1.5'>
+                {sectionStatuses.map(({ key, translated }) => (
+                  <span
+                    key={key}
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${
+                      translated
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-white/5 text-muted-foreground'
+                    }`}
+                    title={translated ? `${key} — translated` : `${key} — same as EN`}
+                  >
+                    {key}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </FormSection>
+  );
+}
+
+function StatusTab({
+  snapshot,
+  localizedContent,
+}: {
+  snapshot: MilkbarCmsSnapshot | null;
+  localizedContent: MilkbarLocalizedContent;
+}): React.JSX.Element {
   return (
     <div className='grid gap-4 lg:grid-cols-2'>
       <FormSection
@@ -2111,6 +2335,9 @@ function StatusTab({ snapshot }: { snapshot: MilkbarCmsSnapshot | null }): React
           </div>
         ) : null}
       </FormSection>
+      <div className='lg:col-span-2'>
+        <TranslationCompletenessPanel localizedContent={localizedContent} />
+      </div>
     </div>
   );
 }

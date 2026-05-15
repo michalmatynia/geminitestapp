@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -23,6 +24,21 @@ vi.mock('@/shared/ui/primitives.public', async () => {
 });
 
 import { EcommerceDataSyncPanel } from './EcommerceDataSyncPanel';
+
+const renderPanel = (): ReturnType<typeof render> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <EcommerceDataSyncPanel />
+    </QueryClientProvider>
+  );
+};
 
 describe('EcommerceDataSyncPanel', () => {
   beforeEach(() => {
@@ -59,7 +75,7 @@ describe('EcommerceDataSyncPanel', () => {
       },
     });
 
-    render(<EcommerceDataSyncPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Push categories' }));
 
@@ -106,7 +122,7 @@ describe('EcommerceDataSyncPanel', () => {
       },
     });
 
-    render(<EcommerceDataSyncPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Push pricing system' }));
 
@@ -128,7 +144,7 @@ describe('EcommerceDataSyncPanel', () => {
   it('shows the push error returned by the API client', async () => {
     mocks.apiPost.mockRejectedValue(new Error('Local ecommerce database is not reachable.'));
 
-    render(<EcommerceDataSyncPanel />);
+    renderPanel();
 
     fireEvent.click(screen.getByRole('button', { name: 'Push categories' }));
 

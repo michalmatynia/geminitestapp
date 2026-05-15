@@ -25,9 +25,9 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   type DatabaseBackupSchedulerTickResult,
   type DatabaseEngineBackupSchedule,
-  type DatabaseEngineBackupType,
   type DatabaseEngineBackupTargetSchedule,
 } from '@/shared/contracts/database';
+import type { DatabaseEngineBackupType } from '@/shared/lib/db/database-engine-constants';
 import {
   getDatabaseEngineBackupSchedule,
   persistBackupSchedule,
@@ -35,6 +35,8 @@ import {
   evaluateBackupTargetSchedule,
   computeNextDueAfter,
 } from './database-backup-scheduler-utils';
+
+export { evaluateBackupTargetSchedule };
 
 /**
  * Executes the backup task for a single database target.
@@ -153,4 +155,33 @@ export async function tickDatabaseBackupScheduler(
 
   if (changed) await persistBackupSchedule(nextSchedule);
   return result;
+}
+
+export async function getDatabaseBackupSchedulerStatus(
+  now = new Date()
+): Promise<{
+  timestamp: string;
+  schedulerEnabled: boolean;
+  repeatTickEnabled: boolean;
+  lastCheckedAt: string | null;
+  targets: Record<string, { dueNow: boolean; nextDueAt: string | null } & Partial<DatabaseEngineBackupTargetSchedule>>;
+}> {
+  const schedule = await getDatabaseEngineBackupSchedule();
+  const targets: Record<string, { dueNow: boolean; nextDueAt: string | null } & Partial<DatabaseEngineBackupTargetSchedule>> = {};
+
+  for (const dbType of targetKeys) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const target = (schedule as any)[dbType] as DatabaseEngineBackupTargetSchedule | undefined;
+    if (!target) continue;
+    const evaluated = evaluateBackupTargetSchedule(target, now);
+    targets[dbType] = { ...target, ...evaluated };
+  }
+
+  return {
+    timestamp: now.toISOString(),
+    schedulerEnabled: schedule.schedulerEnabled,
+    repeatTickEnabled: schedule.repeatTickEnabled,
+    lastCheckedAt: schedule.lastCheckedAt,
+    targets,
+  };
 }

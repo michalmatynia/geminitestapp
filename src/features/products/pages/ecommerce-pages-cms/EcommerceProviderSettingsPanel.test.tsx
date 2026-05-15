@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -30,6 +31,21 @@ vi.mock('@/shared/ui/primitives.public', async () => {
 });
 
 import { EcommerceProviderSettingsPanel } from './EcommerceProviderSettingsPanel';
+
+const renderPanel = (): ReturnType<typeof render> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <EcommerceProviderSettingsPanel />
+    </QueryClientProvider>
+  );
+};
 
 const makeSettings = (): EcommerceProviderSettingsInput => ({
   ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS,
@@ -95,7 +111,7 @@ describe('EcommerceProviderSettingsPanel', () => {
       updatedBy: 'admin-1',
     });
 
-    render(<EcommerceProviderSettingsPanel />);
+    renderPanel();
 
     expect(await screen.findByDisplayValue('123456')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('POS ID'), { target: { value: '654321' } });

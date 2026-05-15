@@ -562,6 +562,18 @@ export const execFileAsync = (
     }
   );
 
+/**
+ * Validates that a backup name is safe to use in file system operations.
+ * 
+ * This prevents path traversal attacks by ensuring the backup name:
+ * - Is a relative path.
+ * - Does not contain forbidden segments ('.', '..', empty).
+ * - Is confined to a single sub-folder (the application folder).
+ * - Uses the mandatory '.archive' extension.
+ * 
+ * @param backupName - The proposed backup filename/path.
+ * @throws AppError if the path is unsafe or invalid.
+ */
 export const assertValidBackupName = (backupName: string): void => {
   if (backupName.includes('\\') || path.isAbsolute(backupName)) {
     throw badRequestError(`Invalid backup name "${backupName}": backup names must be relative paths and must not contain backslashes.`);
@@ -612,6 +624,15 @@ export const getMongoBackupPath = (backupName: string): string => {
   return path.join(backupsDir, backupName);
 };
 
+/**
+ * Resolves the full file system path for a backup file.
+ * 
+ * It first checks for the file in the modern backups location; if not found, 
+ * it falls back to the legacy backups directory for compatibility.
+ * 
+ * @param backupName - Relative path to the backup file.
+ * @returns The absolute path to the backup file.
+ */
 export const resolveMongoBackupPath = async (backupName: string): Promise<string> => {
   assertValidBackupName(backupName);
   const primaryPath = getMongoBackupPath(backupName);

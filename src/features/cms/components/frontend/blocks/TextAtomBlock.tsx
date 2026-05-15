@@ -10,22 +10,23 @@ import { type BlockInstance } from '@/shared/contracts/cms';
 export function TextAtomBlock(): React.JSX.Element | null {
   const { block } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
-  const text = (settings['text'] as string) || '';
+  
+  const text = typeof settings['text'] === 'string' ? settings['text'] : '';
   const alignment = (settings['alignment'] as string) || 'left';
-  const letterGap = (settings['letterGap'] as number) || 0;
-  const lineGap = (settings['lineGap'] as number) || 0;
-  const wrap = (settings['wrap'] as string) || 'wrap';
+  const letterGap = typeof settings['letterGap'] === 'number' ? settings['letterGap'] : 0;
+  const lineGap = typeof settings['lineGap'] === 'number' ? settings['lineGap'] : 0;
+  const wrap = settings['wrap'] === 'nowrap' ? 'nowrap' : 'wrap';
   
   const letters: BlockInstance[] = useMemo(() => {
     if (Array.isArray(block.blocks) && block.blocks.length > 0) {
-        return block.blocks;
+      return block.blocks;
     }
     return Array.from(text).map(
-        (char: string, index: number): BlockInstance => ({
-          id: `text-atom-${block.id}-${index}`,
-          type: 'TextAtomLetter',
-          settings: { textContent: char },
-        })
+      (char: string, index: number): BlockInstance => ({
+        id: `text-atom-${block.id ?? 'unknown'}-${index}`,
+        type: 'TextAtomLetter',
+        settings: { textContent: char },
+      })
     );
   }, [block.blocks, block.id, text]);
 
@@ -55,7 +56,7 @@ export function TextAtomBlock(): React.JSX.Element | null {
 
 export function TextAtomLetterBlock(): React.JSX.Element {
   const settings = useRequiredBlockSettings();
-  const text = (settings['textContent'] as string) ?? '';
+  const text = typeof settings['textContent'] === 'string' ? settings['textContent'] : '';
   const typoStyles = useMemo(() => getBlockTypographyStyles(settings), [settings]);
   
   return (

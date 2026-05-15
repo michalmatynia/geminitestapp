@@ -4,6 +4,7 @@ import { CheckCircle2, Cloud, Database, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { EcommercePricingSyncPanel } from './EcommercePricingSyncPanel';
 import {
   Alert,
@@ -190,42 +191,51 @@ function SyncPanelContent({
 
 function CategoriesSyncPanel(): React.JSX.Element {
   const { toast } = useToast();
-  const [isSyncing, setIsSyncing] = useState(false);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const syncMutation = createMutationV2<SyncResponse, void>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'data-sync', 'categories'],
+    mutationFn: (): Promise<SyncResponse> =>
+      api.post<SyncResponse>(SYNC_ENDPOINT, undefined, {
+        logError: false,
+        timeout: 120_000,
+      }),
+    onSuccess: (response: SyncResponse): void => {
+      setResult(response.sync);
+      toast('Categories pushed to ecommerce databases.', { variant: 'success' });
+    },
+    onError: (syncError: Error): void => {
+      const message = toErrorMessage(syncError);
+      setError(message);
+      toast(message, { variant: 'error' });
+    },
+    meta: {
+      source: 'products.ecommercePagesCms.CategoriesSyncPanel.sync',
+      operation: 'action',
+      resource: 'products.ecommerce-pages-cms.categories-data-sync',
+      domain: 'products',
+      description: 'Pushes ecommerce category data to local and cloud ecommerce databases.',
+      errorPresentation: 'toast',
+      tags: ['products', 'ecommerce', 'cms', 'categories', 'data-sync'],
+    },
+  });
 
   const targetCountLabel = useMemo(() => {
     if (result === null) return 'No push run yet';
     return `${result.targets.length} ecommerce database${result.targets.length === 1 ? '' : 's'}`;
   }, [result]);
 
-  const handleSyncClick = useCallback(async (): Promise<void> => {
-    setIsSyncing(true);
+  const handleSyncClick = useCallback((): void => {
     setError(null);
-    try {
-      const response = await api.post<SyncResponse>(SYNC_ENDPOINT, undefined, {
-        logError: false,
-        timeout: 120_000,
-      });
-      setResult(response.sync);
-      toast('Categories pushed to ecommerce databases.', { variant: 'success' });
-    } catch (syncError: unknown) {
-      const message = toErrorMessage(syncError);
-      setError(message);
-      toast(message, { variant: 'error' });
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [toast]);
+    syncMutation.mutate();
+  }, [syncMutation]);
 
   return (
     <Card variant='outline'>
       <SyncPanelHeader
         buttonLabel='Push categories'
-        isSyncing={isSyncing}
-        onSyncClick={() => {
-          void handleSyncClick();
-        }}
+        isSyncing={syncMutation.isPending}
+        onSyncClick={handleSyncClick}
         result={result}
         sourceCountLabel={`${result?.sourceCategoryCount ?? 0} source categories`}
         targetCountLabel={targetCountLabel}

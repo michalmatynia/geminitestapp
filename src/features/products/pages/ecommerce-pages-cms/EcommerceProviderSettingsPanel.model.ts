@@ -7,6 +7,8 @@ import {
   type EcommerceProviderSettingsInput,
 } from '@/shared/contracts/integrations/ecommerce-provider-settings';
 import { api } from '@/shared/lib/api-client';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
@@ -23,6 +25,10 @@ import {
 
 type SettingsSetter = Dispatch<SetStateAction<EcommerceProviderSettingsInput>>;
 type Toast = ReturnType<typeof useToast>['toast'];
+type SaveProviderSettingsVariables = {
+  pushToEcommerce: boolean;
+  settings: EcommerceProviderSettingsInput;
+};
 type ProviderSettingsPanelModel = {
   error: string | null;
   handleSave: () => Promise<void>;
@@ -59,73 +65,114 @@ export const cloneProviderSettings = (
 export const toProviderSettingsErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+const PROVIDER_SETTINGS_QUERY_KEY = [
+  'products',
+  'ecommerce-pages-cms',
+  'provider-settings',
+] as const;
+
+const fetchProviderSettings = (): Promise<ProviderSettingsResponse> =>
+  api.get<ProviderSettingsResponse>(PROVIDER_SETTINGS_ENDPOINT, {
+    logError: false,
+    timeout: 120_000,
+  });
+
+const saveProviderSettings = ({
+  pushToEcommerce,
+  settings,
+}: SaveProviderSettingsVariables): Promise<ProviderSettingsWriteResponse> =>
+  api.put<ProviderSettingsWriteResponse>(
+    PROVIDER_SETTINGS_ENDPOINT,
+    { pushToEcommerce, settings },
+    { logError: false, timeout: 120_000 }
+  );
+
+const useProviderSettingsQuery = (): SingleQuery<ProviderSettingsResponse> =>
+  createSingleQueryV2({
+    id: 'ecommerce-pages-provider-settings',
+    queryKey: PROVIDER_SETTINGS_QUERY_KEY,
+    queryFn: fetchProviderSettings,
+    meta: {
+      source: 'products.ecommercePagesCms.providerSettings.load',
+      operation: 'detail',
+      resource: 'products.ecommerce-pages-cms.provider-settings',
+    },
+  });
+
+function applyProviderSettingsResponse(
+  response: Pick<
+    ProviderSettingsResponse,
+    'lastPushedAt' | 'settings' | 'updatedAt' | 'updatedBy'
+  >,
+  setters: {
+    setMeta: Dispatch<SetStateAction<ProviderSettingsMeta>>;
+    setSettings: SettingsSetter;
+  }
+): void {
+  setters.setSettings(cloneProviderSettings(response.settings));
+  setters.setMeta({
+    lastPushedAt: response.lastPushedAt,
+    updatedAt: response.updatedAt,
+    updatedBy: response.updatedBy,
+  });
+}
+
 function useLoadProviderSettings(args: {
   setError: Dispatch<SetStateAction<string | null>>;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
   setMeta: Dispatch<SetStateAction<ProviderSettingsMeta>>;
   setSettings: SettingsSetter;
   toast: Toast;
-}): () => Promise<void> {
-  const { setError, setIsLoading, setMeta, setSettings, toast } = args;
-  return useCallback(async (): Promise<void> => {
-    setIsLoading(true);
+}): { isLoading: boolean; loadSettings: () => Promise<void>; queryError: string | null } {
+  const { setError, setMeta, setSettings, toast } = args;
+  const query = useProviderSettingsQuery();
+
+  useEffect(() => {
+    if (query.data === undefined) return;
+    applyProviderSettingsResponse(query.data, { setMeta, setSettings });
+  }, [query.data, setMeta, setSettings]);
+
+  useEffect(() => {
+    if (!query.error) return;
+    const message = toProviderSettingsErrorMessage(query.error);
+    setError(message);
+    toast(message, { variant: 'error' });
+  }, [query.error, setError, toast]);
+
+  const queryError = query.error ? toProviderSettingsErrorMessage(query.error) : null;
+  const loadSettings = useCallback(async (): Promise<void> => {
     setError(null);
-    try {
-      const response = await api.get<ProviderSettingsResponse>(PROVIDER_SETTINGS_ENDPOINT, {
-        logError: false,
-        timeout: 120_000,
-      });
-      setSettings(cloneProviderSettings(response.settings));
-      setMeta({
-        lastPushedAt: response.lastPushedAt,
-        updatedAt: response.updatedAt,
-        updatedBy: response.updatedBy,
-      });
-    } catch (loadError: unknown) {
-      const message = toProviderSettingsErrorMessage(loadError);
-      setError(message);
-      toast(message, { variant: 'error' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setError, setIsLoading, setMeta, setSettings, toast]);
+    await query.refetch();
+  }, [query, setError]);
+
+  return { isLoading: query.isLoading, loadSettings, queryError };
 }
 
 function useSaveProviderSettings(args: {
   pushToEcommerce: boolean;
   setError: Dispatch<SetStateAction<string | null>>;
-  setIsSaving: Dispatch<SetStateAction<boolean>>;
   setMeta: Dispatch<SetStateAction<ProviderSettingsMeta>>;
   setSettings: SettingsSetter;
   setTargets: Dispatch<SetStateAction<ProviderSettingsTarget[]>>;
   settings: EcommerceProviderSettingsInput;
   toast: Toast;
-}): () => Promise<void> {
+}): { handleSave: () => Promise<void>; isSaving: boolean } {
   const {
     pushToEcommerce,
     setError,
-    setIsSaving,
     setMeta,
     setSettings,
     setTargets,
     settings,
     toast,
   } = args;
-  return useCallback(async (): Promise<void> => {
-    setIsSaving(true);
-    setError(null);
-    try {
-      const response = await api.put<ProviderSettingsWriteResponse>(
-        PROVIDER_SETTINGS_ENDPOINT,
-        { pushToEcommerce, settings },
-        { logError: false, timeout: 120_000 }
-      );
-      setSettings(cloneProviderSettings(response.settings));
-      setMeta({
-        lastPushedAt: response.lastPushedAt,
-        updatedAt: response.updatedAt,
-        updatedBy: response.updatedBy,
-      });
+  const saveMutation = createMutationV2<
+    ProviderSettingsWriteResponse,
+    SaveProviderSettingsVariables
+  >({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'provider-settings', 'save'],
+    mutationFn: saveProviderSettings,
+    onSuccess: (response: ProviderSettingsWriteResponse): void => {
+      applyProviderSettingsResponse(response, { setMeta, setSettings });
       setTargets(response.targets);
       toast(
         response.pushed
@@ -133,23 +180,31 @@ function useSaveProviderSettings(args: {
           : 'Provider settings saved.',
         { variant: 'success' }
       );
-    } catch (saveError: unknown) {
+    },
+    onError: (saveError: Error): void => {
       const message = toProviderSettingsErrorMessage(saveError);
       setError(message);
       toast(message, { variant: 'error' });
-    } finally {
-      setIsSaving(false);
+    },
+    invalidateKeys: [PROVIDER_SETTINGS_QUERY_KEY],
+    meta: {
+      source: 'products.ecommercePagesCms.providerSettings.save',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.provider-settings',
+      errorPresentation: 'toast',
+    },
+  });
+
+  const handleSave = useCallback(async (): Promise<void> => {
+    setError(null);
+    try {
+      await saveMutation.mutateAsync({ pushToEcommerce, settings });
+    } catch {
+      // Error presentation is handled by the mutation callback.
     }
-  }, [
-    pushToEcommerce,
-    setError,
-    setIsSaving,
-    setMeta,
-    setSettings,
-    setTargets,
-    settings,
-    toast,
-  ]);
+  }, [pushToEcommerce, saveMutation, setError, settings]);
+
+  return { handleSave, isSaving: saveMutation.isPending };
 }
 
 function useProviderSettingsUpdaters(setSettings: SettingsSetter): {
@@ -219,14 +274,11 @@ export function useProviderSettingsPanelModel(): ProviderSettingsPanelModel {
   });
   const [targets, setTargets] = useState<ProviderSettingsTarget[]>([]);
   const [pushToEcommerce, setPushToEcommerce] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const loadSettings = useLoadProviderSettings({ setError, setIsLoading, setMeta, setSettings, toast });
-  const handleSave = useSaveProviderSettings({
+  const loadState = useLoadProviderSettings({ setError, setMeta, setSettings, toast });
+  const saveAction = useSaveProviderSettings({
     pushToEcommerce,
     setError,
-    setIsSaving,
     setMeta,
     setSettings,
     setTargets,
@@ -235,16 +287,12 @@ export function useProviderSettingsPanelModel(): ProviderSettingsPanelModel {
   });
   const updaters = useProviderSettingsUpdaters(setSettings);
 
-  useEffect(() => {
-    void loadSettings();
-  }, [loadSettings]);
-
   return {
-    error,
-    handleSave,
-    isLoading,
-    isSaving,
-    loadSettings,
+    error: error ?? loadState.queryError,
+    handleSave: saveAction.handleSave,
+    isLoading: loadState.isLoading,
+    isSaving: saveAction.isSaving,
+    loadSettings: loadState.loadSettings,
     meta,
     pushToEcommerce,
     setPushToEcommerce,

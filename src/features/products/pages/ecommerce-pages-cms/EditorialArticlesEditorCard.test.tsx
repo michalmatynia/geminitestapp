@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -179,6 +180,23 @@ const createController = (
   ...overrides,
 });
 
+const renderEditorCard = (
+  controller: EditorialArticlesController
+): ReturnType<typeof render> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <EditorialArticlesEditorCard controller={controller} />
+    </QueryClientProvider>
+  );
+};
+
 describe('EditorialArticlesEditorCard', () => {
   beforeEach(() => {
     mocks.apiGet.mockReset();
@@ -208,7 +226,7 @@ describe('EditorialArticlesEditorCard', () => {
       createArticle({ id: 'hidden-drop', title: 'Hidden Drop', visible: false }),
     ]);
 
-    render(<EditorialArticlesEditorCard controller={controller} />);
+    renderEditorCard(controller);
 
     expect(screen.getByTestId('master-folder-tree')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Visible Report')).toBeInTheDocument();
@@ -224,7 +242,7 @@ describe('EditorialArticlesEditorCard', () => {
       createArticle({ id: 'visible-report', title: 'Visible Report', visible: true }),
     ], { addArticle });
 
-    render(<EditorialArticlesEditorCard controller={controller} />);
+    renderEditorCard(controller);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add article' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Lore Article' });
@@ -270,7 +288,7 @@ describe('EditorialArticlesEditorCard', () => {
     });
     const controller = createController([]);
 
-    render(<EditorialArticlesEditorCard controller={controller} />);
+    renderEditorCard(controller);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add article' }));
     const dialog = screen.getByRole('dialog', { name: 'Add Lore Article' });

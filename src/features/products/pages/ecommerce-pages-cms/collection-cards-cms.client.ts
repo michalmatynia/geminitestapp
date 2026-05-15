@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type CollectionCardSelectorType = 'all' | 'category' | 'theme' | 'custom';
@@ -44,6 +46,8 @@ type CollectionCardImageUploadResponse = {
   };
 };
 
+type CollectionCardImage = CollectionCardImageUploadResponse['image'];
+
 export type CollectionCardsController = {
   addCard: (card: CollectionCardState) => void;
   cards: CollectionCardState[];
@@ -71,6 +75,7 @@ export const SELECTOR_TYPE_OPTIONS: Array<{
 
 const COLLECTION_CARDS_ENDPOINT = '/api/v2/products/pages/collection-cards';
 const COLLECTION_CARD_IMAGE_ENDPOINT = '/api/v2/products/pages/collection-cards/image';
+const COLLECTION_CARDS_QUERY_KEY = ['products', 'ecommerce-pages-cms', 'collection-cards'] as const;
 
 const EMPTY_COLLECTION_CARDS_STATE: CollectionCardsState = {
   cards: [],
@@ -122,7 +127,7 @@ const saveCollectionCards = async (
 
 const uploadCollectionCardImage = async (
   file: File
-): Promise<CollectionCardImageUploadResponse['image']> => {
+): Promise<CollectionCardImage> => {
   const formData = new FormData();
   formData.append('file', file);
   const response = await api.post<CollectionCardImageUploadResponse>(
@@ -136,6 +141,18 @@ const uploadCollectionCardImage = async (
 type CollectionCardsStateSetter = Dispatch<SetStateAction<CollectionCardsState | null>>;
 type ErrorSetter = Dispatch<SetStateAction<string | null>>;
 
+const useCollectionCardsQuery = (): SingleQuery<CollectionCardsState> =>
+  createSingleQueryV2({
+    id: 'ecommerce-pages-collection-cards',
+    queryKey: COLLECTION_CARDS_QUERY_KEY,
+    queryFn: fetchCollectionCards,
+    meta: {
+      source: 'products.ecommercePagesCms.collectionCards.load',
+      operation: 'detail',
+      resource: 'products.ecommerce-pages-cms.collection-cards',
+    },
+  });
+
 const useCollectionCardsData = (): {
   collectionCards: CollectionCardsState | null;
   error: string | null;
@@ -145,26 +162,27 @@ const useCollectionCardsData = (): {
   setError: ErrorSetter;
 } => {
   const [collectionCards, setCollectionCards] = useState<CollectionCardsState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const collectionCardsQuery = useCollectionCardsQuery();
 
   const loadCards = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
     setError(null);
-    try {
-      setCollectionCards(await fetchCollectionCards());
-    } catch (loadError: unknown) {
-      setError(toErrorMessage(loadError));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await collectionCardsQuery.refetch();
+  }, [collectionCardsQuery]);
 
   useEffect(() => {
-    loadCards().catch(() => undefined);
-  }, [loadCards]);
+    if (collectionCardsQuery.data === undefined) return;
+    setCollectionCards(collectionCardsQuery.data);
+  }, [collectionCardsQuery.data]);
 
-  return { collectionCards, error, isLoading, loadCards, setCollectionCards, setError };
+  return {
+    collectionCards,
+    error: error ?? (collectionCardsQuery.error ? toErrorMessage(collectionCardsQuery.error) : null),
+    isLoading: collectionCardsQuery.isLoading,
+    loadCards,
+    setCollectionCards,
+    setError,
+  };
 };
 
 const useCollectionCardMutators = (input: {
@@ -211,32 +229,40 @@ const useCollectionCardsSaveAction = (input: {
   setError: ErrorSetter;
 }): Pick<CollectionCardsController, 'handleSaveClick' | 'isSaving'> => {
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
+  const saveMutation = createMutationV2<CollectionCardsState, CollectionCardState[]>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'collection-cards', 'save'],
+    mutationFn: saveCollectionCards,
+    onSuccess: (nextCards: CollectionCardsState): void => {
+      input.setCollectionCards(nextCards);
+      if (nextCards.cloudMirrored === true) {
+        toast('Collection cards saved and mirrored.', { variant: 'success' });
+      } else {
+        toast('Collection cards saved locally. Cloud mirror did not complete.', {
+          variant: 'warning',
+        });
+      }
+    },
+    onError: (saveError: Error): void => {
+      const message = toErrorMessage(saveError);
+      input.setError(message);
+      toast(message, { variant: 'error' });
+    },
+    invalidateKeys: [COLLECTION_CARDS_QUERY_KEY],
+    meta: {
+      source: 'products.ecommercePagesCms.collectionCards.save',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.collection-cards',
+      errorPresentation: 'toast',
+    },
+  });
 
   const handleSaveClick = useCallback((): void => {
     const cards = input.collectionCards?.cards ?? [];
-    setIsSaving(true);
     input.setError(null);
-    saveCollectionCards(cards)
-      .then((nextCards) => {
-        input.setCollectionCards(nextCards);
-        if (nextCards.cloudMirrored === true) {
-          toast('Collection cards saved and mirrored.', { variant: 'success' });
-        } else {
-          toast('Collection cards saved locally. Cloud mirror did not complete.', {
-            variant: 'warning',
-          });
-        }
-      })
-      .catch((saveError: unknown) => {
-        const message = toErrorMessage(saveError);
-        input.setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setIsSaving(false));
-  }, [input, toast]);
+    saveMutation.mutate(cards);
+  }, [input, saveMutation]);
 
-  return { handleSaveClick, isSaving };
+  return { handleSaveClick, isSaving: saveMutation.isPending };
 };
 
 const useCollectionCardImageUploadAction = (input: {
@@ -245,22 +271,41 @@ const useCollectionCardImageUploadAction = (input: {
 }): Pick<CollectionCardsController, 'uploadCardImage' | 'uploadingIndex'> => {
   const { toast } = useToast();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const uploadMutation = createMutationV2<
+    CollectionCardImage,
+    { file: File; index: number }
+  >({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'collection-cards', 'image', 'upload'],
+    mutationFn: ({ file }: { file: File; index: number }): Promise<CollectionCardImage> =>
+      uploadCollectionCardImage(file),
+    onSuccess: (
+      image: CollectionCardImage,
+      variables: { file: File; index: number }
+    ): void => {
+      input.updateCard(variables.index, { imageUrl: image.remoteUrl });
+      toast('Collection image uploaded. Save cards to publish the URL.', { variant: 'success' });
+    },
+    onError: (uploadError: Error): void => {
+      const message = toErrorMessage(uploadError);
+      input.setError(message);
+      toast(message, { variant: 'error' });
+    },
+    onSettled: (): void => {
+      setUploadingIndex(null);
+    },
+    meta: {
+      source: 'products.ecommercePagesCms.collectionCards.image.upload',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.collection-card-image',
+      errorPresentation: 'toast',
+    },
+  });
 
   const uploadCardImage = useCallback((index: number, file: File): void => {
     setUploadingIndex(index);
     input.setError(null);
-    uploadCollectionCardImage(file)
-      .then((image) => {
-        input.updateCard(index, { imageUrl: image.remoteUrl });
-        toast('Collection image uploaded. Save cards to publish the URL.', { variant: 'success' });
-      })
-      .catch((uploadError: unknown) => {
-        const message = toErrorMessage(uploadError);
-        input.setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setUploadingIndex(null));
-  }, [input, toast]);
+    uploadMutation.mutate({ file, index });
+  }, [input, uploadMutation]);
 
   return { uploadCardImage, uploadingIndex };
 };

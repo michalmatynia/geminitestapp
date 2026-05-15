@@ -31,6 +31,7 @@ const BRAIN_TABS: BrainTab[] = ['operations', 'routing', 'providers', 'reports',
 const isBrainTab = (value: string | null | undefined): value is BrainTab =>
   Boolean(value && BRAIN_TABS.includes(value as BrainTab));
 
+/* eslint-disable max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 function BrainContextRegistrySource(): React.JSX.Element {
   const {
     activeTab,

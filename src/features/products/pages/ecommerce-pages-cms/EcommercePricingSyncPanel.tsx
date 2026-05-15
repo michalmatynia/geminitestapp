@@ -4,6 +4,8 @@ import { CheckCircle2, Cloud, Database, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   Alert,
   Badge,
@@ -39,6 +41,12 @@ type PricingSyncResult = {
 type PricingSyncResponse = {
   ok: boolean;
   sync: PricingSyncResult;
+};
+
+type UsePricingSyncMutationOptions = {
+  setError: (error: string | null) => void;
+  setResult: (result: PricingSyncResult | null) => void;
+  toast: ReturnType<typeof useToast>['toast'];
 };
 
 const PRICING_SYNC_ENDPOINT = '/api/v2/products/pages/data-sync/pricing';
@@ -134,11 +142,44 @@ function PricingSyncContent({
   );
 }
 
+function usePricingSyncMutation({
+  setError,
+  setResult,
+  toast,
+}: UsePricingSyncMutationOptions): MutationResult<PricingSyncResponse, void> {
+  return createMutationV2<PricingSyncResponse, void>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'data-sync', 'pricing'],
+    mutationFn: (): Promise<PricingSyncResponse> =>
+      api.post<PricingSyncResponse>(PRICING_SYNC_ENDPOINT, undefined, {
+        logError: false,
+        timeout: 120_000,
+      }),
+    onSuccess: (response: PricingSyncResponse): void => {
+      setResult(response.sync);
+      toast('Pricing system pushed to ecommerce databases.', { variant: 'success' });
+    },
+    onError: (syncError: Error): void => {
+      const message = toErrorMessage(syncError);
+      setError(message);
+      toast(message, { variant: 'error' });
+    },
+    meta: {
+      source: 'products.ecommercePagesCms.EcommercePricingSyncPanel.sync',
+      operation: 'action',
+      resource: 'products.ecommerce-pages-cms.pricing-data-sync',
+      domain: 'products',
+      description: 'Pushes ecommerce pricing data to local and cloud ecommerce databases.',
+      errorPresentation: 'toast',
+      tags: ['products', 'ecommerce', 'cms', 'pricing', 'data-sync'],
+    },
+  });
+}
+
 export function EcommercePricingSyncPanel(): React.JSX.Element {
   const { toast } = useToast();
-  const [isSyncing, setIsSyncing] = useState(false);
   const [result, setResult] = useState<PricingSyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const syncMutation = usePricingSyncMutation({ setError, setResult, toast });
   const targetCountLabel = useMemo(() => {
     if (result === null) return 'No push run yet';
     return `${result.targets.length} ecommerce database${result.targets.length === 1 ? '' : 's'}`;
@@ -148,24 +189,10 @@ export function EcommercePricingSyncPanel(): React.JSX.Element {
       ? '0 currencies, 0 price groups'
       : `${result.sourceCurrencyCount} currencies, ${result.sourcePriceGroupCount} price groups`;
 
-  const handleSyncClick = useCallback(async (): Promise<void> => {
-    setIsSyncing(true);
+  const handleSyncClick = useCallback((): void => {
     setError(null);
-    try {
-      const response = await api.post<PricingSyncResponse>(PRICING_SYNC_ENDPOINT, undefined, {
-        logError: false,
-        timeout: 120_000,
-      });
-      setResult(response.sync);
-      toast('Pricing system pushed to ecommerce databases.', { variant: 'success' });
-    } catch (syncError: unknown) {
-      const message = toErrorMessage(syncError);
-      setError(message);
-      toast(message, { variant: 'error' });
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [toast]);
+    syncMutation.mutate();
+  }, [syncMutation]);
 
   return (
     <Card variant='outline'>
@@ -180,10 +207,10 @@ export function EcommercePricingSyncPanel(): React.JSX.Element {
         <Button
           type='button'
           variant='solid'
-          icon={<RefreshCw className={cn('size-4', isSyncing && 'animate-spin')} aria-hidden='true' />}
-          loading={isSyncing}
+          icon={<RefreshCw className={cn('size-4', syncMutation.isPending && 'animate-spin')} aria-hidden='true' />}
+          loading={syncMutation.isPending}
           loadingText='Pushing'
-          onClick={() => { void handleSyncClick(); }}
+          onClick={handleSyncClick}
         >
           Push pricing system
         </Button>

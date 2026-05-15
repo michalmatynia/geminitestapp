@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui/primitives.public';
 
 export type BackgroundState = {
@@ -18,6 +20,13 @@ type BackgroundResponse = {
   background: BackgroundState;
 };
 
+type SaveBackgroundMutationOptions = {
+  setBackground: (background: BackgroundState | null) => void;
+  setCosmosParallaxEnabled: (enabled: boolean) => void;
+  setError: (error: string | null) => void;
+  toast: ReturnType<typeof useToast>['toast'];
+};
+
 export type BackgroundSettingsController = {
   background: BackgroundState | null;
   cosmosParallaxEnabled: boolean;
@@ -30,6 +39,7 @@ export type BackgroundSettingsController = {
 };
 
 const BACKGROUND_ENDPOINT = '/api/v2/products/pages/background';
+const BACKGROUND_QUERY_KEY = ['products', 'ecommerce-pages-cms', 'background'] as const;
 
 const DEFAULT_BACKGROUND_STATE: BackgroundState = {
   cloudConfigured: false,
@@ -57,59 +67,87 @@ const saveBackground = async (
   return response.background;
 };
 
+const useBackgroundQuery = (): SingleQuery<BackgroundState> =>
+  createSingleQueryV2({
+    id: 'ecommerce-pages-background',
+    queryKey: BACKGROUND_QUERY_KEY,
+    queryFn: fetchBackground,
+    meta: {
+      source: 'products.ecommercePagesCms.background.load',
+      operation: 'detail',
+      resource: 'products.ecommerce-pages-cms.background',
+      domain: 'products',
+      description: 'Loads ecommerce CMS background settings.',
+      tags: ['products', 'ecommerce', 'cms', 'background'],
+    },
+  });
+
+const useSaveBackgroundMutation = ({
+  setBackground,
+  setCosmosParallaxEnabled,
+  setError,
+  toast,
+}: SaveBackgroundMutationOptions): MutationResult<BackgroundState, boolean> =>
+  createMutationV2<BackgroundState, boolean>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'background', 'save'],
+    mutationFn: saveBackground,
+    onSuccess: (nextBackground: BackgroundState): void => {
+      setBackground(nextBackground);
+      setCosmosParallaxEnabled(nextBackground.cosmosParallaxEnabled);
+      toast('Background settings saved and mirrored.', { variant: 'success' });
+    },
+    onError: (saveError: Error): void => {
+      const message = toErrorMessage(saveError);
+      setError(message);
+      toast(message, { variant: 'error' });
+    },
+    invalidateKeys: [BACKGROUND_QUERY_KEY],
+    meta: {
+      source: 'products.ecommercePagesCms.background.save',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.background',
+      domain: 'products',
+      description: 'Saves and mirrors ecommerce CMS background settings.',
+      errorPresentation: 'toast',
+      tags: ['products', 'ecommerce', 'cms', 'background'],
+    },
+  });
+
 export const useBackgroundSettingsController = (): BackgroundSettingsController => {
   const { toast } = useToast();
   const [background, setBackground] = useState<BackgroundState | null>(null);
   const [cosmosParallaxEnabled, setCosmosParallaxEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const loadBackground = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const nextBackground = await fetchBackground();
-      setBackground(nextBackground);
-      setCosmosParallaxEnabled(nextBackground.cosmosParallaxEnabled);
-    } catch (loadError: unknown) {
-      setError(toErrorMessage(loadError));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const backgroundQuery = useBackgroundQuery();
+  const saveMutation = useSaveBackgroundMutation({
+    setBackground,
+    setCosmosParallaxEnabled,
+    setError,
+    toast,
+  });
 
   useEffect(() => {
-    loadBackground().catch(() => undefined);
-  }, [loadBackground]);
+    if (backgroundQuery.data === undefined) return;
+    setBackground(backgroundQuery.data);
+    setCosmosParallaxEnabled(backgroundQuery.data.cosmosParallaxEnabled);
+  }, [backgroundQuery.data]);
 
   const handleSaveClick = useCallback((): void => {
-    setIsSaving(true);
     setError(null);
-    saveBackground(cosmosParallaxEnabled)
-      .then((nextBackground) => {
-        setBackground(nextBackground);
-        setCosmosParallaxEnabled(nextBackground.cosmosParallaxEnabled);
-        toast('Background settings saved and mirrored.', { variant: 'success' });
-      })
-      .catch((saveError: unknown) => {
-        const message = toErrorMessage(saveError);
-        setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setIsSaving(false));
-  }, [cosmosParallaxEnabled, toast]);
+    saveMutation.mutate(cosmosParallaxEnabled);
+  }, [cosmosParallaxEnabled, saveMutation]);
 
   return {
     background: background ?? DEFAULT_BACKGROUND_STATE,
     cosmosParallaxEnabled,
-    error,
+    error: error ?? (backgroundQuery.error ? toErrorMessage(backgroundQuery.error) : null),
     handleRefreshClick: () => {
-      loadBackground().catch(() => undefined);
+      setError(null);
+      void backgroundQuery.refetch();
     },
     handleSaveClick,
-    isLoading,
-    isSaving,
+    isLoading: backgroundQuery.isLoading,
+    isSaving: saveMutation.isPending,
     setCosmosParallaxEnabled,
   };
 };

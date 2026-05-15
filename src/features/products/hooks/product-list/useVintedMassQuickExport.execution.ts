@@ -15,6 +15,7 @@ import {
   invalidateProductListingsAndBadges,
   invalidateProducts,
 } from '@/shared/lib/query-invalidation';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import type { useToast } from '@/shared/ui/toast';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -248,20 +249,17 @@ export const useVintedMassQuickExportExecutor = ({
   isRunning: boolean;
   progress: ProgressSnapshotDto;
 } => {
-  const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState<ProgressSnapshotDto>({
     current: 0,
     total: 0,
     errors: 0,
   });
+  const massExportMutation = createMutationV2<void, string[]>({
+    mutationKey: ['products', 'mass-quick-export', 'vinted'],
+    mutationFn: async (productIds: string[]): Promise<void> => {
+      if (productIds.length === 0) return;
+      setProgress({ current: 0, total: productIds.length, errors: 0 });
 
-  const execute = useCallback(async (productIds: string[]): Promise<void> => {
-    if (isRunning || productIds.length === 0) return;
-
-    setIsRunning(true);
-    setProgress({ current: 0, total: productIds.length, errors: 0 });
-
-    try {
       const connection = await resolveConnectionForExecution({ resolveConnection, toast });
       if (connection === null) return;
       const sessionReady = await prepareVintedSessionForMassExport({
@@ -282,10 +280,22 @@ export const useVintedMassQuickExportExecutor = ({
       await invalidateProducts(queryClient);
       const finalToast = buildFinalToast({ ...exportState, total: productIds.length });
       toast(finalToast.message, { variant: finalToast.variant });
-    } finally {
-      setIsRunning(false);
-    }
-  }, [isRunning, queryClient, resolveConnection, toast]);
+    },
+    meta: {
+      source: 'products.hooks.useVintedMassQuickExport.execute',
+      operation: 'action',
+      resource: 'products.mass-quick-export.vinted',
+      domain: 'products',
+      description: 'Runs mass Vinted quick export for selected products.',
+      errorPresentation: 'toast',
+      tags: ['products', 'vinted', 'mass-quick-export'],
+    },
+  });
 
-  return { execute, isRunning, progress };
+  const execute = useCallback(async (productIds: string[]): Promise<void> => {
+    if (massExportMutation.isPending || productIds.length === 0) return;
+    await massExportMutation.mutateAsync(productIds);
+  }, [massExportMutation]);
+
+  return { execute, isRunning: massExportMutation.isPending, progress };
 };

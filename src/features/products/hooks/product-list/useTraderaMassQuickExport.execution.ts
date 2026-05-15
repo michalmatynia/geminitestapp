@@ -6,6 +6,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { persistTraderaQuickListFeedback } from '@/features/integrations/product-integrations-adapter';
 import type { ProgressSnapshotDto } from '@/shared/contracts/base';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { integrationSelectionQueryKeys } from '@/features/integrations/product-integrations-adapter';
@@ -198,20 +199,17 @@ export const useTraderaMassQuickExportExecutor = ({
   isRunning: boolean;
   progress: ProgressSnapshotDto;
 } => {
-  const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState<ProgressSnapshotDto>({
     current: 0,
     total: 0,
     errors: 0,
   });
+  const massExportMutation = createMutationV2<void, string[]>({
+    mutationKey: ['products', 'mass-quick-export', 'tradera'],
+    mutationFn: async (productIds: string[]): Promise<void> => {
+      if (productIds.length === 0) return;
+      setProgress({ current: 0, total: productIds.length, errors: 0 });
 
-  const execute = useCallback(async (productIds: string[]): Promise<void> => {
-    if (isRunning || productIds.length === 0) return;
-
-    setIsRunning(true);
-    setProgress({ current: 0, total: productIds.length, errors: 0 });
-
-    try {
       const connection = await resolveConnectionForExecution({ resolveConnection, toast });
       if (connection === null) return;
 
@@ -225,10 +223,22 @@ export const useTraderaMassQuickExportExecutor = ({
       await persistPreferredConnection(queryClient, connection);
       const finalToast = buildFinalToast({ errorCount, total: productIds.length });
       toast(finalToast.message, { variant: finalToast.variant });
-    } finally {
-      setIsRunning(false);
-    }
-  }, [isRunning, queryClient, resolveConnection, toast]);
+    },
+    meta: {
+      source: 'products.hooks.useTraderaMassQuickExport.execute',
+      operation: 'action',
+      resource: 'products.mass-quick-export.tradera',
+      domain: 'products',
+      description: 'Runs mass Tradera quick export for selected products.',
+      errorPresentation: 'toast',
+      tags: ['products', 'tradera', 'mass-quick-export'],
+    },
+  });
 
-  return { execute, isRunning, progress };
+  const execute = useCallback(async (productIds: string[]): Promise<void> => {
+    if (massExportMutation.isPending || productIds.length === 0) return;
+    await massExportMutation.mutateAsync(productIds);
+  }, [massExportMutation]);
+
+  return { execute, isRunning: massExportMutation.isPending, progress };
 };

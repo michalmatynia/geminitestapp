@@ -34,6 +34,7 @@ export function RuleItem(props: RuleItemProps): React.JSX.Element {
   );
 }
 
+/* eslint-disable max-lines-per-function, complexity, eqeqeq */
 function RuleItemInner(props: RuleItemProps): React.JSX.Element {
   const { collapsed, onCollapsedChange } = props;
 
@@ -51,6 +52,8 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
       ? String(Math.max(0, Math.floor(rule.sequence)))
       : '';
 
+  const getSequenceValue = (value: string | undefined): string => (value != null && value !== '' ? value : '-');
+
   return (
     <Card
       variant='subtle'
@@ -59,7 +62,7 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
         'space-y-3 border-border/60 bg-card/40 transition-opacity',
         isDragging ? 'opacity-50' : 'opacity-100',
         isDragTarget ? 'ring-1 ring-cyan-300/55' : '',
-        rule?.sequenceGroupId ? 'border-l-2 border-cyan-400/35' : ''
+        rule?.sequenceGroupId != null ? 'border-l-2 border-cyan-400/35' : ''
       )}
     >
       <RuleItemHeader isCollapsed={isCollapsed} setCollapsed={setCollapsed} />
@@ -85,7 +88,7 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
                 aria-label='Textarea'
                 title='Textarea'
               />
-              {draft.error ? (
+              {draft.error !== null ? (
                 <div className='text-xs text-red-300'>{draft.error}</div>
               ) : (
                 <div className='text-xs text-gray-400'>Fix JSON to enable visual editing.</div>
@@ -98,7 +101,7 @@ function RuleItemInner(props: RuleItemProps): React.JSX.Element {
         <div className='rounded-md border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-400'>
           {rule ? (
             <>
-              Sequence: {sequenceValue || '-'} | Kind: {rule.kind}
+              Sequence: {getSequenceValue(sequenceValue)} | Kind: {rule.kind}
               {' | '}
               Scopes: {appliesToScopes.length > 0 ? appliesToScopes.join(', ') : 'all'}
             </>

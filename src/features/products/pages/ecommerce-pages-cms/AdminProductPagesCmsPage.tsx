@@ -16,6 +16,8 @@ import { useCollectionCardsController } from './collection-cards-cms.client';
 import { useEditorialArticlesController } from './editorial-articles-cms.client';
 import { useManifestoController } from './manifesto-cms.client';
 import { api } from '@/shared/lib/api-client';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -35,7 +37,22 @@ type LogoResponse = {
   logo: LogoState;
 };
 
+type LogoUploadVariables = {
+  file: File;
+  logoAlt: string;
+};
+
+type LogoUploadMutationOptions = {
+  resetFileInput: () => void;
+  setError: (error: string | null) => void;
+  setLogo: (logo: LogoState | null) => void;
+  setLogoAlt: (logoAlt: string) => void;
+  setSelectedFile: (file: File | null) => void;
+  toast: ReturnType<typeof useToast>['toast'];
+};
+
 const LOGO_ENDPOINT = '/api/v2/products/pages/logo';
+const LOGO_QUERY_KEY = ['products', 'ecommerce-pages-cms', 'logo'] as const;
 const ECOMMERCE_PAGE_TABS = [
   { label: 'CMS Content', value: 'content' },
   { label: 'Discount Coupons', value: 'discount-coupons' },
@@ -75,6 +92,57 @@ const uploadLogo = async (file: File, logoAlt: string): Promise<LogoState> => {
   return response.logo;
 };
 
+const useLogoCmsQuery = (): SingleQuery<LogoState> =>
+  createSingleQueryV2({
+    id: 'ecommerce-pages-logo',
+    queryKey: LOGO_QUERY_KEY,
+    queryFn: fetchLogo,
+    meta: {
+      source: 'products.ecommercePagesCms.logo.load',
+      operation: 'detail',
+      resource: 'products.ecommerce-pages-cms.logo',
+      domain: 'products',
+      description: 'Loads ecommerce CMS logo settings.',
+      tags: ['products', 'ecommerce', 'cms', 'logo'],
+    },
+  });
+
+const useLogoUploadMutation = ({
+  resetFileInput,
+  setError,
+  setLogo,
+  setLogoAlt,
+  setSelectedFile,
+  toast,
+}: LogoUploadMutationOptions): MutationResult<LogoState, LogoUploadVariables> =>
+  createMutationV2<LogoState, LogoUploadVariables>({
+    mutationKey: ['products', 'ecommerce-pages-cms', 'logo', 'upload'],
+    mutationFn: ({ file, logoAlt }: LogoUploadVariables): Promise<LogoState> =>
+      uploadLogo(file, logoAlt),
+    onSuccess: (nextLogo: LogoState): void => {
+      setLogo(nextLogo);
+      setLogoAlt(nextLogo.logoAlt);
+      setSelectedFile(null);
+      resetFileInput();
+      toast('Logo saved and mirrored.', { variant: 'success' });
+    },
+    onError: (saveError: Error): void => {
+      const message = toErrorMessage(saveError);
+      setError(message);
+      toast(message, { variant: 'error' });
+    },
+    invalidateKeys: [LOGO_QUERY_KEY],
+    meta: {
+      source: 'products.ecommercePagesCms.logo.upload',
+      operation: 'update',
+      resource: 'products.ecommerce-pages-cms.logo',
+      domain: 'products',
+      description: 'Uploads and mirrors ecommerce CMS logo settings.',
+      errorPresentation: 'toast',
+      tags: ['products', 'ecommerce', 'cms', 'logo', 'upload'],
+    },
+  });
+
 const useLogoPreviewUrl = (logoUrl: string, selectedFile: File | null): string => {
   const previewUrl = useMemo(() => {
     if (selectedFile === null) return logoUrl;
@@ -96,54 +164,44 @@ const usePagesCmsLogoController = (): LogoController => {
   const [logo, setLogo] = useState<LogoState | null>(null);
   const [logoAlt, setLogoAlt] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const logoQuery = useLogoCmsQuery();
+  const resetFileInput = useCallback((): void => {
+    if (fileInputRef.current !== null) fileInputRef.current.value = '';
+  }, []);
+  const uploadMutation = useLogoUploadMutation({
+    resetFileInput,
+    setError,
+    setLogo,
+    setLogoAlt,
+    setSelectedFile,
+    toast,
+  });
   const previewUrl = useLogoPreviewUrl(logo?.logoUrl ?? '', selectedFile);
 
-  const loadLogo = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const nextLogo = await fetchLogo();
-      setLogo(nextLogo);
-      setLogoAlt(nextLogo.logoAlt);
-    } catch (loadError: unknown) { setError(toErrorMessage(loadError)); }
-    finally { setIsLoading(false); }
-  }, []);
-
   useEffect(() => {
-    loadLogo().catch(() => undefined);
-  }, [loadLogo]);
+    if (logoQuery.data === undefined) return;
+    setLogo(logoQuery.data);
+    setLogoAlt(logoQuery.data.logoAlt);
+  }, [logoQuery.data]);
 
   const handleUploadClick = useCallback((): void => {
     if (selectedFile === null) { setError('Choose a logo file first.'); return; }
-    setIsSaving(true);
     setError(null);
-    uploadLogo(selectedFile, logoAlt)
-      .then((nextLogo) => {
-        setLogo(nextLogo); setLogoAlt(nextLogo.logoAlt); setSelectedFile(null);
-        if (fileInputRef.current !== null) fileInputRef.current.value = '';
-        toast('Logo saved and mirrored.', { variant: 'success' });
-      })
-      .catch((saveError: unknown) => {
-        const message = toErrorMessage(saveError);
-        setError(message);
-        toast(message, { variant: 'error' });
-      })
-      .finally(() => setIsSaving(false));
-  }, [logoAlt, selectedFile, toast]);
+    uploadMutation.mutate({ file: selectedFile, logoAlt });
+  }, [logoAlt, selectedFile, uploadMutation]);
 
   return {
-    error,
+    error: error ?? (logoQuery.error ? toErrorMessage(logoQuery.error) : null),
     fileInputRef,
     handleFileChange: (event) => setSelectedFile(event.target.files?.[0] ?? null),
     handleRefreshClick: () => {
-      loadLogo().catch(() => undefined);
+      setError(null);
+      void logoQuery.refetch();
     },
     handleUploadClick,
-    isLoading,
-    isSaving,
+    isLoading: logoQuery.isLoading,
+    isSaving: uploadMutation.isPending,
     logo,
     logoAlt,
     previewUrl,

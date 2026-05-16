@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ArchLocale, ArchPageContent, ArchPageSettings, Project, Service } from '@/lib/types';
-import { isArchLocale } from '@/lib/types';
+import { ARCH_LOCALES, isArchLocale } from '@/lib/types';
 import Nav from '@/components/Nav';
 import Cursor from '@/components/Cursor';
 import Hero from '@/components/Hero';
@@ -33,6 +33,17 @@ function readLocaleFromPathname(pathname: string): ArchLocale | null {
   return isArchLocale(maybeLocale) ? maybeLocale : null;
 }
 
+function firstLocalizedModelUrl(
+  localizedContent: Record<ArchLocale, ArchPageContent>,
+  select: (content: ArchPageContent) => string | undefined
+): string | undefined {
+  for (const locale of ARCH_LOCALES) {
+    const value = select(localizedContent[locale])?.trim();
+    if (value !== undefined && value.length > 0) return value;
+  }
+  return undefined;
+}
+
 export default function ArchHomePage({
   initialLocale,
   localizedContent,
@@ -44,6 +55,14 @@ export default function ArchHomePage({
   const pageContent =
     localizedContent[activeLocale] ?? localizedContent[pageSettings.defaultLocale] ?? localizedContent.en;
   const vis = pageSettings.visibility;
+  const heroModelUrl = useMemo(
+    () => firstLocalizedModelUrl(localizedContent, (content) => content.hero.modelUrl),
+    [localizedContent]
+  );
+  const interiorModelUrl = useMemo(
+    () => firstLocalizedModelUrl(localizedContent, (content) => content.drawing.interiorModelUrl),
+    [localizedContent]
+  );
 
   const switchLocale = useCallback((nextLocale: ArchLocale) => {
     if (activeLocale === nextLocale) return;
@@ -82,10 +101,10 @@ export default function ArchHomePage({
         publishedLocales={pageSettings.publishedLocales}
         onLocaleChange={switchLocale}
       />
-      <Hero content={pageContent.hero} />
+      <Hero content={pageContent.hero} modelUrl={heroModelUrl} />
       {vis.drawing ? (
         <FloorPlanSlotsProvider>
-          <FloorPlan content={pageContent.drawing} />
+          <FloorPlan content={pageContent.drawing} interiorModelUrl={interiorModelUrl} />
         </FloorPlanSlotsProvider>
       ) : null}
       {vis.philosophy ? <Philosophy content={pageContent.philosophy} /> : null}

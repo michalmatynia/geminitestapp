@@ -3,10 +3,16 @@
 import type { ArchPageContent } from '@/lib/types';
 import HeroCanvas from './HeroCanvas';
 
-export default function Hero({ content }: { content: ArchPageContent['hero'] }) {
+export default function Hero({
+  content,
+  modelUrl,
+}: {
+  content: ArchPageContent['hero'];
+  modelUrl?: string;
+}) {
   return (
     <header className="hero">
-      <HeroCanvas />
+      <HeroCanvas modelUrl={modelUrl} />
       <div className="wrap hero-inner">
         <div className="hero-meta rev">
           <span><span className="dot" />&thinsp;{content.location}</span>

@@ -61,7 +61,7 @@ function wallsFromRooms(rooms: Room[]): Wall[] {
 const ss  = (t: number) => t * t * (3 - 2 * t);
 const co3 = (t: number) => 1 - Math.pow(1 - t, 3);
 
-function PlanInteractivePanel() {
+function PlanInteractivePanel({ modelUrl }: { modelUrl?: string }) {
   const { setSlots: publishSlots } = useFloorPlanSlots();
   const [slots,      setSlots]      = useState<Slots>(INITIAL_SLOTS);
   const [display,    setDisplay]    = useState<Room[]>(() => computeRooms(INITIAL_SLOTS));
@@ -356,7 +356,7 @@ function PlanInteractivePanel() {
 
           </div>
           <div className="interior-viewer-panel rev" data-delay="2">
-            <InteriorViewer />
+            <InteriorViewer modelUrl={modelUrl} />
           </div>
     </div>
   );
@@ -364,7 +364,13 @@ function PlanInteractivePanel() {
 
 const MemoizedPlanInteractivePanel = memo(PlanInteractivePanel);
 
-export default function FloorPlan({ content }: { content: ArchPageContent['drawing'] }) {
+export default function FloorPlan({
+  content,
+  interiorModelUrl,
+}: {
+  content: ArchPageContent['drawing'];
+  interiorModelUrl?: string;
+}) {
   const [modalSrc, setModalSrc] = useState<string | null>(null);
 
   const closeModal = useCallback(() => setModalSrc(null), []);
@@ -405,7 +411,7 @@ export default function FloorPlan({ content }: { content: ArchPageContent['drawi
             )}
           </div>
 
-          <MemoizedPlanInteractivePanel />
+          <MemoizedPlanInteractivePanel modelUrl={interiorModelUrl} />
         </div>
       </div>
       {modalSrc && (

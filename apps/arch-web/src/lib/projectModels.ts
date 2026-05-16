@@ -14,6 +14,9 @@ export type MatHint = 'glass' | 'concrete' | 'plaster';
 // every THREE.Texture(canvas) shares the same GPU upload.
 const _canvasCache = new Map<MatHint, HTMLCanvasElement>();
 
+const canCreateCanvas = (): boolean =>
+  typeof document !== 'undefined' && typeof document.createElement === 'function';
+
 function glassCanvas(): HTMLCanvasElement {
   // Tile = one curtain-wall panel: 48×72 px → 0.9 m × 1.5 m real-world
   const W = 48, H = 72, frame = 2, spanH = 14;
@@ -95,6 +98,9 @@ function plasterCanvas(): HTMLCanvasElement {
 
 function getBaseCanvas(m: MatHint): HTMLCanvasElement {
   if (_canvasCache.has(m)) return _canvasCache.get(m)!;
+  if (!canCreateCanvas()) {
+    throw new Error('Canvas facade textures are only available in the browser.');
+  }
   const cv = m === 'glass' ? glassCanvas() : m === 'concrete' ? concreteCanvas() : plasterCanvas();
   _canvasCache.set(m, cv);
   return cv;
@@ -103,20 +109,33 @@ function getBaseCanvas(m: MatHint): HTMLCanvasElement {
 // Build a PBR material with a tiled facade texture.
 // tintHex is multiplied with the map (0xFFFFFF = no tint).
 function facadeMat(w: number, h: number, m: MatHint, tintHex = 0xFFFFFF): THREE.MeshStandardMaterial {
+  let roughness: number, metalness: number, envMapIntensity: number;
+  if (m === 'glass') {
+    roughness = 0.12; metalness = 0.12; envMapIntensity = 1.0;
+  } else if (m === 'concrete') {
+    roughness = 0.88; metalness = 0;   envMapIntensity = 0.28;
+  } else {
+    roughness = 0.76; metalness = 0;   envMapIntensity = 0.32;
+  }
+
+  if (!canCreateCanvas()) {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color(tintHex),
+      roughness, metalness, envMapIntensity,
+      transparent: true, opacity: 0,
+    });
+  }
+
   const tex = new THREE.Texture(getBaseCanvas(m));
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.needsUpdate = true;
 
-  let roughness: number, metalness: number, envMapIntensity: number;
   if (m === 'glass') {
     tex.repeat.set(w / 0.9,  h / 1.5);
-    roughness = 0.12; metalness = 0.12; envMapIntensity = 1.0;
   } else if (m === 'concrete') {
     tex.repeat.set(w / 2.0,  h / 0.22);
-    roughness = 0.88; metalness = 0;   envMapIntensity = 0.28;
   } else {
     tex.repeat.set(w / 1.8,  h / 2.2);
-    roughness = 0.76; metalness = 0;   envMapIntensity = 0.32;
   }
 
   return new THREE.MeshStandardMaterial({

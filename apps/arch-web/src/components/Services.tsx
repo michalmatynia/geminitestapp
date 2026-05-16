@@ -8,6 +8,41 @@ const servicesMeta: Record<string, { num: string; meta: string; value: string }>
   'S-04': { num: 'iv.', meta: 'Tracked', value: '340+ projects' },
 };
 
+const fallbackServices: Service[] = [
+  {
+    code: 'S-01',
+    title: 'Code compliance',
+    emphasis: 'compliance',
+    description:
+      'Planning rules, building regulations, access standards, and project constraints are checked before drawings leave review.',
+    order: 0,
+  },
+  {
+    code: 'S-02',
+    title: 'Brief to massing',
+    emphasis: 'massing',
+    description:
+      'Natural language briefs become tested spatial options with area schedules, circulation logic, and daylight constraints attached.',
+    order: 1,
+  },
+  {
+    code: 'S-03',
+    title: 'Drawing documentation',
+    emphasis: 'documentation',
+    description:
+      'Plans, elevations, and schedules are coordinated against studio standards so issue sets stay consistent.',
+    order: 2,
+  },
+  {
+    code: 'S-04',
+    title: 'Practice intelligence',
+    emphasis: 'intelligence',
+    description:
+      'Project data becomes searchable memory, linking precedents, decisions, risks, and consultant responses.',
+    order: 3,
+  },
+];
+
 export default function Services({
   content,
   services,
@@ -15,6 +50,8 @@ export default function Services({
   content: ArchPageContent['services'];
   services: Service[];
 }) {
+  const displayServices = services.length > 0 ? services : fallbackServices;
+
   return (
     <section id="practice" className="services-dark">
       <div className="wrap">
@@ -29,7 +66,7 @@ export default function Services({
         </div>
 
         <div className="practice-list">
-          {services.map((svc) => {
+          {displayServices.map((svc) => {
             const meta = servicesMeta[svc.code] ?? { num: '—', meta: '', value: '' };
             return (
               <div className="practice-row" key={svc.code}>

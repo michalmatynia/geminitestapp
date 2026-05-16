@@ -56,6 +56,8 @@ export interface Project {
   status: 'published' | 'draft';
   cameraPosition: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
+  modelAssetId?: string;
+  modelUrl?: string;
 }
 
 export interface Service {
@@ -88,6 +90,8 @@ export interface ArchPageContent {
     lede: string;
     primaryCtaLabel: string;
     secondaryCtaLabel: string;
+    modelAssetId?: string;
+    modelUrl?: string;
   };
   drawing: {
     eyebrow: string;
@@ -97,6 +101,8 @@ export interface ArchPageContent {
     ctaLabel: string;
     hint: string;
     thumbImages: string[];
+    interiorModelAssetId?: string;
+    interiorModelUrl?: string;
   };
   philosophy: {
     eyebrow: string;

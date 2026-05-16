@@ -135,7 +135,7 @@ export const buildIdFilter = (id: string): Filter<Asset3DDocument> => {
   
   // Return combined filter
   if (clauses.length === 0) return {};
-  if (clauses.length === 1) return clauses[0];
+  if (clauses.length === 1) return clauses[0] ?? {};
   return { $or: clauses };
 };
 
@@ -179,6 +179,9 @@ const getViewerConfig = (doc: Asset3DDocument): Record<string, unknown> => {
 const getAssetFileUrl = (doc: Asset3DDocument): string | undefined =>
   normalizeString(doc.fileUrl) ?? undefined;
 
+const getAssetFilepath = (doc: Asset3DDocument): string | undefined =>
+  normalizeString(doc.filepath) ?? normalizeString(doc.fileUrl) ?? undefined;
+
 const getAssetSize = (doc: Asset3DDocument): number =>
   doc.size ?? doc.fileSize ?? 0;
 
@@ -194,14 +197,17 @@ export const mapDocToRecord = (doc: Asset3DDocument): Asset3DRecord => {
     categoryId: getAssetRecordCategory(doc),
     tags: getAssetRecordTags(doc),
     fileUrl: getAssetFileUrl(doc),
+    thumbnailUrl: normalizeString(doc.thumbnailUrl) ?? null,
     filename: normalizeString(doc.filename) ?? undefined,
+    filepath: getAssetFilepath(doc),
     mimetype: normalizeString(doc.mimetype) ?? undefined,
     size: getAssetSize(doc),
+    fileSize: getAssetSize(doc),
     format: normalizeString(doc.format) ?? undefined,
     isPublic: doc.isPublic ?? false,
     metadata: getMetadata(doc),
     viewerConfig: getViewerConfig(doc),
-    createdAt,
-    updatedAt: normalizeDate(doc.updatedAt, createdAt),
+    createdAt: createdAt.toISOString(),
+    updatedAt: normalizeDate(doc.updatedAt, createdAt).toISOString(),
   };
 };

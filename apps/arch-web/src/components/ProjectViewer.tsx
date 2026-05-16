@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { makeProjectGroup, INK, INK_2, INK_3, PAPER, PAPER2, PAPER3 } from '@/lib/projectModels';
+import { disposeObject3D, fitObjectToBox, loadGltfModel, prepareLoadedModel } from '@/lib/threeModelUtils';
 
 type RenderMode = 'wire' | 'solid' | 'texture';
 type Props = { projects: Project[] };
@@ -200,6 +201,7 @@ function ProjectViewer({ projects }: Props) {
 
     function opFn(m: RenderMode) {
       return (c: THREE.Object3D) => {
+        if (c.userData.isExternalModel) return m === 'wire' ? 0.28 : 1;
         if (c.userData.isSolid)   return m === 'solid' ? 1 : 0;
         if (c.userData.isTexture) return m === 'texture' ? 1 : 0;
         if (c.userData.isWire) {
@@ -212,18 +214,56 @@ function ProjectViewer({ projects }: Props) {
       };
     }
 
+    let loadToken = 0;
+
     function loadProject(idx: number) {
+      const token = loadToken + 1;
+      loadToken = token;
       if (currentGroup) {
         const old = currentGroup;
         animateOpacity(old, () => 0, 350);
-        setTimeout(() => scene.remove(old), 400);
+        setTimeout(() => {
+          scene.remove(old);
+          disposeObject3D(old);
+        }, 400);
+        currentGroup = null;
       }
-      const g = makeProjectGroup(idx);
-      g.traverse(c => { const mat = (c as THREE.Mesh).material as THREE.Material & { opacity: number } | undefined; if (mat) mat.opacity = 0; });
-      scene.add(g);
-      currentGroup = g;
+
+      const addGroup = (g: THREE.Group) => {
+        if (loadToken !== token) {
+          disposeObject3D(g);
+          return;
+        }
+        g.traverse(c => {
+          const mesh = c as THREE.Mesh;
+          const mats = Array.isArray(mesh.material)
+            ? mesh.material
+            : mesh.material
+              ? [mesh.material]
+              : [];
+          (mats as Array<THREE.Material & { opacity: number }>).forEach((mat) => {
+            mat.transparent = true;
+            mat.opacity = 0;
+          });
+        });
+        scene.add(g);
+        currentGroup = g;
+        setTimeout(() => { if (currentGroup === g) animateOpacity(g, opFn(mode), 600); }, 50);
+      };
+
+      const projectModelUrl = displayProjects[idx]?.modelUrl?.trim();
+      if (projectModelUrl !== undefined && projectModelUrl.length > 0) {
+        void loadGltfModel(projectModelUrl)
+          .then((g) => {
+            prepareLoadedModel(g);
+            fitObjectToBox(g, 18, new THREE.Vector3(0, 6, 0));
+            addGroup(g);
+          })
+          .catch(() => addGroup(makeProjectGroup(idx)));
+      } else {
+        addGroup(makeProjectGroup(idx));
+      }
       currentIdx = idx;
-      setTimeout(() => { if (currentGroup === g) animateOpacity(g, opFn(mode), 600); }, 50);
 
       const ct = camTargets[idx];
       const sp = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
@@ -299,6 +339,7 @@ function ProjectViewer({ projects }: Props) {
       window.removeEventListener('resize', onResize);
       canvas.removeEventListener('pointerdown', pauseRotate);
       canvas.removeEventListener('pointerup', resumeRotate);
+      if (currentGroup) disposeObject3D(currentGroup);
       controls.dispose();
       envTex.dispose();
       renderer.dispose();

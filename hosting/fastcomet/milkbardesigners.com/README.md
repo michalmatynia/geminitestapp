@@ -97,6 +97,38 @@ Repo smoke test from the GeminiTest app root:
 npm run storage:smoke:milkbar-fastcomet
 ```
 
+Export the current arch-web procedural models into the FastComet `public_html`
+tree from the GeminiTest app root:
+
+```sh
+npm run storage:export:milkbar-procedural-models
+```
+
+This writes:
+
+```text
+hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural/milkbar-hero-background.gltf
+hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural/milkbar-every-line-interior.gltf
+hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural/milkbar-project-mbd-001.gltf
+hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural/milkbar-project-mbd-002.gltf
+hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural/milkbar-project-mbd-003.gltf
+```
+
+Upload and assign Milkbar CMS model files from the GeminiTest app root:
+
+```sh
+npm run storage:upload:milkbar-models -- \
+  --hero=/absolute/path/hero.glb \
+  --interior=/absolute/path/interior.glb \
+  --project=MBD-001=/absolute/path/project-001.glb \
+  --push-cloud
+```
+
+This uses the same `milkbarCms` storage profile as the CMS UI. Files are
+uploaded to `/uploads/cms/models`, asset records are created, the CMS hero,
+interior, and project model assignments are updated, and `--push-cloud` copies
+the public FastComet URLs into the arch-web runtime MongoDB Cloud data.
+
 Without credentials, it verifies that the PHP endpoint is reachable on
 FastComet and should return JSON. With credentials in the app's Mongo
 `fastcomet_storage_config_v1` setting, or with `MILKBAR_FASTCOMET_STORAGE_TOKEN`

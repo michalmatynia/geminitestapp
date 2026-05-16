@@ -2,8 +2,9 @@
 
 import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { disposeObject3D, fitObjectToBox, loadGltfModel, prepareLoadedModel } from '@/lib/threeModelUtils';
 
-function HeroCanvas() {
+function HeroCanvas({ modelUrl }: { modelUrl?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -21,6 +22,73 @@ function HeroCanvas() {
     const camera = new THREE.PerspectiveCamera(42, initW / initH, 0.1, 300);
     camera.position.set(10, 16, 10);
     camera.lookAt(0, 2, 0);
+
+    const resolvedModelUrl = modelUrl?.trim();
+    if (resolvedModelUrl !== undefined && resolvedModelUrl.length > 0) {
+      scene.add(new THREE.AmbientLight(0xF9F8F5, 0.9));
+      const key = new THREE.DirectionalLight(0xFFF4E0, 1.2);
+      key.position.set(8, 18, 12);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xE8EFF8, 0.45);
+      fill.position.set(-10, 8, -8);
+      scene.add(fill);
+
+      let cancelled = false;
+      let loadedModel: THREE.Group | null = null;
+      void loadGltfModel(resolvedModelUrl)
+        .then((group) => {
+          if (cancelled) {
+            disposeObject3D(group);
+            return;
+          }
+          prepareLoadedModel(group);
+          fitObjectToBox(group, 16, new THREE.Vector3(0, 4.5, 0));
+          scene.add(group);
+          loadedModel = group;
+        })
+        .catch(() => undefined);
+
+      let heroMouseX = 0, heroMouseY = 0;
+      let targetX = 0, targetY = 0;
+      const onMouseMove = (e: MouseEvent) => {
+        targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+        targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+      };
+      window.addEventListener('mousemove', onMouseMove);
+
+      function onResize() {
+        if (!canvas) return;
+        const w = canvas.offsetWidth || window.innerWidth;
+        const h = canvas.offsetHeight || window.innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+      window.addEventListener('resize', onResize);
+
+      let t = 0, rafId: number;
+      function animate() {
+        rafId = requestAnimationFrame(animate);
+        t += 0.0005;
+        heroMouseX += (targetX - heroMouseX) * 0.055;
+        heroMouseY += (targetY - heroMouseY) * 0.055;
+        camera.position.x = 10 + Math.sin(t) * 1.1 + heroMouseX * 5.5;
+        camera.position.z = 10 + Math.cos(t) * 1.1 + heroMouseY * 4.2;
+        camera.position.y = 16 + heroMouseY * 3.8;
+        camera.lookAt(0, 3, 0);
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', onResize);
+        window.removeEventListener('mousemove', onMouseMove);
+        if (loadedModel !== null) disposeObject3D(loadedModel);
+        renderer.dispose();
+      };
+    }
 
     const html = document.documentElement;
 
@@ -356,7 +424,7 @@ function HeroCanvas() {
       window.removeEventListener('mousemove', onMouseMove);
       renderer.dispose();
     };
-  }, []);
+  }, [modelUrl]);
 
   return (
     <canvas

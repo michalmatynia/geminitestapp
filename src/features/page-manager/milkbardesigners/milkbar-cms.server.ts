@@ -32,6 +32,8 @@ import {
   resolveArchMongoSourceConfig,
   type MongoApplicationSourceConfig,
 } from '@/shared/lib/db/utils/mongo';
+import { getAsset3DRepository } from '@/features/viewer3d/server';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const SOURCE_PAGE_CONTENT_COLLECTION = 'milkbar_page_content';
 const SOURCE_PROJECTS_COLLECTION = 'milkbar_projects';
@@ -60,6 +62,16 @@ type MilkbarCmsData = {
   updatedAt: string | null;
 };
 
+const createEmptyMilkbarCmsData = (): MilkbarCmsData => ({
+  hasPageContent: false,
+  localizedContent: normalizeLocalizedContent(undefined),
+  pageSettings: normalizePageSettings(undefined),
+  projects: [],
+  services: [],
+  inquiries: [],
+  updatedAt: null,
+});
+
 const SOURCE_COLLECTIONS: MilkbarCmsCollections = {
   pageContent: SOURCE_PAGE_CONTENT_COLLECTION,
   projects: SOURCE_PROJECTS_COLLECTION,
@@ -79,6 +91,12 @@ const asString = (value: unknown, fallback: string): string => {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
+};
+
+const asOptionalString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 };
 
 const asNumber = (value: unknown, fallback: number): number => {
@@ -108,6 +126,45 @@ const splitMultiline = (value: string): string[] =>
     .split('\n')
     .map((entry) => entry.trim())
     .filter(Boolean);
+
+const isAbsoluteHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value.trim());
+
+const joinUrl = (baseUrl: string, pathname: string): string => {
+  const base = baseUrl.trim().replace(/\/+$/, '');
+  const path = pathname.trim().replace(/^\/+/, '');
+  return `${base}/${path}`;
+};
+
+const metadataString = (
+  metadata: Record<string, unknown> | undefined,
+  key: string
+): string | undefined => {
+  const value = metadata?.[key];
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const resolveAssetPublicUrl = (asset: Asset3DRecord): string | undefined => {
+  const directCandidates = [asset.filepath, asset.fileUrl].filter(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  );
+  const absolute = directCandidates.find(isAbsoluteHttpUrl);
+  if (absolute !== undefined) return absolute.trim();
+
+  const publicBaseUrl = metadataString(asset.metadata, 'publicBaseUrl');
+  const publicPath = metadataString(asset.metadata, 'publicPath');
+  if (publicBaseUrl !== undefined && publicPath !== undefined) {
+    return joinUrl(publicBaseUrl, publicPath);
+  }
+
+  const storedPath = directCandidates.find((candidate) => candidate.startsWith('/'));
+  if (publicBaseUrl !== undefined && storedPath !== undefined) {
+    return joinUrl(publicBaseUrl, storedPath);
+  }
+
+  return undefined;
+};
 
 const redactMongoUri = (value: string | null): string | null => {
   if (value === null) return null;
@@ -288,6 +345,21 @@ async function readMilkbarCmsData(
   };
 }
 
+const readMilkbarCmsDataOrEmpty = async (
+  read: () => Promise<MilkbarCmsData>,
+  label: string
+): Promise<MilkbarCmsData> => {
+  try {
+    return await read();
+  } catch (error) {
+    console.warn(
+      `[milkbar-cms] ${label} is unavailable; continuing with fallback data.`,
+      error instanceof Error ? error.message : String(error)
+    );
+    return createEmptyMilkbarCmsData();
+  }
+};
+
 const hasSourceOfTruthData = (data: MilkbarCmsData): boolean =>
   data.hasPageContent || data.projects.length > 0 || data.services.length > 0;
 
@@ -415,6 +487,12 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       lede: asString(hero['lede'], fallback.hero.lede),
       primaryCtaLabel: asString(hero['primaryCtaLabel'], fallback.hero.primaryCtaLabel),
       secondaryCtaLabel: asString(hero['secondaryCtaLabel'], fallback.hero.secondaryCtaLabel),
+      ...(asOptionalString(hero['modelAssetId']) !== undefined
+        ? { modelAssetId: asOptionalString(hero['modelAssetId']) }
+        : {}),
+      ...(asOptionalString(hero['modelUrl']) !== undefined
+        ? { modelUrl: asOptionalString(hero['modelUrl']) }
+        : {}),
     },
     drawing: {
       eyebrow: asString(drawing['eyebrow'], fallback.drawing.eyebrow),
@@ -424,6 +502,12 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       ctaLabel: asString(drawing['ctaLabel'], fallback.drawing.ctaLabel),
       hint: asString(drawing['hint'], fallback.drawing.hint),
       thumbImages: asStringArray(drawing['thumbImages'], fallback.drawing.thumbImages),
+      ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
+        ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
+        : {}),
+      ...(asOptionalString(drawing['interiorModelUrl']) !== undefined
+        ? { interiorModelUrl: asOptionalString(drawing['interiorModelUrl']) }
+        : {}),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], fallback.philosophy.eyebrow),
@@ -584,6 +668,9 @@ const normalizeProject = (input: unknown, index: number): MilkbarProjectCmsRecor
     ...(typeof record['modelAssetId'] === 'string' && record['modelAssetId'].trim().length > 0
       ? { modelAssetId: record['modelAssetId'].trim() }
       : {}),
+    ...(typeof record['modelUrl'] === 'string' && record['modelUrl'].trim().length > 0
+      ? { modelUrl: record['modelUrl'].trim() }
+      : {}),
   };
 };
 
@@ -625,6 +712,119 @@ const normalizeUpdateInput = (input: unknown): MilkbarCmsUpdateInput => {
   };
 };
 
+const collectModelAssetIds = (input: MilkbarCmsUpdateInput): string[] => {
+  const ids = new Set<string>();
+
+  MILKBAR_LOCALES.forEach((locale) => {
+    const content = input.localizedContent[locale];
+    const heroId = content.hero.modelAssetId?.trim() ?? '';
+    const interiorId = content.drawing.interiorModelAssetId?.trim() ?? '';
+    if (heroId.length > 0) ids.add(heroId);
+    if (interiorId.length > 0) ids.add(interiorId);
+  });
+
+  input.projects.forEach((project) => {
+    const modelId = project.modelAssetId?.trim() ?? '';
+    if (modelId.length > 0) ids.add(modelId);
+  });
+
+  return Array.from(ids);
+};
+
+const resolveModelAssetUrlMap = async (
+  input: MilkbarCmsUpdateInput
+): Promise<Map<string, string>> => {
+  const ids = collectModelAssetIds(input);
+  if (ids.length === 0) return new Map();
+
+  try {
+    const repository = getAsset3DRepository();
+    const records = await Promise.all(
+      ids.map(async (id) => ({ id, asset: await repository.getAsset3DById(id) }))
+    );
+    return new Map(
+      records.flatMap(({ id, asset }) => {
+        if (asset === null) return [];
+        const url = resolveAssetPublicUrl(asset);
+        return url === undefined ? [] : [[id, url] as const];
+      })
+    );
+  } catch {
+    return new Map();
+  }
+};
+
+const optionalStringProp = <K extends string>(
+  key: K,
+  value: string | undefined
+): Partial<Record<K, string>> =>
+  value !== undefined && value.trim().length > 0
+    ? ({ [key]: value.trim() } as Partial<Record<K, string>>)
+    : {};
+
+const enrichPageContentWithModelUrls = (
+  content: MilkbarPageContent,
+  assetUrls: Map<string, string>
+): MilkbarPageContent => {
+  const heroAssetId = content.hero.modelAssetId?.trim();
+  const interiorAssetId = content.drawing.interiorModelAssetId?.trim();
+  const heroUrl =
+    heroAssetId !== undefined && heroAssetId.length > 0
+      ? assetUrls.get(heroAssetId) ?? content.hero.modelUrl
+      : undefined;
+  const interiorUrl =
+    interiorAssetId !== undefined && interiorAssetId.length > 0
+      ? assetUrls.get(interiorAssetId) ?? content.drawing.interiorModelUrl
+      : undefined;
+
+  const { modelAssetId: _heroModelAssetId, modelUrl: _heroModelUrl, ...heroBase } = content.hero;
+  const {
+    interiorModelAssetId: _interiorModelAssetId,
+    interiorModelUrl: _interiorModelUrl,
+    ...drawingBase
+  } = content.drawing;
+  const hero: MilkbarPageContent['hero'] = {
+    ...heroBase,
+    ...optionalStringProp('modelAssetId', heroAssetId),
+    ...optionalStringProp('modelUrl', heroUrl),
+  };
+  const drawing: MilkbarPageContent['drawing'] = {
+    ...drawingBase,
+    ...optionalStringProp('interiorModelAssetId', interiorAssetId),
+    ...optionalStringProp('interiorModelUrl', interiorUrl),
+  };
+
+  return { ...content, hero, drawing };
+};
+
+const enrichMilkbarCmsUpdateWithModelUrls = async (
+  input: MilkbarCmsUpdateInput
+): Promise<MilkbarCmsUpdateInput> => {
+  const assetUrls = await resolveModelAssetUrlMap(input);
+  const localizedContent = MILKBAR_LOCALES.reduce((acc, locale) => {
+    acc[locale] = enrichPageContentWithModelUrls(input.localizedContent[locale], assetUrls);
+    return acc;
+  }, {} as MilkbarLocalizedContent);
+
+  return {
+    ...input,
+    localizedContent,
+    projects: input.projects.map((project) => {
+      const modelAssetId = project.modelAssetId?.trim();
+      const modelUrl =
+        modelAssetId !== undefined && modelAssetId.length > 0
+          ? assetUrls.get(modelAssetId) ?? project.modelUrl
+          : undefined;
+      const { modelAssetId: _modelAssetId, modelUrl: _modelUrl, ...projectBase } = project;
+      return {
+        ...projectBase,
+        ...optionalStringProp('modelAssetId', modelAssetId),
+        ...optionalStringProp('modelUrl', modelUrl),
+      };
+    }),
+  };
+};
+
 const toOptionalIsoDate = (value: unknown): string | null => {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'string' && value.trim().length > 0) return value;
@@ -645,8 +845,14 @@ const toInquiry = (record: AnyRecord): MilkbarInquiryCmsRecord => {
 export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapshot> {
   const [status, sourceData, runtimeData] = await Promise.all([
     getSourceStatus(),
-    withSourceOfTruthDb((db) => readMilkbarCmsData(db, SOURCE_COLLECTIONS, false)),
-    withRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, true)),
+    readMilkbarCmsDataOrEmpty(
+      () => withSourceOfTruthDb((db) => readMilkbarCmsData(db, SOURCE_COLLECTIONS, false)),
+      'source-of-truth CMS database'
+    ),
+    readMilkbarCmsDataOrEmpty(
+      () => withRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, true)),
+      'local Milkbar runtime database'
+    ),
   ]);
   const useSourceOfTruth = hasSourceOfTruthData(sourceData);
   const editableData = useSourceOfTruth ? sourceData : runtimeData;
@@ -678,11 +884,18 @@ export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapsh
 export async function saveMilkbarDesignersCmsSnapshot(
   input: unknown
 ): Promise<MilkbarCmsSnapshot> {
-  const updateInput = normalizeUpdateInput(input);
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizeUpdateInput(input));
   const now = new Date();
 
   await withSourceOfTruthDb((db) => writeMilkbarCmsData(db, SOURCE_COLLECTIONS, updateInput, now));
-  await withRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
+  try {
+    await withRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
+  } catch (error) {
+    console.warn(
+      '[milkbar-cms] local Milkbar runtime database is unavailable; saved source-of-truth only.',
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 
   return await getMilkbarDesignersCmsSnapshot();
 }
@@ -727,11 +940,28 @@ export async function pushMilkbarRuntimeToCloud(
   const report = onProgress ?? (() => Promise.resolve());
   const now = new Date();
 
-  await report({ step: 1, total: 4, phase: 'reading', message: 'Connecting to local runtime…' });
+  await report({
+    step: 1,
+    total: 4,
+    phase: 'reading',
+    message: 'Reading local runtime or source CMS data…',
+  });
 
-  const localData = await withRuntimeDb((db) =>
-    readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)
+  const runtimeData = await readMilkbarCmsDataOrEmpty(
+    () => withRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)),
+    'local Milkbar runtime database'
   );
+  const localData = hasSourceOfTruthData(runtimeData)
+    ? runtimeData
+    : await withSourceOfTruthDb((db) =>
+        readMilkbarCmsData(db, SOURCE_COLLECTIONS, false)
+      );
+
+  if (!hasSourceOfTruthData(localData)) {
+    throw configurationError(
+      'No Milkbar CMS data is available to push. Save the CMS source data before pushing to cloud.'
+    );
+  }
 
   await report({
     step: 2,
@@ -740,12 +970,12 @@ export async function pushMilkbarRuntimeToCloud(
     message: `Read ${localData.projects.length} projects, ${localData.services.length} services, page content`,
   });
 
-  const updateInput: MilkbarCmsUpdateInput = {
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls({
     localizedContent: localData.localizedContent,
     pageSettings: localData.pageSettings,
     projects: localData.projects,
     services: localData.services,
-  };
+  });
 
   await report({ step: 3, total: 4, phase: 'writing', message: 'Writing to cloud database…' });
 

@@ -1562,6 +1562,14 @@ function ContentTab({
           <FieldInput label='Primary CTA' value={pageContent.hero.primaryCtaLabel} onChange={(primaryCtaLabel) => updateHero({ primaryCtaLabel })} />
           <FieldInput label='Secondary CTA' value={pageContent.hero.secondaryCtaLabel} onChange={(secondaryCtaLabel) => updateHero({ secondaryCtaLabel })} />
         </div>
+        <CmsModel3DField
+          label='Hero background 3D model'
+          description='Uploads to FastComet /uploads/cms/models and drives the Vercel hero background model.'
+          modelId={pageContent.hero.modelAssetId}
+          uploadName='Milkbar hero background model'
+          tags={['hero']}
+          onChange={(modelAssetId) => updateHero({ modelAssetId, modelUrl: undefined })}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection id='drawing' title='Drawing Section' open={openSections.has('drawing')} onToggle={toggleSection}>
@@ -1573,6 +1581,14 @@ function ContentTab({
           <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
           <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
         </div>
+        <CmsModel3DField
+          label='Interior section 3D model'
+          description='Uploads the Every line carries intent interior model to FastComet /uploads/cms/models.'
+          modelId={pageContent.drawing.interiorModelAssetId}
+          uploadName='Milkbar Every line carries intent interior model'
+          tags={['interior', 'drawing']}
+          onChange={(interiorModelAssetId) => updateDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
+        />
         <DrawingImageSlotsField
           value={pageContent.drawing.thumbImages}
           onChange={(thumbImages) => updateDrawing({ thumbImages })}
@@ -2101,10 +2117,14 @@ function ModelAssetLabel({ modelId }: { modelId: string }): React.JSX.Element {
   );
 }
 
-function ProjectAssetLibraryPickerModal({
+function ModelAssetLibraryPickerModal({
+  title = 'Select 3D Asset from Library',
+  confirmLabel = 'Assign Model',
   onSelect,
   onClose,
 }: {
+  title?: string;
+  confirmLabel?: string;
   onSelect: (assetId: string) => void;
   onClose: () => void;
 }): React.JSX.Element {
@@ -2130,7 +2150,7 @@ function ProjectAssetLibraryPickerModal({
   const modelUrl = selectedAsset !== null ? `/api/assets3d/${selectedAsset.id}/file` : '';
 
   return (
-    <DetailModal isOpen title='Select 3D Asset from Library' onClose={onClose} size='xl'>
+    <DetailModal isOpen title={title} onClose={onClose} size='xl'>
       <div className='flex h-[640px] min-h-0 flex-col gap-3'>
         <Input
           placeholder='Search assets…'
@@ -2215,7 +2235,7 @@ function ProjectAssetLibraryPickerModal({
             onClick={handleConfirm}
             icon={<Library className='size-3.5' />}
           >
-            Assign to Project
+            {confirmLabel}
           </Button>
         </div>
       </div>
@@ -2223,13 +2243,13 @@ function ProjectAssetLibraryPickerModal({
   );
 }
 
-function ProjectModel3DPreviewModal({
+function Model3DPreviewModal({
   modelId,
-  projectName,
+  title,
   onClose,
 }: {
   modelId: string;
-  projectName: string;
+  title: string;
   onClose: () => void;
 }): React.JSX.Element {
   const [showSettings, setShowSettings] = useState(false);
@@ -2237,7 +2257,7 @@ function ProjectModel3DPreviewModal({
   const modelUrl = `/api/assets3d/${modelId}/file`;
 
   return (
-    <DetailModal isOpen title={`3D Preview — ${projectName}`} onClose={onClose} size='xl'>
+    <DetailModal isOpen title={`3D Preview — ${title}`} onClose={onClose} size='xl'>
       <Viewer3DProvider>
         <div className='flex h-[600px] min-h-0 flex-col'>
           <div className='relative flex min-h-0 flex-1'>
@@ -2288,6 +2308,165 @@ function ProjectModel3DPreviewModal({
   );
 }
 
+function CmsModel3DField({
+  label,
+  description,
+  modelId,
+  uploadName,
+  tags,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  modelId: string | undefined;
+  uploadName: string;
+  tags: string[];
+  onChange: (modelAssetId: string | undefined) => void;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const hasModel = modelId !== undefined && modelId.trim().length > 0;
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file = event.target.files?.[0];
+      if (file === undefined) return;
+      setUploading(true);
+      setUploadProgress(0);
+      try {
+        const record = await uploadAsset3DFile(
+          file,
+          {
+            name: uploadName,
+            category: 'cms',
+            tags: ['milkbardesigners', ...tags],
+            isPublic: true,
+            storageProfile: 'milkbarCms',
+          },
+          (loaded, total) => {
+            if (total !== undefined) {
+              setUploadProgress(Math.round((loaded / total) * 100));
+            }
+          }
+        );
+        onChange(record.id);
+        toast(`3D model uploaded: ${record.filename ?? file.name}`, { variant: 'success' });
+      } catch (err) {
+        toast(`Upload failed: ${toErrorMessage(err)}`, { variant: 'error' });
+      } finally {
+        setUploading(false);
+        setUploadProgress(null);
+        if (fileInputRef.current !== null) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [onChange, tags, toast, uploadName]
+  );
+
+  return (
+    <>
+      <div className='rounded-md border border-white/10 bg-white/5 p-3'>
+        <div className='mb-2 flex items-start justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className='flex items-center gap-1.5 text-xs font-medium text-white/80'>
+              <Box className='size-3.5 text-blue-400/70' />
+              {label}
+            </p>
+            <p className='mt-1 text-[11px] leading-relaxed text-muted-foreground'>{description}</p>
+          </div>
+          {hasModel ? <Badge variant='secondary'>Assigned</Badge> : <Badge variant='outline'>Empty</Badge>}
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          {hasModel ? (
+            <>
+              <ModelAssetLabel modelId={modelId as string} />
+              <Button
+                type='button'
+                size='sm'
+                variant='ghost'
+                className='h-7 px-2 text-xs'
+                icon={<Eye className='size-3.5' />}
+                onClick={() => setPreviewOpen(true)}
+              >
+                Preview
+              </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='ghost'
+                className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
+                icon={<X className='size-3.5' />}
+                onClick={() => onChange(undefined)}
+              >
+                Remove
+              </Button>
+            </>
+          ) : (
+            <span className='text-xs text-white/30'>No model attached</span>
+          )}
+          <input
+            ref={fileInputRef}
+            type='file'
+            accept='.glb,.gltf'
+            className='hidden'
+            onChange={handleFileChange}
+          />
+          <Button
+            type='button'
+            size='sm'
+            variant='ghost'
+            className='h-7 px-2 text-xs'
+            disabled={uploading}
+            icon={<Upload className='size-3.5' />}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading
+              ? uploadProgress !== null
+                ? `${uploadProgress}%`
+                : 'Uploading…'
+              : hasModel
+                ? 'Replace'
+                : 'Upload .glb / .gltf'}
+          </Button>
+          <Button
+            type='button'
+            size='sm'
+            variant={hasModel ? 'ghost' : 'secondary'}
+            className='h-7 px-2 text-xs'
+            icon={<Library className='size-3.5' />}
+            onClick={() => setPickerOpen(true)}
+          >
+            From Library
+          </Button>
+        </div>
+      </div>
+      {previewOpen && hasModel ? (
+        <Model3DPreviewModal
+          modelId={modelId as string}
+          title={label}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
+      {pickerOpen ? (
+        <ModelAssetLibraryPickerModal
+          title={`Select ${label}`}
+          confirmLabel='Assign Model'
+          onSelect={(assetId) => {
+            onChange(assetId);
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
 function ProjectModel3DSection({
   project,
   projectIndex,
@@ -2317,17 +2496,23 @@ function ProjectModel3DSection({
       try {
         const record = await uploadAsset3DFile(
           file,
-          { name: `${project.code} — ${project.name}`, storageProfile: 'milkbarCms' },
+          {
+            name: `${project.code} — ${project.name}`,
+            category: 'cms',
+            tags: ['milkbardesigners', 'project'],
+            isPublic: true,
+            storageProfile: 'milkbarCms',
+          },
           (loaded, total) => {
             if (total !== undefined) {
               setUploadProgress(Math.round((loaded / total) * 100));
             }
           }
         );
-        onUpdate(projectIndex, { modelAssetId: record.id });
-        toast({ title: '3D model uploaded', description: record.filename ?? file.name });
+        onUpdate(projectIndex, { modelAssetId: record.id, modelUrl: undefined });
+        toast(`3D model uploaded: ${record.filename ?? file.name}`, { variant: 'success' });
       } catch (err) {
-        toast({ title: 'Upload failed', description: toErrorMessage(err), variant: 'destructive' });
+        toast(`Upload failed: ${toErrorMessage(err)}`, { variant: 'error' });
       } finally {
         setUploading(false);
         setUploadProgress(null);
@@ -2386,7 +2571,7 @@ function ProjectModel3DSection({
               className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
               icon={<X className='size-3.5' />}
               onClick={() => {
-                onUpdate(projectIndex, { modelAssetId: undefined });
+                onUpdate(projectIndex, { modelAssetId: undefined, modelUrl: undefined });
                 setShowInlineViewer(false);
               }}
             >
@@ -2462,16 +2647,18 @@ function ProjectModel3DSection({
         </div>
       ) : null}
       {previewOpen && hasModel ? (
-        <ProjectModel3DPreviewModal
+        <Model3DPreviewModal
           modelId={project.modelAssetId as string}
-          projectName={project.name.length > 0 ? project.name : project.code}
+          title={project.name.length > 0 ? project.name : project.code}
           onClose={() => setPreviewOpen(false)}
         />
       ) : null}
       {pickerOpen ? (
-        <ProjectAssetLibraryPickerModal
+        <ModelAssetLibraryPickerModal
+          title='Select Project 3D Asset from Library'
+          confirmLabel='Assign to Project'
           onSelect={(assetId) => {
-            onUpdate(projectIndex, { modelAssetId: assetId });
+            onUpdate(projectIndex, { modelAssetId: assetId, modelUrl: undefined });
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}

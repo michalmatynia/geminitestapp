@@ -18,6 +18,40 @@ export async function listAssets3D(db: Db, filters?: Asset3DListFilters): Promis
     clauses.push({ filename: { $regex: filename, $options: 'i' } });
   }
 
+  const categoryId = normalizeString(filters?.categoryId);
+  if (categoryId !== null) {
+    clauses.push({
+      $or: [
+        { categoryId },
+        { category: categoryId },
+      ],
+    });
+  }
+
+  const search = normalizeString(filters?.search);
+  if (search !== null) {
+    clauses.push({
+      $or: [
+        { name: { $regex: search, $options: 'i' } },
+        { filename: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ],
+    });
+  }
+
+  if (filters?.isPublic !== undefined) {
+    clauses.push({ isPublic: filters.isPublic });
+  }
+
+  if (filters?.tags !== undefined && filters.tags.length > 0) {
+    clauses.push({
+      $or: [
+        { tags: { $in: filters.tags } },
+        { tagIds: { $in: filters.tags } },
+      ],
+    });
+  }
+
   const cursor = collection.find(clauses.length > 0 ? { $and: clauses } : {});
   const docs = await cursor.toArray();
   return docs.map(mapDocToRecord);

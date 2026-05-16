@@ -52,6 +52,8 @@ export type MilkbarPageContent = {
     lede: string;
     primaryCtaLabel: string;
     secondaryCtaLabel: string;
+    modelAssetId?: string | undefined;
+    modelUrl?: string | undefined;
   };
   drawing: {
     eyebrow: string;
@@ -61,6 +63,8 @@ export type MilkbarPageContent = {
     ctaLabel: string;
     hint: string;
     thumbImages: string[];
+    interiorModelAssetId?: string | undefined;
+    interiorModelUrl?: string | undefined;
   };
   philosophy: {
     eyebrow: string;
@@ -169,6 +173,7 @@ export type MilkbarProjectCmsRecord = {
   cameraPosition: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
   modelAssetId?: string | undefined;
+  modelUrl?: string | undefined;
 };
 
 export type MilkbarServiceCmsRecord = {
@@ -827,3 +832,83 @@ export const DEFAULT_MILKBAR_PAGE_SETTINGS: MilkbarPageSettings = {
   defaultLocale: 'en',
   publishedLocales: ['en'],
 };
+
+export const DEFAULT_MILKBAR_PROJECTS: MilkbarProjectCmsRecord[] = [
+  {
+    code: 'MBD-001',
+    name: 'Helios Tower',
+    projectType: 'Mixed-Use Tower',
+    city: 'Zurich',
+    country: 'CH',
+    stats: ['32 Floors - 42,000 m2', 'Mixed-Use - Zurich, CH'],
+    description:
+      'A mixed-use tower study coordinating envelope rhythm, compliance checking, and vertical programme stacking.',
+    order: 0,
+    status: 'published',
+    cameraPosition: { x: 22, y: 18, z: 22 },
+    cameraTarget: { x: 0, y: 8, z: 0 },
+  },
+  {
+    code: 'MBD-002',
+    name: 'Kulturhaus',
+    projectType: 'Cultural Centre',
+    city: 'Amsterdam',
+    country: 'NL',
+    stats: ['3 Volumes - 4,200 m2', 'Cultural - Amsterdam, NL'],
+    description:
+      'A civic cultural centre arranged as interlocking volumes with tracked public flows and programme adjacency.',
+    order: 1,
+    status: 'published',
+    cameraPosition: { x: 20, y: 12, z: 20 },
+    cameraTarget: { x: 0, y: 5, z: 0 },
+  },
+  {
+    code: 'MBD-003',
+    name: 'South Quarter',
+    projectType: 'Residential Ensemble',
+    city: 'Berlin',
+    country: 'DE',
+    stats: ['3 Volumes - 8,600 m2', 'Residential - Berlin, DE'],
+    description:
+      'A residential ensemble balancing courtyard massing, daylight access, and repeatable documentation logic.',
+    order: 2,
+    status: 'published',
+    cameraPosition: { x: 18, y: 15, z: 18 },
+    cameraTarget: { x: 0, y: 6, z: 0 },
+  },
+];
+
+export const DEFAULT_MILKBAR_SERVICES: MilkbarServiceCmsRecord[] = [
+  {
+    code: 'S-01',
+    title: 'Code compliance',
+    emphasis: 'compliance',
+    description:
+      'Planning rules, building regulations, access standards, and project constraints are checked before drawings leave review.',
+    order: 0,
+  },
+  {
+    code: 'S-02',
+    title: 'Brief to massing',
+    emphasis: 'massing',
+    description:
+      'Natural language briefs become tested spatial options with area schedules, circulation logic, and daylight constraints attached.',
+    order: 1,
+  },
+  {
+    code: 'S-03',
+    title: 'Drawing documentation',
+    emphasis: 'documentation',
+    description:
+      'Plans, elevations, and schedules are coordinated against studio standards so issue sets stay consistent.',
+    order: 2,
+  },
+  {
+    code: 'S-04',
+    title: 'Practice intelligence',
+    emphasis: 'intelligence',
+    description:
+      'Project data becomes searchable memory, linking precedents, decisions, risks, and consultant responses.',
+    order: 3,
+  },
+];

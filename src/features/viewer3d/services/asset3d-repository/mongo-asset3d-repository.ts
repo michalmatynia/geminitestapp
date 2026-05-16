@@ -1,27 +1,60 @@
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { Asset3DCreateInput, Asset3DListFilters, Asset3DRecord, Asset3DRepository } from '@/shared/contracts/viewer3d';
-import { createAsset3D } from './repository-mutations';
+import { createAsset3D, deleteAsset3D, updateAsset3D } from './repository-mutations';
 import { getAsset3DById, listAssets3D } from './repository-queries';
+import { getCollection } from './repository-db-helpers';
 
 export const Asset3DRepositoryImpl: Asset3DRepository = {
-  create: async (data: Asset3DCreateInput): Promise<Asset3DRecord> => {
+  createAsset: async (data: Asset3DCreateInput): Promise<Asset3DRecord> => {
     const db = await getMongoDb();
     return createAsset3D(db, data);
   },
-  getById: async (id: string): Promise<Asset3DRecord | null> => {
+  createAsset3D: async (data: Asset3DCreateInput): Promise<Asset3DRecord> => {
+    const db = await getMongoDb();
+    return createAsset3D(db, data);
+  },
+  getAssetById: async (id: string): Promise<Asset3DRecord | null> => {
     const db = await getMongoDb();
     return getAsset3DById(db, id);
   },
-  list: async (filters?: Asset3DListFilters): Promise<Asset3DRecord[]> => {
+  getAsset3DById: async (id: string): Promise<Asset3DRecord | null> => {
+    const db = await getMongoDb();
+    return getAsset3DById(db, id);
+  },
+  listAssets: async (filters?: Asset3DListFilters): Promise<Asset3DRecord[]> => {
     const db = await getMongoDb();
     return listAssets3D(db, filters);
   },
-  update: () => { 
-    // Asset3D update functionality is not yet implemented
-    throw new Error('Not implemented'); 
+  listAssets3D: async (filters?: Asset3DListFilters): Promise<Asset3DRecord[]> => {
+    const db = await getMongoDb();
+    return listAssets3D(db, filters);
   },
-  delete: () => { 
-    // Asset3D delete functionality is not yet implemented
-    throw new Error('Not implemented'); 
+  updateAsset: async (id, data): Promise<Asset3DRecord | null> => {
+    const db = await getMongoDb();
+    return updateAsset3D(db, id, data);
+  },
+  updateAsset3D: async (id, data): Promise<Asset3DRecord | null> => {
+    const db = await getMongoDb();
+    return updateAsset3D(db, id, data);
+  },
+  deleteAsset: async (id): Promise<Asset3DRecord | null> => {
+    const db = await getMongoDb();
+    return deleteAsset3D(db, id);
+  },
+  deleteAsset3D: async (id): Promise<Asset3DRecord | null> => {
+    const db = await getMongoDb();
+    return deleteAsset3D(db, id);
+  },
+  getCategories: async (): Promise<unknown[]> => {
+    const db = await getMongoDb();
+    const collection = await getCollection(db);
+    const categories = await collection.distinct('categoryId');
+    return categories.filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
+  },
+  getTags: async (): Promise<unknown[]> => {
+    const db = await getMongoDb();
+    const collection = await getCollection(db);
+    const tags = await collection.distinct('tags');
+    return tags.filter((entry) => typeof entry === 'string' && entry.trim().length > 0);
   },
 };

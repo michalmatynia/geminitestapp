@@ -4,6 +4,7 @@ import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useFloorPlanSlots, type Slots } from '@/lib/floorPlanContext';
+import { disposeObject3D, fitObjectToBox, loadGltfModel, prepareLoadedModel } from '@/lib/threeModelUtils';
 
 // 1 unit = 1 m  |  PW=10m wide, PD=7m deep, z=0 is north wall
 const PW = 10, PD = 7, CH = 2.8, WT = 0.09;
@@ -422,7 +423,7 @@ function furnishRoom(g: THREE.Group, prog: string, x0: number, z0: number, x1: n
 // SCENE ASSEMBLY
 // ──────────────────────────────────────────────────────────────────────────────
 
-function buildInterior(slots: Slots): THREE.Group {
+export function buildInterior(slots: Slots): THREE.Group {
   const g = new THREE.Group();
   const { cx, lz, rz } = partitions(slots);
 
@@ -490,11 +491,13 @@ interface State {
   group:    THREE.Group | null;
 }
 
-function InteriorViewer() {
+function InteriorViewer({ modelUrl }: { modelUrl?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef   = useRef<HTMLDivElement>(null);
   const stateRef  = useRef<State | null>(null);
+  const loadTokenRef = useRef(0);
   const { slots } = useFloorPlanSlots();
+  const resolvedModelUrl = modelUrl?.trim();
 
   // ── Init renderer / scene / lights (once)
   useEffect(() => {
@@ -561,13 +564,54 @@ function InteriorViewer() {
       window.removeEventListener('resize', onResize);
       canvas.removeEventListener('pointerdown', pause);
       canvas.removeEventListener('pointerup', resume);
+      if (stateRef.current?.group) disposeGroup(stateRef.current.group);
       controls.dispose(); renderer.dispose();
       stateRef.current = null;
     };
   }, []);
 
+  // ── Load uploaded FastComet interior model when assigned in the CMS
+  useEffect(() => {
+    if (resolvedModelUrl === undefined || resolvedModelUrl.length === 0) return;
+    const s = stateRef.current;
+    if (!s) return;
+    const token = loadTokenRef.current + 1;
+    loadTokenRef.current = token;
+
+    if (s.group) {
+      s.scene.remove(s.group);
+      disposeGroup(s.group);
+      s.group = null;
+    }
+
+    let cancelled = false;
+    void loadGltfModel(resolvedModelUrl)
+      .then((group) => {
+        if (cancelled || loadTokenRef.current !== token || stateRef.current === null) {
+          disposeObject3D(group);
+          return;
+        }
+        prepareLoadedModel(group);
+        fitObjectToBox(group, 8.6, new THREE.Vector3(PW / 2, 1.2, PD / 2));
+        stateRef.current.scene.add(group);
+        stateRef.current.group = group;
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+      const current = stateRef.current;
+      if (current?.group) {
+        current.scene.remove(current.group);
+        disposeObject3D(current.group);
+        current.group = null;
+      }
+    };
+  }, [resolvedModelUrl]);
+
   // ── Rebuild interior whenever slots change
   useEffect(() => {
+    if (resolvedModelUrl !== undefined && resolvedModelUrl.length > 0) return;
     const s = stateRef.current;
     if (!s) return;
     if (s.group) { s.scene.remove(s.group); disposeGroup(s.group); }
@@ -610,7 +654,7 @@ function InteriorViewer() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [slots]);
+  }, [resolvedModelUrl, slots]);
 
   return (
     <div ref={wrapRef} style={{ position: 'absolute', inset: 0 }}>

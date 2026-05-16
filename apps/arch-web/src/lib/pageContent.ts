@@ -440,6 +440,9 @@ const isRecord = (value: unknown): value is AnyRecord =>
 const asString = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 
+const asOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+
 const asBoolean = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback;
 
@@ -579,6 +582,12 @@ export function normalizeArchPageContent(
       lede: asString(hero['lede'], d.hero.lede),
       primaryCtaLabel: asString(hero['primaryCtaLabel'], d.hero.primaryCtaLabel),
       secondaryCtaLabel: asString(hero['secondaryCtaLabel'], d.hero.secondaryCtaLabel),
+      ...(asOptionalString(hero['modelAssetId']) !== undefined
+        ? { modelAssetId: asOptionalString(hero['modelAssetId']) }
+        : {}),
+      ...(asOptionalString(hero['modelUrl']) !== undefined
+        ? { modelUrl: asOptionalString(hero['modelUrl']) }
+        : {}),
     },
     drawing: {
       eyebrow: asString(drawing['eyebrow'], d.drawing.eyebrow),
@@ -588,6 +597,12 @@ export function normalizeArchPageContent(
       ctaLabel: asString(drawing['ctaLabel'], d.drawing.ctaLabel),
       hint: asString(drawing['hint'], d.drawing.hint),
       thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages),
+      ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
+        ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
+        : {}),
+      ...(asOptionalString(drawing['interiorModelUrl']) !== undefined
+        ? { interiorModelUrl: asOptionalString(drawing['interiorModelUrl']) }
+        : {}),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], d.philosophy.eyebrow),

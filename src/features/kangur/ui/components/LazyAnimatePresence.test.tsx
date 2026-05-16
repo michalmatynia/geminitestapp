@@ -6,7 +6,13 @@ import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { framerMotionLoadSpy, motionButtonPropsSpy, motionDivPropsSpy } = vi.hoisted(() => ({
+const {
+  animatePresencePropsSpy,
+  framerMotionLoadSpy,
+  motionButtonPropsSpy,
+  motionDivPropsSpy,
+} = vi.hoisted(() => ({
+  animatePresencePropsSpy: vi.fn<(props: Record<string, unknown>) => void>(),
   framerMotionLoadSpy: vi.fn<() => void>(),
   motionButtonPropsSpy: vi.fn<(props: Record<string, unknown>) => void>(),
   motionDivPropsSpy: vi.fn<(props: Record<string, unknown>) => void>(),
@@ -19,9 +25,10 @@ vi.mock('@/features/kangur/ui/boot/boot-ready-signal', () => ({
 vi.mock('framer-motion', () => {
   framerMotionLoadSpy();
   return {
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid='mock-animate-presence'>{children}</div>
-    ),
+    AnimatePresence: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => {
+      animatePresencePropsSpy(props);
+      return <div data-testid='mock-animate-presence'>{children}</div>;
+    },
     motion: {
       div: ({ children, ...props }: React.ComponentProps<'div'> & Record<string, unknown>) => {
         motionDivPropsSpy(props);
@@ -38,6 +45,7 @@ vi.mock('framer-motion', () => {
 describe('LazyAnimatePresence', () => {
   beforeEach(() => {
     vi.resetModules();
+    animatePresencePropsSpy.mockClear();
     framerMotionLoadSpy.mockClear();
     motionButtonPropsSpy.mockClear();
     motionDivPropsSpy.mockClear();
@@ -96,12 +104,15 @@ describe('LazyAnimatePresence', () => {
   });
 
   it('does not replay hidden initial states when motion is enabled after a plain render', async () => {
-    const { LazyMotionButton, LazyMotionDiv } = await import(
+    const { LazyAnimatePresence, LazyMotionButton, LazyMotionDiv } = await import(
       '@/features/kangur/ui/components/LazyAnimatePresence'
     );
 
     const { rerender } = render(
       <>
+        <LazyAnimatePresence loadMotion={false}>
+          <div>animate-child</div>
+        </LazyAnimatePresence>
         <LazyMotionDiv
           animate={{ opacity: 1, y: 0 }}
           initial={{ opacity: 0, y: 12 }}
@@ -121,6 +132,9 @@ describe('LazyAnimatePresence', () => {
 
     rerender(
       <>
+        <LazyAnimatePresence loadMotion>
+          <div>animate-child</div>
+        </LazyAnimatePresence>
         <LazyMotionDiv
           animate={{ opacity: 1, y: 0 }}
           initial={{ opacity: 0, y: 12 }}
@@ -139,10 +153,14 @@ describe('LazyAnimatePresence', () => {
     );
 
     await waitFor(() => {
+      expect(animatePresencePropsSpy).toHaveBeenCalled();
       expect(motionDivPropsSpy).toHaveBeenCalled();
       expect(motionButtonPropsSpy).toHaveBeenCalled();
     });
 
+    expect(animatePresencePropsSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ initial: false })
+    );
     expect(motionDivPropsSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ initial: false })
     );

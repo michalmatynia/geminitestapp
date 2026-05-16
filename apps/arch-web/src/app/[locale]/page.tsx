@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import type { Metadata } from 'next';
 import { getDb } from '@/lib/mongodb';
+import { toOptionalFastCometAssetUrl } from '@/lib/assetUrls';
 import { resolveArchPageData } from '@/lib/pageContent';
 import { isArchLocale, type ArchLocale, type Project, type Service } from '@/lib/types';
 import ArchHomePage from '@/components/ArchHomePage';
@@ -11,11 +12,17 @@ type PageProps = { params: Promise<{ locale: string }> };
 async function getProjects(): Promise<Project[]> {
   try {
     const db = await getDb();
-    return await db
+    const projects = await db
       .collection<Project>('projects')
       .find({ status: 'published' }, { projection: { _id: 0 } })
       .sort({ order: 1 })
       .toArray();
+    return projects.map((project) => ({
+      ...project,
+      ...(project.modelUrl !== undefined
+        ? { modelUrl: toOptionalFastCometAssetUrl(project.modelUrl) }
+        : {}),
+    }));
   } catch {
     return [];
   }
@@ -38,8 +45,13 @@ async function getPageData() {
   try {
     const db = await getDb();
     const doc = await db
-      .collection<{ localizedContent?: unknown; pageSettings?: unknown }>('page_content')
-      .findOne({ key: 'home' }, { projection: { _id: 0, localizedContent: 1, pageSettings: 1 } });
+      .collection<{ content?: unknown; localizedContent?: unknown; pageSettings?: unknown }>(
+        'page_content'
+      )
+      .findOne(
+        { key: 'home' },
+        { projection: { _id: 0, content: 1, localizedContent: 1, pageSettings: 1 } }
+      );
     return resolveArchPageData(doc);
   } catch {
     return resolveArchPageData(null);

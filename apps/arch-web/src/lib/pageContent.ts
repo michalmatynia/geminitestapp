@@ -1,4 +1,5 @@
 import { ARCH_LOCALES, type ArchLocale, type ArchPageContent, type ArchPageSettings, type ArchSeoMeta } from './types';
+import { toFastCometAssetUrl, toOptionalFastCometAssetUrl } from './assetUrls';
 
 export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
   nav: {
@@ -586,7 +587,7 @@ export function normalizeArchPageContent(
         ? { modelAssetId: asOptionalString(hero['modelAssetId']) }
         : {}),
       ...(asOptionalString(hero['modelUrl']) !== undefined
-        ? { modelUrl: asOptionalString(hero['modelUrl']) }
+        ? { modelUrl: toOptionalFastCometAssetUrl(asOptionalString(hero['modelUrl'])) }
         : {}),
     },
     drawing: {
@@ -596,12 +597,18 @@ export function normalizeArchPageContent(
       description: asString(drawing['description'], d.drawing.description),
       ctaLabel: asString(drawing['ctaLabel'], d.drawing.ctaLabel),
       hint: asString(drawing['hint'], d.drawing.hint),
-      thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages),
+      thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages).map(
+        toFastCometAssetUrl
+      ),
       ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
         ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
         : {}),
       ...(asOptionalString(drawing['interiorModelUrl']) !== undefined
-        ? { interiorModelUrl: asOptionalString(drawing['interiorModelUrl']) }
+        ? {
+            interiorModelUrl: toOptionalFastCometAssetUrl(
+              asOptionalString(drawing['interiorModelUrl'])
+            ),
+          }
         : {}),
     },
     philosophy: {
@@ -732,6 +739,7 @@ export type ArchLocalizedPageData = {
 };
 
 type PageContentDoc = {
+  content?: unknown;
   localizedContent?: unknown;
   pageSettings?: unknown;
 };
@@ -740,6 +748,8 @@ export function resolveArchPageData(doc: PageContentDoc | null): ArchLocalizedPa
   const localizedSource =
     doc !== null && isRecord(doc.localizedContent)
       ? (doc.localizedContent as Record<string, unknown>)
+      : doc !== null && isRecord(doc.content)
+        ? { en: doc.content }
       : {};
 
   const localizedContent = ARCH_LOCALES.reduce((acc, locale) => {

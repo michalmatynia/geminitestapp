@@ -1,0 +1,360 @@
+- generic [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - generic [ref=e8]:
+        - link "Skip to content" [ref=e9] [cursor=pointer]:
+          - /url: "#kangur-main-content"
+        - complementary "Admin sidebar" [ref=e10]:
+          - navigation "Admin menu" [ref=e12]:
+            - generic [ref=e15]:
+              - generic [ref=e16]:
+                - search [ref=e17]:
+                  - img [ref=e18]
+                  - searchbox "Search admin pages…" [ref=e21]
+                - button "Collapse admin sidebar" [expanded] [ref=e23] [cursor=pointer]:
+                  - img [ref=e24]
+              - generic "Collapse all folders" [ref=e28]:
+                - button "Collapse all folders" [ref=e29] [cursor=pointer]:
+                  - img [ref=e30]
+            - generic [ref=e32]:
+              - link "Home" [ref=e35] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e36]:
+                  - img [ref=e38]
+                  - generic [ref=e41]: Home
+              - button "Workspace" [ref=e44] [cursor=pointer]:
+                - generic [ref=e45]:
+                  - img [ref=e47]
+                  - generic [ref=e49]: Workspace
+                - img [ref=e50]
+              - generic [ref=e52]:
+                - button "Filemaker" [expanded] [ref=e54] [cursor=pointer]:
+                  - generic [ref=e55]:
+                    - img [ref=e57]
+                    - generic [ref=e59]: Filemaker
+                  - img [ref=e60]
+                - generic [ref=e62]:
+                  - link "• Database" [ref=e65] [cursor=pointer]:
+                    - /url: /admin/filemaker
+                    - generic [ref=e66]:
+                      - generic [ref=e67]: •
+                      - generic [ref=e68]: Database
+                  - link "• Persons" [ref=e71] [cursor=pointer]:
+                    - /url: /admin/filemaker/persons
+                    - generic [ref=e72]:
+                      - generic [ref=e73]: •
+                      - generic [ref=e74]: Persons
+                  - link "• Organizations" [ref=e77] [cursor=pointer]:
+                    - /url: /admin/filemaker/organizations
+                    - generic [ref=e78]:
+                      - generic [ref=e79]: •
+                      - generic [ref=e80]: Organizations
+                  - link "• Invoices" [ref=e83] [cursor=pointer]:
+                    - /url: /admin/filemaker/invoices
+                    - generic [ref=e84]:
+                      - generic [ref=e85]: •
+                      - generic [ref=e86]: Invoices
+                  - link "• Job Listings" [ref=e89] [cursor=pointer]:
+                    - /url: /admin/filemaker/job-listings
+                    - generic [ref=e90]:
+                      - generic [ref=e91]: •
+                      - generic [ref=e92]: Job Listings
+                  - link "• Websites" [ref=e95] [cursor=pointer]:
+                    - /url: /admin/filemaker/websites
+                    - generic [ref=e96]:
+                      - generic [ref=e97]: •
+                      - generic [ref=e98]: Websites
+                  - link "• Events" [ref=e101] [cursor=pointer]:
+                    - /url: /admin/filemaker/events
+                    - generic [ref=e102]:
+                      - generic [ref=e103]: •
+                      - generic [ref=e104]: Events
+                  - link "• Values" [ref=e107] [cursor=pointer]:
+                    - /url: /admin/filemaker/values
+                    - generic [ref=e108]:
+                      - generic [ref=e109]: •
+                      - generic [ref=e110]: Values
+                  - link "• Lexicon" [ref=e113] [cursor=pointer]:
+                    - /url: /admin/filemaker/lexicon
+                    - generic [ref=e114]:
+                      - generic [ref=e115]: •
+                      - generic [ref=e116]: Lexicon
+                  - link "• Goal Automation" [ref=e119] [cursor=pointer]:
+                    - /url: /admin/filemaker/goal-automation
+                    - generic [ref=e120]:
+                      - generic [ref=e121]: •
+                      - generic [ref=e122]: Goal Automation
+                  - link "• Email Client" [ref=e125] [cursor=pointer]:
+                    - /url: /admin/filemaker/mail-client
+                    - generic [ref=e126]:
+                      - generic [ref=e127]: •
+                      - generic [ref=e128]: Email Client
+                  - link "• Mail Settings" [ref=e131] [cursor=pointer]:
+                    - /url: /admin/filemaker/mail
+                    - generic [ref=e132]:
+                      - generic [ref=e133]: •
+                      - generic [ref=e134]: Mail Settings
+                  - link "• Compose Email" [ref=e137] [cursor=pointer]:
+                    - /url: /admin/filemaker/mail/compose
+                    - generic [ref=e138]:
+                      - generic [ref=e139]: •
+                      - generic [ref=e140]: Compose Email
+                  - link "• Email Creator" [ref=e143] [cursor=pointer]:
+                    - /url: /admin/filemaker/campaigns/create
+                    - generic [ref=e144]:
+                      - generic [ref=e145]: •
+                      - generic [ref=e146]: Email Creator
+                  - link "• Email Campaigns" [ref=e149] [cursor=pointer]:
+                    - /url: /admin/filemaker/campaigns
+                    - generic [ref=e150]:
+                      - generic [ref=e151]: •
+                      - generic [ref=e152]: Email Campaigns
+                  - link "• Campaign Control" [ref=e155] [cursor=pointer]:
+                    - /url: /admin/filemaker/campaigns/control-centre
+                    - generic [ref=e156]:
+                      - generic [ref=e157]: •
+                      - generic [ref=e158]: Campaign Control
+                  - link "• Suppressions" [ref=e161] [cursor=pointer]:
+                    - /url: /admin/filemaker/campaigns/suppressions
+                    - generic [ref=e162]:
+                      - generic [ref=e163]: •
+                      - generic [ref=e164]: Suppressions
+                  - link "• Social Publishing" [ref=e167] [cursor=pointer]:
+                    - /url: /admin/filemaker/social
+                    - generic [ref=e168]:
+                      - generic [ref=e169]: •
+                      - generic [ref=e170]: Social Publishing
+                  - link "• Email Records" [ref=e173] [cursor=pointer]:
+                    - /url: /admin/filemaker/emails
+                    - generic [ref=e174]:
+                      - generic [ref=e175]: •
+                      - generic [ref=e176]: Email Records
+                  - link "• Combined List" [ref=e179] [cursor=pointer]:
+                    - /url: /admin/filemaker/list
+                    - generic [ref=e180]:
+                      - generic [ref=e181]: •
+                      - generic [ref=e182]: Combined List
+                  - link "• Settings" [ref=e185] [cursor=pointer]:
+                    - /url: /admin/settings/filemaker
+                    - generic [ref=e186]:
+                      - generic [ref=e187]: •
+                      - generic [ref=e188]: Settings
+              - button "Image Studio" [ref=e191] [cursor=pointer]:
+                - generic [ref=e192]:
+                  - img [ref=e194]
+                  - generic [ref=e198]: Image Studio
+                - img [ref=e199]
+              - button "Prompt Exploder" [ref=e203] [cursor=pointer]:
+                - generic [ref=e204]:
+                  - img [ref=e206]
+                  - generic [ref=e209]: Prompt Exploder
+                - img [ref=e210]
+              - button "Page Manager" [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]:
+                  - img [ref=e217]
+                  - generic [ref=e219]: Page Manager
+                - img [ref=e220]
+              - button "Commerce" [ref=e224] [cursor=pointer]:
+                - generic [ref=e225]:
+                  - img [ref=e227]
+                  - generic [ref=e231]: Commerce
+                - img [ref=e232]
+              - button "Integrations" [ref=e236] [cursor=pointer]:
+                - generic [ref=e237]:
+                  - img [ref=e239]
+                  - generic [ref=e241]: Integrations
+                - img [ref=e242]
+              - link "Brain" [ref=e246] [cursor=pointer]:
+                - /url: /admin/brain?tab=operations
+                - generic [ref=e247]:
+                  - img [ref=e249]
+                  - generic [ref=e257]: Brain
+              - button "Jobs" [ref=e260] [cursor=pointer]:
+                - generic [ref=e261]:
+                  - img [ref=e263]
+                  - generic [ref=e267]: Jobs
+                - img [ref=e268]
+              - button "AI" [ref=e272] [cursor=pointer]:
+                - generic [ref=e273]:
+                  - img [ref=e275]
+                  - generic [ref=e279]: AI
+                - img [ref=e280]
+              - button "Content" [ref=e284] [cursor=pointer]:
+                - generic [ref=e286]: Content
+                - img [ref=e287]
+              - button "System" [ref=e291] [cursor=pointer]:
+                - generic [ref=e292]:
+                  - img [ref=e294]
+                  - generic [ref=e297]: System
+                - img [ref=e298]
+        - generic [ref=e300]:
+          - generic "Admin toolbar"
+          - main [ref=e301]:
+            - generic [ref=e303]:
+              - generic [ref=e305]:
+                - generic [ref=e306]:
+                  - generic [ref=e307]:
+                    - generic [ref=e308]: Mail Navigation
+                    - generic [ref=e309]: Manage mailbox accounts and browse synced folders.
+                  - generic [ref=e310]:
+                    - button "New Mailbox" [ref=e311] [cursor=pointer]
+                    - button "Compose" [ref=e312] [cursor=pointer]:
+                      - img [ref=e313]
+                      - text: Compose
+                  - generic [ref=e316]:
+                    - generic [ref=e317]: "Accounts: 0"
+                    - generic [ref=e318]: "Folders: 0"
+                    - generic [ref=e319]: "Recent: 0"
+                - region "Folder tree items" [ref=e324]:
+                  - generic [ref=e325]:
+                    - button "• Search Messages" [ref=e327]:
+                      - generic [ref=e328]: •
+                      - img [ref=e329]
+                      - generic [ref=e333]: Search Messages
+                    - button "• Add Mailbox" [ref=e335]:
+                      - generic [ref=e336]: •
+                      - img [ref=e337]
+                      - generic [ref=e341]: Add Mailbox
+                - button "Open master tree instance settings" [ref=e342]: m
+              - generic [ref=e343]:
+                - generic [ref=e345]:
+                  - generic [ref=e346]: New mailbox account
+                  - generic [ref=e347]: Create a new IMAP/SMTP mailbox for Filemaker mail sync and replies.
+                - generic [ref=e348]:
+                  - generic [ref=e350]:
+                    - heading "Google OAuth credentials" [level=1] [ref=e352]
+                    - paragraph [ref=e353]: Shared OAuth client used by Filemaker mail and integrations.
+                  - generic [ref=e355]:
+                    - generic [ref=e356]:
+                      - generic [ref=e357]:
+                        - generic [ref=e358]: Credential status
+                        - generic [ref=e360]: Missing
+                      - generic [ref=e361]:
+                        - term [ref=e362]:
+                          - generic [ref=e363]: "Source:"
+                        - definition [ref=e364]: Not configured
+                      - generic [ref=e365]:
+                        - term [ref=e366]:
+                          - generic [ref=e367]: "Local client ID:"
+                        - definition [ref=e368]: —
+                      - generic [ref=e369]:
+                        - term [ref=e370]:
+                          - generic [ref=e371]: "Local client secret:"
+                        - definition [ref=e372]: —
+                    - generic [ref=e373]:
+                      - generic [ref=e374]:
+                        - generic [ref=e377]: Client ID
+                        - textbox "Client ID" [ref=e378]:
+                          - /placeholder: Google OAuth client ID
+                      - generic [ref=e379]:
+                        - generic [ref=e382]: Client secret
+                        - generic [ref=e383]:
+                          - textbox "Client secret" [ref=e384]:
+                            - /placeholder: Google OAuth client secret
+                          - button "Show password" [ref=e385] [cursor=pointer]:
+                            - img [ref=e386]
+                    - generic [ref=e389]:
+                      - generic [ref=e390]: Refreshing
+                      - button "Save credentials" [disabled]
+                - generic [ref=e391]:
+                  - heading "Add Mailbox" [level=1] [ref=e395]
+                  - generic [ref=e396]:
+                    - generic [ref=e397]:
+                      - generic [ref=e400]: Mailbox name
+                      - textbox "Mailbox name" [ref=e401]:
+                        - /placeholder: Primary support inbox
+                    - generic [ref=e402]:
+                      - generic [ref=e405]: Email address
+                      - textbox "Email address" [ref=e406]:
+                        - /placeholder: support@example.com
+                    - generic [ref=e407]:
+                      - generic [ref=e408]:
+                        - generic [ref=e411]: IMAP host
+                        - textbox "IMAP host" [ref=e412]:
+                          - /placeholder: imap.example.com
+                      - generic [ref=e413]:
+                        - generic [ref=e416]: IMAP port
+                        - textbox "IMAP port" [ref=e417]: "993"
+                      - generic [ref=e418]:
+                        - generic [ref=e421]: IMAP user
+                        - textbox "IMAP user" [ref=e422]
+                      - generic [ref=e423]:
+                        - generic [ref=e426]: IMAP password
+                        - textbox "IMAP password" [ref=e427]:
+                          - /placeholder: ""
+                    - generic [ref=e428]:
+                      - generic [ref=e429]:
+                        - generic [ref=e432]: SMTP host
+                        - textbox "SMTP host" [ref=e433]:
+                          - /placeholder: smtp.example.com
+                      - generic [ref=e434]:
+                        - generic [ref=e437]: SMTP port
+                        - textbox "SMTP port" [ref=e438]: "465"
+                      - generic [ref=e439]:
+                        - generic [ref=e442]: SMTP user
+                        - textbox "SMTP user" [ref=e443]
+                      - generic [ref=e444]:
+                        - generic [ref=e447]: SMTP password
+                        - textbox "SMTP password" [ref=e448]:
+                          - /placeholder: ""
+                    - generic [ref=e449]:
+                      - generic [ref=e450]:
+                        - generic [ref=e453]: From name
+                        - textbox "From name" [ref=e454]:
+                          - /placeholder: Filemaker Team
+                      - generic [ref=e455]:
+                        - generic [ref=e458]: Reply-to email
+                        - textbox "Reply-to email" [ref=e459]:
+                          - /placeholder: reply@example.com
+                    - generic [ref=e460]:
+                      - generic [ref=e463]: Mailbox allowlist
+                      - textbox "Mailbox allowlist" [ref=e464]:
+                        - /placeholder: INBOX, Sent
+                    - generic [ref=e465]:
+                      - generic [ref=e466]:
+                        - generic [ref=e469]: Initial sync lookback (days)
+                        - textbox "Initial sync lookback (days)" [ref=e470]: "30"
+                      - generic [ref=e471]:
+                        - generic [ref=e474]: Max messages per sync
+                        - textbox "Max messages per sync" [ref=e475]: "100"
+                    - generic [ref=e476]:
+                      - heading "DKIM signing (optional)" [level=1] [ref=e480]
+                      - generic [ref=e481]:
+                        - generic [ref=e482]:
+                          - generic [ref=e483]:
+                            - generic [ref=e486]: DKIM domain
+                            - textbox "DKIM domain" [ref=e487]:
+                              - /placeholder: example.com
+                          - generic [ref=e488]:
+                            - generic [ref=e491]: DKIM selector
+                            - textbox "DKIM selector" [ref=e492]:
+                              - /placeholder: mail
+                        - generic [ref=e493]:
+                          - generic [ref=e496]: DKIM private key (PEM)
+                          - textbox "DKIM private key (PEM)" [ref=e497]:
+                            - /placeholder: "-----BEGIN PRIVATE KEY-----"
+                    - generic [ref=e498]:
+                      - generic [ref=e499]:
+                        - checkbox "IMAP secure" [checked] [ref=e500]:
+                          - generic:
+                            - img
+                        - checkbox [checked]
+                        - text: IMAP secure
+                      - generic [ref=e501]:
+                        - checkbox "SMTP secure" [checked] [ref=e502]:
+                          - generic:
+                            - img
+                        - checkbox [checked]
+                        - text: SMTP secure
+                      - generic "Maintain a live IMAP IDLE connection for push-style new-mail notifications" [ref=e503]:
+                        - checkbox "Push (IMAP IDLE)" [checked] [ref=e504]:
+                          - generic:
+                            - img
+                        - checkbox [checked]
+                        - text: Push (IMAP IDLE)
+                    - button "Save Mailbox" [ref=e506] [cursor=pointer]
+  - alert [ref=e507]

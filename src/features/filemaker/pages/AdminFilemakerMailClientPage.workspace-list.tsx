@@ -1,7 +1,7 @@
 'use client';
 
-import { RefreshCcw } from 'lucide-react';
-import React from 'react';
+import { RefreshCcw, Star } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
 
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
@@ -75,26 +75,43 @@ const getThreadListStatus = ({
 
 function ThreadRow({
   isSelected,
+  isStarred,
   thread,
   onSelectThread,
+  onToggleStar,
 }: {
   isSelected: boolean;
+  isStarred: boolean;
   thread: FilemakerMailThread;
   onSelectThread: (thread: FilemakerMailThread) => void;
+  onToggleStar: (threadId: string) => void;
 }): React.JSX.Element {
   return (
-    <button
-      type='button'
-      aria-pressed={isSelected}
+    <div
       className={cn(
-        'grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-3 text-left transition',
+        'grid w-full grid-cols-[auto_minmax(0,1fr)_auto] gap-2 px-3 py-3 text-left transition',
         isSelected ? 'bg-sky-500/10 ring-1 ring-inset ring-sky-400/30' : 'hover:bg-foreground/5'
       )}
-      onClick={(): void => onSelectThread(thread)}
     >
-      <ThreadRowMain thread={thread} />
-      <ThreadRowMeta thread={thread} />
-    </button>
+      <button
+        type='button'
+        aria-pressed={isStarred}
+        aria-label={isStarred ? 'Remove from favourites' : 'Add to favourites'}
+        onClick={(e): void => { e.stopPropagation(); onToggleStar(thread.id); }}
+        className='flex size-6 shrink-0 items-center justify-center self-center rounded text-muted-foreground/50 transition hover:text-amber-400'
+      >
+        <Star className={cn('size-3.5', isStarred && 'fill-amber-400 text-amber-400')} />
+      </button>
+      <button
+        type='button'
+        aria-pressed={isSelected}
+        className='grid grid-cols-[minmax(0,1fr)_auto] gap-3 text-left'
+        onClick={(): void => onSelectThread(thread)}
+      >
+        <ThreadRowMain thread={thread} />
+        <ThreadRowMeta thread={thread} />
+      </button>
+    </div>
   );
 }
 
@@ -135,12 +152,16 @@ function ThreadRowMeta({ thread }: { thread: FilemakerMailThread }): React.JSX.E
 
 function ThreadRows({
   selectedThreadId,
+  starredThreadIds,
   threads,
   onSelectThread,
+  onToggleStar,
 }: {
   selectedThreadId: string | null;
+  starredThreadIds: Set<string>;
   threads: FilemakerMailThread[];
   onSelectThread: (thread: FilemakerMailThread) => void;
+  onToggleStar: (threadId: string) => void;
 }): React.JSX.Element {
   return (
     <div className='divide-y divide-border/60'>
@@ -149,7 +170,9 @@ function ThreadRows({
           key={thread.id}
           thread={thread}
           isSelected={thread.id === selectedThreadId}
+          isStarred={starredThreadIds.has(thread.id)}
           onSelectThread={onSelectThread}
+          onToggleStar={onToggleStar}
         />
       ))}
     </div>
@@ -161,22 +184,34 @@ function ThreadListContent({
   error,
   isLoading,
   selectedThreadId,
+  starredThreadIds,
   threads,
   onSelectThread,
+  onToggleStar,
 }: {
   account: FilemakerMailAccount | null;
   error: string | null;
   isLoading: boolean;
   selectedThreadId: string | null;
+  starredThreadIds: Set<string>;
   threads: FilemakerMailThread[];
   onSelectThread: (thread: FilemakerMailThread) => void;
+  onToggleStar: (threadId: string) => void;
 }): React.JSX.Element {
   const status = getThreadListStatus({ account, error, isLoading });
   if (status !== null) return <div className='p-4'>{status}</div>;
   if (threads.length === 0) {
     return <div className='p-4'><MailClientStatusLine>No synced emails found for this selection.</MailClientStatusLine></div>;
   }
-  return <ThreadRows threads={threads} selectedThreadId={selectedThreadId} onSelectThread={onSelectThread} />;
+  return (
+    <ThreadRows
+      threads={threads}
+      selectedThreadId={selectedThreadId}
+      starredThreadIds={starredThreadIds}
+      onSelectThread={onSelectThread}
+      onToggleStar={onToggleStar}
+    />
+  );
 }
 
 export function MailClientThreadList({
@@ -198,6 +233,19 @@ export function MailClientThreadList({
   onRefresh: () => void;
   onSelectThread: (thread: FilemakerMailThread) => void;
 }): React.JSX.Element {
+  const [starredThreadIds, setStarredThreadIds] = useState<Set<string>>(new Set());
+  const handleToggleStar = useCallback((threadId: string): void => {
+    setStarredThreadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(threadId)) {
+        next.delete(threadId);
+      } else {
+        next.add(threadId);
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <section className='flex min-h-0 flex-col border-b border-border/60'>
       <ThreadListHeader
@@ -212,8 +260,10 @@ export function MailClientThreadList({
           error={error}
           isLoading={isLoading}
           selectedThreadId={selectedThreadId}
+          starredThreadIds={starredThreadIds}
           threads={threads}
           onSelectThread={onSelectThread}
+          onToggleStar={handleToggleStar}
         />
       </div>
     </section>

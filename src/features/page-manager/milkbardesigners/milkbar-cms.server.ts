@@ -34,6 +34,8 @@ import {
 } from '@/shared/lib/db/utils/mongo';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { getPublicPathFromStoredPath } from '@/shared/lib/files/services/storage/file-storage-service';
+import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const SOURCE_PAGE_CONTENT_COLLECTION = 'milkbar_page_content';
@@ -155,7 +157,22 @@ const metadataString = (
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const resolveMilkbarFastCometPublicUrl = (asset: Asset3DRecord): string | undefined => {
+  if (metadataString(asset.metadata, 'storageProfile') !== 'milkbarCms') return undefined;
+  const metadataPath = metadataString(asset.metadata, 'publicPath');
+  const filepathPath =
+    typeof asset.filepath === 'string' ? getPublicPathFromStoredPath(asset.filepath) : null;
+  const fileUrlPath =
+    typeof asset.fileUrl === 'string' ? getPublicPathFromStoredPath(asset.fileUrl) : null;
+  const publicPath = metadataPath ?? filepathPath ?? fileUrlPath;
+  if (publicPath?.startsWith('/uploads/cms/models/') !== true) return undefined;
+  return joinUrl(resolveMilkbarFastCometStorageProfile().publicBaseUrl, publicPath);
+};
+
 const resolveAssetPublicUrl = (asset: Asset3DRecord): string | undefined => {
+  const milkbarUrl = resolveMilkbarFastCometPublicUrl(asset);
+  if (milkbarUrl !== undefined) return milkbarUrl;
+
   const directCandidates = [asset.filepath, asset.fileUrl].filter(
     (value): value is string => typeof value === 'string' && value.trim().length > 0
   );
@@ -341,10 +358,14 @@ async function readMilkbarCmsData(
   const pageContentDoc = await db
     .collection(collections.pageContent)
     .findOne<{
+      content?: unknown;
       localizedContent?: unknown;
       pageSettings?: unknown;
       updatedAt?: Date | string | null;
-    }>({ key: PAGE_CONTENT_KEY }, { projection: { _id: 0, localizedContent: 1, pageSettings: 1, updatedAt: 1 } });
+    }>(
+      { key: PAGE_CONTENT_KEY },
+      { projection: { _id: 0, content: 1, localizedContent: 1, pageSettings: 1, updatedAt: 1 } }
+    );
 
   const [projectDocs, serviceDocs, inquiryDocs] = await Promise.all([
     db
@@ -369,7 +390,9 @@ async function readMilkbarCmsData(
 
   return {
     hasPageContent: pageContentDoc !== null,
-    localizedContent: normalizeLocalizedContent(pageContentDoc?.localizedContent),
+    localizedContent: normalizeLocalizedContent(
+      pageContentDoc?.localizedContent ?? { en: pageContentDoc?.content }
+    ),
     pageSettings: normalizePageSettings(pageContentDoc?.pageSettings),
     projects: normalizeProjects(projectDocs),
     services: normalizeServices(serviceDocs),
@@ -740,7 +763,9 @@ const normalizeUpdateInput = (input: unknown): MilkbarCmsUpdateInput => {
   if (!isRecord(input)) throw badRequestError('Invalid Milkbar CMS payload.');
 
   return {
-    localizedContent: normalizeLocalizedContent(input['localizedContent']),
+    localizedContent: normalizeLocalizedContent(
+      input['localizedContent'] ?? { en: input['pageContent'] }
+    ),
     pageSettings: normalizePageSettings(input['pageSettings']),
     projects: normalizeProjects(input['projects']),
     services: normalizeServices(input['services']),

@@ -39,6 +39,7 @@ const PRODUCT_LIST_ROUTES = new Set<string>([
   '/admin/filemaker/job-listings',
   '/admin/filemaker/organizations',
   '/admin/filemaker/persons',
+  '/admin/filemaker/mail-client',
   '/admin/validator',
   '/admin/validator/lists',
   '/admin/ai-paths/queue',

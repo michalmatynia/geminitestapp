@@ -15,6 +15,7 @@ import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { notFoundError } from '@/shared/errors/app-error';
+import { getMilkbarFastCometPublicHtmlMirrorPath } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { normalizeFastCometIpAddress } from '@/shared/lib/files/services/storage/fastcomet-storage-config';
 
@@ -60,14 +61,36 @@ const createFileResponse = (
     },
   });
 
+const readExistingDiskFileResponse = async (
+  diskPath: string,
+  contentType: string | undefined
+): Promise<Response | null> => {
+  if (!existsSync(diskPath)) return null;
+  return createFileResponse(await readFile(diskPath), contentType);
+};
+
+const shouldReadMilkbarPublicHtmlMirror = (
+  asset: Asset3DRecord,
+  publicPath: string
+): boolean =>
+  getMetadataString(asset.metadata, 'storageProfile') === 'milkbarCms' &&
+  publicPath.startsWith('/uploads/cms/models/');
+
 const readMirroredAssetFile = async (asset: Asset3DRecord): Promise<Response | null> => {
   const publicPath = resolveMirroredPublicPath(asset);
   if (publicPath === null) return null;
 
-  const diskPath = getDiskPathFromPublicPath(publicPath);
-  if (!existsSync(diskPath)) return null;
+  const uploadMirrorResponse = await readExistingDiskFileResponse(
+    getDiskPathFromPublicPath(publicPath),
+    asset.mimetype
+  );
+  if (uploadMirrorResponse !== null) return uploadMirrorResponse;
 
-  return createFileResponse(await readFile(diskPath), asset.mimetype);
+  if (!shouldReadMilkbarPublicHtmlMirror(asset, publicPath)) return null;
+  return await readExistingDiskFileResponse(
+    getMilkbarFastCometPublicHtmlMirrorPath(publicPath),
+    asset.mimetype
+  );
 };
 
 const getRequiredAsset = async (id: string): Promise<Asset3DRecordWithFilepath> => {

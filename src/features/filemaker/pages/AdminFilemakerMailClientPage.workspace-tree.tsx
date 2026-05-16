@@ -1,7 +1,7 @@
 'use client';
 
-import { Folder, Inbox, MailOpen, UserRound } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import { Folder, Inbox, MailOpen, MailPlus, UserRound } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   MasterFolderTreeViewport,
@@ -25,6 +25,7 @@ import type {
   FilemakerMailThread,
 } from '../types';
 import { isClientTreeNode, type MailClientSelection } from './AdminFilemakerMailClientPage.workspace-model';
+import { AddMailboxModal } from './AdminFilemakerMailClientPage.add-mailbox-modal';
 
 type MailClientTreeHandlers = {
   onSelectAccount: (accountId: string) => void;
@@ -212,6 +213,7 @@ export function MailClientAccountsTree({
   threads,
   selection,
   isLoading,
+  onAccountAdded,
   ...handlers
 }: {
   accounts: FilemakerMailAccount[];
@@ -219,7 +221,9 @@ export function MailClientAccountsTree({
   threads: FilemakerMailThread[];
   selection: MailClientSelection;
   isLoading: boolean;
+  onAccountAdded: (account: FilemakerMailAccount) => void;
 } & MailClientTreeHandlers): React.JSX.Element {
+  const [isAddMailboxOpen, setIsAddMailboxOpen] = useState(false);
   const treeNodes = useClientTreeNodes({ accounts, folders, threads });
   const selectedNodeId = useSelectedTreeNodeId(selection);
   const initiallyExpandedNodeIds = useExpandedTreeNodeIds(accounts, selection);
@@ -237,29 +241,51 @@ export function MailClientAccountsTree({
   );
 
   return (
-    <FolderTreePanel
-      className='h-full rounded-none border-0 bg-transparent'
-      bodyClassName='min-h-0 overflow-hidden'
-      masterInstance='filemaker_mail'
-      header={<MailClientAccountsTreeHeader />}
-    >
-      <div className='min-h-0 overflow-auto p-2'>
-        <MasterFolderTreeViewport
-          tree={tree}
-          enableDnd={false}
-          emptyLabel={isLoading ? 'Loading accounts...' : 'No mailboxes configured'}
-          renderNode={renderNode}
-        />
-      </div>
-    </FolderTreePanel>
+    <>
+      <FolderTreePanel
+        className='h-full rounded-none border-0 bg-transparent'
+        bodyClassName='min-h-0 overflow-hidden'
+        masterInstance='filemaker_mail'
+        header={<MailClientAccountsTreeHeader onAddMailbox={() => setIsAddMailboxOpen(true)} />}
+      >
+        <div className='min-h-0 overflow-auto p-2'>
+          <MasterFolderTreeViewport
+            tree={tree}
+            enableDnd={false}
+            emptyLabel={isLoading ? 'Loading accounts...' : 'No mailboxes configured'}
+            renderNode={renderNode}
+          />
+        </div>
+      </FolderTreePanel>
+      <AddMailboxModal
+        open={isAddMailboxOpen}
+        onClose={() => setIsAddMailboxOpen(false)}
+        onAccountAdded={onAccountAdded}
+      />
+    </>
   );
 }
 
-function MailClientAccountsTreeHeader(): React.JSX.Element {
+function MailClientAccountsTreeHeader({
+  onAddMailbox,
+}: {
+  onAddMailbox: () => void;
+}): React.JSX.Element {
   return (
-    <div className='border-b border-border/60 px-3 py-3'>
-      <div className='text-sm font-semibold text-foreground'>Accounts</div>
-      <div className='text-xs text-muted-foreground'>Mailboxes and synced folders</div>
+    <div className='flex items-center justify-between border-b border-border/60 px-3 py-3'>
+      <div>
+        <div className='text-sm font-semibold text-foreground'>Accounts</div>
+        <div className='text-xs text-muted-foreground'>Mailboxes and synced folders</div>
+      </div>
+      <button
+        type='button'
+        aria-label='Add Mailbox'
+        title='Add Mailbox'
+        onClick={onAddMailbox}
+        className='flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground'
+      >
+        <MailPlus className='size-4' />
+      </button>
     </div>
   );
 }

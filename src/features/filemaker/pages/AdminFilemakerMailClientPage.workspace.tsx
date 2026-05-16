@@ -1,7 +1,7 @@
 'use client';
 
-import { Inbox, Mail } from 'lucide-react';
-import React, { useCallback } from 'react';
+import { Eye, Inbox, Mail } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 
 import { Button } from '@/shared/ui/primitives.public';
 
@@ -234,28 +234,44 @@ function WorkspaceLayout({
   folders,
   isLoading,
   loadError,
+  loadMailboxData,
   viewModel,
 }: {
   accounts: MailClientWorkspaceProps['accounts'];
   folders: MailClientWorkspaceProps['folders'];
   isLoading: boolean;
   loadError: string | null;
+  loadMailboxData: MailClientWorkspaceProps['loadMailboxData'];
   viewModel: WorkspaceViewModel;
 }): React.JSX.Element {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const toggleSidebar = useCallback(() => setIsSidebarOpen((prev) => !prev), []);
+
   return (
-    <div className='grid min-h-[calc(100vh-13rem)] overflow-hidden border border-border/60 bg-card/15 lg:grid-cols-[320px_minmax(0,1fr)]'>
-      <aside className='min-h-0 border-b border-border/60 lg:border-b-0 lg:border-r'>
-        <MailClientAccountsTree
-          accounts={accounts}
-          folders={folders}
-          threads={viewModel.threadsState.threads}
-          selection={viewModel.selection}
-          isLoading={isLoading}
-          onSelectAccount={viewModel.selectAccount}
-          onSelectFolder={viewModel.selectFolder}
-          onSelectThread={viewModel.selectTreeThread}
-        />
-      </aside>
+    <div
+      className={`grid min-h-[calc(100vh-13rem)] overflow-hidden border border-border/60 bg-card/15 ${
+        isSidebarOpen
+          ? 'lg:grid-cols-[320px_minmax(0,1fr)]'
+          : 'lg:grid-cols-[minmax(0,1fr)]'
+      }`}
+    >
+      {isSidebarOpen ? (
+        <aside className='min-h-0 border-b border-border/60 lg:border-b-0 lg:border-r'>
+          <MailClientAccountsTree
+            accounts={accounts}
+            folders={folders}
+            threads={viewModel.threadsState.threads}
+            selection={viewModel.selection}
+            isLoading={isLoading}
+            onAccountAdded={() => { void loadMailboxData(); }}
+            onSelectAccount={viewModel.selectAccount}
+            onSelectFolder={viewModel.selectFolder}
+            onSelectThread={viewModel.selectTreeThread}
+          />
+        </aside>
+      ) : (
+        <MailClientSidebarCollapseButton onToggleSidebar={toggleSidebar} />
+      )}
       <main className='grid min-h-0 grid-rows-[minmax(240px,38vh)_minmax(420px,1fr)]'>
         <WorkspaceMain
           detailState={viewModel.detailState}
@@ -275,6 +291,25 @@ function WorkspaceLayout({
   );
 }
 
+function MailClientSidebarCollapseButton({
+  onToggleSidebar,
+}: {
+  onToggleSidebar: () => void;
+}): React.JSX.Element {
+  return (
+    <div className='hidden items-start lg:flex'>
+      <button
+        type='button'
+        aria-label='Show accounts sidebar'
+        onClick={onToggleSidebar}
+        className='m-2 flex size-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground'
+      >
+        <Eye className='size-4' />
+      </button>
+    </div>
+  );
+}
+
 export function MailClientWorkspace(props: MailClientWorkspaceProps): React.JSX.Element {
   const viewModel = useMailClientWorkspaceViewModel(props);
   return (
@@ -283,6 +318,7 @@ export function MailClientWorkspace(props: MailClientWorkspaceProps): React.JSX.
       folders={props.folders}
       isLoading={props.isLoading}
       loadError={props.loadError}
+      loadMailboxData={props.loadMailboxData}
       viewModel={viewModel}
     />
   );

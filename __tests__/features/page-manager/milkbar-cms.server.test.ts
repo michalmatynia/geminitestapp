@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   mongoClientConnect: vi.fn(async () => undefined),
   mongoClientCtor: vi.fn(),
   mongoClientDb: vi.fn(),
+  getAsset3DById: vi.fn(),
   resolveArchMongoSourceConfig: vi.fn(),
   resolveMongoSourceConfig: vi.fn(),
 }));
@@ -28,6 +29,12 @@ vi.mock('@/shared/lib/db/mongo-source', () => ({
 
 vi.mock('@/shared/lib/db/utils/mongo', () => ({
   resolveArchMongoSourceConfig: mocks.resolveArchMongoSourceConfig,
+}));
+
+vi.mock('@/features/viewer3d/server', () => ({
+  getAsset3DRepository: () => ({
+    getAsset3DById: mocks.getAsset3DById,
+  }),
 }));
 
 import {
@@ -149,6 +156,7 @@ describe('milkbar cms server', () => {
     mocks.mongoClientDb.mockImplementation((dbName: string) =>
       dbName === 'app_local' ? sourceDb : runtimeDb
     );
+    mocks.getAsset3DById.mockResolvedValue(null);
   });
 
   it('saves localized Milkbar CMS data to GeminiTest source collections and mirrors runtime collections', async () => {
@@ -523,5 +531,67 @@ describe('milkbar cms server', () => {
     // EN nav should be untouched
     const en = snapshot.localizedContent.en;
     expect(en.nav.ctaLabel).toBe(DEFAULT_MILKBAR_PAGE_CONTENT.nav.ctaLabel);
+  });
+
+  it('publishes Milkbar model asset ids as FastComet model URLs', async () => {
+    mocks.getAsset3DById.mockImplementation(async (id: string) => ({
+      id,
+      filename: `${id}.gltf`,
+      filepath: `http://localhost:3000/api/assets3d/${id}/file`,
+      fileUrl: `http://localhost:3000/api/assets3d/${id}/file`,
+      mimetype: 'model/gltf+json',
+      size: 100,
+      metadata: {
+        publicPath: `/uploads/cms/models/${id}.gltf`,
+        storageProfile: 'milkbarCms',
+      },
+    }));
+
+    const content = {
+      ...DEFAULT_MILKBAR_PAGE_CONTENT,
+      hero: {
+        ...DEFAULT_MILKBAR_PAGE_CONTENT.hero,
+        modelAssetId: 'hero-asset',
+        modelUrl: 'http://localhost:3000/api/assets3d/hero-asset/file',
+      },
+      drawing: {
+        ...DEFAULT_MILKBAR_PAGE_CONTENT.drawing,
+        interiorModelAssetId: 'interior-asset',
+        interiorModelUrl: 'http://localhost:3000/api/assets3d/interior-asset/file',
+      },
+    };
+
+    const snapshot = await saveMilkbarDesignersCmsSnapshot({
+      localizedContent: { ...DEFAULT_MILKBAR_LOCALIZED_CONTENT, en: content },
+      pageSettings: DEFAULT_MILKBAR_PAGE_SETTINGS,
+      projects: [
+        {
+          cameraPosition: { x: 1, y: 2, z: 3 },
+          cameraTarget: { x: 0, y: 1, z: 0 },
+          city: 'Amsterdam',
+          code: 'MBD-001',
+          country: 'NL',
+          description: 'Cloud model project.',
+          modelAssetId: 'project-asset',
+          modelUrl: 'http://localhost:3000/api/assets3d/project-asset/file',
+          name: 'Cloud Model Project',
+          order: 1,
+          projectType: 'Architecture Project',
+          stats: [],
+          status: 'published',
+        },
+      ],
+      services: [],
+    });
+
+    expect(snapshot.localizedContent.en.hero.modelUrl).toBe(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/hero-asset.gltf'
+    );
+    expect(snapshot.localizedContent.en.drawing.interiorModelUrl).toBe(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/interior-asset.gltf'
+    );
+    expect(snapshot.projects[0]?.modelUrl).toBe(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/project-asset.gltf'
+    );
   });
 });

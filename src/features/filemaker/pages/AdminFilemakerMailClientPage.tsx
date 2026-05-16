@@ -1,15 +1,17 @@
 'use client';
 
-import { LayoutDashboard, Mail, MailPlus, RefreshCcw } from 'lucide-react';
+import { LayoutDashboard, Mail, RefreshCcw } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 import React from 'react';
 
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import { Button } from '@/shared/ui/button';
+import { FocusModeTogglePortal } from '@/shared/ui/navigation-and-layout.public';
 import { Alert, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
-import { PanelHeader } from '@/shared/ui/templates.public';
 
-import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
-import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import { useAdminFilemakerMailClientPageActions } from './AdminFilemakerMailClientPage.actions';
 import { MailClientDashboardSections } from './AdminFilemakerMailClientPage.dashboard';
 import { buildMailClientComposeHref } from './AdminFilemakerMailClientPage.helpers';
@@ -54,40 +56,38 @@ const buildMailClientTabHref = (
   return nextSearch === '' ? '/admin/filemaker/mail-client' : `/admin/filemaker/mail-client?${nextSearch}`;
 };
 
-const buildMailClientHeaderActions = (
-  router: ReturnType<typeof useRouter>,
-  composeHref: string,
-  onRefresh: () => Promise<void>
-): Parameters<typeof PanelHeader>[0]['actions'] => [
-  {
-    key: 'add-mailbox',
-    label: 'Add Mailbox',
-    icon: <MailPlus className='size-4' />,
-    variant: 'outline' as const,
-    onClick: () => {
-      router.push(buildFilemakerMailSelectionHref({ panel: 'settings' }));
-    },
-  },
-  {
-    key: 'compose',
-    label: 'Compose',
-    icon: <MailPlus className='size-4' />,
-    variant: 'outline' as const,
-    onClick: () => {
-      router.push(composeHref);
-    },
-  },
-  {
-    key: 'refresh',
-    label: 'Refresh',
-    icon: <RefreshCcw className='size-4' />,
-    variant: 'outline' as const,
-    onClick: () => {
-      void onRefresh();
-    },
-  },
-  ...buildFilemakerNavActions(router, 'mail'),
-];
+function MailClientHeaderActions({
+  router,
+  composeHref,
+  onRefresh,
+}: {
+  router: ReturnType<typeof useRouter>;
+  composeHref: string;
+  onRefresh: () => Promise<void>;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center gap-1'>
+      <Button
+        onClick={() => { void onRefresh(); }}
+        variant='outline'
+        aria-label='Refresh'
+        title='Refresh'
+        className='h-7 w-7 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
+      >
+        <RefreshCcw className='h-3 w-3' />
+      </Button>
+      <Button
+        variant='outline'
+        size='sm'
+        className='h-7 border border-white/20 bg-transparent text-white transition-colors hover:border-white/40 hover:bg-white/10'
+        onClick={() => router.push(composeHref)}
+      >
+        <Mail className='mr-1 h-3 w-3' />
+        Compose Email
+      </Button>
+    </div>
+  );
+}
 
 function MailClientPageTabs({
   actions,
@@ -141,6 +141,8 @@ function MailClientPageLoadAlert({
 export function AdminFilemakerMailClientPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isMenuHidden } = useAdminLayoutState();
+  const { setIsMenuHidden } = useAdminLayoutActions();
   const state = useAdminFilemakerMailClientPageState();
   const { accounts, firstActiveAccount, loadMailboxData } = state;
   const actions = useAdminFilemakerMailClientPageActions({
@@ -178,16 +180,23 @@ export function AdminFilemakerMailClientPage(): React.JSX.Element {
   );
 
   return (
-    <div className='page-section-compact space-y-4'>
-      <PanelHeader
-        title='Filemaker Email Client'
-        description='Browse accounts, scan synced email lists, and reply from the reader/editor workspace.'
-        icon={<Mail className='size-4' />}
-        actions={buildMailClientHeaderActions(
-          router,
-          composeHref,
-          loadMailboxData
-        )}
+    <div className='space-y-4'>
+      <FocusModeTogglePortal
+        isFocusMode={isMenuHidden === false}
+        onToggleFocusMode={() => { setIsMenuHidden(isMenuHidden === false); }}
+      />
+      <AdminTitleBreadcrumbHeader
+        title={<h1 className='text-3xl font-bold tracking-tight text-white'>Mail Client</h1>}
+        breadcrumb={<AdminFilemakerBreadcrumbs current='Mail Client' />}
+        titleStackClassName='shrink-0 min-w-max'
+        actions={
+          <MailClientHeaderActions
+            router={router}
+            composeHref={composeHref}
+            onRefresh={loadMailboxData}
+          />
+        }
+        actionsClassName='relative z-0 min-w-0 flex-1 justify-end'
       />
       <MailClientPageLoadAlert loadError={state.loadError} />
       <MailClientPageTabs

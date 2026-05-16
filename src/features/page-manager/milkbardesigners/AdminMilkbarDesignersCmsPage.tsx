@@ -1265,13 +1265,35 @@ const compactDrawingImageSlotValues = (values: string[]): string[] => {
   return next;
 };
 
-const createDrawingImageSelection = (src: string, index: number): ImageFileSelection => ({
-  id: `milkbar-drawing-image-${index}-${src}`,
-  filepath: src,
-  publicUrl: src,
-  url: src,
-  filename: src.split('/').pop() ?? `drawing-image-${index + 1}`,
-});
+const toUploadPublicPath = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.startsWith('/uploads/')) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    const pathname = decodeURIComponent(url.pathname);
+    return pathname.startsWith('/uploads/') ? pathname : null;
+  } catch {
+    return null;
+  }
+};
+
+const toLocalMilkbarCmsMediaPreviewUrl = (src: string): string => {
+  const publicPath = toUploadPublicPath(src);
+  if (publicPath?.startsWith('/uploads/cms/visualisation/') !== true) return src;
+  return `/api/cms/media/local${publicPath}`;
+};
+
+const createDrawingImageSelection = (src: string, index: number): ImageFileSelection => {
+  const previewUrl = toLocalMilkbarCmsMediaPreviewUrl(src);
+  return {
+    id: `milkbar-drawing-image-${index}-${src}`,
+    filepath: previewUrl,
+    publicUrl: previewUrl,
+    url: previewUrl,
+    filename: src.split('/').pop() ?? `drawing-image-${index + 1}`,
+  };
+};
 
 const createDrawingManagedImageSlot = (
   src: string,
@@ -1282,7 +1304,7 @@ const createDrawingManagedImageSlot = (
   return {
     type: 'existing',
     data: createDrawingImageSelection(trimmed, index),
-    previewUrl: trimmed,
+    previewUrl: toLocalMilkbarCmsMediaPreviewUrl(trimmed),
     slotId: `milkbar-drawing-image-slot-${index}`,
   };
 };

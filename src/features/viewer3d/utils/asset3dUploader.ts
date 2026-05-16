@@ -30,6 +30,10 @@ import {
   getPublicPathFromStoredPath,
   uploadToConfiguredStorage,
 } from '@/shared/lib/files/services/image-file-service';
+import {
+  getMilkbarFastCometPublicHtmlMirrorPath,
+  writeMilkbarFastCometPublicHtmlMirrorFile,
+} from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -70,26 +74,6 @@ type AssetStorageTarget = {
   fastCometUploadOptions: MilkbarFastCometUploadOptions | Record<string, never>;
 };
 
-const MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT = path.resolve(
-  process.cwd(),
-  'hosting',
-  'fastcomet',
-  'milkbardesigners.com',
-  'public_html'
-);
-
-const toMilkbarPublicHtmlMirrorPath = (publicPath: string): string => {
-  const cleaned = publicPath.replace(/^\/+/, '');
-  const resolved = path.resolve(MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT, cleaned);
-  if (
-    resolved !== MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT &&
-    !resolved.startsWith(`${MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT}${path.sep}`)
-  ) {
-    throw new Error('Invalid Milkbar FastComet public_html mirror path.');
-  }
-  return resolved;
-};
-
 const writeFileBuffer = async (diskPath: string, fileBuffer: Buffer): Promise<void> => {
   await fs.mkdir(path.dirname(diskPath), { recursive: true });
   await fs.writeFile(diskPath, fileBuffer);
@@ -99,7 +83,7 @@ const writeMilkbarPublicHtmlMirror = async (
   publicPath: string,
   fileBuffer: Buffer
 ): Promise<void> => {
-  await writeFileBuffer(toMilkbarPublicHtmlMirrorPath(publicPath), fileBuffer);
+  await writeMilkbarFastCometPublicHtmlMirrorFile(publicPath, fileBuffer);
 };
 
 const readMetadataText = (
@@ -126,7 +110,7 @@ const deleteMilkbarPublicHtmlMirror = async (asset: Asset3DRecord): Promise<void
   if (!isMilkbarCmsAsset(asset)) return;
   const publicPath = resolveAssetPublicPath(asset);
   if (publicPath?.startsWith('/uploads/cms/models/') !== true) return;
-  await fs.unlink(toMilkbarPublicHtmlMirrorPath(publicPath)).catch(() => undefined);
+  await fs.unlink(getMilkbarFastCometPublicHtmlMirrorPath(publicPath)).catch(() => undefined);
 };
 
 function resolveAssetStorageTarget(

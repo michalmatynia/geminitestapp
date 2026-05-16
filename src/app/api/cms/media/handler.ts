@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { uploadFile } from '@/features/files/server';
+import { getPublicPathFromStoredPath, uploadFile } from '@/features/files/server';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
@@ -9,6 +10,7 @@ import {
   fileStorageProfileValues,
   type FileStorageProfile,
 } from '@/shared/lib/files/constants';
+import { writeMilkbarFastCometPublicHtmlMirrorFile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -30,6 +32,62 @@ const readStorageProfile = (formData: FormData): FileStorageProfile => {
     return value as FileStorageProfile;
   }
   throw badRequestError('Invalid storage profile.', { storageProfile: value });
+};
+
+const readUploadMetadataString = (
+  metadata: Record<string, unknown> | null | undefined,
+  key: string
+): string | null => {
+  const value = metadata?.[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveUploadPublicPath = (upload: ImageFileRecord): string | null => {
+  const metadataPath = readUploadMetadataString(upload.metadata, 'publicPath');
+  if (metadataPath !== null) return metadataPath;
+  return getPublicPathFromStoredPath(upload.filepath);
+};
+
+const mirrorMilkbarCmsMediaToPublicHtml = async (
+  file: File,
+  upload: ImageFileRecord
+): Promise<void> => {
+  const publicPath = resolveUploadPublicPath(upload);
+  if (publicPath?.startsWith('/uploads/cms/visualisation/') !== true) return;
+  await writeMilkbarFastCometPublicHtmlMirrorFile(
+    publicPath,
+    Buffer.from(await file.arrayBuffer())
+  );
+};
+
+const uploadCmsMediaFile = async (
+  file: File,
+  input: {
+    folder: string | null;
+    isMilkbarCmsUpload: boolean;
+    milkbarStorage: ReturnType<typeof resolveMilkbarFastCometStorageProfile> | null;
+  }
+): Promise<ImageFileRecord> => {
+  const upload = await uploadFile(file, {
+    category: 'cms',
+    allowOrphanRecord: true,
+    folder: input.folder,
+    ...(input.isMilkbarCmsUpload
+      ? {
+          forceStorageSource: 'fastcomet' as const,
+          fastCometBaseUrl: input.milkbarStorage?.publicBaseUrl,
+          fastCometConfig: input.milkbarStorage?.fastCometConfig,
+        }
+      : {}),
+  });
+
+  if (input.isMilkbarCmsUpload) {
+    await mirrorMilkbarCmsMediaToPublicHtml(file, upload);
+  }
+
+  return upload;
 };
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -62,17 +120,10 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const uploads = await Promise.all(
     files.map((file) =>
-      uploadFile(file, {
-        category: 'cms',
-        allowOrphanRecord: true,
+      uploadCmsMediaFile(file, {
         folder,
-        ...(isMilkbarCmsUpload
-          ? {
-              forceStorageSource: 'fastcomet',
-              fastCometBaseUrl: milkbarStorage?.publicBaseUrl,
-              fastCometConfig: milkbarStorage?.fastCometConfig,
-            }
-          : {}),
+        isMilkbarCmsUpload,
+        milkbarStorage,
       })
     )
   );

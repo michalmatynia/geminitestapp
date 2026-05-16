@@ -98,13 +98,6 @@ const NAV_ITEMS: Array<{
     variant: 'outline',
   },
   {
-    key: 'mail-settings',
-    label: 'Mail Settings',
-    href: '/admin/filemaker/mail',
-    icon: <Mail className='size-4' />,
-    variant: 'outline',
-  },
-  {
     key: 'events',
     label: 'Events',
     href: '/admin/filemaker/events',

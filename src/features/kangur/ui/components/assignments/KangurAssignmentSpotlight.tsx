@@ -38,6 +38,7 @@ import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kan
 type KangurAssignmentSpotlightProps = {
   basePath: string;
   enabled?: boolean;
+  idleDelayMs?: number;
 };
 type KangurAssignmentSpotlightAssignment =
   ReturnType<typeof useKangurAssignments>['assignments'][number];
@@ -241,9 +242,10 @@ function KangurAssignmentSpotlightContent({
 export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
+  idleDelayMs = GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
   const isIdleReady = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    minimumDelayMs: idleDelayMs,
   });
   const shouldLoadAssignmentSpotlight = enabled && isIdleReady;
   const { assignments, isLoading, error } = useKangurAssignments({

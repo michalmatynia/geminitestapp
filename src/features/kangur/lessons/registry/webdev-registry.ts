@@ -33,4 +33,12 @@ export const webdevLessons = {
   webdev_react_router: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentReactRouterLesson')),
   webdev_react_setup: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentReactSetupLesson')),
   webdev_react_state_management: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentReactStateManagementLesson')),
+
+  // JavaScript lessons
+  webdev_js_basics: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptBasicsLesson')),
+  webdev_js_syntax: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptSyntaxLesson')),
+  webdev_js_dom: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptDomLesson')),
+  webdev_js_es6: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptEs6Lesson')),
+  webdev_js_async: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptAsyncLesson')),
+  webdev_js_tooling: loadLessonComponent(() => import('@/features/kangur/ui/components/WebDevelopmentJavaScriptToolingLesson')),
 };

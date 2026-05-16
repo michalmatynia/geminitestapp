@@ -24,6 +24,7 @@ import {
 type KangurPriorityAssignmentsProps = {
   basePath: string;
   enabled?: boolean;
+  idleDelayMs?: number;
   limit?: number;
   title?: string;
   emptyLabel?: string;
@@ -88,13 +89,14 @@ const resolvePriorityAssignmentsCopy = ({
 function useKangurPriorityAssignmentsState({
   basePath,
   enabled = false,
+  idleDelayMs = GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
   limit = 3,
   title,
   emptyLabel,
 }: KangurPriorityAssignmentsProps): KangurPriorityAssignmentsState {
   const translations = useTranslations('KangurGameWidgets');
   const isIdleReady = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    minimumDelayMs: idleDelayMs,
   });
   const shouldLoadPriorityAssignments = enabled && isIdleReady;
   const { entry: assignmentsContent } = useKangurPageContentEntry(

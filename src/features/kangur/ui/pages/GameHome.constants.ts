@@ -40,7 +40,9 @@ export const GAME_HOME_QUEST_SHELL_CLASSNAME = 'w-full';
 
 export const GAME_HOME_HERO_SHELL_CLASSNAME = 'w-full space-y-4';
 
-export const GAME_HOME_COPY_IDLE_DELAY_MS = 1200;
+export const GAME_HOME_NEAR_FOLD_IDLE_DELAY_MS = 500;
+
+export const GAME_HOME_FAR_FOLD_IDLE_DELAY_MS = 1200;
 
 export const GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS = 2000;
 

@@ -62,8 +62,7 @@ export function useKangurPreloadEffects(input: KangurPreloadEffectsInput): void 
       isThemeBootLoading ||
       isNavigationTransitionActive ||
       isCoarsePointer ||
-      isSyntheticKangurCapture ||
-      resolvedPageKey === 'Game'
+      isSyntheticKangurCapture
     ) {
       return;
     }

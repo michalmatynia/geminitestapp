@@ -1,13 +1,17 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { type useTranslations } from 'next-intl';
+import { useLocale, type useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 import type { RefObject } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
+import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { prefetchKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   KangurButton,
   KangurEmptyState,
@@ -16,8 +20,9 @@ import {
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
+  GAME_HOME_FAR_FOLD_IDLE_DELAY_MS,
   GAME_HOME_LAYOUT_CLASSNAME,
-  GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  GAME_HOME_NEAR_FOLD_IDLE_DELAY_MS,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import { type resolveKangurGameHomeVisibility } from '@/features/kangur/ui/pages/GameHome.visibility';
 import {
@@ -203,10 +208,10 @@ function GameHomeActionsColumn(props: {
   basePath: string;
   homeActionsRef: RefObject<HTMLDivElement | null>;
   homeVisibility: ReturnType<typeof resolveKangurGameHomeVisibility>;
-  shouldMountSecondaryHomeWidgets: boolean;
+  shouldMountNearFoldWidgets: boolean;
   translations: GameTranslations;
 }): React.JSX.Element {
-  const { basePath, homeActionsRef, homeVisibility, shouldMountSecondaryHomeWidgets, translations } =
+  const { basePath, homeActionsRef, homeVisibility, shouldMountNearFoldWidgets, translations } =
     props;
 
   return (
@@ -214,7 +219,7 @@ function GameHomeActionsColumn(props: {
       <div id='kangur-home-actions' ref={homeActionsRef}>
         <KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />
       </div>
-      {shouldMountSecondaryHomeWidgets ? (
+      {shouldMountNearFoldWidgets ? (
         <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
       ) : (
         <DuelsInvitesSkeleton />
@@ -244,9 +249,42 @@ export function GameHomeScreen(props: {
     screenHeadingRef,
     translations,
   } = props;
-  const shouldMountSecondaryHomeWidgets = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+  const shouldMountNearFoldWidgets = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_NEAR_FOLD_IDLE_DELAY_MS,
   });
+  const shouldMountFarFoldWidgets = useKangurIdleReady({
+    minimumDelayMs: GAME_HOME_FAR_FOLD_IDLE_DELAY_MS,
+  });
+
+  const queryClient = useQueryClient();
+  const locale = useLocale();
+
+  useEffect(() => {
+    // Warm the page-content cache (hero copy, leaderboard copy) before widgets mount.
+    // The fetch is shared across all widgets via React Query — a single network request
+    // that fulfils both the hero and leaderboard CMS entries.
+    void prefetchKangurPageContentStore(queryClient, locale);
+  }, [queryClient, locale]);
+
+  useEffect(() => {
+    const preload = (): void => {
+      void import('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget');
+      void import('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget');
+      void import('@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget');
+      void import('@/features/kangur/ui/components/Leaderboard');
+      void import('@/features/kangur/ui/components/PlayerProgressCard');
+      void import('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight');
+      if (canAccessParentAssignments) {
+        void prefetchKangurAssignments(queryClient);
+      }
+    };
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(preload, { timeout: 200 });
+      return () => { window.cancelIdleCallback(id); };
+    }
+    const id = setTimeout(preload, 200);
+    return () => { clearTimeout(id); };
+  }, [canAccessParentAssignments, queryClient]);
 
   return (
     <div
@@ -258,7 +296,7 @@ export function GameHomeScreen(props: {
       </h2>
       <KangurGameHomeSections
         visibility={homeVisibility}
-        parentSpotlight={<KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} />}
+        parentSpotlight={<KangurAssignmentSpotlight basePath={basePath} enabled={canAccessParentAssignments} idleDelayMs={GAME_HOME_NEAR_FOLD_IDLE_DELAY_MS} />}
         parentSpotlightSectionProps={{
           headingId: 'kangur-home-parent-assignment-heading',
           headingLabel: translations('home.parentSuggestionsHeading'),
@@ -269,13 +307,13 @@ export function GameHomeScreen(props: {
             basePath={basePath}
             homeActionsRef={homeRefs.homeActionsRef}
             homeVisibility={homeVisibility}
-            shouldMountSecondaryHomeWidgets={shouldMountSecondaryHomeWidgets}
+            shouldMountNearFoldWidgets={shouldMountNearFoldWidgets}
             translations={translations}
           />
         }
         actionsColumnProps={{ testId: 'kangur-home-actions-column' }}
         quest={
-          shouldMountSecondaryHomeWidgets ? (
+          shouldMountNearFoldWidgets ? (
             <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
           ) : (
             <QuestSkeleton />
@@ -288,7 +326,7 @@ export function GameHomeScreen(props: {
           ref: homeRefs.homeQuestRef,
         }}
         summary={
-          shouldMountSecondaryHomeWidgets ? (
+          shouldMountNearFoldWidgets ? (
             <KangurGameHomeHeroWidget
               hideWhenScreenMismatch={false}
               showIntro={false}
@@ -307,6 +345,7 @@ export function GameHomeScreen(props: {
           <KangurPriorityAssignments
             basePath={basePath}
             enabled={canAccessParentAssignments}
+            idleDelayMs={GAME_HOME_NEAR_FOLD_IDLE_DELAY_MS}
             title={translations('home.priorityAssignmentsTitle')}
             emptyLabel={translations('home.priorityAssignmentsEmpty')}
           />
@@ -318,8 +357,8 @@ export function GameHomeScreen(props: {
           ref: homeRefs.homeAssignmentsRef,
         }}
         leaderboard={
-          shouldMountSecondaryHomeWidgets ? (
-            <Leaderboard deferUntilVisible />
+          shouldMountFarFoldWidgets ? (
+            <Leaderboard deferUntilVisible idleDelayMs={0} />
           ) : (
             <LeaderboardSkeleton />
           )
@@ -330,7 +369,7 @@ export function GameHomeScreen(props: {
         }}
         playerProgress={
           progress ? (
-            shouldMountSecondaryHomeWidgets ? (
+            shouldMountFarFoldWidgets ? (
               <PlayerProgressCard progress={progress} />
             ) : (
               <PlayerProgressSkeleton />

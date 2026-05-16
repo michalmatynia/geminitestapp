@@ -243,6 +243,30 @@ export const UKRAINIAN_LESSON_COPY_OVERRIDES: Partial<
     title: 'Основи керування станом',
     description: 'Вивчіть основи керування станом у React.',
   },
+  webdev_js_basics: {
+    title: 'JavaScript: Основи',
+    description: 'Вступ до змінних, значень та простих операторів.',
+  },
+  webdev_js_syntax: {
+    title: 'JavaScript: Синтаксис і типи',
+    description: 'Огляд типів, приведення типів і поширених синтаксичних конструкцій.',
+  },
+  webdev_js_dom: {
+    title: 'JavaScript: DOM і Browser API',
+    description: 'Робота з DOM, подіями та базовими API браузера.',
+  },
+  webdev_js_es6: {
+    title: 'JavaScript: ES6 та модулі',
+    description: 'Сучасний JavaScript: let/const, стрілкові функції, модулі, деструктуризація.',
+  },
+  webdev_js_async: {
+    title: 'JavaScript: Асинхронність і Promises',
+    description: 'Callbacks, Promises, async/await та обробка асинхронного потоку.',
+  },
+  webdev_js_tooling: {
+    title: 'JavaScript: Інструменти і збірка',
+    description: 'NPM, бандлери, лінтери та прості скрипти збірки.',
+  },
   agentic_coding_codex_5_4: {
     title: 'Основи агентного програмування',
     description:

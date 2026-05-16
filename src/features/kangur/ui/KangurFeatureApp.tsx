@@ -180,7 +180,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isInitialHomeSkeletonPhase, isBootSkeletonVisible, isRouteInteractionReady,
     shouldKeepRouteContentVisibleDuringTransition,
   } = boot;
-  const isBootLoaderBlockingNavigation = isBootSkeletonVisible && !isRouteSkeletonVisible;
+  // Guard: never re-show the full-screen loader once past the 'loader' phase and route content
+  // is available. Without this, a state-lag race between isBootSkeletonVisible (async state) and
+  // isRouteSkeletonVisible (synchronous derived) causes a one-render flash when routeContent
+  // transitions from null → non-null during the 'page-skeleton' phase.
+  const isBootLoaderBlockingNavigation =
+    isBootSkeletonVisible &&
+    !isRouteSkeletonVisible &&
+    (isInitialHomeLoaderPhase || routeContent === null);
   // Keep the real nav bar mounted during all route transitions so it doesn't
   // visually flash/remount. The skeleton overlay positions itself below the nav
   // (top: topBarHeightCssValue) and doesn't need an inline nav skeleton.

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const IDLE_READY_FALLBACK_TIMEOUT_MS = 1;
+const IDLE_READY_MINIMUM_TIMEOUT_MS = 50;
 type UseKangurIdleReadyOptions = {
   minimumDelayMs?: number;
 };
@@ -49,9 +50,12 @@ export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boo
       typeof hostWindow.requestIdleCallback === 'function' &&
       typeof hostWindow.cancelIdleCallback === 'function'
     ) {
+      // timeout bounds the maximum wait: fire when idle, but no later than minimumDelayMs.
+      // Without this, a busy tab can delay the callback far beyond the expected minimum.
+      const idleTimeout = Math.max(IDLE_READY_MINIMUM_TIMEOUT_MS, minimumDelayMs);
       const idleId = hostWindow.requestIdleCallback(() => {
         markReady();
-      });
+      }, { timeout: idleTimeout });
 
       return () => {
         hostWindow.cancelIdleCallback(idleId);

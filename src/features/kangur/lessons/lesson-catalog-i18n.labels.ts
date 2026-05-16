@@ -32,6 +32,15 @@ export const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_adverbs: 'Adverbs',
   english_grammar_adverbs_frequency: 'Adverbs of frequency',
   english_grammar_prepositions: 'Prepositions',
+
+  // Web Development: JavaScript
+  webdev_javascript: 'JavaScript',
+  webdev_js_basics: 'First Steps',
+  webdev_js_syntax: 'Syntax, Types & Data',
+  webdev_js_dom: 'Browser APIs & DOM',
+  webdev_js_es6: 'Functions, Objects & Modules',
+  webdev_js_async: 'Asynchronous JavaScript',
+  webdev_js_tooling: 'Reference & Debugging',
 };
 
 export const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
@@ -63,6 +72,15 @@ export const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_adverbs: 'Adverbien',
   english_grammar_adverbs_frequency: 'Adverbien der Haeufigkeit',
   english_grammar_prepositions: 'Praepositionen',
+
+  // Web Development: JavaScript
+  webdev_javascript: 'JavaScript',
+  webdev_js_basics: 'Erste Schritte',
+  webdev_js_syntax: 'Syntax, Typen & Daten',
+  webdev_js_dom: 'Browser-APIs & DOM',
+  webdev_js_es6: 'Funktionen, Objekte & Module',
+  webdev_js_async: 'Asynchrones JavaScript',
+  webdev_js_tooling: 'Referenz & Debugging',
 };
 
 export const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
@@ -94,6 +112,15 @@ export const UKRAINIAN_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar_adverbs: 'Прислівники',
   english_grammar_adverbs_frequency: 'Прислівники частоти',
   english_grammar_prepositions: 'Прийменники',
+
+  // Web Development: JavaScript
+  webdev_javascript: 'JavaScript',
+  webdev_js_basics: 'Перші кроки',
+  webdev_js_syntax: 'Синтаксис, типи та дані',
+  webdev_js_dom: 'Browser APIs & DOM',
+  webdev_js_es6: 'Функції, обʼєкти та модулі',
+  webdev_js_async: 'Асинхронний JavaScript',
+  webdev_js_tooling: 'Довідник і налагодження',
 };
 
 export const ENGLISH_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {

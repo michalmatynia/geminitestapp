@@ -35,10 +35,8 @@ import {
   getProgressTopActivities,
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
-import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
-  GAME_HOME_COPY_IDLE_DELAY_MS,
   GAME_HOME_PLAYER_PROGRESS_SHELL_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -207,12 +205,7 @@ export default function PlayerProgressCard({
 }: PlayerProgressCardProps): React.JSX.Element {
   const translations = useTranslations('KangurPlayerProgress');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const shouldLoadProgressContent = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_COPY_IDLE_DELAY_MS,
-  });
-  const { entry: progressContent } = useKangurPageContentEntry('game-home-progress', undefined, {
-    enabled: shouldLoadProgressContent,
-  });
+  const { entry: progressContent } = useKangurPageContentEntry('game-home-progress');
   const badgeTrackProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted } = progress;
   const progressLocalizer = { translate: runtimeTranslations };

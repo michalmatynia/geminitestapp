@@ -152,6 +152,42 @@ export const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Poznaj podstawy zarządzania stanem w React. Lekcja dla dorosłych.',
     triggerPhrases: ['state', 'stan', 'use' + 'State', 'context', 'reducer'],
   },
+  webdev_js_basics: {
+    explanation:
+      'Wprowadza JavaScript od pierwszych kroków: wartości, zmienne, operatory, tablice, warunki i pętle. Lekcja dla dorosłych.',
+    triggerPhrases: ['javascript', 'js', 'variables', 'zmienne', 'arrays', 'loops', 'pętle'],
+    aliases: ['JavaScript First Steps', 'JS basics'],
+  },
+  webdev_js_syntax: {
+    explanation:
+      'Wyjaśnia składnię JavaScript, typy danych, porównania, strict equality oraz struktury danych takie jak Array, Map i Set. Lekcja dla dorosłych.',
+    triggerPhrases: ['javascript syntax', 'types', 'typy', 'strict equality', 'map', 'set'],
+    aliases: ['Syntax, Types & Data'],
+  },
+  webdev_js_dom: {
+    explanation:
+      'Pokazuje użycie JavaScript w przeglądarce: DOM, zdarzenia, formularze, fetch, storage i Web APIs. Lekcja dla dorosłych.',
+    triggerPhrases: ['dom', 'browser api', 'web api', 'events', 'fetch', 'localStorage'],
+    aliases: ['Browser APIs & DOM'],
+  },
+  webdev_js_es6: {
+    explanation:
+      'Ćwiczy funkcje, domknięcia, obiekty, prototypy, klasy, iteratory i moduły JavaScript. Lekcja dla dorosłych.',
+    triggerPhrases: ['functions', 'funkcje', 'closures', 'objects', 'classes', 'modules'],
+    aliases: ['Functions, Objects & Modules'],
+  },
+  webdev_js_async: {
+    explanation:
+      'Uczy asynchronicznego JavaScript: callbacks, promises, async/await, try/catch i przepływy fetch. Lekcja dla dorosłych.',
+    triggerPhrases: ['async', 'await', 'promise', 'promises', 'asynchroniczny', 'callback'],
+    aliases: ['Asynchronous JavaScript'],
+  },
+  webdev_js_tooling: {
+    explanation:
+      'Uczy pracy z referencją MDN, debugowania, obiektów wbudowanych, operatorów, funkcji, klas, błędów i wyrażeń regularnych. Lekcja dla dorosłych.',
+    triggerPhrases: ['mdn', 'reference', 'debugging', 'debug', 'regexp', 'errors', 'console'],
+    aliases: ['Reference & Debugging'],
+  },
   agentic_coding_codex_5_4: {
     explanation:
       'Wprowadzenie do agentycznego kodowania z Codex 5.4: planowanie, iteracje i praca z asystentem AI. Lekcja dla dorosłych.',

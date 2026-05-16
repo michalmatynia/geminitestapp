@@ -8,6 +8,7 @@ import { FOCUS_TO_COMPONENT } from './lesson-focus-map';
 import { alphabetLessons } from './registry/alphabet-registry';
 import { webdevLessons } from './registry/webdev-registry';
 import { agenticLessons } from './registry/agentic-coding-registry';
+import { coreLessons } from './registry/core-registry';
 
 export type LessonProps = {
   onBack?: () => void;
@@ -16,6 +17,7 @@ export type LessonProps = {
 };
 
 export const LESSON_COMPONENTS: Record<string, ComponentType<LessonProps>> = {
+  ...coreLessons,
   ...alphabetLessons,
   ...webdevLessons,
   ...agenticLessons,

@@ -6,10 +6,8 @@ import { useTranslations } from 'next-intl';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurPanelIntro } from '@/features/kangur/ui/design/primitives';
-import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import {
-  GAME_HOME_COPY_IDLE_DELAY_MS,
   GAME_HOME_HERO_SHELL_CLASSNAME,
 } from '@/features/kangur/ui/pages/GameHome.constants';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
@@ -202,12 +200,7 @@ export function KangurGameHomeHeroWidget(
   const { hideWhenScreenMismatch, showAssignmentSpotlight, showIntro } =
     resolveKangurGameHomeHeroWidgetProps(props);
   const runtime = useKangurGameRuntime();
-  const shouldLoadHeroContent = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_COPY_IDLE_DELAY_MS,
-  });
-  const { entry: heroContent } = useKangurPageContentEntry('game-home-hero', undefined, {
-    enabled: shouldLoadHeroContent,
-  });
+  const { entry: heroContent } = useKangurPageContentEntry('game-home-hero');
   const { basePath, progress, screen, user } = runtime;
   const canAccessParentAssignments = resolveKangurGameHomeHeroAccess({
     canAccessParentAssignments: runtime.canAccessParentAssignments,

@@ -220,6 +220,30 @@ export const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
   webdev_react_state_management: {
     description: 'Learn the basics of state management in React.',
   },
+  webdev_js_basics: {
+    title: 'JavaScript: Basics',
+    description: 'Introduction to variables, values, and simple operators.',
+  },
+  webdev_js_syntax: {
+    title: 'JavaScript: Syntax & Types',
+    description: 'Overview of types, coercion, and common syntax patterns.',
+  },
+  webdev_js_dom: {
+    title: 'JavaScript: DOM & Browser APIs',
+    description: 'Working with the DOM, events, and basic browser APIs.',
+  },
+  webdev_js_es6: {
+    title: 'JavaScript: ES6 & Modules',
+    description: 'Modern JavaScript: let/const, arrow functions, modules, destructuring.',
+  },
+  webdev_js_async: {
+    title: 'JavaScript: Asynchrony & Promises',
+    description: 'Callbacks, Promises, async/await and handling async flow.',
+  },
+  webdev_js_tooling: {
+    title: 'JavaScript: Tooling & Build',
+    description: 'NPM, bundlers, linters, and simple build scripts overview.',
+  },
   agentic_coding_codex_5_4: {
     description: 'What agentic coding is and how to adopt the right mindset.',
   },
@@ -518,6 +542,30 @@ export const GERMAN_LESSON_COPY_OVERRIDES: Partial<
   },
   webdev_react_state_management: {
     description: 'Lerne die Grundlagen des State-Managements in React.',
+  },
+  webdev_js_basics: {
+    title: 'JavaScript: Grundlagen',
+    description: 'Einfuhrung in Variablen, Werte und einfache Operatoren.',
+  },
+  webdev_js_syntax: {
+    title: 'JavaScript: Syntax & Typen',
+    description: 'Ueberblick ueber Typen, Type Coercion und gebraeuchliche Syntaxmuster.',
+  },
+  webdev_js_dom: {
+    title: 'JavaScript: DOM & Browser-APIs',
+    description: 'Arbeiten mit dem DOM, Events und grundlegenden Browser-APIs.',
+  },
+  webdev_js_es6: {
+    title: 'JavaScript: ES6 & Module',
+    description: 'Modernes JavaScript: let/const, Pfeilfunktionen, Module, Destructuring.',
+  },
+  webdev_js_async: {
+    title: 'JavaScript: Asynchronitaet & Promises',
+    description: 'Callbacks, Promises, async/await und asynchrone Ablaeufe.',
+  },
+  webdev_js_tooling: {
+    title: 'JavaScript: Tooling & Build',
+    description: 'NPM, Bundler, Linter und einfache Build-Skripte.',
   },
   agentic_coding_codex_5_4: {
     description: 'Was agentisches Coding ist und wie du die richtige Denkweise entwickelst.',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import {
   isRecoverableKangurClientFetchError,
@@ -165,6 +165,24 @@ const fetchAssignments = async (
     }
   );
   return result ?? [];
+};
+
+export const prefetchKangurAssignments = async (
+  queryClient: QueryClient | null | undefined
+): Promise<void> => {
+  if (!queryClient) {
+    return;
+  }
+  const queryKey = resolveKangurAssignmentsQueryKey({ includeArchived: false });
+  const existing = queryClient.getQueryState<KangurAssignmentSnapshot[]>(queryKey);
+  if (existing?.status === 'success' || existing?.fetchStatus === 'fetching') {
+    return;
+  }
+  void queryClient.prefetchQuery({
+    queryKey,
+    queryFn: () => fetchAssignments({ includeArchived: false }),
+    staleTime: ASSIGNMENTS_STALE_TIME_MS,
+  });
 };
 
 export const useKangurAssignments = (

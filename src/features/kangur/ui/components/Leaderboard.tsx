@@ -45,15 +45,17 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
 
 export default function Leaderboard({
   deferUntilVisible = false,
+  idleDelayMs = GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
 }: {
   deferUntilVisible?: boolean;
+  idleDelayMs?: number;
 }): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const isCoarsePointer = useKangurCoarsePointer();
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(!deferUntilVisible);
   const isLeaderboardIdleReady = useKangurIdleReady({
-    minimumDelayMs: GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS,
+    minimumDelayMs: idleDelayMs,
   });
   const isLeaderboardReady = isLeaderboardIdleReady && isVisible;
   const { entry: leaderboardContent } = useKangurPageContentEntry(

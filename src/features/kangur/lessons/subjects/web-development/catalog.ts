@@ -23,6 +23,12 @@ export const WEB_DEVELOPMENT_LESSON_COMPONENT_ORDER = [
   'webdev_react_router',
   'webdev_react_setup',
   'webdev_react_state_management',
+  'webdev_js_basics',
+  'webdev_js_syntax',
+  'webdev_js_dom',
+  'webdev_js_es6',
+  'webdev_js_async',
+  'webdev_js_tooling',
 ] as const satisfies readonly KangurLessonComponentId[];
 
 type WebDevelopmentLessonComponentId = (typeof WEB_DEVELOPMENT_LESSON_COMPONENT_ORDER)[number];
@@ -109,6 +115,30 @@ const WEB_DEVELOPMENT_SETUP_COMPONENT_IDS = [
 
 const WEB_DEVELOPMENT_STATE_MANAGEMENT_COMPONENT_IDS = [
   'webdev_react_state_management',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_BASICS_COMPONENT_IDS = [
+  'webdev_js_basics',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_SYNTAX_COMPONENT_IDS = [
+  'webdev_js_syntax',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_DOM_COMPONENT_IDS = [
+  'webdev_js_dom',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_ES6_COMPONENT_IDS = [
+  'webdev_js_es6',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_ASYNC_COMPONENT_IDS = [
+  'webdev_js_async',
+] as const satisfies readonly WebDevelopmentLessonComponentId[];
+
+const WEB_DEVELOPMENT_JS_TOOLING_COMPONENT_IDS = [
+  'webdev_js_tooling',
 ] as const satisfies readonly WebDevelopmentLessonComponentId[];
 
 export const WEB_DEVELOPMENT_LESSON_TEMPLATES: Record<
@@ -346,6 +376,78 @@ export const WEB_DEVELOPMENT_LESSON_TEMPLATES: Record<
     color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-indigo-500',
   },
+  webdev_js_basics: {
+    componentId: 'webdev_js_basics',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'JavaScript First Steps',
+    title: 'JavaScript First Steps',
+    description:
+      'Learn JavaScript values, variables, operators, strings, arrays, conditionals, and loops using the MDN JavaScript learning path.',
+    emoji: '📜',
+    color: 'kangur-gradient-accent-amber',
+    activeBg: 'bg-amber-500',
+  },
+  webdev_js_syntax: {
+    componentId: 'webdev_js_syntax',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'Syntax, Types & Data',
+    title: 'Syntax, Types & Data',
+    description:
+      'Study JavaScript grammar, primitive and object types, strict equality, type checks, arrays, maps, sets, and strict mode.',
+    emoji: '🔎',
+    color: 'kangur-gradient-accent-sky',
+    activeBg: 'bg-sky-500',
+  },
+  webdev_js_dom: {
+    componentId: 'webdev_js_dom',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'Browser APIs & DOM',
+    title: 'Browser APIs & DOM',
+    description:
+      'Use JavaScript in the browser with DOM selection, events, forms, fetch, storage, and common client-side Web APIs.',
+    emoji: '🖱️',
+    color: 'kangur-gradient-accent-emerald',
+    activeBg: 'bg-emerald-500',
+  },
+  webdev_js_es6: {
+    componentId: 'webdev_js_es6',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'Functions, Objects & Modules',
+    title: 'Functions, Objects & Modules',
+    description:
+      'Practice first-class functions, closures, objects, prototypes, classes, iterators, and JavaScript modules.',
+    emoji: '🧩',
+    color: 'kangur-gradient-accent-indigo',
+    activeBg: 'bg-indigo-500',
+  },
+  webdev_js_async: {
+    componentId: 'webdev_js_async',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'Asynchronous JavaScript',
+    title: 'Asynchronous JavaScript',
+    description:
+      'Learn callbacks, promises, async/await, try/catch, fetch flows, and non-blocking work in JavaScript.',
+    emoji: '⏱️',
+    color: 'kangur-gradient-accent-teal',
+    activeBg: 'bg-teal-500',
+  },
+  webdev_js_tooling: {
+    componentId: 'webdev_js_tooling',
+    subject: 'web_development',
+    ageGroup: 'grown_ups',
+    label: 'Reference & Debugging',
+    title: 'Reference & Debugging',
+    description:
+      'Use MDN reference pages for built-ins, operators, statements, functions, classes, errors, regular expressions, and browser compatibility.',
+    emoji: '🛠️',
+    color: 'kangur-gradient-accent-rose',
+    activeBg: 'bg-rose-500',
+  },
 };
 
 export const WEB_DEVELOPMENT_LESSON_GROUPS = [
@@ -479,6 +581,49 @@ export const WEB_DEVELOPMENT_LESSON_GROUPS = [
         label: 'Managing State',
         typeLabel: 'Subsection',
         componentIds: WEB_DEVELOPMENT_STATE_MANAGEMENT_COMPONENT_IDS,
+      },
+    ],
+  },
+  {
+    id: 'javascript',
+    label: 'JavaScript',
+    typeLabel: 'Section',
+    subsections: [
+      {
+        id: 'javascript-first-steps',
+        label: 'First Steps',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_BASICS_COMPONENT_IDS,
+      },
+      {
+        id: 'javascript-syntax-types',
+        label: 'Syntax, Types & Data',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_SYNTAX_COMPONENT_IDS,
+      },
+      {
+        id: 'javascript-browser-apis',
+        label: 'Browser APIs & DOM',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_DOM_COMPONENT_IDS,
+      },
+      {
+        id: 'javascript-functions-objects-modules',
+        label: 'Functions, Objects & Modules',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_ES6_COMPONENT_IDS,
+      },
+      {
+        id: 'javascript-async',
+        label: 'Asynchronous JavaScript',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_ASYNC_COMPONENT_IDS,
+      },
+      {
+        id: 'javascript-reference-debugging',
+        label: 'Reference & Debugging',
+        typeLabel: 'Subsection',
+        componentIds: WEB_DEVELOPMENT_JS_TOOLING_COMPONENT_IDS,
       },
     ],
   },

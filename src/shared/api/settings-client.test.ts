@@ -18,6 +18,7 @@ describe('settings-client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    document.body.innerHTML = '';
     delete (globalThis as typeof globalThis & { __LITE_SETTINGS__?: unknown }).__LITE_SETTINGS__;
   });
 
@@ -36,6 +37,19 @@ describe('settings-client', () => {
     expect(
       (globalThis as typeof globalThis & { __LITE_SETTINGS__?: unknown }).__LITE_SETTINGS__
     ).toBeUndefined();
+  });
+
+  it('hydrates lite settings from the SSR JSON data island', async () => {
+    const ssrSettings = [{ key: 'observability.infoEnabled', value: 'true' }];
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    document.body.innerHTML =
+      '<script id="__LITE_SETTINGS__" type="application/json">[{"key":"observability.infoEnabled","value":"true"}]</script>';
+
+    const { fetchLiteSettingsCached } = await import('./settings-client');
+
+    await expect(fetchLiteSettingsCached()).resolves.toEqual(ssrSettings);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('hydrates lite settings lazily when the SSR payload appears after module evaluation', async () => {

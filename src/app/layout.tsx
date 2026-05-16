@@ -21,7 +21,12 @@ import { loadSiteMessages } from '@/i18n/messages';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { cn } from '@/shared/utils/ui-utils';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import {
+  LITE_SETTINGS_HYDRATION_ELEMENT_ID,
+  serializeLiteSettingsHydrationData,
+} from '@/shared/lib/lite-settings-hydration';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 import { AppIntlProvider } from '@/shared/providers/AppIntlProvider';
 import { AccessibilityProvider } from '@/shared/providers/AccessibilityProvider';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
@@ -66,9 +71,9 @@ export default async function RootLayout({
 
   const [messages, liteSettings] = await Promise.all([messagesPromise, liteSettingsPromise]);
 
-  const sanitizedLiteSettingsScript =
+  const liteSettingsHydrationJson =
     liteSettings.length > 0
-      ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`
+      ? serializeLiteSettingsHydrationData(liteSettings)
       : null;
 
   const fontSetId =
@@ -99,10 +104,12 @@ export default async function RootLayout({
         <title>{siteTitle}</title>
       </head>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
-        {sanitizedLiteSettingsScript !== null ? (
+        {liteSettingsHydrationJson !== null ? (
           <script
+            id={LITE_SETTINGS_HYDRATION_ELEMENT_ID}
+            type='application/json'
             dangerouslySetInnerHTML={{
-              __html: sanitizedLiteSettingsScript,
+              __html: safeHtml(liteSettingsHydrationJson),
             }}
           />
         ) : null}

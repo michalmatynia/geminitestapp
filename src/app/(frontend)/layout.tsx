@@ -7,10 +7,7 @@ import {
 import { CmsStorefrontAppearanceProvider } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
-import {
-  getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server';
+import { getKangurSurfaceBootstrapStyle } from '@/features/kangur/server';
 import { renderKangurAuthBootstrapScript } from '@/features/kangur/server/renderKangurAuthBootstrapScript';
 import {
   buildRequestPathname,
@@ -94,9 +91,6 @@ function ResolvedFrontendLayoutContent({
           id={KANGUR_SURFACE_BOOTSTRAP_ID}
           css={getKangurSurfaceBootstrapStyle(layoutState.initialAppearance)}
         />
-      )}
-      {layoutState.shouldApplyKangurSurfaceBootstrap && (
-        <InlineSafeScript code={KANGUR_SURFACE_HINT_SCRIPT} />
       )}
       {renderKangurAuthBootstrapScript(layoutState.kangurAuthBootstrapScript)}
       {layoutState.loadKangurStorefrontBootstrap ? <KangurServerShell /> : null}

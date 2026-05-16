@@ -1,9 +1,0 @@
-- generic [active] [ref=e1]:
-  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
-    - /url: "#kangur-main-content"
-  - main [ref=e4]:
-    - heading "StudiQ" [level=1] [ref=e5]
-    - generic [ref=e6]:
-      - status [ref=e7]
-      - status "Loading admin page" [ref=e8]
-  - alert [ref=e23]

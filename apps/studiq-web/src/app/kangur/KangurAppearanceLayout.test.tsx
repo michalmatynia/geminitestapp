@@ -8,20 +8,17 @@ const {
   getKangurStorefrontInitialStateMock,
   getKangurSurfaceBootstrapStyleMock,
   getLiteSettingsForHydrationMock,
-  kangurSurfaceHintScriptMock,
   settingsStoreProviderMock,
   storefrontAppearanceProviderMock,
 } = vi.hoisted(() => ({
   getKangurStorefrontInitialStateMock: vi.fn(),
   getKangurSurfaceBootstrapStyleMock: vi.fn(),
   getLiteSettingsForHydrationMock: vi.fn(),
-  kangurSurfaceHintScriptMock: 'window.__kangurSurfaceHint = "<unsafe>&";',
   settingsStoreProviderMock: vi.fn(),
   storefrontAppearanceProviderMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
-  KANGUR_SURFACE_HINT_SCRIPT: kangurSurfaceHintScriptMock,
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
   getKangurSurfaceBootstrapStyle: getKangurSurfaceBootstrapStyleMock,
 }));
@@ -139,12 +136,10 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     expect(container.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent).toBe(
       ':root{--bootstrap-style:1;}'
     );
-    expect(container.querySelector('script')?.textContent).toContain(
-      'window.__kangurSurfaceHint'
-    );
+    expect(container.querySelector('script')).toBeNull();
   });
 
-  it('escapes inline bootstrap script and style payloads before rendering', async () => {
+  it('escapes inline bootstrap style payloads before rendering', async () => {
     getKangurStorefrontInitialStateMock.mockResolvedValue({
       initialMode: 'default',
       initialThemeSettings: {
@@ -170,16 +165,10 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
         id?: string;
       }>
     >;
-    const scriptNode = nodes.find((node) => node.type === 'script');
     const styleNode = nodes.find((node) => node.props.id === '__KANGUR_SURFACE_BOOTSTRAP__');
-    const inlineScript = scriptNode?.props.dangerouslySetInnerHTML?.__html ?? '';
     const inlineStyle = styleNode?.props.dangerouslySetInnerHTML?.__html ?? '';
 
-    expect(inlineScript).not.toContain('<');
-    expect(inlineScript).not.toContain('&');
-    expect(inlineScript).toContain('window.__kangurSurfaceHint');
-    expect(inlineScript).toContain('\\u003c');
-    expect(inlineScript).toContain('\\u0026');
+    expect(nodes.some((node) => node.type === 'script')).toBe(false);
     expect(inlineStyle).not.toContain('<');
     expect(inlineStyle).not.toContain('&');
     expect(inlineStyle).toContain('\\u003c');

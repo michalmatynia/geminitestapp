@@ -2,7 +2,6 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import {
   getKangurStorefrontInitialState,
   getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
 } from '@/features/kangur/server';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
 import { escapeForInlineScript } from '../../lib/kangur-surface-bootstrap';
@@ -32,7 +31,6 @@ export default async function KangurAppearanceLayout({
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: escapeForInlineScript(KANGUR_SURFACE_HINT_SCRIPT) }} />
       <style
         id='__KANGUR_SURFACE_BOOTSTRAP__'
         dangerouslySetInnerHTML={{ __html: escapeForInlineScript(surfaceBootstrapStyle) }}

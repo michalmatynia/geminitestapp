@@ -3,10 +3,7 @@ import {
   type FrontendLoadTimingPayload,
 } from '@/app/(frontend)/shell/frontend-load-timing';
 import type { FrontPageSelectionResolution } from '@/app/(frontend)/home/home-helpers';
-import {
-  getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/server';
+import { getKangurSurfaceBootstrapStyle } from '@/features/kangur/server';
 import { KangurSSRSkeleton } from '@/features/kangur/ui/KangurSSRSkeleton';
 import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
@@ -128,6 +125,7 @@ export function InlineSafeScript({
   return (
     <script
       {...idProps}
+      type='application/json'
       dangerouslySetInnerHTML={{
         __html: safeHtml(code),
       }}
@@ -195,9 +193,6 @@ export function FrontendLayoutFallback({
           id={KANGUR_SURFACE_BOOTSTRAP_FALLBACK_ID}
           css={getKangurSurfaceBootstrapStyle()}
         />
-      )}
-      {routeFamily === 'studiq' && (
-        <InlineSafeScript code={KANGUR_SURFACE_HINT_SCRIPT} />
       )}
       {shouldRenderKangurAliasFallback ? <KangurServerShell /> : null}
       {shouldRenderKangurRootFallback ? <KangurSSRSkeleton /> : null}

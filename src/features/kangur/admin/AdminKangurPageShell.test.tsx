@@ -12,6 +12,10 @@ vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  SettingsStoreProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   KangurRoutingProvider: ({
     children,

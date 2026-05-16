@@ -62,7 +62,11 @@ describe('RootLayout', () => {
     const bodyChildren = readRootLayoutBodyChildren(layout);
     const liteSettingsScript = bodyChildren.find(
       (child) => isValidElement(child) && child.type === 'script'
-    ) as ReactElement<{ dangerouslySetInnerHTML?: { __html?: string } }> | undefined;
+    ) as ReactElement<{
+      dangerouslySetInnerHTML?: { __html?: string };
+      id?: string;
+      type?: string;
+    }> | undefined;
     const intlProvider = bodyChildren.find(
       (child) => isValidElement(child) && child.type === appIntlProviderMock
     ) as ReactElement<{ locale?: string; messages?: unknown }> | undefined;
@@ -77,8 +81,10 @@ describe('RootLayout', () => {
         }),
       })
     );
+    expect(liteSettingsScript?.props.id).toBe('__LITE_SETTINGS__');
+    expect(liteSettingsScript?.props.type).toBe('application/json');
     expect(liteSettingsScript?.props.dangerouslySetInnerHTML?.__html).toContain(
-      '__LITE_SETTINGS__'
+      'observability.infoEnabled'
     );
     const rootClientShell = findElementByType(layout, rootClientShellMock);
     expect(rootClientShell?.props.initialLiteSettings).toEqual([
@@ -96,12 +102,15 @@ describe('RootLayout', () => {
     const bodyChildren = readRootLayoutBodyChildren(layout);
     const liteSettingsScript = bodyChildren.find(
       (child) => isValidElement(child) && child.type === 'script'
-    ) as ReactElement<{ dangerouslySetInnerHTML?: { __html?: string } }> | undefined;
+    ) as ReactElement<{
+      dangerouslySetInnerHTML?: { __html?: string };
+      id?: string;
+      type?: string;
+    }> | undefined;
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
-    expect(liteSettingsScript?.props.dangerouslySetInnerHTML?.__html).toContain(
-      '__LITE_SETTINGS__'
-    );
+    expect(liteSettingsScript?.props.id).toBe('__LITE_SETTINGS__');
+    expect(liteSettingsScript?.props.type).toBe('application/json');
   });
 
   it('provides the app-content wrapper targeted by Kangur surface styles', async () => {

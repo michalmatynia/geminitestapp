@@ -1,4 +1,5 @@
 import type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
+import { readLiteSettingsHydrationData } from '@/shared/lib/lite-settings-hydration';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
@@ -125,18 +126,18 @@ function saveLiteSettingsSnapshot(data: SettingRecord[]): void {
 }
 
 const hydrateLiteSettingsFromSSRIfPresent = (): boolean => {
-  if (typeof globalThis === 'undefined') return false;
-  const win = globalThis as typeof globalThis & { __LITE_SETTINGS__?: SettingRecord[] };
-  const ssrData = win.__LITE_SETTINGS__;
-  if (!Array.isArray(ssrData) || ssrData.length === 0) return false;
+  const ssrData = readLiteSettingsHydrationData();
+  if (ssrData === null || ssrData.length === 0) return false;
   const data = cloneSettings(ssrData);
   liteSettingsCache = { data, fetchedAt: Date.now() };
   saveLiteSettingsSnapshot(data);
-  delete win.__LITE_SETTINGS__;
+  if (typeof globalThis !== 'undefined') {
+    delete (globalThis as typeof globalThis & { __LITE_SETTINGS__?: unknown }).__LITE_SETTINGS__;
+  }
   return true;
 };
 
-// SSR hydration: read lite settings injected by the server layout's <script> tag.
+// SSR hydration: read lite settings injected by the server layout's JSON data island.
 // This seeds the client cache so the first fetchLiteSettingsCached() call returns
 // instantly without a network round-trip to /api/settings/lite.
 hydrateLiteSettingsFromSSRIfPresent();

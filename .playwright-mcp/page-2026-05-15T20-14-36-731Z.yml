@@ -1,7 +1,0 @@
-- region "Scrollable region" [active] [ref=e1]:
-  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
-    - /url: "#kangur-main-content"
-  - main [ref=e4]:
-    - heading "StudiQ" [level=1] [ref=e5]
-    - status [ref=e7]
-  - alert [ref=e8]

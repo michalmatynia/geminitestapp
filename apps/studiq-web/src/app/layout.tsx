@@ -3,7 +3,12 @@ import { Suspense } from 'react';
 import KangurLoadingFallback from '../components/KangurLoadingFallback';
 import { StudiqQueryProvider } from '../providers/QueryProvider';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import {
+  LITE_SETTINGS_HYDRATION_ELEMENT_ID,
+  serializeLiteSettingsHydrationData,
+} from '@/shared/lib/lite-settings-hydration';
 import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { safeHtml } from '@/shared/lib/security/safe-html';
 
 import type { Metadata } from 'next';
 import type { JSX, ReactNode } from 'react';
@@ -21,9 +26,9 @@ export default async function RootLayout({
   children: ReactNode;
 }): Promise<JSX.Element> {
   const liteSettings = await getLiteSettingsForHydration();
-  const sanitizedLiteSettingsScript =
+  const liteSettingsHydrationJson =
     liteSettings.length > 0
-      ? `self.__LITE_SETTINGS__=${JSON.stringify(liteSettings).replace(/</g, '\\u003c')}`
+      ? serializeLiteSettingsHydrationData(liteSettings)
       : null;
 
   return (
@@ -33,15 +38,17 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className='kangur-surface-active'>
-        {sanitizedLiteSettingsScript !== null ? (
+        {liteSettingsHydrationJson !== null ? (
           <script
+            id={LITE_SETTINGS_HYDRATION_ELEMENT_ID}
+            type='application/json'
             dangerouslySetInnerHTML={{
-              __html: sanitizedLiteSettingsScript,
+              __html: safeHtml(liteSettingsHydrationJson),
             }}
           />
         ) : null}
         <Suspense fallback={<KangurLoadingFallback />}>
-          <StudiqQueryProvider>
+          <StudiqQueryProvider initialLiteSettings={liteSettings}>
             <main id='kangur-main-content'>{children}</main>
           </StudiqQueryProvider>
         </Suspense>

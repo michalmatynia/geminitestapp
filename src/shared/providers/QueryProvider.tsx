@@ -39,6 +39,7 @@ import { useSmartCache, useCacheWarming } from '@/shared/hooks/query/useSmartCac
 import { usePerformanceMonitor } from '@/shared/hooks/useQueryAnalytics';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { setupOfflineSupport } from '@/shared/lib/offline-support';
+import { readLiteSettingsHydrationData } from '@/shared/lib/lite-settings-hydration';
 import { createQueryClient } from '@/shared/lib/query-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -167,7 +168,9 @@ function QueryProviderInner({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const initialSettings = (globalThis as WindowLiteSettingsHydration).__LITE_SETTINGS__;
+    const initialSettings =
+      (globalThis as WindowLiteSettingsHydration).__LITE_SETTINGS__ ??
+      readLiteSettingsHydrationData();
     if (Array.isArray(initialSettings) && initialSettings.length > 0) {
       const queryKey = QUERY_KEYS.settings.scope('lite');
       if (!queryClient.getQueryData(queryKey)) {

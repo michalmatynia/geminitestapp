@@ -13,7 +13,7 @@ type KangurInitialHomeBootWindow = Window & {
 };
 
 const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
-const INITIAL_HOME_SKELETON_MIN_VISIBLE_MS = 650;
+const INITIAL_HOME_SKELETON_MIN_VISIBLE_MS = 0;
 
 const hasCompletedKangurInitialHomeBoot = (): boolean =>
   typeof window !== 'undefined' &&
@@ -114,11 +114,7 @@ export function useKangurBootOrchestrator(
   );
 
   const isInitialMountSkeletonVisible =
-    (isInitialHomeSkeletonPhase &&
-      isStandaloneHomeRoute &&
-      !isNavigationTransitionActive &&
-      !isPendingRouteSnapshotVisible) ||
-    (routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell);
+    routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell;
 
   const isRouteSkeletonVisible =
     shouldShowAcknowledgingNavigationSkeleton ||
@@ -131,7 +127,7 @@ export function useKangurBootOrchestrator(
     (isRouteSkeletonVisible &&
       (transitionPhase === 'acknowledging' || transitionPhase === 'pending'));
   const shouldKeepRouteContentVisibleDuringTransition =
-    shouldPreserveOutgoingRouteContent || (isLanguageSwitcherTransition && isRouteSkeletonVisible);
+    shouldPreserveOutgoingRouteContent || isLanguageSwitcherTransition;
   const isRouteContentVisuallyHidden =
     (isInitialHomeLoaderPhase && !isRouteSkeletonVisible) ||
     isInitialMountSkeletonVisible ||

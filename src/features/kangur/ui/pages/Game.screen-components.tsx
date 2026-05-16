@@ -36,24 +36,71 @@ const DynamicLoadingFallback = (): React.JSX.Element => (
   <div className='h-24 w-full animate-pulse rounded-2xl bg-slate-100/60' />
 );
 
-const SecondaryHomeWidgetFallback = ({
-  testId,
-}: {
-  testId: string;
-}): React.JSX.Element => (
-  <div
-    className='h-24 w-full animate-pulse rounded-2xl bg-slate-100/60'
-    data-testid={testId}
-  />
+const SkeletonRow = ({ className }: { className?: string }): React.JSX.Element => (
+  <div className={cn('h-4 animate-pulse rounded-full bg-slate-100/70', className)} />
+);
+
+const SkeletonBlock = ({ className }: { className?: string }): React.JSX.Element => (
+  <div className={cn('animate-pulse rounded-2xl bg-slate-100/60', className)} />
+);
+
+const DuelsInvitesSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-duels-invites-fallback'>
+    <SkeletonRow className='w-1/3' />
+    <SkeletonBlock className='h-16 w-full' />
+    <SkeletonBlock className='h-16 w-full' />
+  </div>
+);
+
+const QuestSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-quest-fallback'>
+    <SkeletonRow className='w-2/5' />
+    <SkeletonBlock className='h-24 w-full' />
+  </div>
+);
+
+const HeroSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-hero-fallback'>
+    <SkeletonRow className='w-1/4' />
+    <SkeletonBlock className='h-32 w-full' />
+    <SkeletonRow className='w-1/2' />
+  </div>
+);
+
+const LeaderboardSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-leaderboard-fallback'>
+    <SkeletonRow className='w-1/3' />
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className='flex items-center gap-3'>
+        <SkeletonBlock className='h-8 w-8 flex-shrink-0 rounded-full' />
+        <SkeletonRow className='flex-1' />
+      </div>
+    ))}
+  </div>
+);
+
+const PlayerProgressSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-player-progress-fallback'>
+    <SkeletonRow className='w-2/5' />
+    <SkeletonBlock className='h-20 w-full' />
+    <SkeletonBlock className='h-8 w-full' />
+  </div>
+);
+
+const ParentSpotlightSkeleton = (): React.JSX.Element => (
+  <div className='flex flex-col gap-3 rounded-2xl bg-white/40 p-4' data-testid='kangur-home-parent-spotlight-fallback'>
+    <SkeletonRow className='w-1/2' />
+    <SkeletonBlock className='h-28 w-full' />
+  </div>
 );
 
 const Leaderboard = dynamic(() => import('@/features/kangur/ui/components/Leaderboard'), {
-  loading: DynamicLoadingFallback,
+  loading: LeaderboardSkeleton,
   ssr: false,
 });
 
 const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components/PlayerProgressCard'), {
-  loading: DynamicLoadingFallback,
+  loading: PlayerProgressSkeleton,
   ssr: false,
 });
 
@@ -65,7 +112,7 @@ const KangurGameHomeDuelsInvitesWidget = dynamic(
       })
     ),
   {
-    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-duels-invites-fallback' />,
+    loading: DuelsInvitesSkeleton,
     ssr: false,
   }
 );
@@ -76,7 +123,7 @@ const KangurGameHomeQuestWidget = dynamic(
       default: m.KangurGameHomeQuestWidget,
     })),
   {
-    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-quest-fallback' />,
+    loading: QuestSkeleton,
     ssr: false,
   }
 );
@@ -87,7 +134,7 @@ const KangurGameHomeHeroWidget = dynamic(
       default: m.KangurGameHomeHeroWidget,
     })),
   {
-    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-hero-fallback' />,
+    loading: HeroSkeleton,
     ssr: false,
   }
 );
@@ -98,7 +145,7 @@ const KangurPriorityAssignments = dynamic(
       default: m.KangurPriorityAssignments,
     })),
   {
-    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-priority-assignments-fallback' />,
+    loading: DynamicLoadingFallback,
     ssr: false,
   }
 );
@@ -109,7 +156,7 @@ const KangurAssignmentSpotlight = dynamic(
       default: m.KangurAssignmentSpotlight,
     })),
   {
-    loading: () => <SecondaryHomeWidgetFallback testId='kangur-home-parent-spotlight-fallback' />,
+    loading: ParentSpotlightSkeleton,
     ssr: false,
   }
 );
@@ -170,7 +217,7 @@ function GameHomeActionsColumn(props: {
       {shouldMountSecondaryHomeWidgets ? (
         <KangurGameHomeDuelsInvitesWidget hideWhenScreenMismatch={false} />
       ) : (
-        <SecondaryHomeWidgetFallback testId='kangur-home-duels-invites-fallback' />
+        <DuelsInvitesSkeleton />
       )}
       {homeVisibility.hideLearnerWidgetsForParent ? (
         <GameHomeMissingLearnerState basePath={basePath} translations={translations} />
@@ -231,7 +278,7 @@ export function GameHomeScreen(props: {
           shouldMountSecondaryHomeWidgets ? (
             <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
           ) : (
-            <SecondaryHomeWidgetFallback testId='kangur-home-quest-fallback' />
+            <QuestSkeleton />
           )
         }
         questSectionProps={{
@@ -248,7 +295,7 @@ export function GameHomeScreen(props: {
               showAssignmentSpotlight={false}
             />
           ) : (
-            <SecondaryHomeWidgetFallback testId='kangur-home-hero-fallback' />
+            <HeroSkeleton />
           )
         }
         summarySectionProps={{
@@ -274,7 +321,7 @@ export function GameHomeScreen(props: {
           shouldMountSecondaryHomeWidgets ? (
             <Leaderboard deferUntilVisible />
           ) : (
-            <SecondaryHomeWidgetFallback testId='kangur-home-leaderboard-fallback' />
+            <LeaderboardSkeleton />
           )
         }
         leaderboardColumnProps={{
@@ -286,7 +333,7 @@ export function GameHomeScreen(props: {
             shouldMountSecondaryHomeWidgets ? (
               <PlayerProgressCard progress={progress} />
             ) : (
-              <SecondaryHomeWidgetFallback testId='kangur-home-player-progress-fallback' />
+              <PlayerProgressSkeleton />
             )
           ) : null
         }

@@ -153,7 +153,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       ? readKangurTopBarHeightCssValue() : null;
 
   const navSkeleton = useKangurNavigationSkeleton({
-    embedded, isBootLoading, isNavigationTransitionActive,
+    embedded, isBootLoading, isLanguageSwitcherTransition, isNavigationTransitionActive,
     isRouteAcknowledging, isRoutePending, isRouteWaitingForReady, isRouteRevealing,
     isRouteSkeletonVisible: boot.isRouteSkeletonVisible,
     shouldSkipNavigationSkeletonDelay, shouldShowAcknowledgingNavigationSkeleton,

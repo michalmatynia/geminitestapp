@@ -72,13 +72,26 @@ describe('apps/studiq-web RootLayout', () => {
     const bodyChildren = Children.toArray(bodyElement.props.children) as ReactElement[];
     const scriptElement = bodyChildren[0] as ReactElement<{
       dangerouslySetInnerHTML?: { __html: string };
+      id?: string;
+      type?: string;
+    }>;
+    const suspenseElement = bodyChildren.at(-1) as ReactElement<{
+      children?: ReactNode;
+      fallback?: ReactNode;
+    }>;
+    const queryProviderElement = Children.only(suspenseElement.props.children) as ReactElement<{
+      initialLiteSettings?: ReadonlyArray<{ key: string; value: string }>;
     }>;
 
     expect(getLiteSettingsForHydrationMock).toHaveBeenCalledTimes(1);
     expect(scriptElement.type).toBe('script');
-    expect(scriptElement.props.dangerouslySetInnerHTML?.__html).toContain('__LITE_SETTINGS__');
+    expect(scriptElement.props.id).toBe('__LITE_SETTINGS__');
+    expect(scriptElement.props.type).toBe('application/json');
     expect(scriptElement.props.dangerouslySetInnerHTML?.__html).toContain(
       'kangur_storefront_default_mode'
     );
+    expect(queryProviderElement.props.initialLiteSettings).toEqual([
+      { key: 'kangur_storefront_default_mode', value: 'default' },
+    ]);
   });
 });

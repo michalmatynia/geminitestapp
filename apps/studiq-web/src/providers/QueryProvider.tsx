@@ -3,19 +3,26 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { readLiteSettingsHydrationData } from '@/shared/lib/lite-settings-hydration';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { ReactNode } from 'react';
+import type { SettingRecord } from '@/shared/contracts/settings';
 
 let browserQueryClient: QueryClient | null = null;
-type WindowLiteSettingsHydration = typeof globalThis & { __LITE_SETTINGS__?: unknown[] };
 
-const hydrateLiteSettingsQueryCache = (queryClient: QueryClient): void => {
+const hydrateLiteSettingsQueryCache = (
+  queryClient: QueryClient,
+  initialLiteSettings?: ReadonlyArray<SettingRecord>
+): void => {
   if (typeof globalThis === 'undefined') {
     return;
   }
 
-  const initialSettings = (globalThis as WindowLiteSettingsHydration).__LITE_SETTINGS__;
+  const initialSettings =
+    initialLiteSettings && initialLiteSettings.length > 0
+      ? [...initialLiteSettings]
+      : readLiteSettingsHydrationData();
   if (!Array.isArray(initialSettings) || initialSettings.length === 0) {
     return;
   }
@@ -26,19 +33,27 @@ const hydrateLiteSettingsQueryCache = (queryClient: QueryClient): void => {
   }
 };
 
-const getQueryClient = (): QueryClient => {
+const getQueryClient = (
+  initialLiteSettings?: ReadonlyArray<SettingRecord>
+): QueryClient => {
   if (typeof window === 'undefined') {
     return new QueryClient();
   }
   if (!browserQueryClient) {
     browserQueryClient = new QueryClient();
-    hydrateLiteSettingsQueryCache(browserQueryClient);
   }
+  hydrateLiteSettingsQueryCache(browserQueryClient, initialLiteSettings);
   return browserQueryClient;
 };
 
-export function StudiqQueryProvider({ children }: { children: ReactNode }): ReactNode {
-  const [queryClient] = useState(getQueryClient);
+export function StudiqQueryProvider({
+  children,
+  initialLiteSettings,
+}: {
+  children: ReactNode;
+  initialLiteSettings?: ReadonlyArray<SettingRecord>;
+}): ReactNode {
+  const [queryClient] = useState(() => getQueryClient(initialLiteSettings));
 
   return (
     <QueryClientProvider client={queryClient}>

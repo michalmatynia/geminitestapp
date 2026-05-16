@@ -28,6 +28,38 @@ const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
   process.env['LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS'],
   process.env['NODE_ENV'] === 'development' ? 50 : 150
 );
+const LITE_SETTINGS_SSR_MAX_RECORD_VALUE_CHARS = parsePositiveInt(
+  process.env['LITE_SETTINGS_SSR_MAX_RECORD_VALUE_CHARS'],
+  128_000
+);
+const LITE_SETTINGS_SSR_MAX_PAYLOAD_CHARS = parsePositiveInt(
+  process.env['LITE_SETTINGS_SSR_MAX_PAYLOAD_CHARS'],
+  512_000
+);
+
+export const filterLiteSettingsForHydrationPayload = (
+  rows: SettingRecord[]
+): SettingRecord[] => {
+  let payloadChars = 0;
+  const filtered: SettingRecord[] = [];
+
+  for (const row of rows) {
+    const valueChars = row.value.length;
+    if (valueChars > LITE_SETTINGS_SSR_MAX_RECORD_VALUE_CHARS) {
+      continue;
+    }
+
+    const rowChars = row.key.length + valueChars;
+    if (payloadChars + rowChars > LITE_SETTINGS_SSR_MAX_PAYLOAD_CHARS) {
+      continue;
+    }
+
+    filtered.push(row);
+    payloadChars += rowChars;
+  }
+
+  return filtered;
+};
 
 /**
  * Waits for settings prewarming with timeout to prevent SSR blocking.
@@ -59,7 +91,7 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
 
 /**
  * Fetch lite settings on the server and return them for SSR hydration.
- * The result is injected into a <script> tag so the client can skip the
+ * The result is injected into a JSON data island so the client can skip the
  * /api/settings/lite round-trip on first load.
  */
 export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
@@ -69,12 +101,12 @@ export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
   try {
     const currentCache = getLiteSettingsCache();
     if (currentCache) {
-      return cloneLiteSettings(currentCache.data);
+      return filterLiteSettingsForHydrationPayload(cloneLiteSettings(currentCache.data));
     }
 
     await waitForLiteSettingsPrewarm();
     const cache = getLiteSettingsCache();
-    return cache ? cloneLiteSettings(cache.data) : [];
+    return cache ? filterLiteSettingsForHydrationPayload(cloneLiteSettings(cache.data)) : [];
   } catch {
     return [];
   }

@@ -18,6 +18,7 @@ const NAVIGATION_SKELETON_DELAY_MS = 0;
 type KangurNavigationSkeletonInput = {
   embedded: boolean;
   isBootLoading: boolean;
+  isLanguageSwitcherTransition: boolean;
   isNavigationTransitionActive: boolean;
   isRouteAcknowledging: boolean;
   isRoutePending: boolean;
@@ -46,6 +47,7 @@ export function useKangurNavigationSkeleton(
   const {
     embedded,
     isBootLoading,
+    isLanguageSwitcherTransition,
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,
@@ -132,6 +134,14 @@ export function useKangurNavigationSkeleton(
       return;
     }
 
+    // Locale-switch only updates text in place — suppress the skeleton entirely so
+    // the user sees live text updates without any visual overlay disruption.
+    if (isLanguageSwitcherTransition) {
+      navigationSkeletonShownRef.current = false;
+      setIsNavigationSkeletonVisible(false);
+      return;
+    }
+
     if (shouldShowAcknowledgingNavigationSkeleton) {
       navigationSkeletonShownRef.current = true;
       setIsNavigationSkeletonVisible(true);
@@ -184,6 +194,7 @@ export function useKangurNavigationSkeleton(
     return undefined;
   }, [
     isBootLoading,
+    isLanguageSwitcherTransition,
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,

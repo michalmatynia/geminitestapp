@@ -58,7 +58,6 @@ vi.mock('@/features/kangur/server', () => ({
   getKangurSurfaceBootstrapStyle: vi.fn(
     () => ':root{--kangur-soft-card-border:rgba(15,23,42,0.18);}'
   ),
-  KANGUR_SURFACE_HINT_SCRIPT: 'document.documentElement.classList.add(\'kangur-surface-active\')',
 }));
 
 vi.mock('@/shared/lib/request/server-request-context', () => ({
@@ -428,6 +427,7 @@ describe('frontend layout bootstrap', () => {
 
     const timingScript = document.querySelector('#__FRONTEND_LAYOUT_TIMING__');
     expect(timingScript).not.toBeNull();
+    expect(timingScript).toHaveAttribute('type', 'application/json');
     expect(timingScript?.textContent).toContain('"source":"frontend-layout"');
     expect(timingScript?.textContent).toContain('"publicOwner":"kangur"');
     expect(timingScript?.textContent).toContain('"routeFamily":"studiq"');
@@ -477,7 +477,7 @@ describe('frontend layout bootstrap', () => {
     expect(
       document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
     ).toContain('--kangur-soft-card-border:');
-    expect(document.body.innerHTML).toContain(
+    expect(document.body.innerHTML).not.toContain(
       'document.documentElement.classList.add(\'kangur-surface-active\')'
     );
     expect(frontendPublicOwnerProviderMock.mock.calls[0]?.[0]).toMatchObject({

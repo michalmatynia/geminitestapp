@@ -38,6 +38,17 @@ const globalForRedis = global as typeof global & {
 let redis: Redis | null = globalForRedis.redis ?? null;
 let redisInitializedAtMs: number | null = globalForRedis.redisInitializedAtMs ?? null;
 
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt(process.env['REDIS_CONNECT_TIMEOUT_MS'], 750);
+const REDIS_MAX_RETRIES_PER_REQUEST = parsePositiveInt(
+  process.env['REDIS_MAX_RETRIES_PER_REQUEST'],
+  1
+);
+
 const ensureRedisClient = (): Redis | null => {
   const url = process.env['REDIS_URL'];
   if (!url) return null;
@@ -46,8 +57,10 @@ const ensureRedisClient = (): Redis | null => {
   try {
     const startedAt = Date.now();
     const client = new Redis(url, {
-      maxRetriesPerRequest: null,
+      connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
+      enableOfflineQueue: false,
       enableReadyCheck: true,
+      maxRetriesPerRequest: REDIS_MAX_RETRIES_PER_REQUEST,
     });
 
     client.on('error', (err) => {

@@ -14,7 +14,7 @@ import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';
 import { getRedisClient } from '@/shared/lib/redis';
-import { safeSetInterval } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetInterval, safeSetTimeout } from '@/shared/lib/timers';
 import { logger } from '@/shared/utils/logger';
 
 import type { NextRequest } from 'next/server';
@@ -56,6 +56,48 @@ type RateLimitResult = {
   resetTime: number;
   /** Total number of hits in the current window. */
   totalHits: number;
+};
+
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+const RATE_LIMIT_REDIS_TIMEOUT_MS = parsePositiveInt(
+  process.env['RATE_LIMIT_REDIS_TIMEOUT_MS'],
+  750
+);
+
+class RateLimitRedisTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Rate limit Redis check timed out after ${timeoutMs}ms.`);
+    this.name = 'RateLimitRedisTimeoutError';
+  }
+}
+
+const isRateLimitRedisTimeoutError = (error: unknown): error is RateLimitRedisTimeoutError =>
+  error instanceof RateLimitRedisTimeoutError;
+
+const withRateLimitRedisTimeout = async <T>(promise: Promise<T>): Promise<T> => {
+  if (RATE_LIMIT_REDIS_TIMEOUT_MS <= 0) {
+    return promise;
+  }
+
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = safeSetTimeout(() => {
+          reject(new RateLimitRedisTimeoutError(RATE_LIMIT_REDIS_TIMEOUT_MS));
+        }, RATE_LIMIT_REDIS_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      safeClearTimeout(timeoutId);
+    }
+  }
 };
 
 /**
@@ -120,14 +162,16 @@ class RateLimiter {
         const requestId = `${now}-${Math.random()}`;
 
         // Use Lua script for atomic execution to prevent race conditions
-        const results = (await redis.eval(
-          RATE_LIMIT_LUA_SCRIPT,
-          1,
-          key,
-          now.toString(),
-          this.config.windowMs.toString(),
-          this.config.maxRequests.toString(),
-          requestId
+        const results = (await withRateLimitRedisTimeout(
+          redis.eval(
+            RATE_LIMIT_LUA_SCRIPT,
+            1,
+            key,
+            now.toString(),
+            this.config.windowMs.toString(),
+            this.config.maxRequests.toString(),
+            requestId
+          ) as Promise<unknown>
         )) as [number, number];
 
         const [allowed, remaining] = results;
@@ -139,7 +183,9 @@ class RateLimiter {
           totalHits: this.config.maxRequests - (remaining ?? 0),
         };
       } catch (error) {
-        void ErrorSystem.captureException(error);
+        if (!isRateLimitRedisTimeoutError(error)) {
+          void ErrorSystem.captureException(error);
+        }
         logger.warn('[rate-limit] Redis failure, falling back to memory', { error });
       }
     }

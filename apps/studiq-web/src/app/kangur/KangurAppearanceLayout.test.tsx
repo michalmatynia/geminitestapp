@@ -92,6 +92,11 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     });
     getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{--bootstrap-style:1;}');
     getLiteSettingsForHydrationMock.mockResolvedValue([
+      { key: 'kangur_storefront_default_mode_v1', value: 'sunset' },
+      { key: 'kangur_cms_theme_daily_v1', value: '{"slot":"default"}' },
+      { key: 'kangur_cms_theme_dawn_v1', value: '{"slot":"dawn"}' },
+      { key: 'kangur_cms_theme_sunset_v1', value: '{"slot":"sunset"}' },
+      { key: 'kangur_cms_theme_nightly_v1', value: '{"slot":"dark"}' },
       { key: 'kangur_theme_daily', value: '{"accent":"daily"}' },
       { key: 'kangur_theme_default', value: '{"accent":"default"}' },
     ]);
@@ -188,5 +193,36 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     expect(inlineStyle).not.toContain('&');
     expect(inlineStyle).toContain('\\u003c');
     expect(inlineStyle).toContain('\\u0026');
+  });
+
+  it('refreshes the seeded lite store when the SSR payload is missing appearance keys', async () => {
+    getKangurStorefrontInitialStateMock.mockResolvedValue({
+      initialMode: 'dawn',
+      initialThemeSettings: {
+        default: '{"slot":"default"}',
+        dawn: '{"slot":"dawn"}',
+        sunset: '{"slot":"sunset"}',
+        dark: '{"slot":"dark"}',
+      },
+    });
+    getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{--bootstrap-style:1;}');
+    getLiteSettingsForHydrationMock.mockResolvedValue([
+      { key: 'kangur_storefront_default_mode_v1', value: 'dawn' },
+      { key: 'kangur_theme_unrelated', value: '{"accent":"other"}' },
+    ]);
+
+    const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
+    const result = await KangurAppearanceLayout({
+      children: <div data-testid='workspace-child'>Workspace child</div>,
+    });
+
+    render(result);
+
+    expect(settingsStoreProviderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'lite',
+        refreshSeededLiteStore: true,
+      })
+    );
   });
 });

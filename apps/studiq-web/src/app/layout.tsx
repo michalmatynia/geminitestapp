@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 
-import KangurLoadingFallback from '../components/KangurLoadingFallback';
 import { StudiqQueryProvider } from '../providers/QueryProvider';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import {
@@ -61,7 +60,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className='kangur-surface-active'>
-        <Suspense fallback={<KangurLoadingFallback />}>
+        <Suspense fallback={null}>
           <StudiqRootContent>{children}</StudiqRootContent>
         </Suspense>
       </body>

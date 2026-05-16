@@ -64,7 +64,9 @@ export function useFrontPageController(initialSelected: FrontPageSelectableApp):
       });
       return;
     }
-    persistSelection().catch(logClientCatch);
+    persistSelection().catch((error: unknown) => {
+      logClientCatch(error, { source: 'FrontPageSettings', action: 'saveFrontPageMode' });
+    });
   };
 
   return {

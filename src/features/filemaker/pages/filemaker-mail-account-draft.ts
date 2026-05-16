@@ -28,11 +28,7 @@ const CREATE_REQUIRED_SECRET_FIELDS = [
 const POSITIVE_INTEGER_FIELDS = [
   ['imapPort', 0, 'IMAP port must be a positive number.'],
   ['smtpPort', 0, 'SMTP port must be a positive number.'],
-  [
-    'initialSyncLookbackDays',
-    365,
-    'Initial sync lookback must be between 1 and 365 days.',
-  ],
+  ['initialSyncLookbackDays', 365, 'Initial sync lookback must be between 1 and 365 days.'],
   ['maxMessagesPerSync', 500, 'Max messages per sync must be between 1 and 500.'],
 ] as const satisfies ReadonlyArray<readonly [keyof FilemakerMailAccountDraft, number, string]>;
 
@@ -135,15 +131,13 @@ const toDraftFromFilemakerMailAccount = (
 
 const validateFilemakerMailAccountDraft = (
   draft: FilemakerMailAccountDraft
-): FilemakerMailAccountDraftFieldErrors => {
-  return {
-    ...collectRequiredStringErrors(draft, REQUIRED_ACCOUNT_TEXT_FIELDS),
-    ...collectPositiveIntegerErrors(draft),
-    ...(!hasText(draft.id) && draft.authMode !== 'google_oauth'
-      ? collectRequiredStringErrors(draft, CREATE_REQUIRED_SECRET_FIELDS)
-      : {}),
-  };
-};
+): FilemakerMailAccountDraftFieldErrors => ({
+  ...collectRequiredStringErrors(draft, REQUIRED_ACCOUNT_TEXT_FIELDS),
+  ...collectPositiveIntegerErrors(draft),
+  ...(!hasText(draft.id) && draft.authMode !== 'google_oauth'
+    ? collectRequiredStringErrors(draft, CREATE_REQUIRED_SECRET_FIELDS)
+    : {}),
+});
 
 export {
   createDefaultFilemakerMailDraft,

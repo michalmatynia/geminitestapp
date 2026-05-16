@@ -162,5 +162,5 @@ export const buildFilemakerMailSelectionHref = (
   setRecentSelectionSearchParams(search, { ...input, panel }, hasAccount);
   setSearchSelectionSearchParams(search, { ...input, panel }, hasAccount);
   const nextSearch = search.toString();
-  return nextSearch !== '' ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
+  return nextSearch !== '' ? `/admin/filemaker/mail-client?${nextSearch}` : '/admin/filemaker/mail-client';
 };

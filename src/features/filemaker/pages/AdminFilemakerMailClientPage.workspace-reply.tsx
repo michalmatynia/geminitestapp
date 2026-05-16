@@ -4,8 +4,9 @@ import { Send } from 'lucide-react';
 import React from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
-import { Button, Input } from '@/shared/ui/primitives.public';
-import { FormField } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/button';
+import { FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
 
 import { hasText } from './AdminFilemakerMailClientPage.workspace-model';
 

@@ -49,7 +49,7 @@ const handleNewAccount: NodeAction<'mail_new_account'> = (_parsed, input) => {
     input.context.onNewMailbox();
     return;
   }
-  input.navigate('/admin/filemaker/mail');
+  input.navigate('/admin/filemaker/mail-client');
 };
 
 const handleSearch: NodeAction<'mail_search'> = (_parsed, input) => {

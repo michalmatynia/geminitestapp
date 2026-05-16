@@ -1,4 +1,5 @@
 'use client';
+'use memo';
 
 import dynamic from 'next/dynamic';
 import { useLocale } from 'next-intl';
@@ -696,6 +697,42 @@ const AuthenticatedApp = (): JSX.Element | null => {
     });
     return () => cancelAnimationFrame(frameId);
   }, [hasInitialContentSettled]);
+
+  // Dev-only: log the stuck-boot variables 3 s after mount so the exact
+  // blocking condition is visible in the console without guessing.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    const id = safeSetTimeout(() => {
+      if (isBootSkeletonVisible) {
+        console.warn('[StudiQ boot debug] loader still visible at 3 s', {
+          isBootLoading,
+          isThemeBootLoading,
+          isBootSkeletonVisible,
+          hasPresentedInteractiveShell,
+          routeContentIsNull: routeContent === null,
+          shouldShowFallbackBootLoader,
+          initialHomeBootPhase,
+          embedded,
+        });
+      }
+    }, 3_000);
+    return () => safeClearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally captures mount-time snapshot
+
+  // Safety escape hatch: if the boot loader is somehow stuck for >8 s in the
+  // admin-embedded context, force the skeleton hidden to prevent an indefinite
+  // spinner. The `embedded` guard prevents interference with the standalone
+  // home boot sequence.
+  useEffect(() => {
+    if (!embedded || !isBootSkeletonVisible) return;
+    const id = safeSetTimeout(() => {
+      bootSkeletonShownAtRef.current = null;
+      setIsBootSkeletonVisible(false);
+      setHasPresentedInteractiveShell(true);
+    }, 8_000);
+    return () => safeClearTimeout(id);
+  }, [embedded, isBootSkeletonVisible]);
 
   useEffect(() => {
     if (

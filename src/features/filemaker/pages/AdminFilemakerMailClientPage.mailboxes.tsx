@@ -236,7 +236,10 @@ function MailClientMailboxHeader({
         <Badge variant='outline'>Unread: {unreadCount}</Badge>
         {primaryFolder !== null ? (
           <Badge variant='outline'>
-            Primary: {formatFilemakerMailFolderLabel(primaryFolder.mailboxPath)}
+            Primary: {formatFilemakerMailFolderLabel(
+              primaryFolder.mailboxPath,
+              primaryFolder.mailboxRole
+            )}
           </Badge>
         ) : null}
       </div>

@@ -3,7 +3,8 @@
 import { RefreshCcw, Star } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
-import { Badge, Button } from '@/shared/ui/primitives.public';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
 
 import type { FilemakerMailAccount, FilemakerMailThread } from '../types';

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
-import type { ToastType } from '@/shared/ui/primitives.public';
+import type { ToastVariant } from '@/shared/contracts/ui/base';
 import { EMPTY_EDITOR_STATE, type ValidatorPatternListEditorState } from './types';
 
 export interface UseValidatorListsEditorResult {
@@ -9,7 +9,7 @@ export interface UseValidatorListsEditorResult {
   handleOpenEditor: (list: ValidatorPatternList) => void;
   handleCloseEditor: () => void;
   handleEditorChange: (patch: Partial<ValidatorPatternListEditorState>) => void;
-  handleSaveEditor: (handleListChange: (id: string, patch: Partial<ValidatorPatternList>) => void, toast: (msg: string, options: { variant: ToastType }) => void) => void;
+  handleSaveEditor: (handleListChange: (id: string, patch: Partial<ValidatorPatternList>) => void, toast: (msg: string, options: { variant: ToastVariant }) => void) => void;
 }
 
 export function useValidatorListsEditor(): UseValidatorListsEditorResult {
@@ -42,7 +42,7 @@ export function useValidatorListsEditor(): UseValidatorListsEditorResult {
   const handleSaveEditor = useCallback(
     (
       handleListChange: (id: string, patch: Partial<ValidatorPatternList>) => void,
-      toast: (msg: string, options: { variant: ToastType }) => void
+      toast: (msg: string, options: { variant: ToastVariant }) => void
     ): void => {
       const normalizedName = editorState.name.trim();
       if (normalizedName === '') {

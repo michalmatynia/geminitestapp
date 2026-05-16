@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { setupAdminFilemakerMailPagesTest } from './AdminFilemakerMailPages.test-support';
+import { setupFilemakerMailTests } from './filemaker-mail-test-support';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import {
@@ -13,7 +13,7 @@ import {
   type FilemakerMailSidebarContextValue,
 } from '@/features/filemaker/components/FilemakerMailSidebarContext';
 
-setupAdminFilemakerMailPagesTest();
+setupFilemakerMailTests();
 
 const baseContextValue = {
   accounts: [],

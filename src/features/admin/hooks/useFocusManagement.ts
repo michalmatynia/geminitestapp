@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, type RefObject, type MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject, type RefCallback } from 'react';
 import { useFocusTrap } from '@/shared/hooks/useFocusTrap';
 
 export function useFocusManagement(isOverlayMenu: boolean, isMenuHidden: boolean): {
-  focusTrapRef: RefObject<HTMLDivElement | null>;
+  focusTrapRef: RefCallback<HTMLElement>;
   overlayMenuToggleButtonRef: MutableRefObject<HTMLButtonElement | null>;
   shouldTrapFocus: boolean;
 } {

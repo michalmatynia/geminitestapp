@@ -172,7 +172,7 @@ function MailClientEmptyStateCard(): React.JSX.Element {
             <Link href={buildFilemakerMailSelectionHref({ panel: 'settings' })}>Add Mailbox</Link>
           </Button>
           <Button asChild variant='outline'>
-            <Link href='/admin/filemaker/mail'>Open Workspace</Link>
+            <Link href='/admin/filemaker/mail-client'>Open Workspace</Link>
           </Button>
         </div>
       </div>

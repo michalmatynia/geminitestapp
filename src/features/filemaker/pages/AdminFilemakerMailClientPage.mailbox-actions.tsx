@@ -234,7 +234,7 @@ function MailClientMailboxShortcuts({
                 mailboxPath: folder.mailboxPath,
               })}
             >
-              {formatFilemakerMailFolderLabel(folder.mailboxPath)}
+              {formatFilemakerMailFolderLabel(folder.mailboxPath, folder.mailboxRole)}
             </Link>
           </Button>
         ))}

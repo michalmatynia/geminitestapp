@@ -9,7 +9,7 @@ const buildAdminMailRedirect = (
   request: NextRequest,
   params: Record<string, string>
 ): string => {
-  const url = new URL('/admin/filemaker/mail', request.url);
+  const url = new URL('/admin/filemaker/mail-client', request.url);
   Object.entries(params).forEach(([key, value]) => {
     if (value.trim().length > 0) url.searchParams.set(key, value);
   });

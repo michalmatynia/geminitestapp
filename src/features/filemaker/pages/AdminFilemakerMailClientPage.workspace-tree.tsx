@@ -1,14 +1,13 @@
 'use client';
 
 import { Folder, Inbox, MailOpen, MailPlus, UserRound } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import {
-  MasterFolderTreeViewport,
-  useMasterFolderTreeViewModel,
-} from '@/shared/lib/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { Badge } from '@/shared/ui/primitives.public';
+import { MasterFolderTreeViewport } from '@/shared/lib/foldertree/v2/components/MasterFolderTreeViewport';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2/components/FolderTreeViewportV2';
+import { useMasterFolderTreeViewModel } from '@/shared/lib/foldertree/v2/shell/useMasterFolderTreeViewModel';
+import { Badge } from '@/shared/ui/badge';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -25,7 +24,12 @@ import type {
   FilemakerMailThread,
 } from '../types';
 import { isClientTreeNode, type MailClientSelection } from './AdminFilemakerMailClientPage.workspace-model';
-import { AddMailboxModal } from './AdminFilemakerMailClientPage.add-mailbox-modal';
+import type { AddMailboxModalProps } from './AdminFilemakerMailClientPage.add-mailbox-modal';
+
+const AddMailboxModal = dynamic<AddMailboxModalProps>(
+  () => import('./AdminFilemakerMailClientPage.add-mailbox-modal').then((mod) => mod.AddMailboxModal),
+  { ssr: false }
+);
 
 type MailClientTreeHandlers = {
   onSelectAccount: (accountId: string) => void;

@@ -136,6 +136,8 @@ function MailClientAttentionAccountsGrid({
   foldersByAccount: Map<string, FilemakerMailFolderSummary[]>;
   onSyncAccount: (accountId: string) => Promise<void>;
   onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
+  syncingAccountId: string | null;
+  statusUpdatingAccountId: string | null;
 }): React.JSX.Element {
   return (
     <div className='grid gap-3 xl:grid-cols-2'>

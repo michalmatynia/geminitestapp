@@ -1,4 +1,5 @@
 'use client';
+'use memo';
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';

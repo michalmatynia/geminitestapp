@@ -8,3 +8,4 @@ export { AdminKangurObservabilityPage } from '@/features/kangur/admin/AdminKangu
 export { AdminKangurAiTutorContentPage } from '@/features/kangur/admin/AdminKangurAiTutorContentPage';
 export { default as AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
 export { AdminKangurTestSuitesManagerPage } from '@/features/kangur/admin/AdminKangurTestSuitesManagerPage';
+export { AdminKangurDatabasePage } from '@/features/kangur/admin/AdminKangurDatabasePage';

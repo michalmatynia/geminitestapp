@@ -105,7 +105,9 @@ function MailClientAttentionAccountDetails({
       <div>Allowlist: {allowlistLabel}</div>
       <div>
         Primary folder:{' '}
-        {primaryFolder !== null ? formatFilemakerMailFolderLabel(primaryFolder.mailboxPath) : 'Not set'}
+        {primaryFolder !== null
+          ? formatFilemakerMailFolderLabel(primaryFolder.mailboxPath, primaryFolder.mailboxRole)
+          : 'Not set'}
       </div>
       <div>Tracked folders: {folderCount}</div>
     </div>
@@ -209,9 +211,10 @@ function MailClientAttentionAccountCard({
 }: MailClientAttentionAccountCardProps): React.JSX.Element {
   const primaryFolder = getFilemakerMailPrimaryFolder(folders);
   const unreadCount = folders.reduce((sum, folder) => sum + folder.unreadCount, 0);
-  const allowlistLabel = account.folderAllowlist.length > 0
-    ? formatFilemakerMailboxAllowlist(account.folderAllowlist)
-    : 'Auto';
+  const allowlistLabel =
+    account.folderAllowlist.length > 0
+      ? formatFilemakerMailboxAllowlist(account.folderAllowlist)
+      : 'Auto';
 
   return (
     <Card

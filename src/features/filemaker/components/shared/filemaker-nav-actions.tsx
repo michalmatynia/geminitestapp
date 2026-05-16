@@ -30,6 +30,7 @@ type FilemakerPageKey =
   | 'job-listings'
   | 'websites'
   | 'mail'
+  | 'email-dashboard'
   | 'mail-settings'
   | 'events'
   | 'values'
@@ -94,6 +95,13 @@ const NAV_ITEMS: Array<{
     key: 'mail',
     label: 'Email Client',
     href: '/admin/filemaker/mail-client',
+    icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'email-dashboard',
+    label: 'Email Dashboard',
+    href: '/admin/filemaker/email-dashboard',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },

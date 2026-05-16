@@ -6,9 +6,9 @@ import {
   jsonResponse,
   renderWithProviders,
   routeParamsMock,
-  setupAdminFilemakerMailPagesTest,
+  setupFilemakerMailTests,
   toastMock,
-} from './AdminFilemakerMailPages.test-support';
+} from './filemaker-mail-test-support';
 import {
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
@@ -38,7 +38,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-setupAdminFilemakerMailPagesTest();
+setupFilemakerMailTests();
 
 const setCampaignRunSettings = (): void => {
   const campaign = createFilemakerEmailCampaign({
@@ -145,11 +145,11 @@ describe('AdminFilemakerCampaignRunPage mail integration', () => {
 
     expect(screen.getByRole('link', { name: 'Open Mail Thread' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail/threads/thread-delivery-1?accountId=mail-account-1&mailboxPath=Sent'
+      '/admin/filemaker/mail-client?threadId=thread-delivery-1&accountId=mail-account-1&mailboxPath=Sent'
     );
     expect(screen.getByRole('link', { name: 'Open Reply Thread' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail/threads/thread-reply-1'
+      '/admin/filemaker/mail-client?threadId=thread-reply-1'
     );
   });
 

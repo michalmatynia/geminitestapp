@@ -8,7 +8,6 @@ import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { buildFilemakerMailMasterNodes } from '../mail-master-tree';
-import { useOptionalMailPageContext } from '../pages/FilemakerMail.context';
 import { useSidebarFilterActions, useSidebarSelectionActions } from './FilemakerMailSidebar.actions';
 import { useSidebarContextValue } from './FilemakerMailSidebar.context-value';
 import { useFilemakerMailData } from './FilemakerMailSidebar.hooks';
@@ -19,7 +18,6 @@ import type {
   FilemakerMailSidebarData,
   FilemakerMailSidebarFilters,
   FilemakerMailSidebarModel,
-  FilemakerMailSidebarPageContext,
   FilemakerMailSidebarProps,
   FilemakerMailSidebarSelection,
   FilemakerMailTreeShell,
@@ -29,7 +27,6 @@ import { FilemakerMailSidebarNode } from './FilemakerMailSidebarNode';
 type SidebarResolvedState = {
   data: FilemakerMailSidebarData;
   filters: FilemakerMailSidebarFilters;
-  pageContext: FilemakerMailSidebarPageContext;
   selection: FilemakerMailSidebarSelection;
   setStatusUpdatingAccountId: (id: string | null) => void;
   statusUpdatingAccountId: string | null;
@@ -88,19 +85,16 @@ const resolveContextFlags = (
 };
 
 const resolveOnNewMailbox = (
-  propsActions: FilemakerMailSidebarProps['actions'],
-  pageContext: FilemakerMailSidebarPageContext
+  propsActions: FilemakerMailSidebarProps['actions']
 ): SidebarContextActions['onNewMailbox'] => {
   const actions = propsActions ?? {};
   if (actions.onNewMailbox !== undefined) return actions.onNewMailbox;
-  if (pageContext === null) return undefined;
-  return pageContext.onNewMailbox;
+  return undefined;
 };
 
 const resolveContextActions = (input: {
   onNewMailbox: SidebarContextActions['onNewMailbox'];
   openSelection: ReturnType<typeof useSidebarSelectionActions>;
-  pageContext: FilemakerMailSidebarPageContext;
   propsActions: FilemakerMailSidebarProps['actions'];
 }): SidebarContextActions => {
   const actions = input.propsActions ?? {};
@@ -115,36 +109,20 @@ const resolveContextActions = (input: {
     onSelectAttention: withFallback(actions.onSelectAttention, input.openSelection.openAttentionPanel),
     onSelectFolder: withFallback(actions.onSelectFolder, input.openSelection.openFolder),
     onSelectRecent: withFallback(actions.onSelectRecent, input.openSelection.openRecentPanel),
-    onSelectSearch: withFallback(
-      actions.onSelectSearch,
-      input.pageContext !== null ? input.openSelection.openSearchPanel : undefined
-    ),
+    onSelectSearch: withFallback(actions.onSelectSearch, input.openSelection.openSearchPanel),
   };
 };
 
 const useResolvedSidebarData = (
   selection: FilemakerMailSidebarSelection,
-  pageContext: FilemakerMailSidebarPageContext,
   refreshKey: number
 ): FilemakerMailSidebarData => {
-  const fallbackData = useFilemakerMailData({
-    enabled: pageContext === null,
+  return useFilemakerMailData({
+    enabled: true,
     refreshKey,
     selectedAccountId: selection.accountId,
     selectedMailboxPath: selection.mailboxPath,
   });
-  if (pageContext === null) return fallbackData;
-  return {
-    accounts: pageContext.accounts,
-    fetchAccountsAndFolders: pageContext.loadNavigation,
-    folders: pageContext.folders,
-    isLoading: pageContext.isNavigationLoading,
-    recentThreads: pageContext.recentPreviewThreads,
-    setAccounts: pageContext.setAccounts,
-    setSyncingAccountId: pageContext.setSyncingAccountId,
-    syncingAccountId: pageContext.syncingAccountId,
-    threads: pageContext.threads,
-  };
 };
 
 const useSidebarResolvedState = ({
@@ -152,18 +130,16 @@ const useSidebarResolvedState = ({
   refreshKey = 0,
   selection: propsSelection,
 }: FilemakerMailSidebarProps): SidebarResolvedState => {
-  const pageContext = useOptionalMailPageContext();
   const selection = useMemo(
-    () => resolveSelection(propsSelection, pageContext),
-    [pageContext, propsSelection]
+    () => resolveSelection(propsSelection),
+    [propsSelection]
   );
-  const filters = useMemo(() => resolveFilters(propsFilters, pageContext), [pageContext, propsFilters]);
-  const data = useResolvedSidebarData(selection, pageContext, refreshKey);
+  const filters = useMemo(() => resolveFilters(propsFilters), [propsFilters]);
+  const data = useResolvedSidebarData(selection, refreshKey);
   const [statusUpdatingAccountId, setStatusUpdatingAccountId] = useState<string | null>(null);
   return {
     data,
     filters,
-    pageContext,
     selection,
     setStatusUpdatingAccountId,
     statusUpdatingAccountId,
@@ -233,16 +209,15 @@ export const useFilemakerMailSidebarModel = ({
   const flags = resolveContextFlags(state.filters, state.selection);
   const openSelection = useSidebarSelectionActions({
     effectiveSearchAccountId: flags.effectiveSearchAccountId,
-    pageContext: state.pageContext,
+    router,
   });
   const filterActions = useSidebarFilterActions({
     filters: state.filters,
-    pageContext: state.pageContext,
     router,
     selectedAccountId: state.selection.accountId,
   });
-  const onNewMailbox = resolveOnNewMailbox(propsActions, state.pageContext);
-  const contextActions = resolveContextActions({ onNewMailbox, openSelection, pageContext: state.pageContext, propsActions });
+  const onNewMailbox = resolveOnNewMailbox(propsActions);
+  const contextActions = resolveContextActions({ onNewMailbox, openSelection, propsActions });
   const contextValue = useSidebarContextValue({
     data: state.data,
     effectiveSearchAccountId: flags.effectiveSearchAccountId,

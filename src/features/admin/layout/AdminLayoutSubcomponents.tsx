@@ -40,6 +40,7 @@ const PRODUCT_LIST_ROUTES = new Set<string>([
   '/admin/filemaker/organizations',
   '/admin/filemaker/persons',
   '/admin/filemaker/mail-client',
+  '/admin/filemaker/email-dashboard',
   '/admin/validator',
   '/admin/validator/lists',
   '/admin/ai-paths/queue',
@@ -70,7 +71,7 @@ export function AdminSidebar({
   sidebarClassName,
   handleToggleCollapse,
 }: {
-  focusTrapRef: React.RefObject<HTMLElement | null>;
+  focusTrapRef: React.Ref<HTMLElement>;
   isMenuHidden: boolean;
   isMenuCollapsed: boolean;
   sidebarClassName: string;

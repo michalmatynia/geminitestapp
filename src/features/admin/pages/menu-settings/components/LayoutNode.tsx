@@ -29,8 +29,8 @@ export function LayoutNode({ input, layoutNodeStateById }: LayoutNodeProps): Rea
           <ChevronRight className='size-3.5 text-gray-400' />
         )}
       </button>
-      <span className='flex-1 truncate text-sm text-gray-200'>{nodeState?.label ?? input.node.label}</span>
-      {nodeState?.isBuiltIn === true && <StatusBadge status='Built-in' variant='warning' size='xs' />}
+      <span className='flex-1 truncate text-sm text-gray-200'>{nodeState?.label ?? input.node.name}</span>
+      {nodeState?.isBuiltIn === true && <StatusBadge status='Built-in' variant='warning' size='sm' />}
     </div>
   );
 }

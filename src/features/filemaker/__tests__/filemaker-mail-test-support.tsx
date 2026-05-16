@@ -530,7 +530,7 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/shared/ui/primitives.public';
 
-const setupAdminFilemakerMailPagesTest = (): void => {
+const setupFilemakerMailTests = (): void => {
   beforeEach(() => {
     vi.clearAllMocks();
     searchParamsGetMock.mockReturnValue(null);
@@ -567,7 +567,7 @@ export {
   routerPushMock,
   routerReplaceMock,
   searchParamsGetMock,
-  setupAdminFilemakerMailPagesTest,
+  setupFilemakerMailTests,
   renderWithProviders,
   toastMock,
 };

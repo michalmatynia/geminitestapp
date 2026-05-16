@@ -62,7 +62,7 @@ const buildComposeHandler = (input: SidebarModelInput): (() => void) => {
 const buildNewMailboxHandler = (input: SidebarModelInput): (() => void) => {
   if (input.onNewMailbox !== undefined) return input.onNewMailbox;
   return (): void => {
-    navigate(input.router, '/admin/filemaker/mail');
+    navigate(input.router, '/admin/filemaker/mail-client');
   };
 };
 

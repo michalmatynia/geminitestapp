@@ -104,6 +104,7 @@ const requestedDevBundler =
   typeof process.env['NEXT_DEV_BUNDLER'] === 'string'
     ? process.env['NEXT_DEV_BUNDLER'].trim().toLowerCase()
     : '';
+const effectiveDevBundler = requestedDevBundler || 'webpack';
 
 const DUELS_LOBBY_WS_PATH = '/api/kangur/duels/lobby/ws';
 const DUELS_LOBBY_REDIS_CHANNEL = 'kangur:duels:lobby';
@@ -119,9 +120,9 @@ const nextOptions = {
   port,
 };
 
-if (dev && requestedDevBundler === 'webpack') {
+if (dev && effectiveDevBundler === 'webpack') {
   nextOptions.webpack = true;
-} else if (dev && (requestedDevBundler === 'turbopack' || requestedDevBundler === 'turbo')) {
+} else if (dev && (effectiveDevBundler === 'turbopack' || effectiveDevBundler === 'turbo')) {
   nextOptions.turbopack = true;
 }
 

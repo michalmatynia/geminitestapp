@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react';
 import { useAdminMenuSettings } from '../../context/AdminMenuSettingsContext';
 import { FormSection, FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { ADMIN_MENU_COLORS } from '@/features/admin/components/menu/admin-menu-constants';
-import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { IdLabelOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
 const SECTION_COLOR_OPTIONS: Array<LabeledOptionDto<string>> = [
@@ -21,11 +21,7 @@ export function SectionColorsSection(): React.JSX.Element {
     sections,
     sectionColors,
     updateSectionColor,
-  } = useAdminMenuSettings() as {
-    sections: Array<LabeledOptionDto<string>>;
-    sectionColors: Record<string, string>;
-    updateSectionColor: (id: string, color: string) => void;
-  };
+  } = useAdminMenuSettings();
 
   return (
     <FormSection
@@ -36,11 +32,11 @@ export function SectionColorsSection(): React.JSX.Element {
       variant='subtle'
     >
       <div className='grid gap-4 sm:grid-cols-2'>
-        {sections.map((section) => (
-          <FormField key={section.value} label={section.label}>
+        {sections.map((section: IdLabelOptionDto) => (
+          <FormField key={section.id} label={section.label}>
             <SelectSimple
-              value={sectionColors[section.value] ?? 'none'}
-              onValueChange={(val: string) => updateSectionColor(section.value, val)}
+              value={sectionColors[section.id] ?? 'none'}
+              onValueChange={(val: string) => updateSectionColor(section.id, val)}
               options={SECTION_COLOR_OPTIONS}
               className='h-8 bg-gray-900/40 text-xs'
             />

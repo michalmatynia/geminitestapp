@@ -122,7 +122,10 @@ const readGoogleOAuthSettingsConfig = async (
 export const readGoogleOAuthConfig = async (
   input: GoogleOAuthConfigInput = {}
 ): Promise<GoogleOAuthConfig> => {
-  const explicitConfig = resolveGoogleOAuthConfigFromValues(input);
+  const explicitConfig = resolveGoogleOAuthConfigFromValues({
+    clientId: input.clientId,
+    clientSecret: input.clientSecret,
+  });
   const envConfig = explicitConfig ?? readGoogleOAuthEnvironmentConfig(input);
   const config = envConfig ?? (await readGoogleOAuthSettingsConfig(input));
   if (config !== null) return config;

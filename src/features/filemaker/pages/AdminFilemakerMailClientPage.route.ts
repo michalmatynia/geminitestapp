@@ -1,6 +1,6 @@
 import type { MailClientDashboardScope } from './AdminFilemakerMailClientPage.helpers';
 
-const DEFAULT_MAIL_CLIENT_DASHBOARD_PATH = '/admin/filemaker/mail-client';
+const DEFAULT_MAIL_CLIENT_DASHBOARD_PATH = '/admin/filemaker/email-dashboard';
 
 const normalizeMailClientDashboardAccountId = (rawAccountId: string | null | undefined): string =>
   typeof rawAccountId === 'string' ? rawAccountId.trim() : '';
@@ -24,7 +24,6 @@ const buildMailClientDashboardHref = (input: {
   const nextAccountId = normalizeMailClientDashboardAccountId(input.accountId);
   const nextQuery = input.query.trim();
 
-  search.set('tab', 'overview');
   if (input.scope !== 'all') search.set('scope', input.scope);
   if (nextAccountId !== '') search.set('accountId', nextAccountId);
   if (nextQuery !== '') search.set('query', nextQuery);

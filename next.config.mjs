@@ -87,6 +87,7 @@ const outputFileTracingExcludes = {
   // entire directory tree, which explodes Vercel function size.
   '/*': [
     './public/uploads/**/*',
+    './hosting/fastcomet/**/*',
     './mongo/backups/**/*',
     './tmp/**/*',
     './playwright-debug/**/*',
@@ -101,11 +102,15 @@ const watchIgnoredGlobs = [
   '**/.next/**',
   '**/.next-dev/**',
   '**/public/uploads/**',
+  '**/hosting/fastcomet/**',
   '**/tmp/**',
   '**/test-results/**',
   '**/playwright-debug/**',
   '**/.playwright-cli/**',
+  '**/.playwright-mcp/**',
+  '**/coverage/**',
   '**/mongo/backups/**',
+  '**/database/**',
   '**/docs/metrics/**',
 ];
 const csp = [
@@ -137,7 +142,11 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 
 const nextConfig = {
   reactStrictMode: true,
-  reactCompiler: true,
+  // React Compiler: always enabled but uses annotation mode in dev to avoid
+  // the 8 GB heap pressure from compiling the whole monorepo. Files that
+  // need auto-memoisation opt in with 'use memo' at the top of the file.
+  // In production all files are compiled unconditionally.
+  reactCompiler: isDev ? { compilationMode: 'annotation' } : true,
   cacheComponents: true,
   cacheLife: {
     swr60: {
@@ -299,6 +308,12 @@ const nextConfig = {
       ...config.watchOptions,
       ignored: Array.from(new Set([...normalizedWatchIgnored, ...watchIgnoredGlobs])),
     };
+    if (isDev && requestedDevBundler === 'webpack') {
+      config.infrastructureLogging = {
+        ...config.infrastructureLogging,
+        level: 'error',
+      };
+    }
 
     config.resolve ??= {};
     config.resolve.alias ??= {};
@@ -319,6 +334,10 @@ const nextConfig = {
       {
         module: /@opentelemetry\/instrumentation\/build\/esm\/platform\/node\/instrumentation\.js$/,
         message: /Critical dependency: the request of a dependency is an expression/,
+      },
+      {
+        module: /next-intl\/dist\/esm\/production\/extractor\/format\/index\.js$/,
+        message: /Parsing of .* for build dependencies failed at 'import\(t\)'/,
       },
     ];
     if (!isServer) {

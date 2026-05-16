@@ -39,9 +39,16 @@ export type ProductSyncBaseFieldPresentationMetadata = {
   warehousesByIdentifier: Map<
     string,
     {
-      id: string;
       name: string;
-      identifier: string;
+      isDefault: boolean;
+    }
+  >;
+  priceGroupsByIdentifier: Map<
+    string,
+    {
+      name: string;
+      currencyCode: string | null;
+      isDefault: boolean;
     }
   >;
 };

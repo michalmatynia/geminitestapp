@@ -2,7 +2,6 @@ import * as React from 'react';
 import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/base';
 import { PageLayout } from './PageLayout';
 import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
-import { cn } from '@/shared/utils/ui-utils';
 
 type AdminPageLayoutProps = React.ComponentProps<typeof PageLayout> & {
   section: AdminBreadcrumbNode;

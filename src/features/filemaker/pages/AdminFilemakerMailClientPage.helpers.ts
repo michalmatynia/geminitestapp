@@ -195,7 +195,7 @@ const buildMailClientWorkspaceHref = ({
         accountId: focusedAccountId,
         panel: 'settings',
       })
-    : '/admin/filemaker/mail';
+    : '/admin/filemaker/mail-client';
 
 export {
   buildMailClientComposeHref,

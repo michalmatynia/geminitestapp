@@ -113,6 +113,12 @@ export const getPageManagerNav = (): NavItem => ({
           href: '/admin/page-manager/studiq/settings/ai-tutor-content',
           required: true,
         },
+        {
+          id: 'page-manager/studiq/database',
+          label: 'Database',
+          href: '/admin/kangur/database',
+          keywords: ['push', 'sync', 'cloud', 'mongodb', 'mirror'],
+        },
       ],
     },
     {
@@ -131,6 +137,7 @@ export const getPageManagerNav = (): NavItem => ({
         { id: 'page-manager/kangur/appearance', label: 'Appearance', href: '/admin/kangur/appearance' },
         { id: 'page-manager/kangur/settings', label: 'Settings', href: '/admin/kangur/settings' },
         { id: 'page-manager/kangur/settings/ai-tutor-content', label: 'AI Tutor Content', href: '/admin/kangur/settings/ai-tutor-content' },
+        { id: 'page-manager/kangur/database', label: 'Database', href: '/admin/kangur/database', keywords: ['push', 'sync', 'cloud', 'mongodb', 'mirror'] },
       ],
     },
     {

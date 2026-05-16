@@ -121,7 +121,7 @@ function MailClientFocusedFolderCard({
         <Badge variant='outline'>Threads: {folder.threadCount}</Badge>
       </div>
       <div className='text-xs text-gray-400'>
-        Last activity: {formatFocusedFolderActivity(folder.lastMessageAt)}
+        Last activity: {formatFocusedFolderActivity(folder.lastMessageAt ?? null)}
       </div>
       <Button asChild variant='outline' size='sm'>
         <Link

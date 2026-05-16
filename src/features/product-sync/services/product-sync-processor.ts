@@ -388,7 +388,7 @@ const extractBaseRecordParameterSyncValues = (
   });
 
   return extracted
-    .map(toParameterSyncValueFromExtracted)
+    .map((entry: ExtractedBaseParameter) => toParameterSyncValueFromExtracted(entry))
     .filter((entry: ProductParameterValue | null): entry is ProductParameterValue =>
       entry !== null
     );
@@ -529,7 +529,7 @@ const extractLanguageFromBaseFieldPath = (path: string): string | null => {
 
 const normalizeBaseFieldCollectionKey = (path: string): string => {
   const lastSegment = path.split('.').pop() ?? path;
-  const [namePart] = lastSegment.split('|');
+  const namePart = lastSegment.split('|')[0] ?? '';
   return namePart.trim().toLowerCase();
 };
 

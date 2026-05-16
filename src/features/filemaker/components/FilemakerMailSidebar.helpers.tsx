@@ -218,17 +218,17 @@ const buildFilemakerMailComposeHref = (input: MailSearchUrlInput & {
   setParamIfPresent(search, 'forwardThreadId', input.forwardThreadId);
   buildCommonSearchUrl(search, input);
   const nextSearch = search.toString();
-  return nextSearch !== '' ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
+  return nextSearch !== '' ? `/admin/filemaker/mail-client/compose?${nextSearch}` : '/admin/filemaker/mail-client/compose';
 };
 
 const buildFilemakerMailThreadHref = (input: MailSearchUrlInput & {
   threadId: string;
 }): string => {
   const search = new URLSearchParams();
+  search.set('threadId', input.threadId);
   buildCommonSearchUrl(search, input);
   const nextSearch = search.toString();
-  const base = `/admin/filemaker/mail/threads/${encodeURIComponent(input.threadId)}`;
-  return nextSearch !== '' ? `${base}?${nextSearch}` : base;
+  return `/admin/filemaker/mail-client?${nextSearch}`;
 };
 
 export {

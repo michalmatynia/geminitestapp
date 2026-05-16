@@ -1,31 +1,34 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GoogleOAuthCredentialsSettings } from '@/shared/lib/oauth/components/GoogleOAuthCredentialsSettings';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
 import {
-  Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Input,
-} from '@/shared/ui/primitives.public';
-import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+} from '@/shared/ui/dialog';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { useToast } from '@/shared/ui/toast';
 
 import {
   createDefaultFilemakerMailDraft,
   hasFilemakerMailAccountDraftErrors,
   validateFilemakerMailAccountDraft,
   type FilemakerMailAccountDraftFieldErrors,
-} from './AdminFilemakerMailPage.helpers';
-import { fetchFilemakerMailJson as fetchJson, resolveFilemakerMailSyncNotice } from '../mail-ui-helpers';
-import { formatFilemakerMailboxAllowlist } from '../mail-utils';
+} from './filemaker-mail-account-draft';
+import {
+  fetchFilemakerMailJson as fetchJson,
+  resolveFilemakerMailSyncNotice,
+  type FilemakerMailSyncDispatchResponseLike,
+} from '../mail-ui-helpers';
 
-import type { FilemakerMailAccount, FilemakerMailAccountDraft, FilemakerMailSyncDispatchResponseLike } from '../types';
-import { useToast } from '@/shared/ui/primitives.public';
+import type { FilemakerMailAccount, FilemakerMailAccountDraft } from '../types';
 
 const toNullable = (v: string): string | null => (v.length > 0 ? v : null);
 const parsePositiveInt = (v: string, fallback: number): number => {
@@ -180,7 +183,14 @@ function SecurityToggles({
   );
 }
 
-function useAddMailboxForm(onSuccess: (account: FilemakerMailAccount) => void) {
+type AddMailboxFormState = {
+  draft: FilemakerMailAccountDraft; setDraft: React.Dispatch<React.SetStateAction<FilemakerMailAccountDraft>>;
+  errors: FilemakerMailAccountDraftFieldErrors; folderAllowlistValue: string;
+  setFolderAllowlistValue: React.Dispatch<React.SetStateAction<string>>; isSaving: boolean;
+  handleSave: () => Promise<void>; reset: () => void;
+};
+
+function useAddMailboxForm(onSuccess: (account: FilemakerMailAccount) => void): AddMailboxFormState {
   const { toast } = useToast();
   const [draft, setDraft] = useState<FilemakerMailAccountDraft>(createDefaultFilemakerMailDraft);
   const [errors, setErrors] = useState<FilemakerMailAccountDraftFieldErrors>({});
@@ -245,15 +255,13 @@ function useAddMailboxForm(onSuccess: (account: FilemakerMailAccount) => void) {
   return { draft, setDraft, errors, folderAllowlistValue, setFolderAllowlistValue, isSaving, handleSave, reset };
 }
 
+export type AddMailboxModalProps = { open: boolean; onClose: () => void; onAccountAdded: (account: FilemakerMailAccount) => void; };
+
 export function AddMailboxModal({
   open,
   onClose,
   onAccountAdded,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onAccountAdded: (account: FilemakerMailAccount) => void;
-}): React.JSX.Element {
+}: AddMailboxModalProps): React.JSX.Element {
   const handleSuccess = useCallback(
     (account: FilemakerMailAccount) => {
       onAccountAdded(account);

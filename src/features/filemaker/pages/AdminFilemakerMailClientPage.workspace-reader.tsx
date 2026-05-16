@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { sanitizeHtml } from '@/shared/utils/sanitization';
@@ -11,8 +12,21 @@ import {
   formatParticipants,
   hasText,
 } from './AdminFilemakerMailClientPage.workspace-model';
-import { ReplyPanel, type ReplyPanelProps } from './AdminFilemakerMailClientPage.workspace-reply';
+import type { ReplyPanelProps } from './AdminFilemakerMailClientPage.workspace-reply';
 import { MailClientStatusLine } from './AdminFilemakerMailClientPage.workspace-shared';
+
+const ReplyPanel = dynamic<ReplyPanelProps>(
+  () =>
+    import('./AdminFilemakerMailClientPage.workspace-reply').then((module) => module.ReplyPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className='border-t border-border/60 bg-card/20 p-4'>
+        <MailClientStatusLine>Loading reply editor...</MailClientStatusLine>
+      </div>
+    ),
+  }
+);
 
 const formatMessageSender = (message: FilemakerMailMessage): string => {
   if (message.from === null || message.from === undefined) return 'Unknown sender';

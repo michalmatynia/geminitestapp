@@ -103,6 +103,13 @@ const isFastCometUploadQueuedResponse = (
   value: FastCometUploadResponse
 ): value is FastCometUploadQueuedResponse => value.status === 'queued';
 
+const assertFastCometUploadOkResponse = (
+  value: FastCometUploadResponse
+): FastCometUploadOkResponse => {
+  if (value.status === 'ok') return value;
+  throw new Error('FastComet upload was queued without a completed image file.');
+};
+
 const getExistingImageFileFromSlot = (
   slot: ProductImageSlotValue | undefined
 ): ImageFileSelection | null => {
@@ -439,11 +446,16 @@ export function ProductImageManagerUIProvider({
           setImageLinkAt,
           setSlotViewMode,
         })) return;
-        handleSlotFileSelect(result.imageFile, index);
+        const completedResult = assertFastCometUploadOkResponse(result);
+        handleSlotFileSelect(completedResult.imageFile, index);
         setImageLinkAt(index, '');
         setImageBase64At(index, '');
-        setSlotViewMode(index, resolveSlotViewModeForImageFile(result.imageFile));
-        notifyImmediateUploadSuccess({ onSuccess: onFastCometUploadSuccess, result, uploadEvent });
+        setSlotViewMode(index, resolveSlotViewModeForImageFile(completedResult.imageFile));
+        notifyImmediateUploadSuccess({
+          onSuccess: onFastCometUploadSuccess,
+          result: completedResult,
+          uploadEvent,
+        });
       } catch (error: unknown) {
         logClientError(error);
         pushDebug({ action: 'immediate-file-upload', message: toErrorMessage(error), slotIndex: index });
@@ -647,17 +659,21 @@ export function ProductImageManagerUIProvider({
           setImageLinkAt,
           setSlotViewMode,
         })) return;
-        handleSlotFileSelect(result.imageFile, index);
+        const completedResult = assertFastCometUploadOkResponse(result);
+        handleSlotFileSelect(completedResult.imageFile, index);
         setImageLinkAt(index, '');
         setImageBase64At(index, '');
-        setSlotViewMode(index, isFastCometImageFile(result.imageFile) ? 'fastcomet' : 'upload');
+        setSlotViewMode(
+          index,
+          isFastCometImageFile(completedResult.imageFile) ? 'fastcomet' : 'upload'
+        );
         onFastCometUploadSuccess?.({
           ...uploadEvent,
-          alreadyUploaded: result.alreadyUploaded,
-          imageFile: result.imageFile,
-          product: result.product,
-          publicPath: result.publicPath,
-          remoteUrl: result.remoteUrl,
+          alreadyUploaded: completedResult.alreadyUploaded,
+          imageFile: completedResult.imageFile,
+          product: completedResult.product,
+          publicPath: completedResult.publicPath,
+          remoteUrl: completedResult.remoteUrl,
         });
       } catch (error: unknown) {
         logClientError(error);

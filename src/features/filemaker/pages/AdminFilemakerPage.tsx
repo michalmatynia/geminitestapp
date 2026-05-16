@@ -1,6 +1,6 @@
 'use client';
 
-import { BotMessageSquare, BriefcaseBusiness, Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, MailPlus, Megaphone, Settings2, Share2, ShieldAlert, Tags, Users } from 'lucide-react';
+import { BotMessageSquare, BriefcaseBusiness, Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, Megaphone, Settings2, Share2, ShieldAlert, Tags, Users } from 'lucide-react';
 import React, { startTransition } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -27,8 +27,7 @@ const FILEMAKER_PAGE_ACTIONS = [
     Icon: Building2,
   },
   { key: 'mail', label: 'Email Client', href: '/admin/filemaker/mail-client', Icon: Mail },
-  { key: 'mail-settings', label: 'Mail Settings', href: '/admin/filemaker/mail', Icon: Settings2 },
-  { key: 'compose-email', label: 'Compose Email', href: '/admin/filemaker/mail/compose', Icon: MailPlus },
+  { key: 'email-dashboard', label: 'Email Dashboard', href: '/admin/filemaker/email-dashboard', Icon: Mail },
   { key: 'invoices', label: 'Invoices Page', href: '/admin/filemaker/invoices', Icon: FileText },
   { key: 'email-creator', label: 'Email Creator', href: '/admin/filemaker/campaigns/create', Icon: Megaphone },
   { key: 'campaigns', label: 'Email Campaigns', href: '/admin/filemaker/campaigns', Icon: Megaphone },

@@ -49,6 +49,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'filemaker/emails',
   'filemaker/events',
   'filemaker/list',
+  'filemaker/email-dashboard',
   'filemaker/mail-client',
   'filemaker/organizations',
   'filemaker/persons',

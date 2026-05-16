@@ -170,7 +170,7 @@ const settings: SettingsOption[] = [
   },
 ];
 
-const colorClasses: Record<string, { border: string; text: string }> = {
+const colorClasses: Record<SettingsOption['color'], { border: string; text: string }> = {
   emerald: {
     border: 'group-hover:border-emerald-500/50',
     text: 'text-emerald-400',

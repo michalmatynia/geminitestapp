@@ -5,7 +5,7 @@ import { useRouter } from 'nextjs-toploader/app';
 import type React from 'react';
 import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useToast } from '@/shared/ui/primitives.public';
+import { useToast } from '@/shared/ui/toast';
 
 import { fetchFilemakerMailJson } from '../mail-ui-helpers';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { type NavItem } from './admin-menu-utils';
 import { PackageIcon } from './icons';
 

@@ -157,7 +157,9 @@ function useBackgroundSyncHandlers(params: {
   };
 
   const handleProcessQueueClick = (): void => {
-    handleProcessQueue().catch(logClientCatch);
+    handleProcessQueue().catch((error: unknown) => {
+      logClientCatch(error, { source: 'AdminSyncSettingsPage', action: 'processQueue' });
+    });
   };
 
   return {

@@ -2,7 +2,7 @@
 
 import { type Dispatch, type SetStateAction, useCallback, useState } from 'react';
 
-import { useOptionalToast } from '@/shared/ui/primitives.public';
+import { useOptionalToast } from '@/shared/ui/toast';
 
 import {
   fetchFilemakerMailJson,

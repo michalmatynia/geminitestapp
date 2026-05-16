@@ -35,6 +35,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Configure Kangur narrator voice, narration mode, and documentation tooltip behavior.',
   '/admin/kangur/settings/ai-tutor-content':
     'Edit the Mongo-backed AI Tutor content pack used by onboarding, helper prompts, and tutor explanations.',
+  '/admin/kangur/database':
+    'Push the local StudiQ MongoDB mirror to the Atlas cloud database.',
   '/admin/filemaker':
     'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',
@@ -50,11 +52,9 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/filemaker/goal-automation':
     'Configure Filemaker goal automation workflows and AI-assisted actions.',
   '/admin/filemaker/mail-client':
-    'Open the Filemaker email client dashboard for mailbox health, recent activity, and mailbox actions.',
-  '/admin/filemaker/mail':
-    'Manage Filemaker mailbox account settings, folder browsing, search, and synced mail threads.',
-  '/admin/filemaker/mail/compose':
-    'Compose and send a one-off Filemaker email with account selection, rich text content, and attachments.',
+    'Open the Filemaker IMAP/SMTP email client workspace for reading and replying to mail threads.',
+  '/admin/filemaker/email-dashboard':
+    'Filemaker email dashboard — mailbox health, recent threads, sync status, and account overview.',
   '/admin/filemaker/campaigns/create':
     'Create a Filemaker email campaign before configuring audience, content, and launch rules in the Email Creator.',
   '/admin/filemaker/campaigns':

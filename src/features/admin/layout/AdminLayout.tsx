@@ -109,7 +109,7 @@ function AdminLayoutContent({
         />
       )}
       <AdminSidebar
-        focusTrapRef={focusTrapRef as React.RefObject<HTMLElement | null>}
+        focusTrapRef={focusTrapRef}
         isMenuHidden={isMenuHidden}
         isMenuCollapsed={isMenuCollapsed}
         sidebarClassName={sidebarClassName}

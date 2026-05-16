@@ -12,6 +12,7 @@ import {
 } from '../validator-scope';
 import {
   type ValidatorListsView,
+  type ValidatorPatternListEditorState,
 } from './types';
 import {
   canonicalizeLists,
@@ -35,7 +36,7 @@ export interface UseValidatorListsResult {
   query: string;
   setQuery: (val: string) => void;
   editorOpen: boolean;
-  editorState: unknown;
+  editorState: ValidatorPatternListEditorState;
   isDirty: boolean;
   isPending: boolean;
   totalLocked: number;
@@ -46,7 +47,7 @@ export interface UseValidatorListsResult {
   handleSave: () => Promise<void>;
   handleOpenEditor: (list: ValidatorPatternList) => void;
   handleCloseEditor: () => void;
-  handleEditorChange: (patch: unknown) => void;
+  handleEditorChange: (patch: Partial<ValidatorPatternListEditorState>) => void;
   handleSaveEditor: () => void;
   handleReorder: (reorderedVisible: ValidatorPatternList[]) => void;
   handleToggleLock: (listId: string) => void;

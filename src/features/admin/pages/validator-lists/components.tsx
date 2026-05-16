@@ -14,6 +14,7 @@ import {
   scopeOptions,
   type ValidatorListsView,
 } from './types';
+import type { ValidatorScope } from '@/shared/contracts/admin';
 import { getViewContentId, getViewTriggerId } from './utils';
 
 export function ValidatorListsHeader({
@@ -108,8 +109,8 @@ export function AddValidatorListForm({
 }: {
   newListName: string;
   setNewListName: (val: string) => void;
-  newListScope: string;
-  setNewListScope: (val: string) => void;
+  newListScope: ValidatorScope;
+  setNewListScope: (val: ValidatorScope) => void;
   newListDescription: string;
   setNewListDescription: (val: string) => void;
   onAdd: () => void;

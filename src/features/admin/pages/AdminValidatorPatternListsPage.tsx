@@ -8,7 +8,7 @@ import {
   ValidatorDocsTooltipsProvider,
 } from '@/features/admin/components/AdminValidatorSettings';
 
-import { EDITOR_FIELDS } from './validator-lists/types';
+import { EDITOR_FIELDS, type ValidatorPatternListEditorState } from './validator-lists/types';
 import { useValidatorLists } from './validator-lists/useValidatorLists';
 import {
   ValidatorListsHeader,
@@ -65,7 +65,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
           />
         </ListPanel>
 
-        <SettingsPanelBuilder
+        <SettingsPanelBuilder<ValidatorPatternListEditorState>
           open={state.editorOpen}
           onClose={state.handleCloseEditor}
           title='Edit Validation Pattern List'
@@ -73,7 +73,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
           fields={EDITOR_FIELDS}
           values={state.editorState}
           onChange={state.handleEditorChange}
-          onSave={state.handleSaveEditor}
+          onSave={async () => { state.handleSaveEditor(); }}
           size='sm'
         />
 

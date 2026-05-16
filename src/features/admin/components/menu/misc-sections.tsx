@@ -1,6 +1,5 @@
 import { BookOpenIcon, ImageIcon, SparklesIcon } from './icons';
 import { type NavItem } from './admin-menu-utils';
-import React from 'react';
 
 const FILEMAKER_NAV_CHILDREN: NavItem[] = [
   { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
@@ -18,18 +17,17 @@ const FILEMAKER_NAV_CHILDREN: NavItem[] = [
     href: '/admin/filemaker/goal-automation',
     keywords: ['goals', 'automation', 'ai goals', 'filemaker automation'],
   },
-  { id: 'filemaker/mail-client', label: 'Email Client', href: '/admin/filemaker/mail-client' },
   {
-    id: 'filemaker/mail',
-    label: 'Mail Settings',
-    href: '/admin/filemaker/mail',
-    keywords: ['mailbox settings', 'imap', 'smtp', 'mail accounts', 'mail folders'],
+    id: 'filemaker/mail-client',
+    label: 'Email Client',
+    href: '/admin/filemaker/mail-client',
+    keywords: ['email client', 'imap', 'mailbox'],
   },
   {
-    id: 'filemaker/mail/compose',
-    label: 'Compose Email',
-    href: '/admin/filemaker/mail/compose',
-    keywords: ['email composer', 'mail compose', 'one off email'],
+    id: 'filemaker/email-dashboard',
+    label: 'Email Dashboard',
+    href: '/admin/filemaker/email-dashboard',
+    keywords: ['mailbox settings', 'smtp', 'mail accounts', 'mail folders', 'email overview'],
   },
   {
     id: 'filemaker/campaigns/create',

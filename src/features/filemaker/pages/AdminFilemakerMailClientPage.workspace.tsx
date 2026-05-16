@@ -3,7 +3,7 @@
 import { Eye, Inbox, Mail } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
-import { Button } from '@/shared/ui/primitives.public';
+import { Button } from '@/shared/ui/button';
 
 import type { FilemakerMailThread } from '../types';
 import { MailClientAccountsTree } from './AdminFilemakerMailClientPage.workspace-tree';
@@ -37,19 +37,13 @@ type WorkspaceMainProps = {
   onSendReply: () => void;
 };
 
-type WorkspaceViewModel = Omit<
-  WorkspaceMainProps,
-  'loadError'
-> & {
+type WorkspaceViewModel = Omit<WorkspaceMainProps, 'loadError'> & {
   selectAccount: (accountId: string) => void;
   selectFolder: (selection: { accountId: string; mailboxPath: string }) => void;
   selectTreeThread: ReturnType<typeof useMailClientSelection>['applySelection'];
 };
 
-type WorkspaceSelectionActions = Pick<
-  WorkspaceViewModel,
-  'onOpenPrimaryFolder' | 'onRefreshThreads' | 'onSelectThread' | 'selectAccount' | 'selectFolder' | 'selectTreeThread'
->;
+type WorkspaceSelectionActions = Pick<WorkspaceViewModel, 'onOpenPrimaryFolder' | 'onRefreshThreads' | 'onSelectThread' | 'selectAccount' | 'selectFolder' | 'selectTreeThread'>;
 
 function SelectionBanner({
   selectedAccount,
@@ -291,19 +285,10 @@ function WorkspaceLayout({
   );
 }
 
-function MailClientSidebarCollapseButton({
-  onToggleSidebar,
-}: {
-  onToggleSidebar: () => void;
-}): React.JSX.Element {
+function MailClientSidebarCollapseButton({ onToggleSidebar }: { onToggleSidebar: () => void }): React.JSX.Element {
   return (
     <div className='hidden items-start lg:flex'>
-      <button
-        type='button'
-        aria-label='Show accounts sidebar'
-        onClick={onToggleSidebar}
-        className='m-2 flex size-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground'
-      >
+      <button type='button' aria-label='Show accounts sidebar' onClick={onToggleSidebar} className='m-2 flex size-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground'>
         <Eye className='size-4' />
       </button>
     </div>

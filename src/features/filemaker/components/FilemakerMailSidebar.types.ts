@@ -4,7 +4,6 @@ import type {
   useMasterFolderTreeViewModel,
 } from '@/shared/lib/foldertree/public';
 import type { useRouter } from 'nextjs-toploader/app';
-import type { MailPageState } from '../pages/AdminFilemakerMailPage.hooks';
 import type {
   FilemakerMailAccount,
   FilemakerMailFolderSummary,
@@ -15,8 +14,6 @@ import type { FilemakerMailSidebarContextValue } from './FilemakerMailSidebarCon
 export type FilemakerMailTreeShell = ReturnType<typeof useMasterFolderTreeViewModel>;
 
 export type FilemakerMailSidebarRouter = ReturnType<typeof useRouter>;
-
-export type FilemakerMailSidebarPageContext = MailPageState | null;
 
 export type FilemakerMailSidebarData = {
   accounts: FilemakerMailAccount[];

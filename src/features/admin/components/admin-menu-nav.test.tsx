@@ -150,7 +150,7 @@ describe('buildAdminNav', () => {
     expect(baseCategoryMappingItem).not.toBeNull();
   });
 
-  it('includes the Filemaker email client, composer, creator, and records entries', () => {
+  it('includes the Filemaker email client, dashboard, creator, and records entries', () => {
     const nav = buildAdminNav({
       onOpenChat: () => undefined,
       onCreatePageClick: () => undefined,
@@ -163,19 +163,12 @@ describe('buildAdminNav', () => {
         entry.label === 'Email Client' &&
         entry.href === '/admin/filemaker/mail-client'
     );
-    const composeEmailItem = findNavItem(
+    const emailDashboardItem = findNavItem(
       nav,
       (entry) =>
-        entry.id === 'filemaker/mail/compose' &&
-        entry.label === 'Compose Email' &&
-        entry.href === '/admin/filemaker/mail/compose'
-    );
-    const mailSettingsItem = findNavItem(
-      nav,
-      (entry) =>
-        entry.id === 'filemaker/mail' &&
-        entry.label === 'Mail Settings' &&
-        entry.href === '/admin/filemaker/mail'
+        entry.id === 'filemaker/email-dashboard' &&
+        entry.label === 'Email Dashboard' &&
+        entry.href === '/admin/filemaker/email-dashboard'
     );
     const emailCreatorItem = findNavItem(
       nav,
@@ -200,8 +193,7 @@ describe('buildAdminNav', () => {
     );
 
     expect(emailClientItem).not.toBeNull();
-    expect(mailSettingsItem).not.toBeNull();
-    expect(composeEmailItem).not.toBeNull();
+    expect(emailDashboardItem).not.toBeNull();
     expect(emailCreatorItem).not.toBeNull();
     expect(emailCampaignsItem).not.toBeNull();
     expect(emailRecordsItem).not.toBeNull();

@@ -75,6 +75,11 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
   visibility: hidden;
 }
 
+[data-testid='kangur-route-content'][data-route-capture-ready='true'][data-route-interactive-ready='true'][data-route-transition-phase='idle'] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
   .kangur-page-container {
     max-width: var(--kangur-page-max-width, 1440px);
     min-width: 0;

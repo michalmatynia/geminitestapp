@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 
 import KangurAppearanceLayout from '../../kangur/KangurAppearanceLayout';
 import { loadKangurSiteMessages } from '@/i18n/messages';
@@ -21,6 +22,8 @@ export default async function LocalizedKangurLayout({
   children,
   params,
 }: LocalizedKangurLayoutProps): Promise<ReactNode> {
+  await connection();
+
   const { locale } = await params;
 
   if (!isSupportedSiteLocale(locale)) {

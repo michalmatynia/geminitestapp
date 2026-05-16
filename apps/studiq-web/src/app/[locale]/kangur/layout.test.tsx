@@ -7,6 +7,7 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 const {
+  connectionMock,
   setRequestLocaleMock,
   loadKangurSiteMessagesMock,
   nextIntlProviderMock,
@@ -14,6 +15,7 @@ const {
   kangurAppearanceLayoutMock,
   notFoundMock,
 } = vi.hoisted(() => ({
+  connectionMock: vi.fn(),
   setRequestLocaleMock: vi.fn(),
   loadKangurSiteMessagesMock: vi.fn(),
   nextIntlProviderMock: vi.fn(
@@ -58,6 +60,10 @@ vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
 }));
 
+vi.mock('next/server', () => ({
+  connection: connectionMock,
+}));
+
 vi.mock('@/i18n/messages', () => ({
   loadKangurSiteMessages: loadKangurSiteMessagesMock,
 }));
@@ -90,6 +96,7 @@ describe('apps/studiq-web localized Kangur layout', () => {
 
     render(result);
 
+    expect(connectionMock).toHaveBeenCalledTimes(1);
     expect(setRequestLocaleMock).toHaveBeenCalledWith('en');
     expect(loadKangurSiteMessagesMock).toHaveBeenCalledWith('en');
     expect(screen.getByTestId('next-intl-provider')).toHaveAttribute('data-locale', 'en');

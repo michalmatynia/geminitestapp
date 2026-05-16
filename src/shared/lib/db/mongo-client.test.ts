@@ -92,6 +92,17 @@ describe('mongo-client defaults', () => {
     expect(__testOnly.isSingleNodeLocalMongoUri('mongodb+srv://cluster.example/app')).toBe(false);
   });
 
+  it('masks credentials from Mongo URI log identifiers', async () => {
+    const { __testOnly } = await import('./mongo-client');
+
+    expect(
+      __testOnly.maskMongoUriForLog('mongodb+srv://user:pass@cluster.example/app?retryWrites=true')
+    ).toBe('mongodb+srv://***@cluster.example/app?retryWrites=true');
+    expect(__testOnly.maskMongoUriForLog('mongodb://localhost:27017/app')).toBe(
+      'mongodb://localhost:27017/app'
+    );
+  });
+
   it('closes cached Mongo clients and clears cache stores during invalidation', async () => {
     const cachedClient: MongoClientCacheTestDouble = {
       close: vi.fn(async () => undefined),

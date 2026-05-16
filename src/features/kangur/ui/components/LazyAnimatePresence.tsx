@@ -110,11 +110,16 @@ export function LazyAnimatePresence({
   ...props
 }: LazyAnimatePresenceProps): React.JSX.Element {
   const fm = useFramerMotion(loadMotion);
+  const hasRenderedWithoutMotionRef = useRef(false);
 
   if (fm) {
-    return <fm.AnimatePresence {...props}>{children}</fm.AnimatePresence>;
+    const resolvedProps = hasRenderedWithoutMotionRef.current
+      ? { ...props, initial: false }
+      : props;
+    return <fm.AnimatePresence {...resolvedProps}>{children}</fm.AnimatePresence>;
   }
 
+  hasRenderedWithoutMotionRef.current = true;
   return <>{children}</>;
 }
 

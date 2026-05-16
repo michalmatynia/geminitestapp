@@ -6,8 +6,10 @@ import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { framerMotionLoadSpy } = vi.hoisted(() => ({
+const { framerMotionLoadSpy, motionButtonPropsSpy, motionDivPropsSpy } = vi.hoisted(() => ({
   framerMotionLoadSpy: vi.fn<() => void>(),
+  motionButtonPropsSpy: vi.fn<(props: Record<string, unknown>) => void>(),
+  motionDivPropsSpy: vi.fn<(props: Record<string, unknown>) => void>(),
 }));
 
 vi.mock('@/features/kangur/ui/boot/boot-ready-signal', () => ({
@@ -21,16 +23,14 @@ vi.mock('framer-motion', () => {
       <div data-testid='mock-animate-presence'>{children}</div>
     ),
     motion: {
-      div: ({ children, ...props }: React.ComponentProps<'div'>) => (
-        <div data-testid='mock-motion-div' {...props}>
-          {children}
-        </div>
-      ),
-      button: ({ children, ...props }: React.ComponentProps<'button'>) => (
-        <button data-testid='mock-motion-button' {...props}>
-          {children}
-        </button>
-      ),
+      div: ({ children, ...props }: React.ComponentProps<'div'> & Record<string, unknown>) => {
+        motionDivPropsSpy(props);
+        return <div data-testid='mock-motion-div'>{children}</div>;
+      },
+      button: ({ children, ...props }: React.ComponentProps<'button'> & Record<string, unknown>) => {
+        motionButtonPropsSpy(props);
+        return <button data-testid='mock-motion-button'>{children}</button>;
+      },
     },
   };
 });
@@ -39,6 +39,8 @@ describe('LazyAnimatePresence', () => {
   beforeEach(() => {
     vi.resetModules();
     framerMotionLoadSpy.mockClear();
+    motionButtonPropsSpy.mockClear();
+    motionDivPropsSpy.mockClear();
   });
 
   afterEach(() => {
@@ -87,11 +89,65 @@ describe('LazyAnimatePresence', () => {
     );
 
     await waitFor(() => {
-      expect(framerMotionLoadSpy).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('mock-animate-presence')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-motion-div')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-motion-button')).toBeInTheDocument();
+    });
+  });
+
+  it('does not replay hidden initial states when motion is enabled after a plain render', async () => {
+    const { LazyMotionButton, LazyMotionDiv } = await import(
+      '@/features/kangur/ui/components/LazyAnimatePresence'
+    );
+
+    const { rerender } = render(
+      <>
+        <LazyMotionDiv
+          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 12 }}
+          loadMotion={false}
+        >
+          motion-child
+        </LazyMotionDiv>
+        <LazyMotionButton
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          loadMotion={false}
+        >
+          button-child
+        </LazyMotionButton>
+      </>
+    );
+
+    rerender(
+      <>
+        <LazyMotionDiv
+          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 12 }}
+          loadMotion
+        >
+          motion-child
+        </LazyMotionDiv>
+        <LazyMotionButton
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          loadMotion
+        >
+          button-child
+        </LazyMotionButton>
+      </>
+    );
+
+    await waitFor(() => {
+      expect(motionDivPropsSpy).toHaveBeenCalled();
+      expect(motionButtonPropsSpy).toHaveBeenCalled();
     });
 
-    expect(screen.getByTestId('mock-animate-presence')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-motion-div')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-motion-button')).toBeInTheDocument();
+    expect(motionDivPropsSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ initial: false })
+    );
+    expect(motionButtonPropsSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ initial: false })
+    );
   });
 });

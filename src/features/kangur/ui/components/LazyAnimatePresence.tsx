@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useEffect,
+  useRef,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -144,14 +145,19 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
   (props, ref) => {
     const { loadMotion = true, ...motionProps } = props;
     const fm = useFramerMotion(loadMotion);
+    const hasRenderedWithoutMotionRef = useRef(false);
 
     if (fm) {
       const MotionDiv = fm.MotionDiv;
-      return <MotionDiv ref={ref} {...(motionProps as HTMLMotionProps<'div'>)} />;
+      const resolvedMotionProps = hasRenderedWithoutMotionRef.current
+        ? { ...motionProps, initial: false }
+        : motionProps;
+      return <MotionDiv ref={ref} {...(resolvedMotionProps as HTMLMotionProps<'div'>)} />;
     }
 
     // Before framer-motion loads, render a plain div with only standard HTML props.
     const divProps = stripMotionOnlyProps(motionProps as Record<string, unknown>);
+    hasRenderedWithoutMotionRef.current = true;
 
     return <div ref={ref} {...(divProps as ComponentProps<'div'>)} />;
   }
@@ -168,13 +174,18 @@ export const LazyMotionButton = forwardRef<
 >((props, ref) => {
   const { loadMotion = true, ...motionProps } = props;
   const fm = useFramerMotion(loadMotion);
+  const hasRenderedWithoutMotionRef = useRef(false);
 
   if (fm) {
     const MotionButton = fm.MotionButton;
-    return <MotionButton ref={ref} {...motionProps} />;
+    const resolvedMotionProps = hasRenderedWithoutMotionRef.current
+      ? { ...motionProps, initial: false }
+      : motionProps;
+    return <MotionButton ref={ref} {...resolvedMotionProps} />;
   }
 
   const buttonProps = stripMotionOnlyProps(motionProps as Record<string, unknown>);
+  hasRenderedWithoutMotionRef.current = true;
 
   return <button ref={ref} {...(buttonProps as ComponentProps<'button'>)} />;
 });

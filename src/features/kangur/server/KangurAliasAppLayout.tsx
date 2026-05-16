@@ -4,8 +4,6 @@
  * Purpose: Server-side layout used when Kangur is embedded as an alias route
  * inside the storefront. Responsibilities:
  * - Inject auth bootstrap scripts safely into the head
- * - Render the server Kangur shell to ensure SSR content contains landmarks and
- *   accessible markup
  * - Mount the client boundary for interactive route shells
  *
  * Accessibility notes:
@@ -18,7 +16,6 @@ import { headers } from 'next/headers';
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
 import { renderKangurAuthBootstrapScript } from '@/features/kangur/server/renderKangurAuthBootstrapScript';
 import { KangurFeatureRouteShellClientLoader } from '@/features/kangur/ui/KangurFeatureRouteShellClientLoader';
-import { KangurServerShell } from '@/features/kangur/ui/components/KangurServerShell';
 
 import type { ReactNode } from 'react';
 
@@ -39,7 +36,6 @@ export function KangurAliasAppLayout({
       <Suspense fallback={null}>
         <KangurAuthBootstrapScript />
       </Suspense>
-      <KangurServerShell />
       {children}
       <KangurFeatureRouteShellClientLoader />
     </>

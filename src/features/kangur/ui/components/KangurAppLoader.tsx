@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/KangurHomeLogo';
+import { getKangurAppContentElement } from '@/features/kangur/ui/utils/kangurAppContentTarget';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { safeClearInterval, safeSetInterval, safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
@@ -94,7 +95,7 @@ const resolveKangurAppLoaderTargets = (): HTMLElement[] => {
   if (document.body) {
     targets.push(document.body);
   }
-  const appContent = document.getElementById('app-content');
+  const appContent = getKangurAppContentElement();
   if (appContent instanceof HTMLElement) {
     targets.push(appContent);
   }

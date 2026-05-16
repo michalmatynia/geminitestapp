@@ -20,7 +20,7 @@ import {
   LazyAnimatePresence,
   LazyMotionDiv,
 } from '@/features/kangur/ui/components/LazyAnimatePresence';
-import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { type createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { JSX } from 'react';
@@ -190,10 +190,11 @@ export const KangurRenderedRouteSkeletonOverlay = memo(({
 
 export const KangurRenderedRouteWithSuspense = memo(({
   isInitialHomeLoaderPhase, isInitialHomeSkeletonPhase,
-  resolvedPageKey, shouldSkipRouteContentPresence, renderedRouteContent,
+  loadMotion, resolvedPageKey, shouldSkipRouteContentPresence, renderedRouteContent,
 }: {
   isInitialHomeLoaderPhase: boolean;
   isInitialHomeSkeletonPhase: boolean;
+  loadMotion: boolean;
   resolvedPageKey: string | null;
   shouldSkipRouteContentPresence: boolean;
   renderedRouteContent: JSX.Element | null;
@@ -206,7 +207,7 @@ export const KangurRenderedRouteWithSuspense = memo(({
     }
   >
     <LazyAnimatePresence
-      loadMotion={true}
+      loadMotion={loadMotion}
       mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}
     >
       {renderedRouteContent}

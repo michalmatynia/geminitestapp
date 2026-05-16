@@ -37,7 +37,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     vi.restoreAllMocks();
   });
 
-  it('keeps the initial home route behind the boot loader during boot loading states', () => {
+  it('keeps the initial home route behind the page skeleton during boot loading states', () => {
     authStateMock.mockReturnValue({
       isLoadingAuth: true,
       isLoadingPublicSettings: false,
@@ -60,8 +60,10 @@ describe('KangurFeatureApp auth and theme loading', () => {
       'data-route-capture-ready',
       'false'
     );
-    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
-    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:default'
+    );
   });
 
   it('redirects anonymous users away from the parent dashboard route', async () => {

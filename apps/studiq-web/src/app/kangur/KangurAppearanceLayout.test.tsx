@@ -32,12 +32,14 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
     children,
     initialEntries,
     mode,
+    refreshSeededLiteStore,
   }: {
     children: ReactNode;
     initialEntries?: ReadonlyArray<readonly [string, string]>;
     mode?: 'admin' | 'lite';
+    refreshSeededLiteStore?: boolean;
   }) => {
-    settingsStoreProviderMock({ initialEntries, mode });
+    settingsStoreProviderMock({ initialEntries, mode, refreshSeededLiteStore });
     return <div data-testid='settings-store-provider'>{children}</div>;
   },
 }));
@@ -113,10 +115,16 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     });
     expect(settingsStoreProviderMock).toHaveBeenCalledWith({
       initialEntries: [
+        ['kangur_storefront_default_mode_v1', 'sunset'],
+        ['kangur_cms_theme_daily_v1', '{"slot":"default"}'],
+        ['kangur_cms_theme_dawn_v1', '{"slot":"dawn"}'],
+        ['kangur_cms_theme_sunset_v1', '{"slot":"sunset"}'],
+        ['kangur_cms_theme_nightly_v1', '{"slot":"dark"}'],
         ['kangur_theme_daily', '{"accent":"daily"}'],
         ['kangur_theme_default', '{"accent":"default"}'],
       ],
       mode: 'lite',
+      refreshSeededLiteStore: false,
     });
     expect(storefrontAppearanceProviderMock).toHaveBeenCalledWith({
       initialAppearance: {
@@ -168,6 +176,13 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
     const styleNode = nodes.find((node) => node.props.id === '__KANGUR_SURFACE_BOOTSTRAP__');
     const inlineStyle = styleNode?.props.dangerouslySetInnerHTML?.__html ?? '';
 
+    render(result);
+
+    expect(settingsStoreProviderMock).toHaveBeenCalledWith({
+      initialEntries: [['kangur_storefront_default_mode_v1', 'default']],
+      mode: 'lite',
+      refreshSeededLiteStore: true,
+    });
     expect(nodes.some((node) => node.type === 'script')).toBe(false);
     expect(inlineStyle).not.toContain('<');
     expect(inlineStyle).not.toContain('&');

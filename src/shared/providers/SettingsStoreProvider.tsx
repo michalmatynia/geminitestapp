@@ -57,12 +57,14 @@ const {
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
+  refreshSeededLiteStore = false,
   suppressOwnQuery = false,
   canReadAdminSettings,
   initialEntries,
 }: {
   children: React.ReactNode;
   mode?: 'admin' | 'lite';
+  refreshSeededLiteStore?: boolean;
   suppressOwnQuery?: boolean;
   canReadAdminSettings?: boolean;
   initialEntries?: ReadonlyArray<readonly [string, string]>;
@@ -83,6 +85,7 @@ export function SettingsStoreProvider({
     parentFetching: parentFetching ?? false,
     parentStore,
     pathname,
+    refreshSeededLiteStore,
     suppressOwnQuery,
   });
 

@@ -8,6 +8,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { logger } from '@/shared/utils/logger';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
+import { getKangurAppContentElement } from '@/features/kangur/ui/utils/kangurAppContentTarget';
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
 const KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE = 'data-kangur-appearance-mode';
@@ -29,7 +30,7 @@ const getKangurSurfaceTargets = (): KangurSurfaceTarget[] => {
     return [];
   }
 
-  const appContent = document.getElementById('app-content');
+  const appContent = getKangurAppContentElement();
   const targets: KangurSurfaceTarget[] = [];
 
   if (document.documentElement instanceof HTMLElement) {

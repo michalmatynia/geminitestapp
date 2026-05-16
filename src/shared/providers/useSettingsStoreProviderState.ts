@@ -30,6 +30,7 @@ type UseSettingsStoreProviderStateOptions = {
   parentFetching: boolean;
   parentStore: SettingsStoreValue | null;
   pathname: string | null;
+  refreshSeededLiteStore: boolean;
   suppressOwnQuery: boolean;
 };
 
@@ -50,6 +51,7 @@ const useSettingsStoreQueries = ({
   mode,
   parentStore,
   pathname,
+  refreshSeededLiteStore,
   suppressOwnQuery,
 }: Omit<UseSettingsStoreProviderStateOptions, 'parentFetching'>): {
   adminQuery: SettingsQueryLike;
@@ -63,6 +65,7 @@ const useSettingsStoreQueries = ({
     mode,
     parentStore,
     pathname,
+    refreshSeededLiteStore,
     suppressOwnQuery,
   });
   const adminQuery = useSettingsMap({
@@ -113,6 +116,7 @@ const useResolvedSettingsStoreMapData = ({
     mergedAdminMap,
     settingsQuery,
     shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
+    shouldRefreshSeededLiteStore: flags.shouldRefreshSeededLiteStore,
     shouldUseAdminSettings: flags.shouldUseAdminSettings,
   });
 };
@@ -166,6 +170,7 @@ const useResolvedSettingsStoreQueryState = ({
       settingsQuery,
       shouldReuseParentLiteStore: flags.shouldReuseParentLiteStore,
       shouldUseSeededLiteStore: flags.shouldUseSeededLiteStore,
+      shouldRefreshSeededLiteStore: flags.shouldRefreshSeededLiteStore,
       shouldUseAdminSettings: flags.shouldUseAdminSettings,
     }),
     isLoading: resolveSettingsStoreLoadingState({
@@ -274,6 +279,7 @@ export const useSettingsStoreProviderState = ({
   parentFetching,
   parentStore,
   pathname,
+  refreshSeededLiteStore,
   suppressOwnQuery,
 }: UseSettingsStoreProviderStateOptions): {
   isFetching: boolean;
@@ -285,6 +291,7 @@ export const useSettingsStoreProviderState = ({
     mode,
     parentStore,
     pathname,
+    refreshSeededLiteStore,
     suppressOwnQuery,
   });
   const resolvedState = useResolvedSettingsStoreState({

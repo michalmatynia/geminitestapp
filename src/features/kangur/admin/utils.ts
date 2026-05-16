@@ -18,17 +18,25 @@ import { TREE_MODE_STORAGE_KEY } from './constants';
 import type { LessonFormData, LessonTreeMode } from './types';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
+const trimToEmpty = (val: string | null | undefined): string => val?.trim() ?? '';
+
 export const resolvePageSectionOptions = (
   page: KangurLessonPage | null
 ): {
   sectionKey?: string;
   sectionTitle?: string;
   sectionDescription?: string;
-} => ({
-  sectionKey: (page?.sectionKey?.trim().length ?? 0) > 0 ? (page?.sectionKey?.trim() ?? '') : '',
-  sectionTitle: (page?.sectionTitle?.trim().length ?? 0) > 0 ? (page?.sectionTitle?.trim() ?? '') : '',
-  sectionDescription: (page?.sectionDescription?.trim().length ?? 0) > 0 ? (page?.sectionDescription?.trim() ?? '') : '',
-});
+} => {
+  if (!page) {
+    return { sectionKey: '', sectionTitle: '', sectionDescription: '' };
+  }
+  return {
+    sectionKey: trimToEmpty(page.sectionKey),
+    sectionTitle: trimToEmpty(page.sectionTitle),
+    sectionDescription: trimToEmpty(page.sectionDescription),
+  };
+};
+
 
 type LessonRecipeFamily = 'time' | 'arithmetic' | 'geometry' | 'logic';
 
@@ -77,27 +85,22 @@ const LESSON_TEMPLATE_FORM_FIELDS: readonly LessonTemplateFormField[] = [
   'activeBg',
 ];
 
-const setLessonTemplateFormField = <Field extends LessonTemplateFormField>(
-  target: LessonFormData,
-  field: Field,
-  value: LessonFormData[Field]
-): void => {
-  target[field] = value;
-};
-
 const applyDefinedLessonFormOverrides = (
   formData: LessonFormData,
   overrides: Partial<Pick<LessonFormData, LessonTemplateFormField>>
-): LessonFormData => {
-  const nextFormData = { ...formData };
-  for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
-    const value = overrides[field];
-    if (value !== undefined) {
-      setLessonTemplateFormField(nextFormData, field, value);
-    }
-  }
-  return nextFormData;
-};
+): LessonFormData =>
+  LESSON_TEMPLATE_FORM_FIELDS.reduce(
+    (acc, field) => {
+      const value = overrides[field];
+      if (value !== undefined) {
+        return { ...acc, [field]: value };
+      }
+      return acc;
+    },
+    { ...formData }
+  );
+
+
 
 const resolveLessonTemplateFormOverrides = (
   template?: KangurLessonTemplate | null

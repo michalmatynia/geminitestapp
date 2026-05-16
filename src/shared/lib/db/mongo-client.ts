@@ -223,6 +223,17 @@ const getMongoUri = (): string => {
   return uri;
 };
 
+const maskMongoUriForLog = (uri: string): string => {
+  try {
+    const parsed = new URL(uri);
+    const authPrefix = parsed.username || parsed.password ? '***@' : '';
+    const pathname = parsed.pathname && parsed.pathname !== '/' ? parsed.pathname : '';
+    return `${parsed.protocol}//${authPrefix}${parsed.host}${pathname}${parsed.search}`;
+  } catch {
+    return uri.replace(/\/\/([^@/]+)@/, '//***@');
+  }
+};
+
 /**
  * Checks if a URI targets a local single-node instance.
  * Useful for enabling directConnection when no replica set is present.
@@ -266,6 +277,7 @@ const getMongoClientOptions = (): MongoClientOptions => {
 export const __testOnly = {
   getMongoClientOptions,
   isSingleNodeLocalMongoUri,
+  maskMongoUriForLog,
 };
 
 /** Accesses the global client instance cache. */
@@ -351,6 +363,7 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
   const sourceConfig = await applyActiveMongoSourceEnv(preferredSource);
   const uri = getMongoUri();
   const clientCacheKey = `${sourceConfig.source}:${uri}`;
+  const maskedClientCacheKey = `${sourceConfig.source}:${maskMongoUriForLog(uri)}`;
   const clientByKey = getMongoClientByKeyStore();
   const clientPromiseByKey = getMongoClientPromiseByKeyStore();
 
@@ -375,7 +388,7 @@ export async function getMongoClient(preferredSource?: MongoSource): Promise<Mon
     void reportRuntimeCatch(error, {
       source: 'db.mongo-client',
       action: 'getMongoClient',
-      clientCacheKey,
+      clientCacheKey: maskedClientCacheKey,
       isInflight,
       hasMongoUri: Boolean(process.env['MONGODB_URI']),
       message: `Failed to establish connection for source: ${sourceConfig.source}`,

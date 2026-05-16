@@ -362,12 +362,12 @@ const buildKangurLeaderboardItem = ({
   };
 };
 
-export const prefetchKangurLeaderboardScores = (): void => {
-  const cached = peekCachedKangurLeaderboardScores(kangurPlatform.score, { limit: 20 });
+export const prefetchKangurLeaderboardScores = (subject?: KangurLessonSubject): void => {
+  const cached = peekCachedKangurLeaderboardScores(kangurPlatform.score, { subject, limit: 20 });
   if (cached !== null) {
     return;
   }
-  void loadKangurLeaderboardScores(kangurPlatform.score, { limit: 20 });
+  void loadKangurLeaderboardScores(kangurPlatform.score, { subject, limit: 20 });
 };
 
 export const useKangurLeaderboardState = (

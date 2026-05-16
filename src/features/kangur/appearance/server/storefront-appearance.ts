@@ -42,6 +42,10 @@ const KANGUR_STOREFRONT_INITIAL_STATE_DEPENDENCY_KEYS = new Set<string>([
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
 ]);
 
+type StorefrontAppearanceReadOptions = {
+  fallbackOnTransient?: boolean;
+};
+
 const normalizeKangurStorefrontAppearanceLoadError = (error: unknown): Error => {
   if (error instanceof Error) {
     return error;
@@ -88,11 +92,16 @@ const createKangurStorefrontThemeSettings = (
   };
 };
 
-const readKangurStorefrontAppearanceSettings = async (): Promise<SettingRecord[]> => {
+const readKangurStorefrontAppearanceSettings = async (
+  options: StorefrontAppearanceReadOptions = {}
+): Promise<SettingRecord[]> => {
   try {
     return await ensureKangurStorefrontAppearanceSettingsSeeded();
   } catch (error) {
     if (isTransientMongoConnectionError(error)) {
+      if (options.fallbackOnTransient === false) {
+        throw error;
+      }
       return createKangurStorefrontAppearanceSeedSettings();
     }
     throw normalizeKangurStorefrontAppearanceLoadError(error);
@@ -107,8 +116,9 @@ export const getKangurStorefrontDefaultMode = async (): Promise<KangurStorefront
   );
 };
 
-const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefrontInitialState> => {
-  const settings = await readKangurStorefrontAppearanceSettings();
+const createKangurStorefrontInitialState = (
+  settings: SettingRecord[]
+): KangurStorefrontInitialState => {
   const settingsMap = new Map(settings.map(({ key, value }) => [key, value]));
   const initialMode = parseKangurStorefrontAppearanceMode(
     settingsMap.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)
@@ -121,10 +131,28 @@ const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefro
   };
 };
 
-export const getKangurStorefrontInitialState = async (): Promise<KangurStorefrontInitialState> => {
+const getKangurStorefrontInitialStateUncached = async (
+  options: StorefrontAppearanceReadOptions = {}
+): Promise<KangurStorefrontInitialState> => {
+  const settings = await readKangurStorefrontAppearanceSettings(options);
+  return createKangurStorefrontInitialState(settings);
+};
+
+const getKangurStorefrontInitialStateCached = async (): Promise<KangurStorefrontInitialState> => {
   'use cache';
   applyCacheLife({ revalidate: 300 });
   cacheTag(KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG);
 
-  return getKangurStorefrontInitialStateUncached();
+  return getKangurStorefrontInitialStateUncached({ fallbackOnTransient: false });
+};
+
+export const getKangurStorefrontInitialState = async (): Promise<KangurStorefrontInitialState> => {
+  try {
+    return await getKangurStorefrontInitialStateCached();
+  } catch (error) {
+    if (isTransientMongoConnectionError(error)) {
+      return createKangurStorefrontInitialState(createKangurStorefrontAppearanceSeedSettings());
+    }
+    throw normalizeKangurStorefrontAppearanceLoadError(error);
+  }
 };

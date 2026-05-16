@@ -1,4 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
+import { connection } from 'next/server';
 
 import KangurAppearanceLayout from './KangurAppearanceLayout';
 import { loadKangurSiteMessages } from '@/i18n/messages';
@@ -12,6 +13,8 @@ export default async function KangurLayout({
 }: {
   children: ReactNode;
 }): Promise<ReactNode> {
+  await connection();
+
   const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
   const messages = await loadKangurSiteMessages(locale);
 

@@ -7,11 +7,13 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 const {
+  connectionMock,
   loadKangurSiteMessagesMock,
   nextIntlProviderMock,
   htmlLangSyncMock,
   kangurAppearanceLayoutMock,
 } = vi.hoisted(() => ({
+  connectionMock: vi.fn(),
   loadKangurSiteMessagesMock: vi.fn(),
   nextIntlProviderMock: vi.fn(
     ({
@@ -42,6 +44,10 @@ const {
 
 vi.mock('next-intl', () => ({
   NextIntlClientProvider: nextIntlProviderMock,
+}));
+
+vi.mock('next/server', () => ({
+  connection: connectionMock,
 }));
 
 vi.mock('@/i18n/messages', () => ({
@@ -75,6 +81,7 @@ describe('apps/studiq-web Kangur layout', () => {
 
     render(result);
 
+    expect(connectionMock).toHaveBeenCalledTimes(1);
     expect(loadKangurSiteMessagesMock).toHaveBeenCalledWith('pl');
     expect(nextIntlProviderMock).toHaveBeenCalledTimes(1);
     expect(htmlLangSyncMock).toHaveBeenCalledWith({ locale: 'pl' }, undefined);

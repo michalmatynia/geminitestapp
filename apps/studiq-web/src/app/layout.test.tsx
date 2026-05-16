@@ -31,9 +31,9 @@ describe('apps/studiq-web RootLayout', () => {
   });
 
   it('keeps the root shell structural and leaves locale ownership to nested Kangur layouts', async () => {
-    const { default: RootLayout } = await import('./layout');
+    const { default: RootLayout, StudiqRootContent } = await import('./layout');
 
-    const layout = await RootLayout({
+    const layout = RootLayout({
       children: <div data-testid='child'>child</div>,
     });
     const htmlElement = layout as ReactElement<{ children?: ReactNode; lang?: string }>;
@@ -43,18 +43,14 @@ describe('apps/studiq-web RootLayout', () => {
       children?: ReactNode;
       fallback?: ReactNode;
     }>;
-    const queryProviderElement = Children.only(suspenseElement.props.children) as ReactElement<{
+    const rootContentElement = Children.only(suspenseElement.props.children) as ReactElement<{
       children?: ReactNode;
-    }>;
-    const mainElement = Children.only(queryProviderElement.props.children) as ReactElement<{
-      children?: ReactNode;
-      id?: string;
     }>;
 
     expect(htmlElement.props.lang).toBe('pl');
-    expect(queryProviderElement.type).toBe(queryProviderMock);
-    expect(mainElement.props.id).toBe('kangur-main-content');
+    expect(rootContentElement.type).toBe(StudiqRootContent);
     expect((suspenseElement.props.fallback as ReactElement).type).toBe(kangurLoadingFallbackMock);
+    expect(getLiteSettingsForHydrationMock).not.toHaveBeenCalled();
   });
 
   it('injects lite settings hydration script when SSR data is available', async () => {
@@ -62,24 +58,19 @@ describe('apps/studiq-web RootLayout', () => {
       { key: 'kangur_storefront_default_mode', value: 'default' },
     ]);
 
-    const { default: RootLayout } = await import('./layout');
+    const { StudiqRootContent } = await import('./layout');
 
-    const layout = await RootLayout({
+    const content = await StudiqRootContent({
       children: <div data-testid='child'>child</div>,
     });
-    const htmlElement = layout as ReactElement<{ children?: ReactNode }>;
-    const bodyElement = htmlElement.props.children as ReactElement<{ children?: ReactNode }>;
-    const bodyChildren = Children.toArray(bodyElement.props.children) as ReactElement[];
-    const scriptElement = bodyChildren[0] as ReactElement<{
+    const contentElement = content as ReactElement<{ children?: ReactNode }>;
+    const contentChildren = Children.toArray(contentElement.props.children) as ReactElement[];
+    const scriptElement = contentChildren[0] as ReactElement<{
       dangerouslySetInnerHTML?: { __html: string };
       id?: string;
       type?: string;
     }>;
-    const suspenseElement = bodyChildren.at(-1) as ReactElement<{
-      children?: ReactNode;
-      fallback?: ReactNode;
-    }>;
-    const queryProviderElement = Children.only(suspenseElement.props.children) as ReactElement<{
+    const queryProviderElement = contentChildren.at(-1) as ReactElement<{
       initialLiteSettings?: ReadonlyArray<{ key: string; value: string }>;
     }>;
 

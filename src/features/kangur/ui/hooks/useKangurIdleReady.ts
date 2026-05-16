@@ -18,15 +18,25 @@ type IdleReadyWindow = Window &
 const resolveRemainingIdleDelay = (startAt: number, minimumDelayMs: number): number =>
   Math.max(0, minimumDelayMs - (Date.now() - startAt));
 
+// Module-level cache: once an idle delay fires it is remembered across remounts.
+// This prevents widget skeleton resets when the component tree is remounted (e.g.
+// during framer-motion's div→motion.div element-type switch on first load).
+const idleReadyCache = new Map<number, true>();
+
 export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boolean => {
-  const [ready, setReady] = useState(false);
   const minimumDelayMs =
     typeof options.minimumDelayMs === 'number' && options.minimumDelayMs > 0
       ? Math.round(options.minimumDelayMs)
       : 0;
+  const [ready, setReady] = useState(() => idleReadyCache.has(minimumDelayMs));
 
   useEffect(() => {
     if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    if (idleReadyCache.has(minimumDelayMs)) {
+      setReady(true);
       return undefined;
     }
 
@@ -37,11 +47,13 @@ export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boo
     const markReady = (): void => {
       const remainingDelay = resolveRemainingIdleDelay(startAt, minimumDelayMs);
       if (remainingDelay === 0) {
+        idleReadyCache.set(minimumDelayMs, true);
         setReady(true);
         return;
       }
 
       timeoutId = safeSetTimeout(() => {
+        idleReadyCache.set(minimumDelayMs, true);
         setReady(true);
       }, remainingDelay);
     };

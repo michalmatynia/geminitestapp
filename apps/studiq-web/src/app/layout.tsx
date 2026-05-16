@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: 'StudiQ',
 };
 
-export default async function RootLayout({
+export async function StudiqRootContent({
   children,
 }: {
   children: ReactNode;
@@ -32,25 +32,37 @@ export default async function RootLayout({
       : null;
 
   return (
+    <>
+      {liteSettingsHydrationJson !== null ? (
+        <script
+          id={LITE_SETTINGS_HYDRATION_ELEMENT_ID}
+          type='application/json'
+          dangerouslySetInnerHTML={{
+            __html: safeHtml(liteSettingsHydrationJson),
+          }}
+        />
+      ) : null}
+      <StudiqQueryProvider initialLiteSettings={liteSettings}>
+        <main id='kangur-main-content'>{children}</main>
+      </StudiqQueryProvider>
+    </>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
+  return (
     <html
       lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale}
       className='kangur-surface-active'
       suppressHydrationWarning
     >
       <body className='kangur-surface-active'>
-        {liteSettingsHydrationJson !== null ? (
-          <script
-            id={LITE_SETTINGS_HYDRATION_ELEMENT_ID}
-            type='application/json'
-            dangerouslySetInnerHTML={{
-              __html: safeHtml(liteSettingsHydrationJson),
-            }}
-          />
-        ) : null}
         <Suspense fallback={<KangurLoadingFallback />}>
-          <StudiqQueryProvider initialLiteSettings={liteSettings}>
-            <main id='kangur-main-content'>{children}</main>
-          </StudiqQueryProvider>
+          <StudiqRootContent>{children}</StudiqRootContent>
         </Suspense>
       </body>
     </html>

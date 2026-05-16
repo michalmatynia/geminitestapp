@@ -73,7 +73,6 @@ export function useKangurBootOrchestrator(
     basePath,
     hasStandaloneHomeTopNavigationRegistration,
     routeContent,
-    isNavigationTransitionActive,
     isPendingRouteSnapshotVisible,
     isNavigationSkeletonVisible,
     shouldShowAcknowledgingNavigationSkeleton,

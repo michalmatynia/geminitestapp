@@ -13,6 +13,7 @@ import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleRead
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { prefetchKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { prefetchKangurLeaderboardScores } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurEmptyState,
@@ -259,6 +260,7 @@ export function GameHomeScreen(props: {
 
   const queryClient = useQueryClient();
   const locale = useLocale();
+  const { subject } = useKangurSubjectFocus();
 
   useEffect(() => {
     // Warm the page-content cache (hero copy, leaderboard copy) before widgets mount.
@@ -268,12 +270,6 @@ export function GameHomeScreen(props: {
   }, [queryClient, locale]);
 
   useEffect(() => {
-    if (shouldMountFarFoldWidgets) {
-      prefetchKangurLeaderboardScores();
-    }
-  }, [shouldMountFarFoldWidgets]);
-
-  useEffect(() => {
     const preload = (): void => {
       void import('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget');
       void import('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget');
@@ -281,6 +277,7 @@ export function GameHomeScreen(props: {
       void import('@/features/kangur/ui/components/Leaderboard');
       void import('@/features/kangur/ui/components/PlayerProgressCard');
       void import('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight');
+      prefetchKangurLeaderboardScores(subject);
       if (canAccessParentAssignments) {
         void prefetchKangurAssignments(queryClient);
       }
@@ -291,7 +288,7 @@ export function GameHomeScreen(props: {
     }
     const id = setTimeout(preload, 200);
     return () => { clearTimeout(id); };
-  }, [canAccessParentAssignments, queryClient]);
+  }, [canAccessParentAssignments, queryClient, subject]);
 
   return (
     <div

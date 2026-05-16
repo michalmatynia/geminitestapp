@@ -54,6 +54,7 @@ next-env.d.ts
 
 # chatbot
 /tmp/chatbot-agent
+.claude/worktrees/
 
 # Database
 /mongo/backups

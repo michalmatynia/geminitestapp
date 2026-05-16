@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
+import { prefetchKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { preloadKangurPage } from '@/features/kangur/config/pages';
+import type { KangurLessonAgeGroup, KangurLessonSubject } from '@/shared/contracts/kangur-lesson-constants';
 
 import type { QueryClient } from '@tanstack/react-query';
 
@@ -30,6 +32,7 @@ const isKangurPreloadPageKey = (value: string | null): value is KangurPreloadPag
   value !== null && KANGUR_PRELOAD_PAGE_KEYS.includes(value as KangurPreloadPageKey);
 
 type KangurPreloadEffectsInput = {
+  ageGroup: KangurLessonAgeGroup | null | undefined;
   isBootLoading: boolean;
   isThemeBootLoading: boolean;
   isNavigationTransitionActive: boolean;
@@ -38,10 +41,12 @@ type KangurPreloadEffectsInput = {
   resolvedPageKey: string | null;
   queryClient: QueryClient;
   routeLocale: string;
+  subject: KangurLessonSubject | null | undefined;
 };
 
 export function useKangurPreloadEffects(input: KangurPreloadEffectsInput): void {
   const {
+    ageGroup,
     isBootLoading,
     isThemeBootLoading,
     isNavigationTransitionActive,
@@ -50,6 +55,7 @@ export function useKangurPreloadEffects(input: KangurPreloadEffectsInput): void 
     resolvedPageKey,
     queryClient,
     routeLocale,
+    subject,
   } = input;
 
   const preloadedHotRoutesRef = useRef<Set<string>>(new Set());
@@ -133,5 +139,39 @@ export function useKangurPreloadEffects(input: KangurPreloadEffectsInput): void 
     isBootLoading, isCoarsePointer, isSyntheticKangurCapture,
     isNavigationTransitionActive, isThemeBootLoading,
     queryClient, resolvedPageKey, routeLocale,
+  ]);
+
+  // Prefetch lesson sections while on the Game (home) page so Lessons page
+  // renders without a loading skeleton on first navigation.
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isBootLoading ||
+      isThemeBootLoading ||
+      isNavigationTransitionActive ||
+      isCoarsePointer ||
+      isSyntheticKangurCapture ||
+      resolvedPageKey !== 'Game'
+    ) {
+      return;
+    }
+
+    const prefetch = (): void => {
+      prefetchKangurLessonSections(queryClient, {
+        subject: subject ?? undefined,
+        ageGroup: ageGroup ?? undefined,
+      });
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(prefetch, { timeout: 250 });
+      return () => { window.cancelIdleCallback?.(idleId); };
+    }
+
+    const timeoutId = safeSetTimeout(prefetch, 0);
+    return () => { safeClearTimeout(timeoutId); };
+  }, [
+    ageGroup, isBootLoading, isCoarsePointer, isSyntheticKangurCapture,
+    isNavigationTransitionActive, isThemeBootLoading, queryClient, resolvedPageKey, subject,
   ]);
 }

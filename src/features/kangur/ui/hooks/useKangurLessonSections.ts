@@ -11,6 +11,7 @@ import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { useListQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { QueryClient } from '@tanstack/react-query';
 
 type LessonSectionsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
@@ -106,6 +107,21 @@ export const useKangurLessonSections = (
   options?: LessonSectionsQueryOptions
 ): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
   createLessonSectionsQuery(options);
+
+export const prefetchKangurLessonSections = (
+  queryClient: QueryClient,
+  options?: Pick<LessonSectionsQueryOptions, 'subject' | 'ageGroup'>
+): void => {
+  const filters = resolveLessonSectionsQueryFilters({ ...options, enabledOnly: true });
+  const queryKey = [...QUERY_KEYS.kangur.lessonSections(), filters] as const;
+  const existing = queryClient.getQueryState(queryKey);
+  if (existing?.status === 'success' || existing?.fetchStatus === 'fetching') return;
+  void queryClient.prefetchQuery({
+    queryKey,
+    queryFn: () => fetchKangurLessonSections({ ...options, enabledOnly: true }),
+    staleTime: 1000 * 60 * 5,
+  });
+};
 
 const invalidateKangurLessonSections = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;

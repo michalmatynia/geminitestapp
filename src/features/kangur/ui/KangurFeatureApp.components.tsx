@@ -189,12 +189,11 @@ export const KangurRenderedRouteSkeletonOverlay = memo(({
 });
 
 export const KangurRenderedRouteWithSuspense = memo(({
-  isInitialHomeLoaderPhase, isInitialHomeSkeletonPhase, isStandaloneHomeReady,
+  isInitialHomeLoaderPhase, isInitialHomeSkeletonPhase,
   resolvedPageKey, shouldSkipRouteContentPresence, renderedRouteContent,
 }: {
   isInitialHomeLoaderPhase: boolean;
   isInitialHomeSkeletonPhase: boolean;
-  isStandaloneHomeReady: boolean;
   resolvedPageKey: string | null;
   shouldSkipRouteContentPresence: boolean;
   renderedRouteContent: JSX.Element | null;
@@ -207,7 +206,7 @@ export const KangurRenderedRouteWithSuspense = memo(({
     }
   >
     <LazyAnimatePresence
-      loadMotion={isStandaloneHomeReady}
+      loadMotion={true}
       mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}
     >
       {renderedRouteContent}

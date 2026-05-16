@@ -17,7 +17,11 @@ import {
   useKangurAuthStatusState,
 } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
-import { KangurFocusProvider } from '@/features/kangur/ui/context/KangurFocusProvider';
+import {
+  KangurFocusProvider,
+  useKangurAgeGroupFocus,
+  useKangurSubjectFocus,
+} from '@/features/kangur/ui/context/KangurFocusProvider';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
@@ -33,7 +37,6 @@ import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRout
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { isSocialPublishingBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { useKangurBootOrchestrator } from '@/features/kangur/ui/hooks/useKangurBootOrchestrator';
@@ -75,7 +78,6 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionPageKey, activeTransitionRequestedHref, activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
-  const isStandaloneHomeReady = useKangurDeferredStandaloneHomeReady();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
   const queryClient = useQueryClient();
   const settingsStore = useSettingsStore();
@@ -83,6 +85,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeLocale = normalizeSiteLocale(useLocale());
   const isCoarsePointer = useKangurCoarsePointer();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const { subject } = useKangurSubjectFocus();
+  const { ageGroup } = useKangurAgeGroupFocus();
 
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
@@ -163,8 +167,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
   navSkeletonVisibleRef.current = navSkeleton.isNavigationSkeletonVisible;
 
   useKangurPreloadEffects({
-    isBootLoading, isThemeBootLoading, isNavigationTransitionActive,
+    ageGroup, isBootLoading, isThemeBootLoading, isNavigationTransitionActive,
     isCoarsePointer, isSyntheticKangurCapture, resolvedPageKey, queryClient, routeLocale,
+    subject,
   });
 
   const skeletonOverlay = useKangurSkeletonOverlayState({
@@ -216,7 +221,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       embedded={embedded}
       isNavigationTransitionActive={isNavigationTransitionActive}
       isPendingRouteSnapshotVisible={isPendingRouteSnapshotVisible}
-      loadMotion={isStandaloneHomeReady}
+      loadMotion={true}
       isRouteCaptureReady={isRouteCaptureReady}
       isRouteContentInteractionBlocked={isRouteContentInteractionBlocked}
       isRouteContentVisuallyHidden={isRouteContentVisuallyHidden}
@@ -254,16 +259,15 @@ const AuthenticatedApp = (): JSX.Element | null => {
       <KangurRenderedRouteWithSuspense
         isInitialHomeLoaderPhase={isInitialHomeLoaderPhase}
         isInitialHomeSkeletonPhase={isInitialHomeSkeletonPhase}
-        isStandaloneHomeReady={isStandaloneHomeReady}
         resolvedPageKey={resolvedPageKey}
         shouldSkipRouteContentPresence={shouldSkipRouteContentPresence}
         renderedRouteContent={renderedRouteContent}
       />
-      <LazyAnimatePresence loadMotion={isStandaloneHomeReady}>
+      <LazyAnimatePresence loadMotion={true}>
         <KangurRenderedRouteSkeletonOverlay
           isLanguageSwitcherTransition={isLanguageSwitcherTransition}
           isRouteSkeletonVisible={isRouteSkeletonVisible}
-          loadMotion={isStandaloneHomeReady}
+          loadMotion={true}
           routeSkeletonMotionProps={skeletonOverlay.routeSkeletonMotionProps}
           shouldRenderInlineRouteSkeletonTopNavigation={shouldRenderInlineRouteSkeletonTopNavigation}
           topBarHeightCssValue={skeletonOverlay.visibleTransitionSkeletonTopBarHeightCssValue}

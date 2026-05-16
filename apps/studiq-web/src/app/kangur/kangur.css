@@ -80,6 +80,11 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
   transform: none !important;
 }
 
+[data-home-action][data-nav-state='idle'] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
   .kangur-page-container {
     max-width: var(--kangur-page-max-width, 1440px);
     min-width: 0;

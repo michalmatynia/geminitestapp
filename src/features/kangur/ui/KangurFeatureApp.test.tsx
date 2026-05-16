@@ -169,7 +169,7 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('hands the initial home route from the server loader into the full page skeleton before revealing content', async () => {
+  it('hands the initial home route from the boot loader into the full page skeleton before revealing content', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -193,6 +193,13 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Game:default'
@@ -202,10 +209,6 @@ describe('KangurFeatureApp', () => {
       'false'
     );
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(20);
-    });
 
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();
@@ -220,7 +223,7 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
   });
 
-  it('uses the server loader handoff directly into the full page skeleton on the public root home route', () => {
+  it('uses the boot loader before the full page skeleton on the public root home route', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -230,6 +233,13 @@ describe('KangurFeatureApp', () => {
     });
 
     render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
 
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
@@ -250,11 +260,11 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
-
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(20);
+      await vi.advanceTimersByTimeAsync(700);
     });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toBeInTheDocument();
 
     await act(async () => {
       await vi.runOnlyPendingTimersAsync();

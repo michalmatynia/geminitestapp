@@ -19,7 +19,7 @@ import {
   useKangurDeferredStandaloneHomeReadyMock,
 } from '@/features/kangur/ui/KangurFeatureApp.test-support';
 
-const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 700;
 
 let KangurFeatureApp: typeof import('@/features/kangur/ui/KangurFeatureApp').KangurFeatureApp;
 
@@ -37,7 +37,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     vi.restoreAllMocks();
   });
 
-  it('keeps the initial home route behind the page skeleton during boot loading states', () => {
+  it('keeps the initial home route behind the boot loader during boot loading states', () => {
     authStateMock.mockReturnValue({
       isLoadingAuth: true,
       isLoadingPublicSettings: false,
@@ -60,10 +60,8 @@ describe('KangurFeatureApp auth and theme loading', () => {
       'data-route-capture-ready',
       'false'
     );
-    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Game:default'
-    );
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 
   it('redirects anonymous users away from the parent dashboard route', async () => {
@@ -263,7 +261,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     expect(screen.queryByTestId('kangur-page-lessons')).toBeNull();
   });
 
-  it('dismisses the boot skeleton after the 50ms minimum visibility elapses', async () => {
+  it('dismisses the boot skeleton after the minimum visibility elapses', async () => {
     // To make the boot loader visible, route content must be null. This happens
     // when shouldBlockRouteContent is true (anonymous user on ParentDashboard)
     // AND the theme is still loading.
@@ -317,7 +315,7 @@ describe('KangurFeatureApp auth and theme loading', () => {
     });
     rerender(<KangurFeatureApp />);
 
-    // Advance past the 50ms minimum visibility
+    // Advance past the minimum visibility
     await act(async () => {
       vi.advanceTimersByTime(BOOT_SKELETON_MIN_VISIBLE_MS);
     });

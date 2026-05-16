@@ -12,7 +12,7 @@ type KangurInitialHomeBootWindow = Window & {
   __kangurInitialHomeBootComplete?: boolean;
 };
 
-const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 700;
 const INITIAL_HOME_SKELETON_MIN_VISIBLE_MS = 0;
 
 const hasCompletedKangurInitialHomeBoot = (): boolean =>
@@ -81,7 +81,7 @@ export function useKangurBootOrchestrator(
   shouldRunInitialHomeBootRef.current ??=
     isStandaloneHomeRoute && !isSettingsRefresh && !hasCompletedKangurInitialHomeBoot();
   const shouldRunInitialHomeBoot = shouldRunInitialHomeBootRef.current;
-  const shouldSkipClientBootLoader = isStandaloneHomeRoute;
+  const shouldSkipClientBootLoader = false;
   const shouldBlockForThemeBoot = isThemeBootLoading && routeContent === null;
 
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);

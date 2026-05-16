@@ -72,12 +72,9 @@ export function extractBlockTexts(block: BlockInstance): string[] {
   return texts;
 }
 
-/**
- * Extracts all human-readable text from a CMS page's component tree.
- */
-export function extractCmsPageTextContent(page: Page): CmsPageTextContent {
-  const sortedComponents = [...page.components].sort(
-    (a: PageComponentInput, b: PageComponentInput) => a.order - b.order
+function extractSections(components: PageComponentInput[]): CmsSectionTextContent[] {
+  const sortedComponents = [...components].sort(
+    (a, b) => a.order - b.order
   );
 
   const sections: CmsSectionTextContent[] = [];
@@ -98,8 +95,15 @@ export function extractCmsPageTextContent(page: Page): CmsPageTextContent {
       });
     }
   }
+  return sections;
+}
 
-  const defaultSlug = page.slugs?.[0]?.slug ?? null;
+/**
+ * Extracts all human-readable text from a CMS page's component tree.
+ */
+export function extractCmsPageTextContent(page: Page): CmsPageTextContent {
+  const sections = extractSections(page.components);
+  const defaultSlug = page.slugs[0]?.slug ?? null;
 
   return {
     pageId: page.id,
@@ -111,19 +115,21 @@ export function extractCmsPageTextContent(page: Page): CmsPageTextContent {
   };
 }
 
+
 /**
  * Returns the total character count of all extracted text.
  */
 export function getCmsPageTextLength(content: CmsPageTextContent): number {
   let length = 0;
 
-  if (content.seoTitle) {
+  if (content.seoTitle !== null) {
     length += content.seoTitle.length;
   }
 
-  if (content.seoDescription) {
+  if (content.seoDescription !== null) {
     length += content.seoDescription.length;
   }
+
 
   for (const section of content.sections) {
     for (const text of section.texts) {
@@ -148,21 +154,22 @@ export function hasMeaningfulTextContent(content: CmsPageTextContent): boolean {
 export function buildCmsPageSemanticText(content: CmsPageTextContent): string {
   const parts: string[] = [];
 
-  if (content.pageName) {
+  if (content.pageName.length > 0) {
     parts.push(content.pageName);
   }
 
-  if (content.seoTitle && content.seoTitle !== content.pageName) {
+  if (content.seoTitle !== null && content.seoTitle !== content.pageName) {
     parts.push(content.seoTitle);
   }
 
-  if (content.seoDescription) {
+  if (content.seoDescription !== null) {
     parts.push(content.seoDescription);
   }
 
-  if (content.slug) {
+  if (content.slug !== null) {
     parts.push(content.slug);
   }
+
 
   for (const section of content.sections) {
     parts.push(...section.texts);
@@ -183,13 +190,14 @@ export function buildCmsPageSemanticText(content: CmsPageTextContent): string {
 export function buildCmsPageCanonicalText(content: CmsPageTextContent): string {
   const parts: string[] = [];
 
-  if (content.seoTitle) {
+  if (content.seoTitle !== null) {
     parts.push(content.seoTitle);
   }
 
-  if (content.seoDescription) {
+  if (content.seoDescription !== null) {
     parts.push(content.seoDescription);
   }
+
 
   for (const section of content.sections) {
     parts.push(section.texts.join(' '));

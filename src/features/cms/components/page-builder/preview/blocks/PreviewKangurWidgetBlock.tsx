@@ -20,7 +20,7 @@ export const PreviewKangurWidgetBlock: React.FC<PreviewKangurWidgetBlockProps> =
   selectableBlockProps,
 }) => {
   const resolvedSettings = block.settings;
-  const widgetId = typeof resolvedSettings['widgetId'] === 'string' ? (resolvedSettings['widgetId'] as string) : '';
+  const widgetId = typeof resolvedSettings['widgetId'] === 'string' ? (resolvedSettings['widgetId']) : '';
   const widgetLabel = getKangurWidgetLabel(widgetId);
 
   return wrapInspector(

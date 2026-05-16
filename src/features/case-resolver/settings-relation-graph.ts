@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/strict-boolean-expressions -- Relation graph sanitizer preserves legacy custom graph shape handling. */
+/* eslint-disable complexity, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-shadow, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/strict-boolean-expressions -- Relation graph sanitizer preserves legacy custom graph shape handling. */
 /**
  * settings-relation-graph.ts
  *

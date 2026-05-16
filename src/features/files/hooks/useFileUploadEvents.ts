@@ -18,7 +18,8 @@ export function useFileUploadEvents(
     queryKey,
     queryFn: async ({ signal }): Promise<FileUploadEventsResponse> => {
       const query = buildQueryParams(filters);
-      const res = await fetch(`/api/system/upload-events?${query}`, signal ? { signal } : undefined);
+      const res = await fetch(`/api/system/upload-events?${query}`, { signal });
+
       if (!res.ok) throw new Error('Failed to load upload events.');
       return res.json() as Promise<FileUploadEventsResponse>;
     },

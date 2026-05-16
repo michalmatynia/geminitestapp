@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import type React from 'react';
+import { useEffect, useMemo } from 'react';
 import type {
   SelectorRegistryProbeSession,
   SelectorRegistryProbeSessionCluster,

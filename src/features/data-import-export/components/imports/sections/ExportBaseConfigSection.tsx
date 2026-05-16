@@ -28,20 +28,30 @@ const EXPORT_TEMPLATE_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   label: 'No template (use defaults)',
 };
 
-export function ExportBaseConfigSection(): React.JSX.Element {
-  const { baseConnections, inventories, exportTemplates, loadingExportTemplates } =
-    useImportExportData();
-  const {
-    selectedBaseConnectionId,
-    setSelectedBaseConnectionId,
-    exportInventoryId,
-    setExportInventoryId,
-    exportWarehouseId,
-    setExportWarehouseId,
-    exportActiveTemplateId,
-    setExportActiveTemplateId,
-  } = useImportExportState();
+interface ExportBaseConfigState {
+  selectedBaseConnectionId: string;
+  setSelectedBaseConnectionId: (id: string) => void;
+  exportInventoryId: string;
+  setExportInventoryId: (id: string) => void;
+  exportWarehouseId: string;
+  setExportWarehouseId: (id: string) => void;
+  exportActiveTemplateId: string;
+  setExportActiveTemplateId: (id: string) => void;
+  baseConnections: IntegrationConnectionBasic[];
+  inventories: InventoryOption[];
+  exportTemplates: Template[];
+  loadingExportTemplates: boolean;
+  baseConnectionOptions: LabeledOptionDto<string>[];
+  inventoryOptions: LabeledOptionDto<string>[];
+  exportTemplateOptions: LabeledOptionDto<string>[];
+  applyTemplate: (t: Template, mode: 'import' | 'export') => void;
+}
+
+function useExportBaseConfigState(): ExportBaseConfigState {
+  const { baseConnections, inventories, exportTemplates, loadingExportTemplates } = useImportExportData();
+  const state = useImportExportState();
   const { applyTemplate } = useImportExportActions();
+
   const baseConnectionOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       BASE_CONNECTION_PLACEHOLDER_OPTION,
@@ -52,6 +62,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
     ],
     [baseConnections]
   );
+
   const inventoryOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       DEFAULT_INVENTORY_PLACEHOLDER_OPTION,
@@ -59,6 +70,7 @@ export function ExportBaseConfigSection(): React.JSX.Element {
     ],
     [inventories]
   );
+
   const exportTemplateOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       EXPORT_TEMPLATE_PLACEHOLDER_OPTION,
@@ -67,90 +79,158 @@ export function ExportBaseConfigSection(): React.JSX.Element {
     [exportTemplates]
   );
 
+  return {
+    selectedBaseConnectionId: state.selectedBaseConnectionId,
+    setSelectedBaseConnectionId: state.setSelectedBaseConnectionId,
+    exportInventoryId: state.exportInventoryId,
+    setExportInventoryId: state.setExportInventoryId,
+    exportWarehouseId: state.exportWarehouseId,
+    setExportWarehouseId: state.setExportWarehouseId,
+    exportActiveTemplateId: state.exportActiveTemplateId,
+    setExportActiveTemplateId: state.setExportActiveTemplateId,
+    baseConnections,
+    inventories,
+    exportTemplates,
+    loadingExportTemplates,
+    baseConnectionOptions,
+    inventoryOptions,
+    exportTemplateOptions,
+    applyTemplate,
+  };
+}
+
+
+export function ExportBaseConfigSection(): React.JSX.Element {
+  const state = useExportBaseConfigState();
+
+  const handleConnectionChange = (v: string): void => {
+    const nextConnectionId = v === '__none__' ? '' : v;
+    if (nextConnectionId !== state.selectedBaseConnectionId) {
+      if (state.exportInventoryId.length > 0) state.setExportInventoryId('');
+      if (state.exportWarehouseId.length > 0) state.setExportWarehouseId('');
+      if (state.exportActiveTemplateId.length > 0) state.setExportActiveTemplateId('');
+    }
+    state.setSelectedBaseConnectionId(nextConnectionId);
+  };
+
   return (
     <div className='grid grid-cols-2 gap-4'>
-      <div className='col-span-2'>
-        <Label className='text-xs text-gray-400'>
-          Default Base connection (OneClick + inventory tools)
-        </Label>
-        <div className='mt-2'>
-          <SelectSimple
-            size='sm'
-            value={selectedBaseConnectionId || '__none__'}
-            onValueChange={(v: string): void => {
-              const nextConnectionId = v === '__none__' ? '' : v;
-              if (nextConnectionId !== selectedBaseConnectionId) {
-                if (exportInventoryId) setExportInventoryId('');
-                if (exportWarehouseId) setExportWarehouseId('');
-                if (exportActiveTemplateId) setExportActiveTemplateId('');
-              }
-              setSelectedBaseConnectionId(nextConnectionId);
-            }}
-            disabled={baseConnections.length === 0}
-            options={baseConnectionOptions}
-            placeholder={
-              baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
-            }
-            triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-           ariaLabel={baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'} title={baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'}/>
-        </div>
-        <p className='mt-1 text-xs text-gray-500'>
-          Used by Product List OneClick export and for loading inventories/warehouses.
-        </p>
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Default Inventory</Label>
-        <div className='mt-2'>
-          <SelectSimple
-            size='sm'
-            value={exportInventoryId || '__none__'}
-            onValueChange={(v: string): void => setExportInventoryId(v === '__none__' ? '' : v)}
-            disabled={inventories.length === 0 && !exportInventoryId}
-            options={inventoryOptions}
-            placeholder={
-              inventories.length === 0
-                ? exportInventoryId
-                  ? `Saved inventory (${exportInventoryId})`
-                  : 'No inventories loaded'
-                : 'Select default inventory...'
-            }
-            triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-           ariaLabel={inventories.length === 0
-                ? exportInventoryId
-                  ? `Saved inventory (${exportInventoryId})`
-                  : 'No inventories loaded'
-                : 'Select default inventory...'} title={inventories.length === 0
-                ? exportInventoryId
-                  ? `Saved inventory (${exportInventoryId})`
-                  : 'No inventories loaded'
-                : 'Select default inventory...'}/>
-        </div>
-        <p className='mt-1 text-xs text-gray-500'>Default inventory for product exports</p>
-      </div>
-
-      <div>
-        <Label className='text-xs text-gray-400'>Default Export Template</Label>
-        <div className='mt-2'>
-          <SelectSimple
-            size='sm'
-            value={exportActiveTemplateId || '__none__'}
-            onValueChange={(nextId: string): void => {
-              const val = nextId === '__none__' ? '' : nextId;
-              const selected = exportTemplates.find((template: Template) => template.id === val);
-              if (selected) {
-                applyTemplate(selected, 'export');
-              } else {
-                setExportActiveTemplateId(val);
-              }
-            }}
-            disabled={loadingExportTemplates || exportTemplates.length === 0}
-            options={exportTemplateOptions}
-            placeholder='No template (use defaults)'
-            triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-           ariaLabel='No template (use defaults)' title='No template (use defaults)'/>
-        </div>
-        <p className='mt-1 text-xs text-gray-500'>Template for field mapping on export</p>
-      </div>
+      <BaseConnectionSelect 
+        value={state.selectedBaseConnectionId} 
+        options={state.baseConnectionOptions} 
+        onChange={handleConnectionChange} 
+        disabled={state.baseConnections.length === 0} 
+      />
+      <InventorySelect 
+        value={state.exportInventoryId} 
+        options={state.inventoryOptions} 
+        onChange={(v) => state.setExportInventoryId(v === '__none__' ? '' : v)}
+        inventoriesCount={state.inventories.length}
+      />
+      <ExportTemplateSelect 
+        value={state.exportActiveTemplateId} 
+        options={state.exportTemplateOptions} 
+        exportTemplates={state.exportTemplates}
+        loading={state.loadingExportTemplates}
+        applyTemplate={state.applyTemplate}
+        setExportActiveTemplateId={state.setExportActiveTemplateId}
+      />
     </div>
   );
 }
+
+function BaseConnectionSelect({ value, options, onChange, disabled }: { 
+  value: string; options: LabeledOptionDto<string>[]; onChange: (v: string) => void; disabled: boolean; 
+}): React.JSX.Element {
+  const placeholder = disabled ? 'No connections loaded' : 'Select a connection...';
+  return (
+    <div className='col-span-2'>
+      <Label className='text-xs text-gray-400'>
+        Default Base connection (OneClick + inventory tools)
+      </Label>
+      <div className='mt-2'>
+        <SelectSimple
+          size='sm'
+          value={value.length > 0 ? value : '__none__'}
+          onValueChange={onChange}
+          disabled={disabled}
+          options={options}
+          placeholder={placeholder}
+          triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+          ariaLabel={placeholder} title={placeholder}
+        />
+      </div>
+      <p className='mt-1 text-xs text-gray-500'>
+        Used by Product List OneClick export and for loading inventories/warehouses.
+      </p>
+    </div>
+  );
+}
+
+function InventorySelect({ value, options, onChange, inventoriesCount }: {
+  value: string; options: LabeledOptionDto<string>[]; onChange: (v: string) => void; inventoriesCount: number;
+}): React.JSX.Element {
+  const hasInventories = inventoriesCount > 0;
+  
+  let placeholder = 'Select default inventory...';
+  if (!hasInventories) {
+    placeholder = value.length > 0
+      ? `Saved inventory (${value})`
+      : 'No inventories loaded';
+  }
+
+  return (
+    <div>
+      <Label className='text-xs text-gray-400'>Default Inventory</Label>
+      <div className='mt-2'>
+        <SelectSimple
+          size='sm'
+          value={value.length > 0 ? value : '__none__'}
+          onValueChange={onChange}
+          disabled={!hasInventories && value.length === 0}
+          options={options}
+          placeholder={placeholder}
+          triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+          ariaLabel={placeholder} title={placeholder}
+        />
+      </div>
+      <p className='mt-1 text-xs text-gray-500'>Default inventory for product exports</p>
+    </div>
+  );
+}
+
+function ExportTemplateSelect({ value, options, exportTemplates, loading, applyTemplate, setExportActiveTemplateId }: {
+  value: string; options: LabeledOptionDto<string>[]; exportTemplates: Template[]; loading: boolean; 
+  applyTemplate: (t: Template, mode: 'import' | 'export') => void;
+  setExportActiveTemplateId: (id: string) => void;
+}): React.JSX.Element {
+  const handleTemplateChange = (nextId: string): void => {
+    const val = nextId === '__none__' ? '' : nextId;
+    const selected = exportTemplates.find((template: Template) => template.id === val);
+    if (selected) {
+      applyTemplate(selected, 'export');
+    } else {
+      setExportActiveTemplateId(val);
+    }
+  };
+
+  return (
+    <div>
+      <Label className='text-xs text-gray-400'>Default Export Template</Label>
+      <div className='mt-2'>
+        <SelectSimple
+          size='sm'
+          value={value.length > 0 ? value : '__none__'}
+          onValueChange={handleTemplateChange}
+          disabled={loading || exportTemplates.length === 0}
+          options={options}
+          placeholder='No template (use defaults)'
+          triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+          ariaLabel='No template (use defaults)' title='No template (use defaults)'
+        />
+      </div>
+      <p className='mt-1 text-xs text-gray-500'>Template for field mapping on export</p>
+    </div>
+  );
+}
+

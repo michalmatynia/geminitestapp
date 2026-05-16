@@ -21,7 +21,7 @@ export const PreviewInputBlock: React.FC<PreviewInputBlockProps> = ({
   const resolvedSettings = block.settings;
   const value = typeof resolvedSettings['inputValue'] === 'string' ? resolvedSettings['inputValue'] : '';
   const placeholder = typeof resolvedSettings['inputPlaceholder'] === 'string' ? resolvedSettings['inputPlaceholder'] : '';
-  const inputAriaLabel = typeof resolvedSettings['inputAriaLabel'] === 'string' ? (resolvedSettings['inputAriaLabel'] as string).trim() : '';
+  const inputAriaLabel = typeof resolvedSettings['inputAriaLabel'] === 'string' ? (resolvedSettings['inputAriaLabel']).trim() : '';
 
   return wrapInspector(
     <div

@@ -42,6 +42,12 @@ const PROMOTION_STEP_KEYS: Record<string, PromotionLogEntry['kind']> = {
   manual_promote: 'manual',
 };
 
+const resolvePromotionCompanyName = (scan: JobScanRecord, company: Company | null): string | null => {
+  if (company !== null) return company.name;
+  const evalCompany = scan.evaluation?.company as Record<string, unknown> | null;
+  return (evalCompany?.['name'] as string | undefined) ?? null;
+};
+
 const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): PromotionLogEntry[] => {
   const companyById = new Map(companies.map((c) => [c.id, c]));
   const entries: PromotionLogEntry[] = [];
@@ -54,12 +60,7 @@ const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): Prom
         scanId: scan.id,
         scanSourceUrl: scan.sourceUrl,
         companyId: scan.companyId,
-        companyName:
-          company?.name ??
-          ((scan.evaluation?.company as Record<string, unknown> | null)?.['name'] as
-            | string
-            | undefined) ??
-          null,
+        companyName: resolvePromotionCompanyName(scan, company),
         kind,
         status: step.status,
         message: step.message,
@@ -75,6 +76,7 @@ const collectPromotionLog = (scans: JobScanRecord[], companies: Company[]): Prom
     return bTs - aTs;
   });
 };
+
 
 const promotionStatusBadge = (status: PromotionLogEntry['status']): string => {
   switch (status) {
@@ -107,16 +109,17 @@ const statusBadge = (status: JobScanRecord['status']): string => {
 
 const formatSalary = (salary: JobListing['salary']): string => {
   if (salary === null || salary === undefined) return '—';
-  if (typeof salary.raw === 'string' && salary.raw !== '') return salary.raw;
-  const min = salary.min;
-  const max = salary.max;
-  const currency = salary.currency ?? '';
-  const period = (typeof salary.period === 'string' && salary.period !== '') ? ` / ${salary.period}` : '';
-  if (min !== null && max !== null) return `${min}–${max} ${currency}${period}`.trim();
-  if (min !== null) return `from ${min} ${currency}${period}`.trim();
-  if (max !== null) return `up to ${max} ${currency}${period}`.trim();
+  if (typeof salary.raw === 'string' && salary.raw.length > 0) return salary.raw;
+  
+  const { min, max, currency = '', period = '' } = salary;
+  const periodStr = period.length > 0 ? ` / ${period}` : '';
+  
+  if (min !== null && max !== null) return `${min}–${max} ${currency}${periodStr}`.trim();
+  if (min !== null) return `from ${min} ${currency}${periodStr}`.trim();
+  if (max !== null) return `up to ${max} ${currency}${periodStr}`.trim();
   return '—';
 };
+
 
 /* eslint-disable max-lines, max-lines-per-function */
 export function AdminJobBoardPage(): React.JSX.Element {
@@ -168,8 +171,9 @@ export function AdminJobBoardPage(): React.JSX.Element {
     const handle = safeSetInterval(() => {
       void loadAll();
     }, 3000);
-    return () => safeClearInterval(handle);
+    return () => { safeClearInterval(handle); };
   }, [hasActiveScan, loadAll]);
+
 
   // Keep the open scan-detail dialog's data in sync with refreshed scans (e.g. after a manual
   // promote appends a `manual_promote` step). Compare by id so a stale closure-captured object
@@ -186,7 +190,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
     async (event: FormEvent<HTMLFormElement>): Promise<void> => {
       event.preventDefault();
       const url = sourceUrl.trim();
-      if (!url) return;
+      if (url.length === 0) return;
       setIsSubmitting(true);
       setError(null);
       try {
@@ -201,12 +205,12 @@ export function AdminJobBoardPage(): React.JSX.Element {
         });
         if (!response.ok) {
           const text = await response.text();
-          throw new Error(text || `Submit failed (HTTP ${response.status})`);
+          throw new Error(text.length > 0 ? text : `Submit failed (HTTP ${response.status})`);
         }
         const body = (await response.json()) as JobScanCreateResponse;
         setScans((prev) => [body.scan, ...prev.filter((s) => s.id !== body.scan.id)]);
         setSourceUrl('');
-        void loadAll();
+        await loadAll();
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -215,6 +219,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
     },
     [sourceUrl, provider, useVisionEmailFinder, loadAll]
   );
+
 
   const handleCompanyUpdated = useCallback((updatedCompany: Company): void => {
     setCompanies((prev) =>
@@ -235,9 +240,10 @@ export function AdminJobBoardPage(): React.JSX.Element {
       icon={<Briefcase className='size-4' />}
     >
       <form
-        onSubmit={(event) => void handleSubmit(event)}
+        onSubmit={(event) => { void handleSubmit(event); }}
         className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-center'
       >
+
         <Input
           type='url'
           required
@@ -281,11 +287,12 @@ export function AdminJobBoardPage(): React.JSX.Element {
         </div>
       </form>
 
-      {error ? (
+      {error !== null ? (
         <div className='mb-4 rounded border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800'>
           {error}
         </div>
       ) : null}
+
 
       <div className='mb-4 flex gap-2 border-b border-slate-200'>
         {(['scans', 'companies', 'listings', 'promotions'] as Tab[]).map((value) => (
@@ -346,6 +353,50 @@ export function AdminJobBoardPage(): React.JSX.Element {
   );
 }
 
+function ScanRow({ scan, onSelect }: { scan: JobScanRecord; onSelect: (scan: JobScanRecord) => void }): React.JSX.Element {
+  const listing = (scan.evaluation?.listing as Record<string, unknown> | null) ?? null;
+  const company = (scan.evaluation?.company as Record<string, unknown> | null) ?? null;
+  const title = (listing?.['title'] as string | undefined) ?? '—';
+  const companyName = (company?.['name'] as string | undefined) ?? '—';
+  const confidence = scan.evaluation?.confidence;
+
+  return (
+    <tr
+      className='cursor-pointer hover:bg-slate-50'
+      onClick={() => onSelect(scan)}
+    >
+      <td className='px-4 py-2'>
+        <span
+          className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${statusBadge(
+            scan.status
+          )}`}
+        >
+          {scan.status}
+        </span>
+      </td>
+      <td className='max-w-xs truncate px-4 py-2'>{title}</td>
+      <td className='max-w-xs truncate px-4 py-2'>{companyName}</td>
+      <td className='max-w-md truncate px-4 py-2'>
+        <a
+          href={scan.sourceUrl}
+          target='_blank'
+          rel='noreferrer'
+          className='text-blue-600 hover:underline'
+          onClick={(event) => event.stopPropagation()}
+        >
+          {scan.sourceUrl}
+        </a>
+      </td>
+      <td className='px-4 py-2'>
+        {typeof confidence === 'number' ? confidence.toFixed(2) : '—'}
+      </td>
+      <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
+        {scan.createdAt !== undefined ? new Date(scan.createdAt).toLocaleString() : '—'}
+      </td>
+    </tr>
+  );
+}
+
 function ScansTable({
   scans,
   isLoading,
@@ -376,56 +427,16 @@ function ScansTable({
               </td>
             </tr>
           ) : (
-            scans.map((scan) => {
-              const listing = (scan.evaluation?.listing as Record<string, unknown> | null) ?? null;
-              const company = (scan.evaluation?.company as Record<string, unknown> | null) ?? null;
-              const title = (listing?.['title'] as string | undefined) ?? '—';
-              const companyName = (company?.['name'] as string | undefined) ?? '—';
-              const confidence = scan.evaluation?.confidence;
-              return (
-                <tr
-                  key={scan.id}
-                  className='cursor-pointer hover:bg-slate-50'
-                  onClick={() => onSelect(scan)}
-                >
-                  <td className='px-4 py-2'>
-                    <span
-                      className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${statusBadge(
-                        scan.status
-                      )}`}
-                    >
-                      {scan.status}
-                    </span>
-                  </td>
-                  <td className='max-w-xs truncate px-4 py-2'>{title}</td>
-                  <td className='max-w-xs truncate px-4 py-2'>{companyName}</td>
-                  <td className='max-w-md truncate px-4 py-2'>
-                    <a
-                      href={scan.sourceUrl}
-                      target='_blank'
-                      rel='noreferrer'
-                      className='text-blue-600 hover:underline'
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      {scan.sourceUrl}
-                    </a>
-                  </td>
-                  <td className='px-4 py-2'>
-                    {typeof confidence === 'number' ? confidence.toFixed(2) : '—'}
-                  </td>
-                  <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
-                    {scan.createdAt !== undefined ? new Date(scan.createdAt).toLocaleString() : '—'}
-                  </td>
-
-                </tr>
-              );
-            })
+            scans.map((scan) => (
+              <ScanRow key={scan.id} scan={scan} onSelect={onSelect} />
+            ))
           )}
         </tbody>
       </table>
     </div>
   );
 }
+
 
 function CompaniesTable({
   companies,
@@ -645,15 +656,16 @@ function PromotionsTable({
                     </a>
                   </td>
                   <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
-                    {entry.completedAt
+                    {entry.completedAt !== null && entry.completedAt !== undefined
                       ? new Date(entry.completedAt).toLocaleString()
-                      : entry.startedAt
+                      : (entry.startedAt !== null && entry.startedAt !== undefined)
                         ? new Date(entry.startedAt).toLocaleString()
                         : '—'}
                   </td>
                   <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
-                    {entry.durationMs != null ? `${entry.durationMs} ms` : '—'}
+                    {entry.durationMs !== null && entry.durationMs !== undefined ? `${entry.durationMs} ms` : '—'}
                   </td>
+
                 </tr>
               ))
             )}

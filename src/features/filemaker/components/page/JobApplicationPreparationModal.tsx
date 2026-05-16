@@ -1312,8 +1312,7 @@ export function JobApplicationPreparationModal({
       >).flatMap(([artifactKind, status]) => {
         const context = runContextsByArtifact[artifactKind] ?? null;
         if (
-          context === null ||
-          context.organizationId !== selectedOrganizationId ||
+          context?.organizationId !== selectedOrganizationId ||
           context.jobListingId !== selectedJobListingId ||
           (selectedPersonFilter.length > 0 && context.personId !== selectedPersonFilter)
         ) {

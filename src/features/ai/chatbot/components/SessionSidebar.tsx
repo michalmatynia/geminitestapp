@@ -20,7 +20,12 @@ export function SessionSidebar(): React.JSX.Element {
   return (
     <div className='flex h-full flex-col bg-card/80 border-r border-border'>
       <div className='p-4 border-b border-border'>
-        <Button onClick={() => void createNewSession()} className='w-full'>
+        <Button
+          onClick={(): void => {
+            void createNewSession();
+          }}
+          className='w-full'
+        >
           <Plus className='mr-2 size-4' />
           New Chat
         </Button>
@@ -31,15 +36,19 @@ export function SessionSidebar(): React.JSX.Element {
           <div className='p-4 text-center text-sm text-gray-500'>No chat sessions yet</div>
         ) : (
           <div className='space-y-1'>
-            {sessions.map((session) => (
-              <SessionItem
-                key={session.id}
-                session={session}
-                isActive={currentSessionId === session.id}
-                onSelect={() => selectSession(session.id)}
-                onDelete={() => void deleteSession(session.id)}
-              />
-            ))}
+            {sessions.map(
+              (session: ChatbotSessionListItem): React.JSX.Element => (
+                <SessionItem
+                  key={session.id}
+                  session={session}
+                  isActive={currentSessionId === session.id}
+                  onSelect={(): void => selectSession(session.id)}
+                  onDelete={(): void => {
+                    void deleteSession(session.id);
+                  }}
+                />
+              )
+            )}
           </div>
         )}
       </div>

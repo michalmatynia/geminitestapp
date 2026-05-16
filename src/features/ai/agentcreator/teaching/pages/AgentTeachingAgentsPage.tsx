@@ -18,24 +18,27 @@ import {
 } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+interface ValidatedAgentDraft {
+  name: string;
+  llmModel: string;
+  embeddingModel: string;
+  selectedCollectionIds: string[];
+}
+
 const validateAgentDraft = (
   draft: Partial<LearnerAgentLibraryItem>,
   chatModelId: string,
   embeddingModelId: string,
   collections: AgentTeachingEmbeddingCollectionRecord[]
-) => {
+): ValidatedAgentDraft => {
   const name = draft.name?.trim() ?? '';
-  if (name === '') {
-    throw new Error('Agent name is required.');
-  }
+  if (name === '') throw new Error('Agent name is required.');
+  
   const llmModel = chatModelId.trim();
-  if (llmModel === '') {
-    throw new Error('Configure Agent Teaching Chat in AI Brain first.');
-  }
+  if (llmModel === '') throw new Error('Configure Agent Teaching Chat in AI Brain first.');
+  
   const embeddingModel = embeddingModelId.trim();
-  if (embeddingModel === '') {
-    throw new Error('Configure Agent Teaching Embeddings in AI Brain first.');
-  }
+  if (embeddingModel === '') throw new Error('Configure Agent Teaching Embeddings in AI Brain first.');
 
   const selectedCollectionIds = Array.isArray(draft.collectionIds) ? draft.collectionIds : [];
   const mismatchedCollections = selectedCollectionIds
@@ -51,79 +54,67 @@ const validateAgentDraft = (
   return { name, llmModel, embeddingModel, selectedCollectionIds };
 };
 
-const prepareAgentPayload = (draft: Partial<LearnerAgentLibraryItem>) => {
-  const temperatureRaw = typeof draft.temperature === 'number' ? draft.temperature : 0.2;
-  const temperature = Number.isFinite(temperatureRaw)
-    ? Math.max(0, Math.min(temperatureRaw, 2))
-    : 0.2;
-  const maxTokensRaw = typeof draft.maxTokens === 'number' ? draft.maxTokens : 800;
-  const maxTokens = Number.isFinite(maxTokensRaw) ? Math.max(1, Math.round(maxTokensRaw)) : 800;
-  const maxDocsPerCollectionRaw =
-    typeof draft.maxDocsPerCollection === 'number' ? draft.maxDocsPerCollection : 400;
-  const maxDocsPerCollection = Number.isFinite(maxDocsPerCollectionRaw)
-    ? Math.max(10, Math.min(Math.round(maxDocsPerCollectionRaw), 2000))
-    : 400;
+interface PreparedAgentPayload {
+  temperature: number;
+  maxTokens: number;
+  maxDocsPerCollection: number;
+  retrievalTopK: number;
+  retrievalMinScore: number;
+}
 
-  return {
-    temperature,
-    maxTokens,
-    maxDocsPerCollection,
-    retrievalTopK: typeof draft.retrievalTopK === 'number' ? draft.retrievalTopK : 6,
-    retrievalMinScore: typeof draft.retrievalMinScore === 'number' ? draft.retrievalMinScore : 0.15,
-  };
+const prepareTemperature = (value: number | undefined): number => {
+  const temp = typeof value === 'number' ? value : 0.2;
+  return Number.isFinite(temp) ? Math.max(0, Math.min(temp, 2)) : 0.2;
 };
 
-export function AgentTeachingAgentsPage(): React.JSX.Element {
-  const { toast } = useToast();
-  const {
-    agents,
-    collections,
-    chatModelId,
-    embeddingModelId,
-    isLoading: isLoadingContext,
-  } = useAgentTeachingQueriesContext();
+const prepareMaxTokens = (value: number | undefined): number => {
+  const tokens = typeof value === 'number' ? value : 800;
+  return Number.isFinite(tokens) ? Math.max(1, Math.round(tokens)) : 800;
+};
 
+const prepareMaxDocs = (value: number | undefined): number => {
+  const docs = typeof value === 'number' ? value : 400;
+  return Number.isFinite(docs) ? Math.max(10, Math.min(Math.round(docs), 2000)) : 400;
+};
+
+const prepareAgentPayload = (draft: Partial<LearnerAgentLibraryItem>): PreparedAgentPayload => ({
+  temperature: prepareTemperature(draft.temperature),
+  maxTokens: prepareMaxTokens(draft.maxTokens),
+  maxDocsPerCollection: prepareMaxDocs(draft.maxDocsPerCollection),
+  retrievalTopK: typeof draft.retrievalTopK === 'number' ? draft.retrievalTopK : 6,
+  retrievalMinScore: typeof draft.retrievalMinScore === 'number' ? draft.retrievalMinScore : 0.15,
+});
+
+interface AgentTeachingHandlers {
+  handleSave: (draft: Partial<LearnerAgentLibraryItem>) => Promise<void>;
+  handleDelete: (agent: LearnerAgentLibraryItem) => Promise<void>;
+  saving: boolean;
+}
+
+function useAgentTeachingHandlers(): AgentTeachingHandlers {
+  const { toast } = useToast();
+  const { collections, chatModelId, embeddingModelId } = useAgentTeachingQueriesContext();
   const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
   const { mutateAsync: remove } = useDeleteTeachingAgentMutation();
-
-  const libraryAgents = React.useMemo<LearnerAgentLibraryItem[]>(
-    () =>
-      agents.map((agent: AgentTeachingAgentRecord) => ({
-        ...agent,
-        description: typeof agent.description === 'string' ? agent.description : null,
-      })),
-    [agents]
-  );
 
   const handleSave = async (draft: Partial<LearnerAgentLibraryItem>): Promise<void> => {
     try {
       const { name, llmModel, embeddingModel, selectedCollectionIds } = validateAgentDraft(
-        draft,
-        chatModelId,
-        embeddingModelId,
-        collections
+        draft, chatModelId, embeddingModelId, collections
       );
-
       const params = prepareAgentPayload(draft);
 
       await upsert({
         ...(draft.id !== undefined ? { id: draft.id } : {}),
         name,
         description: typeof draft.description === 'string' ? draft.description : null,
-        llmModel,
-        embeddingModel,
-        systemPrompt: draft.systemPrompt ?? '',
-        collectionIds: selectedCollectionIds,
-        ...params,
+        llmModel, embeddingModel, systemPrompt: draft.systemPrompt ?? '',
+        collectionIds: selectedCollectionIds, ...params,
       });
-      toast(draft.id !== undefined ? 'Learner agent updated.' : 'Learner agent created.', {
-        variant: 'success',
-      });
+      toast(draft.id !== undefined ? 'Learner agent updated.' : 'Learner agent created.', { variant: 'success' });
     } catch (error) {
       logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save learner agent.', {
-        variant: 'error',
-      });
+      toast(error instanceof Error ? error.message : 'Failed to save learner agent.', { variant: 'error' });
       throw error;
     }
   };
@@ -134,11 +125,44 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       toast('Learner agent deleted.', { variant: 'success' });
     } catch (error) {
       logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', {
-        variant: 'error',
-      });
+      toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', { variant: 'error' });
       throw error;
     }
+  };
+
+  return { handleSave, handleDelete, saving };
+}
+
+export function AgentTeachingAgentsPage(): React.JSX.Element {
+  const { agents, collections, chatModelId, embeddingModelId, isLoading: isLoadingContext } = useAgentTeachingQueriesContext();
+  const { handleSave, handleDelete, saving } = useAgentTeachingHandlers();
+
+  const libraryAgents = React.useMemo<LearnerAgentLibraryItem[]>(
+    () => agents.map((agent: AgentTeachingAgentRecord) => ({
+      ...agent,
+      description: typeof agent.description === 'string' ? agent.description : null,
+    })),
+    [agents]
+  );
+
+  const buildDefaultItem = (): Partial<LearnerAgentLibraryItem> => ({
+    name: '', description: '', llmModel: chatModelId, embeddingModel: embeddingModelId,
+    systemPrompt: '', collectionIds: [], temperature: 0.2, maxTokens: 800,
+    retrievalTopK: 6, retrievalMinScore: 0.15, maxDocsPerCollection: 400,
+  });
+
+  const renderItemTags = (agent: LearnerAgentLibraryItem): string[] => {
+    let chat = chatModelId;
+    if (chat === '') {
+      chat = agent.llmModel !== '' ? agent.llmModel : '—';
+    }
+    let embed = embeddingModelId;
+    if (embed === '') {
+      embed = agent.embeddingModel !== '' ? agent.embeddingModel : '—';
+    }
+    const temp = typeof agent.temperature === 'number' ? agent.temperature : 0.2;
+
+    return [`LLM: ${chat}`, `Embed: ${embed}`, `KB: ${agent.collectionIds.length}`, `Temp: ${temp.toFixed(2)}` ];
   };
 
   return (
@@ -152,48 +176,10 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       onSave={handleSave}
       onDelete={handleDelete}
       backLink={<AdminAgentTeachingBreadcrumbs current='Agents' className='mb-2' />}
-      buildDefaultItem={() => ({
-        name: '',
-        description: '',
-        llmModel: chatModelId,
-        embeddingModel: embeddingModelId,
-        systemPrompt: '',
-        collectionIds: [],
-        temperature: 0.2,
-        maxTokens: 800,
-        retrievalTopK: 6,
-        retrievalMinScore: 0.15,
-        maxDocsPerCollection: 400,
-      })}
-      renderItemTags={(agent: LearnerAgentLibraryItem) => {
-        const effectiveChatModel =
-          chatModelId !== '' ? chatModelId : agent.llmModel !== '' ? agent.llmModel : '—';
-        const effectiveEmbeddingModel =
-          embeddingModelId !== ''
-            ? embeddingModelId
-            : agent.embeddingModel !== ''
-            ? agent.embeddingModel
-            : '—';
-        const temp = typeof agent.temperature === 'number' ? agent.temperature : 0.2;
-
-        return [
-          `LLM: ${effectiveChatModel}`,
-          `Embed: ${effectiveEmbeddingModel}`,
-          `KB: ${agent.collectionIds.length}`,
-          `Temp: ${temp.toFixed(2)}`,
-        ];
-      }}
-      renderExtraFields={(
-        draft: LearnerAgentLibraryItem,
-        onChange: (changes: Partial<LearnerAgentLibraryItem>) => void
-      ) => (
-        <LearnerAgentForm
-          draft={draft}
-          onChange={onChange}
-          chatModel={chatModelId}
-          embeddingModel={embeddingModelId}
-          collections={collections}
-        />
+      buildDefaultItem={buildDefaultItem}
+      renderItemTags={renderItemTags}
+      renderExtraFields={(draft, onChange) => (
+        <LearnerAgentForm draft={draft} onChange={onChange} chatModel={chatModelId} embeddingModel={embeddingModelId} collections={collections} />
       )}
     />
   );

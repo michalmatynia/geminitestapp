@@ -118,7 +118,7 @@ export function useLessonsManagerHandlers(params: {
       const useExisting = !isPrimaryContentLocale && Boolean(existingLesson);
 
       const pick = <K extends keyof KangurLesson>(key: K): KangurLesson[K] =>
-        useExisting && existingLesson !== undefined && existingLesson[key] !== undefined
+        useExisting && existingLesson?.[key] !== undefined
           ? existingLesson[key]
           : (source as KangurLesson)[key];
 

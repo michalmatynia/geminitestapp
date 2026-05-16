@@ -110,7 +110,7 @@ async function collectStudiqSelections(sourceDb: Db): Promise<StudiqSelection[]>
   const relatedAuthFilters = await buildRelatedAuthFilters(sourceDb, sourceCollectionNames);
   for (const [name, filter] of Object.entries(relatedAuthFilters)) {
     if (!sourceCollectionNames.has(name)) continue;
-    selections.push({ name, filter: filter as Record<string, unknown>, scope: 'related-auth' });
+    selections.push({ name, filter, scope: 'related-auth' });
   }
 
   if (sourceCollectionNames.has('settings')) {

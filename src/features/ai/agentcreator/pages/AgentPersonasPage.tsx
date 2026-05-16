@@ -111,22 +111,32 @@ const normalizeSinglePersona = (draft: Partial<AgentPersona>): AgentPersona => {
   return persona;
 };
 
+const buildNextPersonaMoods = (
+  draft: Partial<AgentPersona>,
+  existing: AgentPersona | undefined
+): AgentPersona['moods'] => draft.moods ?? existing?.moods ?? buildDefaultAgentPersonaMoods();
+
 const buildNextPersona = (
   draft: Partial<AgentPersona>,
   existing: AgentPersona | undefined,
   name: string
 ): AgentPersona => {
   const now = new Date().toISOString();
+  const settings = buildAgentPersonaSettings(draft.settings ?? existing?.settings);
+  const moods = buildNextPersonaMoods(draft, existing);
+  const description = resolveNullableTrimmedString(draft.description) ?? undefined;
+  const createdAt = existing?.createdAt ?? now;
+  
   return normalizeSinglePersona({
     ...existing,
     ...draft,
     id: resolvePersonaId(draft, existing),
     name,
-    description: resolveNullableTrimmedString(draft.description) ?? undefined,
-    settings: buildAgentPersonaSettings(draft.settings ?? existing?.settings),
+    description,
+    settings,
     defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
-    moods: draft.moods ?? existing?.moods ?? buildDefaultAgentPersonaMoods(),
-    createdAt: existing?.createdAt ?? now,
+    moods,
+    createdAt,
     updatedAt: now,
   });
 };
@@ -239,10 +249,10 @@ const cleanupUnsavedPersona = async ({
   if (saved) {
     return;
   }
-  return Promise.all([
+  await Promise.all([
     deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(draft, originalItem)),
     deleteAvatarThumbnails(diffRemovedAgentPersonaAvatarThumbnailRefs(draft, originalItem)),
-  ]).then(() => undefined);
+  ]);
 };
 
 export function AgentPersonasPage(): React.JSX.Element {

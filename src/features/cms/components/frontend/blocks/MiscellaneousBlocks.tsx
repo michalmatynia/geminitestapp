@@ -22,7 +22,7 @@ export function AnnouncementBlock(): React.JSX.Element | null {
       <a
         href={link}
         className='text-sm font-medium text-blue-200 underline decoration-blue-400/50 hover:text-blue-100'
-        style={typoStyles as React.CSSProperties}
+        style={typoStyles}
         aria-label={text}
         title={text}
       >
@@ -32,7 +32,7 @@ export function AnnouncementBlock(): React.JSX.Element | null {
   }
 
   return (
-    <span className='text-sm text-[var(--cms-appearance-page-text)]' style={typoStyles as React.CSSProperties}>
+    <span className='text-sm text-[var(--cms-appearance-page-text)]' style={typoStyles}>
       {text}
     </span>
   );

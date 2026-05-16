@@ -54,9 +54,9 @@ export function ButtonBlock(): React.JSX.Element {
   const isDisabled = useMemo(() => {
     const hasRuntimeBinding =
       typeof settings['buttonDisabledSource'] === 'string' &&
-      (settings['buttonDisabledSource'] as string).trim().length > 0 &&
+      (settings['buttonDisabledSource']).trim().length > 0 &&
       typeof settings['buttonDisabledPath'] === 'string' &&
-      (settings['buttonDisabledPath'] as string).trim().length > 0;
+      (settings['buttonDisabledPath']).trim().length > 0;
 
     if (!hasRuntimeBinding) {
       return parseBoolean(settings['buttonDisabled']);
@@ -76,7 +76,7 @@ export function ButtonBlock(): React.JSX.Element {
       <button
         type='button'
         onClick={() => runtimeAction?.(...runtimeActionArgs)}
-        disabled={!!isDisabled}
+        disabled={Boolean(isDisabled)}
         className={className}
         style={customStyles}
         aria-label={label}

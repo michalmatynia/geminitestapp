@@ -1,39 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import {
-  DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-  DEFAULT_BRAIN_OVERRIDES_ENABLED,
-  DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
-  DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-  getAllowedProvidersForFeature,
-  hasAnyBrainOrInsightsSetting,
-} from './brain-runtime-shared';
+import { hasAnyBrainOrInsightsSetting } from './brain-runtime-shared';
 import { useBrainDerivedState } from './useBrainDerivedState';
 import { useBrainPersistence } from './useBrainPersistence';
-import {
-  defaultBrainProviderCatalog,
-  defaultBrainSettings,
-  getBrainCapabilityDefinition,
-  resolveBrainAssignment,
-  resolveBrainCapabilityAssignment,
-  sanitizeBrainAssignmentForProviders,
-  type AiBrainAssignment,
-  type AiBrainCapabilityKey,
-  type AiBrainFeature,
-  type AiBrainProviderCatalog,
-  type AiBrainSettings,
-} from '../settings';
+import { useBrainState } from './useBrainState';
+import { useBrainAssignmentHandlers } from './useBrainAssignmentHandlers';
+import { useBrainFeatureToggleHandlers } from './useBrainFeatureToggleHandlers';
+import { useBrainCapabilityToggleHandlers } from './useBrainCapabilityToggleHandlers';
 
 import type {
   BrainActionsContextType,
   BrainStateContextType,
-  BrainTab,
 } from './BrainContext.types';
 
 interface BrainRuntimeResult {
@@ -41,394 +23,52 @@ interface BrainRuntimeResult {
   stateValue: BrainStateContextType;
 }
 
-export type {
-  BrainModelsResponse,
-  BrainOperationsOverviewResponse,
-  InsightsSnapshot,
-} from './useBrainDerivedState';
-
 export function useBrainRuntime(): BrainRuntimeResult {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
 
-  const [activeTab, setActiveTab] = useState<BrainTab>('routing');
-  const [operationsRange, setOperationsRange] = useState<BrainOperationsRange>('1h');
-  const [settings, setSettings] = useState<AiBrainSettings>(defaultBrainSettings);
-  const [overridesEnabled, setOverridesEnabled] =
-    useState<Record<AiBrainFeature, boolean>>(DEFAULT_BRAIN_OVERRIDES_ENABLED);
-  const [providerCatalog, setProviderCatalog] = useState<AiBrainProviderCatalog>(
-    defaultBrainProviderCatalog
-  );
+  const state = useBrainState();
+  const assignments = useBrainAssignmentHandlers({ setSettings: state.setSettings });
+  const featureToggles = useBrainFeatureToggleHandlers({
+    setSettings: state.setSettings, setOverridesEnabled: state.setOverridesEnabled,
+  });
+  const capabilityToggles = useBrainCapabilityToggleHandlers({ setSettings: state.setSettings });
 
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [anthropicApiKey, setAnthropicApiKey] = useState('');
-  const [geminiApiKey, setGeminiApiKey] = useState('');
-
-  const [analyticsScheduleEnabled, setAnalyticsScheduleEnabled] = useState(false);
-  const [analyticsScheduleMinutes, setAnalyticsScheduleMinutes] = useState(30);
-  const [runtimeAnalyticsScheduleEnabled, setRuntimeAnalyticsScheduleEnabled] = useState(false);
-  const [runtimeAnalyticsScheduleMinutes, setRuntimeAnalyticsScheduleMinutes] = useState(30);
-  const [logsScheduleEnabled, setLogsScheduleEnabled] = useState(false);
-  const [logsScheduleMinutes, setLogsScheduleMinutes] = useState(15);
-  const [logsAutoOnError, setLogsAutoOnError] = useState(false);
-
-  const [analyticsPromptSystem, setAnalyticsPromptSystem] = useState(
-    DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT
-  );
-  const [runtimeAnalyticsPromptSystem, setRuntimeAnalyticsPromptSystem] = useState(
-    DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT
-  );
-  const [logsPromptSystem, setLogsPromptSystem] = useState(DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT);
-
-  const {
-    agentQuickPicks,
-    analyticsSummaryQuery,
-    effectiveAssignments,
-    effectiveCapabilityAssignments,
-    insightsQuery,
-    liveOllamaModels,
-    logMetricsQuery,
-    modelDescriptors,
-    modelQuickPicks,
-    ollamaModelsQuery,
-    operationsOverviewQuery,
-    runtimeAnalyticsLiveEnabled,
-    runtimeAnalyticsQuery,
-  } = useBrainDerivedState({
-    activeTab,
-    operationsRange,
-    providerCatalog,
-    settings,
+  const derived = useBrainDerivedState({
+    activeTab: state.activeTab, operationsRange: state.operationsRange,
+    providerCatalog: state.providerCatalog, settings: state.settings,
   });
 
   const {
-    handleReset,
-    handleSave,
-    hydrateFromSettingsMap,
-    saving,
-    syncPlaywrightPersonas,
+    handleReset, handleSave, hydrateFromSettingsMap, saving, syncPlaywrightPersonas,
   } = useBrainPersistence({
-    analyticsPromptSystem,
-    analyticsScheduleEnabled,
-    analyticsScheduleMinutes,
-    anthropicApiKey,
-    geminiApiKey,
-    logsAutoOnError,
-    logsPromptSystem,
-    logsScheduleEnabled,
-    logsScheduleMinutes,
-    openaiApiKey,
-    overridesEnabled,
-    providerCatalog,
-    runtimeAnalyticsPromptSystem,
-    runtimeAnalyticsScheduleEnabled,
-    runtimeAnalyticsScheduleMinutes,
-    setAnalyticsPromptSystem,
-    setAnalyticsScheduleEnabled,
-    setAnalyticsScheduleMinutes,
-    setAnthropicApiKey,
-    setGeminiApiKey,
-    setLogsAutoOnError,
-    setLogsPromptSystem,
-    setLogsScheduleEnabled,
-    setLogsScheduleMinutes,
-    setOpenaiApiKey,
-    setOverridesEnabled,
-    setProviderCatalog,
-    setRuntimeAnalyticsPromptSystem,
-    setRuntimeAnalyticsScheduleEnabled,
-    setRuntimeAnalyticsScheduleMinutes,
-    setSettings,
-    settings,
-    settingsMap: settingsQuery.data,
-    toast,
-    updateSetting,
-    updateSettingsBulk,
+    ...state, settingsMap: settingsQuery.data, toast, updateSetting, updateSettingsBulk,
   });
 
   useEffect(() => {
-    if (!settingsQuery.data) return;
-    if (!hasAnyBrainOrInsightsSetting(settingsQuery.data)) return;
-    hydrateFromSettingsMap(settingsQuery.data);
+    if (settingsQuery.data && hasAnyBrainOrInsightsSetting(settingsQuery.data)) {
+      hydrateFromSettingsMap(settingsQuery.data);
+    }
   }, [hydrateFromSettingsMap, settingsQuery.data, settingsQuery.dataUpdatedAt]);
 
-  const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {
-    setSettings((prev: AiBrainSettings) => ({
-      ...prev,
-      defaults: sanitizeBrainAssignmentForProviders(next, ['model']),
-    }));
-  }, []);
+  const stateValue = useMemo((): BrainStateContextType => ({
+    ...state, ...derived, saving,
+  }), [state, derived, saving]);
 
-  const handleOverrideChange = useCallback(
-    (feature: AiBrainFeature, next: AiBrainAssignment): void => {
-      setSettings((prev: AiBrainSettings) => ({
-        ...prev,
-        assignments: {
-          ...prev.assignments,
-          [feature]: sanitizeBrainAssignmentForProviders(
-            next,
-            getAllowedProvidersForFeature(feature)
-          ),
-        },
-      }));
-    },
-    []
-  );
+  const actionsValue = useMemo((): BrainActionsContextType => ({
+    ...assignments, ...featureToggles, ...capabilityToggles,
+    setActiveTab: state.setActiveTab, setSettings: state.setSettings, setProviderCatalog: state.setProviderCatalog,
+    setOpenaiApiKey: (k) => state.setOpenaiApiKey(k), setAnthropicApiKey: (k) => state.setAnthropicApiKey(k), setGeminiApiKey: (k) => state.setGeminiApiKey(k),
+    setAnalyticsScheduleEnabled: (e) => state.setAnalyticsScheduleEnabled(e), setAnalyticsScheduleMinutes: (m) => state.setAnalyticsScheduleMinutes(m),
+    setRuntimeAnalyticsScheduleEnabled: (e) => state.setRuntimeAnalyticsScheduleEnabled(e), setRuntimeAnalyticsScheduleMinutes: (m) => state.setRuntimeAnalyticsScheduleMinutes(m),
+    setLogsScheduleEnabled: (e) => state.setLogsScheduleEnabled(e), setLogsScheduleMinutes: (m) => state.setLogsScheduleMinutes(m),
+    setLogsAutoOnError: (a) => state.setLogsAutoOnError(a),
+    setAnalyticsPromptSystem: (p) => state.setAnalyticsPromptSystem(p), setRuntimeAnalyticsPromptSystem: (p) => state.setRuntimeAnalyticsPromptSystem(p), setLogsPromptSystem: (p) => state.setLogsPromptSystem(p),
+    setOperationsRange: (r) => state.setOperationsRange(r),
+    handleSave, handleReset, syncPlaywrightPersonas,
+  }), [assignments, featureToggles, capabilityToggles, state, handleSave, handleReset, syncPlaywrightPersonas]);
 
-  const handleCapabilityChange = useCallback(
-    (capability: AiBrainCapabilityKey, next: AiBrainAssignment): void => {
-      setSettings((prev: AiBrainSettings) => ({
-        ...prev,
-        capabilities: {
-          ...prev.capabilities,
-          [capability]: sanitizeBrainAssignmentForProviders(
-            next,
-            getBrainCapabilityDefinition(capability).policy === 'agent-or-model'
-              ? ['model', 'agent']
-              : ['model']
-          ),
-        },
-      }));
-    },
-    []
-  );
-
-  const setFeatureEnabled = useCallback((feature: AiBrainFeature, enabled: boolean): void => {
-    setOverridesEnabled((prev: Record<AiBrainFeature, boolean>) => ({
-      ...prev,
-      [feature]: true,
-    }));
-    setSettings((prev: AiBrainSettings) => {
-      const baseAssignment = prev.assignments[feature] ?? resolveBrainAssignment(prev, feature);
-      return {
-        ...prev,
-        assignments: {
-          ...prev.assignments,
-          [feature]: sanitizeBrainAssignmentForProviders(
-            {
-              ...baseAssignment,
-              enabled,
-            },
-            getAllowedProvidersForFeature(feature)
-          ),
-        },
-      };
-    });
-  }, []);
-
-  const setCapabilityEnabled = useCallback(
-    (capability: AiBrainCapabilityKey, enabled: boolean): void => {
-      setSettings((prev: AiBrainSettings) => {
-        const definition = getBrainCapabilityDefinition(capability);
-        const allowedProviders =
-          definition.policy === 'agent-or-model'
-            ? (['model', 'agent'] as const)
-            : (['model'] as const);
-        const baseAssignment =
-          prev.capabilities[capability] ?? resolveBrainCapabilityAssignment(prev, capability);
-        const nextAssignment = sanitizeBrainAssignmentForProviders(
-          {
-            ...baseAssignment,
-            enabled,
-          },
-          [...allowedProviders]
-        );
-
-        return {
-          ...prev,
-          capabilities: {
-            ...prev.capabilities,
-            [capability]: nextAssignment,
-          },
-        };
-      });
-    },
-    []
-  );
-
-  const clearCapabilityOverride = useCallback((capability: AiBrainCapabilityKey): void => {
-    setSettings((prev: AiBrainSettings) => {
-      if (!prev.capabilities[capability]) {
-        return prev;
-      }
-      const nextCapabilities = { ...prev.capabilities };
-      delete nextCapabilities[capability];
-      return {
-        ...prev,
-        capabilities: nextCapabilities,
-      };
-    });
-  }, []);
-
-  const toggleOverride = useCallback((feature: AiBrainFeature, enabled: boolean): void => {
-    setOverridesEnabled((prev: Record<AiBrainFeature, boolean>) => ({
-      ...prev,
-      [feature]: enabled,
-    }));
-    if (!enabled) {
-      setSettings((prev: AiBrainSettings) => {
-        const nextAssignments = { ...prev.assignments };
-        delete nextAssignments[feature];
-        return { ...prev, assignments: nextAssignments };
-      });
-      return;
-    }
-    setSettings((prev: AiBrainSettings) => ({
-      ...prev,
-      assignments: {
-        ...prev.assignments,
-        [feature]: prev.assignments[feature] ?? resolveBrainAssignment(prev, feature),
-      },
-    }));
-  }, []);
-
-  const toggleCapabilityOverride = useCallback(
-    (capability: AiBrainCapabilityKey, enabled: boolean): void => {
-      if (!enabled) {
-        setSettings((prev: AiBrainSettings) => {
-          const nextCapabilities = { ...prev.capabilities };
-          delete nextCapabilities[capability];
-          return {
-            ...prev,
-            capabilities: nextCapabilities,
-          };
-        });
-        return;
-      }
-
-      setSettings((prev: AiBrainSettings) => ({
-        ...prev,
-        capabilities: {
-          ...prev.capabilities,
-          [capability]:
-            prev.capabilities[capability] ?? resolveBrainCapabilityAssignment(prev, capability),
-        },
-      }));
-    },
-    []
-  );
-
-  const stateValue = useMemo(
-    (): BrainStateContextType => ({
-      activeTab,
-      settings,
-      overridesEnabled,
-      providerCatalog,
-      openaiApiKey,
-      anthropicApiKey,
-      geminiApiKey,
-      analyticsScheduleEnabled,
-      analyticsScheduleMinutes,
-      runtimeAnalyticsScheduleEnabled,
-      runtimeAnalyticsScheduleMinutes,
-      logsScheduleEnabled,
-      logsScheduleMinutes,
-      logsAutoOnError,
-      analyticsPromptSystem,
-      runtimeAnalyticsPromptSystem,
-      logsPromptSystem,
-      ollamaModelsQuery,
-      operationsRange,
-      operationsOverviewQuery,
-      analyticsSummaryQuery,
-      logMetricsQuery,
-      insightsQuery,
-      runtimeAnalyticsQuery,
-      modelDescriptors,
-      modelQuickPicks,
-      agentQuickPicks,
-      effectiveAssignments,
-      effectiveCapabilityAssignments,
-      runtimeAnalyticsLiveEnabled,
-      saving,
-      liveOllamaModels,
-    }),
-    [
-      activeTab,
-      agentQuickPicks,
-      analyticsPromptSystem,
-      analyticsScheduleEnabled,
-      analyticsScheduleMinutes,
-      analyticsSummaryQuery,
-      anthropicApiKey,
-      effectiveAssignments,
-      effectiveCapabilityAssignments,
-      geminiApiKey,
-      insightsQuery,
-      liveOllamaModels,
-      logMetricsQuery,
-      logsAutoOnError,
-      logsPromptSystem,
-      logsScheduleEnabled,
-      logsScheduleMinutes,
-      modelDescriptors,
-      modelQuickPicks,
-      ollamaModelsQuery,
-      openaiApiKey,
-      operationsOverviewQuery,
-      operationsRange,
-      overridesEnabled,
-      providerCatalog,
-      runtimeAnalyticsLiveEnabled,
-      runtimeAnalyticsPromptSystem,
-      runtimeAnalyticsQuery,
-      runtimeAnalyticsScheduleEnabled,
-      runtimeAnalyticsScheduleMinutes,
-      saving,
-      settings,
-    ]
-  );
-
-  const actionsValue = useMemo(
-    (): BrainActionsContextType => ({
-      setActiveTab,
-      setSettings,
-      setProviderCatalog,
-      setOpenaiApiKey,
-      setAnthropicApiKey,
-      setGeminiApiKey,
-      setAnalyticsScheduleEnabled,
-      setAnalyticsScheduleMinutes,
-      setRuntimeAnalyticsScheduleEnabled,
-      setRuntimeAnalyticsScheduleMinutes,
-      setLogsScheduleEnabled,
-      setLogsScheduleMinutes,
-      setLogsAutoOnError,
-      setAnalyticsPromptSystem,
-      setRuntimeAnalyticsPromptSystem,
-      setLogsPromptSystem,
-      setOperationsRange,
-      handleSave,
-      handleReset,
-      handleDefaultChange,
-      handleOverrideChange,
-      handleCapabilityChange,
-      setFeatureEnabled,
-      setCapabilityEnabled,
-      clearCapabilityOverride,
-      toggleOverride,
-      toggleCapabilityOverride,
-      syncPlaywrightPersonas,
-    }),
-    [
-      clearCapabilityOverride,
-      handleCapabilityChange,
-      handleDefaultChange,
-      handleOverrideChange,
-      handleReset,
-      handleSave,
-      setFeatureEnabled,
-      setCapabilityEnabled,
-      syncPlaywrightPersonas,
-      toggleCapabilityOverride,
-      toggleOverride,
-    ]
-  );
-
-  return {
-    actionsValue,
-    stateValue,
-  };
+  return { actionsValue, stateValue };
 }

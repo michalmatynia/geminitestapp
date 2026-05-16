@@ -19,17 +19,17 @@ const LOGIN_DESCRIPTION_PREFIX = 'User logged in:';
 const readLoginIdentity = (log: ActivityLog): string => {
   if (log.description.startsWith(LOGIN_DESCRIPTION_PREFIX)) {
     const identity = log.description.slice(LOGIN_DESCRIPTION_PREFIX.length).trim();
-    if (identity) return identity;
+    if (identity !== '') return identity;
   }
 
-  return log.description || 'Unknown account';
+  return log.description !== '' ? log.description : 'Unknown account';
 };
 
 const readMetadataText = (log: ActivityLog, key: string): string | null => {
   const value = log.metadata?.[key];
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+  return trimmed !== '' ? trimmed : null;
 };
 
 /* eslint-disable max-lines-per-function, complexity, @typescript-eslint/strict-boolean-expressions */

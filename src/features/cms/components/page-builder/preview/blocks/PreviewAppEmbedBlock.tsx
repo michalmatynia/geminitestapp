@@ -22,7 +22,7 @@ export const PreviewAppEmbedBlock: React.FC<PreviewAppEmbedBlockProps> = ({
   const resolvedSettings = block.settings;
   const appOption = getAppEmbedOption(
     typeof resolvedSettings['appId'] === 'string'
-      ? (resolvedSettings['appId'] as string)
+      ? (resolvedSettings['appId'])
       : DEFAULT_APP_EMBED_ID
   );
   const title = (

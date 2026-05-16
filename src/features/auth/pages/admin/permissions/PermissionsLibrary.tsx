@@ -8,7 +8,7 @@ export function PermissionsLibrary({
 }: {
   permissions: AuthPermission[];
   onRemove: (id: string) => void;
-}) {
+}): React.JSX.Element {
   return (
     <Card className='bg-card border-border'>
       <CardHeader>
@@ -23,7 +23,7 @@ export function PermissionsLibrary({
                 <div>
                   <div className='text-sm font-semibold text-white'>{p.name}</div>
                   <div className='text-xs text-gray-400'>{p.id}</div>
-                  {p.description && <div className='text-xs text-gray-500 mt-1'>{p.description}</div>}
+                  {p.description !== undefined && p.description !== '' && <div className='text-xs text-gray-500 mt-1'>{p.description}</div>}
                 </div>
                 <Button variant='ghost' size='sm' onClick={() => onRemove(p.id)} className='text-xs text-red-200'>Remove</Button>
               </div>

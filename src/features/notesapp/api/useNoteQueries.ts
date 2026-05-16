@@ -104,8 +104,9 @@ const buildNotesUrl = (params: FetchNotesParams): string => {
 
   stringParams.forEach((key) => {
     const val = params[key];
-    if (val !== null && val !== undefined && val !== '') search.set(key, val);
+    if (val !== undefined && val.length > 0) search.set(key, val);
   });
+
   booleanParams.forEach((key) => {
     if (params[key] === true) {
       search.set(key, 'true');

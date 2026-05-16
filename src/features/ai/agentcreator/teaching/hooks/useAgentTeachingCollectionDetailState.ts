@@ -18,7 +18,24 @@ import {
 } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-function useCollectionSearch(collectionId: string) {
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+
+interface CollectionSearchState {
+  searching: boolean;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  searchTopK: number;
+  setSearchTopK: React.Dispatch<React.SetStateAction<number>>;
+  searchMinScore: number;
+  setSearchMinScore: React.Dispatch<React.SetStateAction<number>>;
+  searchResults: AgentTeachingChatSource[];
+  setSearchResults: React.Dispatch<React.SetStateAction<AgentTeachingChatSource[]>>;
+  searchError: string | null;
+  setSearchError: React.Dispatch<React.SetStateAction<string | null>>;
+  handleSearch: () => Promise<void>;
+}
+
+function useCollectionSearch(collectionId: string): CollectionSearchState {
   const searchMutation = useSearchEmbeddingCollectionMutation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTopK, setSearchTopK] = useState(8);
@@ -61,8 +78,89 @@ function useCollectionSearch(collectionId: string) {
   };
 }
 
-export function useAgentTeachingCollectionDetailState() {
+interface DocumentManagementState {
+  adding: boolean;
+  deleting: boolean;
+  text: string;
+  setText: React.Dispatch<React.SetStateAction<string>>;
+  title: string;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
+  source: string;
+  setSource: React.Dispatch<React.SetStateAction<string>>;
+  tags: string;
+  setTags: React.Dispatch<React.SetStateAction<string>>;
+  docToDelete: AgentTeachingEmbeddingDocumentListItem | null;
+  setDocToDelete: React.Dispatch<React.SetStateAction<AgentTeachingEmbeddingDocumentListItem | null>>;
+  handleAdd: () => Promise<void>;
+  handleDelete: () => Promise<void>;
+}
+
+function useDocumentManagement(
+  collectionId: string,
+  refetchDocs: () => Promise<unknown>
+): DocumentManagementState {
   const { toast } = useToast();
+  const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
+  const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
+
+  const [text, setText] = useState('');
+  const [title, setTitle] = useState('');
+  const [source, setSource] = useState('');
+  const [tags, setTags] = useState('');
+  const [docToDelete, setDocToDelete] = useState<AgentTeachingEmbeddingDocumentListItem | null>(null);
+
+  const handleAdd = useCallback(async () => {
+    const trimmed = text.trim();
+    if (trimmed.length === 0) {
+      toast('Text is required.', { variant: 'error' });
+      return;
+    }
+    try {
+      await addDoc({
+        collectionId,
+        text: trimmed,
+        title: title.trim().length > 0 ? title.trim() : null,
+        source: source.trim().length > 0 ? source.trim() : null,
+        tags: tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0),
+      });
+      toast('Document embedded and saved.', { variant: 'success' });
+      setText(''); setTitle(''); setSource(''); setTags('');
+      void refetchDocs();
+    } catch (error) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to add document.', { variant: 'error' });
+    }
+  }, [collectionId, text, title, source, tags, addDoc, toast, refetchDocs]);
+
+  const handleDelete = useCallback(async () => {
+    if (docToDelete === null) return;
+    try {
+      await deleteDoc({ collectionId, documentId: docToDelete.id });
+      toast('Document deleted.', { variant: 'success' });
+      void refetchDocs();
+    } catch (error) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to delete document.', { variant: 'error' });
+    } finally {
+      setDocToDelete(null);
+    }
+  }, [collectionId, docToDelete, deleteDoc, toast, refetchDocs]);
+
+  return {
+    adding, deleting, text, setText, title, setTitle,
+    source, setSource, tags, setTags, docToDelete, setDocToDelete,
+    handleAdd, handleDelete
+  };
+}
+
+interface AgentTeachingCollectionDetailState extends CollectionSearchState, DocumentManagementState {
+  collectionId: string;
+  collection: AgentTeachingEmbeddingCollectionRecord | null;
+  docs: AgentTeachingEmbeddingDocumentListItem[];
+  isLoading: boolean;
+}
+
+export function useAgentTeachingCollectionDetailState(): AgentTeachingCollectionDetailState {
   const params = useParams<{ collectionId: string }>();
   const collectionId = params.collectionId;
 
@@ -77,76 +175,9 @@ export function useAgentTeachingCollectionDetailState() {
     isLoading: loadingDocs,
     refetch: refetchDocs,
   } = useEmbeddingDocuments(collectionId);
-  const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
-  const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
 
-  const [text, setText] = useState('');
-  const [title, setTitle] = useState('');
-  const [source, setSource] = useState('');
-  const [tags, setTags] = useState('');
-  const [docToDelete, setDocToDelete] = useState<AgentTeachingEmbeddingDocumentListItem | null>(
-    null
-  );
-
-  const {
-    searching,
-    searchQuery,
-    setSearchQuery,
-    searchTopK,
-    setSearchTopK,
-    searchMinScore,
-    setSearchMinScore,
-    searchResults,
-    searchError,
-    handleSearch,
-  } = useCollectionSearch(collectionId);
-
-  const handleAdd = useCallback(async () => {
-    const trimmed = text.trim();
-    if (trimmed.length === 0) {
-      toast('Text is required.', { variant: 'error' });
-      return;
-    }
-    try {
-      await addDoc({
-        collectionId,
-        text: trimmed,
-        title: title.trim().length > 0 ? title.trim() : null,
-        source: source.trim().length > 0 ? source.trim() : null,
-        tags: tags
-          .split(',')
-          .map((t) => t.trim())
-          .filter((t) => t.length > 0),
-      });
-      toast('Document embedded and saved.', { variant: 'success' });
-      setText('');
-      setTitle('');
-      setSource('');
-      setTags('');
-      void refetchDocs();
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to add document.', {
-        variant: 'error',
-      });
-    }
-  }, [collectionId, text, title, source, tags, addDoc, toast, refetchDocs]);
-
-  const handleDelete = useCallback(async () => {
-    if (docToDelete === null) return;
-    try {
-      await deleteDoc({ collectionId, documentId: docToDelete.id });
-      toast('Document deleted.', { variant: 'success' });
-      void refetchDocs();
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to delete document.', {
-        variant: 'error',
-      });
-    } finally {
-      setDocToDelete(null);
-    }
-  }, [collectionId, docToDelete, deleteDoc, toast, refetchDocs]);
+  const documentManagement = useDocumentManagement(collectionId, refetchDocs);
+  const search = useCollectionSearch(collectionId);
 
   const docs = useMemo(() => docsResult?.items ?? [], [docsResult]);
 
@@ -155,29 +186,7 @@ export function useAgentTeachingCollectionDetailState() {
     collection,
     docs,
     isLoading: loadingCollections || loadingDocs,
-    adding,
-    deleting,
-    searching,
-    text,
-    setText,
-    title,
-    setTitle,
-    source,
-    setSource,
-    tags,
-    setTags,
-    docToDelete,
-    setDocToDelete,
-    searchQuery,
-    setSearchQuery,
-    searchTopK,
-    setSearchTopK,
-    searchMinScore,
-    setSearchMinScore,
-    searchResults,
-    searchError,
-    handleAdd,
-    handleDelete,
-    handleSearch,
+    ...documentManagement,
+    ...search,
   };
 }

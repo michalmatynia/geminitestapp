@@ -11,7 +11,8 @@ export async function assertSettingsManageAccess(): Promise<void> {
 }
 
 function hasAccess(session: { user?: { isElevated?: boolean; permissions?: string[] } } | null): boolean {
-  const isElevated = session?.user?.isElevated ?? false;
-  const canManage = session?.user?.permissions?.includes('settings.manage') ?? false;
-  return isElevated || canManage;
+  if (!session?.user) return false;
+  const { isElevated = false, permissions = [] } = session.user;
+  return isElevated || permissions.includes('settings.manage');
 }
+

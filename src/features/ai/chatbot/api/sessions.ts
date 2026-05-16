@@ -32,6 +32,26 @@ import {
 import { fetchWithTimeout, readErrorMessage, requestJson } from './client';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
+function parseChatbotSessionsResponse(data: unknown, scope?: 'ids'): { sessions?: ChatSession[]; ids?: string[] } {
+  if (scope === 'ids') {
+    return chatbotSessionIdsResponseSchema.parse(data);
+  }
+  const parsed = chatbotSessionsResponseSchema.parse(data);
+  return {
+    ...(parsed.sessions ? { sessions: parsed.sessions } : {}),
+  };
+}
+
+function buildChatbotSessionsUrl(params?: { scope?: 'ids'; query?: string }): string {
+  const searchParams = new URLSearchParams();
+  if (params?.scope === 'ids') searchParams.set('scope', params.scope);
+  if (typeof params?.query === 'string' && params.query !== '') {
+    searchParams.set('query', params.query);
+  }
+  const query = searchParams.toString();
+  return query !== '' ? `/api/chatbot/sessions?${query}` : '/api/chatbot/sessions';
+}
+
 /**
  * Fetches chatbot sessions. Can be filtered by scope or query string.
  * 
@@ -39,28 +59,18 @@ import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
  * @returns Object containing optional arrays of sessions or IDs.
  * @throws AppError if the request fails, with specific context about the scope.
  */
-export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
+export const fetchChatbotSessions = async (params?: {
   scope?: 'ids';
   query?: string;
-}): Promise<{ sessions?: TSession[]; ids?: string[] }> => {
-  const searchParams = new URLSearchParams();
-  if (params?.scope) searchParams.set('scope', params.scope);
-  if (params?.query) searchParams.set('query', params.query);
-  const query = searchParams.toString();
-  const url = query ? `/api/chatbot/sessions?${query}` : '/api/chatbot/sessions';
+}): Promise<{ sessions?: ChatSession[]; ids?: string[] }> => {
+  const url = buildChatbotSessionsUrl(params);
   
   const data = await requestJson<unknown>(url, undefined, {
     fallbackMessage: 'Failed to load sessions.',
   });
   
   try {
-    if (params?.scope === 'ids') {
-      return chatbotSessionIdsResponseSchema.parse(data);
-    }
-    const parsed = chatbotSessionsResponseSchema.parse(data);
-    return {
-      ...(parsed.sessions ? { sessions: parsed.sessions as TSession[] } : {}),
-    };
+    return parseChatbotSessionsResponse(data, params?.scope);
   } catch (error) {
     throw new AppError('Failed to parse response while fetching chatbot sessions.', {
       code: AppErrorCodes.validation,
@@ -74,7 +84,7 @@ export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
 /** Retrieves session IDs matching an optional search query. */
 export const fetchChatbotSessionIds = async (query?: string): Promise<string[]> => {
   const searchParams = new URLSearchParams({ scope: 'ids' });
-  if (query) searchParams.set('query', query);
+  if (typeof query === 'string' && query !== '') searchParams.set('query', query);
   const url = `/api/chatbot/sessions?${searchParams.toString()}`;
   const data = await requestJson<unknown>(url, undefined, {
     fallbackMessage: 'Failed to load session ids.',

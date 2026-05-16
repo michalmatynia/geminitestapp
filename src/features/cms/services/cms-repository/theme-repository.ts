@@ -44,7 +44,7 @@ export const themeRepository = {
   async getThemeById(id: string): Promise<CmsTheme | null> {
     try {
       const db = await getMongoDb();
-      const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>);
+      const doc = await db.collection<ThemeDocument>(themesCollection).findOne(buildIdFilter<ThemeDocument>(id));
       return doc ? mapThemeDocument(doc) : null;
     } catch (error) {
       throw databaseError(`Failed to retrieve theme: ${id}`, error, {
@@ -94,7 +94,7 @@ export const themeRepository = {
 
       const result = await db
         .collection<ThemeDocument>(themesCollection)
-        .findOneAndUpdate(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>, { $set: update }, { returnDocument: 'after' });
+        .findOneAndUpdate(buildIdFilter<ThemeDocument>(id), { $set: update }, { returnDocument: 'after' });
       
       return result ? mapThemeDocument(result) : null;
     } catch (error) {
@@ -109,7 +109,7 @@ export const themeRepository = {
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     try {
       const db = await getMongoDb();
-      const doc = await db.collection<ThemeDocument>(themesCollection).findOneAndDelete(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>);
+      const doc = await db.collection<ThemeDocument>(themesCollection).findOneAndDelete(buildIdFilter<ThemeDocument>(id));
       return doc ? mapThemeDocument(doc) : null;
     } catch (error) {
       throw databaseError(`Failed to delete theme: ${id}`, error, {
@@ -135,7 +135,7 @@ export const themeRepository = {
     try {
       const db = await getMongoDb();
       await db.collection<ThemeDocument>(themesCollection).updateMany({ isDefault: true } as Filter<ThemeDocument>, { $set: { isDefault: false } });
-      await db.collection<ThemeDocument>(themesCollection).updateOne(buildIdFilter<ThemeDocument>(id) as Filter<ThemeDocument>, { $set: { isDefault: true } });
+      await db.collection<ThemeDocument>(themesCollection).updateOne(buildIdFilter<ThemeDocument>(id), { $set: { isDefault: true } });
     } catch (error) {
       throw databaseError(`Failed to set default theme: ${id}`, error, {
         collection: themesCollection,

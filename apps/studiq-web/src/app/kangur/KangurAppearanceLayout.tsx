@@ -77,8 +77,11 @@ const createKangurInitialSettingsEntries = ({
   initialState: KangurStorefrontInitialState;
   liteSettings: ReadonlyArray<SettingRecord>;
 }): Array<readonly [string, string]> => {
-  const entries = new Map<string, string>(createKangurAppearanceSettingsEntries(initialState));
+  const entries = new Map<string, string>();
   liteSettings.forEach(({ key, value }) => {
+    entries.set(key, value);
+  });
+  createKangurAppearanceSettingsEntries(initialState).forEach(([key, value]) => {
     entries.set(key, value);
   });
   return Array.from(entries.entries());

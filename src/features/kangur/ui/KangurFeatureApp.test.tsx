@@ -194,6 +194,11 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
 
     await act(async () => {
@@ -235,6 +240,11 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
 
     await act(async () => {

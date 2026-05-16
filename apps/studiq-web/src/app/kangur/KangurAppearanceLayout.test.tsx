@@ -225,4 +225,43 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
       })
     );
   });
+
+  it('lets server-resolved appearance override stale lite theme payloads', async () => {
+    getKangurStorefrontInitialStateMock.mockResolvedValue({
+      initialMode: 'dark',
+      initialThemeSettings: {
+        default: '{"slot":"server-default"}',
+        dawn: '{"slot":"server-dawn"}',
+        sunset: '{"slot":"server-sunset"}',
+        dark: '{"slot":"server-dark"}',
+      },
+    });
+    getKangurSurfaceBootstrapStyleMock.mockReturnValue(':root{--bootstrap-style:1;}');
+    getLiteSettingsForHydrationMock.mockResolvedValue([
+      { key: 'kangur_storefront_default_mode_v1', value: 'default' },
+      { key: 'kangur_cms_theme_daily_v1', value: '{"slot":"stale-default"}' },
+      { key: 'kangur_cms_theme_nightly_v1', value: '{"slot":"stale-dark"}' },
+      { key: 'kangur_theme_unrelated', value: '{"accent":"other"}' },
+    ]);
+
+    const { default: KangurAppearanceLayout } = await import('./KangurAppearanceLayout');
+    const result = await KangurAppearanceLayout({
+      children: <div data-testid='workspace-child'>Workspace child</div>,
+    });
+
+    render(result);
+
+    expect(settingsStoreProviderMock).toHaveBeenCalledWith({
+      initialEntries: [
+        ['kangur_storefront_default_mode_v1', 'dark'],
+        ['kangur_cms_theme_daily_v1', '{"slot":"server-default"}'],
+        ['kangur_cms_theme_nightly_v1', '{"slot":"server-dark"}'],
+        ['kangur_theme_unrelated', '{"accent":"other"}'],
+        ['kangur_cms_theme_dawn_v1', '{"slot":"server-dawn"}'],
+        ['kangur_cms_theme_sunset_v1', '{"slot":"server-sunset"}'],
+      ],
+      mode: 'lite',
+      refreshSeededLiteStore: true,
+    });
+  });
 });

@@ -15,12 +15,6 @@ import {
   type KangurStorefrontAppearanceMode,
   type KangurStorefrontInitialState,
 } from '@/features/kangur/appearance/storefront-appearance-settings';
-import {
-  KANGUR_DAILY_THEME_SETTINGS_KEY,
-  KANGUR_DAWN_THEME_SETTINGS_KEY,
-  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-  KANGUR_SUNSET_THEME_SETTINGS_KEY,
-} from '@/shared/contracts/kangur-settings-keys';
 
 import type { ReactNode } from 'react';
 import type { SettingRecord } from '@/shared/contracts/settings';
@@ -32,23 +26,12 @@ const KANGUR_STOREFRONT_APPEARANCE_MODES = [
   'dark',
 ] as const satisfies ReadonlyArray<KangurStorefrontAppearanceMode>;
 
-const KANGUR_STOREFRONT_CRITICAL_LITE_SETTINGS = [
-  KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-  KANGUR_DAILY_THEME_SETTINGS_KEY,
-  KANGUR_DAWN_THEME_SETTINGS_KEY,
-  KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-] as const;
-
 const shouldRefreshKangurSeededLiteStore = (
-  liteSettings: ReadonlyArray<SettingRecord>
+  _liteSettings: ReadonlyArray<SettingRecord>
 ): boolean => {
-  if (liteSettings.length === 0) {
-    return true;
-  }
-
-  const liteSettingKeys = new Set(liteSettings.map(({ key }) => key));
-  return KANGUR_STOREFRONT_CRITICAL_LITE_SETTINGS.some((key) => !liteSettingKeys.has(key));
+  // Always refresh in the browser so a stale cached HTML shell cannot keep
+  // public theme settings pinned to the fallback values.
+  return true;
 };
 
 const createKangurAppearanceSettingsEntries = (

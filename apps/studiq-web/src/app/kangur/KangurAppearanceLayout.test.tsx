@@ -129,7 +129,7 @@ describe('apps/studiq-web KangurAppearanceLayout', () => {
         ['kangur_theme_default', '{"accent":"default"}'],
       ],
       mode: 'lite',
-      refreshSeededLiteStore: false,
+      refreshSeededLiteStore: true,
     });
     expect(storefrontAppearanceProviderMock).toHaveBeenCalledWith({
       initialAppearance: {

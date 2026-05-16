@@ -1,6 +1,5 @@
 'use client';
 
-import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import React from 'react';
@@ -55,21 +54,18 @@ export const buildSocialLinks = (theme: SocialThemeSettings | null | undefined):
     id: 'facebook',
     label: 'Facebook',
     href: normalizeSocialUrl(theme.socialFacebook),
-    Icon: Facebook,
     fallback: 'Fb',
   });
   addLink({
     id: 'instagram',
     label: 'Instagram',
     href: normalizeSocialUrl(theme.socialInstagram),
-    Icon: Instagram,
     fallback: 'Ig',
   });
   addLink({
     id: 'youtube',
     label: 'YouTube',
     href: normalizeSocialUrl(theme.socialYoutube),
-    Icon: Youtube,
     fallback: 'Yt',
   });
   addLink({
@@ -82,7 +78,6 @@ export const buildSocialLinks = (theme: SocialThemeSettings | null | undefined):
     id: 'twitter',
     label: 'X / Twitter',
     href: normalizeSocialUrl(theme.socialTwitter),
-    Icon: Twitter,
     fallback: 'X',
   });
   addLink({
@@ -113,7 +108,6 @@ export const buildSocialLinks = (theme: SocialThemeSettings | null | undefined):
     id: 'linkedin',
     label: 'LinkedIn',
     href: normalizeSocialUrl(theme.socialLinkedin),
-    Icon: Linkedin,
     fallback: 'In',
   });
 

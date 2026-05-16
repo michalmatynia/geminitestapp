@@ -811,6 +811,96 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
   });
 
+  it('clears a localized pending route snapshot once the normalized target route is current', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
+    pendingRouteLoadingSnapshotMock.mockReturnValue({
+      fromHref: '/en/kangur',
+      href: '/en/kangur/lessons',
+      pageKey: 'Lessons',
+      skeletonVariant: 'lessons-library',
+      startedAt: Date.now(),
+      topBarHeightCssValue: '136px',
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
+  });
+
+  it('drops a navigation skeleton after the route transition returns to idle', async () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'pending',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/en/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    const { rerender } = render(<KangurFeatureApp />);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+
+    routingStateMock.mockReturnValue({
+      pageKey: 'Lessons',
+      embedded: false,
+      requestedPath: '/kangur/lessons',
+      requestedHref: '/kangur/lessons',
+      basePath: '/kangur',
+    });
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'idle',
+      activeTransitionSourceId: null,
+      activeTransitionPageKey: null,
+      activeTransitionRequestedHref: null,
+      activeTransitionSkeletonVariant: null,
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    await act(async () => {
+      rerender(<KangurFeatureApp />);
+    });
+    await act(async () => {});
+
+    expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('overflow-hidden');
+  });
+
   it('keeps the shell navbar skeleton while the shared host is unresolved', async () => {
     topNavigationHostVisibleMock.mockReturnValue(false);
     routeTransitionStateMock.mockReturnValue({

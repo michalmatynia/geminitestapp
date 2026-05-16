@@ -34,7 +34,10 @@ import {
   useOptionalKangurTopNavigationState,
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
-import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
+import {
+  normalizeManagedKangurPathname,
+  resolveManagedKangurEmbeddedFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
 import { isSocialPublishingBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -66,6 +69,41 @@ import {
 import type { JSX } from 'react';
 
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+
+const normalizeKangurRouteSnapshotHref = (href: string | null): string | null => {
+  if (!href) return null;
+
+  try {
+    const parsed = new URL(href, 'https://kangur.local');
+    const normalizedPathname = normalizeManagedKangurPathname(parsed.pathname);
+    return normalizedPathname
+      ? `${normalizedPathname}${parsed.search}${parsed.hash}`
+      : null;
+  } catch {
+    const [pathname = '', suffix = ''] = href.split(/(?=[?#])/, 2);
+    const normalizedPathname = normalizeManagedKangurPathname(pathname);
+    return normalizedPathname ? `${normalizedPathname}${suffix}` : null;
+  }
+};
+
+const isKangurRouteSnapshotForCurrentHref = ({
+  currentHref,
+  snapshotHref,
+}: {
+  currentHref: string | null;
+  snapshotHref: string | null;
+}): boolean => {
+  if (!snapshotHref || !currentHref) return false;
+  if (snapshotHref === currentHref) return true;
+
+  const normalizedSnapshotHref = normalizeKangurRouteSnapshotHref(snapshotHref);
+  const normalizedCurrentHref = normalizeKangurRouteSnapshotHref(currentHref);
+  return Boolean(
+    normalizedSnapshotHref &&
+      normalizedCurrentHref &&
+      normalizedSnapshotHref === normalizedCurrentHref
+  );
+};
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { navigateToLogin } = useKangurAuthActions();
@@ -137,7 +175,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isNavigationTransitionActive &&
     pendingRouteLoadingSnapshot !== null &&
     pendingRouteLoadingSnapshot.href !== null &&
-    pendingRouteLoadingSnapshot.href !== currentRequestedHref;
+    !isKangurRouteSnapshotForCurrentHref({
+      currentHref: currentRequestedHref,
+      snapshotHref: pendingRouteLoadingSnapshot.href,
+    });
   const hasCommittedTargetRoute =
     (activeTransitionRequestedHref !== null && activeTransitionRequestedHref !== currentRequestedHref) ||
     (activeTransitionPageKey !== null && activeTransitionPageKey !== resolvedPageKey) ||
@@ -158,6 +199,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isNavigationTransitionActive || (boot.isRouteSkeletonVisible && !boot.isInitialMountSkeletonVisible)
       ? readKangurTopBarHeightCssValue() : null;
 
+  const previousNavigationSkeletonVisible = navSkeletonVisibleRef.current;
   const navSkeleton = useKangurNavigationSkeleton({
     embedded, isBootLoading, isLanguageSwitcherTransition, isNavigationTransitionActive,
     isRouteAcknowledging, isRoutePending, isRouteWaitingForReady, isRouteRevealing,
@@ -168,8 +210,19 @@ const AuthenticatedApp = (): JSX.Element | null => {
   });
   navSkeletonVisibleRef.current = navSkeleton.isNavigationSkeletonVisible;
 
+  const shouldIgnoreStaleNavigationSkeletonBootFrame =
+    previousNavigationSkeletonVisible &&
+    !navSkeleton.isNavigationSkeletonVisible &&
+    !isNavigationTransitionActive &&
+    !isPendingRouteSnapshotVisible &&
+    !shouldShowAcknowledgingNavigationSkeleton &&
+    !boot.isInitialMountSkeletonVisible &&
+    !boot.isInitialHomeSkeletonPhase;
+  const bootRouteSkeletonVisible = shouldIgnoreStaleNavigationSkeletonBootFrame
+    ? false
+    : boot.isRouteSkeletonVisible;
   const effectiveIsRouteSkeletonVisible =
-    boot.isRouteSkeletonVisible || navSkeleton.isNavigationSkeletonVisible;
+    bootRouteSkeletonVisible || navSkeleton.isNavigationSkeletonVisible;
   const shouldBlockInitialHomePreloads =
     isStandaloneHomeRoute && boot.shouldRunInitialHomeBoot;
   const shouldLoadRouteMotion =

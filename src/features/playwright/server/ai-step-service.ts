@@ -290,7 +290,7 @@ export const slugifyPlaywrightVerificationReviewSegment = (
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  if (normalized !== null && normalized !== undefined && normalized.length > 0) {
+  if (normalized !== undefined && normalized.length > 0) {
     return normalized;
   }
 
@@ -299,9 +299,11 @@ export const slugifyPlaywrightVerificationReviewSegment = (
 
 const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<void> => {
   if (code.trim() === '') return;
-  const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
-    ...args: string[]
-  ) => (...a: unknown[]) => Promise<unknown>;
+  const AsyncFunction = (
+    Object.getPrototypeOf(async () => {}) as {
+      constructor: new (...args: string[]) => (...a: unknown[]) => Promise<unknown>;
+    }
+  ).constructor;
   await new AsyncFunction('page', code)(page);
 };
 
@@ -550,7 +552,7 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       iteration: iterationsRun,
       code: result.code,
       done: result.done && executionError === null,
-      reasoning: lastReasoning ?? result.reasoning,
+      reasoning: lastReasoning,
       executionError,
       urlAfter: activeUrl,
       screenshotArtifactName: iterScreenshotArtifactName,
@@ -581,20 +583,34 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
   };
 }
 
-export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
-  options: CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation>
-): Promise<CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>> {
-  const currentUrl = options.currentUrl ?? safePageUrl(options.page);
-  const pageTitle = normalizeOptionalText(await options.page.title().catch(() => null));
+async function capturePageObservation(
+  page: Page,
+  options: {
+    textSelector?: string | null | undefined;
+    maxTextLength?: number | null | undefined;
+    extraFingerprintParts?: readonly unknown[] | null | undefined;
+    artifactKey: string;
+    artifacts?: PlaywrightObservationArtifacts | null | undefined;
+    screenshotKind?: string | null | undefined;
+    log?: ((message: string, context?: unknown) => void) | null | undefined;
+    screenshotFailureLogKey?: string | null | undefined;
+  }
+): Promise<PlaywrightCapturedPageObservation> {
+  const currentUrl = safePageUrl(page);
+  const pageTitle = normalizeOptionalText(await page.title().catch(() => null));
+  const effectiveTextSelector = options.textSelector?.trim() ?? '';
   const pageTextSnippet = normalizeOptionalText(
     (
-      await options.page
-        .locator(options.textSelector?.trim() || 'body')
+      await page
+        .locator(effectiveTextSelector !== '' ? effectiveTextSelector : 'body')
         .first()
         .textContent()
         .catch(() => null)
-    )?.replace(/\s+/g, ' ').slice(0, options.maxTextLength ?? 2_500) ?? null
+    )
+      ?.replace(/\s+/g, ' ')
+      .slice(0, options.maxTextLength ?? 2_500) ?? null
   );
+
   const fingerprint = buildPlaywrightObservationFingerprint([
     currentUrl ?? '',
     pageTitle ?? '',
@@ -602,39 +618,14 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
     ...(options.extraFingerprintParts ?? []),
   ]);
   const observedAt = new Date().toISOString();
-  const baseCapture: PlaywrightCapturedPageObservation = {
-    currentUrl,
-    pageTitle,
-    pageTextSnippet,
-    screenshotBase64: null,
-    screenshotArtifactName: null,
-    htmlArtifactName: null,
-    fingerprint,
-    observedAt,
-  };
-
-  if (
-    options.previousObservation !== null &&
-    options.previousObservation !== undefined &&
-    options.previousFingerprint === fingerprint
-  ) {
-    return {
-      observation: options.previousObservation,
-      review: null,
-      capture: baseCapture,
-      deduped: true,
-      injection: null,
-      injectionReEvaluated: false,
-    };
-  }
 
   let screenshotBuffer: Buffer | null = null;
   let screenshotArtifactName: string | null = null;
   let htmlArtifactName: string | null = null;
 
   try {
-    screenshotBuffer = await options.page.screenshot({ type: 'png' });
-    if (typeof options.artifacts?.file === 'function') {
+    screenshotBuffer = await page.screenshot({ type: 'png' });
+    if (typeof options.artifacts?.file === 'function' && options.artifactKey !== '') {
       const artifactPath = await options.artifacts.file(options.artifactKey, screenshotBuffer, {
         extension: 'png',
         mimeType: 'image/png',
@@ -644,95 +635,90 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
     }
   } catch (error) {
     const logMessage = normalizeOptionalText(options.screenshotFailureLogKey);
-    if (logMessage && typeof options.log === 'function') {
+    if (logMessage !== null && typeof options.log === 'function') {
       options.log(logMessage, {
         error: error instanceof Error ? error.message : String(error ?? 'Unknown error'),
       });
     }
   }
 
-  if (typeof options.artifacts?.html === 'function') {
+  if (typeof options.artifacts?.html === 'function' && options.artifactKey !== '') {
     const htmlArtifact = await options.artifacts.html(options.artifactKey).catch(() => null);
     htmlArtifactName = toArtifactName(htmlArtifact);
   }
 
-  let capture: PlaywrightCapturedPageObservation = {
-    ...baseCapture,
+  return {
+    currentUrl,
+    pageTitle,
+    pageTextSnippet,
     screenshotBase64: screenshotBuffer?.toString('base64') ?? null,
     screenshotArtifactName,
     htmlArtifactName,
+    fingerprint,
+    observedAt,
   };
-  let review = await options.evaluate(capture);
+}
 
+export async function captureAndEvaluatePlaywrightObservation<TReview, TObservation>(
+  options: CaptureAndEvaluatePlaywrightObservationOptions<TReview, TObservation>
+): Promise<CaptureAndEvaluatePlaywrightObservationResult<TReview, TObservation>> {
+  const capture = await capturePageObservation(options.page, {
+    textSelector: options.textSelector,
+    maxTextLength: options.maxTextLength,
+    extraFingerprintParts: options.extraFingerprintParts,
+    artifactKey: options.artifactKey,
+    artifacts: options.artifacts,
+    screenshotKind: options.screenshotKind,
+    log: options.log,
+    screenshotFailureLogKey: options.screenshotFailureLogKey,
+  });
+
+  if (
+    options.previousObservation !== null &&
+    options.previousObservation !== undefined &&
+    options.previousFingerprint === capture.fingerprint
+  ) {
+    return {
+      observation: options.previousObservation,
+      review: null,
+      capture,
+      deduped: true,
+      injection: null,
+      injectionReEvaluated: false,
+    };
+  }
+
+  let currentCapture = capture;
+  let review = await options.evaluate(currentCapture);
   let injection: PlaywrightInjectionAttemptResult | null = null;
   let injectionReEvaluated = false;
 
-  if (options.injectOnEvaluation?.shouldInject(review, capture)) {
+  if (options.injectOnEvaluation?.shouldInject(review, currentCapture) === true) {
     const effectiveInjectConfig: typeof options.injectOnEvaluation = {
       ...options.injectOnEvaluation,
-      log: options.injectOnEvaluation.log ?? options.log ?? undefined,
-      artifacts: options.injectOnEvaluation.artifacts ?? options.artifacts ?? undefined,
-      artifactKey: options.injectOnEvaluation.artifactKey ?? options.artifactKey ?? undefined,
+      log: options.injectOnEvaluation.log,
+      artifacts: options.injectOnEvaluation.artifacts,
+      artifactKey: options.injectOnEvaluation.artifactKey,
     };
     injection = await runPlaywrightVerificationInjectionLoop(
       options.page,
       effectiveInjectConfig,
       review,
-      capture
+      currentCapture
     );
 
-    if (options.injectOnEvaluation.reEvaluateAfterInjection) {
-      const postUrl = safePageUrl(options.page);
-      const postTitle = normalizeOptionalText(await options.page.title().catch(() => null));
-      const postTextSnippet = normalizeOptionalText(
-        (
-          await options.page
-            .locator(options.textSelector?.trim() || 'body')
-            .first()
-            .textContent()
-            .catch(() => null)
-        )?.replace(/\s+/g, ' ').slice(0, options.maxTextLength ?? 2_500) ?? null
-      );
-      const postFingerprint = buildPlaywrightObservationFingerprint([
-        postUrl ?? '',
-        postTitle ?? '',
-        postTextSnippet ?? '',
-        ...(options.extraFingerprintParts ?? []),
-      ]);
-
-      let postScreenshotBuffer: Buffer | null = null;
-      let postScreenshotArtifactName: string | null = null;
-      let postHtmlArtifactName: string | null = null;
-      const postInjectKey = `${options.artifactKey}-post-inject`;
-      try {
-        postScreenshotBuffer = await options.page.screenshot({ type: 'png' });
-        if (typeof options.artifacts?.file === 'function') {
-          const artifactPath = await options.artifacts.file(
-            postInjectKey,
-            postScreenshotBuffer,
-            { extension: 'png', mimeType: 'image/png', kind: options.screenshotKind?.trim() || 'screenshot' }
-          );
-          postScreenshotArtifactName = toArtifactName(artifactPath);
-        }
-      } catch {
-        // proceed without screenshot
-      }
-      if (typeof options.artifacts?.html === 'function') {
-        const htmlArtifact = await options.artifacts.html(postInjectKey).catch(() => null);
-        postHtmlArtifactName = toArtifactName(htmlArtifact);
-      }
-
-      capture = {
-        currentUrl: postUrl,
-        pageTitle: postTitle,
-        pageTextSnippet: postTextSnippet,
-        screenshotBase64: postScreenshotBuffer?.toString('base64') ?? null,
-        screenshotArtifactName: postScreenshotArtifactName,
-        htmlArtifactName: postHtmlArtifactName,
-        fingerprint: postFingerprint,
-        observedAt: new Date().toISOString(),
-      };
-      review = await options.evaluate(capture);
+    if (options.injectOnEvaluation.reEvaluateAfterInjection === true) {
+      currentCapture = await capturePageObservation(options.page, {
+        textSelector: options.textSelector,
+        maxTextLength: options.maxTextLength,
+        extraFingerprintParts: options.extraFingerprintParts,
+        artifactKey: `${options.artifactKey}-post-inject`,
+        artifacts: options.artifacts,
+        screenshotKind: options.screenshotKind,
+        log: options.log,
+        screenshotFailureLogKey: options.screenshotFailureLogKey,
+      });
+      review = await options.evaluate(currentCapture);
       injectionReEvaluated = true;
     }
 
@@ -744,17 +730,16 @@ export async function captureAndEvaluatePlaywrightObservation<TReview, TObservat
   }
 
   return {
-    observation: options.buildObservation({ capture, review }),
+    observation: options.buildObservation({ capture: currentCapture, review }),
     review,
-    capture,
+    capture: currentCapture,
     deduped: false,
     injection,
     injectionReEvaluated,
   };
-}
+  }
 
-export async function evaluateStructuredPlaywrightScreenshotWithAI<TParsed>(
-  options: PlaywrightStructuredScreenshotEvaluationOptions<TParsed>
+  export async function evaluateStructuredPlaywrightScreenshotWithAI<TParsed>(  options: PlaywrightStructuredScreenshotEvaluationOptions<TParsed>
 ): Promise<PlaywrightStructuredScreenshotEvaluationResult<TParsed>> {
   if (options.screenshotBase64 === null) {
     return {
@@ -1375,8 +1360,12 @@ export const finalizePlaywrightVerificationReview = async <
     warning: stepOutcome.warning,
     url: options.currentUrl,
     details: options.details,
-    ...(options.runtime.step.group ? { group: options.runtime.step.group } : {}),
-    ...(options.runtime.step.label ? { label: options.runtime.step.label } : {}),
+    ...(options.runtime.step.group !== undefined && options.runtime.step.group !== ''
+      ? { group: options.runtime.step.group }
+      : {}),
+    ...(options.runtime.step.label !== undefined && options.runtime.step.label !== ''
+      ? { label: options.runtime.step.label }
+      : {}),
   });
 
   await persistPlaywrightObservationReviewArtifacts({
@@ -1816,7 +1805,7 @@ export async function evaluateStepWithAI(
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userContent as string },
     ],
-    temperature: brainConfig.temperature ?? 0,
+    temperature: brainConfig.temperature,
   });
 
   return { output: result.text, modelId: result.modelId };
@@ -2121,7 +2110,7 @@ export type PlaywrightVisionGuidedAutomationOptions = {
  * done, `maxIterations` is reached, or `timeoutMs` elapses.
  */
 async function captureIteration(
-  options: any,
+  options: PlaywrightVisionGuidedAutomationOptions,
   iterationsRun: number
 ): Promise<{
   screenshotBase64: string | null;
@@ -2134,7 +2123,7 @@ async function captureIteration(
     options.page.content().catch(() => null),
     options.page.screenshot({ type: 'png' }).catch(() => null),
   ]);
-  const screenshotBase64 = screenshotBuffer?.toString('base64') ?? null;
+  const screenshotBase64 = screenshotBuffer !== null ? screenshotBuffer.toString('base64') : null;
   let activeUrl: string | null = null;
   try {
     activeUrl = options.page.url();
@@ -2144,9 +2133,9 @@ async function captureIteration(
 
   let iterScreenshotArtifactName: string | null = null;
   let iterHtmlArtifactName: string | null = null;
-  if (options.artifactKey) {
+  if (options.artifactKey !== null && options.artifactKey !== undefined && options.artifactKey !== '') {
     const iterKey = `${options.artifactKey}-iter-${iterationsRun}`;
-    if (screenshotBuffer && typeof options.artifacts?.file === 'function') {
+    if (screenshotBuffer !== null && typeof options.artifacts?.file === 'function') {
       try {
         const artifactPath = await options.artifacts.file(iterKey, screenshotBuffer, {
           extension: 'png',
@@ -2395,7 +2384,9 @@ export async function runPlaywrightVisionGuidedAutomation(
 
   if (
     typeof options.artifacts?.json === 'function' &&
-    options.artifactKey &&
+    options.artifactKey !== undefined &&
+    options.artifactKey !== null &&
+    options.artifactKey !== '' &&
     iterationRecords.length > 0
   ) {
     await options.artifacts
@@ -2446,3 +2437,4 @@ export function createPlaywrightVisionGuidedEvaluator<TParsed>(
 
   return evaluate;
 }
+

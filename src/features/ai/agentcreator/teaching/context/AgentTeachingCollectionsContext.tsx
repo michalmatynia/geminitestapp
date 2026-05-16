@@ -45,6 +45,20 @@ const {
 });
 export { useAgentTeachingCollectionsContext };
 
+const resolveEmbeddingModel = (
+  editingItem: AgentTeachingEmbeddingCollectionRecord | null,
+  brainModel: string,
+  draftModel: string
+): string => {
+  const editingModel = editingItem?.embeddingModel.trim() ?? '';
+  if (editingModel !== '') return editingModel;
+  if (brainModel !== '') return brainModel;
+  return draftModel;
+};
+
+const resolveCollectionName = (draft: Partial<AgentTeachingEmbeddingCollectionRecord>): string =>
+  draft.name?.trim() ?? '';
+
 const useCollectionActions = (args: {
   upsert: (vars: { id?: string; name: string; description: string | null; embeddingModel: string }) => Promise<unknown>,
   remove: (vars: { id: string }) => Promise<unknown>,
@@ -67,29 +81,29 @@ const useCollectionActions = (args: {
   };
 
   const handleSave = async (): Promise<void> => {
-    const name = draft.name?.trim();
-    if (name === undefined || name === '') {
+    const name = resolveCollectionName(draft);
+    if (name === '') {
       toast('Collection name is required.', { variant: 'error' });
       return;
     }
 
     const brainModel = embeddingModelId.trim();
     const draftModel = draft.embeddingModel?.trim() ?? '';
-    const editingModel = editingItem?.embeddingModel.trim() ?? '';
-
-    const model = editingModel !== '' ? editingModel : (brainModel !== '' ? brainModel : draftModel);
-
+    const model = resolveEmbeddingModel(editingItem, brainModel, draftModel);
     if (model === '') {
       toast('Configure Agent Teaching Embeddings in AI Brain first.', { variant: 'error' });
       return;
     }
+
     try {
       await saveCollection(editingItem, draft, model);
-      toast(editingItem ? 'Collection updated.' : 'Collection created.', { variant: 'success' });
+      const message = editingItem !== null ? 'Collection updated.' : 'Collection created.';
+      toast(message, { variant: 'success' });
       closeModal();
     } catch (error) {
       logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save collection.', { variant: 'error' });
+      const errorMsg = error instanceof Error ? error.message : 'Failed to save collection.';
+      toast(errorMsg, { variant: 'error' });
     }
   };
 
@@ -100,7 +114,8 @@ const useCollectionActions = (args: {
       toast('Collection deleted.', { variant: 'success' });
     } catch (error) {
       logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to delete collection.', { variant: 'error' });
+      const message = error instanceof Error ? error.message : 'Failed to delete collection.';
+      toast(message, { variant: 'error' });
     } finally {
       setItemToDelete(null);
     }
@@ -109,28 +124,29 @@ const useCollectionActions = (args: {
   return { handleSave, handleDelete };
 };
 
-const useAgentTeachingCollections = (): AgentTeachingCollectionsContextValue => {
-  const { toast } = useToast();
-  const { collections, agents, embeddingModelId, isLoading } = useAgentTeachingQueriesContext();
+interface AgentTeachingCollectionsModals {
+  isModalOpen: boolean;
+  editingItem: AgentTeachingEmbeddingCollectionRecord | null;
+  draft: Partial<AgentTeachingEmbeddingCollectionRecord>;
+  setDraft: React.Dispatch<React.SetStateAction<Partial<AgentTeachingEmbeddingCollectionRecord>>>;
+  itemToDelete: AgentTeachingEmbeddingCollectionRecord | null;
+  setItemToDelete: (item: AgentTeachingEmbeddingCollectionRecord | null) => void;
+  openCreate: (defaultModel: string) => void;
+  openEdit: (item: AgentTeachingEmbeddingCollectionRecord) => void;
+  closeModal: () => void;
+}
 
-  const embeddingModels = useMemo(() => {
-    const normalized = embeddingModelId.trim();
-    return normalized.length > 0 ? [normalized] : [];
-  }, [embeddingModelId]);
-
-  const { mutateAsync: upsert, isPending: isSaving } = useUpsertEmbeddingCollectionMutation();
-  const { mutateAsync: remove, isPending: isDeleting } = useDeleteEmbeddingCollectionMutation();
-
+function useAgentTeachingCollectionsModals(): AgentTeachingCollectionsModals {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
   const [draft, setDraft] = useState<Partial<AgentTeachingEmbeddingCollectionRecord>>({});
   const [itemToDelete, setItemToDelete] = useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
 
-  const openCreate = useCallback(() => {
+  const openCreate = useCallback((defaultModel: string) => {
     setEditingItem(null);
-    setDraft({ name: '', description: '', embeddingModel: embeddingModels[0] ?? '' });
+    setDraft({ name: '', description: '', embeddingModel: defaultModel });
     setIsModalOpen(true);
-  }, [embeddingModels]);
+  }, []);
 
   const openEdit = useCallback((item: AgentTeachingEmbeddingCollectionRecord) => {
     setEditingItem(item);
@@ -144,15 +160,29 @@ const useAgentTeachingCollections = (): AgentTeachingCollectionsContextValue => 
     setDraft({});
   }, []);
 
+  return {
+    isModalOpen, editingItem, draft, setDraft, itemToDelete, setItemToDelete,
+    openCreate, openEdit, closeModal
+  };
+}
+
+const useAgentTeachingCollections = (): AgentTeachingCollectionsContextValue => {
+  const { toast } = useToast();
+  const { collections, agents, embeddingModelId, isLoading } = useAgentTeachingQueriesContext();
+  const { mutateAsync: upsert, isPending: isSaving } = useUpsertEmbeddingCollectionMutation();
+  const { mutateAsync: remove, isPending: isDeleting } = useDeleteEmbeddingCollectionMutation();
+
+  const embeddingModels = useMemo(() => {
+    const normalized = embeddingModelId.trim();
+    return normalized.length > 0 ? [normalized] : [];
+  }, [embeddingModelId]);
+
+  const modals = useAgentTeachingCollectionsModals();
+
   const { handleSave, handleDelete } = useCollectionActions({
-    upsert,
-    remove,
-    toast,
-    closeModal,
-    editingItem,
-    draft,
-    embeddingModelId,
-    setItemToDelete,
+    upsert, remove, toast, closeModal: modals.closeModal,
+    editingItem: modals.editingItem, draft: modals.draft,
+    embeddingModelId, setItemToDelete: modals.setItemToDelete,
   });
 
   const getUsedByCount = useCallback(
@@ -162,22 +192,13 @@ const useAgentTeachingCollections = (): AgentTeachingCollectionsContextValue => 
   );
 
   return {
-    collections,
-    embeddingModels,
-    isLoading,
-    isSaving,
-    isDeleting,
-    isModalOpen,
-    editingItem,
-    draft,
-    setDraft,
-    itemToDelete,
-    setItemToDelete,
-    openCreate,
-    openEdit,
-    closeModal,
-    handleSave,
-    handleDelete: () => handleDelete(itemToDelete),
+    collections, embeddingModels, isLoading, isSaving, isDeleting,
+    isModalOpen: modals.isModalOpen, editingItem: modals.editingItem,
+    draft: modals.draft, setDraft: modals.setDraft,
+    itemToDelete: modals.itemToDelete, setItemToDelete: modals.setItemToDelete,
+    openCreate: () => modals.openCreate(embeddingModels[0] ?? ''),
+    openEdit: modals.openEdit, closeModal: modals.closeModal,
+    handleSave, handleDelete: () => handleDelete(modals.itemToDelete),
     getUsedByCount,
   };
 };

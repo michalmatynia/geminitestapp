@@ -9,10 +9,8 @@ import { type FileUploadEventRecord } from '../hooks/useFileUploadEvents';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function useFileUploadEventsTableProps() {
-  const { events, isFetching: isLoading } = useFileUploadEventsContext();
-
-  const columns = useMemo<ColumnDef<FileUploadEventRecord>[]>(
+function useFileUploadEventsColumns(): ColumnDef<FileUploadEventRecord>[] {
+  return useMemo<ColumnDef<FileUploadEventRecord>[]>(
     () => [
       {
         accessorKey: 'createdAt',
@@ -78,6 +76,15 @@ export function useFileUploadEventsTableProps() {
     ],
     []
   );
+}
+
+export function useFileUploadEventsTableProps(): {
+  columns: ColumnDef<FileUploadEventRecord>[];
+  data: FileUploadEventRecord[];
+  isLoading: boolean;
+} {
+  const { events, isFetching: isLoading } = useFileUploadEventsContext();
+  const columns = useFileUploadEventsColumns();
 
   return useMemo(
     () => ({
@@ -88,3 +95,4 @@ export function useFileUploadEventsTableProps() {
     [columns, events, isLoading]
   );
 }
+

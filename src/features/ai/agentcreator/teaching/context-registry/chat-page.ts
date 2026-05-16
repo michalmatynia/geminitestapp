@@ -64,6 +64,20 @@ const summarizeSource = (
   textPreview: (source.text ?? '').trim().slice(0, 600),
 });
 
+const buildWorkspaceSnapshotItem = (
+  input: BuildAgentTeachingChatContextBundleInput
+): Record<string, unknown> => ({
+  selectedAgentId: input.selectedAgent?.id ?? null,
+  selectedAgentName: input.selectedAgent?.name ?? null,
+  agentCount: input.agents.length,
+  collectionCount: input.collections.length,
+  messageCount: input.messages.length,
+  lastRetrievedSourceCount: input.lastSources.length,
+  configuredChatModelId: input.chatModelId.length > 0 ? input.chatModelId : null,
+  configuredEmbeddingModelId:
+    input.embeddingModelId.length > 0 ? input.embeddingModelId : null,
+});
+
 const buildChatSections = (
   input: BuildAgentTeachingChatContextBundleInput,
   collectionNamesById: Map<string, string>
@@ -72,19 +86,7 @@ const buildChatSections = (
     {
       kind: 'facts',
       title: 'Workspace snapshot',
-      items: [
-        {
-          selectedAgentId: input.selectedAgent?.id ?? null,
-          selectedAgentName: input.selectedAgent?.name ?? null,
-          agentCount: input.agents.length,
-          collectionCount: input.collections.length,
-          messageCount: input.messages.length,
-          lastRetrievedSourceCount: input.lastSources.length,
-          configuredChatModelId: input.chatModelId.length > 0 ? input.chatModelId : null,
-          configuredEmbeddingModelId:
-            input.embeddingModelId.length > 0 ? input.embeddingModelId : null,
-        },
-      ],
+      items: [buildWorkspaceSnapshotItem(input)],
     },
     {
       kind: 'items',

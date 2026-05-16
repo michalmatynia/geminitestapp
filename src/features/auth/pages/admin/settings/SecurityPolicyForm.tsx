@@ -14,11 +14,11 @@ export function SecurityPolicyForm({
   securityPolicy: AuthSecurityPolicy;
   setSecurityPolicy: React.Dispatch<React.SetStateAction<AuthSecurityPolicy>>;
   setSecurityDirty: (val: boolean) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
   isSaving: boolean;
   securityDirty: boolean;
-}) {
-  const updatePolicy = (key: keyof AuthSecurityPolicy, value: any) => {
+}): React.JSX.Element {
+  const updatePolicy = (key: keyof AuthSecurityPolicy, value: string | number | boolean): void => {
     setSecurityPolicy((prev) => ({ ...prev, [key]: value }));
     setSecurityDirty(true);
   };

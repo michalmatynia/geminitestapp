@@ -7,16 +7,16 @@ export const readErrorResponse = async (
   try {
     const data = (await res.json()) as { error?: string; errorId?: string };
     return {
-      message: data.error || defaultErrorMessage,
+      message: typeof data.error === 'string' && data.error !== '' ? data.error : defaultErrorMessage,
       ...(typeof data.errorId === 'string' ? { errorId: data.errorId } : {}),
     };
   } catch (error) {
     logClientError(error);
     try {
       const text = await res.text();
-      return { message: text || defaultErrorMessage };
-    } catch (error) {
-      logClientError(error);
+      return { message: text !== '' ? text : defaultErrorMessage };
+    } catch (innerError) {
+      logClientError(innerError);
       return { message: defaultErrorMessage };
     }
   }
@@ -39,8 +39,8 @@ export const fetchWithTimeout = async (
 export const readErrorMessage = async (res: Response, fallbackMessage: string): Promise<string> => {
   const error = await readErrorResponse(res);
   const message =
-    error.message && error.message !== defaultErrorMessage ? error.message : fallbackMessage;
-  const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : '';
+    error.message !== '' && error.message !== defaultErrorMessage ? error.message : fallbackMessage;
+  const suffix = typeof error.errorId === 'string' && error.errorId !== '' ? ` (Error ID: ${error.errorId})` : '';
   return `${message}${suffix}`;
 };
 
@@ -50,7 +50,7 @@ export const requestJson = async <T>(
   options?: { timeoutMs?: number; fallbackMessage?: string }
 ): Promise<T> => {
   const initOptions = init ?? {};
-  const res = options?.timeoutMs
+  const res = typeof options?.timeoutMs === 'number'
     ? await fetchWithTimeout(input, initOptions, options.timeoutMs)
     : await fetch(input, initOptions);
   if (!res.ok) {

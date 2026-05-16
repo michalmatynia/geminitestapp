@@ -4,15 +4,15 @@ interface ChatMessageContentProps {
   content: string;
 }
 
-export function ChatMessageContent({ content }: ChatMessageContentProps): React.JSX.Element {
-  const renderInline = (text: string): React.ReactNode[] => {
-    const parts = text.split('**');
-    return parts.map(
-      (part: string, index: number): React.ReactNode =>
-        index % 2 === 1 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>
-    );
-  };
+function renderInline(text: string): React.ReactNode[] {
+  const parts = text.split('**');
+  return parts.map(
+    (part: string, index: number): React.ReactNode =>
+      index % 2 === 1 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>
+  );
+}
 
+export function ChatMessageContent({ content }: ChatMessageContentProps): React.JSX.Element {
   const lines = content.split('\n');
   const blocks: React.ReactNode[] = [];
   let listItems: string[] = [];
@@ -33,7 +33,7 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
 
   lines.forEach((line: string, index: number): void => {
     const trimmed: string = line.trim();
-    if (!trimmed) {
+    if (trimmed === '') {
       flushList(`list-${index}`);
       blocks.push(<div key={`spacer-${index}`} className='h-2' />);
       return;
@@ -46,40 +46,30 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
           {renderInline(trimmed.slice(4))}
         </h3>
       );
-      return;
-    }
-
-    if (trimmed.startsWith('## ')) {
+    } else if (trimmed.startsWith('## ')) {
       flushList(`list-${index}`);
       blocks.push(
         <h2 key={`h2-${index}`} className='text-base font-semibold text-white'>
           {renderInline(trimmed.slice(3))}
         </h2>
       );
-      return;
-    }
-
-    if (trimmed.startsWith('# ')) {
+    } else if (trimmed.startsWith('# ')) {
       flushList(`list-${index}`);
       blocks.push(
         <h1 key={`h1-${index}`} className='text-lg font-semibold text-white'>
           {renderInline(trimmed.slice(2))}
         </h1>
       );
-      return;
-    }
-
-    if (trimmed.startsWith('- ')) {
+    } else if (trimmed.startsWith('- ')) {
       listItems.push(trimmed.slice(2));
-      return;
+    } else {
+      flushList(`list-${index}`);
+      blocks.push(
+        <p key={`p-${index}`} className='leading-relaxed text-slate-100'>
+          {renderInline(trimmed)}
+        </p>
+      );
     }
-
-    flushList(`list-${index}`);
-    blocks.push(
-      <p key={`p-${index}`} className='leading-relaxed text-slate-100'>
-        {renderInline(trimmed)}
-      </p>
-    );
   });
 
   flushList('list-final');

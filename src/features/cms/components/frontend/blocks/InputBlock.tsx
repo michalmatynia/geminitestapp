@@ -6,7 +6,6 @@ import { Input } from '@/shared/ui/primitives.public';
 import {
   resolveCmsRuntimeAction,
   useOptionalCmsRuntime,
-  type CmsRuntimeContextValue,
 } from '../CmsRuntimeContext';
 import { useRequiredBlockSettings } from './BlockContext';
 
@@ -34,9 +33,9 @@ const resolveInputMaxLength = (value: unknown): number | undefined =>
 const resolveInputBlockSettings = (settings: Record<string, unknown>): InputBlockResolvedSettings => ({
   controlledValue: resolveInputValue(settings['inputValue']),
   placeholder: typeof settings['inputPlaceholder'] === 'string' ? settings['inputPlaceholder'] : '',
-  inputAriaLabel: typeof settings['inputAriaLabel'] === 'string' ? (settings['inputAriaLabel'] as string).trim() : '',
+  inputAriaLabel: typeof settings['inputAriaLabel'] === 'string' ? (settings['inputAriaLabel']).trim() : '',
   inputType: typeof settings['inputType'] === 'string' ? settings['inputType'] : 'text',
-  autoComplete: typeof settings['inputAutoComplete'] === 'string' ? (settings['inputAutoComplete'] as string).trim() : '',
+  autoComplete: typeof settings['inputAutoComplete'] === 'string' ? (settings['inputAutoComplete']).trim() : '',
   maxLength: resolveInputMaxLength(settings['inputMaxLength']),
   disabled: resolveBoolean(settings['inputDisabled']),
 });
@@ -76,11 +75,11 @@ export function InputBlock(): React.JSX.Element {
     useMemo(() => resolveInputBlockSettings(settings), [settings]);
 
   const changeAction = useMemo(
-    () => resolveCmsRuntimeAction(runtime as CmsRuntimeContextValue | null, settings['inputChangeActionSource'] as string, settings['inputChangeActionPath'] as string),
+    () => resolveCmsRuntimeAction(runtime, settings['inputChangeActionSource'] as string, settings['inputChangeActionPath'] as string),
     [runtime, settings]
   );
   const submitAction = useMemo(
-    () => resolveCmsRuntimeAction(runtime as CmsRuntimeContextValue | null, settings['inputSubmitActionSource'] as string, settings['inputSubmitActionPath'] as string),
+    () => resolveCmsRuntimeAction(runtime, settings['inputSubmitActionSource'] as string, settings['inputSubmitActionPath'] as string),
     [runtime, settings]
   );
 

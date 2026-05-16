@@ -48,9 +48,7 @@ const shouldRefreshKangurSeededLiteStore = (
   }
 
   const liteSettingKeys = new Set(liteSettings.map(({ key }) => key));
-  return KANGUR_STOREFRONT_CRITICAL_LITE_SETTINGS.some(
-    (key) => !liteSettingKeys.has(key)
-  );
+  return KANGUR_STOREFRONT_CRITICAL_LITE_SETTINGS.some((key) => !liteSettingKeys.has(key));
 };
 
 const createKangurAppearanceSettingsEntries = (
@@ -77,8 +75,11 @@ const createKangurInitialSettingsEntries = ({
   initialState: KangurStorefrontInitialState;
   liteSettings: ReadonlyArray<SettingRecord>;
 }): Array<readonly [string, string]> => {
-  const entries = new Map<string, string>(createKangurAppearanceSettingsEntries(initialState));
+  const entries = new Map<string, string>();
   liteSettings.forEach(({ key, value }) => {
+    entries.set(key, value);
+  });
+  createKangurAppearanceSettingsEntries(initialState).forEach(([key, value]) => {
     entries.set(key, value);
   });
   return Array.from(entries.entries());

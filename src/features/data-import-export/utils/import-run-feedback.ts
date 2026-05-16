@@ -41,6 +41,21 @@ export const resolveLiveImportResult = (
   };
 };
 
+const isPreflightEquivalent = (
+  left: ImportResponse['preflight'],
+  right: ImportResponse['preflight']
+): boolean => JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+
+const isBaseEquivalent = (
+  left: ImportResponse,
+  right: ImportResponse
+): boolean =>
+  left.runId === right.runId &&
+  left.status === right.status &&
+  left.queueJobId === right.queueJobId &&
+  left.dispatchMode === right.dispatchMode &&
+  left.summaryMessage === right.summaryMessage;
+
 export const areImportResponsesEquivalent = (
   left: ImportResponse | null,
   right: ImportResponse | null
@@ -48,15 +63,10 @@ export const areImportResponsesEquivalent = (
   if (left === right) return true;
   if (left === null || right === null) return false;
 
-  return (
-    left.runId === right.runId &&
-    left.status === right.status &&
-    left.queueJobId === right.queueJobId &&
-    left.dispatchMode === right.dispatchMode &&
-    left.summaryMessage === right.summaryMessage &&
-    JSON.stringify(left.preflight ?? null) === JSON.stringify(right.preflight ?? null)
-  );
+  return isBaseEquivalent(left, right) && isPreflightEquivalent(left.preflight, right.preflight);
 };
+
+
 
 const getDispatchModeLabel = (dispatchMode: string | null): string => {
   if (dispatchMode === 'queued') return 'queued (base-import runtime queue)';
@@ -130,38 +140,58 @@ const getFailedRunMessage = (result: ImportResponse, preflightErrors: string[]):
   return result.summaryMessage ?? 'Import failed.';
 };
 
+const getRunningRunToast = (label: string, result: ImportResponse): { message: string; toast: ToastOptions } => {
+  const suffix = result.queueJobId !== null ? ` (job ${result.queueJobId}).` : '.';
+  const msg = getQueuedRunMessage(label, result, suffix);
+  return {
+    message: msg,
+    toast: { variant: result.dispatchMode === 'inline' ? 'warning' : 'success' },
+  };
+};
+
+const getCompletedRunToast = (label: string, result: ImportResponse): { message: string; toast: ToastOptions } => ({
+  message: result.summaryMessage ?? `${label} completed.`,
+  toast: { variant: 'success' },
+});
+
+const getFailedRunToast = (result: ImportResponse): { message: string; toast: ToastOptions } => ({
+  message: getFailedRunMessage(result, getPreflightErrorMessages(result)),
+  toast: { variant: 'error' },
+});
+
+const getFallbackRunToast = (label: string, result: ImportResponse): { message: string; toast: ToastOptions } => ({
+  message: result.summaryMessage ?? `${label} updated.`,
+  toast: { variant: 'info' },
+});
+
+const getImportMetadata = (result: ImportResponse, options: { kind: ImportActionKind; dryRun?: boolean }): { label: string } => {
+  const isExactTarget = (result.summaryMessage?.startsWith('Queued exact ') ?? false);
+  const label = getImportLabel(options.kind, options.dryRun ?? false, isExactTarget);
+  return { label };
+};
+
+
 export const buildImportResultToast = (
   result: ImportResponse,
   options: { kind: ImportActionKind; dryRun?: boolean }
 ): { message: string; toast: ToastOptions } => {
-  const isExactTarget = (result.summaryMessage?.startsWith('Queued exact ') ?? false);
-  const label = getImportLabel(options.kind, options.dryRun ?? false, isExactTarget);
+  const { label } = getImportMetadata(result, options);
 
   if (result.status === 'queued' || result.status === 'running') {
-    const suffix = result.queueJobId !== null ? ` (job ${result.queueJobId}).` : '.';
-    const msg = getQueuedRunMessage(label, result, suffix);
-    return {
-      message: msg,
-      toast: { variant: result.dispatchMode === 'inline' ? 'warning' : 'success' },
-    };
+    return getRunningRunToast(label, result);
   }
 
   if (result.status === 'completed' || result.status === 'partial_success') {
-    return {
-      message: result.summaryMessage ?? `${label} completed.`,
-      toast: { variant: 'success' },
-    };
+    return getCompletedRunToast(label, result);
   }
 
   if (result.status === 'failed') {
-    return {
-      message: getFailedRunMessage(result, getPreflightErrorMessages(result)),
-      toast: { variant: 'error' },
-    };
+    return getFailedRunToast(result);
   }
 
-  return {
-    message: result.summaryMessage ?? `${label} updated.`,
-    toast: { variant: 'info' },
-  };
+  return getFallbackRunToast(label, result);
 };
+
+
+
+

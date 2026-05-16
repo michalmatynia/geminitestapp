@@ -90,13 +90,9 @@ describe('KangurFeatureApp', () => {
     rerender(<KangurFeatureApp />);
 
     expect(kangurPageRenderSpyMock).toHaveBeenCalledTimes(1);
-    expect(kangurAiTutorWidgetRenderSpyMock).toHaveBeenCalledTimes(
-      initialAiTutorWidgetRenderCount
-    );
+    expect(kangurAiTutorWidgetRenderSpyMock).toHaveBeenCalledTimes(initialAiTutorWidgetRenderCount);
     expect(kangurAppLoaderRenderSpyMock).toHaveBeenCalledTimes(initialAppLoaderRenderCount);
-    expect(kangurLoginModalRenderSpyMock).toHaveBeenCalledTimes(
-      initialLoginModalRenderCount
-    );
+    expect(kangurLoginModalRenderSpyMock).toHaveBeenCalledTimes(initialLoginModalRenderCount);
     expect(kangurProgressSyncProviderRenderSpyMock).toHaveBeenCalledTimes(
       initialProgressSyncProviderRenderCount
     );
@@ -194,6 +190,11 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-game')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
 
     await act(async () => {
@@ -201,9 +202,7 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Game:default'
-    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game:default');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-inline-top-navigation-skeleton',
       'false'
@@ -235,6 +234,11 @@ describe('KangurFeatureApp', () => {
     render(<KangurFeatureApp />);
 
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
 
     await act(async () => {
@@ -242,9 +246,7 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Game:default'
-    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game:default');
     expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
   });
 
@@ -276,8 +278,9 @@ describe('KangurFeatureApp', () => {
   });
 
   it('does not replay the initial root skeleton after the home handoff already completed', () => {
-    (window as Window & { __kangurInitialHomeBootComplete?: boolean })
-      .__kangurInitialHomeBootComplete = true;
+    (
+      window as Window & { __kangurInitialHomeBootComplete?: boolean }
+    ).__kangurInitialHomeBootComplete = true;
     routingStateMock.mockReturnValue({
       pageKey: 'Game',
       embedded: false,
@@ -766,7 +769,9 @@ describe('KangurFeatureApp', () => {
       screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeNull();
     expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Game:game-home');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:game-home'
+    );
   });
 
   it('shows the pending route snapshot skeleton immediately on the first click handoff', () => {
@@ -837,7 +842,9 @@ describe('KangurFeatureApp', () => {
     expect(
       screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
   });
 
   it('keeps the target route hidden while the destination is still loading', () => {
@@ -1132,7 +1139,9 @@ describe('KangurFeatureApp', () => {
     expect(
       screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
     expect(screen.getByTestId('kangur-page-transition-skeleton-motion')).toHaveAttribute(
       'data-motion-initial',
       JSON.stringify({ opacity: 0 })
@@ -1206,7 +1215,9 @@ describe('KangurFeatureApp', () => {
     expect(
       screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
     ).toBeNull();
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent('Lessons:lessons-library');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
   });
 
   it('renders the very first home-to-lessons skeleton frame in standalone mode', async () => {
@@ -1390,5 +1401,4 @@ describe('KangurFeatureApp', () => {
       '136px'
     );
   });
-
 });

@@ -18,12 +18,12 @@ export const PreviewProgressBlock: React.FC<PreviewProgressBlockProps> = ({
   wrapInspector,
 }) => {
   const resolvedSettings = block.settings;
-  const value = typeof resolvedSettings['progressValue'] === 'number' ? (resolvedSettings['progressValue'] as number) : 0;
-  const max = typeof resolvedSettings['progressMax'] === 'number' && (resolvedSettings['progressMax'] as number) > 0 ? (resolvedSettings['progressMax'] as number) : 100;
-  const height = typeof resolvedSettings['progressHeight'] === 'number' && (resolvedSettings['progressHeight'] as number) > 0 ? (resolvedSettings['progressHeight'] as number) : 12;
-  const borderRadius = typeof resolvedSettings['borderRadius'] === 'number' && (resolvedSettings['borderRadius'] as number) >= 0 ? (resolvedSettings['borderRadius'] as number) : 999;
-  const fillColor = typeof resolvedSettings['fillColor'] === 'string' && (resolvedSettings['fillColor'] as string).trim().length > 0 ? (resolvedSettings['fillColor'] as string) : '#6366f1';
-  const trackColor = typeof resolvedSettings['trackColor'] === 'string' && (resolvedSettings['trackColor'] as string).trim().length > 0 ? (resolvedSettings['trackColor'] as string) : '#e2e8f0';
+  const value = typeof resolvedSettings['progressValue'] === 'number' ? (resolvedSettings['progressValue']) : 0;
+  const max = typeof resolvedSettings['progressMax'] === 'number' && (resolvedSettings['progressMax']) > 0 ? (resolvedSettings['progressMax']) : 100;
+  const height = typeof resolvedSettings['progressHeight'] === 'number' && (resolvedSettings['progressHeight']) > 0 ? (resolvedSettings['progressHeight']) : 12;
+  const borderRadius = typeof resolvedSettings['borderRadius'] === 'number' && (resolvedSettings['borderRadius']) >= 0 ? (resolvedSettings['borderRadius']) : 999;
+  const fillColor = typeof resolvedSettings['fillColor'] === 'string' && (resolvedSettings['fillColor']).trim().length > 0 ? (resolvedSettings['fillColor']) : '#6366f1';
+  const trackColor = typeof resolvedSettings['trackColor'] === 'string' && (resolvedSettings['trackColor']).trim().length > 0 ? (resolvedSettings['trackColor']) : '#e2e8f0';
   const showPercentage = resolvedSettings['showPercentage'] === true || resolvedSettings['showPercentage'] === 'true';
   const percent = Math.max(0, Math.min(100, (value / max) * 100));
 

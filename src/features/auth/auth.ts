@@ -279,7 +279,6 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         }
       },
       session({ session, token }): Session {
-        if (session.user === undefined) return session;
         return {
           ...session,
           user: getSessionUser(token, session.user),

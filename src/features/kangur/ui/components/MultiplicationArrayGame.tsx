@@ -8,10 +8,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { getKangurMiniGameFinishLabel } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import { type KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { safeSetTimeout } from '@/shared/lib/timers';
 
-import { MultiplicationArrayProblem, pickProblem } from './multiplication-game/constants';
+import { type MultiplicationArrayProblem, pickProblem } from './multiplication-game/constants';
 import { MultiplicationArrayGameContext } from './multiplication-game/context';
 import {
   clearMultiplicationArrayAdvanceTimeout,

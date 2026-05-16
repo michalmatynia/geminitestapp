@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Button, Input } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';
 
-export function AddPermissionForm({ onAdd }: { onAdd: (id: string, name: string, desc: string) => void }) {
+export function AddPermissionForm({ onAdd }: { onAdd: (id: string, name: string, desc: string) => void }): React.JSX.Element {
   const [id, setId] = useState('');
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
 
-  const handleAdd = () => {
+  const handleAdd = (): void => {
     onAdd(id, name, desc);
     setId(''); setName(''); setDesc('');
   };

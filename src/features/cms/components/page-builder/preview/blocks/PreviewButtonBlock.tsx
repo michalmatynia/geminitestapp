@@ -38,9 +38,9 @@ export const PreviewButtonBlock: React.FC<PreviewButtonBlockProps> = ({
   
   const hasRuntimeDisabledBinding =
     typeof resolvedSettings['buttonDisabledSource'] === 'string' &&
-    (resolvedSettings['buttonDisabledSource'] as string).trim().length > 0 &&
+    (resolvedSettings['buttonDisabledSource']).trim().length > 0 &&
     typeof resolvedSettings['buttonDisabledPath'] === 'string' &&
-    (resolvedSettings['buttonDisabledPath'] as string).trim().length > 0;
+    (resolvedSettings['buttonDisabledPath']).trim().length > 0;
 
   let runtimeDisabledValue: unknown;
   try {
@@ -82,7 +82,7 @@ export const PreviewButtonBlock: React.FC<PreviewButtonBlockProps> = ({
       {renderSelectionButton('left-2 top-2')}
       <button
         type='button'
-        disabled={!!isDisabled}
+        disabled={Boolean(isDisabled)}
         className={cn(
           'pointer-events-none inline-flex rounded-md px-6 py-2.5 text-sm font-semibold transition',
           style === 'outline' ? 'border-2 border-white text-white' : 'bg-white text-gray-900',

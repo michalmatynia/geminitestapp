@@ -61,7 +61,7 @@ function AuthUserPagesForm(): React.JSX.Element {
       <UserPagesHeader />
       <AuthFlowsSection settings={settings} onToggle={handleToggle} />
       <FormActions
-        onSave={() => void handleSave()}
+        onSave={() => { void handleSave(); }}
         saveText='Save user page settings'
         isDisabled={!dirty || updateSetting.isPending}
         isSaving={updateSetting.isPending}
@@ -71,7 +71,7 @@ function AuthUserPagesForm(): React.JSX.Element {
   );
 }
 
-function UserPagesHeader() {
+function UserPagesHeader(): React.JSX.Element {
   return (
     <FormSection
       title='User Pages'
@@ -91,7 +91,7 @@ function AuthFlowsSection({
 }: {
   settings: AuthUserPageSettings;
   onToggle: (key: keyof AuthUserPageSettings) => void;
-}) {
+}): React.JSX.Element {
   const rows = [
     ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
     ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],

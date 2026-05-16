@@ -27,7 +27,7 @@ export const computeNodeOutput = (
   const nodeText = ''; // Placeholder for actual text resolution logic
   const nodeWysiwygText = ''; // Placeholder
 
-  let plainTextOutput = transform 
+  const plainTextOutput = transform 
     ? transform({ nodeId: node.id, nodeMeta: meta, output: 'plainText', value: nodeText })
     : stripHtml(nodeText);
 
@@ -35,7 +35,7 @@ export const computeNodeOutput = (
   
   if (meta.includeInOutput && nodeText.trim().length > 0) {
     const joinMode = (meta.role === 'explanatory' ? incoming.plainText.firstJoinMode : incoming.plaintextContent.firstJoinMode) || (DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ?? 'newline');
-    plaintextContentOutput = appendWithJoin(plaintextContentOutput, nodeText, joinMode as CaseResolverJoinMode);
+    plaintextContentOutput = appendWithJoin(plaintextContentOutput, nodeText, joinMode);
   }
 
   if (meta.role === 'explanatory' && !transform) {
@@ -44,7 +44,7 @@ export const computeNodeOutput = (
 
   let wysiwygContentOutput = meta.role === 'explanatory' ? incoming.wysiwygContent.value : '';
   if (meta.role === 'explanatory' && meta.includeInOutput && nodeWysiwygText.trim().length > 0) {
-    const joinMode = (incoming.wysiwygContent.firstJoinMode || DEFAULT_CASE_RESOLVER_EDGE_META.joinMode || 'newline') as CaseResolverJoinMode;
+    const joinMode = (incoming.wysiwygContent.firstJoinMode || DEFAULT_CASE_RESOLVER_EDGE_META.joinMode || 'newline');
     wysiwygContentOutput = appendWithJoin(wysiwygContentOutput, nodeWysiwygText, joinMode);
   }
 

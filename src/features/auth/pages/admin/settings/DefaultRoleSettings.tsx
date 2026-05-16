@@ -15,7 +15,7 @@ export function DefaultRoleSettings({
   defaultRole: string;
   setDefaultRole: (val: string) => void;
   setDefaultDirty: (val: boolean) => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
   roleOptions: LabeledOptionDto<string>[];
   disabled: boolean;
   isSaving: boolean;

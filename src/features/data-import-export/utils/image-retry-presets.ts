@@ -34,33 +34,79 @@ export const getDefaultImageRetryPresets = (): ImageRetryPreset[] =>
 
 export const buildImageRetryPresetLabel = (preset: ImageRetryPreset): string => {
   const { maxDimension, jpegQuality } = preset.transform;
-  const dim = maxDimension ?? 'auto';
-  const qual = jpegQuality ?? 'auto';
+  const dim = maxDimension !== undefined ? String(maxDimension) : 'auto';
+  const qual = jpegQuality !== undefined ? String(jpegQuality) : 'auto';
 
   if (preset.id === 'lower-dimension') return `Lower max dimension (${dim}px)`;
   if (preset.id === 'lower-quality') return `Lower JPEG quality (${qual})`;
   if (preset.id === 'lower-both') return `Lower dimension + quality (${dim}px, ${qual})`;
 
-  return preset.name.trim() !== '' ? preset.name.trim() : 'Image retry preset';
+  const trimmedName = preset.name.trim();
+  return trimmedName.length > 0 ? trimmedName : 'Image retry preset';
+};
+
+const getPresetDescription = (presetId: string, dimLabel: string, qualLabel: string): string | null => {
+  if (presetId === 'lower-dimension') return `Resize down to ${dimLabel} and convert to JPEG.`;
+  if (presetId === 'lower-quality') return `Compress to quality ${qualLabel} without resizing.`;
+  if (presetId === 'lower-both') return `Resize to ${dimLabel} and compress to ${qualLabel} for maximum compatibility.`;
+  return null;
 };
 
 export const buildImageRetryPresetDescription = (preset: ImageRetryPreset): string => {
   const { maxDimension, jpegQuality } = preset.transform;
-  const dimLabel = maxDimension !== null && maxDimension !== undefined ? `${maxDimension}px` : 'your target size';
-  const qualLabel = jpegQuality !== null && jpegQuality !== undefined ? jpegQuality : 'your';
+  const dimLabel = maxDimension !== undefined ? `${maxDimension}px` : 'your target size';
+  const qualLabel = jpegQuality !== undefined ? String(jpegQuality) : 'your';
 
-  if (preset.id === 'lower-dimension') return `Resize down to ${dimLabel} and convert to JPEG.`;
-  if (preset.id === 'lower-quality') return `Compress to quality ${qualLabel} without resizing.`;
-  if (preset.id === 'lower-both') return `Resize to ${dimLabel} and compress to ${qualLabel} for maximum compatibility.`;
+  const desc = getPresetDescription(preset.id, dimLabel, qualLabel);
+  if (desc !== null) return desc;
 
-  return preset.description.trim() !== '' ? preset.description.trim() : 'Adjust image export settings.';
+  const trimmedDesc = preset.description.trim();
+  return trimmedDesc.length > 0 ? trimmedDesc : 'Adjust image export settings.';
 };
+
+
 
 export const withImageRetryPresetLabels = (preset: ImageRetryPreset): ImageRetryPreset => ({
   ...preset,
   name: buildImageRetryPresetLabel(preset),
   description: buildImageRetryPresetDescription(preset),
 });
+
+const resolvePresetName = (
+  record: Partial<ImageRetryPreset> & { label?: string },
+  fallback: ImageRetryPreset | undefined
+): string => {
+  if (typeof record.name === 'string' && record.name.trim().length > 0) {
+    return record.name;
+  }
+  if (typeof record.label === 'string' && record.label.trim().length > 0) {
+    return record.label;
+  }
+  return fallback?.name ?? 'Image retry preset';
+};
+
+const resolvePresetDescription = (
+  description: unknown,
+  fallbackDesc: string | undefined
+): string => {
+  if (typeof description === 'string' && description.trim().length > 0) {
+    return description;
+  }
+  return fallbackDesc ?? 'Adjust image export settings.';
+};
+
+const resolvePresetTransform = (
+  recordTransform: Partial<ImageRetryPreset['transform']> | undefined,
+  fallbackTransform: ImageRetryPreset['transform'] | undefined
+): ImageRetryPreset['transform'] => ({
+  ...(fallbackTransform ?? {}),
+  ...(recordTransform ?? {}),
+});
+
+const resolvePresetBase64Mode = (
+  recordMode: ImageRetryPreset['imageBase64Mode'] | undefined,
+  fallbackMode: ImageRetryPreset['imageBase64Mode'] | undefined
+): ImageRetryPreset['imageBase64Mode'] => recordMode ?? fallbackMode ?? 'base-only';
 
 const normalizePreset = (
   entry: unknown,
@@ -73,42 +119,41 @@ const normalizePreset = (
   };
   const id = typeof record.id === 'string' ? record.id : null;
   if (id === null) return null;
+  
   const fallback = byId.get(id);
+  const name = resolvePresetName(record, fallback);
+  const description = resolvePresetDescription(record.description, fallback?.description);
+  const transform = resolvePresetTransform(record.transform, fallback?.transform);
+  const imageBase64Mode = resolvePresetBase64Mode(record.imageBase64Mode, fallback?.imageBase64Mode);
 
-  const name =
-    typeof record.name === 'string' && record.name.trim() !== ''
-      ? record.name
-      : typeof record.label === 'string' && record.label.trim() !== ''
-        ? record.label
-        : (fallback?.name ?? 'Image retry preset');
-
-  const description =
-    typeof record.description === 'string' && record.description.trim() !== ''
-      ? record.description
-      : (fallback?.description ?? 'Adjust image export settings.');
-
-  const preset: ImageRetryPreset = {
-    id,
-    name,
-    description,
-    imageBase64Mode: record.imageBase64Mode ?? fallback?.imageBase64Mode ?? 'base-only',
-    transform: {
-      ...(fallback?.transform ?? {}),
-      ...(record.transform ?? {}),
-    },
-  };
-  return withImageRetryPresetLabels(preset);
+  return withImageRetryPresetLabels({ id, name, description, imageBase64Mode, transform });
 };
 
-export const normalizeImageRetryPresets = (value: unknown): ImageRetryPreset[] => {
-  if (!Array.isArray(value) || value.length === 0) {
-    return getDefaultImageRetryPresets();
-  }
-  const defaults = getDefaultImageRetryPresets();
-  const byId = new Map(defaults.map((p) => [p.id, p]));
-  const normalized = value
+
+
+
+
+const mapToNormalizedPresets = (value: unknown[], byId: Map<string, ImageRetryPreset>): ImageRetryPreset[] =>
+  value
     .map((v) => normalizePreset(v, byId))
     .filter((p): p is ImageRetryPreset => p !== null);
 
+const getInitialPresets = (value: unknown): ImageRetryPreset[] | null => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return getDefaultImageRetryPresets();
+  }
+  return null;
+};
+
+export const normalizeImageRetryPresets = (value: unknown): ImageRetryPreset[] => {
+  const initial = getInitialPresets(value);
+  if (initial !== null) return initial;
+
+  const defaults = getDefaultImageRetryPresets();
+  const byId = new Map(defaults.map((p) => [p.id, p]));
+  const normalized = mapToNormalizedPresets(value as unknown[], byId);
+
   return normalized.length > 0 ? normalized : defaults;
 };
+
+

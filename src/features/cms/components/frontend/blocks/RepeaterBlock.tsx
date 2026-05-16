@@ -42,7 +42,7 @@ export function RepeaterBlock(): React.JSX.Element | null {
   const collectionPath = settings['collectionPath'];
   
   const items = useMemo(
-    () => resolveCmsRuntimeCollection(runtime, collectionSource as string, collectionPath as string) as unknown[],
+    () => resolveCmsRuntimeCollection(runtime, collectionSource as string, collectionPath as string),
     [collectionPath, collectionSource, runtime]
   );
   
@@ -65,8 +65,8 @@ export function RepeaterBlock(): React.JSX.Element | null {
   const alignItems = resolveAlignItems(settings['itemAlignItems']) ?? 'stretch';
   const itemGap = resolvePositiveNumber(settings['itemGap'], 12);
 
-  const listWrapperClass = getFlexClasses(listDirection as 'row' | 'column', listWrap as 'wrap' | 'nowrap');
-  const itemWrapperClass = getFlexClasses(itemDirection as 'row' | 'column', itemWrap as 'wrap' | 'nowrap');
+  const listWrapperClass = getFlexClasses(listDirection, listWrap);
+  const itemWrapperClass = getFlexClasses(itemDirection, itemWrap);
 
   if (typeof collectionSource !== 'string' || collectionSource.trim().length === 0 || 
       typeof collectionPath !== 'string' || collectionPath.trim().length === 0) {

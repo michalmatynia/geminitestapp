@@ -26,7 +26,19 @@ import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { AgentSidebar, ChatPane } from '../components/AgentTeachingChatComponents';
 
-function useTeachingChatState(agents: AgentTeachingAgentRecord[]) {
+interface TeachingChatState {
+  selectedAgentId: string;
+  setSelectedAgentId: React.Dispatch<React.SetStateAction<string>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  messages: SimpleChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<SimpleChatMessage[]>>;
+  lastSources: AgentTeachingChatSource[];
+  setLastSources: React.Dispatch<React.SetStateAction<AgentTeachingChatSource[]>>;
+  selectedAgent: AgentTeachingAgentRecord | null;
+}
+
+function useTeachingChatState(agents: AgentTeachingAgentRecord[]): TeachingChatState {
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<SimpleChatMessage[]>([]);
@@ -53,32 +65,21 @@ function useTeachingChatState(agents: AgentTeachingAgentRecord[]) {
   };
 }
 
-function AgentTeachingChatPageContent(): React.JSX.Element {
-  const { toast } = useToast();
-  const {
-    agents,
-    collections,
-    chatModelId,
-    embeddingModelId,
-    isLoading: loadingAgents,
-  } = useAgentTeachingQueriesContext();
-  const chatMutation = useTeachingChatMutation();
-  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+interface TeachingChatLogic extends TeachingChatState {
+  sending: boolean;
+  handleSend: () => Promise<void>;
+  resolveCollectionName: (id: string) => string;
+}
 
-  const {
-    selectedAgentId,
-    setSelectedAgentId,
-    input,
-    setInput,
-    messages,
-    setMessages,
-    lastSources,
-    setLastSources,
-    selectedAgent,
-  } = useTeachingChatState(agents);
-
-  const sending = chatMutation.isPending;
-
+function useTeachingChatRegistry(params: {
+  state: TeachingChatState;
+  agents: AgentTeachingAgentRecord[];
+  collections: AgentTeachingEmbeddingCollectionRecord[];
+  chatModelId: string;
+  embeddingModelId: string;
+}): void {
+  const { state, agents, collections, chatModelId, embeddingModelId } = params;
+  const { selectedAgent, messages, lastSources } = state;
   const registrySource = React.useMemo(
     () => ({
       label: 'Agent Teaching Chat',
@@ -96,6 +97,29 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
   );
 
   useRegisterContextRegistryPageSource('agent-teaching-chat-state', registrySource);
+}
+
+interface TeachingChatActions {
+  handleSend: () => Promise<void>;
+  resolveCollectionName: (id: string) => string;
+  sending: boolean;
+}
+
+function useTeachingChatActions(
+  state: TeachingChatState,
+  collections: AgentTeachingEmbeddingCollectionRecord[]
+): TeachingChatActions {
+  const { toast } = useToast();
+  const chatMutation = useTeachingChatMutation();
+  const contextRegistry = useOptionalContextRegistryPageEnvelope();
+  const {
+    selectedAgentId,
+    input,
+    setInput,
+    messages,
+    setMessages,
+    setLastSources,
+  } = state;
 
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id);
@@ -132,6 +156,55 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
       ]);
     }
   };
+
+  return {
+    handleSend,
+    resolveCollectionName,
+    sending: chatMutation.isPending,
+  };
+}
+
+function useTeachingChatLogic(): TeachingChatLogic {
+  const {
+    agents,
+    collections,
+    chatModelId,
+    embeddingModelId,
+  } = useAgentTeachingQueriesContext();
+
+  const state = useTeachingChatState(agents);
+
+  useTeachingChatRegistry({
+    state,
+    agents,
+    collections,
+    chatModelId,
+    embeddingModelId,
+  });
+  const actions = useTeachingChatActions(state, collections);
+
+  return {
+    ...state,
+    ...actions,
+  };
+}
+
+function AgentTeachingChatPageContent(): React.JSX.Element {
+  const { isLoading: loadingAgents, agents } = useAgentTeachingQueriesContext();
+  const {
+    selectedAgentId,
+    setSelectedAgentId,
+    input,
+    setInput,
+    messages,
+    setMessages,
+    lastSources,
+    setLastSources,
+    selectedAgent,
+    sending,
+    handleSend,
+    resolveCollectionName,
+  } = useTeachingChatLogic();
 
   return (
     <PageLayout

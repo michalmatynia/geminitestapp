@@ -31,6 +31,26 @@ const cacheLifeProfiles = {
     expire: 604800,
   },
 };
+const kangurNoStoreHeaders = [
+  {
+    key: 'Cache-Control',
+    value: 'no-store, no-cache, max-age=0, must-revalidate',
+  },
+  {
+    key: 'CDN-Cache-Control',
+    value: 'no-store',
+  },
+  {
+    key: 'Vercel-CDN-Cache-Control',
+    value: 'no-store',
+  },
+];
+const kangurNoStoreHeaderRoutes = [
+  '/kangur',
+  '/kangur/:path*',
+  '/:locale(en|pl|de|uk)/kangur',
+  '/:locale(en|pl|de|uk)/kangur/:path*',
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -67,6 +87,12 @@ const nextConfig = {
       afterFiles: [],
       fallback: [],
     };
+  },
+  async headers() {
+    return kangurNoStoreHeaderRoutes.map((source) => ({
+      source,
+      headers: kangurNoStoreHeaders,
+    }));
   },
 };
 

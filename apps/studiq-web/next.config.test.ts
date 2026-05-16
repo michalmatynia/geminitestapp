@@ -23,4 +23,25 @@ describe('apps/studiq-web next.config', () => {
       },
     });
   });
+
+  it('disables document caching for localized Kangur storefront routes', async () => {
+    await expect(nextConfig.headers?.()).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: '/:locale(en|pl|de|uk)/kangur',
+          headers: expect.arrayContaining([
+            { key: 'Cache-Control', value: 'no-store, no-cache, max-age=0, must-revalidate' },
+            { key: 'CDN-Cache-Control', value: 'no-store' },
+            { key: 'Vercel-CDN-Cache-Control', value: 'no-store' },
+          ]),
+        }),
+        expect.objectContaining({
+          source: '/:locale(en|pl|de|uk)/kangur/:path*',
+          headers: expect.arrayContaining([
+            { key: 'Vercel-CDN-Cache-Control', value: 'no-store' },
+          ]),
+        }),
+      ])
+    );
+  });
 });

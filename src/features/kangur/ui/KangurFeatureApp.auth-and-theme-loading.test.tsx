@@ -61,6 +61,11 @@ describe('KangurFeatureApp auth and theme loading', () => {
       'false'
     );
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toHaveAttribute(
+      'data-loader-offset-top-bar',
+      'false'
+    );
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 

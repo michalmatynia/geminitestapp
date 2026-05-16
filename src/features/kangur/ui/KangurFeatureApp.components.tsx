@@ -137,7 +137,7 @@ export const KangurRenderedTopNavigation = memo(({
   shouldHideTopNavigationDuringBoot: boolean;
   shouldRenderTopNavigationHost: boolean;
 }): JSX.Element | null => {
-  if (shouldHideTopNavigationDuringBoot) return TOP_NAVIGATION_FALLBACK;
+  if (shouldHideTopNavigationDuringBoot) return null;
   if (!shouldRenderTopNavigationHost) return null;
   return <KangurTopNavigationHost fallback={TOP_NAVIGATION_FALLBACK} />;
 });

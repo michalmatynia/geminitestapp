@@ -274,7 +274,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
         shouldHideTopNavigationDuringBoot={isBootLoaderBlockingNavigation}
         shouldRenderTopNavigationHost={shouldRenderTopNavigationHost}
       />
-      <KangurRenderedAppLoader offsetTopBar visible={isBootLoaderBlockingNavigation} />
+      <KangurRenderedAppLoader offsetTopBar={false} visible={isBootLoaderBlockingNavigation} />
       <KangurRenderedRouteWithSuspense
         isInitialHomeLoaderPhase={isInitialHomeLoaderPhase}
         isInitialHomeSkeletonPhase={isInitialHomeSkeletonPhase}

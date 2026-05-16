@@ -15,7 +15,8 @@
 
 import 'server-only';
 
-import { getScheduleSettings } from '@/features/ai/insights/server';
+import { getScheduleSettings, type InsightScheduleSettings } from '@/features/ai/insights/server';
+
 import { isScheduledAiInsightsEnabled } from '@/features/ai/insights/scheduling';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
@@ -96,8 +97,7 @@ const queue = createManagedQueue<ScheduledTickJobData>({
   },
 });
 
-const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
-  const schedule = await getScheduleSettings();
+const checkInsightsCapabilities = async (schedule: InsightScheduleSettings): Promise<boolean> => {
   const [analyticsBrain, runtimeAnalyticsBrain, logsBrain, aiPathsBrain] = await Promise.all([
     getBrainAssignmentForCapability('insights.analytics'),
     getBrainAssignmentForCapability('insights.runtime_analytics'),
@@ -112,6 +112,13 @@ const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
 
   return analyticsReady || runtimeReady || logsReady;
 };
+
+
+const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
+  const schedule = await getScheduleSettings();
+  return checkInsightsCapabilities(schedule);
+};
+
 
 const hasRepeatableQueueApi = (
   value: unknown
@@ -220,14 +227,15 @@ export const getAiInsightsQueueStatus = async (): Promise<AiInsightsQueueStatus>
 
   const health = await queue.getHealthStatus();
   return {
-    running: health.running ?? false,
-    healthy: health.healthy ?? false,
-    processing: health.processing ?? false,
-    activeJobs: health.activeCount ?? 0,
-    waitingJobs: health.waitingCount ?? 0,
-    failedJobs: health.failedCount ?? 0,
-    completedJobs: health.completedCount ?? 0,
-    lastPollTime: health.lastPollTime ?? 0,
-    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    running: health.running,
+    healthy: health.healthy,
+    processing: health.processing,
+    activeJobs: health.activeCount,
+    waitingJobs: health.waitingCount,
+    failedJobs: health.failedCount,
+    completedJobs: health.completedCount,
+    lastPollTime: health.lastPollTime,
+    timeSinceLastPoll: health.timeSinceLastPoll,
   };
 };
+

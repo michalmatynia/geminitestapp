@@ -166,7 +166,8 @@ export const startTraderaRelistSchedulerQueue = (): void => {
       }
 
       // Check the current state *after* potentially awaiting above
-      if (queueState.workerStarted === false) {
+      const currentWorkerStarted = queueState.workerStarted;
+      if (currentWorkerStarted === false) {
         queueState.workerStarted = true;
         queue.startWorker();
       }
@@ -189,10 +190,14 @@ export const startTraderaRelistSchedulerQueue = (): void => {
           await Promise.all(schedulerRepeatJobs.map((rj) => bullQueue.removeRepeatableByKey(rj.key)));
           queueState.repeatRegistered = false;
         }
-      } else if (queueState.repeatRegistered === true) {
-        queueState.startupInFlight = false;
-        return;
+      } else {
+        const currentRepeatRegistered = queueState.repeatRegistered;
+        if (currentRepeatRegistered === true) {
+          queueState.startupInFlight = false;
+          return;
+        }
       }
+
 
       await queue.enqueue({ type: 'scheduled-tick' }, { repeat: { every: intervalMs }, jobId: SCHEDULER_REPEAT_JOB_ID });
       Object.assign(queueState, { repeatRegistered: true, startupInFlight: false });

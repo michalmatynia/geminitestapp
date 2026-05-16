@@ -42,7 +42,6 @@ const replaceContainerChildren = (
         ),
       } satisfies CvRowBlock;
   }
-  return container;
 };
 
 const collectBlockIds = (blocks: CvBlock[]): Set<string> => {
@@ -109,8 +108,7 @@ export const updateCvBlock = (
 ): CvBlock[] =>
   mapBlocks(blocks, (block: CvBlock): CvBlock => {
     if (block.id !== blockId) return block;
-    const updatedBlock: CvBlock = { ...block, ...patch };
-    return updatedBlock;
+    return { ...block, ...patch } as CvBlock;
   });
 
 export const removeCvBlock = (blocks: CvBlock[], blockId: string): CvBlock[] => {

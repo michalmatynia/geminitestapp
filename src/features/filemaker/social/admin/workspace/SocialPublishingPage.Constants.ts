@@ -168,7 +168,7 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error;
       if (attempt < maxAttempts && retryable(error)) {
-        await new Promise<void>((resolve) => safeSetTimeout(resolve, delayMs * attempt));
+        await new Promise<void>((resolve) => safeSetTimeout(() => resolve(), delayMs * attempt));
         continue;
       }
       throw error;

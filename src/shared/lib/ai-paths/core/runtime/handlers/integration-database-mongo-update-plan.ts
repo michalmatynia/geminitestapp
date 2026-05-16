@@ -719,6 +719,7 @@ export async function buildMongoUpdatePlan({
       dbConfig,
       updates,
       templateInputs,
+      nodeId: node.id,
     });
     if (guardResult.applied && guardResult.meta) {
       const existingMeta = toRecord(debugPayload['parameterInferenceGuard']) ?? {};

@@ -19,6 +19,7 @@ import {
 } from './product-scans-service.helpers.amazon.ai';
 
 type Detail = { label: string; value: string | null };
+type KnownProductScanAmazonEvaluation = NonNullable<ProductScanAmazonEvaluation>;
 
 type EvaluationDetailValues = {
   candidateAsin: string | null;
@@ -77,16 +78,16 @@ const buildEvaluationDetailValues = (
 };
 
 const readEvaluationEvidenceString = (
-  evaluation: ProductScanAmazonEvaluation,
+  evaluation: KnownProductScanAmazonEvaluation,
   key: 'candidateAsin' | 'sourceAsin'
 ): string | null => readOptionalString(evaluation.evidence?.[key]);
 
 const readEvaluationCandidateUrl = (
-  evaluation: ProductScanAmazonEvaluation
-): string | null => evaluation.evidence?.candidateUrl ?? null;
+  evaluation: KnownProductScanAmazonEvaluation
+): string | null => readOptionalString(evaluation.evidence?.candidateUrl);
 
 const buildKnownEvaluationDetailValues = (
-  evaluation: ProductScanAmazonEvaluation
+  evaluation: KnownProductScanAmazonEvaluation
 ): EvaluationDetailValues => {
   return {
     candidateAsin: readEvaluationEvidenceString(evaluation, 'candidateAsin'),
@@ -96,13 +97,13 @@ const buildKnownEvaluationDetailValues = (
     imageMatch: booleanDetailValue(evaluation.imageMatch),
     languageAccepted: booleanDetailValue(evaluation.languageAccepted),
     languageConfidence: formatEvaluationConfidence(evaluation.languageConfidence),
-    languageReason: evaluation.languageReason,
+    languageReason: evaluation.languageReason ?? null,
     mismatch: evaluation.mismatches[0] ?? null,
-    model: evaluation.modelId,
-    pageLanguage: evaluation.pageLanguage,
+    model: evaluation.modelId ?? null,
+    pageLanguage: evaluation.pageLanguage ?? null,
     reason: evaluation.reasons[0] ?? null,
-    recommendedAction: evaluation.recommendedAction,
-    rejectionCategory: evaluation.rejectionCategory,
+    recommendedAction: evaluation.recommendedAction ?? null,
+    rejectionCategory: evaluation.rejectionCategory ?? null,
     sameProduct: booleanDetailValue(evaluation.sameProduct),
     sourceAsin: readOptionalString(evaluation.evidence?.sourceAsin),
   };

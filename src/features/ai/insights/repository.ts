@@ -47,7 +47,7 @@ const getCreatedAtTime = (createdAt: string | null | undefined): number => {
 const readSettingValue = async (key: string): Promise<string | null> => {
   await getAppDbProvider();
   if (!hasMongoUri()) return null;
-  const mongo = (await getMongoDb()) as any;
+  const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
     .findOne({ $or: [{ _id: key }, { key }] });

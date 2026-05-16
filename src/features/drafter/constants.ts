@@ -10,9 +10,9 @@ export const DRAFT_KIND_SELECT_OPTIONS: Array<LabeledOptionDto<ProductDraftKind>
 ];
 
 export const OPEN_PRODUCT_FORM_TAB_SELECT_OPTIONS: Array<LabeledOptionDto<ProductDraftOpenFormTab>> = [
-  { value: 'details', label: 'Details' },
+  { value: 'general', label: 'Details' },
   { value: 'parameters', label: 'Parameters' },
-  { value: 'pricing', label: 'Pricing' },
+  { value: 'marketplace-copy', label: 'Marketplace Copy' },
 ];
 
 export const ICON_COLOR_MODE_OPTIONS: Array<LabeledOptionDto<'theme' | 'custom'>> = [

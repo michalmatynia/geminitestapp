@@ -26,6 +26,7 @@ type ProductFormParametersModelParts = Omit<
   | 'handleRunParameterSequence'
   | 'isSequenceRunning'
   | 'preferredLocale'
+  | 'primaryLanguageCode'
   | 'resolvedActiveParameterLanguageTab'
   | 'sequenceState'
   | 'sequenceStatusMessage'

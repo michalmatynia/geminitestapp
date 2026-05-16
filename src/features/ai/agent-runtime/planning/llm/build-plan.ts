@@ -82,8 +82,13 @@ export async function buildPlanWithLLM(args: BuildPlanArgs): Promise<{
     const parsed = parsePlanJson(content) as ParsedPlanResponse | null;
     if (!parsed) throw new Error('Failed to parse plan JSON.');
     
+    const decisionAction = parsed.action === 'wait_human'
+      ? 'wait_human'
+      : parsed.action === 'finish'
+        ? 'respond'
+        : 'tool';
     const decision: AgentDecision = {
-      action: (parsed.action === 'finish' || parsed.action === 'wait_human') ? parsed.action : 'tool',
+      action: decisionAction,
       reason: parsed.reason ?? 'Starting plan.',
       ...(parsed.action === 'tool' && { toolName: 'playwright' }),
     };
@@ -95,6 +100,6 @@ export async function buildPlanWithLLM(args: BuildPlanArgs): Promise<{
     return { steps, decision, source: 'planner-llm', hierarchy, meta };
   } catch (error) {
     void ErrorSystem.captureException(error, { service: 'agent-runtime.planning', action: 'buildPlanWithLLM' });
-    return { steps: [], decision: { action: 'finish', reason: 'Error building plan.' }, source: 'error' };
+    return { steps: [], decision: { action: 'respond', reason: 'Error building plan.' }, source: 'error' };
   }
 }

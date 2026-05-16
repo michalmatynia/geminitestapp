@@ -93,8 +93,9 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
       });
 
       if (issue !== null) {
-        issues[entry.fieldName] ??= [];
-        issues[entry.fieldName].push(issue);
+        const fieldIssues = issues[entry.fieldName] ?? [];
+        fieldIssues.push(issue);
+        issues[entry.fieldName] = fieldIssues;
       }
     }
   }

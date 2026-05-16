@@ -35,7 +35,7 @@ const isBrowserFile = (value: unknown): value is File =>
 export const isFastCometImageFile = (imageFile: ImageFileSelection | null | undefined): boolean => {
   if (imageFile?.storageProvider === 'fastcomet') return true;
   const metadata = imageFile?.metadata;
-  return isMetadataRecord(metadata) && metadata.storageSource === 'fastcomet';
+  return isMetadataRecord(metadata) && metadata['storageSource'] === 'fastcomet';
 };
 
 /**

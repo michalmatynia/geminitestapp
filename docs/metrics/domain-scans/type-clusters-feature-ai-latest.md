@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-17'
+last_reviewed: '2026-05-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,33 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-17T12:20:16.892Z
+Generated at: 2026-05-16T12:46:03.362Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10655
-- Exported declarations scanned: 6312
-- Candidate declarations scanned: 6292
-- Exact-shape clusters: 9
-- Near-shape clusters: 3
-- Clusters after filters: 0
-- Declarations in clusters: 0
-- Highest risk score: 0
+- Files scanned: 13429
+- Exported declarations scanned: 8244
+- Candidate declarations scanned: 8225
+- Exact-shape clusters: 94
+- Near-shape clusters: 50
+- Clusters after filters: 8
+- Declarations in clusters: 17
+- Highest risk score: 18
 - Domain filter: feature:ai
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| _none_ | - | 0 | 0 | - | - |
+| `exact-0008` | exact-shape | 18 | 3 | feature:ai, feature:products | TBD |
+| `near-0007` | near-shape | 17 | 2 | feature:ai | TBD |
+| `near-0009` | near-shape | 17 | 2 | feature:ai, feature:products | TBD |
+| `near-0010` | near-shape | 11 | 2 | feature:ai, shared:contracts | TBD |
+| `near-0008` | near-shape | 10 | 2 | feature:ai, feature:kangur | TBD |
+| `exact-0030` | exact-shape | 9 | 2 | feature:ai | TBD |
+| `exact-0029` | exact-shape | 8 | 2 | feature:ai | TBD |
+| `exact-0031` | exact-shape | 8 | 2 | feature:ai | TBD |
 
 ## Initial DTO Consolidation Workflow
 

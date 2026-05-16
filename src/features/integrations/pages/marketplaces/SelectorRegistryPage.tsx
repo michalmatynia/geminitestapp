@@ -890,12 +890,9 @@ export default function SelectorRegistryPage({
         </section>
 
         <SelectorRegistryProbeSessionsSection
-          namespace={namespace}
-          profile={selectedProfile}
           sessions={probeSessions}
           clusters={probeSessionClusters}
           promotableEntries={promotableEntries}
-          isReadOnly={isReadOnly}
           showArchived={showArchivedProbeSessions}
           onShowArchivedChange={setShowArchivedProbeSessions}
         />

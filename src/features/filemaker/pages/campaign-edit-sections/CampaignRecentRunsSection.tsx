@@ -72,7 +72,7 @@ type RecentRunCardProps = {
   handleRunAction: (
     runId: string,
     action: ReturnType<typeof getRunActions>[number]['action']
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   openRunMonitor: (runId: string) => void;
 };
 

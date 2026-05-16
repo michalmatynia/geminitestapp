@@ -59,15 +59,7 @@ const stamp = (): string => new Date().toISOString();
 import {
   buildSnapshotFallbackEvaluation,
   buildStep,
-  cleanCompanyProfileTitle,
-  cleanListingTitle,
-  clipProbeText,
-  firstNonEmpty,
-  firstSnapshotSectionText,
-  hostnameFromUrl,
   mergeJobScanEvaluations,
-  normalizeProbeText,
-  snapshotFactValue,
 } from './job-scans/snapshot-helpers';
 
 type JobScanEmailFinderMode = 'vision_ai' | 'preselected_routes';
@@ -200,7 +192,7 @@ const runJobBoardOfferProbe = async (
     headless: input.headless ?? null,
     humanizeMouse: input.humanizeMouse ?? true,
     personaId: input.personaId ?? null,
-    provider: input.provider ?? null,
+    provider: input.provider ?? undefined,
     timeoutMs: input.timeoutMs ?? null,
   });
   const fetchCompletedAt = stamp();
@@ -384,7 +376,8 @@ const runJobBoardSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
     aiEvaluation,
     buildSnapshotFallbackEvaluation(snapshot, fetchResult.finalUrl, evalCompletedAt)
   );
-  const evalOk = Boolean(evaluation) && !evaluation.error && Boolean(evaluation.listing?.['title']);
+  const evalOk =
+    evaluation !== null && !evaluation.error && Boolean(evaluation.listing?.['title']);
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
       message: evaluation?.error ?? `confidence=${evaluation?.confidence ?? 'n/a'}`,

@@ -248,10 +248,10 @@ const createRuntimeRequestCommon = async (input: {
         humanizeMouse: input.humanizeMouse ?? actionSettingsOverrides.humanizeMouse ?? true,
       };
   if (hasPersonaId && typeof input.humanizeMouse === 'boolean') {
-    settingsOverrides.humanizeMouse = input.humanizeMouse;
+    settingsOverrides['humanizeMouse'] = input.humanizeMouse;
   }
   if (typeof effectiveHeadless === 'boolean') {
-    settingsOverrides.headless = effectiveHeadless;
+    settingsOverrides['headless'] = effectiveHeadless;
   }
 
   return {

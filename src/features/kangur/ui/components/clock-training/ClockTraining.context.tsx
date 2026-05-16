@@ -53,7 +53,7 @@ import type {
 } from '../clock-training/types';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 export type ClockTrainingContextValue = {
   props: ClockTrainingProps;
@@ -143,14 +143,14 @@ export function ClockTrainingProvider({
   const [challengeMedal, setChallengeMedal] = useState<ClockChallengeMedal | null>(null);
   
   const sessionStartedAtRef = useRef(Date.now());
-  const advanceTimeoutRef = useRef<number | null>(null);
+  const advanceTimeoutRef = useRef<SafeTimerId | null>(null);
   const trainingSectionContent = useMemo(() => getClockTrainingSectionContent(section, translations), [section, translations]);
 
   const task = tasks[current];
 
   const clearAdvanceTimeout = useCallback((): void => {
     if (advanceTimeoutRef.current !== null) {
-      window.clearTimeout(advanceTimeoutRef.current);
+      safeClearTimeout(advanceTimeoutRef.current);
       advanceTimeoutRef.current = null;
     }
   }, []);
@@ -366,7 +366,7 @@ export function ClockTrainingProvider({
   }, [resolveAttempt, task]);
 
   useEffect(() => {
-    let timerId = 0;
+    let timerId: SafeTimerId | null = null;
     if (gameMode !== 'challenge' || done || feedback || !task) {
       return () => undefined;
     }

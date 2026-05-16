@@ -60,7 +60,7 @@ type ScreencastFrameEvent = {
     deviceWidth?: number;
     deviceHeight?: number;
   };
-  sessionId: string;
+  sessionId: number;
 };
 
 const pickDelayBetween = (min: number, max: number): number => {

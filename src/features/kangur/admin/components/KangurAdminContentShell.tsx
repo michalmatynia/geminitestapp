@@ -11,8 +11,8 @@ import { cn } from '@/features/kangur/shared/utils';
 
 type KangurAdminContentShellProps = {
   title: string;
-  description: ReactNode;
-  breadcrumbs: BreadcrumbItem[];
+  description?: ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
   headerActions?: ReactNode;
   headerLayout?: 'inline' | 'stacked';
   headerFooterSpacing?: 'default' | 'flush';
@@ -108,8 +108,8 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
 
 export function KangurAdminContentShell({
   title,
-  description,
-  breadcrumbs,
+  description = '',
+  breadcrumbs = [],
   headerActions,
   headerLayout = 'inline',
   headerFooterSpacing = 'default',

@@ -80,9 +80,9 @@ const organizationPatchSchema = z.object({
 });
 
 const resolveOrganizationId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['organizationId'];
+  const value = ctx.params?.['organizationId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
-  return decodeURIComponent(raw);
+  return decodeURIComponent(raw ?? '');
 };
 
 // eslint-disable-next-line max-lines-per-function

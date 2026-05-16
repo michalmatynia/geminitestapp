@@ -104,7 +104,7 @@ export async function runExtractionRequest({
   let finalUrl = initialFinalUrl;
   const extractionRequest = parseExtractionRequest(prompt);
   if (extractionRequest) {
-    if ((extractionRequest.type as any) === 'batch_image') {
+    if (extractionRequest.type === 'batch_image') {
       const runIds = await runBatchGeneration({
         projectId: 'default',
         prompts: [prompt ?? ''],

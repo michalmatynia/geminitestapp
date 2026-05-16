@@ -6,6 +6,7 @@ import {
   subscribeToTrackedAiPathRun,
   type TrackedAiPathRunSnapshot,
 } from '@/shared/lib/ai-paths/client-run-tracker';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { TriggerButtonRunFeedbackStatus } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 
 import { TERMINAL_EXPORT_RUN_STATUSES } from './BaseQuickExportButton.constants';
@@ -119,7 +120,7 @@ export const usePersistedBaseQuickExportFeedbackEffect = ({
     setTrackedExportRunStatus(persistedFeedback.status);
     setTrackedExportRunContextId(persistedFeedback.runId);
     setTrackedExportRunErrorMessage(persistedFeedback.errorMessage ?? null);
-    if (shouldResumePersistedRun(persistedFeedback)) {
+    if (persistedFeedback.runId !== null && shouldResumePersistedRun(persistedFeedback)) {
       startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
     }
   }, [
@@ -200,7 +201,7 @@ export const useStartTrackingExportRun = ({
           {
             initialSnapshot: {
               runId: normalizedRunId,
-              status: resolveInitialSnapshotStatus(initialStatus),
+              status: resolveInitialSnapshotStatus(initialStatus) as AiPathRunRecord['status'],
               entityId: productId,
               entityType: 'product',
             },

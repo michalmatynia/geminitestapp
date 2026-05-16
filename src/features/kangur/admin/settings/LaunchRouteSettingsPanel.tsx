@@ -1,7 +1,7 @@
 import { FormSection, Badge, Button } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '../components/KangurAdminCard';
 
-export function LaunchRouteSettingsPanel({ launchRoute, setLaunchRoute, options, activeTarget, className }: any) {
+export function LaunchRouteSettingsPanel({ launchRoute, setLaunchRoute, options, className }: any) {
   return (
     <FormSection
       title='App launch route'

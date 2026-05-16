@@ -1,6 +1,8 @@
+import type { Dispatch, SetStateAction } from 'react';
+
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Product } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVariantsResponse } from '@/shared/contracts/products/studio';
 import type { ContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context-shared';
 
@@ -72,10 +74,10 @@ export type ProductStudioRunState = {
 export type ProductStudioBaseState = {
   imageLinks: string[];
   imageSlotPreviews: ProductImageSlotPreview[];
-  product: Product | null;
+  product: ProductWithImages | null | undefined;
   productId: string | null;
   productImagesExternalBaseUrl: string;
-  refreshImagesFromProduct: () => Promise<void>;
+  refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
   selectedImageIndex: number | null;
   setSelectedImageIndex: (index: number | null | ((prev: number | null) => number | null)) => void;
   setStudioProjectId: (id: string | null) => void;
@@ -102,7 +104,7 @@ export type ProductStudioLoadedState = {
     sequenceReadinessMessage: string | null;
     blockSendForSequenceReadiness: boolean;
     pendingVariantPlaceholderCount: number;
-    registrySource: ContextRegistryPageSource | null;
+    registrySource: Omit<ContextRegistryPageSource, 'sourceId'> | null;
   };
   variantsState: {
     variantsData: ProductStudioVariantsResponse | null;
@@ -110,8 +112,8 @@ export type ProductStudioLoadedState = {
     selectedVariantSlotId: string | null;
     studioActionError: string | null;
     refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
-    setSelectedVariantSlotId: (id: string | null) => void;
-    setStudioActionError: (error: string | null) => void;
+    setSelectedVariantSlotId: Dispatch<SetStateAction<string | null>>;
+    setStudioActionError: Dispatch<SetStateAction<string | null>>;
   };
 };
 

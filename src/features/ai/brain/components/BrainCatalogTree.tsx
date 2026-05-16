@@ -21,6 +21,8 @@ import React, { useMemo } from 'react';
 import {
   createMasterFolderTreeOrderedItemsAdapter,
   MasterFolderTreeViewport,
+  useMasterFolderTreeViewModel,
+  type FolderTreeViewportRenderNodeInput,
   type MasterFolderTreeViewportProps,
   type MasterFolderTreeAdapterV3,
 } from '@/shared/lib/foldertree/public';
@@ -31,7 +33,10 @@ import {
   resolveBrainCatalogOrderFromNodes,
   toBrainCatalogNodeId,
 } from './brain-catalog-master-tree';
-import { BrainCatalogNodeItem } from './BrainCatalogNodeItem';
+import {
+  BrainCatalogNodeItem,
+  BrainCatalogNodeItemRuntimeContext,
+} from './BrainCatalogNodeItem';
 
 import type { AiBrainCatalogEntry } from '../settings';
 
@@ -136,6 +141,45 @@ function useBrainCatalogTreeData({
 }
 
 export function BrainCatalogTree({ entries, onChange, onEdit, onRemove, isPending = false }: BrainCatalogTreeProps): React.JSX.Element {
-    // ... component implementation logic
-    return <></>; // Placeholder for actual implementation logic
+  const { masterNodes, entryByNodeId, adapter } = useBrainCatalogTreeData({
+    entries,
+    onChange,
+  });
+  const tree = useMasterFolderTreeViewModel({
+    instance: 'brain_catalog_tree',
+    nodes: masterNodes,
+    adapter,
+  });
+  const renderNode = React.useCallback(
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
+      const entry = entryByNodeId.get(input.node.id);
+      if (entry === undefined) return null;
+      return <BrainCatalogNodeItem {...input} entry={entry} />;
+    },
+    [entryByNodeId]
+  );
+  const runtimeValue = useMemo(
+    () => ({
+      isPending,
+      onEdit,
+      onRemove,
+    }),
+    [isPending, onEdit, onRemove]
+  );
+  const viewportRuntimeValue = useMemo(
+    () => ({
+      isPending,
+      renderNode,
+      tree,
+    }),
+    [isPending, renderNode, tree]
+  );
+
+  return (
+    <BrainCatalogNodeItemRuntimeContext.Provider value={runtimeValue}>
+      <BrainCatalogTreeViewportRuntimeContext.Provider value={viewportRuntimeValue}>
+        <BrainCatalogTreeViewport />
+      </BrainCatalogTreeViewportRuntimeContext.Provider>
+    </BrainCatalogNodeItemRuntimeContext.Provider>
+  );
 }

@@ -1,4 +1,3 @@
-import { type ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export const getFileKind = (filepath: string): 'base64' | 'link' | 'upload' | 'other' => {

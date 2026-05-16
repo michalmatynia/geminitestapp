@@ -48,26 +48,26 @@ const EXPLODER_SUBTAB_OPTIONS: Array<LabeledOptionDto<ExploderPatternSubTab>> = 
   { value: 'case_resolver_rules', label: 'Case Resolver' },
 ];
 
-const PatternTabs = ({ patternTab, patternTabLocked, setPatternTab }: { patternTab: string, patternTabLocked: boolean, setPatternTab: (v: string) => void }): React.JSX.Element | null => 
+const PatternTabs = ({ patternTab, patternTabLocked, setPatternTab }: { patternTab: PatternCollectionTab, patternTabLocked: boolean, setPatternTab: (v: PatternCollectionTab) => void }): React.JSX.Element | null =>
   !patternTabLocked ? (
     <SegmentedControl
       size='md'
       className='w-full max-w-md'
       value={patternTab}
       ariaLabel='Prompt engine pattern tabs'
-      onChange={setPatternTab}
+      onChange={(value: string) => setPatternTab(value as PatternCollectionTab)}
       options={PATTERN_TAB_OPTIONS}
     />
   ) : null;
 
-const ExploderTabs = ({ patternTab, exploderSubTab, exploderSubTabLocked, setExploderSubTab }: { patternTab: string, exploderSubTab: string, exploderSubTabLocked: boolean, setExploderSubTab: (v: string) => void }): React.JSX.Element | null =>
+const ExploderTabs = ({ patternTab, exploderSubTab, exploderSubTabLocked, setExploderSubTab }: { patternTab: PatternCollectionTab, exploderSubTab: ExploderPatternSubTab, exploderSubTabLocked: boolean, setExploderSubTab: (v: ExploderPatternSubTab) => void }): React.JSX.Element | null =>
   (patternTab === 'prompt_exploder' && !exploderSubTabLocked) ? (
     <SegmentedControl
       size='md'
       className='w-full max-w-2xl'
       value={exploderSubTab}
       ariaLabel='Prompt exploder rule categories'
-      onChange={setExploderSubTab}
+      onChange={(value: string) => setExploderSubTab(value as ExploderPatternSubTab)}
       options={EXPLODER_SUBTAB_OPTIONS}
     />
   ) : null;

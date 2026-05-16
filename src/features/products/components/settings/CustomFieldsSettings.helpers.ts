@@ -17,7 +17,7 @@ export type CustomFieldSavePayload = {
     options: ProductCustomFieldOption[];
     type: ProductCustomFieldType;
   };
-  id?: string | undefined;
+  id: string | undefined;
 };
 
 export const EMPTY_CUSTOM_FIELD_FORM: CustomFieldFormData = {

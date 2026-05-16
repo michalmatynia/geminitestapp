@@ -42,8 +42,8 @@ export const buildImageDownloadHeaders = (
     'sec-fetch-site': 'same-origin',
     'user-agent': BROWSER_USER_AGENT,
   };
-  if (refererUrl !== null) headers.referer = refererUrl;
-  if (cookieHeader !== null && cookieHeader.length > 0) headers.cookie = cookieHeader;
+  if (refererUrl !== null) headers['referer'] = refererUrl;
+  if (cookieHeader !== null && cookieHeader.length > 0) headers['cookie'] = cookieHeader;
   return headers;
 };
 

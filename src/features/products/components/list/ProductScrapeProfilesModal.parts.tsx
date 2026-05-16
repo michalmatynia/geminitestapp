@@ -214,7 +214,7 @@ const renderMainContent = ({
   profiles,
 }: {
   error: Error | null;
-  formProps: ProductScrapeProfilesFormProps;
+  formProps: Omit<ProductScrapeProfilesFormProps, 'profiles'>;
   isLoading: boolean;
   profiles: ProductScrapeProfile[];
 }): React.JSX.Element => {

@@ -69,9 +69,11 @@ const extractCredentials = (c: Record<string, unknown> | null): AuthCredentials 
   authFlow: getString(c, 'authFlow')?.trim(),
 });
 
+type AuthSessionUser = NonNullable<Session['user']>;
+
 interface UserRef { id: string; emailVerified: boolean | null; passwordHash: string | null; email: string; name?: string | null; image?: string | null; }
 
-const resolveUserAndChallenge = async (creds: AuthCredentials, ip: string | undefined): Promise<{
+const resolveUserAndChallenge = async (creds: AuthCredentials, ip: string | null): Promise<{
   challenge: Awaited<ReturnType<typeof consumeLoginChallenge>> | null;
   user: UserRef | null;
 }> => {
@@ -85,18 +87,18 @@ const resolveUserAndChallenge = async (creds: AuthCredentials, ip: string | unde
   return { challenge: null, user: user as UserRef | null };
 };
 
-const checkAccountStatus = (s: { bannedAt: Date | null; disabledAt: Date | null; }): boolean => s.bannedAt === null && s.disabledAt === null;
+const checkAccountStatus = (s: { bannedAt: Date | string | null; disabledAt: Date | string | null; }): boolean => s.bannedAt === null && s.disabledAt === null;
 
 const checkEmailVerification = (u: UserRef, s: { requireEmailVerification: boolean; }, f: string | undefined): boolean => {
   if (s.requireEmailVerification !== true && f !== 'kangur_parent') return true;
   return u.emailVerified === true;
 };
 
-const checkSecurityProfile = async (u: UserRef, ip: string | undefined, f: string | undefined): Promise<boolean> => {
+const checkSecurityProfile = async (u: UserRef, ip: string | null, f: string | undefined): Promise<boolean> => {
   const [sec, set] = await Promise.all([getAuthSecurityProfile(u.id), getAuthUserPageSettings()]);
   if (checkAccountStatus(sec) === false) return false;
   if (checkEmailVerification(u, set, f) === false) return false;
-  if (sec.allowedIps.length > 0 && (ip === undefined || sec.allowedIps.includes(ip) === false)) return false;
+  if (sec.allowedIps.length > 0 && (ip === null || sec.allowedIps.includes(ip) === false)) return false;
   return true;
 };
 
@@ -119,7 +121,7 @@ const verifyMfa = async (uid: string, sec: SecInfo, creds: AuthCredentials): Pro
   return false;
 };
 
-interface PreRes { ip: string | undefined; challenge: { purpose: string } | null; user: UserRef; }
+interface PreRes { ip: string | null; challenge: { purpose: string } | null; user: UserRef; }
 
 const checkLoginPreconditions = async (creds: AuthCredentials, request: Request): Promise<PreRes | null> => {
   const { email, password, challengeId } = creds;
@@ -219,7 +221,7 @@ const getTokenFlags = (token: JWT): { isElevated: boolean; roleAssigned: boolean
   accountBanned: token.accountBanned ?? false,
 });
 
-const getSessionUser = (token: JWT, current: User): User => {
+const getSessionUser = (token: JWT, current: AuthSessionUser): AuthSessionUser => {
   return {
     ...current,
     id: String(token.sub ?? current.id),
@@ -277,6 +279,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         }
       },
       session({ session, token }): Session {
+        if (session.user === undefined) return session;
         return {
           ...session,
           user: getSessionUser(token, session.user),

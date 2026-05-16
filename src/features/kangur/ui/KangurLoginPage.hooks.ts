@@ -37,7 +37,7 @@ import {
   type KangurLoginSubmitStage,
   type VerificationCardState,
 } from './KangurLoginPage.utils';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 const resolveKangurLoginCurrentOrigin = (): string | null =>
   typeof window === 'undefined' ? null : window.location.origin;
@@ -73,10 +73,10 @@ const resolveKangurLoginFocusTarget = (
 ): 'identifier' | 'password' => (identifier.trim() ? 'password' : 'identifier');
 
 const clearKangurLoginTimer = (
-  timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+  timerRef: React.MutableRefObject<SafeTimerId | null>
 ): void => {
   if (timerRef.current) {
-    clearTimeout(timerRef.current);
+    safeClearTimeout(timerRef.current);
     timerRef.current = null;
   }
 };
@@ -258,8 +258,8 @@ export function useKangurLoginPageState() {
   const identifierInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const initialFocusAppliedRef = useRef(false);
-  const resendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const focusTimerRef = useRef<number | null>(null);
+  const resendTimerRef = useRef<SafeTimerId | null>(null);
+  const focusTimerRef = useRef<SafeTimerId | null>(null);
   
   const identifierHintId = useId();
   const passwordHintId = useId();

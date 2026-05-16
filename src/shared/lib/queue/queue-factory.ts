@@ -290,6 +290,13 @@ export function createManagedQueue<TJobData>(
       });
     }
 
+    const onStalledCallback = config.onStalled;
+    if (onStalledCallback) {
+      worker.on('stalled', (jobId: string, prevStatus: string) => {
+        void onStalledCallback(jobId, prevStatus);
+      });
+    }
+
     worker.on('error', (err: Error) => {
       if (isTransientRedisTransportError(err)) {
         const normalizedMessage = err.message.trim() || 'Redis transport error';

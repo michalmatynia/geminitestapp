@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/shared/utils/ui-utils';
 import { type SectionInstance } from '@/shared/contracts/cms';
-import { PreviewFrontendSection } from '../PreviewFrontendSection';
+import { PreviewFrontendSection } from '../../PreviewFrontendSection';
 
 type FrontendSectionProps = {
   section: SectionInstance;

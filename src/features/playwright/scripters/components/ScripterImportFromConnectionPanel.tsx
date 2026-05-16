@@ -115,7 +115,7 @@ export function ScripterImportFromConnectionPanel({
       </button>
       {expanded ? (
         <div className='space-y-2'>
-          {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+          {error !== null ? <Alert variant='error'>{error}</Alert> : null}
           {busy && connections === null ? (
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Loader2 className='size-4 animate-spin' />

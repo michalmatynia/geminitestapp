@@ -260,13 +260,17 @@ export default function GameDeferredNonHomeScreen(props: {
     );
   }
 
-  return (
-    <GameKangurModeScreen
-      screen={screen}
-      screenHeadingRef={screenHeadingRef}
-      screenMotionProps={screenMotionProps}
-      sessionRefs={sessionRefs}
-      translations={translations}
-    />
-  );
+  if (screen === 'kangur' || screen === 'kangur_setup') {
+    return (
+      <GameKangurModeScreen
+        screen={screen}
+        screenHeadingRef={screenHeadingRef}
+        screenMotionProps={screenMotionProps}
+        sessionRefs={sessionRefs}
+        translations={translations}
+      />
+    );
+  }
+
+  return null;
 }

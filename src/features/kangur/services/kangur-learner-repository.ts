@@ -12,6 +12,7 @@
 import 'server-only';
 
 import { cache } from 'react';
+import { randomUUID } from 'node:crypto';
 import {
   normalizeLoginName,
   normalizeLegacyUserKey,
@@ -711,7 +712,7 @@ export const createKangurLearner = async (input: {
     aiTutor: createDefaultKangurAiTutorLearnerMood(),
     createdAt: now,
     updatedAt: now,
-    passwordHash: await bcrypt.hash(input.learner.password, 12),
+    passwordHash: await hashPassword(input.learner.password),
   };
 
   if (useMongoLearnerCollection) {
@@ -768,7 +769,7 @@ export const updateKangurLearner = async (
     updatedAt: new Date().toISOString(),
     passwordHash:
       typeof input.password === 'string'
-        ? await bcrypt.hash(input.password, 12)
+        ? await hashPassword(input.password)
         : current.passwordHash,
   };
 
@@ -939,7 +940,7 @@ export const verifyKangurLearnerPassword = async (
     return null;
   }
 
-  const ok = await bcrypt.compare(password, profile.passwordHash);
+  const ok = await verifyPassword(password, profile.passwordHash);
   if (!ok) {
     void ErrorSystem.logInfo(`Failed login attempt for Kangur learner: ${loginName}`, {
       service: 'kangur.learner-repository',

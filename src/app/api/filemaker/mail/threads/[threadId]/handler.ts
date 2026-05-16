@@ -18,7 +18,7 @@ const filemakerMailThreadPatchSchema = z.object({
 });
 
 const resolveThreadId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['threadId'];
+  const value = ctx.params?.['threadId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
   if (raw === undefined) {
     return '';

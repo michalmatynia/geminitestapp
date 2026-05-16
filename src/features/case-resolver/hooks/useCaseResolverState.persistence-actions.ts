@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { safeSetTimeout, safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { type Toast } from '@/shared/contracts/ui';
@@ -44,8 +44,8 @@ export interface UseCaseResolverPersistenceValue {
   queuedSerializedWorkspaceRef: React.MutableRefObject<string | null>;
   queuedExpectedRevisionRef: React.MutableRefObject<number | null>;
   queuedMutationIdRef: React.MutableRefObject<string | null>;
-  conflictRetryTimerRef: React.MutableRefObject<number | null>;
-  persistWorkspaceTimerRef: React.MutableRefObject<number | null>;
+  conflictRetryTimerRef: React.MutableRefObject<SafeTimerId | null>;
+  persistWorkspaceTimerRef: React.MutableRefObject<SafeTimerId | null>;
   persistWorkspaceInFlightRef: React.MutableRefObject<boolean>;
   workspaceConflictAutoRetryCountRef: React.MutableRefObject<number>;
   syncPersistedWorkspaceTracking: (nextWorkspace: CaseResolverWorkspace) => void;
@@ -88,8 +88,8 @@ export function useCaseResolverPersistence({
   const queueStateRef = useRef<CaseResolverWorkspacePersistQueueState>(
     createCaseResolverWorkspacePersistQueueState()
   );
-  const conflictRetryTimerRef = useRef<number | null>(null);
-  const persistWorkspaceTimerRef = useRef<number | null>(null);
+  const conflictRetryTimerRef = useRef<SafeTimerId | null>(null);
+  const persistWorkspaceTimerRef = useRef<SafeTimerId | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const workspaceConflictAutoRetryCountRef = useRef(0);
 

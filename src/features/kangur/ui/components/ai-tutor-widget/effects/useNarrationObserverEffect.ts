@@ -1,6 +1,6 @@
 import { useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { extractNarrationTextFromElement } from '../../kangur-narrator-utils';
 
 export function useNarrationObserverEffect(input: {
@@ -21,7 +21,7 @@ export function useNarrationObserverEffect(input: {
   } = input;
 
   useLayoutEffect(() => {
-    let timeoutId: number | null = null;
+    let timeoutId: SafeTimerId | null = null;
 
     const clearNarrationTimeout = (): void => {
       if (timeoutId !== null) {

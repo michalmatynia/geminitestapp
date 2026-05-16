@@ -12,7 +12,7 @@ import { PreviewSectionMediaButton } from './PreviewSectionMediaButton';
 export function PreviewImageWithTextSection(): React.JSX.Element {
   const { layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const { section, PreviewBlockItem } = usePreviewSectionContext();
+  const { section } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 

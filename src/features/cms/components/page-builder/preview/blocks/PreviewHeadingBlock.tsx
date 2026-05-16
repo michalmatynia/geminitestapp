@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { getBlockTypographyStyles } from '../../frontend/theme-styles';
+import { getBlockTypographyStyles } from '../../../frontend/theme-styles';
 import { type BlockInstance } from '@/shared/contracts/cms';
 
 type PreviewHeadingBlockProps = {

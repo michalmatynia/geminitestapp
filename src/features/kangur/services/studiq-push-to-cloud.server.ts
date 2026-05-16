@@ -195,7 +195,7 @@ export async function pushStudiqLocalToCloud(
     await localClient.connect();
     await cloudClient.connect();
 
-    const localDb = localClient.db(localConfig.dbName);
+    const localDb = localClient.db(localConfig.dbName ?? undefined);
     const cloudDb = cloudClient.db(cloudConfig.dbName ?? undefined);
 
     await report({ step: 2, total: 4, phase: 'scanning', message: 'Scanning local collections…' });

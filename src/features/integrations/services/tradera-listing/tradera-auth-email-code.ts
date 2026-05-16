@@ -43,7 +43,7 @@ const normalizeComparableEmail = (value: unknown): string =>
 
 const wait = async (timeoutMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, timeoutMs);
+    safeSetTimeout(() => resolve(), timeoutMs);
   });
 };
 

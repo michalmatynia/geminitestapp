@@ -9,16 +9,20 @@ const requestSchema = z.object({
   status: filemakerMailAccountStatusSchema,
 });
 
+const resolveAccountId = (ctx: ApiHandlerContext): string => {
+  const value = ctx.params?.['accountId'];
+  const raw = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+  return decodeURIComponent(raw);
+};
+
 export async function patchHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const routeAccountId = ctx.params['accountId'];
-  const accountId = Array.isArray(routeAccountId) ? (routeAccountId[0] ?? '') : routeAccountId;
   const { status } = requestSchema.parse(await req.json());
 
   return Response.json({
-    account: await updateFilemakerMailAccountStatus(decodeURIComponent(accountId), status),
+    account: await updateFilemakerMailAccountStatus(resolveAccountId(ctx), status),
   });
 }

@@ -35,6 +35,7 @@ import type {
 } from './product-scans-service.helpers.amazon';
 import {
   createProductScanStartedRawResult,
+  createPersistedProductScanStep,
   persistSynchronizedScan,
   readOptionalString,
   resolveScanManualVerificationTimeoutMs,
@@ -252,10 +253,9 @@ export const startAmazonTriageFallbackProviderScan = async (
         fallbackToImageSearchProvider: fallbackProvider,
       },
     }),
-    queueStep: {
+    queueStep: createPersistedProductScanStep({
       key: 'queue_scan',
       label: 'Retry with fallback image-search provider',
-      group: 'input',
       attempt: resolveNextQueueStepAttempt(context.finalizedAmazonSteps),
       status: 'completed',
       resultCode: fallbackStatus === 'running' ? 'run_started' : 'run_queued',
@@ -269,7 +269,7 @@ export const startAmazonTriageFallbackProviderScan = async (
         { label: 'Reason', value: context.triageEvaluation.reasons[0] ?? null },
       ],
       url: null,
-    },
+    }),
   });
 };
 

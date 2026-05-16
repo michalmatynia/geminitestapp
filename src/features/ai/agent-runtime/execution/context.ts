@@ -26,14 +26,34 @@ export async function prepareRunContext(run: AgentRunContextInput): Promise<Agen
   const memoryContext = applyAgentRuntimeContextMemory(contextMemory, contextRegistryPrompt);
   const caps: AiBrainCapabilityKey[] = ['agent_runtime.default', 'agent_runtime.memory_validation', 'agent_runtime.planner', 'agent_runtime.self_check', 'agent_runtime.loop_guard', 'agent_runtime.approval_gate', 'agent_runtime.memory_summarization'];
   const configs = await Promise.all(caps.map((cap: AiBrainCapabilityKey) => resolveBrainExecutionConfigForCapability(cap, { runtimeKind: cap.includes('validation') || cap.includes('gate') || cap.includes('guard') || cap.includes('self_check') ? 'validation' : 'chat' })));
+  const [
+    defaultConfig,
+    memoryValidationConfig,
+    plannerConfig,
+    selfCheckConfig,
+    loopGuardConfig,
+    approvalGateConfig,
+    memorySummarizationConfig,
+  ] = configs;
+  if (
+    defaultConfig === undefined ||
+    memoryValidationConfig === undefined ||
+    plannerConfig === undefined ||
+    selfCheckConfig === undefined ||
+    loopGuardConfig === undefined ||
+    approvalGateConfig === undefined ||
+    memorySummarizationConfig === undefined
+  ) {
+    throw new Error('Agent runtime configuration is incomplete.');
+  }
   if (selfImprovementPlaybook !== null) await logAgentAudit(run.id, 'info', 'Self-improvement playbook ready.', { type: 'self-improvement-playbook' });
   return {
     run: { id: run.id, prompt: run.prompt, agentBrowser: run.agentBrowser ?? null, runHeadless: run.runHeadless ?? null },
     memoryKey, memoryContext, contextRegistry: contextRegistry ?? null, contextRegistryPrompt,
     settings: { maxSteps: 20, maxStepAttempts: 3, maxReplanCalls: 5, replanEverySteps: 3, maxSelfChecks: 3, loopGuardThreshold: 3, loopBackoffBaseMs: 1000, loopBackoffMaxMs: 30000 },
     preferences: { ignoreRobotsTxt: false, requireHumanApproval: false },
-    resolvedModel: configs[0].modelId, memoryValidationModel: configs[1].modelId, plannerModel: configs[2].modelId, selfCheckModel: configs[3].modelId, loopGuardModel: configs[4].modelId, approvalGateModel: configs[5].modelId, memorySummarizationModel: configs[6].modelId,
+    resolvedModel: defaultConfig.modelId, memoryValidationModel: memoryValidationConfig.modelId, plannerModel: plannerConfig.modelId, selfCheckModel: selfCheckConfig.modelId, loopGuardModel: loopGuardConfig.modelId, approvalGateModel: approvalGateConfig.modelId, memorySummarizationModel: memorySummarizationConfig.modelId,
     browserContext: null,
-    configs: { default: configs[0], memoryValidation: configs[1], planner: configs[2], selfCheck: configs[3], loopGuard: configs[4], approvalGate: configs[5], memorySummarization: configs[6] },
+    configs: { default: defaultConfig, memoryValidation: memoryValidationConfig, planner: plannerConfig, selfCheck: selfCheckConfig, loopGuard: loopGuardConfig, approvalGate: approvalGateConfig, memorySummarization: memorySummarizationConfig },
   };
 }

@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { DEFAULT_THEME, type ThemeSettings } from '@/shared/contracts/cms-theme';
+import { internalError } from '@/shared/errors/app-error';
 import { fetchThemeSettings } from '@/features/cms/services/theme';
 
 const CMS_THEME_SETTINGS_CACHE_TTL_MS = 30_000;
@@ -49,15 +50,16 @@ const scheduleCmsThemeSettingsHotCacheInvalidation = (): void => {
   cmsThemeSettingsCacheInvalidationHandle.unref?.();
 };
 
-import { internalError } from '@/shared/errors/app-error';
-
-// ... (existing code)
-
 export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
   if (cmsThemeSettingsCacheEntry) return cmsThemeSettingsCacheEntry;
   if (cmsThemeSettingsInFlight) return cmsThemeSettingsInFlight;
 
-  cmsThemeSettingsInFlight = fetchThemeSettings()
+  const timeoutMs = getCmsThemeSettingsReadTimeoutMs();
+  cmsThemeSettingsInFlight = awaitThemeSettingsWithinTimeout(
+    fetchThemeSettings(),
+    timeoutMs,
+    DEFAULT_THEME
+  )
     .then((value) => {
       cmsThemeSettingsCacheEntry = value;
       scheduleCmsThemeSettingsHotCacheInvalidation();

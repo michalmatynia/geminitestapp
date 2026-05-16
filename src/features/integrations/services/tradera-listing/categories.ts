@@ -160,14 +160,6 @@ const logCategoryFetchResult = (
       scrapedFrom: result.scrapedFrom,
     },
   });
-  return {
-    sampleCategories: categories.slice(0, 5).map((category) => ({
-      id: category.id,
-      name: category.name,
-      parentId: category.parentId,
-    })),
-    crawlStats: result.crawlStats,
-  };
 };
 
 function assertCategoryFetchResult(

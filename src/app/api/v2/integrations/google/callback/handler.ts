@@ -48,7 +48,9 @@ const toAdminRedirect = (
   return NextResponse.redirect(url.toString());
 };
 
-const isStateRecord = (value: unknown): value is Partial<GoogleIntegrationState> => {
+const isStateRecord = (
+  value: unknown
+): value is Omit<GoogleIntegrationState, 'scope'> & Partial<Pick<GoogleIntegrationState, 'scope'>> => {
   if (value === null || typeof value !== 'object') return false;
   const record = value as Partial<GoogleIntegrationState>;
   return (

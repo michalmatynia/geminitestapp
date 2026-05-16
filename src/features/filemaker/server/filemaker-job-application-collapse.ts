@@ -62,7 +62,7 @@ const groupLegacyApplications = (
         application.source !== 'filemaker-manual-applied'
     )
     .forEach((application) => {
-      const canonicalKey = application.canonicalApplicationKey;
+      const canonicalKey = application.canonicalApplicationKey ?? null;
       if (canonicalKey === null || canonicalKey.trim().length === 0) return;
       const group = groups.get(canonicalKey) ?? [];
       group.push(application);

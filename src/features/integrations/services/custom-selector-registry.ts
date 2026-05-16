@@ -246,7 +246,11 @@ const normalizeProbePathHint = (pathname: string): string | null => {
     return null;
   }
 
-  const [firstSegment, secondSegment] = segments;
+  const firstSegment = segments[0];
+  if (typeof firstSegment !== 'string') {
+    return null;
+  }
+  const secondSegment = segments[1];
   const localeLike = /^[a-z]{2}(?:-[a-z]{2})?$/i.test(firstSegment);
   const stableSegments: string[] = [];
 
@@ -472,7 +476,7 @@ const syncProfile = async (
         source: 'code',
         createdAt: now,
         updatedAt: now,
-      } as CustomSelectorRegistryDoc);
+      } as unknown as CustomSelectorRegistryDoc);
       insertedCount += 1;
       continue;
     }

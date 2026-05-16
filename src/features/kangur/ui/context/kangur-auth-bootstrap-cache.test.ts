@@ -43,12 +43,27 @@ const AUTHENTICATED_USER = {
   learners: [],
 };
 
+const BOOTSTRAP_ELEMENT_ID = 'kangur-auth-bootstrap-data';
+
+function injectBootstrapDataElement(data: unknown): void {
+  const existing = document.getElementById(BOOTSTRAP_ELEMENT_ID);
+  if (existing) existing.remove();
+  const el = document.createElement('script');
+  el.id = BOOTSTRAP_ELEMENT_ID;
+  el.type = 'application/json';
+  el.textContent = JSON.stringify(data);
+  document.head.appendChild(el);
+}
+
+function removeBootstrapDataElement(): void {
+  document.getElementById(BOOTSTRAP_ELEMENT_ID)?.remove();
+}
+
 describe('kangur-auth-bootstrap-cache', () => {
   beforeEach(() => {
     vi.resetModules();
     meMock.mockReset();
-    delete (window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: unknown })
-      .__KANGUR_AUTH_BOOTSTRAP__;
+    removeBootstrapDataElement();
   });
 
   it('hydrates a late guest bootstrap without calling auth.me', async () => {
@@ -56,8 +71,7 @@ describe('kangur-auth-bootstrap-cache', () => {
 
     expect(cache.readKangurAuthBootstrapCache()).toBeUndefined();
 
-    (window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: unknown })
-      .__KANGUR_AUTH_BOOTSTRAP__ = null;
+    injectBootstrapDataElement(null);
 
     expect(cache.readKangurAuthBootstrapCache()).toBeNull();
     expect(meMock).not.toHaveBeenCalled();
@@ -66,8 +80,7 @@ describe('kangur-auth-bootstrap-cache', () => {
   it('hydrates a late authenticated bootstrap without calling auth.me', async () => {
     const cache = await import('@/features/kangur/ui/context/kangur-auth-bootstrap-cache');
 
-    (window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: unknown })
-      .__KANGUR_AUTH_BOOTSTRAP__ = AUTHENTICATED_USER;
+    injectBootstrapDataElement(AUTHENTICATED_USER);
 
     expect(cache.readKangurAuthBootstrapCache()).toEqual(AUTHENTICATED_USER);
     expect(meMock).not.toHaveBeenCalled();
@@ -76,8 +89,7 @@ describe('kangur-auth-bootstrap-cache', () => {
   it('loads a late guest bootstrap session without falling back to auth.me', async () => {
     const cache = await import('@/features/kangur/ui/context/kangur-auth-bootstrap-cache');
 
-    (window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: unknown })
-      .__KANGUR_AUTH_BOOTSTRAP__ = null;
+    injectBootstrapDataElement(null);
 
     await expect(cache.loadKangurAuthBootstrapSession()).resolves.toBeNull();
     expect(meMock).not.toHaveBeenCalled();

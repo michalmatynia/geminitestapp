@@ -35,7 +35,7 @@ export type FilemakerJobApplicationApplyRunMongoDocument = Document & {
   sourceUrl?: unknown;
   startedAt?: unknown;
   status?: unknown;
-  steps?: unknown;
+  steps?: FilemakerJobApplicationApplyRunStep[];
   updatedAt?: unknown;
 };
 
@@ -272,7 +272,7 @@ export const appendMongoFilemakerJobApplicationApplyRunStep = async (
     {
       $push: { steps: step },
       $set: { updatedAt: new Date().toISOString() },
-    }
+    } as Document
   );
   if (result.matchedCount === 0) {
     throw notFoundError('Filemaker job application apply run was not found.');

@@ -58,7 +58,7 @@ export type ProductScanVerificationState<
 };
 
 export type ProductScanVerificationBarrierEvaluationProfileLike<
-  TParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
   TReview extends PlaywrightVerificationObservationLike,
 > =
   | Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, 'evaluation'>
@@ -73,7 +73,7 @@ export type ProductScanVerificationBarrierEvaluationProfileLike<
     >;
 
 export const resolveProductScanVerificationBarrierEvaluationProfile = <
-  TParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
   TReview extends PlaywrightVerificationObservationLike,
 >(
   profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>

@@ -32,6 +32,7 @@ data recovery instead of drifting into a single-track workflow.
 ## Track Directories
 
 - [`application-performance/README.md`](./application-performance/README.md)
+- [`image-studio-product-integration/README.md`](./image-studio-product-integration/README.md)
 - [`products-category-schema-normalization/README.md`](./products-category-schema-normalization/README.md)
 - [`products-parameter-integrity/README.md`](./products-parameter-integrity/README.md)
 - [`repo-quality-baseline/README.md`](./repo-quality-baseline/README.md)
@@ -43,6 +44,7 @@ data recovery instead of drifting into a single-track workflow.
 | If you need to... | Open |
 | --- | --- |
 | inspect broad app/runtime performance follow-up | [`application-performance/README.md`](./application-performance/README.md) |
+| review Image Studio and product workflow integration work | [`image-studio-product-integration/README.md`](./image-studio-product-integration/README.md) |
 | normalize products categories or parameter schema | [`products-category-schema-normalization/README.md`](./products-category-schema-normalization/README.md) |
 | recover missing products parameters or source integrity | [`products-parameter-integrity/README.md`](./products-parameter-integrity/README.md) |
 | review repo-wide quality baseline follow-up | [`repo-quality-baseline/README.md`](./repo-quality-baseline/README.md) |

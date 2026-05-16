@@ -65,13 +65,20 @@ const isManualVerificationPending = (
   return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
-const resolveAmazonEvaluationStatus = (row: ScanModalRow): string | null =>
+type ProductScanAmazonEvaluationStatus =
+  NonNullable<ProductScanRecord['amazonEvaluation']>['status'];
+type ProductScanSupplierEvaluationStatus =
+  NonNullable<ProductScanRecord['supplierEvaluation']>['status'];
+
+const resolveAmazonEvaluationStatus = (row: ScanModalRow): ProductScanAmazonEvaluationStatus | null =>
   row.scan?.amazonEvaluation?.status ?? null;
 
 const resolveAmazonEvaluationLanguageAccepted = (row: ScanModalRow): boolean | null =>
   normalizeBoolean(row.scan?.amazonEvaluation?.languageAccepted);
 
-const resolveSupplierEvaluationStatus = (row: ScanModalRow): string | null =>
+const resolveSupplierEvaluationStatus = (
+  row: ScanModalRow
+): ProductScanSupplierEvaluationStatus | null =>
   row.scan?.supplierEvaluation?.status ?? null;
 
 const buildRunFeedbackContext = (

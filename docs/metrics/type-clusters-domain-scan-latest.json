@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-05-16T12:47:06.353Z",
+  "domains": [
+    {
+      "domain": "feature:ai",
+      "generatedAt": "2026-05-16T12:46:03.362Z",
+      "exact": 94,
+      "near": 50,
+      "after": 8,
+      "risk": 18,
+      "source": "docs/metrics/domain-scans/type-clusters-feature-ai-latest.json"
+    },
+    {
+      "domain": "feature:integrations",
+      "generatedAt": "2026-05-16T12:46:16.849Z",
+      "exact": 94,
+      "near": 50,
+      "after": 8,
+      "risk": 15,
+      "source": "docs/metrics/domain-scans/type-clusters-feature-integrations-latest.json"
+    },
+    {
+      "domain": "feature:case-resolver",
+      "generatedAt": "2026-05-16T12:46:30.302Z",
+      "exact": 94,
+      "near": 50,
+      "after": 5,
+      "risk": 10,
+      "source": "docs/metrics/domain-scans/type-clusters-feature-case-resolver-latest.json"
+    },
+    {
+      "domain": "shared:contracts",
+      "generatedAt": "2026-05-16T12:46:43.764Z",
+      "exact": 94,
+      "near": 50,
+      "after": 19,
+      "risk": 30,
+      "source": "docs/metrics/domain-scans/type-clusters-shared-contracts-latest.json"
+    },
+    {
+      "domain": "shared",
+      "generatedAt": "2026-05-16T12:47:06.314Z",
+      "exact": 94,
+      "near": 50,
+      "after": 17,
+      "risk": 18,
+      "source": "docs/metrics/domain-scans/type-clusters-shared-latest.json"
+    }
+  ]
+}

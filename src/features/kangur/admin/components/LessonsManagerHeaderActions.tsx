@@ -6,8 +6,8 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import type { UseAdminKangurLessonsManagerLogicReturn } from '../hooks/lessons-manager/useAdminKangurLessonsManagerLogic';
 import type { KangurAdminLocale } from '../kangur-admin-locale';
-import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
-import type { KangurLessonAuthoringFilter } from '../types';
+import type { KangurLessonAgeGroup } from '@/shared/contracts/kangur-lesson-constants';
+import type { KangurLessonAuthoringFilter } from '../content-creator-insights';
 
 export function LessonsManagerHeaderActions({
   logic,
@@ -56,4 +56,3 @@ export function LessonsManagerHeaderActions({
     </div>
   );
 }
-

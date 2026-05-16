@@ -6,7 +6,6 @@ import React from 'react';
 import {
   isCmsNodeVisible,
   resolveCmsConnectedSettings,
-  resolveCmsRuntimeValue,
   useOptionalCmsRuntime,
 } from '@/features/cms/components/frontend/CmsRuntimeContext';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
@@ -15,9 +14,7 @@ import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalizat
 import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
-import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
-import { getKangurWidgetLabel } from '@/shared/contracts/kangur-cms';
-import { Button, Card, Input } from '@/shared/ui/primitives.public';
+import { Button, Card } from '@/shared/ui/primitives.public';
 
 import { useCmsPageContext } from '../frontend/CmsPageContext';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
@@ -29,7 +26,11 @@ import {
   getTextAlign,
   getBlockTypographyStyles,
 } from '../frontend/theme-styles';
-import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
+import {
+  BlockContextProvider,
+  CONTAINED_BLOCK_CONTEXT_VALUE,
+  useBlockContext,
+} from './preview/context/BlockContext';
 import {
   usePreviewEditorActions,
   usePreviewEditorState,
@@ -71,6 +72,13 @@ import {
 } from './preview/PreviewSectionBlocks';
 import { PreviewFrontendSection } from './PreviewFrontendSection';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
+import { PreviewAppEmbedBlock } from './preview/blocks/PreviewAppEmbedBlock';
+import { PreviewButtonBlock } from './preview/blocks/PreviewButtonBlock';
+import { PreviewHeadingBlock } from './preview/blocks/PreviewHeadingBlock';
+import { PreviewInputBlock } from './preview/blocks/PreviewInputBlock';
+import { PreviewKangurWidgetBlock } from './preview/blocks/PreviewKangurWidgetBlock';
+import { PreviewProgressBlock } from './preview/blocks/PreviewProgressBlock';
+import { PreviewTextBlock } from './preview/blocks/PreviewTextBlock';
 import {
   PreviewHeroSection,
   PreviewImageWithTextSection,
@@ -91,24 +99,6 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
   'ButtonElement',
   'TextAtom',
 ]);
-
-const isTruthyRuntimeValue = (value: unknown): boolean => {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'number') {
-    return value !== 0;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    return normalized.length > 0 && normalized !== 'false' && normalized !== '0';
-  }
-
-  return Boolean(value);
-};
-const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 
 // ---------------------------------------------------------------------------
 // Top-level section preview
@@ -626,7 +616,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <PreviewHeadingBlock
         block={resolvedBlock}
         containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, '')}
-        onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
         renderSelectionButton={renderBlockSelectionButton}
         wrapInspector={wrapBlock}
       />
@@ -639,7 +629,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         block={resolvedBlock}
         isSelected={isSelected}
         className={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-        onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
         renderSelectionButton={renderBlockSelectionButton}
       />
     );
@@ -651,7 +641,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
             block={resolvedBlock}
             runtime={runtime}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />
@@ -663,7 +653,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewInputBlock
             block={resolvedBlock}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />
@@ -675,7 +665,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewProgressBlock
             block={resolvedBlock}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />
@@ -687,7 +677,6 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewAppEmbedBlock
             block={resolvedBlock}
             containerClass='relative group w-full'
-            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
             selectableBlockProps={selectableBlockProps}
@@ -700,7 +689,6 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewKangurWidgetBlock
             block={resolvedBlock}
             containerClass='relative group w-full'
-            onSelect={(e) => { e.stopPropagation(); onSelect?.(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
             selectableBlockProps={selectableBlockProps}

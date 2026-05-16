@@ -20,7 +20,7 @@ const rebaseAttribute = (
   baseUrl: string
 ): string => {
   const re = new RegExp(`\\s${attribute}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'gi');
-  return html.replace(re, (match, _quoted, dQuoted, sQuoted) => {
+  return html.replace(re, (_match, _quoted, dQuoted, sQuoted) => {
     const value = (dQuoted ?? sQuoted ?? '').trim();
     if (value.length === 0) return ` ${attribute}="#"`;
     if (ABSOLUTE_RE.test(value)) {

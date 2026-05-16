@@ -118,9 +118,9 @@ const collectionByKind: Record<LinkedRecordKind, string> = {
 };
 
 const resolveRouteParam = (ctx: ApiHandlerContext, key: string): string => {
-  const value = ctx.params[key];
+  const value = ctx.params?.[key];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
-  return decodeURIComponent(raw);
+  return decodeURIComponent(raw ?? '');
 };
 
 const resolveRecordKind = (ctx: ApiHandlerContext): LinkedRecordKind =>
@@ -174,8 +174,8 @@ const parsePatch = async (
   req: NextRequest,
   kind: LinkedRecordKind
 ): Promise<Record<string, unknown> | Response> => {
-  const schema = patchSchemaByKind[kind];
-  const result: JsonParseResult<z.infer<typeof schema>> = await parseJsonBody(req, schema, {
+  const schema = patchSchemaByKind[kind] as z.ZodType<Record<string, unknown>>;
+  const result: JsonParseResult<Record<string, unknown>> = await parseJsonBody(req, schema, {
     logPrefix: `filemaker.persons.linked-records.${kind}.PATCH`,
   });
   if (!result.ok) return result.response;

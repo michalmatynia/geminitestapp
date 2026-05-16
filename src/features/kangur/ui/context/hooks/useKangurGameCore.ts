@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type {
   KangurDifficulty,
@@ -34,9 +34,9 @@ type Setter<T> = Dispatch<SetStateAction<T>>;
 //  gameLoopTimeoutRef – drives the per-question countdown timer
 export function useKangurGameCore() {
   // Ref for the auto-dismiss timeout of the XP reward toast.
-  const xpToastTimeoutRef = useRef<number | null>(null);
+  const xpToastTimeoutRef = useRef<SafeTimerId | null>(null);
   // Ref for the game-loop countdown timer (question time limit).
-  const gameLoopTimeoutRef = useRef<number | null>(null);
+  const gameLoopTimeoutRef = useRef<SafeTimerId | null>(null);
   const [state, dispatch] = useReducer(kangurGameCoreReducer, initialKangurGameCoreState);
 
   // Cancel any pending timeouts when the component unmounts to prevent

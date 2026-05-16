@@ -49,12 +49,12 @@ const resolveDeleteProductName = (state: ProductListState): string => {
     return 'this product';
   }
 
-  const englishName = product.name_en.trim();
+  const englishName = (product.name_en ?? '').trim();
   if (englishName.length > 0) {
     return englishName;
   }
 
-  const polishName = product.name_pl.trim();
+  const polishName = (product.name_pl ?? '').trim();
   return polishName.length > 0 ? polishName : 'this product';
 };
 

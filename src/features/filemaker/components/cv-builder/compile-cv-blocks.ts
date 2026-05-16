@@ -173,8 +173,10 @@ const initialsForName = (value: string): string => {
     .map((part: string): string => part.trim())
     .filter((part: string): boolean => part.length > 0);
   if (parts.length === 0) return 'CV';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
+  const firstPart = parts[0] ?? '';
+  if (parts.length === 1) return firstPart.slice(0, 2).toUpperCase();
+  const lastPart = parts[parts.length - 1] ?? '';
+  return `${firstPart[0] ?? ''}${lastPart[0] ?? ''}`.toUpperCase();
 };
 
 const compileProfileHeader = (block: CvProfileHeaderBlock, context: CvRenderContext): string => {

@@ -4,7 +4,6 @@ import React, { useMemo } from 'react';
 
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useRequiredBlockSettings } from './BlockContext';
-import { cn } from '@/shared/utils/ui-utils';
 
 function Heading({ size, text, typoStyles }: { size: string, text: string, typoStyles: React.CSSProperties }): React.JSX.Element {
   if (size === 'small') {

@@ -28,7 +28,7 @@ export type SupplierEvaluatorInput = {
 
 export type SupplierEvaluatorAssets = {
   productImageDataUrl: string;
-  screenshotArtifact: Awaited<ReturnType<typeof readPlaywrightEngineArtifact>>;
+  screenshotArtifact: NonNullable<Awaited<ReturnType<typeof readPlaywrightEngineArtifact>>>;
   heroImageDataUrl: string | null;
 };
 
@@ -102,7 +102,7 @@ export const resolveArtifactFileNameByKey = (
     const artifactPath = entry.path.length > 0 ? entry.path : '';
     const baseName = readOptionalString(path.basename(artifactPath, path.extname(artifactPath)));
     return (
-      entry.mimeType.startsWith(mimePrefix) &&
+      entry.mimeType?.startsWith(mimePrefix) === true &&
       (entry.name === normalizedKey || baseName === normalizedKey)
     );
   });

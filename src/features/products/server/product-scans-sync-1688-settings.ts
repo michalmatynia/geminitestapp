@@ -64,8 +64,8 @@ export const resolve1688ConnectionEngineSettings = (
   settings: Record<string, unknown>,
   options: { forceVisible: boolean }
 ): PlaywrightConnectionSettingsOverridesInput => {
-  const overrides: PlaywrightConnectionSettingsOverridesInput = {
-    ...settings,
+  const overrides = {
+    ...(settings as Partial<PlaywrightConnectionSettingsOverridesInput>),
     ...resolveVisibilityOverrides(options.forceVisible),
     locale: readOptionalString(settings['locale']) ?? SCANNER_1688_DEFAULT_LOCALE,
     timezoneId: readOptionalString(settings['timezoneId']) ?? SCANNER_1688_DEFAULT_TIMEZONE_ID,
@@ -87,7 +87,7 @@ export const resolve1688ConnectionEngineSettings = (
     inputDelayMax: resolveNumericSetting({ value: settings['inputDelayMax'], fallback: 160 }),
     actionDelayMin: resolveNumericSetting({ value: settings['actionDelayMin'], fallback: 250 }),
     actionDelayMax: resolveNumericSetting({ value: settings['actionDelayMax'], fallback: 900 }),
-  };
+  } as PlaywrightConnectionSettingsOverridesInput;
 
   return overrides;
 };

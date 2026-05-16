@@ -86,5 +86,5 @@ export const serializeWorkspaceForUnsavedChangesCheck = (
 
 export const sleep = (durationMs: number): Promise<void> =>
   new Promise((resolve) => {
-    safeSetTimeout(resolve, Math.max(0, durationMs));
+    safeSetTimeout(() => resolve(), Math.max(0, durationMs));
   });

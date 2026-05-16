@@ -1,23 +1,37 @@
 import React from 'react';
 import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
-import { 
-    type KangurLessonSection, 
-    type KangurLessonSubsection,
-    type KangurLessonSubject,
-    KANGUR_SUBJECTS
-} from '@/features/kangur/shared/contracts/kangur';
-import { KANGUR_AGE_GROUPS } from '@/features/kangur/shared/contracts/kangur';
+import {
+  type KangurLessonSection,
+  type KangurLessonSubsection,
+} from '@/shared/contracts/kangur-lesson-sections';
+import {
+  kangurLessonComponentIdSchema,
+  type KangurLessonAgeGroup,
+  type KangurLessonComponentId,
+  type KangurLessonSubject,
+} from '@/shared/contracts/kangur-lesson-constants';
+import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 
 export type SectionFormData = {
   id: string;
   subject: KangurLessonSubject;
-  ageGroup: string;
+  ageGroup: KangurLessonAgeGroup;
   label: string;
   typeLabel: string;
   emoji?: string;
   sortOrder: number;
   enabled: boolean;
 };
+
+const parseComponentIdsInput = (value: string): KangurLessonComponentId[] =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .flatMap((item) => {
+      const result = kangurLessonComponentIdSchema.safeParse(item);
+      return result.success ? [result.data] : [];
+    });
 
 export const KangurSectionModal: React.FC<{
   isOpen: boolean;
@@ -95,7 +109,7 @@ export const KangurSectionModal: React.FC<{
                 </div>
                 <div>
                     <Label>Age group</Label>
-                    <select value={form.ageGroup} onChange={(e) => setForm(f => ({...f, ageGroup: e.target.value}))}>
+                    <select value={form.ageGroup} onChange={(e) => setForm(f => ({...f, ageGroup: e.target.value as KangurLessonAgeGroup}))}>
                         {KANGUR_AGE_GROUPS.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
                     </select>
                 </div>
@@ -150,7 +164,7 @@ export const KangurSubsectionModal: React.FC<{
       typeLabel: form.typeLabel || 'Subsection',
       sortOrder: form.sortOrder,
       enabled: form.enabled,
-      componentIds: form.componentIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
+      componentIds: parseComponentIdsInput(form.componentIds),
     };
 
     const nextSections = sections.map((s) => {

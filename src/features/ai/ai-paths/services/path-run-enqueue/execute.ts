@@ -1,4 +1,11 @@
-import { type AiPathRunRecord, type EnqueueRunInput, type ParserSampleState, type UpdaterSampleState, type AiNode, type AiPathRunRepository } from '@/shared/contracts/ai-paths';
+import {
+  type AiNode,
+  type AiPathRunRecord,
+  type AiPathRunRepository,
+  type ParserSampleState,
+  type UpdaterSampleState,
+} from '@/shared/contracts/ai-paths';
+import { type EnqueueRunInput } from './types';
 import { validationError } from '@/shared/errors/app-error';
 import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.runtime-state';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils';

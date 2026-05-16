@@ -4,6 +4,7 @@ import { useCallback, useEffect, type MouseEvent as ReactMouseEvent } from 'reac
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { safeClearTimeout } from '@/shared/lib/timers';
 
 import {
   clearPersistedTutorAvatarPosition,
@@ -273,11 +274,11 @@ export function useKangurAiTutorPanelInteractions(
       setGuestIntroVisible(false);
       setGuestIntroHelpVisible(false);
       if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
+        safeClearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
       if (selectionGuidanceRevealTimeoutRef.current !== null) {
-        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
         selectionGuidanceRevealTimeoutRef.current = null;
       }
       setSelectionGuidanceCalloutVisibleText(null);
@@ -395,11 +396,11 @@ export function useKangurAiTutorPanelInteractions(
     setGuestIntroVisible(false);
     setGuestIntroHelpVisible(false);
     if (selectionExplainTimeoutRef.current !== null) {
-      window.clearTimeout(selectionExplainTimeoutRef.current);
+      safeClearTimeout(selectionExplainTimeoutRef.current);
       selectionExplainTimeoutRef.current = null;
     }
     if (selectionGuidanceRevealTimeoutRef.current !== null) {
-      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
       selectionGuidanceRevealTimeoutRef.current = null;
     }
     setHomeOnboardingStepIndex(null);

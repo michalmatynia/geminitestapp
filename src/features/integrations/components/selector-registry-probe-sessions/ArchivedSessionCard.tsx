@@ -100,7 +100,7 @@ export function ArchivedSessionCard(props: ArchivedSessionCardProps): React.JSX.
               <div className='text-xs text-muted-foreground'>{getSelectorRegistryProbeSuggestionEvidenceText(formattingInput)}</div>
               <div className='space-y-1 text-xs text-muted-foreground'>
                 <div>{getSelectorRegistryProbeSuggestionPrimaryPageLabel(formattingInput)}</div>
-                <SelectorRegistryProbeSuggestionCandidateDetails suggestion={formattingInput} />
+                <SelectorRegistryProbeSuggestionCandidateDetails suggestion={suggestion} />
                 <div>Archived probe suggestion. Review history only until restored.</div>
               </div>
             </div>

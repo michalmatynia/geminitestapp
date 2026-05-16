@@ -361,10 +361,11 @@ export const installInMemoryMongoPathRunDb = (): void => {
       async bulkWrite(operations: Array<{ updateOne?: { filter: MongoFilter; update: MongoUpdate } }>) {
         let modifiedCount = 0;
         for (const operation of operations) {
-          if (!operation.updateOne) continue;
-          const index = docs.findIndex((doc) => matchesFilter(doc, operation.updateOne.filter));
+          const updateOne = operation.updateOne;
+          if (!updateOne) continue;
+          const index = docs.findIndex((doc) => matchesFilter(doc, updateOne.filter));
           if (index === -1) continue;
-          docs[index] = applyUpdate(cloneValue(docs[index]!), operation.updateOne.update, false);
+          docs[index] = applyUpdate(cloneValue(docs[index]!), updateOne.update, false);
           modifiedCount += 1;
         }
         return { modifiedCount };

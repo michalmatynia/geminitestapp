@@ -341,7 +341,7 @@ export const createMagicLoginChallenge = async (input: {
     userId: input.userId,
     email: input.email,
     purpose: 'magic_login',
-    ttlMinutes: MAGIC_LOGIN_CHALLENGE_CALLBACK_TTL_MINUTES,
+    ttlMinutes: MAGIC_LOGIN_CHALLENGE_TTL_MINUTES,
     callbackUrl: input.callbackUrl,
   });
 

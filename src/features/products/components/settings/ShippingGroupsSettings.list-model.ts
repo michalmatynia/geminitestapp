@@ -151,10 +151,11 @@ const getAutoRuleSubtitle = ({
 
 const getTraderaSubtitle = (shippingGroup: ProductShippingGroup): string | null => {
   const condition = toTrimmedString(shippingGroup.traderaShippingCondition);
-  const hasPrice = typeof shippingGroup.traderaShippingPriceEur === 'number';
+  const price = shippingGroup.traderaShippingPriceEur;
+  const hasPrice = typeof price === 'number';
   if (condition.length === 0 && !hasPrice) return null;
   const conditionLabel = condition.length > 0 ? condition : 'Shipping modal';
-  const priceLabel = hasPrice ? ` · EUR ${shippingGroup.traderaShippingPriceEur.toFixed(2)}` : '';
+  const priceLabel = hasPrice ? ` · EUR ${price.toFixed(2)}` : '';
   return `Tradera: ${conditionLabel}${priceLabel}`;
 };
 

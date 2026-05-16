@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 import { type ExpandedImageFile } from '@/shared/contracts/products/drafts';
-import { type ImageFileSelection } from '@/shared/contracts/files';
 import { resolveFolder } from './FileGridUtils';
 
 export const FileGridItem = ({

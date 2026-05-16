@@ -125,8 +125,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
   const [info, setInfo] = useState<string | null>(null);
   const registryQuery = useListQueryV2<
     ScripterRegistryListEntry,
-    ScripterRegistryListEntry[],
-    typeof SCRIPTER_REGISTRY_QUERY_KEY
+    ScripterRegistryListEntry[]
   >({
     queryKey: SCRIPTER_REGISTRY_QUERY_KEY,
     queryFn: apiList,
@@ -363,7 +362,7 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       </aside>
 
       <main className='space-y-4'>
-        {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+        {error !== null ? <Alert variant='error'>{error}</Alert> : null}
         {info !== null ? <Alert>{info}</Alert> : null}
 
         <ScripterImportFromConnectionPanel

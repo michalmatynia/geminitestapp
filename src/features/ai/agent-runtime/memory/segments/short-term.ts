@@ -90,7 +90,7 @@ const buildListMemoryFilters = (params: {
   if (params.personaId !== null && params.personaId !== undefined && params.personaId !== '') {
     where.personaId = params.personaId;
   }
-  if (params.scope !== undefined && params.scope !== '') {
+  if (params.scope !== undefined) {
     where.scope = params.scope;
   }
   return where;

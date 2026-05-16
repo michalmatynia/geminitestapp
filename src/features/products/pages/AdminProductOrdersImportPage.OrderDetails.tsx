@@ -97,7 +97,7 @@ function OrderItemsPanel({
           </thead>
           <tbody className='divide-y divide-border/20'>
             {order.lineItems.map((item, index) => (
-              <OrderItemRow key={`${item.sku}:${index}`} item={item} index={index} currency={order.currency} />
+              <OrderItemRow key={`${item.sku}:${index}`} item={item} index={index} currency={order.currency ?? ''} />
             ))}
           </tbody>
         </table>

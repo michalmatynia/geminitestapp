@@ -525,7 +525,7 @@ export function useTriggerButtons({
           onError: (errorMessage?: string): void => {
             const errorRun: TriggerButtonLastRun = {
               runId: `error:${button.id}:${Date.now()}`,
-              status: 'error',
+              status: 'failed',
               updatedAt: new Date().toISOString(),
               finishedAt: new Date().toISOString(),
               errorMessage: errorMessage ?? null,

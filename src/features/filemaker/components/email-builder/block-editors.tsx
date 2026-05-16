@@ -60,7 +60,7 @@ function ImageLinkField({
 export function TextBlockEditor({ block, onUpdate }: EditorProps<EmailTextBlock>): React.JSX.Element {
   return (
     <DocumentWysiwygEditor
-      engineInstance={`filemaker_email_block_${block.id}`}
+      engineInstance='filemaker_email'
       value={block.html}
       onChange={(value: string): void => { onUpdate({ html: value }); }}
       placeholder='Write your text…'

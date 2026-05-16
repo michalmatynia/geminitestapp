@@ -90,6 +90,7 @@ export const performEnqueue = async (
   args: ServerExecutionArgs,
   payload: EnqueuePayload
 ) => {
+  void args;
   const enqueueResult = await enqueueAiPathRun(payload, {
     timeoutMs: SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS,
   });

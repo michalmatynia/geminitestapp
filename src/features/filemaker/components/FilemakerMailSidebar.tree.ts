@@ -47,8 +47,8 @@ const resolveRecentThreadNodeId = (
     treeNodes,
     (node) =>
       node.kind === 'mail_recent_thread' &&
-      node.metadata['accountId'] === selectedAccountId &&
-      node.metadata['threadId'] === selectedThreadId
+      node.metadata?.['accountId'] === selectedAccountId &&
+      node.metadata?.['threadId'] === selectedThreadId
   );
   return recentMatch?.id ?? null;
 };
@@ -62,8 +62,8 @@ const resolveFolderNodeId = (
     treeNodes,
     (node) =>
       node.kind === 'mail_folder' &&
-      node.metadata['accountId'] === selectedAccountId &&
-      node.metadata['mailboxPath'] === selectedMailboxPath
+      node.metadata?.['accountId'] === selectedAccountId &&
+      node.metadata?.['mailboxPath'] === selectedMailboxPath
   );
   return match?.id ?? null;
 };

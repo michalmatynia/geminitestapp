@@ -1,24 +1,22 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
-import { buildKangurLessonTtsEnvelopeSignature } from '@/features/kangur/tts/context-registry/instructions';
 import { buildKangurLessonDocumentNarrationScript } from '@/features/kangur/tts/script';
 import { api } from '@/shared/lib/api-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import type { RequestStatus } from '@/shared/contracts/ui/base';
 import type { KangurLessonTtsResponse, KangurLessonTtsStatusResponse } from '@/features/kangur/tts/contracts';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 export function useNarrationController() {
-  const { lesson, document, onChange } = useLessonContentEditorContext();
+  const { lesson, document } = useLessonContentEditorContext();
   const pageContextRegistry = useOptionalContextRegistryPageEnvelope();
   
   const [status, setStatus] = useState<RequestStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [response, setResponse] = useState<KangurLessonTtsResponse | null>(null);
-  const [cacheStatus, setCacheStatus] = useState<KangurLessonTtsStatusResponse | null>(null);
-  const [isCheckingCache, setIsCheckingCache] = useState(false);
+  const [cacheStatus] = useState<KangurLessonTtsStatusResponse | null>(null);
+  const [isCheckingCache] = useState(false);
 
   const requestContextRegistry = useMemo(() => pageContextRegistry ? buildContextRegistryConsumerEnvelope({
       refs: pageContextRegistry.refs,

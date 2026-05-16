@@ -29,8 +29,8 @@ type ProductListDataState = ReturnType<typeof useProductListDataState>;
 type ProductListModalState = ReturnType<typeof useProductListModalState>;
 type ProductListRuntimeState = ReturnType<typeof useProductListRuntimeState>;
 
-const optionalString = (value: string): string | undefined =>
-  value.length > 0 ? value : undefined;
+const optionalString = (value: string | undefined): string | undefined =>
+  value !== undefined && value.length > 0 ? value : undefined;
 
 const resolveBaseExportedFilter = (value: '' | 'true' | 'false'): boolean | undefined => {
   if (value === 'true') return true;

@@ -264,7 +264,7 @@ export async function upsertProductScan(scan: CreateProductScanInput): Promise<P
       },
       $setOnInsert: {
         createdAt:
-          normalized.createdAt.length > 0 ? new Date(normalized.createdAt) : now,
+          (normalized.createdAt ?? '').length > 0 ? new Date(normalized.createdAt ?? '') : now,
       },
     },
     { upsert: true, returnDocument: 'after' }

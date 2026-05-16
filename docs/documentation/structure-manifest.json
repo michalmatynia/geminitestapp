@@ -163,6 +163,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/filemaker",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/ai-paths",
       "mode": "curated_references",
       "requiredReferences": [
@@ -301,7 +305,9 @@
     "docs/build/bazel-buildbuddy.md",
     "docs/build/bazel.md",
     "docs/build/bun.md",
+    "docs/build/database-engine-managed-mongo.md",
     "docs/build/vercel-deployment.md",
+    "docs/build/vercel-studiq-cms-split.md",
     "docs/build/codeql.md",
     "docs/build/general-improvements.md",
     "docs/build/improvements/README.md",

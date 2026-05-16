@@ -39,7 +39,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const filteredLanguages = readMetadataArray<ProductFormLanguage>(
     productFormMetadata.filteredLanguages
   );
-  const categories = readMetadataArray<ProductFormPolishNameCategories[number]>(
+  const categories = readMetadataArray<NonNullable<ProductFormPolishNameCategories>[number]>(
     productFormMetadata.categories
   );
   const focusedFieldName = useProductFormGeneralFocus();

@@ -357,7 +357,10 @@ const hasTextValue = (value: string | null | undefined): boolean =>
 const resolveReferenceText = (
   currentValue: string | null | undefined,
   referenceValue: string | null | undefined
-): string | null | undefined => (hasTextValue(currentValue) ? currentValue : referenceValue);
+): string | undefined => {
+  const resolvedValue = hasTextValue(currentValue) ? currentValue : referenceValue;
+  return typeof resolvedValue === 'string' ? resolvedValue : undefined;
+};
 
 const resolveReferenceArray = <T,>(
   currentValue: T[] | undefined,

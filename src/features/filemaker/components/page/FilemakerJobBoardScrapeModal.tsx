@@ -316,7 +316,7 @@ const buildLexiconTypesContext = (
           label: term.label,
           normalizedLabel: term.normalizedLabel,
           occurrenceCount: term.occurrenceCount,
-          sourceSite: term.sourceSite,
+          sourceSite: term.sourceSite ?? '',
         })),
       sortOrder: type.sortOrder,
     }));
@@ -335,7 +335,7 @@ const buildKnownTermIndex = (database: FilemakerDatabase): LexiconKnownTermConte
       label: term.label,
       normalizedLabel: term.normalizedLabel,
       occurrenceCount: term.occurrenceCount,
-      sourceSite: term.sourceSite,
+      sourceSite: term.sourceSite ?? '',
       typeKey: term.typeKey,
     }));
 
@@ -774,7 +774,7 @@ const normalizeRuntimeStatus = (value: unknown): FilemakerJobBoardScrapeRuntimeS
 
 const isRuntimeRunActive = (
   run: FilemakerJobBoardScrapeRuntimeRun | null
-): run is FilemakerJobBoardScrapeRuntimeRun =>
+): boolean =>
   run !== null &&
   (run.status === 'queued' || run.status === 'running' || run.status === 'paused');
 
@@ -2037,7 +2037,8 @@ export function FilemakerJobBoardScrapeModal(
   }, [applyRuntimeSnapshot, props.open, toast]);
 
   useEffect(() => {
-    if (!isRuntimeRunActive(activeRuntimeRun)) return undefined;
+    const runtimeRun = activeRuntimeRun;
+    if (runtimeRun === null || !isRuntimeRunActive(runtimeRun)) return undefined;
     if (activeRequestRef.current !== null) return undefined;
     let canceled = false;
     let timeoutId: number | null = null;
@@ -2060,7 +2061,7 @@ export function FilemakerJobBoardScrapeModal(
 
     const poll = async (): Promise<void> => {
       try {
-        const snapshot = await fetchRuntimeSnapshot(activeRuntimeRun.id, controller.signal);
+        const snapshot = await fetchRuntimeSnapshot(runtimeRun.id, controller.signal);
         if (!canceled) {
           const fingerprint = computeFingerprint(snapshot);
           if (fingerprint !== lastFingerprint) {

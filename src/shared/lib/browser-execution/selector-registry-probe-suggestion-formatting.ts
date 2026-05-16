@@ -1,4 +1,4 @@
-type SelectorRegistryProbeSuggestionFormattingInput = {
+export type SelectorRegistryProbeSuggestionFormattingInput = {
   textPreview: string | null;
   pageTitle: string | null;
   pageUrl: string;
@@ -8,6 +8,11 @@ type SelectorRegistryProbeSuggestionFormattingInput = {
     xpath: string | null;
   };
 };
+
+type SelectorRegistryProbeSuggestionCandidateFormattingInput = Pick<
+  SelectorRegistryProbeSuggestionFormattingInput,
+  'candidates'
+>;
 
 export const getSelectorRegistryProbeSuggestionTextPreview = (
   suggestion: SelectorRegistryProbeSuggestionFormattingInput
@@ -30,6 +35,6 @@ export const formatSelectorRegistryProbeSuggestionCandidateValue = (
 ): string => value ?? 'Unavailable';
 
 export const formatSelectorRegistryProbeSuggestionCandidateSummary = (
-  suggestion: SelectorRegistryProbeSuggestionFormattingInput
+  suggestion: SelectorRegistryProbeSuggestionCandidateFormattingInput
 ): string =>
   `CSS: ${formatSelectorRegistryProbeSuggestionCandidateValue(suggestion.candidates.css)} · XPath: ${formatSelectorRegistryProbeSuggestionCandidateValue(suggestion.candidates.xpath)}`;

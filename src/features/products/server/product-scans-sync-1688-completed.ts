@@ -90,7 +90,7 @@ const loadSupplierEvaluatorConfig = async (
 const shouldEvaluateSupplierCandidate = (
   evaluatorConfig: SupplierEvaluatorConfig,
   state: Completed1688State
-): boolean =>
+): evaluatorConfig is Extract<SupplierEvaluatorConfig, { enabled: true }> =>
   evaluatorConfig.enabled &&
   evaluatorConfig.mode !== 'disabled' &&
   state.nextStatus === 'completed' &&

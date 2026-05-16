@@ -7,7 +7,7 @@
 
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
-import type { RelationTreeBuildResult } from '../types';
+import type { RelationTreeBuildResult } from '../../relation-search/types';
 import {
   buildCaseBuckets,
   ensureFolderNode,

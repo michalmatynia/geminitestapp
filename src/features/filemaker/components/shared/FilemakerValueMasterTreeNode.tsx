@@ -117,7 +117,8 @@ function FilemakerValueEditButton(props: {
   onOpenValue: (valueId: string) => void;
   value: FilemakerValue | null;
 }): React.JSX.Element | null {
-  if (props.value === null) return null;
+  const value = props.value;
+  if (value === null) return null;
 
   return (
     <Button
@@ -125,12 +126,12 @@ function FilemakerValueEditButton(props: {
       variant='outline'
       size='icon'
       className='size-7'
-      aria-label={`Edit value ${props.value.label}`}
-      title={`Edit value ${props.value.label}`}
+      aria-label={`Edit value ${value.label}`}
+      title={`Edit value ${value.label}`}
       onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
         event.preventDefault();
         event.stopPropagation();
-        props.onOpenValue(props.value.id);
+        props.onOpenValue(value.id);
       }}
     >
       <Edit2 className='size-3.5' />

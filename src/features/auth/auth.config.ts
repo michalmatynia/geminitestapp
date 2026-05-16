@@ -17,6 +17,8 @@
 import type { NextAuthConfig, Session, User } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 
+type AuthSessionUser = NonNullable<Session['user']>;
+
 // Secret key for JWT signing - required in production
 const devFallbackSecret = 'dev-secret-change-me';
 const secret =
@@ -210,7 +212,7 @@ const getUserStatusData = (token: JWT): Partial<User> => {
   };
 };
 
-const getUpdatedUser = (user: User, token: JWT): User => {
+const getUpdatedUser = (user: AuthSessionUser, token: JWT): AuthSessionUser => {
   return {
     ...user,
     ...getCoreUserData(token, user.id),

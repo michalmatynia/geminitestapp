@@ -8,6 +8,7 @@ import {
   resolveDetectedAmazonAsinOutcome,
 } from './product-scan-amazon.helpers';
 import {
+  createPersistedProductScanStep,
   normalizeErrorMessage,
   persistSynchronizedScan,
   readOptionalString,
@@ -56,16 +57,15 @@ export const persistAmazonMatchedProductMissing = async (
   );
   const finalizedSteps = upsertPersistedProductScanStep(
     resolvePersistedProductScanSteps(input.scan, input.parsedResult.steps),
-    {
+    createPersistedProductScanStep({
       key: 'product_asin_update',
       label: 'Update product ASIN',
-      group: 'product',
       status: 'failed',
       resultCode: 'product_not_found',
       message,
       details: [{ label: 'Reason', value: 'Product not found' }],
       url: scanUrl,
-    }
+    })
   );
   return await persistSynchronizedScan(input.scan, {
     engineRunId: input.engineRunId,
@@ -139,10 +139,9 @@ const buildAsinUpdateStep = (
   context: AmazonMatchedContext,
   asinOutcome: AmazonAsinOutcome,
   finalUpdate: FinalAsinUpdate
-): ProductScanRecord['steps'][number] => ({
+): ProductScanRecord['steps'][number] => createPersistedProductScanStep({
   key: 'product_asin_update',
   label: 'Update product ASIN',
-  group: 'product',
   status: resolveAsinUpdateStepStatus(finalUpdate.updateStatus),
   resultCode: resolveAsinUpdateResultCode(finalUpdate.updateStatus),
   message: finalUpdate.message,

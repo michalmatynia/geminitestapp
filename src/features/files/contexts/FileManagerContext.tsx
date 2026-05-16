@@ -137,7 +137,19 @@ function FileManagerConfigProvider(props: {
   filepathFilter?: (filepath: string) => boolean;
 }) {
   const { children, ...config } = props;
-  const configValue = useMemo<FileManagerConfig>(() => config, [config]);
+  const configValue = useMemo<FileManagerConfig>(
+    () => ({
+      mode: config.mode ?? 'select',
+      selectionMode: config.selectionMode ?? 'multiple',
+      autoConfirmSelection: config.autoConfirmSelection ?? false,
+      showFolderFilter: config.showFolderFilter ?? false,
+      defaultFolder: config.defaultFolder,
+      showBulkActions: config.showBulkActions ?? false,
+      showTagSearch: config.showTagSearch ?? false,
+      onSelectFile: config.onSelectFile,
+    }),
+    [config]
+  );
   return <ConfigContext.Provider value={configValue}>{children}</ConfigContext.Provider>;
 }
 

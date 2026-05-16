@@ -286,7 +286,7 @@ const buildFallbackListing = (context: SnapshotFallbackContext): Record<string, 
 
 export const buildSnapshotFallbackEvaluation = (
   snapshot: JobBoardStructuredSnapshot | null,
-  finalUrl: string,
+  _finalUrl: string,
   evaluatedAt: string
 ): JobScanEvaluation => {
   if (snapshot === null) return null;

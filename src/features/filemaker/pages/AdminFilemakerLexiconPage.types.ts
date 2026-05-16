@@ -18,7 +18,7 @@ import type {
 
 export type FilemakerLexiconTypeEditorViewState = {
   changeDraft: (
-    key: string,
+    key: FilemakerLexiconTypeDraft['key'],
     patch: Partial<FilemakerLexiconTypeDraft>
   ) => void;
   close: () => void;

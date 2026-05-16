@@ -29,7 +29,9 @@ export function PlaywrightEngineSettingsModal({
   return (
     <AppModal
       open={open}
-      onOpenChange={(isOpen) => !isOpen && onClose()}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
       onClose={onClose}
       title='Playwright Engine'
       subtitle='Browser automation engine powering programmable captures and AI Path runs.'
@@ -63,5 +65,4 @@ export function PlaywrightEngineSettingsModal({
     </AppModal>
   );
 }
-
 

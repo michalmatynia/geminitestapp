@@ -310,7 +310,7 @@ export async function getDatabaseEngineServiceProvider(
   service: DatabaseEngineServiceRoute
 ): Promise<DatabaseEngineProvider | undefined> {
   const map = await getDatabaseEngineServiceRouteMap();
-  return map[service] ?? null;
+  return map[service];
 }
 
 /** Checks if a primary database provider is correctly configured in the environment. */
@@ -331,4 +331,3 @@ export const invalidateDatabaseEnginePolicyCache = (): void => {
   backupScheduleCache.invalidate();
   operationControlsCache.invalidate();
 };
-

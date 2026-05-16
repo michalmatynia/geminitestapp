@@ -15,6 +15,7 @@ import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries'
 import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/1688/selectors';
+const SUPPLIER_1688_SELECTOR_REGISTRY_TAGS = ['integrations', '1688', 'selectors'];
 
 type Supplier1688SelectorRegistryQueryKey = readonly ['integrations', '1688', 'selectors', string];
 
@@ -36,8 +37,8 @@ const buildUrl = (profile?: string | null): string => {
 
 const baseMeta = {
   domain: 'integrations',
-  tags: ['integrations', '1688', 'selectors'],
-} as const;
+  tags: SUPPLIER_1688_SELECTOR_REGISTRY_TAGS,
+};
 
 async function requestJson<TResponse>(
   url: string,
@@ -67,7 +68,11 @@ export function useSupplier1688SelectorRegistry(options?: {
 }): SingleQuery<Supplier1688SelectorRegistryListResponse> {
   const profile = options?.profile ?? '1688';
   const queryKey = registryKey(profile);
-  return useSingleQueryV2<Supplier1688SelectorRegistryListResponse>({
+  return useSingleQueryV2<
+    Supplier1688SelectorRegistryListResponse,
+    Supplier1688SelectorRegistryListResponse,
+    Supplier1688SelectorRegistryQueryKey
+  >({
     queryKey,
     queryFn: async (): Promise<Supplier1688SelectorRegistryListResponse> =>
       requestJson<Supplier1688SelectorRegistryListResponse>(buildUrl(profile)),

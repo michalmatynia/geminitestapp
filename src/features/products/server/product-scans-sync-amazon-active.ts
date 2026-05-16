@@ -54,6 +54,14 @@ type ActiveRunState = {
   activeRunStallThresholdMs: number;
 };
 
+const normalizeAmazonActiveRunStatus = (
+  status: PlaywrightEngineRunRecord['status']
+): ProductScanRecord['status'] => {
+  if (status === 'pending') return 'queued';
+  if (status === 'cancelled' || status === 'canceled') return 'failed';
+  return status;
+};
+
 const resolveLatestActiveStage = (
   activeRunDiagnostics: ActiveRunDiagnostics,
   resultValue: unknown
@@ -113,7 +121,7 @@ const buildActiveRunState = (input: SynchronizeAmazonActiveRunInput): ActiveRunS
       activeRunDiagnostics,
       resultValue: input.resultValue,
       engineRunId: input.engineRunId,
-      runStatus: input.run.status,
+      runStatus: normalizeAmazonActiveRunStatus(input.run.status),
       manualVerificationPending,
       activeMessage,
       manualVerificationTimeoutMs,
@@ -235,7 +243,7 @@ const persistActiveRunState = (
 ): Promise<ProductScanRecord> =>
   persistSynchronizedScan(input.scan, {
     engineRunId: input.engineRunId,
-    status: input.run.status,
+    status: normalizeAmazonActiveRunStatus(input.run.status),
     steps: state.nextSteps,
     rawResult: state.nextRawResult,
     error: null,

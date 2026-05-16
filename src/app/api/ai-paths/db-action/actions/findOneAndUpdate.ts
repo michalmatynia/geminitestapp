@@ -12,7 +12,6 @@ export const runMongoAction = async (ctx: MongoActionContext, normalizedFilter: 
   const options: FindOneAndUpdateOptions = {
     returnDocument: ctx.returnDocument === 'before' ? 'before' : 'after',
     upsert: Boolean(ctx.upsert),
-    includeResultMetadata: true
   };
 
   const result = await ctx.collectionRef.findOneAndUpdate(
@@ -20,5 +19,5 @@ export const runMongoAction = async (ctx: MongoActionContext, normalizedFilter: 
     nextUpdateDoc as Document, 
     options
   );
-  return withProviderPayload(ctx.provider, ctx.requestedProvider, { value: result.value ?? null, ok: result.ok });
+  return withProviderPayload(ctx.provider, ctx.requestedProvider, { value: result ?? null, ok: result === null ? 0 : 1 });
 };

@@ -23,7 +23,8 @@ export type PlaywrightVerificationInjectionConfig<TReview> = {
   timeoutMs?: number | null | undefined;
   useConversationHistory?: boolean | null | undefined;
   evaluateCapture?: ((capture: PlaywrightVisionIterationCapture) => Promise<PlaywrightVisionIterationEvaluation>) | null | undefined;
-  artifacts?: any | null | undefined; // Using any for brevity; replace with specific type if imported
+  artifacts?: import('@/features/playwright/server/ai-step-service/types').PlaywrightObservationArtifacts | null | undefined;
   artifactKey?: string | null | undefined;
   maxConsecutiveErrors?: number | null | undefined;
+  iterationDelayMs?: number | null | undefined;
 };

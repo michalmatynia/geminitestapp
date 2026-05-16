@@ -183,43 +183,6 @@ const createInitialParameterInferenceCandidateStats =
     unknownParameterIdCount: 0,
   });
 
-const createBlockedParameterInferenceResult = (args: {
-  targetPath: string;
-  definitionsPort?: string;
-  definitionsPath?: string;
-  candidates?: number;
-  definitions?: number;
-  repairedCandidates?: boolean;
-  updates: Record<string, unknown>;
-  reason: string;
-  errorMessage: string;
-}): {
-  updates: Record<string, unknown>;
-  applied: boolean;
-  blocked: boolean;
-  errorMessage: string;
-  meta: Record<string, unknown>;
-} => ({
-  updates: args.updates,
-  applied: true,
-  blocked: true,
-  errorMessage: args.errorMessage,
-  meta: {
-    targetPath: args.targetPath,
-    ...(args.definitionsPort ? { definitionsPort: args.definitionsPort } : {}),
-    ...(args.definitionsPath !== undefined ? { definitionsPath: args.definitionsPath } : {}),
-    ...(args.candidates !== undefined ? { candidates: args.candidates } : {}),
-    ...(args.definitions !== undefined ? { definitions: args.definitions } : {}),
-    ...(args.repairedCandidates !== undefined
-      ? { repairedCandidates: args.repairedCandidates }
-      : {}),
-    blocked: {
-      reason: args.reason,
-      message: args.errorMessage,
-    },
-  },
-});
-
 const normalizeParameterInferenceTargetPath = (
   dbConfig: DatabaseConfig
 ): string => normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
@@ -767,7 +730,7 @@ export const shouldRunParameterDefinitionFallback = (args: {
   return isMissingCatalogIdQuery(args.query);
 };
 
-import { configurationError, internalError } from '@/shared/errors/app-error';
+import { configurationError } from '@/shared/errors/app-error';
 
 // ... (existing constants)
 

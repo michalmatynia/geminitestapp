@@ -42,7 +42,7 @@ import type {
   KangurMiniGameInformationalFeedback,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { cn } from '@/features/kangur/shared/utils';
 import {
   CANVAS_HEIGHT,
@@ -137,7 +137,7 @@ const resolveGeometrySymmetryBaseLayerCacheKey = (
 
 function useGeometrySymmetryRoundAdvance(input: {
   clearDrawing: () => void;
-  nextRoundTimeoutRef: React.RefObject<number | null>;
+  nextRoundTimeoutRef: React.RefObject<SafeTimerId | null>;
   ownerKey: string;
   roundIndex: number;
   score: number;
@@ -305,7 +305,7 @@ function useGeometrySymmetryGameRuntime(input: {
   );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sessionStartedAtRef = useRef(Date.now());
-  const nextRoundTimeoutRef = useRef<number | null>(null);
+  const nextRoundTimeoutRef = useRef<SafeTimerId | null>(null);
   const resolvedRounds = useMemo(
     () =>
       resolveGeometrySymmetryRounds({
@@ -424,7 +424,7 @@ function useGeometrySymmetryGameRuntime(input: {
   useEffect(() => {
     return () => {
       if (nextRoundTimeoutRef.current !== null) {
-        window.clearTimeout(nextRoundTimeoutRef.current);
+        safeClearTimeout(nextRoundTimeoutRef.current);
       }
     };
   }, []);

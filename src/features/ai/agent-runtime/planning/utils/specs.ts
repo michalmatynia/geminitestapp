@@ -82,7 +82,8 @@ const createWaitHumanDecision = (reason: string): AgentDecision => ({
 const normalizeExplicitDecision = (
   decision: Partial<AgentDecision> | undefined
 ): AgentDecision | null => {
-  const action = decision?.action;
+  if (decision === undefined) return null;
+  const action = decision.action;
   if (action === 'tool') {
     return createToolDecision(
       decision.reason ?? 'LLM planner selected tool execution.',

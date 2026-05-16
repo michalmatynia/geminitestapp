@@ -9,6 +9,7 @@ import {
   createAiPathNodePlaywrightInstance,
   enqueuePlaywrightEngineRun,
   type PlaywrightEngineRunRecord,
+  type PlaywrightEngineRunRequest,
 } from '@/features/playwright/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
@@ -45,15 +46,15 @@ const normalizeCaptureConfig = (
 
 interface EngineRequest {
   script: string;
-  input?: unknown;
+  input?: Record<string, unknown>;
   startUrl?: string;
   timeoutMs?: number;
-  browserEngine?: string;
+  browserEngine?: PlaywrightEngineRunRequest['browserEngine'];
   personaId?: string;
   settingsOverrides?: Record<string, unknown>;
-  launchOptions?: Record<string, unknown>;
-  contextOptions?: Record<string, unknown>;
-  contextRegistry?: unknown;
+  launchOptions?: PlaywrightEngineRunRequest['launchOptions'];
+  contextOptions?: PlaywrightEngineRunRequest['contextOptions'];
+  contextRegistry?: PlaywrightEngineRunRequest['contextRegistry'];
   capture?: CapturePayload;
 }
 
@@ -73,14 +74,18 @@ const addEngineOptions = (
   ...(payload.timeoutMs !== undefined ? { timeoutMs: payload.timeoutMs } : {}),
   ...(payload.browserEngine !== undefined ? { browserEngine: payload.browserEngine } : {}),
   ...(payload.settingsOverrides !== undefined ? { settingsOverrides: payload.settingsOverrides } : {}),
-  ...(payload.launchOptions !== undefined ? { launchOptions: payload.launchOptions } : {}),
-  ...(payload.contextOptions !== undefined ? { contextOptions: payload.contextOptions } : {}),
+  ...(payload.launchOptions !== undefined
+    ? { launchOptions: payload.launchOptions as PlaywrightEngineRunRequest['launchOptions'] }
+    : {}),
+  ...(payload.contextOptions !== undefined
+    ? { contextOptions: payload.contextOptions as PlaywrightEngineRunRequest['contextOptions'] }
+    : {}),
 });
 
 /* eslint-disable complexity */
 const resolveBuildEngineRequest = (
   payload: AiPathsPlaywrightEnqueueRequest,
-  contextRegistry: unknown,
+  contextRegistry: PlaywrightEngineRunRequest['contextRegistry'] | null | undefined,
   capture: CapturePayload | undefined
 ): EngineRequest => {
   const request: EngineRequest = { script: payload.script };
@@ -120,7 +125,7 @@ export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerCo
   const contextRegistry = await resolveAiPathsContextRegistryEnvelope(payload.contextRegistry);
   
   const run = await enqueuePlaywrightEngineRun({
-    request: resolveBuildEngineRequest(payload, contextRegistry, capture),
+    request: resolveBuildEngineRequest(payload, contextRegistry, capture) as PlaywrightEngineRunRequest,
     waitForResult: payload.waitForResult ?? true,
     ownerUserId: isInternal ? 'system' : access.userId,
     instance: createAiPathNodePlaywrightInstance(),

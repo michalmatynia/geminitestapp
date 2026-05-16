@@ -34,7 +34,6 @@ import type {
 import {
   configurationError,
   externalServiceError,
-  internalError,
 } from '@/shared/errors/app-error';
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
@@ -499,12 +498,10 @@ const loadLiveContext = async ({
   nodeId,
   config,
   nodeInputs,
-  reportAiPathsError,
 }: {
   nodeId: string;
   config: DbSchemaConfig;
   nodeInputs: RuntimePortValues;
-  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
 }): Promise<LiveContextPayload | null> => {
   const selectedCollections = resolveLiveContextCollectionKeys(config);
   if (selectedCollections.length === 0) {
@@ -630,7 +627,6 @@ export const handleDbSchema: NodeHandler = async ({
   nodeInputs,
   prevOutputs,
   executed,
-  reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.schema?.has(node.id)) return prevOutputs;
 
@@ -696,7 +692,6 @@ export const handleDbSchema: NodeHandler = async ({
         nodeId: node.id,
         config,
         nodeInputs,
-        reportAiPathsError,
       })
       : null;
   const liveContextText =

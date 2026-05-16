@@ -78,7 +78,7 @@ const formatShippingRuleSummary = (
   formatCategoryRuleSummary({
     categoryIds,
     categoryLabelById: model.categoryPathLabelById,
-  });
+  }) ?? '';
 
 export const ShippingGroupAlerts = ({
   props,

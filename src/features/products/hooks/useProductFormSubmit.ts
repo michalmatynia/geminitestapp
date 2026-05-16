@@ -157,8 +157,9 @@ const runSubmitWithLock = async ({
 
 type UseSubmitCallbackArgs = Omit<
   UseProductFormSubmitProps,
-  'methods' | 'refreshImages' | 'onSuccess' | 'onEditSave'
+  'methods' | 'refreshImages' | 'onSuccess' | 'onEditSave' | 'requireHydratedEditProduct'
 > & {
+  requireHydratedEditProduct: boolean;
   latestRefs: LatestSubmitRefs;
   confirm: ReturnType<typeof useConfirm>['confirm'];
   toast: ReturnType<typeof useToast>['toast'];

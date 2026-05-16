@@ -23,9 +23,7 @@ type SessionUserCacheEntry = {
   expiresAt: number;
 };
 
-type KangurBootstrapWindow = Window & {
-  __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null;
-};
+const KANGUR_AUTH_BOOTSTRAP_ELEMENT_ID = 'kangur-auth-bootstrap-data';
 
 let sessionUserCache: SessionUserCacheEntry | null = null;
 let sessionUserInFlight: Promise<KangurUser> | null = null;
@@ -85,22 +83,23 @@ const syncActiveLearnerStorage = (user: KangurUser): void => {
 };
 
 function hydrateSessionUserCacheFromBootstrap(): void {
-  if (sessionUserBootstrapHydrated || typeof window === 'undefined') {
-    return;
-  }
+  if (sessionUserBootstrapHydrated || typeof document === 'undefined') return;
 
   sessionUserBootstrapHydrated = true;
-  const bootstrapWindow = window as KangurBootstrapWindow;
-  const bootstrapUser = bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__;
 
-  if (typeof bootstrapUser === 'undefined') {
+  const el = document.getElementById(KANGUR_AUTH_BOOTSTRAP_ELEMENT_ID);
+  if (!el) return;
+
+  let bootstrapUser: KangurUser | null | undefined;
+  try {
+    bootstrapUser = JSON.parse(el.textContent ?? 'undefined') as KangurUser | null | undefined;
+  } catch {
     return;
   }
 
-  if (bootstrapUser) {
-    syncActiveLearnerStorage(bootstrapUser);
-  }
+  if (typeof bootstrapUser === 'undefined') return;
 
+  if (bootstrapUser) syncActiveLearnerStorage(bootstrapUser);
   cacheResolvedUser(bootstrapUser, bootstrapUser === null);
 }
 

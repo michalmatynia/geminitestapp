@@ -19,16 +19,24 @@ const ROUTER_MATCH_MODE_OPTIONS = [
   { value: 'contains', label: 'Contains' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<RouterConfig['matchMode']>>;
 
+const DEFAULT_ROUTER_CONFIG = {
+  mode: 'valid',
+  matchMode: 'truthy',
+  compareTo: '',
+} satisfies Required<Pick<RouterConfig, 'mode' | 'matchMode' | 'compareTo'>>;
+
 export function RouterNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { updateSelectedNodeConfig } = useAiPathOrchestrator();
 
   if (selectedNode?.type !== 'router') return null;
 
-  const routerConfig = selectedNode.config?.router ?? {
-    mode: 'valid',
-    matchMode: 'truthy',
-    compareTo: '',
+  const rawRouterConfig = selectedNode.config?.router;
+  const routerConfig = {
+    ...rawRouterConfig,
+    mode: rawRouterConfig?.mode ?? DEFAULT_ROUTER_CONFIG.mode,
+    matchMode: rawRouterConfig?.matchMode ?? DEFAULT_ROUTER_CONFIG.matchMode,
+    compareTo: rawRouterConfig?.compareTo ?? DEFAULT_ROUTER_CONFIG.compareTo,
   };
 
   const updateConfig = (patch: Partial<RouterConfig>): void => {

@@ -24,6 +24,7 @@ health.
 - [`scan-latest.md`](./scan-latest.md)
 - [`scan-latest.json`](./scan-latest.json)
 - [`inventory-latest.csv`](./inventory-latest.csv)
+- [`audit-report.md`](./audit-report.md)
 
 ## Core Commands
 

@@ -4,8 +4,6 @@
  * Logic for validating, normalizing, and parsing Case Resolver graph edges.
  */
 
-import { z } from 'zod';
-import { caseResolverEdgeSchema, type CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
 import { validationError } from '@/shared/errors/app-error';
 
 export const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([

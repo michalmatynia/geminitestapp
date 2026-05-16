@@ -1,13 +1,9 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { type CmsStorefrontAppearanceMode } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance.contracts';
 import { resolveStorefrontAppearanceColorSchemes } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance.logic';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
-import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import type { GsapAnimationConfig } from '@/features/gsap/public';
-import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type {
   PageComponentInput,
   BlockInstance,
@@ -18,12 +14,9 @@ import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 import { CmsPageProvider } from './CmsPageContext';
 import {
-  isCmsNodeVisible,
   resolveCmsConnectedSettings,
   type CmsRuntimeContextValue,
 } from './CmsRuntimeShared';
-import { CssAnimationWrapper } from './CssAnimationWrapper';
-import { GsapAnimationWrapper } from './GsapAnimationWrapper';
 import { SectionSubtree } from './page-renderer/SectionSubtree';
 import { MediaStylesProvider } from './media-styles-context';
 import { FrontendAccordionSection } from './sections/FrontendAccordionSection';

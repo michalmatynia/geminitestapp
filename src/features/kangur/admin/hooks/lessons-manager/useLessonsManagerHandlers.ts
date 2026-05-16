@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
-import type { KangurLesson, KangurLessonTemplate } from '@/features/kangur/shared/contracts/kangur';
-import type { KangurLessonTemplateComponentContent } from '@/shared/contracts/kangur-lesson-templates';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonTemplate,
+  KangurLessonTemplateComponentContent,
+} from '@/shared/contracts/kangur-lesson-templates';
 import { useToast } from '@/features/kangur/shared/ui';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { buildLessonsManagerErrorReport } from '../../AdminKangurLessonsManagerPage.shared';
@@ -114,8 +117,10 @@ export function useLessonsManagerHandlers(params: {
       const existingLesson = lessonById.get(lessonId);
       const useExisting = !isPrimaryContentLocale && Boolean(existingLesson);
 
-      const pick = <K extends keyof KangurLesson>(key: K): KangurLesson[K] => 
-        (useExisting && existingLesson[key] !== undefined) ? existingLesson[key] : (source as any)[key];
+      const pick = <K extends keyof KangurLesson>(key: K): KangurLesson[K] =>
+        useExisting && existingLesson !== undefined && existingLesson[key] !== undefined
+          ? existingLesson[key]
+          : (source as KangurLesson)[key];
 
       return {
         id: lessonId,
@@ -193,13 +198,14 @@ export function useLessonsManagerHandlers(params: {
   };
 
   const handleDelete = async (): Promise<void> => {
-    if (!ui.lessonToDelete) return;
+    const lessonToDelete = ui.lessonToDelete;
+    if (!lessonToDelete) return;
     await withKangurClientError(
-      buildLessonsManagerErrorReport('lesson-delete', 'Deletes a lesson and its content document.', { lessonId: ui.lessonToDelete.id }),
+      buildLessonsManagerErrorReport('lesson-delete', 'Deletes a lesson and its content document.', { lessonId: lessonToDelete.id }),
       async () => {
-        const nextLessons = lessons.filter((lesson) => lesson.id !== ui.lessonToDelete.id);
+        const nextLessons = lessons.filter((lesson) => lesson.id !== lessonToDelete.id);
         await updateLessons.mutateAsync(nextLessons);
-        const nextDocuments = removeKangurLessonDocument(lessonDocuments, ui.lessonToDelete.id);
+        const nextDocuments = removeKangurLessonDocument(lessonDocuments, lessonToDelete.id);
         await updateLessonDocuments.mutateAsync(nextDocuments);
         toast('Lesson deleted', { variant: 'success' });
         ui.setLessonToDelete(null);
@@ -208,19 +214,20 @@ export function useLessonsManagerHandlers(params: {
   };
 
   const handleSaveContent = async (): Promise<void> => {
-    if (!ui.editingContentLesson) return;
+    const editingContentLesson = ui.editingContentLesson;
+    if (!editingContentLesson) return;
     await withKangurClientError(
-      buildLessonsManagerErrorReport('lesson-content-save', 'Saves the lesson document editor content.', { lessonId: ui.editingContentLesson.id }),
+      buildLessonsManagerErrorReport('lesson-content-save', 'Saves the lesson document editor content.', { lessonId: editingContentLesson.id }),
       async () => {
         const pages = resolveKangurLessonDocumentPages(ui.contentDraft);
         const nextDocument = updateKangurLessonDocumentPages(ui.contentDraft, pages);
-        const nextLesson = buildPersistedLessonRecord(ui.editingContentLesson.id, ui.editingContentLesson, ui.editingContentLesson.sortOrder);
-        const baseLessons = lessonById.has(ui.editingContentLesson.id) ? lessons : upsertLesson(lessons, ui.editingContentLesson);
+        const nextLesson = buildPersistedLessonRecord(editingContentLesson.id, editingContentLesson, editingContentLesson.sortOrder);
+        const baseLessons = lessonById.has(editingContentLesson.id) ? lessons : upsertLesson(lessons, editingContentLesson);
         const nextLessons = upsertLesson(baseLessons, nextLesson);
         await updateLessons.mutateAsync(nextLessons);
         await saveLocalizedLessonTemplate(nextLesson);
-        await updateLessonDocuments.mutateAsync({ ...lessonDocuments, [ui.editingContentLesson.id]: nextDocument });
-        clearLessonContentEditorDraft(ui.editingContentLesson.id);
+        await updateLessonDocuments.mutateAsync({ ...lessonDocuments, [editingContentLesson.id]: nextDocument });
+        clearLessonContentEditorDraft(editingContentLesson.id);
         toast('Content saved', { variant: 'success' });
         ui.setShowContentModal(false);
         ui.setEditingContentLesson(null);
@@ -229,16 +236,17 @@ export function useLessonsManagerHandlers(params: {
   };
 
   const handleClearContent = async (): Promise<void> => {
-    if (!ui.editingContentLesson) return;
+    const editingContentLesson = ui.editingContentLesson;
+    if (!editingContentLesson) return;
     await withKangurClientError(
-      buildLessonsManagerErrorReport('lesson-content-clear', 'Clears the lesson document and restores component mode.', { lessonId: ui.editingContentLesson.id }),
+      buildLessonsManagerErrorReport('lesson-content-clear', 'Clears the lesson document and restores component mode.', { lessonId: editingContentLesson.id }),
       async () => {
-        const nextLesson = buildPersistedLessonRecord(ui.editingContentLesson.id, { ...ui.editingContentLesson, contentMode: 'component' }, ui.editingContentLesson.sortOrder);
+        const nextLesson = buildPersistedLessonRecord(editingContentLesson.id, { ...editingContentLesson, contentMode: 'component' }, editingContentLesson.sortOrder);
         const nextLessons = upsertLesson(lessons, nextLesson);
-        const nextDocuments = removeKangurLessonDocument(lessonDocuments, ui.editingContentLesson.id);
+        const nextDocuments = removeKangurLessonDocument(lessonDocuments, editingContentLesson.id);
         await updateLessons.mutateAsync(nextLessons);
         await updateLessonDocuments.mutateAsync(nextDocuments);
-        clearLessonContentEditorDraft(ui.editingContentLesson.id);
+        clearLessonContentEditorDraft(editingContentLesson.id);
         ui.setContentDraft(createDefaultKangurLessonDocument());
         toast('Content cleared', { variant: 'success' });
         ui.setShowContentModal(false);
@@ -280,17 +288,18 @@ export function useLessonsManagerHandlers(params: {
   );
 
   const handleSaveQuickSvg = async (markup: string): Promise<void> => {
-    if (!ui.svgModalLesson) return;
+    const svgModalLesson = ui.svgModalLesson;
+    if (!svgModalLesson) return;
     await withKangurClientError(
-      buildLessonsManagerErrorReport('lesson-quick-svg-save', 'Adds a quick SVG block to the lesson document.', { lessonId: ui.svgModalLesson.id }),
+      buildLessonsManagerErrorReport('lesson-quick-svg-save', 'Adds a quick SVG block to the lesson document.', { lessonId: svgModalLesson.id }),
       async () => {
         const block = { ...createKangurLessonSvgBlock(), markup: sanitizeSvgMarkup(markup) };
-        const document = lessonDocuments[ui.svgModalLesson.id] ?? createDefaultKangurLessonDocument();
+        const document = lessonDocuments[svgModalLesson.id] ?? createDefaultKangurLessonDocument();
         const pages = resolveKangurLessonDocumentPages(document);
         const firstPage = pages[0] ?? { id: 'p1', sectionKey: '', title: '', description: '', blocks: [] };
         const nextPages = [{ ...firstPage, blocks: [...firstPage.blocks, block] }, ...pages.slice(1)];
         const nextDocument = updateKangurLessonDocumentTimestamp(updateKangurLessonDocumentPages(document, nextPages));
-        await updateLessonDocuments.mutateAsync({ ...lessonDocuments, [ui.svgModalLesson.id]: nextDocument });
+        await updateLessonDocuments.mutateAsync({ ...lessonDocuments, [svgModalLesson.id]: nextDocument });
         toast('SVG added to lesson', { variant: 'success' });
         ui.setSvgModalLesson(null);
         ui.setSvgModalInitialMarkup('');
@@ -363,7 +372,7 @@ export function useLessonsManagerHandlers(params: {
   return {
     handleCloseModal, handleCreate, handleEdit, handleEditContent, openLessonContentEditor,
     handleComponentChange, handleSave, handleDelete, handleSaveContent, handleClearContent,
-    handleCanonicalize, handleImportLegacy, handleSaveQuickSvg,
+    handleCanonicalize, handleImportLegacy, handleQuickAddSvg: ui.setSvgModalLesson, handleSaveQuickSvg,
     handleAppendMissing, handleAddGeometryPack, handleAddLogicalThinkingPack, handleImportAllLessonsToEditor
   };
 }

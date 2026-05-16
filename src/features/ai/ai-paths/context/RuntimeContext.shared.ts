@@ -116,6 +116,11 @@ export interface RuntimeProviderProps {
 }
 
 export const INITIAL_RUNTIME_STATE: RuntimeState = {
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
   inputs: {},
   outputs: {},
 };

@@ -412,6 +412,7 @@ export type QueueConfig<TJobData = unknown> = {
     data: TJobData,
     context?: Record<string, unknown>
   ) => Promise<void>;
+  onStalled?: (jobId: string, prevStatus: string) => Promise<void>;
 };
 
 export type ManagedQueue<TJobData = unknown> = {

@@ -111,8 +111,7 @@ function useBackgroundSyncHandlers(params: {
   updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
   forceSync: () => void;
 }): BackgroundSyncHandlers {
-  const { enabled, forceSync, intervalSeconds, offlineQueue, processQueue, toast, updateSettingsBulk } =
-    params;
+  const { enabled, forceSync, intervalSeconds, offlineQueue, processQueue, toast, updateSettingsBulk } = params;
 
   const handleSave = (): void => {
     updateSettingsBulk.mutate(

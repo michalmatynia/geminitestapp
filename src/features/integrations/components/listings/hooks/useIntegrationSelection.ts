@@ -191,10 +191,15 @@ export function useIntegrationSelection(
   const preferredTraderaConnectionQuery = results[1];
   const integrationsQuery = results[2];
   const preferredVintedConnectionQuery = results[3];
-  const preferredBaseConnectionData = preferredConnectionQuery?.data ?? null;
-  const preferredTraderaConnectionData = preferredTraderaConnectionQuery?.data ?? null;
-  const preferredVintedConnectionData = preferredVintedConnectionQuery?.data ?? null;
-  const integrationsData = integrationsQuery?.data;
+  const preferredBaseConnectionData =
+    (preferredConnectionQuery?.data as BaseDefaultConnectionPreferenceResponse | undefined) ?? null;
+  const preferredTraderaConnectionData =
+    (preferredTraderaConnectionQuery?.data as TraderaDefaultConnectionPreferenceResponse | undefined) ??
+    null;
+  const preferredVintedConnectionData =
+    (preferredVintedConnectionQuery?.data as VintedDefaultConnectionPreferenceResponse | undefined) ??
+    null;
+  const integrationsData = integrationsQuery?.data as IntegrationWithConnections[] | undefined;
 
   const loading = Boolean(
     integrationsQuery?.isPending && !integrationsData && !integrationsQuery?.isError

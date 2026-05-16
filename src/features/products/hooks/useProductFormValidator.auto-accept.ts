@@ -39,7 +39,7 @@ type AutoAcceptCycleArgs = {
   visibleFieldIssues: ProductValidatorFieldIssues;
 };
 
-type UseProductFormValidatorAutoAcceptArgs = AutoAcceptCycleArgs & {
+type UseProductFormValidatorAutoAcceptArgs = Omit<AutoAcceptCycleArgs, 'autoAcceptedIssueKeys'> & {
   entityIdentity: string;
   formatterEnabled: boolean;
   validatorEnabled: boolean;

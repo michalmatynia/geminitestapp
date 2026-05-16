@@ -68,7 +68,7 @@ const normalizePositiveInteger = (value: number, fallback: number): number =>
 const extractAddressCandidate = (value: string): string => {
   let candidate = value.trim();
   const angleMatch = candidate.match(/<([^<>]+)>/);
-  if (angleMatch) candidate = angleMatch[1].trim();
+  if (angleMatch) candidate = (angleMatch[1] ?? '').trim();
   if (candidate.toLowerCase().startsWith('mailto:')) {
     candidate = candidate.slice('mailto:'.length);
     const queryStart = candidate.indexOf('?');
@@ -202,17 +202,17 @@ const interpretAddressResults = (input: {
   aaaa: TimedResolverResult<readonly string[]>;
   mx: TimedResolverResult<readonly MxRecord[]>;
 }): MxLookupResult => {
-  const addressResults = [input.a, input.aaaa];
-  if (addressResults.some(resolverResultTimedOut)) {
+  const addressResults: Array<TimedResolverResult<readonly string[]>> = [input.a, input.aaaa];
+  if (addressResults.some((result) => resolverResultTimedOut(result))) {
     return { outcome: 'timeout', hasMail: false };
   }
   if (resolverResultHasOperationalError(input.mx)) {
     return { outcome: 'error', hasMail: false };
   }
-  if (addressResults.some(resolverResultHasRecords)) {
+  if (addressResults.some((result) => resolverResultHasRecords(result))) {
     return { outcome: 'address-only', hasMail: true };
   }
-  if (addressResults.some(resolverResultHasOperationalError)) {
+  if (addressResults.some((result) => resolverResultHasOperationalError(result))) {
     return { outcome: 'error', hasMail: false };
   }
   return { outcome: 'none', hasMail: false };

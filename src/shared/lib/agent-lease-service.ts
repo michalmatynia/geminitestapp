@@ -541,7 +541,7 @@ export async function getAgentLeaseState(resourceId: string, scopeId?: string | 
  * @param input - The raw mutation request payload.
  * @returns A result object indicating success or failure.
  */
-import { configurationError, operationFailedError } from '@/shared/errors/app-error';
+import { configurationError } from '@/shared/errors/app-error';
 
 // ...
 

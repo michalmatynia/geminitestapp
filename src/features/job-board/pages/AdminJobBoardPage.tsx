@@ -414,7 +414,7 @@ function ScansTable({
                     {typeof confidence === 'number' ? confidence.toFixed(2) : '—'}
                   </td>
                   <td className='whitespace-nowrap px-4 py-2 text-slate-500'>
-                    {new Date(scan.createdAt).toLocaleString()}
+                    {scan.createdAt !== undefined ? new Date(scan.createdAt).toLocaleString() : '—'}
                   </td>
 
                 </tr>

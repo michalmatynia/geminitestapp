@@ -114,7 +114,7 @@ const mapGenericSequencerStep = (
     buildScanStepActionRunStep({
       key,
       label,
-      status: step['status'],
+      status: readString(step['status']),
       message: step['message'],
       warning: step['warning'],
       details: step['details'],

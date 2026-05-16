@@ -119,6 +119,7 @@ export const useProductsNextPagePrefetch = (input: {
 
   useEffect(() => {
     if (shouldSkipProductsPagePrefetch({ enabled, queryData, shouldPrefetchNextPage })) return;
+    if (queryData === undefined) return;
     const nextFilters = resolveNextPageFilters(filters, queryData.total);
     if (nextFilters === null) return;
     prefetchProductsPage({

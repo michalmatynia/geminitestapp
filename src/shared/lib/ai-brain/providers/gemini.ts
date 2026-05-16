@@ -48,7 +48,7 @@ export const buildGeminiMessages = (
     .trim();
   const contents = messages
     .filter((message: BrainChatMessage): boolean => message.role !== 'system')
-    .map((message: BrainChatMessage) => ({
+    .map((message: BrainChatMessage): GeminiMessagesBuildResult['contents'][number] => ({
       role: message.role === 'assistant' ? 'model' : 'user',
       parts:
         typeof message.content === 'string'

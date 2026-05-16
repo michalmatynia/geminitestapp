@@ -20,13 +20,13 @@ describe('GitHub main branch protection workflow contract', () => {
     expect(workflowText).toContain('default: check');
     expect(workflowText).toContain('- check');
     expect(workflowText).toContain('- repair');
-    expect(workflowText).toContain("cron: '47 * * * *'");
-    expect(workflowText).toContain("GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}");
-    expect(workflowText).toContain("if: ${{ env.GH_ADMIN_TOKEN == '' }}");
-    expect(workflowText).toContain("if: ${{ env.GH_ADMIN_TOKEN != '' }}");
+    expect(workflowText).toContain('cron: \'47 * * * *\'');
+    expect(workflowText).toContain('GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}');
+    expect(workflowText).toContain('if: ${{ env.GH_ADMIN_TOKEN == \'\' }}');
+    expect(workflowText).toContain('if: ${{ env.GH_ADMIN_TOKEN != \'\' }}');
     expect(workflowText).toContain('actions/checkout@v4');
     expect(workflowText).toContain('actions/setup-node@v4');
-    expect(workflowText).toContain("node-version-file: '.nvmrc'");
+    expect(workflowText).toContain('node-version-file: \'.nvmrc\'');
     expect(workflowText).toContain('run: npm run check:github:branch-protection');
     expect(workflowText).toContain('run: npm run repair:github:branch-protection');
   });

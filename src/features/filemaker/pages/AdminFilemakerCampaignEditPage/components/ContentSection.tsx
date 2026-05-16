@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from '@/shared/ui/react-native-web-shim';
-import { Card } from '@/features/kangur/ui/components';
+import { Card } from '@/shared/ui/primitives.public';
 
 interface ContentSectionProps {
   contentGroupRegistry: unknown;

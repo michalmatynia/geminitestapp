@@ -15,7 +15,7 @@ const readLatestRuntimeHistoryEntry = (value: unknown): Record<string, unknown> 
   const entries = Array.isArray(value) ? value.map(asRecord) : [];
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const entry = entries[index];
-    if (entry !== null) return entry;
+    if (entry !== null && entry !== undefined) return entry;
   }
   return null;
 };

@@ -36,7 +36,7 @@ export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   const sanitized: RuntimeState = {
     ...EMPTY_RUNTIME_STATE,
     ...parsed,
-    status: (typeof parsed['status'] === 'string' ? parsed['status'] as AiPathNodeStatus : EMPTY_RUNTIME_STATE.status),
+    status: toRuntimeRunStatus(parsed['status']),
     inputs: (isObjectRecord(parsed['inputs']) ? (parsed['inputs'] as Record<string, RuntimePortValues>) : {}),
     outputs: (isObjectRecord(parsed['outputs']) ? (parsed['outputs'] as Record<string, RuntimePortValues>) : {}),
     nodeOutputs: (isObjectRecord(parsed['nodeOutputs']) ? (parsed['nodeOutputs'] as Record<string, RuntimePortValues>) : {}),
@@ -46,6 +46,22 @@ export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   };
   checkSanitizeDrops(state, sanitized);
   return sanitized;
+};
+
+const toRuntimeRunStatus = (value: unknown): RuntimeState['status'] => {
+  if (typeof value !== 'string') return EMPTY_RUNTIME_STATE.status;
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'idle':
+    case 'running':
+    case 'paused':
+    case 'stepping':
+    case 'completed':
+    case 'failed':
+      return normalized;
+    default:
+      return EMPTY_RUNTIME_STATE.status;
+  }
 };
 
 const checkSanitizeDrops = (state: RuntimeState, sanitized: RuntimeState): void => {
@@ -249,6 +265,7 @@ export const buildRuntimeProfileSnapshot = (input: {
 export const computeDownstreamNodes = (edges: Edge[], startNodes: Set<string>): Set<string> => {
   const adjacency = new Map<string, Set<string>>();
   edges.forEach((edge: Edge) => {
+    if (typeof edge.from !== 'string' || typeof edge.to !== 'string') return;
     const set = adjacency.get(edge.from) ?? new Set<string>();
     set.add(edge.to);
     adjacency.set(edge.from, set);

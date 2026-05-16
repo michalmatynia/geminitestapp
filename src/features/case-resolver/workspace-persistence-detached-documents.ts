@@ -53,6 +53,10 @@ export const DetachedDocumentsPayloadSchema = z.object({
   files: z.array(DetachedFileEntrySchema),
 });
 
+export type CaseResolverWorkspaceDetachedDocumentsPayload = z.infer<
+  typeof DetachedDocumentsPayloadSchema
+>;
+
 const coerceDetachedWorkspaceFile = (
   value: unknown
 ): CaseResolverWorkspace['files'][number] => value as CaseResolverWorkspace['files'][number];
@@ -170,7 +174,7 @@ const stripDetachedDocumentFields = (file: CaseResolverWorkspace['files'][number
         }
       }
 
-      return fileRecord as CaseResolverWorkspace['files'][number];
+      return fileRecord as unknown as CaseResolverWorkspace['files'][number];
     };
 
     export const stripCaseResolverWorkspaceDetachedDocuments = (

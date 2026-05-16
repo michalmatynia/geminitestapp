@@ -32,8 +32,8 @@ import type {
 } from './product-scans-sync-amazon-probe.types';
 
 type FallbackProviderInput = {
-  currentProvider: string;
-  fallbackProvider: string;
+  currentProvider: NonNullable<ReturnType<typeof resolveAmazonImageSearchFallbackProvider>>;
+  fallbackProvider: NonNullable<ReturnType<typeof resolveAmazonImageSearchFallbackProvider>>;
 };
 
 type FallbackProviderQueuedInput = {
@@ -51,8 +51,8 @@ type FallbackRawResultInput = FallbackProviderQueuedInput & {
 const resolveFallbackProvider = (
   context: AmazonProbeReadyContext,
   state: AmazonProbeEvaluationState,
-  currentProvider: string
-): string | null => {
+  currentProvider: NonNullable<ReturnType<typeof resolveAmazonImageSearchFallbackProvider>>
+): ReturnType<typeof resolveAmazonImageSearchFallbackProvider> => {
   if (state.amazonEvaluation?.recommendedAction !== 'fallback_provider') return null;
   return resolveAmazonImageSearchFallbackProvider({
     rawResult: context.scan.rawResult,

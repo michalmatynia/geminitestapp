@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { LayoutGrid, ShieldCheck, Sparkles } from 'lucide-react';
+import { LayoutGrid, ShieldCheck, Sparkles, type LucideIcon } from 'lucide-react';
 
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
 
@@ -55,13 +55,18 @@ function HighlightsHeader({ translations }: { translations: any }): React.JSX.El
   );
 }
 
-function HighlightItem({ item }: { item: { title: string; description: string; Icon: React.ElementType } }): React.JSX.Element {
+function HighlightItem({
+  item,
+}: {
+  item: { title: string; description: string; Icon: LucideIcon };
+}): React.JSX.Element {
+  const Icon = item.Icon;
   return (
     <li
       className='cms-appearance-surface rounded-3xl border p-6 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4'
     >
       <span className='cms-appearance-subtle-surface inline-flex size-10 items-center justify-center rounded-2xl border'>
-        <item.Icon className='size-5' aria-hidden='true' />
+        <Icon className='size-5' aria-hidden='true' />
       </span>
       <h3 className='mt-4 text-lg font-semibold text-[var(--cms-appearance-page-text)]'>
         {item.title}

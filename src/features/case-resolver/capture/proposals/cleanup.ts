@@ -27,32 +27,6 @@ const CAPTURE_STREET_HINT_PATTERN =
   /\b(ul\.?|ulica|street|st\.?|avenue|ave\.?|road|rd\.?|al\.?|aleja|plac|pl\.)\b/i;
 const CAPTURE_PARTY_LABEL_LINE_PATTERN =
   /^(addresser|from|od|nadawca|sender|wnioskodawca|addressee|to|do|adresat|recipient|odbiorca|organ)\s*[:-]?$/i;
-const CAPTURE_ORGANIZATION_HINTS = [
-  'zus',
-  'inspektorat',
-  'oddzial',
-  'zaklad',
-  'urzad',
-  'sad',
-  'ministerstwo',
-  'fundacja',
-  'stowarzyszenie',
-  'spolka',
-  'sp z o o',
-  'sa',
-  'kancelaria',
-  'office',
-  'department',
-  'agency',
-  'court',
-  'inc',
-  'llc',
-  'corp',
-  'company',
-  'university',
-  'uniwersytet',
-];
-
 const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 140;
 const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
 

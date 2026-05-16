@@ -94,10 +94,16 @@ export function AdminKangurLessonSectionsPanel({
       setExpandedSectionId={setExpandedSectionId}
       setEditingSection={setEditingSection}
       setShowSectionModal={setShowSectionModal}
-      setSubsectionParent={setSubsectionParent}
-      setEditingSubsection={setEditingSubsection}
-      setShowSubsectionModal={setShowSubsectionModal}
-      setDeleteTarget={setDeleteTarget}
+  setSubsectionParent={setSubsectionParent}
+  setEditingSubsection={setEditingSubsection}
+  setShowSubsectionModal={setShowSubsectionModal}
+  setDeleteTarget={setDeleteTarget}
+      showSectionModal={showSectionModal}
+      editingSection={editingSection}
+      showSubsectionModal={showSubsectionModal}
+      subsectionParent={subsectionParent}
+      editingSubsection={editingSubsection}
+      deleteTarget={deleteTarget}
       standalone={standalone}
     />
   );
@@ -117,6 +123,12 @@ interface SectionsPanelContentProps {
   setEditingSubsection: (sub: KangurLessonSubsection | null) => void;
   setShowSubsectionModal: (show: boolean) => void;
   setDeleteTarget: (target: { section: KangurLessonSection; subsectionId?: string } | null) => void;
+  showSectionModal: boolean;
+  editingSection: KangurLessonSection | null;
+  showSubsectionModal: boolean;
+  subsectionParent: KangurLessonSection | null;
+  editingSubsection: KangurLessonSubsection | null;
+  deleteTarget: { section: KangurLessonSection; subsectionId?: string } | null;
   standalone: boolean;
 }
 
@@ -124,6 +136,8 @@ function SectionsPanelContent({
   sections, isLoading, isSaving, sectionsBySubject, persistSections,
   expandedSectionId, setExpandedSectionId, setEditingSection, setShowSectionModal,
   setSubsectionParent, setEditingSubsection, setShowSubsectionModal, setDeleteTarget,
+  showSectionModal, editingSection, showSubsectionModal, subsectionParent, editingSubsection,
+  deleteTarget,
   standalone 
 }: SectionsPanelContentProps): React.JSX.Element {
     const { toast } = useToast();
@@ -158,6 +172,26 @@ function SectionsPanelContent({
             toast(section.enabled ? 'Section disabled.' : 'Section enabled.', {
                 variant: 'success',
             });
+        }
+    };
+
+    const handleConfirmDelete = async (): Promise<void> => {
+        if (deleteTarget === null) return;
+        const next = deleteTarget.subsectionId === undefined
+            ? sections.filter((section) => section.id !== deleteTarget.section.id)
+            : sections.map((section) =>
+                section.id === deleteTarget.section.id
+                    ? {
+                        ...section,
+                        subsections: section.subsections.filter(
+                            (subsection) => subsection.id !== deleteTarget.subsectionId
+                        ),
+                    }
+                    : section
+            );
+        if (await persistSections(next)) {
+            setDeleteTarget(null);
+            toast('Section structure updated.', { variant: 'success' });
         }
     };
 
@@ -231,6 +265,44 @@ function SectionsPanelContent({
                     </div>
                 )}
             </div>
+            <KangurSectionModal
+                isOpen={showSectionModal}
+                onClose={() => setShowSectionModal(false)}
+                section={editingSection}
+                persistSections={persistSections}
+                sections={sections}
+            />
+            <KangurSubsectionModal
+                isOpen={showSubsectionModal}
+                onClose={() => setShowSubsectionModal(false)}
+                parent={subsectionParent}
+                subsection={editingSubsection}
+                persistSections={persistSections}
+                sections={sections}
+            />
+            {deleteTarget ? (
+                <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
+                    <div className='w-full max-w-sm rounded-xl border border-border/60 bg-background p-5 shadow-xl'>
+                        <div className='text-sm font-semibold text-foreground'>Delete section item?</div>
+                        <div className='mt-2 text-sm text-muted-foreground'>
+                            This will remove the selected {deleteTarget.subsectionId ? 'subsection' : 'section'}.
+                        </div>
+                        <div className='mt-4 flex justify-end gap-2'>
+                            <Button type='button' variant='ghost' onClick={() => setDeleteTarget(null)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                type='button'
+                                variant='destructive'
+                                disabled={isSaving}
+                                onClick={() => { void handleConfirmDelete(); }}
+                            >
+                                Delete
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 }

@@ -12,7 +12,7 @@ import {
 import { buildSelectorRegistryProbeSessionClusters } from '../selectorRegistryProbeSessionClustering';
 
 export type ProbeSessionDataResult = {
-  defaultKeysByRole: Record<string, string>;
+  defaultKeysByRole: Map<string, string>;
   archivedSessions: SelectorRegistryProbeSession[];
   resolvedClusters: SelectorRegistryProbeSessionCluster[];
   archivedClusters: SelectorRegistryProbeSessionCluster[];

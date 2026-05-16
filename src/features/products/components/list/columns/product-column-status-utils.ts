@@ -80,9 +80,11 @@ const MANAGED_MARKETPLACE_CLASS: Record<MarketplaceButtonKind, string> = {
   scraped: MANAGED_EMERALD_MARKETPLACE_CLASS,
 };
 
+type StatusGroupClassMap = Record<keyof typeof STATUS_TONE_CLASS_BY_GROUP, string>;
+
 const resolveStatusGroupClass = (
   normalized: string,
-  classes: typeof STATUS_TONE_CLASS_BY_GROUP
+  classes: StatusGroupClassMap
 ): string | null => {
   if (SUCCESS_STATUSES.has(normalized)) return classes.success;
   if (PENDING_STATUSES.has(normalized)) return classes.pending;

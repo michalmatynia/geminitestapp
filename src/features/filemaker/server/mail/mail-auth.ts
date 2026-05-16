@@ -22,7 +22,7 @@ export const resolveFilemakerMailImapCredential = async (
   const passwordKey = resolveAccountSecretSettingKey(account, 'imap_password');
   const secrets = await readSecretSettingValues([passwordKey]);
   const password = secrets[passwordKey];
-  if (password === null) {
+  if (password === null || password === undefined) {
     throw configurationError(
       `IMAP password not configured for ${account.emailAddress}. Set it on the mail account before syncing.`
     );

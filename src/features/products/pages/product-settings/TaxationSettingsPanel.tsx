@@ -38,13 +38,15 @@ export function TaxationSettingsPanel({
   return (
     <FormSection title='Taxation Rules' className='p-4 space-y-4'>
       <Input
-        label='VAT Rate (%)'
+        aria-label='VAT Rate (%)'
+        placeholder='VAT Rate (%)'
         type='number'
         value={getNumberSettingInputValue(settings, 'vatRate')}
         onChange={handleVatRateChange}
       />
       <Input
-        label='Tax Region'
+        aria-label='Tax Region'
+        placeholder='Tax Region'
         value={getStringSetting(settings, 'taxRegion')}
         onChange={handleTaxRegionChange}
       />

@@ -79,9 +79,9 @@ const resolvePreferredLanguageValue = (
 ): string => {
   return (
     valuesByLanguage[languageCode] ??
-    valuesByLanguage.en ??
-    valuesByLanguage.pl ??
-    valuesByLanguage.de ??
+    valuesByLanguage['en'] ??
+    valuesByLanguage['pl'] ??
+    valuesByLanguage['de'] ??
     ''
   );
 };

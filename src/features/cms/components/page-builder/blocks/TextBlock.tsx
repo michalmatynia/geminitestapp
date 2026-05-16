@@ -1,4 +1,4 @@
-import { getBlockTypographyStyles } from '../frontend/theme-styles';
+import { getBlockTypographyStyles } from '../../frontend/theme-styles';
 
 export function TextBlock({ settings }: { settings: Record<string, unknown> }) {
   const text = (settings['textContent'] as string) || '';

@@ -2,6 +2,8 @@
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
+import { safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
+
 import { clearPersistedTutorAvatarPosition } from './KangurAiTutorWidget.storage';
 
 import type {
@@ -34,8 +36,8 @@ export function useKangurAiTutorAvatarShellActions(input: {
   isOpen: boolean;
   launcherPromptVisible: boolean;
   persistSelectionContext: (options?: { prefillInput?: boolean }) => string | null;
-  selectionExplainTimeoutRef: MutableRefObject<number | null>;
-  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
+  selectionExplainTimeoutRef: MutableRefObject<SafeTimerId | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<SafeTimerId | null>;
   setCanonicalTutorModalVisible: Dispatch<SetStateAction<boolean>>;
   setContextualTutorMode: Dispatch<
     SetStateAction<'selection_explain' | 'section_explain' | null>
@@ -92,11 +94,11 @@ export function useKangurAiTutorAvatarShellActions(input: {
 
   const clearPendingGuidance = useCallback((): void => {
     if (selectionExplainTimeoutRef.current !== null) {
-      window.clearTimeout(selectionExplainTimeoutRef.current);
+      safeClearTimeout(selectionExplainTimeoutRef.current);
       selectionExplainTimeoutRef.current = null;
     }
     if (selectionGuidanceRevealTimeoutRef.current !== null) {
-      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
       selectionGuidanceRevealTimeoutRef.current = null;
     }
 

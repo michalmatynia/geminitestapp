@@ -110,7 +110,8 @@ const readAppliedAdvancedFilterPresetIdEntry =
   };
 
 function readStoredProductListPreferenceEntries(): StoredPreferenceEntry[] {
-  return [
+  const entries: StoredPreferenceEntry[] = [];
+  for (const entry of [
     readNameLocaleEntry(),
     readCatalogFilterEntry(),
     readCurrencyCodeEntry(),
@@ -121,7 +122,10 @@ function readStoredProductListPreferenceEntries(): StoredPreferenceEntry[] {
     readAdvancedFilterPresetsEntry(),
     readAppliedAdvancedFilterEntry(),
     readAppliedAdvancedFilterPresetIdEntry(),
-  ].filter((entry): entry is StoredPreferenceEntry => entry !== null);
+  ]) {
+    if (entry !== null) entries.push(entry as StoredPreferenceEntry);
+  }
+  return entries;
 }
 
 export function readStoredProductListPreferences(): ProductListPreferences | null {

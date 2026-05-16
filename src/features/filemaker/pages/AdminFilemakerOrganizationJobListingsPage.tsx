@@ -27,7 +27,7 @@ const resolveOrganizationBreadcrumbContext = (
   if (organizationId.length > 0) {
     return {
       label: organizationName ?? 'Organization',
-      nameForTitle: organizationName,
+      nameForTitle: organizationName ?? null,
       organizationId,
       organizationHref: `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}`,
     };

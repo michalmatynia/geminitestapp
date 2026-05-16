@@ -34,13 +34,13 @@ const normalizeAsset3DListFilters = (filters: Asset3DListFilters): Asset3DListFi
 
 const fetchAssets3D = async (filters: Asset3DListFilters): Promise<Asset3DRecord[]> => {
   const params: Record<string, string> = {};
-  if (filters.filename !== undefined && filters.filename !== '') {
+  if (typeof filters.filename === 'string' && filters.filename !== '') {
     params['filename'] = filters.filename;
   }
-  if (filters.categoryId !== undefined && filters.categoryId !== '') {
+  if (typeof filters.categoryId === 'string' && filters.categoryId !== '') {
     params['categoryId'] = filters.categoryId;
   }
-  if (filters.search !== undefined && filters.search !== '') {
+  if (typeof filters.search === 'string' && filters.search !== '') {
     params['search'] = filters.search;
   }
   if (filters.isPublic !== undefined) {

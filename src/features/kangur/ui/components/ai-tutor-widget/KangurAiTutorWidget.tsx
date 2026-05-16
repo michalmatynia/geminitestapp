@@ -18,6 +18,10 @@ import {
   useKangurLoginModalActions,
   useKangurLoginModalState,
 } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import type {
+  KangurAiTutorGuestIntroMode,
+  KangurAiTutorHomeOnboardingMode,
+} from '@/features/kangur/ai-tutor/settings';
 
 import { useKangurAiTutorRuntime } from '../../context/KangurAiTutorRuntime.hook';
 
@@ -61,8 +65,8 @@ const resolveKangurAiTutorWidgetAuthState = ({
 const resolveKangurAiTutorWidgetAppModes = (
   tutorRuntime: ReturnType<typeof useKangurAiTutorRuntime>['value']
 ): {
-  guestIntroMode: 'every_visit' | 'first_visit';
-  homeOnboardingMode: 'every_visit' | 'first_visit';
+  guestIntroMode: KangurAiTutorGuestIntroMode;
+  homeOnboardingMode: KangurAiTutorHomeOnboardingMode;
 } => {
   const tutorAppSettings = tutorRuntime.appSettings as
     | Partial<typeof tutorRuntime.appSettings>
@@ -136,7 +140,7 @@ export function KangurAiTutorWidget(): React.JSX.Element | null {
       isOpen: loginModalState.isOpen,
       openLoginModal,
     },
-    prefersReducedMotion,
+    prefersReducedMotion: prefersReducedMotion ?? undefined,
     tutorContent,
     tutorRuntime,
     widgetState,

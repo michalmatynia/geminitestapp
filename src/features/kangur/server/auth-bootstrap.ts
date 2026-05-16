@@ -8,11 +8,12 @@ import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 
 import type { KangurUser } from '@kangur/platform';
 
-const KANGUR_AUTH_BOOTSTRAP_GLOBAL = '__KANGUR_AUTH_BOOTSTRAP__';
 const KANGUR_AUTH_BOOTSTRAP_URL = 'https://kangur.local/';
 const NEXT_INTERNAL_ROUTE_REQUEST_HEADERS = ['next-router-state-tree', 'next-url', 'rsc'] as const;
 
-const serializeInlineBootstrapValue = (value: KangurUser | null): string =>
+// Serialize as safe JSON for embedding in a <script type="application/json"> data island.
+// The HTML-unsafe characters must still be escaped to prevent broken HTML structure.
+const serializeBootstrapJson = (value: KangurUser | null): string =>
   JSON.stringify(value)
     .replace(/</g, '\\u003c')
     .replace(/\u2028/g, '\\u2028')
@@ -37,10 +38,10 @@ export const getKangurAuthBootstrapScript = async (
     const actor = await resolveKangurActor(buildKangurBootstrapRequest(requestHeaders));
     const authUser = toKangurAuthUser(actor);
 
-    return `window.${KANGUR_AUTH_BOOTSTRAP_GLOBAL}=${serializeInlineBootstrapValue(authUser)};`;
+    return serializeBootstrapJson(authUser);
   } catch (error) {
     if (isAppError(error) && error.code === AppErrorCodes.unauthorized) {
-      return `window.${KANGUR_AUTH_BOOTSTRAP_GLOBAL}=null;`;
+      return serializeBootstrapJson(null);
     }
 
     await ErrorSystem.captureException(error, {
@@ -48,6 +49,6 @@ export const getKangurAuthBootstrapScript = async (
       action: 'bootstrap',
     });
 
-    return `window.${KANGUR_AUTH_BOOTSTRAP_GLOBAL}=null;`;
+    return serializeBootstrapJson(null);
   }
 };

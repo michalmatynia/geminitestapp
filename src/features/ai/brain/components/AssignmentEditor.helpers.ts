@@ -60,6 +60,21 @@ export const getActiveAllowedProviders = (
     ? allowedProviders
     : providerOptions.map((option) => option.value);
 
+export const resolveProvider = (
+  provider: AiBrainProvider,
+  allowedProviders: readonly AiBrainProvider[]
+): AiBrainProvider =>
+  allowedProviders.includes(provider) ? provider : (allowedProviders[0] ?? 'model');
+
+export const resolveSelectedVendor = (
+  provider: AiBrainProvider,
+  modelId: string,
+  modelDescriptors: Record<string, BrainModelDescriptor>
+): BrainModelVendor | null => {
+  if (provider !== 'model') return null;
+  return modelDescriptors[modelId]?.vendor ?? null;
+};
+
 /**
  * Filters the list of model quick-picks based on the selected model family.
  * Returns the original list if no family filter is applied.

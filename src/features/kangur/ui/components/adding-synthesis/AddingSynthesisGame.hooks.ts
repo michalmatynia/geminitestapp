@@ -31,6 +31,7 @@ import {
   resolveAddingSynthesisExitLabels,
   resolveAddingSynthesisViewKind,
 } from './AddingSynthesisGame.utils';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 const resolveAddingSynthesisElapsedProgress = ({
   noteElapsedMs,
@@ -153,15 +154,15 @@ export function useAddingSynthesisGameState() {
   const [summary, setSummary] = useState<GameSummary | null>(null);
 
   const noteStartedAtRef = useRef<number | null>(null);
-  const noteDeadlineRef = useRef<number | null>(null);
-  const noteAdvanceRef = useRef<number | null>(null);
+  const noteDeadlineRef = useRef<SafeTimerId | null>(null);
+  const noteAdvanceRef = useRef<SafeTimerId | null>(null);
   const sessionStartedAtRef = useRef(Date.now());
 
   const currentNote = phase === 'playing' ? (notes[currentIndex] ?? null) : null;
 
   const stopCurrentNoteTimers = useCallback((): void => {
     if (noteDeadlineRef.current !== null) {
-      window.clearTimeout(noteDeadlineRef.current);
+      safeClearTimeout(noteDeadlineRef.current);
       noteDeadlineRef.current = null;
     }
   }, []);
@@ -169,7 +170,7 @@ export function useAddingSynthesisGameState() {
   const clearAllTimers = useCallback((): void => {
     stopCurrentNoteTimers();
     if (noteAdvanceRef.current !== null) {
-      window.clearTimeout(noteAdvanceRef.current);
+      safeClearTimeout(noteAdvanceRef.current);
       noteAdvanceRef.current = null;
     }
   }, [stopCurrentNoteTimers]);

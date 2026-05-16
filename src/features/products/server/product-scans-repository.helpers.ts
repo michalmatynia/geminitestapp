@@ -49,7 +49,9 @@ export const toDocUpdate = (
 };
 
 export const sortByCreatedAtDesc = (scans: ProductScanRecord[]): ProductScanRecord[] =>
-  [...scans].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+  [...scans].sort(
+    (left, right) => Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? '')
+  );
 
 export const normalizeIdList = (value: string[] | null | undefined): string[] =>
   Array.from(

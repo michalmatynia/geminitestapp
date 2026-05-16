@@ -328,7 +328,7 @@ export function PersonCvsSection(): React.JSX.Element {
   const previewCvPdf = useCallback(
     (cv: Pick<FilemakerCv, 'bodyBlocks' | 'highlightTechnologyTerms'>): void => {
       openFilemakerCvPdfPreview(
-        compileCvBlocksToHtml(cv.bodyBlocks, {
+        compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
           highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
         })
       );

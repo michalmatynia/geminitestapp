@@ -129,7 +129,7 @@ const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
 const AGENT_TERMINAL_POLL_STATUSES = new Set(['completed', 'waiting_human']);
 const AGENT_FAILED_POLL_STATUSES = new Set(['failed', 'stopped']);
 
-import { externalServiceError, internalError, operationFailedError } from '@/shared/errors/app-error';
+import { externalServiceError } from '@/shared/errors/app-error';
 
 const assertAgentPollResponse = (
   response: Awaited<ReturnType<typeof agentApi.poll>>,
@@ -162,7 +162,7 @@ export const pollAgentRun = async (
   const intervalMs = options?.intervalMs ?? 2000;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const run = assertAgentPollResponse(await agentApi.poll(runId));
+    const run = assertAgentPollResponse(await agentApi.poll(runId), runId);
     const status = run?.status ?? '';
 
     if (AGENT_TERMINAL_POLL_STATUSES.has(status)) {

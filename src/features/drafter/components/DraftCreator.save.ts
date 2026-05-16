@@ -111,7 +111,7 @@ const serializeDraftImageLinks = async (
 const buildDraftInput = (
   state: DraftCreatorState,
   imageLinks: string[],
-  stock: string | null
+  stock: number | null
 ): CreateProductDraftInput => ({
   name: state.name.trim(),
   draftKind: state.draftKind,

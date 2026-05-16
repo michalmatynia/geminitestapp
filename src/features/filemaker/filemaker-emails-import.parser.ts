@@ -94,7 +94,7 @@ const findHeaderRowIndex = (rows: string[][], scanForHeader: boolean): number =>
   const index = rows.findIndex((row: string[], rowIndex: number): boolean => {
     if (!scanForHeader && rowIndex > 0) return false;
     if (rowIndex >= HEADER_SCAN_LIMIT) return false;
-    return hasEmailHeader(row.map(normalizeString));
+    return hasEmailHeader(row.map((value: string): string => normalizeString(value)));
   });
   return index;
 };

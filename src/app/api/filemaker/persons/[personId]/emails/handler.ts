@@ -24,9 +24,9 @@ const personEmailExtractRequestSchema = z.object({
 });
 
 const resolvePersonId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['personId'];
+  const value = ctx.params?.['personId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
-  return decodeURIComponent(raw);
+  return decodeURIComponent(raw ?? '');
 };
 
 export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

@@ -94,6 +94,7 @@ import type {
 import type {
   FilemakerJobApplicationActiveArtifacts,
   FilemakerJobApplicationArtifactVersion,
+  FilemakerJobApplicationExperienceHighlightPatch,
 } from '../../filemaker-job-application.types';
 
 import {
@@ -375,7 +376,7 @@ const hasApplicationEmailArtifact = (application: FilemakerJobApplication): bool
   (application.applicationEmail?.bodyText?.trim().length ?? 0) > 0 ||
   application.applicationEmail !== null ||
   application.artifactKind === 'application_email' ||
-  application.artifactVersions.applicationEmail.length > 0;
+  (application.artifactVersions?.applicationEmail.length ?? 0) > 0;
 
 const hasApplicationEmailVersionArtifact = (application: FilemakerJobApplication): boolean =>
   (application.applicationEmail?.subject?.trim().length ?? 0) > 0 ||
@@ -446,7 +447,7 @@ const normalizeTailoredCvPayload = (
     educationHighlights: normalizePayloadStringArray(record['educationHighlights']),
     experienceHighlightPatches: Array.isArray(record['experienceHighlightPatches'])
       ? record['experienceHighlightPatches']
-          .map((entry: unknown) => {
+          .map((entry: unknown): FilemakerJobApplicationExperienceHighlightPatch | null => {
             const patch = readRecord(entry);
             if (patch === null) return null;
             const highlights = normalizePayloadStringArray(patch['highlights']);
@@ -461,16 +462,7 @@ const normalizeTailoredCvPayload = (
             };
           })
           .filter(
-            (
-              entry
-            ): entry is {
-              experienceKey?: string | null;
-              experienceId: string | null;
-              experienceTitle: string | null;
-              company?: string | null;
-              role?: string | null;
-              highlights: string[];
-            } => entry !== null
+            (entry): entry is FilemakerJobApplicationExperienceHighlightPatch => entry !== null
           )
       : [],
     experienceHighlights: normalizePayloadStringArray(record['experienceHighlights']),
@@ -494,7 +486,7 @@ const normalizeTailoredCvPayload = (
               tailoringPatch['experienceHighlightPatches']
             )
               ? tailoringPatch['experienceHighlightPatches']
-                  .map((entry: unknown) => {
+                  .map((entry: unknown): FilemakerJobApplicationExperienceHighlightPatch | null => {
                     const patch = readRecord(entry);
                     if (patch === null) return null;
                     const highlights = normalizePayloadStringArray(patch['highlights']);
@@ -509,16 +501,8 @@ const normalizeTailoredCvPayload = (
                     };
                   })
                   .filter(
-                    (
-                      entry
-                    ): entry is {
-                      experienceKey?: string | null;
-                      experienceId: string | null;
-                      experienceTitle: string | null;
-                      company?: string | null;
-                      role?: string | null;
-                      highlights: string[];
-                    } => entry !== null
+                    (entry): entry is FilemakerJobApplicationExperienceHighlightPatch =>
+                      entry !== null
                   )
               : [],
           }
@@ -721,7 +705,8 @@ const createPreparedJobApplication = (
     id: `prepared:${canonicalApplicationKey}`,
     applicationIds: storageApplicationIds,
     baseApplicationId: baseApplication.id,
-    artifactVersions,
+    artifactVersions: artifactVersions as FilemakerJobApplication['artifactVersions'] &
+      PreparedApplicationArtifactVersions,
     canonicalApplicationKey,
     applicationEmail: latestApplicationEmail?.applicationEmail ?? null,
     applicationNotes: mergeUniqueStringArrays(
@@ -1010,10 +995,10 @@ const normalizePolledAiPathRunStatus = (
 };
 
 const readPolledAiPathRunError = (run: Record<string, unknown>): string | null => {
-  const directError = run.error ?? run.errorMessage ?? run.failureReason;
+  const directError = run['error'] ?? run['errorMessage'] ?? run['failureReason'];
   if (typeof directError === 'string' && directError.trim().length > 0) return directError.trim();
-  const meta = readRecord(run.meta);
-  const metaError = meta?.error ?? meta?.errorMessage ?? meta?.failureReason;
+  const meta = readRecord(run['meta']);
+  const metaError = meta?.['error'] ?? meta?.['errorMessage'] ?? meta?.['failureReason'];
   return typeof metaError === 'string' && metaError.trim().length > 0 ? metaError.trim() : null;
 };
 
@@ -1021,9 +1006,9 @@ const resolvePolledJobApplicationRunEntry = (
   entry: JobApplicationRunEntry,
   run: Record<string, unknown>
 ): JobApplicationRunEntry | null => {
-  const status = normalizePolledAiPathRunStatus(run.status);
+  const status = normalizePolledAiPathRunStatus(run['status']);
   if (status === null) return null;
-  const runUpdatedAt = typeof run.updatedAt === 'string' ? run.updatedAt : null;
+  const runUpdatedAt = typeof run['updatedAt'] === 'string' ? run['updatedAt'] : null;
   return {
     ...entry,
     error:
@@ -1102,14 +1087,8 @@ function JobApplicationRunStatusBadges({
           completed: 'success',
           error: 'error',
           running: 'processing',
-          completed_with_errors: 'error',
           queued: 'outline',
-          failed: 'error',
-          canceled: 'outline',
-          pending: 'pending',
-          auth_required: 'outline',
-          awaiting_review: 'outline',
-          submitted: 'success',
+          starting: 'pending',
         };
         const title = [label, status, runId.length > 0 ? `Run ${runId}` : null, entry.error]
           .filter((value: string | null): value is string => value !== null && value.length > 0)
@@ -3485,11 +3464,16 @@ function ApplicationPackageModal({
                   Recent analysis history
                 </div>
               {visibleMatchAnalysisHistory.map((entry, index: number) => {
-                const payload = entry.payload;
-                const firstGap = payload !== null ? payload.gaps[0] : null;
-                const modelId = entry.modelId;
-                const snapshot = entry.applicationUpdatedAtSnapshot;
-                const sourceRunId = entry.sourceRunId;
+                const payload = entry.payload ?? null;
+                const firstGap = payload?.gaps[0] ?? null;
+                const modelId = entry.modelId ?? null;
+                const recommendedDecision = payload?.recommendedDecision ?? null;
+                const recommendedDecisionReason = payload?.recommendedDecisionReason ?? null;
+                const scoreLabel = payload?.scoreLabel ?? null;
+                const snapshot = entry.applicationUpdatedAtSnapshot ?? null;
+                const sourceRunId = entry.sourceRunId ?? null;
+                const summary = payload?.summary ?? null;
+                const changeSincePrevious = payload?.changeSincePrevious ?? null;
                 return (
               <div
                 key={entry.id}
@@ -3515,38 +3499,38 @@ function ApplicationPackageModal({
                   ) : null}
                   <span className='font-semibold text-gray-100'>
                     {payload?.score ?? 'n/a'}
-                    {payload?.scoreLabel !== null && payload.scoreLabel.length > 0
-                      ? ` · ${payload.scoreLabel}`
+                    {scoreLabel !== null && scoreLabel.length > 0
+                      ? ` · ${scoreLabel}`
                       : ''}
                   </span>
-                  {payload?.recommendedDecision !== null ? (
+                  {recommendedDecision !== null ? (
                     <Badge
                       variant={
-                        payload.recommendedDecision === 'Apply now' ? 'success' : 'outline'
+                        recommendedDecision === 'Apply now' ? 'success' : 'outline'
                       }
                       title={
-                        payload.recommendedDecisionReason !== null &&
-                        payload.recommendedDecisionReason.length > 0
-                          ? `AI recommendation: ${payload.recommendedDecisionReason}`
+                        recommendedDecisionReason !== null &&
+                        recommendedDecisionReason.length > 0
+                          ? `AI recommendation: ${recommendedDecisionReason}`
                           : 'AI recommendation'
                       }
                     >
-                      {payload.recommendedDecision}
+                      {recommendedDecision}
                     </Badge>
                   ) : null}
                 </div>
-                {payload?.summary !== null && payload.summary.length > 0 ? (
-                  <p className='mt-1 line-clamp-2 text-gray-400'>{payload.summary}</p>
+                {summary !== null && summary.length > 0 ? (
+                  <p className='mt-1 line-clamp-2 text-gray-400'>{summary}</p>
                 ) : null}
-                {payload?.recommendedDecisionReason !== null &&
-                payload.recommendedDecisionReason.length > 0 ? (
+                {recommendedDecisionReason !== null &&
+                recommendedDecisionReason.length > 0 ? (
                   <p className='mt-1 line-clamp-1 text-[11px] text-gray-400'>
-                    Decision: {payload.recommendedDecisionReason}
+                    Decision: {recommendedDecisionReason}
                   </p>
                 ) : null}
-                {payload?.changeSincePrevious !== null && payload.changeSincePrevious.length > 0 ? (
+                {changeSincePrevious !== null && changeSincePrevious.length > 0 ? (
                   <p className='mt-1 line-clamp-1 text-[11px] text-cyan-200'>
-                    Change: {payload.changeSincePrevious}
+                    Change: {changeSincePrevious}
                   </p>
                 ) : null}
                 {isNonEmptyString(firstGap) ? (
@@ -3556,9 +3540,9 @@ function ApplicationPackageModal({
                 ) : null}
                 {sourceRunId !== null && sourceRunId.length > 0 ? (
                   <a
-                    href={`/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(
-                      sourceRunId
-                    )}&runId=${encodeURIComponent(entry.sourceRunId)}&status=all`}
+	                    href={`/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(
+	                      sourceRunId
+	                    )}&runId=${encodeURIComponent(sourceRunId)}&status=all`}
                     className='mt-1 inline-flex text-[11px] text-blue-300 underline-offset-2 hover:underline'
                   >
                     Open AI-Paths run

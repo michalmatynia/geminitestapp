@@ -1,6 +1,8 @@
 export * from './KangurAuthContext';
 export * from './KangurGameContext';
 export * from './KangurGameRuntimeContext';
+export * from './KangurGuestPlayerContext';
+export * from './KangurLoginModalContext';
 export * from './KangurLearnerProfileRuntimeContext';
 export * from './KangurLessonNavigationContext';
 export * from './KangurLessonsRuntimeContext';
@@ -8,3 +10,5 @@ export * from './KangurParentDashboardRuntimeContext';
 export * from './KangurRouteTransitionContext';
 export * from './KangurRoutingContext';
 export * from './KangurTestSuiteRuntimeContext';
+export * from './KangurTopNavigationContext';
+export * from './KangurFocusProvider';

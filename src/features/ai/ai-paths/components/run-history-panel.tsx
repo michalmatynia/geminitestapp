@@ -7,6 +7,7 @@ import { Card } from '@/shared/ui/primitives.public';
 import { RunComparisonTool } from './RunComparisonTool';
 import { RunHistoryFilterControls } from './RunHistoryFilterControls';
 import { RunHistoryList } from './RunHistoryList';
+import type { RunHistoryFilter } from '../context/RunHistoryContext';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 import { useRunComparison } from '../hooks/useRunComparison';
 
@@ -80,7 +81,7 @@ export function RunHistoryPanel(): React.JSX.Element {
 function useFilteredRunList(
   rawRunFilter: string,
   resolvedRuns: AiPathRunRecord[],
-  setRunFilterContext: (next: string) => void
+  setRunFilterContext: (next: RunHistoryFilter) => void
 ) {
   const runFilter: RunHistoryFilterView = React.useMemo((): RunHistoryFilterView => {
     if (rawRunFilter === 'active' || rawRunFilter === 'running' || rawRunFilter === 'queued') {

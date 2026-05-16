@@ -1,5 +1,5 @@
-import { useBlockContext } from '../preview/context/BlockContext';
-import { cn } from '@/features/cms/shared/utils';
+import { useBlockContext } from '../../preview/context/BlockContext';
+import { cn } from '@/shared/utils/ui-utils';
 
 export function HeroBlock({ block }: { block: any }) {
   const { stretch } = useBlockContext();

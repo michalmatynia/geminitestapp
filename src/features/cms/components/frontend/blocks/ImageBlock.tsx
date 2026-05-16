@@ -7,7 +7,6 @@ import {
   clampNumber,
   resolveObjectPosition,
   resolveGradientDirection,
-  buildTransparencyMaskStyles,
   toBoolean,
 } from './image-utils';
 

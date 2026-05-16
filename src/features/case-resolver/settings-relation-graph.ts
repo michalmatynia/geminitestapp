@@ -24,7 +24,6 @@ import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { AiNodeSchema } from './types/relation-graph';
 import { RelationNodeMetaSchema, RelationEdgeMetaSchema } from './types/relation-meta';
 
 
@@ -32,13 +31,6 @@ import { RelationNodeMetaSchema, RelationEdgeMetaSchema } from './types/relation
 // back to the provided fallback (typically `now`).
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
-
-// Coerces an unknown value to a trimmed non-empty string, or null.
-const sanitizeOptionalId = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
 
 // Normalises a raw folder path: converts backslashes, trims segments,
 // removes `.` / `..` traversals, and replaces non-alphanumeric characters
@@ -89,7 +81,7 @@ const getRelationNodePosition = (
 };
 
 // Maps a CaseResolver entity type to the corresponding AI-node visual style.
-const RELATION_NODE_TYPE_MAP: Record<CaseResolverRelationEntityType, AiNode['type']> = {
+const RELATION_NODE_TYPE_MAP: Partial<Record<CaseResolverRelationEntityType, AiNode['type']>> = {
   folder: 'database',
   file: 'prompt',
   custom: 'template',
@@ -216,28 +208,6 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): CaseR
   });
   return edges;
 };
-
-// Coerces an unknown value to a valid CaseResolverRelationEntityType,
-// defaulting to 'custom' for unrecognised values.
-const sanitizeRelationEntityType = (value: unknown): CaseResolverRelationEntityType =>
-  value === 'case' || value === 'folder' || value === 'file' || value === 'custom'
-    ? value
-    : 'custom';
-
-// Returns null for unrecognised file kinds (treated as non-file nodes).
-const sanitizeRelationFileKind = (value: unknown): CaseResolverRelationFileKind | null =>
-  value === 'case_file' || value === 'asset_file' ? value : null;
-
-// Coerces an unknown value to a valid edge kind, defaulting to 'related'.
-const sanitizeRelationEdgeKind = (value: unknown): CaseResolverRelationEdgeKind =>
-  value === 'contains' ||
-  value === 'located_in' ||
-  value === 'parent_case' ||
-  value === 'references' ||
-  value === 'related' ||
-  value === 'custom'
-    ? value
-    : 'related';
 
 /**
  * Parses and sanitizes the raw `nodeMeta` map from persisted JSON.

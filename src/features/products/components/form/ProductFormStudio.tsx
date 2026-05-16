@@ -53,7 +53,7 @@ function useProductStudioWorkspaceRegistrySource(): ProductStudioRegistrySource 
   const productId = product?.id ?? '';
 
   return React.useMemo((): ProductStudioRegistrySource => {
-    if (productId === '') return null;
+    if (product === undefined || productId === '') return null;
 
     return {
       label: 'Product Studio workspace state',

@@ -22,6 +22,7 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 
 export type QuestionCardQuestion = {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { safeSetTimeout, safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
@@ -46,7 +46,7 @@ export function useCaseResolverStateWorkspaceHydration({
 }): void {
   const [bootstrapRefreshRetryTick, setBootstrapRefreshRetryTick] = useState(0);
   const bootstrapRefreshRetryAttemptRef = useRef(0);
-  const bootstrapRefreshRetryTimerRef = useRef<number | null>(null);
+  const bootstrapRefreshRetryTimerRef = useRef<SafeTimerId | null>(null);
   const lastWorkspaceSourceSelectionSignatureRef = useRef<string>('');
 
   useEffect((): void => {

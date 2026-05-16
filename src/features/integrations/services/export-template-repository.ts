@@ -546,6 +546,7 @@ export const getExportActiveTemplateId = async (
       inventoryId: scope?.inventoryId ?? null,
     });
     await logGuardFailure(
+      'Failed to read active export template preference.',
       error,
       {
         action: 'getExportActiveTemplateId',

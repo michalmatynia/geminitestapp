@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { safeSetTimeout, safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   type KangurRouteTransitionSkeletonVariant,
@@ -256,7 +256,7 @@ export function useKangurRouteTransitionLogic({
   const shouldResetScrollOnCommitRef = useRef(false);
   // Timeout ref for the acknowledge phase. Cleared when the transition
   // advances to pending or is superseded.
-  const acknowledgementTimeoutRef = useRef<number | null>(null);
+  const acknowledgementTimeoutRef = useRef<SafeTimerId | null>(null);
   const currentAccessiblePageKey = pageKey ?? 'Game';
 
   const clearAcknowledgementTimeout = useCallback((): void => {

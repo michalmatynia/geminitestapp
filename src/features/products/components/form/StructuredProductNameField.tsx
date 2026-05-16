@@ -108,7 +108,7 @@ function StructuredProductNameFieldView({ controller }: ControllerProps): React.
       actions={<TitleTermsAction href={controller.titleTermsHref} />}
     >
       <StructuredProductNameInput controller={controller} />
-      <CatalogHint primaryCatalogId={controller.primaryCatalogId} />
+      <CatalogHint />
       <SelectedCategoryHint label={controller.selectedCategoryLabel} />
     </FormField>
   );

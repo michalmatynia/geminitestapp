@@ -38,7 +38,7 @@ type EditableCellState = {
 
 type EditableCellController = {
   isEditing: boolean;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   editValue: string;
   setEditValue: React.Dispatch<React.SetStateAction<string>>;
   displayValue: number | null;
@@ -190,7 +190,7 @@ async function persistEditableCellValue({
 }
 
 function EditableCellComponent(props: EditableCellProps): React.JSX.Element {
-  const { field, value } = props;
+  const { field } = props;
   const controller = useEditableCellController(props);
 
   if (controller.isEditing) {
@@ -208,12 +208,11 @@ function EditableCellComponent(props: EditableCellProps): React.JSX.Element {
   }
 
   return (
-    <EditableCellDisplay
-      field={field}
-      value={value}
-      displayValue={controller.displayValue}
-      startEditing={controller.startEditing}
-    />
+      <EditableCellDisplay
+        field={field}
+        displayValue={controller.displayValue}
+        startEditing={controller.startEditing}
+      />
   );
 }
 
@@ -231,7 +230,7 @@ function EditableCellInput({
   handleSave,
   isSaving,
 }: {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   field: EditableCellProps['field'];
   editValue: string;
   setEditValue: React.Dispatch<React.SetStateAction<string>>;

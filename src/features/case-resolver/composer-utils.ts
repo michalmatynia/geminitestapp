@@ -5,15 +5,55 @@ import {
   type CaseResolverNodeMeta,
   type CaseResolverEdgeMeta,
 } from '@/shared/contracts/case-resolver';
+import {
+  DEFAULT_CASE_RESOLVER_EDGE_META,
+  DEFAULT_CASE_RESOLVER_NODE_META,
+} from '@/shared/contracts/case-resolver/constants';
 import { stripHtml } from './utils/text-sanitization';
-import { JOIN_VALUE_MAP, resolveNodeMeta, resolveSourceOutputValue } from './composer-utils';
 
-export { JOIN_VALUE_MAP, resolveNodeMeta, resolveSourceOutputValue };
+type CaseResolverOutputChannels = {
+  wysiwygText: string;
+  plaintextContent: string;
+  plainText: string;
+  wysiwygContent: string;
+};
+
+export const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
+  newline: '\n',
+  none: '',
+  space: ' ',
+  tab: '\t',
+};
+
+export const resolveNodeMeta = (
+  nodeId: string,
+  nodeMeta: Record<string, CaseResolverNodeMeta>,
+  fallback: CaseResolverNodeMeta = DEFAULT_CASE_RESOLVER_NODE_META
+): CaseResolverNodeMeta => ({
+  ...fallback,
+  ...(nodeMeta[nodeId] ?? {}),
+});
 
 export const resolveEdgeMeta = (
   edgeId: string,
   edgeMeta: Record<string, CaseResolverEdgeMeta>
-): CaseResolverEdgeMeta => edgeMeta[edgeId] ?? { surroundPrefix: '', surroundSuffix: '', appendTrailingNewline: false };
+): CaseResolverEdgeMeta => ({
+  ...DEFAULT_CASE_RESOLVER_EDGE_META,
+  ...(edgeMeta[edgeId] ?? {}),
+});
+
+export const resolveSourceOutputValue = (
+  outputs: CaseResolverOutputChannels | undefined,
+  sourceHandle: string | null | undefined,
+  fallbackType: keyof CaseResolverOutputChannels
+): string => {
+  if (outputs === undefined) return '';
+  if (sourceHandle === 'wysiwygText') return outputs.wysiwygText;
+  if (sourceHandle === 'plaintextContent') return outputs.plaintextContent;
+  if (sourceHandle === 'plainText') return outputs.plainText;
+  if (sourceHandle === 'wysiwygContent') return outputs.wysiwygContent;
+  return outputs[fallbackType];
+};
 
 export const resolveNodeText = (node: AiNode): string => {
   const promptTemplate = node.config?.prompt?.template;

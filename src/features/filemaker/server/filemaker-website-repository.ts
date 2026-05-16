@@ -98,6 +98,12 @@ export type MongoFilemakerOrganizationWebsiteDiscoveryResult = {
   skipped: Array<{ reason: string; url: string }>;
 };
 
+type NormalizedDiscoveryUrl = {
+  host: string;
+  normalizedUrl: string;
+  url: string;
+};
+
 type WebsiteWithLinksDocument = MongoFilemakerWebsiteDocument & {
   links?: MongoFilemakerWebsiteLinkDocument[];
 };
@@ -204,7 +210,7 @@ const uniqueStrings = (values: Array<string | undefined>): string[] =>
 
 const normalizeDiscoveryUrl = (
   value: string
-): Pick<MongoFilemakerWebsiteDocument, 'host' | 'normalizedUrl' | 'url'> | null => {
+): NormalizedDiscoveryUrl | null => {
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
   try {
@@ -213,7 +219,7 @@ const normalizeDiscoveryUrl = (
     parsed.hash = '';
     parsed.hostname = parsed.hostname.toLowerCase();
     const normalizedUrl =
-      parsed.pathname === '/' && parsed.search.length === ''
+      parsed.pathname === '/' && parsed.search.length === 0
         ? `${parsed.origin}/`
         : parsed.toString();
     return {

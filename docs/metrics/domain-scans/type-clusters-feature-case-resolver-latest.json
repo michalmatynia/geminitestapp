@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-17T12:20:39.304Z",
+  "generatedAt": "2026-05-16T12:46:30.302Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -22,16 +22,227 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10655,
-    "exportedDeclarationsScanned": 6312,
-    "candidateDeclarationsScanned": 6292,
-    "exactShapeClusters": 9,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 13429,
+    "exportedDeclarationsScanned": 8244,
+    "candidateDeclarationsScanned": 8225,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 50,
+    "clustersAfterFilters": 5,
+    "declarationsInClusters": 10,
+    "highestRiskScore": 10
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0034",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "164fc1593259",
+        "memberCount": 4,
+        "preview": "prop:plainText:string; prop:plaintextContent:string; prop:wysiwygContent:string; prop:wysiwygText:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/case-resolver/composer-compiler.ts#NodeOutput",
+          "name": "NodeOutput",
+          "kind": "type",
+          "path": "src/features/case-resolver/composer-compiler.ts",
+          "source": {
+            "path": "src/features/case-resolver/composer-compiler.ts",
+            "line": 10,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 2
+        },
+        {
+          "id": "src/features/case-resolver/types/composer.ts#NodeOutput",
+          "name": "NodeOutput",
+          "kind": "interface",
+          "path": "src/features/case-resolver/types/composer.ts",
+          "source": {
+            "path": "src/features/case-resolver/types/composer.ts",
+            "line": 24,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0033",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "db320fab3912",
+        "memberCount": 11,
+        "preview": "prop:at:string; prop:attempts:number; prop:cleanupDurationMs?:number | null; prop:message:string; prop:mutationDurationMs?:number | null; prop:resolvedTargetFileId:string | null; prop:stage:'precheck' | 'mutation' | 'rebase' | null; prop:status:'idle' | 'success' | 'failed'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx#PromptExploderCaptureMappingDiagnostics",
+          "name": "PromptExploderCaptureMappingDiagnostics",
+          "kind": "type",
+          "path": "src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx",
+          "source": {
+            "path": "src/features/case-resolver/components/PromptExploderCaptureMappingModalRuntimeContext.tsx",
+            "line": 11,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/case-resolver/hooks/capture-actions/types.ts#CaptureApplyDiagnostics",
+          "name": "CaptureApplyDiagnostics",
+          "kind": "interface",
+          "path": "src/features/case-resolver/hooks/capture-actions/types.ts",
+          "source": {
+            "path": "src/features/case-resolver/hooks/capture-actions/types.ts",
+            "line": 24,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0035",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "be9622754f57",
+        "memberCount": 4,
+        "preview": "prop:caseId:string; prop:entity:'case_content_folder'; prop:folderPath:string; prop:nodeId:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/case-resolver/master-tree.ts#CaseResolverCaseContentFolderMasterNodeRef",
+          "name": "CaseResolverCaseContentFolderMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/case-resolver/master-tree.ts",
+          "source": {
+            "path": "src/features/case-resolver/master-tree.ts",
+            "line": 64,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/case-resolver/services/tree/master-tree-service.ts#CaseResolverCaseContentFolderMasterNodeRef",
+          "name": "CaseResolverCaseContentFolderMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/case-resolver/services/tree/master-tree-service.ts",
+          "source": {
+            "path": "src/features/case-resolver/services/tree/master-tree-service.ts",
+            "line": 21,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0036",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "24c5a19e770e",
+        "memberCount": 4,
+        "preview": "prop:caseId:string; prop:entity:'case_content_file'; prop:fileId:string; prop:nodeId:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/case-resolver/master-tree.ts#CaseResolverCaseContentFileMasterNodeRef",
+          "name": "CaseResolverCaseContentFileMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/case-resolver/master-tree.ts",
+          "source": {
+            "path": "src/features/case-resolver/master-tree.ts",
+            "line": 71,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/case-resolver/services/tree/master-tree-service.ts#CaseResolverCaseContentFileMasterNodeRef",
+          "name": "CaseResolverCaseContentFileMasterNodeRef",
+          "kind": "type",
+          "path": "src/features/case-resolver/services/tree/master-tree-service.ts",
+          "source": {
+            "path": "src/features/case-resolver/services/tree/master-tree-service.ts",
+            "line": 28,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0037",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:case-resolver"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "99f7c35a8bf2",
+        "memberCount": 3,
+        "preview": "prop:displayName:string; prop:id:string; prop:kind:'person' | 'organization'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/case-resolver/party-matching.ts#MatchedCaseResolverPartyReference",
+          "name": "MatchedCaseResolverPartyReference",
+          "kind": "type",
+          "path": "src/features/case-resolver/party-matching.ts",
+          "source": {
+            "path": "src/features/case-resolver/party-matching.ts",
+            "line": 35,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/case-resolver/services/party-matching/orchestrator.ts#MatchedCaseResolverPartyReference",
+          "name": "MatchedCaseResolverPartyReference",
+          "kind": "type",
+          "path": "src/features/case-resolver/services/party-matching/orchestrator.ts",
+          "source": {
+            "path": "src/features/case-resolver/services/party-matching/orchestrator.ts",
+            "line": 16,
+            "domain": "feature:case-resolver"
+          },
+          "usageCount": 0
+        }
+      ]
+    }
+  ],
   "notes": [
     "type-clusters scan result"
   ]

@@ -1,4 +1,3 @@
-import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { usePreviewEditorActions, usePreviewEditorState } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
@@ -7,7 +6,7 @@ import { PreviewSectionMediaButton } from './PreviewSectionMediaButton';
 
 export function PreviewHeroSection(): React.JSX.Element {
   const mediaStyles = useMediaStyles();
-  const { section, PreviewBlockItem } = usePreviewSectionContext();
+  const { section } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 

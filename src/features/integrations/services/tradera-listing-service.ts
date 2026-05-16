@@ -53,7 +53,6 @@ import {
   finalizePlaywrightStandardListingJobOutcome,
   buildPlaywrightMarketplaceListingProcessArtifacts,
   resolvePlaywrightListingPersistenceContextAfterRun,
-  buildPlaywrightServiceListingFailure,
   buildPlaywrightServiceListingMissingContextFailure,
   buildPlaywrightServiceListingSuccess,
   resolvePlaywrightFailureListingStatus,
@@ -300,7 +299,7 @@ export const runTraderaListing = async (
       });
     }
 
-    const { listing, connection, integration, repository } = runContext;
+    const { listing, connection, repository } = runContext;
 
     const systemSettings = await loadTraderaSystemSettings();
     const requestedSelectorProfile =

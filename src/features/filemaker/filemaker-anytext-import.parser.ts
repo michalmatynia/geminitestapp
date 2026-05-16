@@ -90,7 +90,7 @@ const rowsToLegacyAnyTextRows = (
   input: { format: LegacyAnyTextRowsFormat }
 ): LegacyAnyTextRow[] => {
   const rows = matrix
-    .map((row: unknown[]): string[] => row.map(normalizeString))
+    .map((row: unknown[]): string[] => row.map((value: unknown): string => normalizeString(value)))
     .filter((row: string[]): boolean => row.some((value: string): boolean => value.length > 0));
   const headerRowIndex = findHeaderRowIndex(rows);
   const header = rows[headerRowIndex]?.map((field: string): string => normalizeString(field)) ?? [];

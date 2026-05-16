@@ -102,7 +102,7 @@ const buildEvaluationStageDetails = (
     evaluatedAt: evaluation.evaluatedAt,
     languageAccepted: resolveEvaluationLanguageAccepted(evaluation),
     model: evaluation.modelId,
-    pageLanguage: evaluation.pageLanguage,
+    pageLanguage: evaluation.pageLanguage ?? null,
     recommendedAction: evaluation.recommendedAction,
     rejectionCategory: evaluation.rejectionCategory,
     status: evaluation.status,

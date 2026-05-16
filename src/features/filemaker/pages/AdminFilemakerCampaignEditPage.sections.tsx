@@ -76,6 +76,9 @@ const updateCampaignDraft = (
 
 const DIRECT_CAMPAIGN_CONTENT_VALUE = '__direct_campaign_content__';
 
+const toPersistedEmailBlocks = (blocks: EmailBlock[]): Record<string, unknown>[] =>
+  blocks.map((block): Record<string, unknown> => ({ ...block }));
+
 const upsertContentGroup = (
   registry: FilemakerEmailCampaignContentGroupRegistry,
   group: FilemakerEmailCampaignContentGroup
@@ -346,7 +349,7 @@ export function ContentSection(): React.JSX.Element {
         updateActiveGroupVariant((variant) =>
           createFilemakerEmailCampaignContentVariant({
             ...variant,
-            bodyBlocks: next.length > 0 ? next : null,
+            bodyBlocks: next.length > 0 ? toPersistedEmailBlocks(next) : null,
             bodyHtml: compiledHtml,
           })
         );
@@ -354,7 +357,7 @@ export function ContentSection(): React.JSX.Element {
       }
       updateCampaignDraft(setDraft, (current) => ({
         ...current,
-        bodyBlocks: next.length > 0 ? next : null,
+        bodyBlocks: next.length > 0 ? toPersistedEmailBlocks(next) : null,
         bodyHtml: compiledHtml,
       }));
     },
@@ -426,7 +429,7 @@ export function ContentSection(): React.JSX.Element {
     try {
       await persistContentGroupRegistry(registry);
       setGroupDraft(group);
-      setSelectedVariantId(group.defaultVariantId);
+      setSelectedVariantId(group.defaultVariantId ?? null);
       updateCampaignDraft(setDraft, (current) => ({
         ...current,
         contentGroupId: group.id,

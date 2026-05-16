@@ -1,5 +1,4 @@
-import { Page } from 'playwright';
-import { type PlaywrightVerificationInjectionConfig, PlaywrightCapturedPageObservation, PlaywrightVisionIterationCapture, PlaywrightVisionIterationEvaluation } from './types';
+import { type PlaywrightVerificationInjectionConfig } from './types';
 
 export async function runPlaywrightIterationEvaluation(
   options: {

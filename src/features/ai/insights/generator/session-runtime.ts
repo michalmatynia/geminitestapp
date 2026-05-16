@@ -1,49 +1,54 @@
-/**
- * AI Insights Session Runtime
- * 
- * Session management and runtime coordination for AI insights generation.
- * Provides:
- * - Chatbot session integration for insights
- * - Message mapping and transformation
- * - Chat model invocation coordination
- * - Session state management
- * - Prompt message handling
- */
+import 'server-only';
 
-import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
+import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import type { ChatMessageDto } from '@/shared/contracts/chatbot';
+import { notFoundError } from '@/shared/errors/app-error';
+
 import { callInsightChatModel } from './chat-runtime';
 
-export type InsightPromptMessage = {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-};
+type InsightMessageRole = 'system' | 'user' | 'assistant';
 
-const mapMessage = (msg: ChatMessageDto): ChatMessageDto => ({
-  role: msg.role === 'system' || msg.role === 'user' || msg.role === 'assistant' ? msg.role : 'system',
-  content: msg.content,
-});
+const isInsightMessageRole = (role: ChatMessageDto['role']): role is InsightMessageRole =>
+  role === 'system' || role === 'user' || role === 'assistant';
+
+const toInsightMessages = (messages: ChatMessageDto[]): ChatMessageDto[] =>
+  messages
+    .filter((message): message is ChatMessageDto & { role: InsightMessageRole } =>
+      isInsightMessageRole(message.role)
+    )
+    .map((message) => ({
+      ...message,
+      content: message.content.trim(),
+    }))
+    .filter((message) => message.content.length > 0);
 
 export const fetchSessionTranscripts = async (sessionId: string): Promise<ChatMessageDto[]> => {
   const session = await chatbotSessionRepository.findById(sessionId);
-  if (!session) {
-    throw new Error(`Chatbot session not found: ${sessionId}`);
+  if (session === null) {
+    throw notFoundError('Chat session not found', { sessionId });
   }
-  return session.messages.map(mapMessage);
+  return toInsightMessages(session.messages ?? []);
 };
 
-export const generateSessionInsight = async (sessionId: string, model: string): Promise<string> => {
+export const generateSessionInsight = async (
+  sessionId: string,
+  model: string
+): Promise<string> => {
   const messages = await fetchSessionTranscripts(sessionId);
-  
-  const systemPrompt: ChatMessageDto = {
-    role: 'system',
-    content: 'Summarize the user intent and identify key topics discussed in the following chatbot session transcript.',
-  };
-
-  const modelMessages = [systemPrompt, ...messages];
-
   return callInsightChatModel({
     model,
-    messages: modelMessages,
+    messages: [
+      {
+        id: 'session-insight-system',
+        sessionId,
+        role: 'system',
+        content:
+          'Summarize the important insights, decisions, unresolved questions, and next actions from this session.',
+        timestamp: new Date().toISOString(),
+      },
+      ...messages,
+    ],
+    temperature: 0.2,
+    maxTokens: 1200,
   });
 };

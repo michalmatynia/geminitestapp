@@ -7,7 +7,7 @@ import {
   useUpdateKangurLessonTemplates,
   useUpdateKangurLessons,
 } from '@/features/kangur/hooks';
-import type { KangurLesson, KangurLessonTemplate } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 export type UseLessonsStateReturn = ReturnType<typeof useLessonsState>;
 

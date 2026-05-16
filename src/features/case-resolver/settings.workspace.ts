@@ -80,36 +80,8 @@ export const getCaseResolverWorkspaceNormalizationDiagnostics = (
       CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY)
     : CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY;
 import {
-  normalizeFileRecord,
   resolveSafeCaseParentId,
 } from '@/features/case-resolver/services/workspace';
-
-const resolveParentCaseCandidate = (
-  caseId: string,
-  parentCaseId: string | null,
-  caseMap: Map<string, CaseResolverFile>
-): string | null => {
-  if (!parentCaseId || parentCaseId === caseId) return null;
-  const parentCase = caseMap.get(parentCaseId);
-  return parentCase?.fileType === 'case' ? parentCaseId : null;
-};
-
-const hasCircularCaseParentChain = (
-  caseId: string,
-  parentCaseId: string,
-  caseMap: Map<string, CaseResolverFile>
-): boolean => {
-  let current: string | null = parentCaseId;
-  const visited = new Set<string>();
-  while (current) {
-    if (current === caseId || visited.has(current)) return true;
-    visited.add(current);
-    const parent = caseMap.get(current);
-    if (parent?.fileType !== 'case') return true;
-    current = parent.parentCaseId ?? null;
-  }
-  return false;
-};
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
   const relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({

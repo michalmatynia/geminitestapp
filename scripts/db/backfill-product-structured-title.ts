@@ -2,6 +2,8 @@ import 'dotenv/config';
 
 import { pathToFileURL } from 'node:url';
 
+import type { Document, Filter, ObjectId } from 'mongodb';
+
 import { getMongoDb, invalidateMongoClientCache } from '@/shared/lib/db/product-mongo-client';
 import { productCollectionName } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 
@@ -23,6 +25,13 @@ type BackfillSummary = {
   populatedStructuredFields: number;
   clearedProducts: number;
   changedProductIds: string[];
+};
+
+type ProductStructuredTitleBackfillDocument = Document & {
+  _id: ObjectId | string;
+  id?: unknown;
+  name_en?: unknown;
+  structuredTitle?: unknown;
 };
 
 const normalizeTrimmedString = (value: unknown): string => {
@@ -63,8 +72,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
   try {
     const db = await getMongoDb();
-    const products = db.collection(productCollectionName);
-    const query = options.productId
+    const products = db.collection<ProductStructuredTitleBackfillDocument>(productCollectionName);
+    const query: Filter<ProductStructuredTitleBackfillDocument> = options.productId
       ? {
           $or: [{ id: options.productId }, { _id: options.productId }],
         }

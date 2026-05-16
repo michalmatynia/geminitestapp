@@ -242,7 +242,7 @@ function ProductImagesDefaultView({ model }: { model: ProductImagesTabModel }): 
       )}
       <ProductImageManagerControllerProvider value={model.imageManagerController}>
         <ProductImageManager
-          externalBaseUrl={model.imageExternalBaseUrl}
+          externalBaseUrl={model.imageExternalBaseUrl ?? ''}
           chooseFileManagerButtonAriaLabel={model.chooseButtonAriaLabel}
           chooseFileManagerButtonLabel={model.chooseButtonLabel}
           onChooseFromFileManager={(): void => model.onShowFileManager(true)}

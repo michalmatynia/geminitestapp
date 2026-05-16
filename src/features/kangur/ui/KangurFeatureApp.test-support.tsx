@@ -252,6 +252,7 @@ vi.mock('@/features/kangur/ui/components/LazyAnimatePresence', () => ({
     initial?: unknown;
     loadMotion?: boolean;
     transition?: unknown;
+    'data-testid'?: string;
   }) => {
     kangurLazyMotionDivLoadMotionSpyMock(loadMotion);
     if (props['data-testid'] === 'kangur-route-content') {

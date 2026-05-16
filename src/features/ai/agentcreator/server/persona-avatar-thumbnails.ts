@@ -47,7 +47,7 @@ const readStringField = (record: Record<string, unknown>, key: string): string =
   return typeof value === 'string' ? value.trim() : '';
 };
 
-const hasCompleteThumbnailFields = (record: {
+type ParsedThumbnailRecord = {
   ref: string;
   personaId: string;
   moodId: string;
@@ -56,7 +56,17 @@ const hasCompleteThumbnailFields = (record: {
   height: number | null;
   bytes: number | null;
   hash: string;
-}): boolean =>
+};
+
+type CompleteThumbnailRecord = Omit<ParsedThumbnailRecord, 'width' | 'height' | 'bytes'> & {
+  width: number;
+  height: number;
+  bytes: number;
+};
+
+const hasCompleteThumbnailFields = (
+  record: ParsedThumbnailRecord
+): record is CompleteThumbnailRecord =>
   record.ref.length > 0 &&
   record.personaId.length > 0 &&
   record.moodId.length > 0 &&

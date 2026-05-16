@@ -122,7 +122,7 @@ const buildNextPersona = (
     ...draft,
     id: resolvePersonaId(draft, existing),
     name,
-    description: resolveNullableTrimmedString(draft.description),
+    description: resolveNullableTrimmedString(draft.description) ?? undefined,
     settings: buildAgentPersonaSettings(draft.settings ?? existing?.settings),
     defaultMoodId: DEFAULT_AGENT_PERSONA_MOOD_ID,
     moods: draft.moods ?? existing?.moods ?? buildDefaultAgentPersonaMoods(),
@@ -235,9 +235,9 @@ const cleanupUnsavedPersona = async ({
   draft: Partial<AgentPersona>;
   originalItem?: Partial<AgentPersona> | null;
   saved: boolean;
-}): Promise<void> | undefined => {
+}): Promise<void> => {
   if (saved) {
-    return undefined;
+    return;
   }
   return Promise.all([
     deleteAvatarFiles(diffRemovedAgentPersonaAvatarFileIds(draft, originalItem)),

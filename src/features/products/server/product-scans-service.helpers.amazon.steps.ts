@@ -18,6 +18,8 @@ import type {
 import { readOptionalString, resolvePersistableScanUrl, toRecord } from './product-scans-service.helpers.base';
 import { formatEvaluationConfidence } from './product-scans-service.helpers.amazon.constants';
 
+type KnownProductScanAmazonEvaluation = NonNullable<ProductScanAmazonEvaluation>;
+
 export const resolveAmazonEvaluationStepStatus = (
   evaluation: ProductScanAmazonEvaluation | null | undefined
 ): ProductScanRecord['steps'][number]['status'] => {
@@ -232,7 +234,7 @@ export const resolveAmazonEvaluationStepResultCode = (
 };
 
 const resolveRejectedEvaluationMessage = (
-  evaluation: ProductScanAmazonEvaluation,
+  evaluation: KnownProductScanAmazonEvaluation,
   confidenceLabel: string | null
 ): string => {
   if (evaluation.languageAccepted === false) {
@@ -246,7 +248,7 @@ const resolveRejectedEvaluationMessage = (
 };
 
 const resolveKnownEvaluationMessage = (
-  evaluation: ProductScanAmazonEvaluation,
+  evaluation: KnownProductScanAmazonEvaluation,
   confidenceLabel: string | null
 ): string => {
   if (evaluation.status === 'approved') {

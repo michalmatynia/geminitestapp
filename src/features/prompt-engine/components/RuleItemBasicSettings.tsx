@@ -17,7 +17,7 @@ import { RULE_KIND_OPTIONS, RULE_SEVERITY_OPTIONS } from './RuleItem.constants';
 type RuleKindChangeHandler = (value: string) => void;
 type RuleTextHandler = (value: string) => void;
 
-const getRegexStatus = (rule: PromptValidationRule | null): ReturnType<typeof compileRegex> => {
+const getRegexStatus = (rule: PromptValidationRule | null): ReturnType<typeof compileRegex> | null => {
   if (rule?.kind !== 'regex') return null;
   return compileRegex(rule.pattern, rule.flags);
 };

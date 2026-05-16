@@ -91,7 +91,7 @@ const isActiveBatchResult = (result: BatchResult): boolean =>
 
 const resolveBatchResultStatus = (result: BatchResult): ScanModalRow['status'] => {
   if (result.status !== 'already_running') return result.status;
-  return result.currentStatus;
+  return result.currentStatus ?? 'running';
 };
 
 const buildQueuedRow = (input: {
@@ -269,7 +269,11 @@ const handleBatchFailure = async (
   const { rowsRef, setRows } = input;
   if (input.sessionId !== input.modalSessionRef.current) return;
   const message = error instanceof Error ? error.message : input.modalConfig.batchFailureMessage;
-  const failedRows = input.initialRows.map((row) => ({ ...row, status: 'failed' as const, message }));
+  const failedRows: ScanModalRow[] = input.initialRows.map((row) => ({
+    ...row,
+    status: 'failed',
+    message,
+  }));
   rowsRef.current = failedRows;
   setRows(failedRows);
   await invalidateProductScanRows(input.queryClient, input.initialRows);

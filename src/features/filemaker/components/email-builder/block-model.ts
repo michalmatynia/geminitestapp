@@ -94,10 +94,6 @@ const isEmailContainerBlockKind = (value: string): value is EmailContainerBlockK
 const isEmailBlockKind = (value: string): value is EmailBlockKind =>
   isEmailLeafBlockKind(value) || isEmailContainerBlockKind(value);
 
-const throwUnexpectedBlockKind = (kind: never): never => {
-  throw new Error(`Unexpected email block kind: ${String(kind)}`);
-};
-
 export const isEmailLeafBlock = (block: EmailBlock): block is EmailLeafBlock => isEmailLeafBlockKind(block.kind);
 
 export const isEmailContainerBlock = (block: EmailBlock): block is EmailContainerBlock =>
@@ -118,7 +114,6 @@ export const isContainerKindAcceptingChildKind = (
     case 'row':
       return isEmailLeafBlockKind(childKind);
   }
-  return throwUnexpectedBlockKind(parentKind);
 };
 
 const generateBlockId = (kind: EmailBlockKind): string => {
@@ -246,7 +241,10 @@ const createSectionBlock = (id: string, overrides?: Partial<EmailSectionBlock>):
   };
 };
 
-const createColumnsFallbackRows = (): EmailRowBlock[] => [createEmailBlock('row'), createEmailBlock('row')];
+const createColumnsFallbackRows = (): EmailRowBlock[] => [
+  createRowBlock(generateBlockId('row')),
+  createRowBlock(generateBlockId('row')),
+];
 
 const createColumnsBlock = (id: string, overrides?: Partial<EmailColumnsBlock>): EmailColumnsBlock => {
   const normalizedChildren = normalizeEmailBlocks(overrides?.children).filter(
@@ -294,7 +292,6 @@ const createLeafEmailBlock = (
     case 'spacer':
       return createSpacerBlock(id, overrides as Partial<EmailSpacerBlock> | undefined);
   }
-  return throwUnexpectedBlockKind(kind);
 };
 
 const createContainerEmailBlock = (
@@ -310,7 +307,6 @@ const createContainerEmailBlock = (
     case 'row':
       return createRowBlock(id, overrides as Partial<EmailRowBlock> | undefined);
   }
-  return throwUnexpectedBlockKind(kind);
 };
 
 export const createEmailBlock = (kind: EmailBlockKind, overrides?: Partial<EmailBlock>): EmailBlock => {

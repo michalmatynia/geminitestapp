@@ -877,18 +877,18 @@ export async function syncSelectorRegistryFromCode(input: {
 
   if (input.namespace === 'tradera') {
     const response = await syncTraderaSelectorRegistryFromCode({ profile: input.profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'amazon') {
     const response = await syncAmazonSelectorRegistryFromCode({ profile: input.profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'custom') {
     const response = await syncCustomSelectorRegistryFromCode({ profile: input.profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   const response = await syncSupplier1688SelectorRegistryFromCode({ profile: input.profile });
-  return { namespace: input.namespace, ...response };
+  return { ...response, namespace: input.namespace };
 }
 
 export async function saveSelectorRegistryEntry(input: {
@@ -902,18 +902,18 @@ export async function saveSelectorRegistryEntry(input: {
 
   if (input.namespace === 'tradera') {
     const response = await saveTraderaSelectorRegistryEntry(input);
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'amazon') {
     const response = await saveAmazonSelectorRegistryEntry(input);
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'custom') {
     const response = await saveCustomSelectorRegistryEntry(input);
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   const response = await saveSupplier1688SelectorRegistryEntry(input);
-  return { namespace: input.namespace, ...response };
+  return { ...response, namespace: input.namespace };
 }
 
 export async function deleteSelectorRegistryEntry(input: {
@@ -927,18 +927,18 @@ export async function deleteSelectorRegistryEntry(input: {
 
   if (input.namespace === 'tradera') {
     const response = await deleteTraderaSelectorRegistryEntry({ ...input, profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'amazon') {
     const response = await deleteAmazonSelectorRegistryEntry({ ...input, profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'custom') {
     const response = await deleteCustomSelectorRegistryEntry({ ...input, profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   const response = await deleteSupplier1688SelectorRegistryEntry({ ...input, profile });
-  return { namespace: input.namespace, ...response };
+  return { ...response, namespace: input.namespace };
 }
 
 export async function mutateSelectorRegistryProfile(input:
@@ -997,18 +997,18 @@ export async function mutateSelectorRegistryProfile(input:
 
     if (input.namespace === 'tradera') {
       const response = await cloneTraderaSelectorRegistryProfile({ sourceProfile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     if (input.namespace === 'amazon') {
       const response = await cloneAmazonSelectorRegistryProfile({ sourceProfile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     if (input.namespace === 'custom') {
       const response = await cloneCustomSelectorRegistryProfile({ sourceProfile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     const response = await cloneSupplier1688SelectorRegistryProfile({ sourceProfile, targetProfile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
 
   if (input.action === 'rename_profile') {
@@ -1022,36 +1022,36 @@ export async function mutateSelectorRegistryProfile(input:
 
     if (input.namespace === 'tradera') {
       const response = await renameTraderaSelectorRegistryProfile({ profile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     if (input.namespace === 'amazon') {
       const response = await renameAmazonSelectorRegistryProfile({ profile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     if (input.namespace === 'custom') {
       const response = await renameCustomSelectorRegistryProfile({ profile, targetProfile });
-      return { namespace: input.namespace, ...response };
+      return { ...response, namespace: input.namespace };
     }
     const response = await renameSupplier1688SelectorRegistryProfile({ profile, targetProfile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
 
   const profile = normalizeProfile(input.namespace, input.profile);
   assertNonDefaultProfile(input.namespace, profile, 'Deleting');
   if (input.namespace === 'tradera') {
     const response = await deleteTraderaSelectorRegistryProfile({ profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'amazon') {
     const response = await deleteAmazonSelectorRegistryProfile({ profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   if (input.namespace === 'custom') {
     const response = await deleteCustomSelectorRegistryProfile({ profile });
-    return { namespace: input.namespace, ...response };
+    return { ...response, namespace: input.namespace };
   }
   const response = await deleteSupplier1688SelectorRegistryProfile({ profile });
-  return { namespace: input.namespace, ...response };
+  return { ...response, namespace: input.namespace };
 }
 
 const getRuntimeEntries = async (

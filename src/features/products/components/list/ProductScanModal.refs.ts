@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 
+import type { Toast } from '@/shared/ui/toast';
 import type { SafeTimerId } from '@/shared/lib/timers';
 
 import type { ProductScanModalSelectedProduct, ScanModalRow } from './ProductScanModal.types';
 
-type ProductScanToast = (message: string, options?: { variant?: string }) => void;
+type ProductScanToast = Toast;
 
 export const useProductScanModalRefs = (toast: ProductScanToast): {
   autoStarted1688ConnectionIdsRef: React.MutableRefObject<Set<string>>;

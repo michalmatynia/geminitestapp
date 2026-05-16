@@ -3,7 +3,7 @@
 // Hook for managing Web Audio API context in Kangur music synthesizer
 // Handles audio context lifecycle, idle suspension, and audio processing chain setup
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { resolveAudioContextCtor } from '../useKangurMusicSynth.utils';
 import type { ReverbChain } from '../useKangurMusicSynth.types';
 
@@ -26,7 +26,7 @@ type UseKangurMusicSynthAudioContextResult = {
 type AudioContextRefs = {
   audioContextRef: React.MutableRefObject<AudioContext | null>;
   compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>;
-  idleSuspendTimeoutRef: React.MutableRefObject<number | null>;
+  idleSuspendTimeoutRef: React.MutableRefObject<SafeTimerId | null>;
   reverbChainRef: React.MutableRefObject<ReverbChain | null>;
 };
 
@@ -162,7 +162,7 @@ const useCloseAudioContext = ({
 export function useKangurMusicSynthAudioContext(): UseKangurMusicSynthAudioContextResult {
   const audioContextRef = useRef<AudioContext | null>(null);
   const compressorNodeRef = useRef<DynamicsCompressorNode | null>(null);
-  const idleSuspendTimeoutRef = useRef<number | null>(null);
+  const idleSuspendTimeoutRef = useRef<SafeTimerId | null>(null);
   const reverbChainRef = useRef<ReverbChain | null>(null);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const isAudioSupported = useMemo(() => resolveAudioContextCtor() !== null, []);

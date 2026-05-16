@@ -37,7 +37,6 @@ const resolveUnhandledTerminalActiveRun = (
 
 const useProductStudioAutoPollEffect = (
   loaded: ProductStudioLoadedState,
-  runState: ProductStudioRunState,
   baselineIdsRef: React.MutableRefObject<string[]>,
   selectedVariantSlotIdRef: React.MutableRefObject<string | null>
 ): void => {
@@ -264,7 +263,7 @@ export const useProductStudioRunEffects = (
   selectedVariantSlotIdRef.current = selectedVariantSlotId;
   const prevPlaceholderCountRef = useRef(pendingVariantPlaceholderCount);
 
-  useProductStudioAutoPollEffect(loaded, runState, baselineIdsRef, selectedVariantSlotIdRef);
+  useProductStudioAutoPollEffect(loaded, baselineIdsRef, selectedVariantSlotIdRef);
   useProductStudioStatusAdvanceEffect(loaded, runState);
   useProductStudioCompletionEffect(loaded, runState, prevPlaceholderCountRef, target);
   useProductStudioTerminalActiveRunEffect(loaded, runState, target);

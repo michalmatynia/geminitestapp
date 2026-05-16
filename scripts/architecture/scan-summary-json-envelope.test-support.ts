@@ -13,6 +13,18 @@ import {
   resolveAccessibilityRouteCrawlChunkSize,
 } from '../testing/lib/accessibility-route-crawl.mjs';
 
+type AccessibilityRouteCrawlEntry = {
+  audience: string;
+  contextSelector: string | null;
+  id: string;
+  name: string;
+  navigationTimeoutMs: number | null;
+  navigationWaitUntil: string | null;
+  readySelector: string | null;
+  requiredEnv: string[];
+  route: string;
+};
+
 const tempRoots: string[] = [];
 
 const repoRoot = process.cwd();
@@ -596,11 +608,14 @@ const seedAccessibilityCommandHarness = (
 
 const startFixtureServer = async (): Promise<string> => 'http://127.0.0.1:4010';
 
-const seedAccessibilityRouteCrawlReport = (root: string, env: NodeJS.ProcessEnv = {}): string => {
+const seedAccessibilityRouteCrawlReport = (
+  root: string,
+  env: NodeJS.ProcessEnv = process.env
+): string => {
   const routeEntries = filterAccessibilityRouteEntries(
     normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes),
     { env }
-  );
+  ) as AccessibilityRouteCrawlEntry[];
   const reportPath = path.join(root, 'tmp', 'accessibility-route-crawl-report.json');
   writeFile(
     root,

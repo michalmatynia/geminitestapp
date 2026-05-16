@@ -23,6 +23,22 @@ type FramerMotionExports = {
 
 let cached: FramerMotionExports | null = null;
 let loadPromise: Promise<FramerMotionExports> | null = null;
+const MOTION_ONLY_PROP_KEYS = [
+  'initial',
+  'animate',
+  'exit',
+  'transition',
+  'whileHover',
+  'whileTap',
+  'whileFocus',
+  'whileInView',
+  'whileDrag',
+  'variants',
+  'layout',
+  'layoutId',
+  'onAnimationStart',
+  'onAnimationComplete',
+] as const;
 
 const loadFramerMotion = (): Promise<FramerMotionExports> => {
   if (cached) return Promise.resolve(cached);
@@ -71,6 +87,14 @@ const useFramerMotion = (enabled = true): FramerMotionExports | null => {
   return resolved;
 };
 
+const stripMotionOnlyProps = (props: Record<string, unknown>): Record<string, unknown> => {
+  const stripped = { ...props };
+  MOTION_ONLY_PROP_KEYS.forEach((key) => {
+    delete stripped[key];
+  });
+  return stripped;
+};
+
 // ---------------------------------------------------------------------------
 // LazyAnimatePresence
 // ---------------------------------------------------------------------------
@@ -98,11 +122,19 @@ export function LazyAnimatePresence({
 // LazyMotionDiv — renders a plain <div> until framer-motion loads
 // ---------------------------------------------------------------------------
 
-type LazyMotionDivProps = HTMLMotionProps<'div'> & {
+type LazyMotionDivProps = Omit<
+  HTMLMotionProps<'div'>,
+  'animate' | 'exit' | 'initial' | 'transition'
+> & {
+  animate?: HTMLMotionProps<'div'>['animate'] | Record<string, unknown>;
   children?: ReactNode;
   className?: string;
+  exit?: HTMLMotionProps<'div'>['exit'] | Record<string, unknown>;
+  initial?: HTMLMotionProps<'div'>['initial'] | Record<string, unknown>;
   loadMotion?: boolean;
+  transition?: HTMLMotionProps<'div'>['transition'] | Record<string, unknown>;
   'data-testid'?: string;
+  'data-route-capture-ready'?: string;
   'data-route-transition-phase'?: string;
   'data-route-interactive-ready'?: string;
   'data-route-transition-key'?: string;
@@ -116,25 +148,11 @@ export const LazyMotionDiv = forwardRef<HTMLDivElement, LazyMotionDivProps>(
 
     if (fm) {
       const MotionDiv = fm.MotionDiv;
-      return <MotionDiv ref={ref} {...motionProps} />;
+      return <MotionDiv ref={ref} {...(motionProps as HTMLMotionProps<'div'>)} />;
     }
 
     // Before framer-motion loads, render a plain div with only standard HTML props.
-    const divProps: Record<string, unknown> = { ...motionProps };
-    delete divProps.initial;
-    delete divProps.animate;
-    delete divProps.exit;
-    delete divProps.transition;
-    delete divProps.whileHover;
-    delete divProps.whileTap;
-    delete divProps.whileFocus;
-    delete divProps.whileInView;
-    delete divProps.whileDrag;
-    delete divProps.variants;
-    delete divProps.layout;
-    delete divProps.layoutId;
-    delete divProps.onAnimationStart;
-    delete divProps.onAnimationComplete;
+    const divProps = stripMotionOnlyProps(motionProps as Record<string, unknown>);
 
     return <div ref={ref} {...(divProps as ComponentProps<'div'>)} />;
   }
@@ -157,21 +175,7 @@ export const LazyMotionButton = forwardRef<
     return <MotionButton ref={ref} {...motionProps} />;
   }
 
-  const buttonProps: Record<string, unknown> = { ...motionProps };
-  delete buttonProps.initial;
-  delete buttonProps.animate;
-  delete buttonProps.exit;
-  delete buttonProps.transition;
-  delete buttonProps.whileHover;
-  delete buttonProps.whileTap;
-  delete buttonProps.whileFocus;
-  delete buttonProps.whileInView;
-  delete buttonProps.whileDrag;
-  delete buttonProps.variants;
-  delete buttonProps.layout;
-  delete buttonProps.layoutId;
-  delete buttonProps.onAnimationStart;
-  delete buttonProps.onAnimationComplete;
+  const buttonProps = stripMotionOnlyProps(motionProps as Record<string, unknown>);
 
   return <button ref={ref} {...(buttonProps as ComponentProps<'button'>)} />;
 });

@@ -68,6 +68,12 @@ const promptExploderSupportsSegmentTextSplit = (segment: PromptExploderSegment |
       segment.type === 'parameter_block')
   );
 
+const formatTemplateCandidateState = (state: unknown): string => {
+  if (typeof state !== 'string') return 'candidate';
+  const trimmed = state.trim();
+  return trimmed.length > 0 ? trimmed : 'candidate';
+};
+
 const buildSelectorOptions = (
   entry: PromptExploderParamEntry
 ): Array<LabeledOptionDto<string>> =>
@@ -503,9 +509,7 @@ function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                 </div>
                 <div className='mt-1 text-[10px] text-gray-500'>
                   score {(candidate.score * 100).toFixed(1)}% · type {candidate.segmentType} · state{' '}
-                  {(candidate.state === null || candidate.state === '' || candidate.state === undefined
-                    ? 'candidate'
-                    : candidate.state)} ·
+                  {formatTemplateCandidateState(candidate.state)} ·
                   approvals{' '}
                   {typeof candidate.approvals === 'number' ? candidate.approvals : 0}
                 </div>{' '}

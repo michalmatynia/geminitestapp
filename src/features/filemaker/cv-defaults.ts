@@ -330,7 +330,7 @@ const buildTechnicalStackItems = (
         ? resolveFilemakerTechnologyDisplayLabel(candidate)
         : null;
     if (matchedTerm === null && matchedKnownLabel === null) return;
-    addItem(matchedKnownLabel ?? candidate, matchedTerm);
+    addItem(matchedKnownLabel ?? candidate, matchedTerm ?? undefined);
   });
 
   return items.slice(0, 28);

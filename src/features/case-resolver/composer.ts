@@ -23,12 +23,25 @@
  * `plaintextContent` outputs, joined with double newlines.
  */
 import type { CaseResolverCompiledSegment, CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
-import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
-import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT, CASE_RESOLVER_PLAINTEXT_CONTENT_PORT, DEFAULT_CASE_RESOLVER_EDGE_META } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverEdge, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { stripHtml } from './utils/text-sanitization';
-import { JOIN_VALUE_MAP, resolveNodeMeta, resolveSourceOutputValue } from './composer-utils';
+import {
+  appendWithJoin,
+  resolveEdgeMeta,
+  resolveNodeMeta,
+  resolveNodeText,
+  resolveNodeWysiwygText,
+  resolveSourceOutputValue,
+  sortEdgesBySourcePosition,
+  sortNodeIdsByPosition,
+  wrapByQuoteMode,
+  wrapByQuoteModeWithoutColor,
+} from './composer-utils';
+import { computeNodeOutput } from './composer-compiler';
+import { resolveLeafNodePrompt } from './composer-traversal';
 
 
 export type CaseResolverPlainTextTransformInput = {
@@ -45,16 +58,16 @@ export type CaseResolverCompileOptions = {
 // JOIN_VALUE_MAP, DOCUMENT_*_PORT, resolveNodeMeta, resolveEdgeMeta, resolveNodeText, resolveNodeWysiwygText, wrapByQuoteMode, wrapByQuoteModeWithoutColor, sortNodeIdsByPosition, appendWithJoin, sortEdgesBySourcePosition, resolveSourceOutputValue are now in composer-utils.ts
 
 const isWysiwygTextInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_WYSIWYG_TEXT_PORT;
+  port === 'wysiwygText';
 
 const isPlaintextContentInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_PLAINTEXT_CONTENT_PORT;
+  port === CASE_RESOLVER_PLAINTEXT_CONTENT_PORT;
 
 const isPlainTextInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_PLAIN_TEXT_PORT;
+  port === 'plainText';
 
 const isWysiwygContentInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_WYSIWYG_CONTENT_PORT;
+  port === CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 
 /**
  * Compiles the CaseResolver node graph into a prompt string.
@@ -169,7 +182,7 @@ export const compileCaseResolverPrompt = (
       if (!node) return;
       const meta = resolveNodeMeta(node.id, graph.nodeMeta || {});
       const nodeText = resolveNodeText(node);
-      const nodeWysiwygText = resolveNodeWysiwygText(node);
+      resolveNodeWysiwygText(node);
       const incomingEdges = sortEdgesBySourcePosition(incomingByNode.get(node.id) ?? [], nodeById);
 
       const collectIncoming = (
@@ -286,9 +299,18 @@ export const compileCaseResolverPrompt = (
         node,
         meta,
         {
-          plainText: { value: incomingPlainText.value, firstJoinMode: incomingPlainText.firstJoinMode },
-          plaintextContent: { value: incomingPlaintextContent.value, firstJoinMode: incomingPlaintextContent.firstJoinMode },
-          wysiwygContent: { value: incomingWysiwygContent.value, firstJoinMode: incomingWysiwygContent.firstJoinMode },
+          plainText: {
+            value: incomingPlainText.value,
+            firstJoinMode: incomingPlainText.firstJoinMode ?? 'newline',
+          },
+          plaintextContent: {
+            value: incomingPlaintextContent.value,
+            firstJoinMode: incomingPlaintextContent.firstJoinMode ?? 'newline',
+          },
+          wysiwygContent: {
+            value: incomingWysiwygContent.value,
+            firstJoinMode: incomingWysiwygContent.firstJoinMode ?? 'newline',
+          },
         },
         options.transformPlainTextOutput
       );

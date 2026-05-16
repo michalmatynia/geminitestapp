@@ -1,9 +1,9 @@
 import type { 
   FilemakerDatabase,
   FilemakerJobListing,
-  FilemakerJobApplicationSettings,
   FilemakerOrganization,
 } from '../../../types';
+import type { FilemakerJobApplicationSettings } from '../../../filemaker-job-application-settings';
 import type { JobApplicationRunEntry } from '../JobApplicationPreparationModal';
 
 export type JobApplicationPreparationModalProps = {

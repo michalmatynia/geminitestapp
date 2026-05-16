@@ -32,7 +32,7 @@ const readManifestoBody = async (req: NextRequest): Promise<EcommercePagesCmsMan
     throw badRequestError('Invalid Collector Creed payload.');
   }
 
-  const candidate = isRecord(body) && isRecord(body.manifesto) ? body.manifesto : body;
+  const candidate = isRecord(body) && isRecord(body['manifesto']) ? body['manifesto'] : body;
   if (!isRecord(candidate)) throw badRequestError('Collector Creed payload must be an object.');
   return candidate as EcommercePagesCmsManifestoFields;
 };

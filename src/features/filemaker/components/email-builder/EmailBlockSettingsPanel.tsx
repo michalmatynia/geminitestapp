@@ -90,7 +90,6 @@ const describeLayoutSelection = (block: LayoutEmailBlock): string => {
     case 'columns': return `${getLabelOrFallback(block.label, 'Columns')} (${block.children.length})`;
     case 'row': return getLabelOrFallback(block.label, 'Row');
   }
-  return 'Block';
 };
 
 const describeContentSelection = (block: ContentEmailBlock): string => {
@@ -102,7 +101,6 @@ const describeContentSelection = (block: ContentEmailBlock): string => {
     case 'divider': return 'Divider';
     case 'spacer': return `Spacer (${block.height}px)`;
   }
-  return 'Block';
 };
 
 const describeSelection = (block: EmailBlock): string => {

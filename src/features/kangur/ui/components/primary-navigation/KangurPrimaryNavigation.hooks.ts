@@ -71,21 +71,6 @@ function resolveKangurPrimaryNavigationAuthUser(
   return authSessionState ? authSessionState.user : null;
 }
 
-function resolveKangurPrimaryNavigationActiveLearner(
-  authUser: OptionalKangurAuthUser | null
-): {
-  activeLearner: OptionalKangurAuthUser['activeLearner'] | null;
-  hasActiveLearner: boolean;
-} {
-  const activeLearner = authUser?.activeLearner ?? null;
-  const activeLearnerId = activeLearner?.id.trim() ?? '';
-
-  return {
-    activeLearner,
-    hasActiveLearner: activeLearnerId.length > 0,
-  };
-}
-
 function resolveKangurPrimaryNavigationEffectiveAuthState({
   authSessionState,
   authStatusState,
@@ -143,7 +128,6 @@ function resolveKangurPrimaryNavigationSessionState({
   showParentDashboard: boolean | undefined;
 }): KangurPrimaryNavigationSessionState {
   const authUser = resolveKangurPrimaryNavigationAuthUser(authSessionState);
-  const { activeLearner, hasActiveLearner } = resolveKangurPrimaryNavigationActiveLearner(authUser);
   const { effectiveIsAuthenticated, isLoggingOut } =
     resolveKangurPrimaryNavigationEffectiveAuthState({
       authSessionState,

@@ -23,7 +23,6 @@ export const handleHttp: NodeHandler = async ({
   nodeInputs,
   prevOutputs,
   executed,
-  reportAiPathsError,
   abortSignal,
   sideEffectControl,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {

@@ -83,8 +83,15 @@ const handleAmazonTriageOutcome = async (
   context: AmazonTriageQueueContext,
   input: AmazonTriageReadyInput
 ): Promise<ProductScanRecord> => {
+  const terminalTriageInput = {
+    ...input,
+    ...context,
+    rawResult: context.triageRawResult,
+    steps: context.finalizedAmazonSteps,
+  };
+
   if (context.triageEvaluation.status === 'failed') {
-    return await persistAmazonTriageEvaluationFailed({ ...input, ...context });
+    return await persistAmazonTriageEvaluationFailed(terminalTriageInput);
   }
 
   const fallbackProvider = resolveAmazonTriageFallbackProvider(context);
@@ -100,7 +107,7 @@ const handleAmazonTriageOutcome = async (
     return await startAmazonTriageSelectedCandidateScan(context, selectedCandidate);
   }
 
-  return await persistAmazonTriageNoCandidates({ ...input, ...context });
+  return await persistAmazonTriageNoCandidates(terminalTriageInput);
 };
 
 const buildAmazonTriageQueueContext = async (

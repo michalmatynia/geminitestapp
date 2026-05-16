@@ -194,7 +194,7 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
     clearPersistedTutorPanelPosition();
     setAskModalDockStyle(null);
     if (selectionGuidanceRevealTimeoutRef.current !== null) {
-      window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+      safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
       selectionGuidanceRevealTimeoutRef.current = null;
     }
     clearSelection();

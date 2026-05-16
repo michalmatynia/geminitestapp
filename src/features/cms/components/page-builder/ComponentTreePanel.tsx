@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/shared/ui/primitives.public';
 import { FolderTreePanel, CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { TreeHeader } from '@/shared/ui/data-display.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState } from '../../hooks/usePageBuilderContext';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { TreeActionsProvider } from '../../hooks/useTreeActionsContext';
 import {
@@ -12,6 +12,15 @@ import {
 } from './settings/PageBuilderSettingsPage';
 import { ComponentTreePanelProvider } from './tree/ComponentTreePanelContext';
 import { ComponentTreeNodeRuntimeProvider } from './tree/ComponentTreeNodeRuntimeContext';
+
+const EMPTY_TREE_PLACEHOLDER_CLASSES = {
+  rootIdle: '',
+  rootActive: '',
+  lineIdle: '',
+  lineActive: '',
+  badgeIdle: '',
+  badgeActive: '',
+};
 
 export function ComponentTreePanel(): React.JSX.Element {
   const state = usePageBuilderState();
@@ -40,7 +49,7 @@ export function ComponentTreePanel(): React.JSX.Element {
         showSectionDropPlaceholder,
         canDropSectionsAtRoot: false, // Simplified for now
         canDropBlocksAtRoot: false, // Simplified for now
-        treePlaceholderClasses: '',
+        treePlaceholderClasses: EMPTY_TREE_PLACEHOLDER_CLASSES,
         treeInlineDropLabel: '',
         treeRootDropLabel: '',
         startSectionMasterDrag: () => {},

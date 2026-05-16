@@ -3,18 +3,18 @@
 import { useCallback, useRef, useState, type MutableRefObject } from 'react';
 import { stopActiveNode } from '../useKangurMusicSynth.utils';
 import type { ActiveNode } from '../useKangurMusicSynth.types';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 type KangurMusicSynthPlayback = {
   activeNodesRef: MutableRefObject<ActiveNode[]>;
   isPlayingSequenceRef: MutableRefObject<boolean>;
   playbackTokenRef: MutableRefObject<number>;
-  timeoutIdsRef: MutableRefObject<number[]>;
+  timeoutIdsRef: MutableRefObject<SafeTimerId[]>;
   isPlayingSequence: boolean;
   setIsPlayingSequence: (value: boolean) => void;
   clearScheduledTimeouts: () => void;
   clearActivePlayback: () => void;
-  schedulePlaybackTimeout: (callback: () => void, ms: number) => number;
+  schedulePlaybackTimeout: (callback: () => void, ms: number) => SafeTimerId;
   waitForPlaybackWindow: (token: number, ms: number) => Promise<boolean>;
 };
 
@@ -22,7 +22,7 @@ export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
   const activeNodesRef = useRef<ActiveNode[]>([]);
   const isPlayingSequenceRef = useRef(false);
   const playbackTokenRef = useRef(0);
-  const timeoutIdsRef = useRef<number[]>([]);
+  const timeoutIdsRef = useRef<SafeTimerId[]>([]);
   const [isPlayingSequence, setIsPlayingSequenceState] = useState(false);
 
   const setIsPlayingSequence = useCallback((value: boolean): void => {
@@ -44,7 +44,7 @@ export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
   }, [clearScheduledTimeouts]);
 
   const schedulePlaybackTimeout = useCallback(
-    (callback: () => void, ms: number): number => {
+    (callback: () => void, ms: number): SafeTimerId => {
     const timeoutId = safeSetTimeout(() => {
         timeoutIdsRef.current = timeoutIdsRef.current.filter((candidate) => candidate !== timeoutId);
         callback();

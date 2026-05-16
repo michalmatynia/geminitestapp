@@ -1,4 +1,4 @@
-import { Button, Badge } from '@/shared/ui/primitives.public';
+import { Button } from '@/shared/ui/primitives.public';
 import { Eye, EyeOff, Undo2, Redo2 } from 'lucide-react';
 
 export function PreviewToolbar({

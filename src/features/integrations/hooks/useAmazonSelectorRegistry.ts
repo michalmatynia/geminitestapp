@@ -15,6 +15,7 @@ import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries'
 import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 
 const ENDPOINT = '/api/v2/integrations/amazon/selectors';
+const AMAZON_SELECTOR_REGISTRY_TAGS = ['integrations', 'amazon', 'selectors'];
 
 type AmazonSelectorRegistryQueryKey = readonly ['integrations', 'amazon', 'selectors', string];
 
@@ -36,8 +37,8 @@ const buildUrl = (profile?: string | null): string => {
 
 const baseMeta = {
   domain: 'integrations',
-  tags: ['integrations', 'amazon', 'selectors'],
-} as const;
+  tags: AMAZON_SELECTOR_REGISTRY_TAGS,
+};
 
 async function requestJson<TResponse>(url: string, init?: RequestInit): Promise<TResponse> {
   const response = await fetch(url, {
@@ -64,7 +65,11 @@ export function useAmazonSelectorRegistry(options?: {
 }): SingleQuery<AmazonSelectorRegistryListResponse> {
   const profile = options?.profile ?? 'amazon';
   const queryKey = registryKey(profile);
-  return useSingleQueryV2<AmazonSelectorRegistryListResponse>({
+  return useSingleQueryV2<
+    AmazonSelectorRegistryListResponse,
+    AmazonSelectorRegistryListResponse,
+    AmazonSelectorRegistryQueryKey
+  >({
     queryKey: registryKey(profile),
     queryFn: async (): Promise<AmazonSelectorRegistryListResponse> =>
       requestJson<AmazonSelectorRegistryListResponse>(buildUrl(profile)),

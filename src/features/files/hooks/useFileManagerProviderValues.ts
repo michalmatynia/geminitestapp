@@ -6,7 +6,7 @@ import type {
   FileManagerData,
   FileManagerSearch,
   FileManagerUIState,
-} from './FileManagerContext.types';
+} from '../contexts/FileManagerContext.types';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';

@@ -37,7 +37,7 @@ export function ImageBlockEditor({ block, onUpdate }: EditorProps<EmailImageBloc
       />
       <Text>Width (px)</Text>
       <TextInput
-        keyboardType='numeric'
+        type='number'
         value={String(block.width ?? '')}
         onChangeText={(text) => {
           const parsed = Math.trunc(Number(text));

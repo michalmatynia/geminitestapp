@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
+import type { DataContractNodeIssueSummary } from '@/shared/contracts/ai-paths-core/engine';
 import type { NodeDefinition } from '@/shared/contracts/ai-paths-core/nodes';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
@@ -138,7 +139,7 @@ interface CanvasMainProps {
   pathTreeVisible: boolean;
   canvasContainerRef: React.RefObject<HTMLDivElement | null>;
   confirmNodeSwitchSafe: (nextNodeId: string) => boolean | Promise<boolean>;
-  nodeDiagnosticsById: Record<string, unknown>;
+  nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
   focusDataContractNode: (nodeId: string) => void;
   openPathSettings: (open: boolean) => void;
   setIsFocusMode: (next: boolean) => void;

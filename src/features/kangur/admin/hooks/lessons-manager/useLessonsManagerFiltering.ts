@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { KangurLesson, KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
-import type { KangurLessonAuthoringFilter } from '../../types';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonAgeGroup } from '@/shared/contracts/kangur-lesson-constants';
+import type { KangurLessonAuthoringFilter } from '../../content-creator-insights';
 import { matchesKangurLessonAuthoringFilter, getKangurLessonAuthoringFilterCounts } from '../../content-creator-insights';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog-metadata';
 

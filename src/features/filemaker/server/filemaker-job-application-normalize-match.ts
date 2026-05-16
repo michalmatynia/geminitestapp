@@ -48,27 +48,27 @@ const isEvidenceRebuildDecision = (normalized: string): boolean =>
   normalized === 'deprioritize' ||
   normalized === 'rebuild evidence';
 
+type MatchAnalysisAttentionArea = FilemakerJobApplicationMatchAnalysis['attentionAreas'][number];
+type MatchAnalysisHistoryEntry = NonNullable<
+  NonNullable<FilemakerJobApplication['matchAnalysisHistory']>[number]
+>;
+
 const normalizeMatchAnalysisAttentionAreas = (
   value: unknown
 ): FilemakerJobApplicationMatchAnalysis['attentionAreas'] => {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((entry: unknown) => {
-      const record = normalizeRecord(entry);
-      if (record === null) return null;
-      return {
-        area: normalizeString(record['area']),
-        whyItMatters: normalizeString(record['whyItMatters']),
-        recommendedAction: normalizeString(record['recommendedAction']),
-        evidence: normalizeString(record['evidence']),
-      };
-    })
-    .filter(
-      (
-        entry
-      ): entry is FilemakerJobApplicationMatchAnalysis['attentionAreas'][number] =>
-        entry !== null
-    );
+  const areas: MatchAnalysisAttentionArea[] = [];
+  value.forEach((entry: unknown): void => {
+    const record = normalizeRecord(entry);
+    if (record === null) return;
+    areas.push({
+      area: normalizeString(record['area']),
+      whyItMatters: normalizeString(record['whyItMatters']),
+      recommendedAction: normalizeString(record['recommendedAction']),
+      evidence: normalizeString(record['evidence']),
+    });
+  });
+  return areas;
 };
 
 export const toMatchAnalysis = (value: unknown): FilemakerJobApplicationMatchAnalysis | null => {
@@ -96,28 +96,22 @@ export const normalizeMatchAnalysisHistory = (
   value: unknown
 ): NonNullable<FilemakerJobApplication['matchAnalysisHistory']> | null => {
   if (!Array.isArray(value)) return null;
-  const history = value
-    .map((entry: unknown) => {
-      const record = normalizeRecord(entry);
-      if (record === null) return null;
-      const id = normalizeString(record['id']);
-      if (id === null) return null;
-      return {
-        id,
-        payload: toMatchAnalysis(record['payload']),
-        sourceRunId: normalizeString(record['sourceRunId']),
-        modelId: normalizeString(record['modelId']),
-        applicationId: normalizeString(record['applicationId']),
-        canonicalApplicationKeySnapshot: normalizeString(record['canonicalApplicationKeySnapshot']),
-        applicationUpdatedAtSnapshot: normalizeString(record['applicationUpdatedAtSnapshot']),
-        createdAt: normalizeString(record['createdAt']),
-      };
-    })
-    .filter(
-      (
-        entry
-      ): entry is NonNullable<FilemakerJobApplication['matchAnalysisHistory']>[number] =>
-        entry !== null
-    );
+  const history: MatchAnalysisHistoryEntry[] = [];
+  value.forEach((entry: unknown): void => {
+    const record = normalizeRecord(entry);
+    if (record === null) return;
+    const id = normalizeString(record['id']);
+    if (id === null) return;
+    history.push({
+      id,
+      payload: toMatchAnalysis(record['payload']),
+      sourceRunId: normalizeString(record['sourceRunId']),
+      modelId: normalizeString(record['modelId']),
+      applicationId: normalizeString(record['applicationId']),
+      canonicalApplicationKeySnapshot: normalizeString(record['canonicalApplicationKeySnapshot']),
+      applicationUpdatedAtSnapshot: normalizeString(record['applicationUpdatedAtSnapshot']),
+      createdAt: normalizeString(record['createdAt']),
+    });
+  });
   return history.length > 0 ? history : null;
 };

@@ -31,7 +31,7 @@ export const recordPostprocessAudit = async (
   metadata: Record<string, unknown>
 ): Promise<void> => {
   const agentAuditLog = getAgentAuditLogDelegate();
-  if (runId !== undefined && runId !== '') {
+  if (agentAuditLog !== null && runId !== undefined && runId !== '') {
     await agentAuditLog.create({
       data: {
         runId,

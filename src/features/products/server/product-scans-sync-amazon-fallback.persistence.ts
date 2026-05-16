@@ -4,6 +4,7 @@ import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 
 import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 import {
+  createPersistedProductScanStep,
   createProductScanStartedRawResult,
   persistSynchronizedScan,
   resolvePersistedProductScanSteps,
@@ -23,10 +24,9 @@ const buildFallbackQueueStep = (
   context: FallbackRetryContext,
   fallbackStatus: 'queued' | 'running',
   nextSteps: ProductScanRecord['steps']
-): ProductScanRecord['steps'][number] => ({
+): ProductScanRecord['steps'][number] => createPersistedProductScanStep({
   key: 'queue_scan',
   label: 'Retry with fallback image-search provider',
-  group: 'input',
   attempt: resolveNextQueueStepAttempt(nextSteps),
   status: 'completed',
   resultCode: fallbackStatus === 'running' ? 'run_started' : 'run_queued',

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-17T12:20:51.223Z",
+  "generatedAt": "2026-05-16T12:46:43.764Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -22,21 +22,288 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10656,
-    "exportedDeclarationsScanned": 6312,
-    "candidateDeclarationsScanned": 6292,
-    "exactShapeClusters": 9,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 1,
-    "declarationsInClusters": 3,
-    "highestRiskScore": 17
+    "filesScanned": 13429,
+    "exportedDeclarationsScanned": 8244,
+    "candidateDeclarationsScanned": 8225,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 50,
+    "clustersAfterFilters": 19,
+    "declarationsInClusters": 41,
+    "highestRiskScore": 30
   },
   "clusters": [
     {
-      "clusterId": "exact-0001",
+      "clusterId": "near-0023",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 30,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2e385e35e799",
+        "memberCount": 5,
+        "preview": "prop:combinator:OrganizationAdvancedFilterCombinator; prop:id:string; prop:not:boolean; prop:rules:Array<OrganizationAdvancedFilterCondition | OrganizationAdvancedFilterGroup>; prop:type:'group'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/filemaker-organization-advanced-filters.ts#OrganizationAdvancedFilterGroup",
+          "name": "OrganizationAdvancedFilterGroup",
+          "kind": "interface",
+          "path": "src/features/filemaker/filemaker-organization-advanced-filters.ts",
+          "source": {
+            "path": "src/features/filemaker/filemaker-organization-advanced-filters.ts",
+            "line": 96,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 13
+        },
+        {
+          "id": "src/shared/contracts/products/filters.ts#ProductAdvancedFilterGroup",
+          "name": "ProductAdvancedFilterGroup",
+          "kind": "interface",
+          "path": "src/shared/contracts/products/filters.ts",
+          "source": {
+            "path": "src/shared/contracts/products/filters.ts",
+            "line": 103,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 7
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0085",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
-      "riskScore": 17,
+      "riskScore": 28,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "8532d729d36c",
+        "memberCount": 1,
+        "preview": "z.infer<typeof productListingSchema>"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#ProductListing",
+          "name": "ProductListing",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 57,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 23
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#ProductListing",
+          "name": "ProductListing",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 50,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 2
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0086",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 28,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b2d356ef364c",
+        "memberCount": 1,
+        "preview": "z.infer<typeof playwrightRelistBrowserModeSchema>"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#PlaywrightRelistBrowserMode",
+          "name": "PlaywrightRelistBrowserMode",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 106,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 16
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#PlaywrightRelistBrowserMode",
+          "name": "PlaywrightRelistBrowserMode",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 58,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 4
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0006",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 19,
+      "declarationCount": 2,
+      "domains": [
+        "app",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b31cde2a6238",
+        "memberCount": 14,
+        "preview": "prop:debounceMs:number; prop:flags:string | null; prop:index:number; prop:length:number; prop:matchText:string; prop:message:string; prop:patternId:string; prop:postAcceptBehavior:ProductValidationPostAcceptBehavior"
+      },
+      "declarations": [
+        {
+          "id": "src/app/api/v2/products/validator-runtime/evaluate/handler.helpers.ts#RuntimeFieldIssue",
+          "name": "RuntimeFieldIssue",
+          "kind": "type",
+          "path": "src/app/api/v2/products/validator-runtime/evaluate/handler.helpers.ts",
+          "source": {
+            "path": "src/app/api/v2/products/validator-runtime/evaluate/handler.helpers.ts",
+            "line": 34,
+            "domain": "app"
+          },
+          "usageCount": 1
+        },
+        {
+          "id": "src/shared/contracts/products/validation.ts#FieldValidatorIssue",
+          "name": "FieldValidatorIssue",
+          "kind": "type",
+          "path": "src/shared/contracts/products/validation.ts",
+          "source": {
+            "path": "src/shared/contracts/products/validation.ts",
+            "line": 182,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 8
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0083",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 16,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "2e9b8e2e5c0a",
+        "memberCount": 1,
+        "preview": "z.infer<typeof productListingExportEventSchema>"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#ProductListingExportEvent",
+          "name": "ProductListingExportEvent",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 24,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 8
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#ProductListingExportEvent",
+          "name": "ProductListingExportEvent",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 19,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0012",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 3,
+      "domains": [
+        "feature:filemaker",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b9bf368ba869",
+        "memberCount": 1,
+        "preview": "'all' | 'root' | 'child'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/pages/AdminFilemakerOrganizationsPage.types.ts#OrganizationParentFilter",
+          "name": "OrganizationParentFilter",
+          "kind": "type",
+          "path": "src/features/filemaker/pages/AdminFilemakerOrganizationsPage.types.ts",
+          "source": {
+            "path": "src/features/filemaker/pages/AdminFilemakerOrganizationsPage.types.ts",
+            "line": 14,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/filemaker/server/filemaker-organizations-list-options.ts#FilemakerOrganizationParentFilter",
+          "name": "FilemakerOrganizationParentFilter",
+          "kind": "type",
+          "path": "src/features/filemaker/server/filemaker-organizations-list-options.ts",
+          "source": {
+            "path": "src/features/filemaker/server/filemaker-organizations-list-options.ts",
+            "line": 8,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 1
+        },
+        {
+          "id": "src/shared/contracts/case-resolver/base.ts#CaseHierarchyFilter",
+          "name": "CaseHierarchyFilter",
+          "kind": "type",
+          "path": "src/shared/contracts/case-resolver/base.ts",
+          "source": {
+            "path": "src/shared/contracts/case-resolver/base.ts",
+            "line": 129,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0020",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
       "declarationCount": 3,
       "domains": [
         "shared:contracts"
@@ -58,7 +325,7 @@
             "line": 181,
             "domain": "shared:contracts"
           },
-          "usageCount": 1
+          "usageCount": 0
         },
         {
           "id": "src/shared/contracts/jobs.ts#ProductAiJobDeleteResponse",
@@ -79,10 +346,535 @@
           "path": "src/shared/contracts/ui/api.ts",
           "source": {
             "path": "src/shared/contracts/ui/api.ts",
-            "line": 62,
+            "line": 115,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 3
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0005",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 3,
+      "domains": [
+        "feature:filemaker",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "a9816035fe10",
+        "memberCount": 1,
+        "preview": "prop:run:FilemakerJobApplicationApplyRun | null"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/filemaker-job-application.types.ts#FilemakerJobApplicationApplyRunResponse",
+          "name": "FilemakerJobApplicationApplyRunResponse",
+          "kind": "type",
+          "path": "src/features/filemaker/filemaker-job-application.types.ts",
+          "source": {
+            "path": "src/features/filemaker/filemaker-job-application.types.ts",
+            "line": 244,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/filemaker/filemaker-job-board-scrape-runtime-contracts.ts#FilemakerJobBoardScrapeRuntimeStartResponse",
+          "name": "FilemakerJobBoardScrapeRuntimeStartResponse",
+          "kind": "type",
+          "path": "src/features/filemaker/filemaker-job-board-scrape-runtime-contracts.ts",
+          "source": {
+            "path": "src/features/filemaker/filemaker-job-board-scrape-runtime-contracts.ts",
+            "line": 34,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/image-studio/run.ts#ImageStudioRunDetailResponse",
+          "name": "ImageStudioRunDetailResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/image-studio/run.ts",
+          "source": {
+            "path": "src/shared/contracts/image-studio/run.ts",
+            "line": 87,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 2
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0024",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 2,
+      "domains": [
+        "app",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "b1ffeb6073a5",
+        "memberCount": 1,
+        "preview": "'none' | 'database_query' | 'ai_prompt'"
+      },
+      "declarations": [
+        {
+          "id": "src/app/api/v2/products/validator-patterns/handler.helpers.ts#ValidatorPatternRuntimeType",
+          "name": "ValidatorPatternRuntimeType",
+          "kind": "type",
+          "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+          "source": {
+            "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+            "line": 17,
+            "domain": "app"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/products/validation.ts#ProductValidationRuntimeType",
+          "name": "ProductValidationRuntimeType",
+          "kind": "type",
+          "path": "src/shared/contracts/products/validation.ts",
+          "source": {
+            "path": "src/shared/contracts/products/validation.ts",
+            "line": 161,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 5
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0087",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "0ae9e1a310bf",
+        "memberCount": 1,
+        "preview": "z.infer<typeof browserListingResultSchema>"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#BrowserListingResultDto",
+          "name": "BrowserListingResultDto",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 710,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 5
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#BrowserListingResultDto",
+          "name": "BrowserListingResultDto",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 68,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 2
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0027",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "app",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "aee575517e93",
+        "memberCount": 1,
+        "preview": "| 'equals' | 'not_equals' | 'contains' | 'starts_with' | 'ends_with' | 'regex' | 'gt' | 'gte' | 'lt' | 'lte' | 'is_empty' | 'is_not_empty'"
+      },
+      "declarations": [
+        {
+          "id": "src/app/api/v2/products/validator-patterns/handler.helpers.ts#ValidatorPatternLaunchOperator",
+          "name": "ValidatorPatternLaunchOperator",
+          "kind": "type",
+          "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+          "source": {
+            "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+            "line": 24,
+            "domain": "app"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/products/validation.ts#ProductValidationLaunchOperator",
+          "name": "ProductValidationLaunchOperator",
+          "kind": "type",
+          "path": "src/shared/contracts/products/validation.ts",
+          "source": {
+            "path": "src/shared/contracts/products/validation.ts",
+            "line": 168,
             "domain": "shared:contracts"
           },
           "usageCount": 4
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0012",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e8dd58d80d68",
+        "memberCount": 3,
+        "preview": "prop:entity:CvBlockEntity; prop:id:MasterTreeId; prop:nodeId:MasterTreeId"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/components/cv-builder/cv-master-tree-adapter.ts#CvMasterNodeIdentity",
+          "name": "CvMasterNodeIdentity",
+          "kind": "type",
+          "path": "src/features/filemaker/components/cv-builder/cv-master-tree-adapter.ts",
+          "source": {
+            "path": "src/features/filemaker/components/cv-builder/cv-master-tree-adapter.ts",
+            "line": 15,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/master-folder-tree.ts#DecodedMasterTreeNode",
+          "name": "DecodedMasterTreeNode",
+          "kind": "type",
+          "path": "src/shared/contracts/master-folder-tree.ts",
+          "source": {
+            "path": "src/shared/contracts/master-folder-tree.ts",
+            "line": 286,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 4
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0026",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "app",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "5422ac2c10e2",
+        "memberCount": 1,
+        "preview": "| 'current_field' | 'form_field' | 'latest_product_field'"
+      },
+      "declarations": [
+        {
+          "id": "src/app/api/v2/products/validator-patterns/handler.helpers.ts#ValidatorPatternLaunchSourceMode",
+          "name": "ValidatorPatternLaunchSourceMode",
+          "kind": "type",
+          "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+          "source": {
+            "path": "src/app/api/v2/products/validator-patterns/handler.helpers.ts",
+            "line": 19,
+            "domain": "app"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/products/validation.ts#ProductValidationLaunchSourceMode",
+          "name": "ProductValidationLaunchSourceMode",
+          "kind": "type",
+          "path": "src/shared/contracts/products/validation.ts",
+          "source": {
+            "path": "src/shared/contracts/products/validation.ts",
+            "line": 164,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 2
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0059",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "bc7abfcd8776",
+        "memberCount": 2,
+        "preview": "prop:href?:string; prop:label:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/social/admin/AdminSocialPublishingPage.tsx#SocialPublishingAdminBreadcrumb",
+          "name": "SocialPublishingAdminBreadcrumb",
+          "kind": "type",
+          "path": "src/features/filemaker/social/admin/AdminSocialPublishingPage.tsx",
+          "source": {
+            "path": "src/features/filemaker/social/admin/AdminSocialPublishingPage.tsx",
+            "line": 27,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/ui/base.ts#AdminBreadcrumbNodeDto",
+          "name": "AdminBreadcrumbNodeDto",
+          "kind": "type",
+          "path": "src/shared/contracts/ui/base.ts",
+          "source": {
+            "path": "src/shared/contracts/ui/base.ts",
+            "line": 61,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0010",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c5171744ad38",
+        "memberCount": 3,
+        "preview": "prop:description:string; prop:key:AiBrainFeature; prop:label:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/brain/components/brain-routing-master-tree.ts#BrainRoutingFeatureConfig",
+          "name": "BrainRoutingFeatureConfig",
+          "kind": "type",
+          "path": "src/features/ai/brain/components/brain-routing-master-tree.ts",
+          "source": {
+            "path": "src/features/ai/brain/components/brain-routing-master-tree.ts",
+            "line": 10,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/products/scrape-template-placeholders.ts#ScrapeTemplatePlaceholderOption",
+          "name": "ScrapeTemplatePlaceholderOption",
+          "kind": "type",
+          "path": "src/shared/contracts/products/scrape-template-placeholders.ts",
+          "source": {
+            "path": "src/shared/contracts/products/scrape-template-placeholders.ts",
+            "line": 1,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0033",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2133f5d3997e",
+        "memberCount": 4,
+        "preview": "prop:disabled:boolean; prop:onChange:(value: string | null) => void; prop:options:ReadonlyArray<MultiSelectOption>; prop:value:string | null"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx#CategoryMapperSelectCellProps",
+          "name": "CategoryMapperSelectCellProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx",
+          "source": {
+            "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx",
+            "line": 13,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/ui/api.ts#GenericMapperExternalCellProps",
+          "name": "GenericMapperExternalCellProps",
+          "kind": "type",
+          "path": "src/shared/contracts/ui/api.ts",
+          "source": {
+            "path": "src/shared/contracts/ui/api.ts",
+            "line": 232,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0089",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "49c0fe067aec",
+        "memberCount": 1,
+        "preview": "OAuthTokenResponseDto"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/oauth.ts#OAuthTokenResponse",
+          "name": "OAuthTokenResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/oauth.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/oauth.ts",
+            "line": 14,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/oauth/google-oauth.ts#GoogleOAuthTokenResponse",
+          "name": "GoogleOAuthTokenResponse",
+          "kind": "type",
+          "path": "src/shared/lib/oauth/google-oauth.ts",
+          "source": {
+            "path": "src/shared/lib/oauth/google-oauth.ts",
+            "line": 51,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0084",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "f51d6bb4aeaa",
+        "memberCount": 1,
+        "preview": "z.infer<typeof productListingRelistPolicySchema>"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#ProductListingRelistPolicy",
+          "name": "ProductListingRelistPolicy",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 36,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#ProductListingRelistPolicy",
+          "name": "ProductListingRelistPolicy",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 29,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0088",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "36676e52f583",
+        "memberCount": 1,
+        "preview": "BrowserListingResultDto"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/listings.ts#BrowserListingResult",
+          "name": "BrowserListingResult",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/listings.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/listings.ts",
+            "line": 711,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/playwright-listing-runtime.ts#BrowserListingResult",
+          "name": "BrowserListingResult",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright-listing-runtime.ts",
+          "source": {
+            "path": "src/shared/contracts/playwright-listing-runtime.ts",
+            "line": 69,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
         }
       ]
     }

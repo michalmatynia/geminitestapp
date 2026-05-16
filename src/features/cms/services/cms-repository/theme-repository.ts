@@ -10,9 +10,11 @@ import type {
 } from '@/shared/contracts/cms';
 import { databaseError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { buildIdFilter, removeUndefined } from '../utils';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 const themesCollection = 'cms_themes';
+
+const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => ({ id }) as Filter<T>;
 
 interface ThemeDocument {
   id: string;

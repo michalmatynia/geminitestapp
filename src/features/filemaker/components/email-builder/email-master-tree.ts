@@ -41,7 +41,6 @@ const labelForContainerBlock = (block: EmailContainerBlock): string => {
     case 'columns': return labelWithFallback(block.label, 'Columns');
     case 'row': return labelWithFallback(block.label, 'Row');
   }
-  return 'Block';
 };
 
 const labelForLeafBlock = (block: EmailLeafBlock): string => {
@@ -53,7 +52,6 @@ const labelForLeafBlock = (block: EmailLeafBlock): string => {
     case 'divider': return 'Divider';
     case 'spacer': return `Spacer (${block.height}px)`;
   }
-  return 'Block';
 };
 
 const labelForBlock = (block: EmailBlock): string =>

@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-04-15T15:26:41.838Z",
+  "summary": {
+    "totalEntries": 2,
+    "passingEntries": 1,
+    "failingEntries": 1,
+    "warningEntries": 0,
+    "latestRunAt": "2026-04-15T15:26:41.699Z"
+  },
+  "entries": [
+    {
+      "id": "2026-04-15T15:26:41.699Z:deep-scan-2026-04-15",
+      "recordedAt": "2026-04-15T15:26:41.699Z",
+      "label": "deep-scan-2026-04-15",
+      "status": "failed",
+      "laneId": null,
+      "suiteIds": [
+        "critical-flows",
+        "unit-domains"
+      ],
+      "suiteResults": [
+        {
+          "id": "critical-flows",
+          "label": "Critical Flow Regression",
+          "status": "failed",
+          "durationMs": null
+        },
+        {
+          "id": "unit-domains",
+          "label": "Unit Domain Timings",
+          "status": "failed",
+          "durationMs": null
+        }
+      ],
+      "durationMs": null,
+      "trigger": "manual",
+      "actor": null,
+      "notes": [],
+      "artifactPaths": [],
+      "command": null,
+      "git": {
+        "sha": "01de9a5aa",
+        "branch": "tradera"
+      }
+    },
+    {
+      "id": "2026-03-31T07:34:30.951Z:Manual refactoring and architectural stabilization",
+      "recordedAt": "2026-03-31T07:34:30.951Z",
+      "label": "Manual refactoring and architectural stabilization",
+      "status": "ok",
+      "laneId": null,
+      "suiteIds": [
+        "unit"
+      ],
+      "suiteResults": [
+        {
+          "id": "unit",
+          "label": "Vitest Unit Project",
+          "status": "ok",
+          "durationMs": null
+        }
+      ],
+      "durationMs": null,
+      "trigger": "manual",
+      "actor": null,
+      "notes": [],
+      "artifactPaths": [],
+      "command": null,
+      "git": {
+        "sha": "da439c697",
+        "branch": "codex/vercel-production-sync-guardrails"
+      }
+    }
+  ]
+}

@@ -16,7 +16,7 @@ import {
 import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 type KangurTopNavigationRegistration = {
   ownerId: string;
@@ -45,7 +45,7 @@ export function KangurTopNavigationProvider({
 }): React.JSX.Element {
   const [visibleRegistration, setVisibleRegistration] =
     useState<KangurTopNavigationRegistration | null>(null);
-  const clearTimeoutRef = useRef<number | null>(null);
+  const clearTimeoutRef = useRef<SafeTimerId | null>(null);
   const applyClearNavigation = useCallback((ownerId: string): void => {
     setVisibleRegistration((current) => {
       if (current?.ownerId !== ownerId) {
@@ -59,7 +59,7 @@ export function KangurTopNavigationProvider({
     (ownerId: string, options?: { immediate?: boolean }): void => {
       const immediate = options?.immediate === true;
       if (clearTimeoutRef.current !== null && typeof window !== 'undefined') {
-        window.clearTimeout(clearTimeoutRef.current);
+        safeClearTimeout(clearTimeoutRef.current);
         clearTimeoutRef.current = null;
       }
 

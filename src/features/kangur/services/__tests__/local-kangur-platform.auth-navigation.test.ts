@@ -116,17 +116,30 @@ const loadActiveLearnerModule = () =>
     '@/features/kangur/services/kangur-active-learner'
   );
 
+const BOOTSTRAP_ELEMENT_ID = 'kangur-auth-bootstrap-data';
+
+function injectBootstrapElement(data: unknown): void {
+  const existing = document.getElementById(BOOTSTRAP_ELEMENT_ID);
+  if (existing) existing.remove();
+  const el = document.createElement('script');
+  el.id = BOOTSTRAP_ELEMENT_ID;
+  el.type = 'application/json';
+  el.textContent = JSON.stringify(data);
+  document.head.appendChild(el);
+}
+
+function removeBootstrapElement(): void {
+  document.getElementById(BOOTSTRAP_ELEMENT_ID)?.remove();
+}
+
 describe('createLocalKangurPlatform auth navigation', () => {
   const originalLocation = window.location;
-  const bootstrapWindow = window as Window & {
-    __KANGUR_AUTH_BOOTSTRAP__?: unknown;
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
     localStorage.clear();
-    delete bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__;
+    removeBootstrapElement();
     withCsrfHeadersMock.mockImplementation((headers?: HeadersInit) => new Headers(headers));
     Object.defineProperty(window, 'location', {
       value: {
@@ -248,7 +261,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
   it('hydrates anonymous auth from SSR bootstrap without probing auth/me', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__ = null;
+    injectBootstrapElement(null);
 
     const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();
@@ -260,7 +273,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
   it('hydrates authenticated auth from SSR bootstrap without probing auth/me', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__ = {
+    injectBootstrapElement({
       id: 'learner-1',
       full_name: 'Ada',
       email: null,
@@ -280,7 +293,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
       },
       learners: [],
       ownerEmailVerified: false,
-    };
+    });
 
     const { createLocalKangurPlatform } = await loadLocalKangurPlatformModule();
     const platform = createLocalKangurPlatform();

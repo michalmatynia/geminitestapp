@@ -86,9 +86,9 @@ const parsePreviewSettings = (formData: PatternFormData): {
   return {
     error: null,
     settings: {
-      parsedMaxExecutions: parsedMaxExecutions.value,
+      parsedMaxExecutions: parsedMaxExecutions.value ?? 1,
       parsedSequence: parsedSequence.value,
-      parsedValidationDebounceMs: parsedDebounce.value,
+      parsedValidationDebounceMs: parsedDebounce.value ?? 0,
     },
   };
 };

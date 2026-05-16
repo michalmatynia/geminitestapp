@@ -23,15 +23,15 @@ export function NoteCard({ note }: NoteCardProps): React.JSX.Element {
   const bg = hasCustom ? color : theme.backgroundColor;
   const text = hasCustom ? getReadableTextColor(bg) : theme.textColor;
 
-  const onDrag = (e: React.DragEvent<HTMLElement>, start: boolean): void => {
-    if (start) {
-      setNoteDragData(e.dataTransfer, note.id);
-      if (cardRef.current) cardRef.current.style.opacity = '0.5';
-      setDraggedNoteId(note.id);
-    } else {
-      if (cardRef.current) cardRef.current.style.opacity = '1';
-      setDraggedNoteId(null);
-    }
+  const onDragStart = (event: React.DragEvent<HTMLElement>): void => {
+    setNoteDragData(event.dataTransfer, note.id);
+    if (cardRef.current) cardRef.current.style.opacity = '0.5';
+    setDraggedNoteId(note.id);
+  };
+
+  const onDragEnd = (): void => {
+    if (cardRef.current) cardRef.current.style.opacity = '1';
+    setDraggedNoteId(null);
   };
 
   return (
@@ -45,8 +45,8 @@ export function NoteCard({ note }: NoteCardProps): React.JSX.Element {
         note={note}
         onSelectNote={(n) => { setSelectedNote(n); setIsEditing(false); }}
         enableDrag={!isFolderTreeCollapsed}
-        onNoteDragStart={(e) => onDrag(e, true)}
-        onNoteDragEnd={(e) => onDrag(e as React.DragEvent<HTMLElement>, false)}
+        onNoteDragStart={onDragStart}
+        onNoteDragEnd={onDragEnd}
       />
       {renderNoteCardContent({ note })}
       <NoteCardFooter

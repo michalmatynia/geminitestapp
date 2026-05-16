@@ -1,5 +1,3 @@
-import type { CollectionSchema } from '@/shared/contracts/database';
-
 export type LiveContextCollection = {
   name: string;
   provider: 'mongodb';

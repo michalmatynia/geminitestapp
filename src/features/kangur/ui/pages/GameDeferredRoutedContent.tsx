@@ -12,10 +12,7 @@ import {
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
-import {
-  useGameSessionScreenRefs,
-  type GameSessionScreenRefs,
-} from './Game.screen-refs';
+import { useGameSessionScreenRefs } from './Game.screen-refs';
 
 const GameDeferredAiTutorSessionSync = dynamic(
   () => import('@/features/kangur/ui/pages/GameDeferredAiTutorSessionSync'),

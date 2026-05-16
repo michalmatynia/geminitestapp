@@ -216,7 +216,7 @@ const resolvePlaywrightStorageState = (params: {
 
 const sleep = async (ms: number): Promise<void> =>
   new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, ms);
+    safeSetTimeout(() => resolve(), ms);
   });
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>

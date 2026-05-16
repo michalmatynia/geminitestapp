@@ -145,7 +145,9 @@ const buildDecisionCountMap = (eventRegistry: FilemakerEmailCampaignEventRegistr
 const buildColdSuppressionCountMap = (suppressionRegistry: FilemakerEmailCampaignSuppressionRegistry): Map<string, number> => {
   const map = new Map<string, number>();
   suppressionRegistry.entries.forEach((entry): void => {
-    if (entry.reason === 'cold' && entry.campaignId !== null) map.set(entry.campaignId, (map.get(entry.campaignId) ?? 0) + 1);
+    if (entry.reason === 'cold' && typeof entry.campaignId === 'string') {
+      map.set(entry.campaignId, (map.get(entry.campaignId) ?? 0) + 1);
+    }
   });
   return map;
 };

@@ -142,8 +142,9 @@ const setSearchSelectionSearchParams = (
   hasAccount: boolean
 ): void => {
   if (input.panel !== 'search') return;
+  const accountId = hasAccount && typeof input.accountId === 'string' ? input.accountId : null;
   search.set('panel', 'search');
-  if (hasAccount) search.set('accountId', input.accountId);
+  if (accountId !== null) search.set('accountId', accountId);
   setSearchParamIfValue(search, 'searchQuery', input.searchQuery);
 };
 
@@ -153,8 +154,9 @@ export const buildFilemakerMailSelectionHref = (
   const panel = normalizeMailSelectionPanel(input.panel);
   const search = new URLSearchParams();
   const hasAccount = hasRouteValue(input.accountId);
-  if (panel !== 'attention' && panel !== 'search' && hasAccount) {
-    search.set('accountId', input.accountId);
+  const accountId = hasAccount && typeof input.accountId === 'string' ? input.accountId : null;
+  if (panel !== 'attention' && panel !== 'search' && accountId !== null) {
+    search.set('accountId', accountId);
   }
   if (panel === null) setSearchParamIfValue(search, 'mailboxPath', input.mailboxPath);
   if (panel === 'attention') search.set('panel', 'attention');

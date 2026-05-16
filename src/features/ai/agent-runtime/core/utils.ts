@@ -12,7 +12,7 @@ export function reminderList(label: string, items: string[]): string | null {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, ms);
+    safeSetTimeout(() => resolve(), ms);
   });
 }
 

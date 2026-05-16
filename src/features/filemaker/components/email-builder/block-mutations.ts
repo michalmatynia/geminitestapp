@@ -36,7 +36,6 @@ const replaceContainerChildren = (
         ),
       } satisfies EmailRowBlock;
   }
-  return container;
 };
 
 const mapBlocks = (
@@ -59,8 +58,7 @@ export const updateBlock = (
 ): EmailBlock[] =>
   mapBlocks(blocks, (block: EmailBlock): EmailBlock => {
     if (block.id !== blockId) return block;
-    const updatedBlock: EmailBlock = { ...block, ...patch };
-    return updatedBlock;
+    return { ...block, ...patch } as EmailBlock;
   });
 
 export const removeBlock = (blocks: EmailBlock[], blockId: string): EmailBlock[] => {

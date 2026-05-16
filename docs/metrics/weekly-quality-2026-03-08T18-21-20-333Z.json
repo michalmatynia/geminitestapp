@@ -1,0 +1,1179 @@
+{
+  "generatedAt": "2026-03-08T18:21:20.333Z",
+  "nodeVersion": "v24.3.0",
+  "includeE2E": false,
+  "strictMode": true,
+  "summary": {
+    "totalChecks": 18,
+    "passed": 12,
+    "failed": 3,
+    "timedOut": 0,
+    "skipped": 3
+  },
+  "passRates": {
+    "build": 0,
+    "lint": null,
+    "lintDomains": 0,
+    "typecheck": 100,
+    "criticalFlows": 100,
+    "securitySmoke": 100,
+    "unitDomains": 100,
+    "fullUnit": null,
+    "e2e": null
+  },
+  "durationAlerts": [
+    {
+      "id": "build",
+      "label": "Build",
+      "status": "fail",
+      "durationMs": 273906,
+      "budgetMs": 195000
+    }
+  ],
+  "checks": [
+    {
+      "id": "build",
+      "label": "Build",
+      "command": "npm run build",
+      "status": "fail",
+      "exitCode": 1,
+      "signal": null,
+      "durationMs": 273906,
+      "output": "[build-preflight] Removed .next/standalone before build to reclaim disk space. Removed stale .next/trace-build before running build check.\n[attempt 1/2]\n> libapp2@0.1.0 build\n> removedOrm generate && NODE_OPTIONS=--max-old-space-size=8192 next build --webpack\n\nLoaded removedOrm config from removedOrm.config.ts.\n\nremovedOrm schema loaded from removedOrm/schema.removedOrm.\n\n✔ Generated removedOrm Client (v7.4.2) to ./node_modules/@removedOrm/client in 1.56s\n\nStart by importing your removedOrm Client (See: https://pris.ly/d/importing-client)\n\n\n▲ Next.js 16.1.6 (webpack)\n- Environments: .env\n- Experiments (use with caution):\n  · optimizePackageImports\n  · proxyClientMaxBodySize: \"50mb\"\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 80s\n  Running TypeScript ...\nFailed to compile.\n\n.next-dev-web-dev-webpack-michalmatynia/dev/types/app/api/settings/route.ts:14:13\nType error: Type 'OmitWithTag<typeof import(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route\"), \"POST\" | \"config\" | \"GET\" | \"HEAD\" | \"OPTIONS\" | \"PUT\" | \"PATCH\" | ... 9 more ... | \"preferredRegion\", \"\">' does not satisfy the constraint '{ [x: string]: never; }'.\n  Property 'GET_handler' is incompatible with index signature.\n    Type '(_req: NextRequest, _ctx: ApiHandlerContext, scopeOverride?: \"all\" | \"light\" | \"heavy\" | undefined) => Promise<Response>' is not assignable to type 'never'.\n\n\u001b[0m \u001b[90m 12 |\u001b[39m\n \u001b[90m 13 |\u001b[39m \u001b[90m// Check that the entry is a valid entry\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m checkFields\u001b[33m<\u001b[39m\u001b[33mDiff\u001b[39m\u001b[33m<\u001b[39m{\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   \u001b[33mGET\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\n \u001b[90m 16 |\u001b[39m   \u001b[33mHEAD\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\n \u001b[90m 17 |\u001b[39m   \u001b[33mOPTIONS\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\u001b[0m\nNext.js build worker exited with code: 1 and signal: null\n\n[attempt 2/2]\n> libapp2@0.1.0 build\n> removedOrm generate && NODE_OPTIONS=--max-old-space-size=8192 next build --webpack\n\nLoaded removedOrm config from removedOrm.config.ts.\n\nremovedOrm schema loaded from removedOrm/schema.removedOrm.\n\n✔ Generated removedOrm Client (v7.4.2) to ./node_modules/@removedOrm/client in 310ms\n\nStart by importing your removedOrm Client (See: https://pris.ly/d/importing-client)\n\n\n▲ Next.js 16.1.6 (webpack)\n- Environments: .env\n- Experiments (use with caution):\n  · optimizePackageImports\n  · proxyClientMaxBodySize: \"50mb\"\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 69s\n  Running TypeScript ...\nFailed to compile.\n\n.next-dev-web-dev-webpack-michalmatynia/dev/types/app/api/settings/route.ts:14:13\nType error: Type 'OmitWithTag<typeof import(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route\"), \"POST\" | \"config\" | \"GET\" | \"HEAD\" | \"OPTIONS\" | \"PUT\" | \"PATCH\" | ... 9 more ... | \"preferredRegion\", \"\">' does not satisfy the constraint '{ [x: string]: never; }'.\n  Property 'GET_handler' is incompatible with index signature.\n    Type '(_req: NextRequest, _ctx: ApiHandlerContext, scopeOverride?: \"all\" | \"light\" | \"heavy\" | undefined) => Promise<Response>' is not assignable to type 'never'.\n\n\u001b[0m \u001b[90m 12 |\u001b[39m\n \u001b[90m 13 |\u001b[39m \u001b[90m// Check that the entry is a valid entry\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m checkFields\u001b[33m<\u001b[39m\u001b[33mDiff\u001b[39m\u001b[33m<\u001b[39m{\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   \u001b[33mGET\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\n \u001b[90m 16 |\u001b[39m   \u001b[33mHEAD\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\n \u001b[90m 17 |\u001b[39m   \u001b[33mOPTIONS\u001b[39m\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mFunction\u001b[39m\u001b[0m\nNext.js build worker exited with code: 1 and signal: null"
+    },
+    {
+      "id": "lint",
+      "label": "Lint",
+      "command": "npm run lint",
+      "status": "skipped",
+      "exitCode": null,
+      "signal": null,
+      "durationMs": 0,
+      "output": "Skipped by configuration."
+    },
+    {
+      "id": "lintDomains",
+      "label": "Lint Domain Gate",
+      "command": "node scripts/quality/run-lint-domain-checks.mjs --include-test-tree --strict --ci --no-history",
+      "status": "fail",
+      "exitCode": 1,
+      "signal": null,
+      "durationMs": 126079,
+      "output": "[attempt 1/1]\n[lint-domains] Auth          PASS    18.5s\n[lint-domains] Products      PASS    27.8s\n[lint-domains] AI Paths      PASS    30.8s\n[lint-domains] Image Studio  FAIL    27.1s\n[lint-domains] Case Resolver PASS    21.6s\n[lint-domains] summary pass=4 fail=1 timeout=0 skipped=0\nWrote docs/metrics/lint-domain-checks-latest.json\nWrote docs/metrics/lint-domain-checks-latest.md"
+    },
+    {
+      "id": "typecheck",
+      "label": "Typecheck",
+      "command": "npm run typecheck",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 33875,
+      "output": "> libapp2@0.1.0 typecheck\n> tsc --noEmit --incremental false"
+    },
+    {
+      "id": "criticalFlows",
+      "label": "Critical Flow Gate",
+      "command": "npm run test:critical-flows:strict -- --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 26050,
+      "output": "> libapp2@0.1.0 test:critical-flows:strict\n> node scripts/testing/run-critical-flow-tests.mjs --strict --ci --no-history\n\n[critical-flows] Authentication + Session Bootstrap             PASS 3.3s\n[critical-flows] Products CRUD + Listing Refresh                PASS 2.0s\n[critical-flows] Image Studio Generate + Preview                PASS 1.6s\n[critical-flows] AI Paths Run Execution                         PASS 4.1s\n[critical-flows] Case Resolver OCR + Capture Mapping            PASS 3.5s\n[critical-flows] Products Trigger Button Queue Integration      PASS 10.6s\n[critical-flows] summary pass=6 fail=0 total=6\nWrote docs/metrics/critical-flow-tests-latest.json\nWrote docs/metrics/critical-flow-tests-latest.md"
+    },
+    {
+      "id": "securitySmoke",
+      "label": "Security Smoke Gate",
+      "command": "npm run test:security-smoke:strict -- --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 10907,
+      "output": "> libapp2@0.1.0 test:security-smoke:strict\n> node scripts/testing/run-security-smoke-tests.mjs --strict --ci --no-history\n\n[security-smoke] Auth Security Policy                 PASS 2.2s\n[security-smoke] Auth Encryption                      PASS 1.6s\n[security-smoke] Auth Verify Credentials API          PASS 2.4s\n[security-smoke] AI Paths Access Rate Limit           PASS 1.7s\n[security-smoke] Observability Log Redaction          PASS 2.3s\n[security-smoke] summary pass=5 fail=0 total=5\nWrote docs/metrics/security-smoke-latest.json\nWrote docs/metrics/security-smoke-latest.md"
+    },
+    {
+      "id": "unitDomains",
+      "label": "Unit Domain Gate",
+      "command": "npm run test:unit:domains:strict -- --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 323154,
+      "output": "> libapp2@0.1.0 test:unit:domains:strict\n> node scripts/testing/run-unit-domain-timings.mjs --strict --ci --no-history\n\n[unit-domains] Auth            PASS 8.6s\n[unit-domains] Products        PASS 1.0m\n[unit-domains] AI Paths        PASS 1.5m\n[unit-domains] Image Studio    PASS 44.9s\n[unit-domains] Case Resolver   PASS 2.0m\n[unit-domains] summary pass=5 fail=0 total=5 duration=5.4m\nWrote docs/metrics/unit-domain-timings-latest.json\nWrote docs/metrics/unit-domain-timings-latest.md"
+    },
+    {
+      "id": "fullUnit",
+      "label": "Full Unit Tests",
+      "command": "npm run test:unit",
+      "status": "skipped",
+      "exitCode": null,
+      "signal": null,
+      "durationMs": 0,
+      "output": "Skipped by configuration."
+    },
+    {
+      "id": "e2e",
+      "label": "E2E Tests",
+      "command": "npm run test:e2e",
+      "status": "skipped",
+      "exitCode": null,
+      "signal": null,
+      "durationMs": 0,
+      "output": "Skipped by configuration."
+    },
+    {
+      "id": "guardrails",
+      "label": "Architecture Guardrails",
+      "command": "node scripts/architecture/check-guardrails.mjs",
+      "status": "fail",
+      "exitCode": 1,
+      "signal": null,
+      "durationMs": 11557,
+      "output": "[attempt 1/1]\nGuardrail comparison against baseline\nBaseline generated at: 2026-03-08T16:54:59.720Z\nINFO   api.delegatedServerRoutes                    current=       0 max=       0\nOK     api.routesWithoutApiHandler                  current=      13 max=      13\nOK     api.routesWithoutExplicitCachePolicy         current=       0 max=       0\nOK     api.totalRoutes                              current=     330 max=     330\nOK     architecture.crossFeatureEdgePairs           current=      56 max=      56\nOK     imports.appFeatureBarrelImports              current=       3 max=       3\nOK     imports.appFeatureDeepImports                current=     145 max=     145\nOK     imports.sharedToFeaturesTotalImports         current=      75 max=      75\nOK     propDrilling.componentsWithForwarding        current=      42 max=      42\nOK     propDrilling.depthGte4Chains                 current=       0 max=       0\nOK     runtime.setIntervalOccurrences               current=      22 max=      22\nOK     source.filesOver1000                         current=       9 max=       9\nOK     source.filesOver1500                         current=       3 max=       3\nOK     source.largestFileLines                      current=    2855 max=    2855\nFAIL   source.useClientFiles                        current=    1496 max=    1494\nOK     uiConsolidation.duplicateNameClusters        current=       0 max=       0\nOK     uiConsolidation.highPriorityOpportunities    current=       0 max=       0\nOK     uiConsolidation.propSignatureClusters        current=       0 max=       0\nOK     uiConsolidation.tokenSimilarityClusters      current=       0 max=       0\nOK     uiConsolidation.totalOpportunities           current=       0 max=       0\nOK     source.largestFileLines (hard limit)         current=    2855 max=    4000\nGuardrail check failed: one or more metrics exceeded baseline thresholds."
+    },
+    {
+      "id": "uiConsolidation",
+      "label": "UI Consolidation Guardrail",
+      "command": "node scripts/architecture/check-ui-consolidation.mjs",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 10373,
+      "output": "UI consolidation guardrail snapshot\npropForwarding=42 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0 | duplicateNameClusters=0 | propSignatureClusters=0 | tokenSimilarityClusters=0\nBaseline generated at: 2026-03-08T16:54:59.720Z\nUI consolidation guardrail check passed."
+    },
+    {
+      "id": "observability",
+      "label": "Observability Check",
+      "command": "npm run observability:check",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2432,
+      "output": "> libapp2@0.1.0 observability:check\n> node scripts/observability/check-observability.mjs --mode=check\n\n[observability:v2:passed] routes=330 wrapped=196 delegated=134 uncovered=0 loggerViolations=0 eventSourceViolations=0 coreViolations=0 consoleLogs=44 emptyCatches=4 legacyCompatViolations=0 runtimeErrors=0\n{\n  \"schemaVersion\": 2,\n  \"generatedAt\": \"2026-03-08T18:21:12.732Z\",\n  \"mode\": \"check\",\n  \"executionContext\": {\n    \"environment\": \"local\",\n    \"branch\": null,\n    \"commit\": null,\n    \"workflow\": null,\n    \"job\": null,\n    \"runId\": null,\n    \"actor\": null\n  },\n  \"routeCoverage\": {\n    \"totalRoutes\": 330,\n    \"wrappedRoutes\": 196,\n    \"delegatedRoutes\": 134,\n    \"uncoveredRoutes\": 0\n  },\n  \"logger\": {\n    \"totalViolations\": 0,\n    \"violations\": []\n  },\n  \"eventSource\": {\n    \"totalViolations\": 0,\n    \"violations\": []\n  },\n  \"core\": {\n    \"totalViolations\": 0,\n    \"violations\": []\n  },\n  \"consoleLogs\": {\n    \"totalViolations\": 44,\n    \"violations\": [\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/hooks/useAiPathsValidationActions.ts\",\n        \"line\": 33,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/hooks/useAiPathsValidationActions.ts\",\n        \"line\": 43,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts\",\n        \"line\": 329,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts\",\n        \"line\": 512,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts\",\n        \"line\": 146,\n        \"method\": \"warn\",\n        \"message\": \"console.warn() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts\",\n        \"line\": 573,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/useJobQueueRealtime.ts\",\n        \"line\": 261,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/useJobQueueRealtime.ts\",\n        \"line\": 281,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/components/useJobQueueRealtime.ts\",\n        \"line\": 315,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/context/GraphContext.tsx\",\n        \"line\": 167,\n        \"method\": \"warn\",\n        \"message\": \"console.warn() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/ai-paths/services/path-run-enqueue-service.ts\",\n        \"line\": 494,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/image-studio/components/generation-toolbar/handlers/useCropHandlers.ts\",\n        \"line\": 93,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/image-studio/hooks/useImageStudioMutations.ts\",\n        \"line\": 459,\n        \"method\": \"warn\",\n        \"message\": \"console.warn() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/image-studio/hooks/useImageStudioMutations.ts\",\n        \"line\": 509,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/image-studio/hooks/useImageStudioMutations.ts\",\n        \"line\": 557,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/image-studio/hooks/useImageStudioMutations.ts\",\n        \"line\": 582,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/insights/generator.ts\",\n        \"line\": 346,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/insights/generator.ts\",\n        \"line\": 356,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/ai/insights/generator.ts\",\n        \"line\": 366,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/case-resolver/workers/caseResolverOcrQueue.ts\",\n        \"line\": 270,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx\",\n        \"line\": 207,\n        \"method\": \"log\",\n        \"message\": \"console.log() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/products/hooks/useAiPathSettings.ts\",\n        \"line\": 437,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/products/hooks/useAiPathTrigger.ts\",\n        \"line\": 295,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/products/hooks/useAiPathTrigger.ts\",\n        \"line\": 324,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/features/products/hooks/useAiPathTrigger.ts\",\n        \"line\": 370,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/hooks/useQueryAnalytics.ts\",\n        \"line\": 301,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/ai-paths/settings-store-client.ts\",\n        \"line\": 299,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/ai-paths/settings-store-client.ts\",\n        \"line\": 382,\n        \"method\": \"info\",\n        \"message\": \"console.info() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/otel-node.ts\",\n        \"line\": 188,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/otel-node.ts\",\n        \"line\": 248,\n        \"method\": \"warn\",\n        \"message\": \"console.warn() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger-central-forwarding.ts\",\n        \"line\": 221,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger-central-forwarding.ts\",\n        \"line\": 276,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger-central-forwarding.ts\",\n        \"line\": 307,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger-central-forwarding.ts\",\n        \"line\": 451,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 531,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 533,\n        \"method\": \"warn\",\n        \"message\": \"console.warn() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 535,\n        \"method\": \"log\",\n        \"message\": \"console.log() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 554,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 631,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/lib/observability/system-logger.ts\",\n        \"line\": 635,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/ui/templates/modals/ConfirmModal.tsx\",\n        \"line\": 152,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/ui/templates/panels/PanelHeader.tsx\",\n        \"line\": 75,\n        \"method\": \"error\",\n        \"message\": \"console.error() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/ui/templates/pickers/GenericGridPicker.tsx\",\n        \"line\": 29,\n        \"method\": \"log\",\n        \"message\": \"console.log() should use logSystemEvent() or logger for structured logging\"\n      },\n      {\n        \"file\": \"src/shared/ui/templates/pickers/GenericPickerDropdown.tsx\",\n        \"line\": 32,\n        \"method\": \"log\",\n        \"message\": \"console.log() should use logSystemEvent() or logger for structured logging\"\n      }\n    ]\n  },\n  \"emptyCatchBlocks\": {\n    \"totalViolations\": 4,\n    \"violations\": [\n      {\n        \"file\": \"src/app/api/system/diagnostics/mongo-indexes/handler.ts\",\n        \"line\": 87,\n        \"message\": \"Empty catch block swallows errors silently. Log the error or re-throw it.\"\n      },\n      {\n        \"file\": \"src/features/case-resolver/hooks/useAdminCaseResolverDocumentActions.ts\",\n        \"line\": 382,\n        \"message\": \"Empty catch block swallows errors silently. Log the error or re-throw it.\"\n      },\n      {\n        \"file\": \"src/features/cms/pages/themes/ThemesPage.tsx\",\n        \"line\": 42,\n        \"message\": \"Empty catch block swallows errors silently. Log the error or re-throw it.\"\n      },\n      {\n        \"file\": \"src/features/viewer3d/hooks/useAsset3DListState.ts\",\n        \"line\": 68,\n        \"message\": \"Empty catch block swallows errors silently. Log the error or re-throw it.\"\n      }\n    ]\n  },\n  \"legacyCompatibility\": {\n    \"totalViolations\": 0,\n    \"violations\": []\n  },\n  \"runtimeLogs\": {\n    \"logsDir\": \"logs\",\n    \"filesScanned\": 0,\n    \"totalErrors\": 0,\n    \"truncated\": false,\n    \"readFailures\": [],\n    \"fingerprints\": [],\n    \"errors\": []\n  },\n  \"logArtifacts\": {\n    \"checkLogFile\": \"logs/observability-check.log\",\n    \"errorLogFile\": \"logs/observability-check.error.log\",\n    \"maxCheckLogBytes\": 1000000,\n    \"maxErrorLogBytes\": 4000000,\n    \"writeErrors\": []\n  },\n  \"status\": \"passed\",\n  \"comment\": null\n}"
+    },
+    {
+      "id": "unsafePatterns",
+      "label": "Unsafe Patterns",
+      "command": "node scripts/quality/check-unsafe-patterns.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1121,
+      "output": "[unsafe-patterns] status=passed files=4410 errors=0 warnings=0 info=0 duration=941ms\n  double-assertions=0 any=0 eslint-disable=0 non-null=0\nWrote docs/metrics/unsafe-patterns-latest.json\nWrote docs/metrics/unsafe-patterns-latest.md"
+    },
+    {
+      "id": "importBoundaries",
+      "label": "Import Boundaries",
+      "command": "node scripts/quality/check-import-boundaries.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 561,
+      "output": "[import-boundaries] status=warn files=4410 features=15 cycles=0 errors=0 warnings=1 duration=377ms\nWrote docs/metrics/import-boundaries-latest.json\nWrote docs/metrics/import-boundaries-latest.md"
+    },
+    {
+      "id": "apiInputValidation",
+      "label": "API Input Validation",
+      "command": "node scripts/quality/check-api-input-validation.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 242,
+      "output": "[api-input-validation] status=passed handlers=648 validated=648 coverage=100% errors=0 warnings=0 duration=80ms\nWrote docs/metrics/api-input-validation-latest.json\nWrote docs/metrics/api-input-validation-latest.md"
+    },
+    {
+      "id": "contextHealth",
+      "label": "Context Health",
+      "command": "node scripts/quality/check-context-health.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 819,
+      "output": "[context-health] status=passed contexts=238 errors=0 warnings=0 info=1 duration=400ms\nWrote docs/metrics/context-health-latest.json\nWrote docs/metrics/context-health-latest.md"
+    },
+    {
+      "id": "timerCleanup",
+      "label": "Timer Cleanup",
+      "command": "node scripts/quality/check-timer-cleanup.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 350,
+      "output": "[timer-cleanup] status=passed files=2014 errors=0 warnings=0 duration=180ms\nWrote docs/metrics/timer-cleanup-latest.json\nWrote docs/metrics/timer-cleanup-latest.md"
+    },
+    {
+      "id": "testDistribution",
+      "label": "Test Distribution",
+      "command": "node scripts/quality/check-test-distribution.mjs --ci --no-history",
+      "status": "pass",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 523,
+      "output": "[test-distribution] status=passed features=28 with-tests=28 without-tests=0 test-files=1159 .only=0 .skip=19 duration=361ms\nWrote docs/metrics/test-distribution-latest.json\nWrote docs/metrics/test-distribution-latest.md"
+    }
+  ],
+  "buildPreflight": {
+    "action": "removed",
+    "message": "Removed .next/standalone before build to reclaim disk space. Removed stale .next/trace-build before running build check."
+  },
+  "metrics": {
+    "generatedAt": "2026-03-08T18:21:17.510Z",
+    "source": {
+      "totalFiles": 5116,
+      "totalLines": 832571,
+      "useClientFiles": 1496,
+      "filesOver800": 69,
+      "filesOver1000": 9,
+      "filesOver1500": 3,
+      "largestFile": {
+        "path": "src/features/kangur/cms-builder/project.ts",
+        "lines": 2855
+      }
+    },
+    "api": {
+      "totalRoutes": 330,
+      "routesWithApiHandler": 317,
+      "delegatedServerRoutes": 0,
+      "routesWithoutApiHandler": 13,
+      "forceDynamicRoutes": 87,
+      "revalidateRoutes": 19,
+      "routesWithCacheHeader": 1,
+      "routesWithCacheOption": 27,
+      "routesWithExplicitCachePolicy": 330,
+      "routesWithoutExplicitCachePolicy": 0,
+      "topRouteHotspots": [
+        {
+          "path": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
+          "lines": 83
+        },
+        {
+          "path": "src/app/api/v2/products/[id]/studio/[action]/route.ts",
+          "lines": 40
+        },
+        {
+          "path": "src/app/api/v2/products/[id]/route.ts",
+          "lines": 38
+        },
+        {
+          "path": "src/app/api/marketplace/[resource]/route.ts",
+          "lines": 37
+        },
+        {
+          "path": "src/app/api/v2/products/metadata/[type]/[id]/route.ts",
+          "lines": 32
+        },
+        {
+          "path": "src/app/api/v2/products/metadata/[type]/route.ts",
+          "lines": 27
+        },
+        {
+          "path": "src/app/api/v2/products/sync/profiles/[id]/route.ts",
+          "lines": 27
+        },
+        {
+          "path": "src/app/api/v2/products/categories/[id]/route.ts",
+          "lines": 25
+        },
+        {
+          "path": "src/app/api/v2/products/categories/route.ts",
+          "lines": 24
+        },
+        {
+          "path": "src/app/api/v2/products/parameters/route.ts",
+          "lines": 24
+        },
+        {
+          "path": "src/app/api/auth/users/[id]/route.ts",
+          "lines": 23
+        },
+        {
+          "path": "src/app/api/v2/products/tags/route.ts",
+          "lines": 23
+        },
+        {
+          "path": "src/app/api/ai/schema/[entity]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/v2/products/ai-jobs/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/v2/products/sync/profiles/route.ts",
+          "lines": 22
+        },
+        {
+          "path": "src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts",
+          "lines": 21
+        },
+        {
+          "path": "src/app/api/ai-paths/portable-engine/remediation-dead-letters/route.ts",
+          "lines": 21
+        },
+        {
+          "path": "src/app/api/user/preferences/route.ts",
+          "lines": 21
+        }
+      ]
+    },
+    "imports": {
+      "appFeatureBarrelImports": 3,
+      "appFeatureDeepImports": 145,
+      "sharedToFeaturesStaticImports": 68,
+      "sharedToFeaturesDynamicImports": 7,
+      "sharedToFeaturesTotalImports": 75
+    },
+    "architecture": {
+      "crossFeatureEdgePairs": 56,
+      "topCrossFeatureEdges": [
+        {
+          "edge": "cms -> gsap",
+          "references": 20
+        },
+        {
+          "edge": "case-resolver -> case-resolver-capture",
+          "references": 18
+        },
+        {
+          "edge": "case-resolver -> foldertree",
+          "references": 15
+        },
+        {
+          "edge": "case-resolver -> filemaker",
+          "references": 13
+        },
+        {
+          "edge": "drafter -> products",
+          "references": 13
+        },
+        {
+          "edge": "case-resolver -> document-editor",
+          "references": 12
+        },
+        {
+          "edge": "jobs -> ai",
+          "references": 12
+        },
+        {
+          "edge": "kangur -> foldertree",
+          "references": 10
+        },
+        {
+          "edge": "case-resolver -> ai",
+          "references": 9
+        },
+        {
+          "edge": "ai -> products",
+          "references": 8
+        },
+        {
+          "edge": "cms -> app-embeds",
+          "references": 8
+        },
+        {
+          "edge": "cms -> viewer3d",
+          "references": 8
+        },
+        {
+          "edge": "integrations -> products",
+          "references": 8
+        },
+        {
+          "edge": "kangur -> cms",
+          "references": 8
+        },
+        {
+          "edge": "products -> internationalization",
+          "references": 8
+        },
+        {
+          "edge": "integrations -> playwright",
+          "references": 7
+        },
+        {
+          "edge": "products -> foldertree",
+          "references": 7
+        },
+        {
+          "edge": "prompt-exploder -> foldertree",
+          "references": 7
+        },
+        {
+          "edge": "case-resolver -> prompt-exploder",
+          "references": 6
+        },
+        {
+          "edge": "admin -> foldertree",
+          "references": 5
+        },
+        {
+          "edge": "cms -> foldertree",
+          "references": 5
+        },
+        {
+          "edge": "jobs -> integrations",
+          "references": 5
+        },
+        {
+          "edge": "jobs -> product-sync",
+          "references": 5
+        },
+        {
+          "edge": "notesapp -> foldertree",
+          "references": 5
+        },
+        {
+          "edge": "notesapp -> document-editor",
+          "references": 5
+        }
+      ],
+      "featureSizeByLines": [
+        {
+          "feature": "ai",
+          "files": 962,
+          "lines": 194121
+        },
+        {
+          "feature": "kangur",
+          "files": 424,
+          "lines": 86582
+        },
+        {
+          "feature": "case-resolver",
+          "files": 288,
+          "lines": 62686
+        },
+        {
+          "feature": "cms",
+          "files": 297,
+          "lines": 48184
+        },
+        {
+          "feature": "products",
+          "files": 214,
+          "lines": 40460
+        },
+        {
+          "feature": "integrations",
+          "files": 197,
+          "lines": 29642
+        },
+        {
+          "feature": "prompt-exploder",
+          "files": 152,
+          "lines": 26790
+        },
+        {
+          "feature": "notesapp",
+          "files": 90,
+          "lines": 14009
+        },
+        {
+          "feature": "foldertree",
+          "files": 77,
+          "lines": 9426
+        },
+        {
+          "feature": "filemaker",
+          "files": 53,
+          "lines": 9010
+        },
+        {
+          "feature": "admin",
+          "files": 35,
+          "lines": 6914
+        },
+        {
+          "feature": "database",
+          "files": 29,
+          "lines": 6236
+        },
+        {
+          "feature": "data-import-export",
+          "files": 30,
+          "lines": 6119
+        },
+        {
+          "feature": "auth",
+          "files": 38,
+          "lines": 5922
+        },
+        {
+          "feature": "viewer3d",
+          "files": 30,
+          "lines": 4752
+        },
+        {
+          "feature": "prompt-engine",
+          "files": 30,
+          "lines": 4041
+        },
+        {
+          "feature": "case-resolver-capture",
+          "files": 12,
+          "lines": 3207
+        },
+        {
+          "feature": "drafter",
+          "files": 14,
+          "lines": 2993
+        },
+        {
+          "feature": "product-sync",
+          "files": 10,
+          "lines": 2864
+        },
+        {
+          "feature": "observability",
+          "files": 18,
+          "lines": 2789
+        },
+        {
+          "feature": "document-editor",
+          "files": 19,
+          "lines": 2449
+        },
+        {
+          "feature": "files",
+          "files": 22,
+          "lines": 2176
+        },
+        {
+          "feature": "internationalization",
+          "files": 21,
+          "lines": 2006
+        },
+        {
+          "feature": "playwright",
+          "files": 8,
+          "lines": 799
+        },
+        {
+          "feature": "jobs",
+          "files": 4,
+          "lines": 480
+        },
+        {
+          "feature": "gsap",
+          "files": 4,
+          "lines": 370
+        },
+        {
+          "feature": "tooltip-engine",
+          "files": 6,
+          "lines": 363
+        },
+        {
+          "feature": "app-embeds",
+          "files": 5,
+          "lines": 282
+        }
+      ]
+    },
+    "runtime": {
+      "setIntervalOccurrences": 22
+    },
+    "codeHealth": {
+      "deepRelativeImportCount": 5,
+      "circularFeatureDeps": [
+        [
+          "cms",
+          "kangur",
+          "cms"
+        ]
+      ],
+      "hookComplexity": [
+        {
+          "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
+          "useEffectCount": 3,
+          "useCallbackCount": 16,
+          "useMemoCount": 20,
+          "total": 39
+        },
+        {
+          "path": "src/features/ai/image-studio/context/useVersionGraphRuntime.ts",
+          "useEffectCount": 2,
+          "useCallbackCount": 29,
+          "useMemoCount": 8,
+          "total": 39
+        },
+        {
+          "path": "src/features/case-resolver/hooks/useAdminCaseResolverPageState.ts",
+          "useEffectCount": 4,
+          "useCallbackCount": 22,
+          "useMemoCount": 5,
+          "total": 31
+        },
+        {
+          "path": "src/features/products/hooks/useProductFormValidator.ts",
+          "useEffectCount": 8,
+          "useCallbackCount": 11,
+          "useMemoCount": 12,
+          "total": 31
+        },
+        {
+          "path": "src/features/case-resolver/context/useCaseResolverFolderTreeRuntime.ts",
+          "useEffectCount": 7,
+          "useCallbackCount": 0,
+          "useMemoCount": 21,
+          "total": 28
+        },
+        {
+          "path": "src/features/products/hooks/useProductData.ts",
+          "useEffectCount": 6,
+          "useCallbackCount": 19,
+          "useMemoCount": 3,
+          "total": 28
+        },
+        {
+          "path": "src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts",
+          "useEffectCount": 1,
+          "useCallbackCount": 8,
+          "useMemoCount": 14,
+          "total": 23
+        },
+        {
+          "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
+          "useEffectCount": 6,
+          "useCallbackCount": 2,
+          "useMemoCount": 15,
+          "total": 23
+        },
+        {
+          "path": "src/features/ai/image-studio/components/studio-modals/useStudioInlineEditRuntimeState.ts",
+          "useEffectCount": 1,
+          "useCallbackCount": 0,
+          "useMemoCount": 21,
+          "total": 22
+        },
+        {
+          "path": "src/features/admin/context/useAdminMenuSettingsDerivedState.ts",
+          "useEffectCount": 1,
+          "useCallbackCount": 0,
+          "useMemoCount": 19,
+          "total": 20
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
+          "useEffectCount": 4,
+          "useCallbackCount": 14,
+          "useMemoCount": 2,
+          "total": 20
+        },
+        {
+          "path": "src/features/case-resolver/context/useAdminCaseResolverCasesRuntime.ts",
+          "useEffectCount": 4,
+          "useCallbackCount": 8,
+          "useMemoCount": 8,
+          "total": 20
+        },
+        {
+          "path": "src/features/prompt-engine/context/prompt-engine/usePromptEngineActionsImpl.ts",
+          "useEffectCount": 0,
+          "useCallbackCount": 19,
+          "useMemoCount": 0,
+          "total": 19
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts",
+          "useEffectCount": 7,
+          "useCallbackCount": 8,
+          "useMemoCount": 3,
+          "total": 18
+        },
+        {
+          "path": "src/features/prompt-exploder/context/settings/useSettingsDataImpl.ts",
+          "useEffectCount": 6,
+          "useCallbackCount": 0,
+          "useMemoCount": 12,
+          "total": 18
+        },
+        {
+          "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.navigation.ts",
+          "useEffectCount": 0,
+          "useCallbackCount": 16,
+          "useMemoCount": 1,
+          "total": 17
+        },
+        {
+          "path": "src/features/filemaker/hooks/useAdminFilemakerPageState.ts",
+          "useEffectCount": 0,
+          "useCallbackCount": 14,
+          "useMemoCount": 2,
+          "total": 16
+        },
+        {
+          "path": "src/features/case-resolver/hooks/useCaseResolverState.requested-context.ts",
+          "useEffectCount": 5,
+          "useCallbackCount": 9,
+          "useMemoCount": 1,
+          "total": 15
+        },
+        {
+          "path": "src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts",
+          "useEffectCount": 3,
+          "useCallbackCount": 5,
+          "useMemoCount": 7,
+          "total": 15
+        },
+        {
+          "path": "src/features/database/hooks/useDatabaseBackupsState.ts",
+          "useEffectCount": 2,
+          "useCallbackCount": 9,
+          "useMemoCount": 4,
+          "total": 15
+        },
+        {
+          "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts",
+          "useEffectCount": 0,
+          "useCallbackCount": 10,
+          "useMemoCount": 5,
+          "total": 15
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRunHistory.ts",
+          "useEffectCount": 7,
+          "useCallbackCount": 5,
+          "useMemoCount": 2,
+          "total": 14
+        },
+        {
+          "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.nodes.ts",
+          "useEffectCount": 2,
+          "useCallbackCount": 12,
+          "useMemoCount": 0,
+          "total": 14
+        },
+        {
+          "path": "src/features/ai/ai-paths/hooks/useDeadLetterRuns.ts",
+          "useEffectCount": 7,
+          "useCallbackCount": 6,
+          "useMemoCount": 1,
+          "total": 14
+        },
+        {
+          "path": "src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-actions.ts",
+          "useEffectCount": 5,
+          "useCallbackCount": 8,
+          "useMemoCount": 1,
+          "total": 14
+        }
+      ]
+    },
+    "hotspots": {
+      "topFilesByLines": [
+        {
+          "path": "src/features/kangur/cms-builder/project.ts",
+          "lines": 2855
+        },
+        {
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.tsx",
+          "lines": 2243
+        },
+        {
+          "path": "src/features/kangur/ui/components/KangurAiTutorWidget.test.tsx",
+          "lines": 1596
+        },
+        {
+          "path": "src/features/kangur/ui/design/primitives.tsx",
+          "lines": 1480
+        },
+        {
+          "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
+          "lines": 1140
+        },
+        {
+          "path": "src/features/kangur/ui/context/KangurAiTutorContext.test.tsx",
+          "lines": 1097
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
+          "lines": 1055
+        },
+        {
+          "path": "src/features/kangur/admin/KangurLessonDocumentEditor.tsx",
+          "lines": 1045
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
+          "lines": 1003
+        },
+        {
+          "path": "src/shared/contracts/image-studio.ts",
+          "lines": 999
+        },
+        {
+          "path": "src/shared/contracts/ai-paths.ts",
+          "lines": 995
+        },
+        {
+          "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+          "lines": 989
+        },
+        {
+          "path": "src/app/api/kangur/ai-tutor/chat/handler.test.ts",
+          "lines": 980
+        },
+        {
+          "path": "src/features/kangur/ui/components/ClockTrainingGame.tsx",
+          "lines": 969
+        },
+        {
+          "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
+          "lines": 969
+        },
+        {
+          "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
+          "lines": 967
+        },
+        {
+          "path": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
+          "lines": 957
+        },
+        {
+          "path": "src/shared/contracts/ai-paths-core/nodes.ts",
+          "lines": 953
+        },
+        {
+          "path": "src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx",
+          "lines": 945
+        },
+        {
+          "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
+          "lines": 929
+        },
+        {
+          "path": "src/features/kangur/services/local-kangur-platform.ts",
+          "lines": 928
+        },
+        {
+          "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
+          "lines": 927
+        },
+        {
+          "path": "src/features/cms/components/page-builder/PreviewBlock.tsx",
+          "lines": 925
+        },
+        {
+          "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+          "lines": 924
+        },
+        {
+          "path": "src/shared/lib/documentation/catalogs/validator-docs.ts",
+          "lines": 909
+        },
+        {
+          "path": "src/features/ai/ai-paths/components/run-history-panel.tsx",
+          "lines": 902
+        },
+        {
+          "path": "src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+          "lines": 902
+        },
+        {
+          "path": "src/features/case-resolver-capture/__tests__/proposals.test.ts",
+          "lines": 901
+        },
+        {
+          "path": "src/features/kangur/server/context-registry.ts",
+          "lines": 900
+        },
+        {
+          "path": "src/features/kangur/observability/summary.ts",
+          "lines": 898
+        }
+      ],
+      "topPagesByLines": [
+        {
+          "path": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
+          "lines": 189
+        },
+        {
+          "path": "src/app/(frontend)/[...slug]/page.tsx",
+          "lines": 84
+        },
+        {
+          "path": "src/app/(frontend)/preview/[id]/page.tsx",
+          "lines": 67
+        },
+        {
+          "path": "src/app/(admin)/admin/agentcreator/teaching/page.tsx",
+          "lines": 53
+        },
+        {
+          "path": "src/app/(admin)/admin/agentcreator/page.tsx",
+          "lines": 50
+        },
+        {
+          "path": "src/app/(admin)/admin/settings/recovery/page.tsx",
+          "lines": 50
+        },
+        {
+          "path": "src/app/(frontend)/page.tsx",
+          "lines": 48
+        },
+        {
+          "path": "src/app/(admin)/admin/page.tsx",
+          "lines": 40
+        },
+        {
+          "path": "src/app/(admin)/admin/settings/logging/page.tsx",
+          "lines": 32
+        },
+        {
+          "path": "src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
+          "lines": 29
+        },
+        {
+          "path": "src/app/(frontend)/kangur/login/page.tsx",
+          "lines": 28
+        },
+        {
+          "path": "src/app/(frontend)/products/[id]/page.tsx",
+          "lines": 15
+        },
+        {
+          "path": "src/app/(admin)/admin/chatbot/context/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/chatbot/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/integrations/marketplaces/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/integrations/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/notes/notebooks/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/settings/playwright/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/(admin)/admin/system/logs/page.tsx",
+          "lines": 14
+        },
+        {
+          "path": "src/app/auth/signin/page.tsx",
+          "lines": 14
+        }
+      ]
+    }
+  },
+  "metricsError": null,
+  "propDrilling": {
+    "ok": true,
+    "summary": {
+      "generatedAt": "2026-03-08T18:21:20.314Z",
+      "scannedSourceFiles": 4634,
+      "scannedJsxFiles": 1714,
+      "componentCount": 2529,
+      "componentsWithForwarding": 42,
+      "componentsWithAnyForwarding": 79,
+      "resolvedTransitionCount": 212,
+      "depth2CandidateChainCount": 212,
+      "candidateChainCount": 24,
+      "highPriorityChainCount": 0,
+      "unknownSpreadForwardingCount": 11,
+      "highPropCountComponentCount": 19,
+      "passThroughHotspotCount": 17,
+      "topFeatureScopes": [
+        {
+          "scope": "feature:kangur",
+          "count": 72
+        },
+        {
+          "scope": "feature:cms",
+          "count": 4
+        },
+        {
+          "scope": "feature:ai",
+          "count": 1
+        },
+        {
+          "scope": "app",
+          "count": 1
+        },
+        {
+          "scope": "shared-ui",
+          "count": 1
+        }
+      ]
+    },
+    "error": null
+  },
+  "uiConsolidation": {
+    "ok": true,
+    "summary": {
+      "generatedAt": "2026-03-08T18:21:18.077Z",
+      "scannedFileCount": 1330,
+      "duplicateNameClusterCount": 0,
+      "propSignatureClusterCount": 0,
+      "tokenSimilarityClusterCount": 0,
+      "thinReExportWrapperCount": 4,
+      "totalOpportunities": 0,
+      "highPriorityCount": 0,
+      "familyCounts": [
+        {
+          "family": "Unknown",
+          "count": 754
+        },
+        {
+          "family": "Page",
+          "count": 149
+        },
+        {
+          "family": "Section",
+          "count": 134
+        },
+        {
+          "family": "Panel",
+          "count": 84
+        },
+        {
+          "family": "Modal",
+          "count": 57
+        },
+        {
+          "family": "Tab",
+          "count": 38
+        },
+        {
+          "family": "Card",
+          "count": 20
+        },
+        {
+          "family": "Settings",
+          "count": 18
+        },
+        {
+          "family": "Header",
+          "count": 18
+        },
+        {
+          "family": "List",
+          "count": 15
+        },
+        {
+          "family": "Form",
+          "count": 14
+        },
+        {
+          "family": "Toolbar",
+          "count": 7
+        },
+        {
+          "family": "Picker",
+          "count": 7
+        },
+        {
+          "family": "Dialog",
+          "count": 5
+        },
+        {
+          "family": "Sidebar",
+          "count": 4
+        },
+        {
+          "family": "Table",
+          "count": 4
+        },
+        {
+          "family": "Drawer",
+          "count": 2
+        }
+      ],
+      "domainCounts": [
+        {
+          "domain": "feature",
+          "count": 997
+        },
+        {
+          "domain": "app",
+          "count": 175
+        },
+        {
+          "domain": "shared-ui",
+          "count": 119
+        },
+        {
+          "domain": "shared",
+          "count": 39
+        }
+      ]
+    },
+    "error": null
+  },
+  "trends": {
+    "weeklyLane": {
+      "runCount": 1,
+      "oldest": "2026-03-05T00:31:37.152Z",
+      "newest": "2026-03-05T00:31:37.152Z",
+      "totalDurationDeltaMs": null
+    },
+    "unitDomains": {
+      "runCount": 2,
+      "oldest": "2026-03-05T03:33:16.314Z",
+      "newest": "2026-03-05T03:49:28.650Z",
+      "totalDurationDeltaMs": 5291
+    },
+    "lintDomains": {
+      "runCount": 4,
+      "oldest": "2026-03-05T04:00:57.270Z",
+      "newest": "2026-03-05T04:36:38.577Z",
+      "totalDurationDeltaMs": 31494
+    }
+  },
+  "criticalFlows": [
+    {
+      "id": "auth-session",
+      "name": "Authentication + Session Bootstrap",
+      "kpi": "Successful sign-in completion rate",
+      "target": ">= 99.5%",
+      "scope": "src/features/auth + app entry routes"
+    },
+    {
+      "id": "products-core-crud",
+      "name": "Products CRUD + Listing Refresh",
+      "kpi": "Create/edit success rate without retries",
+      "target": ">= 99.0%",
+      "scope": "src/features/products + products API routes"
+    },
+    {
+      "id": "image-studio-generate",
+      "name": "Image Studio Generate + Preview",
+      "kpi": "Generation completion under timeout budget",
+      "target": ">= 98.0%",
+      "scope": "src/features/ai/image-studio + runtime APIs"
+    },
+    {
+      "id": "ai-paths-runtime",
+      "name": "AI Paths Run Execution",
+      "kpi": "Run completion without fallback/error path",
+      "target": ">= 98.5%",
+      "scope": "src/features/ai/ai-paths + shared ai-path runtime"
+    },
+    {
+      "id": "case-resolver-capture",
+      "name": "Case Resolver OCR + Capture Mapping",
+      "kpi": "Queue-to-review completion without manual recovery",
+      "target": ">= 98.0%",
+      "scope": "src/features/case-resolver + capture APIs"
+    }
+  ]
+}

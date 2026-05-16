@@ -12,7 +12,7 @@ export async function postHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const rawAccountId = ctx.params['accountId'];
+  const rawAccountId = ctx.params?.['accountId'];
   const accountId = Array.isArray(rawAccountId) ? (rawAccountId[0] ?? '') : rawAccountId ?? '';
   const decodedAccountId = decodeURIComponent(accountId);
   startFilemakerMailSyncQueue();

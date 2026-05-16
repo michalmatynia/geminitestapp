@@ -156,7 +156,7 @@ export function buildValidatorSettingsControllerValue(
     ...buildDraftSection(args),
     openCreate: args.patternModalActions.handleAddPattern,
     openEdit: args.patternModalActions.handleEditPattern,
-  } satisfies ValidatorSettingsController;
+  } as ValidatorSettingsController;
 
   return value;
 }

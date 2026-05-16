@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { getSectionStyles } from '../../frontend/theme-styles';
+import { getSectionStyles } from '../../../frontend/theme-styles';
 import { type SectionInstance } from '@/shared/contracts/cms';
 import { type ColorSchemeColors } from '@/shared/contracts/cms-theme';
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { SectionExplainContext } from './KangurAiTutorWidget.types';
+import type { SectionExplainContext } from '../KangurAiTutorWidget.types';
 import type { KangurAiTutorTelemetryContextDto } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export function useSectionGuidanceEffect(input: {

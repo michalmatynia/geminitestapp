@@ -187,7 +187,7 @@ const createPageSession = <
       runtime.observeLoopWithPage({ ...loopOptions, ...sessionOptions, verificationState: state }),
     bindBaseParams: (baseParams) => ({
       capture: (params) => {
-        const mergedParams: TParams = { ...baseParams, ...params };
+        const mergedParams = { ...baseParams, ...params } as unknown as TParams;
         return pageSession.capture({ params: mergedParams });
       },
       observeLoop: (loopOptions) => pageSession.observeLoop({ ...loopOptions, baseParams }),

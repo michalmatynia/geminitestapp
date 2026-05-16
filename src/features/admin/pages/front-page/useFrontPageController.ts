@@ -33,10 +33,7 @@ export function useFrontPageController(initialSelected: FrontPageSelectableApp):
     () => FRONT_PAGE_OPTION_LABELS.get(initialSelected) ?? initialSelected,
     [initialSelected]
   );
-  const pendingLabel = useMemo(
-    () => FRONT_PAGE_OPTION_LABELS.get(selected) ?? selected,
-    [selected]
-  );
+  const pendingLabel = FRONT_PAGE_OPTION_LABELS.get(selected) ?? selected;
 
   const persistSelection = async (): Promise<void> => {
     try {

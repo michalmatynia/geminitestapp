@@ -134,7 +134,7 @@ const findVisiblePaymentSolutionDialog = async (page: Page): Promise<Locator | n
   for (const rawDialogs of dialogCollections) {
     const parsedDialogs = locatorCollectionSchema.safeParse(rawDialogs);
     if (!parsedDialogs.success) continue;
-    const dialogs = parsedDialogs.data as Locator & {
+    const dialogs = parsedDialogs.data as unknown as Locator & {
       count: () => Promise<number>;
       nth: (index: number) => Locator;
     };
@@ -155,7 +155,7 @@ const findVisiblePaymentSolutionDialog = async (page: Page): Promise<Locator | n
     return null;
   }
 
-  const heading = (pageWithText.data as Page)
+  const heading = (pageWithText.data as unknown as Page)
     .getByText(/Tradera'?s payment solution|Traderas betalningslösning|betalningslösning/i)
     .first();
   const headingVisible = await heading.isVisible({ timeout: 250 }).catch(() => false);
@@ -209,7 +209,7 @@ const findPaymentSolutionTermsCheckbox = async (dialog: Locator): Promise<Locato
     if (!dialogWithLocator.success) continue;
 
     const escapedText = label.replace(/"/g, '\\"');
-    const labeledCheckbox = (dialogWithLocator.data as Locator)
+    const labeledCheckbox = (dialogWithLocator.data as unknown as Locator)
       .locator(
         `xpath=.//*[contains(normalize-space(.), "${ 
           escapedText 
@@ -250,7 +250,7 @@ const findPaymentSolutionContinueButton = async (dialog: Locator): Promise<Locat
     if (!dialogWithLocator.success) continue;
 
     const escapedText = label.replace(/"/g, '\\"');
-    const textButton = (dialogWithLocator.data as Locator)
+    const textButton = (dialogWithLocator.data as unknown as Locator)
       .locator(
         `xpath=.//*[self::button or self::a or @role="button" or @tabindex][normalize-space(.)="${ 
           escapedText 
@@ -357,7 +357,7 @@ const clickPaymentSolutionContinueButton = async (
 const waitBriefly = async (page: Page, timeoutMs: number): Promise<void> => {
   const pageWithTimer = pageTimerSchema.safeParse(page);
   if (pageWithTimer.success) {
-    await (pageWithTimer.data as Page & { waitForTimeout: (timeoutMs: number) => Promise<void> })
+    await (pageWithTimer.data as unknown as Page & { waitForTimeout: (timeoutMs: number) => Promise<void> })
       .waitForTimeout(timeoutMs)
       .catch(() => undefined);
     return;

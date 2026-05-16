@@ -17,6 +17,7 @@ import {
 } from './plan-utils';
 
 type CheckpointState = ReturnType<typeof parseCheckpoint>;
+type ParsedCheckpointState = NonNullable<CheckpointState>;
 
 type PlanInitializationResult = {
   planSteps: PlanStep[];
@@ -35,7 +36,7 @@ type InitializePlanInput = {
 
 interface HandleResumeInput {
   runId: string;
-  checkpoint: CheckpointState;
+  checkpoint: ParsedCheckpointState;
   planSteps: PlanStep[];
   stepIndex: number;
   context: AgentExecutionContext;
@@ -53,7 +54,7 @@ const getNextPlanState = (
   return {
     nextPlanSteps: shouldReplan ? resumeReview.steps : planSteps,
     nextStepIndex: shouldReplan ? 0 : stepIndex,
-    nextTaskType: resumeReview.meta?.taskType ?? taskType,
+    nextTaskType: resumeReview.meta?.taskType ?? taskType ?? null,
   };
 };
 
@@ -116,7 +117,7 @@ const handleResumeRequest = async (
 };
 
 
-const resolveStepIndex = (checkpoint: CheckpointState, planSteps: PlanStep[]): number => {
+const resolveStepIndex = (checkpoint: ParsedCheckpointState, planSteps: PlanStep[]): number => {
   if (checkpoint.activeStepId !== null && checkpoint.activeStepId !== '') {
     const activeIndex = planSteps.findIndex(
       (step: PlanStep) => step.id === checkpoint.activeStepId
@@ -129,7 +130,7 @@ const resolveStepIndex = (checkpoint: CheckpointState, planSteps: PlanStep[]): n
 
 const mergeCheckpointPreferences = (
   base: AgentExecutionContext['preferences'],
-  checkpointPrefs: CheckpointState['preferences']
+  checkpointPrefs: ParsedCheckpointState['preferences']
 ): AgentExecutionContext['preferences'] => {
   const next = { ...base };
   const prefs = checkpointPrefs as Record<string, unknown> | undefined;
@@ -143,7 +144,7 @@ const mergeCheckpointPreferences = (
 };
 
 
-const checkResumeRequested = (checkpoint: CheckpointState): boolean => {
+const checkResumeRequested = (checkpoint: ParsedCheckpointState): boolean => {
   return (
     checkpoint.resumeRequestedAt !== null &&
     checkpoint.resumeRequestedAt !== undefined &&
@@ -153,7 +154,7 @@ const checkResumeRequested = (checkpoint: CheckpointState): boolean => {
 };
 
 const initializeFromCheckpoint = async (
-  checkpoint: CheckpointState,
+  checkpoint: ParsedCheckpointState,
   context: AgentExecutionContext,
   basePreferences: AgentExecutionContext['preferences']
 ): Promise<PlanInitializationResult> => {
@@ -177,7 +178,7 @@ const initializeFromCheckpoint = async (
     });
     planSteps = resumeResult.planSteps;
     stepIndex = resumeResult.stepIndex;
-    taskType = resumeResult.taskType;
+    taskType = resumeResult.taskType ?? null;
   } else {
     stepIndex = resolveStepIndex(checkpoint, planSteps);
   }

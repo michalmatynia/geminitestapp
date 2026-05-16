@@ -169,13 +169,13 @@ export const pushEcommerceProviderSettingsToEcommerce = async (
 
   return Promise.all(
     targets.map(async (target) => {
-      const result = await target.db.collection(ECOM_SETTINGS_COLLECTION).updateOne(
+      const result = await target.db.collection<Document>(ECOM_SETTINGS_COLLECTION).updateOne(
         {
           $or: [
             { key: ECOMMERCE_PROVIDER_SETTINGS_KEY },
             { _id: ECOMMERCE_PROVIDER_SETTINGS_KEY },
           ],
-        },
+        } as Document,
         {
           $set: {
             key: ECOMMERCE_PROVIDER_SETTINGS_KEY,

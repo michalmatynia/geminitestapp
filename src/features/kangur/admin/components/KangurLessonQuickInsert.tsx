@@ -6,7 +6,8 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { useQuickInsertActions } from '../hooks/useQuickInsertActions';
-import type { KangurLessonPage, KangurLessonRootBlock, KangurLessonDocumentTemplateId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonDocumentTemplateId } from '@/features/kangur/lesson-documents';
 import { Input } from '@/features/kangur/shared/ui';
 
 interface KangurLessonQuickInsertProps {

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 
 import { uploadPersonaAvatar } from '@/features/ai/agentcreator/utils/avatar-input';
 import type { AgentPersonaMood, AgentPersonaMoodId } from '@/shared/contracts/agents';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { mapPersonaUploadToMoodFields } from './map-upload-to-mood-fields';
@@ -14,7 +15,7 @@ import {
   setMoodSvgContent as setMoodSvgContentOnServer,
 } from './utils';
 
-export type MoodEditorToast = (message: string, options?: { variant?: string }) => void;
+export type MoodEditorToast = Toast;
 
 export type MoodEditorReplaceUploadDeps = {
   effectiveMoods: AgentPersonaMood[];

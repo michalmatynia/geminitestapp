@@ -64,7 +64,7 @@ export const resolveDueFilemakerEmailCampaignRetryRuns = (input: {
       campaignId: delivery.campaignId,
       runId: delivery.runId,
       retryableDeliveryCount: (existing?.retryableDeliveryCount ?? 0) + 1,
-      nextRetryAt: resolveEarlierRetryAt(existing?.nextRetryAt ?? null, delivery.nextRetryAt),
+      nextRetryAt: resolveEarlierRetryAt(existing?.nextRetryAt ?? null, delivery.nextRetryAt ?? null),
     });
     return map;
   }, new Map());

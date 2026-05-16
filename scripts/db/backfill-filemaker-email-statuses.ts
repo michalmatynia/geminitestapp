@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 
 import { config as loadDotenv } from 'dotenv';
-import type { AnyBulkWriteOperation, Collection, Document } from 'mongodb';
+import type { AnyBulkWriteOperation, Collection, Document, Filter } from 'mongodb';
 
 import {
   FILEMAKER_EMAIL_STATUSES,
@@ -139,7 +139,7 @@ const toUpdateOperation = (
   status: FilemakerEmailStatus
 ): AnyBulkWriteOperation<BackfillEmailDocument> => ({
   updateOne: {
-    filter: { _id: document._id },
+    filter: { _id: document._id } as Filter<BackfillEmailDocument>,
     update: {
       $set: { status },
       $unset: { legacyStatusRaw: '', legacyStatusUuid: '' },
@@ -151,7 +151,7 @@ const toEmailLinkCleanupOperation = (
   document: BackfillEmailLinkDocument
 ): AnyBulkWriteOperation<BackfillEmailLinkDocument> => ({
   updateOne: {
-    filter: { _id: document._id },
+    filter: { _id: document._id } as Filter<BackfillEmailLinkDocument>,
     update: { $unset: { legacyStatusUuid: '', legacyStatusUuids: '' } },
   },
 });

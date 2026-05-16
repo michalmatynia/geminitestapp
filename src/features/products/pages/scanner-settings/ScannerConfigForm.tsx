@@ -42,9 +42,15 @@ export function ScannerConfigForm({
 
   return (
     <FormSection title='Scanner Configuration' className='p-4 space-y-4'>
-      <Input label='Scanner Host' value={readStringConfig(config, 'host')} onChange={handleHostChange} />
       <Input
-        label='Connection Timeout (ms)'
+        aria-label='Scanner Host'
+        placeholder='Scanner Host'
+        value={readStringConfig(config, 'host')}
+        onChange={handleHostChange}
+      />
+      <Input
+        aria-label='Connection Timeout (ms)'
+        placeholder='Connection Timeout (ms)'
         type='number'
         value={readNumberConfig(config, 'timeout')}
         onChange={handleTimeoutChange}

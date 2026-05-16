@@ -14,6 +14,7 @@ import {
 import { buildProductScannerEngineRequestOptions } from './product-scanner-settings';
 import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 import {
+  createPersistedProductScanStep,
   createProductScanStartedRawResult,
   persistSynchronizedScan,
   upsertPersistedProductScanStep,
@@ -138,10 +139,9 @@ const startRejectedCandidateContinuationRun = async (
 const buildRejectedContinuationQueueStep = (
   context: RejectedContinuationContext,
   status: RejectedQueueStatus
-): ProductScanRecord['steps'][number] => ({
+): ProductScanRecord['steps'][number] => createPersistedProductScanStep({
   key: 'queue_scan',
   label: 'Continue with next Amazon candidate',
-  group: 'input',
   attempt: resolveNextQueueStepAttempt(context.finalizedAmazonSteps),
   status: 'completed',
   resultCode: status === 'running' ? 'run_started' : 'run_queued',

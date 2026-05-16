@@ -12,7 +12,9 @@ import type {
 } from './Game.screen-refs';
 
 type GameTranslations = ReturnType<typeof useTranslations>;
-type GameTutorAnchorRefs = Partial<GameHomeScreenRefs> & GameSessionScreenRefs;
+type GameTutorAnchorRefs = Partial<GameHomeScreenRefs> & Partial<GameSessionScreenRefs>;
+
+const EMPTY_TUTOR_ANCHOR_REF: RefObject<HTMLElement | null> = { current: null };
 
 const getGameScreenLabel = (
   translations: GameTranslations,
@@ -39,16 +41,16 @@ const createGameScreenTutorAnchor = ({
   id: string;
   label: string;
   priority: number;
-  ref: RefObject<HTMLDivElement | null>;
+  ref?: RefObject<HTMLElement | null> | undefined;
 }): KangurTutorAnchorConfig =>
   createGameTutorAnchor({
     contentId: enabled ? contentId : null,
-    enabled,
+    enabled: enabled && ref !== undefined,
     id,
     kind: 'screen',
     label,
     priority,
-    ref,
+    ref: ref ?? EMPTY_TUTOR_ANCHOR_REF,
   });
 
 const buildGameHomeTutorAnchors = ({
@@ -176,21 +178,21 @@ export default function GameDeferredTutorAnchors(input: {
             createGameTutorAnchor({
               assignmentId: activeGameAssignmentId ?? null,
               contentId: screen === 'result' ? tutorActivityContentId : null,
-              enabled: screen === 'result',
+              enabled: screen === 'result' && refs.resultSummaryRef !== undefined,
               id: 'kangur-game-result-summary',
               kind: 'review',
               label: getGameScreenLabel(translations, 'result'),
               priority: 110,
-              ref: refs.resultSummaryRef,
+              ref: refs.resultSummaryRef ?? EMPTY_TUTOR_ANCHOR_REF,
             }),
             createGameTutorAnchor({
               contentId: screen === 'result' ? tutorActivityContentId : null,
-              enabled: screen === 'result',
+              enabled: screen === 'result' && refs.resultLeaderboardRef !== undefined,
               id: 'kangur-game-result-leaderboard',
               kind: 'leaderboard',
               label: translations('result.leaderboardLabel'),
               priority: 100,
-              ref: refs.resultLeaderboardRef,
+              ref: refs.resultLeaderboardRef ?? EMPTY_TUTOR_ANCHOR_REF,
             }),
           ],
     [

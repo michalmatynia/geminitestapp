@@ -20,6 +20,7 @@ import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignEventRegistry,
   FilemakerEmailCampaignRun,
+  FilemakerMailAccount,
 } from '../types';
 import type {
   FilemakerCampaignMailFilingRepairDeliveryResult,
@@ -188,7 +189,7 @@ const loadRepairState = async (runId: string): Promise<RepairState> => {
   if (campaign === null) {
     throw notFoundError('Filemaker campaign not found.');
   }
-  if (campaign.mailAccountId === null || campaign.mailAccountId.length === 0) {
+  if (typeof campaign.mailAccountId !== 'string' || campaign.mailAccountId.length === 0) {
     throw badRequestError('Campaign does not use a FileMaker mail account.');
   }
   return { campaign, run, deliveryRegistry, eventRegistry };
@@ -223,7 +224,11 @@ export const repairFilemakerCampaignRunMailFiling = async (
   runId: string
 ): Promise<FilemakerCampaignMailFilingRepairResult> => {
   const state = await loadRepairState(runId);
-  const account = await getFilemakerMailAccount(state.campaign.mailAccountId ?? '');
+  const mailAccountId = state.campaign.mailAccountId;
+  if (typeof mailAccountId !== 'string' || mailAccountId.length === 0) {
+    throw badRequestError('Campaign does not use a FileMaker mail account.');
+  }
+  const account = await getFilemakerMailAccount(mailAccountId);
   const sentDeliveries = getFilemakerEmailCampaignDeliveriesForRun(
     state.deliveryRegistry,
     state.run.id

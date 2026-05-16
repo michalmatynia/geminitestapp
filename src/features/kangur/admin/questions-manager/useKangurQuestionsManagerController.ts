@@ -1,9 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useKangurQuestionsMutations } from '../hooks/useKangurQuestionsMutations';
 import { getQuestionAuthoringSummary } from '../question-authoring-insights';
-import { readQuestionEditorDraft, writeQuestionEditorDraft, clearQuestionEditorDraft, QUESTION_EDITOR_NEW_DRAFT_SLOT } from '../question-editor-drafts';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
-import type { QuestionFormData } from '../test-suites/questions';
 
 export function useKangurQuestionsManagerController(currentSuite: any, suites: any[], questionStore: Record<string, KangurTestQuestion>, questions: KangurTestQuestion[], currentPublishableQuestionIds: string[]) {
   const mutations = useKangurQuestionsMutations(currentSuite, suites, questionStore, questions, currentPublishableQuestionIds);
@@ -27,6 +25,7 @@ export function useKangurQuestionsManagerController(currentSuite: any, suites: a
   }, [questions, searchQuery, listFilter, sortMode, questionSummaries]);
 
   return {
+    state: mutations,
     mutations,
     listFilter, setListFilter,
     sortMode, setSortMode,

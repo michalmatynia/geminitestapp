@@ -29,8 +29,9 @@ export function useFetchExternalCategoriesMutation() {
       tags: ['integrations', 'marketplace', 'categories'],
       description: 'Runs marketplace categories fetch.',
     },
-    invalidate: (queryClient, _data, { connectionId }) =>
-      invalidateMarketplaceCategories(queryClient, connectionId),
+    invalidate: async (queryClient, _data, { connectionId }) => {
+      await invalidateMarketplaceCategories(queryClient, connectionId);
+    },
   });
 }
 
@@ -47,8 +48,9 @@ export function useSaveMappingsMutation() {
       tags: ['integrations', 'marketplace', 'mappings'],
       description: 'Updates marketplace mappings bulk.',
     },
-    invalidate: (queryClient, _data, { connectionId, catalogId }) =>
-      invalidateMarketplaceMappings(queryClient, connectionId, catalogId),
+    invalidate: async (queryClient, _data, { connectionId, catalogId }) => {
+      await invalidateMarketplaceMappings(queryClient, connectionId, catalogId);
+    },
   });
 }
 

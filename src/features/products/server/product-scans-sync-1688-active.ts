@@ -34,6 +34,14 @@ type Active1688PersistenceArgs = {
   manualVerificationPending: boolean;
 };
 
+const normalizeActive1688RunStatus = (
+  status: ProductScan1688SyncContext['run']['status']
+): ProductScanRecord['status'] => {
+  if (status === 'pending') return 'queued';
+  if (status === 'cancelled' || status === 'canceled') return 'failed';
+  return status;
+};
+
 const resolveManualVerificationPending = (
   context: ProductScan1688SyncContext,
   existingRawResult: Record<string, unknown>
@@ -90,6 +98,7 @@ export const syncActive1688ProductScan = async (
 ): Promise<ProductScanRecord> => {
   const existingRawResult = toRecord(context.scan.rawResult) ?? {};
   const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(existingRawResult);
+  const runStatus = normalizeActive1688RunStatus(context.run.status);
   const nextSteps = resolvePersistedProductScanSteps(
     context.scan,
     context.productScanStepSource
@@ -104,7 +113,7 @@ export const syncActive1688ProductScan = async (
     existingRawResult,
     resultValue: context.resultValue,
     engineRunId: context.engineRunId,
-    runStatus: context.run.status,
+    runStatus,
     manualVerificationPending,
     manualVerificationMessage: activeMessage,
     manualVerificationTimeoutMs,
@@ -112,7 +121,7 @@ export const syncActive1688ProductScan = async (
   const persistenceArgs = {
     scan: context.scan,
     engineRunId: context.engineRunId,
-    runStatus: context.run.status,
+    runStatus,
     nextSteps,
     existingRawResult,
     nextRawResult,
@@ -124,7 +133,7 @@ export const syncActive1688ProductScan = async (
 
   return await persistSynchronizedScan(context.scan, {
     engineRunId: context.engineRunId,
-    status: context.run.status,
+    status: runStatus,
     steps: nextSteps,
     rawResult: nextRawResult,
     error: null,

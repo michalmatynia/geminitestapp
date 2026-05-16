@@ -23,7 +23,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { getMotionSafeScrollBehavior } from '@/features/kangur/shared/utils';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import {
   getPageRect,
@@ -105,8 +105,8 @@ export function useKangurAiTutorGuidedFlow(input: {
   prefersReducedMotion: boolean;
   resetAskModalState: () => void;
   selectionConversationFocus: TutorConversationFocus;
-  selectionExplainTimeoutRef: MutableRefObject<number | null>;
-  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
+  selectionExplainTimeoutRef: MutableRefObject<SafeTimerId | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<SafeTimerId | null>;
   sendMessage: KangurAiTutorContextValue['sendMessage'];
   setCanonicalTutorModalVisible: (value: boolean) => void;
   setContextualTutorMode: (value: 'selection_explain' | 'section_explain' | null) => void;
@@ -297,11 +297,11 @@ export function useKangurAiTutorGuidedFlow(input: {
     // eslint-disable-next-line complexity, max-lines-per-function
     (anchor: SectionAnchor): void => {
       if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
+        safeClearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
       if (selectionGuidanceRevealTimeoutRef.current !== null) {
-        window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+        safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
         selectionGuidanceRevealTimeoutRef.current = null;
       }
 

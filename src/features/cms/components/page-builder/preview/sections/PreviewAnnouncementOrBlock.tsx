@@ -1,17 +1,16 @@
 import React from 'react';
-import { Card } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
+import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../../../frontend/theme-styles';
 import {
   getSpacingValue,
   resolveJustifyContent,
   resolveAlignItems,
-} from '../preview/preview-utils';
-import { BlockContextProvider, CONTAINED_BLOCK_CONTEXT_VALUE } from '../preview/context/BlockContext';
+} from '../preview-utils';
+import { BlockContextProvider, CONTAINED_BLOCK_CONTEXT_VALUE } from '../context/BlockContext';
+import { usePreviewSectionContext } from '../context/PreviewSectionContext';
 import { type BlockInstance, type SectionInstance } from '@/shared/contracts/cms';
 import { type ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
-import { PreviewBlockItem } from '../PreviewBlockItem'; // Assuming PreviewBlockItem is available here
 
 type SimpleSectionProps = {
   section: SectionInstance;
@@ -38,6 +37,7 @@ export const PreviewAnnouncementOrBlock: React.FC<SimpleSectionProps> = ({
   divider,
   wrapInspector,
 }) => {
+  const { PreviewBlockItem } = usePreviewSectionContext();
   const isBlockSection = section.type === 'Block';
   const alignment = (section.settings['contentAlignment'] as string) || 'center';
   const alignmentClasses = alignment === 'left' ? 'justify-start text-left' : alignment === 'right' ? 'justify-end text-right' : 'justify-center text-center';

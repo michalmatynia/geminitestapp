@@ -29,28 +29,18 @@ type DeleteEmbeddingDocumentVariables = {
   documentId: string;
 };
 
-const emptyDocumentsQuery: SingleQuery<AgentTeachingDocumentsResponse | null> = {
-  data: null,
-  isPending: false,
-  isFetching: false,
-  isError: false,
-  error: null,
-  refetch: () => Promise.resolve({ data: null }),
-};
-
 export function useEmbeddingDocuments(
   collectionId: string | null
 ): SingleQuery<AgentTeachingDocumentsResponse | null> {
-  if (collectionId === null || collectionId.length === 0) {
-    return emptyDocumentsQuery;
-  }
+  const resolvedCollectionId = collectionId ?? '';
+  const hasCollectionId = resolvedCollectionId.length > 0;
 
-  const queryKey = agentTeachingKeys.documents(collectionId);
+  const queryKey = agentTeachingKeys.documents(hasCollectionId ? resolvedCollectionId : 'none');
   return usePaginatedListQueryV2<AgentTeachingEmbeddingDocumentListItem>({
-    id: collectionId,
+    id: hasCollectionId ? resolvedCollectionId : null,
     queryKey,
-    queryFn: () => fetchEmbeddingDocs(collectionId),
-    enabled: true,
+    queryFn: () => fetchEmbeddingDocs(resolvedCollectionId),
+    enabled: hasCollectionId,
     meta: {
       source: 'agentTeaching.hooks.useEmbeddingDocuments',
       operation: 'list',

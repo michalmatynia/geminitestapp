@@ -14,7 +14,7 @@ export type ProbeSessionsBodyProps = {
   resolvedClusters: SelectorRegistryProbeSessionCluster[];
   selectedKeys: Record<string, string>;
   manuallySelectedKeys: Record<string, boolean>;
-  defaultKeysByRole: Record<string, string>;
+  defaultKeysByRole: Map<string, string>;
   showArchived: boolean;
   archivedClusters: SelectorRegistryProbeSessionCluster[];
   archivedSessions: SelectorRegistryProbeSession[];

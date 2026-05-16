@@ -26,7 +26,7 @@ import type {
 
 export const evaluateAmazonProbeCandidate = async (
   context: AmazonProbeReadyContext,
-  evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig
+  evaluatorConfig: Extract<ProductScannerAmazonCandidateEvaluatorResolvedConfig, { enabled: true }>
 ): Promise<AmazonProbeEvaluationState> => {
   const amazonEvaluation = await evaluateProductScanCandidateMatch({
     scan: context.scan,

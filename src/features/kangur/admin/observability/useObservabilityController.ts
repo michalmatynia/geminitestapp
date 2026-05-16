@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { startTransition } from 'react';
 import { useKangurObservabilitySummary } from '@/features/kangur/observability/hooks';

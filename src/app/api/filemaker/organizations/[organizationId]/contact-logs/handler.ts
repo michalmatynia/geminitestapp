@@ -9,9 +9,9 @@ import {
 } from '@/features/filemaker/server';
 
 const resolveOrganizationId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['organizationId'];
+  const value = ctx.params?.['organizationId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
-  return decodeURIComponent(raw);
+  return decodeURIComponent(raw ?? '');
 };
 
 export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

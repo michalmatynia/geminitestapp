@@ -1,6 +1,6 @@
 'use client';
 
-import type { AudioWaveform } from '@/shared/contracts/ai-paths';
+import type { AudioOscillatorConfig, AudioWaveform } from '@/shared/contracts/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths/core/utils';
 import { Input } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
@@ -8,6 +8,12 @@ import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
 const WAVEFORM_OPTIONS: AudioWaveform[] = ['sine', 'square', 'triangle', 'sawtooth'];
+const DEFAULT_OSCILLATOR_CONFIG = {
+  waveform: 'sine',
+  frequencyHz: 440,
+  gain: 0.25,
+  durationMs: 400,
+} satisfies Required<Pick<AudioOscillatorConfig, 'waveform' | 'frequencyHz' | 'gain' | 'durationMs'>>;
 
 const waveformOptions = WAVEFORM_OPTIONS.map((w) => ({ value: w, label: w }));
 
@@ -16,14 +22,21 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
   const { updateSelectedNodeConfig } = useAiPathOrchestrator();
   if (selectedNode?.type !== 'audio_oscillator') return null;
 
-  const oscillatorConfig = selectedNode.config?.audioOscillator ?? {
-    waveform: 'sine' as AudioWaveform,
-    frequencyHz: 440,
-    gain: 0.25,
-    durationMs: 400,
+  const rawOscillatorConfig = selectedNode.config?.audioOscillator;
+  const oscillatorConfig = {
+    waveform:
+      rawOscillatorConfig?.waveform ??
+      rawOscillatorConfig?.type ??
+      DEFAULT_OSCILLATOR_CONFIG.waveform,
+    frequencyHz:
+      rawOscillatorConfig?.frequencyHz ??
+      rawOscillatorConfig?.frequency ??
+      DEFAULT_OSCILLATOR_CONFIG.frequencyHz,
+    gain: rawOscillatorConfig?.gain ?? DEFAULT_OSCILLATOR_CONFIG.gain,
+    durationMs: rawOscillatorConfig?.durationMs ?? DEFAULT_OSCILLATOR_CONFIG.durationMs,
   };
 
-  const updateConfig = (patch: Partial<typeof oscillatorConfig>): void => {
+  const updateConfig = (patch: Partial<AudioOscillatorConfig>): void => {
     updateSelectedNodeConfig({
       audioOscillator: {
         ...oscillatorConfig,

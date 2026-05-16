@@ -243,11 +243,7 @@ export const findExistingFilemakerPartyReference = (
       database,
       candidate,
       personFirst,
-      personLast,
-      normalizeCaseResolverPostalCode,
-      normalizeCaseResolverCountry,
-      isCityCompatible,
-      isPersonLastNameCompatible
+      personLast
     );
     if (bestPerson && bestPerson.score >= 4) {
       return {
@@ -266,10 +262,7 @@ export const findExistingFilemakerPartyReference = (
     const bestOrganization = findBestOrganizationMatch(
       database,
       candidate,
-      organizationName,
-      normalizeCaseResolverPostalCode,
-      normalizeCaseResolverCountry,
-      isCityCompatible
+      organizationName
     );
     if (bestOrganization && bestOrganization.score >= 4) {
       return {

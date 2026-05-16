@@ -138,8 +138,12 @@ const scoreCountryCompatibility = ({
 };
 
 const sumAddressScores = (scores: Array<number | null>): number | null => {
-  if (scores.some((score) => score === null)) return null;
-  return scores.reduce((total, score) => total + (score ?? 0), 0);
+  let total = 0;
+  for (const score of scores) {
+    if (score === null) return null;
+    total += score;
+  }
+  return total;
 };
 
 export const scoreAddressCompatibility = (

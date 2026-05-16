@@ -87,7 +87,10 @@ export const searchGoogle = async (query: string): Promise<GoogleSearchResult> =
     });
 
     if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'canceled') {
-      const errorMessage = run.error !== undefined && run.error !== '' ? run.error : `Search run status=${run.status}`;
+      const errorMessage =
+        typeof run.error === 'string' && run.error !== ''
+          ? run.error
+          : `Search run status=${run.status}`;
       return { hits: [], query, error: errorMessage };
     }
 
@@ -157,4 +160,3 @@ export const findCompanyWebsite = async (input: {
     return { website: null, domain: null };
   }
 };
-

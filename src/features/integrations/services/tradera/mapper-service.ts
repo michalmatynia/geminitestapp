@@ -6,11 +6,8 @@
  */
 
 import {
-  traderaParameterMapperCatalogPayloadSchema,
-  traderaParameterMapperRulesPayloadSchema,
   type TraderaParameterMapperCategoryFetch,
   type TraderaParameterMapperCatalogEntry,
-  type TraderaParameterMapperRule,
 } from '@/shared/contracts/integrations/tradera-parameter-mapper';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

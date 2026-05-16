@@ -35,6 +35,7 @@ import { useKangurLoginPageProps } from './login-context';
 export type KangurLoginKind = 'parent' | 'student' | 'unknown';
 const LOGIN_AUTH_REFRESH_TIMEOUT_MS = 12_000;
 export type KangurLoginSuccessStage = 'refreshing-session' | 'redirecting';
+type KangurAuthActions = NonNullable<ReturnType<typeof useOptionalKangurAuthActions>>;
 
 export const resolveKangurLoginCallbackNavigation = (
   callbackUrl: string,
@@ -115,7 +116,7 @@ const syncKangurLoginSuccessLearnerState = ({
 
 const waitForKangurLoginSuccessNotice = async (): Promise<void> => {
   await new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+    safeSetTimeout(() => resolve(), LOGIN_SUCCESS_NOTICE_DELAY_MS);
   });
 };
 
@@ -135,7 +136,7 @@ const resolveKangurLoginSuccessNavigationState = ({
   navigation,
   refreshedUser,
 }: {
-  checkAppState: ReturnType<typeof useOptionalKangurAuthActions>['checkAppState'];
+  checkAppState: KangurAuthActions['checkAppState'] | undefined;
   currentPath: string | null;
   navigation: ReturnType<typeof resolveKangurLoginCallbackNavigation>;
   refreshedUser: Awaited<

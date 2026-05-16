@@ -1,12 +1,11 @@
 import {
   type AiNode,
-  type CaseResolverEdge,
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
 import { DEFAULT_CASE_RESOLVER_EDGE_META } from '@/shared/contracts/case-resolver/constants';
 import { stripHtml } from './utils/text-sanitization';
-import { JOIN_VALUE_MAP, appendWithJoin } from './composer-utils';
+import { appendWithJoin } from './composer-utils';
 
 export type NodeOutput = {
   wysiwygText: string;

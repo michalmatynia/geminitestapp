@@ -14,7 +14,7 @@
  * and manipulation across the application.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';

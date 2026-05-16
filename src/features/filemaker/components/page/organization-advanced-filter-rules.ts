@@ -156,15 +156,13 @@ export const isOrganizationAdvancedMultiValueOperator = (
   operator: OrganizationAdvancedFilterOperator
 ): boolean => operator === 'in' || operator === 'notIn';
 
-const isEmptyConditionValue = (value: unknown): boolean =>
-  value === undefined || value === null || value === '';
-
 const convertConditionToMultiValue = (
   condition: OrganizationAdvancedFilterCondition
 ): OrganizationAdvancedFilterCondition => {
   if (Array.isArray(condition.value)) return condition;
-  if (!isEmptyConditionValue(condition.value)) {
-    return { ...condition, value: [condition.value] };
+  const currentValue = condition.value;
+  if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+    return { ...condition, value: [currentValue] };
   }
   const nextCondition: OrganizationAdvancedFilterCondition = { ...condition };
   delete nextCondition.value;

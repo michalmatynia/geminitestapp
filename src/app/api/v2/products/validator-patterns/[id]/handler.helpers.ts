@@ -1,13 +1,36 @@
 import { z } from 'zod';
+
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import { productValidationSemanticStateSchema, type ProductValidationPattern, type UpdateProductValidationPatternInput } from '@/shared/contracts/products/validation';
+import {
+  productValidationInstanceScopeSchema,
+  productValidationSemanticStateSchema,
+  productValidationTargetSchema,
+  type ProductValidationInstanceScope,
+  type ProductValidationLaunchOperator,
+  type ProductValidationLaunchScopeBehavior,
+  type ProductValidationLaunchSourceMode,
+  type ProductValidationPattern,
+  type ProductValidationRuntimeType,
+  type UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products/validation';
 import { badRequestError } from '@/shared/errors/app-error';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
+  normalizeProductValidationLaunchScopeBehavior,
+  normalizeProductValidationPatternDenyBehaviorOverride,
+  normalizeProductValidationPatternLaunchScopes,
+  normalizeProductValidationPatternReplacementScopes,
+  normalizeProductValidationPatternScopes,
+  normalizeProductValidationSkipNoopReplacementProposal,
+} from '@/shared/lib/products/utils/validator-instance-behavior';
+import { normalizeProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-state';
+
+import {
+  assertValidValidatorPatternLaunchConfig,
   assertValidValidatorPatternRegex,
   assertValidValidatorPatternReplacementRecipe,
-  assertValidValidatorPatternLaunchConfig,
   canResolveValidatorPatternReplacementAtRuntime,
+  normalizeValidatorPatternReplacementFields,
 } from '../handler.helpers';
 
 const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
@@ -15,20 +38,7 @@ const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 export const updatePatternSchema = z
   .object({
     label: z.string().trim().min(1).optional(),
-    target: z
-      .enum([
-        'name',
-        'description',
-        'sku',
-        'price',
-        'stock',
-        'category',
-        'size_length',
-        'size_width',
-        'length',
-        'weight',
-      ])
-      .optional(),
+    target: productValidationTargetSchema.optional(),
     locale: z.string().trim().nullable().optional(),
     regex: z.string().min(1).optional(),
     flags: z.string().trim().nullable().optional(),
@@ -40,9 +50,7 @@ export const updatePatternSchema = z
     skipNoopReplacementProposal: z.boolean().optional(),
     replacementValue: z.string().trim().nullable().optional(),
     replacementFields: z.array(replacementFieldSchema).optional(),
-    replacementAppliesToScopes: z
-      .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-      .optional(),
+    replacementAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
     runtimeEnabled: z.boolean().optional(),
     runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
     runtimeConfig: z.string().trim().nullable().optional(),
@@ -57,9 +65,7 @@ export const updatePatternSchema = z
     maxExecutions: z.number().int().min(1).max(20).optional(),
     passOutputToNext: z.boolean().optional(),
     launchEnabled: z.boolean().optional(),
-    launchAppliesToScopes: z
-      .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-      .optional(),
+    launchAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
     launchScopeBehavior: z.enum(['gate', 'condition_only']).optional(),
     launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
     launchSourceField: z.string().trim().nullable().optional(),
@@ -81,9 +87,7 @@ export const updatePatternSchema = z
       .optional(),
     launchValue: z.string().nullable().optional(),
     launchFlags: z.string().trim().nullable().optional(),
-    appliesToScopes: z
-      .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-      .optional(),
+    appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
     semanticState: productValidationSemanticStateSchema.nullable().optional(),
     expectedUpdatedAt: z.string().trim().nullable().optional(),
   })
@@ -95,153 +99,103 @@ export const updatePatternSchema = z
 
 type UpdatePatternBody = z.infer<typeof updatePatternSchema>;
 
-// Validators and state resolution utilities for product patterns.
+type ReplacementConfiguration = {
+  nextReplacementEnabled: boolean;
+  nextReplacementValue: string | null;
+  nextReplacementFields: string[];
+  nextReplacementAppliesToScopes: ProductValidationInstanceScope[];
+};
 
-const normalizeRuntimeConfig = (
-  body: UpdatePatternBody,
-  current: ProductValidationPattern,
-  enabled: boolean,
-  type: ValidatorPatternRuntimeType
-): string | null => {
-  const normalized = validateAndNormalizeRuntimeConfig({
-    runtimeEnabled: enabled,
-    runtimeType: type,
-    runtimeConfig: (body.runtimeConfig ?? current.runtimeConfig) ?? null,
-  });
-  return normalized;
+type LaunchConfiguration = {
+  nextLaunchEnabled: boolean;
+  nextLaunchSourceMode: ProductValidationLaunchSourceMode;
+  nextLaunchScopeBehavior: ProductValidationLaunchScopeBehavior;
+  nextLaunchSourceField: string | null;
+  nextLaunchAppliesToScopes: ProductValidationInstanceScope[];
+};
+
+type RuntimeConfiguration = {
+  nextRuntimeEnabled: boolean;
+  nextRuntimeType: ProductValidationRuntimeType;
+  nextRuntimeConfig: string | null;
+};
+
+export type ValidatorPatternState = ReplacementConfiguration &
+  LaunchConfiguration &
+  RuntimeConfiguration & {
+    nextRegex: string;
+    nextFlags: string | null;
+    nextAppliesToScopes: ProductValidationInstanceScope[];
+    shouldPersistRuntimeConfig: boolean;
+  };
+
+const normalizeNullableTrimmed = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const resolveRuntimeState = (
   body: UpdatePatternBody,
   current: ProductValidationPattern
-): {
-  nextRuntimeEnabled: boolean;
-  nextRuntimeType: ValidatorPatternRuntimeType;
-  nextRuntimeConfig: string | null;
-} => {
+): RuntimeConfiguration => {
   const nextRuntimeEnabled = Boolean(body.runtimeEnabled ?? current.runtimeEnabled);
-  const nextRuntimeType = (body.runtimeType ?? current.runtimeType ?? 'none') as ValidatorPatternRuntimeType;
-  const normalized = normalizeRuntimeConfig(body, current, nextRuntimeEnabled, nextRuntimeType);
-  return { nextRuntimeEnabled, nextRuntimeType, nextRuntimeConfig: normalized };
-};
-
-
-const validateLaunchSource = (launch: { nextLaunchEnabled: boolean, nextLaunchSourceMode: string, nextLaunchSourceField: string | null }): void => {
-  if (
-    launch.nextLaunchEnabled === true &&
-    launch.nextLaunchSourceMode !== 'current_field' &&
-    launch.nextLaunchSourceField === null
-  ) {
-    throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');
-  }
-};
-
-// Helper validation function for launch source
-
-export interface LaunchConfiguration {
-  nextLaunchEnabled: boolean;
-  nextLaunchSourceMode: string;
-  nextLaunchScopeBehavior: string;
-  nextLaunchSourceField: string | null;
-  nextLaunchAppliesToScopes: string[];
-}
-
-const validateLaunchConfiguration = (config: {
-  launch: LaunchConfiguration;
-  launchOperator: string | undefined;
-  launchValue: string | null | undefined;
-  launchFlags: string | null | undefined;
-  current: ProductValidationPattern;
-}): void => {
-  validateLaunchSource(config.launch);
-
-  assertValidValidatorPatternLaunchConfig({
-    launchEnabled: config.launch.nextLaunchEnabled,
-    launchOperator: config.launchOperator ?? config.current.launchOperator,
-    launchValue: typeof config.launchValue === 'string' ? config.launchValue : (config.launchValue === null ? null : config.current.launchValue),
-    launchFlags: config.flags ?? config.current.launchFlags ?? null,
+  const nextRuntimeType = body.runtimeType ?? current.runtimeType ?? 'none';
+  const runtimeConfig =
+    body.runtimeConfig !== undefined
+      ? normalizeNullableTrimmed(body.runtimeConfig)
+      : current.runtimeConfig;
+  const nextRuntimeConfig = validateAndNormalizeRuntimeConfig({
+    runtimeEnabled: nextRuntimeEnabled,
+    runtimeType: nextRuntimeType,
+    runtimeConfig,
   });
+
+  return { nextRuntimeEnabled, nextRuntimeType, nextRuntimeConfig };
 };
 
-
-
-export interface ValidatorPatternState {
-  nextRegex: string;
-  nextFlags: string | null;
-  nextReplacementEnabled: boolean;
-  nextReplacementValue: string | null;
-  nextReplacementFields: string[];
-  nextReplacementAppliesToScopes: string[];
-  nextLaunchEnabled: boolean;
-  nextLaunchSourceMode: string;
-  nextLaunchScopeBehavior: string;
-  nextLaunchSourceField: string | null;
-  nextLaunchAppliesToScopes: string[];
-  nextRuntimeEnabled: boolean;
-  nextRuntimeType: ValidatorPatternRuntimeType;
-  nextRuntimeConfig: string | null;
-  shouldPersistRuntimeConfig: boolean;
-  nextAppliesToScopes: string[];
-}
-
-
-
-
-
-export const resolveValidatorPatternUpdateState = (
+const resolveReplacementState = (
   body: UpdatePatternBody,
   current: ProductValidationPattern
-): ValidatorPatternState => {
-  const nextRegex = (body.regex ?? current.regex).trim();
-  const nextFlags = body.flags ?? current.flags ?? null;
+): ReplacementConfiguration => ({
+  nextReplacementEnabled: body.replacementEnabled ?? current.replacementEnabled,
+  nextReplacementValue:
+    body.replacementValue !== undefined
+      ? normalizeNullableTrimmed(body.replacementValue)
+      : current.replacementValue,
+  nextReplacementFields:
+    body.replacementFields !== undefined
+      ? normalizeValidatorPatternReplacementFields(body.replacementFields)
+      : current.replacementFields,
+  nextReplacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+    body.replacementAppliesToScopes ?? current.replacementAppliesToScopes
+  ),
+});
 
-  if (nextRegex.length === 0) {
-    throw badRequestError('Regex pattern cannot be empty');
-  }
-
-  const runtime = resolveRuntimeState(body, current);
-
-  validateReplacement(replacement, runtime);
-  validateLaunchConfiguration({
-    launch,
-    launchOperator: body.launchOperator,
-    launchValue: typeof body.launchValue === 'string' ? body.launchValue : (body.launchValue === null ? null : current.launchValue),
-    launchFlags: body.launchFlags,
-    current,
-  });
-
-  assertValidValidatorPatternRegex(nextRegex, nextFlags);
-  assertValidValidatorPatternReplacementRecipe(replacement.nextReplacementEnabled, replacement.nextReplacementValue);
-
-  return {
-    nextRegex,
-    nextFlags,
-    ...replacement,
-    ...launch,
-    ...runtime,
-    nextAppliesToScopes: body.appliesToScopes ?? current.appliesToScopes,
-    shouldPersistRuntimeConfig: Boolean(
-      body.runtimeConfig !== undefined ||
-        body.runtimeEnabled !== undefined ||
-        body.runtimeType !== undefined
-    ),
-  };
-};
-
-
-interface ReplacementConfiguration {
-  nextReplacementEnabled: boolean;
-  nextReplacementValue: string | null;
-  nextReplacementFields: string[];
-  nextReplacementAppliesToScopes: string[];
-}
+const resolveLaunchState = (
+  body: UpdatePatternBody,
+  current: ProductValidationPattern
+): LaunchConfiguration => ({
+  nextLaunchEnabled: body.launchEnabled ?? current.launchEnabled,
+  nextLaunchSourceMode: body.launchSourceMode ?? current.launchSourceMode,
+  nextLaunchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
+    body.launchScopeBehavior ?? current.launchScopeBehavior
+  ),
+  nextLaunchSourceField:
+    body.launchSourceField !== undefined
+      ? normalizeNullableTrimmed(body.launchSourceField)
+      : current.launchSourceField,
+  nextLaunchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+    body.launchAppliesToScopes ?? current.launchAppliesToScopes
+  ),
+});
 
 const validateReplacement = (
   replacement: ReplacementConfiguration,
-  runtime: { nextRuntimeEnabled: boolean; nextRuntimeType: ValidatorPatternRuntimeType }
+  runtime: RuntimeConfiguration
 ): void => {
   if (
-    replacement.nextReplacementEnabled === true &&
+    replacement.nextReplacementEnabled &&
     replacement.nextReplacementValue === null &&
     !canResolveValidatorPatternReplacementAtRuntime({
       replacementEnabled: replacement.nextReplacementEnabled,
@@ -256,43 +210,177 @@ const validateReplacement = (
   }
 };
 
-const buildReplacementInput = (
+const validateLaunchConfiguration = ({
+  launch,
+  launchOperator,
+  launchValue,
+  launchFlags,
+}: {
+  launch: LaunchConfiguration;
+  launchOperator: ProductValidationLaunchOperator;
+  launchValue: string | null;
+  launchFlags: string | null;
+}): void => {
+  if (
+    launch.nextLaunchEnabled &&
+    launch.nextLaunchSourceMode !== 'current_field' &&
+    launch.nextLaunchSourceField === null
+  ) {
+    throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');
+  }
+
+  assertValidValidatorPatternLaunchConfig({
+    launchEnabled: launch.nextLaunchEnabled,
+    launchOperator,
+    launchValue,
+    launchFlags,
+  });
+};
+
+export const resolveValidatorPatternUpdateState = (
   body: UpdatePatternBody,
-  state: ReturnType<typeof resolveValidatorPatternUpdateState>
+  current: ProductValidationPattern
+): ValidatorPatternState => {
+  const nextRegex = (body.regex ?? current.regex).trim();
+  const nextFlags = body.flags !== undefined ? normalizeNullableTrimmed(body.flags) : current.flags;
+
+  if (nextRegex.length === 0) {
+    throw badRequestError('Regex pattern cannot be empty');
+  }
+
+  const runtime = resolveRuntimeState(body, current);
+  const replacement = resolveReplacementState(body, current);
+  const launch = resolveLaunchState(body, current);
+  const launchOperator = body.launchOperator ?? current.launchOperator;
+  const launchValue =
+    body.launchValue !== undefined
+      ? typeof body.launchValue === 'string'
+        ? body.launchValue
+        : null
+      : current.launchValue;
+  const launchFlags =
+    body.launchFlags !== undefined ? normalizeNullableTrimmed(body.launchFlags) : current.launchFlags;
+
+  validateReplacement(replacement, runtime);
+  validateLaunchConfiguration({
+    launch,
+    launchOperator,
+    launchValue,
+    launchFlags,
+  });
+
+  assertValidValidatorPatternRegex(nextRegex, nextFlags);
+  assertValidValidatorPatternReplacementRecipe(
+    replacement.nextReplacementEnabled,
+    replacement.nextReplacementValue
+  );
+
+  return {
+    nextRegex,
+    nextFlags,
+    ...replacement,
+    ...launch,
+    ...runtime,
+    nextAppliesToScopes: normalizeProductValidationPatternScopes(
+      body.appliesToScopes ?? current.appliesToScopes
+    ),
+    shouldPersistRuntimeConfig:
+      body.runtimeConfig !== undefined ||
+      body.runtimeEnabled !== undefined ||
+      body.runtimeType !== undefined,
+  };
+};
+
+const buildBasicMetadataInput = (
+  body: UpdatePatternBody
 ): Pick<
   UpdateProductValidationPatternInput,
-  'replacementEnabled' | 'replacementAutoApply' | 'skipNoopReplacementProposal' | 'replacementValue' | 'replacementFields' | 'replacementAppliesToScopes'
+  'label' | 'target' | 'locale' | 'message' | 'severity' | 'enabled'
 > => ({
-  ...(body.replacementEnabled !== undefined && { replacementEnabled: state.nextReplacementEnabled }),
-  ...(body.replacementAutoApply !== undefined && { replacementAutoApply: body.replacementAutoApply }),
+  ...(body.label !== undefined && { label: body.label.trim() }),
+  ...(body.target !== undefined && { target: body.target }),
+  ...(body.locale !== undefined && {
+    locale: normalizeNullableTrimmed(body.locale)?.toLowerCase() ?? null,
+  }),
+  ...(body.message !== undefined && { message: body.message.trim() }),
+  ...(body.severity !== undefined && { severity: body.severity }),
+  ...(body.enabled !== undefined && { enabled: body.enabled }),
+});
+
+const buildRegexInput = (
+  body: UpdatePatternBody,
+  state: ValidatorPatternState
+): Pick<UpdateProductValidationPatternInput, 'regex' | 'flags'> => ({
+  ...(body.regex !== undefined && { regex: state.nextRegex }),
+  ...(body.flags !== undefined && { flags: state.nextFlags }),
+});
+
+const buildReplacementInput = (
+  body: UpdatePatternBody,
+  state: ValidatorPatternState
+): Pick<
+  UpdateProductValidationPatternInput,
+  | 'replacementEnabled'
+  | 'replacementAutoApply'
+  | 'skipNoopReplacementProposal'
+  | 'replacementValue'
+  | 'replacementFields'
+  | 'replacementAppliesToScopes'
+> => ({
+  ...(body.replacementEnabled !== undefined && {
+    replacementEnabled: state.nextReplacementEnabled,
+  }),
+  ...(body.replacementAutoApply !== undefined && {
+    replacementAutoApply: body.replacementAutoApply,
+  }),
   ...(body.skipNoopReplacementProposal !== undefined && {
-    skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(body.skipNoopReplacementProposal),
+    skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+      body.skipNoopReplacementProposal
+    ),
   }),
   ...(body.replacementValue !== undefined && { replacementValue: state.nextReplacementValue }),
   ...(body.replacementFields !== undefined && { replacementFields: state.nextReplacementFields }),
-  ...(body.replacementAppliesToScopes !== undefined && { replacementAppliesToScopes: state.nextReplacementAppliesToScopes }),
+  ...(body.replacementAppliesToScopes !== undefined && {
+    replacementAppliesToScopes: state.nextReplacementAppliesToScopes,
+  }),
 });
 
 const buildRuntimeAndLaunchInput = (
   body: UpdatePatternBody,
-  state: ReturnType<typeof resolveValidatorPatternUpdateState>
+  state: ValidatorPatternState
 ): Pick<
   UpdateProductValidationPatternInput,
-  'runtimeEnabled' | 'runtimeType' | 'runtimeConfig' | 'launchEnabled' | 'launchAppliesToScopes' | 'launchScopeBehavior' | 'launchSourceMode' | 'launchSourceField' | 'launchOperator' | 'launchValue' | 'launchFlags'
+  | 'runtimeEnabled'
+  | 'runtimeType'
+  | 'runtimeConfig'
+  | 'launchEnabled'
+  | 'launchAppliesToScopes'
+  | 'launchScopeBehavior'
+  | 'launchSourceMode'
+  | 'launchSourceField'
+  | 'launchOperator'
+  | 'launchValue'
+  | 'launchFlags'
 > => ({
   ...(body.runtimeEnabled !== undefined && { runtimeEnabled: state.nextRuntimeEnabled }),
   ...(body.runtimeType !== undefined && { runtimeType: state.nextRuntimeType }),
   ...(state.shouldPersistRuntimeConfig && { runtimeConfig: state.nextRuntimeConfig }),
   ...(body.launchEnabled !== undefined && { launchEnabled: state.nextLaunchEnabled }),
-  ...(body.launchAppliesToScopes !== undefined && { launchAppliesToScopes: state.nextLaunchAppliesToScopes }),
-  ...(body.launchScopeBehavior !== undefined && { launchScopeBehavior: state.nextLaunchScopeBehavior }),
+  ...(body.launchAppliesToScopes !== undefined && {
+    launchAppliesToScopes: state.nextLaunchAppliesToScopes,
+  }),
+  ...(body.launchScopeBehavior !== undefined && {
+    launchScopeBehavior: state.nextLaunchScopeBehavior,
+  }),
   ...(body.launchSourceMode !== undefined && { launchSourceMode: state.nextLaunchSourceMode }),
   ...(body.launchSourceField !== undefined && { launchSourceField: state.nextLaunchSourceField }),
   ...(body.launchOperator !== undefined && { launchOperator: body.launchOperator }),
   ...(body.launchValue !== undefined && {
     launchValue: typeof body.launchValue === 'string' ? body.launchValue : null,
   }),
-  ...(body.launchFlags !== undefined && { launchFlags: body.launchFlags?.trim() ?? null }),
+  ...(body.launchFlags !== undefined && {
+    launchFlags: normalizeNullableTrimmed(body.launchFlags),
+  }),
 });
 
 const buildBehavioralInput = (
@@ -300,7 +388,9 @@ const buildBehavioralInput = (
 ): Pick<UpdateProductValidationPatternInput, 'postAcceptBehavior' | 'denyBehaviorOverride'> => ({
   ...(body.postAcceptBehavior !== undefined && { postAcceptBehavior: body.postAcceptBehavior }),
   ...(body.denyBehaviorOverride !== undefined && {
-    denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(body.denyBehaviorOverride),
+    denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+      body.denyBehaviorOverride
+    ),
   }),
 });
 
@@ -308,12 +398,27 @@ const buildSequenceInput = (
   body: UpdatePatternBody
 ): Pick<
   UpdateProductValidationPatternInput,
-  'validationDebounceMs' | 'sequenceGroupId' | 'sequenceGroupLabel' | 'sequenceGroupDebounceMs' | 'sequence' | 'chainMode' | 'maxExecutions' | 'passOutputToNext'
+  | 'validationDebounceMs'
+  | 'sequenceGroupId'
+  | 'sequenceGroupLabel'
+  | 'sequenceGroupDebounceMs'
+  | 'sequence'
+  | 'chainMode'
+  | 'maxExecutions'
+  | 'passOutputToNext'
 > => ({
-  ...(body.validationDebounceMs !== undefined && { validationDebounceMs: body.validationDebounceMs }),
-  ...(body.sequenceGroupId !== undefined && { sequenceGroupId: body.sequenceGroupId?.trim() ?? null }),
-  ...(body.sequenceGroupLabel !== undefined && { sequenceGroupLabel: body.sequenceGroupLabel?.trim() ?? null }),
-  ...(body.sequenceGroupDebounceMs !== undefined && { sequenceGroupDebounceMs: body.sequenceGroupDebounceMs }),
+  ...(body.validationDebounceMs !== undefined && {
+    validationDebounceMs: body.validationDebounceMs,
+  }),
+  ...(body.sequenceGroupId !== undefined && {
+    sequenceGroupId: normalizeNullableTrimmed(body.sequenceGroupId),
+  }),
+  ...(body.sequenceGroupLabel !== undefined && {
+    sequenceGroupLabel: normalizeNullableTrimmed(body.sequenceGroupLabel),
+  }),
+  ...(body.sequenceGroupDebounceMs !== undefined && {
+    sequenceGroupDebounceMs: body.sequenceGroupDebounceMs,
+  }),
   ...(body.sequence !== undefined && { sequence: body.sequence }),
   ...(body.chainMode !== undefined && { chainMode: body.chainMode }),
   ...(body.maxExecutions !== undefined && { maxExecutions: body.maxExecutions }),
@@ -322,7 +427,7 @@ const buildSequenceInput = (
 
 const buildSequenceAndAuditInput = (
   body: UpdatePatternBody,
-  state: ReturnType<typeof resolveValidatorPatternUpdateState>
+  state: ValidatorPatternState
 ): Pick<
   UpdateProductValidationPatternInput,
   | 'postAcceptBehavior'
@@ -346,30 +451,17 @@ const buildSequenceAndAuditInput = (
     semanticState: normalizeProductValidationSemanticState(body.semanticState),
   }),
   ...(body.expectedUpdatedAt !== undefined && {
-    expectedUpdatedAt: body.expectedUpdatedAt.trim().length > 0 ? body.expectedUpdatedAt.trim() : null,
+    expectedUpdatedAt: normalizeNullableTrimmed(body.expectedUpdatedAt),
   }),
-});
-
-const buildRegexInput = (body: UpdatePatternBody, state: ReturnType<typeof resolveValidatorPatternUpdateState>): Pick<UpdateProductValidationPatternInput, 'regex' | 'flags'> => ({
-  ...(body.regex !== undefined && { regex: state.nextRegex }),
-  ...(body.flags !== undefined && { flags: state.nextFlags }),
 });
 
 export const buildValidatorPatternUpdateInput = (
   body: UpdatePatternBody,
-  state: ReturnType<typeof resolveValidatorPatternUpdateState>
-): UpdateProductValidationPatternInput => {
-  const metadata = buildBasicMetadataInput(body);
-  const regexData = buildRegexInput(body, state);
-  const replacementData = buildReplacementInput(body, state);
-  const runtimeData = buildRuntimeAndLaunchInput(body, state);
-  const sequenceData = buildSequenceAndAuditInput(body, state);
-
-  return {
-    ...metadata,
-    ...regexData,
-    ...replacementData,
-    ...runtimeData,
-    ...sequenceData,
-  };
-};
+  state: ValidatorPatternState
+): UpdateProductValidationPatternInput => ({
+  ...buildBasicMetadataInput(body),
+  ...buildRegexInput(body, state),
+  ...buildReplacementInput(body, state),
+  ...buildRuntimeAndLaunchInput(body, state),
+  ...buildSequenceAndAuditInput(body, state),
+});

@@ -23,6 +23,7 @@ export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): P
     dueCampaignCount: result.dueCampaignCount,
     launchedRunCount: result.launchedRuns.length,
     launchedRuns: result.launchedRuns,
-    skippedCount: result.skippedCampaigns.length,
+    skippedCount: result.skippedByReason.reduce((total, entry) => total + entry.count, 0),
+    skippedByReason: result.skippedByReason,
   });
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import {
   trackKangurClientEvent,
   withKangurClientError,
@@ -25,6 +25,9 @@ type KangurScoreSyncState = {
 };
 
 type KangurScoreSyncResult = Awaited<ReturnType<typeof syncGuestKangurScores>> | null;
+type GuestScoreSyncHandle =
+  | { kind: 'timeout'; id: SafeTimerId }
+  | { kind: 'idle'; id: number };
 
 const reportGuestScoreSyncError = (
   error: unknown,
@@ -82,40 +85,45 @@ const reportCompletedGuestScoreSync = (
 const scheduleGuestScoreSync = (
   syncScores: () => Promise<void>,
   delayMs: number
-): number => {
-  if (delayMs > 0) {
-    return safeSetTimeout(() => {
-      syncScores().catch((error: unknown) => {
-        trackKangurClientEvent('kangur_guest_scores_sync_failed', {
-          learnerKey: 'unknown',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        });
-      });
-    }, delayMs);
-  }
-
-  const scheduleSync =
-    typeof globalThis.requestIdleCallback === 'function'
-      ? globalThis.requestIdleCallback
-      : (cb: () => void): number => safeSetTimeout(cb, 1);
-
-  return scheduleSync(() => {
+): GuestScoreSyncHandle => {
+  const runSync = (): void => {
     syncScores().catch((error: unknown) => {
       trackKangurClientEvent('kangur_guest_scores_sync_failed', {
         learnerKey: 'unknown',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
     });
-  });
+  };
+
+  if (delayMs > 0) {
+    return {
+      kind: 'timeout',
+      id: safeSetTimeout(runSync, delayMs),
+    };
+  }
+
+  if (typeof globalThis.requestIdleCallback !== 'function') {
+    return {
+      kind: 'timeout',
+      id: safeSetTimeout(runSync, 1),
+    };
+  }
+
+  return {
+    kind: 'idle',
+    id: globalThis.requestIdleCallback(runSync),
+  };
 };
 
-const cancelGuestScoreSync = (idleHandle: number): void => {
-  if (typeof globalThis.cancelIdleCallback === 'function') {
-    globalThis.cancelIdleCallback(idleHandle);
+const cancelGuestScoreSync = (handle: GuestScoreSyncHandle): void => {
+  if (handle.kind === 'timeout') {
+    safeClearTimeout(handle.id);
     return;
   }
 
-  safeClearTimeout(idleHandle);
+  if (typeof globalThis.cancelIdleCallback === 'function') {
+    globalThis.cancelIdleCallback(handle.id);
+  }
 };
 
 const useGuestScoreSync = ({

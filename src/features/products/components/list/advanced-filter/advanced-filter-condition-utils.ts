@@ -114,12 +114,13 @@ const buildConditionForMultiValueOperator = (
   condition: ProductAdvancedFilterCondition
 ): ProductAdvancedFilterCondition => {
   if (Array.isArray(condition.value)) return stripConditionValueTo(condition);
-  if (isMissingValue(condition.value)) {
+  const currentValue = condition.value;
+  if (currentValue === undefined || currentValue === null || isBlankString(currentValue)) {
     return stripConditionValueTo(stripConditionValue(condition));
   }
   return stripConditionValueTo({
     ...condition,
-    value: [condition.value],
+    value: [currentValue],
   });
 };
 

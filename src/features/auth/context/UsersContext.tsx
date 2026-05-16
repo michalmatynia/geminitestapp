@@ -9,14 +9,14 @@ import type {
   AuthUserSecurityProfile,
 } from '@/shared/contracts/auth';
 import { internalError } from '@/shared/errors/app-error';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { createStrictContext, type StrictContextResult } from '@/shared/lib/react/createStrictContext';
 
 import { useUsersState, type UseUsersStateReturn } from '../hooks/useUsersState';
 
-const createUsersStrictContext = <T,>(hookName: string, displayName: string): {
-  Context: React.Context<T | undefined>;
-  useStrictContext: () => T;
-} =>
+const createUsersStrictContext = <T,>(
+  hookName: string,
+  displayName: string
+): StrictContextResult<T> =>
   createStrictContext<T>({
     hookName,
     providerName: 'a UsersProvider',

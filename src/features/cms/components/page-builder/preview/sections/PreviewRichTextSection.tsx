@@ -8,7 +8,7 @@ import { PreviewSectionMediaButton } from './PreviewSectionMediaButton';
 
 export function PreviewRichTextSection(): React.JSX.Element {
   const { layout } = useCmsPageContext();
-  const { section, PreviewBlockItem } = usePreviewSectionContext();
+  const { section } = usePreviewSectionContext();
   const { inspectorSettings } = usePreviewEditorState();
   const { onOpenMedia } = usePreviewEditorActions();
 

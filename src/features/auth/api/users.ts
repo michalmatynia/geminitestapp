@@ -42,7 +42,14 @@ export const updateAuthUser = async (
     return { ok: true, payload };
   } catch (_error: unknown) {
     logClientError(_error);
-    const fallbackPayload: AuthUserSummary = { id: userId, email: input.email ?? '' };
+    const fallbackPayload: AuthUserSummary = {
+      id: userId,
+      name: null,
+      email: input.email ?? null,
+      image: null,
+      emailVerified: null,
+      provider: 'credentials',
+    };
     return {
       ok: false,
       payload: fallbackPayload,

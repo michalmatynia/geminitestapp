@@ -39,13 +39,13 @@ export const toRecord = (value: unknown): Record<string, unknown> =>
   unknownRecordSchema.catch({}).parse(value);
 
 export const readString = (value: unknown): string | null =>
-  nonEmptyTrimmedStringSchema.catch(null).parse(value);
+  nonEmptyTrimmedStringSchema.safeParse(value).data ?? null;
 
 export const readBoolean = (value: unknown): boolean | null =>
-  z.boolean().catch(null).parse(value);
+  z.boolean().safeParse(value).data ?? null;
 
 export const readNumber = (value: unknown): number | null =>
-  finiteNumberSchema.catch(null).parse(value);
+  finiteNumberSchema.safeParse(value).data ?? null;
 
 export const readStringArray = (value: unknown): string[] =>
   stringArraySchema.catch([]).parse(value);

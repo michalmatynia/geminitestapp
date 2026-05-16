@@ -1,12 +1,10 @@
-import React from 'react';
-import { AlertTriangle, Eye, Monitor, SearchIcon } from 'lucide-react';
+import { AlertTriangle, Eye } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { Button, Tooltip } from '@/shared/ui/primitives.public';
 import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
 import {
-  getLogCategory,
   getPrimaryContextDocument,
   getStatusVariant,
   readAlertEvidence,

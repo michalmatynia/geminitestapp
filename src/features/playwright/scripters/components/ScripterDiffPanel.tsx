@@ -152,7 +152,7 @@ export function ScripterDiffPanel({ scripterId }: ScripterDiffPanelProps): JSX.E
           Diff against catalog
         </Button>
       </div>
-      {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+      {error !== null ? <Alert variant='error'>{error}</Alert> : null}
       {data ? (
         <div className='space-y-2'>
           <div className='flex flex-wrap gap-2 text-xs'>

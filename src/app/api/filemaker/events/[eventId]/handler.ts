@@ -28,9 +28,9 @@ const eventPatchSchema = z.object({
 });
 
 const resolveEventId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['eventId'];
+  const value = ctx.params?.['eventId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
-  return decodeURIComponent(raw);
+  return decodeURIComponent(raw ?? '');
 };
 
 export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

@@ -8,11 +8,11 @@ import type {
   MfaVerifyResponse,
 } from '@/shared/contracts/auth';
 
-type MfaSetupMutation = MutationResult<{ ok: boolean; payload: MfaSetupResponse }, void>;
+type MfaSetupMutation = MutationResult<{ ok: boolean; payload: MfaSetupResponse }, unknown>;
 type MfaVerifyMutation = MutationResult<{ ok: boolean; payload: MfaVerifyResponse }, string>;
 type MfaDisableMutation = MutationResult<
   { ok: boolean; payload: MfaDisableResponse },
-  string | { token?: string; recoveryCode?: string }
+  { token?: string; recoveryCode?: string }
 >;
 
 export function MfaSettings({

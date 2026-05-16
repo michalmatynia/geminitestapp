@@ -120,7 +120,6 @@ const compileLeafBlock = (block: EmailLeafBlock): string => {
     case 'divider': return compileDivider(block);
     case 'spacer': return compileSpacer(block);
   }
-  return '';
 };
 
 const compileContainerBlock = (block: EmailContainerBlock): string => {
@@ -129,7 +128,6 @@ const compileContainerBlock = (block: EmailContainerBlock): string => {
     case 'columns': return compileColumns(block);
     case 'row': return compileRow(block);
   }
-  return '';
 };
 
 const compileBlock = (block: EmailBlock): string =>

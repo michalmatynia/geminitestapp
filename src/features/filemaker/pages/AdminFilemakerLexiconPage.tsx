@@ -239,7 +239,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const { categoryFilter, query, setCategoryFilter, setQuery } = useUrlBackedLexiconFilters();
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
-  const { categoryOptions, editCategoryOptions } = useFilemakerLexiconTypeUi(database);
+  const { categoryOptions, editCategoryOptions, typeMetadata } = useFilemakerLexiconTypeUi(database);
   const filteredRows = useFilemakerLexiconRows(database, categoryFilter, query);
   const persistDatabase = usePersistFilemakerLexiconDatabase({
     settingsStore,
@@ -284,6 +284,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
       query={query}
       setQuery={setQuery}
       typeEditor={typeEditor}
+      typeMetadata={typeMetadata}
       patternEditor={patternEditor}
     />
   );

@@ -6,7 +6,6 @@
 
 import {
   CMS_THEME_SETTINGS_KEY,
-  DEFAULT_THEME,
   normalizeThemeSettings,
   type ThemeSettings,
 } from '@/shared/contracts/cms-theme';

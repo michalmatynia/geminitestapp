@@ -6,7 +6,6 @@
  */
 
 import 'server-only';
-import { randomUUID } from 'crypto';
 import type { JobBoardProvider } from '@/shared/lib/job-board/job-board-providers';
 import {
   collectJobBoardOfferUrls,
@@ -24,8 +23,14 @@ export const collectOfferUrls = async (
     concurrency?: number;
   }
 ): Promise<string[]> => {
+  const options = {
+    provider,
+    sourceUrl: config.origin,
+  };
   if (config.deterministic) {
-    return await collectJobBoardOfferUrlsDeterministically(provider, config.origin);
+    const result = await collectJobBoardOfferUrlsDeterministically(options);
+    return result.links.map((link) => link.url);
   }
-  return await collectJobBoardOfferUrls(provider, config.origin, config.concurrency);
+  const result = await collectJobBoardOfferUrls(options);
+  return result.links.map((link) => link.url);
 };

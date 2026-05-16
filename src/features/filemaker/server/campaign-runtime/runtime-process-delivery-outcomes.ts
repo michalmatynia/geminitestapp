@@ -10,7 +10,7 @@ import {
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryAttempt,
-  FilemakerEmailCampaignDeliveryStatus,
+  FilemakerEmailCampaignDeliveryAttemptStatus,
   FilemakerEmailCampaignEvent,
 } from '../../types';
 import {
@@ -130,7 +130,7 @@ const resolveNextRetryAt = (input: {
 };
 
 const buildFailedDelivery = (
-  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryStatus }
+  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryAttemptStatus }
 ): FilemakerEmailCampaignDelivery => ({
   ...input.delivery,
   ...input.attempt.contentMetadata,
@@ -148,7 +148,7 @@ const buildFailedDelivery = (
 });
 
 const buildFailedAttempt = (
-  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryStatus }
+  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryAttemptStatus }
 ): FilemakerEmailCampaignDeliveryAttempt =>
   createFilemakerEmailCampaignDeliveryAttempt({
     campaignId: input.context.campaign.id,
@@ -170,7 +170,7 @@ const buildFailedAttempt = (
   });
 
 const buildFailedEvent = (
-  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryStatus }
+  input: DeliveryHandlerInput & { failure: DeliveryFailureMetadata; status: FilemakerEmailCampaignDeliveryAttemptStatus }
 ): FilemakerEmailCampaignEvent =>
   createFilemakerEmailCampaignEvent({
     campaignId: input.context.campaign.id,
@@ -188,7 +188,7 @@ const appendPermanentBounceSuppression = (input: {
   delivery: FilemakerEmailCampaignDelivery;
   failure: DeliveryFailureMetadata;
   state: RuntimeProcessState;
-  status: FilemakerEmailCampaignDeliveryStatus;
+  status: FilemakerEmailCampaignDeliveryAttemptStatus;
 }): RuntimeProcessState => {
   if (input.status !== 'bounced') return input.state;
   if (!isFilemakerEmailCampaignPermanentFailureCategory(input.failure.failureCategory)) return input.state;

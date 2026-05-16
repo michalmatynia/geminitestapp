@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-03-26T12:53:12.648Z",
+  "strictMode": false,
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "totalDurationMs": 3941
+  },
+  "results": [
+    {
+      "id": "integration-mongo",
+      "name": "Mongo Integration Project",
+      "project": "integration-mongo",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3941,
+      "command": "./node_modules/.bin/vitest run --project integration-mongo",
+      "steps": [
+        {
+          "id": "integration-mongo-vitest",
+          "name": "Vitest integration-mongo project",
+          "command": "./node_modules/.bin/vitest run --project integration-mongo",
+          "args": [
+            "run",
+            "--project",
+            "integration-mongo"
+          ],
+          "status": "pass",
+          "exitCode": 0,
+          "durationMs": 3941,
+          "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |integration-mongo| src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts (10 tests) 11ms\n ✓ |integration-mongo| __tests__/features/products/services/mongo-product-repository.test.ts (8 tests) 10ms\n ✓ |integration-mongo| __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 7ms\n ✓ |integration-mongo| src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts (14 tests) 6ms\n ✓ |integration-mongo| __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 6ms\n ✓ |integration-mongo| __tests__/features/products/services/mongo-parameter-repository.test.ts (2 tests) 5ms\n ✓ |integration-mongo| src/shared/lib/products/services/validation-pattern-repository/mongo-validation-pattern-repository.test.ts (2 tests) 4ms\n ✓ |integration-mongo| __tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts (5 tests) 4ms\n ↓ |integration-mongo| __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts (1 test | 1 skipped)\n\n Test Files  8 passed | 1 skipped (9)\n      Tests  53 passed | 1 skipped (54)\n   Start at  13:53:09\n   Duration  3.50s (transform 833ms, setup 1.52s, import 1.21s, tests 53ms, environment 1ms)"
+        }
+      ],
+      "output": "[step 1/1] Vitest integration-mongo project\nRUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |integration-mongo| src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts (10 tests) 11ms\n ✓ |integration-mongo| __tests__/features/products/services/mongo-product-repository.test.ts (8 tests) 10ms\n ✓ |integration-mongo| __tests__/features/notesapp/services/mongo-note-repository.test.ts (7 tests) 7ms\n ✓ |integration-mongo| src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts (14 tests) 6ms\n ✓ |integration-mongo| __tests__/features/cms/services/mongo-cms-repository.test.ts (5 tests) 6ms\n ✓ |integration-mongo| __tests__/features/products/services/mongo-parameter-repository.test.ts (2 tests) 5ms\n ✓ |integration-mongo| src/shared/lib/products/services/validation-pattern-repository/mongo-validation-pattern-repository.test.ts (2 tests) 4ms\n ✓ |integration-mongo| __tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts (5 tests) 4ms\n ↓ |integration-mongo| __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts (1 test | 1 skipped)\n\n Test Files  8 passed | 1 skipped (9)\n      Tests  53 passed | 1 skipped (54)\n   Start at  13:53:09\n   Duration  3.50s (transform 833ms, setup 1.52s, import 1.21s, tests 53ms, environment 1ms)"
+    }
+  ]
+}

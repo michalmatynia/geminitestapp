@@ -37,12 +37,13 @@ export function ProductDefaultsForm({
   return (
     <FormSection title='Catalog Defaults' className='p-4 space-y-4'>
       <Input
-        label='Default Product Name'
+        aria-label='Default Product Name'
+        placeholder='Default Product Name'
         value={readStringSetting(settings, 'defaultName')}
         onChange={handleNameChange}
       />
       <SelectSimple
-        label='Default Status'
+        ariaLabel='Default Status'
         value={readStringSetting(settings, 'defaultStatus', 'draft')}
         onValueChange={(value: string): void => onUpdate({ defaultStatus: value })}
         options={[{ value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published' }]}

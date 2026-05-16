@@ -251,7 +251,7 @@ export const resolveKangurActiveLessonRuntime = ({
   });
 
   return {
-    ActiveLessonComponent,
+    ActiveLessonComponent: ActiveLessonComponent ?? null,
     activeLesson,
     activeLessonAssignment,
     activeLessonDocument: activeLessonDocument ?? null,

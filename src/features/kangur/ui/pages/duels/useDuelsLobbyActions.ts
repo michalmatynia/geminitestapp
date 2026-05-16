@@ -1,26 +1,12 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
-import {
-  withKangurClientError,
-} from '@/features/kangur/observability/client';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import {
-  KANGUR_DUELS_DEFAULT_LOBBY_LIMIT,
-} from '@/features/kangur/shared/duels-config';
-import type {
-  KangurDuelLobbyEntry,
-  KangurDuelLobbyPresenceEntry,
-} from '@/features/kangur/shared/contracts/kangur-duels';
-import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
-
-const kangurPlatform = getKangurPlatform();
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 export const beginAbortableLobbyLoad = (input: {
   errorReset: () => void;
-  loadingRef: React.MutableRefObject<AbortController | null>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  pollingRef: React.MutableRefObject<boolean>;
+  loadingRef: MutableRefObject<AbortController | null>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  pollingRef: MutableRefObject<boolean>;
   showLoading: boolean;
 }): AbortController => {
   if (input.loadingRef.current !== null && input.showLoading) {
@@ -39,9 +25,9 @@ export const beginAbortableLobbyLoad = (input: {
 
 export const finishAbortableLobbyLoad = (input: {
   controller: AbortController;
-  loadingRef: React.MutableRefObject<AbortController | null>;
-  pollingRef: React.MutableRefObject<boolean>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  loadingRef: MutableRefObject<AbortController | null>;
+  pollingRef: MutableRefObject<boolean>;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
   showLoading: boolean;
 }): void => {
   if (input.loadingRef.current !== input.controller) {

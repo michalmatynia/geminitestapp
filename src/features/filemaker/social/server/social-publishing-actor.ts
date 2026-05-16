@@ -22,19 +22,20 @@ export const resolveSocialPublishingActor = async (
   _request?: NextRequest
 ): Promise<SocialPublishingActor> => {
   const session = await readOptionalServerAuthSession();
-  const userId = session?.user?.id;
+  const sessionUser = session?.user;
+  const userId = sessionUser?.id;
 
   if (!userId) {
     throw authError('Authentication required.');
   }
 
   const user = await findAuthUserById(userId);
-  const sessionEmail = typeof session.user.email === 'string' ? session.user.email : null;
-  const sessionName = typeof session.user.name === 'string' ? session.user.name.trim() : null;
+  const sessionEmail = typeof sessionUser.email === 'string' ? sessionUser.email : null;
+  const sessionName = typeof sessionUser.name === 'string' ? sessionUser.name.trim() : null;
 
   return {
     actorId: userId,
-    role: mapRole((session.user as { role?: unknown }).role),
+    role: mapRole((sessionUser as { role?: unknown }).role),
     email: user?.email ?? sessionEmail,
     name: user?.name ?? sessionName,
   };

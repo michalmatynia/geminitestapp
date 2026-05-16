@@ -88,7 +88,14 @@ export function useFilemakerGoalAutomation(): {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setState({ status: 'running', iterations: [], evaluations: [], done: false, error: null });
+    setState({
+      status: 'running',
+      iterations: [],
+      evaluations: [],
+      done: false,
+      finalUrl: '',
+      error: null,
+    });
 
     try {
       const response = await fetch('/api/filemaker/goal-automation', {

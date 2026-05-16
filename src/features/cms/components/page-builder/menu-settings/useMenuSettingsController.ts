@@ -14,7 +14,7 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 
 export function useMenuSettingsController() {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
-  const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
+  const { activeDomainId, zoningEnabled } = useCmsDomainSelection();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const persistTimerRef = useRef<number | null>(null);

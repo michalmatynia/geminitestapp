@@ -30,6 +30,7 @@ import type {
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useAgentPersonas } from '@/shared/hooks/useAgentPersonas';
 import { api } from '@/shared/lib/api-client';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
@@ -183,7 +184,7 @@ export function useKangurSettings() {
   const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
   const [isProbingNarrator, setIsProbingNarrator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const copyTimeoutRef = useRef<number | null>(null);
+  const copyTimeoutRef = useRef<SafeTimerId | null>(null);
   const narratorProbeRequestIdRef = useRef(0);
   const lastAutoProbeVoiceRef = useRef<KangurLessonTtsVoice | null>(null);
 

@@ -2,7 +2,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { AiInsightType } from '@/shared/contracts/ai-insights';
 
 export function constructMessages(
-  type: AiInsightType,
+  _type: AiInsightType,
   prompt: { systemPrompt: string; userPrompt: string }
 ): ChatMessage[] {
   const now = new Date().toISOString();

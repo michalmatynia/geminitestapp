@@ -11,8 +11,8 @@ interface BlockPickerProps<T, K extends string> {
   palette: Array<{ kind: K; label: string }>;
   isInsertable: (blocks: T[], selectedBlockId: string | null, kind: K) => boolean;
   createBlock: (kind: K) => T;
-  resolveInsertionParent: (blocks: T[], selectedBlockId: string | null, kind: K) => { parentId: string | null; index: number };
-  insertBlock: (blocks: T[], parentId: string | null, newBlock: T, index: number) => T[];
+  resolveInsertionParent: (blocks: T[], selectedBlockId: string | null, kind: K) => { parentId: string | null; index?: number };
+  insertBlock: (blocks: T[], parentId: string | null, newBlock: T, index?: number) => T[];
   className?: string;
 }
 

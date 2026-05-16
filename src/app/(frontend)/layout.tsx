@@ -11,6 +11,7 @@ import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
 } from '@/features/kangur/server';
+import { renderKangurAuthBootstrapScript } from '@/features/kangur/server/renderKangurAuthBootstrapScript';
 import {
   buildRequestPathname,
   buildTimingPayload,
@@ -97,9 +98,7 @@ function ResolvedFrontendLayoutContent({
       {layoutState.shouldApplyKangurSurfaceBootstrap && (
         <InlineSafeScript code={KANGUR_SURFACE_HINT_SCRIPT} />
       )}
-      {layoutState.kangurAuthBootstrapScript !== null && (
-        <InlineSafeScript code={layoutState.kangurAuthBootstrapScript} />
-      )}
+      {renderKangurAuthBootstrapScript(layoutState.kangurAuthBootstrapScript)}
       {layoutState.loadKangurStorefrontBootstrap ? <KangurServerShell /> : null}
       <FrontendPublicOwnerProvider
         publicOwner={layoutState.publicOwner}

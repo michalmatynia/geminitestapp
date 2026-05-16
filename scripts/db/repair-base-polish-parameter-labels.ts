@@ -44,6 +44,7 @@ type ProductValueRepair = {
 };
 
 type SettingDocument = {
+  _id?: ObjectId | string;
   key?: string;
   value?: string;
 };

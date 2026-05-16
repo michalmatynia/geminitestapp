@@ -12,7 +12,7 @@ import {
 
 function useSyncManuallySelectedKeys(params: {
   suggestionIds: string[];
-  setManuallySelectedKeys: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setManuallySelectedKeys: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }): void {
   const { suggestionIds, setManuallySelectedKeys } = params;
   const activeSuggestionKeySet = useMemo(() => new Set(suggestionIds), [suggestionIds]);
@@ -23,7 +23,7 @@ function useSyncManuallySelectedKeys(params: {
       return;
     }
 
-    setManuallySelectedKeys((current: Record<string, string>) => {
+    setManuallySelectedKeys((current: Record<string, boolean>) => {
       const next = Object.fromEntries(
         Object.entries(current).filter(([suggestionKey]) => activeSuggestionKeySet.has(suggestionKey))
       );
@@ -35,8 +35,8 @@ function useSyncManuallySelectedKeys(params: {
 function useSyncSelectedKeys(params: {
   suggestionIds: string[];
   resolvedClusters: SelectorRegistryProbeSessionCluster[];
-  defaultKeysByRole: Record<string, string>;
-  manuallySelectedKeys: Record<string, string>;
+  defaultKeysByRole: Map<string, string>;
+  manuallySelectedKeys: Record<string, boolean>;
   setSelectedKeys: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }): void {
   const { suggestionIds, resolvedClusters, defaultKeysByRole, manuallySelectedKeys, setSelectedKeys } = params;
@@ -78,9 +78,9 @@ function useSyncSelectedKeys(params: {
 export function useProbeSessionSelection(params: {
   activeSessions: SelectorRegistryProbeSession[];
   resolvedClusters: SelectorRegistryProbeSessionCluster[];
-  defaultKeysByRole: Record<string, string>;
-  manuallySelectedKeys: Record<string, string>;
-  setManuallySelectedKeys: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  defaultKeysByRole: Map<string, string>;
+  manuallySelectedKeys: Record<string, boolean>;
+  setManuallySelectedKeys: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   setSelectedKeys: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }): void {
   const {

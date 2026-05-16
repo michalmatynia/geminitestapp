@@ -6,7 +6,7 @@ interface JobScanDetailViewProps {
   selectedScan: JobScanRecord | null;
   companies: Company[];
   onClose: () => void;
-  onCompanyUpdated: () => void;
+  onCompanyUpdated: (company: Company) => void;
   onPromoted: () => void;
 }
 

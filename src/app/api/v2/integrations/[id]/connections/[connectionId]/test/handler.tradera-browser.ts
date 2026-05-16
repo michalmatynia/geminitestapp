@@ -73,6 +73,9 @@ export async function handleTraderaBrowserTest(
   if (quicklistPreflightMode && requestedProductId.length > 0) {
     const productRepo = await getProductRepository();
     const product = await productRepo.getProductById(requestedProductId);
+    if (product === null) {
+      return fail('Validating product', `Product "${requestedProductId}" was not found.`);
+    }
     await validateTraderaQuickListProductConfig({ product, connection });
   }
 

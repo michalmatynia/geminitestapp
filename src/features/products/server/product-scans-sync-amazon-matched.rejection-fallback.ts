@@ -18,6 +18,7 @@ import {
 import { buildProductScannerEngineRequestOptions } from './product-scanner-settings';
 import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 import {
+  createPersistedProductScanStep,
   createProductScanStartedRawResult,
   persistSynchronizedScan,
   upsertPersistedProductScanStep,
@@ -169,10 +170,9 @@ const startRejectedFallbackProviderRun = async (
 const buildRejectedFallbackQueueStep = (
   context: RejectedFallbackContext,
   status: RejectedQueueStatus
-): ProductScanRecord['steps'][number] => ({
+): ProductScanRecord['steps'][number] => createPersistedProductScanStep({
   key: 'queue_scan',
   label: 'Retry with fallback image-search provider',
-  group: 'input',
   attempt: resolveNextQueueStepAttempt(context.finalizedAmazonSteps),
   status: 'completed',
   resultCode: status === 'running' ? 'run_started' : 'run_queued',

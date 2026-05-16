@@ -88,7 +88,7 @@ const syncUpdatedProductAcrossCaches = (
 const markUpdatedProductCachesStale = (
   queryClient: QueryClient,
   productId: string
-): Promise<void[]> =>
+): Promise<void> =>
   Promise.all([
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.lists(),
@@ -102,7 +102,7 @@ const markUpdatedProductCachesStale = (
       queryKey: QUERY_KEYS.products.detailEdit(productId),
       refetchType: 'none',
     }),
-  ]);
+  ]).then(() => undefined);
 
 const prepareProductFieldOptimisticUpdate = async (
   queryClient: QueryClient,

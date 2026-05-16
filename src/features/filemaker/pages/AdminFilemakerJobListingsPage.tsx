@@ -31,14 +31,14 @@ import {
 const jobApplicationLogEntrySchema = z.object({
   id: z.string(),
   appliedAt: z.string(),
-  personId: z.string().nullable().optional(),
-  personName: z.string().nullable().optional(),
-  method: z.string(),
-  toStatus: z.string().nullable().optional(),
+  personId: z.string().nullable().default(null),
+  personName: z.string().nullable().default(null),
+  method: z.enum(['manual', 'apply_script']),
+  toStatus: z.enum(['draft', 'ready', 'applied', 'rejected', 'archived']).nullable().default(null),
 });
 
 const enrichedJobListingSchema = filemakerJobListingSchema.extend({
-  organizationName: z.string().nullable().optional(),
+  organizationName: z.string().nullable().default(null),
   isApplied: z.boolean(),
   applicationId: z.string().nullable(),
   applicationLog: z.array(jobApplicationLogEntrySchema),

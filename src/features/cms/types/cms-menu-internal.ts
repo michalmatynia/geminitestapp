@@ -1,5 +1,3 @@
-import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
-
 export interface CmsMenuInternalProps {
   backgroundColor?: string;
   textColor?: string;

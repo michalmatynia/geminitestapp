@@ -1,0 +1,1826 @@
+{
+  "generatedAt": "2026-03-28T14:56:01.652Z",
+  "status": "fail",
+  "summary": {
+    "repoTestFileCount": 2712,
+    "e2eTestFileCount": 56,
+    "scriptTestFileCount": 91,
+    "registeredSuiteCount": 17,
+    "registeredLaneCount": 5,
+    "majorLaneCount": 4,
+    "recordedRunCount": 0,
+    "passingRecordedRunCount": 0,
+    "failingRecordedRunCount": 0,
+    "warningRecordedRunCount": 0,
+    "latestRecordedRunAt": null,
+    "featureCount": 27,
+    "featuresWithTestCount": 27,
+    "featuresWithoutTestCount": 0,
+    "featuresWithoutFastTestCount": 0,
+    "featuresWithoutNegativeTestCount": 0,
+    "onlyCount": 0,
+    "skipCount": 32,
+    "todoCount": 0,
+    "baselineCount": 7,
+    "availableBaselineCount": 7,
+    "failingBaselineCount": 4,
+    "missingBaselineCount": 0,
+    "requiredFailingBaselineCount": 2,
+    "requiredMissingBaselineCount": 0,
+    "staleBaselineCount": 0,
+    "agingBaselineCount": 6,
+    "slowestSuiteCount": 20
+  },
+  "inventory": {
+    "repoTestFileCount": 2712,
+    "e2eTestFileCount": 56,
+    "scriptTestFileCount": 91,
+    "registry": {
+      "suiteCount": 17,
+      "laneCount": 5,
+      "majorLaneIds": [
+        "pr-required",
+        "nightly-deep",
+        "weekly-audit",
+        "release-gate"
+      ]
+    },
+    "featureCoverage": {
+      "featureCount": 27,
+      "featuresWithTestCount": 27,
+      "featuresWithoutTestCount": 0,
+      "featuresWithoutTests": [],
+      "featuresWithoutFastTests": [],
+      "featuresWithoutNegativeTests": []
+    },
+    "hygiene": {
+      "onlyCount": 0,
+      "skipCount": 32,
+      "todoCount": 0
+    }
+  },
+  "registry": {
+    "suites": [
+      {
+        "id": "lint",
+        "label": "Lint",
+        "kind": "static-analysis",
+        "cadence": [
+          "pr",
+          "release"
+        ],
+        "cost": "medium",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "lint-domains",
+        "label": "Lint Domain Gate",
+        "kind": "static-analysis",
+        "cadence": [
+          "nightly",
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "typecheck",
+        "label": "Typecheck",
+        "kind": "static-analysis",
+        "cadence": [
+          "local",
+          "pr",
+          "release"
+        ],
+        "cost": "medium",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "build",
+        "label": "Production Build",
+        "kind": "build",
+        "cadence": [
+          "release"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "unit",
+        "label": "Vitest Unit Project",
+        "kind": "unit",
+        "cadence": [
+          "pr",
+          "release"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "unit-domains",
+        "label": "Unit Domain Timings",
+        "kind": "unit",
+        "cadence": [
+          "nightly",
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "critical-flows",
+        "label": "Critical Flow Regression",
+        "kind": "regression",
+        "cadence": [
+          "local",
+          "pr",
+          "nightly",
+          "release"
+        ],
+        "cost": "medium",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "security-smoke",
+        "label": "Security Smoke",
+        "kind": "security",
+        "cadence": [
+          "pr",
+          "nightly",
+          "release"
+        ],
+        "cost": "medium",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "accessibility-smoke",
+        "label": "Accessibility Smoke",
+        "kind": "accessibility",
+        "cadence": [
+          "pr",
+          "nightly",
+          "release"
+        ],
+        "cost": "medium",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "accessibility-route-crawl",
+        "label": "Accessibility Route Crawl",
+        "kind": "accessibility",
+        "cadence": [
+          "nightly",
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "integration-mongo",
+        "label": "Mongo Integration Project",
+        "kind": "integration",
+        "cadence": [
+          "pr",
+          "release"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "integration-mongo-baseline",
+        "label": "Mongo Integration Baseline",
+        "kind": "integration",
+        "cadence": [
+          "nightly",
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "high-risk-coverage",
+        "label": "High-Risk Coverage Baseline",
+        "kind": "coverage",
+        "cadence": [
+          "nightly",
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "test-distribution",
+        "label": "Test Distribution Scan",
+        "kind": "quality",
+        "cadence": [
+          "weekly"
+        ],
+        "cost": "low",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "test-quality-snapshot",
+        "label": "Testing Quality Snapshot",
+        "kind": "quality",
+        "cadence": [
+          "weekly"
+        ],
+        "cost": "low",
+        "supportsSummaryJson": true
+      },
+      {
+        "id": "e2e",
+        "label": "Playwright End-to-End",
+        "kind": "e2e",
+        "cadence": [
+          "nightly",
+          "release"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": false
+      },
+      {
+        "id": "weekly-quality-report",
+        "label": "Weekly Quality Report",
+        "kind": "quality",
+        "cadence": [
+          "weekly"
+        ],
+        "cost": "high",
+        "supportsSummaryJson": true
+      }
+    ],
+    "lanes": [
+      {
+        "id": "local-fast",
+        "label": "Local Fast Confidence",
+        "cadence": "on-demand",
+        "requiresLedgerEntry": false,
+        "suites": [
+          "typecheck",
+          "critical-flows"
+        ]
+      },
+      {
+        "id": "pr-required",
+        "label": "Pull Request Required",
+        "cadence": "pull-request",
+        "requiresLedgerEntry": true,
+        "suites": [
+          "lint",
+          "typecheck",
+          "unit",
+          "critical-flows",
+          "security-smoke",
+          "accessibility-smoke",
+          "integration-mongo"
+        ]
+      },
+      {
+        "id": "nightly-deep",
+        "label": "Nightly Deep Regression",
+        "cadence": "nightly",
+        "requiresLedgerEntry": true,
+        "suites": [
+          "lint-domains",
+          "unit-domains",
+          "critical-flows",
+          "security-smoke",
+          "accessibility-smoke",
+          "accessibility-route-crawl",
+          "integration-mongo-baseline",
+          "high-risk-coverage",
+          "e2e"
+        ]
+      },
+      {
+        "id": "weekly-audit",
+        "label": "Weekly Audit And Trend",
+        "cadence": "weekly",
+        "requiresLedgerEntry": true,
+        "suites": [
+          "weekly-quality-report",
+          "integration-mongo-baseline",
+          "high-risk-coverage",
+          "test-distribution",
+          "test-quality-snapshot"
+        ]
+      },
+      {
+        "id": "release-gate",
+        "label": "Release Gate",
+        "cadence": "release",
+        "requiresLedgerEntry": true,
+        "suites": [
+          "build",
+          "typecheck",
+          "unit",
+          "critical-flows",
+          "security-smoke",
+          "accessibility-smoke",
+          "integration-mongo",
+          "e2e"
+        ]
+      }
+    ]
+  },
+  "ledger": {
+    "generatedAt": "2026-03-28T14:39:04.078Z",
+    "summary": {
+      "totalEntries": 0,
+      "passingEntries": 0,
+      "failingEntries": 0,
+      "warningEntries": 0,
+      "latestRunAt": null
+    },
+    "latestEntry": null
+  },
+  "baselines": [
+    {
+      "id": "unitDomains",
+      "label": "Unit Domain Gate",
+      "required": true,
+      "sourcePath": "docs/metrics/unit-domain-timings-latest.json",
+      "status": "fail",
+      "generatedAt": "2026-03-26T12:50:41.057Z",
+      "ageHours": 50.1,
+      "freshness": "aging",
+      "totalSuites": 5,
+      "passedSuites": 4,
+      "failedSuites": 1,
+      "passRate": 80,
+      "totalDurationMs": 468320,
+      "note": null,
+      "topSlowSuites": [
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "ai-paths",
+          "name": "AI Paths",
+          "status": "pass",
+          "durationMs": 197048,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/ai-paths __tests__/api/ai-paths __tests__/api/ai-paths- src/features/ai/ai-paths",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "products",
+          "name": "Products",
+          "status": "fail",
+          "durationMs": 107460,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/products __tests__/api/products src/features/products __tests__/shared/contracts/products-contracts.test.ts",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "case-resolver",
+          "name": "Case Resolver",
+          "status": "pass",
+          "durationMs": 91953,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/case-resolver src/features/case-resolver/capture src/features/case-resolver/capture/__tests__ src/features/prompt-exploder/__tests__/case-resolver",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "image-studio",
+          "name": "Image Studio",
+          "status": "pass",
+          "durationMs": 59701,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/image-studio src/features/ai/image-studio",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "auth",
+          "name": "Auth",
+          "status": "pass",
+          "durationMs": 12158,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth __tests__/api/auth src/features/auth",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "ai-paths",
+          "name": "AI Paths",
+          "status": "pass",
+          "durationMs": 197048,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/ai-paths __tests__/api/ai-paths __tests__/api/ai-paths- src/features/ai/ai-paths",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "products",
+          "name": "Products",
+          "status": "fail",
+          "durationMs": 107460,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/products __tests__/api/products src/features/products __tests__/shared/contracts/products-contracts.test.ts",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "case-resolver",
+          "name": "Case Resolver",
+          "status": "pass",
+          "durationMs": 91953,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/case-resolver src/features/case-resolver/capture src/features/case-resolver/capture/__tests__ src/features/prompt-exploder/__tests__/case-resolver",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "image-studio",
+          "name": "Image Studio",
+          "status": "pass",
+          "durationMs": 59701,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/image-studio src/features/ai/image-studio",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        },
+        {
+          "baselineId": "unitDomains",
+          "baselineLabel": "Unit Domain Gate",
+          "suiteId": "auth",
+          "name": "Auth",
+          "status": "pass",
+          "durationMs": 12158,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth __tests__/api/auth src/features/auth",
+          "generatedAt": "2026-03-26T12:50:41.057Z"
+        }
+      ]
+    },
+    {
+      "id": "criticalFlows",
+      "label": "Critical Flow Gate",
+      "required": true,
+      "sourcePath": "docs/metrics/critical-flow-tests-latest.json",
+      "status": "pass",
+      "generatedAt": "2026-03-26T12:42:44.265Z",
+      "ageHours": 50.2,
+      "freshness": "aging",
+      "totalSuites": 6,
+      "passedSuites": 6,
+      "failedSuites": 0,
+      "passRate": 100,
+      "totalDurationMs": 30021,
+      "note": null,
+      "topSlowSuites": [
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "products-trigger-queue-integration",
+          "name": "Products Trigger Button Queue Integration",
+          "status": "pass",
+          "durationMs": 11383,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "auth-session",
+          "name": "Authentication + Session Bootstrap",
+          "status": "pass",
+          "durationMs": 6606,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "ai-paths-runtime",
+          "name": "AI Paths Run Execution",
+          "status": "pass",
+          "durationMs": 4557,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "case-resolver-capture",
+          "name": "Case Resolver OCR + Capture Mapping",
+          "status": "pass",
+          "durationMs": 3053,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "image-studio-generate",
+          "name": "Image Studio Generate + Preview",
+          "status": "pass",
+          "durationMs": 2316,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "products-trigger-queue-integration",
+          "name": "Products Trigger Button Queue Integration",
+          "status": "pass",
+          "durationMs": 11383,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/job-queue-context.enqueue-events.test.tsx src/shared/contracts/__tests__/ai-paths-run-enqueued-event.contract-runtime.test.ts src/shared/lib/__tests__/query-invalidation.notify-ai-path-run-enqueued.test.ts src/shared/lib/__tests__/query-invalidation.optimistically-insert-run.test.ts src/shared/lib/ai-paths/__tests__/optimistic-run-queue.test.ts src/shared/lib/ai-paths/api/__tests__/enqueue-client-contract.test.ts src/features/products/hooks/useProductAiPathsRunSync.test.tsx src/features/products/state/queued-product-ops.test.ts src/shared/lib/ai-paths/hooks/trigger-event-selection.test.ts src/shared/lib/ai-paths/hooks/trigger-event-sanitization.test.ts src/shared/lib/ai-paths/hooks/trigger-event-utils.test.ts src/shared/lib/ai-paths/hooks/trigger-event-recovery.test.ts src/shared/lib/ai-paths/hooks/trigger-event-context.test.ts src/shared/lib/ai-paths/hooks/trigger-event-invalidation.test.ts src/shared/lib/ai-paths/hooks/trigger-event-settings.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "auth-session",
+          "name": "Authentication + Session Bootstrap",
+          "status": "pass",
+          "durationMs": 6606,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "ai-paths-runtime",
+          "name": "AI Paths Run Execution",
+          "status": "pass",
+          "durationMs": 4557,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/ai/ai-paths/services/path-run-executor.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "case-resolver-capture",
+          "name": "Case Resolver OCR + Capture Mapping",
+          "status": "pass",
+          "durationMs": 3053,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/case-resolver/__tests__/workspace-persistence.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "image-studio-generate",
+          "name": "Image Studio Generate + Preview",
+          "status": "pass",
+          "durationMs": 2316,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        },
+        {
+          "baselineId": "criticalFlows",
+          "baselineLabel": "Critical Flow Gate",
+          "suiteId": "products-core-crud",
+          "name": "Products CRUD + Listing Refresh",
+          "status": "pass",
+          "durationMs": 2106,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/products/services/getSettingValue.test.ts",
+          "generatedAt": "2026-03-26T12:42:44.265Z"
+        }
+      ]
+    },
+    {
+      "id": "securitySmoke",
+      "label": "Security Smoke Gate",
+      "required": true,
+      "sourcePath": "docs/metrics/security-smoke-latest.json",
+      "status": "pass",
+      "generatedAt": "2026-03-26T12:42:52.693Z",
+      "ageHours": 50.2,
+      "freshness": "aging",
+      "totalSuites": 5,
+      "passedSuites": 5,
+      "failedSuites": 0,
+      "passRate": 100,
+      "totalDurationMs": 8391,
+      "note": null,
+      "topSlowSuites": [
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-verify-credentials",
+          "name": "Auth Verify Credentials API",
+          "status": "pass",
+          "durationMs": 1888,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/api/verify-credentials.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "rate-limit",
+          "name": "AI Paths Access Rate Limit",
+          "status": "pass",
+          "durationMs": 1791,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-encryption",
+          "name": "Auth Encryption",
+          "status": "pass",
+          "durationMs": 1684,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-encryption.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "log-redaction",
+          "name": "Observability Log Redaction",
+          "status": "pass",
+          "durationMs": 1643,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/shared/lib/observability/log-redaction.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-security",
+          "name": "Auth Security Policy",
+          "status": "pass",
+          "durationMs": 1385,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-security.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-verify-credentials",
+          "name": "Auth Verify Credentials API",
+          "status": "pass",
+          "durationMs": 1888,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/api/verify-credentials.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "rate-limit",
+          "name": "AI Paths Access Rate Limit",
+          "status": "pass",
+          "durationMs": 1791,
+          "runner": null,
+          "command": "npx vitest run --project unit src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-encryption",
+          "name": "Auth Encryption",
+          "status": "pass",
+          "durationMs": 1684,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-encryption.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "log-redaction",
+          "name": "Observability Log Redaction",
+          "status": "pass",
+          "durationMs": 1643,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/shared/lib/observability/log-redaction.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        },
+        {
+          "baselineId": "securitySmoke",
+          "baselineLabel": "Security Smoke Gate",
+          "suiteId": "auth-security",
+          "name": "Auth Security Policy",
+          "status": "pass",
+          "durationMs": 1385,
+          "runner": null,
+          "command": "npx vitest run --project unit __tests__/features/auth/utils/auth-security.test.ts",
+          "generatedAt": "2026-03-26T12:42:52.693Z"
+        }
+      ]
+    },
+    {
+      "id": "highRiskCoverage",
+      "label": "High-Risk Coverage Gate",
+      "required": false,
+      "sourcePath": "docs/metrics/high-risk-coverage-latest.json",
+      "status": "fail",
+      "generatedAt": "2026-03-27T14:57:35.230Z",
+      "ageHours": 24,
+      "freshness": "fresh",
+      "totalSuites": 1,
+      "passedSuites": null,
+      "failedSuites": null,
+      "passRate": null,
+      "totalDurationMs": 43,
+      "note": "No generated high-risk coverage artifact exists yet.",
+      "topSlowSuites": [],
+      "slowSuites": []
+    },
+    {
+      "id": "accessibilitySmoke",
+      "label": "Accessibility Smoke Gate",
+      "required": true,
+      "sourcePath": "docs/metrics/accessibility-smoke-latest.json",
+      "status": "fail",
+      "generatedAt": "2026-03-26T13:06:45.566Z",
+      "ageHours": 49.8,
+      "freshness": "aging",
+      "totalSuites": 14,
+      "passedSuites": 12,
+      "failedSuites": 2,
+      "passRate": 85.7,
+      "totalDurationMs": 650544,
+      "note": null,
+      "topSlowSuites": [
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "case-resolver-browser-a11y",
+          "name": "Case Resolver Accessibility",
+          "status": "pass",
+          "durationMs": 141679,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "cms-builder-browser-a11y",
+          "name": "CMS Builder Accessibility",
+          "status": "pass",
+          "durationMs": 134817,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "cms-pages-browser-a11y",
+          "name": "CMS Pages Accessibility",
+          "status": "fail",
+          "durationMs": 123268,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "products-list-browser-a11y",
+          "name": "Products List Accessibility",
+          "status": "pass",
+          "durationMs": 73997,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "notes-workspace-browser-a11y",
+          "name": "Notes Workspace Accessibility",
+          "status": "pass",
+          "durationMs": 73559,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "case-resolver-browser-a11y",
+          "name": "Case Resolver Accessibility",
+          "status": "pass",
+          "durationMs": 141679,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "cms-builder-browser-a11y",
+          "name": "CMS Builder Accessibility",
+          "status": "pass",
+          "durationMs": 134817,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "cms-pages-browser-a11y",
+          "name": "CMS Pages Accessibility",
+          "status": "fail",
+          "durationMs": 123268,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "products-list-browser-a11y",
+          "name": "Products List Accessibility",
+          "status": "pass",
+          "durationMs": 73997,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "notes-workspace-browser-a11y",
+          "name": "Notes Workspace Accessibility",
+          "status": "pass",
+          "durationMs": 73559,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "admin-dashboard-browser-a11y",
+          "name": "Admin Dashboard Accessibility",
+          "status": "pass",
+          "durationMs": 44780,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "public-auth-routes-browser-a11y",
+          "name": "Public Auth Route Accessibility",
+          "status": "pass",
+          "durationMs": 26036,
+          "runner": "playwright",
+          "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "kangur-profile-a11y",
+          "name": "Kangur Profile Accessibility",
+          "status": "pass",
+          "durationMs": 7156,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "products-edit-a11y",
+          "name": "Products Edit Form Accessibility",
+          "status": "pass",
+          "durationMs": 5363,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "ai-paths-a11y",
+          "name": "AI Paths Canvas Accessibility",
+          "status": "pass",
+          "durationMs": 4771,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "image-studio-a11y",
+          "name": "Image Studio UI Accessibility",
+          "status": "pass",
+          "durationMs": 4661,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "auth-signin-a11y",
+          "name": "Auth Sign-In Accessibility",
+          "status": "pass",
+          "durationMs": 4258,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "case-resolver-a11y",
+          "name": "Case Resolver Header Accessibility",
+          "status": "pass",
+          "durationMs": 3435,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        },
+        {
+          "baselineId": "accessibilitySmoke",
+          "baselineLabel": "Accessibility Smoke Gate",
+          "suiteId": "app-shell-a11y",
+          "name": "App Shell Accessibility",
+          "status": "fail",
+          "durationMs": 2764,
+          "runner": "vitest",
+          "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+          "generatedAt": "2026-03-26T13:06:45.566Z"
+        }
+      ]
+    },
+    {
+      "id": "accessibilityRouteCrawl",
+      "label": "Accessibility Route Crawl",
+      "required": false,
+      "sourcePath": "docs/metrics/accessibility-route-crawl-latest.json",
+      "status": "fail",
+      "generatedAt": "2026-03-26T13:38:01.211Z",
+      "ageHours": 49.3,
+      "freshness": "aging",
+      "totalSuites": 32,
+      "passedSuites": 30,
+      "failedSuites": 2,
+      "passRate": 93.8,
+      "totalDurationMs": 1667021.328,
+      "note": null,
+      "topSlowSuites": [
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-appearance",
+          "name": "Admin Kangur Appearance",
+          "status": "pass",
+          "durationMs": 152933,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-builder",
+          "name": "Admin Kangur Builder",
+          "status": "pass",
+          "durationMs": 118742,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-tests",
+          "name": "Kangur Tests",
+          "status": "pass",
+          "durationMs": 118598,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-parent-dashboard",
+          "name": "Kangur Parent Dashboard",
+          "status": "pass",
+          "durationMs": 109303,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "public-home",
+          "name": "Public Home",
+          "status": "pass",
+          "durationMs": 106887,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-appearance",
+          "name": "Admin Kangur Appearance",
+          "status": "pass",
+          "durationMs": 152933,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-builder",
+          "name": "Admin Kangur Builder",
+          "status": "pass",
+          "durationMs": 118742,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-tests",
+          "name": "Kangur Tests",
+          "status": "pass",
+          "durationMs": 118598,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-parent-dashboard",
+          "name": "Kangur Parent Dashboard",
+          "status": "pass",
+          "durationMs": 109303,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "public-home",
+          "name": "Public Home",
+          "status": "pass",
+          "durationMs": 106887,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur",
+          "name": "Admin Kangur",
+          "status": "pass",
+          "durationMs": 93652,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-duels",
+          "name": "Kangur Duels",
+          "status": "pass",
+          "durationMs": 83167,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-game",
+          "name": "Kangur Game",
+          "status": "pass",
+          "durationMs": 70893,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-ai-paths",
+          "name": "Admin AI Paths",
+          "status": "pass",
+          "durationMs": 69608,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-lessons",
+          "name": "Admin Kangur Lessons Manager",
+          "status": "pass",
+          "durationMs": 67998,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-dashboard",
+          "name": "Admin Dashboard",
+          "status": "pass",
+          "durationMs": 58301,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-login",
+          "name": "Kangur Login",
+          "status": "fail",
+          "durationMs": 52352,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-observability",
+          "name": "Admin Kangur Observability",
+          "status": "pass",
+          "durationMs": 51396,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-products",
+          "name": "Admin Products",
+          "status": "pass",
+          "durationMs": 48325,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-profile",
+          "name": "Kangur Profile",
+          "status": "pass",
+          "durationMs": 43656,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-lessons",
+          "name": "Kangur Lessons",
+          "status": "pass",
+          "durationMs": 41644,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-databases",
+          "name": "Admin Databases",
+          "status": "pass",
+          "durationMs": 40618,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-social-updates",
+          "name": "Kangur Social Updates",
+          "status": "pass",
+          "durationMs": 39676,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-kangur-settings",
+          "name": "Admin Kangur Settings",
+          "status": "pass",
+          "durationMs": 33334,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-competition",
+          "name": "Kangur Competition",
+          "status": "pass",
+          "durationMs": 32425,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-case-resolver",
+          "name": "Admin Case Resolver",
+          "status": "pass",
+          "durationMs": 31889,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-notes",
+          "name": "Admin Notes",
+          "status": "pass",
+          "durationMs": 27012,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-cms",
+          "name": "Admin CMS",
+          "status": "pass",
+          "durationMs": 25443,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-agentcreator",
+          "name": "Admin Agent Creator",
+          "status": "pass",
+          "durationMs": 24875,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-image-studio",
+          "name": "Admin Image Studio",
+          "status": "pass",
+          "durationMs": 24828,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-prompt-engine-validation",
+          "name": "Admin Prompt Engine Validation",
+          "status": "pass",
+          "durationMs": 19515,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-chatbot",
+          "name": "Admin Chatbot",
+          "status": "pass",
+          "durationMs": 18839,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-integrations",
+          "name": "Admin Integrations",
+          "status": "pass",
+          "durationMs": 15743,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "admin-brain-settings",
+          "name": "Admin Brain Settings",
+          "status": "pass",
+          "durationMs": 14318,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "auth-signin",
+          "name": "Auth Sign In",
+          "status": "pass",
+          "durationMs": 9425,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "auth-register",
+          "name": "Auth Register",
+          "status": "pass",
+          "durationMs": 8439,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        },
+        {
+          "baselineId": "accessibilityRouteCrawl",
+          "baselineLabel": "Accessibility Route Crawl",
+          "suiteId": "kangur-home",
+          "name": "Kangur Home",
+          "status": "fail",
+          "durationMs": 0,
+          "runner": null,
+          "command": null,
+          "generatedAt": "2026-03-26T13:38:01.211Z"
+        }
+      ]
+    },
+    {
+      "id": "integrationMongo",
+      "label": "Mongo Integration Baseline",
+      "required": false,
+      "sourcePath": "docs/metrics/integration-mongo-latest.json",
+      "status": "pass",
+      "generatedAt": "2026-03-26T12:53:12.648Z",
+      "ageHours": 50,
+      "freshness": "aging",
+      "totalSuites": 1,
+      "passedSuites": 1,
+      "failedSuites": 0,
+      "passRate": 100,
+      "totalDurationMs": 3941,
+      "note": "No generated Mongo integration baseline artifact exists yet.",
+      "topSlowSuites": [
+        {
+          "baselineId": "integrationMongo",
+          "baselineLabel": "Mongo Integration Baseline",
+          "suiteId": "integration-mongo",
+          "name": "Mongo Integration Project",
+          "status": "pass",
+          "durationMs": 3941,
+          "runner": null,
+          "command": "./node_modules/.bin/vitest run --project integration-mongo",
+          "generatedAt": "2026-03-26T12:53:12.648Z"
+        }
+      ],
+      "slowSuites": [
+        {
+          "baselineId": "integrationMongo",
+          "baselineLabel": "Mongo Integration Baseline",
+          "suiteId": "integration-mongo",
+          "name": "Mongo Integration Project",
+          "status": "pass",
+          "durationMs": 3941,
+          "runner": null,
+          "command": "./node_modules/.bin/vitest run --project integration-mongo",
+          "generatedAt": "2026-03-26T12:53:12.648Z"
+        }
+      ]
+    }
+  ],
+  "slowestSuites": [
+    {
+      "baselineId": "unitDomains",
+      "baselineLabel": "Unit Domain Gate",
+      "suiteId": "ai-paths",
+      "name": "AI Paths",
+      "status": "pass",
+      "durationMs": 197048,
+      "runner": null,
+      "command": "npx vitest run --project unit __tests__/features/ai/ai-paths __tests__/api/ai-paths __tests__/api/ai-paths- src/features/ai/ai-paths",
+      "generatedAt": "2026-03-26T12:50:41.057Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-kangur-appearance",
+      "name": "Admin Kangur Appearance",
+      "status": "pass",
+      "durationMs": 152933,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilitySmoke",
+      "baselineLabel": "Accessibility Smoke Gate",
+      "suiteId": "case-resolver-browser-a11y",
+      "name": "Case Resolver Accessibility",
+      "status": "pass",
+      "durationMs": 141679,
+      "runner": "playwright",
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+      "generatedAt": "2026-03-26T13:06:45.566Z"
+    },
+    {
+      "baselineId": "accessibilitySmoke",
+      "baselineLabel": "Accessibility Smoke Gate",
+      "suiteId": "cms-builder-browser-a11y",
+      "name": "CMS Builder Accessibility",
+      "status": "pass",
+      "durationMs": 134817,
+      "runner": "playwright",
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+      "generatedAt": "2026-03-26T13:06:45.566Z"
+    },
+    {
+      "baselineId": "accessibilitySmoke",
+      "baselineLabel": "Accessibility Smoke Gate",
+      "suiteId": "cms-pages-browser-a11y",
+      "name": "CMS Pages Accessibility",
+      "status": "fail",
+      "durationMs": 123268,
+      "runner": "playwright",
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+      "generatedAt": "2026-03-26T13:06:45.566Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-kangur-builder",
+      "name": "Admin Kangur Builder",
+      "status": "pass",
+      "durationMs": 118742,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "kangur-tests",
+      "name": "Kangur Tests",
+      "status": "pass",
+      "durationMs": 118598,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "kangur-parent-dashboard",
+      "name": "Kangur Parent Dashboard",
+      "status": "pass",
+      "durationMs": 109303,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "unitDomains",
+      "baselineLabel": "Unit Domain Gate",
+      "suiteId": "products",
+      "name": "Products",
+      "status": "fail",
+      "durationMs": 107460,
+      "runner": null,
+      "command": "npx vitest run --project unit __tests__/features/products __tests__/api/products src/features/products __tests__/shared/contracts/products-contracts.test.ts",
+      "generatedAt": "2026-03-26T12:50:41.057Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "public-home",
+      "name": "Public Home",
+      "status": "pass",
+      "durationMs": 106887,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-kangur",
+      "name": "Admin Kangur",
+      "status": "pass",
+      "durationMs": 93652,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "unitDomains",
+      "baselineLabel": "Unit Domain Gate",
+      "suiteId": "case-resolver",
+      "name": "Case Resolver",
+      "status": "pass",
+      "durationMs": 91953,
+      "runner": null,
+      "command": "npx vitest run --project unit src/features/case-resolver src/features/case-resolver/capture src/features/case-resolver/capture/__tests__ src/features/prompt-exploder/__tests__/case-resolver",
+      "generatedAt": "2026-03-26T12:50:41.057Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "kangur-duels",
+      "name": "Kangur Duels",
+      "status": "pass",
+      "durationMs": 83167,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilitySmoke",
+      "baselineLabel": "Accessibility Smoke Gate",
+      "suiteId": "products-list-browser-a11y",
+      "name": "Products List Accessibility",
+      "status": "pass",
+      "durationMs": 73997,
+      "runner": "playwright",
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+      "generatedAt": "2026-03-26T13:06:45.566Z"
+    },
+    {
+      "baselineId": "accessibilitySmoke",
+      "baselineLabel": "Accessibility Smoke Gate",
+      "suiteId": "notes-workspace-browser-a11y",
+      "name": "Notes Workspace Accessibility",
+      "status": "pass",
+      "durationMs": 73559,
+      "runner": "playwright",
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+      "generatedAt": "2026-03-26T13:06:45.566Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "kangur-game",
+      "name": "Kangur Game",
+      "status": "pass",
+      "durationMs": 70893,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-ai-paths",
+      "name": "Admin AI Paths",
+      "status": "pass",
+      "durationMs": 69608,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-kangur-lessons",
+      "name": "Admin Kangur Lessons Manager",
+      "status": "pass",
+      "durationMs": 67998,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    },
+    {
+      "baselineId": "unitDomains",
+      "baselineLabel": "Unit Domain Gate",
+      "suiteId": "image-studio",
+      "name": "Image Studio",
+      "status": "pass",
+      "durationMs": 59701,
+      "runner": null,
+      "command": "npx vitest run --project unit __tests__/features/ai/image-studio src/features/ai/image-studio",
+      "generatedAt": "2026-03-26T12:50:41.057Z"
+    },
+    {
+      "baselineId": "accessibilityRouteCrawl",
+      "baselineLabel": "Accessibility Route Crawl",
+      "suiteId": "admin-dashboard",
+      "name": "Admin Dashboard",
+      "status": "pass",
+      "durationMs": 58301,
+      "runner": null,
+      "command": null,
+      "generatedAt": "2026-03-26T13:38:01.211Z"
+    }
+  ],
+  "featureCoverage": {
+    "withTests": [
+      {
+        "feature": "kangur",
+        "testCount": 721,
+        "fastTestCount": 703,
+        "e2eTestCount": 18,
+        "negativePathTestCount": 123
+      },
+      {
+        "feature": "ai",
+        "testCount": 294,
+        "fastTestCount": 294,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 103
+      },
+      {
+        "feature": "products",
+        "testCount": 117,
+        "fastTestCount": 110,
+        "e2eTestCount": 7,
+        "negativePathTestCount": 33
+      },
+      {
+        "feature": "case-resolver",
+        "testCount": 81,
+        "fastTestCount": 80,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 34
+      },
+      {
+        "feature": "cms",
+        "testCount": 76,
+        "fastTestCount": 75,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 15
+      },
+      {
+        "feature": "integrations",
+        "testCount": 56,
+        "fastTestCount": 55,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 18
+      },
+      {
+        "feature": "prompt-exploder",
+        "testCount": 46,
+        "fastTestCount": 46,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 23
+      },
+      {
+        "feature": "foldertree",
+        "testCount": 28,
+        "fastTestCount": 26,
+        "e2eTestCount": 2,
+        "negativePathTestCount": 7
+      },
+      {
+        "feature": "observability",
+        "testCount": 27,
+        "fastTestCount": 26,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 4
+      },
+      {
+        "feature": "admin",
+        "testCount": 18,
+        "fastTestCount": 15,
+        "e2eTestCount": 3,
+        "negativePathTestCount": 4
+      },
+      {
+        "feature": "database",
+        "testCount": 13,
+        "fastTestCount": 12,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 8
+      },
+      {
+        "feature": "auth",
+        "testCount": 12,
+        "fastTestCount": 12,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 7
+      },
+      {
+        "feature": "notesapp",
+        "testCount": 12,
+        "fastTestCount": 10,
+        "e2eTestCount": 2,
+        "negativePathTestCount": 3
+      },
+      {
+        "feature": "filemaker",
+        "testCount": 10,
+        "fastTestCount": 10,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 3
+      },
+      {
+        "feature": "viewer3d",
+        "testCount": 9,
+        "fastTestCount": 8,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 3
+      },
+      {
+        "feature": "jobs",
+        "testCount": 7,
+        "fastTestCount": 7,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 3
+      },
+      {
+        "feature": "data-import-export",
+        "testCount": 5,
+        "fastTestCount": 4,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 1
+      },
+      {
+        "feature": "files",
+        "testCount": 5,
+        "fastTestCount": 4,
+        "e2eTestCount": 1,
+        "negativePathTestCount": 2
+      },
+      {
+        "feature": "internationalization",
+        "testCount": 5,
+        "fastTestCount": 5,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 4
+      },
+      {
+        "feature": "document-editor",
+        "testCount": 4,
+        "fastTestCount": 4,
+        "e2eTestCount": 0,
+        "negativePathTestCount": 1
+      }
+    ],
+    "withoutTests": [],
+    "withoutFastTests": [],
+    "withoutNegativeTests": []
+  }
+}

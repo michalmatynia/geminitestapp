@@ -1,8 +1,6 @@
 import React from 'react';
-import { Badge, Button } from '@/shared/ui/primitives.public';
-import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2, ChevronDown } from 'lucide-react';
-import { cn } from '@/shared/utils/ui-utils';
-import { type KangurLessonSection, type KangurLessonSubsection } from '@/features/kangur/shared/contracts/kangur';
+import { Badge } from '@/shared/ui/primitives.public';
+import { type KangurLessonSection, type KangurLessonSubsection } from '@/shared/contracts/kangur-lesson-sections';
 import { SectionRow } from './SectionRow';
 
 type SubjectSectionsGroupProps = {

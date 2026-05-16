@@ -2,12 +2,12 @@ import 'server-only';
 
 import {
   runPlaywrightVerificationReviewCapture,
-  type PlaywrightCapturedPageObservation,
   type PlaywrightVerificationCaptureParamsBase,
   type PlaywrightVerificationObservationLike,
   type PlaywrightVerificationReviewLoopProfile,
   type RunPlaywrightVerificationReviewCaptureOptions,
 } from '@/features/playwright/server/ai-step-service';
+import type { PlaywrightCapturedPageObservation } from '@/features/playwright/server/ai-step-service/types';
 
 import {
   commitProductScanVerificationObservation,
@@ -60,7 +60,7 @@ export const createProductScanVerificationBarrierEvaluationInput = (options: {
 });
 
 export const createProductScanVerificationBarrierEvaluationInputFromProfile = <
-  TParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
   TReview extends PlaywrightVerificationObservationLike,
 >(options: {
   profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>;
@@ -80,7 +80,7 @@ export const createProductScanVerificationBarrierEvaluationInputFromProfile = <
 };
 
 export const evaluateProductScanVerificationBarrierFromProfile = async <
-  TParams,
+  TParams extends PlaywrightVerificationCaptureParamsBase,
   TReview extends PlaywrightVerificationObservationLike,
 >(options: {
   profile: ProductScanVerificationBarrierEvaluationProfileLike<TParams, TReview>;

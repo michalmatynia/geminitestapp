@@ -1,4 +1,3 @@
-import React from 'react';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { PLAYWRIGHT_SETTINGS_HREF } from '../PlaywrightEngineLogoButton';
 

@@ -1,0 +1,376 @@
+{
+  "generatedAt": "2026-03-09T05:03:28.292Z",
+  "status": "failed",
+  "summary": {
+    "total": 5,
+    "errorCount": 5,
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "failed",
+    "routeCount": 345,
+    "methodCount": 493,
+    "csrfExemptionCount": 47,
+    "csrfExemptionsByPolicy": {
+      "webhook-ingest": 1,
+      "telemetry-ingest": 3,
+      "auth-bootstrap": 10,
+      "unreviewed": 2,
+      "external-integrations": 31
+    }
+  },
+  "routeRoots": [
+    "src/app/api",
+    "src/features/ai/agentcreator/api"
+  ],
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "route-bodyschema-without-parsejson",
+      "message": "bodySchema is configured without parseJsonBody: true.",
+      "file": "src/app/api/kangur/auth/parent-account/create/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-bodyschema-without-parsejson",
+      "message": "bodySchema is configured without parseJsonBody: true.",
+      "file": "src/app/api/kangur/auth/parent-email/verify/route.ts",
+      "line": 11,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+      "line": 19,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+      "line": 19,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-bodyschema-without-parsejson",
+      "message": "bodySchema is configured without parseJsonBody: true.",
+      "file": "src/app/api/kangur/auth/parent-password/route.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "route-bodyschema-without-parsejson",
+      "errorCount": 3,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-csrf-optout-unreviewed",
+      "errorCount": 2,
+      "warningCount": 0,
+      "infoCount": 0
+    }
+  ],
+  "csrfExemptions": [
+    {
+      "routePath": "ai-paths/portable-engine/remediation-webhook",
+      "method": "POST",
+      "policy": "webhook-ingest",
+      "reason": "Webhook-style endpoints must accept third-party callbacks."
+    },
+    {
+      "routePath": "analytics/events",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "auth/[...nextauth]",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/disable",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/setup",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mfa/verify",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/mock-signin",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/register",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]",
+      "method": "PATCH",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]",
+      "method": "DELETE",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/users/[id]/security",
+      "method": "PATCH",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "auth/verify-credentials",
+      "method": "POST",
+      "policy": "auth-bootstrap",
+      "reason": "Auth bootstrap flows need to accept requests before app CSRF is established."
+    },
+    {
+      "routePath": "client-errors",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "kangur/auth/parent-magic-link/exchange",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "kangur/auth/parent-magic-link/request",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "query-telemetry",
+      "method": "POST",
+      "policy": "telemetry-ingest",
+      "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/disconnect",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/request",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/allegro/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/products",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/request",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/base/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections/[connectionId]/test",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/[id]/connections",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]",
+      "method": "PUT",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/exports/base/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/images/sync-base/all",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/[setting]",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/parameters",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]/cancel",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs/[runId]/resume",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/runs",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/imports/base/sample-product",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/product-listings",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/base/link-existing",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/base/sku-check",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/export-to-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/delete-from-base",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/purge",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/relist",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]",
+      "method": "DELETE",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]",
+      "method": "PATCH",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/sync-base-images",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/products/[id]/listings",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    }
+  ],
+  "durationMs": 120
+}

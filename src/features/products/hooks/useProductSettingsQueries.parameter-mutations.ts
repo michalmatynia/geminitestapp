@@ -1,6 +1,6 @@
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { SaveMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
-import { useDeleteMutationV2, useMutationV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { useDeleteMutationV2, useMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateCatalogScopedData, invalidateProductsAndCounts } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 

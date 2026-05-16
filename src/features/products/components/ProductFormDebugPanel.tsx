@@ -17,8 +17,8 @@ import {
 } from '@/features/products/context/ProductFormStudioContext';
 
 const mergeDebugContexts = (
-  left: Record<string, unknown> | null,
-  right: Record<string, unknown> | null
+  left: object | null,
+  right: object | null
 ): Record<string, unknown> | null => {
   if (left === null && right === null) return null;
   return { ...(left ?? {}), ...(right ?? {}) };

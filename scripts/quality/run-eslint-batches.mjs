@@ -16,12 +16,12 @@ function run() {
     const batchNum = Math.floor(i / batchSize) + 1;
     const totalBatches = Math.ceil(files.length / batchSize);
     console.log(`[Batch ${batchNum}/${totalBatches}] Processing ${batch.length} files...`);
-    
+
     // Use process.execPath so we use the same Node environment that launched this script!
     const cmd = `"${process.execPath}" --max-old-space-size=12288 ./node_modules/.bin/eslint --fix --cache --cache-location .eslintcache --no-error-on-unmatched-pattern ${batch.join(' ')}`;
     try {
       execSync(cmd, { stdio: 'ignore' });
-    } catch (err) {
+    } catch {
       // Ignored - eslint returns error code if it can't fix everything. We suppress it successfully.
     }
   }

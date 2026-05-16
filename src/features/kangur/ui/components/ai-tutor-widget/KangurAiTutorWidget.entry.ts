@@ -10,6 +10,7 @@ import {
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { isAuthGuidedTutorTarget } from './KangurAiTutorWidget.helpers';
 import {
@@ -36,8 +37,8 @@ export const getGuidedGuestTargetKind = (authMode: KangurAuthMode): GuidedTutorA
 export const getGuidedGuestModalTargetKind = (): GuidedTutorAuthKind => 'login_identifier_field';
 
 type AuthState = {
-  isAuthenticated: boolean;
-  isLoadingAuth: boolean;
+  isAuthenticated?: boolean;
+  isLoadingAuth?: boolean;
 } | null;
 
 type LoginModalState = {
@@ -94,7 +95,7 @@ const isGuestIntroAuthPending = ({
 }: {
   authState: AuthState;
   mounted: boolean;
-}): boolean => !mounted || !authState || authState.isLoadingAuth;
+}): boolean => !mounted || !authState || authState.isLoadingAuth === true;
 
 const shouldHideGuestIntroPanels = ({
   authState,
@@ -300,7 +301,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
   isTutorHidden: boolean;
   mounted: boolean;
   selectionGuidanceHandoffText: string | null;
-  selectionExplainTimeoutRef: MutableRefObject<number | null>;
+  selectionExplainTimeoutRef: MutableRefObject<SafeTimerId | null>;
   selectionResponsePending: PendingSelectionResponse | null;
   setCanonicalTutorModalVisible: (value: boolean) => void;
   setGuestAuthFormVisible: (value: boolean) => void;
@@ -466,7 +467,7 @@ export function useKangurAiTutorGuestIntroFlow(input: {
         source,
       });
       if (selectionExplainTimeoutRef.current !== null) {
-        window.clearTimeout(selectionExplainTimeoutRef.current);
+        safeClearTimeout(selectionExplainTimeoutRef.current);
         selectionExplainTimeoutRef.current = null;
       }
       setCanonicalTutorModalVisible(false);

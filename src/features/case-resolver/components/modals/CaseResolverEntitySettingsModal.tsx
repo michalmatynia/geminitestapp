@@ -94,9 +94,7 @@ export function CaseResolverEntitySettingsModal(): React.JSX.Element {
       fields={fields}
       values={formData}
       onChange={handleChange}
-      onSave={(): Promise<void> => {
-        onSave();
-      }}
+      onSave={onSave}
       isSaving={isSaving}
       size='md'
     />

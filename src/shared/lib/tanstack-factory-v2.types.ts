@@ -56,6 +56,7 @@ export type TanstackFactoryDomain =
   | 'agent_creator'
   | 'drafter'
   | 'files'
+  | 'filemaker'
   | 'viewer3d'
   | 'analytics'
   | 'internationalization'

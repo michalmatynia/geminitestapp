@@ -1,6 +1,3 @@
-import { Badge } from '@/features/kangur/shared/ui';
-import { cn } from '@/features/kangur/shared/utils';
-
 export function NarrationCoverageReview({ coverageRecommendations }: { coverageRecommendations: string[] }) {
   return (
     <div className='rounded-2xl border border-border/60 bg-card/30 px-3 py-3'>

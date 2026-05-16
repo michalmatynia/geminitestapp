@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { GraphActions } from '@/features/ai/ai-paths/context/GraphContext.shared';
 import {
   computeEdgeSelectionDeleteResult,
   computeNodeSelectionDeleteResult,
@@ -15,8 +16,8 @@ interface DeleteHandlerOptions {
   selectedEdgeId: string | null;
   graphNodes: AiNode[];
   graphEdges: Edge[];
-  setGraphNodes: (nodes: AiNode[], options: { reason: string; source: string; allowNodeCountDecrease?: boolean }) => void;
-  setGraphEdges: (edges: Edge[], options: { reason: string; source: string }) => void;
+  setGraphNodes: GraphActions['setNodes'];
+  setGraphEdges: GraphActions['setEdges'];
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
   selectNode: (id: string | null) => void;
   selectEdge: (id: string | null) => void;

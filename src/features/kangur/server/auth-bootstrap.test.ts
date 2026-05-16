@@ -56,7 +56,7 @@ describe('getKangurAuthBootstrapScript', () => {
     const script = await getKangurAuthBootstrapScript(new Headers());
 
     expect(resolveKangurActorMock).toHaveBeenCalledTimes(1);
-    expect(script).toContain('window.__KANGUR_AUTH_BOOTSTRAP__=');
+    expect(script).not.toContain('window.');
     expect(script).toContain('"id":"user-1"');
   });
 });

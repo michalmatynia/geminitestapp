@@ -23,6 +23,12 @@ export default function AdminKangurSettingsPage(): React.JSX.Element {
   return (
     <KangurAdminContentShell
       title='Kangur Settings'
+      description='Configure storefront, narrator, tutor, parent verification, and launch behavior.'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Settings' },
+      ]}
       headerActions={
         <Button onClick={() => { void ctrl.handleSave(); }} disabled={!ctrl.isDirty || ctrl.isSaving}>
           {ctrl.isSaving ? 'Saving...' : 'Save Settings'}
@@ -45,7 +51,11 @@ export default function AdminKangurSettingsPage(): React.JSX.Element {
           voice: ctrl.voice,
           setEngine: ctrl.setEngine,
           setVoice: ctrl.setVoice,
-          onSave: ctrl.handleSave,
+          copyStatus: ctrl.copyStatus,
+          onCopyTemplateText: ctrl.handleCopyTemplateText,
+          isProbingNarrator: ctrl.isProbingNarrator,
+          onProbeNarrator: ctrl.handleProbeNarrator,
+          narratorProbe: ctrl.narratorProbe,
           className: SETTINGS_SECTION_CLASS_NAME,
         })}
 

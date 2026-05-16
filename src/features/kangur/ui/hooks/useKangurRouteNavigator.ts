@@ -4,7 +4,7 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname } from 'next/navigation';
 import { startTransition, useCallback, useMemo } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -332,7 +332,7 @@ const resolveManagedBackPageKey = (
 // Module-level ref for the queued navigation timeout. Module-level (not a
 // React ref) so it survives across re-renders and can be cancelled by any
 // navigation call, not just the one that scheduled it.
-let queuedManagedNavigationTimeoutId: number | null = null;
+let queuedManagedNavigationTimeoutId: SafeTimerId | null = null;
 
 const clearQueuedManagedNavigation = (): void => {
   if (queuedManagedNavigationTimeoutId === null) {

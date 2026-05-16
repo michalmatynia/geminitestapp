@@ -107,7 +107,8 @@ function mergeAgentInput(
   id: string,
   now: string
 ): AgentTeachingAgentRecord {
-  const base = existing ?? {
+  const base: AgentTeachingAgentRecord = existing ?? {
+    id,
     agentId: '',
     enabled: true,
     name: '',
@@ -162,11 +163,11 @@ type ParameterFields = Pick<AgentTeachingAgentRecord, 'temperature' | 'maxTokens
 
 function mergeParameterFields(input: Partial<AgentTeachingAgentRecord>, base: AgentTeachingAgentRecord): ParameterFields {
   return {
-    temperature: getValidNumber(input.temperature, base.temperature),
-    maxTokens: getValidNumber(input.maxTokens, base.maxTokens),
-    retrievalTopK: getValidNumber(input.retrievalTopK, base.retrievalTopK),
-    retrievalMinScore: getValidNumber(input.retrievalMinScore, base.retrievalMinScore),
-    maxDocsPerCollection: getValidNumber(input.maxDocsPerCollection, base.maxDocsPerCollection),
+    temperature: getValidNumber(input.temperature, base.temperature ?? 0.2),
+    maxTokens: getValidNumber(input.maxTokens, base.maxTokens ?? 800),
+    retrievalTopK: getValidNumber(input.retrievalTopK, base.retrievalTopK ?? 5),
+    retrievalMinScore: getValidNumber(input.retrievalMinScore, base.retrievalMinScore ?? 0),
+    maxDocsPerCollection: getValidNumber(input.maxDocsPerCollection, base.maxDocsPerCollection ?? 400),
   };
 }
 

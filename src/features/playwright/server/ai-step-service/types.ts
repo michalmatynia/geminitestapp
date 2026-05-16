@@ -51,12 +51,61 @@ export type PlaywrightCapturedPageObservation = {
   observedAt: string;
 };
 
+export type PlaywrightInjectionIterationEvaluationRecord = {
+  done: boolean;
+  context: string;
+  reasoning?: string | null | undefined;
+};
+
+export type PlaywrightInjectionIterationRecord = {
+  iteration: number;
+  code: string;
+  done: boolean;
+  reasoning: string;
+  executionError: string | null;
+  urlAfter: string | null;
+  screenshotArtifactName: string | null;
+  htmlArtifactName: string | null;
+  evaluation: PlaywrightInjectionIterationEvaluationRecord | null;
+};
+
+export type PlaywrightVisionIterationCapture = {
+  screenshotBase64: string | null;
+  dom: string | null;
+  url: string | null;
+  iteration: number;
+  maxIterations: number;
+};
+
+export type PlaywrightVisionIterationEvaluation = {
+  context: string;
+  done: boolean;
+  reasoning?: string | null | undefined;
+};
+
 export type PlaywrightVerificationInjectionConfig<TReview> = {
   shouldInject: (review: TReview, capture: PlaywrightCapturedPageObservation) => boolean;
   goal: string | ((review: TReview, capture: PlaywrightCapturedPageObservation) => string);
   systemPrompt?: string | null | undefined;
   maxIterations?: number | null | undefined;
-  capability?: string | null | undefined;
+  buildEvaluatorContext?: ((
+    review: TReview,
+    capture: PlaywrightCapturedPageObservation
+  ) => string) | null | undefined;
+  reEvaluateAfterInjection?: boolean | null | undefined;
+  log?: ((message: string, context?: unknown) => void) | null | undefined;
+  onIterationResult?: ((record: PlaywrightInjectionIterationRecord) => void) | null | undefined;
+  waitForNavigation?: boolean | null | undefined;
+  timeoutMs?: number | null | undefined;
+  useConversationHistory?: boolean | null | undefined;
+  evaluateCapture?: ((
+    capture: PlaywrightVisionIterationCapture
+  ) => Promise<PlaywrightVisionIterationEvaluation>) | null | undefined;
+  artifacts?: PlaywrightObservationArtifacts | null | undefined;
+  artifactKey?: string | null | undefined;
+  maxConsecutiveErrors?: number | null | undefined;
+  iterationDelayMs?: number | null | undefined;
+  capability?: AiBrainCapabilityKey | null | undefined;
   defaultModelId?: string | null | undefined;
 };
 

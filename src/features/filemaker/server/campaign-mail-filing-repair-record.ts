@@ -72,9 +72,9 @@ export const buildRepairDeliveryRecord = (
     campaignId: input.campaign.id,
     runId: input.run.id,
     deliveryId: input.delivery.id,
-    mailAccountId: input.campaign.mailAccountId,
-    replyToEmail: input.campaign.replyToEmail,
-    fromName: input.campaign.fromName,
+    mailAccountId: input.campaign.mailAccountId ?? null,
+    replyToEmail: input.campaign.replyToEmail ?? null,
+    fromName: input.campaign.fromName ?? null,
     sentAt: timestamp.iso,
   };
 };

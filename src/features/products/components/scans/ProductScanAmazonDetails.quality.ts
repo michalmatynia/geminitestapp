@@ -13,6 +13,8 @@ import type {
   ProductScanAmazonQualityScan,
 } from './ProductScanAmazonDetails.types';
 
+type KnownProductScanAmazonDetails = NonNullable<ProductScanAmazonDetailsValue>;
+
 export const hasProductScanAmazonDetails = (
   details: ProductScanAmazonDetailsValue | null | undefined
 ): boolean => {
@@ -20,7 +22,7 @@ export const hasProductScanAmazonDetails = (
   return hasAmazonDetailText(details) || hasAmazonDetailCollections(details);
 };
 
-const hasAmazonDetailText = (details: ProductScanAmazonDetailsValue): boolean =>
+const hasAmazonDetailText = (details: KnownProductScanAmazonDetails): boolean =>
   [
     details.brand,
     details.manufacturer,
@@ -43,7 +45,7 @@ const hasAmazonDetailText = (details: ProductScanAmazonDetailsValue): boolean =>
     details.isbn,
   ].some((value) => hasText(value));
 
-const hasAmazonDetailCollections = (details: ProductScanAmazonDetailsValue): boolean =>
+const hasAmazonDetailCollections = (details: KnownProductScanAmazonDetails): boolean =>
   details.bulletPoints.length > 0 || details.attributes.length > 0 || details.rankings.length > 0;
 
 export const resolveAmazonScanQualitySummary = (

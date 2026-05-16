@@ -86,7 +86,8 @@ const isDeliveryLinkedToOrganization = (
   linkedEmailAddresses: Set<string>
 ): boolean => {
   if (delivery.partyKind !== 'organization' || delivery.partyId !== organizationId) return false;
-  const matchesEmailId = delivery.emailId !== null && linkedEmailIds.has(delivery.emailId);
+  const matchesEmailId =
+    typeof delivery.emailId === 'string' && linkedEmailIds.has(delivery.emailId);
   const normalizedAddress = delivery.emailAddress.trim().toLowerCase();
   return matchesEmailId || linkedEmailAddresses.has(normalizedAddress);
 };
@@ -177,8 +178,8 @@ export const useOrganizationCampaignDeliveriesModel = (): OrganizationCampaignDe
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
-  const campaignsById = useCampaignsById(rawCampaigns);
-  const orgDeliveries = useOrganizationDeliveries(organization, emails, rawDeliveries);
+  const campaignsById = useCampaignsById(rawCampaigns ?? null);
+  const orgDeliveries = useOrganizationDeliveries(organization, emails, rawDeliveries ?? null);
   const groupsByEmail = useGroupsByEmail(emails, orgDeliveries);
   const groupsByCampaign = useGroupsByCampaign(orgDeliveries, campaignsById);
   const navigation = useDeliveryNavigation();

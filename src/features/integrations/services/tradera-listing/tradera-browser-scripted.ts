@@ -1054,7 +1054,6 @@ export const runTraderaBrowserMoveToUnsold = async ({
       connectionId: connection.id,
       integrationId: connection.integrationId,
       listingId: listing.id,
-      productId: listing.productId,
     }),
     timeoutMs: TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS,
     browserMode,
@@ -1084,7 +1083,7 @@ export const runTraderaBrowserMoveToUnsold = async ({
     externalListingId: resolvedExternalListingId,
     listingUrl: resolvedResultListingUrl ?? undefined,
     metadata: buildPlaywrightScriptListingMetadata({
-      result,
+      result: { ...result, publishVerified: false },
       requestedBrowserMode: browserMode,
       additional: {
         checkedStatus,

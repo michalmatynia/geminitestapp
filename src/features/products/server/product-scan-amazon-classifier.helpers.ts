@@ -42,7 +42,9 @@ const readRawString = (record: Record<string, unknown> | null, key: string): str
 
 const readLowerMessage = (...candidates: Array<string | null | undefined>): string => {
   for (const candidate of candidates) {
-    if (hasNonEmptyString(candidate)) return candidate.toLowerCase();
+    if (typeof candidate === 'string' && hasNonEmptyString(candidate)) {
+      return candidate.toLowerCase();
+    }
   }
   return '';
 };
@@ -56,7 +58,7 @@ const readStepDetailValue = (
 ): string | null => {
   if (!Array.isArray(details)) return null;
   const entry = details.find((detail) => detail.label === label);
-  return hasNonEmptyString(entry?.value) ? entry.value : null;
+  return typeof entry?.value === 'string' && hasNonEmptyString(entry.value) ? entry.value : null;
 };
 
 const hasRawCaptchaSignal = (raw: Record<string, unknown> | null): boolean =>
@@ -229,7 +231,7 @@ export const summariseCaptchaSteps = (
     .map((step) => ({
       key: step.key,
       status: step.status,
-      resultCode: step.resultCode,
+      resultCode: step.resultCode ?? null,
       message: step.message,
     }));
 

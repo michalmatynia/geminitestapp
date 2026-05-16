@@ -119,7 +119,7 @@ export const listMongoFilemakerEventsForOrganization = async (
 
   const documents = await db
     .collection<FilemakerEventMongoDocument>(FILEMAKER_EVENTS_COLLECTION)
-    .aggregate([
+    .aggregate<FilemakerEventMongoDocument>([
       { $match: { id: { $in: eventIds } } },
       {
         $lookup: {

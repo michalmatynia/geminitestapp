@@ -30,7 +30,7 @@ type JobApplicationParams = {
 
 const resolveApplicationId = (params: JobApplicationParams): string => {
   const value = params.applicationId;
-  const raw = Array.isArray(value) ? (value[0] ?? '') : value;
+  const raw = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
   return decodeURIComponent(raw);
 };
 
@@ -58,25 +58,25 @@ export async function patchHandler(
   if (!result.ok) return result.response;
 
   const applicationId = resolveApplicationId(params);
-  const hasStatusUpdate = result.data.status !== undefined;
-  const hasActiveArtifactsUpdate = result.data.activeArtifacts !== undefined;
-  const hasLogEntryRemoval = result.data.removeLogEntryId !== undefined;
+  const nextStatus = result.data.status;
+  const nextActiveArtifacts = result.data.activeArtifacts;
+  const removeLogEntryId = result.data.removeLogEntryId;
   let updatedApplication = await requireMongoFilemakerJobApplicationById(applicationId);
 
-  if (hasLogEntryRemoval) {
+  if (removeLogEntryId !== undefined) {
     updatedApplication = await removeMongoFilemakerJobApplicationLogEntry(
       applicationId,
-      result.data.removeLogEntryId
+      removeLogEntryId
     );
   }
-  if (hasStatusUpdate) {
-    updatedApplication = await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status);
+  if (nextStatus !== undefined) {
+    updatedApplication = await updateMongoFilemakerJobApplicationStatus(applicationId, nextStatus);
   }
-  if (hasActiveArtifactsUpdate) {
+  if (nextActiveArtifacts !== undefined) {
     updatedApplication = await updateMongoFilemakerJobApplicationActiveArtifacts(applicationId, {
-      applicationEmailVersionId: result.data.activeArtifacts.applicationEmailVersionId ?? null,
-      coverLetterVersionId: result.data.activeArtifacts.coverLetterVersionId ?? null,
-      tailoredCvVersionId: result.data.activeArtifacts.tailoredCvVersionId ?? null,
+      applicationEmailVersionId: nextActiveArtifacts.applicationEmailVersionId ?? null,
+      coverLetterVersionId: nextActiveArtifacts.coverLetterVersionId ?? null,
+      tailoredCvVersionId: nextActiveArtifacts.tailoredCvVersionId ?? null,
     });
   }
   return Response.json({ application: updatedApplication });

@@ -29,7 +29,7 @@ type QueryOptions = {
 };
 
 const createNoteQuery = <T>(
-  queryKey: string[],
+  queryKey: readonly string[],
   fetchFn: () => Promise<T[]>,
   resource: string,
   options?: QueryOptions

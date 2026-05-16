@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-17T12:21:03.075Z",
+  "generatedAt": "2026-05-16T12:47:06.314Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -22,18 +22,190 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10656,
-    "exportedDeclarationsScanned": 6312,
-    "candidateDeclarationsScanned": 6292,
-    "exactShapeClusters": 9,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 6,
-    "declarationsInClusters": 12,
-    "highestRiskScore": 13
+    "filesScanned": 13429,
+    "exportedDeclarationsScanned": 8244,
+    "candidateDeclarationsScanned": 8225,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 50,
+    "clustersAfterFilters": 17,
+    "declarationsInClusters": 34,
+    "highestRiskScore": 18
   },
   "clusters": [
     {
-      "clusterId": "near-0002",
+      "clusterId": "near-0011",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 18,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "65ed7154815f",
+        "memberCount": 2,
+        "preview": "prop:kind:'summary'; prop:text:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/components/cv-builder/cv-block-model.ts#CvSummaryBlock",
+          "name": "CvSummaryBlock",
+          "kind": "interface",
+          "path": "src/features/filemaker/components/cv-builder/cv-block-model.ts",
+          "source": {
+            "path": "src/features/filemaker/components/cv-builder/cv-block-model.ts",
+            "line": 36,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 5
+        },
+        {
+          "id": "src/shared/utils/prompt-params/scanner.ts#Segment",
+          "name": "Segment",
+          "kind": "type",
+          "path": "src/shared/utils/prompt-params/scanner.ts",
+          "source": {
+            "path": "src/shared/utils/prompt-params/scanner.ts",
+            "line": 11,
+            "domain": "shared"
+          },
+          "usageCount": 3
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0071",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 2,
+      "domains": [
+        "feature:playwright",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "1742801c1ba3",
+        "memberCount": 2,
+        "preview": "prop:id:string; prop:name:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/playwright/step-sequencer-master-tree.ts#StepSeqWebsiteInfo",
+          "name": "StepSeqWebsiteInfo",
+          "kind": "interface",
+          "path": "src/features/playwright/step-sequencer-master-tree.ts",
+          "source": {
+            "path": "src/features/playwright/step-sequencer-master-tree.ts",
+            "line": 96,
+            "domain": "feature:playwright"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker.ts#TraderaListingFormCategoryPickerItem",
+          "name": "TraderaListingFormCategoryPickerItem",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker.ts",
+            "line": 1,
+            "domain": "shared"
+          },
+          "usageCount": 7
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0061",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "e6ffbf4bbbcb",
+        "memberCount": 1,
+        "preview": "'auto' | 'brave' | 'chrome' | 'chromium'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/pracuj-browser-auth.ts#PracujBrowserPreference",
+          "name": "PracujBrowserPreference",
+          "kind": "type",
+          "path": "src/features/integrations/services/pracuj-browser-auth.ts",
+          "source": {
+            "path": "src/features/integrations/services/pracuj-browser-auth.ts",
+            "line": 81,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/playwright/browser-launch.ts#PlaywrightBrowserPreference",
+          "name": "PlaywrightBrowserPreference",
+          "kind": "type",
+          "path": "src/shared/lib/playwright/browser-launch.ts",
+          "source": {
+            "path": "src/shared/lib/playwright/browser-launch.ts",
+            "line": 18,
+            "domain": "shared"
+          },
+          "usageCount": 5
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0072",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "b34d32bf9f47",
+        "memberCount": 2,
+        "preview": "prop:code:string; prop:name:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/products/components/form/ProductFormGeneral.types.ts#ProductFormLanguage",
+          "name": "ProductFormLanguage",
+          "kind": "type",
+          "path": "src/features/products/components/form/ProductFormGeneral.types.ts",
+          "source": {
+            "path": "src/features/products/components/form/ProductFormGeneral.types.ts",
+            "line": 1,
+            "domain": "feature:products"
+          },
+          "usageCount": 3
+        },
+        {
+          "id": "src/shared/constants/countries.ts#CountryCodeOption",
+          "name": "CountryCodeOption",
+          "kind": "type",
+          "path": "src/shared/constants/countries.ts",
+          "source": {
+            "path": "src/shared/constants/countries.ts",
+            "line": 13,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0042",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 13,
@@ -76,7 +248,305 @@
       ]
     },
     {
-      "clusterId": "exact-0006",
+      "clusterId": "near-0048",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e7162cb4e90e",
+        "memberCount": 22,
+        "preview": "prop:_id:string; prop:createdAt:Date | string; prop:entityId?:string | null; prop:entityType?:string | null; prop:errorMessage?:string | null; prop:finishedAt?:Date | string | null; prop:graph?:Record<string, unknown> | null; prop:id?:string"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/ai-paths/services/path-run-repository/methods/repository-shared.ts#RunDocument",
+          "name": "RunDocument",
+          "kind": "type",
+          "path": "src/shared/lib/ai-paths/services/path-run-repository/methods/repository-shared.ts",
+          "source": {
+            "path": "src/shared/lib/ai-paths/services/path-run-repository/methods/repository-shared.ts",
+            "line": 45,
+            "domain": "shared"
+          },
+          "usageCount": 3
+        },
+        {
+          "id": "src/shared/lib/db/services/database-sync-types.ts#MongoAiPathRunDoc",
+          "name": "MongoAiPathRunDoc",
+          "kind": "interface",
+          "path": "src/shared/lib/db/services/database-sync-types.ts",
+          "source": {
+            "path": "src/shared/lib/db/services/database-sync-types.ts",
+            "line": 391,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0062",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:job-board",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e78a58377723",
+        "memberCount": 2,
+        "preview": "prop:title:string; prop:url:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/job-board/server/providers/job-board-sync.ts#JobBoardCollectedOfferLink",
+          "name": "JobBoardCollectedOfferLink",
+          "kind": "type",
+          "path": "src/features/job-board/server/providers/job-board-sync.ts",
+          "source": {
+            "path": "src/features/job-board/server/providers/job-board-sync.ts",
+            "line": 52,
+            "domain": "feature:job-board"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts#JobBoardCollectedOfferLink",
+          "name": "JobBoardCollectedOfferLink",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+            "line": 48,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0089",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "shared",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "49c0fe067aec",
+        "memberCount": 1,
+        "preview": "OAuthTokenResponseDto"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/contracts/integrations/oauth.ts#OAuthTokenResponse",
+          "name": "OAuthTokenResponse",
+          "kind": "type",
+          "path": "src/shared/contracts/integrations/oauth.ts",
+          "source": {
+            "path": "src/shared/contracts/integrations/oauth.ts",
+            "line": 14,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/oauth/google-oauth.ts#GoogleOAuthTokenResponse",
+          "name": "GoogleOAuthTokenResponse",
+          "kind": "type",
+          "path": "src/shared/lib/oauth/google-oauth.ts",
+          "source": {
+            "path": "src/shared/lib/oauth/google-oauth.ts",
+            "line": 51,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0025",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2d1d5c0509d3",
+        "memberCount": 2,
+        "preview": "prop:message:string; prop:variant:'success' | 'warning'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/filemaker/filemaker-organization-scrape-client.ts#ScrapeToast",
+          "name": "ScrapeToast",
+          "kind": "type",
+          "path": "src/features/filemaker/filemaker-organization-scrape-client.ts",
+          "source": {
+            "path": "src/features/filemaker/filemaker-organization-scrape-client.ts",
+            "line": 38,
+            "domain": "feature:filemaker"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/base-order-quick-import-feedback.ts#BaseOrderQuickImportFeedback",
+          "name": "BaseOrderQuickImportFeedback",
+          "kind": "type",
+          "path": "src/shared/lib/base-order-quick-import-feedback.ts",
+          "source": {
+            "path": "src/shared/lib/base-order-quick-import-feedback.ts",
+            "line": 3,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0047",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:products",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "73995b6dfab6",
+        "memberCount": 2,
+        "preview": "prop:capture:( params: Omit<TParams, keyof TBaseParams> ) => Promise<TObservation | null>; prop:observeLoop:( options: Omit< ProductScanVerificationBarrierObserveLoopWithPageOptions< TState, TBaseParams, TParams, TObservation, TExtra >, | 'verificationState' | 'resolveCurrentUrl' | 'page' | 'artifacts' | 'log' | 'upsertStep' | 'baseParams' > ) => Promise<PlaywrightObservationLoopResult<TState, TObservation>>"
+      },
+      "declarations": [
+        {
+          "id": "src/features/products/server/product-scan-verification.runtime-types.ts#ProductScanVerificationBarrierBoundPageSession",
+          "name": "ProductScanVerificationBarrierBoundPageSession",
+          "kind": "type",
+          "path": "src/features/products/server/product-scan-verification.runtime-types.ts",
+          "source": {
+            "path": "src/features/products/server/product-scan-verification.runtime-types.ts",
+            "line": 207,
+            "domain": "feature:products"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/ProductScanSequencer.ts#ProductScanManualVerificationCaptureSession",
+          "name": "ProductScanManualVerificationCaptureSession",
+          "kind": "interface",
+          "path": "src/shared/lib/browser-execution/sequencers/ProductScanSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/ProductScanSequencer.ts",
+            "line": 123,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0094",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "0e700aa2dc3e",
+        "memberCount": 2,
+        "preview": "prop:size?:'xs' | 'sm' | 'default'; prop:variant?:'default' | 'subtle'"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/ui/input.tsx#InputProps",
+          "name": "InputProps",
+          "kind": "interface",
+          "path": "src/shared/ui/input.tsx",
+          "source": {
+            "path": "src/shared/ui/input.tsx",
+            "line": 33,
+            "domain": "shared"
+          },
+          "usageCount": 1
+        },
+        {
+          "id": "src/shared/ui/textarea.tsx#TextareaProps",
+          "name": "TextareaProps",
+          "kind": "interface",
+          "path": "src/shared/ui/textarea.tsx",
+          "source": {
+            "path": "src/shared/ui/textarea.tsx",
+            "line": 33,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0050",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e597e434c9e5",
+        "memberCount": 10,
+        "preview": "prop:completedAt:string | null; prop:details:Array<{ label: string; value?: string | null }>; prop:durationMs:number | null; prop:key:string; prop:label:string; prop:message:string | null; prop:startedAt:string | null; prop:status:FilemakerOrganizationPresenceStepStatus"
+      },
+      "declarations": [
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts#FilemakerOrganizationPresenceStep",
+          "name": "FilemakerOrganizationPresenceStep",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts",
+            "line": 14,
+            "domain": "shared"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts#JobBoardScrapeStep",
+          "name": "JobBoardScrapeStep",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+          "source": {
+            "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+            "line": 24,
+            "domain": "shared"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0090",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -98,7 +568,7 @@
           "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
-            "line": 306,
+            "line": 319,
             "domain": "shared"
           },
           "usageCount": 0
@@ -110,7 +580,7 @@
           "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
-            "line": 98,
+            "line": 138,
             "domain": "shared"
           },
           "usageCount": 0
@@ -118,7 +588,7 @@
       ]
     },
     {
-      "clusterId": "exact-0007",
+      "clusterId": "exact-0091",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -140,7 +610,7 @@
           "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
-            "line": 308,
+            "line": 321,
             "domain": "shared"
           },
           "usageCount": 0
@@ -152,7 +622,7 @@
           "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
-            "line": 100,
+            "line": 140,
             "domain": "shared"
           },
           "usageCount": 0
@@ -160,7 +630,7 @@
       ]
     },
     {
-      "clusterId": "exact-0008",
+      "clusterId": "exact-0092",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -182,7 +652,7 @@
           "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
-            "line": 310,
+            "line": 323,
             "domain": "shared"
           },
           "usageCount": 0
@@ -194,7 +664,7 @@
           "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
-            "line": 102,
+            "line": 142,
             "domain": "shared"
           },
           "usageCount": 0
@@ -202,7 +672,7 @@
       ]
     },
     {
-      "clusterId": "exact-0009",
+      "clusterId": "exact-0093",
       "clusterKind": "exact-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -211,32 +681,32 @@
         "shared"
       ],
       "signature": {
-        "shapeKind": "structural-members",
-        "normalizedShapeHash": "477e993a2e3e",
-        "memberCount": 5,
-        "preview": "prop:buffer?:Buffer | null; prop:id?:string | null; prop:localPath?:string | null; prop:rank?:number | null; prop:url?:string | null"
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "37bdafa654d9",
+        "memberCount": 1,
+        "preview": "| 'pending' | 'running' | 'completed' | 'failed' | 'skipped'"
       },
       "declarations": [
         {
-          "id": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts#AmazonScanImageCandidate",
-          "name": "AmazonScanImageCandidate",
-          "kind": "interface",
-          "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
+          "id": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts#FilemakerOrganizationPresenceStepStatus",
+          "name": "FilemakerOrganizationPresenceStepStatus",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts",
           "source": {
-            "path": "src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts",
-            "line": 41,
+            "path": "src/shared/lib/browser-execution/sequencers/FilemakerOrganizationPresenceSequencer.ts",
+            "line": 7,
             "domain": "shared"
           },
           "usageCount": 0
         },
         {
-          "id": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts#Supplier1688ScanImageCandidate",
-          "name": "Supplier1688ScanImageCandidate",
-          "kind": "interface",
-          "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
+          "id": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts#JobBoardScrapeStepStatus",
+          "name": "JobBoardScrapeStepStatus",
+          "kind": "type",
+          "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
           "source": {
-            "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
-            "line": 11,
+            "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
+            "line": 17,
             "domain": "shared"
           },
           "usageCount": 0
@@ -244,7 +714,7 @@
       ]
     },
     {
-      "clusterId": "near-0003",
+      "clusterId": "near-0049",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -254,9 +724,9 @@
       ],
       "signature": {
         "shapeKind": "structural-members",
-        "normalizedShapeHash": "76d79a1e71e2",
-        "memberCount": 5,
-        "preview": "prop:description:string; prop:key:string; prop:kind:AmazonSelectorRegistryKind; prop:label:string; prop:value:AmazonSelectorRegistryValue"
+        "normalizedShapeHash": "98daf33bce3f",
+        "memberCount": 6,
+        "preview": "prop:description:string; prop:key:string; prop:kind:AmazonSelectorRegistryKind; prop:label:string; prop:role:SelectorRegistryRole; prop:value:AmazonSelectorRegistryValue"
       },
       "declarations": [
         {
@@ -266,7 +736,7 @@
           "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/amazon.ts",
-            "line": 312,
+            "line": 325,
             "domain": "shared"
           },
           "usageCount": 0
@@ -278,7 +748,7 @@
           "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
           "source": {
             "path": "src/shared/lib/browser-execution/selectors/supplier-1688.ts",
-            "line": 104,
+            "line": 144,
             "domain": "shared"
           },
           "usageCount": 0

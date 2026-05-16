@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, LoadingState, StatusBadge } from '@/features/kangur/shared/ui';
+import { Badge, StatusBadge } from '@/features/kangur/shared/ui';
 import { KangurAdminStatusCard } from '../components/KangurAdminStatusCard';
 import { SummaryContent } from '../components/observability/SummaryContent';
 import { formatDateTime, formatNumber } from '../components/observability/utils';

@@ -179,6 +179,7 @@ function StudioVariantsGridPicker({
       gridClassName='grid-cols-2 sm:grid-cols-3 md:grid-cols-5'
       gap='8px'
       renderItem={(item, isSelected) => {
+        if (item.value === undefined) return null;
         if (item.metadata?.isPending === true)
           return (
             <PendingVariantCard

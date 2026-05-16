@@ -8,6 +8,7 @@ import {
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
+import type { AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
@@ -30,10 +31,12 @@ const AI_PATH_STATUSES: AiPathRunStatus[] = [
 
 const JOB_STATUSES: ProductAiJobStatus[] = [
   'pending',
+  'queued',
   'running',
   'completed',
   'failed',
   'canceled',
+  'cancelled',
 ];
 const DEFAULT_HEALTH_CRITICAL_GRACE_MS = 15 * 60 * 1000;
 
@@ -70,18 +73,27 @@ const toIso = (value?: Date | string | null): string | null => {
 
 
 
-interface HealthStatus {
-  slo: { overall: 'ok' | 'critical' };
-  running: number;
-  healthy: number;
-  activeRuns: number;
-  queuedCount: number;
-  queueLagMs: number;
-}
-
 interface RuntimeSummary {
   [key: string]: unknown;
 }
+
+const createEmptyAiPathStatusCounts = (): Record<AiPathRunStatus, number> => ({
+  queued: 0,
+  running: 0,
+  completed: 0,
+  failed: 0,
+  canceled: 0,
+});
+
+const createEmptyJobStatusCounts = (): Record<ProductAiJobStatus, number> => ({
+  pending: 0,
+  queued: 0,
+  running: 0,
+  completed: 0,
+  failed: 0,
+  canceled: 0,
+  cancelled: 0,
+});
 
 async function getAiPathsHealth(): Promise<{ provider: string; routeMode: string; collection: string; total: number | null; byStatus: Record<AiPathRunStatus, number>; latest: { id: string; status: AiPathRunStatus; createdAt: string | null } | null; error?: string }> {
   try {
@@ -93,7 +105,7 @@ async function getAiPathsHealth(): Promise<{ provider: string; routeMode: string
         return [status, result.total] as const;
       })
     );
-    const byStatus: Record<AiPathRunStatus, number> = Object.fromEntries(byStatusEntries);
+    const byStatus = Object.fromEntries(byStatusEntries) as Record<AiPathRunStatus, number>;
     const all = await repo.listRuns({ limit: 1, offset: 0 });
     const latestRun = all.runs[0];
     const latest = latestRun
@@ -118,7 +130,7 @@ async function getAiPathsHealth(): Promise<{ provider: string; routeMode: string
       routeMode: 'fallback',
       collection: 'ai_path_runs',
       total: null,
-      byStatus: {},
+      byStatus: createEmptyAiPathStatusCounts(),
       latest: null,
       error: error instanceof Error ? error.message : 'Failed to load AI Paths counts.',
     };
@@ -144,7 +156,7 @@ async function getAiJobsHealth(): Promise<{
     const provider = getProductAiJobProvider() ?? 'unknown';
 
     if (provider !== 'mongodb') {
-      return { provider, total: null, byStatus: {}, latest: null };
+      return { provider, total: null, byStatus: createEmptyJobStatusCounts(), latest: null };
     }
 
     const db = await getMongoDb();
@@ -159,7 +171,7 @@ async function getAiJobsHealth(): Promise<{
       .limit(1)
       .next();
     
-    const byStatus: Record<ProductAiJobStatus, number> = Object.fromEntries(totals);
+    const byStatus = Object.fromEntries(totals) as Record<ProductAiJobStatus, number>;
     const latestRecord = asRecord(latest);
     const latestId = latestRecord ? resolveRecordId(latestRecord) : null;
     
@@ -180,17 +192,17 @@ async function getAiJobsHealth(): Promise<{
     return {
       provider: getProductAiJobProvider() ?? 'unknown',
       total: null,
-      byStatus: {},
+      byStatus: createEmptyJobStatusCounts(),
       latest: null,
       error: error instanceof Error ? error.message : 'Failed to load AI Jobs counts.',
     };
   }
 }
 
-async function getQueueStatus(): Promise<{ status: HealthStatus | null; error?: string }> {
+async function getQueueStatus(): Promise<{ status: AiPathRunQueueStatus | null; error?: string }> {
   try {
     const status = await getAiPathRunQueueStatus();
-    return { status: status as HealthStatus | null };
+    return { status };
   } catch (error) {
     ErrorSystem.captureException(error).catch(() => { /* ignore */ });
     return { status: null, error: error instanceof Error ? error.message : 'Failed to load queue health.' };
@@ -276,4 +288,3 @@ export async function getHealthHandler(
     { status }
   );
 }
-

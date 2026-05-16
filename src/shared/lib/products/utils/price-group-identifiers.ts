@@ -31,11 +31,11 @@ export const matchesPriceGroupIdentifier = (
 };
 
 export const findPriceGroupByIdentifier = <TGroup extends PriceGroupLike>(
-  groups: TGroup[],
+  groups: readonly TGroup[],
   identifier: string | null | undefined
 ): TGroup | undefined => groups.find((group) => matchesPriceGroupIdentifier(group, identifier));
 
 export const resolvePriceGroupIdentifierToId = <TGroup extends PriceGroupLike>(
-  groups: TGroup[],
+  groups: readonly TGroup[],
   identifier: string | null | undefined
 ): string => findPriceGroupByIdentifier(groups, identifier)?.id?.trim() ?? normalizeIdentifier(identifier);

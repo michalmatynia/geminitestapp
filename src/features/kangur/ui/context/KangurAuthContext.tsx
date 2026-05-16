@@ -270,6 +270,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
 
     void checkAppState({ timeoutMs: AUTH_CHECK_TIMEOUT_MS, useBootstrapCache: true })
       .finally(() => signalBootReady());
+    return undefined;
   }, [bootstrapSnapshot.cachedUser, checkAppState]);
 
   // logout clears local auth state immediately (optimistic), then calls the

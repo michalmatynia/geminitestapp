@@ -31,6 +31,7 @@ export function useKangurLessonEditorController() {
 
   return {
     lesson,
+    document: value,
     pages,
     activePage,
     activePageId,

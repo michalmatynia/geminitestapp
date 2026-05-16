@@ -5,6 +5,8 @@
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { Producer } from '@/shared/contracts/products/producers';
 
+type ProducerLike = Pick<Producer, 'id' | 'name'> & Partial<Pick<Producer, 'website'>>;
+
 import {
   coerceProductValidationFieldNumericValue,
   getProductValidationFieldValueKind,
@@ -59,7 +61,7 @@ type ResolveValidatorFieldReplacementInput = {
   replacementValue: string | null | undefined;
   categories?: ReadonlyArray<ProductCategory>;
   categoryNameById?: ReadonlyMap<string, string>;
-  producers?: ReadonlyArray<Producer>;
+  producers?: ReadonlyArray<ProducerLike>;
   producerNameById?: ReadonlyMap<string, string>;
 };
 

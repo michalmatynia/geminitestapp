@@ -24,6 +24,7 @@ typecheck follow-up.
 - [`scan-latest.md`](./scan-latest.md)
 - [`scan-latest.json`](./scan-latest.json)
 - [`inventory-latest.csv`](./inventory-latest.csv)
+- [`audit-exceptions.md`](./audit-exceptions.md)
 
 ## Core Commands
 

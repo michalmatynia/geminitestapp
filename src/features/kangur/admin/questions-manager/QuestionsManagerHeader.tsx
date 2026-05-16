@@ -1,6 +1,6 @@
 import { KangurQuestionsHeader } from '../components/KangurQuestionsHeader';
 
-export function QuestionsManagerHeader({ copy, currentSuite, questions, health, canPublishAndGoLive, canPublishReady, isSaving, mutations }: { copy: any; currentSuite: any; questions: any[]; health: any; canPublishAndGoLive: boolean; canPublishReady: boolean; isSaving: boolean; mutations: any; }) {
+export function QuestionsManagerHeader({ copy, currentSuite, questions, health, canPublishAndGoLive, canPublishReady, isSaving, mutations, onClose }: { copy: any; currentSuite: any; questions: any[]; health: any; canPublishAndGoLive: boolean; canPublishReady: boolean; isSaving: boolean; mutations: any; onClose: () => void; }) {
   return (
     <KangurQuestionsHeader
       copy={copy.header}
@@ -25,7 +25,7 @@ export function QuestionsManagerHeader({ copy, currentSuite, questions, health, 
       onGoLive={mutations.handleGoLiveCurrentSuite}
       onTakeOffline={mutations.handleTakeCurrentSuiteOffline}
       onAddQuestion={mutations.openCreate}
-      onBack={mutations.onClose}
+      onBack={onClose}
     />
   );
 }

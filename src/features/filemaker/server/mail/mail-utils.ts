@@ -24,7 +24,8 @@ const toNullableString = (value: string): string | null =>
 export const toParticipant = (
   input: MessageAddressObject | FilemakerMailParticipant | null | undefined
 ): FilemakerMailParticipant | null => {
-  const rawAddress = input?.address ?? '';
+  if (input === null || input === undefined) return null;
+  const rawAddress = input.address ?? '';
   if (rawAddress.length === 0) return null;
   const address = normalizeEmailAddress(rawAddress);
   if (address.length === 0) return null;
@@ -96,7 +97,7 @@ export const buildSyncStateId = (accountId: string, mailboxPath: string): string
 
 export const buildAccountSecretSettingKey = (
   accountId: string,
-  kind: 'imap_password' | 'smtp_password' | 'google_oauth_refresh_token'
+  kind: 'imap_password' | 'smtp_password' | 'google_oauth_refresh_token' | 'dkim_private_key'
 ): string => `${FILEMAKER_MAIL_ACCOUNT_SECRET_SETTING_PREFIX}${accountId}_${kind}`;
 
 export const resolveAccountSecretSettingKey = (

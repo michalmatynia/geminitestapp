@@ -48,9 +48,6 @@ const KANGUR_FEATURE_PAGE_FOOTER_LINK_CLASSNAME =
 const KANGUR_FEATURE_PAGE_SKIP_LINK_CLASSNAME =
   'sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70';
 
-const resolveKangurFeaturePageShellBrowserPathname = (): string | null =>
-  typeof window === 'undefined' ? null : window.location.pathname?.trim() || null;
-
 const resolveKangurFeaturePageShowFooter = (
   embedded: boolean,
   pageKey: string

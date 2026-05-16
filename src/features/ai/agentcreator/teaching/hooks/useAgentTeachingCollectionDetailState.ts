@@ -5,7 +5,6 @@ import { useState, useMemo, useCallback } from 'react';
 
 import type {
   AgentTeachingChatSource,
-  AgentTeachingEmbeddingCollectionRecord,
   AgentTeachingEmbeddingDocumentListItem,
 } from '@/shared/contracts/agent-teaching';
 import { useToast } from '@/shared/ui/primitives.public';

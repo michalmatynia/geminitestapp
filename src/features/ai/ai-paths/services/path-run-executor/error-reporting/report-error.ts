@@ -20,7 +20,7 @@ const readBoolean = (meta: Record<string, unknown>, key: string): boolean | null
 const readHints = (meta: Record<string, unknown>): string[] | null =>
   Array.isArray(meta['hints']) ? (meta['hints'] as string[]) : null;
 
-const AI_PATH_ERROR_SCOPES = new Set<string>([
+const AI_PATH_ERROR_SCOPES: ReadonlySet<AiPathErrorScope> = new Set<AiPathErrorScope>([
   'enqueue',
   'run',
   'node',
@@ -30,9 +30,12 @@ const AI_PATH_ERROR_SCOPES = new Set<string>([
   'unknown',
 ]);
 
+const isAiPathErrorScope = (value: string): value is AiPathErrorScope =>
+  AI_PATH_ERROR_SCOPES.has(value as AiPathErrorScope);
+
 const resolveErrorScope = (meta: Record<string, unknown>): AiPathErrorScope => {
   const explicitScope = readString(meta, 'errorScope');
-  if (explicitScope !== null && AI_PATH_ERROR_SCOPES.has(explicitScope)) {
+  if (explicitScope !== null && isAiPathErrorScope(explicitScope)) {
     return explicitScope;
   }
   return readString(meta, 'nodeId') !== null ? 'node' : 'run';

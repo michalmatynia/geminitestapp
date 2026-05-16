@@ -48,10 +48,10 @@ const buildRunRepositoryHeaders = (
   };
   if (writerSelection !== null) {
     const { provider, routeMode } = writerSelection;
-    if (provider !== null) {
+    if (provider !== null && provider !== undefined) {
       headers['X-Ai-Paths-Run-Writer-Provider'] = provider;
     }
-    if (routeMode !== null) {
+    if (routeMode !== null && routeMode !== undefined) {
       headers['X-Ai-Paths-Run-Writer-Route-Mode'] = routeMode;
     }
   }

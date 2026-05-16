@@ -66,6 +66,7 @@ const buildEmptyProductStudioVariantsResult = (
   preflight: ProductStudioSequencePreflightResult
 ): ProductStudioVariantsResult => ({
   ...buildProductStudioVariantsResultBase(preflight),
+  activeRun: null,
   sourceSlotId: null,
   sourceSlot: null,
   variants: [],
@@ -77,6 +78,7 @@ const buildResolvedProductStudioVariantsResult = (
   resolved: Awaited<ReturnType<typeof resolveGenerationVariants>>
 ): ProductStudioVariantsResult => ({
   ...buildProductStudioVariantsResultBase(preflight),
+  activeRun: null,
   sourceSlotId: resolved.sourceSlot?.id ?? sourceSlotCandidates[0] ?? null,
   sourceSlot: resolved.sourceSlot,
   variants: resolved.variants,

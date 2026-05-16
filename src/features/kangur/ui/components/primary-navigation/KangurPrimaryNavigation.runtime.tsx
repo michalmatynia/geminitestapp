@@ -17,9 +17,6 @@ import {
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 
 import { KangurHomeBetaBadge } from './KangurPrimaryNavigation.components';
-import {
-  type useKangurPrimaryNavigationState,
-} from './KangurPrimaryNavigation.hooks';
 import type {
   KangurNavActionConfig,
   KangurPrimaryNavigationProps,

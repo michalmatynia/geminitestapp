@@ -10,7 +10,6 @@ import { useKangurGameContentSets } from '@/features/kangur/ui/hooks/useKangurGa
 import { useKangurGameInstances } from '@/features/kangur/ui/hooks/useKangurGameInstances';
 import {
   isKangurLaunchableGameScreen,
-  type KangurLaunchableGameScreen,
 } from '@/features/kangur/ui/services/game-launch';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type {

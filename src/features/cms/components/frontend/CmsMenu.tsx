@@ -5,7 +5,13 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import React, { useEffect, useId, useMemo, useState } from 'react';
 
-import { CmsStorefrontAppearanceButtons, resolveStorefrontAppearanceTone, useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import {
+  CmsStorefrontAppearanceButtons,
+  resolveStorefrontAppearanceTone,
+  useOptionalCmsStorefrontAppearance,
+  VALID_MODES,
+  type CmsStorefrontAppearanceMode,
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
@@ -70,14 +76,29 @@ function MenuList({ menu, normPath, colors, hydrated }: { menu: MenuSettings; no
   );
 }
 
+const resolveAppearanceMode = (mode: string | undefined): CmsStorefrontAppearanceMode =>
+  VALID_MODES.has(mode as CmsStorefrontAppearanceMode)
+    ? (mode as CmsStorefrontAppearanceMode)
+    : 'default';
+
+const toCssLength = (value: string | number | null | undefined, fallback: string): string =>
+  typeof value === 'number' ? `${value}px` : value ?? fallback;
+
 const getColors = (menu: MenuSettings, appMode: string | undefined): ColorSchemeColors => {
-    const accent = menu.activeColor ?? (menu.activeItemColor ?? menu.textColor);
-    return resolveStorefrontAppearanceTone({ 
-        background: menu.backgroundColor ?? 'default-bg', 
-        text: menu.textColor ?? 'default-text', 
-        border: menu.borderColor ?? 'default-border', 
-        accent
-    }, appMode ?? 'default');
+  const accent = menu.activeColor ?? (menu.activeItemColor ?? menu.textColor);
+  const tone = resolveStorefrontAppearanceTone(
+    {
+      background: menu.backgroundColor ?? 'default-bg',
+      text: menu.textColor ?? 'default-text',
+      border: menu.borderColor ?? 'default-border',
+      accent,
+    },
+    resolveAppearanceMode(appMode)
+  );
+  return {
+    ...tone,
+    surface: tone.background,
+  };
 };
 
 const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): React.CSSProperties => {
@@ -87,7 +108,9 @@ const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): R
   
   let width = '100%';
   if (isSide) {
-      width = (collapsed && isCollapsible) ? (menu.collapsedWidth || '50px') : (menu.sideWidth || '200px');
+      width = (collapsed && isCollapsible)
+        ? toCssLength(menu.collapsedWidth, '50px')
+        : toCssLength(menu.sideWidth, '200px');
   }
 
   return {

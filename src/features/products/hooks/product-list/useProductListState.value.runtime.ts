@@ -3,6 +3,8 @@ import type { ProductListValueInput } from './useProductListState.value.types';
 
 const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_ECOMMERCE_BADGE_IDS = new Set<string>();
+const EMPTY_ECOMMERCE_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
@@ -17,6 +19,8 @@ export type ProductListRuntimeValue = Pick<
   | 'bulkDeletePending'
   | 'handleConfirmSingleDelete'
   | 'handleMassDelete'
+  | 'ecommerceBadgeIds'
+  | 'ecommerceBadgeStatuses'
   | 'integrationBadgeIds'
   | 'integrationBadgeStatuses'
   | 'isDebugOpen'
@@ -58,6 +62,8 @@ export const buildRuntimeValue = ({
   onAddToMarketplace: modal.modals.handleAddToMarketplace,
   integrationBadgeIds: EMPTY_INTEGRATION_BADGE_IDS,
   integrationBadgeStatuses: EMPTY_INTEGRATION_BADGE_STATUSES,
+  ecommerceBadgeIds: EMPTY_ECOMMERCE_BADGE_IDS,
+  ecommerceBadgeStatuses: EMPTY_ECOMMERCE_BADGE_STATUSES,
   traderaBadgeIds: EMPTY_TRADERA_BADGE_IDS,
   traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
   playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,

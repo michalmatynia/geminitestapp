@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import type { KangurLesson, KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
-import type { LessonFormData, LessonTreeMode, KangurLessonAuthoringFilter } from '../../types';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonAgeGroup } from '@/shared/contracts/kangur-lesson-constants';
+import type { LessonFormData, LessonTreeMode } from '../../types';
+import type { KangurLessonAuthoringFilter } from '../../content-creator-insights';
 import { createDefaultKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { createInitialLessonFormData, readPersistedTreeMode } from '../../utils';
 

@@ -142,8 +142,9 @@ const selectManualUnmarkTargetFromApplications = (
     })
     .map((application: FilemakerJobApplication) => application.id);
 
-  if (statusTargets.length === 0) return null;
-  return { applicationId: statusTargets[0] };
+  const applicationId = statusTargets[0];
+  if (applicationId === undefined) return null;
+  return { applicationId };
 };
 
 const parseJobApplicationsPayload = (value: unknown): FilemakerJobApplication[] => {

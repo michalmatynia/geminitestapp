@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { usePageBuilderState, usePageBuilderDispatch, useVectorOverlay } from '@/features/cms/hooks/usePageBuilderContext';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
@@ -16,7 +16,7 @@ export function usePreviewPanelController() {
   
   const [mediaTarget, setMediaTarget] = useState<any | null>(null);
   const [mediaOpen, setMediaOpen] = useState(false);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [, setHoveredNodeId] = useState<string | null>(null);
 
   const domainSlugSet = useMemo(() => (slugsQuery.data ?? []).length ? new Set((slugsQuery.data ?? []).map((s: any) => s.slug)) : null, [slugsQuery.data]);
   

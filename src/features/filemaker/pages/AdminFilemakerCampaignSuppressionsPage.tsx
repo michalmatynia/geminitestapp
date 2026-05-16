@@ -97,7 +97,7 @@ function useUnsuppressHandler(
   settingsStore: SettingsStore,
   setPendingAddress: React.Dispatch<React.SetStateAction<string | null>>
 ): {
-  ConfirmationModal: React.ReactNode;
+  ConfirmationModal: ReturnType<typeof useConfirm>['ConfirmationModal'];
   handleUnsuppress: (entry: SuppressionEntry) => void;
 } {
   const { toast } = useToast();
@@ -321,7 +321,7 @@ export function AdminFilemakerCampaignSuppressionsPage(): React.JSX.Element {
         isLoading={settingsStore.isLoading}
         totalEntries={suppressionEntries.length}
       />
-      {ConfirmationModal}
+      <ConfirmationModal />
     </div>
   );
 }

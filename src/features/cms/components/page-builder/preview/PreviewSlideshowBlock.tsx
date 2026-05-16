@@ -364,7 +364,7 @@ export function PreviewSlideshowBlock({
                 currentActiveIndex={currentActiveIndex}
                 transition={transition}
                 transitionDuration={transitionDuration}
-                selectedNodeId={selectedNodeId}
+                selectedNodeId={selectedNodeId ?? undefined}
                 onSelect={onSelect}
                 showEditorChrome={showEditorChrome}
                 getParentBlockContextValue={getParentBlockContextValue}

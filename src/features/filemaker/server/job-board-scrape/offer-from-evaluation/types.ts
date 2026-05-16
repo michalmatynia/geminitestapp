@@ -1,4 +1,4 @@
-import type { FilemakerJobBoardScrapedOffer } from '../../filemaker-job-board-scrape-contracts';
+import type { FilemakerJobBoardScrapedOffer } from '../../../filemaker-job-board-scrape-contracts';
 
 export type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
 

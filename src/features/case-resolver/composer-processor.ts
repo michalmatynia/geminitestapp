@@ -1,11 +1,9 @@
 import {
   type AiNode,
-  type CaseResolverEdge,
-  type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverCompiledSegment,
 } from '@/shared/contracts/case-resolver';
-import { resolveNodeMeta, resolveSourceOutputValue } from './composer-utils';
+import { resolveNodeMeta } from './composer-utils';
 import { computeNodeOutput, type NodeOutput } from './composer-compiler';
 
 export type CompilationState = {

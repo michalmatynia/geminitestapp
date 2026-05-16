@@ -138,11 +138,11 @@ const assertValidReplacementRecipe = (
   const recipe = parseDynamicReplacementRecipe(replacementValue);
   if (recipe === null) return;
 
-  if (recipe.sourceRegex !== null) {
+  if (typeof recipe.sourceRegex === 'string' && recipe.sourceRegex.length > 0) {
     assertValidRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
   }
   if (recipe.logicOperator === 'regex') {
-    if (recipe.logicOperand === null) {
+    if (typeof recipe.logicOperand !== 'string' || recipe.logicOperand.length === 0) {
       throw badRequestError('Dynamic replacement regex condition requires an operand. Set logicOperand when logicOperator is "regex".');
     }
     assertValidRegex(recipe.logicOperand, recipe.logicFlags ?? null);

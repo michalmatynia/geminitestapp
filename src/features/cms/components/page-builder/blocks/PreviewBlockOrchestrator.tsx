@@ -4,14 +4,14 @@ import { PreviewNodeSelectionButton } from '../preview/PreviewNodeSelectionButto
 import { useBlockContext } from '../preview/context/BlockContext';
 import { InspectorHover } from '../preview/InspectorOverlay';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
-import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
+import { CssAnimationWrapper } from '../../frontend/CssAnimationWrapper';
+import { GsapAnimationWrapper } from '../../frontend/GsapAnimationWrapper';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import type { GsapAnimationConfig } from '@/features/gsap/public';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 
 export function PreviewBlockOrchestrator({ block, children }: { block: BlockInstance; children: React.ReactNode }) {
-  const { selectedNodeId, isInspecting, inspectorSettings, hoveredNodeId } = usePreviewEditorState();
+  const { selectedNodeId, inspectorSettings } = usePreviewEditorState();
   const { onSelect } = usePreviewEditorActions();
   const { sectionId, columnId, parentBlockId } = useBlockContext();
 

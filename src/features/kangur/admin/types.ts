@@ -1,9 +1,11 @@
 import {
-  type KangurLessonAgeGroup,
   type KangurLessonComponentId,
   type KangurLessonContentMode,
-  type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonAgeGroup,
+  KangurLessonSubject,
+} from '@/shared/contracts/kangur-lesson-constants';
 
 export type LessonTreeMode = 'ordered' | 'catalog' | 'sections';
 export type TreeMode = LessonTreeMode;

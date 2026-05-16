@@ -76,6 +76,7 @@ export async function postHandler(
     if (!inventoryId || inventoryId === '0') {
       throw badRequestError('inventory_id is required for getInventoryProductsDetailed. Provide a non-zero inventory_id in the parameters.');
     }
+    const limitRaw = parameters['limit'];
     const limit =
       typeof limitRaw === 'number' && Number.isFinite(limitRaw)
         ? limitRaw

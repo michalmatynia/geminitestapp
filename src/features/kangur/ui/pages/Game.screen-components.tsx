@@ -13,7 +13,6 @@ import {
   KangurEmptyState,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {

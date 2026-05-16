@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
+import { safeClearTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
 import { getExpandedRect, isSectionExplainableTutorAnchor } from './KangurAiTutorWidget.helpers';
 import { AVATAR_SIZE, EDGE_GAP } from './KangurAiTutorWidget.shared';
@@ -241,8 +242,8 @@ export function useKangurAiTutorAvatarDrag(input: {
   hoveredSectionAnchor: SectionAnchor | null;
   isAvatarDragging: boolean;
   isOpen: boolean;
-  selectionExplainTimeoutRef: MutableRefObject<number | null>;
-  selectionGuidanceRevealTimeoutRef: MutableRefObject<number | null>;
+  selectionExplainTimeoutRef: MutableRefObject<SafeTimerId | null>;
+  selectionGuidanceRevealTimeoutRef: MutableRefObject<SafeTimerId | null>;
   setDraggedAvatarPoint: Dispatch<SetStateAction<TutorPoint | null>>;
   setGuidedTutorTarget: Dispatch<SetStateAction<GuidedTutorTarget | null>>;
   setHomeOnboardingStepIndex: Dispatch<SetStateAction<number | null>>;
@@ -369,11 +370,11 @@ export function useKangurAiTutorAvatarDrag(input: {
         }
         if (guidedTutorTarget) {
           if (selectionExplainTimeoutRef.current !== null) {
-            window.clearTimeout(selectionExplainTimeoutRef.current);
+            safeClearTimeout(selectionExplainTimeoutRef.current);
             selectionExplainTimeoutRef.current = null;
           }
           if (selectionGuidanceRevealTimeoutRef.current !== null) {
-            window.clearTimeout(selectionGuidanceRevealTimeoutRef.current);
+            safeClearTimeout(selectionGuidanceRevealTimeoutRef.current);
             selectionGuidanceRevealTimeoutRef.current = null;
           }
           setSelectionGuidanceCalloutVisibleText(null);

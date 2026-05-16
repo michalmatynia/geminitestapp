@@ -43,6 +43,19 @@ import {
   createInitialRequestedContextRuntimeState,
 } from './requested-context/utils';
 
+type RequestedContextInFlightState = {
+  requestKey: string;
+  requestedFileId: string;
+  startedAtMs: number;
+};
+
+type RequestedContextTransitionResolvedVia =
+  | 'none'
+  | 'auto_clear'
+  | 'manual'
+  | 'workspace_presence'
+  | 'snapshot_fetch'
+  | 'watchdog';
 
 export function useCaseResolverStateRequestedContext({
   requestedFileId,

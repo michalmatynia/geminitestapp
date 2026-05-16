@@ -1,3 +1,4 @@
+import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
 import {
   asRecord,
@@ -40,7 +41,7 @@ const resolveTopicHints = (item: PersonaMemoryEntryRecord): string[] => {
   return extractTopicHints(item.summary ?? item.content, item.topicHints);
 };
 
-const resolveMoodHints = (item: PersonaMemoryEntryRecord): string[] => {
+const resolveMoodHints = (item: PersonaMemoryEntryRecord): AgentPersonaMoodId[] => {
   return normalizeMoodHints(item.moodHints, item.summary ?? item.content);
 };
 
@@ -83,7 +84,10 @@ export const mapMemoryEntryToRecord = (
   };
 };
 
-const resolveConversationMoodHints = (message: PersonaConversationMessageRecord, metadata: Record<string, unknown> | undefined): string[] => {
+const resolveConversationMoodHints = (
+  message: PersonaConversationMessageRecord,
+  metadata: Record<string, unknown> | undefined
+): AgentPersonaMoodId[] => {
   const rawMoodHints = metadata?.['moodHints'];
   return normalizeMoodHints(
     Array.isArray(rawMoodHints)

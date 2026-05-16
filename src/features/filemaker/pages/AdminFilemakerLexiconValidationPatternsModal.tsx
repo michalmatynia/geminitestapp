@@ -1,5 +1,6 @@
 import type React from 'react';
 
+import { filemakerLexiconTypeKeySchema } from '@/shared/contracts/filemaker';
 import { FormField, FormModal, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input } from '@/shared/ui/primitives.public';
 
@@ -94,7 +95,10 @@ function PatternDraftSection(props: {
             aria-label='Pattern target type'
             value={draft.targetTypeKey}
             options={editCategoryOptions}
-            onChange={(value: string): void => onChange(draft.id, { targetTypeKey: value })}
+            onChange={(value: string): void => {
+              const targetTypeKey = filemakerLexiconTypeKeySchema.safeParse(value);
+              onChange(draft.id, { targetTypeKey: targetTypeKey.success ? targetTypeKey.data : 'other' });
+            }}
           />
         </FormField>
         <PatternTextInput

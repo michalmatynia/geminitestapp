@@ -127,7 +127,7 @@ function CampaignEditBadges({
         Automation: {context.draft.launch.mode}
       </Badge>
       <Badge variant='outline' className='text-[10px]'>
-        Delivery Route: {getDeliveryRouteLabel(context.selectedMailAccount, context.draft.mailAccountId)}
+        Delivery Route: {getDeliveryRouteLabel(context.selectedMailAccount, context.draft.mailAccountId ?? null)}
       </Badge>
       <Badge variant='outline' className='text-[10px]'>
         Next Due: {formatNextAutomationAt(context.nextAutomationAt)}

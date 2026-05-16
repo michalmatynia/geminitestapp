@@ -5,11 +5,10 @@ import type { GsapAnimationConfig } from '@/features/gsap/public';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { useBlockSettings } from './sections/FrontendBlockRenderer';
 import { buildEase, buildStagger, buildTargets } from './gsap-wrapper/animation-builders';
-import { buildEaseValue, buildScrollTrigger } from './gsap-wrapper/animation-triggers';
+import { buildScrollTrigger } from './gsap-wrapper/animation-triggers';
 import {
   buildKeyframes,
   buildMotionPathVars,
-  computeParallaxOffset,
   resolveMotionPath,
 } from './gsap-wrapper/animation-presets';
 import { getGsapFromVars } from '@/features/gsap/public';

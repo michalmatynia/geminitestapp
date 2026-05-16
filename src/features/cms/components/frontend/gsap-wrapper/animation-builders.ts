@@ -1,9 +1,8 @@
-import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/features/gsap/public';
+import type { GsapAnimationConfig } from '@/features/gsap/public';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { type UnknownRecordDto } from '@/shared/contracts/base';
 
-type GSAPTweenVars = UnknownRecordDto;
 type GSAPStaggerVars = UnknownRecordDto;
 
 export const buildTargets = (root: HTMLElement, selector?: string): Element[] => {

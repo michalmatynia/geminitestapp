@@ -268,13 +268,13 @@ function getListFilters(params: {
 }): Record<string, unknown> {
   const where: Record<string, unknown> = {};
   if (params.memoryKey !== undefined && params.memoryKey !== '') {
-    where.memoryKey = params.memoryKey;
+    where['memoryKey'] = params.memoryKey;
   }
   if (params.personaId !== null && params.personaId !== undefined && params.personaId !== '') {
-    where.personaId = params.personaId;
+    where['personaId'] = params.personaId;
   }
   if (Array.isArray(params.tags) && params.tags.length > 0) {
-    where.tags = { hasSome: params.tags };
+    where['tags'] = { hasSome: params.tags };
   }
   return where;
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import { ArrowUpRight } from 'lucide-react';
-import type { Translation } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import React from 'react';
+
+type HomeFallbackCollectionsTranslations = ReturnType<typeof useTranslations>;
 
 export function HomeFallbackCollections(): React.JSX.Element {
   const translations = useTranslations('FallbackHome.Collections');
@@ -36,25 +37,29 @@ export function HomeFallbackCollections(): React.JSX.Element {
   );
 }
 
-function CollectionsHeader({ translations }: { translations: Translation }): React.JSX.Element {
+function CollectionsHeader({
+  translations,
+}: {
+  translations: HomeFallbackCollectionsTranslations;
+}): React.JSX.Element {
   return (
     <div className='flex flex-col gap-3 md:flex-row md:items-end md:justify-between motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'>
       <div className='space-y-2'>
         <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
-          {translations('eyebrow' as any)}
+          {translations('eyebrow')}
         </p>
         <h2 id='collections-title' className='font-heading text-3xl font-semibold tracking-tight'>
-          {translations('title' as any)}
+          {translations('title')}
         </h2>
         <p className='text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]'>
-          {translations('description' as any)}
+          {translations('description')}
         </p>
       </div>
       <a
         href='#products'
         className='inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--hero-text)]'
       >
-        {translations('viewAllProducts' as any)}
+        {translations('viewAllProducts')}
         <ArrowUpRight className='size-4' aria-hidden='true' />
       </a>
     </div>
@@ -68,7 +73,7 @@ function CollectionItem({
 }: {
   collection: { title: string; description: string; emphasis: string };
   index: number;
-  translations: Translation;
+  translations: HomeFallbackCollectionsTranslations;
 }): React.JSX.Element {
   const tint = 12 + index * 6;
   return (
@@ -90,9 +95,9 @@ function CollectionItem({
       <a
         href='#products'
         className='mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--hero-text)]'
-        aria-label={translations('exploreAria', { title: collection.title } as any)}
+        aria-label={translations('exploreAria', { title: collection.title })}
       >
-        {translations('explore' as any)}
+        {translations('explore')}
         <ArrowUpRight className='size-3' aria-hidden='true' />
       </a>
     </li>

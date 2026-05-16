@@ -31,7 +31,7 @@ interface StepFormSelectorRegistryProps {
 
 export function StepFormSelectorRegistry({
   draft,
-  set,
+  set: _set,
   setSelectorBinding,
   selectorBindingMode,
   selectedRegistryNamespace,
@@ -112,7 +112,9 @@ export function StepFormSelectorRegistry({
                 <SelectContent>
                   {registryNamespacesForSelect.map((entryNamespace) => (
                     <SelectItem key={entryNamespace} value={entryNamespace}>
-                      {formatSelectorRegistryNamespaceLabel(entryNamespace)}
+                      {formatSelectorRegistryNamespaceLabel(
+                        entryNamespace as SelectorRegistryNamespace
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,6 +1,6 @@
 import './load-app-env';
 
-import { MongoClient, type Collection, type Db, type Document } from 'mongodb';
+import { MongoClient, type Collection, type Db, type Document, type Filter } from 'mongodb';
 
 type CliOptions = {
   limit: number;
@@ -212,7 +212,7 @@ const readImageFilePathMap = async (db: Db): Promise<Map<string, string>> => {
   return byId;
 };
 
-const applyLimit = <T extends Document>(collection: Collection<T>, query: Document, limit: number) => {
+const applyLimit = <T extends Document>(collection: Collection<T>, query: Filter<T>, limit: number) => {
   const cursor = collection.find(query);
   return limit > 0 ? cursor.limit(limit) : cursor;
 };

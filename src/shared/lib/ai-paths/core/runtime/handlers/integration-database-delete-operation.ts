@@ -35,61 +35,6 @@ const buildDeleteOperationResult = (
   aiPrompt,
 });
 
-const buildMissingEntityIdResult = (aiPrompt: string): RuntimePortValues => ({
-  result: null,
-  bundle: { error: 'Missing entity id' },
-  aiPrompt,
-});
-
-const reportMissingEntityId = (
-  nodeId: string,
-  reportAiPathsError: NodeHandlerContext['reportAiPathsError'],
-  toast: NodeHandlerContext['toast']
-): void => {
-  reportAiPathsError(
-    new Error('Database delete missing entity id'),
-    { action: 'deleteEntity', nodeId },
-    'Database delete missing entity id:'
-  );
-  toast('Database delete needs an entity ID input.', { variant: 'error' });
-};
-
-const reportDeleteFailure = (input: {
-  nodeId: string;
-  entityType: string;
-  entityId: string;
-  error: string | undefined;
-  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
-  toast: NodeHandlerContext['toast'];
-}): void => {
-  input.reportAiPathsError(
-    new Error(input.error),
-    {
-      action: 'deleteEntity',
-      entityType: input.entityType,
-      entityId: input.entityId,
-      nodeId: input.nodeId,
-    },
-    'Database delete failed:'
-  );
-  input.toast(`Failed to delete ${input.entityType}.`, { variant: 'error' });
-};
-
-const reportDeleteSuccess = (
-  entityType: string,
-  entityId: string,
-  toast: NodeHandlerContext['toast']
-): void => {
-  toast(`Deleted ${entityType} ${entityId}`, { variant: 'success' });
-};
-
-const buildUnsupportedDeleteResult = (entityId: string, aiPrompt: string): RuntimePortValues =>
-  ({
-    result: { ok: false },
-    bundle: { ok: false, entityId },
-    aiPrompt,
-  });
-
 const getDeleteEntityOperation = (
   entityType: string
 ): ((entityId: string) => Promise<DeleteEntityResult>) | null => {
@@ -108,7 +53,6 @@ export async function handleDatabaseDeleteOperation(
     simulationEntityType,
     simulationEntityId,
     dbConfig,
-    dryRun,
     aiPrompt,
   } = input;
   const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();

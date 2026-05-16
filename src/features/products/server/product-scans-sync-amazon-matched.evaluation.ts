@@ -9,6 +9,7 @@ import { evaluateProductScanCandidateMatch } from './product-scan-ai-evaluator';
 import {
   normalizeErrorMessage,
   persistSynchronizedScan,
+  createPersistedProductScanStep,
   upsertPersistedProductScanStep,
 } from './product-scans-service.helpers';
 import {
@@ -49,10 +50,10 @@ const buildEvaluationStep = (
   amazonEvaluation: NonNullable<ProductScanAmazonEvaluation>,
   evaluatorConfig: EnabledExtractionEvaluatorConfig,
   latestCandidateMeta: CandidateStepMeta
-): ProductScanRecord['steps'][number] => ({
+): ProductScanRecord['steps'][number] =>
+  createPersistedProductScanStep({
   key: 'amazon_ai_evaluate',
   label: 'Evaluate Amazon candidate match',
-  group: 'amazon',
   attempt: resolveNextAmazonEvaluationStepAttempt(context.finalizedAmazonSteps),
   candidateId: latestCandidateMeta.candidateId ?? context.parsedResult.matchedImageId,
   candidateRank: latestCandidateMeta.candidateRank,
@@ -61,7 +62,7 @@ const buildEvaluationStep = (
   message: resolveAmazonEvaluationMessage(amazonEvaluation),
   details: buildAmazonEvaluationStepDetails(amazonEvaluation, evaluatorConfig, 'extraction'),
   url: amazonEvaluation.evidence?.candidateUrl ?? context.resolvedScanUrl ?? latestCandidateMeta.url,
-});
+  });
 
 const buildEvaluatedContext = (
   context: AmazonMatchedContext,
@@ -137,6 +138,8 @@ const buildFailedAmazonEvaluation = (
   evidence: {
     candidateUrl: context.resolvedScanUrl,
     pageTitle: context.parsedResult.title,
+    sourceAsin: null,
+    candidateAsin: null,
     heroImageSource: null,
     heroImageArtifactName: null,
     screenshotArtifactName: null,
@@ -156,10 +159,9 @@ const buildFailedEvaluationStep = (
   const latestCandidateMeta = resolveLatestAmazonCandidateStepMeta(context.finalizedAmazonSteps);
   const evaluationCandidateUrl =
     amazonEvaluation.evidence?.candidateUrl ?? context.resolvedScanUrl ?? latestCandidateMeta.url;
-  return {
+  return createPersistedProductScanStep({
     key: 'amazon_ai_evaluate',
     label: 'Evaluate Amazon candidate match',
-    group: 'amazon',
     attempt: resolveNextAmazonEvaluationStepAttempt(context.finalizedAmazonSteps),
     candidateId: latestCandidateMeta.candidateId ?? context.parsedResult.matchedImageId,
     candidateRank: latestCandidateMeta.candidateRank,
@@ -171,7 +173,7 @@ const buildFailedEvaluationStep = (
       { label: 'Error', value: message },
     ],
     url: evaluationCandidateUrl,
-  };
+  });
 };
 
 const persistEvaluationException = async (

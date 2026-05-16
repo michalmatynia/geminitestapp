@@ -172,7 +172,7 @@ export type AdminFilemakerCampaignEditState = CampaignEditRoute &
     deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
     attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
     handleRunAction: CampaignRunActions['handleRunAction'];
-    isRunActionPending: boolean;
+    isRunActionPending: CampaignRunActions['isRunActionPending'];
     isLoading: boolean;
     isUpdatePending: boolean;
     router: CampaignEditRouter;

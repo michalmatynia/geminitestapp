@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { MutableRefObject } from 'react';
-import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
+import type { PendingSelectionResponse, SectionExplainContext } from '../KangurAiTutorWidget.types';
 
 export function useResetGuidanceEffect(input: {
   activeSelectedText: string | null;

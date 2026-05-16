@@ -77,10 +77,8 @@ import {
   useCaseResolverPersistence,
   type UseCaseResolverPersistenceValue,
 } from './useCaseResolverState.persistence-actions';
-import {
-  useCaseResolverPromptExploder,
-  type UseCaseResolverPromptExploderValue,
-} from './useCaseResolverState.prompt-exploder-actions';
+import { useCaseResolverPromptExploder } from './useCaseResolverState.prompt-exploder-actions';
+import type { UseCaseResolverPromptExploderValue } from './prompt-exploder/types';
 import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.related-files-actions';
 import { useCaseResolverStateRequestedContext } from './useCaseResolverState.requested-context';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';

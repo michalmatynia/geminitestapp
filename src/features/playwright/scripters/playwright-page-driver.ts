@@ -131,10 +131,9 @@ const createExtractList =
       key,
       serializeField(spec),
     ]);
-    return page.evaluate<
-      Array<Record<string, ExtractedFieldValue>>,
-      void
-    >(buildPageExpression(EXTRACT_LIST_FUNCTION_SOURCE, { itemSelector, fields: serialized }));
+    return page.evaluate<Array<Record<string, ExtractedFieldValue>>>(
+      buildPageExpression(EXTRACT_LIST_FUNCTION_SOURCE, { itemSelector, fields: serialized })
+    );
   };
 
 const createScrollToBottom =

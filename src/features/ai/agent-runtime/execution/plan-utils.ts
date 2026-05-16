@@ -7,13 +7,23 @@ import type {
 } from '@/shared/contracts/agent-runtime';
 import type { BrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 
-export const buildResumeBrowserContext = (raw?: BrowserContextSummary | null): AgentExecutionContext['browserContext'] => {
-  if (!raw) return null;
+type PlannerBrowserContext = {
+  url: string;
+  title: string | null;
+  domTextSample: string;
+  logs: { level: string; message: string }[];
+  uiInventory?: unknown;
+};
+
+export const buildResumeBrowserContext = (
+  raw?: AgentExecutionContext['browserContext'] | BrowserContextSummary | null
+): PlannerBrowserContext | null => {
+  if (raw === null || raw === undefined) return null;
   return {
-    url: raw.url,
-    title: raw.title,
-    domTextSample: raw.domTextSample,
-    logs: raw.logs,
+    url: raw.url ?? '',
+    title: raw.title ?? null,
+    domTextSample: raw.domTextSample ?? '',
+    logs: raw.logs ?? [],
     uiInventory: raw.uiInventory,
   };
 };

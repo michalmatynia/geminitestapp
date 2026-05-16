@@ -117,7 +117,7 @@ const rowsToLegacyContractRows = (
   input: { format: LegacyContractRowsFormat; requiredFields: string[]; tableName: string }
 ): LegacyContractRow[] => {
   const rows = matrix
-    .map((row: unknown[]): string[] => row.map(normalizeString))
+    .map((row: unknown[]): string[] => row.map((value: unknown): string => normalizeString(value)))
     .filter((row: string[]): boolean => row.some((value: string): boolean => value.length > 0));
   const headerRowIndex = rows.findIndex((row: string[], index: number): boolean => {
     if (index >= HEADER_SCAN_LIMIT) return false;

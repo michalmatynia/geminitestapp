@@ -25,7 +25,6 @@ import {
   removeTileById,
   reorderWithinList,
 } from './NumberBalanceRushGame.utils';
-import { safeSetTimeout } from '@/shared/lib/timers';
 
 type NumberBalanceTranslations = (key: string, values?: TranslationValues) => string;
 
@@ -268,7 +267,7 @@ export const scheduleNumberBalanceStatusReset = ({
     return;
   }
 
-  timeoutRef.current = safeSetTimeout(() => {
+  timeoutRef.current = window.setTimeout(() => {
     timeoutRef.current = null;
     onReset();
   }, delayMs);

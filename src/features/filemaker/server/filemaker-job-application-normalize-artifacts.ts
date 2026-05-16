@@ -3,6 +3,7 @@ import type {
   FilemakerJobApplicationArtifactKind,
   FilemakerJobApplicationArtifactVersion,
   FilemakerJobApplicationArtifactVersionSet,
+  FilemakerJobApplicationExperienceHighlightPatch,
   FilemakerJobApplicationTailoredCv,
 } from '../filemaker-job-application.types';
 import {
@@ -29,27 +30,22 @@ export const normalizeExperienceHighlightPatches = (
   value: unknown
 ): FilemakerJobApplicationTailoredCv['experienceHighlightPatches'] => {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((entry: unknown) => {
-      const patch = normalizeRecord(entry);
-      if (patch === null) return null;
-      const highlights = normalizeStringArray(patch['highlights']);
-      if (highlights.length === 0) return null;
-      return {
-        experienceKey: normalizeString(patch['experienceKey']),
-        experienceId: normalizeString(patch['experienceId']),
-        experienceTitle: normalizeString(patch['experienceTitle']),
-        company: normalizeString(patch['company']),
-        role: normalizeString(patch['role']),
-        highlights,
-      };
-    })
-    .filter(
-      (
-        entry
-      ): entry is NonNullable<FilemakerJobApplicationTailoredCv['experienceHighlightPatches']>[number] =>
-        entry !== null
-    );
+  const patches: FilemakerJobApplicationExperienceHighlightPatch[] = [];
+  value.forEach((entry: unknown): void => {
+    const patch = normalizeRecord(entry);
+    if (patch === null) return;
+    const highlights = normalizeStringArray(patch['highlights']);
+    if (highlights.length === 0) return;
+    patches.push({
+      experienceKey: normalizeString(patch['experienceKey']),
+      experienceId: normalizeString(patch['experienceId']),
+      experienceTitle: normalizeString(patch['experienceTitle']),
+      company: normalizeString(patch['company']),
+      role: normalizeString(patch['role']),
+      highlights,
+    });
+  });
+  return patches;
 };
 
 export const normalizeTailoredCvSourceFallback = (value: unknown): TailoredCvSourceFallback => {

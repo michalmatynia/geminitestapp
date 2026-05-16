@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { MutableRefObject } from 'react';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import type { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
@@ -74,6 +74,6 @@ export type ProductScrapeProfileFormState = {
   setImageImportMode: (value: ProductScrapeProfileImageImportMode) => void;
   setSourcePriceCurrencyCode: (value: ProductScrapeSourcePriceCurrencyCode) => void;
   setLimitInput: (value: string) => void;
-  setProfileId: (value: string) => void;
+  setProfileId: Dispatch<SetStateAction<string>>;
   setSettingsProfileId: (value: string) => void;
 };

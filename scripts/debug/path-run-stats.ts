@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   const [queueStats, recentForPath, recentQueued, recentFailed] = await Promise.all([
     repo.getQueueStats(),
     repo.listRuns({ pathId, limit: 10, offset: 0 }),
-    repo.listRuns({ statuses: ['queued', 'running', 'paused'], limit: 20, offset: 0 }),
+    repo.listRuns({ statuses: ['queued', 'running'], limit: 20, offset: 0 }),
     repo.listRuns({ pathId, statuses: ['failed'], limit: 10, offset: 0 }),
   ]);
 

@@ -152,8 +152,9 @@ const useProductListUserCatalogState = (
 
   useEffect(() => {
     if (preferencesState.loading) return;
-    if (preferencesState.preferences.currencyCode.length === 0) return;
-    catalogState.setCurrencyCode(preferencesState.preferences.currencyCode);
+    const currencyCode = preferencesState.preferences.currencyCode;
+    if (currencyCode === null || currencyCode.length === 0) return;
+    catalogState.setCurrencyCode(currencyCode);
   }, [catalogState, preferencesState.loading, preferencesState.preferences.currencyCode]);
 
   useEffect(() => {

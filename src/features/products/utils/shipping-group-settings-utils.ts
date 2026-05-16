@@ -31,22 +31,6 @@ const hasMinimumConflictArrayLengths = ({
 }): boolean =>
   groupIds.length >= 2 && groupNames.length >= 2 && overlapCategoryIds.length > 0;
 
-const hasDefinedConflictGroupPairs = ({
-  firstGroupId,
-  secondGroupId,
-  firstGroupName,
-  secondGroupName,
-}: {
-  firstGroupId: string | undefined;
-  secondGroupId: string | undefined;
-  firstGroupName: string | undefined;
-  secondGroupName: string | undefined;
-}): boolean =>
-  firstGroupId !== undefined &&
-  secondGroupId !== undefined &&
-  firstGroupName !== undefined &&
-  secondGroupName !== undefined;
-
 const toShippingGroupRuleConflict = (
   conflict: unknown
 ): ShippingGroupRuleConflict | null => {
@@ -71,12 +55,10 @@ const toShippingGroupRuleConflict = (
   const [firstGroupId, secondGroupId] = groupIds;
   const [firstGroupName, secondGroupName] = groupNames;
   if (
-    !hasDefinedConflictGroupPairs({
-      firstGroupId,
-      secondGroupId,
-      firstGroupName,
-      secondGroupName,
-    })
+    firstGroupId === undefined ||
+    secondGroupId === undefined ||
+    firstGroupName === undefined ||
+    secondGroupName === undefined
   ) {
     return null;
   }

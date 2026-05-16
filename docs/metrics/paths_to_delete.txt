@@ -1,0 +1,10 @@
+src/features/kangur/ui/components/KangurAssignmentManager.types.ts
+src/features/kangur/ui/components/KangurGameOperationSelectorWidget.types.ts
+src/features/kangur/ui/components/kangur-wordmark.ts
+src/features/kangur/ui/components/KangurAssignmentManager.helpers.ts
+src/features/kangur/ui/components/QuestionCard.tsx
+src/features/kangur/ui/components/KangurGameSetupShell.tsx
+src/features/kangur/ui/components/KangurTextWordmark.tsx
+src/features/kangur/ui/components/KangurWordmarkBase.tsx
+src/features/kangur/ui/components/OperationSelector.tsx
+src/features/kangur/ui/components/ResultScreen.tsx

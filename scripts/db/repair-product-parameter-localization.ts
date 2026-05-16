@@ -66,6 +66,26 @@ type CollectionStats = {
   }>;
 };
 
+type ProductParameterRepairStats = Omit<
+  CollectionStats,
+  'collection' | 'scanned' | 'changedDocuments' | 'samples'
+>;
+
+const PRODUCT_PARAMETER_REPAIR_STAT_KEYS: Array<keyof ProductParameterRepairStats> = [
+  'legacyAttributesMigrated',
+  'legacyTagsMigrated',
+  'legacyMaterialRowsRemoved',
+  'canonicalAttributesMaterialRowsRemoved',
+  'attributesLocalized',
+  'tagsLocalized',
+  'modelNameLocalized',
+  'modelNumberLocalized',
+  'legacyModelNameMigrated',
+  'legacyModelNumberMigrated',
+  'materialValuesMerged',
+  'duplicateTargetRowsMerged',
+];
+
 type OrderedParameterEntry =
   | {
       kind: 'passthrough';
@@ -454,10 +474,10 @@ const repairParametersForDoc = (
 ): {
   changed: boolean;
   nextParameters: ProductParameterValueDoc[];
-  stats: Omit<CollectionStats, 'collection' | 'scanned' | 'changedDocuments' | 'samples'>;
+  stats: ProductParameterRepairStats;
   changes: string[];
 } => {
-  const stats = {
+  const stats: ProductParameterRepairStats = {
     legacyAttributesMigrated: 0,
     legacyTagsMigrated: 0,
     legacyMaterialRowsRemoved: 0,
@@ -694,8 +714,8 @@ const repairCollection = async (
   for await (const doc of cursor) {
     stats.scanned += 1;
     const result = repairParametersForDoc(doc, targets);
-    Object.entries(result.stats).forEach(([key, value]: [string, number]) => {
-      (stats as unknown as Record<string, number>)[key] += value;
+    PRODUCT_PARAMETER_REPAIR_STAT_KEYS.forEach((key) => {
+      stats[key] += result.stats[key];
     });
 
     if (!result.changed) continue;

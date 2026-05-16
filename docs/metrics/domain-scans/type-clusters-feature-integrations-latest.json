@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-17T12:20:27.898Z",
+  "generatedAt": "2026-05-16T12:46:16.849Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -22,18 +22,233 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10655,
-    "exportedDeclarationsScanned": 6312,
-    "candidateDeclarationsScanned": 6292,
-    "exactShapeClusters": 9,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 1,
-    "declarationsInClusters": 2,
-    "highestRiskScore": 8
+    "filesScanned": 13429,
+    "exportedDeclarationsScanned": 8244,
+    "candidateDeclarationsScanned": 8225,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 50,
+    "clustersAfterFilters": 8,
+    "declarationsInClusters": 16,
+    "highestRiskScore": 15
   },
   "clusters": [
     {
-      "clusterId": "near-0001",
+      "clusterId": "exact-0061",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 15,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "e6ffbf4bbbcb",
+        "memberCount": 1,
+        "preview": "'auto' | 'brave' | 'chrome' | 'chromium'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/pracuj-browser-auth.ts#PracujBrowserPreference",
+          "name": "PracujBrowserPreference",
+          "kind": "type",
+          "path": "src/features/integrations/services/pracuj-browser-auth.ts",
+          "source": {
+            "path": "src/features/integrations/services/pracuj-browser-auth.ts",
+            "line": 81,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/lib/playwright/browser-launch.ts#PlaywrightBrowserPreference",
+          "name": "PlaywrightBrowserPreference",
+          "kind": "type",
+          "path": "src/shared/lib/playwright/browser-launch.ts",
+          "source": {
+            "path": "src/shared/lib/playwright/browser-launch.ts",
+            "line": 18,
+            "domain": "shared"
+          },
+          "usageCount": 5
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0035",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 14,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "50d4f75e2a96",
+        "memberCount": 9,
+        "preview": "prop:code:string; prop:discountType:EcommerceDiscountCouponType; prop:enabled:boolean; prop:endsAt:string | null; prop:minOrderAmount:number | null; prop:singleUse:boolean; prop:startsAt:string | null; prop:usageLimit:number | null"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/ecommerce-discount-coupons.ts#EcommerceDiscountCouponInput",
+          "name": "EcommerceDiscountCouponInput",
+          "kind": "type",
+          "path": "src/features/integrations/services/ecommerce-discount-coupons.ts",
+          "source": {
+            "path": "src/features/integrations/services/ecommerce-discount-coupons.ts",
+            "line": 16,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts#CouponFormState",
+          "name": "CouponFormState",
+          "kind": "type",
+          "path": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts",
+          "source": {
+            "path": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts",
+            "line": 19,
+            "domain": "feature:products"
+          },
+          "usageCount": 4
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0036",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "5d33ae56b5f0",
+        "memberCount": 5,
+        "preview": "prop:dbName:string; prop:matchedCount:number; prop:modifiedCount:number; prop:source:EcommerceExportDbTarget['source']; prop:upsertedCount:number"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/ecommerce-provider-settings.ts#EcommerceProviderSettingsTargetResult",
+          "name": "EcommerceProviderSettingsTargetResult",
+          "kind": "type",
+          "path": "src/features/integrations/services/ecommerce-provider-settings.ts",
+          "source": {
+            "path": "src/features/integrations/services/ecommerce-provider-settings.ts",
+            "line": 32,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/products/pages/ecommerce-pages-cms/EcommerceProviderSettingsPanel.types.ts#ProviderSettingsTarget",
+          "name": "ProviderSettingsTarget",
+          "kind": "type",
+          "path": "src/features/products/pages/ecommerce-pages-cms/EcommerceProviderSettingsPanel.types.ts",
+          "source": {
+            "path": "src/features/products/pages/ecommerce-pages-cms/EcommerceProviderSettingsPanel.types.ts",
+            "line": 5,
+            "domain": "feature:products"
+          },
+          "usageCount": 2
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0060",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "229248da20a0",
+        "memberCount": 1,
+        "preview": "'fixed' | 'percentage'"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/ecommerce-discount-coupons.ts#EcommerceDiscountCouponType",
+          "name": "EcommerceDiscountCouponType",
+          "kind": "type",
+          "path": "src/features/integrations/services/ecommerce-discount-coupons.ts",
+          "source": {
+            "path": "src/features/integrations/services/ecommerce-discount-coupons.ts",
+            "line": 14,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts#CouponType",
+          "name": "CouponType",
+          "kind": "type",
+          "path": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts",
+          "source": {
+            "path": "src/features/products/pages/ecommerce-pages-cms/discount-coupons.types.ts",
+            "line": 1,
+            "domain": "feature:products"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0033",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2133f5d3997e",
+        "memberCount": 4,
+        "preview": "prop:disabled:boolean; prop:onChange:(value: string | null) => void; prop:options:ReadonlyArray<MultiSelectOption>; prop:value:string | null"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx#CategoryMapperSelectCellProps",
+          "name": "CategoryMapperSelectCellProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx",
+          "source": {
+            "path": "src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx",
+            "line": 13,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/ui/api.ts#GenericMapperExternalCellProps",
+          "name": "GenericMapperExternalCellProps",
+          "kind": "type",
+          "path": "src/shared/contracts/ui/api.ts",
+          "source": {
+            "path": "src/shared/contracts/ui/api.ts",
+            "line": 232,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0034",
       "clusterKind": "near-shape",
       "canonicalDtoCandidate": null,
       "riskScore": 8,
@@ -55,7 +270,7 @@
           "path": "src/features/integrations/services/amazon-selector-registry.ts",
           "source": {
             "path": "src/features/integrations/services/amazon-selector-registry.ts",
-            "line": 58,
+            "line": 60,
             "domain": "feature:integrations"
           },
           "usageCount": 0
@@ -67,7 +282,91 @@
           "path": "src/features/integrations/services/supplier-1688-selector-registry.ts",
           "source": {
             "path": "src/features/integrations/services/supplier-1688-selector-registry.ts",
-            "line": 58,
+            "line": 60,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0037",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "6464e8a5dc56",
+        "memberCount": 14,
+        "preview": "prop:acceptCookieConsent:() => Promise<boolean>; prop:errorSelector:string; prop:failWithDebug:FailHandler; prop:humanizedClick:(locator: Locator) => Promise<void>; prop:humanizedFill:(locator: Locator, value: string) => Promise<void>; prop:humanizedPause:(min?: number, max?: number) => Promise<void>; prop:safeCount:(locator: Locator, label: string) => Promise<number>; prop:safeGoto:( url: string, options: Parameters<Page['goto']>[1], label: string ) => Promise<SafeGotoResult>"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/services/tradera-browser-test-utils.ts#TraderaBrowserTestUtils",
+          "name": "TraderaBrowserTestUtils",
+          "kind": "type",
+          "path": "src/features/integrations/services/tradera-browser-test-utils.ts",
+          "source": {
+            "path": "src/features/integrations/services/tradera-browser-test-utils.ts",
+            "line": 33,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts#VintedBrowserTestUtils",
+          "name": "VintedBrowserTestUtils",
+          "kind": "type",
+          "path": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts",
+          "source": {
+            "path": "src/features/integrations/services/vinted-listing/vinted-browser-test-utils.ts",
+            "line": 9,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0038",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "138aed9685a3",
+        "memberCount": 2,
+        "preview": "prop:dispatchMode:'queued' | 'inline'; prop:queueJobId:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/integrations/workers/baseExportQueue.ts#BaseExportDispatchResult",
+          "name": "BaseExportDispatchResult",
+          "kind": "type",
+          "path": "src/features/integrations/workers/baseExportQueue.ts",
+          "source": {
+            "path": "src/features/integrations/workers/baseExportQueue.ts",
+            "line": 142,
+            "domain": "feature:integrations"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/integrations/workers/baseImportQueue.ts#BaseImportDispatchResult",
+          "name": "BaseImportDispatchResult",
+          "kind": "type",
+          "path": "src/features/integrations/workers/baseImportQueue.ts",
+          "source": {
+            "path": "src/features/integrations/workers/baseImportQueue.ts",
+            "line": 86,
             "domain": "feature:integrations"
           },
           "usageCount": 0

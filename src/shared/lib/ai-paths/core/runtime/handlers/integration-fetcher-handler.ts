@@ -6,7 +6,6 @@ import type {
 import {
   configurationError,
   internalError,
-  operationFailedError,
 } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod';
-import { DEFAULT_CASE_RESOLVER_RELATION_NODE_META, DEFAULT_CASE_RESOLVER_RELATION_EDGE_META } from '@/shared/contracts/case-resolver/constants';
+import { DEFAULT_CASE_RESOLVER_RELATION_EDGE_META } from '@/shared/contracts/case-resolver/constants';
 
 export const RelationNodeMetaSchema = z.object({
   entityType: z.enum(['case', 'folder', 'file', 'custom']).default('custom'),

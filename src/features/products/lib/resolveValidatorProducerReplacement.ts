@@ -1,5 +1,7 @@
 import type { Producer } from '@/shared/contracts/products/producers';
 
+type ProducerLike = Pick<Producer, 'id' | 'name'> & Partial<Pick<Producer, 'website'>>;
+
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
@@ -21,7 +23,7 @@ const splitReplacementTokens = (value: string): string[] => {
   return parts.length > 0 ? parts : [value.trim()].filter((part) => part.length > 0);
 };
 
-const getProducerComparableValues = (producer: Producer): string[] => {
+const getProducerComparableValues = (producer: ProducerLike): string[] => {
   const normalizedId = normalizeComparableText(producer.id);
   const normalizedName = normalizeComparableText(producer.name);
   const normalizedWebsite = normalizeComparableWebsite(producer.website);
@@ -31,7 +33,7 @@ const getProducerComparableValues = (producer: Producer): string[] => {
 
 const resolveSingleProducerId = (
   token: string,
-  producers: ReadonlyArray<Producer>
+  producers: ReadonlyArray<ProducerLike>
 ): string | null => {
   const normalizedToken = normalizeComparableWebsite(token);
   if (normalizedToken.length === 0) return null;
@@ -47,7 +49,7 @@ const resolveSingleProducerId = (
 };
 
 export const buildProducerNameById = (
-  producers: ReadonlyArray<Producer> | undefined
+  producers: ReadonlyArray<ProducerLike> | undefined
 ): Map<string, string> => {
   const map = new Map<string, string>();
 
@@ -68,7 +70,7 @@ export const formatProducerDisplayValue = ({
   fallbackValue = '',
 }: {
   producerIds: ReadonlyArray<string>;
-  producers?: ReadonlyArray<Producer>;
+  producers?: ReadonlyArray<ProducerLike>;
   producerNameById?: ReadonlyMap<string, string>;
   fallbackValue?: string;
 }): string => {
@@ -92,7 +94,7 @@ export const formatProducerDisplayValue = ({
 
 export const resolveValidatorProducerReplacementIds = (
   replacementValue: string | null | undefined,
-  producers: ReadonlyArray<Producer> | undefined
+  producers: ReadonlyArray<ProducerLike> | undefined
 ): string[] | null => {
   if (!Array.isArray(producers) || producers.length === 0) {
     return null;

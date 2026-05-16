@@ -154,7 +154,11 @@ const CountriesSection = ({
   );
 };
 
-const LanguageCountryBadges = ({ countries }: { countries: CountryOption[] }): React.JSX.Element => {
+const LanguageCountryBadges = ({
+  countries,
+}: {
+  countries: Language['countries'];
+}): React.JSX.Element => {
   if (countries.length === 0) {
     return (
       <Hint size='xxs' italic>

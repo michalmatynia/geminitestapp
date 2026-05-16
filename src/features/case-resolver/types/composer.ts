@@ -10,8 +10,7 @@
  * - Content compilation result types
  */
 
-import type { AiNode, CaseResolverEdgeMeta, CaseResolverJoinMode, CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
-import type { CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
+import type { AiNode, CaseResolverJoinMode, CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 
 export interface CompileContext {
   node: AiNode;

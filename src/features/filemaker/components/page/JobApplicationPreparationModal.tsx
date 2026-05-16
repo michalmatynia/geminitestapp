@@ -1309,30 +1309,32 @@ export function JobApplicationPreparationModal({
 
       return (Object.entries(runStatusesByArtifact) as Array<
         [JobApplicationArtifactKind, JobApplicationRunStatus]
-      >)
-        .map(([artifactKind, status]) => ({
+      >).flatMap(([artifactKind, status]) => {
+        const context = runContextsByArtifact[artifactKind] ?? null;
+        if (
+          context === null ||
+          context.organizationId !== selectedOrganizationId ||
+          context.jobListingId !== selectedJobListingId ||
+          (selectedPersonFilter.length > 0 && context.personId !== selectedPersonFilter)
+        ) {
+          return [];
+        }
+
+        return [{
           artifactKind,
           label: resolveJobApplicationArtifactLabel({
             artifactKind,
             artifactLabel: runLabelsByArtifact[artifactKind] ?? null,
           }),
-          context: runContextsByArtifact[artifactKind] ?? null,
+          context,
           error: null,
           id: artifactKind,
           runId: runIdsByArtifact[artifactKind] ?? null,
           status,
           artifactLabel: runLabelsByArtifact[artifactKind] ?? null,
           updatedAt: '',
-        }))
-        .filter(
-          (
-            entry
-          ): entry is JobApplicationRunEntry & { label: string } =>
-            entry.context !== null &&
-            entry.context.organizationId === selectedOrganizationId &&
-            entry.context.jobListingId === selectedJobListingId &&
-            (selectedPersonFilter.length === 0 || entry.context.personId === selectedPersonFilter)
-        );
+        }];
+      });
     },
     [
       runContextsByArtifact,

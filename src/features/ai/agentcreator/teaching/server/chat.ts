@@ -32,7 +32,7 @@ const buildRagSystemPrompt = (params: {
   if (params.sources.length > 0) {
     lines.push('', 'Knowledge Base Sources:');
     params.sources.forEach((src: AgentTeachingChatSource) => {
-      lines.push('', buildSourceHeader(src), buildSourceSnippet(src.text));
+      lines.push('', buildSourceHeader(src), buildSourceSnippet(src.text ?? ''));
     });
   }
   return lines.join('\n');

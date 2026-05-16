@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { Filter } from 'mongodb';
+import type { Document, Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
 import { toObjectIdMaybe } from '@/shared/lib/db/services/sync-utils';
@@ -124,7 +124,7 @@ export const updateMongoFilemakerJobApplicationStatus = async (
     {
       $set: { status, updatedAt: now },
       $push: { applicationLog: { ...entry, toStatus: entry.toStatus ?? status } },
-    }
+    } as Document
   );
   return requireMongoFilemakerJobApplicationById(normalizeId(existing));
 };
@@ -251,7 +251,7 @@ export const removeMongoFilemakerJobApplicationLogEntry = async (
   if (existing === null) throw notFoundError('Filemaker job application was not found.');
   await collection.updateOne(
     { _id: existing._id },
-    { $pull: { applicationLog: { id: logEntryId } } }
+    { $pull: { applicationLog: { id: logEntryId } } } as Document
   );
   return requireMongoFilemakerJobApplicationById(normalizeId(existing));
 };
@@ -280,5 +280,5 @@ const resolveApplicationIdFilter = (
 
   return {
     $or: [{ _id: objectId }, ...candidates],
-  };
+  } as unknown as Filter<FilemakerJobApplicationMongoDocument>;
 };

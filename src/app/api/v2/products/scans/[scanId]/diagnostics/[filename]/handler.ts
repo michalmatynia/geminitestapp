@@ -35,7 +35,10 @@ export async function getHandler(
     throw notFoundError('Diagnostic artifact not found.', { scanId, filename });
   }
 
-  return new Response(artifact.content, {
+  const body = new ArrayBuffer(artifact.content.byteLength);
+  new Uint8Array(body).set(artifact.content);
+
+  return new Response(body, {
     status: 200,
     headers: {
       'Content-Type': artifact.mimeType,

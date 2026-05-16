@@ -6,6 +6,7 @@ import {
   safeClearTimeout,
   safeRequestAnimationFrame,
   safeSetTimeout,
+  type SafeTimerId,
 } from '@/shared/lib/timers';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
@@ -335,7 +336,7 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
   const selectionRangeRef = useRef<Range | null>(null);
   const selectionClearTokenRef = useRef(0);
   const selectionEmphasisWrappersRef = useRef<HTMLElement[]>([]);
-  const clearSelectionTimeoutRef = useRef<number | null>(null);
+  const clearSelectionTimeoutRef = useRef<SafeTimerId | null>(null);
   const clearSelectionRafRef = useRef<number | null>(null);
 
   const clearSelectionGlow = useCallback((): void => {
@@ -417,7 +418,7 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
   useEffect(() => {
     return () => {
       if (clearSelectionTimeoutRef.current !== null) {
-        window.clearTimeout(clearSelectionTimeoutRef.current);
+        safeClearTimeout(clearSelectionTimeoutRef.current);
       }
       if (clearSelectionRafRef.current !== null) {
         window.cancelAnimationFrame(clearSelectionRafRef.current);

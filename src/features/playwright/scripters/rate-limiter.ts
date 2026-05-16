@@ -11,7 +11,7 @@ export type RateLimiterOptions = {
 import { safeSetTimeout } from '@/shared/lib/timers';
 
 const defaultSleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => safeSetTimeout(resolve, Math.max(0, ms)));
+  new Promise((resolve) => safeSetTimeout(() => resolve(), Math.max(0, ms)));
 
 export const createRateLimiter = (options: RateLimiterOptions): RateLimiter => {
   if (!Number.isFinite(options.requestsPerMinute) || options.requestsPerMinute <= 0) {

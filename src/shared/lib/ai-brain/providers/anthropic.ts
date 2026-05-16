@@ -50,7 +50,7 @@ export const buildAnthropicMessages = (
     .trim();
   const chatMessages = messages
     .filter((message: BrainChatMessage): boolean => message.role !== 'system')
-    .map((message: BrainChatMessage) => ({
+    .map((message: BrainChatMessage): AnthropicMessagesBuildResult['chatMessages'][number] => ({
       role: message.role === 'assistant' ? 'assistant' : 'user',
       content:
         typeof message.content === 'string'

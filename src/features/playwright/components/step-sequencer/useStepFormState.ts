@@ -6,7 +6,7 @@ import {
   SELECTOR_REGISTRY_DEFAULT_PROFILES, 
   SELECTOR_REGISTRY_NAMESPACES 
 } from '@/shared/lib/browser-execution/selector-registry-metadata';
-import { usePlaywrightStepSequencer, type PlaywrightStepSequencerContextType } from '../../context/PlaywrightStepSequencerContext';
+import { usePlaywrightStepSequencer } from '../../context/PlaywrightStepSequencerContext';
 import { type StepDraft, buildEmpty } from './step-form-utils';
 import { type SelectorRegistryEntry } from '@/shared/contracts/integrations/selector-registry';
 

@@ -5,7 +5,6 @@
  * in document-capture workflows.
  */
 
-import { normalizeCaseResolverComparable } from '@/features/case-resolver/services/party-matching';
 import { lineContainsComparableHint } from '@/features/case-resolver/capture/proposals/cleanup/hint-utils';
 
 /**

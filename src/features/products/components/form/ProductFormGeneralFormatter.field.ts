@@ -64,7 +64,7 @@ type PatternResultApplication = {
 };
 
 const resolveSequenceGroupId = (pattern: ProductValidationPattern): string | null => {
-  const groupId = pattern.sequenceGroupId.trim();
+  const groupId = pattern.sequenceGroupId?.trim() ?? '';
   return groupId !== '' ? groupId : null;
 };
 

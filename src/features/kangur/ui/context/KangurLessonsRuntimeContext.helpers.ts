@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   safeCancelAnimationFrame,
-  safeClearTimeout,
   safeRequestAnimationFrame,
-  safeSetTimeout,
 } from '@/shared/lib/timers';
 
 import {
@@ -16,11 +14,13 @@ import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documen
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type {
   KangurLesson,
-  KangurLessonAgeGroup,
   KangurLessonComponentId,
   KangurLessonDocument,
-  KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonAgeGroup,
+  KangurLessonSubject,
+} from '@kangur/contracts/kangur-lesson-constants';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 import {
@@ -487,7 +487,7 @@ const resolveKangurActiveLessonRuntime = ({
     orderedLessons,
   });
   const ActiveLessonComponent = activeLesson
-    ? LESSON_COMPONENTS[activeLesson.componentId]
+    ? LESSON_COMPONENTS[activeLesson.componentId] ?? null
     : null;
   const lessonDocuments = resolveKangurActiveLessonDocuments({
     activeLessonDocument,

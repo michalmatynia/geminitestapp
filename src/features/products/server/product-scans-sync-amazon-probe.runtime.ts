@@ -30,6 +30,7 @@ import {
   buildAmazonScannerRequestRuntimeOptions,
   resolveAmazonImageSearchPageUrl,
   resolveAmazonImageSearchProvider,
+  type AmazonProductScanRuntimeKey,
   resolveAmazonProductScanRuntimeKey,
   resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
@@ -40,8 +41,8 @@ export const amazonProbeScanRuntime = requireProductScanNativeRuntime(
 );
 
 export type AmazonProbeRuntimeRequestContext = {
-  amazonImageSearchProvider: string;
-  amazonImageSearchPageUrl: string;
+  amazonImageSearchProvider: ReturnType<typeof resolveAmazonImageSearchProvider>;
+  amazonImageSearchPageUrl: string | null;
   amazonSelectorProfile: string;
   manualVerificationTimeoutMs: number;
   allowManualVerification: boolean;
@@ -72,11 +73,11 @@ export const loadAmazonProbeScannerSettings = async (
   }
 };
 
-export const resolveAmazonProbeRuntimeKey = (rawResult: unknown): string =>
+export const resolveAmazonProbeRuntimeKey = (rawResult: unknown): AmazonProductScanRuntimeKey =>
   resolveAmazonProductScanRuntimeKey(toRecord(rawResult)?.['runtimeKey']);
 
 export const resolveAmazonProbeRuntimeAction = async (
-  runtimeKey: string
+  runtimeKey: AmazonProductScanRuntimeKey
 ): ReturnType<typeof resolveAmazonRuntimeActionDefinition> =>
   await resolveAmazonRuntimeActionDefinition(runtimeKey);
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Badge, Button } from '@/features/kangur/shared/ui';
 import { Copy, Trash2 } from 'lucide-react';
 
@@ -11,7 +10,6 @@ import { QuizEditorCard } from '../components/QuizEditorCard';
 export function LessonBlockEditor({
   block,
   index,
-  activePage,
   mutations,
 }: {
   block: any;

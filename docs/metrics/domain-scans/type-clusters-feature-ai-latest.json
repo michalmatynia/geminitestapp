@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-17T12:20:16.892Z",
+  "generatedAt": "2026-05-16T12:46:03.362Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -22,16 +22,369 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 10655,
-    "exportedDeclarationsScanned": 6312,
-    "candidateDeclarationsScanned": 6292,
-    "exactShapeClusters": 9,
-    "nearShapeClusters": 3,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 13429,
+    "exportedDeclarationsScanned": 8244,
+    "candidateDeclarationsScanned": 8225,
+    "exactShapeClusters": 94,
+    "nearShapeClusters": 50,
+    "clustersAfterFilters": 8,
+    "declarationsInClusters": 17,
+    "highestRiskScore": 18
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0008",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 18,
+      "declarationCount": 3,
+      "domains": [
+        "feature:ai",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "e73ebbbde89a",
+        "memberCount": 1,
+        "preview": "Toast"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/agentcreator/components/mood-editor/use-mood-editor-persona-handlers.ts#MoodEditorToast",
+          "name": "MoodEditorToast",
+          "kind": "type",
+          "path": "src/features/ai/agentcreator/components/mood-editor/use-mood-editor-persona-handlers.ts",
+          "source": {
+            "path": "src/features/ai/agentcreator/components/mood-editor/use-mood-editor-persona-handlers.ts",
+            "line": 18,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/types.ts#UiToastFn",
+          "name": "UiToastFn",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/types.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/types.ts",
+            "line": 15,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.types.ts#ValidatorToast",
+          "name": "ValidatorToast",
+          "kind": "type",
+          "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.types.ts",
+          "source": {
+            "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.types.ts",
+            "line": 81,
+            "domain": "feature:products"
+          },
+          "usageCount": 5
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0007",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "745c6ac7d97e",
+        "memberCount": 9,
+        "preview": "prop:dependsOn?:number[] | string[] | null | undefined; prop:expectedObservation?:string | null | undefined; prop:goalId?:string | null | undefined; prop:phase?:string | null | undefined; prop:priority?:number | null | undefined; prop:subgoalId?:string | null | undefined; prop:successCriteria?:string | null | undefined; prop:title?:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/agent-runtime/planning/llm-step-specs.ts#PlanStepSpecInput",
+          "name": "PlanStepSpecInput",
+          "kind": "type",
+          "path": "src/features/ai/agent-runtime/planning/llm-step-specs.ts",
+          "source": {
+            "path": "src/features/ai/agent-runtime/planning/llm-step-specs.ts",
+            "line": 1,
+            "domain": "feature:ai"
+          },
+          "usageCount": 8
+        },
+        {
+          "id": "src/features/ai/agent-runtime/planning/utils/specs.ts#PlanStepSpecInput",
+          "name": "PlanStepSpecInput",
+          "kind": "interface",
+          "path": "src/features/ai/agent-runtime/planning/utils/specs.ts",
+          "source": {
+            "path": "src/features/ai/agent-runtime/planning/utils/specs.ts",
+            "line": 27,
+            "domain": "feature:ai"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0009",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 17,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "feature:products"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c7473f6d7ea7",
+        "memberCount": 4,
+        "preview": "prop:kind?:string | null; prop:mimeType?:string | null; prop:name:string; prop:path:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/ai-paths/services/playwright-node-runner.types.ts#PlaywrightNodeRunArtifact",
+          "name": "PlaywrightNodeRunArtifact",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/services/playwright-node-runner.types.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/services/playwright-node-runner.types.ts",
+            "line": 6,
+            "domain": "feature:ai"
+          },
+          "usageCount": 3
+        },
+        {
+          "id": "src/features/products/components/scans/ProductScanDiagnostics.types.ts#ScanFailureArtifact",
+          "name": "ScanFailureArtifact",
+          "kind": "type",
+          "path": "src/features/products/components/scans/ProductScanDiagnostics.types.ts",
+          "source": {
+            "path": "src/features/products/components/scans/ProductScanDiagnostics.types.ts",
+            "line": 1,
+            "domain": "feature:products"
+          },
+          "usageCount": 4
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0010",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "c5171744ad38",
+        "memberCount": 3,
+        "preview": "prop:description:string; prop:key:AiBrainFeature; prop:label:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/brain/components/brain-routing-master-tree.ts#BrainRoutingFeatureConfig",
+          "name": "BrainRoutingFeatureConfig",
+          "kind": "type",
+          "path": "src/features/ai/brain/components/brain-routing-master-tree.ts",
+          "source": {
+            "path": "src/features/ai/brain/components/brain-routing-master-tree.ts",
+            "line": 10,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/shared/contracts/products/scrape-template-placeholders.ts#ScrapeTemplatePlaceholderOption",
+          "name": "ScrapeTemplatePlaceholderOption",
+          "kind": "type",
+          "path": "src/shared/contracts/products/scrape-template-placeholders.ts",
+          "source": {
+            "path": "src/shared/contracts/products/scrape-template-placeholders.ts",
+            "line": 1,
+            "domain": "shared:contracts"
+          },
+          "usageCount": 1
+        }
+      ]
+    },
+    {
+      "clusterId": "near-0008",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f7e8667307d3",
+        "memberCount": 1,
+        "preview": "prop:status?:string | null"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/ai-paths/components/run-history-entry-actions.ts#RunHistoryActionSource",
+          "name": "RunHistoryActionSource",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/components/run-history-entry-actions.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/components/run-history-entry-actions.ts",
+            "line": 3,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/kangur/services/status-errors.ts#KangurStatusError",
+          "name": "KangurStatusError",
+          "kind": "type",
+          "path": "src/features/kangur/services/status-errors.ts",
+          "source": {
+            "path": "src/features/kangur/services/status-errors.ts",
+            "line": 1,
+            "domain": "feature:kangur"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0030",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 9,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "cfb9a35130b8",
+        "memberCount": 1,
+        "preview": "prop:runId:string"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/ai-paths/workers/ai-path-run-queue/types.ts#AiPathRunJobData",
+          "name": "AiPathRunJobData",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/workers/ai-path-run-queue/types.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/workers/ai-path-run-queue/types.ts",
+            "line": 3,
+            "domain": "feature:ai"
+          },
+          "usageCount": 1
+        },
+        {
+          "id": "src/features/ai/image-studio/workers/sequence-queue/queue-definition.ts#ImageStudioSequenceJobData",
+          "name": "ImageStudioSequenceJobData",
+          "kind": "type",
+          "path": "src/features/ai/image-studio/workers/sequence-queue/queue-definition.ts",
+          "source": {
+            "path": "src/features/ai/image-studio/workers/sequence-queue/queue-definition.ts",
+            "line": 21,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0029",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "33b649a1c76e",
+        "memberCount": 1,
+        "preview": "GraphDataState"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/ai-paths/context/GraphContext.shared.ts#PathMetadataState",
+          "name": "PathMetadataState",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/context/GraphContext.shared.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/context/GraphContext.shared.ts",
+            "line": 49,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/ai/ai-paths/context/GraphContext.shared.ts#GraphState",
+          "name": "GraphState",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/context/GraphContext.shared.ts",
+          "source": {
+            "path": "src/features/ai/ai-paths/context/GraphContext.shared.ts",
+            "line": 51,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        }
+      ]
+    },
+    {
+      "clusterId": "exact-0031",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "e0089f36a1cb",
+        "memberCount": 3,
+        "preview": "prop:capability?:AiBrainCapabilityKey | null; prop:onClose?:() => void; prop:open?:boolean"
+      },
+      "declarations": [
+        {
+          "id": "src/features/ai/brain/components/BrainRoutingEditModal.parts.tsx#BrainRoutingEditModalIdentityProps",
+          "name": "BrainRoutingEditModalIdentityProps",
+          "kind": "type",
+          "path": "src/features/ai/brain/components/BrainRoutingEditModal.parts.tsx",
+          "source": {
+            "path": "src/features/ai/brain/components/BrainRoutingEditModal.parts.tsx",
+            "line": 32,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        },
+        {
+          "id": "src/features/ai/brain/components/BrainRoutingEditModal.tsx#BrainRoutingEditModalProps",
+          "name": "BrainRoutingEditModalProps",
+          "kind": "interface",
+          "path": "src/features/ai/brain/components/BrainRoutingEditModal.tsx",
+          "source": {
+            "path": "src/features/ai/brain/components/BrainRoutingEditModal.tsx",
+            "line": 18,
+            "domain": "feature:ai"
+          },
+          "usageCount": 0
+        }
+      ]
+    }
+  ],
   "notes": [
     "type-clusters scan result"
   ]

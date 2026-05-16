@@ -163,12 +163,12 @@ export const assertValidValidatorPatternReplacementRecipe = (
   const recipe = parseDynamicReplacementRecipe(replacementValue);
   if (recipe === null) return;
 
-  if (recipe.sourceRegex !== null) {
+  if (typeof recipe.sourceRegex === 'string' && recipe.sourceRegex.length > 0) {
     assertValidValidatorPatternRegex(recipe.sourceRegex, recipe.sourceFlags ?? null);
   }
 
   if (recipe.logicOperator === 'regex') {
-    if (recipe.logicOperand === null) {
+    if (typeof recipe.logicOperand !== 'string' || recipe.logicOperand.length === 0) {
       throw badRequestError('Dynamic replacement regex condition requires an operand.');
     }
 
@@ -268,7 +268,7 @@ export const resolveValidatorPatternCreateState = (
 
   assertValidValidatorPatternRegex(regex, flags);
   assertValidValidatorPatternReplacementRecipe(replacementEnabled, replacementValue);
-  assertValidValidatorPatternCreateLaunchConfig({
+  assertValidValidatorPatternLaunchConfig({
     launchEnabled,
     launchOperator,
     launchValue,

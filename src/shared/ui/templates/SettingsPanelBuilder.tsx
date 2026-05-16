@@ -503,7 +503,7 @@ export interface SettingsPanelBuilderProps<
   onClose: () => void;
   title: string;
   subtitle?: string;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<void> | void;
   isSaving?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   saveText?: string;

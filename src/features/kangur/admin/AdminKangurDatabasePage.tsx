@@ -193,12 +193,15 @@ function PushResultCard({ result }: { result: StudiqPushToCloudResult }) {
 export function AdminKangurDatabasePage(): React.JSX.Element {
   const { pushState, handlePush, handleReset } = useStudiqPushController();
 
-  const isRunning = pushState.kind === 'enqueuing' || pushState.kind === 'active';
-
   return (
     <KangurAdminContentShell
       title='StudiQ Database'
       description='Manage the StudiQ local database mirror and sync to cloud.'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Database' },
+      ]}
       headerActions={
         pushState.kind !== 'idle' && pushState.kind !== 'enqueuing' && pushState.kind !== 'active' ? (
           <Button variant='outline' size='sm' onClick={handleReset}>

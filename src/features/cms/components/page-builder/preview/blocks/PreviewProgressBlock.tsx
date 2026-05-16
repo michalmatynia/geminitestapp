@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 import { type BlockInstance } from '@/shared/contracts/cms';
 

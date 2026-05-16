@@ -28,9 +28,9 @@ const statusVariant = (
 };
 
 const normalizeProductName = (product: ProductWithImages): string => {
-  if (product.name_en !== '') return product.name_en;
-  if (product.name_pl !== '') return product.name_pl;
-  if (product.name_de !== '') return product.name_de;
+  if ((product.name_en ?? '').trim() !== '') return product.name_en ?? '';
+  if ((product.name_pl ?? '').trim() !== '') return product.name_pl ?? '';
+  if ((product.name_de ?? '').trim() !== '') return product.name_de ?? '';
   return product.id;
 };
 

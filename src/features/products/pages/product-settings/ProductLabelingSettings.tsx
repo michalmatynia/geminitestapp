@@ -30,12 +30,14 @@ export function ProductLabelingSettings({
   return (
     <FormSection title='Labeling Configuration' className='p-4 space-y-4'>
       <Input
-        label='Barcode Prefix'
+        aria-label='Barcode Prefix'
+        placeholder='Barcode Prefix'
         value={getStringSetting(settings, 'barcodePrefix')}
         onChange={handleBarcodePrefixChange}
       />
       <Input
-        label='Label Template'
+        aria-label='Label Template'
+        placeholder='Label Template'
         value={getStringSetting(settings, 'labelTemplate')}
         onChange={handleLabelTemplateChange}
       />

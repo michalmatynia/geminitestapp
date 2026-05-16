@@ -16,24 +16,32 @@ let kangurAuthBootstrapCache: KangurAuthBootstrapCacheEntry | null = null;
 let kangurAuthBootstrapInflight: Promise<KangurUser | null> | null = null;
 let kangurAuthSsrBootstrapConsumed = false;
 
-// Hydrate from SSR-injected bootstrap data if available — eliminates the
-// client-side /auth/me round-trip on first load.
+const KANGUR_AUTH_BOOTSTRAP_ELEMENT_ID = 'kangur-auth-bootstrap-data';
+
+// Hydrate from the SSR JSON data island injected by renderKangurAuthBootstrapScript.
+// Reads the <script type="application/json"> element and parses its text content —
+// eliminates the client-side /auth/me round-trip on first load without using a
+// global window variable or triggering React 19's inline-script warning.
 const hydrateKangurAuthFromSsrBootstrap = (): void => {
   if (kangurAuthSsrBootstrapConsumed) return;
+  if (typeof document === 'undefined') return;
 
-  if (typeof window === 'undefined') return;
-  const win = window as typeof window & { __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null };
-  const ssrUser = win.__KANGUR_AUTH_BOOTSTRAP__;
+  const el = document.getElementById(KANGUR_AUTH_BOOTSTRAP_ELEMENT_ID);
+  if (!el) return;
 
-  if (typeof ssrUser === 'undefined') return;
   kangurAuthSsrBootstrapConsumed = true;
 
-  kangurAuthBootstrapCache = {
-    user: ssrUser,
-    expiresAt: Date.now() + AUTH_BOOTSTRAP_CACHE_TTL_MS,
-  };
+  try {
+    const parsed = JSON.parse(el.textContent ?? 'undefined') as KangurUser | null | undefined;
+    if (typeof parsed === 'undefined') return;
 
-  delete win.__KANGUR_AUTH_BOOTSTRAP__;
+    kangurAuthBootstrapCache = {
+      user: parsed,
+      expiresAt: Date.now() + AUTH_BOOTSTRAP_CACHE_TTL_MS,
+    };
+  } catch {
+    // Malformed JSON — treat as cache miss, let /auth/me run normally.
+  }
 };
 
 // Auto-hydrate on module load (before any component mounts)

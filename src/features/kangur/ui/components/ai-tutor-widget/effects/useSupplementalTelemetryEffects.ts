@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect } from 'react';
 import type { MutableRefObject } from 'react';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { TutorProactiveNudge } from '../KangurAiTutorPanelBody.context';
+import type { TutorProactiveNudge } from '../../KangurAiTutorPanelBody.context';
 import type { KangurAiTutorSessionContextTelemetryDto, KangurAiTutorTelemetryContextDto, KangurAiTutorUsageSummary } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
 export function useSupplementalTelemetryEffects(input: {

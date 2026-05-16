@@ -9,9 +9,9 @@ import {
   findAuthUserById as repoFindById,
 } from './auth-user-repository';
 
-import type { AuthUser } from '@/shared/contracts/auth';
+import type { AuthUserRecord } from '@/shared/contracts/auth';
 
-export const findAuthUserByEmail = async (email: string): Promise<AuthUser | null> => {
+export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord | null> => {
   try {
     return await repoFindByEmail(email);
   } catch (error) {
@@ -25,7 +25,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUser | nul
   }
 };
 
-export const findAuthUserById = cache(async (userId: string): Promise<AuthUser | null> => {
+export const findAuthUserById = cache(async (userId: string): Promise<AuthUserRecord | null> => {
   try {
     return await repoFindById(userId);
   } catch (error) {

@@ -70,7 +70,9 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     );
   }
 
-  listings = listings.slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  listings = listings
+    .slice()
+    .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
 
   const appliedListingIds = new Set<string>();
   const appliedApplicationByListingId = new Map<

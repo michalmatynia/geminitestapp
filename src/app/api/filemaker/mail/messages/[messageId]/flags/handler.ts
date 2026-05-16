@@ -8,7 +8,7 @@ import {
 } from '@/features/filemaker/server';
 
 const resolveMessageId = (ctx: ApiHandlerContext): string => {
-  const value = ctx.params['messageId'];
+  const value = ctx.params?.['messageId'];
   const raw = Array.isArray(value) ? (value[0] ?? '') : value;
   if (raw === undefined) {
     return '';

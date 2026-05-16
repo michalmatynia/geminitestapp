@@ -123,7 +123,7 @@ export const createFixtureDriver = (options: FixtureDriverOptions): PageDriver =
       return items.map((item) => {
         const row: Record<string, ExtractedFieldValue> = {};
         for (const [key, spec] of Object.entries(fields)) {
-          row[key] = readField(item as Element, spec);
+          row[key] = readField(item as unknown as Element, spec);
         }
         return row;
       });

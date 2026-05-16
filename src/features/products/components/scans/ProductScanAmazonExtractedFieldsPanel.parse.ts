@@ -85,7 +85,11 @@ const parseDimensionMatch = (
 const parseDimensionValues = (values: string[]): [number, number, number] | null => {
   if (values.length !== 3) return null;
 
-  const parsed = values.map((entry) => parsePositiveNumber(entry));
+  const parsed = values.map((entry) => parsePositiveNumber(entry)) as [
+    number | null,
+    number | null,
+    number | null,
+  ];
   const [sizeLength, sizeWidth, length] = parsed;
   if (sizeLength === null || sizeWidth === null || length === null) return null;
   return [sizeLength, sizeWidth, length];

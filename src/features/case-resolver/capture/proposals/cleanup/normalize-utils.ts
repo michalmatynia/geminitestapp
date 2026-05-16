@@ -5,7 +5,7 @@
  * Provides consistent text transformation for comparison and storage.
  */
 
-import { normalizeCaseResolverComparable } from '../../utils';
+import { normalizeCaseResolverComparable } from '@/features/case-resolver/public';
 
 /**
  * Normalizes text for consistent comparison and storage

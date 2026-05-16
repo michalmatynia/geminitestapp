@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 
+import { createPersistedProductScanStep } from './product-scans-service.helpers';
 import {
   resolveAmazonImageSearchProviderHistory,
   resolveNextQueueStepAttempt,
@@ -19,25 +20,25 @@ const buildSelectedCandidateQueueStep = (
   context: AmazonTriageQueueContext,
   selected: AmazonTriageSelectedCandidate,
   continuationStatus: 'queued' | 'running'
-): ProductScanRecord['steps'][number] => ({
-  key: 'queue_scan',
-  label: 'Start triaged Amazon candidate',
-  group: 'input',
-  attempt: resolveNextQueueStepAttempt(context.finalizedAmazonSteps),
-  status: 'completed',
-  resultCode: continuationStatus === 'running' ? 'run_started' : 'run_queued',
-  message:
-    continuationStatus === 'running'
-      ? 'Started the top-ranked Amazon candidate after AI triage.'
-      : 'Queued the top-ranked Amazon candidate after AI triage.',
-  details: [
-    { label: 'Image search provider', value: context.currentProvider },
-    { label: 'Selected candidate URL', value: selected.selectedCandidateUrl },
-    { label: 'Selected candidate rank', value: String(selected.selectedCandidateRank) },
-    { label: 'Recommended action', value: context.triageEvaluation.recommendedAction },
-  ],
-  url: selected.selectedCandidateUrl,
-});
+): ProductScanRecord['steps'][number] =>
+  createPersistedProductScanStep({
+    key: 'queue_scan',
+    label: 'Start triaged Amazon candidate',
+    attempt: resolveNextQueueStepAttempt(context.finalizedAmazonSteps),
+    status: 'completed',
+    resultCode: continuationStatus === 'running' ? 'run_started' : 'run_queued',
+    message:
+      continuationStatus === 'running'
+        ? 'Started the top-ranked Amazon candidate after AI triage.'
+        : 'Queued the top-ranked Amazon candidate after AI triage.',
+    details: [
+      { label: 'Image search provider', value: context.currentProvider },
+      { label: 'Selected candidate URL', value: selected.selectedCandidateUrl },
+      { label: 'Selected candidate rank', value: String(selected.selectedCandidateRank) },
+      { label: 'Recommended action', value: context.triageEvaluation.recommendedAction },
+    ],
+    url: selected.selectedCandidateUrl,
+  });
 
 export const startAmazonTriageSelectedCandidateScan = async (
   context: AmazonTriageQueueContext,

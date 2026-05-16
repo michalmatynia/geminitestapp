@@ -1,4 +1,4 @@
-import type { CaseResolverRuntimeRequestedContextSlice } from '../runtime';
+import type { CaseResolverRuntimeRequestedContextSlice } from '../../runtime';
 import type { CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
 
 export const mapRequestedContextRuntimeToStatus = (

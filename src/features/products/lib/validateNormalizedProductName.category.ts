@@ -253,9 +253,10 @@ export const resolveCategoryMatches = (args: {
   categoryCandidates: string[];
   categoryContext?: NormalizeProductNameCategoryContext | null;
 }): LeafCategoryMatchResult[] => {
-  if (shouldUseCategoryContext(args.categoryContext)) {
+  const categoryContext = args.categoryContext ?? null;
+  if (shouldUseCategoryContext(categoryContext)) {
     return args.categoryCandidates.map((value) =>
-      resolveLeafCategoryMatchFromContext(args.categoryContext, value)
+      resolveLeafCategoryMatchFromContext(categoryContext, value)
     );
   }
   return args.categoryCandidates.map((value) => resolveLeafCategoryMatch(args.categories, value));

@@ -37,8 +37,6 @@ const SELECTOR_TYPES: readonly PlaywrightStepType[] = [
   'scroll',
   'upload_file',
 ];
-const VALUE_TYPES: readonly PlaywrightStepType[] = ['fill', 'select', 'upload_file', 'assert_text'];
-const URL_TYPES: readonly PlaywrightStepType[] = ['navigate', 'assert_url'];
 const TIMEOUT_TYPES: readonly PlaywrightStepType[] = ['wait_for_timeout', 'wait_for_selector'];
 const SCRIPT_TYPES: readonly PlaywrightStepType[] = ['custom_script'];
 const AI_EVALUATE_TYPES: readonly PlaywrightStepType[] = ['ai_evaluate'];
@@ -276,8 +274,6 @@ function getProcessedInputBindings(
   const showSelector = SELECTOR_TYPES.includes(stepType)
     || (AI_EVALUATE_TYPES.includes(stepType) && draft.aiInputSource === 'selector_text')
     || (AI_INJECT_TYPES.includes(stepType) && draft.aiLoopEvaluatorInputSource === 'selector_text');
-  const showValue = VALUE_TYPES.includes(stepType);
-  const showUrl = URL_TYPES.includes(stepType);
   const showTimeout = TIMEOUT_TYPES.includes(stepType);
   const showScript = SCRIPT_TYPES.includes(stepType);
   const showAiEvaluate = AI_EVALUATE_TYPES.includes(stepType);

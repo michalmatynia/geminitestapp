@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-17'
+last_reviewed: '2026-05-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,31 +8,35 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-17T12:21:03.075Z
+Generated at: 2026-05-16T12:47:06.314Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10656
-- Exported declarations scanned: 6312
-- Candidate declarations scanned: 6292
-- Exact-shape clusters: 9
-- Near-shape clusters: 3
-- Clusters after filters: 6
-- Declarations in clusters: 12
-- Highest risk score: 13
+- Files scanned: 13429
+- Exported declarations scanned: 8244
+- Candidate declarations scanned: 8225
+- Exact-shape clusters: 94
+- Near-shape clusters: 50
+- Clusters after filters: 17
+- Declarations in clusters: 34
+- Highest risk score: 18
 - Domain filter: shared
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| `near-0002` | near-shape | 13 | 2 | feature:products, shared | TBD |
-| `exact-0006` | exact-shape | 8 | 2 | shared | TBD |
-| `exact-0007` | exact-shape | 8 | 2 | shared | TBD |
-| `exact-0008` | exact-shape | 8 | 2 | shared | TBD |
-| `exact-0009` | exact-shape | 8 | 2 | shared | TBD |
-| `near-0003` | near-shape | 8 | 2 | shared | TBD |
+| `near-0011` | near-shape | 18 | 2 | feature:filemaker, shared | TBD |
+| `exact-0071` | exact-shape | 17 | 2 | feature:playwright, shared | TBD |
+| `exact-0061` | exact-shape | 15 | 2 | feature:integrations, shared | TBD |
+| `exact-0072` | exact-shape | 13 | 2 | feature:products, shared | TBD |
+| `near-0042` | near-shape | 13 | 2 | feature:products, shared | TBD |
+| `near-0048` | near-shape | 11 | 2 | shared | TBD |
+| `exact-0062` | exact-shape | 10 | 2 | feature:job-board, shared | TBD |
+| `exact-0089` | exact-shape | 10 | 2 | shared, shared:contracts | TBD |
+| `near-0025` | near-shape | 10 | 2 | feature:filemaker, shared | TBD |
+| `near-0047` | near-shape | 10 | 2 | feature:products, shared | TBD |
 
 ## Initial DTO Consolidation Workflow
 

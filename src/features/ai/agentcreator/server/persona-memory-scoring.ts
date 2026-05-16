@@ -34,7 +34,7 @@ function matchesTopic(topicHints: string[], topic: string | null): boolean {
   return topic === null || matchesExactOrPartial(topicHints, topic);
 }
 
-function matchesMood(moodHints: string[], mood: AgentPersonaMoodId | null): boolean {
+function matchesMood(moodHints: AgentPersonaMoodId[], mood: AgentPersonaMoodId | null): boolean {
   return mood === null || moodHints.includes(mood);
 }
 
@@ -65,7 +65,7 @@ function resolveTopicScore(item: PersonaMemoryRecord, topic: string | null): num
   return (topic !== null && matchesExactOrPartial(item.topicHints, topic)) ? 12 : 0;
 }
 
-function resolveMoodScore(item: PersonaMemoryRecord, mood: string | null): number {
+function resolveMoodScore(item: PersonaMemoryRecord, mood: AgentPersonaMoodId | null): number {
   return (mood !== null && item.moodHints.includes(mood)) ? 10 : 0;
 }
 

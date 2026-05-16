@@ -35,8 +35,12 @@ import {
   TextAreaField,
 } from './AssignmentEditor.fields';
 import {
+  filterQuickPicksByFamily,
+  getActiveAllowedProviders,
   type AssignmentPatchHandler,
   providerOptions,
+  resolveProvider,
+  resolveSelectedVendor,
 } from './AssignmentEditor.helpers';
 
 type AssignmentEditorProps = {
@@ -247,7 +251,7 @@ export function AssignmentEditor(props: AssignmentEditorProps): React.JSX.Elemen
     activeAllowedProviders.includes(option.value)
   );
   const resolvedProvider = resolveProvider(assignment.provider, activeAllowedProviders);
-  const selectedVendor = resolveSelectedVendor(resolvedProvider, assignment.modelId);
+  const selectedVendor = resolveSelectedVendor(resolvedProvider, assignment.modelId, modelDescriptors);
   const enabledCheckboxId = React.useId().replace(/:/g, '');
   const modelPicks = filterQuickPicksByFamily(modelQuickPicks, modelDescriptors, modelFamily);
   const updateField = (patch: Partial<AiBrainAssignment>): void => {

@@ -35,7 +35,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 settings={ctrl.settings} 
                 updateMenuItem={ctrl.updateMenuItem} 
                 removeMenuItem={(id) => ctrl.setUserSettings(prev => ({ ...prev!, items: prev!.items.filter(i => i.id !== id) }))}
-                addMenuItem={() => ctrl.setUserSettings(prev => ({ ...prev!, items: [...prev!.items, { id: String(Date.now()), label: 'New', url: '/' }] }))}
+                addMenuItem={() => ctrl.setUserSettings(prev => ({ ...prev!, items: [...prev!.items, { id: String(Date.now()), label: 'New', url: '/', imageUrl: '' }] }))}
               />
             ) : (
                 <div className='text-xs text-gray-500'>Settings configured for {section}</div>

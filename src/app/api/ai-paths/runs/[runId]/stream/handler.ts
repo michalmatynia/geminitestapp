@@ -2,6 +2,8 @@ import { type NextRequest } from 'next/server';
 
 import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
+  type AiPathRunEventRecord,
+  type AiPathRunNodeRecord,
   aiPathRunStreamQuerySchema,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
@@ -57,7 +59,7 @@ type PubSubMessage = {
 
 const sleep = (ms: number): Promise<void> =>
   new Promise<void>((resolve) => {
-    void safeSetTimeout(resolve, ms);
+    void safeSetTimeout(() => resolve(), ms);
   });
 
 const toISOStringSafe = (value?: Date | string | null): string | null => {
@@ -145,7 +147,7 @@ const getCurrentRunNodes = async (
   repo: AiPathRunRepository,
   runId: string,
   lastNodeCursor: { ts: string; nodeId: string } | null
-): Promise<AiPathRunRecord[]> => {
+): Promise<AiPathRunNodeRecord[]> => {
   if (lastNodeCursor === null) {
     return repo.listRunNodes(runId);
   }
@@ -155,7 +157,7 @@ const getCurrentRunNodes = async (
 };
 
 const resolveLatestNodeCursor = (
-  changedNodes: AiPathRunRecord[]
+  changedNodes: AiPathRunNodeRecord[]
 ): { ts: string; nodeId: string } | null => {
   const latestNode = changedNodes[changedNodes.length - 1];
   if (latestNode === undefined) {
@@ -169,7 +171,7 @@ const resolveLatestNodeCursor = (
 };
 
 const resolveLatestEventCursor = (
-  latestEvent: { createdAt: string; id: string } | undefined
+  latestEvent: AiPathRunEventRecord | undefined
 ): { createdAt: string; id: string } | null => {
   if (latestEvent?.createdAt === undefined || latestEvent.id === undefined || latestEvent.id === '') {
     return null;
@@ -250,8 +252,7 @@ const createDisconnectHandler = (runtime: PubSubRuntime): (() => void) => {
 };
 
 const applyCatchUpAndReturn = async (
-  runtime: PubSubRuntime,
-  channel: string
+  runtime: PubSubRuntime
 ): Promise<{ shouldStop: boolean; runtime: PubSubRuntime }> => {
   const check = await sendRunCatchUp(runtime.context, runtime.cursors);
   if (!check.terminal && check.cursors !== runtime.cursors) {
@@ -273,7 +274,7 @@ const applyCatchUpAndReturn = async (
 const handlePubSubCycle = async (
   runtime: PubSubRuntime,
   channel: string,
-  sub: { off: (event: string, handler: (...args: unknown[]) => void) => void; unsubscribe: (ch: string) => Promise<void> }
+  sub: NonNullable<ReturnType<typeof getRedisSubscriber>>
 ): Promise<void> => {
   if (runtime.done || runtime.context.isCancelled()) {
     return;
@@ -282,7 +283,6 @@ const handlePubSubCycle = async (
 
   if (runtime.disconnected || !isSubscriberConnected()) {
     try {
-      sub.off('message', () => void undefined);
       await sub.unsubscribe(channel);
     } catch (error) {
       void ErrorSystem.captureException(error);
@@ -296,7 +296,7 @@ const handlePubSubCycle = async (
 
   const now = Date.now();
   if (now - runtime.lastCatchUpMs >= PUBSUB_CATCHUP_INTERVAL_MS) {
-    const { shouldStop, runtime: updatedRuntime } = await applyCatchUpAndReturn(runtime, channel);
+    const { shouldStop, runtime: updatedRuntime } = await applyCatchUpAndReturn(runtime);
     runtime.cursors = updatedRuntime.cursors;
     runtime.lastCatchUpMs = updatedRuntime.lastCatchUpMs;
     if (shouldStop) {
@@ -305,7 +305,7 @@ const handlePubSubCycle = async (
   }
 
   if (now - runtime.lastActivityMs > PUBSUB_IDLE_TIMEOUT_MS) {
-    const { shouldStop, runtime: updatedRuntime } = await applyCatchUpAndReturn(runtime, channel);
+    const { shouldStop, runtime: updatedRuntime } = await applyCatchUpAndReturn(runtime);
     runtime.cursors = updatedRuntime.cursors;
     if (shouldStop) {
       return;

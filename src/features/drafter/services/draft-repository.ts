@@ -104,7 +104,9 @@ const mapMongoDocSupplier = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
   stock: doc.stock ?? null,
 });
 
-const mapMongoDocIdentity = (doc: MongoDraftDoc): Partial<ProductDraft> => ({
+const mapMongoDocIdentity = (
+  doc: MongoDraftDoc
+): Pick<ProductDraft, 'id' | 'name' | 'draftKind' | 'scrapeProfileId' | 'description'> => ({
   id: String(doc.id ?? doc._id),
   name: doc.name ?? '',
   draftKind: normalizeDraftKind(doc.draftKind),
@@ -253,6 +255,7 @@ const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Da
     baseProductId: nullable(input.baseProductId),
     importSource: nullable(input.importSource),
     imageLinks: optionalArray(input.imageLinks),
+    _id: id,
     active: input.active ?? true,
     createdAt: now,
     updatedAt: now,

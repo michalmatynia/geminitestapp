@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-17'
+last_reviewed: '2026-05-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,30 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-04-17T12:20:39.304Z
+Generated at: 2026-05-16T12:46:30.302Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 10655
-- Exported declarations scanned: 6312
-- Candidate declarations scanned: 6292
-- Exact-shape clusters: 9
-- Near-shape clusters: 3
-- Clusters after filters: 0
-- Declarations in clusters: 0
-- Highest risk score: 0
+- Files scanned: 13429
+- Exported declarations scanned: 8244
+- Candidate declarations scanned: 8225
+- Exact-shape clusters: 94
+- Near-shape clusters: 50
+- Clusters after filters: 5
+- Declarations in clusters: 10
+- Highest risk score: 10
 - Domain filter: feature:case-resolver
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| _none_ | - | 0 | 0 | - | - |
+| `exact-0034` | exact-shape | 10 | 2 | feature:case-resolver | TBD |
+| `exact-0033` | exact-shape | 9 | 2 | feature:case-resolver | TBD |
+| `exact-0035` | exact-shape | 8 | 2 | feature:case-resolver | TBD |
+| `exact-0036` | exact-shape | 8 | 2 | feature:case-resolver | TBD |
+| `exact-0037` | exact-shape | 8 | 2 | feature:case-resolver | TBD |
 
 ## Initial DTO Consolidation Workflow
 

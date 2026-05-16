@@ -1,5 +1,4 @@
-import { type AiNode, type CaseResolverEdge, type CaseResolverJoinMode } from '@/shared/contracts/case-resolver';
-import { appendWithJoin } from './composer-utils';
+import { type CaseResolverEdge } from '@/shared/contracts/case-resolver';
 import { type NodeOutput } from './composer-compiler';
 
 export const resolveLeafNodePrompt = (

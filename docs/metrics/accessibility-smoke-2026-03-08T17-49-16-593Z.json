@@ -1,0 +1,219 @@
+{
+  "generatedAt": "2026-03-08T17:49:16.593Z",
+  "strictMode": true,
+  "failOnWarningBudgetExceed": false,
+  "runtime": {
+    "source": "broker",
+    "reused": false,
+    "baseUrl": "http://127.0.0.1:52445",
+    "agentId": "smoke-final-6",
+    "leaseKey": "web-dev-smoke-final-6-ed58ad7e"
+  },
+  "summary": {
+    "total": 14,
+    "passed": 0,
+    "failed": 14,
+    "actWarnings": 0,
+    "warningBudget": 10,
+    "warningBudgetStatus": "ok",
+    "warningBudgetEnforcement": "telemetry-only"
+  },
+  "results": [
+    {
+      "id": "app-shell-a11y",
+      "name": "App Shell Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/app/__tests__/shell-accessibility.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/app/__tests__/shell-accessibility.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 6258,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| src/app/__tests__/shell-accessibility.test.tsx (0 test)\n\n⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| src/app/__tests__/shell-accessibility.test.tsx [ src/app/__tests__/shell-accessibility.test.tsx ]\nError: ENOSPC: no space left on device, rename '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/vitest-tmp/UA91Sj43MQXXV-IIfD3Mf/client/.tmp-1772992031238-4ydjd0j066' -> '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/vitest-tmp/UA91Sj43MQXXV-IIfD3Mf/client/e22c7f5949ed98f1db799404a26f05ba2424b20c'\n ❯ src/shared/ui/AppErrorBoundary.tsx:7:1\n      5| import { ErrorBoundary, type FallbackProps } from 'react-error-boundar…\n      6| \n      7| import { classifyError, getSuggestedActions } from '@/shared/errors/er…\n       | ^\n      8| import { logClientError } from '@/shared/utils/observability/client-er…\n      9| import { getLastUserAction } from '@/shared/utils/observability/user-a…\n ❯ src/shared/ui/QueryErrorBoundary.tsx:5:1\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  no tests\n   Start at  18:47:07\n   Duration  4.01s (transform 502ms, setup 1.25s, import 0ms, tests 0ms, environment 1.39s)"
+    },
+    {
+      "id": "auth-signin-a11y",
+      "name": "Auth Sign-In Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/auth/pages/signin-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/auth/pages/signin-page.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 1306,
+      "actWarnings": 0,
+      "output": "failed to load config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.config.ts\n\n⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯\nError: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992032775-e4c4d4325207e.mjs'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.writeFile (node:internal/fs/promises:1214:14)\n    at async loadConfigFromBundledFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35907:3)\n    at async bundleAndLoadConfigFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35797:17)\n    at async loadConfigFromFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35764:42)\n    at async resolveConfig (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35413:22)\n    at async _createServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:25362:67)\n    at async createViteServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:9870:17)\n    at async createVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13186:17)\n    at async prepareVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13548:14) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'open',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992032775-e4c4d4325207e.mjs'\n}"
+    },
+    {
+      "id": "products-edit-a11y",
+      "name": "Products Edit Form Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/products/pages/product-edit-page.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/products/pages/product-edit-page.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 747,
+      "actWarnings": 0,
+      "output": "failed to load config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.config.ts\n\n⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯\nError: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992033523-116ffd040aa4e8.mjs'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.writeFile (node:internal/fs/promises:1214:14)\n    at async loadConfigFromBundledFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35907:3)\n    at async bundleAndLoadConfigFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35797:17)\n    at async loadConfigFromFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35764:42)\n    at async resolveConfig (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35413:22)\n    at async _createServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:25362:67)\n    at async createViteServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:9870:17)\n    at async createVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13186:17)\n    at async prepareVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13548:14) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'open',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992033523-116ffd040aa4e8.mjs'\n}"
+    },
+    {
+      "id": "image-studio-a11y",
+      "name": "Image Studio UI Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 811,
+      "actWarnings": 0,
+      "output": "failed to load config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.config.ts\n\n⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯\nError: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992034331-da61fbb0795d1.mjs'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.writeFile (node:internal/fs/promises:1214:14)\n    at async loadConfigFromBundledFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35907:3)\n    at async bundleAndLoadConfigFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35797:17)\n    at async loadConfigFromFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35764:42)\n    at async resolveConfig (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35413:22)\n    at async _createServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:25362:67)\n    at async createViteServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:9870:17)\n    at async createVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13186:17)\n    at async prepareVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13548:14) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'open',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992034331-da61fbb0795d1.mjs'\n}"
+    },
+    {
+      "id": "ai-paths-a11y",
+      "name": "AI Paths Canvas Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 1001,
+      "actWarnings": 0,
+      "output": "failed to load config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.config.ts\n\n⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯\nError: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992035327-c66f29f6d2374.mjs'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.writeFile (node:internal/fs/promises:1214:14)\n    at async loadConfigFromBundledFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35907:3)\n    at async bundleAndLoadConfigFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35797:17)\n    at async loadConfigFromFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35764:42)\n    at async resolveConfig (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35413:22)\n    at async _createServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:25362:67)\n    at async createViteServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:9870:17)\n    at async createVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13186:17)\n    at async prepareVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13548:14) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'open',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992035327-c66f29f6d2374.mjs'\n}"
+    },
+    {
+      "id": "case-resolver-a11y",
+      "name": "Case Resolver Header Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx"
+      ],
+      "command": "npx vitest run --project unit src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4202,
+      "actWarnings": 0,
+      "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx (0 test)\n\n⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx [ src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx ]\nError: ENOSPC: no space left on device, write\n ❯ src/shared/ui/index.ts:16:1\n     14| export * from './label';\n     15| export * from './radio-group';\n     16| export * from './select';\n       | ^\n     17| export * from './skeleton';\n     18| export * from './SkipToContentLink';\n ❯ src/features/case-resolver/components/CaseResolverTreeHeader.tsx:7:1\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  no tests\n   Start at  18:47:16\n   Duration  2.45s (transform 606ms, setup 428ms, import 0ms, tests 0ms, environment 677ms)"
+    },
+    {
+      "id": "case-resolver-browser-a11y",
+      "name": "Case Resolver Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/case-resolver-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/case-resolver-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 1584,
+      "actWarnings": 0,
+      "output": "Error: ENOSPC: no space left on device, mkdir '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/vitest-tmp/playwright-transform-cache-501/ed'\n    at Object.mkdirSync (node:fs:1377:26)\n    at addToCache (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/playwright/lib/transform/compilationCache.js:122:25)\n    at transformHook (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/playwright/lib/transform/transform.js:209:17)\n    at load (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/playwright/lib/transform/esmLoader.js:64:58)\n    at nextLoad (node:internal/modules/esm/hooks:748:28)\n    at Hooks.load (node:internal/modules/esm/hooks:385:26)\n    at MessagePort.handleMessage (node:internal/modules/esm/worker:199:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:845:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'mkdir',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/vitest-tmp/playwright-transform-cache-501/ed'\n}"
+    },
+    {
+      "id": "kangur-profile-a11y",
+      "name": "Kangur Profile Accessibility",
+      "runner": "vitest",
+      "tests": [
+        "__tests__/features/kangur/kangur-accessibility-smoke.test.tsx"
+      ],
+      "command": "npx vitest run --project unit __tests__/features/kangur/kangur-accessibility-smoke.test.tsx",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 1412,
+      "actWarnings": 0,
+      "output": "failed to load config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/vitest.config.ts\n\n⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯\nError: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992042528-6ca106b94a8de8.mjs'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.writeFile (node:internal/fs/promises:1214:14)\n    at async loadConfigFromBundledFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35907:3)\n    at async bundleAndLoadConfigFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35797:17)\n    at async loadConfigFromFile (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35764:42)\n    at async resolveConfig (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:35413:22)\n    at async _createServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vite/dist/node/chunks/config.js:25362:67)\n    at async createViteServer (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:9870:17)\n    at async createVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13186:17)\n    at async prepareVitest (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/node_modules/vitest/dist/chunks/cli-api.B7PN_QUv.js:13548:14) {\n  errno: -28,\n  code: 'ENOSPC',\n  syscall: 'open',\n  path: '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/.vite-temp/vitest.config.ts.timestamp-1772992042528-6ca106b94a8de8.mjs'\n}"
+    },
+    {
+      "id": "public-auth-routes-browser-a11y",
+      "name": "Public Auth Route Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/public-auth-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/public-auth-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 47545,
+      "actWarnings": 0,
+      "output": "Running 2 tests using 1 worker\n\n(node:76998) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:76998) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✓  1 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/signin exposes skip navigation and passes the accessibility smoke scan (1.2s)\n  ✘  2 e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan (11.6s)\n\n\n  1) e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_EMPTY_RESPONSE at http://127.0.0.1:52445/auth/register\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/register\", waiting until \"load\"\u001b[22m\n\n\n       9 |     page,\n      10 |   }) => {\n    > 11 |     await page.goto(route);\n         |                ^\n      12 |\n      13 |     const main = page.locator('#app-content');\n      14 |     await expect(main).toBeVisible();\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/public-auth-accessibility.spec.ts:11:16\n\n    Error: apiRequestContext._wrapApiCall: ENOSPC: no space left on device, open '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-public-auth-routes-browser-a/test-results/.playwright-artifacts-0/traces/1c3d16d3a734fdf534be-8bad61a6f06bb8414c40-recording1.network'\n\n    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-public-auth-routes-browser-a/test-results/features-accessibility-pub-64d98-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/public-auth-accessibility.spec.ts:8:3 › /auth/register exposes skip navigation and passes the accessibility smoke scan \n  1 passed (45.5s)"
+    },
+    {
+      "id": "admin-dashboard-browser-a11y",
+      "name": "Admin Dashboard Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/admin-dashboard-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/admin-dashboard-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 33571,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:78368) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:78368) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan (255ms)\n\n\n  1) e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-admin-dashboard-browser-a11y/test-results/features-accessibility-adm-38087-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/admin-dashboard-accessibility.spec.ts:6:1 › admin dashboard exposes shell landmarks and passes the accessibility smoke scan"
+    },
+    {
+      "id": "products-list-browser-a11y",
+      "name": "Products List Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/products-list-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/products-list-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 18794,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:79398) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:79398) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan (252ms)\n\n\n  1) e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fproducts\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fproducts\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/products-list-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-products-list-browser-a11y/test-results/features-accessibility-pro-9e388-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/products-list-accessibility.spec.ts:6:1 › products list exposes search and actions accessibly and passes the accessibility smoke scan"
+    },
+    {
+      "id": "cms-pages-browser-a11y",
+      "name": "CMS Pages Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-pages-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-pages-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 3068,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:79939) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:79939) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan (143ms)\n\n\n  1) e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fpages\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fpages\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-pages-accessibility.spec.ts:11:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-pages-browser-a11y/test-results/features-accessibility-cms-17323-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-pages-accessibility.spec.ts:6:1 › cms pages list exposes filters and actions accessibly and passes the accessibility smoke scan"
+    },
+    {
+      "id": "notes-workspace-browser-a11y",
+      "name": "Notes Workspace Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/notes-workspace-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/notes-workspace-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 6778,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:79975) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:79975) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan (158ms)\n\n\n  1) e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fnotes\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fnotes\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/notes-workspace-accessibility.spec.ts:13:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-notes-workspace-browser-a11y/test-results/features-accessibility-not-89389-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/notes-workspace-accessibility.spec.ts:7:1 › notes workspace exposes list controls accessibly and passes the accessibility smoke scan"
+    },
+    {
+      "id": "cms-builder-browser-a11y",
+      "name": "CMS Builder Accessibility",
+      "runner": "playwright",
+      "tests": [
+        "e2e/features/accessibility/cms-builder-accessibility.spec.ts"
+      ],
+      "command": "/Users/michalmatynia/.nvm/versions/node/v22.22.0/bin/npx playwright test e2e/features/accessibility/cms-builder-accessibility.spec.ts",
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 4272,
+      "actWarnings": 0,
+      "output": "Running 1 test using 1 worker\n\n(node:80629) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:80629) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.\n(Use `node --trace-warnings ...` to show where the warning was created)\n  ✘  1 e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan (211ms)\n\n\n  1) e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan \n\n    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fbuilder\n    Call log:\n    \u001b[2m  - navigating to \"http://127.0.0.1:52445/auth/signin?callbackUrl=%2Fadmin%2Fcms%2Fbuilder\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n       at support/admin-auth.ts:35\n\n      33 |   const destinationUrl = new URL(destination, 'http://localhost');\n      34 |\n    > 35 |   await page.goto(`/auth/signin?callbackUrl=${encodeURIComponent(destination)}`, {\n         |              ^\n      36 |     waitUntil: 'domcontentloaded',\n      37 |     timeout: 60_000,\n      38 |   });\n        at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:35:14)\n        at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/cms-builder-accessibility.spec.ts:13:9\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────\n    tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/trace.zip\n    Usage:\n\n        npx playwright show-trace tmp/playwright-runs/web/smoke-final-6/accessibility-smoke-cms-builder-browser-a11y/test-results/features-accessibility-cms-91769-he-accessibility-smoke-scan/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n  1 failed\n    e2e/features/accessibility/cms-builder-accessibility.spec.ts:7:1 › cms builder exposes shell controls accessibly and passes the accessibility smoke scan"
+    }
+  ]
+}

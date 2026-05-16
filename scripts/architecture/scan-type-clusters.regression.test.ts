@@ -33,8 +33,8 @@ describe('scan-type-clusters regression', () => {
       expect(result.output).not.toBeNull();
       expect(result.output?.status).toBe('ok');
       expect(result.output?.summary).toMatchObject({
-        exactShapeClusters: 87,
-        nearShapeClusters: 42,
+        exactShapeClusters: 94,
+        nearShapeClusters: 50,
       });
       expect(result.output?.paths).toBeNull();
       expect(result.output?.filters).toMatchObject({

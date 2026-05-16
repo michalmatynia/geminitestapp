@@ -28,7 +28,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { cn } from '@/features/kangur/shared/utils';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
@@ -150,7 +150,7 @@ const useObservedNarrationText = ({
     }
 
     const root = lessonContentRef.current;
-    let timeoutId: number | null = null;
+    let timeoutId: SafeTimerId | null = null;
     const updateText = (): void => {
       setObservedText(extractNarrationTextFromElement(root));
     };

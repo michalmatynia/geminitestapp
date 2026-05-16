@@ -9,6 +9,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { runPlanningPostprocessTask, recordPostprocessAudit } from './core';
 
+type NormalizablePlanGoals = Parameters<typeof normalizePlanHierarchy>[0]['goals'];
+
 export async function enrichPlanHierarchyWithLLM(args: {
   prompt: string;
   model: string;
@@ -24,7 +26,7 @@ export async function enrichPlanHierarchyWithLLM(args: {
       systemPrompt: 'You enrich goal hierarchies. Output only JSON: {goals:[]}.',
       userContent: JSON.stringify({ prompt, memory, hierarchy, meta }),
     });
-    const parsed = parsePlanJson(content) as { goals?: unknown[] } | null;
+    const parsed = parsePlanJson(content) as { goals?: NormalizablePlanGoals } | null;
     if (!Array.isArray(parsed?.goals) || parsed.goals.length === 0) return null;
     const enriched = normalizePlanHierarchy({ goals: parsed.goals });
     if (enriched === null) return null;
@@ -60,7 +62,7 @@ export async function expandHierarchyFromStepsWithLLM(args: {
       systemPrompt: 'You convert flat steps into a goal hierarchy. Output only JSON: {goals:[]}.',
       userContent: JSON.stringify({ prompt, memory, steps, meta }),
     });
-    const parsed = parsePlanJson(content) as { goals?: unknown[] } | null;
+    const parsed = parsePlanJson(content) as { goals?: NormalizablePlanGoals } | null;
     if (!Array.isArray(parsed?.goals) || parsed.goals.length === 0) return null;
     const expanded = normalizePlanHierarchy({ goals: parsed.goals });
     if (expanded === null) return null;

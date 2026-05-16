@@ -166,8 +166,13 @@ const normalizeEditorialArticle = (
   };
 };
 
-const getDefaultEditorialArticle = (index: number): EcommercePagesCmsEditorialArticle =>
-  DEFAULT_EDITORIAL_ARTICLES[index] ?? DEFAULT_EDITORIAL_ARTICLES[0];
+const getDefaultEditorialArticle = (index: number): EcommercePagesCmsEditorialArticle => {
+  const fallback = DEFAULT_EDITORIAL_ARTICLES[0];
+  if (fallback === undefined) {
+    throw new Error('Default editorial articles must include at least one article.');
+  }
+  return DEFAULT_EDITORIAL_ARTICLES[index] ?? fallback;
+};
 
 const getEditorialArticlesFromDoc = (doc: CmsPageDoc | null): EcommercePagesCmsEditorialArticle[] => {
   const editorial = isRecord(doc?.content) && isRecord(doc.content['editorial'])

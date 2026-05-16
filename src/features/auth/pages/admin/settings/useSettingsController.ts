@@ -12,11 +12,11 @@ import type { MfaDisableResponse, MfaSetupResponse, MfaVerifyResponse } from '@/
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
 type SettingsMutations = {
-  mfaSetupMutation: MutationResult<{ ok: boolean; payload: MfaSetupResponse }, void>;
+  mfaSetupMutation: MutationResult<{ ok: boolean; payload: MfaSetupResponse }, unknown>;
   mfaVerifyMutation: MutationResult<{ ok: boolean; payload: MfaVerifyResponse }, string>;
   mfaDisableMutation: MutationResult<
     { ok: boolean; payload: MfaDisableResponse },
-    string | { token?: string; recoveryCode?: string }
+    { token?: string; recoveryCode?: string }
   >;
 };
 

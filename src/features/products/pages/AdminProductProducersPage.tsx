@@ -33,13 +33,15 @@ export function AdminProductProducersPage(): React.JSX.Element {
       />
 
       <ProducerEditorModal 
-        open={ctrl.open} 
-        setOpen={ctrl.setOpen} 
-        editing={ctrl.editing} 
-        form={ctrl.form} 
-        handleChange={ctrl.setForm} 
-        handleSave={ctrl.handleSave} 
-        isSaving={ctrl.saveMutation.isPending} 
+        open={ctrl.open}
+        setOpen={ctrl.setOpen}
+        editing={ctrl.editing}
+        form={ctrl.form}
+        handleChange={(values) => {
+          ctrl.setForm((previous) => ({ ...previous, ...values }));
+        }}
+        handleSave={ctrl.handleSave}
+        isSaving={ctrl.saveMutation.isPending}
       />
 
       <ConfirmationModal />

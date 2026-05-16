@@ -4,7 +4,6 @@ import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -121,7 +121,7 @@ const buildProductListingsQueryMeta = (mode: ProductListingsQueryMode): {
   source: string;
   operation: 'list';
   resource: string;
-  domain: string;
+  domain: 'integrations';
   tags: string[];
   description: string;
 } => ({

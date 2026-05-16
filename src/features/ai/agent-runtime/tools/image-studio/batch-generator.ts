@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { createImageStudioRun } from '@/features/ai/image-studio/server';
 import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 
 export const batchImageGeneratorSchema = z.object({
   projectId: z.string(),
   prompts: z.array(z.string()),
   outputCount: z.number().default(1),
-  contextRegistry: z.record(z.string(), z.any()).optional(),
+  contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
 });
 
 export type BatchImageGeneratorInput = z.infer<typeof batchImageGeneratorSchema>;

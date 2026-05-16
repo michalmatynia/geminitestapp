@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 
@@ -244,7 +244,7 @@ export function PointerDragProvider({
   onDropRef.current = onDrop;
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
-  const completionTimerRef = useRef<number | null>(null);
+  const completionTimerRef = useRef<SafeTimerId | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
 
   const registerDropZone = useCallback((id: string, element: HTMLElement) => {
@@ -408,9 +408,7 @@ export function PointerDragProvider({
 
   useEffect(() => {
     return () => {
-      if (completionTimerRef.current !== null) {
-        window.clearTimeout(completionTimerRef.current);
-      }
+      safeClearTimeout(completionTimerRef.current);
     };
   }, []);
 

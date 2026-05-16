@@ -1,12 +1,12 @@
 import React from 'react';
 import { PreviewSectionProvider, type PreviewSectionContextValue } from '../context/PreviewSectionContext';
 import { 
-  PreviewSlideshowSection,
-  PreviewGridSection,
   PreviewImageWithTextSection,
   PreviewHeroSection,
   PreviewRichTextSection,
 } from './PreviewSectionVariants';
+import { PreviewGridSection } from './PreviewGridSection';
+import { PreviewSlideshowSection } from './PreviewSlideshowSection';
 import { type SectionInstance } from '@/shared/contracts/cms';
 
 type StandardSectionProps = {

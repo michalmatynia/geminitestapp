@@ -1,12 +1,12 @@
+import type { JobBoardProvider } from '@/shared/lib/job-board/job-board-providers';
 import type { 
-  JobBoardProvider,
   FilemakerJobBoardScrapeLiveEvent,
   FilemakerJobBoardScrapeOfferResult,
   FilemakerJobBoardScrapeWriteResult,
   FilemakerJobBoardScrapedOffer,
   FilemakerJobBoardScrapeRequest,
 } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
-import type { FilemakerDatabase, FilemakerOrganization } from '../types';
+import type { FilemakerDatabase, FilemakerOrganization } from '../../types';
 
 export type ScrapedCompanyCandidate = {
   organization: FilemakerOrganization;

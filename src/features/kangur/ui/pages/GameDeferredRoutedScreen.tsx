@@ -8,7 +8,6 @@ import { usePrefersReducedMotion } from '@/features/kangur/ui/components/LazyAni
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   isKangurLaunchableGameScreen,
-  type KangurLaunchableGameScreen,
 } from '@/features/kangur/ui/services/game-launch';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 

@@ -3,7 +3,8 @@
 import React from 'react';
 import { useKangurStarterRecipes } from '../hooks/useKangurStarterRecipes';
 import { Button } from '@/features/kangur/shared/ui';
-import type { KangurLesson, KangurLessonPage, KangurLessonRootBlock, KangurLessonDocumentTemplateId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonDocumentTemplateId } from '@/features/kangur/lesson-documents';
 
 interface KangurLessonStarterRecipesProps {
   lesson: KangurLesson | null;

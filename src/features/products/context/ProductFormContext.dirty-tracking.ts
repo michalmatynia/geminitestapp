@@ -94,7 +94,7 @@ export const toComparableImageSlot = (slot: unknown): string => {
   const slotRecord = toComparableRecord(slot);
   if (Object.keys(slotRecord).length === 0) return '';
 
-  if (slotRecord.type === 'existing') {
+  if (slotRecord['type'] === 'existing') {
     const existingRecord = toComparableRecord(slotRecord['data']);
     return `existing:${normalizeComparableString(existingRecord['id'])}`;
   }

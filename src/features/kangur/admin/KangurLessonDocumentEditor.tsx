@@ -30,7 +30,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
           addPageFromTemplate={controller.mutations.addPageFromTemplate}
         />
       </div>
-      <KangurLessonPreviewPanel document={controller.mutations.value} activePageId={controller.activePageId} />
+      <KangurLessonPreviewPanel document={controller.document} activePageId={controller.activePageId} />
     </div>
   );
 }

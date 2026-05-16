@@ -42,7 +42,10 @@ export const useProductScanModalData = (
     input.productIds,
     input.products
   );
-  const integrationConnections = integrationsWithConnectionsQuery.data ?? [];
+  const integrationConnections =
+    (integrationsWithConnectionsQuery.data ?? []) as Parameters<
+      typeof useProductScanConnectionNames
+    >[0];
   const connectionNamesById = useProductScanConnectionNames(integrationConnections);
   const connectionModel = useProductScan1688ConnectionModel({
     provider: input.provider,

@@ -134,7 +134,13 @@ export async function runAgentBrowserControl({
 
     // Re-implemented UI inventory and session capture to use shared functions if possible,
     // or keep local if needed. Since I exported them, I can use them.
-    await collectUiInventory(page, runId, safeLabel, log, activeStepId);
+    await collectUiInventory({
+      page,
+      runId,
+      label: safeLabel,
+      log,
+      activeStepId,
+    });
     await captureSessionContext(page, context, {
       runId,
       label: safeLabel,

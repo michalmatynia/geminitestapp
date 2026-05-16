@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 import { Card } from '@/shared/ui/primitives.public';
-import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export function ContentManagerStats({ stats }: { stats: any }): JSX.Element {
   return (

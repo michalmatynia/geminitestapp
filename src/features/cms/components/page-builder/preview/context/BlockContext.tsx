@@ -15,6 +15,8 @@ export interface BlockContextValue {
   stretch?: boolean;
 }
 
+export const CONTAINED_BLOCK_CONTEXT_VALUE: BlockContextValue = { contained: true };
+
 const BlockContext = createContext<BlockContextValue>({});
 
 export function BlockContextProvider({

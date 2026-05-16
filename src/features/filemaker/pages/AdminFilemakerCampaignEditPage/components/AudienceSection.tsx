@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from '@/shared/ui/react-native-web-shim';
-import { Card } from '@/features/kangur/ui/components';
-import { AudienceSourceSection } from '../campaign-edit-sections/AudienceSourceSection';
+import { Card } from '@/shared/ui/primitives.public';
+import { AudienceSourceSection } from '../../campaign-edit-sections/AudienceSourceSection';
 
 export function AudienceSection(): React.JSX.Element {
   return (

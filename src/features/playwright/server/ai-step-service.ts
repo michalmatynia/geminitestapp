@@ -21,6 +21,7 @@ import type {
   PlaywrightStructuredScreenshotEvaluationResult,
   PlaywrightObservationArtifacts,
   PlaywrightCapturedPageObservation,
+  PlaywrightInjectionResult,
 } from './ai-step-service/types';
 
 import { type PlaywrightVerificationInjectionConfig } from '@/features/playwright/services/ai-step';
@@ -304,15 +305,13 @@ const executeInjectedPlaywrightCode = async (page: Page, code: string): Promise<
   await new AsyncFunction('page', code)(page);
 };
 
-type ArtifactHandlers = {
-  file?: (key: string, buffer: Buffer, options: { extension: string; mimeType: string; kind: string }) => Promise<string>;
-  html?: (key: string) => Promise<string | null>;
-};
-
 async function saveIterationArtifacts(
   iterationsRun: number,
   screenshotBuffer: Buffer | null,
-  config: PlaywrightVerificationInjectionConfig<unknown> & { artifacts?: ArtifactHandlers }
+  config: {
+    artifactKey?: string | null | undefined;
+    artifacts?: PlaywrightObservationArtifacts | null | undefined;
+  }
 ): Promise<{ screenshot: string | null; html: string | null }> {
   const artifactKey = config.artifactKey ?? '';
   if (artifactKey === '') {
@@ -361,7 +360,6 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
     config.maxIterations > 0
       ? Math.trunc(config.maxIterations)
       : 3;
-  const goal = typeof config.goal === 'function' ? config.goal(review, capture) : config.goal;
   const evaluatorContext =
     typeof config.buildEvaluatorContext === 'function'
       ? config.buildEvaluatorContext(review, capture)
@@ -460,7 +458,7 @@ async function runPlaywrightVerificationInjectionLoop<TReview>(
       iterationEvalRecord = { done: false, context: evalResult.context };
     }
 
-    const result = await performInjectionIteration({
+    const result: PlaywrightInjectionResult = await performInjectionIteration({
       iterationsRun,
       maxIterations,
       activeUrl,
@@ -1067,6 +1065,7 @@ export type RunPlaywrightVerificationReviewCaptureOptions<
   previousObservation: TObservation | null;
   page: Page;
   artifacts?: PlaywrightObservationArtifacts;
+  artifactKey?: string | null | undefined;
   log?: ((message: string, context?: unknown) => void) | null | undefined;
   screenshotFailureLogKey?: string | null | undefined;
   evaluate: (
@@ -1151,7 +1150,7 @@ export async function runPlaywrightVerificationReviewCapture<
           iteration: options.params.iteration,
           loopDecision: options.params.loopDecision,
           stableForMs: options.params.stableForMs,
-        }) as TObservation,
+        }) as unknown as TObservation,
       injectOnEvaluation: options.injectOnEvaluation
         ? {
             ...options.injectOnEvaluation,
@@ -1936,16 +1935,18 @@ const parseInjectorResponse = (
       done: parsed['done'] === true,
       reasoning: typeof parsed['reasoning'] === 'string' ? parsed['reasoning'] : '',
       modelId,
-      rawText: text,
-    };
-  } catch {
-    return {
+	      rawText: text,
+	      userMessageText: '',
+	    };
+	  } catch {
+	    return {
       code: cleaned,
       done: true,
       reasoning: 'Direct code response (JSON parse failed).',
-      modelId,
-      rawText: text,
-    };
+	      modelId,
+	      rawText: text,
+	      userMessageText: '',
+	    };
   }
 };
 

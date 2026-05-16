@@ -1,43 +1,46 @@
 'use client';
 
 import React from 'react';
-import { Eye } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { useSystemLogsActions, useSystemLogsState } from '@/shared/lib/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { type SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
-import { Button, Tooltip } from '@/shared/ui/primitives.public';
-import { StatusBadge } from '@/shared/ui/data-display.public';
-import { Pagination, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import { formatTimestamp } from '@/shared/lib/observability/utils/formatTimestamp';
-import {
-  getPrimaryContextDocument,
-  getStatusVariant,
-  readAlertEvidence,
-  readLogContextRegistry,
-} from '@/shared/lib/observability/utils/logHelpers';
 import { getSystemLogColumns } from './table/columns';
 import { renderSystemLogDetailsContent } from './table/details-content';
 
 export function ContextDocumentCard(props: {
-  document: any;
+  document: { title?: string | null; status?: string | null };
   accentClassName?: string;
 }): React.JSX.Element {
-  // This is a placeholder for the original component
-  // which will be imported from a proper shared file.
-  return <div />;
+  return (
+    <div className={props.accentClassName}>
+      <div className='text-sm font-medium'>{props.document.title ?? 'Context document'}</div>
+      {props.document.status ? (
+        <div className='text-xs text-muted-foreground'>{props.document.status}</div>
+      ) : null}
+    </div>
+  );
 }
 
 export function ContextRegistryNodesCard(props: {
-  nodes: any[];
+  nodes: Array<{ id?: string | null; title?: string | null; type?: string | null }>;
 }): React.JSX.Element | null {
-  // This is a placeholder for the original component
-  // which will be imported from a proper shared file.
-  return null;
+  if (props.nodes.length === 0) return null;
+  return (
+    <div className='space-y-1'>
+      {props.nodes.map((node, index) => (
+        <div key={node.id ?? index} className='text-xs text-muted-foreground'>
+          {node.title ?? node.id ?? 'Context node'}
+          {node.type ? ` · ${node.type}` : ''}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function EventStreamPanel({

@@ -31,7 +31,7 @@ const GOOGLE_OAUTH_CREDENTIALS_ENDPOINT = '/api/settings/google-oauth';
  * @returns Query result with credentials status
  */
 export function useGoogleOAuthCredentialsStatus(): SingleQuery<GoogleOAuthCredentialsStatus> {
-  return useSingleQueryV2<GoogleOAuthCredentialsStatus>({
+  return useSingleQueryV2<GoogleOAuthCredentialsStatus, GoogleOAuthCredentialsStatus>({
     id: 'global-google-oauth-credentials',
     queryKey: QUERY_KEYS.settings.googleOAuthCredentials(),
     queryFn: (): Promise<GoogleOAuthCredentialsStatus> =>
@@ -41,7 +41,7 @@ export function useGoogleOAuthCredentialsStatus(): SingleQuery<GoogleOAuthCreden
       source: 'shared.hooks.useGoogleOAuthCredentialsStatus',
       operation: 'detail',
       resource: 'settings.google-oauth',
-      domain: 'settings',
+      domain: 'global',
       tags: ['settings', 'google-oauth'],
       description: 'Loads shared Google OAuth credential configuration status.',
     },
@@ -68,7 +68,7 @@ export function useUpdateGoogleOAuthCredentials(): MutationResult<
       source: 'shared.hooks.useUpdateGoogleOAuthCredentials',
       operation: 'update',
       resource: 'settings.google-oauth',
-      domain: 'settings',
+      domain: 'global',
       tags: ['settings', 'google-oauth', 'update'],
       description: 'Updates shared Google OAuth credentials.',
     },

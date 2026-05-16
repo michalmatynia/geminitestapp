@@ -33,7 +33,7 @@ const errorMessage = (error: unknown): string =>
 
 const sleep = async (delayMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {
-    safeSetTimeout(resolve, delayMs);
+    safeSetTimeout(() => resolve(), delayMs);
   });
 };
 

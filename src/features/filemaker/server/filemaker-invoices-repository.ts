@@ -53,16 +53,7 @@ const buildPaymentFilter = (
   filter: FilemakerInvoicePaymentFilter
 ): Filter<FilemakerInvoiceMongoDocument> => {
   if (filter === 'paid') return { isPaid: PAID_INVOICE_RE };
-  if (filter === 'unpaid') {
-    return {
-      $or: [
-        { isPaid: { $exists: false } },
-        { isPaid: '' },
-        { isPaid: null },
-        { isPaid: { $not: PAID_INVOICE_RE } },
-      ],
-    };
-  }
+  if (filter === 'unpaid') return { isPaid: { $not: PAID_INVOICE_RE } };
   return {};
 };
 

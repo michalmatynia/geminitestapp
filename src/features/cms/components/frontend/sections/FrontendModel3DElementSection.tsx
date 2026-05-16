@@ -12,7 +12,7 @@ export function FrontendModel3DElementSection(): React.ReactNode {
   const { settings } = useSectionBlockData();
   const blockSettings = useMemo(() => {
     const rest = { ...settings };
-    delete rest.gsapAnimation;
+    delete rest['gsapAnimation'];
     return rest;
   }, [settings]);
 

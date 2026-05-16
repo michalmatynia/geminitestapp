@@ -1,6 +1,6 @@
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver/capture/public';
 import type { CaseResolverPromptExploderApplyUiDiagnostics, CaseResolverPromptExploderPendingPayload } from '../useCaseResolverState.prompt-exploder-sync';
-import type { PromptExploderTransferUiStatus } from './prompt-exploder-transfer-lifecycle';
+import type { PromptExploderTransferUiStatus } from '../prompt-exploder-transfer-lifecycle';
 
 export interface UseCaseResolverPromptExploderValue {
   pendingPromptExploderPayload: CaseResolverPromptExploderPendingPayload | null;

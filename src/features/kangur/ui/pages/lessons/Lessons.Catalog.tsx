@@ -6,7 +6,6 @@ import {
   safeCancelAnimationFrame,
   safeClearTimeout,
   safeRequestAnimationFrame,
-  safeSetTimeout,
 } from '@/shared/lib/timers';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {

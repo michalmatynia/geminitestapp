@@ -102,6 +102,13 @@ export async function evaluateGraphInternal(
   edges: Edge[],
   options: EvaluateGraphOptions
 ): Promise<RuntimeState> {
-    // ... logic continues
-    return {} as RuntimeState; 
+    const { cleanup } = buildExecutionAbortSignal(options);
+    void nodes;
+    void edges;
+    try {
+      // ... logic continues
+      return {} as RuntimeState;
+    } finally {
+      cleanup();
+    }
 }

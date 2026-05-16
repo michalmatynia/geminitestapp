@@ -238,9 +238,7 @@ describe('frontend layout bootstrap', () => {
       source: 'lite',
       fallbackReason: null,
     });
-    getKangurAuthBootstrapScriptMock.mockResolvedValue(
-      'window.__KANGUR_AUTH_BOOTSTRAP__=null;'
-    );
+    getKangurAuthBootstrapScriptMock.mockResolvedValue('null');
 
     await renderResolvedFrontendLayout(<div>kangur</div>);
 
@@ -250,7 +248,7 @@ describe('frontend layout bootstrap', () => {
     expect(getCmsThemeSettingsMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).toHaveBeenCalledTimes(1);
     expect(getKangurAuthBootstrapScriptMock).toHaveBeenCalledTimes(1);
-    expect(document.body.innerHTML).toContain('window.__KANGUR_AUTH_BOOTSTRAP__=null;');
+    expect(document.getElementById('kangur-auth-bootstrap-data')).not.toBeNull();
     expect(
       document.querySelector('#__KANGUR_SURFACE_BOOTSTRAP__')?.textContent
     ).toContain('--kangur-soft-card-border:');
@@ -424,9 +422,7 @@ describe('frontend layout bootstrap', () => {
       source: 'mongo',
       fallbackReason: null,
     });
-    getKangurAuthBootstrapScriptMock.mockResolvedValue(
-      'window.__KANGUR_AUTH_BOOTSTRAP__=null;'
-    );
+    getKangurAuthBootstrapScriptMock.mockResolvedValue('null');
 
     await renderResolvedFrontendLayout(<div>kangur-home</div>);
 

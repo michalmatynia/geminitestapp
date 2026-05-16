@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
+import type { Document } from 'mongodb';
 
 import type {
   FilemakerJobApplication,
@@ -166,11 +167,15 @@ export const upsertManualAppliedMongoFilemakerJobApplication = async (
 
   if (existingDocuments.length > 0) {
     const logEntry = buildManualLogEntry(input, now);
+    const latestDocument = existingDocuments[0];
+    if (latestDocument === undefined) {
+      throw new Error('Expected existing Filemaker job application document.');
+    }
     await collection.updateMany(
       { _id: { $in: existingDocuments.map((document) => document._id) } },
-      { $set: { status: 'applied', updatedAt: now }, $push: { applicationLog: logEntry } }
+      { $set: { status: 'applied', updatedAt: now }, $push: { applicationLog: logEntry } } as Document
     );
-    return requireMongoFilemakerJobApplicationById(normalizeId(existingDocuments[0]));
+    return requireMongoFilemakerJobApplicationById(normalizeId(latestDocument));
   }
 
   const document = buildManualAppliedDocument(input, identity, now);

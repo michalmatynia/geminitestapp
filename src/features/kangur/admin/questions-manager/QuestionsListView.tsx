@@ -1,6 +1,6 @@
 import { KangurQuestionListItem } from '../components/KangurQuestionListItem';
 
-export function QuestionsListView({ filteredQuestions, questions, listFilter, sortMode, isSaving, questionSummaries, mutations }: any) {
+export function QuestionsListView({ copy, filteredQuestions, questions, questionSummaries, mutations }: any) {
   return (
     <div className='flex-1 overflow-auto rounded-[28px] border border-border/60 bg-card/20 p-3 sm:p-4'>
       <div className='space-y-3 pr-1'>
@@ -17,9 +17,14 @@ export function QuestionsListView({ filteredQuestions, questions, listFilter, so
                 question={q}
                 index={index}
                 absoluteIndex={absoluteIndex}
-                isSaving={isSaving}
+                copy={copy.listItem}
+                canReorder={questions.length > 1}
+                isSaving={mutations.isSaving}
                 questionSummary={questionSummaries.get(q.id)}
+                onMoveUp={() => { void mutations.handleMove(absoluteIndex, Math.max(0, absoluteIndex - 1)); }}
+                onMoveDown={() => { void mutations.handleMove(absoluteIndex, Math.min(questions.length - 1, absoluteIndex + 1)); }}
                 onEdit={() => mutations.openEdit(q)}
+                onDuplicate={() => { void mutations.handleDuplicate(q); }}
                 onDelete={() => mutations.setQuestionToDelete(q)}
               />
             );

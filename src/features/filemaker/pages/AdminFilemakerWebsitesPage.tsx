@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 
+import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { PanelHeader } from '@/shared/ui/templates.public';
 
@@ -135,7 +136,7 @@ const createWebsiteListPanelProps = (input: WebsiteListPanelInput): WebsiteListP
 });
 
 function useWebsiteListController(): {
-  navActions: React.ReactNode;
+  navActions: PanelAction[];
   tableProps: WebsiteListPanelProps;
 } {
   const router = useRouter();

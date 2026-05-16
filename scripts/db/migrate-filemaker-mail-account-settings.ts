@@ -70,16 +70,17 @@ const buildMigrationCandidates = (
 ): MigrationCandidate[] => {
   const targetAccountsById = new Map(targetAccounts.map((account) => [account.id, account]));
 
-  return sourceAccounts.flatMap((sourceAccount) => {
+  return sourceAccounts.reduce<MigrationCandidate[]>((candidates, sourceAccount) => {
     const targetAccount = targetAccountsById.get(sourceAccount.id);
     if (targetAccount === undefined) {
-      return [{ account: sourceAccount, action: 'insert' as const }];
+      candidates.push({ account: sourceAccount, action: 'insert' });
+      return candidates;
     }
     if (isSourceNewer(sourceAccount, targetAccount)) {
-      return [{ account: sourceAccount, action: 'update' as const }];
+      candidates.push({ account: sourceAccount, action: 'update' });
     }
-    return [];
-  });
+    return candidates;
+  }, []);
 };
 
 const upsertAccount = async (account: FilemakerMailAccount): Promise<void> => {

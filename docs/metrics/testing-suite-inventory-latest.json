@@ -1,0 +1,446 @@
+{
+  "generatedAt": "2026-05-06T11:43:58.900Z",
+  "status": "ok",
+  "summary": {
+    "suiteCount": 17,
+    "laneCount": 5,
+    "documentedLaneCount": 4,
+    "summaryJsonCapableSuiteCount": 11
+  },
+  "cadenceSummary": [
+    {
+      "cadence": "local",
+      "count": 2
+    },
+    {
+      "cadence": "nightly",
+      "count": 9
+    },
+    {
+      "cadence": "pr",
+      "count": 7
+    },
+    {
+      "cadence": "release",
+      "count": 9
+    },
+    {
+      "cadence": "weekly",
+      "count": 8
+    }
+  ],
+  "suites": [
+    {
+      "id": "lint",
+      "label": "Lint",
+      "kind": "static-analysis",
+      "cadence": [
+        "pr",
+        "release"
+      ],
+      "cost": "medium",
+      "owner": "Platform Team",
+      "command": "npm run lint",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "lint-domains",
+      "label": "Lint Domain Gate",
+      "kind": "static-analysis",
+      "cadence": [
+        "nightly",
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "node scripts/quality/run-lint-domain-checks.mjs",
+      "artifacts": [
+        "docs/metrics/lint-domain-checks-latest.json",
+        "docs/metrics/lint-domain-checks-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "typecheck",
+      "label": "Typecheck",
+      "kind": "static-analysis",
+      "cadence": [
+        "local",
+        "pr",
+        "release"
+      ],
+      "cost": "medium",
+      "owner": "Platform Team",
+      "command": "npm run typecheck",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "build",
+      "label": "Production Build",
+      "kind": "build",
+      "cadence": [
+        "release"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run build",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "unit",
+      "label": "Vitest Unit Project",
+      "kind": "unit",
+      "cadence": [
+        "pr",
+        "release"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:unit",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "unit-domains",
+      "label": "Unit Domain Timings",
+      "kind": "unit",
+      "cadence": [
+        "nightly",
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:unit:domains",
+      "artifacts": [
+        "docs/metrics/unit-domain-timings-latest.json",
+        "docs/metrics/unit-domain-timings-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "critical-flows",
+      "label": "Critical Flow Regression",
+      "kind": "regression",
+      "cadence": [
+        "local",
+        "pr",
+        "nightly",
+        "release"
+      ],
+      "cost": "medium",
+      "owner": "Platform Team",
+      "command": "npm run test:critical-flows",
+      "artifacts": [
+        "docs/metrics/critical-flow-tests-latest.json",
+        "docs/metrics/critical-flow-tests-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "security-smoke",
+      "label": "Security Smoke",
+      "kind": "security",
+      "cadence": [
+        "pr",
+        "nightly",
+        "release"
+      ],
+      "cost": "medium",
+      "owner": "Platform Team",
+      "command": "npm run test:security-smoke",
+      "artifacts": [
+        "docs/metrics/security-smoke-latest.json",
+        "docs/metrics/security-smoke-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "accessibility-smoke",
+      "label": "Accessibility Smoke",
+      "kind": "accessibility",
+      "cadence": [
+        "pr",
+        "nightly",
+        "release"
+      ],
+      "cost": "medium",
+      "owner": "Platform Team",
+      "command": "npm run test:accessibility-smoke",
+      "artifacts": [
+        "docs/metrics/accessibility-smoke-latest.json",
+        "docs/metrics/accessibility-smoke-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "accessibility-route-crawl",
+      "label": "Accessibility Route Crawl",
+      "kind": "accessibility",
+      "cadence": [
+        "nightly",
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:accessibility:route-crawl",
+      "artifacts": [
+        "docs/metrics/accessibility-route-crawl-latest.json",
+        "docs/metrics/accessibility-route-crawl-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "integration-mongo",
+      "label": "Mongo Integration Project",
+      "kind": "integration",
+      "cadence": [
+        "pr",
+        "release"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:integration:mongo",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "database",
+        "products",
+        "cms",
+        "integrations",
+        "kangur",
+        "ai-paths"
+      ]
+    },
+    {
+      "id": "integration-mongo-baseline",
+      "label": "Mongo Integration Baseline",
+      "kind": "integration",
+      "cadence": [
+        "nightly",
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:integration:mongo:baseline",
+      "artifacts": [
+        "docs/metrics/integration-mongo-latest.json",
+        "docs/metrics/integration-mongo-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "database",
+        "products",
+        "cms",
+        "integrations",
+        "kangur",
+        "ai-paths"
+      ]
+    },
+    {
+      "id": "high-risk-coverage",
+      "label": "High-Risk Coverage Baseline",
+      "kind": "coverage",
+      "cadence": [
+        "nightly",
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:coverage:high-risk",
+      "artifacts": [
+        "docs/metrics/high-risk-coverage-latest.json",
+        "docs/metrics/high-risk-coverage-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "test-distribution",
+      "label": "Test Distribution Scan",
+      "kind": "quality",
+      "cadence": [
+        "weekly"
+      ],
+      "cost": "low",
+      "owner": "Platform Team",
+      "command": "npm run check:test-distribution",
+      "artifacts": [
+        "docs/metrics/test-distribution-latest.json",
+        "docs/metrics/test-distribution-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "test-quality-snapshot",
+      "label": "Testing Quality Snapshot",
+      "kind": "quality",
+      "cadence": [
+        "weekly"
+      ],
+      "cost": "low",
+      "owner": "Platform Team",
+      "command": "npm run metrics:test-quality",
+      "artifacts": [
+        "docs/metrics/testing-quality-snapshot-latest.json",
+        "docs/metrics/testing-quality-snapshot-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    },
+    {
+      "id": "e2e",
+      "label": "Playwright End-to-End",
+      "kind": "e2e",
+      "cadence": [
+        "nightly",
+        "release"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run test:e2e",
+      "artifacts": [],
+      "supportsSummaryJson": false,
+      "domains": [
+        "repo",
+        "browser"
+      ]
+    },
+    {
+      "id": "weekly-quality-report",
+      "label": "Weekly Quality Report",
+      "kind": "quality",
+      "cadence": [
+        "weekly"
+      ],
+      "cost": "high",
+      "owner": "Platform Team",
+      "command": "npm run quality:weekly-report",
+      "artifacts": [
+        "docs/metrics/weekly-quality-latest.json",
+        "docs/metrics/weekly-quality-latest.md"
+      ],
+      "supportsSummaryJson": true,
+      "domains": [
+        "repo"
+      ]
+    }
+  ],
+  "lanes": [
+    {
+      "id": "local-fast",
+      "label": "Local Fast Confidence",
+      "cadence": "on-demand",
+      "purpose": "Fast local confidence before or during implementation.",
+      "requiresLedgerEntry": false,
+      "suites": [
+        "typecheck",
+        "critical-flows"
+      ]
+    },
+    {
+      "id": "pr-required",
+      "label": "Pull Request Required",
+      "cadence": "pull-request",
+      "purpose": "Minimum blocking suite set for PR confidence and merge protection.",
+      "requiresLedgerEntry": true,
+      "suites": [
+        "lint",
+        "typecheck",
+        "unit",
+        "critical-flows",
+        "security-smoke",
+        "accessibility-smoke",
+        "integration-mongo"
+      ]
+    },
+    {
+      "id": "nightly-deep",
+      "label": "Nightly Deep Regression",
+      "cadence": "nightly",
+      "purpose": "Broader regression and audit coverage that is too expensive for every PR.",
+      "requiresLedgerEntry": true,
+      "suites": [
+        "lint-domains",
+        "unit-domains",
+        "critical-flows",
+        "security-smoke",
+        "accessibility-smoke",
+        "accessibility-route-crawl",
+        "integration-mongo-baseline",
+        "high-risk-coverage",
+        "e2e"
+      ]
+    },
+    {
+      "id": "weekly-audit",
+      "label": "Weekly Audit And Trend",
+      "cadence": "weekly",
+      "purpose": "Generated quality reporting, inventory drift detection, and trend snapshots.",
+      "requiresLedgerEntry": true,
+      "suites": [
+        "weekly-quality-report",
+        "integration-mongo-baseline",
+        "high-risk-coverage",
+        "test-distribution",
+        "test-quality-snapshot"
+      ]
+    },
+    {
+      "id": "release-gate",
+      "label": "Release Gate",
+      "cadence": "release",
+      "purpose": "Highest-confidence lane before shipping or major environment promotion.",
+      "requiresLedgerEntry": true,
+      "suites": [
+        "build",
+        "typecheck",
+        "unit",
+        "critical-flows",
+        "security-smoke",
+        "accessibility-smoke",
+        "integration-mongo",
+        "e2e"
+      ]
+    }
+  ]
+}

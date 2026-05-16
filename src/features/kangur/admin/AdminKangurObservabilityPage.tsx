@@ -56,7 +56,7 @@ export const buildSystemLogsHref = (input: {
   return `/admin/system/logs?${params.toString()}`;
 };
 
-const RANGE_OPTIONS = [
+const RANGE_OPTIONS: Array<{ value: KangurObservabilityRange; label: string }> = [
   { value: '24h', label: '24h' },
   { value: '7d', label: '7d' },
   { value: '30d', label: '30d' },
@@ -68,6 +68,12 @@ export function AdminKangurObservabilityPage(): React.JSX.Element {
   return (
     <KangurAdminContentShell
       title='Kangur Observability'
+      description='Monitor Kangur runtime health, tutor bridge signals, and learner-facing incidents.'
+      breadcrumbs={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Kangur', href: '/admin/kangur' },
+        { label: 'Observability' },
+      ]}
       headerLayout='stacked'
       refresh={{ onRefresh: () => {}, isRefreshing: ctrl.summaryQuery.isFetching }}
       headerActions={

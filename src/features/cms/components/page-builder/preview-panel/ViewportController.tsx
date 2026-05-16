@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
-export function ViewportController({ isDesktop, canvasRef, canvasScale, setCanvasScale, setCanvasWidth }: any) {
+export function ViewportController({ isDesktop, canvasRef, setCanvasScale, setCanvasWidth }: any) {
   useEffect(() => {
     if (!isDesktop) return;
     const viewport = canvasRef.current?.closest('[data-cms-canvas-viewport=\'true\']') as HTMLDivElement | null;

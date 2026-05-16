@@ -7,6 +7,7 @@ import type { Browser, BrowserContext } from 'playwright';
 import { launchBrowser, createBrowserContext } from '@/features/ai/agent-runtime/tools/playwright/browser';
 import { runAgentTool } from '@/features/ai/agent-runtime/tools';
 import { appendTaskTypeToPrompt } from '@/features/ai/agent-runtime/planning/utils';
+import type { PlannerMeta } from '@/shared/contracts/agent-runtime';
 
 export async function initializeBrowserAndContext(
   agentBrowser: string | null,
@@ -22,7 +23,7 @@ export async function initializeBrowserAndContext(
 
 interface FallbackToolOptions {
   run: { id: string; prompt: string; agentBrowser: string | null; runHeadless: boolean | null };
-  taskType: string | null;
+  taskType: PlannerMeta['taskType'] | null;
   sharedBrowser: Browser;
   sharedContext: BrowserContext;
 }

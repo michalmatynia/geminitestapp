@@ -2,13 +2,10 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { cn } from '@/shared/utils/ui-utils';
 import { type BlockInstance } from '@/shared/contracts/cms';
 import {
   clampNumber,
   resolveObjectPosition,
-  resolveGradientDirection,
-  buildTransparencyMaskStyles,
 } from '../image-utils';
 
 type PreviewImageElementBlockProps = {

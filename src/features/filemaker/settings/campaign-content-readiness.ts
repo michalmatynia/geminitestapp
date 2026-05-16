@@ -76,11 +76,12 @@ export const validateFilemakerCampaignContentReadiness = (input: {
   campaign: FilemakerEmailCampaign;
   contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null;
 }): string[] => {
+  const contentGroupId = input.campaign.contentGroupId ?? null;
   const group = resolveFilemakerEmailCampaignContentGroup(
     input.contentGroupRegistry,
-    input.campaign.contentGroupId
+    contentGroupId
   );
-  if (input.campaign.contentGroupId === null || input.campaign.contentGroupId.length === 0) {
+  if (contentGroupId === null || contentGroupId.length === 0) {
     return validateLegacyCampaignContent(input.campaign);
   }
   if (group === null) return ['Selected email content group could not be found.'];

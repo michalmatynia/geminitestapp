@@ -32,12 +32,12 @@ const readBackgroundBody = async (req: NextRequest): Promise<EcommercePagesCmsBa
     throw badRequestError('Invalid background settings payload.');
   }
 
-  const candidate = isRecord(body) && isRecord(body.background) ? body.background : body;
-  if (!isRecord(candidate) || typeof candidate.cosmosParallaxEnabled !== 'boolean') {
+  const candidate = isRecord(body) && isRecord(body['background']) ? body['background'] : body;
+  if (!isRecord(candidate) || typeof candidate['cosmosParallaxEnabled'] !== 'boolean') {
     throw badRequestError('Background settings payload must include cosmosParallaxEnabled.');
   }
 
-  return { cosmosParallaxEnabled: candidate.cosmosParallaxEnabled };
+  return { cosmosParallaxEnabled: candidate['cosmosParallaxEnabled'] };
 };
 
 export async function getHandler(

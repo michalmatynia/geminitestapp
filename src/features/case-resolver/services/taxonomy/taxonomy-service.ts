@@ -5,12 +5,6 @@
  * including identifiers, tags, and categories.
  */
 
-import {
-  type CaseResolverCategory,
-  type CaseResolverIdentifier,
-  type CaseResolverTag,
-} from '@/shared/contracts/case-resolver';
-
 /**
  * Normalizes a timestamp string.
  */

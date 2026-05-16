@@ -92,6 +92,17 @@ function AuthFlowsSection({
   settings: AuthUserPageSettings;
   onToggle: (key: keyof AuthUserPageSettings) => void;
 }) {
+  const rows = [
+    ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
+    ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
+    ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
+    [
+      'requireEmailVerification',
+      'Require email verification',
+      'Block access until email is verified.',
+    ],
+  ] as const satisfies ReadonlyArray<readonly [keyof AuthUserPageSettings, string, string]>;
+
   return (
     <FormSection
       title='Authentication Flows'
@@ -99,18 +110,13 @@ function AuthFlowsSection({
       className='p-6'
     >
       <div className='space-y-3 mt-4'>
-        {[
-          ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
-          ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
-          ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
-          ['requireEmailVerification', 'Require email verification', 'Block access until email is verified.'],
-        ].map(([key, title, description]) => (
+        {rows.map(([key, title, description]) => (
           <ToggleRow
             key={key}
             label={title}
             description={description}
-            checked={settings[key as keyof AuthUserPageSettings]}
-            onCheckedChange={() => onToggle(key as keyof AuthUserPageSettings)}
+            checked={settings[key]}
+            onCheckedChange={() => onToggle(key)}
             variant='switch'
           />
         ))}

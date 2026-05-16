@@ -259,7 +259,7 @@ const handleWriteOperationResult = ({
   };
 };
 
-import { databaseError, internalError } from '@/shared/errors/app-error';
+import { internalError } from '@/shared/errors/app-error';
 
 // ... (existing constants)
 

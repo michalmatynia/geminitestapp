@@ -19,7 +19,10 @@ import {
   resolveKangurCmsResultTitle,
   translateKangurCmsRuntimeWithFallback,
 } from '@/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.i18n';
-import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
+import {
+  useKangurAuthSessionState,
+  useKangurAuthStatusState,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   useOptionalKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -173,6 +176,7 @@ export function KangurCmsRuntimeDataProvider({
   const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
   const auth = useKangurAuthSessionState();
+  const authStatus = useKangurAuthStatusState();
   const routing = useOptionalKangurRouting();
   const progress = useKangurProgressState();
   const game = useOptionalKangurGameRuntime();
@@ -689,12 +693,12 @@ export function KangurCmsRuntimeDataProvider({
   );
   const authState = useMemo(
     () => ({
-      authErrorType: auth.authError?.type ?? null,
+      authErrorType: authStatus.authError?.type ?? null,
       isAuthenticated: auth.isAuthenticated,
-      isLoadingAuth: auth.isLoadingAuth,
+      isLoadingAuth: authStatus.isLoadingAuth,
       user: auth.user,
     }),
-    [auth.authError?.type, auth.isAuthenticated, auth.isLoadingAuth, auth.user]
+    [auth.isAuthenticated, auth.user, authStatus.authError?.type, authStatus.isLoadingAuth]
   );
   const sources = useMemo(
     () => ({

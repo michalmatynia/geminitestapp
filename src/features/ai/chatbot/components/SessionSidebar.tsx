@@ -4,6 +4,7 @@ import { Plus, Trash2, MessageSquare } from 'lucide-react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useChatbotSessions } from '../context/ChatbotContext';
 

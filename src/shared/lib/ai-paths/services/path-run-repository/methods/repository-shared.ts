@@ -186,7 +186,8 @@ export const ensureIndexes = async (): Promise<void> => {
  * @returns {Date | null} The parsed Date object or null.
  */
 export const toDate = (value: unknown): Date | null => {
-  return dateInputSchema.catch(null).parse(value);
+  const parsed = dateInputSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 };
 
 /**
@@ -214,7 +215,8 @@ export const toRequiredIsoString = (date: unknown): string => {
  * Transforms run graph nodes/edges into valid UI records.
  */
 const toRunGraph = (value: unknown): AiPathRunRecord['graph'] => {
-  return runGraphSchema.catch(null).parse(value);
+  const parsed = runGraphSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 };
 
 /**

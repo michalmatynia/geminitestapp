@@ -101,14 +101,14 @@ const resolveSupplier1688SelectorRuntime = async (
 const buildSupplier1688RuntimeInput = async (
   args: StartSupplier1688QueuedProductScanRunArgs,
   selectorNativeRuntimeResolution: Awaited<ReturnType<typeof resolveSupplier1688SelectorRegistryNativeRuntime>> | null
-): Promise<unknown> => {
+): Promise<Record<string, unknown>> => {
   const supplier1688Runtime = requireProductScanNativeRuntime(getProductScanProviderDefinition('1688'));
   const { integrationId, connection: supplierConnection } = args.supplierConnectionContext;
   const supplier1688RuntimeAction = getPlaywrightRuntimeActionSeed(
     SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
   );
 
-  return supplier1688Runtime.buildRequestInput({
+  const input = supplier1688Runtime.buildRequestInput({
     productId: args.product.id,
     productName: args.productName,
     imageCandidates: args.imageCandidates,
@@ -129,6 +129,7 @@ const buildSupplier1688RuntimeInput = async (
     evaluatorConfig: await resolveProductScanner1688CandidateEvaluatorConfig(args.scannerSettings),
     ...args.requestedStepSequenceInput,
   });
+  return toRecord(input) ?? {};
 };
 
 export const startSupplier1688QueuedProductScanRun = async (

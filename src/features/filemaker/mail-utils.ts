@@ -226,9 +226,12 @@ export const formatFilemakerMailboxAllowlist = (value: string[]): string =>
 export const resolveFilemakerReplyRecipients = (
   message: Pick<FilemakerMailMessage, 'replyTo' | 'from'>
 ): FilemakerMailParticipant[] => {
-  const from = message.from !== null ? [message.from] : [];
+  const replyTo = message.replyTo.filter(
+    (participant): participant is FilemakerMailParticipant => participant !== undefined
+  );
+  const from = message.from !== null && message.from !== undefined ? [message.from] : [];
   return dedupeFilemakerMailParticipants(
-    message.replyTo.length > 0 ? message.replyTo : from
+    replyTo.length > 0 ? replyTo : from
   );
 };
 
@@ -240,11 +243,11 @@ const escapeHtml = (value: string): string =>
     .replaceAll('"', '&quot;')
     .replaceAll('\'', '&#39;');
 
-const formatMailTimestamp = (sentAt: string | null): string =>
-  sentAt !== null ? new Date(sentAt).toLocaleString() : 'Unknown time';
+const formatMailTimestamp = (sentAt: string | null | undefined): string =>
+  sentAt !== null && sentAt !== undefined ? new Date(sentAt).toLocaleString() : 'Unknown time';
 
-const formatMailSenderLabel = (from: FilemakerMailParticipant | null): string => {
-  if (from === null) return 'Unknown sender';
+const formatMailSenderLabel = (from: FilemakerMailParticipant | null | undefined): string => {
+  if (from === null || from === undefined) return 'Unknown sender';
   if (from.name !== null) return `${from.name} <${from.address}>`;
   return from.address;
 };

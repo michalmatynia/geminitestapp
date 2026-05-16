@@ -16,6 +16,11 @@ import {
 } from './validator-lists/components';
 import { ValidatorListsMainContent } from './validator-lists/ValidatorListsMainContent';
 
+const resolveVoidAction = (action: () => void): Promise<void> => {
+  action();
+  return Promise.resolve();
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.adminvalidatorpatternlistspage
  */
@@ -73,7 +78,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
           fields={EDITOR_FIELDS}
           values={state.editorState}
           onChange={state.handleEditorChange}
-          onSave={async () => { state.handleSaveEditor(); }}
+          onSave={() => resolveVoidAction(state.handleSaveEditor)}
           size='sm'
         />
 

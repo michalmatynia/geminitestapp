@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import type { SafeTimerId } from '@/shared/lib/timers';
 
 import {
   loadPersistedGuestIntroRecord,
@@ -160,8 +161,8 @@ function useWidgetSelectionState() {
     useState<SectionExplainContext | null>(null);
   const [sectionResponseComplete, setSectionResponseComplete] =
     useState<SectionExplainContext | null>(null);
-  const selectionExplainTimeoutRef = useRef<number | null>(null);
-  const selectionGuidanceRevealTimeoutRef = useRef<number | null>(null);
+  const selectionExplainTimeoutRef = useRef<SafeTimerId | null>(null);
+  const selectionGuidanceRevealTimeoutRef = useRef<SafeTimerId | null>(null);
   const selectionResponseCompleteTimeoutRef = useRef<number | null>(null);
   const sectionResponseCompleteTimeoutRef = useRef<number | null>(null);
 

@@ -1,5 +1,5 @@
 import { Button, Badge } from '@/features/kangur/shared/ui';
-import { Plus, Grid2x2, Image as ImageIcon, Copy, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/features/kangur/shared/utils';
 
 export function LessonPagesPanel({ controller }: { controller: any }) {

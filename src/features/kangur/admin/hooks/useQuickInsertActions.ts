@@ -19,12 +19,13 @@ import {
   createKangurLessonSvgBlock,
   createKangurLessonTextBlock,
 } from '@/features/kangur/lesson-documents';
+import type { KangurLessonDocumentTemplateId } from '@/features/kangur/lesson-documents';
 import type { KangurLessonPage, KangurLessonRootBlock } from '@/features/kangur/shared/contracts/kangur';
 
 export function useQuickInsertActions(
   activePage: KangurLessonPage | null,
   updateDocument: (nextBlocks: KangurLessonRootBlock[]) => void,
-  addPageFromTemplate: (templateId: KangurLessonDocumentTemplateId) => void
+  addPageFromTemplate?: (templateId: KangurLessonDocumentTemplateId) => void
 ) {
   return useMemo(
     () => [
@@ -98,7 +99,7 @@ export function useQuickInsertActions(
         description: 'New page with referenced SVG images in a neat gallery layout.',
         keywords: ['gallery', 'images', 'svg image', 'page'],
         Icon: Image,
-        onClick: (): void => addPageFromTemplate('image-gallery-page'),
+        onClick: (): void => addPageFromTemplate?.('image-gallery-page'),
       },
       {
         id: 'image-mosaic',
@@ -107,7 +108,7 @@ export function useQuickInsertActions(
         description: 'New page with dense image-led layout for richer explanation.',
         keywords: ['mosaic', 'images', 'svg image', 'page'],
         Icon: Grid2x2,
-        onClick: (): void => addPageFromTemplate('image-gallery-page'),
+        onClick: (): void => addPageFromTemplate?.('image-gallery-page'),
       },
       {
         id: 'svg-gallery',

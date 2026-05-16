@@ -85,15 +85,7 @@ const buildStatusFilter = (
   filter: FilemakerEventStatusFilter
 ): Filter<FilemakerEventMongoDocument> => {
   if (filter === 'discontinued') return { discontinued: true };
-  if (filter === 'active') {
-    return {
-      $or: [
-        { discontinued: { $exists: false } },
-        { discontinued: false },
-        { discontinued: null },
-      ],
-    };
-  }
+  if (filter === 'active') return { discontinued: { $ne: true } };
   return {};
 };
 

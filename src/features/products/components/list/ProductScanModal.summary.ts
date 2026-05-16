@@ -44,7 +44,6 @@ const incrementStatusCount = (
     case 'failed':
       return { ...counts, failed: counts.failed + 1 };
   }
-  return counts;
 };
 
 const countScanRows = (rows: ScanModalRow[]): ProductScanRowsSummaryCounts => {

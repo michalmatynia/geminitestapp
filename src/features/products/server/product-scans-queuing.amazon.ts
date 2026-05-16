@@ -36,6 +36,7 @@ import {
 import {
   readOptionalString,
   shouldAutoShowScannerCaptchaBrowser,
+  toRecord,
 } from './product-scans-service.helpers';
 
 export type AmazonRuntimeKey =
@@ -152,14 +153,14 @@ type AmazonRuntimeInputArgs = {
   triageEvaluatorEnabled: boolean;
 };
 
-const buildAmazonRuntimeInput = (args: AmazonRuntimeInputArgs): unknown => {
+const buildAmazonRuntimeInput = (args: AmazonRuntimeInputArgs): Record<string, unknown> => {
   const isCandidateSearchRuntime =
     args.amazonRuntimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
   const isCandidateExtractionRuntime =
     args.amazonRuntimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
   const shouldSkipCandidateOnlyEvaluation = isCandidateSearchRuntime || isCandidateExtractionRuntime;
 
-  return args.config.runtime.buildRequestInput({
+  const input = args.config.runtime.buildRequestInput({
     productId: args.product.id,
     productName: args.productName,
     existingAsin: args.product.asin,
@@ -195,6 +196,7 @@ const buildAmazonRuntimeInput = (args: AmazonRuntimeInputArgs): unknown => {
         : null,
     ...args.requestedStepSequenceInput,
   });
+  return toRecord(input) ?? {};
 };
 
 type StartAmazonQueuedProductScanRunArgs = {

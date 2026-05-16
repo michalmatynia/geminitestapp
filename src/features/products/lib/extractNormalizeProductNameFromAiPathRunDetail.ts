@@ -50,7 +50,7 @@ const hasCategoryCollectionError = (collectionError: string | null): collectionE
 const resolveCategoryCollectionErrorMessage = (
   collection: NormalizeDbSchemaCollectionState | null
 ): string | null => {
-  if (hasCategoryCollectionError(collection?.error ?? null)) {
+  if (collection !== null && hasCategoryCollectionError(collection.error)) {
     return `Category context unavailable: ${collection.error}`;
   }
   return null;

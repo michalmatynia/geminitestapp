@@ -21,6 +21,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunRepository,
+  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
@@ -96,8 +97,8 @@ export const executePathRun = async (
   }
   const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
   const perfLog = (label: string, start: number) => {
-    const elapsed = Date.now() - start;
-    debugQueueLog(`[ai-paths-executor] ${label} took ${elapsed}ms`);
+    void label;
+    void start;
   };
 
   const preflightStart = Date.now();

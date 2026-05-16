@@ -1,8 +1,10 @@
 import React from 'react';
 import { Card } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { getSectionStyles } from '../frontend/theme-styles';
-import { getBlockTypographyStyles } from '../frontend/theme-styles';
+import {
+  getBlockTypographyStyles,
+  getSectionStyles,
+} from '@/features/cms/components/frontend/theme-styles';
 import { resolveCmsConnectedSettings } from '@/features/cms/components/frontend/CmsRuntimeContext';
 import { type SectionInstance } from '@/shared/contracts/cms';
 import { type ColorSchemeColors } from '@/shared/contracts/cms-theme';

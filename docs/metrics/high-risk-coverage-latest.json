@@ -1,0 +1,227 @@
+{
+  "generatedAt": "2026-04-15T09:38:27.221Z",
+  "status": "passed",
+  "summary": {
+    "total": 0,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "passed",
+    "targetCount": 5,
+    "matchedTargetCount": 5,
+    "passingTargetCount": 5,
+    "failingTargetCount": 0,
+    "uncoveredTargetCount": 0
+  },
+  "coverageSummaryPath": "coverage/high-risk/*/coverage-summary.json (merged)",
+  "targets": [
+    {
+      "id": "api-routes",
+      "label": "API Routes",
+      "directory": "src/app/api",
+      "thresholds": {
+        "lines": 57,
+        "statements": 56,
+        "functions": 60,
+        "branches": 45
+      },
+      "fileCount": 1138,
+      "metrics": {
+        "lines": {
+          "total": 20673,
+          "covered": 11956,
+          "skipped": 0,
+          "pct": 57.8
+        },
+        "statements": {
+          "total": 21800,
+          "covered": 12300,
+          "skipped": 0,
+          "pct": 56.4
+        },
+        "functions": {
+          "total": 2908,
+          "covered": 1754,
+          "skipped": 0,
+          "pct": 60.3
+        },
+        "branches": {
+          "total": 17613,
+          "covered": 8031,
+          "skipped": 0,
+          "pct": 45.6
+        }
+      },
+      "status": "pass",
+      "failingMetrics": [],
+      "lowestCoverageFiles": []
+    },
+    {
+      "id": "shared-contracts",
+      "label": "Shared Contracts",
+      "directory": "src/shared/contracts",
+      "thresholds": {
+        "lines": 85,
+        "statements": 85,
+        "functions": 70,
+        "branches": 50
+      },
+      "fileCount": 245,
+      "metrics": {
+        "lines": {
+          "total": 3233,
+          "covered": 2906,
+          "skipped": 0,
+          "pct": 89.9
+        },
+        "statements": {
+          "total": 3336,
+          "covered": 2957,
+          "skipped": 0,
+          "pct": 88.6
+        },
+        "functions": {
+          "total": 257,
+          "covered": 187,
+          "skipped": 0,
+          "pct": 72.8
+        },
+        "branches": {
+          "total": 894,
+          "covered": 480,
+          "skipped": 0,
+          "pct": 53.7
+        }
+      },
+      "status": "pass",
+      "failingMetrics": [],
+      "lowestCoverageFiles": []
+    },
+    {
+      "id": "shared-lib",
+      "label": "Shared Lib",
+      "directory": "src/shared/lib",
+      "thresholds": {
+        "lines": 75,
+        "statements": 75,
+        "functions": 75,
+        "branches": 64
+      },
+      "fileCount": 763,
+      "metrics": {
+        "lines": {
+          "total": 36396,
+          "covered": 28935,
+          "skipped": 0,
+          "pct": 79.5
+        },
+        "statements": {
+          "total": 40056,
+          "covered": 30803,
+          "skipped": 0,
+          "pct": 76.9
+        },
+        "functions": {
+          "total": 7676,
+          "covered": 5820,
+          "skipped": 0,
+          "pct": 75.8
+        },
+        "branches": {
+          "total": 34876,
+          "covered": 22452,
+          "skipped": 0,
+          "pct": 64.4
+        }
+      },
+      "status": "pass",
+      "failingMetrics": [],
+      "lowestCoverageFiles": []
+    },
+    {
+      "id": "kangur",
+      "label": "Kangur",
+      "directory": "src/features/kangur",
+      "thresholds": {
+        "lines": 76,
+        "statements": 75,
+        "functions": 75,
+        "branches": 65
+      },
+      "fileCount": 1595,
+      "metrics": {
+        "lines": {
+          "total": 61074,
+          "covered": 46999,
+          "skipped": 0,
+          "pct": 77
+        },
+        "statements": {
+          "total": 64090,
+          "covered": 48688,
+          "skipped": 0,
+          "pct": 76
+        },
+        "functions": {
+          "total": 16862,
+          "covered": 12656,
+          "skipped": 0,
+          "pct": 75.1
+        },
+        "branches": {
+          "total": 45814,
+          "covered": 29884,
+          "skipped": 0,
+          "pct": 65.2
+        }
+      },
+      "status": "pass",
+      "failingMetrics": [],
+      "lowestCoverageFiles": []
+    },
+    {
+      "id": "ai-paths",
+      "label": "AI Paths",
+      "directory": "src/features/ai/ai-paths",
+      "thresholds": {
+        "lines": 55,
+        "statements": 50,
+        "functions": 45,
+        "branches": 40
+      },
+      "fileCount": 363,
+      "metrics": {
+        "lines": {
+          "total": 18872,
+          "covered": 12238,
+          "skipped": 0,
+          "pct": 64.8
+        },
+        "statements": {
+          "total": 20666,
+          "covered": 12886,
+          "skipped": 0,
+          "pct": 62.4
+        },
+        "functions": {
+          "total": 4754,
+          "covered": 2683,
+          "skipped": 0,
+          "pct": 56.4
+        },
+        "branches": {
+          "total": 17072,
+          "covered": 8102,
+          "skipped": 0,
+          "pct": 47.5
+        }
+      },
+      "status": "pass",
+      "failingMetrics": [],
+      "lowestCoverageFiles": []
+    }
+  ],
+  "issues": [],
+  "rules": [],
+  "durationMs": 51
+}

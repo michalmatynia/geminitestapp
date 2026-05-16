@@ -70,7 +70,6 @@ const labelForContainerBlock = (block: CvContainerBlock): string => {
     case 'columns': return firstText([block.label], 'Columns');
     case 'row': return firstText([block.label], 'Row');
   }
-  return 'Group';
 };
 
 const labelForPrimaryLeafBlock = (block: CvLeafBlock): string | null => {

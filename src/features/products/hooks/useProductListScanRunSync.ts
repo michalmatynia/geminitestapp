@@ -102,7 +102,7 @@ const useProductScanRunStatusQuery = ({
   enabled: boolean;
   normalizedProductIds: readonly string[];
 }): SingleQuery<ProductScanListResponse> => {
-  const queryKey = QUERY_KEYS.products.scansLatest(normalizedProductIds);
+  const queryKey = QUERY_KEYS.products.scansLatest([...normalizedProductIds]);
   return useSingleQueryV2<ProductScanListResponse>({
     queryKey,
     enabled: enabled && normalizedProductIds.length > 0,

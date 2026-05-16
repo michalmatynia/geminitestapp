@@ -135,7 +135,7 @@ const isWithinDomainGuardAttemptWindow = (input: {
 }): boolean => {
   if (input.nowMs === undefined) return true;
   const attemptedAt = input.attempt.attemptedAt ?? input.attempt.createdAt;
-  const attemptedAtMs = Date.parse(attemptedAt);
+  const attemptedAtMs = Date.parse(attemptedAt ?? '');
   if (!Number.isFinite(attemptedAtMs)) return true;
   return input.nowMs - attemptedAtMs <= input.attemptWindowMs;
 };
@@ -148,7 +148,7 @@ const isWithinDomainGuardDeliveryWindow = (input: {
   if (input.nowMs === undefined) return true;
   const decidedAt =
     input.delivery.sentAt ?? input.delivery.updatedAt ?? input.delivery.createdAt;
-  const decidedAtMs = Date.parse(decidedAt);
+  const decidedAtMs = Date.parse(decidedAt ?? '');
   if (!Number.isFinite(decidedAtMs)) return true;
   return input.nowMs - decidedAtMs <= input.attemptWindowMs;
 };

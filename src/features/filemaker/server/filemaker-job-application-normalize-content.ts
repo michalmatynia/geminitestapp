@@ -44,7 +44,7 @@ const buildTailoringPatch = (
 ): NonNullable<FilemakerJobApplicationTailoredCv['tailoringPatch']> => {
   const patchExperienceHighlightPatches = normalizeExperienceHighlightPatches(
     input.explicitTailoringPatch?.['experienceHighlightPatches']
-  );
+  ) ?? [];
   const patchCoreStrengths =
     input.explicitTailoringPatch === null
       ? []
@@ -66,7 +66,7 @@ const buildTailoringPatch = (
     ),
     experienceHighlightPatches: chooseNonEmptyArray(
       patchExperienceHighlightPatches,
-      input.experienceHighlightPatches
+      input.experienceHighlightPatches ?? []
     ),
   };
 };

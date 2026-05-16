@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-04-07T13:17:21.986Z",
+  "status": "failed",
+  "summary": {
+    "total": 3,
+    "errorCount": 3,
+    "warningCount": 0,
+    "infoCount": 0,
+    "status": "failed",
+    "discoveredPageRouteCount": 0,
+    "configuredRouteCount": 8,
+    "evaluatedRouteCount": 0,
+    "passingRouteCount": 0,
+    "failingRouteCount": 0,
+    "baseBytes": 0,
+    "baseChunkCount": 0
+  },
+  "config": {
+    "path": "scripts/quality/config/bundle-budgets.json",
+    "sharedBase": {
+      "maxBytes": 540000,
+      "maxChunkCount": 6
+    }
+  },
+  "base": {
+    "status": "fail",
+    "bytes": 0,
+    "maxBytes": 540000,
+    "chunkCount": 0,
+    "maxChunkCount": 6,
+    "chunks": []
+  },
+  "routes": [],
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "bundle-build-artifact-missing",
+      "message": "Missing Next build artifact: .next/app-path-routes-manifest.json. Run npm run build before checking bundle budgets.",
+      "file": ".next/app-path-routes-manifest.json",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "bundle-build-artifact-missing",
+      "message": "Missing Next build artifact: .next/build-manifest.json. Run npm run build before checking bundle budgets.",
+      "file": ".next/build-manifest.json",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "bundle-build-artifact-missing",
+      "message": "Missing Next build artifact: .next/server/app-paths-manifest.json. Run npm run build before checking bundle budgets.",
+      "file": ".next/server/app-paths-manifest.json",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "bundle-build-artifact-missing",
+      "errorCount": 3,
+      "warningCount": 0,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 9
+}

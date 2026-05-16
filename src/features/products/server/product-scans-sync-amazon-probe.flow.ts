@@ -20,7 +20,10 @@ import type {
 
 const shouldRunProbeEvaluator = (
   evaluatorConfig: Awaited<ReturnType<typeof resolveAmazonProbeEvaluatorConfig>>
-): boolean => evaluatorConfig.enabled;
+): evaluatorConfig is Extract<
+  Awaited<ReturnType<typeof resolveAmazonProbeEvaluatorConfig>>,
+  { enabled: true }
+> => evaluatorConfig.enabled;
 
 const resolveProbeEvaluationState = async (
   context: AmazonProbeReadyContext

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { safeClearTimeout, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -435,7 +435,7 @@ function ResolvedActiveLessonView({
       });
     }
     let isCleanedUp = false;
-    let focusCleanupTimer: number | null = null;
+    let focusCleanupTimer: SafeTimerId | null = null;
 
     const handleWindowFocus = (): void => {
       if (focusCleanupTimer !== null) {
@@ -468,7 +468,7 @@ function ResolvedActiveLessonView({
       window.removeEventListener('afterprint', cleanup);
       window.removeEventListener('focus', handleWindowFocus);
       if (focusCleanupTimer !== null) {
-        window.clearTimeout(focusCleanupTimer);
+        safeClearTimeout(focusCleanupTimer);
         focusCleanupTimer = null;
       }
     };

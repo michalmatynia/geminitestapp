@@ -50,19 +50,20 @@ const readDiscoveredModels = (data: BrainModelsQueryData): string[] => {
 };
 
 const readSourceCatalogModels = (data: BrainModelsQueryData): string[] => {
-  if (data === undefined) return [];
+  const sources = data?.sources;
+  if (sources === undefined) return [];
   return [
-    ...data.sources.modelPresets,
-    ...data.sources.paidModels,
-    ...data.sources.configuredOllamaModels,
-    ...data.sources.liveOllamaModels,
+    ...sources.modelPresets,
+    ...sources.paidModels,
+    ...sources.configuredOllamaModels,
+    ...sources.liveOllamaModels,
   ];
 };
 
 const isCompatibleModel = (
   modelId: string,
   descriptors: Record<string, BrainModelDescriptor> | undefined,
-  targetFamilies: string[] | null
+  targetFamilies: readonly string[] | null
 ): boolean => {
   if (targetFamilies === null) return true;
   const descriptor = descriptors?.[modelId];
@@ -72,13 +73,13 @@ const isCompatibleModel = (
 
 const resolveTargetFamilies = (
   capability: AiBrainCapabilityKey | undefined
-): string[] | null =>
+): readonly string[] | null =>
   capability === undefined ? null : getBrainCapabilityModelFamilies(capability);
 
 const buildModelOptions = (input: {
   data: BrainModelsQueryData;
   effectiveModelId: string;
-  targetFamilies: string[] | null;
+  targetFamilies: readonly string[] | null;
 }): string[] => {
   const discovered = readDiscoveredModels(input.data);
   const sourceCatalogModels = readSourceCatalogModels(input.data);

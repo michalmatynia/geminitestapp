@@ -250,12 +250,14 @@ const resolveStepDetails = (
   const selectorKey = toStringOrNull(step.selectorKey);
   const selector = toStringOrNull(step.selector);
   const parentStepId = toStringOrNull(step.parentStepId);
-  return [
-    selectorKey !== null ? { label: 'Selector key', value: selectorKey } : null,
-    selector !== null ? { label: 'Selector', value: selector } : null,
-    typeof step.order === 'number' ? { label: 'Action-run order', value: String(step.order) } : null,
-    parentStepId !== null ? { label: 'Parent step', value: parentStepId } : null,
-  ].filter((entry): entry is ProductScanStep['details'][number] => entry !== null);
+  const details: ProductScanStep['details'] = [];
+  if (selectorKey !== null) details.push({ label: 'Selector key', value: selectorKey });
+  if (selector !== null) details.push({ label: 'Selector', value: selector });
+  if (typeof step.order === 'number') {
+    details.push({ label: 'Action-run order', value: String(step.order) });
+  }
+  if (parentStepId !== null) details.push({ label: 'Parent step', value: parentStepId });
+  return details;
 };
 
 const resolveStepWarning = (step: RetainedActionRunStepLike): string | null =>

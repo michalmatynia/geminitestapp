@@ -177,7 +177,7 @@ export function ScripterProbePanel({
         </Button>
       </div>
 
-      {error !== null ? <Alert variant='destructive'>{error}</Alert> : null}
+      {error !== null ? <Alert variant='error'>{error}</Alert> : null}
 
       {session ? (
         <>

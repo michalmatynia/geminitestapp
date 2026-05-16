@@ -5,7 +5,7 @@
  * Provides heuristics for identifying likely person names based on token patterns.
  */
 
-import { normalizeCaptureWordToken } from '../utils';
+import { normalizeCaptureWordToken } from './line-utils';
 
 /**
  * Detects if a line is likely a person name based on token count

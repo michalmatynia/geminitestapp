@@ -53,7 +53,7 @@ const handleCategoryMove = async ({
   const catalogPayload = buildCatalogPayload(selectedCatalogId);
   const targetParentId = targetParent?.id ?? null;
 
-  if (shouldPlaceBeforeFirstRoot(targetParentId, operation.targetIndex)) {
+  if (shouldPlaceBeforeFirstRoot(targetParentId, operation.targetIndex ?? -1)) {
     const firstRootSiblingId = findFirstRootSiblingId(context.nextNodes, node.id);
     if (firstRootSiblingId !== null) {
       await applyReorderPayload({

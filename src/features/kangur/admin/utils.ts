@@ -99,32 +99,21 @@ const applyDefinedLessonFormOverrides = (
   return nextFormData;
 };
 
-const getTemplateField = (
-  template: KangurLessonTemplate,
-  field: LessonTemplateFormField
-): LessonFormData[LessonTemplateFormField] | undefined => {
-  switch (field) {
-    case 'subject': return template.subject;
-    case 'ageGroup': return template.ageGroup;
-    case 'title': return template.title;
-    case 'description': return template.description;
-    case 'emoji': return template.emoji;
-    case 'color': return template.color;
-    case 'activeBg': return template.activeBg;
-  }
-};
-
 const resolveLessonTemplateFormOverrides = (
   template?: KangurLessonTemplate | null
 ): Partial<Pick<LessonFormData, LessonTemplateFormField>> => {
   if (!template) return {};
 
-  const overrides: Partial<Pick<LessonFormData, LessonTemplateFormField>> = {};
-  for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
-    const value = getTemplateField(template, field);
-    if (value !== undefined) {
-      overrides[field] = value;
-    }
+  const overrides: Partial<Pick<LessonFormData, LessonTemplateFormField>> = {
+    subject: template.subject,
+    title: template.title,
+    description: template.description,
+    emoji: template.emoji,
+    color: template.color,
+    activeBg: template.activeBg,
+  };
+  if (template.ageGroup !== undefined) {
+    overrides.ageGroup = template.ageGroup;
   }
   return overrides;
 };

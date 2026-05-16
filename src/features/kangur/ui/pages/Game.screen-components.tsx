@@ -12,6 +12,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurIdleReady } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { prefetchKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { prefetchKangurLeaderboardScores } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
 import {
   KangurButton,
   KangurEmptyState,
@@ -265,6 +266,12 @@ export function GameHomeScreen(props: {
     // that fulfils both the hero and leaderboard CMS entries.
     void prefetchKangurPageContentStore(queryClient, locale);
   }, [queryClient, locale]);
+
+  useEffect(() => {
+    if (shouldMountFarFoldWidgets) {
+      prefetchKangurLeaderboardScores();
+    }
+  }, [shouldMountFarFoldWidgets]);
 
   useEffect(() => {
     const preload = (): void => {

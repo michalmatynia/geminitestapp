@@ -362,6 +362,14 @@ const buildKangurLeaderboardItem = ({
   };
 };
 
+export const prefetchKangurLeaderboardScores = (): void => {
+  const cached = peekCachedKangurLeaderboardScores(kangurPlatform.score, { limit: 20 });
+  if (cached !== null) {
+    return;
+  }
+  void loadKangurLeaderboardScores(kangurPlatform.score, { limit: 20 });
+};
+
 export const useKangurLeaderboardState = (
   options: UseKangurLeaderboardStateOptions = {}
 ): UseKangurLeaderboardStateResult => {

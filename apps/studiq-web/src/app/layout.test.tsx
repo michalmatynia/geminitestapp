@@ -6,18 +6,13 @@ import { Children } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement, ReactNode } from 'react';
 
-const { queryProviderMock, kangurLoadingFallbackMock, getLiteSettingsForHydrationMock } = vi.hoisted(() => ({
+const { queryProviderMock, getLiteSettingsForHydrationMock } = vi.hoisted(() => ({
   queryProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
-  kangurLoadingFallbackMock: vi.fn(() => <div data-testid='kangur-loading-fallback' />),
   getLiteSettingsForHydrationMock: vi.fn(),
 }));
 
 vi.mock('../providers/QueryProvider', () => ({
   StudiqQueryProvider: queryProviderMock,
-}));
-
-vi.mock('../components/KangurLoadingFallback', () => ({
-  default: kangurLoadingFallbackMock,
 }));
 
 vi.mock('@/shared/lib/lite-settings-ssr', () => ({
@@ -49,7 +44,7 @@ describe('apps/studiq-web RootLayout', () => {
 
     expect(htmlElement.props.lang).toBe('pl');
     expect(rootContentElement.type).toBe(StudiqRootContent);
-    expect((suspenseElement.props.fallback as ReactElement).type).toBe(kangurLoadingFallbackMock);
+    expect(suspenseElement.props.fallback).toBeNull();
     expect(getLiteSettingsForHydrationMock).not.toHaveBeenCalled();
   });
 

@@ -43,6 +43,7 @@ import { useKangurBootOrchestrator } from '@/features/kangur/ui/hooks/useKangurB
 import { useKangurNavigationSkeleton } from '@/features/kangur/ui/hooks/useKangurNavigationSkeleton';
 import { useKangurPreloadEffects } from '@/features/kangur/ui/hooks/useKangurPreloadEffects';
 import { useKangurSkeletonOverlayState } from '@/features/kangur/ui/hooks/useKangurSkeletonOverlayState';
+import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
 import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { useSettingsStore, useSettingsStoreLoading } from '@/shared/providers/SettingsStoreProvider';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -85,6 +86,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeLocale = normalizeSiteLocale(useLocale());
   const isCoarsePointer = useKangurCoarsePointer();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const isStandaloneHomeDeferredReady = useKangurDeferredStandaloneHomeReady();
   const { subject } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
 
@@ -166,8 +168,18 @@ const AuthenticatedApp = (): JSX.Element | null => {
   });
   navSkeletonVisibleRef.current = navSkeleton.isNavigationSkeletonVisible;
 
+  const effectiveIsRouteSkeletonVisible =
+    boot.isRouteSkeletonVisible || navSkeleton.isNavigationSkeletonVisible;
+  const shouldBlockInitialHomePreloads =
+    isStandaloneHomeRoute && boot.shouldRunInitialHomeBoot;
+  const shouldLoadRouteMotion =
+    !isStandaloneHomeRoute || isStandaloneHomeDeferredReady;
+
   useKangurPreloadEffects({
-    ageGroup, isBootLoading, isThemeBootLoading, isNavigationTransitionActive,
+    ageGroup,
+    isBootLoading: isBootLoading || shouldBlockInitialHomePreloads,
+    isThemeBootLoading,
+    isNavigationTransitionActive,
     isCoarsePointer, isSyntheticKangurCapture, resolvedPageKey, queryClient, routeLocale,
     subject,
   });
@@ -175,16 +187,17 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const skeletonOverlay = useKangurSkeletonOverlayState({
     activeTransitionSkeletonVariant, basePath, currentNavigationTopBarHeightCssValue,
     embedded, isLanguageSwitcherTransition, isPendingRouteSnapshotVisible,
-    isRouteSkeletonVisible: boot.isRouteSkeletonVisible, navSkeleton,
+    isRouteSkeletonVisible: effectiveIsRouteSkeletonVisible, navSkeleton,
     pendingRouteLoadingSnapshot, prefersReducedMotion, resolvedPageKey,
     transitionEmbedded, transitionPageKey,
   });
 
   const {
-    isRouteSkeletonVisible, isRouteContentVisuallyHidden, isInitialHomeLoaderPhase,
+    isRouteContentVisuallyHidden, isInitialHomeLoaderPhase,
     isInitialHomeSkeletonPhase, isBootSkeletonVisible, isRouteInteractionReady,
     shouldKeepRouteContentVisibleDuringTransition,
   } = boot;
+  const isRouteSkeletonVisible = effectiveIsRouteSkeletonVisible;
   // Guard: never re-show the full-screen loader once past the 'loader' phase and route content
   // is available. Without this, a state-lag race between isBootSkeletonVisible (async state) and
   // isRouteSkeletonVisible (synchronous derived) causes a one-render flash when routeContent
@@ -193,6 +206,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isBootSkeletonVisible &&
     !isRouteSkeletonVisible &&
     (isInitialHomeLoaderPhase || routeContent === null);
+  const hasVisibleRouteBlockingOverlay =
+    isBootLoaderBlockingNavigation || isRouteSkeletonVisible || isPendingRouteSnapshotVisible;
+  const effectiveIsRouteContentVisuallyHidden =
+    routeContent !== null && !hasVisibleRouteBlockingOverlay
+      ? false
+      : isRouteContentVisuallyHidden;
   // Keep the real nav bar mounted during all route transitions so it doesn't
   // visually flash/remount. The skeleton overlay positions itself below the nav
   // (top: topBarHeightCssValue) and doesn't need an inline nav skeleton.
@@ -221,10 +240,10 @@ const AuthenticatedApp = (): JSX.Element | null => {
       embedded={embedded}
       isNavigationTransitionActive={isNavigationTransitionActive}
       isPendingRouteSnapshotVisible={isPendingRouteSnapshotVisible}
-      loadMotion={true}
+      loadMotion={shouldLoadRouteMotion}
       isRouteCaptureReady={isRouteCaptureReady}
       isRouteContentInteractionBlocked={isRouteContentInteractionBlocked}
-      isRouteContentVisuallyHidden={isRouteContentVisuallyHidden}
+      isRouteContentVisuallyHidden={effectiveIsRouteContentVisuallyHidden}
       isRouteInteractionReady={isRouteInteractionReady}
       routeContent={routeContent}
       routeContentMotionProps={routeContentMotionProps}
@@ -259,15 +278,16 @@ const AuthenticatedApp = (): JSX.Element | null => {
       <KangurRenderedRouteWithSuspense
         isInitialHomeLoaderPhase={isInitialHomeLoaderPhase}
         isInitialHomeSkeletonPhase={isInitialHomeSkeletonPhase}
+        loadMotion={shouldLoadRouteMotion}
         resolvedPageKey={resolvedPageKey}
         shouldSkipRouteContentPresence={shouldSkipRouteContentPresence}
         renderedRouteContent={renderedRouteContent}
       />
-      <LazyAnimatePresence loadMotion={true}>
+      <LazyAnimatePresence loadMotion={shouldLoadRouteMotion}>
         <KangurRenderedRouteSkeletonOverlay
           isLanguageSwitcherTransition={isLanguageSwitcherTransition}
           isRouteSkeletonVisible={isRouteSkeletonVisible}
-          loadMotion={true}
+          loadMotion={shouldLoadRouteMotion}
           routeSkeletonMotionProps={skeletonOverlay.routeSkeletonMotionProps}
           shouldRenderInlineRouteSkeletonTopNavigation={shouldRenderInlineRouteSkeletonTopNavigation}
           topBarHeightCssValue={skeletonOverlay.visibleTransitionSkeletonTopBarHeightCssValue}

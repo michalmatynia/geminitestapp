@@ -151,6 +151,37 @@ describe('SettingsStoreProvider', () => {
     expect(screen.getByTestId('loading-context')).toHaveTextContent('false');
   });
 
+  it('can refresh seeded lite entries without putting consumers back into loading state', () => {
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([
+        ['kangur_theme_daily', '{"accent":"query"}'],
+        ['kangur_cms_project_v1', '{"screens":{}}'],
+      ]),
+      isLoading: true,
+      isFetching: true,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    render(
+      <SettingsStoreProvider
+        initialEntries={[['kangur_theme_daily', '{"accent":"seeded"}']]}
+        mode='lite'
+        refreshSeededLiteStore
+      >
+        <SettingsProbe settingKey='kangur_theme_daily' />
+        <SettingsLoadingProbe />
+        <SettingsFetchingProbe />
+      </SettingsStoreProvider>
+    );
+
+    expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: true });
+    expect(screen.getByTestId('value')).toHaveTextContent('{"accent":"query"}');
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('loading-context')).toHaveTextContent('false');
+    expect(screen.getByTestId('fetching')).toHaveTextContent('true');
+  });
+
   it('loads the broader admin light scope immediately', () => {
     liteQueryResultRef.current = {
       data: new Map<string, string>([['query_status_panel_enabled', 'true']]),

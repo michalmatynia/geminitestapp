@@ -25,6 +25,7 @@ describe('storefront-appearance-bootstrap', () => {
     expect(css).toContain('html.kangur-surface-active');
     expect(css).toContain('body.kangur-surface-active');
     expect(css).toContain('html.kangur-surface-active #app-content');
+    expect(css).toContain('html.kangur-surface-active #kangur-main-content');
     expect(KANGUR_SURFACE_HINT_SCRIPT).not.toContain('app-content');
     expect(css).toContain('--kangur-soft-card-border:');
     expect(css).toContain('--kangur-glass-panel-border:');

@@ -60,8 +60,11 @@ body[data-kangur-shell='true'] {
 html.kangur-surface-active,
 body.kangur-surface-active,
 html.kangur-surface-active #app-content,
+html.kangur-surface-active #kangur-main-content,
 body.kangur-surface-active #app-content,
-#app-content.kangur-surface-active {
+body.kangur-surface-active #kangur-main-content,
+#app-content.kangur-surface-active,
+#kangur-main-content.kangur-surface-active {
   overflow-x: hidden;
 }
 
@@ -866,8 +869,11 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
   }
 
   html.kangur-surface-active #app-content,
+  html.kangur-surface-active #kangur-main-content,
   body.kangur-surface-active #app-content,
-  #app-content.kangur-surface-active {
+  body.kangur-surface-active #kangur-main-content,
+  #app-content.kangur-surface-active,
+  #kangur-main-content.kangur-surface-active {
     height: var(--kangur-shell-viewport-height, 100dvh);
     min-height: var(--kangur-shell-viewport-height, 100dvh);
     overflow-y: auto;
@@ -875,7 +881,8 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     scrollbar-gutter: stable;
   }
 
-  body[data-kangur-shell='true'] #app-content {
+  body[data-kangur-shell='true'] #app-content,
+  body[data-kangur-shell='true'] #kangur-main-content {
     height: var(--kangur-shell-viewport-height, 100dvh);
     min-height: var(--kangur-shell-viewport-height, 100dvh);
     overflow-y: auto;
@@ -885,7 +892,9 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
 
   .kangur-surface-active,
   html.kangur-surface-active #app-content,
-  body.kangur-surface-active #app-content {
+  html.kangur-surface-active #kangur-main-content,
+  body.kangur-surface-active #app-content,
+  body.kangur-surface-active #kangur-main-content {
     background: var(
       --kangur-page-background,
       radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)

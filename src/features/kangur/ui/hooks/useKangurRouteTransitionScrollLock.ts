@@ -1,6 +1,10 @@
 'use client';
 
 import { useLayoutEffect } from 'react';
+import {
+  getKangurAppContentElement,
+  isKangurAppContentElement,
+} from '@/features/kangur/ui/utils/kangurAppContentTarget';
 
 export const KANGUR_ROUTE_TRANSITION_ACTIVE_CLASSNAME = 'kangur-route-transition-active';
 export const KANGUR_ROUTE_TRANSITION_SCROLLBAR_GAP_VAR =
@@ -17,7 +21,7 @@ const getKangurSurfaceTargets = (): HTMLElement[] => {
     return [];
   }
 
-  const appContent = document.getElementById('app-content');
+  const appContent = getKangurAppContentElement();
   return [document.documentElement, document.body, appContent].filter(
     (element): element is HTMLElement => element instanceof HTMLElement
   );
@@ -79,7 +83,7 @@ export const setKangurRouteTransitionScrollLock = (active: boolean): void => {
         );
       }
 
-      if (target.id === 'app-content') {
+      if (isKangurAppContentElement(target)) {
         restoreInlineStyle(
           target,
           'padding-inline-end',
@@ -117,7 +121,7 @@ export const setKangurRouteTransitionScrollLock = (active: boolean): void => {
       );
     }
 
-    if (target.id === 'app-content') {
+    if (isKangurAppContentElement(target)) {
       rememberInlineStyle(
         target,
         'padding-inline-end',

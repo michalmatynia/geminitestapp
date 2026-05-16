@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useKangurCoarsePointer } from './useKangurCoarsePointer';
 import { useKangurMobileBreakpoint } from './useKangurMobileBreakpoint';
+import { getKangurAppContentElement } from '@/features/kangur/ui/utils/kangurAppContentTarget';
 
 const PREV_TARGET_KEY_PREFIX = 'kangurMobileInteractionScrollLockPrev';
 const LOCK_STATE_DATA_KEY = 'kangurMobileInteractionScrollLockActive';
@@ -24,7 +25,7 @@ const getLockTargets = (): LockTarget | null => {
 
   const html = document.documentElement;
   const body = document.body;
-  const app = document.getElementById('app-content');
+  const app = getKangurAppContentElement();
 
   if (!(html instanceof HTMLElement) || !(body instanceof HTMLElement)) {
     return null;

@@ -98,6 +98,31 @@ describe('KangurSurfaceClassSync', () => {
     );
   });
 
+  it('uses the StudiQ main content element when the legacy app-content target is absent', () => {
+    document.body.innerHTML = '';
+    const mainContent = document.createElement('main');
+    mainContent.id = 'kangur-main-content';
+    document.body.appendChild(mainContent);
+
+    const { unmount } = render(
+      <KangurStorefrontAppearanceProvider>
+        <KangurSurfaceClassSync>
+          <div>Surface</div>
+        </KangurSurfaceClassSync>
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    expect(mainContent).toHaveClass('kangur-surface-active');
+    expect(mainContent).toHaveAttribute('data-kangur-appearance-mode', 'default');
+    expect(mainContent).toHaveStyle({ scrollbarGutter: 'stable' });
+
+    unmount();
+
+    expect(mainContent).not.toHaveClass('kangur-surface-active');
+    expect(mainContent).not.toHaveAttribute('data-kangur-appearance-mode');
+    expect(mainContent.style.getPropertyValue('scrollbar-gutter')).toBe('');
+  });
+
   it('keeps Mongo-backed surface mode when local storefront storage disagrees', async () => {
     const appContent = document.getElementById('app-content');
     expect(appContent).not.toBeNull();

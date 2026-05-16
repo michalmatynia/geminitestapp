@@ -47,6 +47,8 @@ export type SettingsQueryLike = {
  * Flags determining provider behavior and data source
  */
 export type ProviderFlags = {
+  /** Whether the seeded lite store should refresh in the background */
+  shouldRefreshSeededLiteStore: boolean;
   /** Whether to use seeded lite store from props */
   shouldUseSeededLiteStore: boolean;
   /** Whether to reuse parent provider's lite store */
@@ -130,6 +132,7 @@ export const resolveProviderFlags = ({
   mode,
   parentStore,
   pathname,
+  refreshSeededLiteStore,
   suppressOwnQuery,
 }: {
   /** Whether user can read admin settings */
@@ -142,6 +145,8 @@ export const resolveProviderFlags = ({
   parentStore: SettingsStoreValue | null;
   /** Current pathname for routing context */
   pathname: string | null;
+  /** Whether seeded lite values should still allow the lite query to run */
+  refreshSeededLiteStore: boolean;
   /** Whether to suppress own query */
   suppressOwnQuery: boolean;
 }): ProviderFlags => {
@@ -150,13 +155,17 @@ export const resolveProviderFlags = ({
   const shouldUseAdminSettings = useAdmin && (canReadAdminSettings ?? true);
   const shouldUseSeededLiteStore =
     !shouldUseAdminSettings && !parentStore && hasInitialLiteStore;
+  const shouldRefreshSeededLiteStore = shouldUseSeededLiteStore && refreshSeededLiteStore;
 
   return {
+    shouldRefreshSeededLiteStore,
     shouldUseSeededLiteStore,
     shouldReuseParentLiteStore: shouldUseAdminSettings && Boolean(parentStore),
     shouldSuppressAdminQuery: suppressOwnQuery,
     shouldSuppressLiteQuery:
-      suppressOwnQuery || shouldUseSeededLiteStore || (!useAdmin && currentPathname.startsWith('/admin')),
+      suppressOwnQuery ||
+      (shouldUseSeededLiteStore && !shouldRefreshSeededLiteStore) ||
+      (!useAdmin && currentPathname.startsWith('/admin')),
     shouldUseAdminSettings,
   };
 };
@@ -240,6 +249,7 @@ export const resolveSettingsStoreFetchingState = ({
   parentFetching,
   settingsQuery,
   shouldReuseParentLiteStore,
+  shouldRefreshSeededLiteStore,
   shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
@@ -249,12 +259,13 @@ export const resolveSettingsStoreFetchingState = ({
   parentFetching: boolean;
   settingsQuery: SettingsQueryLike;
   shouldReuseParentLiteStore: boolean;
+  shouldRefreshSeededLiteStore: boolean;
   shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): boolean => {
   if (!shouldUseAdminSettings) {
     if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
-      return false;
+      return shouldRefreshSeededLiteStore && settingsQuery.isFetching;
     }
     return settingsQuery.isFetching;
   }
@@ -301,12 +312,14 @@ export const resolveSettingsStoreMapData = ({
   initialLiteMap,
   mergedAdminMap,
   settingsQuery,
+  shouldRefreshSeededLiteStore,
   shouldUseSeededLiteStore,
   shouldUseAdminSettings,
 }: {
   initialLiteMap: ReadonlyMap<string, string>;
   mergedAdminMap: ReadonlyMap<string, string>;
   settingsQuery: SettingsQueryLike;
+  shouldRefreshSeededLiteStore: boolean;
   shouldUseSeededLiteStore: boolean;
   shouldUseAdminSettings: boolean;
 }): ReadonlyMap<string, string> => {
@@ -315,6 +328,13 @@ export const resolveSettingsStoreMapData = ({
   }
 
   if (shouldUseSeededLiteStore && initialLiteMap.size > 0) {
+    if (
+      shouldRefreshSeededLiteStore &&
+      settingsQuery.data instanceof Map &&
+      settingsQuery.data.size > 0
+    ) {
+      return mergeSettingsMaps(initialLiteMap, settingsQuery.data);
+    }
     return initialLiteMap;
   }
 

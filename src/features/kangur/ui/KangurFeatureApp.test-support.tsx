@@ -700,6 +700,7 @@ export async function setupKangurFeatureAppTest() {
   prefetchKangurPageContentStoreMock.mockReset();
   prefetchKangurPageContentStoreMock.mockResolvedValue(true);
   queryClientMock.mockReturnValue({
+    getQueryState: vi.fn() as QueryClient['getQueryState'],
     prefetchQuery: vi.fn() as QueryClient['prefetchQuery'],
   });
   useLocaleMock.mockReturnValue('pl');

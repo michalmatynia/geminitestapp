@@ -6,8 +6,11 @@ const KANGUR_SURFACE_BOOTSTRAP_SELECTORS = [
   'html.kangur-surface-active',
   'body.kangur-surface-active',
   'html.kangur-surface-active #app-content',
+  'html.kangur-surface-active #kangur-main-content',
   'body.kangur-surface-active #app-content',
+  'body.kangur-surface-active #kangur-main-content',
   '#app-content.kangur-surface-active',
+  '#kangur-main-content.kangur-surface-active',
 ].join(',\n');
 
 export const getKangurSurfaceBootstrapFallbackStyle = (): string =>

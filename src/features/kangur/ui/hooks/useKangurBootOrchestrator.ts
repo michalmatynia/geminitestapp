@@ -24,9 +24,6 @@ export const markKangurInitialHomeBootComplete = (): void => {
   (window as KangurInitialHomeBootWindow).__kangurInitialHomeBootComplete = true;
 };
 
-const isKangurRootBasePath = (basePath: string | null | undefined): boolean =>
-  basePath?.trim() === '/';
-
 type KangurBootOrchestratorInput = {
   embedded: boolean;
   isBootLoading: boolean;
@@ -70,9 +67,9 @@ export function useKangurBootOrchestrator(
     isThemeBootLoading,
     isSettingsRefresh,
     isStandaloneHomeRoute,
-    basePath,
     hasStandaloneHomeTopNavigationRegistration,
     routeContent,
+    isNavigationTransitionActive,
     isPendingRouteSnapshotVisible,
     isNavigationSkeletonVisible,
     shouldShowAcknowledgingNavigationSkeleton,
@@ -84,7 +81,8 @@ export function useKangurBootOrchestrator(
   shouldRunInitialHomeBootRef.current ??=
     isStandaloneHomeRoute && !isSettingsRefresh && !hasCompletedKangurInitialHomeBoot();
   const shouldRunInitialHomeBoot = shouldRunInitialHomeBootRef.current;
-  const shouldSkipClientBootLoader = isStandaloneHomeRoute && isKangurRootBasePath(basePath);
+  const shouldSkipClientBootLoader = isStandaloneHomeRoute;
+  const shouldBlockForThemeBoot = isThemeBootLoading && routeContent === null;
 
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
   const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
@@ -99,7 +97,7 @@ export function useKangurBootOrchestrator(
   const isInitialHomeLoaderPhase = initialHomeBootPhase === 'loader';
   const isInitialHomeSkeletonPhase = initialHomeBootPhase === 'page-skeleton';
   const shouldShowFallbackBootLoader =
-    isThemeBootLoading && !hasPresentedInteractiveShell && routeContent === null;
+    shouldBlockForThemeBoot && !hasPresentedInteractiveShell && !isInitialHomeSkeletonPhase;
 
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(
     isInitialHomeLoaderPhase || shouldShowFallbackBootLoader
@@ -114,12 +112,18 @@ export function useKangurBootOrchestrator(
 
   const isInitialMountSkeletonVisible =
     routeContent === null && !hasInitialContentSettled && !hasPresentedInteractiveShell;
+  const isInitialHomePageSkeletonVisible =
+    isInitialHomeSkeletonPhase &&
+    !isBootSkeletonVisible &&
+    !isNavigationTransitionActive &&
+    !isPendingRouteSnapshotVisible;
 
   const isRouteSkeletonVisible =
     shouldShowAcknowledgingNavigationSkeleton ||
     isNavigationSkeletonVisible ||
     isPendingRouteSnapshotVisible ||
-    isInitialMountSkeletonVisible;
+    isInitialMountSkeletonVisible ||
+    isInitialHomePageSkeletonVisible;
 
   const shouldPreserveOutgoingRouteContent =
     isPendingRouteSnapshotVisible ||
@@ -130,6 +134,7 @@ export function useKangurBootOrchestrator(
   const isRouteContentVisuallyHidden =
     (isInitialHomeLoaderPhase && !isRouteSkeletonVisible) ||
     isInitialMountSkeletonVisible ||
+    isInitialHomePageSkeletonVisible ||
     (!shouldKeepRouteContentVisibleDuringTransition &&
       (transitionPhase === 'waiting_for_ready' ||
         ((transitionPhase === 'pending' ||
@@ -212,7 +217,7 @@ export function useKangurBootOrchestrator(
     if (isInitialHomeLoaderPhase) {
       if (bootSkeletonShownAtRef.current === null) bootSkeletonShownAtRef.current = Date.now();
       setIsBootSkeletonVisible(true);
-      if (isBootLoading || isThemeBootLoading) return;
+      if (isBootLoading || shouldBlockForThemeBoot) return;
 
       const shownAt = bootSkeletonShownAtRef.current;
       const remainingMs = Math.max(0, BOOT_SKELETON_MIN_VISIBLE_MS - (Date.now() - shownAt));
@@ -240,12 +245,12 @@ export function useKangurBootOrchestrator(
       setIsBootSkeletonVisible(false);
     }, remainingMs);
     return () => { safeClearTimeout(timeoutId); };
-  }, [isBootLoading, isInitialHomeLoaderPhase, isThemeBootLoading, shouldShowFallbackBootLoader]);
+  }, [isBootLoading, isInitialHomeLoaderPhase, shouldBlockForThemeBoot, shouldShowFallbackBootLoader]);
 
   useEffect(() => {
     if (!isInitialHomeSkeletonPhase) return;
     if (
-      isBootLoading || isThemeBootLoading ||
+      isBootLoading || shouldBlockForThemeBoot ||
       !hasStandaloneHomeTopNavigationRegistration ||
       !hasInitialContentSettled || routeContent === null
     ) return;
@@ -265,7 +270,7 @@ export function useKangurBootOrchestrator(
     hasStandaloneHomeTopNavigationRegistration,
     isBootLoading,
     isInitialHomeSkeletonPhase,
-    isThemeBootLoading,
+    shouldBlockForThemeBoot,
     routeContent,
   ]);
 

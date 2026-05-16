@@ -23,6 +23,7 @@ vi.mock('fs/promises', () => ({
   default: {
     mkdir: vi.fn().mockResolvedValue(undefined),
     writeFile: vi.fn().mockResolvedValue(undefined),
+    unlink: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -84,6 +85,38 @@ describe('asset3dUploader', () => {
       const file = new File(['content'], 'test.txt', { type: 'text/plain' });
       await expect(uploadAsset3D(file)).rejects.toThrow('Invalid 3D asset file type');
     });
+
+    it('mirrors Milkbar FastComet 3D uploads into the local public_html tree', async () => {
+      const file = new File(['{"asset":{"version":"2.0"}}'], 'milkbar.gltf', {
+        type: 'model/gltf+json',
+      });
+      const mockResult = { id: 'milkbar-asset', filename: 'milkbar.gltf' };
+      repositoryMock.createAsset3D.mockResolvedValue(mockResult as unknown as Asset3DRecord);
+      uploadToConfiguredStorageMock.mockResolvedValueOnce({
+        filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/milkbar.gltf',
+      });
+
+      const result = await uploadAsset3D(file, {
+        name: 'Milkbar Asset',
+        storageProfile: 'milkbarCms',
+      });
+
+      expect(uploadToConfiguredStorageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          forceSource: 'fastcomet',
+          publicPath: expect.stringMatching(/^\/uploads\/cms\/models\/\d+-milkbar\.gltf$/),
+          category: 'cms',
+          folder: 'models',
+        })
+      );
+      expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models'
+        ),
+        expect.any(Buffer)
+      );
+      expect(result).toEqual(mockResult);
+    });
   });
 
   describe('deleteAsset3D', () => {
@@ -106,6 +139,28 @@ describe('asset3dUploader', () => {
 
       expect(result).toBe(false);
       expect(deleteFileFromStorageMock).not.toHaveBeenCalled();
+    });
+
+    it('removes the Milkbar public_html mirror when deleting a Milkbar CMS 3D asset', async () => {
+      const mockAsset = {
+        id: '1',
+        filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
+        metadata: {
+          publicPath: '/uploads/cms/models/model.gltf',
+          storageProfile: 'milkbarCms',
+        },
+      };
+      repositoryMock.getAsset3DById.mockResolvedValue(mockAsset as unknown as Asset3DRecord);
+      repositoryMock.deleteAsset3D.mockResolvedValue(mockAsset as unknown as Asset3DRecord);
+
+      const result = await deleteAsset3D('1');
+
+      expect(result).toBe(true);
+      expect(vi.mocked(fs.unlink)).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/model.gltf'
+        )
+      );
     });
   });
 });

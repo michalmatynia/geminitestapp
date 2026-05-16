@@ -34,6 +34,7 @@ import {
 } from '@/shared/lib/db/utils/mongo';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const SOURCE_PAGE_CONTENT_COLLECTION = 'milkbar_page_content';
 const SOURCE_PROJECTS_COLLECTION = 'milkbar_projects';
@@ -47,6 +48,7 @@ const PAGE_CONTENT_KEY = 'home';
 type AnyRecord = Record<string, unknown>;
 type Vector = { x: number; y: number; z: number };
 type RequiredMongoConfig = MongoApplicationSourceConfig & { uri: string; dbName: string };
+type MilkbarMongoOptions = { timeoutMs?: number };
 type MilkbarCmsCollections = {
   pageContent: string;
   projects: string;
@@ -127,6 +129,14 @@ const splitMultiline = (value: string): string[] =>
     .map((entry) => entry.trim())
     .filter(Boolean);
 
+const getRequiredFallbackItem = <T>(items: readonly T[], label: string): T => {
+  const item = items[0];
+  if (item === undefined) {
+    throw configurationError(`Milkbar CMS default ${label} fallback is empty.`);
+  }
+  return item;
+};
+
 const isAbsoluteHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value.trim());
 
 const joinUrl = (baseUrl: string, pathname: string): string => {
@@ -180,6 +190,18 @@ const getMongoClientOptions = (uri: string): ConstructorParameters<typeof MongoC
   ...(uri.includes('127.0.0.1') || uri.includes('localhost') ? { directConnection: true } : {}),
 });
 
+const getMilkbarMongoClientOptions = (
+  uri: string,
+  options?: MilkbarMongoOptions
+): ConstructorParameters<typeof MongoClient>[1] => {
+  const timeoutMs = options?.timeoutMs ?? 10_000;
+  return {
+    ...getMongoClientOptions(uri),
+    connectTimeoutMS: timeoutMs,
+    serverSelectionTimeoutMS: timeoutMs,
+  };
+};
+
 const assertConfigured = (config: MongoApplicationSourceConfig, label: string): RequiredMongoConfig => {
   const uri = config.uri;
   const dbName = config.dbName;
@@ -198,10 +220,11 @@ const assertConfigured = (config: MongoApplicationSourceConfig, label: string): 
 async function withMongoDb<T>(
   config: MongoApplicationSourceConfig,
   label: string,
-  work: (db: Db) => Promise<T>
+  work: (db: Db) => Promise<T>,
+  options?: MilkbarMongoOptions
 ): Promise<T> {
   const configured = assertConfigured(config, label);
-  const client = new MongoClient(configured.uri, getMongoClientOptions(configured.uri));
+  const client = new MongoClient(configured.uri, getMilkbarMongoClientOptions(configured.uri, options));
   try {
     await client.connect();
     return await work(client.db(configured.dbName));
@@ -215,9 +238,19 @@ async function withSourceOfTruthDb<T>(work: (db: Db) => Promise<T>): Promise<T> 
   return await withMongoDb(config, 'GeminiTest App local source-of-truth', work);
 }
 
+async function withOptionalSourceOfTruthDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
+  const config = await resolveMongoSourceConfig('local');
+  return await withMongoDb(config, 'GeminiTest App local source-of-truth', work, { timeoutMs: 750 });
+}
+
 async function withRuntimeDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
   const config = resolveArchMongoSourceConfig('local');
   return await withMongoDb(config, 'Milkbardesigners local runtime', work);
+}
+
+async function withOptionalRuntimeDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
+  const config = resolveArchMongoSourceConfig('local');
+  return await withMongoDb(config, 'Milkbardesigners local runtime', work, { timeoutMs: 750 });
 }
 
 async function ensureMilkbarCmsIndexes(
@@ -352,10 +385,12 @@ const readMilkbarCmsDataOrEmpty = async (
   try {
     return await read();
   } catch (error) {
-    console.warn(
-      `[milkbar-cms] ${label} is unavailable; continuing with fallback data.`,
-      error instanceof Error ? error.message : String(error)
-    );
+    void logSystemEvent({
+      level: 'warn',
+      source: 'milkbar-cms',
+      message: `[milkbar-cms] ${label} is unavailable; continuing with fallback data.`,
+      error,
+    });
     return createEmptyMilkbarCmsData();
   }
 };
@@ -388,7 +423,7 @@ const normalizePrinciples = (value: unknown, fallback: typeof DEFAULT_MILKBAR_PA
   if (!Array.isArray(value)) return fallback;
   const next = value.map((entry, index) => {
     const record = isRecord(entry) ? entry : {};
-    const current = fallback[index] ?? fallback[0];
+    const current = fallback[index] ?? getRequiredFallbackItem(fallback, 'principle');
     return {
       number: asString(record['number'], current.number),
       title: asString(record['title'], current.title),
@@ -403,7 +438,7 @@ const normalizeProcessSteps = (value: unknown, fallback: typeof DEFAULT_MILKBAR_
   if (!Array.isArray(value)) return fallback;
   const next = value.map((entry, index) => {
     const record = isRecord(entry) ? entry : {};
-    const current = fallback[index] ?? fallback[0];
+    const current = fallback[index] ?? getRequiredFallbackItem(fallback, 'process step');
     return {
       number: asString(record['number'], current.number),
       title: asString(record['title'], current.title),
@@ -417,7 +452,7 @@ const normalizeMetrics = (value: unknown, fallback: MilkbarMetric[]): MilkbarMet
   if (!Array.isArray(value)) return fallback;
   const next = value.map((entry, index) => {
     const record = isRecord(entry) ? entry : {};
-    const current = fallback[index] ?? fallback[0];
+    const current = fallback[index] ?? getRequiredFallbackItem(fallback, 'metric');
     return {
       value: asString(record['value'], current.value),
       suffix: typeof record['suffix'] === 'string' ? record['suffix'].trim() : current.suffix,
@@ -431,13 +466,13 @@ const normalizeFooterColumns = (value: unknown, fallback: MilkbarFooterColumn[])
   if (!Array.isArray(value)) return fallback;
   const next = value.map((entry, index) => {
     const record = isRecord(entry) ? entry : {};
-    const current = fallback[index] ?? fallback[0];
+    const current = fallback[index] ?? getRequiredFallbackItem(fallback, 'footer column');
     const rawLinks = Array.isArray(record['links']) ? record['links'] : current.links;
     return {
       title: asString(record['title'], current.title),
       links: rawLinks.map((link, linkIndex) => {
         const linkRecord = isRecord(link) ? link : {};
-        const currentLink = current.links[linkIndex] ?? current.links[0];
+        const currentLink = current.links[linkIndex] ?? getRequiredFallbackItem(current.links, 'footer link');
         return {
           label: asString(linkRecord['label'], currentLink.label),
           href: asString(linkRecord['href'], currentLink.href),
@@ -757,10 +792,40 @@ const resolveModelAssetUrlMap = async (
 const optionalStringProp = <K extends string>(
   key: K,
   value: string | undefined
-): Partial<Record<K, string>> =>
-  value !== undefined && value.trim().length > 0
-    ? ({ [key]: value.trim() } as Partial<Record<K, string>>)
-    : {};
+): Partial<Record<K, string>> => {
+  const trimmed = value?.trim();
+  if (trimmed === undefined || trimmed.length === 0) return {};
+  const result: Partial<Record<K, string>> = {};
+  result[key] = trimmed;
+  return result;
+};
+
+const withoutHeroModelFields = (
+  hero: MilkbarPageContent['hero']
+): Omit<MilkbarPageContent['hero'], 'modelAssetId' | 'modelUrl'> => {
+  const copy = { ...hero };
+  delete copy.modelAssetId;
+  delete copy.modelUrl;
+  return copy;
+};
+
+const withoutDrawingModelFields = (
+  drawing: MilkbarPageContent['drawing']
+): Omit<MilkbarPageContent['drawing'], 'interiorModelAssetId' | 'interiorModelUrl'> => {
+  const copy = { ...drawing };
+  delete copy.interiorModelAssetId;
+  delete copy.interiorModelUrl;
+  return copy;
+};
+
+const withoutProjectModelFields = (
+  project: MilkbarProjectCmsRecord
+): Omit<MilkbarProjectCmsRecord, 'modelAssetId' | 'modelUrl'> => {
+  const copy = { ...project };
+  delete copy.modelAssetId;
+  delete copy.modelUrl;
+  return copy;
+};
 
 const enrichPageContentWithModelUrls = (
   content: MilkbarPageContent,
@@ -777,19 +842,13 @@ const enrichPageContentWithModelUrls = (
       ? assetUrls.get(interiorAssetId) ?? content.drawing.interiorModelUrl
       : undefined;
 
-  const { modelAssetId: _heroModelAssetId, modelUrl: _heroModelUrl, ...heroBase } = content.hero;
-  const {
-    interiorModelAssetId: _interiorModelAssetId,
-    interiorModelUrl: _interiorModelUrl,
-    ...drawingBase
-  } = content.drawing;
   const hero: MilkbarPageContent['hero'] = {
-    ...heroBase,
+    ...withoutHeroModelFields(content.hero),
     ...optionalStringProp('modelAssetId', heroAssetId),
     ...optionalStringProp('modelUrl', heroUrl),
   };
   const drawing: MilkbarPageContent['drawing'] = {
-    ...drawingBase,
+    ...withoutDrawingModelFields(content.drawing),
     ...optionalStringProp('interiorModelAssetId', interiorAssetId),
     ...optionalStringProp('interiorModelUrl', interiorUrl),
   };
@@ -801,10 +860,11 @@ const enrichMilkbarCmsUpdateWithModelUrls = async (
   input: MilkbarCmsUpdateInput
 ): Promise<MilkbarCmsUpdateInput> => {
   const assetUrls = await resolveModelAssetUrlMap(input);
-  const localizedContent = MILKBAR_LOCALES.reduce((acc, locale) => {
-    acc[locale] = enrichPageContentWithModelUrls(input.localizedContent[locale], assetUrls);
-    return acc;
-  }, {} as MilkbarLocalizedContent);
+  const localizedContent: MilkbarLocalizedContent = {
+    en: enrichPageContentWithModelUrls(input.localizedContent.en, assetUrls),
+    de: enrichPageContentWithModelUrls(input.localizedContent.de, assetUrls),
+    pl: enrichPageContentWithModelUrls(input.localizedContent.pl, assetUrls),
+  };
 
   return {
     ...input,
@@ -815,9 +875,8 @@ const enrichMilkbarCmsUpdateWithModelUrls = async (
         modelAssetId !== undefined && modelAssetId.length > 0
           ? assetUrls.get(modelAssetId) ?? project.modelUrl
           : undefined;
-      const { modelAssetId: _modelAssetId, modelUrl: _modelUrl, ...projectBase } = project;
       return {
-        ...projectBase,
+        ...withoutProjectModelFields(project),
         ...optionalStringProp('modelAssetId', modelAssetId),
         ...optionalStringProp('modelUrl', modelUrl),
       };
@@ -846,16 +905,26 @@ export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapsh
   const [status, sourceData, runtimeData] = await Promise.all([
     getSourceStatus(),
     readMilkbarCmsDataOrEmpty(
-      () => withSourceOfTruthDb((db) => readMilkbarCmsData(db, SOURCE_COLLECTIONS, false)),
+      () => withOptionalSourceOfTruthDb((db) => readMilkbarCmsData(db, SOURCE_COLLECTIONS, false)),
       'source-of-truth CMS database'
     ),
     readMilkbarCmsDataOrEmpty(
-      () => withRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, true)),
+      () => withOptionalRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, true)),
       'local Milkbar runtime database'
     ),
   ]);
+  const cloudRuntimeData =
+    hasSourceOfTruthData(sourceData) || hasSourceOfTruthData(runtimeData)
+      ? createEmptyMilkbarCmsData()
+      : await readMilkbarCmsDataOrEmpty(
+          () => withCloudRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)),
+          'cloud Milkbar runtime database'
+        );
   const useSourceOfTruth = hasSourceOfTruthData(sourceData);
-  const editableData = useSourceOfTruth ? sourceData : runtimeData;
+  const hasRuntimeData = hasSourceOfTruthData(runtimeData);
+  let editableData = cloudRuntimeData;
+  if (hasRuntimeData) editableData = runtimeData;
+  if (useSourceOfTruth) editableData = sourceData;
 
   return {
     ok: true,
@@ -889,12 +958,14 @@ export async function saveMilkbarDesignersCmsSnapshot(
 
   await withSourceOfTruthDb((db) => writeMilkbarCmsData(db, SOURCE_COLLECTIONS, updateInput, now));
   try {
-    await withRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
+    await withOptionalRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
   } catch (error) {
-    console.warn(
-      '[milkbar-cms] local Milkbar runtime database is unavailable; saved source-of-truth only.',
-      error instanceof Error ? error.message : String(error)
-    );
+    void logSystemEvent({
+      level: 'warn',
+      source: 'milkbar-cms',
+      message: '[milkbar-cms] local Milkbar runtime database is unavailable; saved source-of-truth only.',
+      error,
+    });
   }
 
   return await getMilkbarDesignersCmsSnapshot();
@@ -948,7 +1019,7 @@ export async function pushMilkbarRuntimeToCloud(
   });
 
   const runtimeData = await readMilkbarCmsDataOrEmpty(
-    () => withRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)),
+    () => withOptionalRuntimeDb((db) => readMilkbarCmsData(db, RUNTIME_COLLECTIONS, false)),
     'local Milkbar runtime database'
   );
   const localData = hasSourceOfTruthData(runtimeData)

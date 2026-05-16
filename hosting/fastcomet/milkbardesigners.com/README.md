@@ -91,6 +91,11 @@ curl -I https://uploads.milkbardesigners.com/uploads/cms/visualisation/example.w
 curl -I https://uploads.milkbardesigners.com/uploads/cms/models/example.glb
 ```
 
+These URLs must return `200` over HTTPS before the Vercel-hosted website can
+load the assets. A certificate mismatch or a `404` on
+`uploads.milkbardesigners.com` means the cPanel subdomain document root or
+AutoSSL certificate is still not configured for the upload origin.
+
 Repo smoke test from the GeminiTest app root:
 
 ```sh
@@ -125,9 +130,18 @@ npm run storage:upload:milkbar-models -- \
 ```
 
 This uses the same `milkbarCms` storage profile as the CMS UI. Files are
-uploaded to `/uploads/cms/models`, asset records are created, the CMS hero,
-interior, and project model assignments are updated, and `--push-cloud` copies
-the public FastComet URLs into the arch-web runtime MongoDB Cloud data.
+uploaded to `/uploads/cms/models`, mirrored locally under this repo's
+`public_html/uploads/cms/models` FastComet tree, asset records are created, the
+CMS hero, interior, and project model assignments are updated, and
+`--push-cloud` copies the public FastComet URLs into the arch-web runtime
+MongoDB Cloud data.
+
+If the files and CMS assignments are already present and only the Vercel runtime
+database needs refreshing, run:
+
+```sh
+npm run storage:push:milkbar-runtime
+```
 
 Without credentials, it verifies that the PHP endpoint is reachable on
 FastComet and should return JSON. With credentials in the app's Mongo

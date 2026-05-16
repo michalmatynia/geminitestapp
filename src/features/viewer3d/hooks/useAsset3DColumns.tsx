@@ -48,6 +48,9 @@ function TagsCell({ tags }: { tags: string[] }): React.JSX.Element {
   );
 }
 
+const formatOptionalAssetDate = (value: string | undefined): string =>
+  value !== undefined && value.length > 0 ? formatAssetDate(value) : '';
+
 const createAsset3DColumns = (
   setPreviewAsset: (asset: Asset3DRecord) => void
 ): ColumnDef<Asset3DRecord>[] => [
@@ -55,7 +58,7 @@ const createAsset3DColumns = (
   { accessorKey: 'categoryId', header: 'Category', cell: ({ row }) => <CategoryCell categoryId={row.original.categoryId} /> },
   { accessorKey: 'tags', header: 'Tags', cell: ({ row }) => <TagsCell tags={row.original.tags ?? []} /> },
   { accessorKey: 'size', header: 'Size', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size ?? 0)}</span> },
-  { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{row.original.createdAt !== '' ? formatAssetDate(row.original.createdAt) : ''}</span> },
+  { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatOptionalAssetDate(row.original.createdAt)}</span> },
   {
     id: 'actions',
     header: () => <div className='text-right'>Action</div>,

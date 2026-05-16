@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Queue } from 'bullmq';
+import type { Job, Queue } from 'bullmq';
 
 import {
   createManagedQueue,
@@ -30,6 +30,8 @@ type PushJobHealthSnapshot = {
   waitingCount: number;
   failedCount: number;
 };
+type MilkbarBullQueue = Queue<MilkbarPushJobData, MilkbarPushToCloudResult>;
+type MilkbarBullJob = Job<MilkbarPushJobData, MilkbarPushToCloudResult, string>;
 
 export type MilkbarPushJobStatus = {
   state: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' | 'unknown';
@@ -38,11 +40,11 @@ export type MilkbarPushJobStatus = {
   result?: MilkbarPushToCloudResult;
 };
 
-let _queue: ManagedQueue<MilkbarPushJobData> | null = null;
+let milkbarPushQueue: ManagedQueue<MilkbarPushJobData> | null = null;
 
 export function getMilkbarPushToCloudQueue(): ManagedQueue<MilkbarPushJobData> {
-  if (!_queue) {
-    _queue = createManagedQueue<MilkbarPushJobData>({
+  if (milkbarPushQueue === null) {
+    milkbarPushQueue = createManagedQueue<MilkbarPushJobData>({
       name: 'milkbar-push-to-cloud',
       concurrency: 1,
       jobTimeoutMs: 90_000,
@@ -75,35 +77,54 @@ export function getMilkbarPushToCloudQueue(): ManagedQueue<MilkbarPushJobData> {
         return result;
       },
     });
-    _queue.startWorker();
+    milkbarPushQueue.startWorker();
   }
-  return _queue;
+  return milkbarPushQueue;
 }
+
+const toPushJobState = (state: string): MilkbarPushJobStatus['state'] => {
+  switch (state) {
+    case 'waiting':
+    case 'active':
+    case 'completed':
+    case 'failed':
+    case 'delayed':
+      return state;
+    default:
+      return 'unknown';
+  }
+};
+
+const isMilkbarBullQueue = (value: unknown): value is MilkbarBullQueue =>
+  typeof value === 'object' && value !== null && 'getJob' in value;
+
+const buildPushJobStatus = async (job: MilkbarBullJob): Promise<MilkbarPushJobStatus> => {
+  const safeState = toPushJobState(await job.getState());
+  const status: MilkbarPushJobStatus = {
+    state: safeState,
+    progress: isProgressShape(job.progress) ? job.progress : null,
+  };
+
+  if (safeState === 'failed') {
+    return { ...status, failedReason: job.failedReason };
+  }
+  if (safeState === 'completed' && isResult(job.returnvalue)) {
+    return { ...status, result: job.returnvalue };
+  }
+  return status;
+};
 
 export async function getJobProgress(jobId: string): Promise<MilkbarPushJobStatus | null> {
   if (!isRedisAvailable()) return null;
 
   const queue = getMilkbarPushToCloudQueue();
-  const q = queue.getQueue() as Queue | null;
-  if (!q) return null;
+  const q = queue.getQueue();
+  if (!isMilkbarBullQueue(q)) return null;
 
   const job = await q.getJob(jobId);
-  if (!job) return null;
+  if (job === undefined) return null;
 
-  const state = await job.getState();
-  const validStates = ['waiting', 'active', 'completed', 'failed', 'delayed'] as const;
-  const safeState = validStates.includes(state as typeof validStates[number])
-    ? (state as MilkbarPushJobStatus['state'])
-    : 'unknown';
-
-  return {
-    state: safeState,
-    progress: isProgressShape(job.progress) ? job.progress : null,
-    ...(safeState === 'failed' ? { failedReason: job.failedReason } : {}),
-    ...(safeState === 'completed' && isResult(job.returnvalue)
-      ? { result: job.returnvalue as MilkbarPushToCloudResult }
-      : {}),
-  };
+  return buildPushJobStatus(job);
 }
 
 const isProgressShape = (v: unknown): v is MilkbarPushJobProgress =>
@@ -174,8 +195,8 @@ export async function getMilkbarPushQueueHealth(): Promise<PushJobHealthSnapshot
   const health = await queue.getHealthStatus();
   return {
     mode: 'queue',
-    redisAvailable: health.redisAvailable,
-    workerState: health.workerState,
+    redisAvailable: health.redisAvailable === true,
+    workerState: health.workerState ?? 'unknown',
     activeCount: health.activeCount,
     waitingCount: health.waitingCount,
     failedCount: health.failedCount,

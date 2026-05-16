@@ -165,6 +165,17 @@ const getInquiryStatusActionLabel = (
   return 'Mark contacted';
 };
 
+const getModelUploadButtonLabel = (
+  uploading: boolean,
+  uploadProgress: number | null,
+  hasModel: boolean
+): string => {
+  if (uploading) {
+    return uploadProgress !== null ? `${uploadProgress}%` : 'Uploading...';
+  }
+  return hasModel ? 'Replace' : 'Upload .glb / .gltf';
+};
+
 const newProject = (index: number): MilkbarProjectCmsRecord => ({
   code: `MBD-${String(index + 1).padStart(3, '0')}`,
   name: 'New project',
@@ -264,6 +275,7 @@ type PushToCloudOutcome = {
   result?: { projectCount: number; serviceCount: number; updatedAt: string };
   error?: string;
 };
+type PushToCloudResultSummary = NonNullable<PushToCloudOutcome['result']>;
 
 type PushJobStatus = {
   ok: boolean;
@@ -1094,6 +1106,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               onDuplicate={(index) =>
                 setProjects((current) => {
                   const src = current[index];
+                  if (src === undefined) return current;
                   const clone = { ...src, code: `${src.code}-copy`, name: `${src.name} (copy)` };
                   const next = [...current];
                   next.splice(index + 1, 0, clone);
@@ -1104,7 +1117,11 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setProjects((current) => {
                   if (index === 0) return current;
                   const next = [...current];
-                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                  const target = next[index];
+                  const previous = next[index - 1];
+                  if (target === undefined || previous === undefined) return current;
+                  next[index - 1] = target;
+                  next[index] = previous;
                   return next;
                 })
               }
@@ -1112,7 +1129,11 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setProjects((current) => {
                   if (index >= current.length - 1) return current;
                   const next = [...current];
-                  [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                  const target = next[index];
+                  const nextItem = next[index + 1];
+                  if (target === undefined || nextItem === undefined) return current;
+                  next[index] = nextItem;
+                  next[index + 1] = target;
                   return next;
                 })
               }
@@ -1129,6 +1150,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               onDuplicate={(index) =>
                 setServices((current) => {
                   const src = current[index];
+                  if (src === undefined) return current;
                   const clone = { ...src, code: `${src.code}-copy`, title: `${src.title} (copy)` };
                   const next = [...current];
                   next.splice(index + 1, 0, clone);
@@ -1139,7 +1161,11 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setServices((current) => {
                   if (index === 0) return current;
                   const next = [...current];
-                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                  const target = next[index];
+                  const previous = next[index - 1];
+                  if (target === undefined || previous === undefined) return current;
+                  next[index - 1] = target;
+                  next[index] = previous;
                   return next;
                 })
               }
@@ -1147,7 +1173,11 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setServices((current) => {
                   if (index >= current.length - 1) return current;
                   const next = [...current];
-                  [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                  const target = next[index];
+                  const nextItem = next[index + 1];
+                  if (target === undefined || nextItem === undefined) return current;
+                  next[index] = nextItem;
+                  next[index + 1] = target;
                   return next;
                 })
               }
@@ -2148,6 +2178,73 @@ function ModelAssetLibraryPickerModal({
   }, [selectedAsset, onSelect, onClose]);
 
   const modelUrl = selectedAsset !== null ? `/api/assets3d/${selectedAsset.id}/file` : '';
+  const assetListContent = (() => {
+    if (isLoading) {
+      return <p className='py-8 text-center text-xs text-muted-foreground'>Loading...</p>;
+    }
+    if (assets.length === 0) {
+      return <p className='py-8 text-center text-xs text-muted-foreground'>No assets found.</p>;
+    }
+    return assets.map((asset) => {
+      const displayName = asset.name !== '' ? asset.name : (asset.filename ?? asset.id);
+      const isSelected = selectedAsset?.id === asset.id;
+      const categoryId = asset.categoryId;
+      const assetSize = asset.size ?? 0;
+      const assetSizeLabel =
+        assetSize < 1024 * 1024
+          ? `${(assetSize / 1024).toFixed(1)} KB`
+          : `${(assetSize / 1024 / 1024).toFixed(2)} MB`;
+
+      return (
+        <button
+          key={asset.id}
+          type='button'
+          onClick={() => handleAssetClick(asset)}
+          className={`rounded-md border px-3 py-2 text-left transition-colors ${
+            isSelected
+              ? 'border-blue-500/60 bg-blue-500/10 text-white'
+              : 'border-white/10 bg-white/5 text-muted-foreground hover:border-white/30 hover:text-white'
+          }`}
+        >
+          <p className='truncate text-xs font-medium'>{displayName}</p>
+          {categoryId !== null && categoryId !== '' ? (
+            <p className='mt-0.5 truncate text-[10px] text-blue-400/70'>{categoryId}</p>
+          ) : null}
+          {assetSize > 0 ? (
+            <p className='mt-0.5 text-[10px] text-white/30'>{assetSizeLabel}</p>
+          ) : null}
+        </button>
+      );
+    });
+  })();
+  const previewContent = (() => {
+    if (selectedAsset === null) {
+      return (
+        <div className='flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground'>
+          <Box className='size-10 opacity-30' />
+          <p className='text-sm'>Select an asset to preview</p>
+        </div>
+      );
+    }
+    if (modelError !== null) {
+      return (
+        <div className='flex flex-1 flex-col items-center justify-center gap-2 text-red-400'>
+          <p className='text-sm'>Failed to load model</p>
+          <p className='text-xs text-muted-foreground'>{modelError}</p>
+        </div>
+      );
+    }
+    return (
+      <Viewer3DProvider key={selectedAsset.id}>
+        <Viewer3D
+          modelUrl={modelUrl}
+          onError={(err) => setModelError(err.message)}
+          className='h-full w-full flex-1'
+          allowUserControls
+        />
+      </Viewer3DProvider>
+    );
+  })();
 
   return (
     <DetailModal isOpen title={title} onClose={onClose} size='xl'>
@@ -2159,62 +2256,10 @@ function ModelAssetLibraryPickerModal({
         />
         <div className='flex min-h-0 flex-1 gap-4'>
           <div className='flex w-60 shrink-0 flex-col gap-1.5 overflow-y-auto pr-1'>
-            {isLoading ? (
-              <p className='py-8 text-center text-xs text-muted-foreground'>Loading…</p>
-            ) : assets.length === 0 ? (
-              <p className='py-8 text-center text-xs text-muted-foreground'>No assets found.</p>
-            ) : (
-              assets.map((asset) => {
-                const displayName = asset.name !== '' ? asset.name : (asset.filename ?? asset.id);
-                const isSelected = selectedAsset?.id === asset.id;
-                return (
-                  <button
-                    key={asset.id}
-                    type='button'
-                    onClick={() => handleAssetClick(asset)}
-                    className={`rounded-md border px-3 py-2 text-left transition-colors ${
-                      isSelected
-                        ? 'border-blue-500/60 bg-blue-500/10 text-white'
-                        : 'border-white/10 bg-white/5 text-muted-foreground hover:border-white/30 hover:text-white'
-                    }`}
-                  >
-                    <p className='truncate text-xs font-medium'>{displayName}</p>
-                    {asset.categoryId !== null && asset.categoryId !== undefined && asset.categoryId !== '' ? (
-                      <p className='mt-0.5 truncate text-[10px] text-blue-400/70'>{asset.categoryId}</p>
-                    ) : null}
-                    {asset.size !== undefined && asset.size > 0 ? (
-                      <p className='mt-0.5 text-[10px] text-white/30'>
-                        {asset.size < 1024 * 1024
-                          ? `${(asset.size / 1024).toFixed(1)} KB`
-                          : `${(asset.size / 1024 / 1024).toFixed(2)} MB`}
-                      </p>
-                    ) : null}
-                  </button>
-                );
-              })
-            )}
+            {assetListContent}
           </div>
           <div className='relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-white/10 bg-black/40'>
-            {selectedAsset === null ? (
-              <div className='flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground'>
-                <Box className='size-10 opacity-30' />
-                <p className='text-sm'>Select an asset to preview</p>
-              </div>
-            ) : modelError !== null ? (
-              <div className='flex flex-1 flex-col items-center justify-center gap-2 text-red-400'>
-                <p className='text-sm'>Failed to load model</p>
-                <p className='text-xs text-muted-foreground'>{modelError}</p>
-              </div>
-            ) : (
-              <Viewer3DProvider key={selectedAsset.id}>
-                <Viewer3D
-                  modelUrl={modelUrl}
-                  onError={(err) => setModelError(err.message)}
-                  className='h-full w-full flex-1'
-                  allowUserControls
-                />
-              </Viewer3DProvider>
-            )}
+            {previewContent}
             {selectedAsset !== null ? (
               <div className='border-t border-white/10 bg-black/20 px-3 py-1.5'>
                 <p className='truncate text-xs text-muted-foreground'>
@@ -2330,6 +2375,7 @@ function CmsModel3DField({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const hasModel = modelId !== undefined && modelId.trim().length > 0;
+  const assignedModelId = modelId ?? '';
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -2384,7 +2430,7 @@ function CmsModel3DField({
         <div className='flex flex-wrap items-center gap-2'>
           {hasModel ? (
             <>
-              <ModelAssetLabel modelId={modelId as string} />
+              <ModelAssetLabel modelId={assignedModelId} />
               <Button
                 type='button'
                 size='sm'
@@ -2413,8 +2459,11 @@ function CmsModel3DField({
             ref={fileInputRef}
             type='file'
             accept='.glb,.gltf'
+            aria-label={`${label} model file`}
             className='hidden'
-            onChange={handleFileChange}
+            onChange={(event) => {
+              void handleFileChange(event);
+            }}
           />
           <Button
             type='button'
@@ -2425,13 +2474,7 @@ function CmsModel3DField({
             icon={<Upload className='size-3.5' />}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading
-              ? uploadProgress !== null
-                ? `${uploadProgress}%`
-                : 'Uploading…'
-              : hasModel
-                ? 'Replace'
-                : 'Upload .glb / .gltf'}
+            {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
           </Button>
           <Button
             type='button'
@@ -2447,7 +2490,7 @@ function CmsModel3DField({
       </div>
       {previewOpen && hasModel ? (
         <Model3DPreviewModal
-          modelId={modelId as string}
+          modelId={assignedModelId}
           title={label}
           onClose={() => setPreviewOpen(false)}
         />
@@ -2486,6 +2529,7 @@ function ProjectModel3DSection({
   const controlsRef = useRef<OrbitControlsHandle | null>(null);
 
   const hasModel = project.modelAssetId !== undefined && project.modelAssetId !== '';
+  const projectModelId = project.modelAssetId ?? '';
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -2543,7 +2587,7 @@ function ProjectModel3DSection({
         <span className='text-xs font-medium text-muted-foreground'>3D Model</span>
         {hasModel ? (
           <>
-            <ModelAssetLabel modelId={project.modelAssetId as string} />
+            <ModelAssetLabel modelId={projectModelId} />
             <Button
               type='button'
               size='sm'
@@ -2585,8 +2629,11 @@ function ProjectModel3DSection({
           ref={fileInputRef}
           type='file'
           accept='.glb,.gltf'
+          aria-label={`${project.code} model file`}
           className='hidden'
-          onChange={handleFileChange}
+          onChange={(event) => {
+            void handleFileChange(event);
+          }}
         />
         <Button
           type='button'
@@ -2597,13 +2644,7 @@ function ProjectModel3DSection({
           icon={<Upload className='size-3.5' />}
           onClick={() => fileInputRef.current?.click()}
         >
-          {uploading
-            ? uploadProgress !== null
-              ? `${uploadProgress}%`
-              : 'Uploading…'
-            : hasModel
-              ? 'Replace'
-              : 'Upload .glb / .gltf'}
+          {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
         </Button>
         <Button
           type='button'
@@ -2648,7 +2689,7 @@ function ProjectModel3DSection({
       ) : null}
       {previewOpen && hasModel ? (
         <Model3DPreviewModal
-          modelId={project.modelAssetId as string}
+          modelId={projectModelId}
           title={project.name.length > 0 ? project.name : project.code}
           onClose={() => setPreviewOpen(false)}
         />
@@ -2892,7 +2933,7 @@ function InquiriesTab({
   const [filterStatus, setFilterStatus] = useState<InquiryFilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleToggle = async (email: string, current: string): Promise<void> => {
+  const handleToggle = async (email: string, current: 'pending' | 'contacted'): Promise<void> => {
     const next = current === 'contacted' ? 'pending' : 'contacted';
     setLoadingEmail(email);
     try {
@@ -2968,29 +3009,32 @@ function InquiriesTab({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((inquiry) => (
-                <tr key={`${inquiry.email}-${inquiry.createdAt}`} className='border-t border-white/10'>
-                  <td className='px-3 py-2 text-white'>{inquiry.email}</td>
-                  <td className='px-3 py-2'>
-                    <Badge variant={inquiry.status === 'contacted' ? 'success' : 'default'}>
-                      {inquiry.status}
-                    </Badge>
-                  </td>
-                  <td className='px-3 py-2 text-xs uppercase tracking-widest text-muted-foreground'>{inquiry.locale ?? '—'}</td>
-                  <td className='px-3 py-2 text-muted-foreground'>{inquiry.source}</td>
-                  <td className='px-3 py-2 text-muted-foreground'>{inquiry.createdAt ?? '-'}</td>
-                  <td className='px-3 py-2'>
-                    <button
-                      type='button'
-                      disabled={loadingEmail === inquiry.email}
-                      onClick={() => { void handleToggle(inquiry.email, inquiry.status); }}
-                      className='rounded border border-white/10 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-white/30 hover:text-white disabled:opacity-40'
-                    >
-                      {getInquiryStatusActionLabel(loadingEmail === inquiry.email, inquiry.status)}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((inquiry) => {
+                const status = inquiry.status === 'contacted' ? 'contacted' : 'pending';
+                return (
+                  <tr key={`${inquiry.email}-${inquiry.createdAt}`} className='border-t border-white/10'>
+                    <td className='px-3 py-2 text-white'>{inquiry.email}</td>
+                    <td className='px-3 py-2'>
+                      <Badge variant={status === 'contacted' ? 'success' : 'default'}>
+                        {status}
+                      </Badge>
+                    </td>
+                    <td className='px-3 py-2 text-xs uppercase tracking-widest text-muted-foreground'>{inquiry.locale ?? '—'}</td>
+                    <td className='px-3 py-2 text-muted-foreground'>{inquiry.source}</td>
+                    <td className='px-3 py-2 text-muted-foreground'>{inquiry.createdAt ?? '-'}</td>
+                    <td className='px-3 py-2'>
+                      <button
+                        type='button'
+                        disabled={loadingEmail === inquiry.email}
+                        onClick={() => { void handleToggle(inquiry.email, status); }}
+                        className='rounded border border-white/10 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-white/30 hover:text-white disabled:opacity-40'
+                      >
+                        {getInquiryStatusActionLabel(loadingEmail === inquiry.email, status)}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -3250,7 +3294,7 @@ function PushToCloudPanel({
   const [phase, setPhase] = useState<PushPhase>('idle');
   const [lastOutcome, setLastOutcome] = useState<PushToCloudOutcome | null>(null);
   const [progress, setProgress] = useState<LiveProgress | null>(null);
-  const [finalResult, setFinalResult] = useState<PushToCloudOutcome['result'] | null>(null);
+  const [finalResult, setFinalResult] = useState<PushToCloudResultSummary | null>(null);
   const [failedReason, setFailedReason] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeJobId = useRef<string | null>(null);
@@ -3281,7 +3325,7 @@ function PushToCloudPanel({
           stopPoll();
           setFailedReason(js.failedReason ?? 'Job failed');
           setPhase('error');
-          toast({ title: 'Push failed', description: js.failedReason ?? 'Job failed in queue', variant: 'destructive' });
+          toast(`Push failed: ${js.failedReason ?? 'Job failed in queue'}`, { variant: 'error' });
         }
       }).catch(() => { /* transient — keep polling */ });
     }, 800);
@@ -3302,29 +3346,35 @@ function PushToCloudPanel({
       if (!outcome.ok) {
         setPhase('error');
         setFailedReason(outcome.error ?? 'Unknown error');
-        toast({ title: 'Push failed', description: outcome.error ?? 'Unknown error', variant: 'destructive' });
+        toast(`Push failed: ${outcome.error ?? 'Unknown error'}`, { variant: 'error' });
         return;
       }
-      if (outcome.mode === 'queue' && outcome.jobId) {
+      if (outcome.mode === 'queue' && outcome.jobId !== null && outcome.jobId.length > 0) {
         setPhase('active');
         startJobPoll(outcome.jobId);
       } else {
         // inline — result is immediate
         setProgress({ step: PUSH_STEPS_TOTAL, total: PUSH_STEPS_TOTAL, phase: 'done', message: 'Sync complete (inline)' });
-        if (outcome.result) setFinalResult(outcome.result);
+        if (outcome.result !== undefined) setFinalResult(outcome.result);
         setPhase('done');
-        toast({ title: 'Push complete', description: `${outcome.result?.projectCount ?? 0} projects, ${outcome.result?.serviceCount ?? 0} services.` });
+        toast(`Push complete: ${outcome.result?.projectCount ?? 0} projects, ${outcome.result?.serviceCount ?? 0} services.`, { variant: 'success' });
       }
     } catch (err) {
       setPhase('error');
       const msg = err instanceof Error ? err.message : String(err);
       setFailedReason(msg);
-      toast({ title: 'Push failed', description: msg, variant: 'destructive' });
+      toast(`Push failed: ${msg}`, { variant: 'error' });
     }
   }, [cloudConfigured, startJobPoll, toast]);
 
   const isRunning = phase === 'enqueuing' || phase === 'active';
   const pct = getPushProgressPct(progress);
+  const pushButtonLabel = (() => {
+    if (phase === 'enqueuing') return 'Enqueuing...';
+    if (phase === 'active') return 'Pushing...';
+    return 'Push to Cloud';
+  })();
+  const lastJobId = lastOutcome?.jobId ?? '';
 
   return (
     <FormSection
@@ -3346,7 +3396,7 @@ function PushToCloudPanel({
             size='sm'
           >
             <Upload className='mr-2 h-3.5 w-3.5' />
-            {phase === 'enqueuing' ? 'Enqueuing…' : phase === 'active' ? 'Pushing…' : 'Push to Cloud'}
+            {pushButtonLabel}
           </Button>
           {phase === 'done' ? <Badge variant='success'>Done</Badge> : null}
           {phase === 'error' ? <Badge variant='destructive'>Failed</Badge> : null}
@@ -3380,8 +3430,8 @@ function PushToCloudPanel({
             <div className='text-muted-foreground'>
               {finalResult.projectCount} projects · {finalResult.serviceCount} services · {finalResult.updatedAt}
             </div>
-            {lastOutcome?.jobId ? (
-              <div className='text-muted-foreground font-mono'>job: {lastOutcome.jobId}</div>
+            {lastJobId.length > 0 ? (
+              <div className='text-muted-foreground font-mono'>job: {lastJobId}</div>
             ) : null}
           </div>
         ) : null}

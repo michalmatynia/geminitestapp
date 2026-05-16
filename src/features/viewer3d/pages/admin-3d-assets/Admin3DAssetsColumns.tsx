@@ -75,12 +75,15 @@ function AdminAssetActionsCell({ asset, actions }: { asset: Asset3DRecord; actio
   );
 }
 
+const formatOptionalAssetDate = (value: string | undefined): string =>
+  value !== undefined && value.length > 0 ? formatAssetDate(value) : '';
+
 const createAdmin3DAssetColumns = (actions: Admin3DAssetColumnActions): ColumnDef<Asset3DRecord>[] => [
   { accessorKey: 'name', header: 'Name', cell: ({ row }) => <AdminAssetNameCell asset={row.original} setPreviewAsset={actions.setPreviewAsset} /> },
   { accessorKey: 'categoryId', header: 'Category', cell: ({ row }) => row.original.categoryId !== '' && row.original.categoryId !== null ? <StatusBadge status={row.original.categoryId} variant='info' size='sm' className='font-medium' /> : <span className='text-muted-foreground'>-</span> },
   { accessorKey: 'tags', header: 'Tags', cell: ({ row }) => <AdminAssetTagsCell tags={row.original.tags ?? []} /> },
   { accessorKey: 'size', header: 'Size', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size ?? 0)}</span> },
-  { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{row.original.createdAt !== '' ? formatAssetDate(row.original.createdAt) : ''}</span> },
+  { accessorKey: 'createdAt', header: 'Date', cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatOptionalAssetDate(row.original.createdAt)}</span> },
   { id: 'actions', header: () => <div className='text-right'>Actions</div>, cell: ({ row }) => <AdminAssetActionsCell asset={row.original} actions={actions} /> },
 ];
 

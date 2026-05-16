@@ -167,7 +167,7 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
 export function Asset3DPreviewModal(props: Asset3DPreviewModalProps): React.JSX.Element | null {
   const { isOpen, onClose, item: asset } = props;
 
-  if (asset === null) return null;
+  if (asset === null || asset === undefined) return null;
 
   const title = asset.name !== '' ? asset.name : asset.filename ?? '3D asset';
 

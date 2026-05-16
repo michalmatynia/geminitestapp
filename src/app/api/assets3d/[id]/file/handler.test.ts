@@ -4,12 +4,14 @@ const {
   existsSyncMock,
   readFileMock,
   getDiskPathFromPublicPathMock,
+  getPublicPathFromStoredPathMock,
   isHttpFilepathMock,
   getAsset3DByIdMock,
 } = vi.hoisted(() => ({
   existsSyncMock: vi.fn(),
   readFileMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
+  getPublicPathFromStoredPathMock: vi.fn(),
   isHttpFilepathMock: vi.fn(),
   getAsset3DByIdMock: vi.fn(),
 }));
@@ -30,6 +32,7 @@ vi.mock('fs/promises', () => ({
 
 vi.mock('@/features/files/server', () => ({
   getDiskPathFromPublicPath: getDiskPathFromPublicPathMock,
+  getPublicPathFromStoredPath: getPublicPathFromStoredPathMock,
   isHttpFilepath: isHttpFilepathMock,
 }));
 
@@ -44,6 +47,7 @@ import { getHandler } from './handler';
 describe('assets3d file handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getPublicPathFromStoredPathMock.mockImplementation((value: string) => value);
   });
 
   it('serves local files through the shared disk-path guard', async () => {
@@ -69,9 +73,38 @@ describe('assets3d file handler', () => {
     expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('local-model');
   });
 
-  it('falls back to remote storage URLs when the filepath is absolute', async () => {
+  it('serves a mirrored upload file before fetching a remote FastComet URL', async () => {
     getAsset3DByIdMock.mockResolvedValue({
       id: 'asset-2',
+      filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
+      mimetype: 'model/gltf+json',
+      metadata: {
+        publicPath: '/uploads/cms/models/model.gltf',
+        storageProfile: 'milkbarCms',
+      },
+    });
+    isHttpFilepathMock.mockReturnValue(true);
+    getDiskPathFromPublicPathMock.mockReturnValue('/tmp/model.gltf');
+    existsSyncMock.mockReturnValue(true);
+    readFileMock.mockResolvedValue(Buffer.from('mirrored-model'));
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await getHandler(
+      new Request('http://localhost/api/assets3d/asset-2/file') as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1],
+      { id: 'asset-2' }
+    );
+
+    expect(getDiskPathFromPublicPathMock).toHaveBeenCalledWith('/uploads/cms/models/model.gltf');
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('mirrored-model');
+    vi.unstubAllGlobals();
+  });
+
+  it('falls back to remote storage URLs when the filepath is absolute', async () => {
+    getAsset3DByIdMock.mockResolvedValue({
+      id: 'asset-3',
       filepath: 'https://files.example.test/assets/model.glb',
       mimetype: 'model/gltf-binary',
     });
@@ -97,6 +130,39 @@ describe('assets3d file handler', () => {
     });
     expect(getDiskPathFromPublicPathMock).not.toHaveBeenCalled();
     expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('remote-model');
+    vi.unstubAllGlobals();
+  });
+
+  it('uses the Milkbar FastComet origin for CMS assets when no mirror exists', async () => {
+    getAsset3DByIdMock.mockResolvedValue({
+      id: 'asset-4',
+      filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
+      mimetype: 'model/gltf+json',
+      metadata: {
+        publicPath: '/uploads/cms/models/model.gltf',
+        storageProfile: 'milkbarCms',
+      },
+    });
+    isHttpFilepathMock.mockReturnValue(true);
+    getDiskPathFromPublicPathMock.mockReturnValue('/tmp/model.gltf');
+    existsSyncMock.mockReturnValue(false);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('origin-model', {
+        status: 200,
+        headers: { 'content-type': 'application/octet-stream' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await getHandler(
+      new Request('http://localhost/api/assets3d/asset-4/file') as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1],
+      { id: 'asset-4' }
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://milkbardesigners.com/uploads/cms/models/model.gltf');
+    expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('origin-model');
     vi.unstubAllGlobals();
   });
 });

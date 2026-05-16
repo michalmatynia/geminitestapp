@@ -27,6 +27,7 @@ import {
 import { assets3dRoot, uploadsRoot } from '@/shared/lib/files/server-constants';
 import {
   deleteFileFromStorage,
+  getPublicPathFromStoredPath,
   uploadToConfiguredStorage,
 } from '@/shared/lib/files/services/image-file-service';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
@@ -65,7 +66,67 @@ type AssetStorageTarget = {
   publicDir: string;
   category: string;
   folder: string | null;
+  mirrorPublicHtml: boolean;
   fastCometUploadOptions: MilkbarFastCometUploadOptions | Record<string, never>;
+};
+
+const MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT = path.resolve(
+  process.cwd(),
+  'hosting',
+  'fastcomet',
+  'milkbardesigners.com',
+  'public_html'
+);
+
+const toMilkbarPublicHtmlMirrorPath = (publicPath: string): string => {
+  const cleaned = publicPath.replace(/^\/+/, '');
+  const resolved = path.resolve(MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT, cleaned);
+  if (
+    resolved !== MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT &&
+    !resolved.startsWith(`${MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT}${path.sep}`)
+  ) {
+    throw new Error('Invalid Milkbar FastComet public_html mirror path.');
+  }
+  return resolved;
+};
+
+const writeFileBuffer = async (diskPath: string, fileBuffer: Buffer): Promise<void> => {
+  await fs.mkdir(path.dirname(diskPath), { recursive: true });
+  await fs.writeFile(diskPath, fileBuffer);
+};
+
+const writeMilkbarPublicHtmlMirror = async (
+  publicPath: string,
+  fileBuffer: Buffer
+): Promise<void> => {
+  await writeFileBuffer(toMilkbarPublicHtmlMirrorPath(publicPath), fileBuffer);
+};
+
+const readMetadataText = (
+  metadata: Record<string, unknown> | undefined,
+  key: string
+): string | null => {
+  const value = metadata?.[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isMilkbarCmsAsset = (asset: Asset3DRecord): boolean =>
+  readMetadataText(asset.metadata, 'storageProfile') === 'milkbarCms';
+
+const resolveAssetPublicPath = (asset: Asset3DRecord): string | null => {
+  const metadataPath = readMetadataText(asset.metadata, 'publicPath');
+  if (metadataPath !== null) return metadataPath;
+  const filepath = asset.filepath?.trim() ?? '';
+  return filepath.length > 0 ? getPublicPathFromStoredPath(filepath) : null;
+};
+
+const deleteMilkbarPublicHtmlMirror = async (asset: Asset3DRecord): Promise<void> => {
+  if (!isMilkbarCmsAsset(asset)) return;
+  const publicPath = resolveAssetPublicPath(asset);
+  if (publicPath?.startsWith('/uploads/cms/models/') !== true) return;
+  await fs.unlink(toMilkbarPublicHtmlMirrorPath(publicPath)).catch(() => undefined);
 };
 
 function resolveAssetStorageTarget(
@@ -78,6 +139,7 @@ function resolveAssetStorageTarget(
       publicDir: `/uploads/cms/${MILKBAR_CMS_MODELS_FOLDER}`,
       category: 'cms',
       folder: MILKBAR_CMS_MODELS_FOLDER,
+      mirrorPublicHtml: true,
       fastCometUploadOptions: {
         forceSource: 'fastcomet' as const,
         fastCometBaseUrl: milkbarStorage.publicBaseUrl,
@@ -91,6 +153,7 @@ function resolveAssetStorageTarget(
     publicDir: '/uploads/assets3d',
     category: 'assets3d',
     folder: null,
+    mirrorPublicHtml: false,
     fastCometUploadOptions: {},
   };
 }
@@ -133,10 +196,13 @@ async function prepareAssetStorage(
     ...storageTarget.fastCometUploadOptions,
     // Also write to local disk for reindexing operations
     writeLocalCopy: async (): Promise<void> => {
-      await fs.mkdir(diskDir, { recursive: true });
-      await fs.writeFile(localDiskPath, fileBuffer);
+      await writeFileBuffer(localDiskPath, fileBuffer);
     },
   });
+
+  if (storageTarget.mirrorPublicHtml) {
+    await writeMilkbarPublicHtmlMirror(publicPath, fileBuffer);
+  }
 
   return { filename, storedFilepath: storageResult.filepath, publicPath };
 }
@@ -260,6 +326,7 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
     if (filepath !== '') {
       await deleteFileFromStorage(filepath);
     }
+    await deleteMilkbarPublicHtmlMirror(asset);
     // Delete from database
     await repository.deleteAsset3D(id);
 

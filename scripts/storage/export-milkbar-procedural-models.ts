@@ -4,10 +4,9 @@ import path from 'node:path';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
-import { buildInterior } from '../../apps/arch-web/src/components/InteriorViewer.tsx';
-import { makeProjectGroup } from '../../apps/arch-web/src/lib/projectModels.ts';
-
 type FileReaderLikeResult = string | ArrayBuffer | null;
+type InteriorBuilder = (slots: string[]) => THREE.Object3D;
+type ProjectBuilder = (index: number) => THREE.Object3D;
 
 class NodeFileReader {
   result: FileReaderLikeResult = null;
@@ -136,8 +135,10 @@ function createHeroBackgroundModel(): THREE.Group {
     addWireBox(group, tower.x, tower.z, tower.w, tower.h, tower.d, 0.34);
     addFloorLines(group, tower.x, tower.z, tower.w, tower.h, tower.d, tower.floorH);
     addWireBox(group, tower.x, tower.z, tower.w * 0.24, tower.cap, tower.d * 0.24, 0.5);
-    const cap = group.children[group.children.length - 1];
-    cap.position.y = tower.h + tower.cap / 2;
+    const cap = group.children.at(-1);
+    if (cap !== undefined) {
+      cap.position.y = tower.h + tower.cap / 2;
+    }
   });
 
   group.name = 'Milkbar hero background procedural model';
@@ -150,9 +151,9 @@ const colorFromMaterial = (material: THREE.Material): THREE.Color => {
 };
 
 const opacityForExport = (material: THREE.Material, object: THREE.Object3D): number => {
-  if (object.userData.isTexture) return 1;
-  if (object.userData.isWire) return 0.28;
-  if (object.userData.isSolid) return 0;
+  if (object.userData['isTexture']) return 1;
+  if (object.userData['isWire']) return 0.28;
+  if (object.userData['isSolid']) return 0;
   return material.opacity <= 0 ? 1 : material.opacity;
 };
 
@@ -168,7 +169,8 @@ const materialForExport = (material: THREE.Material, object: THREE.Object3D): TH
     depthWrite: material.depthWrite,
   };
 
-  if (object instanceof THREE.Line || object instanceof THREE.Points || material.isMeshBasicMaterial) {
+  const materialFlags = material as THREE.Material & { isMeshBasicMaterial?: boolean };
+  if (object instanceof THREE.Line || object instanceof THREE.Points || materialFlags.isMeshBasicMaterial) {
     return new THREE.MeshBasicMaterial(common);
   }
 
@@ -210,7 +212,26 @@ const exportGltf = (object: THREE.Object3D): Promise<Record<string, unknown>> =>
     );
   });
 
-const exportEntries = (): ExportEntry[] => [
+const loadArchBuilders = async (): Promise<{
+  buildInterior: InteriorBuilder;
+  makeProjectGroup: ProjectBuilder;
+}> => {
+  const interiorModulePath = '../../apps/arch-web/src/components/InteriorViewer.tsx';
+  const projectModulePath = '../../apps/arch-web/src/lib/projectModels.ts';
+  const [interiorModule, projectModule] = await Promise.all([
+    import(interiorModulePath) as Promise<{ buildInterior: InteriorBuilder }>,
+    import(projectModulePath) as Promise<{ makeProjectGroup: ProjectBuilder }>,
+  ]);
+  return {
+    buildInterior: interiorModule.buildInterior,
+    makeProjectGroup: projectModule.makeProjectGroup,
+  };
+};
+
+const exportEntries = (
+  buildInterior: InteriorBuilder,
+  makeProjectGroup: ProjectBuilder
+): ExportEntry[] => [
   {
     key: 'hero',
     filename: 'milkbar-hero-background.gltf',
@@ -231,9 +252,10 @@ const exportEntries = (): ExportEntry[] => [
 async function main(): Promise<void> {
   const outDir = path.resolve(parseOutDir());
   await mkdir(outDir, { recursive: true });
+  const { buildInterior, makeProjectGroup } = await loadArchBuilders();
 
   const written: Array<{ key: string; filepath: string }> = [];
-  for (const entry of exportEntries()) {
+  for (const entry of exportEntries(buildInterior, makeProjectGroup)) {
     const object = prepareObjectForExport(entry.create());
     const gltf = await exportGltf(object);
     const filepath = path.join(outDir, entry.filename);

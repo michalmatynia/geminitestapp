@@ -10,7 +10,10 @@ import type {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getImageFileRepository } from './image-file-repository';
-import { mongoImageFileRepository } from './image-file-repository/mongo-image-file-repository';
+import {
+  mongoImageFileRepository,
+  productMongoImageFileRepository,
+} from './image-file-repository/mongo-image-file-repository';
 
 /**
  * Service that wraps the Image File repository with error handling and logging.
@@ -62,7 +65,14 @@ export type {
   ImageFileUpdateInput,
 };
 
-export { getImageFileRepository, mongoImageFileRepository };
+export {
+  mongoImageFileRepository,
+  productMongoImageFileRepository,
+};
+export {
+  getImageFileRepository,
+  getProductImageFileRepository,
+} from './image-file-repository';
 export { deleteFileFromStorage, getDiskPathFromPublicPath, uploadFile } from '../file-uploader';
 export {
   getPublicPathFromStoredPath,

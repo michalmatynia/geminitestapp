@@ -122,6 +122,13 @@ const matchesLegacyColor = (value: string, target: string): boolean =>
 const isDailyCrystalTheme = (theme: ThemeSettings): boolean =>
   normalizeThemePreset(theme.themePreset) === DAILY_CRYSTAL_PRESET_ID;
 
+// The old daily theme shipped with an orange button gradient before the violet redesign.
+const KANGUR_LEGACY_DAILY_ORANGE_BTN_PRIMARY_BG =
+  'linear-gradient(135deg, #ffb36b 0%, #ff9a63 48%, #ff7f52 100%)';
+
+export const hasLegacyOrangeDailyButton = (theme: Partial<ThemeSettings>): boolean =>
+  matchesLegacyCss(theme.btnPrimaryBg ?? '', KANGUR_LEGACY_DAILY_ORANGE_BTN_PRIMARY_BG);
+
 const applyKangurLegacyThemeBaseline = (theme: ThemeSettings): ThemeSettings => {
   const updates: Partial<ThemeSettings> = {};
   const setUpdate = (key: keyof ThemeSettings, value: ThemeSettings[keyof ThemeSettings]): void => {
@@ -143,6 +150,12 @@ const applyKangurLegacyThemeBaseline = (theme: ThemeSettings): ThemeSettings => 
       setUpdate(key, replacementValue);
     }
   });
+
+  // Migrate old orange daily button → violet. The orange gradient is unique to the
+  // pre-redesign daily theme so this check is safe to apply to all theme modes.
+  if (hasLegacyOrangeDailyButton(theme)) {
+    setUpdate('btnPrimaryBg', KANGUR_DEFAULT_DAILY_THEME.btnPrimaryBg);
+  }
 
   return Object.keys(updates).length > 0 ? { ...theme, ...updates } : theme;
 };

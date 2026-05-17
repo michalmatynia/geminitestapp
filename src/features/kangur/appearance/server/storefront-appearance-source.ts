@@ -15,7 +15,7 @@ import {
   listKangurSettingsByKeys,
   upsertKangurSettingValue,
 } from '@/features/kangur/services/kangur-settings-repository';
-import { normalizeKangurThemeSettings } from '../theme-settings';
+import { hasLegacyOrangeDailyButton, normalizeKangurThemeSettings } from '../theme-settings';
 
 import { KANGUR_DEFAULT_DAILY_THEME } from '../themes/daily';
 import { KANGUR_DEFAULT_DAWN_THEME } from '../themes/dawn';
@@ -76,7 +76,7 @@ const maybeUpgradeStoredThemeSetting = (key: string, rawValue: string): string =
     return rawValue;
   }
 
-  if (hasCompleteClockTheme(parsed.clockTheme)) {
+  if (!hasLegacyOrangeDailyButton(parsed) && hasCompleteClockTheme(parsed.clockTheme)) {
     return rawValue;
   }
 

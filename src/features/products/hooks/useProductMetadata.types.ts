@@ -13,6 +13,7 @@ export interface ProductMetadataHookResult {
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
+  languagesLoading: boolean;
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
   categories: ProductCategory[];
@@ -75,6 +76,7 @@ export interface ProductMetadataResultInput {
   catalogs: CatalogRecord[];
   catalogsError: unknown;
   catalogsLoading: boolean;
+  languagesLoading: boolean;
   categories: ProductCategory[];
   categoriesLoading: boolean;
   filtered: FilteredProductMetadata;

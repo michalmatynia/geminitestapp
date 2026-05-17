@@ -262,10 +262,20 @@ function isMongoConnectivityError(err: unknown): boolean {
   ].some((token) => signature.includes(token));
 }
 
+function sanitizeMongoErrorMessage(message: string): string {
+  return message
+    .replace(/mongodb(?:\+srv)?:\/\/[^@\s]+@/gi, 'mongodb://<redacted>@')
+    .replace(/(password|pwd)=([^&\s]+)/gi, '$1=<redacted>');
+}
+
 function logMentiosFallback(operation: string, err: unknown): void {
-  if (process.env.NODE_ENV === 'production' || isMongoConnectivityError(err)) return;
-  const message = errorMessage(err);
-  console.warn(`[mentios] ${operation} unavailable; using fallback${message ? `: ${message}` : '.'}`);
+  const connectivityError = isMongoConnectivityError(err);
+  if (process.env.NODE_ENV !== 'production' && connectivityError) return;
+
+  const name = errorName(err);
+  const message = sanitizeMongoErrorMessage(errorMessage(err));
+  const details = [name, message].filter((value) => value.length > 0).join(': ');
+  console.warn(`[mentios] ${operation} unavailable; using fallback${details.length > 0 ? `: ${details}` : '.'}`);
 }
 
 function chooseLocalized(

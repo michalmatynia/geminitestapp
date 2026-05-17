@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getEcommerceProductsDb } from './mongodb';
+import { getDb } from './mongodb';
 import type { ShippingProviderAvailability } from './shipping';
 
 const ECOM_SETTINGS_COLLECTION = 'ecom_settings';
@@ -278,7 +278,7 @@ function normalizeProviderSettings(value: unknown): ProviderSettings | null {
 
 export async function readEcommerceProviderSettings(): Promise<ProviderSettings | null> {
   try {
-    const db = await getEcommerceProductsDb();
+    const db = await getDb();
     const record = await db.collection<SettingRecord>(ECOM_SETTINGS_COLLECTION).findOne({
       $or: [{ key: PROVIDER_SETTINGS_KEY }, { _id: PROVIDER_SETTINGS_KEY }],
     });

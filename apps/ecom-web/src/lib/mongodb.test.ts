@@ -55,6 +55,13 @@ const clearMongoEnv = (): void => {
     'PRODUCTS_MONGODB_CLOUD_DB',
     'PRODUCTS_MONGODB_ACTIVE_SOURCE',
     'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
+    'PRODUCTS_MONGODB_SECURITY_OVERRIDE_ENABLED',
+    'PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES',
+    'PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES_IN_PRODUCTION',
+    'PRODUCTS_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR',
+    'PRODUCTS_MONGODB_TLS_ALLOW_INVALID_HOSTNAMES',
+    'PRODUCTS_MONGODB_SERVER_SELECTION_TIMEOUT_MS',
+    'PRODUCTS_MONGODB_CONNECT_TIMEOUT_MS',
     'ECOM_MONGODB_URI',
     'ECOM_MONGODB_DB',
     'ECOM_MONGODB_LOCAL_URI',
@@ -83,12 +90,16 @@ const clearMongoEnv = (): void => {
     'MONGODB_PRODUCTS_LOCAL_DB',
     'MONGODB_PRODUCTS_CLOUD_URI',
     'MONGODB_PRODUCTS_CLOUD_DB',
+    'MONGODB_PRODUCTS_ACTIVE_SOURCE',
+    'MONGODB_PRODUCTS_ACTIVE_SOURCE_DEFAULT',
     'MONGODB_ECOM_URI',
     'MONGODB_ECOM_DB',
     'MONGODB_ECOM_LOCAL_URI',
     'MONGODB_ECOM_LOCAL_DB',
     'MONGODB_ECOM_CLOUD_URI',
     'MONGODB_ECOM_CLOUD_DB',
+    'MONGODB_ECOM_ACTIVE_SOURCE',
+    'MONGODB_ECOM_ACTIVE_SOURCE_DEFAULT',
     'NODE_ENV',
     'VERCEL',
     'VERCEL_ENV',
@@ -158,6 +169,31 @@ describe('ecommerce MongoDB resolver', () => {
 
     expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
     expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+  });
+
+  it('uses separate cloud databases for runtime page content and products in production', async () => {
+    setEnv('NODE_ENV', 'production');
+    process.env['MONGODB_URI'] = 'mongodb+srv://main-app.example.test/';
+    process.env['MONGODB_DB'] = 'app';
+    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
+    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
+    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://ecommerce.example.test/';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'ecom_db';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+
+    const { getDb, getEcommerceProductsDb } = await import('./mongodb');
+
+    await getDb();
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual([
+      'mongodb+srv://ecommerce.example.test/',
+      'mongodb+srv://products.example.test/',
+    ]);
+    expect(mongoMocks.dbNames).toEqual(['ecom_db', 'products_db']);
   });
 
   it('allows env overrides for runtime MongoDB connection timeouts', async () => {
@@ -246,7 +282,7 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
-  it('pins ecommerce product reads to local MongoDB during localhost development', async () => {
+  it('ignores ecommerce runtime source variables for detached product reads during localhost development', async () => {
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
     process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
@@ -257,8 +293,8 @@ describe('ecommerce MongoDB resolver', () => {
 
     await getEcommerceProductsDb();
 
-    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
-    expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/products_local']);
+    expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
   it('prefers explicit Products MongoDB config for ecommerce product reads during localhost development', async () => {
@@ -275,27 +311,27 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['app']);
   });
 
-  it('does not fall back from local ecommerce MongoDB to cloud during localhost development', async () => {
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
-    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
-    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
-    process.env['ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR'] = 'true';
+  it('does not fall back from local product MongoDB to cloud during localhost development', async () => {
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['PRODUCTS_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR'] = 'true';
     mongoMocks.connect.mockRejectedValue(new Error('Socket timed out during startup'));
 
     const { getEcommerceProductsDb } = await import('./mongodb');
 
     await expect(getEcommerceProductsDb()).rejects.toThrow();
-    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/products_local']);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
   });
 
   it('uses the products cloud database for ecommerce product reads on Vercel when local points at loopback', async () => {
     process.env['VERCEL'] = '1';
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
-    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
-    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'local';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
     process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
     process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
 
@@ -325,7 +361,7 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['products_db']);
   });
 
-  it('allows generic MongoDB URI variables as a last-resort ecommerce product read fallback outside localhost development', async () => {
+  it('does not use generic MongoDB URI variables for detached ecommerce product reads', async () => {
     process.env['VERCEL'] = '1';
     process.env['MONGODB_URI'] = 'mongodb+srv://generic.example.test/';
     process.env['MONGODB_DB'] = 'catalog_db';
@@ -334,18 +370,18 @@ describe('ecommerce MongoDB resolver', () => {
 
     await getEcommerceProductsDb();
 
-    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://generic.example.test/']);
-    expect(mongoMocks.dbNames).toEqual(['catalog_db']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/products_local']);
+    expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
   it('falls back to insecure TLS when allowed for TLS handshake errors', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'development');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
-    process.env['ECOM_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
-    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['PRODUCTS_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
+    process.env['PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
     mongoMocks.connect
       .mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'))
       .mockResolvedValue(undefined);
@@ -365,11 +401,11 @@ describe('ecommerce MongoDB resolver', () => {
   it('falls back to insecure TLS when URI-level tls=true is set and allowed', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'development');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_local?tls=true';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
-    process.env['ECOM_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
-    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/products_local?tls=true';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['PRODUCTS_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
+    process.env['PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
     mongoMocks.connect
       .mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'))
       .mockResolvedValue(undefined);
@@ -379,8 +415,8 @@ describe('ecommerce MongoDB resolver', () => {
     await getEcommerceProductsDb();
 
     expect(mongoMocks.createdUris).toEqual([
-      'mongodb://127.0.0.1:27017/ecom_local?tls=true',
-      'mongodb://127.0.0.1:27017/ecom_local?tls=true',
+      'mongodb://127.0.0.1:27017/products_local?tls=true',
+      'mongodb://127.0.0.1:27017/products_local?tls=true',
     ]);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
     expect(mongoMocks.createdOptions[1]?.['tlsAllowInvalidCertificates']).toBe(true);
@@ -389,10 +425,10 @@ describe('ecommerce MongoDB resolver', () => {
   it('does not fall back to insecure TLS when the security override flag is not set', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'development');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
-    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
     mongoMocks.connect.mockRejectedValue(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'));
 
     const { getEcommerceProductsDb } = await import('./mongodb');
@@ -406,10 +442,11 @@ describe('ecommerce MongoDB resolver', () => {
   it('does not fallback to insecure TLS in production without explicit production opt-in', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'production');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
-    process.env['ECOM_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['PRODUCTS_MONGODB_SECURITY_OVERRIDE_ENABLED'] = 'true';
+    process.env['PRODUCTS_MONGODB_TLS_ALLOW_INVALID_CERTIFICATES'] = 'true';
     mongoMocks.connect.mockRejectedValueOnce(new Error('C01835F301000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error'));
 
     const { getEcommerceProductsDb } = await import('./mongodb');
@@ -418,15 +455,15 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to alternate ecommerce source on retryable timeout errors when enabled', async () => {
+  it('falls back to alternate product source on retryable timeout errors when enabled', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'development');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_cloud';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_cloud';
-    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
-    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
-    process.env['ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR'] = 'true';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/products_cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_cloud';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+    process.env['PRODUCTS_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR'] = 'true';
     mongoMocks.connect
       .mockRejectedValueOnce(new Error('Socket timed out during startup'))
       .mockResolvedValue(undefined);
@@ -436,27 +473,27 @@ describe('ecommerce MongoDB resolver', () => {
     await getEcommerceProductsDb();
 
     expect(mongoMocks.createdUris).toEqual([
-      'mongodb://127.0.0.1:27017/ecom_cloud',
-      'mongodb://127.0.0.1:27021/ecom_local',
+      'mongodb://127.0.0.1:27017/products_cloud',
+      'mongodb://127.0.0.1:27017/products_local',
     ]);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(2);
-    expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+    expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
-  it('does not fallback to alternate ecommerce source when flag is disabled', async () => {
+  it('does not fallback to alternate product source when flag is disabled', async () => {
     process.env['VERCEL'] = '1';
     setEnv('NODE_ENV', 'development');
-    process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
-    process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/ecom_cloud';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_cloud';
-    process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';
-    process.env['ECOM_MONGODB_LOCAL_DB'] = 'ecom_local';
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb://127.0.0.1:27017/products_cloud';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_cloud';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
     mongoMocks.connect.mockRejectedValue(new Error('Socket timed out during startup'));
 
     const { getEcommerceProductsDb } = await import('./mongodb');
 
     await expect(getEcommerceProductsDb()).rejects.toThrow();
-    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/ecom_cloud']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/products_cloud']);
     expect(mongoMocks.connect).toHaveBeenCalledTimes(1);
   });
 

@@ -22,6 +22,91 @@ import type { ProductValidationPattern } from '@/shared/contracts/products/valid
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 
 type ValidatorSummary = ValidatorSettingsController['summary'];
+type ValidatorStatusSection = Pick<
+  ValidatorSettingsController,
+  | 'patterns'
+  | 'settings'
+  | 'summary'
+  | 'orderedPatterns'
+  | 'enabledByDefault'
+  | 'formatterEnabledByDefault'
+  | 'instanceDenyBehavior'
+  | 'loading'
+  | 'isUpdating'
+  | 'settingsBusy'
+  | 'patternActionsPending'
+  | 'reorderPending'
+>;
+type ValidatorModalSection = Pick<
+  ValidatorSettingsController,
+  | 'showModal'
+  | 'setShowModal'
+  | 'closeModal'
+  | 'editingPattern'
+  | 'modalSemanticState'
+  | 'modalSemanticTransition'
+  | 'formData'
+  | 'setFormData'
+  | 'testResult'
+  | 'simulatorScope'
+  | 'setSimulatorScope'
+  | 'simulatorValues'
+  | 'setSimulatorValue'
+  | 'simulatorCategoryFixtures'
+  | 'setSimulatorCategoryFixtures'
+  | 'replacementFieldOptions'
+  | 'sourceFieldOptions'
+  | 'createPatternPending'
+  | 'updatePatternPending'
+>;
+type ValidatorHelperSection = Pick<
+  ValidatorSettingsController,
+  | 'isLocaleTarget'
+  | 'normalizeReplacementFields'
+  | 'getReplacementFieldsForTarget'
+  | 'getSourceFieldOptionsForTarget'
+  | 'formatReplacementFields'
+>;
+type ValidatorDragSection = Pick<
+  ValidatorSettingsController,
+  | 'draggedPatternId'
+  | 'setDraggedPatternId'
+  | 'dragOverPatternId'
+  | 'setDragOverPatternId'
+  | 'handleDragStart'
+  | 'handleDrop'
+  | 'handlePatternDrop'
+  | 'handleReorderInGroup'
+>;
+type ValidatorSequenceSection = Pick<
+  ValidatorSettingsController,
+  | 'sequenceGroups'
+  | 'firstPatternIdByGroup'
+  | 'getSequenceGroupId'
+  | 'handleMoveGroup'
+  | 'handleReorderInGroup'
+  | 'handleMoveToGroup'
+  | 'handleRemoveFromGroup'
+  | 'handleCreateGroup'
+  | 'handleRenameGroup'
+  | 'handleUpdateGroupDebounce'
+  | 'onCreateSkuAutoIncrementSequence'
+  | 'onCreateLatestPriceStockSequence'
+  | 'handleCreateNameLengthMirrorPattern'
+  | 'handleCreateNameCategoryMirrorPattern'
+  | 'handleCreateStarGaterProducerPattern'
+  | 'handleCreateNameMirrorPolishSequence'
+  | 'handleSaveSequenceGroup'
+  | 'handleUngroup'
+>;
+type ValidatorDraftSection = Pick<
+  ValidatorSettingsController,
+  | 'patternToDelete'
+  | 'setPatternToDelete'
+  | 'groupDrafts'
+  | 'setGroupDrafts'
+  | 'getGroupDraft'
+>;
 
 type ControllerValueArgs = {
   data: ValidatorSettingsData;
@@ -46,7 +131,7 @@ type ControllerValueArgs = {
 const hasPendingMutation = (pendingStates: readonly boolean[]): boolean =>
   pendingStates.includes(true);
 
-const buildStatusSection = (args: ControllerValueArgs): Partial<ValidatorSettingsController> => ({
+const buildStatusSection = (args: ControllerValueArgs): ValidatorStatusSection => ({
   patterns: args.data.patterns,
   settings: args.data.settings,
   summary: args.summary,
@@ -73,7 +158,7 @@ const buildStatusSection = (args: ControllerValueArgs): Partial<ValidatorSetting
   reorderPending: args.mutations.reorderPatterns.isPending,
 });
 
-const buildModalSection = (args: ControllerValueArgs): Partial<ValidatorSettingsController> => ({
+const buildModalSection = (args: ControllerValueArgs): ValidatorModalSection => ({
   showModal: args.state.showModal,
   setShowModal: args.state.setShowModal,
   closeModal: args.state.closeModal,
@@ -95,7 +180,7 @@ const buildModalSection = (args: ControllerValueArgs): Partial<ValidatorSettings
   updatePatternPending: args.mutations.updatePattern.isPending,
 });
 
-const buildHelperSection = (): Partial<ValidatorSettingsController> => ({
+const buildHelperSection = (): ValidatorHelperSection => ({
   isLocaleTarget,
   normalizeReplacementFields,
   getReplacementFieldsForTarget,
@@ -103,7 +188,7 @@ const buildHelperSection = (): Partial<ValidatorSettingsController> => ({
   formatReplacementFields,
 });
 
-const buildDragSection = (args: ControllerValueArgs): Partial<ValidatorSettingsController> => ({
+const buildDragSection = (args: ControllerValueArgs): ValidatorDragSection => ({
   draggedPatternId: args.state.draggedPatternId,
   setDraggedPatternId: args.state.setDraggedPatternId,
   dragOverPatternId: args.state.dragOverPatternId,
@@ -111,7 +196,7 @@ const buildDragSection = (args: ControllerValueArgs): Partial<ValidatorSettingsC
   ...args.reorderActions,
 });
 
-const buildSequenceSection = (args: ControllerValueArgs): Partial<ValidatorSettingsController> => ({
+const buildSequenceSection = (args: ControllerValueArgs): ValidatorSequenceSection => ({
   sequenceGroups: args.sequenceGroups,
   firstPatternIdByGroup: args.firstPatternIdByGroup,
   getSequenceGroupId: (pattern) =>
@@ -133,7 +218,7 @@ const buildSequenceSection = (args: ControllerValueArgs): Partial<ValidatorSetti
   handleUngroup: args.sequenceActions.handleUngroup,
 });
 
-const buildDraftSection = (args: ControllerValueArgs): Partial<ValidatorSettingsController> => ({
+const buildDraftSection = (args: ControllerValueArgs): ValidatorDraftSection => ({
   patternToDelete: args.state.patternToDelete,
   setPatternToDelete: args.state.setPatternToDelete,
   groupDrafts: args.state.groupDrafts,

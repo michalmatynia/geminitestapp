@@ -60,8 +60,9 @@ const resolveFilteredProductMetadata = ({
   const selectedCatalogs = catalogs.filter((catalog: CatalogRecord): boolean =>
     selectedCatalogIds.includes(catalog.id)
   );
+  const filteredLanguages = filterLanguagesForCatalogs(languages, selectedCatalogs);
   return {
-    filteredLanguages: filterLanguagesForCatalogs(languages, selectedCatalogs),
+    filteredLanguages: filteredLanguages.length > 0 ? filteredLanguages : languages,
     filteredPriceGroups: filterPriceGroupsForCatalogs(priceGroups, selectedCatalogs),
   };
 };

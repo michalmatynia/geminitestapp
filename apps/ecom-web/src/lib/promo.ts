@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 
-import { getDb, getEcommerceProductsDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { ORDERS_COLLECTION } from '@/lib/orders';
 import { getRedisConnection as getRedisConnectionUnsafe } from '@/shared/lib/queue';
 
@@ -254,7 +254,7 @@ const collectActivePromoFromDb = async (
   subtotal: number,
   email?: string
 ): Promise<PromoLookupResult> => {
-  const db: Db = await getEcommerceProductsDb();
+  const db: Db = await getDb();
   const doc = await db.collection<DiscountCouponDoc>(PROMO_COLLECTION).findOne({ code });
   if (doc === null) return { found: false, evaluation: null };
   return {

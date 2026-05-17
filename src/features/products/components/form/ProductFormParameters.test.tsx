@@ -286,6 +286,7 @@ const metadataValue: ProductFormMetadataContextType = {
   catalogs: [],
   catalogsLoading: false,
   catalogsError: null,
+  languagesLoading: false,
   selectedCatalogIds: ['catalog-1'],
   toggleCatalog: vi.fn(),
   categories: [],

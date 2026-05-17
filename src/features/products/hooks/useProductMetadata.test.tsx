@@ -27,6 +27,7 @@ vi.mock('./useProductMetadataQueries', () => ({
   useShippingGroups: (...args: unknown[]) => mocks.useShippingGroups(...args),
   useTags: (...args: unknown[]) => mocks.useTags(...args),
   useParameters: (...args: unknown[]) => mocks.useParameters(...args),
+  useTitleTerms: () => ({ data: [], isLoading: false }),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({

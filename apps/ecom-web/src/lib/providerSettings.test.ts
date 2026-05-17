@@ -9,11 +9,11 @@ vi.mock('server-only', () => ({}));
 const mocks = vi.hoisted(() => ({
   collection: vi.fn(),
   findOne: vi.fn(),
-  getEcommerceProductsDb: vi.fn(),
+  getDb: vi.fn(),
 }));
 
 vi.mock('./mongodb', () => ({
-  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
+  getDb: mocks.getDb,
 }));
 
 import {
@@ -75,7 +75,7 @@ describe('ecommerce provider settings reader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.collection.mockReturnValue({ findOne: mocks.findOne });
-    mocks.getEcommerceProductsDb.mockResolvedValue({ collection: mocks.collection });
+    mocks.getDb.mockResolvedValue({ collection: mocks.collection });
     mocks.findOne.mockResolvedValue(null);
   });
 
@@ -112,7 +112,7 @@ describe('ecommerce provider settings reader', () => {
   it('returns empty availability when provider settings are absent or unreadable', async () => {
     await expect(readPaymentProviderAvailability()).resolves.toEqual({});
 
-    mocks.getEcommerceProductsDb.mockRejectedValue(new Error('database unavailable'));
+    mocks.getDb.mockRejectedValue(new Error('database unavailable'));
     await expect(readShippingProviderAvailability()).resolves.toEqual({});
   });
 });

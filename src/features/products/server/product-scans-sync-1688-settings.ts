@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { PlaywrightConnectionSettingsOverridesInput } from '@/features/playwright/server/connection-runtime';
+import { defaultIntegrationConnectionPlaywrightSettings } from '@/features/playwright/server/connection-settings-shared';
 
 import { normalizeErrorMessage, readOptionalString } from './product-scans-service.helpers';
 
@@ -40,6 +41,39 @@ const resolveNumericSetting = (args: NumericSettingArgs): number => {
 const resolveBooleanSetting = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback;
 
+const resolveBrowserSetting = (
+  value: unknown
+): PlaywrightConnectionSettingsOverridesInput['browser'] => {
+  if (value === 'auto' || value === 'brave' || value === 'chrome' || value === 'chromium') {
+    return value;
+  }
+  return 'auto';
+};
+
+const resolveIdentityProfileSetting = (
+  value: unknown
+): PlaywrightConnectionSettingsOverridesInput['identityProfile'] => {
+  if (value === 'search' || value === 'marketplace') return value;
+  return defaultIntegrationConnectionPlaywrightSettings.identityProfile;
+};
+
+const resolveProxySessionModeSetting = (
+  value: unknown
+): PlaywrightConnectionSettingsOverridesInput['proxySessionMode'] => {
+  if (value === 'rotate') return value;
+  return defaultIntegrationConnectionPlaywrightSettings.proxySessionMode;
+};
+
+const resolveProxyProviderPresetSetting = (
+  value: unknown
+): PlaywrightConnectionSettingsOverridesInput['proxyProviderPreset'] => {
+  if (value === 'brightdata' || value === 'oxylabs' || value === 'decodo') return value;
+  return defaultIntegrationConnectionPlaywrightSettings.proxyProviderPreset;
+};
+
+const resolveStringSetting = (value: unknown, fallback: string): string =>
+  readOptionalString(value) ?? fallback;
+
 export const resolve1688ManualVerificationMessage = (
   value: unknown,
   fallback?: unknown
@@ -64,9 +98,11 @@ export const resolve1688ConnectionEngineSettings = (
   settings: Record<string, unknown>,
   options: { forceVisible: boolean }
 ): PlaywrightConnectionSettingsOverridesInput => {
+  const defaults = defaultIntegrationConnectionPlaywrightSettings;
   const overrides: PlaywrightConnectionSettingsOverridesInput = {
-    ...(settings as Partial<PlaywrightConnectionSettingsOverridesInput>),
-    ...resolveVisibilityOverrides(options.forceVisible),
+    browser: resolveBrowserSetting(settings['browser']),
+    identityProfile: resolveIdentityProfileSetting(settings['identityProfile']),
+    headless: resolveBooleanSetting(settings['headless'], defaults.headless),
     locale: readOptionalString(settings['locale']) ?? SCANNER_1688_DEFAULT_LOCALE,
     timezoneId: readOptionalString(settings['timezoneId']) ?? SCANNER_1688_DEFAULT_TIMEZONE_ID,
     humanizeMouse: resolveBooleanSetting(settings['humanizeMouse'], true),
@@ -81,12 +117,37 @@ export const resolve1688ConnectionEngineSettings = (
       fallback: SCANNER_1688_DEFAULT_SLOW_MO_MS,
       minimum: 0,
     }),
+    timeout: resolveNumericSetting({
+      value: settings['timeout'],
+      fallback: defaults.timeout,
+      minimum: 1000,
+      minimumInclusive: true,
+    }),
+    navigationTimeout: resolveNumericSetting({
+      value: settings['navigationTimeout'],
+      fallback: defaults.navigationTimeout,
+      minimum: 1000,
+      minimumInclusive: true,
+    }),
     clickDelayMin: resolveNumericSetting({ value: settings['clickDelayMin'], fallback: 80 }),
     clickDelayMax: resolveNumericSetting({ value: settings['clickDelayMax'], fallback: 220 }),
     inputDelayMin: resolveNumericSetting({ value: settings['inputDelayMin'], fallback: 50 }),
     inputDelayMax: resolveNumericSetting({ value: settings['inputDelayMax'], fallback: 160 }),
     actionDelayMin: resolveNumericSetting({ value: settings['actionDelayMin'], fallback: 250 }),
     actionDelayMax: resolveNumericSetting({ value: settings['actionDelayMax'], fallback: 900 }),
+    proxyEnabled: resolveBooleanSetting(settings['proxyEnabled'], defaults.proxyEnabled),
+    proxyServer: resolveStringSetting(settings['proxyServer'], defaults.proxyServer ?? ''),
+    proxyUsername: resolveStringSetting(settings['proxyUsername'], defaults.proxyUsername ?? ''),
+    proxyPassword: resolveStringSetting(settings['proxyPassword'], defaults.proxyPassword ?? ''),
+    proxySessionAffinity: resolveBooleanSetting(
+      settings['proxySessionAffinity'],
+      defaults.proxySessionAffinity
+    ),
+    proxySessionMode: resolveProxySessionModeSetting(settings['proxySessionMode']),
+    proxyProviderPreset: resolveProxyProviderPresetSetting(settings['proxyProviderPreset']),
+    emulateDevice: resolveBooleanSetting(settings['emulateDevice'], defaults.emulateDevice),
+    deviceName: resolveStringSetting(settings['deviceName'], defaults.deviceName ?? 'Desktop Chrome'),
+    ...resolveVisibilityOverrides(options.forceVisible),
   };
 
   return overrides;

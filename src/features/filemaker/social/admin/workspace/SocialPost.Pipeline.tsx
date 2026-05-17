@@ -25,7 +25,7 @@ const PIPELINE_PROGRESS_VALUE_BY_STEP = {
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
-  if (normalized === undefined || normalized === null || normalized.length === 0) return false;
+  if ((normalized?.length ?? 0) === 0) return false;
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
@@ -77,7 +77,7 @@ export function SocialPostPipeline(): React.JSX.Element {
     (batchCaptureBaseUrl ?? '').trim().length > 0 &&
     batchCapturePresetIds.length > 0;
   const batchCapturePresetCount = batchCapturePresetIds.length;
-  const pipelineProgressValue = pipelineProgress !== null && pipelineProgress !== undefined
+  const pipelineProgressValue = (pipelineProgress !== null && pipelineProgress !== undefined)
     ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
     : 0;
   const isPipelineBusy =
@@ -86,11 +86,11 @@ export function SocialPostPipeline(): React.JSX.Element {
     pipelineStep === 'saving' ||
     pipelineStep === 'generating' ||
     pipelineStep === 'previewing';
-  const titlePl = editorState?.titlePl?.trim();
-  const titleEn = editorState?.titleEn?.trim();
+  const titlePl = editorState?.titlePl?.trim() ?? '';
+  const titleEn = editorState?.titleEn?.trim() ?? '';
   const activeDraftLabel =
-    (titlePl !== undefined && titlePl.length > 0) ? titlePl :
-    (titleEn !== undefined && titleEn.length > 0) ? titleEn : 'Untitled draft';
+    titlePl.length > 0 ? titlePl :
+    titleEn.length > 0 ? titleEn : 'Untitled draft';
   const previousPipelineStepRef = React.useRef<PipelineStep>('idle');
   const isFreshCaptureInProgress =
     pipelineStep === 'capturing' && pipelineProgress?.captureMode === 'fresh_capture';

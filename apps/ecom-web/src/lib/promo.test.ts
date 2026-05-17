@@ -11,14 +11,12 @@ import {
 } from './promo';
 
 const mocks = vi.hoisted(() => ({
-  getEcommerceProductsDb: vi.fn(),
   getDb: vi.fn(),
   getRedisConnection: vi.fn(),
 }));
 
 vi.mock('@/lib/mongodb', () => ({
   getDb: mocks.getDb,
-  getEcommerceProductsDb: mocks.getEcommerceProductsDb,
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -96,7 +94,6 @@ describe('promo code helpers', () => {
 
     expect(await computeDiscount(10000, 'REDIS10')).toBe(1000);
     expect(mocks.getDb).not.toHaveBeenCalled();
-    expect(mocks.getEcommerceProductsDb).not.toHaveBeenCalled();
   });
 
   it('falls back to MongoDB when Redis cache is missing', async () => {
@@ -118,19 +115,11 @@ describe('promo code helpers', () => {
         return null;
       }),
     };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
-        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
-        return null;
-      }),
-    };
-
     mocks.getRedisConnection.mockReturnValue(redisClient);
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     expect(await computeDiscount(10000, 'MONGO10')).toBe(1000);
-    expect(mocks.getEcommerceProductsDb).toHaveBeenCalledTimes(1);
+    expect(mocks.getDb).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to MongoDB when Redis payload is invalid', async () => {
@@ -152,19 +141,11 @@ describe('promo code helpers', () => {
         return null;
       }),
     };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
-        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
-        return null;
-      }),
-    };
-
     mocks.getRedisConnection.mockReturnValue(redisClient);
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     expect(await computeDiscount(10000, 'INVALID')).toBe(1000);
-    expect(mocks.getEcommerceProductsDb).toHaveBeenCalledTimes(1);
+    expect(mocks.getDb).toHaveBeenCalledTimes(1);
   });
 
   it('validates a database-backed fixed discount code with minimum order constraint', async () => {
@@ -177,12 +158,6 @@ describe('promo code helpers', () => {
         minOrderAmount: 2500,
       }),
     };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
-        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
-        return null;
-      }),
-    };
     const ecommerceDb = {
       collection: vi.fn((name: string) => {
         if (name === 'ecom_discounts') return promoCollection;
@@ -190,8 +165,7 @@ describe('promo code helpers', () => {
       }),
     };
 
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     expect(await computeDiscount(2000, 'FIXED15', 'alice@example.com')).toBe(0);
     expect(await computeDiscount(3000, 'FIXED15', 'alice@example.com')).toBe(1500);
@@ -207,12 +181,6 @@ describe('promo code helpers', () => {
         minOrderAmount: 10,
       }),
     };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
-        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
-        return null;
-      }),
-    };
     const ecommerceDb = {
       collection: vi.fn((name: string) => {
         if (name === 'ecom_discounts') return promoCollection;
@@ -220,8 +188,7 @@ describe('promo code helpers', () => {
       }),
     };
 
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     expect(await computeDiscount(19.04, 'FIXED150', 'alice@example.com')).toBe(1.5);
   });
@@ -255,14 +222,7 @@ describe('promo code helpers', () => {
         endsAt: expired,
       }),
     };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
-        if (name === 'ecom_orders') return { findOne: vi.fn(), countDocuments: vi.fn() };
-        return null;
-      }),
-    };
-
-    mocks.getEcommerceProductsDb
+    mocks.getDb
       .mockResolvedValueOnce({ collection: (name: string) => {
         if (name === 'ecom_discounts') return promoCollection;
         return null;
@@ -271,7 +231,6 @@ describe('promo code helpers', () => {
         if (name === 'ecom_discounts') return inactivePromoCollection;
         return null;
       } });
-    mocks.getDb.mockResolvedValue(ordersDb);
 
     expect(await isValidPromoCode('TIMED10', 10000, 'alice@example.com')).toBe(true);
     expect(await isValidPromoCode('TIMED10', 10000, 'alice@example.com')).toBe(false);
@@ -341,18 +300,12 @@ describe('promo code helpers', () => {
     const ecommerceDb = {
       collection: vi.fn((name: string) => {
         if (name === 'ecom_discounts') return promoCollection;
-        return null;
-      }),
-    };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
         if (name === 'ecom_orders') return orderCollection;
         return null;
       }),
     };
 
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     const valid = await isValidPromoCode('ARCANA10', 10000, 'Alice@Example.Com');
 
@@ -380,18 +333,12 @@ describe('promo code helpers', () => {
     const ecommerceDb = {
       collection: vi.fn((name: string) => {
         if (name === 'ecom_discounts') return promoCollection;
-        return null;
-      }),
-    };
-    const ordersDb = {
-      collection: vi.fn((name: string) => {
         if (name === 'ecom_orders') return orderCollection;
         return null;
       }),
     };
 
-    mocks.getEcommerceProductsDb.mockResolvedValue(ecommerceDb);
-    mocks.getDb.mockResolvedValue(ordersDb);
+    mocks.getDb.mockResolvedValue(ecommerceDb);
 
     const amount = await computeDiscount(10000, 'ARCANA10', 'ALICE@EXAMPLE.COM');
 

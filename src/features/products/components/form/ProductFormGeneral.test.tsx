@@ -297,6 +297,10 @@ describe('ProductFormGeneral formatter auto-apply', () => {
     vi.clearAllMocks();
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [],
+      selectedCatalogIds: [],
+      catalogsLoading: false,
+      languagesLoading: false,
+      hasExistingProduct: false,
     });
     useTitleTermsMock.mockReturnValue({
       data: [],
@@ -540,6 +544,10 @@ describe('ProductFormGeneral formatter auto-apply', () => {
   it('does not rewrite name_en while the structured name field is focused', async () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [{ code: 'en', name: 'English' }],
+      selectedCatalogIds: ['catalog-1'],
+      catalogsLoading: false,
+      languagesLoading: false,
+      hasExistingProduct: false,
     });
 
     const validationState = {

@@ -278,6 +278,10 @@ describe('Product form validation formatter flow', () => {
     vi.clearAllMocks();
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [],
+      selectedCatalogIds: [],
+      catalogsLoading: false,
+      languagesLoading: false,
+      hasExistingProduct: false,
     });
   });
 

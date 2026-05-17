@@ -22,6 +22,7 @@ export interface ProductFormMetadataContextType {
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
+  languagesLoading: boolean;
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
   categories: ProductCategory[];
@@ -41,6 +42,7 @@ export interface ProductFormMetadataContextType {
   toggleProducer: (producerId: string) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
+  hasExistingProduct: boolean;
 }
 
 export type ProductFormMetadataStateContextType = Pick<
@@ -48,6 +50,7 @@ export type ProductFormMetadataStateContextType = Pick<
   | 'catalogs'
   | 'catalogsLoading'
   | 'catalogsError'
+  | 'languagesLoading'
   | 'selectedCatalogIds'
   | 'categories'
   | 'categoriesLoading'
@@ -62,6 +65,7 @@ export type ProductFormMetadataStateContextType = Pick<
   | 'selectedProducerIds'
   | 'filteredLanguages'
   | 'filteredPriceGroups'
+  | 'hasExistingProduct'
 >;
 
 export type ProductFormMetadataActionsContextType = Pick<
@@ -109,6 +113,7 @@ export function ProductFormMetadataProvider({
   const contextValue = useMemo(
     () => ({
       ...metadata,
+      hasExistingProduct: product !== undefined,
       toggleCatalog: (id: string) => {
         onInteraction?.();
         metadata.toggleCatalog(id);
@@ -130,7 +135,7 @@ export function ProductFormMetadataProvider({
         metadata.setProducerIds(producerIds);
       },
     }),
-    [metadata, onInteraction]
+    [metadata, onInteraction, product]
   );
 
   return (
@@ -153,6 +158,7 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     catalogs,
     catalogsLoading,
     catalogsError,
+    languagesLoading,
     selectedCatalogIds,
     categories,
     categoriesLoading,
@@ -167,11 +173,13 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     selectedProducerIds,
     filteredLanguages,
     filteredPriceGroups,
+    hasExistingProduct,
   } = useRequiredProductFormMetadataContext();
   return {
     catalogs,
     catalogsLoading,
     catalogsError,
+    languagesLoading,
     selectedCatalogIds,
     categories,
     categoriesLoading,
@@ -186,6 +194,7 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     selectedProducerIds,
     filteredLanguages,
     filteredPriceGroups,
+    hasExistingProduct,
   };
 };
 

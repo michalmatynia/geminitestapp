@@ -112,21 +112,36 @@ checking local or cloud ecommerce storefront prices.
 Copy `.env.local.example` to `.env.local` when live catalog data is needed.
 The app works without these variables by using static fallback products.
 
+For local development with the live storefront catalog and ecommerce runtime
+data, start both MongoDB instances from the repository root:
+
+```bash
+npm run mongo:ecom-products:up
+```
+
+That starts `products_local` on `127.0.0.1:27017` and `ecom_local` on
+`127.0.0.1:27021`. Use `npm run mongo:ecom-products:status` to check both,
+and `npm run mongo:ecom-products:down` to stop both.
+
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `MONGODB_URI` | For runtime data | `mongodb://127.0.0.1:27021/ecom_local` | Ecommerce runtime MongoDB connection string for auth, wishlist, orders, and CMS data. Product catalog reads use source-specific ecommerce/product variables first. |
-| `MONGODB_DB` | No | `ecom_local` | Database name used by the ecommerce Mongo client. |
-| `PRODUCTS_MONGODB_CLOUD_URI` | For deployed live catalog fallback | none | Cloud Product List MongoDB connection. Used by the storefront when `ECOM_MONGODB_CLOUD_URI` is not set. |
+| `MONGODB_URI` | Fallback runtime data | `mongodb://127.0.0.1:27021/ecom_local` | Generic ecommerce runtime MongoDB fallback for auth, wishlist, orders, and CMS data when `ECOM_MONGODB_*` is not configured. Product catalog reads do not use this variable. |
+| `MONGODB_DB` | No | `ecom_local` | Database name used with the generic ecommerce runtime fallback. |
+| `PRODUCTS_MONGODB_LOCAL_URI` | For live catalog | `mongodb://127.0.0.1:27017/products_local` | Shared local Product List MongoDB connection used for storefront catalog reads. |
+| `PRODUCTS_MONGODB_LOCAL_DB` | For live catalog | `products_local` | Shared local Product List database name. |
+| `PRODUCTS_MONGODB_CLOUD_URI` | For deployed live catalog fallback | none | Cloud Product List MongoDB connection. Used by the storefront when a cloud Products source is selected. |
 | `PRODUCTS_MONGODB_CLOUD_DB` | For deployed live catalog fallback | none | Database name for `PRODUCTS_MONGODB_CLOUD_URI`. |
-| `ECOM_MONGODB_LOCAL_URI` | For live catalog | `mongodb://127.0.0.1:27021/ecom_local` | Local ecommerce product catalog MongoDB connection. |
-| `ECOM_MONGODB_LOCAL_DB` | For live catalog | `ecom_local` | Local ecommerce product catalog database name. |
-| `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce product catalog MongoDB connection. |
-| `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce product catalog database name. Must match the Product List ecommerce export target. |
-| `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce product catalog source. Use `cloud` when testing add/delete visibility against the shared ecommerce export database. |
-| `ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if connecting to the selected ecommerce/product source fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. |
+| `ECOM_MONGODB_LOCAL_URI` | For runtime data | `mongodb://127.0.0.1:27021/ecom_local` | Local ecommerce runtime MongoDB connection for auth, wishlist, orders, CMS, integrations, and listings. |
+| `ECOM_MONGODB_LOCAL_DB` | For runtime data | `ecom_local` | Local ecommerce runtime database name. |
+| `ECOM_MONGODB_CLOUD_URI` | No | none | Cloud ecommerce runtime MongoDB connection. |
+| `ECOM_MONGODB_CLOUD_DB` | No | none | Cloud ecommerce runtime database name. |
+| `PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud Products catalog source for storefront catalog reads. |
+| `ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT` | No | `local` | Selects local or cloud ecommerce runtime source. |
+| `ECOM_MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if connecting to the selected ecommerce runtime source fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. |
 | `MONGODB_FALLBACK_TO_ALTERNATE_SOURCE_ON_CONN_ERROR` | No | `false` | In development, if CMS/auth/runtime DB connection fails with a retryable MongoDB error, try the alternate source (local↔cloud) before failing. Skipped when `MONGODB_URI` is explicitly set. |
 | `MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Runtime MongoDB timeout overrides for auth, wishlist, orders, and CMS data. |
-| `ECOM_MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `ECOM_MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Ecommerce product catalog MongoDB timeout overrides. |
+| `PRODUCTS_MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `PRODUCTS_MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Products catalog MongoDB timeout overrides. |
+| `ECOM_MONGODB_SERVER_SELECTION_TIMEOUT_MS` / `ECOM_MONGODB_CONNECT_TIMEOUT_MS` | No | `1500` local loopback in development, otherwise `12000` | Ecommerce runtime MongoDB timeout overrides. |
 | `MENTIOS_CATALOG_ID` | No | none | Catalog id used to filter products and categories. When omitted, the storefront uses active products from the selected product database. |
 | `NEXT_PUBLIC_FILE_BASE_URL` | No | none | Public FastComet file origin used to render `/uploads/products/...` records from Vercel. |
 | `NEXT_PUBLIC_ECOM_URL` | Recommended for production | local fallback | Public storefront origin used for sitemap/robots and transactional order tracking links. |
@@ -144,12 +159,29 @@ The app works without these variables by using static fallback products.
 | `FASTCOMET_STORAGE_AUTH_TOKEN` | For CMS image uploads | none | Bearer token expected by the FastComet upload endpoint. |
 | `FASTCOMET_STORAGE_BASE_URL` | For CMS image uploads | `NEXT_PUBLIC_FILE_BASE_URL` | Public FastComet origin used when upload responses return relative paths. |
 
+Production/Vercel database routing should be split by responsibility:
+
+```bash
+PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT=cloud
+PRODUCTS_MONGODB_CLOUD_DB=products_db
+ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT=cloud
+ECOM_MONGODB_CLOUD_DB=<cloud-ecommerce-db-name>
+```
+
+`PRODUCTS_MONGODB_CLOUD_URI` must point at the cloud Products database used for
+product list/details, prices, categories, tags, images, shipping groups, and
+price groups. `ECOM_MONGODB_CLOUD_URI` must point at the cloud Ecommerce
+database used for page content, CMS data, auth, wishlist, orders, integrations,
+emails, organizations, and job listings. Database names can match across
+clusters; the URI is what separates Products from Ecommerce when both happen to
+use a database name such as `products_db`.
+
 The Mongo client is implemented in `src/lib/mongodb.ts`. Storefront product
-catalog reads use `ECOM_MONGODB_*` first, then `PRODUCTS_MONGODB_*` as a cloud
-fallback. Generic `MONGODB_URI` is only a last-resort product catalog fallback
-when no ecommerce/product catalog variables are configured. Auth, wishlist,
-order, and CMS paths use the ecommerce `MONGODB_*` routing. In development,
-clients are cached to avoid reconnecting on every Next.js reload.
+catalog reads use `PRODUCTS_MONGODB_*`/`MONGODB_PRODUCTS_*` only. Generic
+runtime `MONGODB_URI` and `ECOM_MONGODB_*` are not used for product catalog
+reads. Auth, wishlist, order, and CMS paths use the ecommerce runtime routing.
+In development, clients are cached to avoid reconnecting on every Next.js
+reload.
 
 ## Route Map
 
@@ -558,10 +590,11 @@ Quality notes:
 
 If the storefront shows only demo products:
 
-- Confirm `ECOM_MONGODB_CLOUD_URI`/`ECOM_MONGODB_CLOUD_DB`,
-  `PRODUCTS_MONGODB_CLOUD_URI`/`PRODUCTS_MONGODB_CLOUD_DB`, or
-  `MONGODB_URI`/`MONGODB_DB` points at a cloud database containing `products` and
-  `product_categories`.
+- Confirm `PRODUCTS_MONGODB_CLOUD_URI`/`PRODUCTS_MONGODB_CLOUD_DB` points at the
+  cloud Products database containing `products` and `product_categories`.
+- Confirm `ECOM_MONGODB_CLOUD_URI`/`ECOM_MONGODB_CLOUD_DB` points at the cloud
+  Ecommerce database for CMS/page content collections such as `ecom_cms_pages`
+  and `ecom_settings`.
 - On Vercel, localhost product DB settings are ignored when a cloud product DB is
   configured, so a copied local `*_ACTIVE_SOURCE_DEFAULT=local` value should not
   force the storefront into static fallback.

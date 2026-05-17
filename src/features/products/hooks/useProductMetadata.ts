@@ -91,6 +91,7 @@ export function useProductMetadata(props: UseProductMetadataProps): ProductMetad
     catalogs,
     catalogsError: catalogsQuery.error,
     catalogsLoading: catalogsQuery.isLoading,
+    languagesLoading: languagesQuery.isLoading,
     categories: getQueryDataArray(categoriesQuery.data),
     categoriesLoading: isAnyMetadataLoading([catalogsQuery.isLoading, categoriesQuery.isLoading]),
     filtered,

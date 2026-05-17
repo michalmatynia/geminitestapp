@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHECKOUT_CONTENT_DEFAULTS } from '@/data/checkoutContent';
 import { HOME_CONTENT_DEFAULTS } from '@/data/homeContent';
 import { SITE_CONTENT_DEFAULTS } from '@/data/siteContent';
-import { getEcommerceProductsDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import {
   deleteCheckoutContent,
   getCheckoutCmsSnapshot,
@@ -30,18 +30,18 @@ const cmsDbMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/mongodb', () => ({
-  getEcommerceProductsDb: vi.fn(async () => ({
+  getDb: vi.fn(async () => ({
     collection: () => cmsDbMocks,
   })),
 }));
 
-const getEcommerceProductsDbMock = vi.mocked(getEcommerceProductsDb);
+const getDbMock = vi.mocked(getDb);
 
 beforeEach(() => {
-  getEcommerceProductsDbMock.mockReset();
-  getEcommerceProductsDbMock.mockResolvedValue({
+  getDbMock.mockReset();
+  getDbMock.mockResolvedValue({
     collection: () => cmsDbMocks,
-  } as unknown as Awaited<ReturnType<typeof getEcommerceProductsDb>>);
+  } as unknown as Awaited<ReturnType<typeof getDb>>);
   cmsDbMocks.find.mockReset();
   cmsDbMocks.findOne.mockReset();
   cmsDbMocks.updateOne.mockReset();
@@ -111,7 +111,7 @@ describe('checkout CMS localization', () => {
   it('falls back to default checkout content without console.error when ecommerce MongoDB is offline', async () => {
     const error = new Error('connect ECONNREFUSED 127.0.0.1:27021');
     error.name = 'MongoServerSelectionError';
-    getEcommerceProductsDbMock.mockRejectedValueOnce(error);
+    getDbMock.mockRejectedValueOnce(error);
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 

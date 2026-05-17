@@ -130,7 +130,7 @@ export const useProductFormPolishNameAutoSync = ({
     if (autoSyncStateUpdate.shouldDisableAutoSync) {
       polishBaseNameAutoSyncRef.current = false;
     }
-    if (currentNamePl === generatedPolishName.polishTitle) return;
+    if (matchesGeneratedPolishTitle(currentNamePl, generatedPolishName.polishTitle)) return;
     setValue('name_pl', generatedPolishName.polishTitle, {
       shouldDirty: true,
       shouldTouch: false,

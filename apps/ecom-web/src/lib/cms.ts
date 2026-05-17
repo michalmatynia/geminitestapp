@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions, complexity, max-lines, max-lines-per-function, no-console */
 import { cache } from 'react';
-import { getEcommerceProductsDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import type { Collection } from 'mongodb';
 import {
   HOME_CONTENT_DEFAULTS,
@@ -166,7 +166,7 @@ function logCmsIndexFailure(error: unknown): void {
 }
 
 async function getCmsPagesCollection(): Promise<Collection<CmsPageDoc>> {
-  const db = await getEcommerceProductsDb();
+  const db = await getDb();
   const collection = db.collection<CmsPageDoc>(CMS_PAGES_COLLECTION);
   cmsPagesIndexPromise ??= collection.createIndex({ page: 1, locale: 1 }, { unique: true }).catch((error) => {
     cmsPagesIndexPromise = null;

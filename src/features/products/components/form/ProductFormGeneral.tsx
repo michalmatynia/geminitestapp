@@ -27,6 +27,21 @@ import {
 const readMetadataArray = <T,>(value: unknown): T[] =>
   Array.isArray(value) ? (value as T[]) : [];
 
+const DEFAULT_FORM_LANGUAGES: ProductFormLanguage[] = [
+  { code: 'EN', name: 'English' },
+  { code: 'PL', name: 'Polish' },
+];
+
+const resolveFormLanguages = (
+  rawLanguages: ProductFormLanguage[],
+  catalogsLoading: boolean,
+  languagesLoading: boolean
+): ProductFormLanguage[] => {
+  if (rawLanguages.length > 0) return rawLanguages;
+  if (catalogsLoading || languagesLoading) return rawLanguages;
+  return DEFAULT_FORM_LANGUAGES;
+};
+
 export default function ProductFormGeneral(): React.JSX.Element {
   const validationState = useProductValidationState();
   const productFormMetadata = useProductFormMetadata();
@@ -36,8 +51,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
     recentSignatures: [],
     cycleHits: 0,
   });
-  const filteredLanguages = readMetadataArray<ProductFormLanguage>(
+  const rawFilteredLanguages = readMetadataArray<ProductFormLanguage>(
     productFormMetadata.filteredLanguages
+  );
+  const filteredLanguages = resolveFormLanguages(
+    rawFilteredLanguages,
+    productFormMetadata.catalogsLoading,
+    productFormMetadata.languagesLoading
   );
   const categories = readMetadataArray<NonNullable<ProductFormPolishNameCategories>[number]>(
     productFormMetadata.categories
@@ -72,7 +92,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <ProductFormGeneralLanguageFields
-        hasCatalogs={filteredLanguages.length > 0}
+        hasCatalogs={productFormMetadata.catalogsLoading || productFormMetadata.languagesLoading || productFormMetadata.hasExistingProduct || productFormMetadata.selectedCatalogIds.length > 0}
         languagesReady={filteredLanguages.length > 0}
         filteredLanguages={filteredLanguages}
         displayValues={displayValues}

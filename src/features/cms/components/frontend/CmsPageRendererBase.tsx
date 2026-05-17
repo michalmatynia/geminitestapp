@@ -71,10 +71,10 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   const resolvedMediaStyles = mediaStyles ?? null;
   const resolvedColorSchemes = resolveStorefrontAppearanceColorSchemes(
-    colorSchemes,
+    colorSchemes ?? {},
     props.appearanceMode ?? 'default'
   );
-  const resolvedLayout = layout;
+  const resolvedLayout = layout ?? {};
 
   const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
     const sectionId = comp.content.sectionId;
@@ -148,27 +148,27 @@ interface SectionRendererInnerProps {
   type: string;
 }
 
-const SECTION_COMPONENTS: Record<string, React.ComponentType<unknown>> = {
-  AnnouncementBar: FrontendAnnouncementBarSection,
-  Block: FrontendBlockSection,
-  TextElement: FrontendTextElementSection,
-  TextAtom: FrontendTextAtomSection,
-  ImageElement: FrontendImageElementSection,
-  Model3DElement: FrontendModel3DElementSection,
-  ButtonElement: FrontendButtonElementSection,
-  Hero: FrontendHeroSection,
-  ImageWithText: FrontendImageWithTextSection,
-  RichText: FrontendRichTextSection,
-  Grid: FrontendGridSection,
-  Accordion: FrontendAccordionSection,
-  Testimonials: FrontendTestimonialsSection,
-  Video: FrontendVideoSection,
-  Slideshow: FrontendSlideshowSection,
-  Newsletter: FrontendNewsletterSection,
-  ContactForm: FrontendContactFormSection,
+const SECTION_RENDERERS: Record<string, () => React.ReactNode> = {
+  AnnouncementBar: () => <FrontendAnnouncementBarSection />,
+  Block: () => <FrontendBlockSection />,
+  TextElement: () => <FrontendTextElementSection />,
+  TextAtom: () => <FrontendTextAtomSection />,
+  ImageElement: () => <FrontendImageElementSection />,
+  Model3DElement: () => <FrontendModel3DElementSection />,
+  ButtonElement: () => <FrontendButtonElementSection />,
+  Hero: () => <FrontendHeroSection />,
+  ImageWithText: () => <FrontendImageWithTextSection />,
+  RichText: () => <FrontendRichTextSection />,
+  Grid: () => <FrontendGridSection />,
+  Accordion: () => <FrontendAccordionSection />,
+  Testimonials: () => <FrontendTestimonialsSection />,
+  Video: () => <FrontendVideoSection />,
+  Slideshow: () => <FrontendSlideshowSection />,
+  Newsletter: () => <FrontendNewsletterSection />,
+  ContactForm: () => <FrontendContactFormSection />,
 };
 
 function SectionRendererInner(props: SectionRendererInnerProps): React.ReactNode {
-  const Component = SECTION_COMPONENTS[props.type];
-  return Component ? <Component /> : null;
+  const renderSection = SECTION_RENDERERS[props.type];
+  return renderSection ? renderSection() : null;
 }

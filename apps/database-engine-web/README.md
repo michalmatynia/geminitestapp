@@ -91,7 +91,17 @@ and cloud MongoDB targets:
 - `geminitestapp`
 - `studiq`
 - `cms-builder`
-- `products` (Ecommerce storefront database; local default `mongodb://127.0.0.1:27021/ecom_local`)
+- `products` (shared Product List database; local default `mongodb://127.0.0.1:27017/products_local`)
+
+For local geminitestapp development, the `app` database and detached
+`products_local` database share the same local MongoDB process on
+`127.0.0.1:27017`. Start or inspect that combined local source from the
+repository root:
+
+```bash
+npm run mongo:app-products:up
+npm run mongo:app-products:status
+```
 
 Use `/admin/databases/engine` to inspect local/cloud reachability, database
 size, collection sizes, and per-collection document counts. Each application

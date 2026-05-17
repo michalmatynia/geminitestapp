@@ -69,8 +69,11 @@ function isLoopbackMongoUri(uri: string | undefined): boolean {
   }
 }
 
-function normalizeSource(value: string | undefined): MongoSource {
-  return value?.toLowerCase() === 'cloud' ? 'cloud' : 'local';
+function normalizeSource(value: string | undefined, fallback: MongoSource = 'local'): MongoSource {
+  const normalized = value?.toLowerCase();
+  if (normalized === 'cloud') return 'cloud';
+  if (normalized === 'local') return 'local';
+  return fallback;
 }
 
 function isTruthyEnv(value: string | undefined): boolean {
@@ -114,12 +117,16 @@ function isProductionLike(): boolean {
   return env === 'production' || vercelEnv === 'production';
 }
 
+function defaultDeploymentMongoSource(): MongoSource {
+  return isProductionLike() || isVercelRuntime() ? 'cloud' : 'local';
+}
+
 function getMongoOptionPrefixes(context: MongoContext): string[] {
   if (context === 'products') {
     return ['PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
   }
   if (context === 'ecommerce') {
-    return ['ECOM_MONGODB', 'MONGODB_ECOM', 'PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
+    return ['PRODUCTS_MONGODB', 'MONGODB_PRODUCTS', 'MONGODB'];
   }
   return ['ECOM_MONGODB', 'MONGODB_ECOM', 'MONGODB'];
 }
@@ -331,7 +338,55 @@ function resolveLocalEcommerceRuntimeMongoConfig(): MongoConfig {
   };
 }
 
-// eslint-disable-next-line complexity, max-lines-per-function
+function resolveEcommerceRuntimeSource(): MongoSource {
+  return normalizeSource(
+    firstEnvValue(
+      'ECOM_MONGODB_ACTIVE_SOURCE',
+      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ECOM_ACTIVE_SOURCE',
+      'MONGODB_ECOM_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+    defaultDeploymentMongoSource(),
+  );
+}
+
+function selectSourceMongoConfig(
+  source: MongoSource,
+  localConfig: MongoConfig | null,
+  cloudConfig: MongoConfig | null,
+  fallbackConfig: MongoConfig,
+): MongoConfig {
+  if (source === 'cloud' && cloudConfig !== null) return cloudConfig;
+  if (shouldUseCloudInsteadOfLoopbackLocal(source, localConfig, cloudConfig)) {
+    return cloudConfig;
+  }
+
+  return fallbackSourceMongoConfig(localConfig, cloudConfig, fallbackConfig);
+}
+
+function shouldUseCloudInsteadOfLoopbackLocal(
+  source: MongoSource,
+  localConfig: MongoConfig | null,
+  cloudConfig: MongoConfig | null,
+): cloudConfig is MongoConfig {
+  if (source !== 'local') return false;
+  if (cloudConfig === null) return false;
+  if (!isVercelRuntime()) return false;
+  return isLoopbackMongoUri(localConfig?.uri);
+}
+
+function fallbackSourceMongoConfig(
+  localConfig: MongoConfig | null,
+  cloudConfig: MongoConfig | null,
+  fallbackConfig: MongoConfig,
+): MongoConfig {
+  if (localConfig !== null) return localConfig;
+  if (cloudConfig !== null) return cloudConfig;
+  return fallbackConfig;
+}
+
 function resolveEcommerceRuntimeMongoConfig(): MongoConfig {
   if (shouldPinEcommerceToLocalDevelopment()) {
     return resolveLocalEcommerceRuntimeMongoConfig();
@@ -348,43 +403,27 @@ function resolveEcommerceRuntimeMongoConfig(): MongoConfig {
     ],
   ));
   if (directConfig) return directConfig;
-  const genericDirectConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_URI'],
-    ['MONGODB_DB'],
-  ));
-  if (genericDirectConfig) return genericDirectConfig;
 
-  const source = normalizeSource(
-    firstEnvValue(
-      'ECOM_MONGODB_ACTIVE_SOURCE',
-      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'MONGODB_ACTIVE_SOURCE',
-      'MONGODB_ACTIVE_SOURCE_DEFAULT',
-    ),
-  );
+  const source = resolveEcommerceRuntimeSource();
 
   const localConfig = completeMongoConfig(readMongoConfig(
     [
       'ECOM_MONGODB_LOCAL_URI',
       'MONGODB_ECOM_LOCAL_URI',
-      'MONGODB_LOCAL_URI',
     ],
     [
       'ECOM_MONGODB_LOCAL_DB',
       'MONGODB_ECOM_LOCAL_DB',
-      'MONGODB_LOCAL_DB',
     ],
   ));
   const cloudConfig = completeMongoConfig(readMongoConfig(
     [
       'ECOM_MONGODB_CLOUD_URI',
       'MONGODB_ECOM_CLOUD_URI',
-      'MONGODB_CLOUD_URI',
     ],
     [
       'ECOM_MONGODB_CLOUD_DB',
       'MONGODB_ECOM_CLOUD_DB',
-      'MONGODB_CLOUD_DB',
     ],
   ));
   const genericFallbackConfig = completeMongoConfig(readMongoConfig(
@@ -392,15 +431,10 @@ function resolveEcommerceRuntimeMongoConfig(): MongoConfig {
     ['MONGODB_DB'],
   ));
 
-  if (source === 'cloud' && cloudConfig) return cloudConfig;
-  if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
-    return cloudConfig;
-  }
-
-  return localConfig ?? cloudConfig ?? genericFallbackConfig ?? {
+  return selectSourceMongoConfig(source, localConfig, cloudConfig, genericFallbackConfig ?? {
     uri: DEFAULT_ECOM_MONGODB_URI,
     dbName: DEFAULT_ECOM_MONGODB_DB,
-  };
+  });
 }
 
 // eslint-disable-next-line complexity, max-lines-per-function
@@ -409,14 +443,7 @@ function resolveMongoConfigCandidates(): MongoConfig[] {
     return [resolveLocalEcommerceRuntimeMongoConfig()];
   }
 
-  const source = normalizeSource(
-    firstEnvValue(
-      'ECOM_MONGODB_ACTIVE_SOURCE',
-      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'MONGODB_ACTIVE_SOURCE',
-      'MONGODB_ACTIVE_SOURCE_DEFAULT',
-    ),
-  );
+  const source = resolveEcommerceRuntimeSource();
 
   const directConfig = completeMongoConfig(readMongoConfig(
     [
@@ -434,24 +461,20 @@ function resolveMongoConfigCandidates(): MongoConfig[] {
     [
       'ECOM_MONGODB_LOCAL_URI',
       'MONGODB_ECOM_LOCAL_URI',
-      'MONGODB_LOCAL_URI',
     ],
     [
       'ECOM_MONGODB_LOCAL_DB',
       'MONGODB_ECOM_LOCAL_DB',
-      'MONGODB_LOCAL_DB',
     ],
   ));
   const cloudConfig = completeMongoConfig(readMongoConfig(
     [
       'ECOM_MONGODB_CLOUD_URI',
       'MONGODB_ECOM_CLOUD_URI',
-      'MONGODB_CLOUD_URI',
     ],
     [
       'ECOM_MONGODB_CLOUD_DB',
       'MONGODB_ECOM_CLOUD_DB',
-      'MONGODB_CLOUD_DB',
     ],
   ));
 
@@ -490,60 +513,83 @@ export function hasMongoConfig(): boolean {
   return Boolean(resolveMongoUri());
 }
 
-// eslint-disable-next-line complexity
-function resolveProductsMongoUri(): string {
-  const directUri = envValue('PRODUCTS_MONGODB_URI') ?? envValue('MONGODB_PRODUCTS_URI');
-  if (directUri !== undefined) return directUri;
+function fallbackProductsMongoConfig(): MongoConfig {
+  return {
+    uri: DEFAULT_PRODUCTS_MONGODB_URI,
+    dbName: DEFAULT_PRODUCTS_MONGODB_DB,
+  };
+}
 
-  const source =
-    (
-      envValue('PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      envValue('MONGODB_ACTIVE_SOURCE') ??
-      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      'local'
-    )
-      .toLowerCase();
-
-  if (source === 'cloud') {
-    const uri =
-      envValue('PRODUCTS_MONGODB_CLOUD_URI') ??
-      envValue('MONGODB_PRODUCTS_CLOUD_URI');
-    if (uri !== undefined) return uri;
-  }
-
-  return (
-    envValue('PRODUCTS_MONGODB_LOCAL_URI') ??
-    envValue('MONGODB_PRODUCTS_LOCAL_URI') ??
-    DEFAULT_PRODUCTS_MONGODB_URI
+function resolveProductsMongoSource(): MongoSource {
+  return normalizeSource(
+    firstEnvValue(
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE',
+      'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_PRODUCTS_ACTIVE_SOURCE',
+      'MONGODB_PRODUCTS_ACTIVE_SOURCE_DEFAULT',
+      'MONGODB_ACTIVE_SOURCE',
+      'MONGODB_ACTIVE_SOURCE_DEFAULT',
+    ),
+    defaultDeploymentMongoSource(),
   );
 }
 
-// eslint-disable-next-line complexity
+function resolveProductsDirectMongoConfig(): MongoConfig | null {
+  return completeMongoConfig(readMongoConfig(
+    [
+      'PRODUCTS_MONGODB_URI',
+      'MONGODB_PRODUCTS_URI',
+    ],
+    [
+      'PRODUCTS_MONGODB_DB',
+      'MONGODB_PRODUCTS_DB',
+    ],
+  ), DEFAULT_PRODUCTS_MONGODB_DB);
+}
+
+function resolveProductsLocalMongoConfig(): MongoConfig | null {
+  return completeMongoConfig(readMongoConfig(
+    [
+      'PRODUCTS_MONGODB_LOCAL_URI',
+      'MONGODB_PRODUCTS_LOCAL_URI',
+    ],
+    [
+      'PRODUCTS_MONGODB_LOCAL_DB',
+      'MONGODB_PRODUCTS_LOCAL_DB',
+    ],
+  ), DEFAULT_PRODUCTS_MONGODB_DB);
+}
+
+function resolveProductsCloudMongoConfig(): MongoConfig | null {
+  return completeMongoConfig(readMongoConfig(
+    [
+      'PRODUCTS_MONGODB_CLOUD_URI',
+      'MONGODB_PRODUCTS_CLOUD_URI',
+    ],
+    [
+      'PRODUCTS_MONGODB_CLOUD_DB',
+      'MONGODB_PRODUCTS_CLOUD_DB',
+    ],
+  ), DEFAULT_PRODUCTS_MONGODB_DB);
+}
+
+function resolveProductsMongoConfig(): MongoConfig {
+  const directConfig = resolveProductsDirectMongoConfig();
+  if (directConfig) return directConfig;
+
+  const source = resolveProductsMongoSource();
+  const localConfig = resolveProductsLocalMongoConfig();
+  const cloudConfig = resolveProductsCloudMongoConfig();
+
+  return selectSourceMongoConfig(source, localConfig, cloudConfig, fallbackProductsMongoConfig());
+}
+
+function resolveProductsMongoUri(): string {
+  return resolveProductsMongoConfig().uri;
+}
+
 function resolveProductsMongoDb(): string {
-  const directDb = envValue('PRODUCTS_MONGODB_DB') ?? envValue('MONGODB_PRODUCTS_DB');
-  if (directDb !== undefined) return directDb;
-
-  const source =
-    (
-      envValue('PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      envValue('MONGODB_ACTIVE_SOURCE') ??
-      envValue('MONGODB_ACTIVE_SOURCE_DEFAULT') ??
-      'local'
-    )
-      .toLowerCase();
-
-  if (source === 'cloud') {
-    const db =
-      envValue('PRODUCTS_MONGODB_CLOUD_DB') ??
-      envValue('MONGODB_PRODUCTS_CLOUD_DB');
-    if (db !== undefined) return db;
-  }
-
-  return (
-    envValue('PRODUCTS_MONGODB_LOCAL_DB') ??
-    envValue('MONGODB_PRODUCTS_LOCAL_DB') ??
-    DEFAULT_PRODUCTS_MONGODB_DB
-  );
+  return resolveProductsMongoConfig().dbName;
 }
 
 function resolveEcommerceProductsMongoUri(): string {
@@ -555,173 +601,34 @@ function shouldPinEcommerceToLocalDevelopment(): boolean {
 }
 
 function resolveLocalEcommerceProductsMongoConfig(): MongoConfig {
-  return completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_LOCAL_URI',
-      'MONGODB_PRODUCTS_LOCAL_URI',
-      'ECOM_MONGODB_LOCAL_URI',
-      'MONGODB_ECOM_LOCAL_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_LOCAL_DB',
-      'MONGODB_PRODUCTS_LOCAL_DB',
-      'ECOM_MONGODB_LOCAL_DB',
-      'MONGODB_ECOM_LOCAL_DB',
-    ],
-  ), DEFAULT_PRODUCTS_MONGODB_DB) ?? {
-    uri: DEFAULT_PRODUCTS_MONGODB_URI,
-    dbName: DEFAULT_PRODUCTS_MONGODB_DB,
-  };
+  return resolveProductsLocalMongoConfig() ?? fallbackProductsMongoConfig();
 }
 
-// eslint-disable-next-line complexity, max-lines-per-function
 function resolveEcommerceProductsMongoConfig(): MongoConfig {
   if (shouldPinEcommerceToLocalDevelopment()) {
     return resolveLocalEcommerceProductsMongoConfig();
   }
 
-  const directConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_URI',
-      'MONGODB_PRODUCTS_URI',
-      'ECOM_MONGODB_URI',
-      'MONGODB_ECOM_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_DB',
-      'MONGODB_PRODUCTS_DB',
-      'ECOM_MONGODB_DB',
-      'MONGODB_ECOM_DB',
-    ],
-  ));
+  const directConfig = resolveProductsDirectMongoConfig();
   if (directConfig) return directConfig;
 
-  const source = normalizeSource(
-    firstEnvValue(
-      'ECOM_MONGODB_ACTIVE_SOURCE',
-      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'PRODUCTS_MONGODB_ACTIVE_SOURCE',
-      'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'MONGODB_ACTIVE_SOURCE',
-      'MONGODB_ACTIVE_SOURCE_DEFAULT',
-    ),
-  );
-  const localConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_LOCAL_URI',
-      'MONGODB_PRODUCTS_LOCAL_URI',
-      'ECOM_MONGODB_LOCAL_URI',
-      'MONGODB_ECOM_LOCAL_URI',
-      'MONGODB_LOCAL_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_LOCAL_DB',
-      'MONGODB_PRODUCTS_LOCAL_DB',
-      'ECOM_MONGODB_LOCAL_DB',
-      'MONGODB_ECOM_LOCAL_DB',
-      'MONGODB_LOCAL_DB',
-    ],
-  ));
-  const cloudConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_CLOUD_URI',
-      'MONGODB_PRODUCTS_CLOUD_URI',
-      'ECOM_MONGODB_CLOUD_URI',
-      'MONGODB_ECOM_CLOUD_URI',
-      'MONGODB_CLOUD_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_CLOUD_DB',
-      'MONGODB_PRODUCTS_CLOUD_DB',
-      'ECOM_MONGODB_CLOUD_DB',
-      'MONGODB_ECOM_CLOUD_DB',
-      'MONGODB_CLOUD_DB',
-    ],
-  ));
-  const genericFallbackConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_URI'],
-    ['MONGODB_DB'],
-  ));
+  const source = resolveProductsMongoSource();
+  const localConfig = resolveProductsLocalMongoConfig();
+  const cloudConfig = resolveProductsCloudMongoConfig();
 
-  if (localConfig && shouldPinEcommerceToLocalDevelopment()) return localConfig;
-  if (source === 'cloud' && cloudConfig) return cloudConfig;
-  if (source === 'local' && isVercelRuntime() && isLoopbackMongoUri(localConfig?.uri) && cloudConfig) {
-    return cloudConfig;
-  }
-
-  return localConfig ?? cloudConfig ?? genericFallbackConfig ?? {
-    uri: DEFAULT_ECOM_MONGODB_URI,
-    dbName: DEFAULT_ECOM_MONGODB_DB,
-  };
+  return selectSourceMongoConfig(source, localConfig, cloudConfig, fallbackProductsMongoConfig());
 }
 
-// eslint-disable-next-line complexity, max-lines-per-function
+// eslint-disable-next-line complexity
 function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
   if (shouldPinEcommerceToLocalDevelopment()) {
     return [resolveLocalEcommerceProductsMongoConfig()];
   }
 
-  const source = normalizeSource(
-    firstEnvValue(
-      'ECOM_MONGODB_ACTIVE_SOURCE',
-      'ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'PRODUCTS_MONGODB_ACTIVE_SOURCE',
-      'PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT',
-      'MONGODB_ACTIVE_SOURCE',
-      'MONGODB_ACTIVE_SOURCE_DEFAULT',
-    ),
-  );
-
-  const directConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_URI',
-      'MONGODB_PRODUCTS_URI',
-      'ECOM_MONGODB_URI',
-      'MONGODB_ECOM_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_DB',
-      'MONGODB_PRODUCTS_DB',
-      'ECOM_MONGODB_DB',
-      'MONGODB_ECOM_DB',
-    ],
-  ));
-  const localConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_LOCAL_URI',
-      'MONGODB_PRODUCTS_LOCAL_URI',
-      'ECOM_MONGODB_LOCAL_URI',
-      'MONGODB_ECOM_LOCAL_URI',
-      'MONGODB_LOCAL_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_LOCAL_DB',
-      'MONGODB_PRODUCTS_LOCAL_DB',
-      'ECOM_MONGODB_LOCAL_DB',
-      'MONGODB_ECOM_LOCAL_DB',
-      'MONGODB_LOCAL_DB',
-    ],
-  ));
-  const cloudConfig = completeMongoConfig(readMongoConfig(
-    [
-      'PRODUCTS_MONGODB_CLOUD_URI',
-      'MONGODB_PRODUCTS_CLOUD_URI',
-      'ECOM_MONGODB_CLOUD_URI',
-      'MONGODB_ECOM_CLOUD_URI',
-      'MONGODB_CLOUD_URI',
-    ],
-    [
-      'PRODUCTS_MONGODB_CLOUD_DB',
-      'MONGODB_PRODUCTS_CLOUD_DB',
-      'ECOM_MONGODB_CLOUD_DB',
-      'MONGODB_ECOM_CLOUD_DB',
-      'MONGODB_CLOUD_DB',
-    ],
-  ));
-  const genericFallbackConfig = completeMongoConfig(readMongoConfig(
-    ['MONGODB_URI'],
-    ['MONGODB_DB'],
-  ));
+  const source = resolveProductsMongoSource();
+  const directConfig = resolveProductsDirectMongoConfig();
+  const localConfig = resolveProductsLocalMongoConfig();
+  const cloudConfig = resolveProductsCloudMongoConfig();
 
   const primary = resolveEcommerceProductsMongoConfig();
   const allowAlternateSourceFallback = readBooleanFromEnv(
@@ -747,7 +654,6 @@ function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
 
   if (shouldTryLocalFallback) addUnique(localConfig);
   if (shouldTryCloudFallback) addUnique(cloudConfig);
-  addUnique(genericFallbackConfig);
 
   return candidates;
 }

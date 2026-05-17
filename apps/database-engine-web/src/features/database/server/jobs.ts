@@ -17,6 +17,7 @@ import type {
   ProductAiJobUpdate,
 } from '@/shared/contracts/jobs';
 import { operationFailedError } from '@/shared/errors/app-error';
+import { writeLastBackupState } from '@/shared/lib/db/services/last-backup-state';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -260,6 +261,10 @@ export async function processProductAiJob(jobId: string): Promise<ProductAiJob> 
   try {
     const result = await runBackupForJob(record);
     await markBackupSucceededSafely(jobId);
+    await writeLastBackupState({
+      lastBackupAt: new Date().toISOString(),
+      application: resolveManagedBackupApplication(record.payload),
+    });
     const updated = await repository.updateJob(
       jobId,
       toJobUpdate({

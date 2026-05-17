@@ -11,6 +11,7 @@ import {
 
 import * as backup from '@/features/database/server/api/backup/route-handler';
 import * as backups from '@/features/database/server/api/backups/route-handler';
+import * as lastBackup from '@/features/database/server/api/last-backup/route-handler';
 import * as browse from '@/features/database/server/api/browse/route-handler';
 import * as copyCollection from '@/features/database/server/api/copy-collection/route-handler';
 import * as crud from '@/features/database/server/api/crud/route-handler';
@@ -40,6 +41,7 @@ import * as engineOperationsJobCancel from '@/features/database/server/api/engin
 const ROUTES = [
   { pattern: ['backup'], module: backup },
   { pattern: ['backups'], module: backups },
+  { pattern: ['last-backup'], module: lastBackup },
   { pattern: ['browse'], module: browse },
   { pattern: ['copy-collection'], module: copyCollection },
   { pattern: ['crud'], module: crud },

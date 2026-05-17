@@ -2,7 +2,7 @@
 
 /* eslint-disable max-lines */
 
-import type { JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
 import type {
   DatabaseEngineManagedMongoApplication,
@@ -264,6 +264,38 @@ function DatabaseEngineCurrentJobsPanel(): JSX.Element {
   );
 }
 
+type LastBackupData = { lastBackupAt: string | null; application: string | null };
+
+function LastBackupPanel(): JSX.Element {
+  const [data, setData] = useState<LastBackupData | null>(null);
+
+  useEffect(() => {
+    fetch('/api/databases/last-backup')
+      .then((r) => r.json() as Promise<LastBackupData>)
+      .then(setData)
+      .catch(() => undefined);
+  }, []);
+
+  const label = data?.lastBackupAt
+    ? new Date(data.lastBackupAt).toLocaleString()
+    : 'No backup recorded yet';
+
+  const appLabel = data?.application ?? null;
+
+  return (
+    <section
+      aria-label='Last backup'
+      className='rounded-md border border-white/10 bg-card/20 p-3'
+    >
+      <h2 className='text-sm font-semibold text-white'>Last Backup</h2>
+      <p className='mt-1 text-xs text-gray-400'>
+        {label}
+        {appLabel !== null ? ` · ${appLabel}` : ''}
+      </p>
+    </section>
+  );
+}
+
 function DatabaseEngineActiveView({
   activeView,
 }: {
@@ -337,7 +369,10 @@ function DatabaseEngineWorkspace(): JSX.Element {
     >
       <div className='space-y-6'>
         <DatabaseEngineViewTabs activeView={activeView} onViewChange={setActiveView} />
-        <DatabaseEngineCurrentJobsPanel />
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <DatabaseEngineCurrentJobsPanel />
+          <LastBackupPanel />
+        </div>
         <DatabaseEngineValidationErrors errors={validationErrors} />
         <DatabaseEngineActiveView activeView={activeView} />
       </div>

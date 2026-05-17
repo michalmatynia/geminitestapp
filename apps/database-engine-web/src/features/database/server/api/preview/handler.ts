@@ -30,12 +30,12 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
-  mongoExecFileAsync,
+  execFileAsync as mongoExecFileAsync,
   getMongoRestoreCommand,
   resolveMongoBackupPath,
-  assertValidMongoBackupName,
-  ensureMongoBackupsDir,
-} from '@/shared/lib/db/services/database-backup-scheduler';
+  assertValidBackupName as assertValidMongoBackupName,
+  ensureBackupsDir as ensureMongoBackupsDir,
+} from '@/shared/lib/db/utils/mongo';
 import {
   getDatabaseSizeFormatted,
   getCollectionSizeFormatted,
@@ -44,7 +44,25 @@ import {
   resolvePreviewTarget,
 } from '@/features/database/server/utils';
 
-// ... (existing helper functions getFieldType and buildTableDetail remain)
+const getFieldType = (value: unknown): string => {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
+};
+
+const buildTableDetail = (
+  name: string,
+  sample: Record<string, unknown>[],
+  indexes: Record<string, unknown>[],
+  rowEstimate: number,
+  sizeFormatted: string
+) => {
+  const columns =
+    sample.length > 0
+      ? Object.entries(sample[0]).map(([field, value]) => ({ field, type: getFieldType(value) }))
+      : [];
+  return { name, columns, indexes, rowEstimate, sizeFormatted };
+};
 
 /**
  * Executes a Mongo restore command for backup preview.
@@ -170,6 +188,7 @@ export async function postDatabasesPreviewHandler(
         tableDetails,
         databaseSize,
         page: Math.max(1, body.page ?? 1),
+        pageSize: body.pageSize ?? 20,
     });
   } finally {
     if (previewMode === 'backup') {

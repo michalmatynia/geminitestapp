@@ -164,30 +164,33 @@ function mapDomainDocumentToDomain(doc: DomainDocument): CmsDomainDto {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => ({ id }) as Filter<T>;
+const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => {
+  const filter: Filter<T> = { id } as unknown as Filter<T>;
+  return filter;
+};
 
 const DEFAULT_CMS_LOCALE = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
 
 const normalizeLocale = (value?: string | null): string => {
   const normalized = value?.trim().toLowerCase();
-  return normalized && normalized.length > 0 ? normalized : DEFAULT_CMS_LOCALE;
+  return normalized !== undefined && normalized !== '' ? normalized : DEFAULT_CMS_LOCALE;
 };
 
 const normalizeLocaleOrNull = (value?: string | null): string | null => {
   const normalized = value?.trim().toLowerCase();
-  return normalized && normalized.length > 0 ? normalized : null;
+  return normalized !== undefined && normalized !== '' ? normalized : null;
 };
 
 const normalizeTranslationGroupId = (value?: string | null): string | null => {
   const normalized = value?.trim();
-  return normalized && normalized.length > 0 ? normalized : null;
+  return normalized !== undefined && normalized !== '' ? normalized : null;
 };
 
 const resolveLocaleCandidates = (
   options?: CmsPageLookupOptions | CmsSlugLookupOptions
 ): string[] => {
   const requested = normalizeLocaleOrNull(options?.locale);
-  if (!requested) {
+  if (requested === null) {
     return [];
   }
 
@@ -355,7 +358,7 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
     const db = await getMongoDb();
-    const update = removeUndefined({
+    const update: Partial<PageDocument> = removeUndefined({
       name: data.name,
       status: data.status,
       publishedAt:
@@ -381,7 +384,7 @@ export const mongoCmsRepository: CmsRepository = {
         data.sourceLocale !== undefined ? normalizeLocaleOrNull(data.sourceLocale) : undefined,
       translationStatus: data.translationStatus,
       updatedAt: new Date(),
-    }) as Partial<PageDocument>;
+    });
 
     const [result, slugLinks] = await Promise.all([
       db
@@ -528,7 +531,7 @@ export const mongoCmsRepository: CmsRepository = {
       const doc: SlugDocument = {
         id,
         slug: data.slug,
-        isDefault: data.isDefault || false,
+        isDefault: data.isDefault ?? false,
         locale: normalizeLocale(data.locale),
         translationGroupId: normalizeTranslationGroupId(data.translationGroupId) ?? id,
         createdAt: new Date(),
@@ -561,7 +564,7 @@ export const mongoCmsRepository: CmsRepository = {
   ): Promise<Slug | null> {
     try {
       const db = await getMongoDb();
-      const update = removeUndefined({
+      const update: Partial<SlugDocument> = removeUndefined({
         slug: data.slug,
         isDefault: data.isDefault,
         locale: data.locale !== undefined ? normalizeLocale(data.locale) : undefined,
@@ -570,7 +573,7 @@ export const mongoCmsRepository: CmsRepository = {
             ? normalizeTranslationGroupId(data.translationGroupId)
             : undefined,
         updatedAt: new Date(),
-      }) as Partial<SlugDocument>;
+      });
 
       const result = await db
         .collection<SlugDocument>(slugsCollection)
@@ -649,8 +652,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,
-      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault ?? false,
+      ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     }));
@@ -668,8 +671,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,
-      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault ?? false,
+      ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
@@ -684,7 +687,7 @@ export const mongoCmsRepository: CmsRepository = {
       typography: data.typography,
       spacing: data.spacing,
       customCss: data.customCss ?? null,
-      isDefault: data.isDefault || false,
+      isDefault: data.isDefault ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -695,15 +698,15 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,
-      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault ?? false,
+      ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
   },
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
     const db = await getMongoDb();
-    const update = removeUndefined({
+    const update: Partial<ThemeDocument> = removeUndefined({
       name: data.name,
       colors: data.colors,
       typography: data.typography,
@@ -711,7 +714,7 @@ export const mongoCmsRepository: CmsRepository = {
       customCss: data.customCss,
       isDefault: data.isDefault,
       updatedAt: new Date(),
-    }) as Partial<ThemeDocument>;
+    });
 
     const result = await db
       .collection<ThemeDocument>(themesCollection)
@@ -727,8 +730,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: result.colors,
       typography: result.typography,
       spacing: result.spacing,
-      isDefault: result.isDefault || false,
-      ...(result.customCss && { customCss: result.customCss }),
+      isDefault: result.isDefault ?? false,
+      ...(result.customCss !== undefined && result.customCss !== null && result.customCss !== '' ? { customCss: result.customCss } : {}),
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
     };
@@ -745,8 +748,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,
-      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault ?? false,
+      ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
@@ -754,9 +757,10 @@ export const mongoCmsRepository: CmsRepository = {
 
   async getDefaultTheme(): Promise<CmsTheme | null> {
     const db = await getMongoDb();
+    const filter: Filter<ThemeDocument> = { isDefault: true };
     const doc = await db
       .collection<ThemeDocument>(themesCollection)
-      .findOne({ isDefault: true } as Filter<ThemeDocument>);
+      .findOne(filter);
     if (!doc) return null;
     return {
       id: doc.id,
@@ -764,8 +768,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,
-      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault ?? false,
+      ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
@@ -773,9 +777,10 @@ export const mongoCmsRepository: CmsRepository = {
 
   async setDefaultTheme(id: string): Promise<void> {
     const db = await getMongoDb();
+    const filter: Filter<ThemeDocument> = { isDefault: true };
     await db
       .collection<ThemeDocument>(themesCollection)
-      .updateMany({ isDefault: true } as Filter<ThemeDocument>, { $set: { isDefault: false } });
+      .updateMany(filter, { $set: { isDefault: false } });
     await db
       .collection<ThemeDocument>(themesCollection)
       .updateOne(buildIdFilter<ThemeDocument>(id), { $set: { isDefault: true } });
@@ -817,11 +822,11 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> {
     const db = await getMongoDb();
-    const update = removeUndefined({
+    const update: Partial<DomainDocument> = removeUndefined({
       domain: data.domain,
       aliasOf: data.aliasOf,
       updatedAt: new Date(),
-    }) as Partial<DomainDocument>;
+    });
 
     await db
       .collection<DomainDocument>(domainsCollection)

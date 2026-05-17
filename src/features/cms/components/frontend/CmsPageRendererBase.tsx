@@ -71,10 +71,10 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   const resolvedMediaStyles = mediaStyles ?? null;
   const resolvedColorSchemes = resolveStorefrontAppearanceColorSchemes(
-    colorSchemes ?? {},
+    colorSchemes,
     props.appearanceMode ?? 'default'
   );
-  const resolvedLayout = layout ?? {};
+  const resolvedLayout = layout;
 
   const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
     const sectionId = comp.content.sectionId;
@@ -85,8 +85,8 @@ export function renderCmsPageRenderer(props: CmsPageRendererBaseProps): React.Re
         type: comp.type,
         zone: normalizeZone(comp.content.zone),
         parentSectionId: comp.content.parentSectionId,
-        settings: comp.content.settings ?? {},
-        blocks: comp.content.blocks ?? [],
+        settings: comp.content.settings,
+        blocks: comp.content.blocks,
       },
     ];
   });
@@ -148,45 +148,27 @@ interface SectionRendererInnerProps {
   type: string;
 }
 
-function SectionRendererInner(props: SectionRendererInnerProps): React.ReactNode {
-  const { type } = props;
+const SECTION_COMPONENTS: Record<string, React.ComponentType<unknown>> = {
+  AnnouncementBar: FrontendAnnouncementBarSection,
+  Block: FrontendBlockSection,
+  TextElement: FrontendTextElementSection,
+  TextAtom: FrontendTextAtomSection,
+  ImageElement: FrontendImageElementSection,
+  Model3DElement: FrontendModel3DElementSection,
+  ButtonElement: FrontendButtonElementSection,
+  Hero: FrontendHeroSection,
+  ImageWithText: FrontendImageWithTextSection,
+  RichText: FrontendRichTextSection,
+  Grid: FrontendGridSection,
+  Accordion: FrontendAccordionSection,
+  Testimonials: FrontendTestimonialsSection,
+  Video: FrontendVideoSection,
+  Slideshow: FrontendSlideshowSection,
+  Newsletter: FrontendNewsletterSection,
+  ContactForm: FrontendContactFormSection,
+};
 
-  switch (type) {
-    case 'AnnouncementBar':
-      return <FrontendAnnouncementBarSection />;
-    case 'Block':
-      return <FrontendBlockSection />;
-    case 'TextElement':
-      return <FrontendTextElementSection />;
-    case 'TextAtom':
-      return <FrontendTextAtomSection />;
-    case 'ImageElement':
-      return <FrontendImageElementSection />;
-    case 'Model3DElement':
-      return <FrontendModel3DElementSection />;
-    case 'ButtonElement':
-      return <FrontendButtonElementSection />;
-    case 'Hero':
-      return <FrontendHeroSection />;
-    case 'ImageWithText':
-      return <FrontendImageWithTextSection />;
-    case 'RichText':
-      return <FrontendRichTextSection />;
-    case 'Grid':
-      return <FrontendGridSection />;
-    case 'Accordion':
-      return <FrontendAccordionSection />;
-    case 'Testimonials':
-      return <FrontendTestimonialsSection />;
-    case 'Video':
-      return <FrontendVideoSection />;
-    case 'Slideshow':
-      return <FrontendSlideshowSection />;
-    case 'Newsletter':
-      return <FrontendNewsletterSection />;
-    case 'ContactForm':
-      return <FrontendContactFormSection />;
-    default:
-      return null;
-  }
+function SectionRendererInner(props: SectionRendererInnerProps): React.ReactNode {
+  const Component = SECTION_COMPONENTS[props.type];
+  return Component ? <Component /> : null;
 }

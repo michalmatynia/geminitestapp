@@ -1916,7 +1916,7 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     overflow: hidden;
     border-radius: 9999px;
     border: 1px solid rgba(255, 255, 255, 0.8);
-    transition: all 300ms ease;
+    transition: transform 200ms ease, box-shadow 200ms ease;
     height: 64px;
     padding-inline: 2rem;
     background: linear-gradient(
@@ -2202,9 +2202,9 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     -webkit-backdrop-filter: blur(18px) saturate(1.22);
     backdrop-filter: blur(18px) saturate(1.22);
     backface-visibility: hidden;
-    will-change: border-color, box-shadow, filter;
-    transition-property: border-color, box-shadow, filter;
-    transition-duration: 280ms, 280ms, 220ms;
+    will-change: box-shadow, filter;
+    transition-property: box-shadow, filter;
+    transition-duration: 280ms, 220ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -2736,9 +2736,9 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
     opacity: var(--home-action-accent-opacity);
     pointer-events: none;
     backface-visibility: hidden;
-    will-change: opacity, border-color, box-shadow;
-    transition-property: opacity, border-color, box-shadow;
-    transition-duration: 240ms, 240ms, 280ms;
+    will-change: opacity, box-shadow;
+    transition-property: opacity, box-shadow;
+    transition-duration: 240ms, 280ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: 0s, 0s, 0s;
   }
@@ -4464,4 +4464,82 @@ body.kangur-client-shell-active [data-kangur-server-shell] {
       break-inside: avoid;
       page-break-inside: avoid;
     }
+  }
+
+  /* ─── Nightly (dark) / Dusk (sunset) mode — logo & nav palette overrides ────
+     1. Logo inner Q circle: SVG gradient fallbacks are white (#FFFFFF/#E6EEFF).
+        Set to transparent so the hole of the Q shows through to the background.
+     2. Nav item active ring: the hardcoded box-shadow ring is light-coloured and
+        jarring on dark surfaces; replaced with a muted indigo ring.
+  ─────────────────────────────────────────────────────────────────────────── */
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset']) {
+    --kangur-logo-glint: transparent;
+    --kangur-logo-word-start: #a8b0ff;
+    --kangur-logo-word-mid: #bfc8ff;
+    --kangur-logo-word-end: #c4b4ff;
+    --kangur-logo-ring-start: #7b82ff;
+    --kangur-logo-ring-end: #b08bff;
+    --kangur-logo-accent-start: #ffb86b;
+    --kangur-logo-accent-end: #ff8f76;
+    --kangur-logo-shadow: rgba(0, 0, 0, 0.38);
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .kangur-nav-item-active,
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .kangur-segmented-control-item-active {
+    box-shadow:
+      0 14px 24px -18px rgba(99, 102, 241, 0.32),
+      0 0 0 1px rgba(120, 130, 200, 0.28) !important;
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .kangur-nav-item-active:hover,
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .kangur-nav-item[data-nav-state='pressed'] {
+    box-shadow:
+      0 10px 18px -18px rgba(99, 102, 241, 0.28),
+      0 0 0 1px rgba(120, 130, 200, 0.22) !important;
+  }
+
+  :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])
+    .kangur-nav-item[data-nav-state='transitioning'] {
+    box-shadow:
+      0 18px 32px -20px rgba(99, 102, 241, 0.36),
+      0 0 0 1px rgba(130, 140, 220, 0.34) !important;
+  }
+
+  /* ─── Theme-switch transitions ───────────────────────────────────────────────
+     Smooth cross-fade of all theme-driven colors when the appearance mode
+     changes (e.g. daily → nightly). Only applied outside print mode to avoid
+     flashing during PDF generation.
+  ─────────────────────────────────────────────────────────────────────────── */
+  [data-kangur-appearance]:not(.kangur-print-mode) {
+    transition:
+      background-color 0.36s ease,
+      color 0.28s ease,
+      box-shadow 0.32s ease;
+  }
+
+  [data-kangur-appearance]:not(.kangur-print-mode) *,
+  [data-kangur-appearance]:not(.kangur-print-mode) *::before,
+  [data-kangur-appearance]:not(.kangur-print-mode) *::after {
+    transition:
+      background-color 0.36s ease,
+      color 0.28s ease,
+      box-shadow 0.32s ease,
+      fill 0.32s ease,
+      stroke 0.32s ease;
+  }
+
+  /* Active nav/segmented items carry a hardcoded ring shadow that jumps from
+     dim (dark theme) to bright (light theme). Snapping box-shadow for these
+     elements prevents the white-ring flash during theme transitions. */
+  [data-kangur-appearance]:not(.kangur-print-mode) .kangur-nav-item-active,
+  [data-kangur-appearance]:not(.kangur-print-mode) .kangur-segmented-control-item-active {
+    transition:
+      background-color 0.36s ease,
+      color 0.28s ease,
+      fill 0.32s ease,
+      stroke 0.32s ease;
   }

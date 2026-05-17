@@ -21,7 +21,8 @@ const toMongoId = (id: string): string | ObjectId => {
  */
 export const readMongoSetting = async (key: string): Promise<string | null> => {
   await applyActiveMongoSourceEnv();
-  if (!process.env['MONGODB_URI']) return null;
+  const mongodbUri = process.env['MONGODB_URI'];
+  if (mongodbUri === undefined || mongodbUri === '') return null;
   try {
     const mongo = await getMongoDb();
     const doc = await mongo

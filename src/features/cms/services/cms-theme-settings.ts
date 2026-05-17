@@ -17,7 +17,8 @@ const parseEnvNumber = (value: string | undefined): number | null => {
 
 const getCmsThemeSettingsReadTimeoutMs = (env: NodeJS.ProcessEnv = process.env): number | null => {
   const explicit = parseEnvNumber(env['CMS_THEME_SETTINGS_READ_TIMEOUT_MS']);
-  return explicit !== null && explicit > 0 ? explicit : (env['NODE_ENV'] === 'development' ? 150 : null);
+  if (explicit !== null && explicit > 0) return explicit;
+  return env['NODE_ENV'] === 'development' ? 150 : null;
 };
 
 const awaitThemeSettingsWithinTimeout = async (
@@ -26,16 +27,17 @@ const awaitThemeSettingsWithinTimeout = async (
   fallbackValue: ThemeSettings
 ): Promise<ThemeSettings> => {
   if (timeoutMs === null) return await promise;
-  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  
+  const state: { handle: ReturnType<typeof setTimeout> | null } = { handle: null };
   try {
-    return await Promise.race([
-      promise,
-      new Promise<ThemeSettings>((resolve) => {
-        timeoutHandle = setTimeout(() => resolve(fallbackValue), timeoutMs);
-      }),
-    ]);
+    const timeoutPromise = new Promise<ThemeSettings>((resolve) => {
+      state.handle = setTimeout(() => resolve(fallbackValue), timeoutMs);
+    });
+    return await Promise.race([promise, timeoutPromise]);
   } finally {
-    if (timeoutHandle !== null) clearTimeout(timeoutHandle);
+    if (state.handle !== null) {
+      clearTimeout(state.handle);
+    }
   }
 };
 
@@ -47,7 +49,6 @@ const scheduleCmsThemeSettingsHotCacheInvalidation = (): void => {
     cmsThemeSettingsCacheEntry = null;
     cmsThemeSettingsCacheInvalidationHandle = null;
   }, CMS_THEME_SETTINGS_CACHE_TTL_MS);
-  cmsThemeSettingsCacheInvalidationHandle.unref?.();
 };
 
 export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
@@ -77,7 +78,7 @@ export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
   return await cmsThemeSettingsInFlight;
 });
 
-export const __testOnly = {
+export const TEST_ONLY = {
   getCmsThemeSettingsReadTimeoutMs,
   scheduleCmsThemeSettingsHotCacheInvalidation,
 };

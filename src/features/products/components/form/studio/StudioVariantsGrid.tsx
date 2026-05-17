@@ -150,6 +150,50 @@ function VariantGridCard({
   );
 }
 
+function RenderStudioVariantItem({
+  item,
+  isSelected,
+  accepting,
+  deletingVariantId,
+  handleDeleteVariant,
+  productImagesExternalBaseUrl,
+  sending,
+}: {
+  item: StudioVariantGridItem;
+  isSelected: boolean;
+  accepting: boolean;
+  deletingVariantId: string | null;
+  handleDeleteVariant: (slot: ImageStudioSlotRecord) => void | Promise<void>;
+  productImagesExternalBaseUrl: string | null;
+  sending: boolean;
+}): React.JSX.Element | null {
+  const value = item.value;
+  if (!value) return null;
+
+  const metadata = item.metadata;
+  if (metadata?.isPending === true) {
+    const progress = metadata.generationProgress;
+    return (
+      <PendingVariantCard
+        arrived={progress?.arrived ?? 0}
+        total={progress?.total ?? 0}
+      />
+    );
+  }
+
+  return (
+    <VariantGridCard
+      accepting={accepting}
+      deletingVariantId={deletingVariantId}
+      handleDeleteVariant={handleDeleteVariant}
+      isSelected={isSelected}
+      productImagesExternalBaseUrl={productImagesExternalBaseUrl}
+      sending={sending}
+      slot={value}
+    />
+  );
+}
+
 function StudioVariantsGridPicker({
   accepting,
   deletingVariantId,
@@ -178,28 +222,17 @@ function StudioVariantsGridPicker({
       }}
       gridClassName='grid-cols-2 sm:grid-cols-3 md:grid-cols-5'
       gap='8px'
-      renderItem={(item, isSelected) => {
-        if (item.value === undefined) return null;
-        if (item.metadata?.isPending === true)
-          return (
-            <PendingVariantCard
-              arrived={item.metadata.generationProgress?.arrived ?? 0}
-              total={item.metadata.generationProgress?.total ?? 0}
-            />
-          );
-        if (item.value === null) return null;
-        return (
-          <VariantGridCard
-            accepting={accepting}
-            deletingVariantId={deletingVariantId}
-            handleDeleteVariant={handleDeleteVariant}
-            isSelected={isSelected}
-            productImagesExternalBaseUrl={productImagesExternalBaseUrl}
-            sending={sending}
-            slot={item.value}
-          />
-        );
-      }}
+      renderItem={(item, isSelected) => (
+        <RenderStudioVariantItem
+          item={item}
+          isSelected={isSelected}
+          accepting={accepting}
+          deletingVariantId={deletingVariantId}
+          handleDeleteVariant={handleDeleteVariant}
+          productImagesExternalBaseUrl={productImagesExternalBaseUrl}
+          sending={sending}
+        />
+      )}
     />
   );
 }

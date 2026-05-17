@@ -86,6 +86,8 @@ const readEvaluationCandidateUrl = (
   evaluation: KnownProductScanAmazonEvaluation
 ): string | null => readOptionalString(evaluation.evidence?.candidateUrl);
 
+const readString = (value: string | undefined | null): string | null => value ?? null;
+
 const buildKnownEvaluationDetailValues = (
   evaluation: KnownProductScanAmazonEvaluation
 ): EvaluationDetailValues => {
@@ -97,13 +99,13 @@ const buildKnownEvaluationDetailValues = (
     imageMatch: booleanDetailValue(evaluation.imageMatch),
     languageAccepted: booleanDetailValue(evaluation.languageAccepted),
     languageConfidence: formatEvaluationConfidence(evaluation.languageConfidence),
-    languageReason: evaluation.languageReason ?? null,
+    languageReason: readString(evaluation.languageReason),
     mismatch: evaluation.mismatches[0] ?? null,
-    model: evaluation.modelId ?? null,
-    pageLanguage: evaluation.pageLanguage ?? null,
+    model: readString(evaluation.modelId),
+    pageLanguage: readString(evaluation.pageLanguage),
     reason: evaluation.reasons[0] ?? null,
-    recommendedAction: evaluation.recommendedAction ?? null,
-    rejectionCategory: evaluation.rejectionCategory ?? null,
+    recommendedAction: readString(evaluation.recommendedAction),
+    rejectionCategory: readString(evaluation.rejectionCategory),
     sameProduct: booleanDetailValue(evaluation.sameProduct),
     sourceAsin: readOptionalString(evaluation.evidence?.sourceAsin),
   };

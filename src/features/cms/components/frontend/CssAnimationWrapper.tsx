@@ -14,6 +14,40 @@ interface CssAnimationWrapperProps {
   className?: string;
 }
 
+const resolveIterationCount = (
+  loop: boolean | undefined,
+  iterations: string | number | undefined
+): string => {
+  if (loop === true || iterations === 'infinite') return 'infinite';
+  return String(typeof iterations === 'number' ? Math.max(1, iterations) : 1);
+};
+
+const resolveTriggerClass = (trigger: string): string => {
+  if (trigger === 'inView') return 'cms-css-anim--in-view';
+  if (trigger === 'hover') return 'cms-css-anim--hover';
+  return 'cms-css-anim--load';
+};
+
+const buildCssAnimationName = (effect: string | undefined): string => `cms-anim-${effect ?? 'none'}`;
+
+const buildStyleVars = (merged: CssAnimationConfig): React.CSSProperties => {
+  const iterationCount = resolveIterationCount(merged.loop, merged.iterations);
+  const name = buildCssAnimationName(merged.effect);
+  return {
+    ['--cms-css-anim-name' as string]: name,
+    ['--cms-css-anim-duration' as string]: `${merged.duration ?? 700}ms`,
+    ['--cms-css-anim-delay' as string]: `${merged.delay ?? 0}ms`,
+    ['--cms-css-anim-ease' as string]: merged.easing ?? 'ease-out',
+    ['--cms-css-anim-iter' as string]: iterationCount,
+    ['--cms-css-anim-direction' as string]: merged.direction ?? 'normal',
+    ['--cms-css-anim-fill' as string]: merged.fillMode ?? 'both',
+    ['--cms-css-anim-distance' as string]: `${merged.distance ?? 40}px`,
+    ['--cms-css-anim-scale' as string]: merged.scale ?? 0.9,
+    ['--cms-css-anim-rotate' as string]: `${merged.rotate ?? 12}deg`,
+    ['--cms-css-anim-blur' as string]: `${merged.blur ?? 6}px`,
+  };
+};
+
 export function CssAnimationWrapper({
   config: propConfig,
   children,
@@ -21,15 +55,16 @@ export function CssAnimationWrapper({
 }: CssAnimationWrapperProps): React.ReactNode {
   const blockSettings = useBlockSettings();
 
-  const config = useMemo(() => {
+  const config = useMemo((): CssAnimationConfig | undefined => {
     if (propConfig) return propConfig;
-    if (blockSettings?.['cssAnimation']) {
-      return blockSettings['cssAnimation'] as CssAnimationConfig;
+    const blockAnim = blockSettings?.['cssAnimation'];
+    if (blockAnim !== undefined && blockAnim !== null) {
+      return blockAnim as CssAnimationConfig;
     }
     return undefined;
   }, [propConfig, blockSettings]);
 
-  const merged = useMemo(() => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(config ?? {}) }), [config]);
+  const merged = useMemo((): CssAnimationConfig => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(config ?? {}) }), [config]);
   const enabled = Boolean(merged.enabled) && merged.effect !== 'none';
   const trigger = merged.trigger ?? 'load';
   const ref = useRef<HTMLDivElement | null>(null);
@@ -44,7 +79,7 @@ export function CssAnimationWrapper({
         entries.forEach((entry: IntersectionObserverEntry) => {
           if (entry.isIntersecting) {
             setActive(true);
-          } else if (merged.replayOnExit) {
+          } else if (merged.replayOnExit === true) {
             setActive(false);
           }
         });
@@ -52,37 +87,17 @@ export function CssAnimationWrapper({
       { threshold: 0.25 }
     );
     observer.observe(node);
-    return (): void => observer.disconnect();
+    return (): void => {
+      observer.disconnect();
+    };
   }, [merged.replayOnExit, trigger]);
 
   if (!enabled) {
     return <>{children}</>;
   }
 
-  const iterationCount =
-    merged.loop || merged.iterations === 'infinite'
-      ? 'infinite'
-      : String(typeof merged.iterations === 'number' ? Math.max(1, merged.iterations) : 1);
-  const styleVars: React.CSSProperties = {
-    ['--cms-css-anim-name' as string]: `cms-anim-${merged.effect}`,
-    ['--cms-css-anim-duration' as string]: `${merged.duration ?? 700}ms`,
-    ['--cms-css-anim-delay' as string]: `${merged.delay ?? 0}ms`,
-    ['--cms-css-anim-ease' as string]: merged.easing ?? 'ease-out',
-    ['--cms-css-anim-iter' as string]: iterationCount,
-    ['--cms-css-anim-direction' as string]: merged.direction ?? 'normal',
-    ['--cms-css-anim-fill' as string]: merged.fillMode ?? 'both',
-    ['--cms-css-anim-distance' as string]: `${merged.distance ?? 40}px`,
-    ['--cms-css-anim-scale' as string]: merged.scale ?? 0.9,
-    ['--cms-css-anim-rotate' as string]: `${merged.rotate ?? 12}deg`,
-    ['--cms-css-anim-blur' as string]: `${merged.blur ?? 6}px`,
-  };
-
-  const triggerClass =
-    trigger === 'inView'
-      ? 'cms-css-anim--in-view'
-      : trigger === 'hover'
-        ? 'cms-css-anim--hover'
-        : 'cms-css-anim--load';
+  const styleVars = buildStyleVars(merged);
+  const triggerClass = resolveTriggerClass(trigger);
 
   return (
     <div

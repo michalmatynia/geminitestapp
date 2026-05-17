@@ -83,6 +83,22 @@ export interface ButtonProps
   loadingText?: string;
 }
 
+type ButtonChildAccessibleProps = {
+  children?: React.ReactNode;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  title?: string;
+};
+
+const getChildAccessibleProps = (
+  asChild: boolean,
+  children: React.ReactNode
+): ButtonChildAccessibleProps => {
+  if (!asChild) return {};
+  if (!React.isValidElement<ButtonChildAccessibleProps>(children)) return {};
+  return children.props;
+};
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -123,11 +139,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const resolvedTabIndex = isDisabled && asChild ? -1 : tabIndex;
     const disabledClassName = isDisabled && asChild ? 'pointer-events-none cursor-not-allowed opacity-50' : null;
     const isIconButton = size === 'icon' || size === 'icon-lg';
+    const childAccessibleProps = getChildAccessibleProps(asChild, children);
+    const childAriaLabel = childAccessibleProps['aria-label'];
+    const childAriaLabelledBy = childAccessibleProps['aria-labelledby'];
+    const childTitle = childAccessibleProps.title;
     const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
       children,
-      ariaLabel: ariaLabelProp,
-      ariaLabelledBy: ariaLabelledByProp,
-      title,
+      ariaLabel: ariaLabelProp ?? childAriaLabel,
+      ariaLabelledBy: ariaLabelledByProp ?? childAriaLabelledBy,
+      title: title ?? childTitle,
       fallbackLabel:
         loadingText ||
         (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||

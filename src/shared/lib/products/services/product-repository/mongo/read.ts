@@ -89,29 +89,13 @@ const attachDuplicateSkuCounts = async (
     return docs;
   }
 
+  const targetNormalizedSkus = Array.from(new Set(normalizedSkuByProductId.values()));
+
   const duplicateCounts = await collection
     .aggregate<DuplicateSkuAggregateResult>([
       {
         $match: {
-          sku: { $type: 'string' },
-        },
-      },
-      {
-        $project: {
-          normalizedSku: {
-            $toUpper: {
-              $trim: {
-                input: '$sku',
-              },
-            },
-          },
-        },
-      },
-      {
-        $match: {
-          normalizedSku: {
-            $in: Array.from(new Set(normalizedSkuByProductId.values())),
-          },
+          normalizedSku: { $in: targetNormalizedSkus },
         },
       },
       {

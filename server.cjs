@@ -104,7 +104,7 @@ const requestedDevBundler =
   typeof process.env['NEXT_DEV_BUNDLER'] === 'string'
     ? process.env['NEXT_DEV_BUNDLER'].trim().toLowerCase()
     : '';
-const effectiveDevBundler = requestedDevBundler || 'webpack';
+const effectiveDevBundler = requestedDevBundler || 'turbopack';
 
 const DUELS_LOBBY_WS_PATH = '/api/kangur/duels/lobby/ws';
 const DUELS_LOBBY_REDIS_CHANNEL = 'kangur:duels:lobby';

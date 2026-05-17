@@ -39,6 +39,6 @@ export type {
 };
 
 // Keep the previous generic call sites valid while relying on shared CMS contracts.
-export type CmsSettingsField<_T = Record<string, unknown>> = CmsSettingsFieldBase;
+export type CmsSettingsField<T = Record<string, unknown>> = CmsSettingsFieldBase & { phantom?: T };
 
 export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = CMS_DEFAULT_INSPECTOR_SETTINGS;

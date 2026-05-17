@@ -12,18 +12,18 @@ function extractLocale(pathname: string): SupportedLocale | null {
   return null;
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const locale = extractLocale(pathname);
 
   if (locale !== null) {
-    // Pass through — stamp x-pathname so root layout can read the locale
+    // Pass through - stamp x-pathname so root layout can read the locale.
     const response = NextResponse.next();
     response.headers.set('x-pathname', pathname);
     return response;
   }
 
-  // Redirect unlocalized paths to /en
+  // Redirect unlocalized paths to /en.
   const url = request.nextUrl.clone();
   url.pathname = `/en${pathname === '/' ? '' : pathname}`;
   return NextResponse.redirect(url);
@@ -33,11 +33,10 @@ export const config = {
   matcher: [
     /*
      * Match all paths except:
-     * - _next/static  (static assets)
-     * - _next/image   (image optimisation)
+     * - _next/*       (static assets, image optimisation, dev HMR)
      * - favicon.ico
      * - Files with extensions (images, fonts, etc.)
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+    '/((?!_next|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
   ],
 };

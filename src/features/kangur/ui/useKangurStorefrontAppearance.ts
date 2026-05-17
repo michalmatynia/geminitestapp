@@ -37,16 +37,6 @@ const KANGUR_FALLBACK_THEME_BASELINES_BY_MODE: Record<
   dark: KANGUR_DEFAULT_THEME,
 };
 
-const KANGUR_FALLBACK_THEME_SIGNATURES_BY_MODE: Record<
-  KangurStorefrontAppearanceMode,
-  string
-> = {
-  default: serializeSetting(KANGUR_DEFAULT_DAILY_THEME),
-  dawn: serializeSetting(KANGUR_DEFAULT_DAWN_THEME),
-  sunset: serializeSetting(KANGUR_DEFAULT_SUNSET_THEME),
-  dark: serializeSetting(KANGUR_DEFAULT_THEME),
-};
-
 const readHydratedThemeSetting = ({
   hydrated,
   initialValue,
@@ -97,10 +87,10 @@ const resolveKangurStorefrontIsFallbackTheme = ({
     raw: selectedThemeRaw,
   });
 
-  return (
-    signature === null ||
-    signature === KANGUR_FALLBACK_THEME_SIGNATURES_BY_MODE[mode]
-  );
+  // A null signature means no theme is stored at all — genuine fallback.
+  // A signature that matches the default is a valid (seeded) configuration,
+  // not a fallback; the theme is correctly applied even if it equals the default.
+  return signature === null;
 };
 
 export const useKangurStorefrontAppearance = (): KangurStorefrontAppearance => {

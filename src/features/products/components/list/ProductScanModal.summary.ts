@@ -43,6 +43,8 @@ const incrementStatusCount = (
       return { ...counts, conflict: counts.conflict + 1 };
     case 'failed':
       return { ...counts, failed: counts.failed + 1 };
+    default:
+      return counts;
   }
 };
 

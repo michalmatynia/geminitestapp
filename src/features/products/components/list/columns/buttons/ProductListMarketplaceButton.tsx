@@ -108,8 +108,11 @@ export function ProductListMarketplaceTextButton({
   label,
   ...buttonProps
 }: ProductListMarketplaceTextButtonProps): React.JSX.Element {
+  const accessibleLabel = buttonProps['aria-label'] ?? label;
+  const title = buttonProps.title ?? accessibleLabel;
+
   return (
-    <ProductListMarketplaceButton {...buttonProps}>
+    <ProductListMarketplaceButton {...buttonProps} aria-label={accessibleLabel} title={title}>
       <ProductListMarketplaceButtonText>{label}</ProductListMarketplaceButtonText>
     </ProductListMarketplaceButton>
   );
@@ -120,8 +123,11 @@ export function ProductListMarketplacePendingTextButton({
   label,
   ...buttonProps
 }: ProductListMarketplacePendingTextButtonProps): React.JSX.Element {
+  const accessibleLabel = buttonProps['aria-label'] ?? label;
+  const title = buttonProps.title ?? accessibleLabel;
+
   return (
-    <ProductListMarketplaceButton {...buttonProps}>
+    <ProductListMarketplaceButton {...buttonProps} aria-label={accessibleLabel} title={title}>
       {isPending ? (
         <ProductListMarketplacePendingText />
       ) : (
@@ -171,8 +177,11 @@ export function ProductListMarketplaceQuickButton({
   showFailureDot,
   ...buttonProps
 }: ProductListMarketplaceQuickButtonProps): React.JSX.Element {
+  const accessibleLabel = buttonProps['aria-label'] ?? label;
+  const title = buttonProps.title ?? accessibleLabel;
+
   return (
-    <ProductListMarketplaceButton {...buttonProps}>
+    <ProductListMarketplaceButton {...buttonProps} aria-label={accessibleLabel} title={title}>
       {showCheckmark ? (
         <ProductListMarketplaceCheckIcon />
       ) : (

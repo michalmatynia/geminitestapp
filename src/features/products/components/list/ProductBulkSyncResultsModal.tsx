@@ -28,10 +28,8 @@ const statusVariant = (
 };
 
 const normalizeProductName = (product: ProductWithImages): string => {
-  if ((product.name_en ?? '').trim() !== '') return product.name_en ?? '';
-  if ((product.name_pl ?? '').trim() !== '') return product.name_pl ?? '';
-  if ((product.name_de ?? '').trim() !== '') return product.name_de ?? '';
-  return product.id;
+  const name = (product.name_en ?? product.name_pl ?? product.name_de ?? '').trim();
+  return name !== '' ? name : product.id;
 };
 
 const buildProductNamesById = (products: readonly ProductWithImages[]): ProductNameLookup =>

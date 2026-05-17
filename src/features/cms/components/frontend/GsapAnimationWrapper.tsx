@@ -19,6 +19,22 @@ interface GsapAnimationWrapperProps {
   className?: string | undefined;
 }
 
+const handleMotionPath = (
+  gsap: any,
+  targets: Element[],
+  config: GsapAnimationConfig,
+  root: HTMLElement,
+  baseVars: Record<string, unknown>
+): void => {
+  if (config.motionPathEnabled === true) {
+    const path = resolveMotionPath(config, root);
+    if (path !== null) {
+      const motionPathVars = buildMotionPathVars(config, path);
+      gsap.to(targets, { ...baseVars, motionPath: motionPathVars });
+    }
+  }
+};
+
 export function GsapAnimationWrapper({
   config: propConfig,
   children,
@@ -27,10 +43,11 @@ export function GsapAnimationWrapper({
   const ref = useRef<HTMLDivElement>(null);
   const blockSettings = useBlockSettings();
 
-  const config = useMemo(() => {
+  const config = useMemo((): Partial<GsapAnimationConfig> | undefined => {
     if (propConfig) return propConfig;
-    if (blockSettings?.['gsapAnimation']) {
-      return blockSettings['gsapAnimation'] as Partial<GsapAnimationConfig>;
+    const blockGsap = blockSettings?.['gsapAnimation'];
+    if (blockGsap !== undefined && blockGsap !== null) {
+      return blockGsap as Partial<GsapAnimationConfig>;
     }
     return undefined;
   }, [propConfig, blockSettings]);
@@ -42,9 +59,10 @@ export function GsapAnimationWrapper({
   }, [config]);
 
   useEffect(() => {
-    if (!mergedConfig || (mergedConfig.preset === 'none' && !mergedConfig.motionPathEnabled)) return;
-    if (!ref.current) return;
-    let ctx: ReturnType<typeof import('gsap').gsap.context> | null = null;
+    if (!mergedConfig || (mergedConfig.preset === 'none' && !mergedConfig.motionPathEnabled) || !ref.current) {
+      return undefined;
+    }
+    let ctx: any = null;
     let cancelled = false;
 
     const loadGsap = async (): Promise<void> => {
@@ -75,11 +93,10 @@ export function GsapAnimationWrapper({
         const keyframes = buildKeyframes(mergedConfig.preset);
         if (keyframes) {
           gsap.to(targets, { ...baseVars, ...keyframes });
-          return;
+        } else {
+          const fromVars = getGsapFromVars(mergedConfig.preset);
+          gsap.from(targets, { ...fromVars, ...baseVars });
         }
-
-        const fromVars = getGsapFromVars(mergedConfig.preset);
-        gsap.from(targets, { ...fromVars, ...baseVars });
       }, root);
 
       ScrollTrigger?.refresh?.();
@@ -89,7 +106,7 @@ export function GsapAnimationWrapper({
 
     return (): void => {
       cancelled = true;
-      ctx?.revert();
+      if (ctx && typeof ctx.revert === 'function') ctx.revert();
     };
   }, [mergedConfig, configSignature]);
 
@@ -103,19 +120,3 @@ export function GsapAnimationWrapper({
     </div>
   );
 }
-
-const handleMotionPath = (
-  gsap: any,
-  targets: Element[],
-  config: GsapAnimationConfig,
-  root: HTMLElement,
-  baseVars: any
-): void => {
-  if (config.motionPathEnabled) {
-    const path = resolveMotionPath(config, root);
-    if (path) {
-      const motionPathVars = buildMotionPathVars(config, path);
-      gsap.to(targets, { ...baseVars, motionPath: motionPathVars });
-    }
-  }
-};

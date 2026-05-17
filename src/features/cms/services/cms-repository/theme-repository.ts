@@ -14,7 +14,10 @@ import { removeUndefined } from '@/shared/utils/object-utils';
 
 const themesCollection = 'cms_themes';
 
-const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => ({ id }) as Filter<T>;
+const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => {
+  const filter: Filter<T> = { id } as unknown as Filter<T>;
+  return filter;
+};
 
 interface ThemeDocument {
   id: string;
@@ -35,7 +38,7 @@ const mapThemeDocument = (doc: ThemeDocument): CmsTheme => ({
   typography: doc.typography,
   spacing: doc.spacing,
   isDefault: doc.isDefault || false,
-  ...(doc.customCss ? { customCss: doc.customCss } : {}),
+  ...(doc.customCss !== undefined && doc.customCss !== null && doc.customCss !== '' ? { customCss: doc.customCss } : {}),
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
 });
@@ -104,7 +107,6 @@ export const themeRepository = {
       });
     }
   },
-// ...
 
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     try {
@@ -122,7 +124,8 @@ export const themeRepository = {
   async getDefaultTheme(): Promise<CmsTheme | null> {
     try {
       const db = await getMongoDb();
-      const doc = await db.collection<ThemeDocument>(themesCollection).findOne({ isDefault: true } as Filter<ThemeDocument>);
+      const filter: Filter<ThemeDocument> = { isDefault: true };
+      const doc = await db.collection<ThemeDocument>(themesCollection).findOne(filter);
       return doc ? mapThemeDocument(doc) : null;
     } catch (error) {
       throw databaseError('Failed to retrieve default theme.', error, {
@@ -134,7 +137,8 @@ export const themeRepository = {
   async setDefaultTheme(id: string): Promise<void> {
     try {
       const db = await getMongoDb();
-      await db.collection<ThemeDocument>(themesCollection).updateMany({ isDefault: true } as Filter<ThemeDocument>, { $set: { isDefault: false } });
+      const filter: Filter<ThemeDocument> = { isDefault: true };
+      await db.collection<ThemeDocument>(themesCollection).updateMany(filter, { $set: { isDefault: false } });
       await db.collection<ThemeDocument>(themesCollection).updateOne(buildIdFilter<ThemeDocument>(id), { $set: { isDefault: true } });
     } catch (error) {
       throw databaseError(`Failed to set default theme: ${id}`, error, {

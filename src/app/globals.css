@@ -12,7 +12,11 @@
  */
 
 @config "../../tailwind.config.ts";
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
+@source "../app/**/*.{js,jsx,ts,tsx,mdx}";
+@source "../features/**/*.{js,jsx,ts,tsx,mdx}";
+@source "../i18n/**/*.{js,jsx,ts,tsx,mdx}";
+@source "../shared/**/*.{js,jsx,ts,tsx,mdx}";
 @layer base {
   :root {
     --app-font-heading:

@@ -140,7 +140,7 @@ export const KANGUR_DAILY_THEME: ThemeSettings = normalizeThemeSettings({
   btnFontSize: 14,
   btnFontWeight: '600',
   btnRadius: 999,
-  btnPrimaryBg: 'linear-gradient(135deg, #ffb36b 0%, #ff9a63 48%, #ff7f52 100%)',
+  btnPrimaryBg: 'linear-gradient(135deg, #9490ff 0%, #6b63ff 55%, #5040e0 100%)',
   btnPrimaryText: '#ffffff',
   btnSecondaryBg: 'rgba(255, 255, 255, 0.86)',
   btnSecondaryText: '#3b4561',

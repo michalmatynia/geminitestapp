@@ -2,6 +2,12 @@ import { randomUUID } from 'crypto';
 
 import { type Collection, type UpdateFilter, type WithId } from 'mongodb';
 
+const normalizeSkuForStorage = (sku: unknown): string | null => {
+  if (typeof sku !== 'string') return null;
+  const trimmed = sku.trim().toUpperCase();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 import { type ProductCreateInput, type ProductUpdateInput } from '@/shared/contracts/products/io';
 import {
   type ProductRecord,
@@ -32,6 +38,7 @@ export const mongoProductWriteImpl = {
       _id: id,
       id,
       sku: data.sku,
+      normalizedSku: normalizeSkuForStorage(data.sku),
       baseProductId: data.baseProductId || null,
       importSource: data.importSource ?? null,
       defaultPriceGroupId: data.defaultPriceGroupId || null,
@@ -100,7 +107,10 @@ export const mongoProductWriteImpl = {
 
     const set = updates.$set as Record<string, unknown>;
 
-    if (data.sku !== undefined) set['sku'] = data.sku;
+    if (data.sku !== undefined) {
+      set['sku'] = data.sku;
+      set['normalizedSku'] = normalizeSkuForStorage(data.sku);
+    }
     if (data.baseProductId !== undefined) set['baseProductId'] = data.baseProductId;
     if (data.importSource !== undefined) set['importSource'] = data.importSource;
     if (data.defaultPriceGroupId !== undefined)

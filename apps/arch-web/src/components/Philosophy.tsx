@@ -25,7 +25,11 @@ export default function Philosophy({ content }: { content: ArchPageContent['phil
 
         <div className="principles">
           {content.principles.map((principle, index) => (
-            <div className="prin-row rev" data-delay={index > 0 ? String(index) : undefined} key={`${principle.number}-${principle.title}`}>
+            <div
+              className="prin-row rev"
+              data-delay={index > 0 ? String(index) : undefined}
+              key={`${principle.number || 'principle'}-${index}`}
+            >
               <span className="prin-num">{principle.number}</span>
               <div className="prin-title">
                 {principle.title}<em>{principle.emphasis}</em>

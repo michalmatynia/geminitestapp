@@ -94,13 +94,13 @@ const toConnectedValue = (type: string, value: unknown): string | number | null 
 
 const resolvePathValue = (input: unknown, path: string): unknown => {
   const normalizedPath = path.trim();
-  if (!normalizedPath) {
+  if (normalizedPath === '') {
     return input;
   }
 
   return normalizedPath.split('.').reduce<unknown>((current: unknown, rawSegment: string) => {
     const segment = rawSegment.trim();
-    if (!segment) {
+    if (segment === '') {
       return current;
     }
 
@@ -125,7 +125,7 @@ export function resolveCmsRuntimeValue(
   source: unknown,
   path: unknown
 ): unknown {
-  if (!runtime) {
+  if (runtime === null) {
     return undefined;
   }
 
@@ -155,6 +155,59 @@ export function resolveCmsRuntimeCollection(
   return Array.isArray(value) ? value : [];
 }
 
+const checkCmsNodeVisibilityValueEquals = (
+  mode: string,
+  resolvedValue: unknown,
+  settings: Record<string, unknown>
+): boolean => {
+  const expected = toComparableString(settings['runtimeVisibilityValue']);
+  if (expected === '') {
+    return true;
+  }
+  const comparableResolved = toComparableString(resolvedValue);
+  return mode === 'equals' ? comparableResolved === expected : comparableResolved !== expected;
+};
+
+const checkCmsNodeVisibilityValueTruthy = (resolvedValue: unknown): boolean => {
+  return (
+    resolvedValue !== null &&
+    resolvedValue !== undefined &&
+    resolvedValue !== false &&
+    resolvedValue !== 0 &&
+    resolvedValue !== ''
+  );
+};
+
+const checkCmsNodeVisibilityValueFalsy = (resolvedValue: unknown): boolean => {
+  return (
+    resolvedValue === null ||
+    resolvedValue === undefined ||
+    resolvedValue === false ||
+    resolvedValue === 0 ||
+    resolvedValue === ''
+  );
+};
+
+const checkCmsNodeVisibilityValue = (
+  mode: string,
+  resolvedValue: unknown,
+  settings: Record<string, unknown>
+): boolean => {
+  if (mode === 'truthy') {
+    return checkCmsNodeVisibilityValueTruthy(resolvedValue);
+  }
+
+  if (mode === 'falsy') {
+    return checkCmsNodeVisibilityValueFalsy(resolvedValue);
+  }
+
+  if (mode === 'equals' || mode === 'not-equals') {
+    return checkCmsNodeVisibilityValueEquals(mode, resolvedValue, settings);
+  }
+
+  return true;
+};
+
 export function isCmsNodeVisible(
   settings: Record<string, unknown>,
   runtime: CmsRuntimeContextValue | null
@@ -168,7 +221,7 @@ export function isCmsNodeVisible(
     return true;
   }
 
-  if (!runtime) {
+  if (runtime === null) {
     return true;
   }
 
@@ -176,29 +229,31 @@ export function isCmsNodeVisible(
   const path = settings['runtimeVisibilityPath'];
   const resolvedValue = resolveCmsRuntimeValue(runtime, source, path);
 
-  switch (mode) {
-    case 'truthy':
-      return Boolean(resolvedValue);
-    case 'falsy':
-      return !resolvedValue;
-    case 'equals': {
-      const expected = toComparableString(settings['runtimeVisibilityValue']);
-      if (!expected) {
-        return true;
-      }
-      return toComparableString(resolvedValue) === expected;
-    }
-    case 'not-equals': {
-      const expected = toComparableString(settings['runtimeVisibilityValue']);
-      if (!expected) {
-        return true;
-      }
-      return toComparableString(resolvedValue) !== expected;
-    }
-    default:
-      return true;
-  }
+  return checkCmsNodeVisibilityValue(mode, resolvedValue, settings);
 }
+
+const resolveConnectedValue = (
+  type: string,
+  connection: CmsConnectionSettings,
+  resolvedValue: unknown
+): string | number | null => {
+  if (hasRuntimeValue(resolvedValue)) {
+    return toConnectedValue(type, resolvedValue);
+  }
+
+  if (typeof connection.fallback === 'string') {
+    return toConnectedValue(type, connection.fallback);
+  }
+
+  return null;
+};
+
+const resolveTargetKey = (type: string, connection: CmsConnectionSettings): string | undefined => {
+  if (typeof connection.targetKey === 'string' && connection.targetKey.trim().length > 0) {
+    return connection.targetKey.trim();
+  }
+  return CONNECTION_TARGET_BY_TYPE[type];
+};
 
 export function resolveCmsConnectedSettings(
   type: string,
@@ -206,26 +261,19 @@ export function resolveCmsConnectedSettings(
   runtime: CmsRuntimeContextValue | null
 ): Record<string, unknown> {
   const rawConnection = settings['connection'];
-  if (!isObjectRecord(rawConnection) || rawConnection['enabled'] !== true || !runtime) {
+  if (!isObjectRecord(rawConnection) || rawConnection['enabled'] !== true || runtime === null) {
     return settings;
   }
 
   const connection = rawConnection as CmsConnectionSettings;
-  const targetKey =
-    typeof connection.targetKey === 'string' && connection.targetKey.trim().length > 0
-      ? connection.targetKey.trim()
-      : CONNECTION_TARGET_BY_TYPE[type];
+  const targetKey = resolveTargetKey(type, connection);
 
-  if (!targetKey) {
+  if (targetKey === undefined || targetKey === '') {
     return settings;
   }
 
   const resolvedValue = resolveCmsRuntimeValue(runtime, connection.source, connection.path);
-  const nextValue = hasRuntimeValue(resolvedValue)
-    ? toConnectedValue(type, resolvedValue)
-    : typeof connection.fallback === 'string'
-      ? toConnectedValue(type, connection.fallback)
-      : null;
+  const nextValue = resolveConnectedValue(type, connection, resolvedValue);
 
   if (nextValue === null) {
     return settings;

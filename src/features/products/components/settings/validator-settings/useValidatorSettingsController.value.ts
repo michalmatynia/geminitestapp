@@ -144,7 +144,7 @@ const buildDraftSection = (args: ControllerValueArgs): Partial<ValidatorSettings
 export function buildValidatorSettingsControllerValue(
   args: ControllerValueArgs
 ): ValidatorSettingsController {
-  const value = {
+  const value: ValidatorSettingsController = {
     ...buildStatusSection(args),
     ...buildModalSection(args),
     ...args.patternPersistenceActions,
@@ -156,7 +156,7 @@ export function buildValidatorSettingsControllerValue(
     ...buildDraftSection(args),
     openCreate: args.patternModalActions.handleAddPattern,
     openEdit: args.patternModalActions.handleEditPattern,
-  } as ValidatorSettingsController;
+  };
 
   return value;
 }

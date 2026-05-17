@@ -60,6 +60,18 @@ const resolveAccessibleTextState = (
 const hasAccessibleReference = (ariaLabelledBy: string | undefined): boolean =>
   Boolean(ariaLabelledBy?.trim());
 
+const warnedMissingAccessibleLabelComponentsKey = '__geminitestappA11yMissingLabelWarnings';
+
+const getWarnedMissingAccessibleLabelComponents = (): Set<string> => {
+  const globalForA11y = globalThis as typeof globalThis & {
+    __geminitestappA11yMissingLabelWarnings?: Set<string>;
+  };
+
+  globalForA11y[warnedMissingAccessibleLabelComponentsKey] ??= new Set<string>();
+
+  return globalForA11y[warnedMissingAccessibleLabelComponentsKey];
+};
+
 export const resolveAccessibleLabel = ({
   children,
   ariaLabel,
@@ -104,6 +116,12 @@ export const warnMissingAccessibleLabel = ({
 }): void => {
   if (process.env['NODE_ENV'] === 'production') return;
   if (hasAccessibleLabel) return;
+
+  const trimmedComponentName = componentName.trim();
+  const warningKey = trimmedComponentName.length > 0 ? trimmedComponentName : 'unknown';
+  const warnedMissingAccessibleLabelComponents = getWarnedMissingAccessibleLabelComponents();
+  if (warnedMissingAccessibleLabelComponents.has(warningKey)) return;
+  warnedMissingAccessibleLabelComponents.add(warningKey);
    
   void import('@/shared/lib/observability/system-logger-client')
     .then(({ logSystemEvent }) =>

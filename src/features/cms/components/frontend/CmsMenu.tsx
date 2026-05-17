@@ -85,12 +85,12 @@ const toCssLength = (value: string | number | null | undefined, fallback: string
   typeof value === 'number' ? `${value}px` : value ?? fallback;
 
 const getColors = (menu: MenuSettings, appMode: string | undefined): ColorSchemeColors => {
-  const accent = menu.activeColor ?? (menu.activeItemColor ?? menu.textColor);
+  const accent = menu.activeColor;
   const tone = resolveStorefrontAppearanceTone(
     {
-      background: menu.backgroundColor ?? 'default-bg',
-      text: menu.textColor ?? 'default-text',
-      border: menu.borderColor ?? 'default-border',
+      background: menu.backgroundColor,
+      text: menu.textColor,
+      border: menu.borderColor,
       accent,
     },
     resolveAppearanceMode(appMode)
@@ -101,10 +101,15 @@ const getColors = (menu: MenuSettings, appMode: string | undefined): ColorScheme
   };
 };
 
+const resolveNavPosition = (isSide: boolean, isSticky: boolean): 'fixed' | 'sticky' | 'relative' => {
+  if (isSide) return 'fixed';
+  return isSticky ? 'sticky' : 'relative';
+};
+
 const getNavStyle = (isSide: boolean, menu: MenuSettings, collapsed: boolean): React.CSSProperties => {
   const isSticky = menu.stickyEnabled === true;
   const isCollapsible = menu.collapsible === true;
-  const position = isSide ? 'fixed' : isSticky ? 'sticky' : 'relative';
+  const position = resolveNavPosition(isSide, isSticky);
   
   let width = '100%';
   if (isSide) {

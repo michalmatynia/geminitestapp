@@ -41,6 +41,7 @@ export type ProductDocument = Omit<
 > & {
   _id: string;
   duplicateSkuCount?: number;
+  normalizedSku?: string | null;
   createdAt: Date;
   updatedAt: Date;
   name?: ProductRecord['name'];

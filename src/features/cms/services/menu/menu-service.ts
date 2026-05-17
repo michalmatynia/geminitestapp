@@ -28,8 +28,25 @@ import { databaseError, internalError } from '@/shared/errors/app-error';
 
 // ... (existing imports)
 
+const mapSettingsDocs = (docs: MongoStringSettingRecord<string | ObjectId>[]): Map<string, string> => {
+  const valuesByKey = new Map<string, string>();
+  for (const doc of docs) {
+    if (typeof doc.value !== 'string') continue;
+
+    if (typeof doc.key === 'string' && !valuesByKey.has(doc.key)) {
+      valuesByKey.set(doc.key, doc.value);
+    }
+
+    if (typeof doc._id === 'string' && !valuesByKey.has(doc._id)) {
+      valuesByKey.set(doc._id, doc.value);
+    }
+  }
+  return valuesByKey;
+};
+
 export const readFirstAvailableSettingValue = async (keys: string[]): Promise<string | null> => {
-  if (keys.length === 0 || !process.env['MONGODB_URI']) {
+  const mongodbUri = process.env['MONGODB_URI'];
+  if (keys.length === 0 || mongodbUri === undefined || mongodbUri === '') {
     return null;
   }
 
@@ -54,19 +71,7 @@ export const readFirstAvailableSettingValue = async (keys: string[]): Promise<st
       )
       .toArray();
 
-    const valuesByKey = new Map<string, string>();
-
-    for (const doc of docs) {
-      if (typeof doc.value !== 'string') continue;
-
-      if (typeof doc.key === 'string' && !valuesByKey.has(doc.key)) {
-        valuesByKey.set(doc.key, doc.value);
-      }
-
-      if (typeof doc._id === 'string' && !valuesByKey.has(doc._id)) {
-        valuesByKey.set(doc._id, doc.value);
-      }
-    }
+    const valuesByKey = mapSettingsDocs(docs);
 
     for (const key of keys) {
       const resolvedValue = valuesByKey.get(key);
@@ -87,11 +92,11 @@ export const getCmsMenuSettings = cache(async (
   locale?: string | null,
   zoningEnabled: boolean = false
 ): Promise<MenuSettings> => {
-  const scopedDomainId = zoningEnabled ? (domainId ?? null) : null;
+  const scopedDomainId = zoningEnabled === true ? (domainId ?? null) : null;
   const fallbackKeys = getCmsMenuSettingsFallbackKeys(scopedDomainId, locale);
   const stored = await readFirstAvailableSettingValue(fallbackKeys);
 
-  if (stored) {
+  if (stored !== null) {
     try {
       const parsed = parseJsonSetting<unknown>(stored, null);
       return normalizeMenuSettings(parsed);

@@ -508,7 +508,7 @@ function InteriorViewer({ modelUrl }: { modelUrl?: string }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(wrap.offsetWidth, wrap.offsetHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xF2F1ED);

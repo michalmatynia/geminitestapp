@@ -1,6 +1,6 @@
 'use client';
 
-import { CloudUploadIcon, DownloadIcon, RefreshCwIcon } from 'lucide-react';
+import { CloudDownloadIcon, CloudUploadIcon, DownloadIcon, RefreshCwIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { JSX } from 'react';
 
@@ -192,13 +192,17 @@ function ManagedMongoDatabaseScopeCard({
 }
 
 function ManagedMongoPanelHeader({
+  backupRoot,
   backupDisabled,
+  pullDisabled,
   syncDisabled,
   backupManagedMongo,
   refetchAll,
   syncManagedMongo,
 }: {
+  backupRoot: string;
   backupDisabled: boolean;
+  pullDisabled: boolean;
   syncDisabled: boolean;
   backupManagedMongo: (app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
   refetchAll: () => void;
@@ -206,7 +210,10 @@ function ManagedMongoPanelHeader({
 }): JSX.Element {
   return (
     <div className='flex flex-wrap items-center justify-between gap-3'>
-      <h2 className='text-sm font-semibold text-white'>Managed MongoDB Files</h2>
+      <div className='space-y-1'>
+        <h2 className='text-sm font-semibold text-white'>Managed MongoDB Files</h2>
+        <p className='text-xs text-gray-400'>Backup root: {backupRoot}</p>
+      </div>
       <div className='flex flex-wrap gap-2'>
         <Button type='button' variant='outline' size='xs' onClick={refetchAll}>
           <RefreshCwIcon className='size-3.5' /> Refresh
@@ -232,6 +239,17 @@ function ManagedMongoPanelHeader({
         >
           <CloudUploadIcon className='size-3.5' /> Push All
         </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='xs'
+          disabled={pullDisabled}
+          onClick={() => {
+            void syncManagedMongo('cloud_to_local', 'all');
+          }}
+        >
+          <CloudDownloadIcon className='size-3.5' /> Pull All
+        </Button>
       </div>
     </div>
   );
@@ -251,7 +269,7 @@ export function ManagedMongoScopePanel({
     return <div className='rounded-md border border-white/10 bg-black/20 p-3 text-sm text-gray-300'>Loading managed MongoDB files...</div>;
   }
 
-  const { canBackupAllLocal, canPushAllToCloud, backupStorage } = managedMongoDatabases;
+  const { backupRoot, canBackupAllLocal, canPushAllToCloud, canPullAllFromCloud, backupStorage } = managedMongoDatabases;
   const { allowManualBackupRunNow, allowManualFullSync } = operationControls;
 
   const isBkpActive = isBackingUpManagedMongo || !allowManualBackupRunNow;
@@ -259,13 +277,16 @@ export function ManagedMongoScopePanel({
 
   const backupDisabled = isBkpActive || !canBackupAllLocal;
   const syncDisabled = isSyncActive || !canPushAllToCloud;
+  const pullDisabled = isSyncActive || !canPullAllFromCloud;
   const cardBackupDisabled = isBkpActive || !backupStorage.canWriteBackups;
   const cardSyncDisabled = isSyncActive;
 
   return (
     <div className='space-y-3 rounded-md border border-white/10 bg-card/30 p-3'>
       <ManagedMongoPanelHeader
+        backupRoot={backupRoot}
         backupDisabled={backupDisabled}
+        pullDisabled={pullDisabled}
         syncDisabled={syncDisabled}
         backupManagedMongo={backupManagedMongo}
         refetchAll={refetchAll}

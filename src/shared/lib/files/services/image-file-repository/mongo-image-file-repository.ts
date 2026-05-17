@@ -10,8 +10,9 @@ import type {
   ImageFileUpdateInput,
 } from '@/shared/contracts/files';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
 
-import type { WithId } from 'mongodb';
+import type { Db, WithId } from 'mongodb';
 
 type ImageFileDocument = {
   _id: string;
@@ -103,9 +104,11 @@ const toRecord = (doc: WithId<ImageFileDocument>): ImageFileRecord => ({
   updatedAt: doc.updatedAt.toISOString(),
 });
 
-export const mongoImageFileRepository: ImageFileRepository = {
+const createMongoImageFileRepository = (
+  resolveDb: () => Promise<Db>
+): ImageFileRepository => ({
   async createImageFile(data: ImageFileCreateInput) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const now = new Date();
     const id = randomUUID();
     const doc: ImageFileDocument = {
@@ -135,7 +138,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async getImageFileById(id: string) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const doc = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .findOne({ $or: [{ _id: id }, { id }] });
@@ -143,7 +146,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async listImageFiles(filters?: ImageFileListFilters) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const filename = filters?.filename?.trim();
     const tags = (filters?.tags ?? []).filter(Boolean);
     const query: Record<string, unknown> = {};
@@ -162,7 +165,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
 
   async findImageFilesByIds(ids: string[]) {
     if (ids.length === 0) return [];
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const docs = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .find({ $or: [{ _id: { $in: Array.from(ids) } }, { id: { $in: ids } }] })
@@ -171,7 +174,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async updateImageFilePath(id: string, filepath: string) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const result = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .findOneAndUpdate(
@@ -184,7 +187,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async updateImageFileTags(id: string, tags: string[]) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const result = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .findOneAndUpdate(
@@ -197,7 +200,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async updateImageFile(id: string, data: ImageFileUpdateInput) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const result = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .findOneAndUpdate(
@@ -210,11 +213,17 @@ export const mongoImageFileRepository: ImageFileRepository = {
   },
 
   async deleteImageFile(id: string) {
-    const db = await getMongoDb();
+    const db = await resolveDb();
     const result = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
       .findOneAndDelete({ $or: [{ _id: id }, { id }] });
     if (!result) return null;
     return toRecord({ ...result, _id: result._id });
   },
-};
+});
+
+export const mongoImageFileRepository: ImageFileRepository =
+  createMongoImageFileRepository(getMongoDb);
+
+export const productMongoImageFileRepository: ImageFileRepository =
+  createMongoImageFileRepository(() => getProductsMongoDb());

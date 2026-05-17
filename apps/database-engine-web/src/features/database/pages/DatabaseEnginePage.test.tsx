@@ -596,7 +596,7 @@ const createState = () => ({
       },
       {
         application: 'products' as const,
-        label: 'Ecommerce',
+        label: 'Products',
         canBackupLocal: true,
         canPushToCloud: true,
         canPullFromCloud: true,
@@ -1034,7 +1034,7 @@ describe('DatabaseEnginePage', () => {
   it('runs manual Mongo sync for a single application', () => {
     render(<DatabaseEnginePage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Push Ecommerce local to cloud' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Push Products local to cloud' }));
 
     expect(mocks.actions.syncMongoSources).toHaveBeenCalledWith('local_to_cloud', 'products');
   });
@@ -1054,15 +1054,15 @@ describe('DatabaseEnginePage', () => {
 
     expect(
       screen.getByText(
-        'Pushing Ecommerce: local -> cloud. Started at 2026-04-16T00:38:12.443Z.'
+        'Pushing Products: local -> cloud. Started at 2026-04-16T00:38:12.443Z.'
       )
     ).toBeInTheDocument();
     const pushingButtons = screen.getAllByText('Pushing...').map((node) => node.closest('button'));
-    expect(pushingButtons.length).toBeGreaterThanOrEqual(2);
+    expect(pushingButtons.length).toBeGreaterThanOrEqual(1);
     pushingButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
-    expect(screen.getByText('Push local to cloud - Ecommerce')).toBeInTheDocument();
+    expect(screen.getByText('Push local to cloud - Products')).toBeInTheDocument();
   });
 
   it('shows server-side sync progress and disables sync controls while the lock is active', () => {
@@ -1085,10 +1085,10 @@ describe('DatabaseEnginePage', () => {
 
     expect(
       screen.getByText(
-        'Sync in progress for Ecommerce: local -> cloud since 2026-04-16T00:38:12.443Z'
+        'Sync in progress for Products: local -> cloud since 2026-04-16T00:38:12.443Z'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Push local to cloud - Ecommerce')).toBeInTheDocument();
+    expect(screen.getByText('Push local to cloud - Products')).toBeInTheDocument();
 
     const syncButtons = screen.getAllByRole('button', { name: 'Syncing...' });
     expect(syncButtons).toHaveLength(2);

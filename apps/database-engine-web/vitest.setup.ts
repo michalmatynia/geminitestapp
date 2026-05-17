@@ -362,6 +362,7 @@ vi.mock('@/shared/lib/api/api-handler', () => {
               ? await rawParams
               : rawParams;
           options.paramsSchema?.parse(resolvedParams);
+          const params = (resolvedParams ?? {}) as Record<string, unknown>;
           return await handler(
             request,
             {
@@ -371,7 +372,7 @@ vi.mock('@/shared/lib/api/api-handler', () => {
               query: buildQuery(request, options),
               getElapsedMs: () => 0,
             },
-            resolvedParams,
+            params,
           );
         } catch (error) {
           return errorResponse(error);
@@ -489,8 +490,8 @@ afterEach(async () => {
   try {
     const { getMongoDb } = await import('@/shared/lib/db/mongo-client');
     const mongoDb = await getMongoDb();
-    if ((mongoDb as { $resetAll?: () => void })?.$resetAll) {
-      (mongoDb as { $resetAll: () => void }).$resetAll();
+    if ((mongoDb as unknown as { $resetAll?: () => void })?.$resetAll) {
+      (mongoDb as unknown as { $resetAll: () => void }).$resetAll();
     }
   } catch {
     // Test suites may replace the mongo client mock.

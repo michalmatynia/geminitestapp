@@ -42,7 +42,7 @@ function useManagedMongoState(): {
     isSyncingManagedMongo ||
     isSyncingMongoSources ||
     pendingMongoSourceSync !== null ||
-    mongoSourceState?.syncInProgress !== null;
+    mongoSourceState?.syncInProgress != null;
 
   return {
     managedMongoDatabases,

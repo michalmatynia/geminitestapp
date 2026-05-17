@@ -237,13 +237,13 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual([]);
   });
 
-  it('defaults ecommerce product data to the same local ecommerce database', async () => {
+  it('defaults ecommerce product data to the shared local products database', async () => {
     const { getEcommerceProductsDb } = await import('./mongodb');
 
     await getEcommerceProductsDb();
 
-    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
-    expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/products_local']);
+    expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
   it('pins ecommerce product reads to local MongoDB during localhost development', async () => {
@@ -261,7 +261,7 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['ecom_local']);
   });
 
-  it('does not use Products or main app MongoDB fallbacks for ecommerce product reads during localhost development', async () => {
+  it('prefers explicit Products MongoDB config for ecommerce product reads during localhost development', async () => {
     process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/app';
     process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'app';
     process.env['MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/app';
@@ -271,8 +271,8 @@ describe('ecommerce MongoDB resolver', () => {
 
     await getEcommerceProductsDb();
 
-    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27021/ecom_local']);
-    expect(mongoMocks.dbNames).toEqual(['ecom_local']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb://127.0.0.1:27017/app']);
+    expect(mongoMocks.dbNames).toEqual(['app']);
   });
 
   it('does not fall back from local ecommerce MongoDB to cloud during localhost development', async () => {
@@ -307,19 +307,21 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['products_db']);
   });
 
-  it('prefers the selected ecommerce cloud source over generic MongoDB URI variables', async () => {
+  it('prefers the selected Products cloud source over ecommerce and generic MongoDB URI variables', async () => {
     process.env['VERCEL'] = '1';
     process.env['MONGODB_URI'] = 'mongodb+srv://generic.example.test/';
     process.env['MONGODB_DB'] = 'generic_db';
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_CLOUD_URI'] = 'mongodb+srv://ecommerce.example.test/';
-    process.env['ECOM_MONGODB_CLOUD_DB'] = 'products_db';
+    process.env['ECOM_MONGODB_CLOUD_DB'] = 'ecommerce_db';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
 
     const { getEcommerceProductsDb } = await import('./mongodb');
 
     await getEcommerceProductsDb();
 
-    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://ecommerce.example.test/']);
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://products.example.test/']);
     expect(mongoMocks.dbNames).toEqual(['products_db']);
   });
 

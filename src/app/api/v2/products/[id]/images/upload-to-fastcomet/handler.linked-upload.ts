@@ -6,7 +6,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   getDiskPathFromPublicPath,
-  getImageFileRepository,
+  getProductImageFileRepository,
 } from '@/shared/lib/files/services/image-file-service';
 import {
   getPublicPathFromStoredPath,
@@ -131,7 +131,7 @@ export const uploadLinkedImageFileToFastComet = async (input: {
     publicPath,
   });
 
-  const imageFileRepo = await getImageFileRepository();
+  const imageFileRepo = await getProductImageFileRepository();
   const updatedImageFile = await imageFileRepo.updateImageFile(linkedImageFile.id, {
     filepath: remoteUrl,
     metadata: buildUpdatedImageMetadata({

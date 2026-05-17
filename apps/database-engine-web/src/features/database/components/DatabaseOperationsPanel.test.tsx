@@ -108,7 +108,7 @@ describe('DatabaseOperationsPanel', () => {
       'href',
       '/admin/databases/engine?view=crud&application=geminitestapp&source=cloud'
     );
-    expect(screen.getByRole('link', { name: 'Ecommerce' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Products' })).toHaveAttribute(
       'href',
       '/admin/databases/engine?view=crud&application=products&source=cloud'
     );

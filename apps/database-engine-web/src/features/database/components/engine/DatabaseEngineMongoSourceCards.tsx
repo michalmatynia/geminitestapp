@@ -29,7 +29,7 @@ const MANAGED_APPLICATIONS: Array<{
   { application: 'geminitestapp', label: 'GeminiTest App' },
   { application: 'studiq', label: 'StudiQ' },
   { application: 'cms-builder', label: 'CMS Builder' },
-  { application: 'products', label: 'Ecommerce' },
+  { application: 'products', label: 'Products' },
   { application: 'arch', label: 'Milkbar Designers' },
 ];
 
@@ -115,8 +115,8 @@ const resolveMongoSourceOverviewModel = (
 const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): string[] => {
   const hasValue = (value: string | null): value is string =>
     value !== null && value !== '';
-  const applicationTransfers = lastSync.applicationTransfers;
-  const preSyncBackups = lastSync.preSyncBackups;
+  const applicationTransfers = lastSync.applicationTransfers ?? [];
+  const preSyncBackups = lastSync.preSyncBackups ?? [];
   const metrics = [`Synced at: ${lastSync.syncedAt}`, `Direction: ${lastSync.direction}`];
 
   if (hasValue(lastSync.archivePath)) {
@@ -156,7 +156,8 @@ export type MongoApplicationTransferSummary = {
 
 const getBackupApplication = (
   backup: DatabaseEngineMongoSyncBackup
-): DatabaseEngineManagedMongoApplication => backup.application;
+): DatabaseEngineManagedMongoApplication =>
+  (backup as Partial<DatabaseEngineMongoSyncBackup>).application ?? 'geminitestapp';
 
 const resolveTransferFromVerification = (
   application: DatabaseEngineManagedMongoApplication,
@@ -180,7 +181,7 @@ const resolveApplicationTransfer = (
   lastSync: DatabaseEngineMongoLastSync,
   application: DatabaseEngineManagedMongoApplication
 ): DatabaseEngineMongoSyncApplicationTransfer | null => {
-  const applicationTransfers = lastSync.applicationTransfers;
+  const applicationTransfers = lastSync.applicationTransfers ?? [];
   const transferFromList = applicationTransfers.find(
     (item) => item.application === application
   );
@@ -213,7 +214,7 @@ export const buildMongoApplicationTransferSummaries = (
 ): MongoApplicationTransferSummary[] =>
   MANAGED_APPLICATIONS.map(({ application, label }) => {
     const transfer = resolveApplicationTransfer(lastSync, application);
-    const backups = lastSync.preSyncBackups.filter(
+    const backups = (lastSync.preSyncBackups ?? []).filter(
       (backup) => getBackupApplication(backup) === application
     );
 
@@ -464,7 +465,7 @@ const MongoTransferHistory = ({
         <MongoTransferSummaryCard key={summary.application} summary={summary} />
       ))}
     </div>
-    {lastSync.applicationTransfers.map((transfer) => (
+    {(lastSync.applicationTransfers ?? []).map((transfer) => (
       <div key={`${transfer.application}-${transfer.archivePath}`} className='space-y-1'>
         <p>{`Application transfer (${transfer.application}): ${transfer.sourceDbName} -> ${transfer.targetDbName}`}</p>
         <p>{`Transfer archive: ${transfer.archivePath}`}</p>
@@ -472,10 +473,10 @@ const MongoTransferHistory = ({
         <p>{`Verification: ${transfer.verification.status} at ${transfer.verification.verifiedAt}`}</p>
       </div>
     ))}
-    {lastSync.preSyncBackups.map((backup) => (
+    {(lastSync.preSyncBackups ?? []).map((backup) => (
       <div key={`${backup.role}-${backup.source}-${backup.backupName}`} className='space-y-1'>
         <p>
-          {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${backup.application} ${backup.source}): ${backup.backupName}`}
+          {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${getBackupApplication(backup)} ${backup.source}): ${backup.backupName}`}
         </p>
         <p>{`Backup file: ${backup.backupPath}`}</p>
         <p>{`Backup log: ${backup.logPath}`}</p>

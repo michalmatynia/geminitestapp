@@ -8,7 +8,7 @@ import {
   mongoSourceSchema,
 } from '@/shared/contracts/database';
 import { badRequestError } from '@/shared/errors/app-error';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { createManagedMongoClient } from '@/shared/lib/db/services/managed-mongo-databases';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
@@ -209,11 +209,14 @@ async function handleMongoCrud(params: MongoCrudParams): Promise<Response> {
   }
 }
 
-export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
 
-  const body = await parseJsonBody(req, ctx);
-  const parsed = databaseCrudRequestSchema.parse(body);
+  const body = await parseObjectJsonBody(req, {
+    logPrefix: 'database-engine-web.databases.crud',
+  });
+  if (!body.ok) return body.response;
+  const parsed = databaseCrudRequestSchema.parse(body.data);
 
   return handleMongoCrud({
     collectionName: parsed.table,

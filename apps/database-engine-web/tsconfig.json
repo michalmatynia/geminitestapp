@@ -5,9 +5,9 @@
     "lib": ["dom", "dom.iterable", "es2022"],
     "noEmit": true,
     "paths": {
-      "@/components/*": ["src/components/*"],
-      "@/features/database": ["src/features/database/public.ts"],
-      "@/features/database/*": ["src/features/database/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/features/database": ["./src/features/database/public.ts"],
+      "@/features/database/*": ["./src/features/database/*"],
       "@/shared/*": ["../../src/shared/*"]
     },
     "plugins": [

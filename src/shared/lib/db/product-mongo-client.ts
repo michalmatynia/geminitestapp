@@ -2,8 +2,8 @@
  * Product MongoDB Client
  * 
  * Specialized MongoDB connection management for product operations.
- * Local Product List reads use the main app database by default; cloud product
- * operations can still resolve through the products source config.
+ * Product catalog reads use the dedicated Products database by default; app
+ * runtime collections that are integration/listing state stay on the app DB.
  * 
  * Features:
  * - Dedicated connection pooling for products.
@@ -42,10 +42,6 @@ type ProductMongoGlobalState = {
 const globalForProductsMongo = globalThis as typeof globalThis & ProductMongoGlobalState;
 
 const APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME = new Set([
-  'category_mappings',
-  'external_categories',
-  'external_producers',
-  'external_tags',
   'integration_amazon_selector_registry',
   'integration_connections',
   'integration_custom_selector_registry',
@@ -54,9 +50,7 @@ const APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME = new Set([
   'integration_supplier_1688_selector_registry',
   'integration_tradera_selector_registry',
   'integrations',
-  'producer_mappings',
   'product_listings',
-  'tag_mappings',
 ]);
 
 const routeCollectionToAppDb = (collectionName: string): boolean =>

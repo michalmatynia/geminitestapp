@@ -11,7 +11,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { MAX_IMAGE_BYTES } from '@/shared/lib/files/constants';
 import {
   getDiskPathFromPublicPath,
-  getImageFileRepository,
+  getProductImageFileRepository,
 } from '@/shared/lib/files/services/image-file-service';
 import { uploadBufferToFastComet } from '@/shared/lib/files/services/storage/file-storage-service';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
@@ -251,7 +251,7 @@ export const uploadNewImageFileToFastComet = async (input: {
     storageProvider: 'fastcomet',
     url: remoteUrl,
   };
-  const imageFileRepo = await getImageFileRepository();
+  const imageFileRepo = await getProductImageFileRepository();
   const imageFile = await imageFileRepo.createImageFile(recordInput);
   const updatedProduct = await persistUploadedImageSlot({
     imageFile,
@@ -298,7 +298,7 @@ export const stageNewImageFileForFastCometUpload = async (input: {
     storageProvider: 'local',
     url: publicPath,
   };
-  const imageFileRepo = await getImageFileRepository();
+  const imageFileRepo = await getProductImageFileRepository();
   const imageFile = await imageFileRepo.createImageFile(recordInput);
   const updatedProduct = await persistUploadedImageSlot({
     imageFile,

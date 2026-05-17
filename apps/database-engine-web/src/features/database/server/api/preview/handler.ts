@@ -57,9 +57,10 @@ const buildTableDetail = (
   rowEstimate: number,
   sizeFormatted: string
 ) => {
+  const firstSample = sample[0];
   const columns =
-    sample.length > 0
-      ? Object.entries(sample[0]).map(([field, value]) => ({ field, type: getFieldType(value) }))
+    firstSample !== undefined
+      ? Object.entries(firstSample).map(([field, value]) => ({ field, type: getFieldType(value) }))
       : [];
   return { name, columns, indexes, rowEstimate, sizeFormatted };
 };

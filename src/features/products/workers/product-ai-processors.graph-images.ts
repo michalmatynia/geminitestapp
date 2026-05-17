@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { getProductImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import {
   getDiskPathFromPublicPath,
   type ImageFileRecord,
@@ -84,7 +84,7 @@ export const buildImageParts = async (
 ): Promise<ChatCompletionContentPart[]> => {
   if (imageUrls.length === 0) return [];
   const urlsToProcess = openAiGuards ? imageUrls.slice(0, OPENAI_MAX_IMAGES) : imageUrls;
-  const imageFileRepository = await getImageFileRepository();
+  const imageFileRepository = await getProductImageFileRepository();
   const imageFiles = await imageFileRepository.listImageFiles();
   const imageFileMap = new Map(imageFiles.map((file) => [file.filepath, file]));
   const loadedParts = await Promise.all(

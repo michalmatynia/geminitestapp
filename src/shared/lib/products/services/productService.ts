@@ -54,8 +54,9 @@ const resolveProductRepository = async (
   providerOverride?: ProductDbProvider
 ): Promise<ProductRepository> => getProductRepository(providerOverride);
 
-const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
-  getImageFileRepository();
+const resolveImageFileRepository = async (
+  provider?: ProductDbProvider
+): Promise<ImageFileRepository> => getImageFileRepository(provider);
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -941,7 +942,7 @@ async function deleteProduct(
   const product = await productRepository.deleteProduct(id);
   if (!product) return null;
 
-  await deleteOrphanedProductImageFiles(product, productRepository);
+  await deleteOrphanedProductImageFiles(product, productRepository, provider);
 
   void logActivity({
     type: ActivityTypes.PRODUCT.DELETED,
@@ -1014,11 +1015,12 @@ const resolveEmbeddedProductImageFile = (
 
 const deleteOrphanedProductImageFiles = async (
   product: ProductRecord,
-  productRepository: ProductRepository
+  productRepository: ProductRepository,
+  provider: ProductDbProvider
 ): Promise<void> => {
   if (!Array.isArray(product.images) || product.images.length === 0) return;
 
-  const imageRepository = await resolveImageFileRepository();
+  const imageRepository = await resolveImageFileRepository(provider);
   const imageFiles = await resolveProductImageFiles(product, imageRepository);
   if (imageFiles.length === 0) return;
 
@@ -1073,7 +1075,7 @@ async function deleteProductImage(
 ): Promise<void> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const imageRepository = await resolveImageFileRepository();
+  const imageRepository = await resolveImageFileRepository(provider);
 
   const imageFile = await imageRepository.getImageFileById(imageId);
   if (!imageFile) return;
@@ -1119,7 +1121,7 @@ async function cleanupOrphanedProductImages(productId: string): Promise<void> {
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductById(productId);
   if (!product) return;
-  await deleteOrphanedProductImageFiles(product, productRepository);
+  await deleteOrphanedProductImageFiles(product, productRepository, provider);
 }
 
 export const productService = {

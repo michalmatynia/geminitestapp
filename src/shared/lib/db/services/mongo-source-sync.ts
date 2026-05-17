@@ -106,12 +106,7 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   arch: 'Milkbar Designers',
 };
 
-const MONGO_SYNC_EXCLUDED_COLLECTIONS: Partial<Record<MongoBackupApplication, string[]>> = {
-  products: ['settings'],
-};
-
-const getExcludedCollectionsForSync = (application: MongoBackupApplication): string[] =>
-  MONGO_SYNC_EXCLUDED_COLLECTIONS[application] ?? [];
+const getExcludedCollectionsForSync = (_application: MongoBackupApplication): string[] => [];
 
 const resolveSyncEndpoints = (
   direction: DatabaseEngineMongoSyncDirection

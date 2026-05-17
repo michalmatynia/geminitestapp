@@ -7,6 +7,7 @@ import type { z } from 'zod';
 
 const mocks = vi.hoisted(() => ({
   getImageFileRepository: vi.fn(),
+  getProductImageFileRepository: vi.fn(),
   getFileStorageSettings: vi.fn(),
   getProductById: vi.fn(),
   getProductRepository: vi.fn(),
@@ -56,6 +57,7 @@ vi.mock('@/features/products/workers/productFastCometImageUploadQueue', () => ({
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
   getDiskPathFromPublicPath: mocks.getDiskPathFromPublicPath,
   getImageFileRepository: mocks.getImageFileRepository,
+  getProductImageFileRepository: mocks.getProductImageFileRepository,
 }));
 
 vi.mock('@/shared/lib/files/services/storage/file-storage-service', () => ({
@@ -147,6 +149,10 @@ describe('product image upload-to-fastcomet handler', () => {
       updateProduct: mocks.updateProduct,
     });
     mocks.getImageFileRepository.mockResolvedValue({
+      createImageFile: mocks.createImageFile,
+      updateImageFile: mocks.updateImageFile,
+    });
+    mocks.getProductImageFileRepository.mockResolvedValue({
       createImageFile: mocks.createImageFile,
       updateImageFile: mocks.updateImageFile,
     });

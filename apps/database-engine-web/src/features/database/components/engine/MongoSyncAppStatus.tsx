@@ -27,7 +27,7 @@ export const APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, s
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Ecommerce',
+  products: 'Products',
   arch: 'Milkbar Designers',
 };
 
@@ -79,7 +79,7 @@ export function EndpointIndicator({
     Missing: 'bg-amber-400/15 text-amber-200',
     Unreachable: 'bg-red-400/15 text-red-200',
   };
-  const colorClass = colorMap[status] ?? colorMap.Unreachable;
+  const colorClass = colorMap[status] ?? colorMap['Unreachable'];
 
   return (
     <span className={`rounded-md px-2 py-1 text-[11px] font-medium ${colorClass}`}>
@@ -104,6 +104,9 @@ export function AppSyncButtons({
 }): JSX.Element {
   const isPendingPush = isPendingSyncTarget(pendingSync, 'local_to_cloud', application);
   const isPendingPull = isPendingSyncTarget(pendingSync, 'cloud_to_local', application);
+  const applicationLabel = APPLICATION_TARGET_LABELS[application];
+  const pushLabel = `Push ${applicationLabel} local to cloud`;
+  const pullLabel = `Pull ${applicationLabel} cloud to local`;
 
   return (
     <div className='flex gap-1'>
@@ -111,7 +114,8 @@ export function AppSyncButtons({
         variant='ghost'
         size='xs'
         className='h-7 px-1.5'
-        title='Push'
+        title={pushLabel}
+        aria-label={pushLabel}
         disabled={disabled}
         loading={isPendingPush}
         onClick={() => onSync('local_to_cloud', application)}
@@ -122,7 +126,8 @@ export function AppSyncButtons({
         variant='ghost'
         size='xs'
         className='h-7 px-1.5'
-        title='Pull'
+        title={pullLabel}
+        aria-label={pullLabel}
         disabled={disabled}
         loading={isPendingPull}
         onClick={() => onSync('cloud_to_local', application)}
@@ -150,7 +155,9 @@ export function AppStatusRow({
   return (
     <div className='flex items-center justify-between border-t border-white/5 py-1.5 first:border-t-0'>
       <div className='flex items-center gap-2 overflow-hidden'>
-        <span className='truncate text-xs font-medium text-gray-200'>{status.label}</span>
+        <span className='truncate text-xs font-medium text-gray-200'>
+          {APPLICATION_LABELS[status.application]}
+        </span>
         <div className='flex gap-1.5'>
           <EndpointIndicator
             label='L'
@@ -253,7 +260,9 @@ export const resolveUnavailableSyncMessage = (params: {
 }): string | null => {
   const { allowManualFullSync, hasDualSourceConfigured, canSync, syncIssue } = params;
   if (!allowManualFullSync) return 'Manual full sync is disabled by Database Engine controls.';
-  if (!hasDualSourceConfigured) return 'Configure both local and cloud URIs to use dual-source mode.';
+  if (!hasDualSourceConfigured) {
+    return 'Configure both local and cloud URIs in the effective env and set MONGODB_ACTIVE_SOURCE_DEFAULT in the winning file to use dual-source mode.';
+  }
   if (!canSync) return syncIssue !== null && syncIssue !== '' ? syncIssue : 'MongoDB source sync is unavailable.';
   return null;
 };

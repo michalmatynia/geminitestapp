@@ -8,7 +8,7 @@ import type { ProductRecord, ProductWithImages } from '@/shared/contracts/produc
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { productsRoot } from '@/shared/lib/files/server-constants';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { getProductImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import { type getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
@@ -211,7 +211,7 @@ const isRetryableHttpStatus = (status: number): boolean =>
 
 export const downloadImage = async (url: string, sku: string, index: number): Promise<{ id: string }> => {
   const nodeFs = getFsPromises();
-  const imageRepository = await getImageFileRepository();
+  const imageRepository = await getProductImageFileRepository();
 
   let lastError: unknown;
   for (let attempt = 1; attempt <= DOWNLOAD_MAX_ATTEMPTS; attempt++) {
@@ -249,7 +249,7 @@ export const downloadImage = async (url: string, sku: string, index: number): Pr
 };
 
 export const createLinkedImage = async (url: string, index: number): Promise<{ id: string }> => {
-  const imageRepository = await getImageFileRepository();
+  const imageRepository = await getProductImageFileRepository();
   const filename = extractFilename(url, `base-image-${index}.jpg`);
   return imageRepository.createImageFile({
     filename,

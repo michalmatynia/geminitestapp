@@ -124,7 +124,7 @@ const buildManagedMongoState = (
     buildDatabase('geminitestapp', 'GeminiTest App'),
     buildDatabase('studiq', 'StudiQ'),
     buildDatabase('cms-builder', 'CMS Builder'),
-    buildDatabase('products', 'Ecommerce'),
+    buildDatabase('products', 'Products'),
     buildDatabase('arch', 'Milkbar Designers'),
   ],
   ...overrides,
@@ -159,7 +159,7 @@ describe('ManagedMongoScopePanel', () => {
     expect(screen.getByText('GeminiTest App')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
     expect(screen.getByText('CMS Builder')).toBeInTheDocument();
-    expect(screen.getByText('Ecommerce')).toBeInTheDocument();
+    expect(screen.getByText('Products')).toBeInTheDocument();
     expect(screen.getByText('Milkbar Designers')).toBeInTheDocument();
 
     const localLinks = screen.getAllByRole('link', { name: 'Local Tables' });
@@ -199,7 +199,7 @@ describe('ManagedMongoScopePanel', () => {
         buildDatabase('geminitestapp', 'GeminiTest App'),
         buildDatabase('studiq', 'StudiQ', { canPushToCloud: false }),
         buildDatabase('cms-builder', 'CMS Builder'),
-        buildDatabase('products', 'Ecommerce'),
+        buildDatabase('products', 'Products'),
         buildDatabase('arch', 'Milkbar Designers'),
       ],
     });

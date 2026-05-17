@@ -16,8 +16,8 @@ import {
   getMongoRestoreCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
-  getEcommerceMongoConnectionUrl,
-  getEcommerceMongoDatabaseName,
+  getProductsMongoConnectionUrl,
+  getProductsMongoDatabaseName,
   getStudiqMongoConnectionUrl,
   getStudiqMongoDatabaseName,
   mongoExecFileAsync,
@@ -66,8 +66,8 @@ const resolveRestoreTarget = (backupName: string): { mongoUri: string; databaseN
 
   if (application === 'products') {
     return {
-      mongoUri: getEcommerceMongoConnectionUrl(),
-      databaseName: getEcommerceMongoDatabaseName(),
+      mongoUri: getProductsMongoConnectionUrl(),
+      databaseName: getProductsMongoDatabaseName(),
     };
   }
 

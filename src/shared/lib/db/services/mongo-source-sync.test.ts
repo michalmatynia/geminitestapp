@@ -642,7 +642,7 @@ describe('mongo-source-sync', () => {
       targetDbName: 'products_local',
       sourceUri: 'mongodb+srv://cluster.example/products_cloud',
       targetUri: 'mongodb://localhost:27017/products_local',
-      excludedCollections: ['settings'],
+      excludedCollections: [],
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(5, {
       source: 'cloud',

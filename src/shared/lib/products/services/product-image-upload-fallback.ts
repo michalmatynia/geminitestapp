@@ -15,6 +15,7 @@ export type LocalProductImageFallbackInput = {
   file: File;
   filename: string;
   mimetype?: string | null;
+  provider?: ProductDbProvider;
   service: string;
   sku?: string | null;
   sourceUrl?: string | null;
@@ -79,7 +80,7 @@ export const saveLocalProductImageFileFallback = async (
 ): Promise<ImageFileRecord | null> => {
   try {
     const { filename, filepath } = await writeLocalFallbackFile(input);
-    const imageFileRepository = await getImageFileRepository();
+    const imageFileRepository = await getImageFileRepository(input.provider);
     const record = await imageFileRepository.createImageFile({
       filename,
       filepath,
@@ -138,6 +139,7 @@ export const uploadProductImageFileWithLocalFallback = async (
       file: input.file,
       filename: input.filename,
       mimetype: input.file.type,
+      provider: input.provider,
       service: input.service,
       sku: input.sku,
       sourceUrl: input.sourceUrl,

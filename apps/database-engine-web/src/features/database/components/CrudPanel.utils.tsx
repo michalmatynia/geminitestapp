@@ -15,7 +15,7 @@ const MANAGED_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplication, 
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Ecommerce',
+  products: 'Products',
   arch: 'Milkbar Designers',
 };
 

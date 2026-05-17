@@ -582,16 +582,16 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
 
   const directConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_URI',
-      'MONGODB_ECOM_URI',
       'PRODUCTS_MONGODB_URI',
       'MONGODB_PRODUCTS_URI',
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
     ],
     [
-      'ECOM_MONGODB_DB',
-      'MONGODB_ECOM_DB',
       'PRODUCTS_MONGODB_DB',
       'MONGODB_PRODUCTS_DB',
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
     ],
   ));
   if (directConfig) return directConfig;
@@ -608,33 +608,33 @@ function resolveEcommerceProductsMongoConfig(): MongoConfig {
   );
   const localConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_LOCAL_URI',
-      'MONGODB_ECOM_LOCAL_URI',
       'PRODUCTS_MONGODB_LOCAL_URI',
       'MONGODB_PRODUCTS_LOCAL_URI',
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
       'MONGODB_LOCAL_URI',
     ],
     [
-      'ECOM_MONGODB_LOCAL_DB',
-      'MONGODB_ECOM_LOCAL_DB',
       'PRODUCTS_MONGODB_LOCAL_DB',
       'MONGODB_PRODUCTS_LOCAL_DB',
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
       'MONGODB_LOCAL_DB',
     ],
   ));
   const cloudConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_CLOUD_URI',
-      'MONGODB_ECOM_CLOUD_URI',
       'PRODUCTS_MONGODB_CLOUD_URI',
       'MONGODB_PRODUCTS_CLOUD_URI',
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
       'MONGODB_CLOUD_URI',
     ],
     [
-      'ECOM_MONGODB_CLOUD_DB',
-      'MONGODB_ECOM_CLOUD_DB',
       'PRODUCTS_MONGODB_CLOUD_DB',
       'MONGODB_PRODUCTS_CLOUD_DB',
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
       'MONGODB_CLOUD_DB',
     ],
   ));
@@ -674,47 +674,47 @@ function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
 
   const directConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_URI',
-      'MONGODB_ECOM_URI',
       'PRODUCTS_MONGODB_URI',
       'MONGODB_PRODUCTS_URI',
+      'ECOM_MONGODB_URI',
+      'MONGODB_ECOM_URI',
     ],
     [
-      'ECOM_MONGODB_DB',
-      'MONGODB_ECOM_DB',
       'PRODUCTS_MONGODB_DB',
       'MONGODB_PRODUCTS_DB',
+      'ECOM_MONGODB_DB',
+      'MONGODB_ECOM_DB',
     ],
   ));
   const localConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_LOCAL_URI',
-      'MONGODB_ECOM_LOCAL_URI',
       'PRODUCTS_MONGODB_LOCAL_URI',
       'MONGODB_PRODUCTS_LOCAL_URI',
+      'ECOM_MONGODB_LOCAL_URI',
+      'MONGODB_ECOM_LOCAL_URI',
       'MONGODB_LOCAL_URI',
     ],
     [
-      'ECOM_MONGODB_LOCAL_DB',
-      'MONGODB_ECOM_LOCAL_DB',
       'PRODUCTS_MONGODB_LOCAL_DB',
       'MONGODB_PRODUCTS_LOCAL_DB',
+      'ECOM_MONGODB_LOCAL_DB',
+      'MONGODB_ECOM_LOCAL_DB',
       'MONGODB_LOCAL_DB',
     ],
   ));
   const cloudConfig = completeMongoConfig(readMongoConfig(
     [
-      'ECOM_MONGODB_CLOUD_URI',
-      'MONGODB_ECOM_CLOUD_URI',
       'PRODUCTS_MONGODB_CLOUD_URI',
       'MONGODB_PRODUCTS_CLOUD_URI',
+      'ECOM_MONGODB_CLOUD_URI',
+      'MONGODB_ECOM_CLOUD_URI',
       'MONGODB_CLOUD_URI',
     ],
     [
-      'ECOM_MONGODB_CLOUD_DB',
-      'MONGODB_ECOM_CLOUD_DB',
       'PRODUCTS_MONGODB_CLOUD_DB',
       'MONGODB_PRODUCTS_CLOUD_DB',
+      'ECOM_MONGODB_CLOUD_DB',
+      'MONGODB_ECOM_CLOUD_DB',
       'MONGODB_CLOUD_DB',
     ],
   ));

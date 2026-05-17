@@ -63,7 +63,7 @@ const MONGO_APPLICATION_LABELS: Record<DatabaseEngineManagedMongoApplicationTarg
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Ecommerce',
+  products: 'Products',
   arch: 'Milkbar Designers',
 };
 

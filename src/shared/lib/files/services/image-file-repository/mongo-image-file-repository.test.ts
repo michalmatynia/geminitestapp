@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getMongoDbMock, insertOneMock } = vi.hoisted(() => ({
+const { getMongoDbMock, getProductsMongoDbMock, insertOneMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
+  getProductsMongoDbMock: vi.fn(),
   insertOneMock: vi.fn(),
 }));
 
@@ -11,13 +12,25 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
 
-import { mongoImageFileRepository } from './mongo-image-file-repository';
+vi.mock('@/shared/lib/db/product-mongo-client', () => ({
+  getMongoDb: getProductsMongoDbMock,
+}));
+
+import {
+  mongoImageFileRepository,
+  productMongoImageFileRepository,
+} from './mongo-image-file-repository';
 
 describe('mongoImageFileRepository', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insertOneMock.mockResolvedValue({ acknowledged: true });
     getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        insertOne: insertOneMock,
+      })),
+    });
+    getProductsMongoDbMock.mockResolvedValue({
       collection: vi.fn(() => ({
         insertOne: insertOneMock,
       })),
@@ -66,5 +79,22 @@ describe('mongoImageFileRepository', () => {
       storageProvider: 'local',
       thumbnailUrl: '/uploads/products/SKU/image-thumb.jpg',
     });
+  });
+
+  it('can persist through the Products database repository', async () => {
+    await productMongoImageFileRepository.createImageFile({
+      filename: 'product.jpg',
+      filepath: '/uploads/products/SKU/product.jpg',
+      mimetype: 'image/jpeg',
+      size: 321,
+    });
+
+    expect(getProductsMongoDbMock).toHaveBeenCalled();
+    expect(insertOneMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filename: 'product.jpg',
+        filepath: '/uploads/products/SKU/product.jpg',
+      })
+    );
   });
 });

@@ -95,7 +95,7 @@ const normalizeGroups = (data: unknown): DatabasePreviewGroup[] => {
 
 const normalizePreviewPayload = (
   normalized: Record<string, unknown>,
-  rawStats: Record<string, string>,
+  rawStats: Record<string, unknown>,
   input: DatabasePreviewRequest
 ): DatabasePreviewPayload => {
   const groups = normalizeGroups(normalized['groups'] ?? rawStats['groups']);

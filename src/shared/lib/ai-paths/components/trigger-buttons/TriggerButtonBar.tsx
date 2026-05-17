@@ -391,7 +391,8 @@ export function TriggerButtonBar({
         key={button.id}
         variant='outline'
         size={showLabel ? 'xs' : 'icon'}
-        aria-label={button.name}
+        aria-label={button.name || undefined}
+        title={button.name || undefined}
         aria-busy={isRunning || undefined}
         loading={isRunning}
         disabled={Boolean(disabled)}

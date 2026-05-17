@@ -46,6 +46,8 @@ export const ensureMongoFilemakerEmailIndexes = async (
 ): Promise<void> => {
   await Promise.all([
     collections.emails.createIndex({ email: 1 }, { name: 'filemaker_emails_email_unique', unique: true }),
+    collections.emails.createIndex({ id: 1 }, { name: 'filemaker_emails_id' }),
+    collections.emails.createIndex({ legacyUuid: 1 }, { name: 'filemaker_emails_legacy_uuid' }),
     collections.emails.createIndex(
       { legacyUuids: 1 },
       {

@@ -23,7 +23,7 @@ export type {
   BrainModelsResponse,
   BrainOperationsOverviewResponse,
   InsightsSnapshot,
-} from './useBrainRuntime';
+} from '../hooks/useBrainQueries';
 
 const {
   Context: BrainStateContext,

@@ -16,7 +16,10 @@ import {
   type getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 
-import { KangurHomeBetaBadge } from './KangurPrimaryNavigation.components';
+import {
+  KangurHomeBetaBadge,
+  KangurHomeFallbackThemeBadge,
+} from './KangurPrimaryNavigation.components';
 import type {
   KangurNavActionConfig,
   KangurPrimaryNavigationProps,
@@ -145,6 +148,7 @@ export const buildHomeAction = ({
   effectiveHomeActive,
   homeHref,
   homeTransitionSourceId,
+  isFallbackTheme,
   navTranslations,
   onHomeClick,
   transitionPhase,
@@ -153,6 +157,7 @@ export const buildHomeAction = ({
   effectiveHomeActive: boolean;
   homeHref: string;
   homeTransitionSourceId: string;
+  isFallbackTheme: boolean;
   navTranslations: KangurIntlTranslate;
   onHomeClick?: () => void;
   transitionPhase: KangurPrimaryNavigationTransitionPhase;
@@ -169,7 +174,10 @@ export const buildHomeAction = ({
         >
           <KangurHomeLogo idPrefix='kangur-primary-nav-logo' className='-translate-y-[1px]' />
         </span>
-        <KangurHomeBetaBadge />
+        <span className='flex items-center justify-center gap-1'>
+          <KangurHomeBetaBadge />
+          {isFallbackTheme ? <KangurHomeFallbackThemeBadge /> : null}
+        </span>
       </span>
       <span className='sr-only'>{navTranslations('home')}</span>
     </>

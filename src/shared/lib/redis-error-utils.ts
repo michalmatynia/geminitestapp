@@ -19,6 +19,10 @@ const TRANSIENT_REDIS_MESSAGE_PATTERNS = [
   'connection is closed',
   'socket closed unexpectedly',
   'timeout',
+  // ioredis throws this when a command is sent while disconnected and
+  // enableOfflineQueue is false — treat it as transient so callers can fall back
+  "stream isn't writeable",
+  'enableofflinequeue',
 ];
 
 const readRedisErrorCode = (error: Error): string | null => {

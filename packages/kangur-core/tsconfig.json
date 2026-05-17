@@ -1,10 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "../..",
     "paths": {
-      "@kangur/contracts": ["./packages/kangur-contracts/src/index.ts"],
-      "@kangur/contracts/*": ["./packages/kangur-contracts/src/*"]
+      "@kangur/contracts": ["../kangur-contracts/src/index.ts"],
+      "@kangur/contracts/*": ["../kangur-contracts/src/*"]
     }
   },
   "include": ["src/**/*.ts"]

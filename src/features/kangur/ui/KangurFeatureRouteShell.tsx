@@ -14,6 +14,7 @@ import {
   resolveKangurPageKeyFromSlug,
   stripKangurLaunchIntent,
 } from '@/features/kangur/config/routing';
+import { KangurClientBootOptionsProvider } from '@/features/kangur/ui/context/KangurClientBootOptionsContext';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
@@ -473,14 +474,18 @@ function useSyncKangurFeatureRouteShellActiveClass(): void {
 //  basePath           – canonical Kangur base path (default: /kangur)
 //  embedded           – true when the shell is embedded inside a CMS page
 //  forceBodyScrollLock – locks body scroll (used by full-screen game views)
+//  skipInitialClientBootLoader – true when a server loader already covered
+//                                first paint for the standalone app.
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,
   forceBodyScrollLock = false,
+  skipInitialClientBootLoader = false,
 }: {
   basePath?: string;
   embedded?: boolean;
   forceBodyScrollLock?: boolean;
+  skipInitialClientBootLoader?: boolean;
 } = {}): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
@@ -532,17 +537,21 @@ export function KangurFeatureRouteShell({
         onDismiss={dismissDedicatedAppPrompt}
         onOpen={openDedicatedApp}
       />
-      <KangurRoutingProvider
-        pageKey={pageKey}
-        requestedPath={requestedPath}
-        requestedHref={requestedHref}
-        basePath={normalizedBasePath}
-        embedded={isEmbedded}
+      <KangurClientBootOptionsProvider
+        skipInitialClientBootLoader={skipInitialClientBootLoader}
       >
-        <KangurMainRoleProvider suppressMainRole>
-          <KangurFeaturePageShell forceBodyScrollLock={forceBodyScrollLock} />
-        </KangurMainRoleProvider>
-      </KangurRoutingProvider>
+        <KangurRoutingProvider
+          pageKey={pageKey}
+          requestedPath={requestedPath}
+          requestedHref={requestedHref}
+          basePath={normalizedBasePath}
+          embedded={isEmbedded}
+        >
+          <KangurMainRoleProvider suppressMainRole>
+            <KangurFeaturePageShell forceBodyScrollLock={forceBodyScrollLock} />
+          </KangurMainRoleProvider>
+        </KangurRoutingProvider>
+      </KangurClientBootOptionsProvider>
     </div>
   );
 }

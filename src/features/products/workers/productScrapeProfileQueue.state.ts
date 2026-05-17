@@ -8,6 +8,7 @@ import type {
 } from '@/shared/contracts/products/scrape-profiles';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getRedisClient } from '@/shared/lib/redis';
+import { isTransientRedisTransportError } from '@/shared/lib/redis-error-utils';
 
 import {
   ACTIVE_RUN_KEY,
@@ -111,12 +112,22 @@ export const readRun = async (
     const run = memoryRuns.get(runId);
     return run === undefined ? null : cloneRun(run);
   }
-  return parseRun(await redis.get(runKey(runId)));
+  try {
+    return parseRun(await redis.get(runKey(runId)));
+  } catch (error) {
+    if (isTransientRedisTransportError(error)) return null;
+    throw error;
+  }
 };
 
 const readRunId = async (redis: RedisClient, key: string): Promise<string | null> => {
-  const value = await redis.get(key);
-  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+  try {
+    const value = await redis.get(key);
+    return typeof value === 'string' && value.trim().length > 0 ? value : null;
+  } catch (error) {
+    if (isTransientRedisTransportError(error)) return null;
+    throw error;
+  }
 };
 
 export const readLatestRunId = async (): Promise<string | null> => {

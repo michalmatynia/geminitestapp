@@ -5,10 +5,16 @@ import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRoute
 
 import type { JSX } from 'react';
 
-export function KangurFeatureRouteShellClientBoundary(): JSX.Element {
+type KangurFeatureRouteShellClientBoundaryProps = {
+  skipInitialClientBootLoader?: boolean;
+};
+
+export function KangurFeatureRouteShellClientBoundary({
+  skipInitialClientBootLoader = false,
+}: KangurFeatureRouteShellClientBoundaryProps = {}): JSX.Element {
   return (
     <KangurMainRoleProvider suppressMainRole>
-      <KangurFeatureRouteShell />
+      <KangurFeatureRouteShell skipInitialClientBootLoader={skipInitialClientBootLoader} />
     </KangurMainRoleProvider>
   );
 }

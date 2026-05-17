@@ -111,8 +111,8 @@ const formatSalary = (salary: JobListing['salary']): string => {
   if (salary === null || salary === undefined) return '—';
   if (typeof salary.raw === 'string' && salary.raw.length > 0) return salary.raw;
   
-  const { min, max, currency = '', period = '' } = salary;
-  const periodStr = period.length > 0 ? ` / ${period}` : '';
+  const { min, max, currency = '', period } = salary;
+  const periodStr = period != null && period.length > 0 ? ` / ${period}` : '';
   
   if (min !== null && max !== null) return `${min}–${max} ${currency}${periodStr}`.trim();
   if (min !== null) return `from ${min} ${currency}${periodStr}`.trim();

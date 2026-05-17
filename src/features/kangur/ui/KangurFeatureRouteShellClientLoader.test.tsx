@@ -8,9 +8,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/dynamic', () => ({
   default: () =>
-    function MockKangurFeatureRouteShellClientBoundary() {
+    function MockKangurFeatureRouteShellClientBoundary(props: {
+      skipInitialClientBootLoader?: boolean;
+    }) {
       return (
-        <div data-testid='kangur-feature-route-shell-client-loader'>
+        <div
+          data-testid='kangur-feature-route-shell-client-loader'
+          data-skip-initial-client-boot-loader={String(
+            props.skipInitialClientBootLoader ?? false
+          )}
+        >
           deferred route shell boundary
         </div>
       );
@@ -26,5 +33,14 @@ describe('KangurFeatureRouteShellClientLoader', () => {
     expect(
       screen.getByTestId('kangur-feature-route-shell-client-loader')
     ).toHaveTextContent('deferred route shell boundary');
+  });
+
+  it('passes the server first-paint loader handoff flag into the deferred boundary', () => {
+    render(<KangurFeatureRouteShellClientLoader skipInitialClientBootLoader />);
+
+    expect(screen.getByTestId('kangur-feature-route-shell-client-loader')).toHaveAttribute(
+      'data-skip-initial-client-boot-loader',
+      'true'
+    );
   });
 });

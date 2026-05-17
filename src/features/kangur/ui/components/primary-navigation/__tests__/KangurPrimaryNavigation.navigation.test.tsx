@@ -9,6 +9,10 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/appearance/theme-settings';
+import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import {
   CmsStorefrontAppearanceProvider,
   KangurPrimaryNavigation,
@@ -60,17 +64,52 @@ it('renders the SVG logo inside the home control', () => {
   const brand = screen.getByTestId('kangur-home-brand');
   const logo = screen.getByTestId('kangur-home-logo');
   const betaBadge = screen.getByTestId('kangur-home-beta-badge');
+  const fallbackBadge = screen.getByTestId('kangur-home-fallback-badge');
 
   expect(brand).toContainElement(logo);
   expect(brand).toContainElement(betaBadge);
+  expect(brand).toContainElement(fallbackBadge);
   expect(logo.querySelector('svg')).not.toBeNull();
   expect(betaBadge.querySelector('title')?.textContent).toBe('StuqiQ Beta badge');
   expect(betaBadge.querySelector('text')?.textContent).toBe('BETA');
+  expect(fallbackBadge).toHaveTextContent('fallback');
   expect(logo.className).not.toContain('translate-x-');
   expect(screen.getByRole('link', { name: /strona główna/i })).toHaveAttribute(
     'href',
     '/kangur'
   );
+});
+
+it('hides the fallback label when a custom Mongo-backed theme slot is available', async () => {
+  settingsStoreGetMock.mockImplementation((key: string) => {
+    if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+      return 'default';
+    }
+    if (key === KANGUR_DAILY_THEME_SETTINGS_KEY) {
+      return serializeSetting({
+        backgroundColor: '#123456',
+        primaryColor: '#4f46e5',
+        themePreset: 'kangur-custom-local',
+      });
+    }
+    return undefined;
+  });
+
+  render(
+    <KangurStorefrontAppearanceProvider>
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        contentClassName='justify-center'
+        currentPage='Game'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    </KangurStorefrontAppearanceProvider>
+  );
+
+  await waitFor(() => {
+    expect(screen.queryByTestId('kangur-home-fallback-badge')).toBeNull();
+  });
 });
 
 it('navigates to the learner profile directly from the profile item', async () => {

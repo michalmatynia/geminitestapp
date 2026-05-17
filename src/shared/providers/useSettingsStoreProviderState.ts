@@ -72,8 +72,13 @@ const useSettingsStoreQueries = ({
     scope: 'light',
     enabled: flags.shouldUseAdminSettings && !flags.shouldSuppressAdminQuery,
   });
+  const shouldForceLiteRefresh =
+    flags.shouldRefreshSeededLiteStore &&
+    !flags.shouldSuppressLiteQuery &&
+    !flags.shouldReuseParentLiteStore;
   const liteQuery = useLiteSettingsMap({
     enabled: !flags.shouldSuppressLiteQuery && !flags.shouldReuseParentLiteStore,
+    ...(shouldForceLiteRefresh ? { bypassCache: true } : {}),
   });
 
   return {

@@ -193,9 +193,11 @@ const collectGenerationSourceContext = async (
       }
     });
   }
-  const primarySourceSlotId =
-    (baseSourceId && sourceSlotIds.includes(baseSourceId) ? baseSourceId : null) ??
-    (baseAssetPath
+  let primarySourceSlotId: string | null;
+  if (baseSourceId !== null && sourceSlotIds.includes(baseSourceId)) {
+    primarySourceSlotId = baseSourceId;
+  } else {
+    const fromPath = baseAssetPath
       ? (sourceSlotIds.find((slotId) => {
         const slot = sourceSlotsById.get(slotId);
         if (!slot) return false;
@@ -203,9 +205,9 @@ const collectGenerationSourceContext = async (
             normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
         return slotPath === baseAssetPath;
       }) ?? null)
-      : null) ??
-    sourceSlotIds[0] ??
-    null;
+      : null;
+    primarySourceSlotId = fromPath ?? sourceSlotIds[0] ?? null;
+  }
 
   const primarySourceSlot = primarySourceSlotId
     ? (sourceSlotsById.get(primarySourceSlotId) ??

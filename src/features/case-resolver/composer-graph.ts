@@ -30,6 +30,14 @@ export const isPlainTextInputPort = (port: string | null | undefined): boolean =
 export const isWysiwygContentInputPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 
+export const isAcceptedPort = (type: string, port: string | null | undefined): boolean => {
+  if (type === 'wysiwygText') return isWysiwygTextInputPort(port);
+  if (type === 'plaintextContent') return isPlaintextContentInputPort(port);
+  if (type === 'plainText') return isPlainTextInputPort(port);
+  if (type === 'wysiwygContent') return isWysiwygContentInputPort(port);
+  return port === type;
+};
+
 export const buildGraphContext = (graph: CaseResolverGraph): GraphContext => {
   const nodeById = new Map<string, AiNode>(
     graph.nodes.map((node) => [node.id, node])

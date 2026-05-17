@@ -1,4 +1,5 @@
 import { type AiNode, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
+import type { CaseResolverCompiledSegment } from '@/shared/contracts/case-resolver/capture';
 import { stripHtml } from './utils/text-sanitization';
 import {
   appendWithJoin,

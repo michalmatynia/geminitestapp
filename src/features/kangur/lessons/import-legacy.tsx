@@ -572,6 +572,30 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  webdev_js_basics: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_js_syntax: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_js_dom: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_js_es6: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_js_async: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_js_tooling: {
+    kind: 'flat',
+    slides: [],
+  },
 };
 
 const buildPagesFromDefinition = (

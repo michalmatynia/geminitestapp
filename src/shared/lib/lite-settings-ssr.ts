@@ -2,7 +2,7 @@ import 'server-only';
 
 /**
  * Lite Settings Server-Side Rendering
- * 
+ *
  * Optimized settings loading for SSR with minimal performance impact.
  * Features:
  * - Prewarming of critical settings during build/startup
@@ -11,8 +11,8 @@ import 'server-only';
  * - Development vs production timeout optimization
  */
 
-import { prewarmLiteSettingsServerCache } from '@/shared/server/api/settings/lite/handler';
-import { cloneLiteSettings, getLiteSettingsCache } from '@/shared/lib/settings-lite-server-cache';
+import { cache } from 'react';
+import { cloneLiteSettings, getLiteSettingsCache, getLiteSettingsInflight } from '@/shared/lib/settings-lite-server-cache';
 
 import type { SettingRecord } from '@/shared/contracts/settings';
 
@@ -62,13 +62,20 @@ export const filterLiteSettingsForHydrationPayload = (
 
 /**
  * Waits for settings prewarming with timeout to prevent SSR blocking.
+ *
+ * Only waits for an in-flight prewarm started externally (e.g. instrumentation.ts
+ * during server startup, outside any request context). Never starts a new MongoDB
+ * fetch here — doing so would create I/O inside the React render context and
+ * trigger Next.js dynamicIO errors ("Uncached data accessed outside <Suspense>").
  */
 const waitForLiteSettingsPrewarm = async (): Promise<void> => {
-  const prewarmPromise = prewarmLiteSettingsServerCache();
-  prewarmPromise.catch(() => undefined);
+  const existingInflight = getLiteSettingsInflight();
+  if (!existingInflight) return;
+
+  existingInflight.catch(() => undefined);
 
   if (LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS <= 0) {
-    await prewarmPromise;
+    await existingInflight;
     return;
   }
 
@@ -76,7 +83,7 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
 
   try {
     await Promise.race([
-      prewarmPromise,
+      existingInflight,
       new Promise<void>((resolve) => {
         timeoutId = setTimeout(resolve, LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS);
       }),
@@ -92,8 +99,11 @@ const waitForLiteSettingsPrewarm = async (): Promise<void> => {
  * Fetch lite settings on the server and return them for SSR hydration.
  * The result is injected into a JSON data island so the client can skip the
  * /api/settings/lite round-trip on first load.
+ *
+ * Wrapped with React cache() so Next.js dynamicIO treats the MongoDB access
+ * as request-scoped cached data, allowing it to be called outside <Suspense>.
  */
-export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
+export const getLiteSettingsForHydration = cache(async (): Promise<SettingRecord[]> => {
   try {
     const currentCache = getLiteSettingsCache();
     if (currentCache) {
@@ -101,9 +111,9 @@ export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
     }
 
     await waitForLiteSettingsPrewarm();
-    const cache = getLiteSettingsCache();
-    return cache ? filterLiteSettingsForHydrationPayload(cloneLiteSettings(cache.data)) : [];
+    const warmedCache = getLiteSettingsCache();
+    return warmedCache ? filterLiteSettingsForHydrationPayload(cloneLiteSettings(warmedCache.data)) : [];
   } catch {
     return [];
   }
-}
+});

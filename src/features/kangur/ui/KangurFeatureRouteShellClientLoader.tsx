@@ -4,19 +4,30 @@ import dynamic from 'next/dynamic';
 
 import type { JSX } from 'react';
 
-const KangurFeatureRouteShellClientBoundary = dynamic(
-  () =>
-    import('@/features/kangur/ui/KangurFeatureRouteShellClientBoundary').then(
-      (module) => ({
-        default: module.KangurFeatureRouteShellClientBoundary,
-      })
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
+export type KangurFeatureRouteShellClientLoaderProps = {
+  skipInitialClientBootLoader?: boolean;
+};
 
-export function KangurFeatureRouteShellClientLoader(): JSX.Element {
-  return <KangurFeatureRouteShellClientBoundary />;
+const KangurFeatureRouteShellClientBoundary =
+  dynamic<KangurFeatureRouteShellClientLoaderProps>(
+    () =>
+      import('@/features/kangur/ui/KangurFeatureRouteShellClientBoundary').then(
+        (module) => ({
+          default: module.KangurFeatureRouteShellClientBoundary,
+        })
+      ),
+    {
+      ssr: false,
+      loading: () => null,
+    }
+  );
+
+export function KangurFeatureRouteShellClientLoader({
+  skipInitialClientBootLoader = false,
+}: KangurFeatureRouteShellClientLoaderProps = {}): JSX.Element {
+  return (
+    <KangurFeatureRouteShellClientBoundary
+      skipInitialClientBootLoader={skipInitialClientBootLoader}
+    />
+  );
 }

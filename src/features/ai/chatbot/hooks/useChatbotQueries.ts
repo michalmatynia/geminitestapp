@@ -26,7 +26,7 @@ export function useChatbotSessions(options?: {
   return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ChatbotSessionListItem[]> => {
-      const data = await fetchChatbotSessions<ChatbotSessionListItem>();
+      const data = await fetchChatbotSessions();
       return data.sessions ?? [];
     },
     enabled: options?.enabled ?? true,

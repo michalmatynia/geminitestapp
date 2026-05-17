@@ -29,9 +29,9 @@ export function useChatbotSessions(params: ChatbotSessionsParams): ChatbotSessio
     setSessionsLoading(true);
     try {
       const res = await chatbotApi.fetchChatbotSessions();
-      setSessions(res.sessions);
-      if (currentSessionId === null && res.sessions.length > 0) {
-        const item = res.sessions[0];
+      setSessions(res.sessions ?? []);
+      if (currentSessionId === null && (res.sessions?.length ?? 0) > 0) {
+        const item = res.sessions?.[0];
         if (item !== undefined) setCurrentSessionId(item.id);
       }
     } catch (e: unknown) { logClientCatch(e, { source: 'useChatbotSessions.fetchSessions' }); toast('Failed to load sessions', { variant: 'error' });
@@ -41,7 +41,7 @@ export function useChatbotSessions(params: ChatbotSessionsParams): ChatbotSessio
   const loadSessionMessages = useCallback(async (id: string): Promise<void> => {
     try {
       const s = await chatbotApi.fetchChatbotSession(id);
-      setMessages(s.messages);
+      setMessages(s.messages ?? []);
     } catch (e: unknown) { logClientCatch(e, { source: 'useChatbotSessions.loadSessionMessages', sessionId: id }); }
   }, [setMessages]);
 

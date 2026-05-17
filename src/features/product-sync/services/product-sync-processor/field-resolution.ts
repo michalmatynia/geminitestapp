@@ -1,9 +1,8 @@
-import { buildEffectiveProductSyncFieldRules } from '@/shared/contracts/product-sync';
 import type {
   ProductSyncAppField,
   ProductSyncFieldRule,
 } from '@/shared/contracts/product-sync';
-import type { ProductWithImages, ProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
   toTrimmedString,
@@ -57,7 +56,7 @@ export const setPathValue = (target: Record<string, unknown>, path: string, valu
 
   let current: Record<string, unknown> = target;
   for (let index = 0; index < segments.length - 1; index += 1) {
-    const key = segments[index];
+    const key = segments[index]!;
     if (key === '') return;
     const next = current[key];
     if (next === null || next === undefined || typeof next !== 'object' || Array.isArray(next)) {
@@ -66,7 +65,7 @@ export const setPathValue = (target: Record<string, unknown>, path: string, valu
     current = current[key] as Record<string, unknown>;
   }
 
-  const lastKey = segments[segments.length - 1];
+  const lastKey = segments[segments.length - 1]!;
   if (lastKey === '') return;
   current[lastKey] = value;
 };

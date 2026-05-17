@@ -1,10 +1,6 @@
-import createMiddleware from 'next-intl/middleware';
-import { type NextRequest, type NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-import { siteRouting } from '@/i18n/routing';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
-
-const intlProxy = createMiddleware(siteRouting);
 
 const KANGUR_NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
@@ -27,12 +23,12 @@ const applyKangurNoStoreHeaders = (response: NextResponse): NextResponse => {
 };
 
 export default function proxy(request: NextRequest): NextResponse {
-  const response = intlProxy(request);
+  const response = NextResponse.next();
   return isKangurPageRequest(request.nextUrl.pathname)
     ? applyKangurNoStoreHeaders(response)
     : response;
 }
 
 export const config = {
-  matcher: ['/((?!(?:api|kangur-api|apps/studiq-web/api|apps/studiq-web/kangur-api)|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!api|kangur-api|_next|_vercel|.*\\..*).*)'],
 };

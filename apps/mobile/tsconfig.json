@@ -5,7 +5,6 @@
       "react",
       "react-native"
     ],
-    "baseUrl": ".",
     "paths": {
       "@kangur/contracts": [
         "../../packages/kangur-contracts/src/index.ts"

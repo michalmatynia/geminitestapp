@@ -222,6 +222,41 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-top-navigation-host')).toBeInTheDocument();
   });
 
+  it('skips the client full-screen loader when the server boot shell handled first paint', async () => {
+    const { KangurClientBootOptionsProvider } = await import(
+      '@/features/kangur/ui/context/KangurClientBootOptionsContext'
+    );
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      basePath: '/kangur',
+    });
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(
+      <KangurClientBootOptionsProvider skipInitialClientBootLoader>
+        <KangurFeatureApp />
+      </KangurClientBootOptionsProvider>
+    );
+
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Game:default'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('uses the boot loader before the full page skeleton on the public root home route', async () => {
     routingStateMock.mockReturnValue({
       pageKey: 'Game',

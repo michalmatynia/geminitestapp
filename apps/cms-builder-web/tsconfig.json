@@ -4,7 +4,6 @@
     "noEmit": true,
     "declaration": false,
     "plugins": [{ "name": "next" }],
-    "baseUrl": ".",
     "paths": {
       "@kangur/contracts": ["../../packages/kangur-contracts/src/index.ts"],
       "@kangur/contracts/*": ["../../packages/kangur-contracts/src/*"],

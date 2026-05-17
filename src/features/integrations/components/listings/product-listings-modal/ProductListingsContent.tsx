@@ -204,10 +204,10 @@ export function ProductListingsContent(): React.JSX.Element {
     recoveryContext?.integrationId ?? fallbackVintedRecoveryListing?.integrationId ?? null;
   const vintedRecoveryConnectionId =
     recoveryContext?.connectionId ?? fallbackVintedRecoveryListing?.connectionId ?? null;
-  const vintedRecoveryFailureReason =
-    (recoveryContext && 'failureReason' in recoveryContext
-      ? recoveryContext.failureReason ?? null
-      : null) ?? fallbackVintedRecoveryListing?.failureReason ?? null;
+  const vintedRecoveryFailureReason: string | null =
+    recoveryContext != null && 'failureReason' in recoveryContext
+      ? (recoveryContext.failureReason ?? null)
+      : (fallbackVintedRecoveryListing?.failureReason ?? null);
   const { feedback: persistedQuickListFeedback } = useTraderaQuickListFeedback(product.id);
   const { feedback: persistedVintedQuickListFeedback } = useVintedQuickListFeedback(product.id);
   const trackedSuccessListing =
@@ -404,9 +404,9 @@ export function ProductListingsContent(): React.JSX.Element {
         integrationId: fallbackVintedRecoveryListing.integrationId ?? null,
         connectionId: fallbackVintedRecoveryListing.connectionId ?? null,
         failureReason:
-          (recoveryContext && 'failureReason' in recoveryContext
-            ? recoveryContext.failureReason ?? null
-            : null) ?? fallbackVintedRecoveryListing.failureReason ?? null,
+          recoveryContext != null && 'failureReason' in recoveryContext
+            ? (recoveryContext.failureReason ?? null)
+            : (fallbackVintedRecoveryListing.failureReason ?? null),
       });
 
     setRecoveryContext((current) => {

@@ -10,8 +10,8 @@ import {
 } from '@/server/integrations';
 import type {
   ProductSyncProfile,
-  UpdateProductInput,
 } from '@/shared/contracts/product-sync';
+import type { UpdateProductInput } from '@/shared/contracts/products/io';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
@@ -39,12 +39,12 @@ export const resolveBaseConnectionContext = async (
   profile: ProductSyncProfile
 ): Promise<BaseConnectionContext> => {
   const integrationRepo = await getIntegrationRepository();
-  const connection = integrationRepo.getConnectionById(profile.connectionId);
+  const connection = await integrationRepo.getConnectionById(profile.connectionId);
   if (connection === null) {
     throw new Error('Configured Base connection does not exist.');
   }
 
-  const integration = integrationRepo.getIntegrationById(connection.integrationId);
+  const integration = await integrationRepo.getIntegrationById(connection.integrationId);
   if (
     integration === null ||
     !BASE_INTEGRATION_SLUGS.has(toTrimmedString(integration.slug).toLowerCase())
@@ -417,7 +417,7 @@ export const runBaseListingBackfill = async (options?: {
     connections.find((entry) => entry.baseApiToken !== null && entry.baseApiToken !== undefined && entry.baseApiToken !== '') ??
     connections[0];
 
-  if (connection === null) {
+  if (connection == null) {
     throw new Error('No usable Base.com connection found.');
   }
 

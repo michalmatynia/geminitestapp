@@ -54,7 +54,8 @@ vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/hooks/use-settings')>();
   return {
     ...actual,
-    useLiteSettingsMap: (options?: { enabled?: boolean }) => useLiteSettingsMapMock(options),
+    useLiteSettingsMap: (options?: { bypassCache?: boolean; enabled?: boolean }) =>
+      useLiteSettingsMapMock(options),
     useSettingsMap: (options?: { scope?: string; enabled?: boolean }) =>
       useSettingsMapMock(options),
   };
@@ -175,7 +176,7 @@ describe('SettingsStoreProvider', () => {
       </SettingsStoreProvider>
     );
 
-    expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: true });
+    expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: true, bypassCache: true });
     expect(screen.getByTestId('value')).toHaveTextContent('{"accent":"query"}');
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
     expect(screen.getByTestId('loading-context')).toHaveTextContent('false');

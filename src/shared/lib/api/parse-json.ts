@@ -30,13 +30,39 @@ export async function parseJsonBody<T>(
   const logPrefix = options?.logPrefix ?? 'request';
   let body: unknown;
 
+  // Use text() + JSON.parse() instead of req.json() so that:
+  // - An empty body (stream closed during long dev compilation) is treated as
+  //   allowEmpty rather than throwing a SyntaxError
+  // - Error messages pinpoint the bad text rather than a generic stream error
+  let text: string;
   try {
-    body = await req.json();
+    text = await req.text();
   } catch (error) {
-    // Some endpoints might allow empty bodies which req.json() would reject
+    return {
+      ok: false,
+      response: await createErrorResponse(badRequestError('Invalid JSON payload').withCause(error), {
+        request: req,
+        source: logPrefix,
+      }),
+    };
+  }
+
+  if (!text.trim()) {
     if (options?.allowEmpty) {
       body = {};
     } else {
+      return {
+        ok: false,
+        response: await createErrorResponse(badRequestError('Invalid JSON payload'), {
+          request: req,
+          source: logPrefix,
+        }),
+      };
+    }
+  } else {
+    try {
+      body = JSON.parse(text) as unknown;
+    } catch (error) {
       return {
         ok: false,
         response: await createErrorResponse(badRequestError('Invalid JSON payload').withCause(error), {

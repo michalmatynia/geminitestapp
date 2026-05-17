@@ -168,7 +168,7 @@ export const createProbeService = (options: ProbeServiceOptions = {}) => {
       };
       const raw = (await record.handle.page.evaluate(
         collectInfoScript(trimmed, MAX_PREVIEW_MATCHES)
-      ));
+      )) as RawResult;
       const candidates = raw.info ? buildSelectorCandidates(raw.info) : [];
       const preview: ProbeMatchPreview[] = raw.preview.map((item) => ({
         outerHtmlSnippet: truncate(item.outerHTML, SNIPPET_LIMIT),

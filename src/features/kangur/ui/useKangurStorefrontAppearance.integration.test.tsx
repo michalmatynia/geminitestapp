@@ -67,6 +67,7 @@ function AppearanceProbe(): React.JSX.Element {
     <div>
       <div data-testid='mode'>{mode}</div>
       <div data-testid='background'>{appearance.theme.backgroundColor}</div>
+      <div data-testid='fallback-theme'>{String(appearance.isFallbackTheme)}</div>
     </div>
   );
 }
@@ -108,6 +109,7 @@ describe('useKangurStorefrontAppearance integration', () => {
       expect(screen.getByTestId('background')).toHaveTextContent('#123456');
     });
     expect(screen.getByTestId('mode')).toHaveTextContent('default');
+    expect(screen.getByTestId('fallback-theme')).toHaveTextContent('false');
   });
 
   it('selects the sunset slot when the stored default mode is sunset', async () => {
@@ -160,6 +162,7 @@ describe('useKangurStorefrontAppearance integration', () => {
       expect(screen.getByTestId('mode')).toHaveTextContent('dark');
     });
     expect(screen.getByTestId('background')).toHaveTextContent(KANGUR_DEFAULT_THEME.backgroundColor);
+    expect(screen.getByTestId('fallback-theme')).toHaveTextContent('true');
   });
 
   it('switches from initial fallback theme settings to Mongo-backed slot settings when they arrive later', async () => {

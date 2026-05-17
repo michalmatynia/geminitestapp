@@ -8,6 +8,7 @@ import {
   useAgentPersonas,
 } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
+import type { AgentPersona } from '@/shared/contracts/agents';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui/primitives.public';

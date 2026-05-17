@@ -205,10 +205,10 @@ function useChatInterfaceState(): ChatInterfaceState {
     return suggestedMoodId ?? DEFAULT_AGENT_PERSONA_MOOD_ID;
   }, [isSending, suggestedMoodId]);
 
-  const resolvedPersonaMood = useMemo(
-    () => resolveAgentPersonaMood(activePersona, requestedMoodId),
-    [activePersona, requestedMoodId]
-  );
+  const resolvedPersonaMood = useMemo(() => {
+    const mood = resolveAgentPersonaMood(activePersona, requestedMoodId);
+    return { ...mood, avatarImageUrl: mood.avatarImageUrl ?? undefined };
+  }, [activePersona, requestedMoodId]);
 
   return {
     messages,

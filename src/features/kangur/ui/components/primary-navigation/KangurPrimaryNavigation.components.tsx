@@ -48,3 +48,23 @@ export function KangurHomeBetaBadge({
     </svg>
   );
 }
+
+export function KangurHomeFallbackThemeBadge(): React.JSX.Element {
+  return (
+    <span
+      aria-label='Fallback theme'
+      className='mt-0.5 inline-flex h-[13px] items-center rounded-full border px-1.5 text-[7px] font-extrabold leading-none tracking-[0.12em] sm:h-[14px] sm:text-[8px]'
+      data-testid='kangur-home-fallback-badge'
+      style={{
+        background:
+          'color-mix(in srgb, var(--kangur-error, #f06f7b) 10%, white)',
+        borderColor:
+          'color-mix(in srgb, var(--kangur-error, #f06f7b) 34%, white)',
+        color:
+          'color-mix(in srgb, var(--kangur-error, #f06f7b) 72%, #1e293b)',
+      }}
+    >
+      fallback
+    </span>
+  );
+}

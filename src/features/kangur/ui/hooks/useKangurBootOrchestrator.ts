@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useKangurClientBootOptions } from '@/features/kangur/ui/context/KangurClientBootOptionsContext';
 import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import type { JSX } from 'react';
@@ -76,12 +77,15 @@ export function useKangurBootOrchestrator(
     transitionPhase,
     isLanguageSwitcherTransition,
   } = input;
+  const { skipInitialClientBootLoader } = useKangurClientBootOptions();
 
   const shouldRunInitialHomeBootRef = useRef<boolean | null>(null);
   shouldRunInitialHomeBootRef.current ??=
     isStandaloneHomeRoute && !isSettingsRefresh && !hasCompletedKangurInitialHomeBoot();
   const shouldRunInitialHomeBoot = shouldRunInitialHomeBootRef.current;
-  const shouldSkipClientBootLoader = false;
+  const shouldSkipClientBootLoaderRef = useRef<boolean | null>(null);
+  shouldSkipClientBootLoaderRef.current ??= skipInitialClientBootLoader;
+  const shouldSkipClientBootLoader = shouldSkipClientBootLoaderRef.current;
   const shouldBlockForThemeBoot = isThemeBootLoading && routeContent === null;
 
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);

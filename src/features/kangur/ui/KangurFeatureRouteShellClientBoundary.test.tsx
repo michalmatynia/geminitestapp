@@ -18,13 +18,18 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', async () => {
   );
 
   return {
-    KangurFeatureRouteShell: function MockKangurFeatureRouteShell() {
+    KangurFeatureRouteShell: function MockKangurFeatureRouteShell(props: {
+      skipInitialClientBootLoader?: boolean;
+    }) {
       const appearance = appearanceModule.useKangurStorefrontAppearance();
 
       return (
         <div
           data-testid='kangur-feature-route-shell'
           data-background={appearance.theme.backgroundColor}
+          data-skip-initial-client-boot-loader={String(
+            props.skipInitialClientBootLoader ?? false
+          )}
         >
           Kangur route shell
         </div>
@@ -56,5 +61,14 @@ describe('KangurFeatureRouteShellClientBoundary', () => {
 
     const element = screen.getByTestId('kangur-feature-route-shell');
     expect(element).toHaveAttribute('data-background', '#123456');
+  });
+
+  it('passes the server first-paint loader handoff flag into the route shell', () => {
+    render(<KangurFeatureRouteShellClientBoundary skipInitialClientBootLoader />);
+
+    expect(screen.getByTestId('kangur-feature-route-shell')).toHaveAttribute(
+      'data-skip-initial-client-boot-loader',
+      'true'
+    );
   });
 });

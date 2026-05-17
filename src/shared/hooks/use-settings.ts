@@ -56,9 +56,9 @@ const fetchSettingsWithFallback = async (
   }
 };
 
-const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
+const fetchLiteSettingsWithFallback = async (bypassCache = false): Promise<SystemSetting[]> => {
   try {
-    return await fetchLiteSettingsCached();
+    return await fetchLiteSettingsCached({ bypassCache });
   } catch (error) {
     logClientCatch(error, {
       source: 'useLiteSettingsMap',
@@ -124,16 +124,19 @@ export function useSettingsMap(options?: {
 }
 
 export function useLiteSettingsMap(options?: {
+  bypassCache?: boolean;
   enabled?: boolean;
 }): SingleQuery<Map<string, string>> {
+  const bypassCache = options?.bypassCache === true;
   return useSingleQueryV2<SystemSetting[], Map<string, string>>({
     id: 'settings-map:lite',
     queryKey: QUERY_KEYS.settings.scope('lite'),
-    queryFn: fetchLiteSettingsWithFallback,
+    queryFn: async (): Promise<SystemSetting[]> =>
+      await fetchLiteSettingsWithFallback(bypassCache),
     select: selectSettingsMap,
     enabled: options?.enabled ?? true,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
+    staleTime: bypassCache ? 0 : 1000 * 60 * 5,
+    refetchOnMount: bypassCache ? 'always' : false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,

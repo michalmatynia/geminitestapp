@@ -45,7 +45,7 @@ type MockedAuthStateInput = Partial<MockedAuthState> &
     | 'isLoadingAuth'
     | 'isLoadingPublicSettings'
   >;
-type MockedQueryClient = Pick<QueryClient, 'prefetchQuery'>;
+type MockedQueryClient = Pick<QueryClient, 'prefetchQuery' | 'getQueryState'>;
 
 const {
   kangurAiTutorWidgetRenderSpyMock,

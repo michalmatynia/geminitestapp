@@ -29,6 +29,7 @@ import {
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import type { 
   KangurNavActionConfig,
   KangurPrimaryNavigationProps 
@@ -119,6 +120,7 @@ export function KangurPrimaryNavigationProvider({
     showParentDashboard: props.showParentDashboard,
   });
   const navTranslations = useTranslations('KangurNavigation');
+  const { isFallbackTheme } = useKangurStorefrontAppearance();
 
   const derived = useMemo(() => {
     const isSixYearOld = state.ageGroup === 'six_year_old';
@@ -143,6 +145,7 @@ export function KangurPrimaryNavigationProvider({
       effectiveHomeActive: props.homeActive ?? props.currentPage === 'Game',
       homeHref,
       homeTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.home,
+      isFallbackTheme,
       navTranslations,
       onHomeClick: props.onHomeClick,
       transitionPhase,
@@ -256,7 +259,7 @@ export function KangurPrimaryNavigationProvider({
       basePath: props.basePath,
       inlineAppearanceWithTutor: true,
     };
-  }, [state, props]);
+  }, [isFallbackTheme, state, props]);
 
   const value: KangurPrimaryNavigationContextValue = useMemo(() => ({
     ...state,

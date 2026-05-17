@@ -19,8 +19,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
   toTrimmedString,
-  toFiniteNumber,
-  serializeArrayField,
 } from './utils';
 
 const PARAMETER_NAME_KEYS = [

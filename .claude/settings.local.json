@@ -109,7 +109,10 @@
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_snapshot",
-      "mcp__plugin_playwright_playwright__browser_console_messages"
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "Bash(npm outdated *)",
+      "Bash(npm show *)",
+      "Bash(NODE_OPTIONS='--max-old-space-size=8192' node scripts/testing/run-segmented-typecheck.mjs)"
     ]
   }
 }

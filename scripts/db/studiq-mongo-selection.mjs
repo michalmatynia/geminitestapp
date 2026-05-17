@@ -8,6 +8,21 @@ export const analyticsFilter = {
   path: /^\/(kangur|[a-z]{2}\/kangur)(\/|$)/,
 };
 
+export const systemLogsFilter = {
+  $or: [
+    { source: /kangur|studiq/i },
+    { service: /kangur|studiq/i },
+    { message: /kangur|studiq/i },
+    { path: /kangur|studiq/i },
+    { route: /kangur|studiq/i },
+    { 'context.source': /kangur|studiq/i },
+    { 'context.service': /kangur|studiq/i },
+    { 'context.route': /kangur|studiq/i },
+    { 'context.path': /kangur|studiq/i },
+    { 'context.endpoint': /kangur|studiq/i },
+  ],
+};
+
 export const parseDbNameFromUri = (uri, fallback) => {
   try {
     const parsed = new URL(uri);
@@ -120,6 +135,14 @@ export const collectStudiqMongoSelections = async (sourceDb) => {
       name: 'analytics_events',
       filter: analyticsFilter,
       scope: 'studiq-analytics',
+    });
+  }
+
+  if (sourceCollectionNames.has('system_logs')) {
+    selections.push({
+      name: 'system_logs',
+      filter: systemLogsFilter,
+      scope: 'studiq-system-logs',
     });
   }
 

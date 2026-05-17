@@ -5,7 +5,7 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 import { getKangurGameContentSetsForGame, getKangurGameDefinition } from '@/features/kangur/games';
 import type { KangurGameContentSet } from '@/shared/contracts/kangur-game-instances';
 import { kangurGameContentSetSchema } from '@/shared/contracts/kangur-game-instances';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 import type {
   KangurGameContentSetListInput,

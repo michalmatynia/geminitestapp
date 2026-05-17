@@ -25,6 +25,7 @@ type PolishBaseNameAutoSyncStateUpdate = {
 type UseProductFormPolishNameAutoSyncInput = {
   languageTabValues: string[];
   categories: StructuredNameCategories;
+  categoriesLoading: boolean;
   nameEn: unknown;
   namePl: unknown;
   getValues: UseFormGetValues<ProductFormData>;
@@ -33,6 +34,7 @@ type UseProductFormPolishNameAutoSyncInput = {
 
 type BuildGeneratedPolishNameInput = Parameters<typeof syncPolishStructuredProductName>[0] & {
   languageTabValues: string[];
+  categoriesLoading: boolean;
 };
 
 const normalizeGeneratedTitleComparisonKey = (value: string): string =>
@@ -70,16 +72,21 @@ const resolvePolishBaseNameAutoSyncStateUpdate = ({
 
 const buildGeneratedPolishName = ({
   languageTabValues,
+  categoriesLoading,
   ...syncInput
 }: BuildGeneratedPolishNameInput): PolishStructuredProductNameSyncResult | null => {
   if (languageTabValues.includes('pl') === false) return null;
   if (syncInput.englishTitle.trim() === '') return null;
+  // Defer until categories are loaded — generating without them would translate
+  // the category segment using only the EN label, overwriting the correct DB value.
+  if (categoriesLoading) return null;
   return syncPolishStructuredProductName(syncInput);
 };
 
 export const useProductFormPolishNameAutoSync = ({
   languageTabValues,
   categories,
+  categoriesLoading,
   nameEn,
   namePl,
   getValues,
@@ -94,6 +101,7 @@ export const useProductFormPolishNameAutoSync = ({
     () =>
       buildGeneratedPolishName({
         languageTabValues,
+        categoriesLoading,
         englishTitle: coerceWatchedString(nameEn),
         polishTitle: coerceWatchedString(namePl),
         previousGeneratedPolishTitle: lastGeneratedPolishNameRef.current,
@@ -105,6 +113,7 @@ export const useProductFormPolishNameAutoSync = ({
       }),
     [
       categories,
+      categoriesLoading,
       languageTabValues,
       materialTermsQuery.data,
       nameEn,

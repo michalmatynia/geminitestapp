@@ -12,7 +12,7 @@ import {
   type KangurPageContentEntry,
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { logger } from '@/shared/utils/logger';

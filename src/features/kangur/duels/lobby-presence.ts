@@ -7,7 +7,7 @@ import {
   type KangurDuelLobbyPresenceEntry,
   type KangurDuelLobbyPresenceResponse,
 } from '@/shared/contracts/kangur-duels';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 import type { Collection } from 'mongodb';
 

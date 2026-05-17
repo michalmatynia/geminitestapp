@@ -37,7 +37,7 @@ import {
 import { conflictError, notFoundError } from '@/features/kangur/shared/errors/app-error';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { buildKangurSource } from '@/features/kangur/observability/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

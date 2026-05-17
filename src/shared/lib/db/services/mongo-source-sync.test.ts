@@ -210,6 +210,40 @@ vi.mock('@/shared/lib/db/services/mongo-source-parity', () => ({
 
 import { syncMongoSources, testOnly } from './mongo-source-sync';
 
+const productsExcludedCollections = [
+  'settings',
+  'image_studio_runs',
+  'image_studio_sequence_runs',
+  'image_studio_slot_links',
+  'image_studio_slots',
+  'product_ai_jobs',
+  'product_category_repair_audit',
+  'product_drafts',
+  'product_scans',
+  'product_studio_run_audit',
+  'product_title_terms',
+  'product_validation_patterns',
+  'ecom_cms_pages',
+  'ecom_orders',
+  'ecom_users',
+  'ecom_wishlists',
+  'integrations',
+  'integration_connections',
+  'integration_amazon_selector_registry',
+  'integration_custom_selector_registry',
+  'integration_custom_selector_registry_profiles',
+  'integration_selector_registry_probe_sessions',
+  'integration_supplier_1688_selector_registry',
+  'integration_tradera_selector_registry',
+  'product_listings',
+  'category_mappings',
+  'external_categories',
+  'producer_mappings',
+  'external_producers',
+  'tag_mappings',
+  'external_tags',
+];
+
 describe('mongo-source-sync', () => {
   const syncLockPath = path.join(process.cwd(), 'mongo', 'runtime', 'sync.lock');
 
@@ -596,6 +630,15 @@ describe('mongo-source-sync', () => {
     expect(result.syncedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(mocks.execFileAsync).toHaveBeenCalledTimes(10);
     expect(mocks.execFileAsync).toHaveBeenNthCalledWith(
+      7,
+      'mongodump',
+      expect.arrayContaining(
+        productsExcludedCollections.map((collectionName) => (
+          `--excludeCollection=${collectionName}`
+        ))
+      )
+    );
+    expect(mocks.execFileAsync).toHaveBeenNthCalledWith(
       10,
       'mongorestore',
       expect.arrayContaining([
@@ -642,7 +685,7 @@ describe('mongo-source-sync', () => {
       targetDbName: 'products_local',
       sourceUri: 'mongodb+srv://cluster.example/products_cloud',
       targetUri: 'mongodb://localhost:27017/products_local',
-      excludedCollections: [],
+      excludedCollections: productsExcludedCollections,
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(5, {
       source: 'cloud',

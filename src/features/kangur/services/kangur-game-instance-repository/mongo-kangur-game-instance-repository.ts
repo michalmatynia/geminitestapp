@@ -7,7 +7,7 @@ import type { KangurGameInstance } from '@/shared/contracts/kangur-game-instance
 import {
   kangurGameInstanceSchema,
 } from '@/shared/contracts/kangur-game-instances';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 import type {
   KangurGameInstanceListInput,

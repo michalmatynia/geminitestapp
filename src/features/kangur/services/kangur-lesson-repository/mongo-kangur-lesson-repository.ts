@@ -10,7 +10,7 @@ import {
 } from '@/features/kangur/settings';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import type { KangurLesson } from '@kangur/contracts/kangur';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { safeSetTimeout } from '@/shared/lib/timers';
 
 import type { KangurLessonListInput, KangurLessonRepository } from './types';

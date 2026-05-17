@@ -106,7 +106,44 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   arch: 'Milkbar Designers',
 };
 
-const getExcludedCollectionsForSync = (_application: MongoBackupApplication): string[] => [];
+const PRODUCTS_SYNC_EXCLUDED_COLLECTIONS = [
+  'settings',
+  'image_studio_runs',
+  'image_studio_sequence_runs',
+  'image_studio_slot_links',
+  'image_studio_slots',
+  'product_ai_jobs',
+  'product_category_repair_audit',
+  'product_drafts',
+  'product_scans',
+  'product_studio_run_audit',
+  'product_title_terms',
+  'product_validation_patterns',
+  'ecom_cms_pages',
+  'ecom_orders',
+  'ecom_users',
+  'ecom_wishlists',
+  'integrations',
+  'integration_connections',
+  'integration_amazon_selector_registry',
+  'integration_custom_selector_registry',
+  'integration_custom_selector_registry_profiles',
+  'integration_selector_registry_probe_sessions',
+  'integration_supplier_1688_selector_registry',
+  'integration_tradera_selector_registry',
+  'product_listings',
+  'category_mappings',
+  'external_categories',
+  'producer_mappings',
+  'external_producers',
+  'tag_mappings',
+  'external_tags',
+] as const;
+
+const getExcludedCollectionsForSync = (application: MongoBackupApplication): string[] => {
+  if (application === 'products') return [...PRODUCTS_SYNC_EXCLUDED_COLLECTIONS];
+  return [];
+};
 
 const resolveSyncEndpoints = (
   direction: DatabaseEngineMongoSyncDirection

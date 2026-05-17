@@ -9,9 +9,14 @@ import {
   clearSystemLogs,
 } from '@/shared/lib/observability/system-log-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getStudiqMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/studiq-mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
@@ -37,10 +42,17 @@ describe('system-log-repository', () => {
   const mockMongoDb = {
     collection: vi.fn().mockReturnValue(mockMongoCollection),
   };
+  const mockStudiqCollection = {
+    insertOne: vi.fn(),
+  };
+  const mockStudiqMongoDb = {
+    collection: vi.fn().mockReturnValue(mockStudiqCollection),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
+    vi.mocked(getStudiqMongoDb).mockResolvedValue(mockStudiqMongoDb as unknown as Db);
     vi.mocked(readMongoSyncLock).mockResolvedValue(null);
   });
 
@@ -91,6 +103,30 @@ describe('system-log-repository', () => {
         createdAt: '2026-03-27T15:00:00.000Z',
       })
     );
+  });
+
+  it('routes Kangur and StudiQ system log writes to the dedicated StudiQ database', async () => {
+    await createSystemLog({
+      message: 'Kangur lessons route completed',
+      level: 'info',
+      source: 'api.kangur.lessons.GET',
+      path: '/api/kangur/lessons',
+      context: {
+        route: '/admin/kangur/content-manager',
+      },
+      createdAt: new Date('2026-05-17T23:25:00.000Z'),
+    });
+
+    expect(mockStudiqMongoDb.collection).toHaveBeenCalledWith('system_logs');
+    expect(mockStudiqCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: 'Kangur lessons route completed',
+        source: 'api.kangur.lessons.GET',
+        path: '/api/kangur/lessons',
+      })
+    );
+    expect(mockMongoCollection.insertOne).not.toHaveBeenCalled();
   });
 
   it('skips MongoDB persistence while a Mongo source sync lock is active', async () => {

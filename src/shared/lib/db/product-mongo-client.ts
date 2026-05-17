@@ -42,6 +42,10 @@ type ProductMongoGlobalState = {
 const globalForProductsMongo = globalThis as typeof globalThis & ProductMongoGlobalState;
 
 const APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME = new Set([
+  'category_mappings',
+  'external_categories',
+  'external_producers',
+  'external_tags',
   'integration_amazon_selector_registry',
   'integration_connections',
   'integration_custom_selector_registry',
@@ -50,7 +54,9 @@ const APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME = new Set([
   'integration_supplier_1688_selector_registry',
   'integration_tradera_selector_registry',
   'integrations',
+  'producer_mappings',
   'product_listings',
+  'tag_mappings',
 ]);
 
 const routeCollectionToAppDb = (collectionName: string): boolean =>
@@ -59,8 +65,8 @@ const routeCollectionToAppDb = (collectionName: string): boolean =>
 const createRoutedProductsDb = (productsDb: Db, appDb: Db): Db => {
   if (productsDb.databaseName === appDb.databaseName) return productsDb;
 
-  return new Proxy(productsDb, {
-    get(target, prop, receiver) {
+  const handler: ProxyHandler<Db> = {
+    get(target, prop, receiver): unknown {
       if (prop === 'collection') {
         return ((collectionName: string, options?: Parameters<Db['collection']>[1]) => {
           const db = routeCollectionToAppDb(collectionName) ? appDb : target;
@@ -68,9 +74,11 @@ const createRoutedProductsDb = (productsDb: Db, appDb: Db): Db => {
         }) as Db['collection'];
       }
 
-      return Reflect.get(target, prop, receiver);
+      return Reflect.get(target, prop, receiver) as unknown;
     },
-  }) as Db;
+  };
+
+  return new Proxy(productsDb, handler);
 };
 
 /**
@@ -129,20 +137,16 @@ const getProductsMongoClientOptions = (uri: string): MongoClientOptions => ({
 
 /** Accesses the global client instance cache for products. */
 const getProductsMongoClientByKeyStore = (): Map<string, MongoClient> => {
-  if (!globalForProductsMongo.__productsMongoClientByKey) {
-    globalForProductsMongo.__productsMongoClientByKey = new Map<string, MongoClient>();
-  }
+  globalForProductsMongo.__productsMongoClientByKey ??= new Map<string, MongoClient>();
   return globalForProductsMongo.__productsMongoClientByKey;
 };
 
 /** Accesses the global pending promise cache for products. */
 const getProductsMongoClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> => {
-  if (!globalForProductsMongo.__productsMongoClientPromiseByKey) {
-    globalForProductsMongo.__productsMongoClientPromiseByKey = new Map<
-      string,
-      Promise<MongoClient>
-    >();
-  }
+  globalForProductsMongo.__productsMongoClientPromiseByKey ??= new Map<
+    string,
+    Promise<MongoClient>
+  >();
   return globalForProductsMongo.__productsMongoClientPromiseByKey;
 };
 
@@ -154,7 +158,7 @@ const normalizeMongoSource = (value: unknown): MongoSource | null =>
  * Resolves the default or preferred source for product database operations.
  */
 const resolveProductsMongoSource = (preferredSource?: MongoSource): MongoSource => {
-  if (preferredSource) return preferredSource;
+  if (preferredSource !== undefined) return preferredSource;
   return (
     normalizeMongoSource(process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT']) ??
     normalizeMongoSource(process.env['MONGODB_ACTIVE_SOURCE_DEFAULT']) ??
@@ -168,6 +172,24 @@ const resolveProductsMongoSource = (preferredSource?: MongoSource): MongoSource 
 const shouldUseDefaultMongoDbInTests = (): boolean =>
   process.env['PRODUCTS_MONGODB_USE_DEDICATED_DB_IN_TESTS'] !== 'true' &&
   (process.env['NODE_ENV'] === 'test' || process.env['VITEST'] === 'true');
+
+const getNonEmptyConfigValue = (value: string | null): string | null => {
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const requireProductsMongoConfig = (source: MongoSource): { uri: string; dbName: string } => {
+  const config = resolveProductsMongoSourceConfig(source);
+  const uri = getNonEmptyConfigValue(config.uri);
+  const dbName = getNonEmptyConfigValue(config.dbName);
+  if (!config.configured || uri === null || dbName === null) {
+    throw configurationError(
+      `Products ${source} MongoDB source is not configured. Set PRODUCTS_MONGODB_${source.toUpperCase()}_URI and PRODUCTS_MONGODB_${source.toUpperCase()}_DB.`
+    );
+  }
+  return { uri, dbName };
+};
 
 /**
  * Invalidates and closes all cached product-specific MongoDB clients.
@@ -199,29 +221,23 @@ export async function invalidateProductsMongoClientCache(): Promise<void> {
  */
 export async function getProductsMongoClient(preferredSource?: MongoSource): Promise<MongoClient> {
   const source = resolveProductsMongoSource(preferredSource);
-  const config = resolveProductsMongoSourceConfig(source);
-  if (!config.configured || !config.uri || !config.dbName) {
-    throw configurationError(
-      `Products ${source} MongoDB source is not configured. Set PRODUCTS_MONGODB_${source.toUpperCase()}_URI and PRODUCTS_MONGODB_${source.toUpperCase()}_DB.`
-    );
-  }
+  const { uri } = requireProductsMongoConfig(source);
 
-  const clientCacheKey = `${source}:${config.uri}`;
+  const clientCacheKey = `${source}:${uri}`;
   const clientByKey = getProductsMongoClientByKeyStore();
   const clientPromiseByKey = getProductsMongoClientPromiseByKeyStore();
   const cachedClient = clientByKey.get(clientCacheKey);
   if (cachedClient) return cachedClient;
 
-  if (!clientPromiseByKey.has(clientCacheKey)) {
+  let clientPromise = clientPromiseByKey.get(clientCacheKey);
+  if (clientPromise === undefined) {
     const { MongoClient } = getMongoClientCtor();
-    clientPromiseByKey.set(
-      clientCacheKey,
-      new MongoClient(config.uri, getProductsMongoClientOptions(config.uri)).connect()
-    );
+    clientPromise = new MongoClient(uri, getProductsMongoClientOptions(uri)).connect();
+    clientPromiseByKey.set(clientCacheKey, clientPromise);
   }
 
   try {
-    const resolvedClient = await clientPromiseByKey.get(clientCacheKey)!;
+    const resolvedClient = await clientPromise;
     clientByKey.set(clientCacheKey, resolvedClient);
     return resolvedClient;
   } catch (error) {
@@ -246,14 +262,9 @@ export async function getProductsMongoDb(preferredSource?: MongoSource): Promise
   }
 
   const source = resolveProductsMongoSource(preferredSource);
-  const config = resolveProductsMongoSourceConfig(source);
-  if (!config.configured || !config.uri || !config.dbName) {
-    throw configurationError(
-      `Products ${source} MongoDB source is not configured. Set PRODUCTS_MONGODB_${source.toUpperCase()}_URI and PRODUCTS_MONGODB_${source.toUpperCase()}_DB.`
-    );
-  }
+  const { dbName } = requireProductsMongoConfig(source);
   const mongoClient = await getProductsMongoClient(source);
-  const productsDb = mongoClient.db(config.dbName);
+  const productsDb = mongoClient.db(dbName);
   const appDb = await getDefaultMongoDb(source);
   return createRoutedProductsDb(productsDb, appDb);
 }

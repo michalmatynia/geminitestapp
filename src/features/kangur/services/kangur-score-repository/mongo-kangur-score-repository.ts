@@ -4,7 +4,7 @@ import { ObjectId, type Filter, type SortDirection } from 'mongodb';
 
 import { resolveKangurScoreSubject } from '@kangur/contracts/kangur';
 import { type KangurScore, type KangurScoreRepositoryCreateInput } from '@kangur/contracts/kangur';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 import { normalizeSort } from './shared';
 

@@ -9,7 +9,6 @@ import {
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
 const allowEmptySource = args.has('--allow-empty-source');
-const allowEmptyCollectionReplace = args.has('--allow-empty-collection-replace');
 
 const getArgValue = (name, fallback) => {
   const prefix = `${name}=`;
@@ -53,22 +52,59 @@ const fail = (message, extra = {}) => {
   process.exit(1);
 };
 
-const planCollectionCopy = async ({ sourceDb, targetDb, targetInitialized, name, filter = {} }) => {
-  const docs = await sourceDb.collection(name).find(filter).toArray();
-  let targetCount = null;
-
-  if (apply && targetInitialized && docs.length === 0) {
-    targetCount = await targetDb.collection(name).countDocuments(filter);
-    if (targetCount > 0 && !allowEmptyCollectionReplace) {
-      fail('Refusing to replace existing StudiQ target data with an empty source collection.', {
-        collection: name,
-        targetCount,
-        requiredFlag: '--allow-empty-collection-replace',
-      });
-    }
+const getUpdatedAtTime = (doc) => {
+  const value = doc?.updatedAt;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
+  return null;
+};
+
+const shouldReplaceTargetDoc = ({ sourceDoc, targetDoc }) => {
+  if (!targetDoc) return true;
+  const sourceUpdatedAt = getUpdatedAtTime(sourceDoc);
+  const targetUpdatedAt = getUpdatedAtTime(targetDoc);
+  return sourceUpdatedAt !== null && targetUpdatedAt !== null && sourceUpdatedAt > targetUpdatedAt;
+};
+
+const planCollectionCopy = async ({ sourceDb, targetDb, name, filter = {} }) => {
+  const docs = await sourceDb.collection(name).find(filter).toArray();
+  const targetCount = await targetDb.collection(name).countDocuments(filter);
 
   return { name, filter, docs, targetCount };
+};
+
+const mergeCollectionDocs = async ({ targetDb, name, docs }) => {
+  const collection = targetDb.collection(name);
+  let inserted = 0;
+  let replaced = 0;
+  let preserved = 0;
+
+  for (const sourceDoc of docs) {
+    const targetDoc = await collection.findOne({ _id: sourceDoc._id });
+    if (!targetDoc) {
+      await collection.insertOne(sourceDoc);
+      inserted += 1;
+      continue;
+    }
+
+    if (shouldReplaceTargetDoc({ sourceDoc, targetDoc })) {
+      await collection.replaceOne({ _id: sourceDoc._id }, sourceDoc);
+      replaced += 1;
+      continue;
+    }
+
+    preserved += 1;
+  }
+
+  return {
+    source: docs.length,
+    inserted,
+    replaced,
+    preserved,
+  };
 };
 
 const sourceClient = new MongoClient(sourceUri, buildMongoOptions(sourceUri));
@@ -81,9 +117,9 @@ try {
   const sourceDb = sourceClient.db(sourceDbName);
   const targetDb = targetClient.db(targetDbName);
   const { selections } = await collectStudiqMongoSelections(sourceDb);
-  const targetMetadata = apply
-    ? await targetDb.collection('studiq_database_metadata').findOne({ _id: 'local-studiq-db' })
-    : null;
+  const targetMetadata = await targetDb
+    .collection('studiq_database_metadata')
+    .findOne({ _id: 'local-studiq-db' });
   const targetInitialized = Boolean(targetMetadata);
 
   const copyPlans = [];
@@ -92,7 +128,6 @@ try {
       await planCollectionCopy({
         sourceDb,
         targetDb,
-        targetInitialized,
         name,
         filter,
       })
@@ -110,16 +145,12 @@ try {
 
   const copied = {};
   if (apply) {
-    for (const { name, filter, docs } of copyPlans) {
-      await targetDb.collection(name).deleteMany(filter);
-      if (docs.length > 0) {
-        await targetDb.collection(name).insertMany(docs, { ordered: false });
-      }
-      copied[name] = docs.length;
+    for (const { name, docs } of copyPlans) {
+      copied[name] = await mergeCollectionDocs({ targetDb, name, docs });
     }
   } else {
-    for (const { name, docs } of copyPlans) {
-      copied[name] = docs.length;
+    for (const { name, docs, targetCount } of copyPlans) {
+      copied[name] = { source: docs.length, target: targetCount };
     }
   }
 

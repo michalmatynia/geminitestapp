@@ -1,0 +1,861 @@
+- region "Scrollable region" [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - generic [ref=e8]:
+        - link "Skip to content" [ref=e9] [cursor=pointer]:
+          - /url: "#kangur-main-content"
+        - complementary "Admin sidebar" [ref=e10]:
+          - navigation "Admin menu" [ref=e12]:
+            - generic [ref=e15]:
+              - generic [ref=e16]:
+                - search [ref=e17]:
+                  - img [ref=e18]
+                  - searchbox "Search admin pages…" [ref=e21]
+                - button "Collapse admin sidebar" [expanded] [ref=e23] [cursor=pointer]:
+                  - img [ref=e24]
+              - generic "Collapse all folders" [ref=e28]:
+                - button "Collapse all folders" [ref=e29] [cursor=pointer]:
+                  - img [ref=e30]
+            - generic [ref=e32]:
+              - button "Favorites" [ref=e35] [cursor=pointer]:
+                - generic [ref=e36]:
+                  - img [ref=e38]
+                  - generic [ref=e40]: Favorites
+                - img [ref=e41]
+              - link "Home" [ref=e45] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e46]:
+                  - img [ref=e48]
+                  - generic [ref=e51]: Home
+              - button "Workspace" [ref=e54] [cursor=pointer]:
+                - generic [ref=e55]:
+                  - img [ref=e57]
+                  - generic [ref=e59]: Workspace
+                - img [ref=e60]
+              - button "Filemaker" [ref=e64] [cursor=pointer]:
+                - generic [ref=e65]:
+                  - img [ref=e67]
+                  - generic [ref=e69]: Filemaker
+                - img [ref=e70]
+              - button "Image Studio" [ref=e74] [cursor=pointer]:
+                - generic [ref=e75]:
+                  - img [ref=e77]
+                  - generic [ref=e81]: Image Studio
+                - img [ref=e82]
+              - button "Prompt Exploder" [ref=e86] [cursor=pointer]:
+                - generic [ref=e87]:
+                  - img [ref=e89]
+                  - generic [ref=e92]: Prompt Exploder
+                - img [ref=e93]
+              - button "Page Manager" [ref=e97] [cursor=pointer]:
+                - generic [ref=e98]:
+                  - img [ref=e100]
+                  - generic [ref=e102]: Page Manager
+                - img [ref=e103]
+              - generic [ref=e105]:
+                - button "Commerce" [expanded] [ref=e107] [cursor=pointer]:
+                  - generic [ref=e108]:
+                    - img [ref=e110]
+                    - generic [ref=e114]: Commerce
+                  - img [ref=e115]
+                - generic [ref=e117]:
+                  - generic [ref=e118]:
+                    - button "• Products" [expanded] [ref=e120] [cursor=pointer]:
+                      - generic [ref=e121]:
+                        - generic [ref=e122]: •
+                        - generic [ref=e123]: Products
+                      - img [ref=e124]
+                    - generic [ref=e126]:
+                      - link "• All Products" [ref=e129] [cursor=pointer]:
+                        - /url: /admin/products
+                        - generic [ref=e130]:
+                          - generic [ref=e131]: •
+                          - generic [ref=e132]: All Products
+                      - link "• Drafts" [ref=e135] [cursor=pointer]:
+                        - /url: /admin/drafts
+                        - generic [ref=e136]:
+                          - generic [ref=e137]: •
+                          - generic [ref=e138]: Drafts
+                      - link "• Producers" [ref=e141] [cursor=pointer]:
+                        - /url: /admin/products/producers
+                        - generic [ref=e142]:
+                          - generic [ref=e143]: •
+                          - generic [ref=e144]: Producers
+                      - link "• Orders Import" [ref=e147] [cursor=pointer]:
+                        - /url: /admin/products/orders-import
+                        - generic [ref=e148]:
+                          - generic [ref=e149]: •
+                          - generic [ref=e150]: Orders Import
+                      - link "• Product Pages" [ref=e153] [cursor=pointer]:
+                        - /url: /admin/products/pages
+                        - generic [ref=e154]:
+                          - generic [ref=e155]: •
+                          - generic [ref=e156]: Product Pages
+                      - link "• Title Terms" [ref=e159] [cursor=pointer]:
+                        - /url: /admin/products/title-terms
+                        - generic [ref=e160]:
+                          - generic [ref=e161]: •
+                          - generic [ref=e162]: Title Terms
+                      - link "• Import" [ref=e165] [cursor=pointer]:
+                        - /url: /admin/products/import
+                        - generic [ref=e166]:
+                          - generic [ref=e167]: •
+                          - generic [ref=e168]: Import
+                      - link "• Preferences" [ref=e171] [cursor=pointer]:
+                        - /url: /admin/products/preferences
+                        - generic [ref=e172]:
+                          - generic [ref=e173]: •
+                          - generic [ref=e174]: Preferences
+                      - link "• Settings" [ref=e177] [cursor=pointer]:
+                        - /url: /admin/products/settings
+                        - generic [ref=e178]:
+                          - generic [ref=e179]: •
+                          - generic [ref=e180]: Settings
+                  - button "• Assets" [ref=e183] [cursor=pointer]:
+                    - generic [ref=e184]:
+                      - generic [ref=e185]: •
+                      - generic [ref=e186]: Assets
+                    - img [ref=e187]
+                  - link "• Job Board" [ref=e191] [cursor=pointer]:
+                    - /url: /admin/job-board
+                    - generic [ref=e192]:
+                      - generic [ref=e193]: •
+                      - generic [ref=e194]: Job Board
+              - button "Integrations" [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]:
+                  - img [ref=e200]
+                  - generic [ref=e202]: Integrations
+                - img [ref=e203]
+              - link "Brain" [ref=e207] [cursor=pointer]:
+                - /url: /admin/brain?tab=operations
+                - generic [ref=e208]:
+                  - img [ref=e210]
+                  - generic [ref=e218]: Brain
+              - button "Jobs" [ref=e221] [cursor=pointer]:
+                - generic [ref=e222]:
+                  - img [ref=e224]
+                  - generic [ref=e228]: Jobs
+                - img [ref=e229]
+              - button "AI" [ref=e233] [cursor=pointer]:
+                - generic [ref=e234]:
+                  - img [ref=e236]
+                  - generic [ref=e240]: AI
+                - img [ref=e241]
+              - button "Content" [ref=e245] [cursor=pointer]:
+                - generic [ref=e247]: Content
+                - img [ref=e248]
+              - button "System" [ref=e252] [cursor=pointer]:
+                - generic [ref=e253]:
+                  - img [ref=e255]
+                  - generic [ref=e258]: System
+                - img [ref=e259]
+        - generic [ref=e261]:
+          - generic "Admin toolbar":
+            - button "Avatar" [ref=e264] [cursor=pointer]:
+              - generic [ref=e266]: M
+          - main [ref=e267]:
+            - generic [ref=e450]:
+              - generic [ref=e453]:
+                - generic [ref=e455]:
+                  - generic [ref=e456]:
+                    - heading "Products" [level=1] [ref=e458]
+                    - generic [ref=e460]:
+                      - button "Remove All Products from admin favorites" [pressed] [ref=e461] [cursor=pointer]:
+                        - img [ref=e462]
+                      - navigation "Breadcrumb" [ref=e464]:
+                        - link "Admin" [ref=e465] [cursor=pointer]:
+                          - /url: /admin
+                        - generic [ref=e466]: /
+                        - link "Products" [ref=e467] [cursor=pointer]:
+                          - /url: /admin/products
+                        - generic [ref=e468]: /
+                        - generic [ref=e469]: Product List
+                  - generic [ref=e470]:
+                    - generic [ref=e471]:
+                      - button "Create new product" [ref=e472] [cursor=pointer]:
+                        - img [ref=e473]
+                      - generic [ref=e474]:
+                        - button "Create product from Bstocl" [ref=e475] [cursor=pointer]:
+                          - img [ref=e476]
+                        - button "Create product from Pin" [ref=e479] [cursor=pointer]:
+                          - img [ref=e480]
+                    - navigation "Pagination" [ref=e482]:
+                      - generic [ref=e483]:
+                        - combobox "Select option" [ref=e486]:
+                          - option "Select an option" [disabled]
+                          - option "12"
+                          - option "24"
+                          - option "48" [selected]
+                        - generic [ref=e487]:
+                          - button "Previous page" [disabled]:
+                            - img
+                          - generic [ref=e488]:
+                            - textbox "Jump to page" [ref=e489]: "1"
+                            - generic [ref=e490]: / 39
+                          - button "Next page" [ref=e491] [cursor=pointer]:
+                            - img [ref=e492]
+                    - combobox "Select product name language" [ref=e495]:
+                      - option "Language" [disabled]
+                      - option "English"
+                      - option "Polish" [selected]
+                    - combobox "Select currency" [ref=e497]:
+                      - option "Currency" [disabled]
+                      - option "EUR"
+                      - option "PLN" [selected]
+                      - option "SEK"
+                    - combobox "Filter by catalog" [ref=e499]:
+                      - option "Catalog" [disabled]
+                      - option "All catalogs"
+                      - option "Unassigned"
+                      - option "BattleStock"
+                      - option "Mentios" [selected]
+                      - option "frefre"
+                - generic [ref=e503]:
+                  - generic [ref=e504]:
+                    - img [ref=e505]
+                    - textbox "Search by product name..." [ref=e508]
+                  - button "Advanced Filter" [ref=e510] [cursor=pointer]
+                  - button "Show Filters" [ref=e511] [cursor=pointer]
+              - generic [ref=e1365]:
+                - button "Products actions" [ref=e1366] [cursor=pointer]:
+                  - generic [ref=e1367]:
+                    - img [ref=e1368]
+                    - generic [ref=e1371]: Products
+                - button "Batch actions" [disabled]:
+                  - generic:
+                    - img
+                    - generic: Batch Actions
+                - generic [ref=e1373]:
+                  - button "Parse Actions" [ref=e1374] [cursor=pointer]:
+                    - img [ref=e1375]
+                    - text: Parse Actions
+                  - button "Scrape Profiles" [ref=e1380] [cursor=pointer]:
+                    - img [ref=e1381]
+                    - text: Scrape Profiles
+                - button "Open actions menu" [ref=e1388] [cursor=pointer]:
+                  - generic [ref=e1389]:
+                    - img [ref=e1390]
+                    - generic [ref=e1391]: Filter Presets
+              - table [ref=e517]:
+                - rowgroup [ref=e527]:
+                  - row "Select all Image Name Price Stock Created At Show trigger run pills Actions" [ref=e528]:
+                    - columnheader "Select all" [ref=e529]:
+                      - checkbox "Select all" [ref=e530] [cursor=pointer]
+                    - columnheader "Image" [ref=e531]
+                    - columnheader "Name" [ref=e532]:
+                      - button "Name" [ref=e533] [cursor=pointer]:
+                        - text: Name
+                        - img [ref=e534]
+                    - columnheader "Price" [ref=e537]:
+                      - button "Price" [ref=e538] [cursor=pointer]:
+                        - text: Price
+                        - img [ref=e539]
+                    - columnheader "Stock" [ref=e542]:
+                      - button "Stock" [ref=e543] [cursor=pointer]:
+                        - text: Stock
+                        - img [ref=e544]
+                    - columnheader "Created At" [ref=e547]:
+                      - button "Created At" [ref=e548] [cursor=pointer]:
+                        - text: Created At
+                        - img [ref=e549]
+                    - columnheader "Show trigger run pills" [ref=e552]:
+                      - button "Show trigger run pills" [ref=e554] [cursor=pointer]:
+                        - img [ref=e555]
+                        - generic [ref=e558]: Show Statuses
+                    - columnheader "Actions" [ref=e559]:
+                      - generic [ref=e560]: Actions
+                - rowgroup [ref=e561]:
+                  - row [ref=e1502]:
+                    - cell [ref=e1503]
+                  - 'row "Select row Add note for Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer Open Nezuko Kamado | 6 cm | Metal | Przypinka Anime | Demon Slayer KEYCHA1479 594465152 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1504]':
+                    - cell "Select row" [ref=e1505]:
+                      - checkbox "Select row" [ref=e1506] [cursor=pointer]
+                    - cell "Add note for Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e1507]:
+                      - generic [ref=e1508]:
+                        - button "Add note for Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e1510] [cursor=pointer]
+                        - img "Nezuko Kamado | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e1512] [cursor=pointer]
+                    - 'cell "Open Nezuko Kamado | 6 cm | Metal | Przypinka Anime | Demon Slayer KEYCHA1479 594465152 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1513]':
+                      - generic [ref=e1514]:
+                        - button "Open Nezuko Kamado | 6 cm | Metal | Przypinka Anime | Demon Slayer" [ref=e1515] [cursor=pointer]: Nezuko Kamado | 6 cm | Metal | Przypinka Anime | Demon Slayer
+                        - generic [ref=e1516]:
+                          - generic [ref=e1517]:
+                            - generic [ref=e1519]: KEYCHA1479
+                            - generic [ref=e1520]: "|"
+                            - generic [ref=e1522]: "594465152"
+                            - generic [ref=e1523]: "|"
+                            - button "Przypinka Anime" [ref=e1525]
+                            - generic [ref=e1526]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1528]'
+                          - generic [ref=e1529]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1531]'
+                            - img "English title and description filled" [ref=e1536]:
+                              - generic [ref=e1539]: EN
+                            - img "Polish title and description filled" [ref=e1541]:
+                              - generic [ref=e1544]: PL
+                    - cell "41.00" [ref=e1545]:
+                      - generic "Double-click to edit price" [ref=e1548] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e1549]:
+                      - generic "Double-click to edit stock" [ref=e1550] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1551]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1552]:
+                      - generic [ref=e1553]:
+                        - button "View integrations" [ref=e1554] [cursor=pointer]:
+                          - generic [ref=e1555]: +
+                        - button "Manage Base.com listing (active)." [ref=e1556] [cursor=pointer]:
+                          - generic [ref=e1557]: BL
+                        - button "Manage ecommerce product" [ref=e1558] [cursor=pointer]:
+                          - generic [ref=e1559]: EC
+                        - button "One-click export to Tradera" [ref=e1560] [cursor=pointer]:
+                          - generic [ref=e1561]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1562] [cursor=pointer]:
+                          - generic [ref=e1563]: V+
+                    - cell "Open row actions" [ref=e1564]:
+                      - button "Open row actions" [ref=e1566] [cursor=pointer]:
+                        - img [ref=e1567]
+                  - 'row "Select row Add note for Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family Open Yor Forger | 4 cm | Metal | Przypinka Anime | Spy X Family KEYCHA1475 594476967 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 22.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1571]':
+                    - cell "Select row" [ref=e1572]:
+                      - checkbox "Select row" [ref=e1573] [cursor=pointer]
+                    - cell "Add note for Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family" [ref=e1574]:
+                      - generic [ref=e1575]:
+                        - button "Add note for Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family" [ref=e1577] [cursor=pointer]
+                        - img "Yor Forger | 5 cm | Metal | Przypinka Anime | Spy X Family" [ref=e1579] [cursor=pointer]
+                    - 'cell "Open Yor Forger | 4 cm | Metal | Przypinka Anime | Spy X Family KEYCHA1475 594476967 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1580]':
+                      - generic [ref=e1581]:
+                        - button "Open Yor Forger | 4 cm | Metal | Przypinka Anime | Spy X Family" [ref=e1582] [cursor=pointer]: Yor Forger | 4 cm | Metal | Przypinka Anime | Spy X Family
+                        - generic [ref=e1583]:
+                          - generic [ref=e1584]:
+                            - generic [ref=e1586]: KEYCHA1475
+                            - generic [ref=e1587]: "|"
+                            - generic [ref=e1589]: "594476967"
+                            - generic [ref=e1590]: "|"
+                            - button "Przypinka Anime" [ref=e1592]
+                            - generic [ref=e1593]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1595]'
+                          - generic [ref=e1596]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1598]'
+                            - img "English title and description filled" [ref=e1603]:
+                              - generic [ref=e1606]: EN
+                            - img "Polish title and description filled" [ref=e1608]:
+                              - generic [ref=e1611]: PL
+                    - cell "22.00" [ref=e1612]:
+                      - generic "Double-click to edit price" [ref=e1615] [cursor=pointer]: "22.00"
+                    - cell "4" [ref=e1616]:
+                      - generic "Double-click to edit stock" [ref=e1617] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1618]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1619]:
+                      - generic [ref=e1620]:
+                        - button "View integrations" [ref=e1621] [cursor=pointer]:
+                          - generic [ref=e1622]: +
+                        - button "Manage Base.com listing (active)." [ref=e1623] [cursor=pointer]:
+                          - generic [ref=e1624]: BL
+                        - button "Manage ecommerce product" [ref=e1625] [cursor=pointer]:
+                          - generic [ref=e1626]: EC
+                        - button "One-click export to Tradera" [ref=e1627] [cursor=pointer]:
+                          - generic [ref=e1628]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1629] [cursor=pointer]:
+                          - generic [ref=e1630]: V+
+                    - cell "Open row actions" [ref=e1631]:
+                      - button "Open row actions" [ref=e1633] [cursor=pointer]:
+                        - img [ref=e1634]
+                  - 'row "Select row Add note for Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Open Xiao Hu Tao Ganyu | 6 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1481 594464840 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1638]':
+                    - cell "Select row" [ref=e1639]:
+                      - checkbox "Select row" [ref=e1640] [cursor=pointer]
+                    - cell "Add note for Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1641]:
+                      - generic [ref=e1642]:
+                        - button "Add note for Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1644] [cursor=pointer]
+                        - img "Xiao Hu Tao Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1646] [cursor=pointer]
+                    - 'cell "Open Xiao Hu Tao Ganyu | 6 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1481 594464840 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1647]':
+                      - generic [ref=e1648]:
+                        - button "Open Xiao Hu Tao Ganyu | 6 cm | Metal | Przypinka Anime | Genshin Impact" [ref=e1649] [cursor=pointer]: Xiao Hu Tao Ganyu | 6 cm | Metal | Przypinka Anime | Genshin Impact
+                        - generic [ref=e1650]:
+                          - generic [ref=e1651]:
+                            - generic [ref=e1653]: KEYCHA1481
+                            - generic [ref=e1654]: "|"
+                            - generic [ref=e1656]: "594464840"
+                            - generic [ref=e1657]: "|"
+                            - button "Przypinka Anime" [ref=e1659]
+                            - generic [ref=e1660]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1662]'
+                          - generic [ref=e1663]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1665]'
+                            - img "English title and description filled" [ref=e1670]:
+                              - generic [ref=e1673]: EN
+                            - img "Polish title and description filled" [ref=e1675]:
+                              - generic [ref=e1678]: PL
+                    - cell "41.00" [ref=e1679]:
+                      - generic "Double-click to edit price" [ref=e1682] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e1683]:
+                      - generic "Double-click to edit stock" [ref=e1684] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1685]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1686]:
+                      - generic [ref=e1687]:
+                        - button "View integrations" [ref=e1688] [cursor=pointer]:
+                          - generic [ref=e1689]: +
+                        - button "Manage Base.com listing (active)." [ref=e1690] [cursor=pointer]:
+                          - generic [ref=e1691]: BL
+                        - button "Manage ecommerce product" [ref=e1692] [cursor=pointer]:
+                          - generic [ref=e1693]: EC
+                        - button "One-click export to Tradera" [ref=e1694] [cursor=pointer]:
+                          - generic [ref=e1695]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1696] [cursor=pointer]:
+                          - generic [ref=e1697]: V+
+                    - cell "Open row actions" [ref=e1698]:
+                      - button "Open row actions" [ref=e1700] [cursor=pointer]:
+                        - img [ref=e1701]
+                  - 'row "Select row Add note for Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact Open product KEYCHA1483 b7adb8a5-f687-42d7-9c70-844d0e52e4e7 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations One-click export to Base.com Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1705]':
+                    - cell "Select row" [ref=e1706]:
+                      - checkbox "Select row" [ref=e1707] [cursor=pointer]
+                    - cell "Add note for Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1708]:
+                      - generic [ref=e1709]:
+                        - button "Add note for Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1711] [cursor=pointer]
+                        - img "Alhaitham | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1713] [cursor=pointer]
+                    - 'cell "Open product KEYCHA1483 b7adb8a5-f687-42d7-9c70-844d0e52e4e7 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled" [ref=e1714]':
+                      - generic [ref=e1715]:
+                        - button "Open product" [ref=e1716] [cursor=pointer]: —
+                        - generic [ref=e1717]:
+                          - generic [ref=e1718]:
+                            - generic [ref=e1720]: KEYCHA1483
+                            - generic [ref=e1721]: "|"
+                            - generic [ref=e1723]: b7adb8a5-f687-42d7-9c70-844d0e52e4e7
+                            - generic [ref=e1724]: "|"
+                            - button "Przypinka Anime" [ref=e1726]
+                            - generic [ref=e1727]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1729]'
+                          - generic [ref=e1730]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1732]'
+                            - img "English title and description filled" [ref=e1737]:
+                              - generic [ref=e1740]: EN
+                    - cell "41.00" [ref=e1741]:
+                      - generic "Double-click to edit price" [ref=e1744] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e1745]:
+                      - generic "Double-click to edit stock" [ref=e1746] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1747]
+                    - cell "View integrations One-click export to Base.com Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1748]:
+                      - generic [ref=e1749]:
+                        - button "View integrations" [ref=e1750] [cursor=pointer]:
+                          - generic [ref=e1751]: +
+                        - button "One-click export to Base.com" [ref=e1752] [cursor=pointer]:
+                          - generic [ref=e1753]: BL
+                        - button "Manage ecommerce product" [ref=e1754] [cursor=pointer]:
+                          - generic [ref=e1755]: EC
+                        - button "One-click export to Tradera" [ref=e1756] [cursor=pointer]:
+                          - generic [ref=e1757]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1758] [cursor=pointer]:
+                          - generic [ref=e1759]: V+
+                    - cell "Open row actions" [ref=e1760]:
+                      - button "Open row actions" [ref=e1762] [cursor=pointer]:
+                        - img [ref=e1763]
+                  - 'row "Select row Add note for Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Open Ganyu | 4 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1474 594476882 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1767]':
+                    - cell "Select row" [ref=e1768]:
+                      - checkbox "Select row" [ref=e1769] [cursor=pointer]
+                    - cell "Add note for Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1770]:
+                      - generic [ref=e1771]:
+                        - button "Add note for Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1773] [cursor=pointer]
+                        - img "Ganyu | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e1775] [cursor=pointer]
+                    - 'cell "Open Ganyu | 4 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1474 594476882 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1776]':
+                      - generic [ref=e1777]:
+                        - button "Open Ganyu | 4 cm | Metal | Przypinka Anime | Genshin Impact" [ref=e1778] [cursor=pointer]: Ganyu | 4 cm | Metal | Przypinka Anime | Genshin Impact
+                        - generic [ref=e1779]:
+                          - generic [ref=e1780]:
+                            - generic [ref=e1782]: KEYCHA1474
+                            - generic [ref=e1783]: "|"
+                            - generic [ref=e1785]: "594476882"
+                            - generic [ref=e1786]: "|"
+                            - button "Przypinka Anime" [ref=e1788]
+                            - generic [ref=e1789]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1791]'
+                          - generic [ref=e1792]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1794]'
+                            - img "English title and description filled" [ref=e1799]:
+                              - generic [ref=e1802]: EN
+                            - img "Polish title and description filled" [ref=e1804]:
+                              - generic [ref=e1807]: PL
+                    - cell "41.00" [ref=e1808]:
+                      - generic "Double-click to edit price" [ref=e1811] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e1812]:
+                      - generic "Double-click to edit stock" [ref=e1813] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1814]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1815]:
+                      - generic [ref=e1816]:
+                        - button "View integrations" [ref=e1817] [cursor=pointer]:
+                          - generic [ref=e1818]: +
+                        - button "Manage Base.com listing (active)." [ref=e1819] [cursor=pointer]:
+                          - generic [ref=e1820]: BL
+                        - button "Manage ecommerce product" [ref=e1821] [cursor=pointer]:
+                          - generic [ref=e1822]: EC
+                        - button "One-click export to Tradera" [ref=e1823] [cursor=pointer]:
+                          - generic [ref=e1824]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1825] [cursor=pointer]:
+                          - generic [ref=e1826]: V+
+                    - cell "Open row actions" [ref=e1827]:
+                      - button "Open row actions" [ref=e1829] [cursor=pointer]:
+                        - img [ref=e1830]
+                  - 'row "Select row Add note for Going Merry | 4 cm | Metal | Anime Pin | One Piece Going Merry | 4 cm | Metal | Anime Pin | One Piece Open Going Merry | 4 cm | Metal | Przypinka Anime | One Piece KEYCHA1476 593321561 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 22.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1834]':
+                    - cell "Select row" [ref=e1835]:
+                      - checkbox "Select row" [ref=e1836] [cursor=pointer]
+                    - cell "Add note for Going Merry | 4 cm | Metal | Anime Pin | One Piece Going Merry | 4 cm | Metal | Anime Pin | One Piece" [ref=e1837]:
+                      - generic [ref=e1838]:
+                        - button "Add note for Going Merry | 4 cm | Metal | Anime Pin | One Piece" [ref=e1840] [cursor=pointer]
+                        - img "Going Merry | 4 cm | Metal | Anime Pin | One Piece" [ref=e1842] [cursor=pointer]
+                    - 'cell "Open Going Merry | 4 cm | Metal | Przypinka Anime | One Piece KEYCHA1476 593321561 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1843]':
+                      - generic [ref=e1844]:
+                        - button "Open Going Merry | 4 cm | Metal | Przypinka Anime | One Piece" [ref=e1845] [cursor=pointer]: Going Merry | 4 cm | Metal | Przypinka Anime | One Piece
+                        - generic [ref=e1846]:
+                          - generic [ref=e1847]:
+                            - generic [ref=e1849]: KEYCHA1476
+                            - generic [ref=e1850]: "|"
+                            - generic [ref=e1852]: "593321561"
+                            - generic [ref=e1853]: "|"
+                            - button "Przypinka Anime" [ref=e1855]
+                            - generic [ref=e1856]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1858]'
+                          - generic [ref=e1859]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1861]'
+                            - img "English title and description filled" [ref=e1866]:
+                              - generic [ref=e1869]: EN
+                            - img "Polish title and description filled" [ref=e1871]:
+                              - generic [ref=e1874]: PL
+                    - cell "22.00" [ref=e1875]:
+                      - generic "Double-click to edit price" [ref=e1878] [cursor=pointer]: "22.00"
+                    - cell "4" [ref=e1879]:
+                      - generic "Double-click to edit stock" [ref=e1880] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1881]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1882]:
+                      - generic [ref=e1883]:
+                        - button "View integrations" [ref=e1884] [cursor=pointer]:
+                          - generic [ref=e1885]: +
+                        - button "Manage Base.com listing (active)." [ref=e1886] [cursor=pointer]:
+                          - generic [ref=e1887]: BL
+                        - button "Manage ecommerce product" [ref=e1888] [cursor=pointer]:
+                          - generic [ref=e1889]: EC
+                        - button "One-click export to Tradera" [ref=e1890] [cursor=pointer]:
+                          - generic [ref=e1891]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1892] [cursor=pointer]:
+                          - generic [ref=e1893]: V+
+                    - cell "Open row actions" [ref=e1894]:
+                      - button "Open row actions" [ref=e1896] [cursor=pointer]:
+                        - img [ref=e1897]
+                  - 'row "Select row Add note for Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon Open Rei Hino | 4 cm | Metal | Przypinka Anime | Sailor Moon KEYCHA1472 594465073 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 25.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1901]':
+                    - cell "Select row" [ref=e1902]:
+                      - checkbox "Select row" [ref=e1903] [cursor=pointer]
+                    - cell "Add note for Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1904]:
+                      - generic [ref=e1905]:
+                        - button "Add note for Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1907] [cursor=pointer]
+                        - img "Rei Hino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1909] [cursor=pointer]
+                    - 'cell "Open Rei Hino | 4 cm | Metal | Przypinka Anime | Sailor Moon KEYCHA1472 594465073 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1910]':
+                      - generic [ref=e1911]:
+                        - button "Open Rei Hino | 4 cm | Metal | Przypinka Anime | Sailor Moon" [ref=e1912] [cursor=pointer]: Rei Hino | 4 cm | Metal | Przypinka Anime | Sailor Moon
+                        - generic [ref=e1913]:
+                          - generic [ref=e1914]:
+                            - generic [ref=e1916]: KEYCHA1472
+                            - generic [ref=e1917]: "|"
+                            - generic [ref=e1919]: "594465073"
+                            - generic [ref=e1920]: "|"
+                            - button "Przypinka Anime" [ref=e1922]
+                            - generic [ref=e1923]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1925]'
+                          - generic [ref=e1926]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1928]'
+                            - img "English title and description filled" [ref=e1933]:
+                              - generic [ref=e1936]: EN
+                            - img "Polish title and description filled" [ref=e1938]:
+                              - generic [ref=e1941]: PL
+                    - cell "25.00" [ref=e1942]:
+                      - generic "Double-click to edit price" [ref=e1945] [cursor=pointer]: "25.00"
+                    - cell "4" [ref=e1946]:
+                      - generic "Double-click to edit stock" [ref=e1947] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e1948]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e1949]:
+                      - generic [ref=e1950]:
+                        - button "View integrations" [ref=e1951] [cursor=pointer]:
+                          - generic [ref=e1952]: +
+                        - button "Manage Base.com listing (active)." [ref=e1953] [cursor=pointer]:
+                          - generic [ref=e1954]: BL
+                        - button "Manage ecommerce product" [ref=e1955] [cursor=pointer]:
+                          - generic [ref=e1956]: EC
+                        - button "One-click export to Tradera" [ref=e1957] [cursor=pointer]:
+                          - generic [ref=e1958]: T+
+                        - button "One-click export to Vinted.pl" [ref=e1959] [cursor=pointer]:
+                          - generic [ref=e1960]: V+
+                    - cell "Open row actions" [ref=e1961]:
+                      - button "Open row actions" [ref=e1963] [cursor=pointer]:
+                        - img [ref=e1964]
+                  - 'row "Select row Add note for Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon Open Usagi Tsukino | 4 cm | Metal | Przypinka Anime | Sailor Moon KEYCHA1473 594476884 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 25.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e1968]':
+                    - cell "Select row" [ref=e1969]:
+                      - checkbox "Select row" [ref=e1970] [cursor=pointer]
+                    - cell "Add note for Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1971]:
+                      - generic [ref=e1972]:
+                        - button "Add note for Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1974] [cursor=pointer]
+                        - img "Usagi Tsukino | 4 cm | Metal | Anime Pin | Sailor Moon" [ref=e1976] [cursor=pointer]
+                    - 'cell "Open Usagi Tsukino | 4 cm | Metal | Przypinka Anime | Sailor Moon KEYCHA1473 594476884 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e1977]':
+                      - generic [ref=e1978]:
+                        - button "Open Usagi Tsukino | 4 cm | Metal | Przypinka Anime | Sailor Moon" [ref=e1979] [cursor=pointer]: Usagi Tsukino | 4 cm | Metal | Przypinka Anime | Sailor Moon
+                        - generic [ref=e1980]:
+                          - generic [ref=e1981]:
+                            - generic [ref=e1983]: KEYCHA1473
+                            - generic [ref=e1984]: "|"
+                            - generic [ref=e1986]: "594476884"
+                            - generic [ref=e1987]: "|"
+                            - button "Przypinka Anime" [ref=e1989]
+                            - generic [ref=e1990]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e1992]'
+                          - generic [ref=e1993]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e1995]'
+                            - img "English title and description filled" [ref=e2000]:
+                              - generic [ref=e2003]: EN
+                            - img "Polish title and description filled" [ref=e2005]:
+                              - generic [ref=e2008]: PL
+                    - cell "25.00" [ref=e2009]:
+                      - generic "Double-click to edit price" [ref=e2012] [cursor=pointer]: "25.00"
+                    - cell "4" [ref=e2013]:
+                      - generic "Double-click to edit stock" [ref=e2014] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e2015]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2016]:
+                      - generic [ref=e2017]:
+                        - button "View integrations" [ref=e2018] [cursor=pointer]:
+                          - generic [ref=e2019]: +
+                        - button "Manage Base.com listing (active)." [ref=e2020] [cursor=pointer]:
+                          - generic [ref=e2021]: BL
+                        - button "Manage ecommerce product" [ref=e2022] [cursor=pointer]:
+                          - generic [ref=e2023]: EC
+                        - button "One-click export to Tradera" [ref=e2024] [cursor=pointer]:
+                          - generic [ref=e2025]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2026] [cursor=pointer]:
+                          - generic [ref=e2027]: V+
+                    - cell "Open row actions" [ref=e2028]:
+                      - button "Open row actions" [ref=e2030] [cursor=pointer]:
+                        - img [ref=e2031]
+                  - 'row "Select row Add note for Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact Open Sangonomiya Kokomi | 6 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1477 594436706 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e2035]':
+                    - cell "Select row" [ref=e2036]:
+                      - checkbox "Select row" [ref=e2037] [cursor=pointer]
+                    - cell "Add note for Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e2038]:
+                      - generic [ref=e2039]:
+                        - button "Add note for Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e2041] [cursor=pointer]
+                        - img "Sangonomiya Kokomi | 6 cm | Metal | Anime Pin | Genshin Impact" [ref=e2043] [cursor=pointer]
+                    - 'cell "Open Sangonomiya Kokomi | 6 cm | Metal | Przypinka Anime | Genshin Impact KEYCHA1477 594436706 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e2044]':
+                      - generic [ref=e2045]:
+                        - button "Open Sangonomiya Kokomi | 6 cm | Metal | Przypinka Anime | Genshin Impact" [ref=e2046] [cursor=pointer]: Sangonomiya Kokomi | 6 cm | Metal | Przypinka Anime | Genshin Impact
+                        - generic [ref=e2047]:
+                          - generic [ref=e2048]:
+                            - generic [ref=e2050]: KEYCHA1477
+                            - generic [ref=e2051]: "|"
+                            - generic [ref=e2053]: "594436706"
+                            - generic [ref=e2054]: "|"
+                            - button "Przypinka Anime" [ref=e2056]
+                            - generic [ref=e2057]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e2059]'
+                          - generic [ref=e2060]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e2062]'
+                            - img "English title and description filled" [ref=e2067]:
+                              - generic [ref=e2070]: EN
+                            - img "Polish title and description filled" [ref=e2072]:
+                              - generic [ref=e2075]: PL
+                    - cell "41.00" [ref=e2076]:
+                      - generic "Double-click to edit price" [ref=e2079] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e2080]:
+                      - generic "Double-click to edit stock" [ref=e2081] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e2082]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2083]:
+                      - generic [ref=e2084]:
+                        - button "View integrations" [ref=e2085] [cursor=pointer]:
+                          - generic [ref=e2086]: +
+                        - button "Manage Base.com listing (active)." [ref=e2087] [cursor=pointer]:
+                          - generic [ref=e2088]: BL
+                        - button "Manage ecommerce product" [ref=e2089] [cursor=pointer]:
+                          - generic [ref=e2090]: EC
+                        - button "One-click export to Tradera" [ref=e2091] [cursor=pointer]:
+                          - generic [ref=e2092]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2093] [cursor=pointer]:
+                          - generic [ref=e2094]: V+
+                    - cell "Open row actions" [ref=e2095]:
+                      - button "Open row actions" [ref=e2097] [cursor=pointer]:
+                        - img [ref=e2098]
+                  - 'row "Select row Add note for Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen Open Suguru Geto | 6 cm | Metal | Przypinka Anime | Jujutsu Kaisen KEYCHA1480 594465052 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e2102]':
+                    - cell "Select row" [ref=e2103]:
+                      - checkbox "Select row" [ref=e2104] [cursor=pointer]
+                    - cell "Add note for Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen" [ref=e2105]:
+                      - generic [ref=e2106]:
+                        - button "Add note for Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen" [ref=e2108] [cursor=pointer]
+                        - img "Suguru Geto | 6 cm | Metal | Anime Pin | Jujutsu Kaisen" [ref=e2110] [cursor=pointer]
+                    - 'cell "Open Suguru Geto | 6 cm | Metal | Przypinka Anime | Jujutsu Kaisen KEYCHA1480 594465052 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e2111]':
+                      - generic [ref=e2112]:
+                        - button "Open Suguru Geto | 6 cm | Metal | Przypinka Anime | Jujutsu Kaisen" [ref=e2113] [cursor=pointer]: Suguru Geto | 6 cm | Metal | Przypinka Anime | Jujutsu Kaisen
+                        - generic [ref=e2114]:
+                          - generic [ref=e2115]:
+                            - generic [ref=e2117]: KEYCHA1480
+                            - generic [ref=e2118]: "|"
+                            - generic [ref=e2120]: "594465052"
+                            - generic [ref=e2121]: "|"
+                            - button "Przypinka Anime" [ref=e2123]
+                            - generic [ref=e2124]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e2126]'
+                          - generic [ref=e2127]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e2129]'
+                            - img "English title and description filled" [ref=e2134]:
+                              - generic [ref=e2137]: EN
+                            - img "Polish title and description filled" [ref=e2139]:
+                              - generic [ref=e2142]: PL
+                    - cell "41.00" [ref=e2143]:
+                      - generic "Double-click to edit price" [ref=e2146] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e2147]:
+                      - generic "Double-click to edit stock" [ref=e2148] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e2149]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2150]:
+                      - generic [ref=e2151]:
+                        - button "View integrations" [ref=e2152] [cursor=pointer]:
+                          - generic [ref=e2153]: +
+                        - button "Manage Base.com listing (active)." [ref=e2154] [cursor=pointer]:
+                          - generic [ref=e2155]: BL
+                        - button "Manage ecommerce product" [ref=e2156] [cursor=pointer]:
+                          - generic [ref=e2157]: EC
+                        - button "One-click export to Tradera" [ref=e2158] [cursor=pointer]:
+                          - generic [ref=e2159]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2160] [cursor=pointer]:
+                          - generic [ref=e2161]: V+
+                    - cell "Open row actions" [ref=e2162]:
+                      - button "Open row actions" [ref=e2164] [cursor=pointer]:
+                        - img [ref=e2165]
+                  - 'row "Select row Add note for Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece Open Portgasa D Ace | 6 cm | Metal | Przypinka Anime | One Piece KEYCHA1482 594465201 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e2169]':
+                    - cell "Select row" [ref=e2170]:
+                      - checkbox "Select row" [ref=e2171] [cursor=pointer]
+                    - cell "Add note for Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece" [ref=e2172]:
+                      - generic [ref=e2173]:
+                        - button "Add note for Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece" [ref=e2175] [cursor=pointer]
+                        - img "Portgasa D Ace | 6 cm | Metal | Anime Pin | One Piece" [ref=e2177] [cursor=pointer]
+                    - 'cell "Open Portgasa D Ace | 6 cm | Metal | Przypinka Anime | One Piece KEYCHA1482 594465201 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e2178]':
+                      - generic [ref=e2179]:
+                        - button "Open Portgasa D Ace | 6 cm | Metal | Przypinka Anime | One Piece" [ref=e2180] [cursor=pointer]: Portgasa D Ace | 6 cm | Metal | Przypinka Anime | One Piece
+                        - generic [ref=e2181]:
+                          - generic [ref=e2182]:
+                            - generic [ref=e2184]: KEYCHA1482
+                            - generic [ref=e2185]: "|"
+                            - generic [ref=e2187]: "594465201"
+                            - generic [ref=e2188]: "|"
+                            - button "Przypinka Anime" [ref=e2190]
+                            - generic [ref=e2191]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e2193]'
+                          - generic [ref=e2194]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e2196]'
+                            - img "English title and description filled" [ref=e2201]:
+                              - generic [ref=e2204]: EN
+                            - img "Polish title and description filled" [ref=e2206]:
+                              - generic [ref=e2209]: PL
+                    - cell "41.00" [ref=e2210]:
+                      - generic "Double-click to edit price" [ref=e2213] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e2214]:
+                      - generic "Double-click to edit stock" [ref=e2215] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e2216]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2217]:
+                      - generic [ref=e2218]:
+                        - button "View integrations" [ref=e2219] [cursor=pointer]:
+                          - generic [ref=e2220]: +
+                        - button "Manage Base.com listing (active)." [ref=e2221] [cursor=pointer]:
+                          - generic [ref=e2222]: BL
+                        - button "Manage ecommerce product" [ref=e2223] [cursor=pointer]:
+                          - generic [ref=e2224]: EC
+                        - button "One-click export to Tradera" [ref=e2225] [cursor=pointer]:
+                          - generic [ref=e2226]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2227] [cursor=pointer]:
+                          - generic [ref=e2228]: V+
+                    - cell "Open row actions" [ref=e2229]:
+                      - button "Open row actions" [ref=e2231] [cursor=pointer]:
+                        - img [ref=e2232]
+                  - 'row "Select row Add note for Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project Open Saigyyouji Yuyuko | 6 cm | Metal | Przypinka Anime | Touhou Project KEYCHA1478 594476781 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T14:36:54.693Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e2236]':
+                    - cell "Select row" [ref=e2237]:
+                      - checkbox "Select row" [ref=e2238] [cursor=pointer]
+                    - cell "Add note for Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project" [ref=e2239]:
+                      - generic [ref=e2240]:
+                        - button "Add note for Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project" [ref=e2242] [cursor=pointer]
+                        - img "Saigyyouji Yuyuko | 6 cm | Metal | Anime Pin | Touhou Project" [ref=e2244] [cursor=pointer]
+                    - 'cell "Open Saigyyouji Yuyuko | 6 cm | Metal | Przypinka Anime | Touhou Project KEYCHA1478 594476781 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e2245]':
+                      - generic [ref=e2246]:
+                        - button "Open Saigyyouji Yuyuko | 6 cm | Metal | Przypinka Anime | Touhou Project" [ref=e2247] [cursor=pointer]: Saigyyouji Yuyuko | 6 cm | Metal | Przypinka Anime | Touhou Project
+                        - generic [ref=e2248]:
+                          - generic [ref=e2249]:
+                            - generic [ref=e2251]: KEYCHA1478
+                            - generic [ref=e2252]: "|"
+                            - generic [ref=e2254]: "594476781"
+                            - generic [ref=e2255]: "|"
+                            - button "Przypinka Anime" [ref=e2257]
+                            - generic [ref=e2258]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e2260]'
+                          - generic [ref=e2261]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e2263]'
+                            - img "English title and description filled" [ref=e2268]:
+                              - generic [ref=e2271]: EN
+                            - img "Polish title and description filled" [ref=e2273]:
+                              - generic [ref=e2276]: PL
+                    - cell "41.00" [ref=e2277]:
+                      - generic "Double-click to edit price" [ref=e2280] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e2281]:
+                      - generic "Double-click to edit stock" [ref=e2282] [cursor=pointer]: "4"
+                    - cell "2026-05-14T14:36:54.693Z" [ref=e2283]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2284]:
+                      - generic [ref=e2285]:
+                        - button "View integrations" [ref=e2286] [cursor=pointer]:
+                          - generic [ref=e2287]: +
+                        - button "Manage Base.com listing (active)." [ref=e2288] [cursor=pointer]:
+                          - generic [ref=e2289]: BL
+                        - button "Manage ecommerce product" [ref=e2290] [cursor=pointer]:
+                          - generic [ref=e2291]: EC
+                        - button "One-click export to Tradera" [ref=e2292] [cursor=pointer]:
+                          - generic [ref=e2293]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2294] [cursor=pointer]:
+                          - generic [ref=e2295]: V+
+                    - cell "Open row actions" [ref=e2296]:
+                      - button "Open row actions" [ref=e2298] [cursor=pointer]:
+                        - img [ref=e2299]
+                  - 'row "Select row Add note for Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer Open Agatsuma Zenitsu | 6 cm | Metal | Przypinka Anime | Demon Slayer KEYCHA1471 593311402 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled 41.00 4 2026-05-14T02:30:42.044Z View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl Open row actions" [ref=e2303]':
+                    - cell "Select row" [ref=e2304]:
+                      - checkbox "Select row" [ref=e2305] [cursor=pointer]
+                    - cell "Add note for Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e2306]:
+                      - generic [ref=e2307]:
+                        - button "Add note for Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e2309] [cursor=pointer]
+                        - img "Agatsuma Zenitsu | 6 cm | Metal | Anime Pin | Demon Slayer" [ref=e2311] [cursor=pointer]
+                    - 'cell "Open Agatsuma Zenitsu | 6 cm | Metal | Przypinka Anime | Demon Slayer KEYCHA1471 593311402 Przypinka Anime Auto ship: Jewellery 7 EUR Product image storage: upload, FastComet English title and description filled Polish title and description filled" [ref=e2312]':
+                      - generic [ref=e2313]:
+                        - button "Open Agatsuma Zenitsu | 6 cm | Metal | Przypinka Anime | Demon Slayer" [ref=e2314] [cursor=pointer]: Agatsuma Zenitsu | 6 cm | Metal | Przypinka Anime | Demon Slayer
+                        - generic [ref=e2315]:
+                          - generic [ref=e2316]:
+                            - generic [ref=e2318]: KEYCHA1471
+                            - generic [ref=e2319]: "|"
+                            - generic [ref=e2321]: "593311402"
+                            - generic [ref=e2322]: "|"
+                            - button "Przypinka Anime" [ref=e2324]
+                            - generic [ref=e2325]: "|"
+                            - 'button "Auto ship: Jewellery 7 EUR" [ref=e2327]'
+                          - generic [ref=e2328]:
+                            - 'img "Product image storage: upload, FastComet" [ref=e2330]'
+                            - img "English title and description filled" [ref=e2335]:
+                              - generic [ref=e2338]: EN
+                            - img "Polish title and description filled" [ref=e2340]:
+                              - generic [ref=e2343]: PL
+                    - cell "41.00" [ref=e2344]:
+                      - generic "Double-click to edit price" [ref=e2347] [cursor=pointer]: "41.00"
+                    - cell "4" [ref=e2348]:
+                      - generic "Double-click to edit stock" [ref=e2349] [cursor=pointer]: "4"
+                    - cell "2026-05-14T02:30:42.044Z" [ref=e2350]
+                    - cell "View integrations Manage Base.com listing (active). Manage ecommerce product One-click export to Tradera One-click export to Vinted.pl" [ref=e2351]:
+                      - generic [ref=e2352]:
+                        - button "View integrations" [ref=e2353] [cursor=pointer]:
+                          - generic [ref=e2354]: +
+                        - button "Manage Base.com listing (active)." [ref=e2355] [cursor=pointer]:
+                          - generic [ref=e2356]: BL
+                        - button "Manage ecommerce product" [ref=e2357] [cursor=pointer]:
+                          - generic [ref=e2358]: EC
+                        - button "One-click export to Tradera" [ref=e2359] [cursor=pointer]:
+                          - generic [ref=e2360]: T+
+                        - button "One-click export to Vinted.pl" [ref=e2361] [cursor=pointer]:
+                          - generic [ref=e2362]: V+
+                    - cell "Open row actions" [ref=e2363]:
+                      - button "Open row actions" [ref=e2365] [cursor=pointer]:
+                        - img [ref=e2366]
+                  - row [ref=e2370]:
+                    - cell [ref=e2371]
+  - alert [ref=e449]
+  - button "Show side panels" [pressed] [ref=e1354] [cursor=pointer]:
+    - img [ref=e1355]

@@ -63,7 +63,15 @@ export const resolveCategorySegmentSyncAction = ({
   if (shouldSelectMatchedCategory(match, selectedCategoryId)) {
     return { type: 'select', categoryId: match.categoryId };
   }
+  // Segment matches the selected category via a cross-locale alias — no change needed.
+  if (match !== null && match.categoryId === selectedCategoryId) {
+    return { type: 'sync', categoryId: selectedCategoryId };
+  }
+  // Only clear when we can confirm the selected category is no longer in the name.
+  // If selectedCategoryOption is null the category list hasn't loaded yet, so we
+  // cannot make a confident decision — leave state unchanged.
   if (
+    selectedCategoryOption !== null &&
     shouldClearSelectedCategory({
       categorySegmentChanged,
       selectedCategoryChanged,

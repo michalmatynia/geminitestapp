@@ -70,6 +70,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   useProductFormPolishNameAutoSync({
     languageTabValues: languageTabs.languageTabValues,
     categories,
+    categoriesLoading: productFormMetadata.categoriesLoading,
     nameEn: watchedValues.nameEn,
     namePl: watchedValues.namePl,
     getValues,

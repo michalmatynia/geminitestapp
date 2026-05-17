@@ -5,7 +5,7 @@ import type { Collection, Db, Document } from 'mongodb';
 import { createDefaultKangurGames } from '@/features/kangur/games';
 import type { KangurGameDefinition } from '@/shared/contracts/kangur-games';
 import { kangurGameDefinitionSchema } from '@/shared/contracts/kangur-games';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 const COLLECTION = 'kangur_games';
 const SUBJECT_SORT_INDEX = 'kangur_games_subject_sort_idx';

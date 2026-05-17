@@ -14,7 +14,7 @@ import {
   type KangurDuelLobbyChatSendResponse,
 } from '@/shared/contracts/kangur-duels-chat';
 import { rateLimitedError, validationError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 import { withKangurServerErrorSync } from '@/features/kangur/observability/server-error-reporting';
 

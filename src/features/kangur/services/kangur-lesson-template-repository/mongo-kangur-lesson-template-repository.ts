@@ -4,7 +4,7 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import { createDefaultKangurLessonTemplates } from '@/features/kangur/lessons/lesson-template-defaults';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { KangurLessonTemplateListInput, KangurLessonTemplateRepository } from './types';

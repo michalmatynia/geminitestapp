@@ -10,7 +10,7 @@ import {
   getKangurGameContentSetsForGame,
   getKangurGameDefinition,
 } from '@/features/kangur/games';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { kangurLessonSchema } from '@/shared/contracts/kangur';
 import {
   type KangurLessonTemplate,

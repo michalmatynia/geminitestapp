@@ -18,7 +18,7 @@ const {
   randomUUIDMock: vi.fn(),
 }));
 
-vi.mock('crypto', async (importOriginal) => {
+async function createCryptoMock(importOriginal: <T>() => Promise<T>) {
   const actual = await importOriginal<typeof import('crypto')>();
   const mock = {
     ...actual,
@@ -28,7 +28,10 @@ vi.mock('crypto', async (importOriginal) => {
     ...mock,
     default: mock,
   };
-});
+}
+
+vi.mock('crypto', createCryptoMock);
+vi.mock('node:crypto', createCryptoMock);
 
 vi.mock('bcryptjs', () => ({
   default: {

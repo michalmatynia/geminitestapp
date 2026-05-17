@@ -11,7 +11,7 @@ import {
 } from '@/features/kangur/lesson-documents';
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { KangurLessonDocumentRepository } from './types';

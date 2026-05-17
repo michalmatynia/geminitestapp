@@ -1,5 +1,5 @@
 import type { Collection } from 'mongodb';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import {
   type NumberBalanceMatchPlayerState,
   type NumberBalanceMatchState,

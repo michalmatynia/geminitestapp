@@ -14,7 +14,7 @@
 
 import { randomUUID } from 'crypto';
 
-import { ObjectId, type Filter, type OptionalId } from 'mongodb';
+import { ObjectId, type Db, type Filter, type OptionalId } from 'mongodb';
 
 import type {
   SystemLogLevelDto as SystemLogLevel,
@@ -24,7 +24,7 @@ import type {
   ListSystemLogsInputDto,
   ListSystemLogsResultDto as ListSystemLogsResult,
 } from '@/shared/contracts/observability';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getRootMongoDb } from '@/shared/lib/db/mongo-client';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import { getObservabilityIndexManifestEntries } from '@/shared/lib/observability/observability-index-manifest';
@@ -52,9 +52,43 @@ const toIsoString = (value?: string | Date | null): string => {
 };
 
 const SYSTEM_LOGS_COLLECTION = 'system_logs';
+const STUDIQ_LOG_PATTERN = /kangur|studiq/i;
+
+const matchesStudiqLogValue = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  return STUDIQ_LOG_PATTERN.test(value);
+};
+
+const isStudiqSystemLogRecord = (record: SystemLogRecord): boolean => {
+  const context = record.context ?? {};
+  const values = [
+    record.message,
+    record.source,
+    record.service,
+    record.path,
+    context['source'],
+    context['service'],
+    context['route'],
+    context['path'],
+    context['endpoint'],
+    context['key'],
+  ];
+  return values.some(matchesStudiqLogValue);
+};
+
+const getMongoDb = (): Promise<Db> => getRootMongoDb();
+
+const getMongoDbForSystemLog = async (payload: SystemLogRecord): Promise<Db> => {
+  if (!isStudiqSystemLogRecord(payload)) {
+    return getRootMongoDb();
+  }
+
+  const { getMongoDb: getStudiqMongoDb } = await import('@/shared/lib/db/studiq-mongo-client');
+  return getStudiqMongoDb();
+};
 
 const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => {
-  const mongo = await getMongoDb();
+  const mongo = await getMongoDbForSystemLog(payload);
 
   await executeMongoWriteWithRetry(async () => {
     await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({

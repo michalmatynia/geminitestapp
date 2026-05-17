@@ -122,7 +122,7 @@ const backupSelections = async ({ sourceDb, selections, sourceCounts }) => {
   };
 };
 
-const validateTargetCopy = async ({ targetDb, selections, sourceCounts }) => {
+const validateTargetCopy = async ({ sourceDb, targetDb, selections, sourceCounts }) => {
   const metadata = await targetDb
     .collection('studiq_database_metadata')
     .findOne({ _id: 'local-studiq-db' });
@@ -135,18 +135,41 @@ const validateTargetCopy = async ({ targetDb, selections, sourceCounts }) => {
   }
 
   const targetCounts = await countSelections(targetDb, selections);
-  const shortCollections = Object.fromEntries(
-    Object.entries(sourceCounts).filter(([name, count]) => (targetCounts[name] ?? 0) < count)
-  );
+  const targetMatchingSourceIds = {};
+  const shortCollections = {};
+
+  for (const { name, filter } of selections) {
+    const sourceIds = await sourceDb
+      .collection(name)
+      .find(filter, { projection: { _id: 1 } })
+      .map((doc) => doc._id)
+      .toArray();
+    if (sourceIds.length === 0) {
+      targetMatchingSourceIds[name] = 0;
+      continue;
+    }
+
+    const targetMatchingIds = await targetDb
+      .collection(name)
+      .countDocuments({ _id: { $in: sourceIds } });
+    targetMatchingSourceIds[name] = targetMatchingIds;
+
+    if (targetMatchingIds < sourceIds.length) {
+      shortCollections[name] = {
+        sourceCount: sourceCounts[name] ?? sourceIds.length,
+        targetMatchingIds,
+      };
+    }
+  }
 
   if (Object.keys(shortCollections).length > 0) {
-    fail('Refusing to detach root data because the StudiQ target has fewer matching documents.', {
+    fail('Refusing to detach root data because the StudiQ target is missing source document IDs.', {
       shortCollections,
       remedy: 'Re-run npm run mongo:copy-from-root -w @app/studiq-web, then run this detach plan again.',
     });
   }
 
-  return { metadata, targetCounts };
+  return { metadata, targetCounts, targetMatchingSourceIds };
 };
 
 if (apply && getArgValue('--confirm') !== expectedConfirm) {
@@ -173,6 +196,7 @@ try {
   const targetValidation = targetClient
     ? await targetClient.connect().then(() =>
         validateTargetCopy({
+          sourceDb,
           targetDb: targetClient.db(targetDbName),
           selections,
           sourceCounts,
@@ -209,6 +233,7 @@ try {
         backup: backup ? { dir: backup.dir, collections: backup.collections } : null,
         collections: apply ? deleted : sourceCounts,
         targetCollections: targetValidation?.targetCounts,
+        targetMatchingSourceIds: targetValidation?.targetMatchingSourceIds,
       },
       null,
       2

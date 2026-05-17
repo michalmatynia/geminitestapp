@@ -29,7 +29,7 @@ type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 const BRAIN_TABS: BrainTab[] = ['operations', 'routing', 'providers', 'reports', 'metrics'];
 
 const isBrainTab = (value: string | null | undefined): value is BrainTab =>
-  Boolean(value && BRAIN_TABS.includes(value as BrainTab));
+  typeof value === 'string' && BRAIN_TABS.includes(value as BrainTab);
 
 /* eslint-disable max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 function BrainContextRegistrySource(): React.JSX.Element {

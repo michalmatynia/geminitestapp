@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 const KANGUR_CONTENT_METADATA_COLLECTION = 'kangur_content_metadata';
 const KANGUR_LESSON_CONTENT_METADATA_ID = 'lesson-content';

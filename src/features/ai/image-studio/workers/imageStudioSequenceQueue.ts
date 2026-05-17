@@ -70,7 +70,7 @@ export const startImageStudioSequenceQueue = (): void => {
 
     if (!enabled) {
       if (!workerStarted) return;
-      await queue.stopWorker().catch(async (error: unknown) => {
+      await queue.stopWorker().catch((error: unknown) => {
         void ErrorSystem.captureException(error, {
           service: LOG_SOURCE,
           action: 'stopWorker',

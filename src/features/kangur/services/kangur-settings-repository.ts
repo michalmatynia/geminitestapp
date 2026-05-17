@@ -10,7 +10,7 @@ import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,
   type KangurLegacySettingDocument,
 } from '@/features/kangur/services/kangur-legacy-settings-store';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { applyActiveMongoSourceEnv } from '@/shared/lib/db/mongo-source';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';

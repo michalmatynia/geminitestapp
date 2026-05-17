@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 

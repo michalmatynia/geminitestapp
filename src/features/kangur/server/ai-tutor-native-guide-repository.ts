@@ -6,7 +6,7 @@ import {
   parseKangurAiTutorNativeGuideStore,
   type KangurAiTutorNativeGuideStore,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';

@@ -8,7 +8,6 @@ import type { StructuredProductTitleLocale } from '@/shared/lib/products/title-t
 import {
   buildCategorySuggestions,
   replaceStructuredSegment,
-  resolveUniqueLeafCategorySuggestion,
 } from './StructuredProductNameField.suggestions';
 import {
   hasStructuredCategoryPrefix,
@@ -56,14 +55,12 @@ const applyCategorySegmentSyncAction = ({
 };
 
 const shouldReplaceStructuredCategorySegment = ({
-  categorySuggestions,
   categorySegment,
   nameValue,
   previousSelectedCategoryId,
   selectedCategoryId,
   selectedCategoryOption,
 }: {
-  categorySuggestions: SuggestionOption[];
   categorySegment: string;
   nameValue: string;
   previousSelectedCategoryId: string | null;
@@ -72,9 +69,6 @@ const shouldReplaceStructuredCategorySegment = ({
 }): boolean => {
   if (hasStructuredCategoryPrefix(nameValue) === false) return false;
   if (categorySegment === selectedCategoryOption.value) return false;
-  const matchedCategoryId =
-    resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment)?.categoryId ?? null;
-  if (matchedCategoryId === selectedCategoryId) return false;
   return previousSelectedCategoryId !== selectedCategoryId || categorySegment === '';
 };
 
@@ -144,7 +138,6 @@ const useAutoSyncCategorySegment = ({
 };
 
 const useStructuredCategorySegmentReplacement = ({
-  categorySuggestions,
   fieldName,
   nameValue,
   previousSelectedCategoryId,
@@ -152,7 +145,6 @@ const useStructuredCategorySegmentReplacement = ({
   selectedCategoryOption,
   setValue,
 }: {
-  categorySuggestions: SuggestionOption[];
   fieldName: 'name_en' | 'name_pl';
   nameValue: string;
   previousSelectedCategoryId: string | null;
@@ -166,7 +158,6 @@ const useStructuredCategorySegmentReplacement = ({
     const categorySegment = resolveCategorySegment(nameValue);
     if (
       shouldReplaceStructuredCategorySegment({
-        categorySuggestions,
         categorySegment,
         nameValue,
         previousSelectedCategoryId,
@@ -185,15 +176,7 @@ const useStructuredCategorySegmentReplacement = ({
         shouldValidate: true,
       }
     );
-  }, [
-    categorySuggestions,
-    fieldName,
-    nameValue,
-    previousSelectedCategoryId,
-    selectedCategoryId,
-    selectedCategoryOption,
-    setValue,
-  ]);
+  }, [fieldName, nameValue, previousSelectedCategoryId, selectedCategoryId, selectedCategoryOption, setValue]);
 };
 
 export function useStructuredProductCategorySync({
@@ -242,7 +225,6 @@ export function useStructuredProductCategorySync({
     syncMappedCategoryField,
   });
   useStructuredCategorySegmentReplacement({
-    categorySuggestions,
     fieldName,
     nameValue,
     previousSelectedCategoryId: previousSelectedCategoryIdRef.current ?? null,

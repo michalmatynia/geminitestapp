@@ -36,7 +36,7 @@ import {
   badRequestError,
   notFoundError,
 } from '@/features/kangur/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { buildKangurSource } from '@/features/kangur/observability/server';
 import {

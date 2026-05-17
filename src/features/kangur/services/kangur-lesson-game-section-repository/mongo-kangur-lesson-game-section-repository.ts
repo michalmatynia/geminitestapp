@@ -4,7 +4,7 @@ import type { Db, Document, Filter } from 'mongodb';
 
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
 import { kangurLessonGameSectionSchema } from '@/shared/contracts/kangur-lesson-game-sections';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/studiq-mongo-client';
 
 import type {
   KangurLessonGameSectionListInput,

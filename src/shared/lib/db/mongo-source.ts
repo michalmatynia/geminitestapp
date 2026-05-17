@@ -32,7 +32,7 @@ import {
   MONGO_BACKUP_APPLICATIONS,
   resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig,
-  resolveEcommerceMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoApplicationSourceConfig,
   type MongoBackupApplication,
@@ -80,7 +80,7 @@ const MONGO_APPLICATION_LABELS: Record<MongoBackupApplication, string> = {
   geminitestapp: 'GeminiTest App',
   studiq: 'StudiQ',
   'cms-builder': 'CMS Builder',
-  products: 'Ecommerce',
+  products: 'Products',
   arch: 'Milkbar Designers',
 };
 
@@ -269,7 +269,7 @@ const resolveApplicationMongoSourceConfig = (
     return resolveCmsBuilderMongoSourceConfig(source);
   }
   if (application === 'products') {
-    return resolveEcommerceMongoSourceConfig(source);
+    return resolveProductsMongoSourceConfig(source);
   }
   if (application === 'arch') {
     return resolveArchMongoSourceConfig(source);
@@ -305,7 +305,7 @@ const getApplicationSourceConfigIssue = (
     application === 'cms-builder'
       ? 'CMS_BUILDER'
       : application === 'products'
-        ? 'ECOM'
+        ? 'PRODUCTS'
         : application === 'arch'
           ? 'ARCH'
           : application.toUpperCase()

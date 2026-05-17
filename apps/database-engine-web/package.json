@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ../../scripts/runtime/run-database-engine-web-next.cjs dev --port 3400",
+    "dev": "node ../../scripts/runtime/run-database-engine-web-next.cjs dev --port 3500",
     "build": "node ../../scripts/runtime/run-database-engine-web-next.cjs build",
-    "start": "node ../../scripts/runtime/run-database-engine-web-next.cjs start --port 3400",
+    "start": "node ../../scripts/runtime/run-database-engine-web-next.cjs start --port 3500",
     "test": "vitest --config vitest.config.ts run",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
   },

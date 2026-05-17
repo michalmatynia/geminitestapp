@@ -19,7 +19,7 @@ import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
+import { getMongoDb } from '@/shared/lib/db/integration-mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

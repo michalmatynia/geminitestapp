@@ -2,7 +2,7 @@ import { type ObjectId, type WithId } from 'mongodb';
 
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { getMongoDb as getMainMongoDb } from '@/shared/lib/db/mongo-client';
-import { getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
+import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/integration-mongo-client';
 import { isBaseIntegrationSlug, isPlaywrightProgrammableSlug } from '@/shared/lib/integration-slugs';
 
 import {

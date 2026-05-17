@@ -130,8 +130,10 @@ describe('database-backup', () => {
     getEcommerceMongoDatabaseNameMock.mockReturnValue('ecom_local');
     getArchMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27022/arch_web_local');
     getArchMongoDatabaseNameMock.mockReturnValue('arch_web_local');
-    getProductsMongoConnectionUrlMock.mockReturnValue('mongodb://localhost:27017/app');
-    getProductsMongoDatabaseNameMock.mockReturnValue('app');
+    getProductsMongoConnectionUrlMock.mockReturnValue(
+      'mongodb://localhost:27017/products_local'
+    );
+    getProductsMongoDatabaseNameMock.mockReturnValue('products_local');
     getMongoDumpCommandMock.mockReturnValue('mongodump');
     ensureMongoBackupsDirMock.mockResolvedValue(undefined);
     resolveMongoSourceConfigMock.mockResolvedValue({
@@ -230,11 +232,11 @@ describe('database-backup', () => {
     ]);
     expect(mongoExecFileAsyncMock).toHaveBeenNthCalledWith(4, 'mongodump', [
       '--uri',
-      'mongodb://localhost:27021/ecom_local',
+      'mongodb://localhost:27017/products_local',
       '--db',
-      'ecom_local',
+      'products_local',
       expect.stringMatching(
-        /^--archive=\/tmp\/backups\/products\/ecom_local-backup-\d+\.archive$/
+        /^--archive=\/tmp\/backups\/products\/products_local-backup-\d+\.archive$/
       ),
       '--gzip',
     ]);
@@ -435,7 +437,7 @@ describe('database-backup', () => {
     });
   });
 
-  it('creates an Ecommerce source backup in the products backup folder for sync workflows', async () => {
+  it('creates a Products source backup in the products backup folder for sync workflows', async () => {
     mongoExecFileAsyncMock.mockResolvedValue({
       stdout: 'backup stdout',
       stderr: '',
@@ -450,13 +452,13 @@ describe('database-backup', () => {
       timestamp,
     });
 
-    expect(resolveEcommerceMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
+    expect(resolveProductsMongoSourceConfigMock).toHaveBeenCalledWith('cloud');
     expect(mongoExecFileAsyncMock).toHaveBeenCalledWith('mongodump', [
       '--uri',
-      'mongodb+srv://cluster.example/ecom_cloud',
+      'mongodb+srv://cluster.example/app_products_cloud',
       '--db',
-      'ecom_cloud',
-      '--archive=/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+      'app_products_cloud',
+      '--archive=/tmp/backups/products/app-products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       '--gzip',
     ]);
     expect(result).toEqual({
@@ -464,11 +466,11 @@ describe('database-backup', () => {
       role: 'source',
       source: 'cloud',
       backupName:
-        'products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+        'products/app-products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       backupPath:
-        '/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
+        '/tmp/backups/products/app-products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive',
       logPath:
-        '/tmp/backups/products/ecom-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
+        '/tmp/backups/products/app-products-cloud-products-cloud-source-pre-sync-cloud-to-local-1712637000000.archive.log',
       createdAt: new Date(timestamp).toISOString(),
       warning: null,
     });

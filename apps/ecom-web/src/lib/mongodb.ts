@@ -3,6 +3,8 @@ import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 
 const DEFAULT_ECOM_MONGODB_URI = 'mongodb://127.0.0.1:27021/ecom_local';
 const DEFAULT_ECOM_MONGODB_DB = 'ecom_local';
+const DEFAULT_PRODUCTS_MONGODB_URI = 'mongodb://127.0.0.1:27017/products_local';
+const DEFAULT_PRODUCTS_MONGODB_DB = 'products_local';
 
 type MongoSource = 'local' | 'cloud';
 type MongoConfig = { uri: string; dbName: string };
@@ -512,7 +514,7 @@ function resolveProductsMongoUri(): string {
   return (
     envValue('PRODUCTS_MONGODB_LOCAL_URI') ??
     envValue('MONGODB_PRODUCTS_LOCAL_URI') ??
-    DEFAULT_ECOM_MONGODB_URI
+    DEFAULT_PRODUCTS_MONGODB_URI
   );
 }
 
@@ -540,7 +542,7 @@ function resolveProductsMongoDb(): string {
   return (
     envValue('PRODUCTS_MONGODB_LOCAL_DB') ??
     envValue('MONGODB_PRODUCTS_LOCAL_DB') ??
-    DEFAULT_ECOM_MONGODB_DB
+    DEFAULT_PRODUCTS_MONGODB_DB
   );
 }
 
@@ -555,16 +557,20 @@ function shouldPinEcommerceToLocalDevelopment(): boolean {
 function resolveLocalEcommerceProductsMongoConfig(): MongoConfig {
   return completeMongoConfig(readMongoConfig(
     [
+      'PRODUCTS_MONGODB_LOCAL_URI',
+      'MONGODB_PRODUCTS_LOCAL_URI',
       'ECOM_MONGODB_LOCAL_URI',
       'MONGODB_ECOM_LOCAL_URI',
     ],
     [
+      'PRODUCTS_MONGODB_LOCAL_DB',
+      'MONGODB_PRODUCTS_LOCAL_DB',
       'ECOM_MONGODB_LOCAL_DB',
       'MONGODB_ECOM_LOCAL_DB',
     ],
-  )) ?? {
-    uri: DEFAULT_ECOM_MONGODB_URI,
-    dbName: DEFAULT_ECOM_MONGODB_DB,
+  ), DEFAULT_PRODUCTS_MONGODB_DB) ?? {
+    uri: DEFAULT_PRODUCTS_MONGODB_URI,
+    dbName: DEFAULT_PRODUCTS_MONGODB_DB,
   };
 }
 

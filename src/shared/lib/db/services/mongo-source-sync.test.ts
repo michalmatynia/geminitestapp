@@ -107,6 +107,23 @@ const mocks = vi.hoisted(() => ({
           usesLegacyEnv: false,
         }
   ),
+  resolveProductsMongoSourceConfig: vi.fn((source: 'local' | 'cloud') =>
+    source === 'local'
+      ? {
+          source,
+          configured: true,
+          uri: 'mongodb://localhost:27017/products_local',
+          dbName: 'products_local',
+          usesLegacyEnv: false,
+        }
+      : {
+          source,
+          configured: true,
+          uri: 'mongodb+srv://cluster.example/products_cloud',
+          dbName: 'products_cloud',
+          usesLegacyEnv: false,
+        }
+  ),
   getManagedMongoSyncControls: vi.fn(async () => ({})),
   verifyMongoSourceParity: vi.fn(async ({ source, target, sourceDbName, targetDbName }) => ({
     status: 'passed',
@@ -151,6 +168,7 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
   resolveArchMongoSourceConfig: mocks.resolveArchMongoSourceConfig,
   resolveCmsBuilderMongoSourceConfig: mocks.resolveCmsBuilderMongoSourceConfig,
   resolveEcommerceMongoSourceConfig: mocks.resolveEcommerceMongoSourceConfig,
+  resolveProductsMongoSourceConfig: mocks.resolveProductsMongoSourceConfig,
   resolveStudiqMongoSourceConfig: mocks.resolveStudiqMongoSourceConfig,
 }));
 
@@ -296,20 +314,20 @@ describe('mongo-source-sync', () => {
             usesLegacyEnv: false,
           }
     );
-    mocks.resolveEcommerceMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
       source === 'local'
         ? {
             source,
             configured: true,
-            uri: 'mongodb://localhost:27021/ecom_local',
-            dbName: 'ecom_local',
+            uri: 'mongodb://localhost:27017/products_local',
+            dbName: 'products_local',
             usesLegacyEnv: false,
           }
         : {
             source,
             configured: true,
-            uri: 'mongodb+srv://cluster.example/ecom_cloud',
-            dbName: 'ecom_cloud',
+            uri: 'mongodb+srv://cluster.example/products_cloud',
+            dbName: 'products_cloud',
             usesLegacyEnv: false,
           }
     );
@@ -376,13 +394,13 @@ describe('mongo-source-sync', () => {
   });
 
   it('reports a single per-app pre-flight configuration failure', async () => {
-    mocks.resolveEcommerceMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
+    mocks.resolveProductsMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') =>
       source === 'local'
         ? {
             source,
             configured: true,
-            uri: 'mongodb://localhost:27021/ecom_local',
-            dbName: 'ecom_local',
+            uri: 'mongodb://localhost:27017/products_local',
+            dbName: 'products_local',
             usesLegacyEnv: false,
           }
         : {
@@ -396,7 +414,7 @@ describe('mongo-source-sync', () => {
 
     await expect(
       testOnly.assertAllApplicationsSyncReady('products', 'local_to_cloud')
-    ).rejects.toThrow(/Ecommerce MongoDB source "cloud" is not configured/i);
+    ).rejects.toThrow(/Products MongoDB source "cloud" is not configured/i);
   });
 
   it('builds database-neutral restore URIs for namespace-remapped restores', () => {
@@ -620,10 +638,10 @@ describe('mongo-source-sync', () => {
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(4, {
       source: 'cloud',
       target: 'local',
-      sourceDbName: 'ecom_cloud',
-      targetDbName: 'ecom_local',
-      sourceUri: 'mongodb+srv://cluster.example/ecom_cloud',
-      targetUri: 'mongodb://localhost:27021/ecom_local',
+      sourceDbName: 'products_cloud',
+      targetDbName: 'products_local',
+      sourceUri: 'mongodb+srv://cluster.example/products_cloud',
+      targetUri: 'mongodb://localhost:27017/products_local',
       excludedCollections: ['settings'],
     });
     expect(mocks.verifyMongoSourceParity).toHaveBeenNthCalledWith(5, {
@@ -714,7 +732,7 @@ describe('mongo-source-sync', () => {
     });
 
     await expect(syncMongoSources('local_to_cloud', 'products')).rejects.toThrow(
-      /Ecommerce MongoDB sync is temporarily disabled in Database Engine/i
+      /Products MongoDB sync is temporarily disabled in Database Engine/i
     );
     expect(mocks.createMongoSourceBackup).not.toHaveBeenCalled();
     expect(mocks.execFileAsync).not.toHaveBeenCalled();
@@ -781,7 +799,7 @@ describe('mongo-source-sync', () => {
     expect(recoveryRestoreCall?.[1]).toEqual(
       expect.arrayContaining([
         '--uri',
-        'mongodb+srv://cluster.example/ecom_cloud',
+        'mongodb+srv://cluster.example/products_cloud',
         '--archive=/tmp/backups/products-cloud-target-pre-sync-local_to_cloud.archive',
         '--gzip',
         '--drop',

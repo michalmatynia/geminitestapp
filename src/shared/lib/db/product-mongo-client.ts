@@ -41,6 +41,44 @@ type ProductMongoGlobalState = {
 
 const globalForProductsMongo = globalThis as typeof globalThis & ProductMongoGlobalState;
 
+const APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME = new Set([
+  'category_mappings',
+  'external_categories',
+  'external_producers',
+  'external_tags',
+  'integration_amazon_selector_registry',
+  'integration_connections',
+  'integration_custom_selector_registry',
+  'integration_custom_selector_registry_profiles',
+  'integration_selector_registry_probe_sessions',
+  'integration_supplier_1688_selector_registry',
+  'integration_tradera_selector_registry',
+  'integrations',
+  'producer_mappings',
+  'product_listings',
+  'tag_mappings',
+]);
+
+const routeCollectionToAppDb = (collectionName: string): boolean =>
+  APP_DB_COLLECTIONS_FOR_PRODUCT_RUNTIME.has(collectionName);
+
+const createRoutedProductsDb = (productsDb: Db, appDb: Db): Db => {
+  if (productsDb.databaseName === appDb.databaseName) return productsDb;
+
+  return new Proxy(productsDb, {
+    get(target, prop, receiver) {
+      if (prop === 'collection') {
+        return ((collectionName: string, options?: Parameters<Db['collection']>[1]) => {
+          const db = routeCollectionToAppDb(collectionName) ? appDb : target;
+          return db.collection(collectionName, options);
+        }) as Db['collection'];
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  }) as Db;
+};
+
 /**
  * Resolves the MongoClient constructor.
  */
@@ -221,7 +259,9 @@ export async function getProductsMongoDb(preferredSource?: MongoSource): Promise
     );
   }
   const mongoClient = await getProductsMongoClient(source);
-  return mongoClient.db(config.dbName);
+  const productsDb = mongoClient.db(config.dbName);
+  const appDb = await getDefaultMongoDb(source);
+  return createRoutedProductsDb(productsDb, appDb);
 }
 
 export {

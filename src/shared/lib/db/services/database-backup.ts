@@ -25,12 +25,12 @@ import {
   getMongoDumpCommand,
   getCmsBuilderMongoConnectionUrl,
   getCmsBuilderMongoDatabaseName,
-  getEcommerceMongoConnectionUrl,
-  getEcommerceMongoDatabaseName,
+  getProductsMongoConnectionUrl,
+  getProductsMongoDatabaseName,
   getStudiqMongoConnectionUrl,
   getStudiqMongoDatabaseName,
   resolveCmsBuilderMongoSourceConfig,
-  resolveEcommerceMongoSourceConfig,
+  resolveProductsMongoSourceConfig,
   resolveArchMongoSourceConfig,
   resolveStudiqMongoSourceConfig,
   type MongoBackupApplication,
@@ -149,7 +149,7 @@ const resolveApplicationMongoSourceConfig = async (
     return resolveCmsBuilderMongoSourceConfig(source);
   }
   if (application === 'products') {
-    return resolveEcommerceMongoSourceConfig(source);
+    return resolveProductsMongoSourceConfig(source);
   }
   if (application === 'arch') {
     return resolveArchMongoSourceConfig(source);
@@ -263,7 +263,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   const geminitestappDatabaseName = getMongoDatabaseName();
   const studiqDatabaseName = getStudiqMongoDatabaseName();
   const cmsBuilderDatabaseName = getCmsBuilderMongoDatabaseName();
-  const productsDatabaseName = getEcommerceMongoDatabaseName();
+  const productsDatabaseName = getProductsMongoDatabaseName();
   const archDatabaseName = getArchMongoDatabaseName();
   const geminitestapp = await runMongoBackup({
     application: 'geminitestapp',
@@ -285,7 +285,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   });
   const products = await runMongoBackup({
     application: 'products',
-    mongoUri: getEcommerceMongoConnectionUrl(),
+    mongoUri: getProductsMongoConnectionUrl(),
     databaseName: productsDatabaseName,
     backupName: buildMongoBackupName(productsDatabaseName, timestamp),
   });

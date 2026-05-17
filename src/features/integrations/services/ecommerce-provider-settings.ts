@@ -10,7 +10,7 @@ import {
   type EcommerceProviderSettingsInput,
 } from '@/shared/contracts/integrations/ecommerce-provider-settings';
 import { validationError } from '@/shared/errors/app-error';
-import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
+import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/integration-mongo-client';
 
 import {
   getAllEcommerceExportDbTargetsForWrite,

@@ -12,6 +12,7 @@ import { FloorPlanSlotsProvider } from '@/lib/floorPlanContext';
 import Services from '@/components/Services';
 import BuiltWork from '@/components/BuiltWork';
 import ProjectViewer from '@/components/ProjectViewer';
+import CodeStudio from '@/components/CodeStudio';
 import Process from '@/components/Process';
 import Metrics from '@/components/Metrics';
 import CaseStudies from '@/components/CaseStudies';
@@ -117,10 +118,11 @@ export default function ArchHomePage({
       {vis.services ? <Services services={services} content={pageContent.services} /> : null}
       {vis.projects ? <BuiltWork projects={viewerProjects} content={pageContent.projects} /> : null}
       {vis.projects ? <ProjectViewer projects={viewerProjects} /> : null}
+      <CodeStudio />
       {vis.process ? <Process content={pageContent.process} /> : null}
       {vis.metrics ? <Metrics metrics={pageContent.metrics} /> : null}
-      {vis.caseStudy && projects.length > 0 ? (
-        <CaseStudies content={pageContent.caseStudy} projects={projects} />
+      {vis.caseStudy && viewerProjects.length > 0 ? (
+        <CaseStudies content={pageContent.caseStudy} projects={viewerProjects} />
       ) : null}
       {vis.quote ? <Quote content={pageContent.quote} /> : null}
       {vis.cta ? <CtaSection content={pageContent.cta} locale={activeLocale} /> : null}

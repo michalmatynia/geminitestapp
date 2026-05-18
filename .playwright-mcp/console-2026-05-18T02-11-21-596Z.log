@@ -1,0 +1,419 @@
+[    5291ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    5312ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    5646ms] [WARNING] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {componentName: Button, source: a11y, service: undefined, statusCode: undefined} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   46189ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   60922ms] [LOG] [Fast Refresh] done in 1691ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   64302ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   76484ms] [LOG] [Fast Refresh] done in 12283ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   76808ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   77056ms] [LOG] [Fast Refresh] done in 349ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   78773ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   78786ms] [LOG] [Fast Refresh] done in 114ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79014ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79030ms] [LOG] [Fast Refresh] done in 118ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79197ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79223ms] [LOG] [Fast Refresh] done in 129ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79325ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   79803ms] [LOG] [Fast Refresh] done in 579ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   85415ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   85863ms] [LOG] [Fast Refresh] done in 548ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   87144ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   87197ms] [LOG] [Fast Refresh] done in 155ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   91112ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   91354ms] [LOG] [Fast Refresh] done in 343ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   91463ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   91521ms] [LOG] [Fast Refresh] done in 159ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   94045ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   94052ms] [LOG] [Fast Refresh] done in 70ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   95155ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   95182ms] [LOG] [Fast Refresh] done in 129ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  112346ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  112616ms] [LOG] [Fast Refresh] done in 371ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  123810ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  124104ms] [LOG] [Fast Refresh] done in 396ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  131464ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  133583ms] [LOG] [Fast Refresh] done in 2220ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  135474ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  151564ms] [LOG] [Fast Refresh] done in 16191ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  158256ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  172845ms] [LOG] [Fast Refresh] done in 14690ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  173309ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  173323ms] [LOG] [Fast Refresh] done in 116ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  173506ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  173849ms] [LOG] [Fast Refresh] done in 446ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174120ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174122ms] [LOG] [Fast Refresh] done in 104ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174438ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174471ms] [LOG] [Fast Refresh] done in 135ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174573ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  174609ms] [LOG] [Fast Refresh] done in 138ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  175717ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  175727ms] [LOG] [Fast Refresh] done in 111ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  176202ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  176211ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  176380ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  176384ms] [LOG] [Fast Refresh] done in 105ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  177448ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  177456ms] [LOG] [Fast Refresh] done in 108ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  177947ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  178654ms] [LOG] [Fast Refresh] done in 809ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  183669ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  183725ms] [LOG] [Fast Refresh] done in 156ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  184620ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  184736ms] [LOG] [Fast Refresh] done in 217ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  190049ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  190078ms] [LOG] [Fast Refresh] done in 130ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  191326ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  191331ms] [LOG] [Fast Refresh] done in 105ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  191432ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  191598ms] [LOG] [Fast Refresh] done in 267ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  193055ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  193382ms] [LOG] [Fast Refresh] done in 429ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  193971ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  194014ms] [LOG] [Fast Refresh] done in 145ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  194462ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  194518ms] [LOG] [Fast Refresh] done in 157ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  195576ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  195623ms] [LOG] [Fast Refresh] done in 149ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  196215ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  196221ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  196322ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  196324ms] [LOG] [Fast Refresh] done in 102ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  197227ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  197241ms] [LOG] [Fast Refresh] done in 115ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  197864ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  197885ms] [LOG] [Fast Refresh] done in 122ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  199863ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  199913ms] [LOG] [Fast Refresh] done in 150ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  201024ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  201475ms] [LOG] [Fast Refresh] done in 552ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203129ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203154ms] [LOG] [Fast Refresh] done in 126ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203695ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203740ms] [LOG] [Fast Refresh] done in 146ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203841ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  203852ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  204938ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  204995ms] [LOG] [Fast Refresh] done in 158ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  208388ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  208404ms] [LOG] [Fast Refresh] done in 117ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  210337ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  210397ms] [LOG] [Fast Refresh] done in 162ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  211013ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  211530ms] [LOG] [Fast Refresh] done in 619ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  213433ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  213450ms] [LOG] [Fast Refresh] done in 119ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  213780ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  213812ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  214009ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  214019ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  216352ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  216407ms] [LOG] [Fast Refresh] done in 157ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  216891ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  217445ms] [LOG] [Fast Refresh] done in 655ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  218464ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  218475ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  219571ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  219577ms] [LOG] [Fast Refresh] done in 108ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  220185ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  220201ms] [LOG] [Fast Refresh] done in 118ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  221642ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  221664ms] [LOG] [Fast Refresh] done in 124ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  221765ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  221805ms] [LOG] [Fast Refresh] done in 141ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  222329ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  222335ms] [LOG] [Fast Refresh] done in 108ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223345ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223370ms] [LOG] [Fast Refresh] done in 126ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223482ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223491ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223784ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  223795ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  224075ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  226370ms] [LOG] [Fast Refresh] done in 2395ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  228199ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  228206ms] [LOG] [Fast Refresh] done in 108ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  245810ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  246381ms] [LOG] [Fast Refresh] done in 672ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  257313ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  257852ms] [LOG] [Fast Refresh] done in 640ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  289684ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  293769ms] [LOG] [Fast Refresh] done in 4129ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  294103ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  324388ms] [LOG] [Fast Refresh] done in 30387ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  327798ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  330235ms] [LOG] [Fast Refresh] done in 2537ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  331469ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  331577ms] [LOG] [Fast Refresh] done in 208ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  332106ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  332656ms] [LOG] [Fast Refresh] done in 651ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  344922ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  344973ms] [LOG] [Fast Refresh] done in 153ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  346551ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  346559ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  347172ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  347204ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  347479ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  347521ms] [LOG] [Fast Refresh] done in 142ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  349474ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/settings?scope=light:0
+[  350364ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  350418ms] [LOG] [Fast Refresh] done in 155ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  350566ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  350633ms] [LOG] [Fast Refresh] done in 167ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  353826ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  353899ms] [LOG] [Fast Refresh] done in 175ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  354446ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  354821ms] [LOG] [Fast Refresh] done in 477ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  357533ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  357538ms] [LOG] [Fast Refresh] done in 107ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  359625ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  359628ms] [LOG] [Fast Refresh] done in 104ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  392699ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  400333ms] [LOG] [Fast Refresh] done in 7735ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  407844ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  416762ms] [LOG] [Fast Refresh] done in 8840ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  417079ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  417715ms] [LOG] [Fast Refresh] done in 737ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  442187ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  442899ms] [LOG] [Fast Refresh] done in 814ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  443789ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  443825ms] [LOG] [Fast Refresh] done in 138ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  444353ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  444452ms] [LOG] [Fast Refresh] done in 201ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  445125ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  445155ms] [LOG] [Fast Refresh] done in 131ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  445732ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  445763ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  446870ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  446874ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  447459ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  479666ms] [LOG] [Fast Refresh] done in 32308ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  491279ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  491421ms] [LOG] [Fast Refresh] done in 244ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  493269ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  493394ms] [LOG] [Fast Refresh] done in 227ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  493691ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  493719ms] [LOG] [Fast Refresh] done in 129ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  497231ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  497618ms] [LOG] [Fast Refresh] done in 489ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  497781ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  497908ms] [LOG] [Fast Refresh] done in 228ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  499497ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  499665ms] [LOG] [Fast Refresh] done in 270ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  501396ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  501466ms] [LOG] [Fast Refresh] done in 172ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  501567ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  501607ms] [LOG] [Fast Refresh] done in 140ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  502509ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  502532ms] [LOG] [Fast Refresh] done in 124ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  503031ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  503052ms] [LOG] [Fast Refresh] done in 122ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  503153ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  503193ms] [LOG] [Fast Refresh] done in 140ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  520562ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  520616ms] [LOG] [Fast Refresh] done in 156ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  521017ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  521109ms] [LOG] [Fast Refresh] done in 194ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  521728ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  521759ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  522379ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  522405ms] [LOG] [Fast Refresh] done in 128ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  523440ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  523442ms] [LOG] [Fast Refresh] done in 102ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  554887ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  555517ms] [LOG] [Fast Refresh] done in 731ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  569270ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  569575ms] [LOG] [Fast Refresh] done in 406ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  581317ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  581607ms] [LOG] [Fast Refresh] done in 391ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  589866ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  590267ms] [LOG] [Fast Refresh] done in 503ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  595823ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  596255ms] [LOG] [Fast Refresh] done in 535ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  606115ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  606636ms] [LOG] [Fast Refresh] done in 615ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  612197ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  612625ms] [LOG] [Fast Refresh] done in 522ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  625038ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  625281ms] [LOG] [Fast Refresh] done in 343ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  631389ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  631732ms] [LOG] [Fast Refresh] done in 445ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  643983ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  644372ms] [LOG] [Fast Refresh] done in 490ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  712503ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  712559ms] [LOG] [Fast Refresh] done in 156ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  713716ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  713728ms] [LOG] [Fast Refresh] done in 113ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  713947ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  714063ms] [LOG] [Fast Refresh] done in 217ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  781572ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  784111ms] [LOG] [Fast Refresh] done in 2612ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  784721ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  799879ms] [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799883ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799886ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799886ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799886ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799886ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799887ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799887ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799888ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799888ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799888ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799888ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799889ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799889ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799889ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799889ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799895ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799895ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799895ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799896ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799896ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799896ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799896ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799897ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799897ms] [ERROR] WebSocket is already in CLOSING or CLOSED state. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3330
+[  799897ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799897ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799898ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799898ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799898ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799898ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799899ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799899ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799899ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799899ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799899ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799900ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799900ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799900ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799900ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799900ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799901ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799901ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799901ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799901ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799902ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799902ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799902ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799902ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799902ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799902ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799916ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799917ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799924ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799924ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799925ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799925ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799926ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799926ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799926ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799926ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799927ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799927ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799927ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799927ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799928ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit?_rsc=mb5-NJB5doDaJj4W:0
+[  799928ms] [ERROR] Failed to fetch RSC payload for http://localhost:3000/admin/products/47063c37-4bf3-4c92-96a9-aae446689840/edit. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:8141:21)
+    at async fetchServerResponse (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:7951:21)
+    at async fetchMissingDynamicData (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:9398:24) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  799928ms] [ERROR] WebSocket is already in CLOSING or CLOSED state. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3330
+[  799932ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/__nextjs_original-stack-frames:0

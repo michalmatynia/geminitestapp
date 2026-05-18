@@ -83,6 +83,55 @@ const buildGeneratedPolishName = ({
   return syncPolishStructuredProductName(syncInput);
 };
 
+const usePolishNameSyncEffect = ({
+  languageTabValues,
+  generatedPolishName,
+  getValues,
+  setValue,
+  lastGeneratedPolishNameRef,
+  polishBaseNameAutoSyncRef,
+}: {
+  languageTabValues: string[];
+  generatedPolishName: PolishStructuredProductNameSyncResult | null;
+  getValues: UseFormGetValues<ProductFormData>;
+  setValue: UseFormSetValue<ProductFormData>;
+  lastGeneratedPolishNameRef: React.MutableRefObject<string>;
+  polishBaseNameAutoSyncRef: React.MutableRefObject<boolean>;
+}): void => {
+  useLayoutEffect(() => {
+    if (languageTabValues.includes('pl') === false) return;
+    if (generatedPolishName === null) return;
+
+    const rawNamePl = getValues('name_pl');
+    const currentNamePl = coerceWatchedString(rawNamePl);
+    const autoSyncStateUpdate = resolvePolishBaseNameAutoSyncStateUpdate({
+      currentNamePl,
+      syncResult: generatedPolishName,
+    });
+    if (autoSyncStateUpdate.generatedPolishTitle !== null) {
+      // eslint-disable-next-line no-param-reassign
+      lastGeneratedPolishNameRef.current = autoSyncStateUpdate.generatedPolishTitle;
+    }
+    if (autoSyncStateUpdate.shouldDisableAutoSync) {
+      // eslint-disable-next-line no-param-reassign
+      polishBaseNameAutoSyncRef.current = false;
+    }
+    if (matchesGeneratedPolishTitle(currentNamePl, generatedPolishName.polishTitle)) return;
+    setValue('name_pl', generatedPolishName.polishTitle, {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [
+    generatedPolishName,
+    getValues,
+    languageTabValues,
+    lastGeneratedPolishNameRef,
+    polishBaseNameAutoSyncRef,
+    setValue,
+  ]);
+};
+
 export const useProductFormPolishNameAutoSync = ({
   languageTabValues,
   categories,
@@ -97,6 +146,7 @@ export const useProductFormPolishNameAutoSync = ({
   const themeTermsQuery = useTitleTerms(undefined, 'theme', { allowWithoutCatalog: true });
   const lastGeneratedPolishNameRef = useRef<string>('');
   const polishBaseNameAutoSyncRef = useRef<boolean>(true);
+
   const generatedPolishName = useMemo(
     () =>
       buildGeneratedPolishName({
@@ -123,27 +173,12 @@ export const useProductFormPolishNameAutoSync = ({
     ]
   );
 
-  useLayoutEffect(() => {
-    if (languageTabValues.includes('pl') === false) return;
-    if (generatedPolishName === null) return;
-
-    const rawNamePl = getValues('name_pl');
-    const currentNamePl = coerceWatchedString(rawNamePl);
-    const autoSyncStateUpdate = resolvePolishBaseNameAutoSyncStateUpdate({
-      currentNamePl,
-      syncResult: generatedPolishName,
-    });
-    if (autoSyncStateUpdate.generatedPolishTitle !== null) {
-      lastGeneratedPolishNameRef.current = autoSyncStateUpdate.generatedPolishTitle;
-    }
-    if (autoSyncStateUpdate.shouldDisableAutoSync) {
-      polishBaseNameAutoSyncRef.current = false;
-    }
-    if (matchesGeneratedPolishTitle(currentNamePl, generatedPolishName.polishTitle)) return;
-    setValue('name_pl', generatedPolishName.polishTitle, {
-      shouldDirty: true,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
-  }, [generatedPolishName, getValues, languageTabValues, setValue]);
+  usePolishNameSyncEffect({
+    languageTabValues,
+    generatedPolishName,
+    getValues,
+    setValue,
+    lastGeneratedPolishNameRef,
+    polishBaseNameAutoSyncRef,
+  });
 };

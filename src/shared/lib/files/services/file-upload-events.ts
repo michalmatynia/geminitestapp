@@ -8,10 +8,12 @@ import type {
   FileUploadEventRecord,
   FileUploadEventsFilters as ListFileUploadEventsInput,
 } from '@/shared/contracts/files';
+import { getMongoDb as getCmsBuilderMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type FileUploadEventInput = {
   status: 'success' | 'error';
+  applicationId?: 'cms-builder' | null | undefined;
   category?: string | null | undefined;
   projectId?: string | null | undefined;
   folder?: string | null | undefined;
@@ -128,7 +130,8 @@ export async function createFileUploadEvent(
     createdAt,
   };
 
-  const mongo = await getMongoDb();
+  const mongo =
+    input.applicationId === 'cms-builder' ? await getCmsBuilderMongoDb() : await getMongoDb();
   const record: MongoFileUploadEventDoc = {
     _id: toMongoId(payload.id),
     ...payload,

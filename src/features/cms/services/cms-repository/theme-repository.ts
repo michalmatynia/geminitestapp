@@ -9,7 +9,7 @@ import type {
   UpdateCmsThemeDto as CmsThemeUpdateInput 
 } from '@/shared/contracts/cms';
 import { databaseError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 import { removeUndefined } from '@/shared/utils/object-utils';
 
 const themesCollection = 'cms_themes';

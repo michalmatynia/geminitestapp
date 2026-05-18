@@ -7,6 +7,7 @@
 import { type CmsRepository, type CmsSlugLookupOptions, type Slug } from '@/shared/contracts/cms';
 import { type CmsDomainSlugLink } from './domain/domain-repository';
 import { internalError } from '@/shared/errors/app-error';
+import { resolveCmsBuilderMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 
 /**
  * Merges domain-specific slug link metadata with raw slug data.
@@ -86,7 +87,7 @@ export const getSlugForDomainById = async (
 
   if (slug === null) return null;
   const link = links.find((item) => item.slugId === slugId);
-  const hasMongoUri = (process.env['MONGODB_URI'] ?? '').trim().length > 0;
+  const hasMongoUri = (resolveCmsBuilderMongoSourceConfig('local').uri ?? '').trim().length > 0;
 
   if (link === undefined && hasMongoUri) {
     throw internalError('Slug resolution failed: Link association missing for domain.', {

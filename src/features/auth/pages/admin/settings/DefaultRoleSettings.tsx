@@ -21,6 +21,10 @@ export function DefaultRoleSettings({
   isSaving: boolean;
   defaultDirty: boolean;
 }): React.JSX.Element {
+  const handleSave = (): void => {
+    void onSave();
+  };
+
   return (
     <FormSection
       title='Default role'
@@ -40,7 +44,7 @@ export function DefaultRoleSettings({
           options={roleOptions}
           placeholder='Select default role'
         />
-        <Button onClick={onSave} disabled={!defaultDirty || isSaving}>
+        <Button onClick={handleSave} disabled={!defaultDirty || isSaving}>
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>

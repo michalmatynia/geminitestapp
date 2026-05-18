@@ -75,7 +75,7 @@ const buildOptionalContextSections = (
 ): ContextRuntimeDocumentSection[] => {
   const sections: ContextRuntimeDocumentSection[] = [];
 
-  if (input.useGlobalContext && input.globalContext.trim()) {
+  if (input.useGlobalContext && input.globalContext.trim() !== '') {
     sections.push({
       kind: 'text',
       title: 'Global context',
@@ -84,7 +84,7 @@ const buildOptionalContextSections = (
     });
   }
 
-  if (input.useLocalContext && input.localContext.trim()) {
+  if (input.useLocalContext && input.localContext.trim() !== '') {
     sections.push({
       kind: 'text',
       title: 'Local context',
@@ -96,28 +96,40 @@ const buildOptionalContextSections = (
   return sections;
 };
 
+const buildWorkspaceFacts = (
+  input: BuildChatbotWorkspaceContextBundleInput,
+  activeSession: ChatbotSessionListItem | null
+): Record<string, unknown> => ({
+  activeTab: input.activeTab,
+  currentSessionId: input.currentSessionId,
+  currentSessionTitle: activeSession?.title ?? null,
+  sessionCount: input.sessions.length,
+  messageCount: input.messages.length,
+  personaId: input.personaId,
+  webSearchEnabled: input.webSearchEnabled,
+  useGlobalContext: input.useGlobalContext,
+  useLocalContext: input.useLocalContext,
+  localContextMode: input.localContextMode,
+  hasGlobalContext: input.globalContext.trim() !== '',
+  hasLocalContext: input.localContext.trim() !== '',
+  latestAgentRunId: input.latestAgentRunId,
+});
+
 export const buildChatbotWorkspaceRuntimeDocument = (
   input: BuildChatbotWorkspaceContextBundleInput
 ): ContextRuntimeDocument => {
   const activeSession =
     input.sessions.find((session) => session.id === input.currentSessionId) ?? null;
+
   const sections: ContextRuntimeDocumentSection[] = [
     {
       kind: 'facts',
       title: 'Workspace snapshot',
       items: [
         {
-          activeTab: input.activeTab,
-          currentSessionId: input.currentSessionId,
-          currentSessionTitle: activeSession?.title ?? null,
-          sessionCount: input.sessions.length,
-          messageCount: input.messages.length,
-          personaId: input.personaId,
-          webSearchEnabled: input.webSearchEnabled,
-          useGlobalContext: input.useGlobalContext,
-          useLocalContext: input.useLocalContext,
-          localContextMode: input.localContextMode,
-          latestAgentRunId: input.latestAgentRunId,
+          ...buildWorkspaceFacts(input, activeSession),
+          hasGlobalContext: undefined,
+          hasLocalContext: undefined,
         },
       ],
     },
@@ -140,34 +152,23 @@ export const buildChatbotWorkspaceRuntimeDocument = (
 
   sections.push(...buildOptionalContextSections(input));
 
+  const title =
+    typeof activeSession?.title === 'string' && activeSession.title !== ''
+      ? `Chatbot workspace state for ${activeSession.title}`
+      : 'Admin chatbot workspace state';
+
   return {
     id: CHATBOT_CONTEXT_RUNTIME_REF.id,
     kind: 'runtime_document',
     entityType: CHATBOT_CONTEXT_RUNTIME_REF.entityType,
-    title: activeSession?.title
-      ? `Chatbot workspace state for ${activeSession.title}`
-      : 'Admin chatbot workspace state',
+    title,
     summary:
       'Live operator context for the admin chatbot page, including session state, visible ' +
       'conversation, and operator-authored global or local context.',
     status: null,
     tags: ['chatbot', 'admin', 'chat', 'live-state'],
     relatedNodeIds: [...CHATBOT_CONTEXT_ROOT_IDS],
-    facts: {
-      activeTab: input.activeTab,
-      currentSessionId: input.currentSessionId,
-      currentSessionTitle: activeSession?.title ?? null,
-      sessionCount: input.sessions.length,
-      messageCount: input.messages.length,
-      personaId: input.personaId,
-      webSearchEnabled: input.webSearchEnabled,
-      useGlobalContext: input.useGlobalContext,
-      useLocalContext: input.useLocalContext,
-      localContextMode: input.localContextMode,
-      hasGlobalContext: Boolean(input.globalContext.trim()),
-      hasLocalContext: Boolean(input.localContext.trim()),
-      latestAgentRunId: input.latestAgentRunId,
-    },
+    facts: buildWorkspaceFacts(input, activeSession),
     sections,
     provenance: {
       source: 'chatbot.admin.client-state',

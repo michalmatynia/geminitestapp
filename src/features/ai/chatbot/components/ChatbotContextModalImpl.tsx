@@ -269,13 +269,8 @@ function useChatbotContextModalRuntimeValue(
     onSave,
   } = props;
 
-  const effectiveDraft = useMemo<ContextDraft>(
-    () => modalDraft ?? EMPTY_CONTEXT_DRAFT,
-    [modalDraft]
-  );
-  const handleSave = useCallback(async (): Promise<void> => {
-    await Promise.resolve(onSave());
-  }, [onSave]);
+  const effectiveDraft = useMemo(() => modalDraft ?? EMPTY_CONTEXT_DRAFT, [modalDraft]);
+  const handleSave = useCallback(() => Promise.resolve(onSave()), [onSave]);
   const draftTags = effectiveDraft.tags;
 
   const fields = useChatbotContextFields({
@@ -286,38 +281,22 @@ function useChatbotContextModalRuntimeValue(
     isSaving,
   });
 
-  const handleChange = useCallback(
-    (vals: Partial<ContextDraft>): void => {
-      setModalDraft((prev) => (prev ? { ...prev, ...vals } : prev));
-    },
-    [setModalDraft]
-  );
+  const handleChange = useCallback((vals: Partial<ContextDraft>) => {
+    setModalDraft((prev) => (prev ? { ...prev, ...vals } : prev));
+  }, [setModalDraft]);
 
-  const runtimeValue = useMemo<ChatbotContextModalRuntimeValue>(
-    () =>
-      buildChatbotContextModalRuntimeValue({
-        isOpen,
-        modalDraft,
-        editingItem,
-        onClose,
-        fields,
-        effectiveDraft,
-        handleChange,
-        onSave: handleSave,
-        isSaving,
-      }),
-    [
-      editingItem,
-      effectiveDraft,
-      fields,
-      handleChange,
-      handleSave,
-      isOpen,
-      isSaving,
-      modalDraft,
-      onClose,
-    ]
-  );
+  const runtimeValue = useMemo(() => buildChatbotContextModalRuntimeValue({
+    isOpen,
+    modalDraft,
+    editingItem,
+    onClose,
+    fields,
+    effectiveDraft,
+    handleChange,
+    onSave: handleSave,
+    isSaving,
+  }), [editingItem, effectiveDraft, fields, handleChange, handleSave, isOpen, isSaving, modalDraft, onClose]);
+
   return runtimeValue;
 }
 

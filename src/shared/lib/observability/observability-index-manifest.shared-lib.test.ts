@@ -17,7 +17,10 @@ describe('observability-index-manifest shared-lib coverage', () => {
       expect.arrayContaining([
         { collection: 'system_logs', key: { createdAt: -1 } },
         { collection: 'system_logs', key: { traceId: 1, createdAt: -1 } },
+        { collection: 'system_logs', key: { applicationId: 1, originLogId: 1 } },
         { collection: 'activity_logs', key: { userId: 1, entityId: 1, createdAt: -1 } },
+        { collection: 'activity_logs', key: { applicationId: 1, originLogId: 1 } },
+        { collection: 'error_logs', key: { applicationId: 1, originLogId: 1 } },
         {
           collection: 'system_logs',
           key: { createdAt: 1 },
@@ -36,7 +39,7 @@ describe('observability-index-manifest shared-lib coverage', () => {
         },
       ])
     );
-    expect(OBSERVABILITY_INDEX_MANIFEST).toHaveLength(19);
+    expect(OBSERVABILITY_INDEX_MANIFEST).toHaveLength(32);
   });
 
   it('groups manifest entries by collection for index assertions', () => {
@@ -46,6 +49,8 @@ describe('observability-index-manifest shared-lib coverage', () => {
         { key: { level: 1, createdAt: -1 } },
         { key: { source: 1, createdAt: -1 } },
         { key: { service: 1, createdAt: -1 } },
+        { key: { applicationId: 1, createdAt: -1 } },
+        { key: { applicationId: 1, originLogId: 1 } },
         { key: { path: 1, createdAt: -1 } },
         { key: { requestId: 1 } },
         { key: { traceId: 1 } },
@@ -65,6 +70,8 @@ describe('observability-index-manifest shared-lib coverage', () => {
         { key: { createdAt: -1 } },
         { key: { type: 1, createdAt: -1 } },
         { key: { userId: 1, createdAt: -1 } },
+        { key: { applicationId: 1, createdAt: -1 } },
+        { key: { applicationId: 1, originLogId: 1 } },
         { key: { entityId: 1, createdAt: -1 } },
         { key: { entityType: 1, createdAt: -1 } },
         { key: { userId: 1, entityId: 1, createdAt: -1 } },
@@ -73,6 +80,23 @@ describe('observability-index-manifest shared-lib coverage', () => {
           options: {
             name: OBSERVABILITY_ACTIVITY_LOG_TTL_INDEX_NAME,
             expireAfterSeconds: OBSERVABILITY_ACTIVITY_LOG_RETENTION_SECONDS,
+          },
+        },
+      ],
+      error_logs: [
+        { key: { createdAt: -1 } },
+        { key: { applicationId: 1, createdAt: -1 } },
+        { key: { applicationId: 1, originLogId: 1 } },
+        { key: { source: 1, createdAt: -1 } },
+        { key: { service: 1, createdAt: -1 } },
+        { key: { requestId: 1 } },
+        { key: { traceId: 1 } },
+        { key: { correlationId: 1 } },
+        {
+          key: { createdAt: 1 },
+          options: {
+            name: 'error_logs_createdAt_ttl_idx',
+            expireAfterSeconds: OBSERVABILITY_SYSTEM_LOG_RETENTION_SECONDS,
           },
         },
       ],

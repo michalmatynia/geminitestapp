@@ -68,13 +68,29 @@ export function UIPresetsPanel(): React.JSX.Element {
     setSelectedPromptId('');
   }, [promptLibrary, selectedPromptId]);
 
+  const savePrompt = async (nextEntry: ImageStudioPromptEntry, nextLibrary: ImageStudioPromptEntry[]): Promise<void> => {
+    setSaveAsNewBusy(true);
+    try {
+      await updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
+        value: serializeSetting(nextLibrary),
+      });
+      toast(`Saved "${nextEntry.name}" to prompt list.`, { variant: 'success' });
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error
+          ? `Failed to save prompt: ${error.message}`
+          : 'Failed to save prompt.',
+        { variant: 'error' }
+      );
+    } finally {
+      setSaveAsNewBusy(false);
+    }
+  };
+
   const handleSavePromptAsNew = useCallback((): void => {
     const trimmedPrompt = promptText.trim();
-    if (!trimmedPrompt) {
-      toast('Enter prompt text first.', { variant: 'info' });
-      return;
-    }
-    if (saveAsNewBusy) return;
+    if (!trimmedPrompt || saveAsNewBusy) return;
 
     const now = new Date().toISOString();
     const nextEntry: ImageStudioPromptEntry = {
@@ -85,27 +101,7 @@ export function UIPresetsPanel(): React.JSX.Element {
       updatedAt: now,
     };
     const nextLibrary = [nextEntry, ...promptLibrary];
-
-    setSaveAsNewBusy(true);
-    void updateSetting
-      .mutateAsync({
-        key: IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
-        value: serializeSetting(nextLibrary),
-      })
-      .then(() => {
-        toast(`Saved "${nextEntry.name}" to prompt list.`, { variant: 'success' });
-      })
-      .catch((error: unknown) => {
-        toast(
-          error instanceof Error
-            ? `Failed to save prompt: ${error.message}`
-            : 'Failed to save prompt.',
-          { variant: 'error' }
-        );
-      })
-      .finally(() => {
-        setSaveAsNewBusy(false);
-      });
+    void savePrompt(nextEntry, nextLibrary);
   }, [promptLibrary, promptText, saveAsNewBusy, toast, updateSetting]);
 
   return (

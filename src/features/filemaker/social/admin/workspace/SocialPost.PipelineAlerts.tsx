@@ -1,9 +1,27 @@
 'use client';
 
+/* eslint-disable complexity, max-lines-per-function -- Legacy alert aggregator with many independent UI states. */
+
 import React from 'react';
 import { LoadingState } from '@/shared/ui';
 import { useSocialPostContext } from './SocialPostContext';
 import { getSocialJobStatusLabel } from './SocialJobStatusPill';
+
+const hasText = (value: string | null | undefined): boolean => (value?.length ?? 0) > 0;
+
+const resolveLatestVisualAnalysisError = ({
+  liveError,
+  hasFailedStatus,
+  savedError,
+}: {
+  liveError: string;
+  hasFailedStatus: boolean;
+  savedError: string;
+}): string => {
+  if (liveError.length > 0) return liveError;
+  if (hasFailedStatus) return savedError;
+  return '';
+};
 
 /**
  * SocialPipelineAlerts component
@@ -33,6 +51,7 @@ export function SocialPipelineAlerts(): React.JSX.Element {
   } = useSocialPostContext();
 
   const hasActivePost = (activePostId?.length ?? 0) > 0;
+  const canRunVisualAnalysis = hasActivePost && canRunVisualAnalysisPipeline;
   const isPipelineBusy =
     pipelineStep === 'loading_context' ||
     pipelineStep === 'capturing' ||
@@ -40,10 +59,10 @@ export function SocialPipelineAlerts(): React.JSX.Element {
     pipelineStep === 'generating' ||
     pipelineStep === 'previewing';
 
-  const readyVisualHighlightCount = visualAnalysisResult?.highlights?.length ?? 0;
+  const readyVisualHighlightCount = visualAnalysisResult?.highlights.length ?? 0;
   const hasReadyVisualAnalysis =
     (visualAnalysisResult?.summary.trim().length ?? 0) > 0 || readyVisualHighlightCount > 0;
-  const hasLiveVisualAnalysisJob = (currentVisualAnalysisJob?.status?.length ?? 0) > 0;
+  const hasLiveVisualAnalysisJob = (currentVisualAnalysisJob?.status.length ?? 0) > 0;
   const shouldWarnSavedAnalysisStale =
     isSavedVisualAnalysisStale && hasSavedVisualAnalysis && !hasLiveVisualAnalysisJob;
 
@@ -58,23 +77,25 @@ export function SocialPipelineAlerts(): React.JSX.Element {
     latestVisualAnalysisJobStatus
   );
   const latestVisualAnalysisJobId =
-    currentVisualAnalysisJob?.id?.trim() ?? savedVisualAnalysisJobId;
+    currentVisualAnalysisJob?.id.trim() ?? savedVisualAnalysisJobId;
   const latestVisualAnalysisStatusKey =
     latestVisualAnalysisJobStatus?.trim().toLowerCase() ?? null;
   const hasFailedVisualAnalysisStatus = latestVisualAnalysisStatusKey === 'failed';
+  const latestVisualAnalysisLiveError = currentVisualAnalysisJob?.failedReason?.trim() ?? '';
   const hasLatestVisualAnalysisMetadata = Boolean(
-    latestVisualAnalysisStatusLabel ||
-      readyVisualAnalysisUpdatedAt ||
-      readyVisualAnalysisModelId ||
-      latestVisualAnalysisJobId
+    hasText(latestVisualAnalysisStatusLabel) ||
+      readyVisualAnalysisUpdatedAt !== null ||
+      hasText(readyVisualAnalysisModelId) ||
+      hasText(latestVisualAnalysisJobId)
   );
-  const latestVisualAnalysisError =
-    currentVisualAnalysisJob?.failedReason?.trim() ||
-    (hasFailedVisualAnalysisStatus ? savedVisualAnalysisError : '') ||
-    '';
+  const latestVisualAnalysisError = resolveLatestVisualAnalysisError({
+    liveError: latestVisualAnalysisLiveError,
+    hasFailedStatus: hasFailedVisualAnalysisStatus,
+    savedError: savedVisualAnalysisError,
+  });
 
-  const editorStateTitlePl = activePost?.socialDraft?.titlePl?.trim() ?? '';
-  const editorStateTitleEn = activePost?.socialDraft?.titleEn?.trim() ?? '';
+  const editorStateTitlePl = activePost?.titlePl.trim() ?? '';
+  const editorStateTitleEn = activePost?.titleEn.trim() ?? '';
   let activeDraftLabel = 'Untitled draft';
   if (editorStateTitlePl.length > 0) {
     activeDraftLabel = editorStateTitlePl;
@@ -127,7 +148,7 @@ export function SocialPipelineAlerts(): React.JSX.Element {
           latestVisualAnalysisJobId.length > 0 ? (
             <div className='mt-1 text-[11px] text-emerald-950/80 dark:text-emerald-100/80'>
               {(latestVisualAnalysisStatusLabel?.length ?? 0) > 0
-                ? `${(currentVisualAnalysisJob?.status?.length ?? 0) > 0 ? 'Latest run' : 'Saved run'}: ${latestVisualAnalysisStatusLabel}. `
+                ? `${(currentVisualAnalysisJob?.status.length ?? 0) > 0 ? 'Latest run' : 'Saved run'}: ${latestVisualAnalysisStatusLabel}. `
                 : ''}
               {readyVisualAnalysisUpdatedAt !== null
                 ? `Analyzed: ${new Date(readyVisualAnalysisUpdatedAt).toLocaleString()}. `
@@ -192,7 +213,10 @@ export function SocialPipelineAlerts(): React.JSX.Element {
       )}
 
       {captureOnlyPending && (
-        <LoadingState message={captureOnlyMessage || 'Capturing...'} size='xs' />
+        <LoadingState
+          message={hasText(captureOnlyMessage) ? captureOnlyMessage ?? 'Capturing...' : 'Capturing...'}
+          size='xs'
+        />
       )}
 
       {!captureOnlyPending && (captureOnlyMessage?.length ?? 0) > 0 && (

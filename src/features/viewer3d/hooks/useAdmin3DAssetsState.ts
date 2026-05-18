@@ -18,6 +18,7 @@ import { useState, useMemo, useCallback, type Dispatch, type SetStateAction } fr
 
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -74,15 +75,17 @@ const getAssetDisplayName = (asset: Asset3DRecord): string => {
 function useAdmin3DAssetFilters(
   searchQuery: string,
   selectedCategory: string | null,
-  selectedTags: string[]
+  selectedTags: string[],
+  storageProfile?: FileStorageProfile
 ): Asset3DListFilters {
   return useMemo(
     () => ({
       ...(searchQuery !== '' ? { search: searchQuery } : {}),
       ...(selectedCategory !== null && selectedCategory !== '' ? { categoryId: selectedCategory } : {}),
       ...(selectedTags.length > 0 ? { tags: selectedTags } : {}),
+      ...(storageProfile !== undefined ? { storageProfile } : {}),
     }),
-    [searchQuery, selectedCategory, selectedTags]
+    [searchQuery, selectedCategory, selectedTags, storageProfile]
   );
 }
 
@@ -165,16 +168,23 @@ const useAdmin3DReindexHandler = (
  * Hook providing complete state management for admin 3D assets interface
  * @returns Object containing all state, handlers, and UI components needed for admin interface
  */
-export function useAdmin3DAssetsState(): UseAdmin3DAssetsStateReturn {
+export function useAdmin3DAssetsState(options?: {
+  storageProfile?: FileStorageProfile;
+}): UseAdmin3DAssetsStateReturn {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const local = useAdmin3DLocalState();
 
-  const filters = useAdmin3DAssetFilters(local.searchQuery, local.selectedCategory, local.selectedTags);
+  const filters = useAdmin3DAssetFilters(
+    local.searchQuery,
+    local.selectedCategory,
+    local.selectedTags,
+    options?.storageProfile
+  );
 
   const assetsQuery = useAssets3D(filters);
-  const categoriesQuery = useAsset3DCategories();
-  const tagsQuery = useAsset3DTags();
+  const categoriesQuery = useAsset3DCategories(options?.storageProfile);
+  const tagsQuery = useAsset3DTags(options?.storageProfile);
   const deleteMutation = useDeleteAsset3DMutation();
   const reindexMutation = useReindexAssets3DMutation();
 

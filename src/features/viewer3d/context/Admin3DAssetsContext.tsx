@@ -15,6 +15,7 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
@@ -38,9 +39,11 @@ export const {
 
 export function Admin3DAssetsProvider({
   children,
+  storageProfile,
 }: {
   children: React.ReactNode;
+  storageProfile?: FileStorageProfile;
 }): React.JSX.Element {
-  const value = useAdmin3DAssetsState();
+  const value = useAdmin3DAssetsState({ storageProfile });
   return <Admin3DAssetsContext.Provider value={value}>{children}</Admin3DAssetsContext.Provider>;
 }

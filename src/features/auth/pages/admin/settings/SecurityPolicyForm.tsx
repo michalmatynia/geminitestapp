@@ -23,13 +23,17 @@ export function SecurityPolicyForm({
     setSecurityDirty(true);
   };
 
+  const handleSave = (): void => {
+    void onSave();
+  };
+
   return (
     <FormSection
       title='Security policy'
       description='Control password strength and login protection rules.'
       className='p-4'
       actions={
-        <Button onClick={onSave} disabled={!securityDirty || isSaving}>
+        <Button onClick={handleSave} disabled={!securityDirty || isSaving}>
           {isSaving ? 'Saving...' : 'Save security policy'}
         </Button>
       }

@@ -3,8 +3,11 @@ import 'server-only';
 import { cache } from 'react';
 
 import type { CmsDomain } from '@/shared/contracts/cms';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
+import {
+  isTransientMongoConnectionError,
+  resolveCmsBuilderMongoSourceConfig,
+} from '@/shared/lib/db/utils/mongo';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCmsDomainSettings } from './cms-domain-settings';
@@ -37,8 +40,8 @@ export const DOMAIN_SLUGS_COLLECTION = 'cms_domain_slugs';
 export const SLUGS_COLLECTION = 'cms_slugs';
 
 export const hasMongoUri = (): boolean => {
-  const uri = process.env['MONGODB_URI'];
-  return typeof uri === 'string' && uri.length > 0;
+  const config = resolveCmsBuilderMongoSourceConfig('local');
+  return typeof config.uri === 'string' && config.uri.length > 0;
 };
 
 export const isDomainZoningEnabled = cache(async (): Promise<boolean> => {

@@ -332,12 +332,12 @@ describe('proxy api routing', () => {
         'https://cms-builder.example.com/admin/cms/pages?tab=published'
       );
 
-      const adminRequest = createRequest('http://localhost/admin/cms/builder?pageId=page-1');
+      const adminRequest = createRequest('http://localhost/admin/cms/pages?pageId=page-1');
       const adminResponse = await Promise.resolve(proxy(adminRequest as never, { params: {} }));
 
       expect(adminResponse.status).toBe(307);
       expect(adminResponse.headers.get('location')).toBe(
-        'https://cms-builder.example.com/admin/cms/builder?pageId=page-1'
+        'https://cms-builder.example.com/admin/cms/pages?pageId=page-1'
       );
 
       const localizedRequest = createRequest('http://localhost/en/cms/pages');
@@ -351,6 +351,22 @@ describe('proxy api routing', () => {
       );
       expect(authInvokeMock).not.toHaveBeenCalled();
       expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    } finally {
+      delete process.env['CMS_BUILDER_WEB_ORIGIN'];
+    }
+  });
+
+  it('does not hand off the removed root CMS Builder route', async () => {
+    process.env['CMS_BUILDER_WEB_ORIGIN'] = 'https://cms-builder.example.com';
+    try {
+      const request = createRequest('http://localhost/admin/cms/builder?pageId=page-1');
+      const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get('x-middleware-next')).toBeNull();
+      expect(response.headers.get('location')).toBeNull();
+      expect(authInvokeMock).not.toHaveBeenCalled();
+      expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
     } finally {
       delete process.env['CMS_BUILDER_WEB_ORIGIN'];
     }

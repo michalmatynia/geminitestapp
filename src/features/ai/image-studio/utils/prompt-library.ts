@@ -14,9 +14,10 @@ const promptEntryListSchema = z.array(promptLibraryItemBaseSchema);
 export function parseImageStudioPromptLibrary(
   raw: string | null | undefined
 ): ImageStudioPromptEntry[] {
-  if ((raw?.length ?? 0) === 0) return [];
+  const serialized = raw ?? '';
+  if (serialized.length === 0) return [];
   try {
-    const json = JSON.parse(raw) as unknown;
+    const json = JSON.parse(serialized) as unknown;
     const parsed = promptEntryListSchema.safeParse(json);
     return parsed.success ? parsed.data : [];
   } catch (error) {

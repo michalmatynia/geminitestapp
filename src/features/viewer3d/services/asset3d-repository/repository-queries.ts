@@ -43,6 +43,20 @@ export async function listAssets3D(db: Db, filters?: Asset3DListFilters): Promis
     clauses.push({ isPublic: filters.isPublic });
   }
 
+  const storageProfile = normalizeString(filters?.storageProfile);
+  if (storageProfile !== null) {
+    clauses.push(
+      storageProfile === 'default'
+        ? {
+            $or: [
+              { 'metadata.storageProfile': 'default' },
+              { 'metadata.storageProfile': { $exists: false } },
+            ],
+          }
+        : { 'metadata.storageProfile': storageProfile }
+    );
+  }
+
   if (filters?.tags !== undefined && filters.tags.length > 0) {
     clauses.push({
       $or: [

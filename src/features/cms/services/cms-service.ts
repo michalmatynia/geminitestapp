@@ -26,6 +26,12 @@ import { getCmsRepository } from './cms-repository';
  * All CMS domain logic and repository access should go through this service.
  */
 
+const CMS_BUILDER_ACTIVITY_ORIGIN = {
+  applicationId: 'cms-builder' as const,
+  applicationName: 'CMS Builder',
+  sourceService: 'cms-service',
+};
+
 const repoCall = async <K extends keyof CmsRepository>(
   key: K,
   ...args: Parameters<CmsRepository[K]>
@@ -60,6 +66,7 @@ export const cmsService: CmsRepository = {
   }): Promise<Page> => {
     const page = await repoCall('createPage', data);
     void logActivity({
+      ...CMS_BUILDER_ACTIVITY_ORIGIN,
       type: ActivityTypes.CMS.PAGE_CREATED,
       description: `Created page ${page.name}`,
       entityId: page.id,
@@ -72,6 +79,7 @@ export const cmsService: CmsRepository = {
     const page = await repoCall('updatePage', id, data);
     if (page) {
       void logActivity({
+        ...CMS_BUILDER_ACTIVITY_ORIGIN,
         type: ActivityTypes.CMS.PAGE_UPDATED,
         description: `Updated page ${page.name}`,
         entityId: page.id,
@@ -85,6 +93,7 @@ export const cmsService: CmsRepository = {
     const page = await repoCall('deletePage', id);
     if (page) {
       void logActivity({
+        ...CMS_BUILDER_ACTIVITY_ORIGIN,
         type: ActivityTypes.CMS.PAGE_DELETED,
         description: `Deleted page ${page.name}`,
         entityId: page.id,
@@ -138,6 +147,7 @@ export const cmsService: CmsRepository = {
   createTheme: async (data: CmsThemeCreateInput): Promise<CmsTheme> => {
     const theme = await repoCall('createTheme', data);
     void logActivity({
+      ...CMS_BUILDER_ACTIVITY_ORIGIN,
       type: ActivityTypes.CMS.THEME_CREATED,
       description: `Created theme ${theme.name}`,
       entityId: theme.id,
@@ -150,6 +160,7 @@ export const cmsService: CmsRepository = {
     const theme = await repoCall('updateTheme', id, data);
     if (theme) {
       void logActivity({
+        ...CMS_BUILDER_ACTIVITY_ORIGIN,
         type: ActivityTypes.CMS.THEME_UPDATED,
         description: `Updated theme ${theme.name}`,
         entityId: theme.id,
@@ -163,6 +174,7 @@ export const cmsService: CmsRepository = {
     const theme = await repoCall('deleteTheme', id);
     if (theme) {
       void logActivity({
+        ...CMS_BUILDER_ACTIVITY_ORIGIN,
         type: ActivityTypes.CMS.THEME_DELETED,
         description: `Deleted theme ${theme.name}`,
         entityId: theme.id,

@@ -37,9 +37,7 @@ vi.mock('@/features/files/server', () => ({
 }));
 
 vi.mock('@/features/viewer3d/server', () => ({
-  getAsset3DRepository: () => ({
-    getAsset3DById: getAsset3DByIdMock,
-  }),
+  getAsset3DFromLookupRepositories: getAsset3DByIdMock,
 }));
 
 import { getHandler } from './handler';

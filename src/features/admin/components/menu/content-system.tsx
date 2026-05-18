@@ -38,8 +38,6 @@ export const getContentNav = (handlers: { onCreatePageClick: () => void }): NavI
       label: 'CMS',
       href: '/admin/cms',
       children: [
-        { id: 'content/cms/builder', label: 'Builder', href: '/admin/cms/builder' },
-        { id: 'content/cms/builder/settings', label: 'Builder Settings', href: '/admin/cms/builder/settings' },
         { id: 'content/cms/pages', label: 'Pages', href: '/admin/cms/pages' },
         {
           id: 'content/cms/pages/create',

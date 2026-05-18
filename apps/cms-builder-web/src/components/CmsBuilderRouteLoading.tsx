@@ -1,7 +1,13 @@
-export function CmsBuilderRouteLoading(): React.JSX.Element {
+type CmsBuilderRouteLoadingProps = {
+  label?: string;
+};
+
+export function CmsBuilderRouteLoading({
+  label = 'Loading CMS builder page',
+}: CmsBuilderRouteLoadingProps): React.JSX.Element {
   return (
     <div
-      aria-label='Loading CMS builder page'
+      aria-label={label}
       className='space-y-6 animate-in fade-in duration-300'
       data-testid='cms-builder-route-loading'
       role='status'

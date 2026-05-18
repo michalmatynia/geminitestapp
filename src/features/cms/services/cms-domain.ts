@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import type { CmsDomain } from '@/shared/contracts/cms';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 
 import {
   buildDefaultDomain,

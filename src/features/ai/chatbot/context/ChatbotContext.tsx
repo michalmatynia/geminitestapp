@@ -9,11 +9,14 @@ import type {
   ChatbotUIData,
 } from '@/shared/contracts/chatbot';
 import { internalError } from '@/shared/errors/app-error';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { createStrictContext, type StrictContextResult } from '@/shared/lib/react/createStrictContext';
 
 import { useChatbotLogic } from '../hooks/useChatbotLogic';
 
-const createChatbotStrictContext = <T,>(hookName: string, displayName: string) =>
+const createChatbotStrictContext = <T,>(
+  hookName: string,
+  displayName: string
+): StrictContextResult<T> =>
   createStrictContext<T>({
     hookName,
     providerName: 'a ChatbotProvider',
@@ -57,10 +60,8 @@ export const {
   'ChatbotUIContext'
 );
 
-export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const logic = useChatbotLogic();
-
-  const messagesValue = useMemo<ChatbotMessagesData>(
+function useChatbotMessagesValue(logic: ReturnType<typeof useChatbotLogic>): ChatbotMessagesData {
+  return useMemo<ChatbotMessagesData>(
     () => ({
       messages: logic.messages,
       setMessages: logic.setMessages,
@@ -84,8 +85,10 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
       logic.setIsSending,
     ]
   );
+}
 
-  const settingsValue = useMemo<ChatbotSettingsData>(
+function useChatbotSettingsValue(logic: ReturnType<typeof useChatbotLogic>): ChatbotSettingsData {
+  return useMemo<ChatbotSettingsData>(
     () => ({
       model: logic.model,
       setModel: logic.setModel,
@@ -139,8 +142,10 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
       logic.saveChatbotSettings,
     ]
   );
+}
 
-  const sessionsValue = useMemo<ChatbotSessionsData>(
+function useChatbotSessionsValue(logic: ReturnType<typeof useChatbotLogic>): ChatbotSessionsData {
+  return useMemo<ChatbotSessionsData>(
     () => ({
       sessions: logic.sessions,
       currentSessionId: logic.currentSessionId,
@@ -160,8 +165,10 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
       logic.selectSession,
     ]
   );
+}
 
-  const uiValue = useMemo<ChatbotUIData>(
+function useChatbotUIValue(logic: ReturnType<typeof useChatbotLogic>): ChatbotUIData {
+  return useMemo<ChatbotUIData>(
     () => ({
       debugState: logic.debugState,
       setDebugState: logic.setDebugState,
@@ -170,6 +177,14 @@ export function ChatbotProvider({ children }: { children: ReactNode }): React.JS
     }),
     [logic.debugState, logic.setDebugState, logic.latestAgentRunId, logic.setLatestAgentRunId]
   );
+}
+
+export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const logic = useChatbotLogic();
+  const messagesValue = useChatbotMessagesValue(logic);
+  const settingsValue = useChatbotSettingsValue(logic);
+  const sessionsValue = useChatbotSessionsValue(logic);
+  const uiValue = useChatbotUIValue(logic);
 
   return (
     <MessagesContext.Provider value={messagesValue}>

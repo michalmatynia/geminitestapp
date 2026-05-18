@@ -1,8 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { getAsset3DRepository, deleteAsset3D } from '@/features/viewer3d/server';
+import {
+  deleteAsset3D,
+  findAsset3DRepositoryAsset,
+  getAsset3DFromLookupRepositories,
+} from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { asset3DUpdateInputSchema, type Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
+import {
+  asset3DUpdateInputSchema,
+  type Asset3DRecord,
+  type Asset3DUpdateInput,
+} from '@/shared/contracts/viewer3d';
 import { notFoundError } from '@/shared/errors/app-error';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -21,12 +29,11 @@ export async function getHandler(
   return NextResponse.json(asset);
 }
 
-async function getAsset3DByIdCached(id: string) {
+async function getAsset3DByIdCached(id: string): Promise<Asset3DRecord | null> {
   'use cache';
   applyCacheLife('swr60');
 
-  const repository = getAsset3DRepository();
-  return repository.getAsset3DById(id);
+  return getAsset3DFromLookupRepositories(id);
 }
 
 export async function patchHandler(
@@ -42,8 +49,11 @@ export async function patchHandler(
   }
   const body: Asset3DUpdateInput = parsed.data;
 
-  const repository = getAsset3DRepository();
-  const asset = await repository.updateAsset3D(params.id, body);
+  const match = await findAsset3DRepositoryAsset(params.id);
+  if (match === null) {
+    throw notFoundError('3D asset not found', { id: params.id });
+  }
+  const asset = await match.repository.updateAsset3D(params.id, body);
 
   if (!asset) {
     throw notFoundError('3D asset not found', { id: params.id });

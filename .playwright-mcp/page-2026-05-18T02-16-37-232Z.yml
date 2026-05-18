@@ -1,0 +1,290 @@
+- region "Scrollable region" [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - generic [ref=e509]:
+        - link "Skip to content" [ref=e510] [cursor=pointer]:
+          - /url: "#kangur-main-content"
+        - complementary "Admin sidebar" [ref=e511]:
+          - navigation "Admin menu" [ref=e513]:
+            - generic [ref=e516]:
+              - generic [ref=e517]:
+                - search [ref=e518]:
+                  - img [ref=e519]
+                  - searchbox "Search admin pages…" [ref=e522]
+                - button "Collapse admin sidebar" [expanded] [ref=e524] [cursor=pointer]:
+                  - img [ref=e525]
+              - generic "Collapse all folders" [ref=e529]:
+                - button "Collapse all folders" [ref=e530] [cursor=pointer]:
+                  - img [ref=e531]
+            - generic [ref=e533]:
+              - link "Home" [ref=e536] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e537]:
+                  - img [ref=e539]
+                  - generic [ref=e542]: Home
+              - button "Workspace" [ref=e545] [cursor=pointer]:
+                - generic [ref=e546]:
+                  - img [ref=e548]
+                  - generic [ref=e550]: Workspace
+                - img [ref=e551]
+              - button "Filemaker" [ref=e555] [cursor=pointer]:
+                - generic [ref=e556]:
+                  - img [ref=e558]
+                  - generic [ref=e560]: Filemaker
+                - img [ref=e561]
+              - button "Image Studio" [ref=e565] [cursor=pointer]:
+                - generic [ref=e566]:
+                  - img [ref=e568]
+                  - generic [ref=e572]: Image Studio
+                - img [ref=e573]
+              - button "Prompt Exploder" [ref=e577] [cursor=pointer]:
+                - generic [ref=e578]:
+                  - img [ref=e580]
+                  - generic [ref=e583]: Prompt Exploder
+                - img [ref=e584]
+              - button "Page Manager" [ref=e588] [cursor=pointer]:
+                - generic [ref=e589]:
+                  - img [ref=e591]
+                  - generic [ref=e593]: Page Manager
+                - img [ref=e594]
+              - generic [ref=e596]:
+                - button "Commerce" [expanded] [ref=e598] [cursor=pointer]:
+                  - generic [ref=e599]:
+                    - img [ref=e601]
+                    - generic [ref=e605]: Commerce
+                  - img [ref=e606]
+                - generic [ref=e608]:
+                  - generic [ref=e609]:
+                    - button "• Products" [expanded] [ref=e611] [cursor=pointer]:
+                      - generic [ref=e612]:
+                        - generic [ref=e613]: •
+                        - generic [ref=e614]: Products
+                      - img [ref=e615]
+                    - generic [ref=e617]:
+                      - link "• All Products" [ref=e620] [cursor=pointer]:
+                        - /url: /admin/products
+                        - generic [ref=e621]:
+                          - generic [ref=e622]: •
+                          - generic [ref=e623]: All Products
+                      - link "• Drafts" [ref=e626] [cursor=pointer]:
+                        - /url: /admin/drafts
+                        - generic [ref=e627]:
+                          - generic [ref=e628]: •
+                          - generic [ref=e629]: Drafts
+                      - link "• Producers" [ref=e632] [cursor=pointer]:
+                        - /url: /admin/products/producers
+                        - generic [ref=e633]:
+                          - generic [ref=e634]: •
+                          - generic [ref=e635]: Producers
+                      - link "• Orders Import" [ref=e638] [cursor=pointer]:
+                        - /url: /admin/products/orders-import
+                        - generic [ref=e639]:
+                          - generic [ref=e640]: •
+                          - generic [ref=e641]: Orders Import
+                      - link "• Product Pages" [ref=e644] [cursor=pointer]:
+                        - /url: /admin/products/pages
+                        - generic [ref=e645]:
+                          - generic [ref=e646]: •
+                          - generic [ref=e647]: Product Pages
+                      - link "• Title Terms" [ref=e650] [cursor=pointer]:
+                        - /url: /admin/products/title-terms
+                        - generic [ref=e651]:
+                          - generic [ref=e652]: •
+                          - generic [ref=e653]: Title Terms
+                      - link "• Import" [ref=e656] [cursor=pointer]:
+                        - /url: /admin/products/import
+                        - generic [ref=e657]:
+                          - generic [ref=e658]: •
+                          - generic [ref=e659]: Import
+                      - link "• Preferences" [ref=e662] [cursor=pointer]:
+                        - /url: /admin/products/preferences
+                        - generic [ref=e663]:
+                          - generic [ref=e664]: •
+                          - generic [ref=e665]: Preferences
+                      - link "• Settings" [ref=e668] [cursor=pointer]:
+                        - /url: /admin/products/settings
+                        - generic [ref=e669]:
+                          - generic [ref=e670]: •
+                          - generic [ref=e671]: Settings
+                  - button "• Assets" [ref=e674] [cursor=pointer]:
+                    - generic [ref=e675]:
+                      - generic [ref=e676]: •
+                      - generic [ref=e677]: Assets
+                    - img [ref=e678]
+                  - link "• Job Board" [ref=e682] [cursor=pointer]:
+                    - /url: /admin/job-board
+                    - generic [ref=e683]:
+                      - generic [ref=e684]: •
+                      - generic [ref=e685]: Job Board
+              - button "Integrations" [ref=e688] [cursor=pointer]:
+                - generic [ref=e689]:
+                  - img [ref=e691]
+                  - generic [ref=e693]: Integrations
+                - img [ref=e694]
+              - link "Brain" [ref=e698] [cursor=pointer]:
+                - /url: /admin/brain?tab=operations
+                - generic [ref=e699]:
+                  - img [ref=e701]
+                  - generic [ref=e709]: Brain
+              - button "Jobs" [ref=e712] [cursor=pointer]:
+                - generic [ref=e713]:
+                  - img [ref=e715]
+                  - generic [ref=e719]: Jobs
+                - img [ref=e720]
+              - button "AI" [ref=e724] [cursor=pointer]:
+                - generic [ref=e725]:
+                  - img [ref=e727]
+                  - generic [ref=e731]: AI
+                - img [ref=e732]
+              - button "Content" [ref=e736] [cursor=pointer]:
+                - generic [ref=e738]: Content
+                - img [ref=e739]
+              - button "System" [ref=e743] [cursor=pointer]:
+                - generic [ref=e744]:
+                  - img [ref=e746]
+                  - generic [ref=e749]: System
+                - img [ref=e750]
+        - generic [ref=e752]:
+          - generic "Admin toolbar":
+            - button "Avatar" [ref=e755] [cursor=pointer]:
+              - generic [ref=e757]: M
+          - main [ref=e758]:
+            - generic [ref=e760]:
+              - generic [ref=e761]:
+                - generic [ref=e762]:
+                  - generic [ref=e764]:
+                    - button "Add All Products to admin favorites" [ref=e765] [cursor=pointer]:
+                      - img [ref=e766]
+                    - navigation "Breadcrumb" [ref=e768]:
+                      - link "Admin" [ref=e769] [cursor=pointer]:
+                        - /url: /admin
+                      - generic [ref=e770]: /
+                      - link "Products" [ref=e771] [cursor=pointer]:
+                        - /url: /admin/products
+                      - generic [ref=e772]: /
+                      - generic [ref=e773]: Edit Product
+                  - heading "Edit Product" [level=1] [ref=e775]
+                - generic [ref=e776]:
+                  - button "Back to products" [ref=e777] [cursor=pointer]: Close
+                  - button "Update" [disabled]
+              - generic [ref=e779]:
+                - generic [ref=e780]:
+                  - tablist "Product form tabs" [ref=e781]:
+                    - tab "General" [selected] [ref=e782] [cursor=pointer]:
+                      - img [ref=e783]
+                      - generic [ref=e787]: General
+                    - tab "Other" [ref=e788] [cursor=pointer]:
+                      - img [ref=e789]
+                      - generic [ref=e792]: Other
+                    - tab "Parameters" [ref=e793] [cursor=pointer]:
+                      - img [ref=e794]
+                      - generic [ref=e795]: Parameters
+                    - tab "Images" [ref=e796] [cursor=pointer]:
+                      - img [ref=e797]
+                      - generic [ref=e801]: Images
+                    - tab "Studio" [ref=e802] [cursor=pointer]:
+                      - img [ref=e803]
+                      - generic [ref=e806]: Studio
+                    - tab "Marketplace Copy" [ref=e807] [cursor=pointer]:
+                      - img [ref=e808]
+                      - generic [ref=e812]: Marketplace Copy
+                    - tab "Custom Fields" [ref=e813] [cursor=pointer]:
+                      - img [ref=e814]
+                      - generic [ref=e819]: Custom Fields
+                    - tab "Scans" [ref=e820] [cursor=pointer]:
+                      - img [ref=e821]
+                      - generic [ref=e824]: Scans
+                    - tab "Import Info" [ref=e825] [cursor=pointer]:
+                      - img [ref=e826]
+                      - generic [ref=e830]: Import Info
+                    - tab "Notes" [ref=e831] [cursor=pointer]:
+                      - img [ref=e832]
+                      - generic [ref=e835]: Notes
+                    - tab "Note Link" [ref=e836] [cursor=pointer]:
+                      - img [ref=e837]
+                      - generic [ref=e840]: Note Link
+                    - tab "Validation" [ref=e841] [cursor=pointer]:
+                      - img [ref=e842]
+                      - generic [ref=e844]: Validation
+                  - tabpanel "General" [ref=e845]:
+                    - generic [ref=e846]:
+                      - generic [ref=e848]:
+                        - generic [ref=e849]:
+                          - tablist "Product name language tabs" [ref=e850]:
+                            - tab "English" [selected] [ref=e851] [cursor=pointer]
+                            - tab "Polish" [ref=e852] [cursor=pointer]
+                          - tabpanel "English" [ref=e853]:
+                            - generic [ref=e854]:
+                              - generic [ref=e855]:
+                                - generic [ref=e856]:
+                                  - generic [ref=e857]: English Name
+                                  - link "Open Title Terms" [ref=e859] [cursor=pointer]:
+                                    - /url: /admin/products/title-terms?catalogId=cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10
+                                    - img [ref=e860]
+                                    - generic [ref=e863]: Open Title Terms
+                                - paragraph [ref=e864]: "REQUIRED FORMAT: <name> | <size> | <material> | <category> | <lore or theme>"
+                              - combobox [ref=e865]:
+                                - textbox "English Name" [ref=e866]:
+                                  - /placeholder: Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan
+                                  - text: Kylo Ren | 13 cm | Eko-Skóra | Movie Wallet | Star Wars
+                              - paragraph [ref=e867]: "Selected category: Movie Wallet"
+                        - generic [ref=e868]:
+                          - tablist "Product description language tabs" [ref=e869]:
+                            - tab "English" [selected] [ref=e870] [cursor=pointer]
+                            - tab "Polish" [ref=e871] [cursor=pointer]
+                          - tabpanel "English" [ref=e872]:
+                            - generic [ref=e873]:
+                              - generic [ref=e876]: English Description
+                              - textbox "English Description" [ref=e878]:
+                                - /placeholder: Enter product description in English
+                                - text: Some might say it's impossible to resist the pull of the dark side—this wallet certainly doesn’t hurt. Crafted from sleek, black eko-skóra, this 13cm folding wallet showcases striking imagery of Kylo Ren and the iconic *Star Wars* logo emblazoned across a fiery, crimson backdrop. The interior holds all your galactic credits (or earthly currency) with practical card slots and a bill compartment, all neatly contained within a classic, bifold design. A bold statement for any devotee of the First Order, it’s a great way to carry a piece of the saga with you.
+                      - generic [ref=e879]:
+                        - heading "Identifiers" [level=1] [ref=e883]
+                        - generic [ref=e884]:
+                          - generic [ref=e885]:
+                            - generic [ref=e888]: SKU *
+                            - textbox "SKU *" [ref=e890]:
+                              - /placeholder: Unique stock keeping unit
+                              - text: KEYCHA1396
+                          - generic [ref=e891]:
+                            - generic [ref=e894]: Product Identifier
+                            - generic [ref=e895]:
+                              - generic [ref=e896]:
+                                - combobox "Product identifier type" [ref=e898]:
+                                  - option "Select an option" [disabled]
+                                  - option "EAN" [selected]
+                                  - option "GTIN"
+                                  - option "ASIN"
+                                - textbox "Enter EAN" [ref=e899]
+                              - paragraph [ref=e900]: EAN, GTIN or ASIN code.
+                      - generic [ref=e901]:
+                        - heading "Dimensions & Weight" [level=1] [ref=e905]
+                        - generic [ref=e906]:
+                          - generic [ref=e907]:
+                            - generic [ref=e910]: Weight (kg)
+                            - generic [ref=e911]:
+                              - spinbutton "Weight (kg)" [ref=e912]: "0"
+                              - generic: KG
+                          - generic [ref=e913]:
+                            - generic [ref=e916]: Length (cm)
+                            - generic [ref=e917]:
+                              - spinbutton "Length (cm)" [ref=e918]: "0"
+                              - generic: CM
+                          - generic [ref=e919]:
+                            - generic [ref=e922]: Width (cm)
+                            - generic [ref=e923]:
+                              - spinbutton "Width (cm)" [ref=e924]: "0"
+                              - generic: CM
+                          - generic [ref=e925]:
+                            - generic [ref=e928]: Height (cm)
+                            - generic [ref=e929]:
+                              - spinbutton "Height (cm)" [ref=e930]: "0"
+                              - generic: CM
+                - button "Copy product ID" [ref=e931] [cursor=pointer]:
+                  - generic [ref=e932]: 47063c37-4bf3-4c92-96a9-aae446689840
+                  - img [ref=e933]
+  - alert [ref=e413]

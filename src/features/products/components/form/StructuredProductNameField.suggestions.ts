@@ -178,7 +178,11 @@ const indexCategories = (
 ): { byParentId: Map<string | null, ProductCategory[]>; parentIds: Set<string> } => {
   const byParentId = new Map<string | null, ProductCategory[]>();
   const parentIds = new Set<string>();
+  const seenIds = new Set<string>();
   for (const category of categories) {
+    // Deduplicate by id — DB may have ObjectId + string duplicates for the same category.
+    if (seenIds.has(category.id)) continue;
+    seenIds.add(category.id);
     const parentId = category.parentId ?? null;
     byParentId.set(parentId, [...(byParentId.get(parentId) ?? []), category]);
     if (parentId !== null) parentIds.add(parentId);

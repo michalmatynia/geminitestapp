@@ -194,7 +194,9 @@ export async function uploadFile(
     const fastCometPublicBaseUrl =
       options?.fastCometBaseUrl ?? options?.fastCometConfig?.baseUrl ?? null;
 
-    const imageFileRepository = await getImageFileRepository(options?.provider);
+    const imageFileRepository = await getImageFileRepository(options?.provider, {
+      applicationId: options?.category === 'cms' ? 'cms-builder' : null,
+    });
     const recordInput: ImageFileCreateInput = {
       filename,
       filepath: storedFilepath,
@@ -215,6 +217,7 @@ export async function uploadFile(
     const imageFile = await imageFileRepository.createImageFile(recordInput);
     void createFileUploadEvent({
       status: 'success',
+      applicationId: options?.category === 'cms' ? 'cms-builder' : null,
       category: options?.category ?? null,
       projectId: options?.projectId ?? null,
       folder: options?.folder ?? null,
@@ -231,6 +234,7 @@ export async function uploadFile(
     void ErrorSystem.captureException(error);
     void createFileUploadEvent({
       status: 'error',
+      applicationId: options?.category === 'cms' ? 'cms-builder' : null,
       category: options?.category ?? null,
       projectId: options?.projectId ?? null,
       folder: options?.folder ?? null,

@@ -48,17 +48,17 @@ export function useChatbotSession(
   sessionId: string | null,
   options?: { enabled?: boolean }
 ): SingleQuery<ChatSession | null> {
-  const queryKey = sessionId
+  const queryKey = typeof sessionId === 'string' && sessionId !== ''
     ? chatbotKeys.session(sessionId)
     : [...chatbotKeys.all, 'session', 'none'];
   return useSingleQueryV2({
     id: sessionId,
     queryKey,
     queryFn: async () => {
-      if (!sessionId) return null;
+      if (sessionId === null || sessionId === '') return null;
       return fetchChatbotSession(sessionId);
     },
-    enabled: (options?.enabled ?? true) && Boolean(sessionId),
+    enabled: (options?.enabled ?? true) && typeof sessionId === 'string' && sessionId !== '',
     meta: {
       source: 'chatbot.hooks.useChatbotSession',
       operation: 'detail',
@@ -82,8 +82,8 @@ export function useChatbotSettings(
     id: key,
     queryKey,
     queryFn: (): Promise<ChatbotSettingsResponse> =>
-      key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
-    enabled: (options?.enabled ?? true) && Boolean(key),
+      typeof key === 'string' && key !== '' ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
+    enabled: (options?.enabled ?? true) && typeof key === 'string' && key !== '',
     meta: {
       source: 'chatbot.hooks.useChatbotSettings',
       operation: 'detail',
@@ -134,7 +134,7 @@ export function useChatbotMemory(
 ): SingleQuery<ChatbotMemoryItem[]> {
   const queryKey = chatbotKeys.memory(query);
   return useSingleQueryV2({
-    id: query || 'global',
+    id: typeof query === 'string' && query !== '' ? query : 'global',
     queryKey,
     queryFn: (): Promise<ChatbotMemoryItem[]> => fetchChatbotMemory(query ?? ''),
     enabled: options?.enabled ?? true,

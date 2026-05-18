@@ -21,11 +21,12 @@ export function CenterPreviewHeader(): React.JSX.Element {
   const { setPreviewMode } = useSlotsActions();
   const { screenshotBusy } = useCenterPreviewContext();
   const { onSaveScreenshot } = useCenterPreviewHeaderContext();
+  const has3dAsset = typeof workingSlot?.asset3dId === 'string' && workingSlot.asset3dId !== '';
 
   return (
     <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
       <div className='flex items-center gap-2'>
-        {workingSlot.asset3dId !== undefined && workingSlot.asset3dId !== '' ? (
+        {has3dAsset ? (
           <ToggleButtonGroup
             value={previewMode}
             onChange={setPreviewMode}
@@ -33,7 +34,7 @@ export function CenterPreviewHeader(): React.JSX.Element {
             className='text-[11px] text-gray-300'
           />
         ) : null}
-        {previewMode === '3d' && workingSlot ? (
+        {previewMode === '3d' && has3dAsset ? (
           <Button
             size='xs'
             variant='outline'

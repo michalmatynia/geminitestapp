@@ -11,7 +11,7 @@ import {
   getPublicPathFromStoredPath,
   isHttpFilepath,
 } from '@/features/files/server';
-import { getAsset3DRepository } from '@/features/viewer3d/server';
+import { getAsset3DFromLookupRepositories } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -94,8 +94,7 @@ const readMirroredAssetFile = async (asset: Asset3DRecord): Promise<Response | n
 };
 
 const getRequiredAsset = async (id: string): Promise<Asset3DRecordWithFilepath> => {
-  const repository = getAsset3DRepository();
-  const asset = await repository.getAsset3DById(id);
+  const asset = await getAsset3DFromLookupRepositories(id);
   const filepath = asset?.filepath?.trim() ?? '';
   if (asset === null || filepath.length === 0) {
     throw notFoundError(`Asset or filepath not found in database: ${id}`);

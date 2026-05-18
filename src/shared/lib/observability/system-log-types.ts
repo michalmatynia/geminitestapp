@@ -31,6 +31,13 @@ export type MongoSystemLogDoc = {
   spanId?: string | null;
   parentSpanId?: string | null;
   userId?: string | null;
+  applicationId?: string | null;
+  applicationName?: string | null;
+  environment?: string | null;
+  sourceService?: string | null;
+  originDatabase?: string | null;
+  originCollection?: string | null;
+  originLogId?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string | null;
 };

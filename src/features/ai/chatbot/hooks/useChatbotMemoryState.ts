@@ -38,10 +38,10 @@ export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
-    if (memoryKey.trim()) params.set('memoryKey', memoryKey.trim());
-    if (tag.trim()) params.set('tag', tag.trim());
-    if (query.trim()) params.set('q', query.trim());
-    if (limit) params.set('limit', String(limit));
+    if (memoryKey.trim() !== '') params.set('memoryKey', memoryKey.trim());
+    if (tag.trim() !== '') params.set('tag', tag.trim());
+    if (query.trim() !== '') params.set('q', query.trim());
+    if (limit !== 0) params.set('limit', String(limit));
     return params.toString();
   }, [memoryKey, tag, query, limit]);
 
@@ -51,7 +51,7 @@ export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
   const toggleExpanded = useCallback((id: string) => {
     setExpanded((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      [id]: !(prev[id] ?? false),
     }));
   }, []);
 
@@ -78,6 +78,8 @@ export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
     loading: memoryQuery.isLoading,
     isFetching: memoryQuery.isFetching,
     error: memoryQuery.error,
-    refetch: () => void memoryQuery.refetch(),
+    refetch: () => {
+      void memoryQuery.refetch();
+    },
   };
 }

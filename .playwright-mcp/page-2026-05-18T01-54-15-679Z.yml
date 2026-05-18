@@ -1,0 +1,21 @@
+- region "Scrollable region" [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - main [ref=e8]:
+        - generic [ref=e9]:
+          - heading "Page not found" [level=1] [ref=e10]
+          - paragraph [ref=e11]: We couldn't find what you're looking for.
+  - generic [ref=e17] [cursor=pointer]:
+    - button "Open issues overlay" [ref=e18]:
+      - img [ref=e20]
+      - generic [ref=e22]:
+        - generic [ref=e23]: "0"
+        - generic [ref=e24]: "1"
+      - generic [ref=e25]: Issue
+    - button "Collapse issues badge" [ref=e26]:
+      - img [ref=e27]
+  - alert [ref=e29]

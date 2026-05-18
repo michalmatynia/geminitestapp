@@ -63,6 +63,8 @@ export type MilkbarPageContent = {
     ctaLabel: string;
     hint: string;
     thumbImages: string[];
+    asset3dSlots: string[];
+    asset3dSlotUrls?: string[] | undefined;
     interiorModelAssetId?: string | undefined;
     interiorModelUrl?: string | undefined;
   };
@@ -158,6 +160,7 @@ export type MilkbarPageSettings = {
   seo: { [K in MilkbarLocale]: MilkbarSeoMeta };
   defaultLocale: MilkbarLocale;
   publishedLocales: MilkbarLocale[];
+  contactEmail: string;
 };
 
 export type MilkbarProjectCmsRecord = {
@@ -265,6 +268,7 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     ctaLabel: 'how it works',
     hint: '- drag rooms to reassign programme',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -449,6 +453,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
     ctaLabel: 'wie es funktioniert',
     hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
@@ -633,6 +638,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
     ctaLabel: 'jak to działa',
     hint: '- przeciągnij pomieszczenia, by przypisać program',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / filozofia',
@@ -831,6 +837,7 @@ export const DEFAULT_MILKBAR_PAGE_SETTINGS: MilkbarPageSettings = {
   },
   defaultLocale: 'en',
   publishedLocales: ['en'],
+  contactEmail: 'hello@milkbar.studio',
 };
 
 export const DEFAULT_MILKBAR_PROJECTS: MilkbarProjectCmsRecord[] = [

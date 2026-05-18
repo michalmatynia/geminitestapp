@@ -10,6 +10,9 @@ import {
 } from '@/shared/lib/observability/system-log-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getMongoDb as getStudiqMongoDb } from '@/shared/lib/db/studiq-mongo-client';
+import { getMongoDb as getCmsBuilderMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
+import { getMongoDb as getEcommerceMongoDb } from '@/shared/lib/db/ecommerce-mongo-client';
+import { getMongoDb as getArchMongoDb } from '@/shared/lib/db/arch-mongo-client';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -17,6 +20,18 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 vi.mock('@/shared/lib/db/studiq-mongo-client', () => ({
+  getMongoDb: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/cms-builder-mongo-client', () => ({
+  getMongoDb: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/ecommerce-mongo-client', () => ({
+  getMongoDb: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/db/arch-mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
@@ -37,22 +52,93 @@ describe('system-log-repository', () => {
     deleteMany: vi.fn(),
     aggregate: vi.fn(),
     createIndex: vi.fn().mockResolvedValue('index_name'),
+    updateOne: vi.fn(),
   };
 
   const mockMongoDb = {
+    databaseName: 'app',
     collection: vi.fn().mockReturnValue(mockMongoCollection),
   };
   const mockStudiqCollection = {
     insertOne: vi.fn(),
+    findOne: vi.fn(),
+    find: vi.fn().mockReturnThis(),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    countDocuments: vi.fn().mockResolvedValue(0),
+    deleteMany: vi.fn(),
+    aggregate: vi.fn(() => ({ toArray: vi.fn().mockResolvedValue([]) })),
+    updateOne: vi.fn(),
+    createIndex: vi.fn().mockResolvedValue('index_name'),
   };
   const mockStudiqMongoDb = {
+    databaseName: 'studiq_local',
     collection: vi.fn().mockReturnValue(mockStudiqCollection),
+  };
+  const mockCmsBuilderCollection = {
+    insertOne: vi.fn(),
+    findOne: vi.fn(),
+    find: vi.fn().mockReturnThis(),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    countDocuments: vi.fn().mockResolvedValue(0),
+    deleteMany: vi.fn(),
+    aggregate: vi.fn(() => ({ toArray: vi.fn().mockResolvedValue([]) })),
+    updateOne: vi.fn(),
+    createIndex: vi.fn().mockResolvedValue('index_name'),
+  };
+  const mockCmsBuilderMongoDb = {
+    databaseName: 'cms_builder_local',
+    collection: vi.fn().mockReturnValue(mockCmsBuilderCollection),
+  };
+  const mockEcommerceCollection = {
+    insertOne: vi.fn(),
+    findOne: vi.fn(),
+    find: vi.fn().mockReturnThis(),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    countDocuments: vi.fn().mockResolvedValue(0),
+    deleteMany: vi.fn(),
+    aggregate: vi.fn(() => ({ toArray: vi.fn().mockResolvedValue([]) })),
+    updateOne: vi.fn(),
+    createIndex: vi.fn().mockResolvedValue('index_name'),
+  };
+  const mockEcommerceMongoDb = {
+    databaseName: 'ecom_local',
+    collection: vi.fn().mockReturnValue(mockEcommerceCollection),
+  };
+  const mockArchCollection = {
+    insertOne: vi.fn(),
+    findOne: vi.fn(),
+    find: vi.fn().mockReturnThis(),
+    sort: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    countDocuments: vi.fn().mockResolvedValue(0),
+    deleteMany: vi.fn(),
+    aggregate: vi.fn(() => ({ toArray: vi.fn().mockResolvedValue([]) })),
+    updateOne: vi.fn(),
+    createIndex: vi.fn().mockResolvedValue('index_name'),
+  };
+  const mockArchMongoDb = {
+    databaseName: 'arch_web_local',
+    collection: vi.fn().mockReturnValue(mockArchCollection),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
     vi.mocked(getStudiqMongoDb).mockResolvedValue(mockStudiqMongoDb as unknown as Db);
+    vi.mocked(getCmsBuilderMongoDb).mockResolvedValue(mockCmsBuilderMongoDb as unknown as Db);
+    vi.mocked(getEcommerceMongoDb).mockResolvedValue(mockEcommerceMongoDb as unknown as Db);
+    vi.mocked(getArchMongoDb).mockResolvedValue(mockArchMongoDb as unknown as Db);
     vi.mocked(readMongoSyncLock).mockResolvedValue(null);
   });
 
@@ -88,6 +174,9 @@ describe('system-log-repository', () => {
         correlationId: 'corr-from-context',
         spanId: 'span-from-context',
         parentSpanId: 'parent-span-from-context',
+        applicationId: 'geminitestapp',
+        applicationName: 'GeminiTestApp',
+        originCollection: 'system_logs',
         createdAt,
       })
     );
@@ -100,6 +189,8 @@ describe('system-log-repository', () => {
         correlationId: 'corr-from-context',
         spanId: 'span-from-context',
         parentSpanId: 'parent-span-from-context',
+        applicationId: 'geminitestapp',
+        applicationName: 'GeminiTestApp',
         createdAt: '2026-03-27T15:00:00.000Z',
       })
     );
@@ -124,6 +215,87 @@ describe('system-log-repository', () => {
         message: 'Kangur lessons route completed',
         source: 'api.kangur.lessons.GET',
         path: '/api/kangur/lessons',
+        applicationId: 'studiq',
+        applicationName: 'StudiQ',
+        originDatabase: 'studiq_local',
+      })
+    );
+    expect(mockMongoCollection.insertOne).not.toHaveBeenCalled();
+    expect(mockMongoCollection.updateOne).not.toHaveBeenCalled();
+  });
+
+  it('routes CMS Builder system logs to the CMS Builder local database', async () => {
+    await createSystemLog({
+      message: 'CMS Builder page saved',
+      level: 'info',
+      source: 'cms.pages.[id].PUT',
+      service: 'cms',
+      path: '/api/cms/pages/page-1',
+      createdAt: new Date('2026-05-18T09:45:00.000Z'),
+    });
+
+    expect(mockCmsBuilderMongoDb.collection).toHaveBeenCalledWith('system_logs');
+    expect(mockCmsBuilderCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: 'CMS Builder page saved',
+        applicationId: 'cms-builder',
+        applicationName: 'CMS Builder',
+        originDatabase: 'cms_builder_local',
+      })
+    );
+    expect(mockMongoCollection.insertOne).not.toHaveBeenCalled();
+  });
+
+  it('routes Stargater error logs to ecommerce local logs without mirroring centrally', async () => {
+    await createSystemLog({
+      message: 'Stargater checkout failed',
+      level: 'error',
+      source: 'stargater.checkout.POST',
+      service: 'stargater',
+      context: {
+        applicationId: 'stargater',
+      },
+      createdAt: new Date('2026-05-18T09:00:00.000Z'),
+    });
+
+    expect(mockEcommerceMongoDb.collection).toHaveBeenCalledWith('system_logs');
+    expect(mockEcommerceMongoDb.collection).toHaveBeenCalledWith('error_logs');
+    expect(mockEcommerceCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'error',
+        message: 'Stargater checkout failed',
+        applicationId: 'stargater',
+        applicationName: 'Stargater',
+        originDatabase: 'ecom_local',
+      })
+    );
+    expect(mockEcommerceCollection.updateOne).toHaveBeenCalledWith(
+      { applicationId: 'stargater', originLogId: expect.any(String) },
+      { $setOnInsert: expect.objectContaining({ applicationId: 'stargater' }) },
+      { upsert: true }
+    );
+    expect(mockMongoCollection.updateOne).not.toHaveBeenCalled();
+  });
+
+  it('routes Milkbar Designers logs to the Arch local database', async () => {
+    await createSystemLog({
+      message: '[milkbar-cms] local runtime saved',
+      level: 'info',
+      source: 'milkbar-cms',
+      service: 'milkbar-cms',
+      path: '/api/v2/page-manager/milkbardesigners',
+      createdAt: new Date('2026-05-18T09:30:00.000Z'),
+    });
+
+    expect(mockArchMongoDb.collection).toHaveBeenCalledWith('system_logs');
+    expect(mockArchCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: '[milkbar-cms] local runtime saved',
+        applicationId: 'arch',
+        applicationName: 'Milkbar Designers',
+        originDatabase: 'arch_web_local',
       })
     );
     expect(mockMongoCollection.insertOne).not.toHaveBeenCalled();
@@ -188,8 +360,8 @@ describe('system-log-repository', () => {
         ]),
       })
     );
-    expect(mockMongoCollection.skip).toHaveBeenCalledWith(10);
-    expect(mockMongoCollection.limit).toHaveBeenCalledWith(10);
+    expect(mockMongoCollection.skip).not.toHaveBeenCalled();
+    expect(mockMongoCollection.limit).toHaveBeenCalledWith(20);
   });
 
   it('clamps pagination and builds duration, service, tracing, query, and date filters', async () => {
@@ -295,12 +467,15 @@ describe('system-log-repository', () => {
               { traceId: { $regex: 'timeout', $options: 'i' } },
               { correlationId: { $regex: 'timeout', $options: 'i' } },
               { userId: { $regex: 'timeout', $options: 'i' } },
+              { applicationId: { $regex: 'timeout', $options: 'i' } },
+              { applicationName: { $regex: 'timeout', $options: 'i' } },
+              { sourceService: { $regex: 'timeout', $options: 'i' } },
             ],
           },
         ]),
       })
     );
-    expect(mockMongoCollection.skip).toHaveBeenLastCalledWith(0);
+    expect(mockMongoCollection.skip).not.toHaveBeenCalled();
     expect(mockMongoCollection.limit).toHaveBeenLastCalledWith(200);
   });
 
@@ -376,7 +551,11 @@ describe('system-log-repository', () => {
       })
     );
     expect(mockMongoCollection.findOne).toHaveBeenCalledWith({
-      $or: [{ _id: objectId }, { id: '507f1f77bcf86cd799439011' }],
+      $or: [
+        { _id: objectId },
+        { id: '507f1f77bcf86cd799439011' },
+        { originLogId: '507f1f77bcf86cd799439011' },
+      ],
     });
 
     mockMongoCollection.findOne.mockResolvedValueOnce(null);

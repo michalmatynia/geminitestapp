@@ -9,6 +9,7 @@ import type {
   ImageFileRepository,
   ImageFileUpdateInput,
 } from '@/shared/contracts/files';
+import { getMongoDb as getCmsBuilderMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
 
@@ -227,3 +228,6 @@ export const mongoImageFileRepository: ImageFileRepository =
 
 export const productMongoImageFileRepository: ImageFileRepository =
   createMongoImageFileRepository(() => getProductsMongoDb());
+
+export const cmsBuilderMongoImageFileRepository: ImageFileRepository =
+  createMongoImageFileRepository(() => getCmsBuilderMongoDb());

@@ -183,7 +183,9 @@ export function Admin3DAssetsPage({
   uploadStorageProfile = 'default',
 }: Admin3DAssetsPageProps): React.JSX.Element {
   return (
-    <Admin3DAssetsProvider>
+    <Admin3DAssetsProvider
+      storageProfile={uploadStorageProfile === 'milkbarCms' ? uploadStorageProfile : undefined}
+    >
       <Admin3DAssetsContent uploadStorageProfile={uploadStorageProfile} />
     </Admin3DAssetsProvider>
   );

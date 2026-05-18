@@ -51,6 +51,27 @@ export type AppProviderDiagnostics = z.infer<typeof appProviderDiagnosticsSchema
  * Activity Log DTO
  */
 
+export const observabilityApplicationIdValues = [
+  'geminitestapp',
+  'studiq',
+  'cms-builder',
+  'stargater',
+  'arch',
+] as const;
+
+export const observabilityApplicationIdSchema = z.enum(observabilityApplicationIdValues);
+export type ObservabilityApplicationId = z.infer<typeof observabilityApplicationIdSchema>;
+
+export const observabilityLogOriginSchema = z.object({
+  applicationId: observabilityApplicationIdSchema.nullable().optional(),
+  applicationName: z.string().nullable().optional(),
+  environment: z.string().nullable().optional(),
+  sourceService: z.string().nullable().optional(),
+  originDatabase: z.string().nullable().optional(),
+  originCollection: z.string().nullable().optional(),
+  originLogId: z.string().nullable().optional(),
+});
+
 export const activityLogSchema = dtoBaseSchema.extend({
   type: z.string(),
   description: z.string(),
@@ -58,6 +79,7 @@ export const activityLogSchema = dtoBaseSchema.extend({
   entityId: z.string().nullable(),
   entityType: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
+  ...observabilityLogOriginSchema.shape,
 });
 
 export type ActivityLog = z.infer<typeof activityLogSchema>;
@@ -69,6 +91,7 @@ export const createActivityLogSchema = z.object({
   entityId: z.string().nullable().optional(),
   entityType: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  ...observabilityLogOriginSchema.shape,
 });
 
 export type CreateActivityLog = z.infer<typeof createActivityLogSchema>;
@@ -79,6 +102,7 @@ export const activityFiltersSchema = z.object({
   types: z.array(z.string()).optional(),
   entityId: z.string().optional(),
   entityType: z.string().optional(),
+  applicationId: observabilityApplicationIdSchema.optional(),
   search: z.string().optional(),
   limit: z.number().optional(),
   offset: z.number().optional(),

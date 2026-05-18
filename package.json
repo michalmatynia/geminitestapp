@@ -122,6 +122,8 @@
     "mongo:products:migrate:apply": "node --import tsx scripts/db/migrate-products-to-products-mongo.ts --apply --replace-target",
     "mongo:products:prune:plan": "node --import tsx scripts/db/prune-products-from-main-mongo.ts",
     "mongo:products:prune:apply": "node --import tsx scripts/db/prune-products-from-main-mongo.ts --apply --confirm=products-main-prune",
+    "mongo:observability:ensure": "node scripts/db/app-observability-logs.mjs",
+    "mongo:observability:sync-apps": "node scripts/db/app-observability-logs.mjs --backfill-errors",
     "mongo:ai-paths:orphans": "cross-env ENABLE_DEV_SYSTEM_LOG_PERSISTENCE=false ENABLE_DEV_RUNTIME_LOGGING_CONTROLS=false NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/cleanup-orphan-ai-path-history.ts --source=both",
     "mongo:ai-paths:orphans:apply": "cross-env ENABLE_DEV_SYSTEM_LOG_PERSISTENCE=false ENABLE_DEV_RUNTIME_LOGGING_CONTROLS=false NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/cleanup-orphan-ai-path-history.ts --source=both --apply",
     "mongo:purge:ai-path-runs": "cross-env ENABLE_DEV_SYSTEM_LOG_PERSISTENCE=false ENABLE_DEV_RUNTIME_LOGGING_CONTROLS=false NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/purge-ai-path-run-history.ts --source=both",

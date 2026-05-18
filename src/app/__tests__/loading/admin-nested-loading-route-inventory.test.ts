@@ -26,7 +26,6 @@ const adminNestedRoutesWithDedicatedLoading = [
   'kangur/observability',
   'kangur/settings',
   'kangur/tests-manager',
-  'cms/builder',
   'cms/pages',
   'cms/slugs',
   'cms/themes',

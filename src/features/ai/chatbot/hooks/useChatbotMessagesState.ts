@@ -14,27 +14,28 @@ import { useChatbotSession } from './useChatbotQueries';
 
 export type { UseChatbotMessagesStateReturn };
 
-export function useChatbotMessagesState(sessionId: string | null): UseChatbotMessagesStateReturn {
+function useChatbotMessageSender({
+  sessionId,
+  messages,
+  setMessages,
+  input,
+  setInput,
+  isSending,
+  setIsSending,
+}: {
+  sessionId: string | null;
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  isSending: boolean;
+  setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
+}): { sendMessage: () => Promise<void> } {
   const { toast } = useToast();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState<string>('');
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [isSending, setIsSending] = useState<boolean>(false);
-
-  const sessionQuery = useChatbotSession(sessionId);
   const sendMutation = useSendChatMessage();
 
-  // Load messages when session changes
-  useEffect((): void => {
-    if (sessionQuery.data?.messages) {
-      setMessages(sessionQuery.data.messages);
-    } else if (!sessionId) {
-      setMessages([]);
-    }
-  }, [sessionQuery.data, sessionId]);
-
   const sendMessage = useCallback(async (): Promise<void> => {
-    if (!input.trim() || isSending) return;
+    if (input.trim() === '' || isSending) return;
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -50,12 +51,9 @@ export function useChatbotMessagesState(sessionId: string | null): UseChatbotMes
     setIsSending(true);
 
     try {
-      const data = await sendMutation.mutateAsync({
-        messages: currentMessages,
-        sessionId,
-      });
+      const data = await sendMutation.mutateAsync({ messages: currentMessages, sessionId });
 
-      if (data.message) {
+      if (typeof data.message === 'string' && data.message !== '') {
         const assistantMessage: ChatMessage = {
           id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
           sessionId: sessionId ?? '',
@@ -63,18 +61,45 @@ export function useChatbotMessagesState(sessionId: string | null): UseChatbotMes
           content: data.message,
           timestamp: new Date().toISOString(),
         };
-        setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
+        setMessages((prev): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'useChatbotMessagesState.sendMessage',
-        sessionId,
-      });
+      logClientCatch(error, { source: 'useChatbotMessagesState.sendMessage', sessionId });
       toast('Failed to send message', { variant: 'error' });
     } finally {
       setIsSending(false);
     }
-  }, [input, isSending, messages, sessionId, sendMutation, toast]);
+  }, [input, isSending, messages, sessionId, sendMutation, toast, setMessages, setInput, setIsSending]);
+
+  return { sendMessage };
+}
+
+export function useChatbotMessagesState(sessionId: string | null): UseChatbotMessagesStateReturn {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState<string>('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isSending, setIsSending] = useState<boolean>(false);
+
+  const sessionQuery = useChatbotSession(sessionId);
+
+  // Load messages when session changes
+  useEffect((): void => {
+    if (sessionQuery.data?.messages !== undefined) {
+      setMessages(sessionQuery.data.messages);
+    } else if (typeof sessionId !== 'string' || sessionId === '') {
+      setMessages([]);
+    }
+  }, [sessionQuery.data, sessionId]);
+
+  const { sendMessage } = useChatbotMessageSender({
+    sessionId,
+    messages,
+    setMessages,
+    input,
+    setInput,
+    isSending,
+    setIsSending,
+  });
 
   return {
     messages,

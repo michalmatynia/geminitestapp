@@ -28,12 +28,13 @@ const canvasTemplateListSchema = z.array(canvasTemplateSchema);
 export function parseImageStudioCanvasTemplates(
   raw: string | null | undefined
 ): ImageStudioCanvasTemplate[] {
-  if (!raw?.trim()) {
+  const serialized = raw?.trim();
+  if (serialized === undefined || serialized.length === 0) {
     return [...DEFAULT_IMAGE_STUDIO_CANVAS_TEMPLATES];
   }
 
   try {
-    const parsedJson = JSON.parse(raw) as unknown;
+    const parsedJson = JSON.parse(serialized) as unknown;
     const parsed = canvasTemplateListSchema.safeParse(parsedJson);
     if (!parsed.success) {
       return [...DEFAULT_IMAGE_STUDIO_CANVAS_TEMPLATES];

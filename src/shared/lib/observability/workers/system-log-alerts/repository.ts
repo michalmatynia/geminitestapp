@@ -47,6 +47,18 @@ export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
       ? doc.parentSpanId
       : (doc.context?.['parentSpanId'] as string | undefined)) ?? null,
   userId: doc.userId ?? null,
+  applicationId:
+    doc.applicationId === 'geminitestapp' ||
+    doc.applicationId === 'studiq' ||
+    doc.applicationId === 'stargater'
+      ? doc.applicationId
+      : null,
+  applicationName: doc.applicationName ?? null,
+  environment: doc.environment ?? null,
+  sourceService: doc.sourceService ?? doc.service ?? null,
+  originDatabase: doc.originDatabase ?? null,
+  originCollection: doc.originCollection ?? null,
+  originLogId: doc.originLogId ?? String(doc.id ?? doc._id ?? ''),
   createdAt: toIsoString(doc.createdAt),
   updatedAt: null,
 });

@@ -175,11 +175,16 @@ const findCategoryBySegment = (
 ): ProductCategory | null => {
   const lookupKey = normalizeTitleTermName(segment);
   if (lookupKey === '') return null;
-  const matches = (categories ?? []).filter((category: ProductCategory): boolean =>
-    [category.name_en, category.name, category.name_pl, category.name_de].some((candidate) =>
-      matchesNormalizedValue(candidate, lookupKey)
-    )
-  );
+  // Deduplicate by id before matching — duplicate DB records (ObjectId + string
+  // for the same hex value) must not inflate the match count to > 1.
+  const seenIds = new Set<string>();
+  const matches = (categories ?? []).filter((category: ProductCategory): boolean => {
+    if (seenIds.has(category.id)) return false;
+    seenIds.add(category.id);
+    return [category.name_en, category.name, category.name_pl, category.name_de].some(
+      (candidate) => matchesNormalizedValue(candidate, lookupKey)
+    );
+  });
   return matches.length === 1 ? matches[0] ?? null : null;
 };
 

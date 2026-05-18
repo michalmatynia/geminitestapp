@@ -23,6 +23,7 @@ import {
 } from '@/features/viewer3d/api';
 import type { ListQuery, SingleQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { FileStorageProfile } from '@/shared/lib/files/constants';
 import { api } from '@/shared/lib/api-client';
 import {
   useListQueryV2,
@@ -67,12 +68,16 @@ function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFi
   const normalizedFilename = normalizeOptionalString(filters.filename);
   const normalizedCategory = normalizeOptionalString(filters.categoryId);
   const normalizedSearch = normalizeOptionalString(filters.search);
+  const normalizedStorageProfile = normalizeOptionalString(filters.storageProfile);
   const normalizedTags = normalizeTagsFilter(filters.tags);
 
   return {
     ...(normalizedFilename !== '' ? { filename: normalizedFilename } : {}),
     ...(normalizedCategory !== '' ? { categoryId: normalizedCategory } : {}),
     ...(normalizedSearch !== '' ? { search: normalizedSearch } : {}),
+    ...(normalizedStorageProfile === 'default' || normalizedStorageProfile === 'milkbarCms'
+      ? { storageProfile: normalizedStorageProfile }
+      : {}),
     ...(normalizedTags.length > 0 ? { tags: normalizedTags } : {}),
     ...(typeof filters.isPublic === 'boolean' ? { isPublic: filters.isPublic } : {}),
   };
@@ -91,6 +96,7 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
       filters.filename,
       filters.categoryId,
       filters.search,
+      filters.storageProfile,
       filters.isPublic,
       Array.isArray(filters.tags) ? filters.tags.join('|') : '',
     ]
@@ -115,11 +121,11 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
   });
 }
 
-export function useAsset3DCategories(): ListQuery<string> {
-  const queryKey = asset3dKeys.categories();
+export function useAsset3DCategories(storageProfile?: FileStorageProfile): ListQuery<string> {
+  const queryKey = [...asset3dKeys.categories(), storageProfile ?? 'all'] as const;
   return useListQueryV2({
     queryKey,
-    queryFn: fetchCategories,
+    queryFn: () => fetchCategories(storageProfile),
     staleTime: ASSET_METADATA_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -135,11 +141,11 @@ export function useAsset3DCategories(): ListQuery<string> {
   });
 }
 
-export function useAsset3DTags(): ListQuery<string> {
-  const queryKey = asset3dKeys.tags();
+export function useAsset3DTags(storageProfile?: FileStorageProfile): ListQuery<string> {
+  const queryKey = [...asset3dKeys.tags(), storageProfile ?? 'all'] as const;
   return useListQueryV2({
     queryKey,
-    queryFn: fetchTags,
+    queryFn: () => fetchTags(storageProfile),
     staleTime: ASSET_METADATA_STALE_TIME_MS,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

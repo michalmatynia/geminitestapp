@@ -30,6 +30,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     ctaLabel: 'how it works',
     hint: '- drag rooms to reassign programme',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -211,6 +212,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_DE: ArchPageContent = {
     ctaLabel: 'wie es funktioniert',
     hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
@@ -312,6 +314,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_PL: ArchPageContent = {
     ctaLabel: 'jak to działa',
     hint: '- przeciągnij pomieszczenia, by przypisać program',
     thumbImages: [],
+    asset3dSlots: [],
   },
   philosophy: {
     eyebrow: '- 02 / filozofia',
@@ -429,6 +432,7 @@ export const DEFAULT_ARCH_PAGE_SETTINGS: ArchPageSettings = {
   },
   defaultLocale: 'en',
   publishedLocales: ['en', 'de', 'pl'],
+  contactEmail: 'hello@milkbar.studio',
 };
 
 // ─── Normalize helpers ────────────────────────────────────────────────────────
@@ -600,6 +604,14 @@ export function normalizeArchPageContent(
       thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages).map(
         toFastCometAssetUrl
       ),
+      asset3dSlots: asStringArray(drawing['asset3dSlots'], d.drawing.asset3dSlots),
+      ...(asStringArray(drawing['asset3dSlotUrls'], []).length > 0
+        ? {
+            asset3dSlotUrls: asStringArray(drawing['asset3dSlotUrls'], []).map(
+              toFastCometAssetUrl
+            ),
+          }
+        : {}),
       ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
         ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
         : {}),
@@ -723,6 +735,7 @@ function normalizeArchPageSettings(input: unknown): ArchPageSettings {
     },
     defaultLocale,
     publishedLocales: publishedLocales.length > 0 ? publishedLocales : d.publishedLocales,
+    contactEmail: asString(r['contactEmail'], d.contactEmail),
   };
 }
 

@@ -82,6 +82,9 @@ export async function postHandler(
   const activityType = pageCreatedType?.['PAGE_CREATED'];
   if (activityType && typeof logActivity === 'function') {
     void logActivity({
+      applicationId: 'cms-builder',
+      applicationName: 'CMS Builder',
+      sourceService: 'cms.pages',
       type: activityType,
       description: `Created CMS page: ${name}`,
       userId: ctx.userId ?? null,

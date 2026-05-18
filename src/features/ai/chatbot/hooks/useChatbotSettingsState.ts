@@ -1,22 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import {
-  parseChatbotSettingsPayload,
-  type ChatbotSettingsDto as ChatbotSettingsPayload,
-} from '@/shared/contracts/chatbot';
+import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useToast } from '@/shared/ui/primitives.public';
-import {
-  logClientCatch,
-  logClientError,
-} from '@/shared/utils/observability/client-error-logger';
 
-import { useSaveChatbotSettings } from './useChatbotMutations';
 import { useChatbotSettings } from './useChatbotQueries';
+import { useChatbotSettingsMemo } from './useChatbotSettingsState.utils';
+import { useChatbotSettingsHandlers } from './useChatbotSettingsState.handlers';
 
 export interface UseChatbotSettingsStateReturn {
   model: string;
@@ -77,9 +70,48 @@ export interface UseChatbotSettingsStateReturn {
   setAgentLoopBackoffMaxMs: (ms: number) => void;
 }
 
-export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
-  const { toast } = useToast();
+type NormalizedAgentSettings = Pick<
+  UseChatbotSettingsStateReturn,
+  | 'agentModeEnabled'
+  | 'agentBrowser'
+  | 'agentRunHeadless'
+  | 'agentIgnoreRobotsTxt'
+  | 'agentRequireHumanApproval'
+  | 'agentMaxSteps'
+  | 'agentMaxStepAttempts'
+  | 'agentMaxReplanCalls'
+  | 'agentReplanEverySteps'
+  | 'agentMaxSelfChecks'
+  | 'agentLoopGuardThreshold'
+  | 'agentLoopBackoffBaseMs'
+  | 'agentLoopBackoffMaxMs'
+>;
 
+const stringOrDefault = (value: string | undefined, fallback: string): string =>
+  typeof value === 'string' && value.length > 0 ? value : fallback;
+
+const numberOrDefault = (value: number | undefined, fallback: number): number =>
+  typeof value === 'number' ? value : fallback;
+
+const normalizeAgentSettings = (
+  agent: ReturnType<typeof useAgentCreatorSettings>
+): NormalizedAgentSettings => ({
+  agentModeEnabled: Boolean(agent.agentModeEnabled),
+  agentBrowser: stringOrDefault(agent.agentBrowser, DEFAULT_CHATBOT_SETTINGS.agentBrowser ?? 'chromium'),
+  agentRunHeadless: Boolean(agent.agentRunHeadless),
+  agentIgnoreRobotsTxt: Boolean(agent.agentIgnoreRobotsTxt),
+  agentRequireHumanApproval: Boolean(agent.agentRequireHumanApproval),
+  agentMaxSteps: numberOrDefault(agent.agentMaxSteps, 10),
+  agentMaxStepAttempts: numberOrDefault(agent.agentMaxStepAttempts, 3),
+  agentMaxReplanCalls: numberOrDefault(agent.agentMaxReplanCalls, 3),
+  agentReplanEverySteps: numberOrDefault(agent.agentReplanEverySteps, 5),
+  agentMaxSelfChecks: numberOrDefault(agent.agentMaxSelfChecks, 3),
+  agentLoopGuardThreshold: numberOrDefault(agent.agentLoopGuardThreshold, 3),
+  agentLoopBackoffBaseMs: numberOrDefault(agent.agentLoopBackoffBaseMs, 1000),
+  agentLoopBackoffMaxMs: numberOrDefault(agent.agentLoopBackoffMaxMs, 5000),
+});
+
+export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   // Base settings
   const [model, setModel] = useState<string>('');
   const [personaId, setPersonaId] = useState<string | null>(null);
@@ -101,251 +133,54 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   const settingsLoadedRef = useRef<boolean>(false);
 
   // External settings & data
-  const brainAssignment = useBrainAssignment({
-    feature: 'chatbot',
-  });
+  const brainAssignment = useBrainAssignment({ feature: 'chatbot' });
   const settingsQuery = useChatbotSettings(CHATBOT_SETTINGS_KEY);
-  const saveMutation = useSaveChatbotSettings();
 
   useEffect((): void => {
     const nextModel = brainAssignment.effectiveModelId.trim();
-    if (!nextModel || nextModel === model) return;
+    if (nextModel === '' || nextModel === model) return;
     setModel(nextModel);
   }, [brainAssignment.effectiveModelId, model]);
 
-  const {
-    agentModeEnabled,
-    setAgentModeEnabled,
-    agentBrowser,
-    setAgentBrowser,
-    agentRunHeadless,
-    setAgentRunHeadless,
-    agentIgnoreRobotsTxt,
-    setAgentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
-    setAgentRequireHumanApproval,
-    agentMaxSteps,
-    setAgentMaxSteps,
-    agentMaxStepAttempts,
-    setAgentMaxStepAttempts,
-    agentMaxReplanCalls,
-    setAgentMaxReplanCalls,
-    agentReplanEverySteps,
-    setAgentReplanEverySteps,
-    agentMaxSelfChecks,
-    setAgentMaxSelfChecks,
-    agentLoopGuardThreshold,
-    setAgentLoopGuardThreshold,
-    agentLoopBackoffBaseMs,
-    setAgentLoopBackoffBaseMs,
-    agentLoopBackoffMaxMs,
-    setAgentLoopBackoffMaxMs,
-  } = useAgentCreatorSettings();
+  const agent = useAgentCreatorSettings();
+  const normalizedAgent = normalizeAgentSettings(agent);
 
-  const currentSettings = useMemo<ChatbotSettingsPayload>(
-    () => ({
-      model,
-      temperature: DEFAULT_CHATBOT_SETTINGS.temperature,
-      maxTokens: DEFAULT_CHATBOT_SETTINGS.maxTokens,
-      systemPrompt: DEFAULT_CHATBOT_SETTINGS.systemPrompt,
-      personaId,
-      enableMemory: DEFAULT_CHATBOT_SETTINGS.enableMemory,
-      enableContext: DEFAULT_CHATBOT_SETTINGS.enableContext,
-      webSearchEnabled,
-      useGlobalContext,
-      useLocalContext,
-      localContextMode,
-      searchProvider,
-      playwrightPersonaId,
-      agentModeEnabled,
-      agentBrowser,
-      runHeadless: agentRunHeadless,
-      ignoreRobotsTxt: agentIgnoreRobotsTxt,
-      requireHumanApproval: agentRequireHumanApproval,
-      maxSteps: agentMaxSteps,
-      maxStepAttempts: agentMaxStepAttempts,
-      maxReplanCalls: agentMaxReplanCalls,
-      replanEverySteps: agentReplanEverySteps,
-      maxSelfChecks: agentMaxSelfChecks,
-      loopGuardThreshold: agentLoopGuardThreshold,
-      loopBackoffBaseMs: agentLoopBackoffBaseMs,
-      loopBackoffMaxMs: agentLoopBackoffMaxMs,
-    }),
-    [
-      model,
-      personaId,
-      webSearchEnabled,
-      useGlobalContext,
-      useLocalContext,
-      localContextMode,
-      searchProvider,
-      playwrightPersonaId,
-      agentModeEnabled,
-      agentBrowser,
-      agentRunHeadless,
-      agentIgnoreRobotsTxt,
-      agentRequireHumanApproval,
-      agentMaxSteps,
-      agentMaxStepAttempts,
-      agentMaxReplanCalls,
-      agentReplanEverySteps,
-      agentMaxSelfChecks,
-      agentLoopGuardThreshold,
-      agentLoopBackoffBaseMs,
-      agentLoopBackoffMaxMs,
-    ]
-  );
+  const currentSettings = useChatbotSettingsMemo({
+    model, personaId, webSearchEnabled, useGlobalContext, useLocalContext, localContextMode,
+    searchProvider, playwrightPersonaId,
+    ...normalizedAgent,
+  });
 
-  const loadChatbotSettings = useCallback(async (): Promise<void> => {
-    if (!settingsQuery.data?.settings?.settings) return;
-
-    try {
-      const stored = parseChatbotSettingsPayload(settingsQuery.data.settings.settings);
-      const resolved: ChatbotSettingsPayload = {
-        ...DEFAULT_CHATBOT_SETTINGS,
-        ...stored,
-      };
-
-      if (resolved.model) setModel(resolved.model);
-      setWebSearchEnabled(Boolean(resolved.webSearchEnabled));
-      setUseGlobalContext(Boolean(resolved.useGlobalContext));
-      setUseLocalContext(Boolean(resolved.useLocalContext));
-      setLocalContextMode((resolved.localContextMode as 'append' | 'override') ?? 'override');
-      setSearchProvider(resolved.searchProvider ?? 'serpapi');
-      setPersonaId(resolved.personaId ?? null);
-      setPlaywrightPersonaId(resolved.playwrightPersonaId ?? null);
-
-      setAgentModeEnabled(Boolean(resolved.agentModeEnabled));
-      setAgentBrowser(resolved.agentBrowser ?? DEFAULT_CHATBOT_SETTINGS.agentBrowser ?? 'chromium');
-      setAgentRunHeadless(Boolean(resolved.runHeadless));
-      setAgentIgnoreRobotsTxt(Boolean(resolved.ignoreRobotsTxt));
-      setAgentRequireHumanApproval(Boolean(resolved.requireHumanApproval));
-      setAgentMaxSteps(resolved.maxSteps ?? 10);
-      setAgentMaxStepAttempts(resolved.maxStepAttempts ?? 3);
-      setAgentMaxReplanCalls(resolved.maxReplanCalls ?? 3);
-      setAgentReplanEverySteps(resolved.replanEverySteps ?? 5);
-      setAgentMaxSelfChecks(resolved.maxSelfChecks ?? 3);
-      setAgentLoopGuardThreshold(resolved.loopGuardThreshold ?? 3);
-      setAgentLoopBackoffBaseMs(resolved.loopBackoffBaseMs ?? 1000);
-      setAgentLoopBackoffMaxMs(resolved.loopBackoffMaxMs ?? 5000);
-
-      setSettingsSnapshot(resolved);
-      setSettingsDirty(false);
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'useChatbotSettingsState.loadChatbotSettings',
-        key: CHATBOT_SETTINGS_KEY,
-      });
-      toast(error instanceof Error ? error.message : 'Invalid chatbot settings payload.', {
-        variant: 'error',
-      });
-    }
-  }, [
-    settingsQuery.data,
-    toast,
-    setAgentModeEnabled,
-    setAgentBrowser,
-    setAgentRunHeadless,
-    setAgentIgnoreRobotsTxt,
-    setAgentRequireHumanApproval,
-    setAgentMaxSteps,
-    setAgentMaxStepAttempts,
-    setAgentMaxReplanCalls,
-    setAgentReplanEverySteps,
-    setAgentMaxSelfChecks,
-    setAgentLoopGuardThreshold,
-    setAgentLoopBackoffBaseMs,
-    setAgentLoopBackoffMaxMs,
-  ]);
+  const handlers = useChatbotSettingsHandlers({
+    settingsQuery, currentSettings, setSettingsSnapshot, setSettingsDirty,
+    actions: {
+      setModel, setWebSearchEnabled, setUseGlobalContext, setUseLocalContext, setLocalContextMode,
+      setSearchProvider, setPersonaId, setPlaywrightPersonaId, ...agent,
+    },
+  });
 
   useEffect((): void => {
     if (settingsLoadedRef.current || !settingsQuery.isSuccess) return;
     settingsLoadedRef.current = true;
-    void loadChatbotSettings();
-  }, [settingsQuery.isSuccess, loadChatbotSettings]);
+    void handlers.loadChatbotSettings();
+  }, [settingsQuery.isSuccess, handlers]);
 
   useEffect((): void => {
-    if (!settingsSnapshot) {
+    if (settingsSnapshot === null) {
       setSettingsSnapshot(currentSettings);
       return;
     }
-    const snapshotJson = JSON.stringify(settingsSnapshot);
-    const currentJson = JSON.stringify(currentSettings);
-    setSettingsDirty(snapshotJson !== currentJson);
+    setSettingsDirty(JSON.stringify(settingsSnapshot) !== JSON.stringify(currentSettings));
   }, [currentSettings, settingsSnapshot]);
 
-  const saveChatbotSettings = async (): Promise<void> => {
-    try {
-      await saveMutation.mutateAsync({
-        key: CHATBOT_SETTINGS_KEY,
-        settings: currentSettings,
-      });
-      setSettingsDirty(false);
-      setSettingsSnapshot(currentSettings);
-      toast('Chatbot settings saved.', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to save settings.';
-      toast(message, { variant: 'error' });
-    }
-  };
-
   return {
-    model,
-    setModel,
-    personaId,
-    setPersonaId,
-    webSearchEnabled,
-    setWebSearchEnabled,
-    useGlobalContext,
-    setUseGlobalContext,
-    useLocalContext,
-    setUseLocalContext,
-    searchProvider,
-    setSearchProvider,
-    playwrightPersonaId,
-    setPlaywrightPersonaId,
-    globalContext,
-    setGlobalContext,
-    localContext,
-    setLocalContext,
-    localContextMode,
-    setLocalContextMode,
-    settingsDirty,
-    setSettingsDirty,
-    settingsSaving,
-    setSettingsSaving,
-    loadChatbotSettings,
-    saveChatbotSettings,
-
-    // Agent Mode
-    agentModeEnabled: Boolean(agentModeEnabled),
-    setAgentModeEnabled,
-    agentRunHeadless: Boolean(agentRunHeadless),
-    setAgentRunHeadless,
-    agentBrowser: agentBrowser ?? 'chromium',
-    setAgentBrowser,
-    agentIgnoreRobotsTxt: Boolean(agentIgnoreRobotsTxt),
-    setAgentIgnoreRobotsTxt,
-    agentRequireHumanApproval: Boolean(agentRequireHumanApproval),
-    setAgentRequireHumanApproval,
-
-    // Agent Settings
-    agentMaxSteps: agentMaxSteps ?? 10,
-    setAgentMaxSteps,
-    agentMaxStepAttempts: agentMaxStepAttempts ?? 3,
-    setAgentMaxStepAttempts,
-    agentMaxReplanCalls: agentMaxReplanCalls ?? 3,
-    setAgentMaxReplanCalls,
-    agentReplanEverySteps: agentReplanEverySteps ?? 5,
-    setAgentReplanEverySteps,
-    agentMaxSelfChecks: agentMaxSelfChecks ?? 3,
-    setAgentMaxSelfChecks,
-    agentLoopGuardThreshold: agentLoopGuardThreshold ?? 3,
-    setAgentLoopGuardThreshold,
-    agentLoopBackoffBaseMs: agentLoopBackoffBaseMs ?? 1000,
-    setAgentLoopBackoffBaseMs,
-    agentLoopBackoffMaxMs: agentLoopBackoffMaxMs ?? 5000,
-    setAgentLoopBackoffMaxMs,
+    model, setModel, personaId, setPersonaId, webSearchEnabled, setWebSearchEnabled,
+    useGlobalContext, setUseGlobalContext, useLocalContext, setUseLocalContext,
+    searchProvider, setSearchProvider, playwrightPersonaId, setPlaywrightPersonaId,
+    globalContext, setGlobalContext, localContext, setLocalContext,
+    localContextMode, setLocalContextMode, settingsDirty, setSettingsDirty,
+    settingsSaving, setSettingsSaving, ...handlers,
+    ...agent,
+    ...normalizedAgent,
   };
 }

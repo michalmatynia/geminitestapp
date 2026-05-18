@@ -8,8 +8,6 @@ import {
 
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
-const allowEmptySource = args.has('--allow-empty-source');
-const allowEmptyCollectionReplace = args.has('--allow-empty-collection-replace');
 
 const getArgValue = (name, fallback) => {
   const prefix = `${name}=`;
@@ -42,37 +40,28 @@ const targetDbName = getArgValue(
     parseDbNameFromUri(targetUri, 'cms_builder_local')
 );
 
-const fail = (message, extra = {}) => {
-  console.error(
-    JSON.stringify(
-      {
-        ok: false,
-        message,
-        ...extra,
-      },
-      null,
-      2
-    )
-  );
-  process.exit(1);
+const getIdKey = (id) => {
+  if (id && typeof id === 'object' && typeof id.toHexString === 'function') {
+    return id.toHexString();
+  }
+  return JSON.stringify(id);
 };
 
-const planCollectionCopy = async ({ sourceDb, targetDb, targetInitialized, name, filter = {} }) => {
+const planCollectionCopy = async ({ sourceDb, targetDb, name, filter = {} }) => {
   const docs = await sourceDb.collection(name).find(filter).toArray();
-  let targetCount = null;
+  const sourceIds = docs.map((doc) => doc._id).filter((id) => id !== undefined);
+  const targetIds =
+    sourceIds.length > 0
+      ? await targetDb
+          .collection(name)
+          .find({ _id: { $in: sourceIds } }, { projection: { _id: 1 } })
+          .toArray()
+      : [];
+  const existingTargetIdKeys = new Set(targetIds.map((doc) => getIdKey(doc._id)));
+  const missingDocs = docs.filter((doc) => !existingTargetIdKeys.has(getIdKey(doc._id)));
+  const targetMatchingCount = await targetDb.collection(name).countDocuments(filter);
 
-  if (apply && targetInitialized && docs.length === 0) {
-    targetCount = await targetDb.collection(name).countDocuments(filter);
-    if (targetCount > 0 && !allowEmptyCollectionReplace) {
-      fail('Refusing to replace existing CMS Builder target data with an empty source collection.', {
-        collection: name,
-        targetCount,
-        requiredFlag: '--allow-empty-collection-replace',
-      });
-    }
-  }
-
-  return { name, filter, docs, targetCount };
+  return { name, filter, docs, missingDocs, targetMatchingCount };
 };
 
 const sourceClient = new MongoClient(sourceUri, buildMongoOptions(sourceUri));
@@ -85,20 +74,12 @@ try {
   const sourceDb = sourceClient.db(sourceDbName);
   const targetDb = targetClient.db(targetDbName);
   const { selections } = await collectCmsBuilderMongoSelections(sourceDb);
-  const targetMetadata = apply
-    ? await targetDb
-        .collection('cms_builder_database_metadata')
-        .findOne({ _id: 'local-cms-builder-db' })
-    : null;
-  const targetInitialized = Boolean(targetMetadata);
-
   const copyPlans = [];
   for (const { name, filter } of selections) {
     copyPlans.push(
       await planCollectionCopy({
         sourceDb,
         targetDb,
-        targetInitialized,
         name,
         filter,
       })
@@ -106,27 +87,20 @@ try {
   }
 
   const sourceTotal = copyPlans.reduce((total, plan) => total + plan.docs.length, 0);
-  if (apply && targetInitialized && sourceTotal === 0 && !allowEmptySource) {
-    fail('Refusing to copy from an empty CMS Builder root source into an initialized target database.', {
-      targetMetadata: 'cms_builder_database_metadata/local-cms-builder-db',
-      requiredFlag: '--allow-empty-source',
-      remedy:
-        'This usually means root data was already detached. Use the existing CMS Builder target database instead.',
-    });
-  }
-
   const copied = {};
+  const targetExisting = {};
   if (apply) {
-    for (const { name, filter, docs } of copyPlans) {
-      await targetDb.collection(name).deleteMany(filter);
-      if (docs.length > 0) {
-        await targetDb.collection(name).insertMany(docs, { ordered: false });
+    for (const { name, missingDocs, targetMatchingCount } of copyPlans) {
+      if (missingDocs.length > 0) {
+        await targetDb.collection(name).insertMany(missingDocs, { ordered: false });
       }
-      copied[name] = docs.length;
+      copied[name] = missingDocs.length;
+      targetExisting[name] = targetMatchingCount;
     }
   } else {
-    for (const { name, docs } of copyPlans) {
-      copied[name] = docs.length;
+    for (const { name, missingDocs, targetMatchingCount } of copyPlans) {
+      copied[name] = missingDocs.length;
+      targetExisting[name] = targetMatchingCount;
     }
   }
 
@@ -139,6 +113,8 @@ try {
           database: targetDbName,
           sourceDatabase: sourceDbName,
           copiedCollections: copied,
+          sourceTotal,
+          targetExistingCollections: targetExisting,
           updatedAt: new Date(),
         },
         $setOnInsert: { createdAt: new Date() },
@@ -154,7 +130,9 @@ try {
         mode: apply ? 'apply' : 'plan',
         source: { uri: sourceUri, database: sourceDbName },
         target: { uri: targetUri, database: targetDbName },
-        collections: copied,
+        sourceTotal,
+        insertedMissingCollections: copied,
+        targetExistingCollections: targetExisting,
       },
       null,
       2

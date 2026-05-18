@@ -58,6 +58,7 @@ export const asset3DListFiltersSchema = z.object({
   tags: z.array(z.string()).optional(),
   filename: z.string().optional(),
   isPublic: z.boolean().optional(),
+  storageProfile: z.enum(['default', 'milkbarCms']).optional(),
 });
 
 export type Asset3DListFilters = z.infer<typeof asset3DListFiltersSchema>;

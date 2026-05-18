@@ -23,7 +23,11 @@ import {
 
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import { activityLogSchema } from './system';
+import {
+  activityLogSchema,
+  observabilityApplicationIdSchema,
+  observabilityLogOriginSchema,
+} from './system';
 
 /**
  * Error categories for classification and routing
@@ -97,6 +101,7 @@ export const systemLogRecordSchema = dtoBaseSchema.extend({
   spanId: z.string().nullable().optional(),
   parentSpanId: z.string().nullable().optional(),
   userId: z.string().nullable().optional(),
+  ...observabilityLogOriginSchema.shape,
 });
 
 export type SystemLogRecord = z.infer<typeof systemLogRecordSchema>;
@@ -119,6 +124,7 @@ export const createSystemLogInputSchema = z.object({
   spanId: z.string().nullable().optional(),
   parentSpanId: z.string().nullable().optional(),
   userId: z.string().nullable().optional(),
+  ...observabilityLogOriginSchema.shape,
   createdAt: z.string().optional(), // ISO string when sent as DTO
 });
 
@@ -138,6 +144,7 @@ export const listSystemLogsInputSchema = z.object({
   traceId: z.string().nullable().optional(),
   correlationId: z.string().nullable().optional(),
   userId: z.string().nullable().optional(),
+  applicationId: observabilityApplicationIdSchema.nullable().optional(),
   fingerprint: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   query: z.string().nullable().optional(),
@@ -169,6 +176,7 @@ export const systemLogsFilterQuerySchema = z.object({
   traceId: optionalTrimmedQueryString(),
   correlationId: optionalTrimmedQueryString(),
   userId: optionalTrimmedQueryString(),
+  applicationId: optionalTrimmedQueryString(observabilityApplicationIdSchema),
   fingerprint: optionalTrimmedQueryString(),
   category: optionalTrimmedQueryString(),
   query: optionalTrimmedQueryString(),
@@ -205,6 +213,7 @@ export const systemLogsCreateRequestSchema = z.object({
   spanId: z.string().optional(),
   parentSpanId: z.string().optional(),
   userId: z.string().optional(),
+  ...observabilityLogOriginSchema.shape,
 });
 
 export type SystemLogsCreateRequest = z.infer<typeof systemLogsCreateRequestSchema>;

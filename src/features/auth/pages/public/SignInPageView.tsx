@@ -37,13 +37,20 @@ export const resolveSignInCallbackNavigation = (
   return { kind: 'location', href: trimmed };
 };
 
-const useSignInFormLogic = () => {
-  const translations = useTranslations('AuthSignIn');
-  const router = useRouter();
+const useSignInFormState = (
+  translations: ReturnType<typeof useTranslations<'AuthSignIn'>>
+): {
+  email: string;
+  setEmail: (email: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+  isSubmitting: boolean;
+  setIsSubmitting: (isSubmitting: boolean) => void;
+} => {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
   const urlError = searchParams.get('error');
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(
@@ -51,29 +58,64 @@ const useSignInFormLogic = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      const result = await signIn('credentials', { email, password, callbackUrl, redirect: false });
-      if (result?.error !== undefined && result.error !== null) {
-        setError(translations('invalidEmailOrPassword'));
-      } else if (result?.ok === true) {
-        const navigationTarget = resolveSignInCallbackNavigation(callbackUrl, window.location.origin);
-        if (navigationTarget?.kind === 'router') {
-          startTransition(() => { router.push(navigationTarget.href); });
-        } else {
-          window.location.assign(navigationTarget?.href ?? callbackUrl);
-        }
+  return { email, setEmail, password, setPassword, error, setError, isSubmitting, setIsSubmitting };
+};
+
+const useSignInFormLogic = (): {
+  email: string;
+  setEmail: (email: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  error: string | null;
+  isSubmitting: boolean;
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  translations: ReturnType<typeof useTranslations<'AuthSignIn'>>;
+} => {
+  const translations = useTranslations('AuthSignIn');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
+  const { email, setEmail, password, setPassword, error, setError, isSubmitting, setIsSubmitting } =
+    useSignInFormState(translations);
+
+  const handleSignInSuccess = useCallback(
+    (targetUrl: string) => {
+      const navigationTarget = resolveSignInCallbackNavigation(targetUrl, window.location.origin);
+      if (navigationTarget?.kind === 'router') {
+        startTransition(() => {
+          router.push(navigationTarget.href);
+        });
+      } else {
+        window.location.assign(navigationTarget?.href ?? targetUrl);
       }
-    } catch (err) {
-      logClientCatch(err, { source: 'SignInPage', action: 'handleSubmit', email });
-      setError(translations('unexpectedError'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [email, password, callbackUrl, router, translations]);
+    },
+    [router]
+  );
+
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const result = await signIn('credentials', { email, password, callbackUrl, redirect: false });
+        const hasError = typeof result.error === 'string' && result.error.length > 0;
+        const isOk = result.ok === true;
+
+        if (hasError) {
+          setError(translations('invalidEmailOrPassword'));
+        } else if (isOk) {
+          handleSignInSuccess(callbackUrl);
+        }
+      } catch (err) {
+        logClientCatch(err, { source: 'SignInPage', action: 'handleSubmit', email });
+        setError(translations('unexpectedError'));
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [email, password, callbackUrl, handleSignInSuccess, translations, setError, setIsSubmitting]
+  );
 
   return { email, setEmail, password, setPassword, error, isSubmitting, handleSubmit, translations };
 };

@@ -25,6 +25,7 @@ export const querySchema = z.object({
   search: optionalTrimmedQueryString(),
   isPublic: optionalBooleanQuerySchema(),
   tags: optionalCsvQueryStringArray(),
+  storageProfile: z.enum(fileStorageProfileValues).optional(),
 });
 
 type Asset3DListQuery = {
@@ -33,6 +34,7 @@ type Asset3DListQuery = {
   search: string | null;
   isPublic: boolean | null;
   tags: string[];
+  storageProfile?: FileStorageProfile;
 };
 
 const readStorageProfile = (value: FormDataEntryValue | null): FileStorageProfile => {
@@ -58,6 +60,7 @@ const toAssetListFilters = (query: Asset3DListQuery): Asset3DListFilters => {
   });
   if (query.isPublic !== null) filters.isPublic = query.isPublic;
   if (query.tags.length > 0) filters.tags = query.tags;
+  if (query.storageProfile !== undefined) filters.storageProfile = query.storageProfile;
   return filters;
 };
 
@@ -65,7 +68,7 @@ async function listAssets3DCached(query: Asset3DListQuery): Promise<Asset3DRecor
   'use cache';
   applyCacheLife('swr60');
 
-  const repository = getAsset3DRepository();
+  const repository = getAsset3DRepository({ storageProfile: query.storageProfile });
   return repository.listAssets3D(toAssetListFilters(query));
 }
 
@@ -101,6 +104,7 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
     search: query.search ?? null,
     isPublic: query.isPublic ?? null,
     tags: query.tags ?? [],
+    storageProfile: query.storageProfile,
   });
 
   return NextResponse.json(assets, {

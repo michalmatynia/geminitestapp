@@ -113,7 +113,7 @@ export default function PagesPage(): React.ReactNode {
         cell: ({ row }) => (
           <div className='flex flex-col gap-1'>
             <Link
-              href={`/admin/cms/builder?pageId=${row.original.id}`}
+              href={`/admin/cms/pages/${row.original.id}/edit`}
               className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
             >
               {row.original.name}
@@ -201,14 +201,6 @@ export default function PagesPage(): React.ReactNode {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  startTransition(() => { router.push(`/admin/cms/builder?pageId=${row.original.id}`); });
-                }}
-              >
-                Open in Builder
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
                   startTransition(() => { router.push(`/admin/cms/pages/${row.original.id}/edit`); });
                 }}
               >
@@ -229,7 +221,7 @@ export default function PagesPage(): React.ReactNode {
         ),
       },
     ],
-    [domainSlugSet, previewSelections, activeDomain]
+    [activeDomain, domainSlugSet, previewSelections, router]
   );
 
   const filterConfig: FilterField[] = useMemo(
@@ -267,7 +259,7 @@ export default function PagesPage(): React.ReactNode {
     <AdminCmsPageLayout
       title='Content Pages'
       current='Pages'
-      description='Manage layouts and routes for your marketplace domains.'
+      description='Manage page records and routes for your marketplace domains.'
       headerActions={
         <div className='flex gap-2'>
           <CmsDomainSelector />

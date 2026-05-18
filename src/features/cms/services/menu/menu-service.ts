@@ -13,7 +13,8 @@ import {
   type MenuSettings,
 } from '@/shared/contracts/cms-menu';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
+import { resolveCmsBuilderMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const toMongoId = (id: string): string | ObjectId => {
@@ -45,7 +46,7 @@ const mapSettingsDocs = (docs: MongoStringSettingRecord<string | ObjectId>[]): M
 };
 
 export const readFirstAvailableSettingValue = async (keys: string[]): Promise<string | null> => {
-  const mongodbUri = process.env['MONGODB_URI'];
+  const mongodbUri = resolveCmsBuilderMongoSourceConfig('local').uri;
   if (keys.length === 0 || mongodbUri === undefined || mongodbUri === '') {
     return null;
   }

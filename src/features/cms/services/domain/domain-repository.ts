@@ -5,7 +5,7 @@
  * associated slug links in MongoDB.
  */
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 
 export const DOMAIN_COLLECTION = 'cms_domains';
 export const DOMAIN_SLUGS_COLLECTION = 'cms_domain_slugs';

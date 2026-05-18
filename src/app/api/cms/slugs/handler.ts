@@ -10,6 +10,7 @@ import {
 } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugCreateSchema } from '@/features/cms/server';
+import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
@@ -122,5 +123,13 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
     await ensureDomainSlug(domain.id, record.id);
   }
   const domainSlug = await getSlugForDomainById(domain.id, record.id, cmsRepository);
+  void logCmsActivity({
+    event: existing ? 'SLUG_LINKED' : 'SLUG_CREATED',
+    description: `${existing ? 'Linked' : 'Created'} CMS slug: ${slug}`,
+    userId: ctx.userId ?? null,
+    entityId: record.id,
+    entityType: 'cms_slug',
+    metadata: { slug, domainId: domain.id, pageId: pageId ?? null },
+  }).catch(() => {});
   return NextResponse.json(domainSlug ?? { ...record, isDefault: false });
 }

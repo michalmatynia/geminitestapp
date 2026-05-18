@@ -25,8 +25,6 @@ const adminAiRouteImports = [
 
 const adminCmsRouteImports = [
   '@/app/(admin)/admin/cms/page',
-  '@/app/(admin)/admin/cms/builder/page',
-  '@/app/(admin)/admin/cms/builder/settings/page',
   '@/app/(admin)/admin/cms/pages/page',
   '@/app/(admin)/admin/cms/pages/create/page',
   '@/app/(admin)/admin/cms/pages/[id]/edit/page',

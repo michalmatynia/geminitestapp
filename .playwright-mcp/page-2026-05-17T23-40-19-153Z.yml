@@ -1,0 +1,265 @@
+- region "Scrollable region" [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - generic [ref=e8]:
+        - link "Skip to content" [ref=e9] [cursor=pointer]:
+          - /url: "#kangur-main-content"
+        - complementary "Admin sidebar" [ref=e10]:
+          - navigation "Admin menu" [ref=e12]:
+            - generic [ref=e15]:
+              - generic [ref=e16]:
+                - search [ref=e17]:
+                  - img [ref=e18]
+                  - searchbox "Search admin pages…" [ref=e21]
+                - button "Collapse admin sidebar" [expanded] [ref=e23] [cursor=pointer]:
+                  - img [ref=e24]
+              - generic "Collapse all folders" [ref=e28]:
+                - button "Collapse all folders" [ref=e29] [cursor=pointer]:
+                  - img [ref=e30]
+            - generic [ref=e32]:
+              - button "Favorites" [ref=e35] [cursor=pointer]:
+                - generic [ref=e36]:
+                  - img [ref=e38]
+                  - generic [ref=e40]: Favorites
+                - img [ref=e41]
+              - link "Home" [ref=e45] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e46]:
+                  - img [ref=e48]
+                  - generic [ref=e51]: Home
+              - button "Workspace" [ref=e54] [cursor=pointer]:
+                - generic [ref=e55]:
+                  - img [ref=e57]
+                  - generic [ref=e59]: Workspace
+                - img [ref=e60]
+              - button "Filemaker" [ref=e64] [cursor=pointer]:
+                - generic [ref=e65]:
+                  - img [ref=e67]
+                  - generic [ref=e69]: Filemaker
+                - img [ref=e70]
+              - button "Image Studio" [ref=e74] [cursor=pointer]:
+                - generic [ref=e75]:
+                  - img [ref=e77]
+                  - generic [ref=e81]: Image Studio
+                - img [ref=e82]
+              - button "Prompt Exploder" [ref=e86] [cursor=pointer]:
+                - generic [ref=e87]:
+                  - img [ref=e89]
+                  - generic [ref=e92]: Prompt Exploder
+                - img [ref=e93]
+              - button "Page Manager" [ref=e97] [cursor=pointer]:
+                - generic [ref=e98]:
+                  - img [ref=e100]
+                  - generic [ref=e102]: Page Manager
+                - img [ref=e103]
+              - generic [ref=e105]:
+                - button "Commerce" [expanded] [ref=e107] [cursor=pointer]:
+                  - generic [ref=e108]:
+                    - img [ref=e110]
+                    - generic [ref=e114]: Commerce
+                  - img [ref=e115]
+                - generic [ref=e117]:
+                  - generic [ref=e118]:
+                    - button "• Products" [expanded] [ref=e120] [cursor=pointer]:
+                      - generic [ref=e121]:
+                        - generic [ref=e122]: •
+                        - generic [ref=e123]: Products
+                      - img [ref=e124]
+                    - generic [ref=e126]:
+                      - link "• All Products" [ref=e129] [cursor=pointer]:
+                        - /url: /admin/products
+                        - generic [ref=e130]:
+                          - generic [ref=e131]: •
+                          - generic [ref=e132]: All Products
+                      - link "• Drafts" [ref=e135] [cursor=pointer]:
+                        - /url: /admin/drafts
+                        - generic [ref=e136]:
+                          - generic [ref=e137]: •
+                          - generic [ref=e138]: Drafts
+                      - link "• Producers" [ref=e141] [cursor=pointer]:
+                        - /url: /admin/products/producers
+                        - generic [ref=e142]:
+                          - generic [ref=e143]: •
+                          - generic [ref=e144]: Producers
+                      - link "• Orders Import" [ref=e147] [cursor=pointer]:
+                        - /url: /admin/products/orders-import
+                        - generic [ref=e148]:
+                          - generic [ref=e149]: •
+                          - generic [ref=e150]: Orders Import
+                      - link "• Product Pages" [ref=e153] [cursor=pointer]:
+                        - /url: /admin/products/pages
+                        - generic [ref=e154]:
+                          - generic [ref=e155]: •
+                          - generic [ref=e156]: Product Pages
+                      - link "• Title Terms" [ref=e159] [cursor=pointer]:
+                        - /url: /admin/products/title-terms
+                        - generic [ref=e160]:
+                          - generic [ref=e161]: •
+                          - generic [ref=e162]: Title Terms
+                      - link "• Import" [ref=e165] [cursor=pointer]:
+                        - /url: /admin/products/import
+                        - generic [ref=e166]:
+                          - generic [ref=e167]: •
+                          - generic [ref=e168]: Import
+                      - link "• Preferences" [ref=e171] [cursor=pointer]:
+                        - /url: /admin/products/preferences
+                        - generic [ref=e172]:
+                          - generic [ref=e173]: •
+                          - generic [ref=e174]: Preferences
+                      - link "• Settings" [ref=e177] [cursor=pointer]:
+                        - /url: /admin/products/settings
+                        - generic [ref=e178]:
+                          - generic [ref=e179]: •
+                          - generic [ref=e180]: Settings
+                  - button "• Assets" [ref=e183] [cursor=pointer]:
+                    - generic [ref=e184]:
+                      - generic [ref=e185]: •
+                      - generic [ref=e186]: Assets
+                    - img [ref=e187]
+                  - link "• Job Board" [ref=e191] [cursor=pointer]:
+                    - /url: /admin/job-board
+                    - generic [ref=e192]:
+                      - generic [ref=e193]: •
+                      - generic [ref=e194]: Job Board
+              - button "Integrations" [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]:
+                  - img [ref=e200]
+                  - generic [ref=e202]: Integrations
+                - img [ref=e203]
+              - link "Brain" [ref=e207] [cursor=pointer]:
+                - /url: /admin/brain?tab=operations
+                - generic [ref=e208]:
+                  - img [ref=e210]
+                  - generic [ref=e218]: Brain
+              - button "Jobs" [ref=e221] [cursor=pointer]:
+                - generic [ref=e222]:
+                  - img [ref=e224]
+                  - generic [ref=e228]: Jobs
+                - img [ref=e229]
+              - button "AI" [ref=e233] [cursor=pointer]:
+                - generic [ref=e234]:
+                  - img [ref=e236]
+                  - generic [ref=e240]: AI
+                - img [ref=e241]
+              - button "Content" [ref=e245] [cursor=pointer]:
+                - generic [ref=e247]: Content
+                - img [ref=e248]
+              - button "System" [ref=e252] [cursor=pointer]:
+                - generic [ref=e253]:
+                  - img [ref=e255]
+                  - generic [ref=e258]: System
+                - img [ref=e259]
+        - generic [ref=e261]:
+          - generic "Admin toolbar":
+            - button "Avatar" [ref=e264] [cursor=pointer]:
+              - generic [ref=e266]: M
+          - main [ref=e267]:
+            - generic [ref=e269]:
+              - generic [ref=e270]:
+                - generic [ref=e271]:
+                  - generic [ref=e273]:
+                    - button "Remove All Products from admin favorites" [pressed] [ref=e274] [cursor=pointer]:
+                      - img [ref=e275]
+                    - navigation "Breadcrumb" [ref=e277]:
+                      - link "Admin" [ref=e278] [cursor=pointer]:
+                        - /url: /admin
+                      - generic [ref=e279]: /
+                      - link "Products" [ref=e280] [cursor=pointer]:
+                        - /url: /admin/products
+                      - generic [ref=e281]: /
+                      - generic [ref=e282]: Edit Product
+                  - heading "Edit Product" [level=1] [ref=e284]
+                - generic [ref=e285]:
+                  - button "Back to products" [ref=e286] [cursor=pointer]: Close
+                  - button "Update" [disabled]
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - tablist "Product form tabs" [ref=e290]:
+                    - tab "General" [selected] [ref=e291] [cursor=pointer]:
+                      - img [ref=e292]
+                      - generic [ref=e296]: General
+                    - tab "Other" [ref=e297] [cursor=pointer]:
+                      - img [ref=e298]
+                      - generic [ref=e301]: Other
+                    - tab "Parameters" [ref=e302] [cursor=pointer]:
+                      - img [ref=e303]
+                      - generic [ref=e304]: Parameters
+                    - tab "Images" [ref=e305] [cursor=pointer]:
+                      - img [ref=e306]
+                      - generic [ref=e310]: Images
+                    - tab "Studio" [ref=e311] [cursor=pointer]:
+                      - img [ref=e312]
+                      - generic [ref=e315]: Studio
+                    - tab "Marketplace Copy" [ref=e316] [cursor=pointer]:
+                      - img [ref=e317]
+                      - generic [ref=e321]: Marketplace Copy
+                    - tab "Custom Fields" [ref=e322] [cursor=pointer]:
+                      - img [ref=e323]
+                      - generic [ref=e328]: Custom Fields
+                    - tab "Scans" [ref=e329] [cursor=pointer]:
+                      - img [ref=e330]
+                      - generic [ref=e333]: Scans
+                    - tab "Import Info" [ref=e334] [cursor=pointer]:
+                      - img [ref=e335]
+                      - generic [ref=e339]: Import Info
+                    - tab "Notes" [ref=e340] [cursor=pointer]:
+                      - img [ref=e341]
+                      - generic [ref=e344]: Notes
+                    - tab "Note Link" [ref=e345] [cursor=pointer]:
+                      - img [ref=e346]
+                      - generic [ref=e349]: Note Link
+                    - tab "Validation" [ref=e350] [cursor=pointer]:
+                      - img [ref=e351]
+                      - generic [ref=e353]: Validation
+                  - tabpanel "General" [ref=e354]:
+                    - generic [ref=e355]:
+                      - generic [ref=e371]:
+                        - heading "Identifiers" [level=1] [ref=e375]
+                        - generic [ref=e376]:
+                          - generic [ref=e377]:
+                            - generic [ref=e380]: SKU *
+                            - textbox "SKU *" [ref=e382]:
+                              - /placeholder: Unique stock keeping unit
+                              - text: KEYCHA1479
+                          - generic [ref=e383]:
+                            - generic [ref=e386]: Product Identifier
+                            - generic [ref=e387]:
+                              - generic [ref=e388]:
+                                - combobox "Product identifier type" [ref=e390]:
+                                  - option "Select an option" [disabled]
+                                  - option "EAN" [selected]
+                                  - option "GTIN"
+                                  - option "ASIN"
+                                - textbox "Enter EAN" [ref=e391]
+                              - paragraph [ref=e392]: EAN, GTIN or ASIN code.
+                      - generic [ref=e393]:
+                        - heading "Dimensions & Weight" [level=1] [ref=e397]
+                        - generic [ref=e398]:
+                          - generic [ref=e399]:
+                            - generic [ref=e402]: Weight (kg)
+                            - generic [ref=e403]:
+                              - spinbutton "Weight (kg)" [ref=e404]: "0"
+                              - generic: KG
+                          - generic [ref=e405]:
+                            - generic [ref=e408]: Length (cm)
+                            - generic [ref=e409]:
+                              - spinbutton "Length (cm)" [ref=e410]: "0"
+                              - generic: CM
+                          - generic [ref=e411]:
+                            - generic [ref=e414]: Width (cm)
+                            - generic [ref=e415]:
+                              - spinbutton "Width (cm)" [ref=e416]: "0"
+                              - generic: CM
+                          - generic [ref=e417]:
+                            - generic [ref=e420]: Height (cm)
+                            - generic [ref=e421]:
+                              - spinbutton "Height (cm)" [ref=e422]: "0"
+                              - generic: CM
+                - button "Copy product ID" [ref=e423] [cursor=pointer]:
+                  - generic [ref=e424]: d17198a7-0882-467b-8003-db835638d5f7
+                  - img [ref=e425]
+  - alert [ref=e428]

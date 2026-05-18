@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsThemeCreateSchema } from '@/features/cms/server';
+import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
@@ -11,7 +12,7 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
   return NextResponse.json(themes);
 }
 
-export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, cmsThemeCreateSchema, {
     logPrefix: 'cms-themes',
   });
@@ -21,5 +22,13 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const cmsRepository = await getCmsRepository();
   const theme = await cmsRepository.createTheme({ ...parsed.data, isDefault: false });
+  void logCmsActivity({
+    event: 'THEME_CREATED',
+    description: `Created CMS theme: ${theme.name}`,
+    userId: ctx.userId ?? null,
+    entityId: theme.id,
+    entityType: 'cms_theme',
+    metadata: { name: theme.name },
+  }).catch(() => {});
   return NextResponse.json(theme);
 }

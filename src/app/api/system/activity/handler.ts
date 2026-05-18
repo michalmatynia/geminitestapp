@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { ActivityFilters } from '@/shared/contracts/system';
+import { observabilityApplicationIdSchema, type ActivityFilters } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
@@ -9,6 +9,7 @@ import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 
 export const activityQuerySchema = commonListQuerySchema.extend({
   type: z.string().trim().optional(),
+  applicationId: observabilityApplicationIdSchema.optional(),
 });
 
 type ActivityListQuery = z.infer<typeof activityQuerySchema>;
@@ -31,6 +32,9 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   }
   if (query.type !== undefined && query.type !== null) {
     filters.type = query.type;
+  }
+  if (query.applicationId !== undefined && query.applicationId !== null) {
+    filters.applicationId = query.applicationId;
   }
 
   const [logs, total] = await Promise.all([

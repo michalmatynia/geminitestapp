@@ -11,7 +11,10 @@ import { ProductFormDimensionsFields } from './ProductFormDimensionsFields';
 import { ProductFormGeneralLanguageFields } from './ProductFormGeneralLanguageFields';
 import ProductFormLatestAmazonExtraction from './ProductFormLatestAmazonExtraction';
 import { ProductFormIdentifierFields } from './ProductFormIdentifierFields';
-import type { ProductFormLanguage } from './ProductFormGeneral.types';
+import type {
+  ProductFormGeneralDisplayValues,
+  ProductFormLanguage,
+} from './ProductFormGeneral.types';
 import { useProductFormGeneralFocus } from './useProductFormGeneralFocus';
 import {
   useCompiledProductValidationPatterns,
@@ -42,7 +45,12 @@ const resolveFormLanguages = (
   return DEFAULT_FORM_LANGUAGES;
 };
 
-export default function ProductFormGeneral(): React.JSX.Element {
+const useProductFormGeneralState = (): {
+	  productFormMetadata: ReturnType<typeof useProductFormMetadata>;
+	  filteredLanguages: ProductFormLanguage[];
+	  displayValues: ProductFormGeneralDisplayValues;
+	  languageTabs: ReturnType<typeof useProductFormLanguageTabs>;
+	} => {
   const validationState = useProductValidationState();
   const productFormMetadata = useProductFormMetadata();
   const { getValues, setValue, watch } = useFormContext<ProductFormData>();
@@ -76,6 +84,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     getValues,
     setValue,
   });
+
   useProductFormGeneralFormatter({
     validatorEnabled: validationState.validatorEnabled,
     formatterEnabled: validationState.formatterEnabled,
@@ -90,10 +99,27 @@ export default function ProductFormGeneral(): React.JSX.Element {
     formatterLoopGuardRef,
   });
 
+  return {
+    productFormMetadata,
+    filteredLanguages,
+    displayValues,
+    languageTabs,
+  };
+};
+
+export default function ProductFormGeneral(): React.JSX.Element {
+  const { productFormMetadata, filteredLanguages, displayValues, languageTabs } =
+    useProductFormGeneralState();
+
   return (
     <div className='space-y-6'>
       <ProductFormGeneralLanguageFields
-        hasCatalogs={productFormMetadata.catalogsLoading || productFormMetadata.languagesLoading || productFormMetadata.hasExistingProduct || productFormMetadata.selectedCatalogIds.length > 0}
+        hasCatalogs={
+          productFormMetadata.catalogsLoading ||
+          productFormMetadata.languagesLoading ||
+          productFormMetadata.hasExistingProduct ||
+          productFormMetadata.selectedCatalogIds.length > 0
+        }
         languagesReady={filteredLanguages.length > 0}
         filteredLanguages={filteredLanguages}
         displayValues={displayValues}

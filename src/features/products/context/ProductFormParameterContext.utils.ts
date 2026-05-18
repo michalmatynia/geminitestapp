@@ -224,12 +224,18 @@ export const resolveLinkedParameterValuesById = ({
     const linkedType = parameter.linkedTitleTermType;
     if (!isLinkedTitleTermType(linkedType)) return;
 
-    const lookupKey = normalizeTitleTermName(structuredLinkedTermValues[linkedType]);
+    const rawValue = structuredLinkedTermValues[linkedType];
+    const lookupKey = normalizeTitleTermName(rawValue);
     if (lookupKey.length === 0) return;
 
     const matchedTerm = titleTermLookups[linkedType].get(lookupKey);
-    if (matchedTerm === undefined) return;
-    resolved.set(parameter.id, resolveLinkedParameterValue(parameter.id, matchedTerm));
+    if (matchedTerm !== undefined) {
+      resolved.set(parameter.id, resolveLinkedParameterValue(parameter.id, matchedTerm));
+      return;
+    }
+    // No matching title term — use the raw name segment so the parameter is
+    // always present when the product name encodes a value for this linked type.
+    resolved.set(parameter.id, { parameterId: parameter.id, value: rawValue, valuesByLanguage: { en: rawValue } });
   });
   return resolved;
 };
@@ -259,8 +265,10 @@ export const mergeLinkedParameterValues = ({
     if (usedLinkedParameterIds.has(normalizedParameterId)) return;
 
     const linkedValue = resolvedLinkedValuesById.get(normalizedParameterId);
-    if (linkedValue === undefined) return;
-    nextValues.push(linkedValue);
+    // Fall back to the stored value when the term lookup has no match (e.g. terms
+    // still loading). Dropping the entry here would cause a save to clear the
+    // parameter value before the title-term queries have resolved.
+    nextValues.push(linkedValue ?? entry);
     baseIndexByValueIndex.push(baseIndex);
     usedLinkedParameterIds.add(normalizedParameterId);
   });

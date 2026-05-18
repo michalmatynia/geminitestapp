@@ -14,6 +14,7 @@ import {
 } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugUpdateSchema } from '@/features/cms/server';
+import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import type { IdDto as Params } from '@/shared/contracts/base';
@@ -67,11 +68,11 @@ export async function getHandler(
  */
 export async function deleteHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const cmsRepository = await getCmsRepository();
   const domain = await resolveDomainFromRequest(req, query);
 
@@ -80,6 +81,15 @@ export async function deleteHandler(
   if (!stillLinked) {
     await cmsRepository.deleteSlug(id);
   }
+
+  void logCmsActivity({
+    event: stillLinked ? 'SLUG_UNLINKED' : 'SLUG_DELETED',
+    description: `${stillLinked ? 'Unlinked' : 'Deleted'} CMS slug`,
+    userId: ctx.userId ?? null,
+    entityId: id,
+    entityType: 'cms_slug',
+    metadata: { domainId: domain.id },
+  }).catch(() => {});
 
   return new Response(null, { status: 204 });
 }
@@ -90,11 +100,11 @@ export async function deleteHandler(
  */
 export async function putHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const parsed = await parseJsonBody(req, cmsSlugUpdateSchema, {
     logPrefix: 'cms-slugs',
@@ -139,9 +149,25 @@ export async function putHandler(
 
   if (zoningEnabled) {
     const domainSlug = await getSlugForDomainById(domain.id, id, cmsRepository);
+    void logCmsActivity({
+      event: 'SLUG_UPDATED',
+      description: `Updated CMS slug: ${updatedSlug.slug}`,
+      userId: ctx.userId ?? null,
+      entityId: id,
+      entityType: 'cms_slug',
+      metadata: { slug: updatedSlug.slug, domainId: domain.id, isDefault: isDefault ?? null },
+    }).catch(() => {});
     return NextResponse.json(domainSlug ?? updatedSlug);
   }
 
   const refreshed = await cmsRepository.getSlugById(id);
+  void logCmsActivity({
+    event: 'SLUG_UPDATED',
+    description: `Updated CMS slug: ${updatedSlug.slug}`,
+    userId: ctx.userId ?? null,
+    entityId: id,
+    entityType: 'cms_slug',
+    metadata: { slug: updatedSlug.slug, isDefault: isDefault ?? null },
+  }).catch(() => {});
   return NextResponse.json(refreshed ?? updatedSlug);
 }

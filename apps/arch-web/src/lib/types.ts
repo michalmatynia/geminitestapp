@@ -42,6 +42,7 @@ export type ArchPageSettings = {
   seo: { [K in ArchLocale]: ArchSeoMeta };
   defaultLocale: ArchLocale;
   publishedLocales: ArchLocale[];
+  contactEmail: string;
 };
 
 export interface Project {
@@ -101,6 +102,8 @@ export interface ArchPageContent {
     ctaLabel: string;
     hint: string;
     thumbImages: string[];
+    asset3dSlots: string[];
+    asset3dSlotUrls?: string[];
     interiorModelAssetId?: string;
     interiorModelUrl?: string;
   };

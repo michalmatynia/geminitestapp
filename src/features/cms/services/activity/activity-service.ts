@@ -6,6 +6,7 @@
 
 import 'server-only';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 export interface CmsActivityLogInput {
   event: string;
@@ -20,7 +21,20 @@ export interface CmsActivityLogInput {
  * Logs a structured CMS activity event.
  */
 export async function logCmsActivity(input: CmsActivityLogInput): Promise<void> {
+  await logActivity({
+    applicationId: 'cms-builder',
+    applicationName: 'CMS Builder',
+    sourceService: 'cms',
+    type: `cms.${input.event.toLowerCase()}`,
+    description: input.description,
+    userId: input.userId,
+    entityId: input.entityId ?? null,
+    entityType: input.entityType ?? 'cms',
+    metadata: input.metadata ?? null,
+  });
+
   await ErrorSystem.logInfo(input.description, {
+    applicationId: 'cms-builder',
     service: 'cms',
     event: input.event,
     userId: input.userId,

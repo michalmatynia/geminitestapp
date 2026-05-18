@@ -27,16 +27,16 @@ import {
   type MilkbarServiceCmsRecord,
 } from './milkbar-cms.types';
 import { configurationError, badRequestError } from '@/shared/errors/app-error';
-import { resolveMongoSourceConfig } from '@/shared/lib/db/mongo-source';
 import {
   resolveArchMongoSourceConfig,
   type MongoApplicationSourceConfig,
 } from '@/shared/lib/db/utils/mongo';
-import { getAsset3DRepository } from '@/features/viewer3d/server';
+import { getAsset3DFromLookupRepositories } from '@/features/viewer3d/server';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getPublicPathFromStoredPath } from '@/shared/lib/files/services/storage/file-storage-service';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 
 const SOURCE_PAGE_CONTENT_COLLECTION = 'milkbar_page_content';
 const SOURCE_PROJECTS_COLLECTION = 'milkbar_projects';
@@ -46,6 +46,9 @@ const RUNTIME_PROJECTS_COLLECTION = 'projects';
 const RUNTIME_SERVICES_COLLECTION = 'services';
 const RUNTIME_INQUIRIES_COLLECTION = 'inquiries';
 const PAGE_CONTENT_KEY = 'home';
+const MILKBAR_APPLICATION_ID = 'arch';
+const MILKBAR_APPLICATION_NAME = 'Milkbar Designers';
+const MILKBAR_SOURCE_SERVICE = 'milkbar-cms';
 
 type AnyRecord = Record<string, unknown>;
 type Vector = { x: number; y: number; z: number };
@@ -64,6 +67,51 @@ type MilkbarCmsData = {
   services: MilkbarServiceCmsRecord[];
   inquiries: MilkbarInquiryCmsRecord[];
   updatedAt: string | null;
+};
+
+const buildMilkbarLogContext = (
+  context: Record<string, unknown> = {}
+): Record<string, unknown> => ({
+  applicationId: MILKBAR_APPLICATION_ID,
+  applicationName: MILKBAR_APPLICATION_NAME,
+  sourceService: MILKBAR_SOURCE_SERVICE,
+  surface: 'milkbardesigners',
+  ...context,
+});
+
+const logMilkbarSystemEvent = (input: {
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  error?: unknown;
+  context?: Record<string, unknown>;
+}): void => {
+  void logSystemEvent({
+    level: input.level,
+    source: MILKBAR_SOURCE_SERVICE,
+    service: MILKBAR_SOURCE_SERVICE,
+    message: input.message,
+    error: input.error,
+    context: buildMilkbarLogContext(input.context),
+  });
+};
+
+const logMilkbarActivity = (input: {
+  type: string;
+  description: string;
+  entityId?: string | null;
+  entityType?: string | null;
+  metadata?: Record<string, unknown>;
+}): void => {
+  void logActivity({
+    type: input.type,
+    description: input.description,
+    entityId: input.entityId ?? null,
+    entityType: input.entityType ?? MILKBAR_SOURCE_SERVICE,
+    applicationId: MILKBAR_APPLICATION_ID,
+    applicationName: MILKBAR_APPLICATION_NAME,
+    sourceService: MILKBAR_SOURCE_SERVICE,
+    metadata: buildMilkbarLogContext(input.metadata),
+  });
 };
 
 const createEmptyMilkbarCmsData = (): MilkbarCmsData => ({
@@ -251,13 +299,13 @@ async function withMongoDb<T>(
 }
 
 async function withSourceOfTruthDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
-  const config = await resolveMongoSourceConfig('local');
-  return await withMongoDb(config, 'GeminiTest App local source-of-truth', work);
+  const config = resolveArchMongoSourceConfig('local');
+  return await withMongoDb(config, 'Milkbardesigners local source-of-truth', work);
 }
 
 async function withOptionalSourceOfTruthDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
-  const config = await resolveMongoSourceConfig('local');
-  return await withMongoDb(config, 'GeminiTest App local source-of-truth', work, { timeoutMs: 750 });
+  const config = resolveArchMongoSourceConfig('local');
+  return await withMongoDb(config, 'Milkbardesigners local source-of-truth', work, { timeoutMs: 750 });
 }
 
 async function withRuntimeDb<T>(work: (db: Db) => Promise<T>): Promise<T> {
@@ -431,7 +479,7 @@ const toMongoSourceStatus = (
 
 const getSourceStatus = async (): Promise<MilkbarCmsSourceStatus> => {
   const [sourceOfTruth, runtimeLocal] = await Promise.all([
-    resolveMongoSourceConfig('local'),
+    Promise.resolve(resolveArchMongoSourceConfig('local')),
     Promise.resolve(resolveArchMongoSourceConfig('local')),
   ]);
   const runtimeCloud = resolveArchMongoSourceConfig('cloud');
@@ -560,6 +608,10 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       ctaLabel: asString(drawing['ctaLabel'], fallback.drawing.ctaLabel),
       hint: asString(drawing['hint'], fallback.drawing.hint),
       thumbImages: asStringArray(drawing['thumbImages'], fallback.drawing.thumbImages),
+      asset3dSlots: asStringArray(drawing['asset3dSlots'], fallback.drawing.asset3dSlots),
+      ...(asStringArray(drawing['asset3dSlotUrls'], []).length > 0
+        ? { asset3dSlotUrls: asStringArray(drawing['asset3dSlotUrls'], []) }
+        : {}),
       ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
         ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
         : {}),
@@ -692,6 +744,7 @@ const normalizePageSettings = (input: unknown): MilkbarPageSettings => {
     },
     defaultLocale: normalizeDefaultLocale(record['defaultLocale']),
     publishedLocales: normalizePublishedLocales(record['publishedLocales']),
+    contactEmail: asString(record['contactEmail'], DEFAULT_MILKBAR_PAGE_SETTINGS.contactEmail),
   };
 };
 
@@ -781,6 +834,10 @@ const collectModelAssetIds = (input: MilkbarCmsUpdateInput): string[] => {
     const interiorId = content.drawing.interiorModelAssetId?.trim() ?? '';
     if (heroId.length > 0) ids.add(heroId);
     if (interiorId.length > 0) ids.add(interiorId);
+    content.drawing.asset3dSlots.forEach((assetId) => {
+      const trimmed = assetId.trim();
+      if (trimmed.length > 0) ids.add(trimmed);
+    });
   });
 
   input.projects.forEach((project) => {
@@ -798,9 +855,8 @@ const resolveModelAssetUrlMap = async (
   if (ids.length === 0) return new Map();
 
   try {
-    const repository = getAsset3DRepository();
     const records = await Promise.all(
-      ids.map(async (id) => ({ id, asset: await repository.getAsset3DById(id) }))
+      ids.map(async (id) => ({ id, asset: await getAsset3DFromLookupRepositories(id) }))
     );
     return new Map(
       records.flatMap(({ id, asset }) => {
@@ -825,6 +881,17 @@ const optionalStringProp = <K extends string>(
   return result;
 };
 
+const optionalStringArrayProp = <K extends string>(
+  key: K,
+  values: string[]
+): Partial<Record<K, string[]>> => {
+  const trimmed = values.map((value) => value.trim()).filter(Boolean);
+  if (trimmed.length === 0) return {};
+  const result: Partial<Record<K, string[]>> = {};
+  result[key] = trimmed;
+  return result;
+};
+
 const withoutHeroModelFields = (
   hero: MilkbarPageContent['hero']
 ): Omit<MilkbarPageContent['hero'], 'modelAssetId' | 'modelUrl'> => {
@@ -836,10 +903,14 @@ const withoutHeroModelFields = (
 
 const withoutDrawingModelFields = (
   drawing: MilkbarPageContent['drawing']
-): Omit<MilkbarPageContent['drawing'], 'interiorModelAssetId' | 'interiorModelUrl'> => {
+): Omit<
+  MilkbarPageContent['drawing'],
+  'interiorModelAssetId' | 'interiorModelUrl' | 'asset3dSlotUrls'
+> => {
   const copy = { ...drawing };
   delete copy.interiorModelAssetId;
   delete copy.interiorModelUrl;
+  delete copy.asset3dSlotUrls;
   return copy;
 };
 
@@ -866,6 +937,12 @@ const enrichPageContentWithModelUrls = (
     interiorAssetId !== undefined && interiorAssetId.length > 0
       ? assetUrls.get(interiorAssetId) ?? content.drawing.interiorModelUrl
       : undefined;
+  const asset3dSlots = content.drawing.asset3dSlots
+    .map((assetId) => assetId.trim())
+    .filter(Boolean);
+  const asset3dSlotUrls = asset3dSlots.map(
+    (assetId, index) => assetUrls.get(assetId) ?? content.drawing.asset3dSlotUrls?.[index] ?? ''
+  );
 
   const hero: MilkbarPageContent['hero'] = {
     ...withoutHeroModelFields(content.hero),
@@ -874,6 +951,8 @@ const enrichPageContentWithModelUrls = (
   };
   const drawing: MilkbarPageContent['drawing'] = {
     ...withoutDrawingModelFields(content.drawing),
+    asset3dSlots,
+    ...optionalStringArrayProp('asset3dSlotUrls', asset3dSlotUrls),
     ...optionalStringProp('interiorModelAssetId', interiorAssetId),
     ...optionalStringProp('interiorModelUrl', interiorUrl),
   };
@@ -981,17 +1060,49 @@ export async function saveMilkbarDesignersCmsSnapshot(
   const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizeUpdateInput(input));
   const now = new Date();
 
-  await withSourceOfTruthDb((db) => writeMilkbarCmsData(db, SOURCE_COLLECTIONS, updateInput, now));
+  try {
+    await withSourceOfTruthDb((db) => writeMilkbarCmsData(db, SOURCE_COLLECTIONS, updateInput, now));
+  } catch (error) {
+    logMilkbarSystemEvent({
+      level: 'error',
+      message: '[milkbar-cms] failed to save source-of-truth data.',
+      error,
+      context: {
+        collectionGroup: 'source-of-truth',
+        projectCount: updateInput.projects.length,
+        serviceCount: updateInput.services.length,
+      },
+    });
+    throw error;
+  }
+
   try {
     await withOptionalRuntimeDb((db) => writeMilkbarCmsData(db, RUNTIME_COLLECTIONS, updateInput, now));
   } catch (error) {
-    void logSystemEvent({
+    logMilkbarSystemEvent({
       level: 'warn',
-      source: 'milkbar-cms',
       message: '[milkbar-cms] local Milkbar runtime database is unavailable; saved source-of-truth only.',
       error,
+      context: {
+        collectionGroup: 'runtime',
+        projectCount: updateInput.projects.length,
+        serviceCount: updateInput.services.length,
+      },
     });
   }
+
+  logMilkbarActivity({
+    type: 'milkbar.cms.save',
+    description: 'Milkbar Designers CMS content was saved.',
+    entityId: PAGE_CONTENT_KEY,
+    entityType: MILKBAR_SOURCE_SERVICE,
+    metadata: {
+      projectCount: updateInput.projects.length,
+      serviceCount: updateInput.services.length,
+      sourceCollections: Object.values(SOURCE_COLLECTIONS),
+      runtimeCollections: Object.values(RUNTIME_COLLECTIONS),
+    },
+  });
 
   return await getMilkbarDesignersCmsSnapshot();
 }
@@ -1008,6 +1119,19 @@ export async function patchMilkbarInquiryStatus(
       { $set: { status } }
     );
   });
+
+  logMilkbarActivity({
+    type: 'milkbar.inquiry.status_updated',
+    description: `Milkbar Designers inquiry status changed to ${status}.`,
+    entityId: email,
+    entityType: 'milkbar-inquiry',
+    metadata: {
+      email,
+      status,
+      collection: RUNTIME_INQUIRIES_COLLECTION,
+    },
+  });
+
   return { ok: true };
 }
 

@@ -38,6 +38,7 @@ function buildFilterParams(filters: Asset3DListFilters): Record<string, string> 
     ['search', filters.search ?? undefined],
     ['isPublic', filters.isPublic !== undefined ? String(filters.isPublic) : undefined],
     ['tags', filters.tags !== undefined && filters.tags.length > 0 ? filters.tags.join(',') : undefined],
+    ['storageProfile', filters.storageProfile],
   ];
 
   entries.forEach(([key, value]) => {
@@ -127,12 +128,18 @@ export async function deleteAsset3DById(id: string): Promise<void> {
   await api.delete(`${API_BASE}/${id}`);
 }
 
-export async function fetchCategories(): Promise<string[]> {
-  return api.get<string[]>(`${API_BASE}/categories`);
+export async function fetchCategories(storageProfile?: FileStorageProfile): Promise<string[]> {
+  return api.get<string[]>(
+    `${API_BASE}/categories`,
+    storageProfile !== undefined ? { params: { storageProfile } } : undefined
+  );
 }
 
-export async function fetchTags(): Promise<string[]> {
-  return api.get<string[]>(`${API_BASE}/tags`);
+export async function fetchTags(storageProfile?: FileStorageProfile): Promise<string[]> {
+  return api.get<string[]>(
+    `${API_BASE}/tags`,
+    storageProfile !== undefined ? { params: { storageProfile } } : undefined
+  );
 }
 
 export async function reindexAssets3DFromDisk(): Promise<{

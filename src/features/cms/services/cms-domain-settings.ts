@@ -9,7 +9,8 @@ import {
   type CmsDomainSettings,
 } from '@/shared/contracts/cms';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
+import { resolveCmsBuilderMongoSourceConfig } from '@/shared/lib/db/utils/mongo';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const toMongoId = (id: string): string | ObjectId => {
@@ -18,7 +19,7 @@ const toMongoId = (id: string): string | ObjectId => {
 };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  if (!resolveCmsBuilderMongoSourceConfig('local').uri) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoStringSettingRecord<string | ObjectId>>('settings')

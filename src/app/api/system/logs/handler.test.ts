@@ -127,6 +127,13 @@ describe('system logs delete handler', () => {
       spanId: null,
       parentSpanId: null,
       userId: null,
+      applicationId: null,
+      applicationName: null,
+      environment: null,
+      sourceService: null,
+      originDatabase: null,
+      originCollection: null,
+      originLogId: null,
     });
     await expect(response.json()).resolves.toEqual({
       log: {
@@ -215,6 +222,7 @@ describe('system logs delete handler', () => {
       traceId: undefined,
       correlationId: undefined,
       userId: undefined,
+      applicationId: undefined,
       fingerprint: undefined,
       category: undefined,
       query: undefined,

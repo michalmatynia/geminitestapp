@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsThemeUpdateSchema } from '@/features/cms/server';
+import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -25,7 +26,7 @@ export async function getHandler(
 
 export async function putHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
@@ -48,16 +49,34 @@ export async function putHandler(
     throw notFoundError('Theme not found');
   }
 
+  void logCmsActivity({
+    event: 'THEME_UPDATED',
+    description: `Updated CMS theme: ${updated.name}`,
+    userId: ctx.userId ?? null,
+    entityId: id,
+    entityType: 'cms_theme',
+    metadata: { name: updated.name },
+  }).catch(() => {});
   return NextResponse.json(updated);
 }
 
 export async function deleteHandler(
   _req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
   const cmsRepository = await getCmsRepository();
-  await cmsRepository.deleteTheme(id);
+  const theme = await cmsRepository.deleteTheme(id);
+  if (theme) {
+    void logCmsActivity({
+      event: 'THEME_DELETED',
+      description: `Deleted CMS theme: ${theme.name}`,
+      userId: ctx.userId ?? null,
+      entityId: id,
+      entityType: 'cms_theme',
+      metadata: { name: theme.name },
+    }).catch(() => {});
+  }
   return new Response(null, { status: 204 });
 }

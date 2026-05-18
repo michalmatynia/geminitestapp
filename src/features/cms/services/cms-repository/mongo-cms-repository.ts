@@ -22,7 +22,7 @@ import type {
 } from '@/shared/contracts/cms';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { databaseError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 
 import type { Filter } from 'mongodb';
 

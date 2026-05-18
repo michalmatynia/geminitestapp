@@ -131,8 +131,17 @@ const isKangurPageRequest = (pathname: string): boolean => {
 /**
  * Check if request is for CMS Builder pages that can move to the standalone app.
  */
+const isRemovedRootCmsBuilderPageRequest = (pathname: string): boolean => {
+  const stripped = stripSiteLocalePrefix(pathname);
+  return stripped === '/admin/cms/builder' || stripped.startsWith('/admin/cms/builder/');
+};
+
 const isCmsBuilderPageRequest = (pathname: string): boolean => {
   const stripped = stripSiteLocalePrefix(pathname);
+  if (isRemovedRootCmsBuilderPageRequest(pathname)) {
+    return false;
+  }
+
   return (
     stripped === '/admin/cms' ||
     stripped.startsWith('/admin/cms/') ||
@@ -420,6 +429,10 @@ export function proxy(
   // API routes: pass through without modification
   if (isApiRequest(pathname)) {
     return baseProxy(request);
+  }
+
+  if (isRemovedRootCmsBuilderPageRequest(pathname)) {
+    return finalizeResponse(request, new NextResponse(null, { status: 404 }));
   }
 
   // Kangur routes: redirect to separate origin if configured

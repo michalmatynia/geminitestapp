@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
-import { useMutationV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast } from '@/shared/ui/primitives.public';
 
-import * as chatbotApi from '../api';
 import {
   useChatbotSessions,
-  useDeleteChatbotSession,
-  useDeleteChatbotSessions,
-  useUpdateSessionTitle,
 } from '../hooks';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import {
+  useChatbotSessionsFiltering,
+  useChatbotSessionsSelection,
+} from './useChatbotSessionsState.utils';
+import {
+  useChatbotSessionsEditing,
+} from './useChatbotSessionsState.handlers';
+import {
+  useChatbotSessionDeletion,
+  useChatbotBulkDeletion,
+} from './useChatbotSessionsState.deletion';
 
 export interface UseChatbotSessionsStateReturn {
   sessions: ChatbotSessionListItem[];
@@ -52,185 +52,30 @@ export interface UseChatbotSessionsStateReturn {
 }
 
 export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftTitle, setDraftTitle] = useState<string>('');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
-  const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
-  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
-
   const sessionsQuery = useChatbotSessions();
-  const updateTitleMutation = useUpdateSessionTitle();
-  const deleteSessionMutation = useDeleteChatbotSession();
-  const deleteSessionsMutation = useDeleteChatbotSessions();
-  const selectAllMatchingMutation = useMutationV2({
-    mutationKey: QUERY_KEYS.ai.chatbot.mutation('sessions.select-all-matching'),
-    mutationFn: chatbotApi.fetchChatbotSessionIds,
-    meta: {
-      source: 'chatbot.hooks.useChatbotSessionsState.selectAllMatching',
-      operation: 'action',
-      resource: 'chatbot.sessions.ids',
-      domain: 'global',
-      tags: ['chatbot', 'sessions', 'selection'],
-      description: 'Runs chatbot sessions ids.'},
+  const sessions = sessionsQuery.data ?? [];
+
+  const filtering = useChatbotSessionsFiltering(sessions);
+  const selection = useChatbotSessionsSelection(filtering.searchQuery, filtering.filteredSessions);
+  const editing = useChatbotSessionsEditing();
+
+  const deletion = useChatbotSessionDeletion({
+    editingId: editing.editingId,
+    cancelEditing: editing.cancelEditing,
+    setSelectedIds: selection.setSelectedIds,
   });
 
-  const sessions = sessionsQuery.data ?? [];
-  const loading = sessionsQuery.isLoading;
-  const isFetching = sessionsQuery.isFetching;
-  const error = sessionsQuery.isError ? sessionsQuery.error.message : null;
-  const bulkDeleting = deleteSessionsMutation.isPending;
-  const selectingAll = selectAllMatchingMutation.isPending;
+  const bulk = useChatbotBulkDeletion({
+    selectedIds: selection.selectedIds,
+    clearSelection: selection.clearSelection,
+  });
 
-  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
-
-  const filteredSessions = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    if (!term) return sessions;
-    return sessions.filter((session) => {
-      const title = session.title?.toLowerCase() || '';
-      return title.includes(term) || session.id.toLowerCase().includes(term);
-    });
-  }, [searchQuery, sessions]);
-
-  const selectAllVisible = useCallback(
-    () => setSelectedIds(new Set(filteredSessions.map((s) => s.id))),
-    [filteredSessions]
-  );
-
-  const selectAllMatching = useCallback(async () => {
-    if (selectingAll) return;
-    try {
-      const term = searchQuery.trim();
-      const ids = await selectAllMatchingMutation.mutateAsync(term || undefined);
-      setSelectedIds(new Set(ids));
-      toast(ids.length ? `Selected ${ids.length} sessions` : 'No matching sessions found');
-    } catch (error: unknown) {
-      logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to select sessions.';
-      toast(message, { variant: 'error' });
-    }
-  }, [searchQuery, selectingAll, selectAllMatchingMutation, toast]);
-
-  const toggleSelected = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const startEditing = useCallback((session: ChatbotSessionListItem) => {
-    setEditingId(session.id);
-    setDraftTitle(session.title || '');
-  }, []);
-
-  const cancelEditing = useCallback(() => {
-    setEditingId(null);
-    setDraftTitle('');
-  }, []);
-
-  const saveTitle = async (sessionId: string) => {
-    try {
-      await updateTitleMutation.mutateAsync({
-        sessionId,
-        title: draftTitle,
-      });
-      cancelEditing();
-      toast('Session title updated', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to update session title.';
-      toast(message, { variant: 'error' });
-    }
-  };
-
-  const deleteSession = async (session: ChatbotSessionListItem) => {
-    setDeletingId(session.id);
-    try {
-      await deleteSessionMutation.mutateAsync(session.id);
-      if (editingId === session.id) {
-        cancelEditing();
-      }
-      setSelectedIds((prev) => {
-        if (!prev.has(session.id)) return prev;
-        const next = new Set(prev);
-        next.delete(session.id);
-        return next;
-      });
-      toast('Session deleted', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to delete session.';
-      toast(message, { variant: 'error' });
-    } finally {
-      setDeletingId(null);
-      setSessionToDelete(null);
-    }
-  };
-
-  const handleBulkDeleteClick = useCallback(() => {
-    if (selectedIds.size === 0) return;
-    if (skipBulkConfirm) {
-      void bulkDelete();
-    } else {
-      setIsBulkDeleteConfirmOpen(true);
-    }
-  }, [selectedIds.size, skipBulkConfirm]);
-
-  const bulkDelete = async () => {
-    const idsToDelete = Array.from(selectedIds);
-    try {
-      await deleteSessionsMutation.mutateAsync(idsToDelete);
-      clearSelection();
-      toast('Selected sessions deleted', { variant: 'success' });
-    } catch (error: unknown) {
-      logClientError(error);
-      const message = error instanceof Error ? error.message : 'Failed to delete sessions.';
-      toast(message, { variant: 'error' });
-    } finally {
-      setIsBulkDeleteConfirmOpen(false);
-    }
-  };
+  const { isLoading: loading, isFetching, isError, error: sessionsError } = sessionsQuery;
 
   return {
-    sessions,
-    filteredSessions,
-    searchQuery,
-    setSearchQuery,
-    editingId,
-    draftTitle,
-    setDraftTitle,
-    deletingId,
-    selectedIds,
-    skipBulkConfirm,
-    setSkipBulkConfirm,
-    sessionToDelete,
-    setSessionToDelete,
-    isBulkDeleteConfirmOpen,
-    setIsBulkDeleteConfirmOpen,
-    loading,
-    isFetching,
-    error,
-    bulkDeleting,
-    selectingAll,
-    clearSelection,
-    selectAllVisible,
-    selectAllMatching,
-    toggleSelected,
-    startEditing,
-    cancelEditing,
-    saveTitle,
-    deleteSession,
-    handleBulkDeleteClick,
-    bulkDelete,
-    refetch: () => void sessionsQuery.refetch(),
+    sessions, ...filtering, ...selection, ...editing, ...deletion, ...bulk,
+    loading, isFetching, error: isError ? sessionsError.message : null,
+    handleBulkDeleteClick: () => bulk.handleBulkDeleteClick(bulk.bulkDelete),
+    refetch: () => { void sessionsQuery.refetch(); },
   };
 }

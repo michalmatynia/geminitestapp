@@ -11,7 +11,8 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 export type { AuthUserPageSettings };
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  const uri = process.env['MONGODB_URI'];
+  if (uri === undefined || uri.length === 0) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoSettingRecord>('settings')
@@ -23,6 +24,6 @@ const readSettingValue = async (key: string): Promise<string | null> => readMong
 
 export const getAuthUserPageSettings = async (): Promise<AuthUserPageSettings> => {
   const stored = await readSettingValue(AUTH_SETTINGS_KEYS.userPages);
-  if (!stored) return DEFAULT_AUTH_USER_PAGE_SETTINGS;
+  if (stored === null || stored.length === 0) return DEFAULT_AUTH_USER_PAGE_SETTINGS;
   return parseJsonSetting<AuthUserPageSettings>(stored, DEFAULT_AUTH_USER_PAGE_SETTINGS);
 };

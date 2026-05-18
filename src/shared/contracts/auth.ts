@@ -1,3 +1,5 @@
+/* eslint-disable max-lines -- Public auth contract barrel; splitting it is a broader contract move. */
+
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
@@ -26,6 +28,8 @@ export type AuthUserRecord = {
   passwordHash?: string | null;
   image?: string | null;
   emailVerified?: Date | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export const createUserSchema = authUserSchema

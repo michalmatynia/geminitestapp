@@ -186,19 +186,48 @@ try {
     : null;
 
   const deleted = {};
+  const droppedCollections = [];
   let backup = null;
   if (apply) {
     backup = await backupSelections({ sourceDb, selections, sourceCounts });
 
-    for (const { name } of selections) {
+    for (const { name, scope } of selections) {
       const backedUpIds = backup.backedUpIdsByCollection[name] ?? [];
       if (backedUpIds.length === 0) {
         deleted[name] = 0;
+        if (scope === 'full-collection') {
+          const remaining = await sourceDb.collection(name).countDocuments({});
+          if (remaining === 0) {
+            await sourceDb
+              .collection(name)
+              .drop()
+              .then(() => {
+                droppedCollections.push(name);
+              })
+              .catch((error) => {
+                if (error?.codeName !== 'NamespaceNotFound') throw error;
+              });
+          }
+        }
         continue;
       }
 
       const result = await sourceDb.collection(name).deleteMany({ _id: { $in: backedUpIds } });
       deleted[name] = result.deletedCount;
+      if (scope === 'full-collection') {
+        const remaining = await sourceDb.collection(name).countDocuments({});
+        if (remaining === 0) {
+          await sourceDb
+            .collection(name)
+            .drop()
+            .then(() => {
+              droppedCollections.push(name);
+            })
+            .catch((error) => {
+              if (error?.codeName !== 'NamespaceNotFound') throw error;
+            });
+        }
+      }
     }
   }
 
@@ -213,6 +242,12 @@ try {
         requiredApplyFlag: `--confirm=${expectedConfirm}`,
         backup: backup ? { dir: backup.dir, collections: backup.collections } : null,
         collections: apply ? deleted : sourceCounts,
+        droppedCollections,
+        wouldDropEmptyCollections: apply
+          ? []
+          : selections
+              .filter((selection) => selection.scope === 'full-collection')
+              .map((selection) => selection.name),
         targetCollections: targetValidation?.targetCounts,
       },
       null,

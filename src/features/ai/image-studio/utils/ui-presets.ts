@@ -49,9 +49,10 @@ const uiPresetSchema = z.object({
 const uiPresetListSchema = z.array(uiPresetSchema);
 
 export function parseImageStudioUiPresets(raw: string | null | undefined): ImageStudioUiPreset[] {
-  if ((raw?.length ?? 0) === 0) return [];
+  const serialized = raw ?? '';
+  if (serialized.length === 0) return [];
   try {
-    const json = JSON.parse(raw) as unknown;
+    const json = JSON.parse(serialized) as unknown;
     const parsed = uiPresetListSchema.safeParse(json);
     return parsed.success ? parsed.data : [];
   } catch (error) {

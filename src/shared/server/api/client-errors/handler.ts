@@ -214,6 +214,11 @@ export async function postHandler(
     );
   }
 
+  const handlerOrigin = _ctx as ApiHandlerContext & {
+    applicationId?: string;
+    source?: string;
+    service?: string;
+  };
   const context: ErrorContext = {
     ...(sanitizedContext ?? {}),
     ...(typeof payload.url === 'string' ? { url: payload.url } : {}),
@@ -224,8 +229,11 @@ export async function postHandler(
       ? { componentStack: payload.componentStack }
       : {}),
     ...(!parsed.success ? { payloadInvalid: true } : {}),
-    source: 'client.error.reporter',
-    service: 'client-error-reporter',
+    ...(typeof handlerOrigin.applicationId === 'string'
+      ? { applicationId: handlerOrigin.applicationId }
+      : {}),
+    source: handlerOrigin.source ?? 'client.error.reporter',
+    service: handlerOrigin.service ?? 'client-error-reporter',
   };
 
   const reportLevel = resolveClientReportLevel(sanitizedContext);

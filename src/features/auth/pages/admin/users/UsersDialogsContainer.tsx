@@ -1,9 +1,20 @@
+import type { UsersDialogs } from '@/features/auth/context/UsersContext';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { MockSignInModal } from '@/features/auth/components/admin/MockSignInModal';
 import { UserCreateModal } from '@/features/auth/components/admin/UserCreateModal';
 import { UserEditModal } from '@/features/auth/components/admin/UserEditModal';
 
-export function UsersDialogsContainer({ userToDelete, setUserToDelete, deleteUser }: any) {
+interface UsersDialogsContainerProps {
+  userToDelete: UsersDialogs['userToDelete'];
+  setUserToDelete: UsersDialogs['setUserToDelete'];
+  deleteUser: UsersDialogs['deleteUser'];
+}
+
+export function UsersDialogsContainer({
+  userToDelete,
+  setUserToDelete,
+  deleteUser,
+}: UsersDialogsContainerProps): React.JSX.Element {
   return (
     <>
       <UserEditModal />

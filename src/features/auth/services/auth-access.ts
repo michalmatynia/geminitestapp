@@ -15,81 +15,13 @@ import { type MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-type MongoSettingDoc = Partial<MongoSettingRecord> & {
-  updatedAt?: Date | string | null;
-};
+import { readMongoSettings } from './auth-settings-reader';
 
 type AuthSettingsSnapshot = {
   permissions: string | null;
   roles: string | null;
   userRoles: string | null;
   defaultRole: string | null;
-};
-
-const getUpdatedAtMs = (value: Date | string | null | undefined): number | null => {
-  if (value === null || value === undefined) return null;
-  const parsed = value instanceof Date ? value.getTime() : Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const pickPreferredSettingDoc = (docs: MongoSettingDoc[]): MongoSettingDoc | null => {
-  let selected: MongoSettingDoc | null = null;
-  for (const doc of docs) {
-    if (doc === undefined || typeof doc.value !== 'string') continue;
-    if (selected === null) {
-      selected = doc;
-      continue;
-    }
-    const docHasKey = typeof doc.key === 'string' && doc.key.trim().length > 0;
-    const selectedHasKey = typeof selected.key === 'string' && selected.key.trim().length > 0;
-    if (docHasKey && !selectedHasKey) {
-      selected = doc;
-      continue;
-    }
-    if (selectedHasKey && !docHasKey) continue;
-    
-    const docUpdated = getUpdatedAtMs(doc.updatedAt);
-    const selectedUpdated = getUpdatedAtMs(selected.updatedAt);
-    if (docUpdated !== null && (selectedUpdated === null || docUpdated > selectedUpdated)) {
-      selected = doc;
-    }
-  }
-  return selected;
-};
-
-const readMongoSettings = async (
-  keys: readonly string[]
-): Promise<Record<string, string | null>> => {
-  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') {
-    return Object.fromEntries(keys.map((key) => [key, null]));
-  }
-  const mongo = await getMongoDb();
-  const docs = await mongo
-    .collection<MongoSettingDoc>('settings')
-    .find(
-      { $or: keys.flatMap((key) => [{ _id: key }, { key }]) },
-      { projection: { _id: 1, key: 1, value: 1, updatedAt: 1 } }
-    )
-    .toArray();
-
-  return Object.fromEntries(
-    keys.map((key) => {
-      const doc = pickPreferredSettingDoc(docs.filter((candidate) => candidate._id === key || candidate.key === key));
-      return [key, typeof doc?.value === 'string' ? doc.value : null];
-    })
-  );
-};
-
-const readSettingValue = async (key: string): Promise<string | null> => {
-  const snapshot = await getAuthSettingsSnapshot();
-  return snapshot[key as keyof AuthSettingsSnapshot] ?? null;
-};
-
-const parseNumber = (value: string | undefined, fallback: number): number => {
-  if (value === undefined || value === '') return fallback;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const AUTH_ACCESS_SETTING_KEYS = {
@@ -99,6 +31,12 @@ const AUTH_ACCESS_SETTING_KEYS = {
   defaultRole: AUTH_SETTINGS_KEYS.defaultRole,
 } as const;
 
+const parseNumber = (value: string | undefined, fallback: number): number => {
+  if (value === undefined || value === '') return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const AUTH_SETTINGS_CACHE_TTL_MS = parseNumber(
   process.env['AUTH_SETTINGS_CACHE_TTL_MS'] ?? process.env['AUTH_ACCESS_CACHE_TTL_MS'],
   60_000
@@ -107,34 +45,50 @@ const AUTH_SETTINGS_CACHE_TTL_MS = parseNumber(
 let authSettingsSnapshotCache: { value: AuthSettingsSnapshot; ts: number } | null = null;
 let authSettingsSnapshotInflight: Promise<AuthSettingsSnapshot> | null = null;
 
+const buildAuthSettingsSnapshot = (values: Record<string, string | null>): AuthSettingsSnapshot => ({
+  permissions: values[AUTH_ACCESS_SETTING_KEYS.permissions] ?? null,
+  roles: values[AUTH_ACCESS_SETTING_KEYS.roles] ?? null,
+  userRoles: values[AUTH_ACCESS_SETTING_KEYS.userRoles] ?? null,
+  defaultRole: values[AUTH_ACCESS_SETTING_KEYS.defaultRole] ?? null,
+});
+
 const getAuthSettingsSnapshot = async (): Promise<AuthSettingsSnapshot> => {
   const now = Date.now();
-  if (authSettingsSnapshotCache !== null && now - authSettingsSnapshotCache.ts < AUTH_SETTINGS_CACHE_TTL_MS) {
+  if (
+    authSettingsSnapshotCache !== null &&
+    now - authSettingsSnapshotCache.ts < AUTH_SETTINGS_CACHE_TTL_MS
+  ) {
     return authSettingsSnapshotCache.value;
   }
   if (authSettingsSnapshotInflight !== null) return authSettingsSnapshotInflight;
 
   const promise = (async (): Promise<AuthSettingsSnapshot> => {
-    const keys = [AUTH_SETTINGS_KEYS.permissions, AUTH_SETTINGS_KEYS.roles, AUTH_SETTINGS_KEYS.userRoles, AUTH_SETTINGS_KEYS.defaultRole] as const;
-    const isMongo = process.env['MONGODB_URI'] !== undefined && process.env['MONGODB_URI'] !== '';
-    const values = isMongo ? await readMongoSettings(keys) : Object.fromEntries(keys.map((key) => [key, null]));
-
-    return {
-      permissions: values[AUTH_ACCESS_SETTING_KEYS.permissions] ?? null,
-      roles: values[AUTH_ACCESS_SETTING_KEYS.roles] ?? null,
-      userRoles: values[AUTH_ACCESS_SETTING_KEYS.userRoles] ?? null,
-      defaultRole: values[AUTH_ACCESS_SETTING_KEYS.defaultRole] ?? null,
-    };
+    const keys = [
+      AUTH_SETTINGS_KEYS.permissions,
+      AUTH_SETTINGS_KEYS.roles,
+      AUTH_SETTINGS_KEYS.userRoles,
+      AUTH_SETTINGS_KEYS.defaultRole,
+    ] as const;
+    const values = await readMongoSettings(keys);
+    return buildAuthSettingsSnapshot(values);
   })();
 
   authSettingsSnapshotInflight = promise;
   try {
     const value = await promise;
-    authSettingsSnapshotCache = { value, ts: Date.now() };
+    if (authSettingsSnapshotInflight === promise) {
+      // eslint-disable-next-line require-atomic-updates
+      authSettingsSnapshotCache = { value, ts: Date.now() };
+    }
     return value;
   } finally {
-    authSettingsSnapshotInflight = null;
+    if (authSettingsSnapshotInflight === promise) authSettingsSnapshotInflight = null;
   }
+};
+
+const readSettingValue = async (key: keyof AuthSettingsSnapshot): Promise<string | null> => {
+  const snapshot = await getAuthSettingsSnapshot();
+  return snapshot[key];
 };
 
 export const getAuthPermissions = async (): Promise<AuthPermission[]> => {
@@ -154,8 +108,7 @@ export const getAuthUserRoles = async (): Promise<AuthUserRoleMap> => {
 
 export const getAuthDefaultRoleId = async (): Promise<string | null> => {
   const value = await readSettingValue('defaultRole');
-  if (value === null) return null;
-  return value.trim();
+  return value !== null ? value.trim() : null;
 };
 
 const AUTH_ACCESS_CACHE_TTL_MS = parseNumber(
@@ -178,71 +131,183 @@ export const invalidateAuthAccessCache = (userId?: string): void => {
   accessInflight.clear();
 };
 
-const resolveEffectiveRole = (roleList: AuthRole[], userRoles: AuthUserRoleMap, userId: string, defaultRoleId: string | null): { role: AuthRole; roleAssigned: boolean } => {
-  const assignedRoleId = userRoles[userId];
-  const isAssignedValid = assignedRoleId !== undefined && roleList.some((r) => r.id === assignedRoleId);
-  
-  if (isAssignedValid) {
-    const found = roleList.find((r) => r.id === assignedRoleId);
-    if (found) return { role: found, roleAssigned: true };
-  }
-
-  const validDefaultId = (defaultRoleId !== null && roleList.some((r) => r.id === defaultRoleId)) ? defaultRoleId : null;
-  const fallbackId = roleList.find((r) => r.id === 'viewer')?.id ?? roleList.find((r) => !['super_admin', 'superuser', 'admin'].includes(r.id))?.id ?? roleList[0]?.id ?? 'admin';
-  
-  const effectiveId = validDefaultId ?? fallbackId;
-  const role = roleList.find((r) => r.id === effectiveId) ?? roleList[0] ?? DEFAULT_AUTH_ROLES[0]!;
-  return { role, roleAssigned: false };
+const getFallbackRole = (roleList: AuthRole[]): AuthRole => {
+  const viewer = roleList.find((r) => r.id === 'viewer');
+  const other = roleList.find((r) => !['super_admin', 'superuser', 'admin'].includes(r.id));
+  const first = roleList[0];
+  const defaultFirst = DEFAULT_AUTH_ROLES[0];
+  return viewer ?? other ?? first ?? (defaultFirst as AuthRole);
 };
 
-export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAccess> => {
+const resolveDefaultAndFallbackRole = (
+  roleList: AuthRole[],
+  defaultRoleId: string | null
+): AuthRole => {
+  const fallback = getFallbackRole(roleList);
+  if (defaultRoleId !== null) {
+    const found = roleList.find((r) => r.id === defaultRoleId);
+    if (found !== undefined) return found;
+  }
+  return fallback;
+};
+
+const resolveEffectiveRole = (
+  roleList: AuthRole[],
+  userRoles: AuthUserRoleMap,
+  userId: string,
+  defaultRoleId: string | null
+): { role: AuthRole; roleAssigned: boolean } => {
+  const assignedRoleId = userRoles[userId];
+  const assignedRole =
+    assignedRoleId !== undefined ? roleList.find((r) => r.id === assignedRoleId) : undefined;
+
+  if (assignedRole !== undefined) return { role: assignedRole, roleAssigned: true };
+  return { role: resolveDefaultAndFallbackRole(roleList, defaultRoleId), roleAssigned: false };
+};
+
+const resolveUserPermissions = (role: AuthRole): string[] => {
+  const denied = role.deniedPermissions ?? [];
+  return role.permissions.filter((p: string) => !denied.includes(p));
+};
+
+const fetchUserAccessData = async (): Promise<[AuthRole[], AuthUserRoleMap, string | null]> =>
+  Promise.all([getAuthRoles(), getAuthUserRoles(), getAuthDefaultRoleId()]);
+
+const buildUserAccessResult = (
+  role: AuthRole,
+  roleAssigned: boolean,
+  permissions: string[]
+): AuthUserAccess => {
+  const level = role.level ?? 0;
+  return {
+    roleId: role.id,
+    permissions,
+    level,
+    isElevated: level >= ROLE_ELEVATION_THRESHOLD,
+    roleAssigned,
+    role,
+  };
+};
+
+const resolveUserAccessState = (
+  roleList: AuthRole[],
+  userRoles: AuthUserRoleMap,
+  userId: string,
+  defaultRoleId: string | null
+): { role: AuthRole; roleAssigned: boolean } =>
+  resolveEffectiveRole(roleList, userRoles, userId, defaultRoleId);
+
+const resolveUserAccess = async (userId: string): Promise<AuthUserAccess> => {
+  const [rawRoles, userRoles, defaultRoleId] = await fetchUserAccessData();
+  const roleList = rawRoles.length > 0 ? rawRoles : DEFAULT_AUTH_ROLES;
+  const { role, roleAssigned } = resolveUserAccessState(roleList, userRoles, userId, defaultRoleId);
+
+  const permissions = resolveUserPermissions(role);
+  return buildUserAccessResult(role, roleAssigned, permissions);
+};
+
+const getCachedAuthAccess = (userId: string): AuthUserAccess | null => {
   const now = Date.now();
   const cached = accessCache.get(userId);
   if (cached !== undefined && now - cached.ts < AUTH_ACCESS_CACHE_TTL_MS) return cached.value;
-  const inflight = accessInflight.get(userId);
-  if (inflight !== undefined) return inflight;
+  return null;
+};
 
-  const promise = (async (): Promise<AuthUserAccess> => {
-    const [rawRoles, userRoles, defaultRoleId] = await Promise.all([getAuthRoles(), getAuthUserRoles(), getAuthDefaultRoleId()]);
-    const roleList = rawRoles.length > 0 ? rawRoles : DEFAULT_AUTH_ROLES;
-    const { role, roleAssigned } = resolveEffectiveRole(roleList, userRoles, userId, defaultRoleId);
+const getInflightAuthAccess = (userId: string): Promise<AuthUserAccess> | null =>
+  accessInflight.get(userId) ?? null;
 
-    const denied = role.deniedPermissions ?? [];
-    const permissions = (role.permissions ?? []).filter((p: string) => !denied.includes(p));
+const updateAccessCache = (userId: string, value: AuthUserAccess): void => {
+  accessCache.set(userId, { value, ts: Date.now() });
+};
 
-    return { roleId: role.id, permissions, level: role.level ?? 0, isElevated: (role.level ?? 0) >= ROLE_ELEVATION_THRESHOLD, roleAssigned, role };
-  })();
-
+const runAndCacheUserAccess = async (userId: string): Promise<AuthUserAccess> => {
+  const promise = resolveUserAccess(userId);
   accessInflight.set(userId, promise);
   try {
     const value = await promise;
-    accessCache.set(userId, { value, ts: Date.now() });
+    updateAccessCache(userId, value);
     return value;
   } finally {
-    accessInflight.delete(userId);
+    if (accessInflight.get(userId) === promise) accessInflight.delete(userId);
   }
 };
 
-export const assignAuthUserRole = async (input: { userId: string; roleId: string; source: string }): Promise<void> => {
-  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') return;
+export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAccess> => {
+  const cached = getCachedAuthAccess(userId);
+  if (cached !== null) return cached;
+  const inflight = getInflightAuthAccess(userId);
+  if (inflight !== null) return inflight;
+
+  return runAndCacheUserAccess(userId);
+};
+
+const upsertAuthUserRolesSetting = async (
+  currentMap: AuthUserRoleMap
+): Promise<unknown> => {
+  const mongo = await getMongoDb();
+  const now = new Date();
+  const col = mongo.collection<MongoSettingRecord>('settings');
+  return await col.findOneAndUpdate(
+    { $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }] },
+    {
+      $set: {
+        key: AUTH_SETTINGS_KEYS.userRoles,
+        value: JSON.stringify(currentMap),
+        updatedAt: now,
+      },
+      $setOnInsert: { createdAt: now },
+    },
+    { upsert: true, returnDocument: 'after' }
+  );
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object';
+
+const readFindOneAndUpdateValue = (res: unknown): unknown =>
+  isRecord(res) && 'ok' in res ? res['value'] : res;
+
+const readStringId = (value: unknown): string | null => {
+  if (!isRecord(value)) return null;
+  const id = value['_id'];
+  return typeof id === 'string' && id.length > 0 ? id : null;
+};
+
+const extractUpdatedSettingId = (res: unknown): string | null =>
+  readStringId(readFindOneAndUpdateValue(res));
+
+const deleteDuplicateAuthUserRoleSettings = async (updatedId: string | null): Promise<void> => {
+  if (updatedId === null) return;
+  const mongo = await getMongoDb();
+  await mongo.collection<MongoSettingRecord>('settings').deleteMany({
+    $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }],
+    _id: { $ne: updatedId },
+  });
+};
+
+const updateAuthUserRolesInMongo = async (currentMap: AuthUserRoleMap): Promise<void> => {
+  const result = await upsertAuthUserRolesSetting(currentMap);
+  await deleteDuplicateAuthUserRoleSettings(extractUpdatedSettingId(result));
+};
+
+export const assignAuthUserRole = async (input: {
+  userId: string;
+  roleId: string;
+  source: string;
+}): Promise<void> => {
+  const uri = process.env['MONGODB_URI'];
+  if (uri === undefined || uri.length === 0) return;
   const currentMap = await getAuthUserRoles();
   if (currentMap[input.userId] === input.roleId) return;
   currentMap[input.userId] = input.roleId;
 
-  const mongo = await getMongoDb();
-  const now = new Date();
-  const col = mongo.collection<MongoSettingRecord>('settings');
-  const res = await col.findOneAndUpdate(
-    { $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }] },
-    { $set: { key: AUTH_SETTINGS_KEYS.userRoles, value: JSON.stringify(currentMap), updatedAt: now }, $setOnInsert: { createdAt: now } },
-    { upsert: true, returnDocument: 'after' }
-  );
-
-  const updated = res && typeof res === 'object' && 'ok' in res ? res.value : res;
-  if (updated && typeof updated === 'object' && '_id' in updated) {
-    await col.deleteMany({ $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }], _id: { $ne: updated._id } });
-  }
-
+  await updateAuthUserRolesInMongo(currentMap);
   invalidateAuthAccessCache(input.userId);
-  await logSystemEvent({ level: 'info', message: `Role "${input.roleId}" assigned to user ${input.userId}.`, source: input.source, service: 'auth', context: { userId: input.userId, roleId: input.roleId, source: input.source } });
+  await logSystemEvent({
+    level: 'info',
+    message: `Role "${input.roleId}" assigned to user ${input.userId}.`,
+    source: input.source,
+    service: 'auth',
+    context: { userId: input.userId, roleId: input.roleId, source: input.source },
+  });
 };

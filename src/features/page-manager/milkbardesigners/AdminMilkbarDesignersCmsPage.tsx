@@ -44,6 +44,7 @@ import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries'
 import { api } from '@/shared/lib/api-client';
 import {
   MILKBAR_CMS_VISUALISATION_FOLDER,
+  type FileStorageProfile,
 } from '@/shared/lib/files/constants';
 import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
@@ -298,15 +299,24 @@ function FieldInput({
   value,
   onChange,
   description,
+  placeholder,
+  type = 'text',
 }: {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
   description?: string;
+  placeholder?: string;
+  type?: React.HTMLInputTypeAttribute;
 }): React.JSX.Element {
   return (
     <FormField label={label} description={description}>
-      <Input value={String(value)} onChange={(event) => onChange(event.target.value)} />
+      <Input
+        type={type}
+        value={String(value)}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </FormField>
   );
 }
@@ -894,6 +904,10 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     setPageSettings((current) => ({ ...current, defaultLocale: locale }));
   }, []);
 
+  const updateContactEmail = useCallback((contactEmail: string): void => {
+    setPageSettings((current) => ({ ...current, contactEmail }));
+  }, []);
+
   const togglePublishedLocale = useCallback((locale: MilkbarLocale, published: boolean): void => {
     setPageSettings((current) => {
       const next = published
@@ -1192,6 +1206,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
               onUpdateVisibility={updateVisibility}
               onUpdateSeo={updateSeo}
               onUpdateDefaultLocale={updateDefaultLocale}
+              onUpdateContactEmail={updateContactEmail}
               onTogglePublishedLocale={togglePublishedLocale}
             />
           ) : null}
@@ -1253,6 +1268,7 @@ function CollapsibleSection({
 }
 
 const DRAWING_IMAGE_SLOT_COUNT = 4;
+const DRAWING_3D_ASSET_SLOT_COUNT = 4;
 
 const createDrawingImageSlotValues = (images: string[]): string[] =>
   Array.from({ length: DRAWING_IMAGE_SLOT_COUNT }, (_, index) => images[index]?.trim() ?? '');
@@ -1263,6 +1279,55 @@ const compactDrawingImageSlotValues = (values: string[]): string[] => {
     next.pop();
   }
   return next;
+};
+
+const createDrawing3DAssetSlotValues = (assetIds: string[]): string[] =>
+  Array.from({ length: DRAWING_3D_ASSET_SLOT_COUNT }, (_, index) => assetIds[index]?.trim() ?? '');
+
+const compactDrawing3DAssetSlotValues = (values: string[]): string[] => {
+  const next = values.slice(0, DRAWING_3D_ASSET_SLOT_COUNT).map((value) => value.trim());
+  while (next.length > 0 && next[next.length - 1] === '') {
+    next.pop();
+  }
+  return next;
+};
+
+const getAsset3DMetadataString = (
+  asset: Asset3DRecord | undefined,
+  key: string
+): string | null => {
+  const value = asset?.metadata?.[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isMilkbarFastCometAsset = (asset: Asset3DRecord | undefined): boolean => {
+  if (getAsset3DMetadataString(asset, 'storageProfile') !== 'milkbarCms') return false;
+  const publicPath = getAsset3DMetadataString(asset, 'publicPath') ?? asset?.filepath ?? '';
+  return publicPath.includes('/uploads/cms/models/');
+};
+
+const getAsset3DDisplayName = (
+  asset: Asset3DRecord | undefined,
+  fallback: string
+): string => {
+  if (asset === undefined) return fallback;
+  if (asset.name !== '') return asset.name;
+  return asset.filename ?? fallback;
+};
+
+const getDrawing3DUploadButtonLabel = ({
+  isUploading,
+  uploadProgress,
+  hasAsset,
+}: {
+  isUploading: boolean;
+  uploadProgress: number | null;
+  hasAsset: boolean;
+}): string => {
+  if (!isUploading) return hasAsset ? 'Replace' : 'Upload';
+  return uploadProgress !== null ? `${uploadProgress}%` : 'Uploading';
 };
 
 const toUploadPublicPath = (value: string): string | null => {
@@ -1468,6 +1533,315 @@ function DrawingImageSlotsField({
   );
 }
 
+function Asset3DStorageStatusBadge({
+  asset,
+  isUploading = false,
+}: {
+  asset: Asset3DRecord | undefined;
+  isUploading?: boolean;
+}): React.JSX.Element {
+  if (isUploading) {
+    return <Badge variant='processing'>Uploading</Badge>;
+  }
+  if (asset === undefined) {
+    return <Badge variant='outline'>Resolving</Badge>;
+  }
+  return isMilkbarFastCometAsset(asset) ? (
+    <Badge variant='success'>FastComet</Badge>
+  ) : (
+    <Badge variant='warning'>Local / unconfirmed</Badge>
+  );
+}
+
+function Drawing3DAssetSlotCard({
+  assetId,
+  index,
+  isUploading,
+  uploadProgress,
+  onUpload,
+  onChoose,
+  onPreview,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: {
+  assetId: string;
+  index: number;
+  isUploading: boolean;
+  uploadProgress: number | null;
+  onUpload: () => void;
+  onChoose: () => void;
+  onPreview: () => void;
+  onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}): React.JSX.Element {
+  const hasAsset = assetId.trim().length > 0;
+  const assetQuery = useAsset3DById(hasAsset ? assetId : null);
+  const asset = assetQuery.data;
+  const title = getAsset3DDisplayName(asset, assetId);
+  const uploadButtonLabel = getDrawing3DUploadButtonLabel({
+    isUploading,
+    uploadProgress,
+    hasAsset,
+  });
+
+  return (
+    <div className='flex min-h-[190px] flex-col justify-between rounded-md border border-white/10 bg-white/5 p-3'>
+      <div className='space-y-2'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='min-w-0'>
+            <p className='flex items-center gap-1.5 text-xs font-semibold text-white/80'>
+              <Box className='size-3.5 text-blue-400/70' />
+              3D asset {index + 1}
+            </p>
+            {hasAsset ? (
+              <p className='mt-1 truncate font-mono text-[10px] text-white/30'>{assetId}</p>
+            ) : null}
+          </div>
+          {hasAsset || isUploading ? (
+            <Asset3DStorageStatusBadge asset={asset} isUploading={isUploading} />
+          ) : (
+            <Badge variant='outline'>Empty</Badge>
+          )}
+        </div>
+        <div className='flex min-h-[54px] items-center rounded border border-white/5 bg-black/20 px-2 py-2'>
+          {hasAsset ? (
+            <div className='min-w-0'>
+              <p className='truncate text-xs font-medium text-white/75'>{title}</p>
+              <p className='mt-0.5 text-[10px] text-muted-foreground'>
+                {asset?.format ?? asset?.mimetype ?? '3D model'}
+              </p>
+            </div>
+          ) : (
+            <p className='text-xs text-white/30'>No 3D asset attached</p>
+          )}
+        </div>
+      </div>
+      <div className='mt-3 flex flex-wrap items-center gap-1.5'>
+        <Button
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='h-7 px-2 text-xs'
+          disabled={!hasAsset || isUploading}
+          icon={<Eye className='size-3.5' />}
+          onClick={onPreview}
+        >
+          Preview
+        </Button>
+        <Button
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='h-7 px-2 text-xs'
+          disabled={isUploading}
+          icon={<Upload className='size-3.5' />}
+          onClick={onUpload}
+        >
+          {uploadButtonLabel}
+        </Button>
+        <Button
+          type='button'
+          size='sm'
+          variant={hasAsset ? 'ghost' : 'secondary'}
+          className='h-7 px-2 text-xs'
+          disabled={isUploading}
+          icon={<Library className='size-3.5' />}
+          onClick={onChoose}
+        >
+          Library
+        </Button>
+        <Button
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='h-7 px-2 text-xs'
+          disabled={index === 0 || isUploading}
+          icon={<ChevronUp className='size-3.5' />}
+          onClick={onMoveUp}
+        >
+          Up
+        </Button>
+        <Button
+          type='button'
+          size='sm'
+          variant='ghost'
+          className='h-7 px-2 text-xs'
+          disabled={index === DRAWING_3D_ASSET_SLOT_COUNT - 1 || isUploading}
+          icon={<ChevronDown className='size-3.5' />}
+          onClick={onMoveDown}
+        >
+          Down
+        </Button>
+        {hasAsset ? (
+          <Button
+            type='button'
+            size='sm'
+            variant='ghost'
+            className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
+            disabled={isUploading}
+            icon={<X className='size-3.5' />}
+            onClick={onRemove}
+          >
+            Remove
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Drawing3DAssetSlotsField({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (assetIds: string[]) => void;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingUploadSlotIndex, setPendingUploadSlotIndex] = useState<number | null>(null);
+  const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [pickerSlotIndex, setPickerSlotIndex] = useState<number | null>(null);
+  const [previewSlotIndex, setPreviewSlotIndex] = useState<number | null>(null);
+  const slotValues = useMemo(() => createDrawing3DAssetSlotValues(value), [value]);
+
+  const setSlotValues = useCallback(
+    (nextValues: string[]): void => {
+      onChange(compactDrawing3DAssetSlotValues(nextValues));
+    },
+    [onChange]
+  );
+
+  const setSlotValue = useCallback(
+    (index: number, nextValue: string): void => {
+      if (index < 0 || index >= DRAWING_3D_ASSET_SLOT_COUNT) return;
+      const nextValues = createDrawing3DAssetSlotValues(value);
+      nextValues[index] = nextValue.trim();
+      setSlotValues(nextValues);
+    },
+    [setSlotValues, value]
+  );
+
+  const swapSlots = useCallback(
+    (fromIndex: number, toIndex: number): void => {
+      if (toIndex < 0 || toIndex >= DRAWING_3D_ASSET_SLOT_COUNT) return;
+      const nextValues = createDrawing3DAssetSlotValues(value);
+      [nextValues[fromIndex], nextValues[toIndex]] = [nextValues[toIndex] ?? '', nextValues[fromIndex] ?? ''];
+      setSlotValues(nextValues);
+    },
+    [setSlotValues, value]
+  );
+
+  const handleUploadFile = useCallback(
+    async (file: File, index: number): Promise<void> => {
+      setUploadingSlotIndex(index);
+      setUploadProgress(0);
+      try {
+        const record = await uploadAsset3DFile(
+          file,
+          {
+            name: `Milkbar drawing 3D asset ${index + 1}`,
+            category: 'cms',
+            tags: ['milkbardesigners', 'drawing', `slot-${index + 1}`],
+            isPublic: true,
+            storageProfile: 'milkbarCms',
+          },
+          (loaded, total) => {
+            if (total !== undefined) {
+              setUploadProgress(Math.round((loaded / total) * 100));
+            }
+          }
+        );
+        setSlotValue(index, record.id);
+        toast(
+          isMilkbarFastCometAsset(record)
+            ? '3D asset uploaded to FastComet. Save the CMS snapshot to publish it.'
+            : '3D asset uploaded. FastComet status could not be confirmed from the returned record.',
+          { variant: 'success' }
+        );
+      } catch (error) {
+        toast(`3D upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
+      } finally {
+        setUploadingSlotIndex(null);
+        setUploadProgress(null);
+        if (fileInputRef.current !== null) {
+          fileInputRef.current.value = '';
+        }
+      }
+    },
+    [setSlotValue, toast]
+  );
+
+  const activePreviewAssetId =
+    previewSlotIndex !== null ? slotValues[previewSlotIndex]?.trim() ?? '' : '';
+
+  return (
+    <FormField
+      label='Drawing 3D asset slots'
+      description='3D model slots for the drawing section. Preview opens an interactive 3D modal.'
+    >
+      <div className='space-y-3'>
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.glb,.gltf'
+          aria-label='Drawing 3D asset file'
+          className='hidden'
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            const targetIndex = pendingUploadSlotIndex;
+            setPendingUploadSlotIndex(null);
+            if (file === undefined || targetIndex === null) return;
+            void handleUploadFile(file, targetIndex);
+          }}
+        />
+        <div className='grid gap-3 md:grid-cols-2'>
+          {slotValues.map((assetId, index) => (
+            <Drawing3DAssetSlotCard
+              key={`drawing-3d-asset-slot-${index}`}
+              assetId={assetId}
+              index={index}
+              isUploading={uploadingSlotIndex === index}
+              uploadProgress={uploadingSlotIndex === index ? uploadProgress : null}
+              onUpload={() => {
+                setPendingUploadSlotIndex(index);
+                fileInputRef.current?.click();
+              }}
+              onChoose={() => setPickerSlotIndex(index)}
+              onPreview={() => setPreviewSlotIndex(index)}
+              onRemove={() => setSlotValue(index, '')}
+              onMoveUp={() => swapSlots(index, index - 1)}
+              onMoveDown={() => swapSlots(index, index + 1)}
+            />
+          ))}
+        </div>
+        {activePreviewAssetId.length > 0 ? (
+          <Model3DPreviewModal
+            modelId={activePreviewAssetId}
+            title={`Drawing 3D asset ${Number(previewSlotIndex) + 1}`}
+            onClose={() => setPreviewSlotIndex(null)}
+          />
+        ) : null}
+        {pickerSlotIndex !== null ? (
+          <ModelAssetLibraryPickerModal
+            title={`Select Drawing 3D Asset ${pickerSlotIndex + 1}`}
+            confirmLabel='Assign Asset'
+            storageProfileFilter='milkbarCms'
+            onSelect={(assetId) => {
+              setSlotValue(pickerSlotIndex, assetId);
+              setPickerSlotIndex(null);
+            }}
+            onClose={() => setPickerSlotIndex(null)}
+          />
+        ) : null}
+      </div>
+    </FormField>
+  );
+}
+
 function ContentTab({
   pageContent,
   updateNav,
@@ -1644,6 +2018,10 @@ function ContentTab({
         <DrawingImageSlotsField
           value={pageContent.drawing.thumbImages}
           onChange={(thumbImages) => updateDrawing({ thumbImages })}
+        />
+        <Drawing3DAssetSlotsField
+          value={pageContent.drawing.asset3dSlots}
+          onChange={(asset3dSlots) => updateDrawing({ asset3dSlots })}
         />
       </CollapsibleSection>
 
@@ -1921,12 +2299,14 @@ function SettingsTab({
   onUpdateVisibility,
   onUpdateSeo,
   onUpdateDefaultLocale,
+  onUpdateContactEmail,
   onTogglePublishedLocale,
 }: {
   pageSettings: MilkbarPageSettings;
   onUpdateVisibility: (patch: Partial<MilkbarSectionVisibility>) => void;
   onUpdateSeo: (locale: MilkbarLocale, patch: Partial<MilkbarSeoMeta>) => void;
   onUpdateDefaultLocale: (locale: MilkbarLocale) => void;
+  onUpdateContactEmail: (contactEmail: string) => void;
   onTogglePublishedLocale: (locale: MilkbarLocale, published: boolean) => void;
 }): React.JSX.Element {
   const [seoLocale, setSeoLocale] = useState<MilkbarLocale>('en');
@@ -2028,6 +2408,20 @@ function SettingsTab({
           </p>
         </FormSection>
       </div>
+
+      <FormSection
+        title='Contact Form Delivery'
+        subtitle='Recipient stored in the Milkbar architecture database and used by the live contact form.'
+      >
+        <FieldInput
+          label='Contact email'
+          type='email'
+          value={pageSettings.contactEmail}
+          placeholder='hello@milkbar.studio'
+          onChange={onUpdateContactEmail}
+          description='Messages submitted through the public contact form are delivered to this address.'
+        />
+      </FormSection>
 
       {/* SEO Metadata per Locale */}
       <FormSection
@@ -2148,7 +2542,13 @@ function SeoPreviewCard({
   );
 }
 
-function ModelAssetLabel({ modelId }: { modelId: string }): React.JSX.Element {
+function ModelAssetLabel({
+  modelId,
+  showStorageStatus = false,
+}: {
+  modelId: string;
+  showStorageStatus?: boolean;
+}): React.JSX.Element {
   const query = useAsset3DById(modelId);
   const asset = query.data;
 
@@ -2158,6 +2558,7 @@ function ModelAssetLabel({ modelId }: { modelId: string }): React.JSX.Element {
       <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-white/70'>
         <Box className='size-3 shrink-0 text-blue-400/70' />
         <span className='truncate'>{name}</span>
+        {showStorageStatus ? <Asset3DStorageStatusBadge asset={asset} /> : null}
       </span>
     );
   }
@@ -2172,11 +2573,13 @@ function ModelAssetLabel({ modelId }: { modelId: string }): React.JSX.Element {
 function ModelAssetLibraryPickerModal({
   title = 'Select 3D Asset from Library',
   confirmLabel = 'Assign Model',
+  storageProfileFilter,
   onSelect,
   onClose,
 }: {
   title?: string;
   confirmLabel?: string;
+  storageProfileFilter?: FileStorageProfile;
   onSelect: (assetId: string) => void;
   onClose: () => void;
 }): React.JSX.Element {
@@ -2184,7 +2587,10 @@ function ModelAssetLibraryPickerModal({
   const [selectedAsset, setSelectedAsset] = useState<Asset3DRecord | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
 
-  const assetsQuery = useAssets3D({ search: search.trim().length > 0 ? search.trim() : undefined });
+  const assetsQuery = useAssets3D({
+    search: search.trim().length > 0 ? search.trim() : undefined,
+    ...(storageProfileFilter !== undefined ? { storageProfile: storageProfileFilter } : {}),
+  });
   const assets: Asset3DRecord[] = assetsQuery.data ?? [];
   const isLoading = assetsQuery.isPending;
 
@@ -2452,7 +2858,7 @@ function CmsModel3DField({
         <div className='flex flex-wrap items-center gap-2'>
           {hasModel ? (
             <>
-              <ModelAssetLabel modelId={assignedModelId} />
+              <ModelAssetLabel modelId={assignedModelId} showStorageStatus />
               <Button
                 type='button'
                 size='sm'
@@ -2521,6 +2927,7 @@ function CmsModel3DField({
         <ModelAssetLibraryPickerModal
           title={`Select ${label}`}
           confirmLabel='Assign Model'
+          storageProfileFilter='milkbarCms'
           onSelect={(assetId) => {
             onChange(assetId);
             setPickerOpen(false);
@@ -2609,7 +3016,7 @@ function ProjectModel3DSection({
         <span className='text-xs font-medium text-muted-foreground'>3D Model</span>
         {hasModel ? (
           <>
-            <ModelAssetLabel modelId={projectModelId} />
+            <ModelAssetLabel modelId={projectModelId} showStorageStatus />
             <Button
               type='button'
               size='sm'
@@ -2720,6 +3127,7 @@ function ProjectModel3DSection({
         <ModelAssetLibraryPickerModal
           title='Select Project 3D Asset from Library'
           confirmLabel='Assign to Project'
+          storageProfileFilter='milkbarCms'
           onSelect={(assetId) => {
             onUpdate(projectIndex, { modelAssetId: assetId, modelUrl: undefined });
             setPickerOpen(false);

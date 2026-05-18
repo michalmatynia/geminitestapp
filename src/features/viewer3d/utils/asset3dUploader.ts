@@ -17,7 +17,10 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
+import {
+  findAsset3DRepositoryAsset,
+  getAsset3DRepository,
+} from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DCreateInput, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
@@ -277,7 +280,7 @@ export async function uploadAsset3D(
       fileBuffer,
       safeOptions
     );
-    const repository = getAsset3DRepository();
+    const repository = getAsset3DRepository({ storageProfile: safeOptions.storageProfile });
     const payload = mapAssetOptionsToCreatePayload({
       filename,
       storedFilepath,
@@ -299,20 +302,19 @@ export async function uploadAsset3D(
 
 export async function deleteAsset3D(id: string): Promise<boolean> {
   try {
-    const repository = getAsset3DRepository();
-    const asset = await repository.getAsset3DById(id);
+    const match = await findAsset3DRepositoryAsset(id);
 
-    if (asset === null) {
+    if (match === null) {
       return false;
     }
 
-    const filepath = asset.filepath ?? '';
+    const filepath = match.asset.filepath ?? '';
     if (filepath !== '') {
       await deleteFileFromStorage(filepath);
     }
-    await deleteMilkbarPublicHtmlMirror(asset);
+    await deleteMilkbarPublicHtmlMirror(match.asset);
     // Delete from database
-    await repository.deleteAsset3D(id);
+    await match.repository.deleteAsset3D(id);
 
     return true;
   } catch (error) {

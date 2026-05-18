@@ -3,13 +3,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
-const { getAsset3DRepositoryMock, deleteAsset3DMock, parseJsonBodyMock } = vi.hoisted(() => ({
+const {
+  findAsset3DRepositoryAssetMock,
+  getAsset3DFromLookupRepositoriesMock,
+  getAsset3DRepositoryMock,
+  deleteAsset3DMock,
+  parseJsonBodyMock,
+} = vi.hoisted(() => ({
+  findAsset3DRepositoryAssetMock: vi.fn(),
+  getAsset3DFromLookupRepositoriesMock: vi.fn(),
   getAsset3DRepositoryMock: vi.fn(),
   deleteAsset3DMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
 }));
 
 vi.mock('@/features/viewer3d/server', () => ({
+  findAsset3DRepositoryAsset: findAsset3DRepositoryAssetMock,
+  getAsset3DFromLookupRepositories: getAsset3DFromLookupRepositoriesMock,
   getAsset3DRepository: getAsset3DRepositoryMock,
   deleteAsset3D: deleteAsset3DMock,
 }));
@@ -37,6 +47,14 @@ describe('assets3d by-id handler module', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAsset3DRepositoryMock.mockReturnValue(repository);
+    repository.getAsset3DById.mockResolvedValue({ id: 'asset-1', name: 'Preview asset' });
+    getAsset3DFromLookupRepositoriesMock.mockImplementation((id: string) =>
+      repository.getAsset3DById(id)
+    );
+    findAsset3DRepositoryAssetMock.mockImplementation(async (id: string) => {
+      const asset = await repository.getAsset3DById(id);
+      return asset === null ? null : { repository, asset };
+    });
     deleteAsset3DMock.mockResolvedValue(true);
     parseJsonBodyMock.mockResolvedValue({
       ok: true,

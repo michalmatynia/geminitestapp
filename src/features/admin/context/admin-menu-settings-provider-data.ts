@@ -156,7 +156,6 @@ function usePersistenceActions({
   customEnabled,
   defaultCustomNav,
   favorites,
-  flattened,
   normalizedCustomNav,
   sectionColors,
   sections,
@@ -171,7 +170,6 @@ function usePersistenceActions({
   | 'customEnabled'
   | 'defaultCustomNav'
   | 'favorites'
-  | 'flattened'
   | 'normalizedCustomNav'
   | 'sectionColors'
   | 'sections'
@@ -184,11 +182,10 @@ function usePersistenceActions({
 >): Pick<AdminMenuSettingsActionsContextValue, 'handleReset' | 'handleSave'> {
   const handleSave = useCallback(async (): Promise<void> => {
     try {
-      const validFavorites = favorites.filter((id: string) => flattened.some((item: AdminNavLeaf) => item.id === id));
       const sectionIds = new Set(sections.map((section: { id: string }) => section.id));
       const validSectionColors = Object.fromEntries(Object.entries(sectionColors).filter(([sectionId]: [string, string]) => sectionIds.has(sectionId)));
       await updateSettingsBulk.mutateAsync([
-        { key: ADMIN_MENU_FAVORITES_KEY, value: JSON.stringify(validFavorites) },
+        { key: ADMIN_MENU_FAVORITES_KEY, value: JSON.stringify(favorites) },
         { key: ADMIN_MENU_SECTION_COLORS_KEY, value: JSON.stringify(validSectionColors) },
         { key: ADMIN_MENU_CUSTOM_ENABLED_KEY, value: JSON.stringify(customEnabled) },
         { key: ADMIN_MENU_CUSTOM_NAV_KEY, value: JSON.stringify(normalizedCustomNav) },
@@ -198,7 +195,7 @@ function usePersistenceActions({
       logClientCatch(error, { source: 'AdminMenuSettingsPage', action: 'save' });
       toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', { variant: 'error' });
     }
-  }, [customEnabled, favorites, flattened, normalizedCustomNav, sectionColors, sections, toast, updateSettingsBulk]);
+  }, [customEnabled, favorites, normalizedCustomNav, sectionColors, sections, toast, updateSettingsBulk]);
 
   const handleReset = useCallback((): void => {
     setFavorites([]);

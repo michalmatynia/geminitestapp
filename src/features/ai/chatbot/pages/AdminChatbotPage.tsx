@@ -59,7 +59,11 @@ function ChatbotPageInner(): React.JSX.Element | null {
   );
 }
 
-function useChatbotRegistrySource(activeTab: string) {
+import type { ContextRegistryResolutionBundle } from '@/shared/contracts/ai-context-registry';
+
+// ... (other imports)
+
+function useChatbotRegistrySource(activeTab: string): { label: string; resolved: ContextRegistryResolutionBundle } {
   const { messages } = useChatbotMessages();
   const { sessions, currentSessionId } = useChatbotSessions();
   const settings = useChatbotSettings();

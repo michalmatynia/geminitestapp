@@ -80,7 +80,6 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/products/import': 'Import products from Base.com and manage import templates.',
   '/admin/integrations/aggregators/base-com/import-export':
     'Configure Base.com product export defaults and export templates.',
-  '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',
   '/admin/settings/menu': 'Customize the admin menu structure and favorites.',
   '/admin/settings/filemaker':

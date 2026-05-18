@@ -17,11 +17,6 @@ const cmsTools = [
     href: '/admin/cms/pages',
   },
   {
-    title: 'Page Builder',
-    description: 'Visual editor for building pages with components.',
-    href: '/admin/cms/builder',
-  },
-  {
     title: 'Themes',
     description: 'Manage color palettes, typography, and spacing presets.',
     href: '/admin/cms/themes',

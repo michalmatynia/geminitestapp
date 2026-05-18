@@ -16,28 +16,21 @@ import { useChatbotSessions } from './useChatbotQueries';
 
 export type { UseChatbotSessionManagerReturn };
 
-export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
+function useChatbotSessionActions({
+  sessions,
+  currentSessionId,
+  setCurrentSessionId,
+}: {
+  sessions: ChatbotSessionListItem[];
+  currentSessionId: string | null;
+  setCurrentSessionId: React.Dispatch<React.SetStateAction<string | null>>;
+}): {
+  createNewSession: (initialSettings?: Partial<ChatSession['settings']>) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
+} {
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-
-  const sessionsQuery = useChatbotSessions();
   const createMutation = useCreateChatbotSession();
   const deleteMutation = useDeleteChatbotSession();
-
-  const sessions = sessionsQuery.data ?? ([] as ChatbotSessionListItem[]);
-  const sessionsLoading = sessionsQuery.isLoading;
-
-  const sessionId = useMemo((): string | null => {
-    return currentSessionId || searchParams.get('session') || null;
-  }, [currentSessionId, searchParams]);
-
-  // If no current session and sessions exist, select the first one
-  useEffect(() => {
-    if (!currentSessionId && sessions.length > 0 && sessions[0]) {
-      setCurrentSessionId(sessions[0].id);
-    }
-  }, [currentSessionId, sessions]);
 
   const createNewSession = useCallback(
     async (initialSettings?: Partial<ChatSession['settings']>): Promise<void> => {
@@ -48,13 +41,11 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
         });
         setCurrentSessionId(data.sessionId);
       } catch (error: unknown) {
-        logClientCatch(error, {
-          source: 'useChatbotSessionManager.createNewSession',
-        });
+        logClientCatch(error, { source: 'useChatbotSessionManager.createNewSession' });
         toast('Failed to create new chat session', { variant: 'error' });
       }
     },
-    [createMutation, toast]
+    [createMutation, toast, setCurrentSessionId]
   );
 
   const deleteSession = useCallback(
@@ -62,18 +53,43 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
       try {
         await deleteMutation.mutateAsync(id);
         if (currentSessionId === id) {
-          setCurrentSessionId(sessions.find((s) => s.id !== id)?.id || null);
+          const nextSession = sessions.find((s) => s.id !== id);
+          setCurrentSessionId(nextSession?.id ?? null);
         }
       } catch (error: unknown) {
-        logClientCatch(error, {
-          source: 'useChatbotSessionManager.deleteSession',
-          sessionId: id,
-        });
+        logClientCatch(error, { source: 'useChatbotSessionManager.deleteSession', sessionId: id });
         toast('Failed to delete chat session', { variant: 'error' });
       }
     },
-    [currentSessionId, sessions, deleteMutation, toast]
+    [currentSessionId, sessions, deleteMutation, toast, setCurrentSessionId]
   );
+
+  return { createNewSession, deleteSession };
+}
+
+export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
+  const searchParams = useSearchParams();
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  const sessionsQuery = useChatbotSessions();
+  const sessions = sessionsQuery.data ?? [];
+  const sessionsLoading = sessionsQuery.isLoading;
+
+  const sessionId = useMemo((): string | null => {
+    return currentSessionId ?? searchParams.get('session') ?? null;
+  }, [currentSessionId, searchParams]);
+
+  useEffect(() => {
+    if (currentSessionId === null && sessions.length > 0 && sessions[0] !== undefined) {
+      setCurrentSessionId(sessions[0].id);
+    }
+  }, [currentSessionId, sessions]);
+
+  const { createNewSession, deleteSession } = useChatbotSessionActions({
+    sessions,
+    currentSessionId,
+    setCurrentSessionId,
+  });
 
   return {
     sessions,

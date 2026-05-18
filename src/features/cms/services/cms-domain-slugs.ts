@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { CmsRepository, CmsSlugLookupOptions, Slug } from '@/shared/contracts/cms';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb } from '@/shared/lib/db/cms-builder-mongo-client';
 
 import {
   deleteDomainSlugLink,

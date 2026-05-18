@@ -114,11 +114,11 @@ export default function ArchHomePage({
           <FloorPlan content={pageContent.drawing} interiorModelUrl={interiorModelUrl} />
         </FloorPlanSlotsProvider>
       ) : null}
+      <CodeStudio />
       {vis.philosophy ? <Philosophy content={pageContent.philosophy} /> : null}
       {vis.services ? <Services services={services} content={pageContent.services} /> : null}
       {vis.projects ? <BuiltWork projects={viewerProjects} content={pageContent.projects} /> : null}
       {vis.projects ? <ProjectViewer projects={viewerProjects} /> : null}
-      <CodeStudio />
       {vis.process ? <Process content={pageContent.process} /> : null}
       {vis.metrics ? <Metrics metrics={pageContent.metrics} /> : null}
       {vis.caseStudy && viewerProjects.length > 0 ? (

@@ -36,6 +36,24 @@ const BLOCK_ENDS = BLOCK_TEXTS.reduce<number[]>((acc, text) => {
 const SPEED = 44;          // chars per second
 const LOOP_PAUSE_MS = 3400;
 
+// precompute which line index each block starts on
+const BLOCK_LINE_STARTS: number[] = [];
+let _lineOffset = 0;
+for (const text of BLOCK_TEXTS) {
+  BLOCK_LINE_STARTS.push(_lineOffset);
+  _lineOffset += text.split('\n').length;
+}
+// line count per block (excluding leading blank lines of continuation blocks)
+const BLOCK_LINE_COUNTS = BLOCK_TEXTS.map((t) => t.split('\n').length);
+
+function getActiveBlockIdx(shown: number): number {
+  for (let i = BLOCK_TEXTS.length - 1; i >= 0; i--) {
+    const start = i === 0 ? 0 : BLOCK_ENDS[i - 1];
+    if (shown > start) return i;
+  }
+  return 0;
+}
+
 // ─── Syntax highlighter ───────────────────────────────────────────────────────
 
 const PATTERNS: [RegExp, string][] = [
@@ -127,23 +145,28 @@ function PipelineGraph({ states }: { states: NodeState[] }) {
 
 // ─── Code display ─────────────────────────────────────────────────────────────
 
-function CodeDisplay({ code, cursor }: { code: string; cursor: boolean }) {
+function CodeDisplay({ code, cursor, activeBlock }: { code: string; cursor: boolean; activeBlock: number }) {
   const lines = code.split('\n');
+  const blockStart = BLOCK_LINE_STARTS[activeBlock];
+  const blockEnd = blockStart + BLOCK_LINE_COUNTS[activeBlock] - 1;
   return (
     <div className="cs-code-body">
-      {lines.map((line, li) => (
-        <div key={li} className="cs-line">
-          <span className="cs-ln">{li + 1}</span>
-          <span className="cs-lc">
-            {tokenizeLine(line).map((tok, ti) => (
-              <span key={ti} className={`cs-t-${tok.type}`}>{tok.text}</span>
-            ))}
-            {li === lines.length - 1 && cursor && (
-              <span className="cs-cursor" aria-hidden="true" />
-            )}
-          </span>
-        </div>
-      ))}
+      {lines.map((line, li) => {
+        const isActive = li >= blockStart && li <= blockEnd;
+        return (
+          <div key={li} className={`cs-line${isActive ? ' cs-line--active' : ''}`}>
+            <span className="cs-ln">{li + 1}</span>
+            <span className="cs-lc">
+              {tokenizeLine(line).map((tok, ti) => (
+                <span key={ti} className={`cs-t-${tok.type}`}>{tok.text}</span>
+              ))}
+              {li === lines.length - 1 && cursor && (
+                <span className="cs-cursor" aria-hidden="true" />
+              )}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -209,8 +232,10 @@ function CodeStudio() {
     };
   }, []);
 
-  const visibleCode = FULL_CODE.slice(0, Math.floor(shown));
-  const nodeStates = getNodeStates(Math.floor(shown));
+  const shownInt = Math.floor(shown);
+  const visibleCode = FULL_CODE.slice(0, shownInt);
+  const nodeStates = getNodeStates(shownInt);
+  const activeBlock = getActiveBlockIdx(shownInt);
 
   return (
     <section className="cs-section" ref={sectionRef} id="code-studio">
@@ -250,7 +275,7 @@ function CodeStudio() {
             <span className="cs-tab-pill cs-tab-pill--dim">site.ts</span>
             <span className="cs-tab-pill cs-tab-pill--dim">massing.ts</span>
           </div>
-          <CodeDisplay code={visibleCode} cursor={cursor} />
+          <CodeDisplay code={visibleCode} cursor={cursor} activeBlock={activeBlock} />
         </div>
 
         {/* ── Node graph ───────────────────────────────────── */}

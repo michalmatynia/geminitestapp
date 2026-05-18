@@ -843,12 +843,18 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
   font-family: var(--mono); font-size: 12px; line-height: 1.8;
   flex: 1; overflow: hidden;
 }
-.cs-line { display: flex; padding: 0 20px; }
+.cs-line { display: flex; padding: 0 20px; transition: background .3s ease; }
+.cs-line--active {
+  background: rgba(133,122,114,0.07);
+  border-left: 2px solid var(--accent);
+  padding-left: 18px;
+}
 .cs-ln {
   width: 28px; text-align: right; margin-right: 20px;
   color: rgba(156,151,143,0.28); font-size: 11px;
   flex-shrink: 0; user-select: none;
 }
+.cs-line--active .cs-ln { color: rgba(156,151,143,0.55); }
 .cs-lc { flex: 1; }
 
 /* syntax tokens */
@@ -887,22 +893,22 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 
 /* node rects */
 .cs-nrect {
-  fill: none; stroke: var(--rule); stroke-width: 1;
-  transition: stroke .45s ease, fill .45s ease;
+  fill: none; stroke: rgba(218,214,208,0.45); stroke-width: 1;
+  transition: stroke .45s ease, fill .45s ease, stroke-width .3s ease;
 }
 .cs-nrect--active {
-  stroke: var(--accent);
-  fill: rgba(133,122,114,0.06);
+  stroke: var(--accent); stroke-width: 1.5;
+  fill: rgba(133,122,114,0.09);
 }
 .cs-nrect--done {
   stroke: var(--ink-3);
-  fill: var(--paper-2);
+  fill: rgba(106,101,96,0.06);
 }
 
 /* node labels */
 .cs-nlabel {
   font-family: var(--mono); font-size: 9px; letter-spacing: .18em;
-  text-transform: uppercase; fill: var(--ink-4);
+  text-transform: uppercase; fill: rgba(198,193,184,0.4);
   transition: fill .45s ease;
 }
 .cs-nlabel--active { fill: var(--ink); }
@@ -910,7 +916,7 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 
 .cs-nsub {
   font-family: var(--mono); font-size: 8px; letter-spacing: .1em;
-  fill: rgba(156,151,143,0.4);
+  fill: rgba(156,151,143,0.25);
   transition: fill .45s ease;
 }
 .cs-nsub--active { fill: var(--accent); }
@@ -918,7 +924,7 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 
 /* status dots */
 .cs-ndot {
-  fill: var(--rule);
+  fill: rgba(218,214,208,0.45);
   transform-box: fill-box; transform-origin: center;
   transition: fill .45s ease;
 }
@@ -930,16 +936,16 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 
 @keyframes cs-dot-pulse {
   0%, 100% { transform: scale(1);   opacity: 1; }
-  50%       { transform: scale(1.6); opacity: 0.65; }
+  50%       { transform: scale(1.7); opacity: 0.6; }
 }
 
 /* connector lines */
 .cs-nline {
-  stroke: var(--ink-4); stroke-width: 1; fill: none; opacity: 0.35;
+  stroke: rgba(218,214,208,0.3); stroke-width: 1; fill: none; opacity: 1;
   transition: stroke .45s ease, stroke-dashoffset .55s cubic-bezier(.4,0,.2,1), opacity .45s ease;
 }
-.cs-nline--live { stroke: var(--ink-3); opacity: 0.7; }
-.cs-nline--idle { opacity: 0.25; }
+.cs-nline--live { stroke: var(--ink-3); opacity: 0.85; }
+.cs-nline--idle { opacity: 0.4; }
 
 /* responsive collapse */
 @media (max-width: 1024px) {

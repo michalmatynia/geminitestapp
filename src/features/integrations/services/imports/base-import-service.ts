@@ -97,7 +97,7 @@ const BASE_IMPORT_RETRY_WAIT_WINDOW_MS = 5_000;
 const toFailureTimestamp = (item: BaseImportItemRecord): number => {
   const candidates = [item.lastErrorAt, item.finishedAt, item.updatedAt];
   for (const value of candidates) {
-    if (!value) continue;
+    if (value === null || value === undefined || value === '') continue;
     const parsed = Date.parse(value);
     if (Number.isFinite(parsed)) return parsed;
   }
@@ -147,15 +147,22 @@ const formatLatestFailureSummary = (item: BaseImportItemRecord | null): string |
   const sku = item.sku?.trim();
   const itemId = item.itemId?.trim();
   const baseProductId = item.baseProductId?.trim();
-  const subject = (sku !== undefined && sku.length > 0) ? sku :
-                  (itemId !== undefined && itemId.length > 0) ? itemId :
-                  (baseProductId !== undefined && baseProductId.length > 0) ? baseProductId : 'item';
+  
+  let subject = 'item';
+  if (sku !== undefined && sku !== '') {
+    subject = sku;
+  } else if (itemId !== undefined && itemId !== '') {
+    subject = itemId;
+  } else if (baseProductId !== undefined && baseProductId !== '') {
+    subject = baseProductId;
+  }
+
   const code = item.errorCode?.trim() ?? '';
   const message = toCompactFailureMessage(item.errorMessage);
   
-  if (code.length === 0 && message === null) return null;
-  if (message === null) return `Latest failure: ${subject}${code.length > 0 ? ` [${code}]` : ''}`;
-  return `Latest failure: ${subject}${code.length > 0 ? ` [${code}]` : ''}: ${message}`;
+  if (code === '' && message === '') return null;
+  if (message === '') return `Latest failure: ${subject}${code !== '' ? ` [${code}]` : ''}`;
+  return `Latest failure: ${subject}${code !== '' ? ` [${code}]` : ''}: ${message}`;
 };
 
 const formatExactTargetItemSummary = (input: {
@@ -164,16 +171,16 @@ const formatExactTargetItemSummary = (input: {
 }): string | null => {
   const directTarget = input.run.params.directTarget;
   const item = input.item;
-  if (!directTarget || !item) return null;
+  if (directTarget === undefined || item === null) return null;
 
   const targetLabel =
     directTarget.type === 'sku'
       ? `SKU ${directTarget.value}`
       : `Base Product ID ${directTarget.value}`;
-  const productReference = item.importedProductId?.trim()
-    ? ` product ${item.importedProductId.trim()}`
+  const productReference = (item.importedProductId?.trim() ?? '') !== ''
+    ? ` product ${item.importedProductId?.trim() ?? ''}`
     : ' product';
-  const importedSkuReference = item.sku?.trim() ? ` with SKU ${item.sku.trim()}` : '';
+  const importedSkuReference = (item.sku?.trim() ?? '') !== '' ? ` with SKU ${item.sku?.trim() ?? ''}` : '';
 
   if (item.status === 'imported') {
     return `Exact target ${targetLabel} created new Base-linked${productReference}${importedSkuReference}.`;
@@ -185,7 +192,7 @@ const formatExactTargetItemSummary = (input: {
 
   if (item.status === 'skipped') {
     const message = toCompactFailureMessage(item.errorMessage, 160);
-    return message
+    return message !== ''
       ? `Exact target ${targetLabel} was skipped: ${message}`
       : `Exact target ${targetLabel} was skipped.`;
   }
@@ -201,7 +208,7 @@ type DueBaseImportRunItemBatch = {
 };
 
 const toRetryTimestamp = (item: BaseImportItemRecord): number | null => {
-  if (!item.nextRetryAt) return null;
+  if (item.nextRetryAt === null || item.nextRetryAt === undefined || item.nextRetryAt === '') return null;
   const retryAt = Date.parse(item.nextRetryAt);
   return Number.isFinite(retryAt) ? retryAt : null;
 };

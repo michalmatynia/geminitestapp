@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -251,18 +252,32 @@ export function KangurFocusProvider({
   const subjectValue = useKangurSubjectFocusStateValue(focusScope);
   const ageGroupValue = useKangurAgeGroupFocusStateValue(focusScope);
 
-  useEffect(() => {
-    const nextSubject = resolveKangurSubjectForAgeGroup(
-      subjectValue.subject,
-      ageGroupValue.ageGroup
-    );
-    if (nextSubject !== subjectValue.subject) {
-      subjectValue.setSubject(nextSubject);
-    }
-  }, [ageGroupValue.ageGroup, subjectValue]);
+  // Keep a ref so the combined setter can read the latest subject/setSubject
+  // without being recreated whenever subject changes.
+  const subjectValueRef = useRef(subjectValue);
+  subjectValueRef.current = subjectValue;
+
+  // Wrap setAgeGroup so that subject is co-updated in the same React batch,
+  // preventing a one-frame flash where ageGroup is new but subject is still old.
+  const setAgeGroupWithSubjectSync = useCallback(
+    (nextAgeGroup: KangurLessonAgeGroup): void => {
+      ageGroupValue.setAgeGroup(nextAgeGroup);
+      const { subject, setSubject } = subjectValueRef.current;
+      const nextSubject = resolveKangurSubjectForAgeGroup(subject, nextAgeGroup);
+      if (nextSubject !== subject) {
+        setSubject(nextSubject);
+      }
+    },
+    [ageGroupValue.setAgeGroup]
+  );
+
+  const synchronizedAgeGroupValue = useMemo(
+    () => ({ ...ageGroupValue, setAgeGroup: setAgeGroupWithSubjectSync }),
+    [ageGroupValue, setAgeGroupWithSubjectSync]
+  );
 
   return (
-    <KangurFocusContextsProvider ageGroupValue={ageGroupValue} subjectValue={subjectValue}>
+    <KangurFocusContextsProvider ageGroupValue={synchronizedAgeGroupValue} subjectValue={subjectValue}>
       {children}
     </KangurFocusContextsProvider>
   );

@@ -1,3 +1,13 @@
+import 'server-only';
+
+/**
+ * Server-side entrypoint for the Playwright feature.
+ * Exports comprehensive server-side services (engine runtime, connections, browser sessions, 
+ * scripters, task runners, storage state, and instance configurations) 
+ * for browser automation and scraping tasks.
+ * Should only be accessed in server environments.
+ */
+
 export {
   PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
   PLAYWRIGHT_DEFAULT_CAPTURE_SCRIPT,

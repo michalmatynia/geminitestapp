@@ -184,7 +184,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     (activeTransitionPageKey !== null && activeTransitionPageKey !== resolvedPageKey) ||
     (pendingPageKey !== null && pendingPageKey !== resolvedPageKey);
   const shouldShowAcknowledgingNavigationSkeleton =
-    isRouteAcknowledging && (isLanguageSwitcherTransition || hasCommittedTargetRoute);
+    isRouteAcknowledging && !isLanguageSwitcherTransition && hasCommittedTargetRoute;
 
   const navSkeletonVisibleRef = useRef(false);
   const boot = useKangurBootOrchestrator({

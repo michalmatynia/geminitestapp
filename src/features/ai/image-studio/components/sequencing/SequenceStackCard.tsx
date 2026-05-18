@@ -18,7 +18,7 @@ import { PROJECT_SEQUENCE_OPERATION_LABELS } from './sequencing-constants';
 import { useSequencingPanelContext } from './SequencingPanelContext';
 
 const createSequenceStepId = (operation: ImageStudioSequenceOperation, index: number): string => {
-  const randomUuid = globalThis.crypto.randomUUID.();
+  const randomUuid = globalThis.crypto.randomUUID();
   if (typeof randomUuid === 'string' && randomUuid.trim().length > 0) {
     return `step_${operation}_${randomUuid.replace(/-/g, '').slice(0, 12)}`;
   }

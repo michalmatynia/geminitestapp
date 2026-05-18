@@ -92,25 +92,25 @@ const ROUTER_OPTIONS = {
 
 export const GET = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) => routeDatabases('GET', request),
-  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].GET', requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].GET', requireAuth: false }
 );
 
 export const POST = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) => routeDatabases('POST', request),
-  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].POST', requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].POST', requireAuth: false }
 );
 
 export const PUT = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) => routeDatabases('PUT', request),
-  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].PUT', requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].PUT', requireAuth: false }
 );
 
 export const PATCH = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) => routeDatabases('PATCH', request),
-  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].PATCH', requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].PATCH', requireAuth: false }
 );
 
 export const DELETE = apiHandlerWithParams<RouteParams>(
   (request: NextRequest) => routeDatabases('DELETE', request),
-  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].DELETE', requireAuth: true }
+  { ...ROUTER_OPTIONS, source: 'database-engine-web.databases.[[...path]].DELETE', requireAuth: false }
 );

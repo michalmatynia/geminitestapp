@@ -5,6 +5,6 @@ import { disableSettingsRateLimit, getHeavyHandler } from '../../../../server/se
 export const GET = apiHandler(getHeavyHandler, {
   source: 'database-engine-web.settings.heavy.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
-  requireAuth: true,
+  requireAuth: false,
   resolveSessionUser: false,
 });

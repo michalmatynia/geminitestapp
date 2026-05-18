@@ -96,6 +96,10 @@ const buildAssetUploadOptions = (formData: FormData): NonNullable<Parameters<typ
   return options;
 };
 
+/**
+ * API handler for GET /api/assets3d
+ * Fetches and returns a filtered list of 3D assets from cache.
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const assets = await listAssets3DCached({
@@ -114,6 +118,10 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
 }
 
+/**
+ * API handler for POST /api/assets3d
+ * Parses form data, validates file, and uploads a new 3D asset.
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {

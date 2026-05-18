@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-05-10T01:05:09.478Z",
+  "generatedAt": "2026-05-18T08:10:58.373Z",
   "source": {
-    "totalFiles": 13170,
-    "totalLines": 2143450,
-    "useClientFiles": 2362,
-    "hooksWithoutUseClient": 145,
+    "totalFiles": 13516,
+    "totalLines": 2182850,
+    "useClientFiles": 2484,
+    "hooksWithoutUseClient": 148,
     "filesOver800": 120,
-    "filesOver1000": 39,
-    "filesOver1500": 12,
+    "filesOver1000": 40,
+    "filesOver1500": 13,
     "largestFile": {
       "path": "src/features/filemaker/components/page/OrganizationJobListingsSection.tsx",
-      "lines": 4883
+      "lines": 4868
     }
   },
   "api": {
     "totalRoutes": 30,
-    "routesWithApiHandler": 132,
-    "delegatedServerRoutes": 247,
+    "routesWithApiHandler": 133,
+    "delegatedServerRoutes": 249,
     "routesWithoutApiHandler": 19,
     "forceDynamicRoutes": 0,
     "revalidateRoutes": 0,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 9,
-    "routesWithExplicitCachePolicy": 379,
+    "routesWithExplicitCachePolicy": 382,
     "routesWithoutExplicitCachePolicy": 19,
     "topRouteHotspots": [
       {
@@ -31,7 +31,7 @@
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 136
+        "lines": 156
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
@@ -98,28 +98,28 @@
         "lines": 23
       },
       {
-        "path": "src/app/api/cms/slugs/[id]/route.ts",
+        "path": "src/app/api/ai-insights/generate/session/route.ts",
         "lines": 23
       },
       {
-        "path": "src/app/api/ai-insights/generate/session/route.ts",
-        "lines": 22
+        "path": "src/app/api/cms/slugs/[id]/route.ts",
+        "lines": 23
       }
     ]
   },
   "imports": {
     "appFeatureBarrelImports": 1,
-    "appFeatureDeepImports": 3,
-    "featureToSharedTotalImports": 25,
-    "featureToAppApiTotalImports": 0,
-    "sharedToFeaturesTotalImports": 5
+    "appFeatureDeepImports": 5,
+    "featureToSharedTotalImports": 26,
+    "featureToAppApiTotalImports": 2,
+    "sharedToFeaturesTotalImports": 6
   },
   "architecture": {
     "crossFeatureEdgePairs": 4,
     "topCrossFeatureEdges": [
       {
         "edge": "filemaker -> kangur",
-        "references": 15
+        "references": 11
       },
       {
         "edge": "products -> playwright",
@@ -137,136 +137,141 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2527,
-        "lines": 498004
+        "files": 2540,
+        "lines": 500203
       },
       {
         "feature": "ai",
-        "files": 1400,
-        "lines": 256370
+        "files": 1492,
+        "lines": 261447
       },
       {
         "feature": "products",
-        "files": 1313,
-        "lines": 218406
+        "files": 1374,
+        "lines": 231701
       },
       {
         "feature": "filemaker",
-        "files": 858,
-        "lines": 203104
+        "files": 868,
+        "lines": 195186
       },
       {
         "feature": "integrations",
-        "files": 585,
-        "lines": 144205
+        "files": 618,
+        "lines": 151034
       },
       {
         "feature": "case-resolver",
-        "files": 394,
-        "lines": 68668
+        "files": 400,
+        "lines": 68558
       },
       {
         "feature": "playwright",
-        "files": 335,
-        "lines": 61401
+        "files": 330,
+        "lines": 61601
       },
       {
         "feature": "cms",
-        "files": 406,
-        "lines": 54010
+        "files": 427,
+        "lines": 54847
       },
       {
         "feature": "prompt-exploder",
         "files": 135,
-        "lines": 26843
-      },
-      {
-        "feature": "notesapp",
-        "files": 99,
-        "lines": 13279
+        "lines": 26937
       },
       {
         "feature": "admin",
-        "files": 127,
-        "lines": 13098
+        "files": 128,
+        "lines": 13788
+      },
+      {
+        "feature": "notesapp",
+        "files": 102,
+        "lines": 13385
       },
       {
         "feature": "data-import-export",
         "files": 49,
-        "lines": 11993
+        "lines": 12157
       },
       {
         "feature": "job-board",
-        "files": 30,
-        "lines": 10262
-      },
-      {
-        "feature": "product-sync",
-        "files": 25,
-        "lines": 7576
+        "files": 27,
+        "lines": 9505
       },
       {
         "feature": "auth",
-        "files": 79,
-        "lines": 7406
+        "files": 91,
+        "lines": 8349
+      },
+      {
+        "feature": "product-sync",
+        "files": 29,
+        "lines": 7628
       },
       {
         "feature": "drafter",
         "files": 53,
-        "lines": 7383
+        "lines": 7404
       },
       {
         "feature": "viewer3d",
         "files": 62,
-        "lines": 6234
+        "lines": 6633
+      },
+      {
+        "feature": "page-manager",
+        "files": 5,
+        "lines": 6293
       },
       {
         "feature": "prompt-engine",
         "files": 32,
-        "lines": 4375
+        "lines": 4742
       },
       {
         "feature": "files",
-        "files": 43,
-        "lines": 3381
+        "files": 47,
+        "lines": 3411
       },
       {
         "feature": "internationalization",
         "files": 30,
-        "lines": 2576
+        "lines": 2580
       },
       {
         "feature": "jobs",
         "files": 5,
-        "lines": 846
+        "lines": 865
       },
       {
         "feature": "gsap",
         "files": 8,
-        "lines": 360
+        "lines": 364
       },
       {
         "feature": "pdf-export",
         "files": 2,
-        "lines": 199
+        "lines": 204
       },
       {
         "feature": "tooltip-engine",
         "files": 9,
-        "lines": 165
+        "lines": 169
       },
       {
         "feature": "app-embeds",
         "files": 9,
-        "lines": 135
+        "lines": 138
       }
     ]
   },
   "runtime": {
-    "setIntervalOccurrences": 0
+    "setIntervalOccurrences": 2
   },
   "codeHealth": {
-    "deepRelativeImportCount": 6,
+    "deepRelativeImportCount": 13,
     "circularFeatureDeps": [],
     "hookComplexity": [
       {
@@ -341,10 +346,10 @@
       },
       {
         "path": "src/features/filemaker/hooks/useAdminFilemakerOrganizationsListState.tsx",
-        "useEffectCount": 2,
+        "useEffectCount": 1,
         "useCallbackCount": 14,
         "useMemoCount": 4,
-        "total": 20
+        "total": 19
       },
       {
         "path": "src/features/kangur/admin/hooks/useKangurLessonMutations.ts",
@@ -380,6 +385,13 @@
         "useCallbackCount": 0,
         "useMemoCount": 12,
         "total": 18
+      },
+      {
+        "path": "src/features/filemaker/hooks/useAdminFilemakerPersonEditPageState.ts",
+        "useEffectCount": 2,
+        "useCallbackCount": 9,
+        "useMemoCount": 6,
+        "total": 17
       },
       {
         "path": "src/features/filemaker/social/admin/workspace/hooks/useSocialSettings.ts",
@@ -424,38 +436,35 @@
         "total": 15
       },
       {
-        "path": "src/features/filemaker/hooks/useAdminFilemakerOrganizationEditPageState.ts",
-        "useEffectCount": 2,
-        "useCallbackCount": 4,
-        "useMemoCount": 9,
-        "total": 15
-      },
-      {
-        "path": "src/features/filemaker/hooks/useAdminFilemakerPersonEditPageState.ts",
-        "useEffectCount": 2,
-        "useCallbackCount": 7,
-        "useMemoCount": 6,
-        "total": 15
-      },
-      {
         "path": "src/features/filemaker/social/admin/workspace/hooks/useSocialPipelineRunner.ts",
         "useEffectCount": 4,
         "useCallbackCount": 11,
         "useMemoCount": 0,
         "total": 15
+      },
+      {
+        "path": "src/features/ai/ai-paths/context/hooks/useCanvasInteractions.nodes.ts",
+        "useEffectCount": 2,
+        "useCallbackCount": 12,
+        "useMemoCount": 0,
+        "total": 14
       }
     ],
-    "highComplexityHooksCount": 191
+    "highComplexityHooksCount": 197
   },
   "hotspots": {
     "topFilesByLines": [
       {
         "path": "src/features/filemaker/components/page/OrganizationJobListingsSection.tsx",
-        "lines": 4883
+        "lines": 4868
       },
       {
         "path": "src/features/products/components/list/ProductScanModal.test.tsx",
         "lines": 4631
+      },
+      {
+        "path": "src/features/page-manager/milkbardesigners/AdminMilkbarDesignersCmsPage.tsx",
+        "lines": 3883
       },
       {
         "path": "src/features/filemaker/server/filemaker-job-board-scrape.test.ts",
@@ -479,15 +488,15 @@
       },
       {
         "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.tsx",
-        "lines": 2629
-      },
-      {
-        "path": "src/features/filemaker/__tests__/AdminFilemakerMailPages.routing.test.tsx",
-        "lines": 2451
+        "lines": 2630
       },
       {
         "path": "src/features/playwright/server/ai-step-service.ts",
-        "lines": 2443
+        "lines": 2441
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
+        "lines": 2336
       },
       {
         "path": "src/features/filemaker/server/filemaker-job-board-scrape.ts",
@@ -498,8 +507,12 @@
         "lines": 2255
       },
       {
-        "path": "src/features/integrations/services/tradera-listing-service.test.ts",
-        "lines": 2224
+        "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
+        "lines": 2170
+      },
+      {
+        "path": "src/features/integrations/services/tradera-listing/OtherOperations.test.ts",
+        "lines": 2151
       },
       {
         "path": "src/features/filemaker/components/page/FilemakerJobBoardScrapeModal.test.tsx",
@@ -514,40 +527,28 @@
         "lines": 2060
       },
       {
-        "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.test.tsx",
-        "lines": 2027
-      },
-      {
-        "path": "src/features/integrations/services/tradera-listing/OtherOperations.test.ts",
-        "lines": 2026
-      },
-      {
         "path": "src/features/filemaker/server/job-board-scrape/offer-from-evaluation.ts",
         "lines": 2020
+      },
+      {
+        "path": "src/features/filemaker/server/filemaker-mail-service.ts",
+        "lines": 1926
       },
       {
         "path": "src/features/products/components/ProductModals.test.tsx",
         "lines": 1920
       },
       {
-        "path": "src/features/filemaker/server/filemaker-mail-service.ts",
-        "lines": 1916
-      },
-      {
-        "path": "src/features/filemaker/__tests__/AdminFilemakerMailClientPage.test.tsx",
-        "lines": 1781
-      },
-      {
         "path": "src/shared/lib/browser-execution/selectors/tradera.ts",
         "lines": 1769
       },
       {
-        "path": "src/features/product-sync/services/product-sync-processor.ts",
-        "lines": 1690
-      },
-      {
         "path": "src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts",
         "lines": 1667
+      },
+      {
+        "path": "src/features/products/components/list/ProductColumns.test.tsx",
+        "lines": 1657
       },
       {
         "path": "src/shared/lib/browser-execution/sequencers/JobBoardScrapeSequencer.ts",
@@ -564,6 +565,10 @@
       {
         "path": "src/shared/lib/browser-execution/sequencers/GoogleLensSearchSequencer.ts",
         "lines": 1608
+      },
+      {
+        "path": "src/features/playwright/components/step-sequencer/ActionConstructorEngine.tsx",
+        "lines": 1595
       },
       {
         "path": "src/features/products/server/product-scans-service.batch.test.ts",
@@ -600,16 +605,16 @@
         "lines": 26
       },
       {
-        "path": "src/app/(admin)/admin/kangur/[...slug]/page.tsx",
-        "lines": 25
-      },
-      {
         "path": "src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx",
         "lines": 24
       },
       {
         "path": "src/app/(admin)/admin/filemaker/campaigns/unsubscribe/page.tsx",
         "lines": 24
+      },
+      {
+        "path": "src/app/(admin)/admin/page-manager/studiq/[...slug]/page.tsx",
+        "lines": 21
       },
       {
         "path": "src/app/(admin)/admin/kangur/builder/page.tsx",
@@ -636,10 +641,6 @@
         "lines": 17
       },
       {
-        "path": "src/app/(admin)/admin/kangur/page.tsx",
-        "lines": 17
-      },
-      {
         "path": "src/app/(admin)/admin/kangur/settings/ai-tutor-content/page.tsx",
         "lines": 17
       },
@@ -650,12 +651,16 @@
       {
         "path": "src/app/(admin)/admin/kangur/appearance/page.tsx",
         "lines": 16
+      },
+      {
+        "path": "src/app/(admin)/admin/kangur/documentation/page.tsx",
+        "lines": 16
       }
     ]
   },
   "propDrilling": {
-    "candidateChains": 2133,
-    "depthGte4Chains": 691,
+    "candidateChains": 2727,
+    "depthGte4Chains": 933,
     "forwardingComponents": 120
   }
 }

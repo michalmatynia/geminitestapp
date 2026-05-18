@@ -7,11 +7,14 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/**
+ * Parses and validates the request body as JSON.
+ * Throws badRequestError if parsing fails.
+ */
 async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
   if (rawBody === '') return {};
-  
+
   try {
     return JSON.parse(rawBody);
   } catch (error) {
@@ -20,8 +23,14 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
   }
 }
 
+/**
+ * API handler for POST /api/ai/context/bundle
+ * Resolves context references for the AI registry, logs the event, 
+ * and returns the bundled resolution result.
+ */
 export async function postBundleHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body = await parseRequestBody(req);
+...
+
 
   const parsed = contextBundleRequestSchema.safeParse(body);
   if (!parsed.success) {

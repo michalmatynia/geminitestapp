@@ -1,3 +1,15 @@
+/**
+ * Server-side entrypoint for the AI feature domain.
+ * Registers global AI-specific error enrichers.
+ * Exports server-side services for:
+ * - AI Context Registry
+ * - AI Paths Runtime & Queues
+ * - Agent Runtime & Audit
+ * - Chatbot Job Queues
+ * - Image Studio Services & Queues
+ * - Insights Queues
+ * Should only be accessed in server environments.
+ */
 import { logAgentAudit } from './agent-runtime/audit';
 import { registerErrorEnricher } from '@/shared/utils/observability/error-enricher-registry';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';

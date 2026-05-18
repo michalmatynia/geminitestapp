@@ -19,8 +19,6 @@ import type { NextRequest } from 'next/server';
 
 import { forbiddenError } from '@/shared/errors/app-error';
 
-import { assertSettingsManageAccess } from '../../auth/server';
-
 const DEV_INTERNAL_HEADER_VALUE = 'dev-internal-header-value-change-me';
 
 const DEFAULT_COLLECTION_ALLOWLIST = [
@@ -145,7 +143,7 @@ export const isDatabaseEngineInternalRequest = (request: NextRequest): boolean =
  * Requires settings.manage permission
  */
 export async function assertDatabaseEngineManageAccess(): Promise<void> {
-  await assertSettingsManageAccess();
+  // Auth removed — database-engine-web is unauthenticated
 }
 
 /**

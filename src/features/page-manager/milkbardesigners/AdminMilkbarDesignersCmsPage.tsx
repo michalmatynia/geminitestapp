@@ -2802,8 +2802,15 @@ function CmsModel3DField({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState(false);
   const hasModel = modelId !== undefined && modelId.trim().length > 0;
   const assignedModelId = modelId ?? '';
+
+  const prevModelIdRef = useRef(assignedModelId);
+  if (prevModelIdRef.current !== assignedModelId) {
+    prevModelIdRef.current = assignedModelId;
+    setThumbnailError(false);
+  }
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -2855,65 +2862,103 @@ function CmsModel3DField({
           </div>
           {hasModel ? <Badge variant='secondary'>Assigned</Badge> : <Badge variant='outline'>Empty</Badge>}
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          {hasModel ? (
-            <>
-              <ModelAssetLabel modelId={assignedModelId} showStorageStatus />
+        <div className='flex items-start gap-3'>
+          {/* Thumbnail frame — mirrors image slot visual */}
+          <div className='relative h-24 w-24 shrink-0 overflow-hidden rounded-md border-2 border bg-gray-800'>
+            {hasModel && !thumbnailError ? (
+              <Viewer3DProvider key={assignedModelId}>
+                <Viewer3D
+                  modelUrl={`/api/assets3d/${assignedModelId}/file`}
+                  onLoad={() => {}}
+                  onError={() => setThumbnailError(true)}
+                  className='h-full w-full'
+                />
+              </Viewer3DProvider>
+            ) : hasModel && thumbnailError ? (
+              <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
+                <Box className='h-6 w-6 text-blue-400/50' />
+                <span className='text-[10px] text-white/30'>3D model</span>
+              </div>
+            ) : (
+              <button
+                type='button'
+                aria-label={`Upload ${label}`}
+                className='flex h-full w-full flex-col items-center justify-center gap-1 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Box className='h-6 w-6 text-gray-500' />
+                <span className='text-[10px] text-gray-500'>Upload</span>
+              </button>
+            )}
+            {hasModel && (
+              <button
+                type='button'
+                aria-label={`Preview ${label}`}
+                className='absolute inset-0 cursor-pointer bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                onClick={() => setPreviewOpen(true)}
+              />
+            )}
+          </div>
+          <div className='flex min-w-0 flex-1 flex-col gap-2'>
+            {hasModel ? <ModelAssetLabel modelId={assignedModelId} showStorageStatus /> : null}
+            <div className='flex flex-wrap items-center gap-1.5'>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='.glb,.gltf'
+                aria-label={`${label} model file`}
+                className='hidden'
+                onChange={(event) => {
+                  void handleFileChange(event);
+                }}
+              />
               <Button
                 type='button'
                 size='sm'
                 variant='ghost'
                 className='h-7 px-2 text-xs'
-                icon={<Eye className='size-3.5' />}
-                onClick={() => setPreviewOpen(true)}
+                disabled={uploading}
+                icon={<Upload className='size-3.5' />}
+                onClick={() => fileInputRef.current?.click()}
               >
-                Preview
+                {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
               </Button>
               <Button
                 type='button'
                 size='sm'
-                variant='ghost'
-                className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
-                icon={<X className='size-3.5' />}
-                onClick={() => onChange(undefined)}
+                variant={hasModel ? 'ghost' : 'secondary'}
+                className='h-7 px-2 text-xs'
+                icon={<Library className='size-3.5' />}
+                onClick={() => setPickerOpen(true)}
               >
-                Remove
+                From Library
               </Button>
-            </>
-          ) : (
-            <span className='text-xs text-white/30'>No model attached</span>
-          )}
-          <input
-            ref={fileInputRef}
-            type='file'
-            accept='.glb,.gltf'
-            aria-label={`${label} model file`}
-            className='hidden'
-            onChange={(event) => {
-              void handleFileChange(event);
-            }}
-          />
-          <Button
-            type='button'
-            size='sm'
-            variant='ghost'
-            className='h-7 px-2 text-xs'
-            disabled={uploading}
-            icon={<Upload className='size-3.5' />}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            variant={hasModel ? 'ghost' : 'secondary'}
-            className='h-7 px-2 text-xs'
-            icon={<Library className='size-3.5' />}
-            onClick={() => setPickerOpen(true)}
-          >
-            From Library
-          </Button>
+              {hasModel ? (
+                <>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='ghost'
+                    className='h-7 px-2 text-xs'
+                    icon={<Eye className='size-3.5' />}
+                    onClick={() => setPreviewOpen(true)}
+                  >
+                    Preview
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='ghost'
+                    className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
+                    icon={<X className='size-3.5' />}
+                    onClick={() => onChange(undefined)}
+                  >
+                    Remove
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
       {previewOpen && hasModel ? (

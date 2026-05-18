@@ -12,7 +12,7 @@
 
 'use client';
 
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useCallback, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import {
   OrbitControls,
@@ -199,8 +199,10 @@ function ViewerOrbitControls({
   return (
     <OrbitControls
       ref={(instance) => {
-        if (controlsRef !== undefined) {
-          controlsRef.current = instance as OrbitControlsHandle | null;
+        const targetControlsRef = controlsRef;
+
+        if (targetControlsRef !== undefined) {
+          targetControlsRef.current = instance as OrbitControlsHandle | null;
         }
       }}
       autoRotate={autoRotate}
@@ -233,6 +235,10 @@ function ViewerCapture({
 export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
   const { modelUrl, settings: propSettings, className, onLoad, onError, autoFit = true, presentationMode = false, allowUserControls = true, captureRef, controlsRef } = props;
   const s = useViewerSettings(propSettings);
+  const [eventSource, setEventSource] = useState<HTMLDivElement | null>(null);
+  const setViewerContainerRef = useCallback((node: HTMLDivElement | null): void => {
+    setEventSource(node);
+  }, []);
 
   const modelNode = (
     <Model3DErrorBoundary onError={onError}>
@@ -243,24 +249,32 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
   );
 
   return (
-    <div className={className}>
-      <Canvas camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }} shadows={s.enableShadows} gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }} dpr={[1, 2]}>
-        <ViewerCapture captureRef={captureRef} />
-        <color attach='background' args={[s.backgroundColor]} />
-        <SceneLighting preset={s.lighting} intensity={s.lightIntensity} />
-        <ViewerEnvironment environment={s.environment} />
-        <Suspense fallback={<Loader />}>
-          <SceneContent modelNode={modelNode} autoFit={autoFit} s={s} presentationMode={presentationMode} allowUserControls={allowUserControls} />
-        </Suspense>
-        <ViewerOrbitControls
-          presentationMode={presentationMode}
-          allowUserControls={allowUserControls}
-          autoRotate={s.autoRotate}
-          autoRotateSpeed={s.autoRotateSpeed}
-          controlsRef={controlsRef}
-        />
-        <ViewerEffects s={s} />
-      </Canvas>
+    <div ref={setViewerContainerRef} className={className}>
+      {eventSource !== null ? (
+        <Canvas
+          camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }}
+          shadows={s.enableShadows}
+          gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }}
+          dpr={[1, 2]}
+          eventSource={eventSource}
+        >
+          <ViewerCapture captureRef={captureRef} />
+          <color attach='background' args={[s.backgroundColor]} />
+          <SceneLighting preset={s.lighting} intensity={s.lightIntensity} />
+          <ViewerEnvironment environment={s.environment} />
+          <Suspense fallback={<Loader />}>
+            <SceneContent modelNode={modelNode} autoFit={autoFit} s={s} presentationMode={presentationMode} allowUserControls={allowUserControls} />
+          </Suspense>
+          <ViewerOrbitControls
+            presentationMode={presentationMode}
+            allowUserControls={allowUserControls}
+            autoRotate={s.autoRotate}
+            autoRotateSpeed={s.autoRotateSpeed}
+            controlsRef={controlsRef}
+          />
+          <ViewerEffects s={s} />
+        </Canvas>
+      ) : null}
     </div>
   );
 }

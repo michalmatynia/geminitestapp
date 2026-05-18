@@ -34,25 +34,45 @@ const ROUTER_OPTIONS = {
   rateLimitKey: false,
 } as const;
 
-// Catch-all auth metadata stays protected at the wrapper level so quality checks
-// do not treat this router as anonymous; individual sub-route handlers still own
-// the real per-path auth model because this surface mixes public, actor, and
-// protected endpoints behind one dispatcher.
+/**
+ * GET /api/kangur/[[...path]]
+ * 
+ * Catch-all route for Kangur API requests (Auth, Duels, Learner, AI Tutor).
+ * Requires authentication.
+ */
 export const GET = apiHandlerWithParams<RouteParams>(
   (request: NextRequest, _ctx, params) => routeKangurRequest(request, params),
   { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].GET', requireAuth: true }
 );
 
+/**
+ * POST /api/kangur/[[...path]]
+ * 
+ * Catch-all route for Kangur API requests (Auth, Duels, Learner, AI Tutor).
+ * Requires authentication.
+ */
 export const POST = apiHandlerWithParams<RouteParams>(
   (request: NextRequest, _ctx, params) => routeKangurRequest(request, params),
   { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].POST', requireAuth: true }
 );
 
+/**
+ * PATCH /api/kangur/[[...path]]
+ * 
+ * Catch-all route for Kangur API requests (Auth, Duels, Learner, AI Tutor).
+ * Requires authentication.
+ */
 export const PATCH = apiHandlerWithParams<RouteParams>(
   (request: NextRequest, _ctx, params) => routeKangurRequest(request, params),
   { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].PATCH', requireAuth: true }
 );
 
+/**
+ * DELETE /api/kangur/[[...path]]
+ * 
+ * Catch-all route for Kangur API requests (Auth, Duels, Learner, AI Tutor).
+ * Requires authentication.
+ */
 export const DELETE = apiHandlerWithParams<RouteParams>(
   (request: NextRequest, _ctx, params) => routeKangurRequest(request, params),
   { ...ROUTER_OPTIONS, source: 'kangur.[[...path]].DELETE', requireAuth: true }

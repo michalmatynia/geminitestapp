@@ -8,8 +8,7 @@ import 'server-only';
  */
 
 export * from '@/shared/lib/products/services/productAiService';
-...
-
+export {
   startAgentQueue,
   stopAgentQueue,
   enqueueAgentRun,

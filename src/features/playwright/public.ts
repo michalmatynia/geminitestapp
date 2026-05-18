@@ -1,4 +1,7 @@
-// Auto-generated public API for feature. Edit with care.
+/**
+ * Public API entrypoint for the Playwright feature.
+ * Exports public UI components, constants, engine utilities, hooks, pages, scan steps, and helpers.
+ */
 export * from './ui.public';
 export * from './constants.public';
 export * from './engine.public';

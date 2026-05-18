@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageCreateSchema } from '@/features/cms/server';
@@ -10,33 +11,21 @@ import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 
-import type { z } from 'zod';
-
+/**
+ * Parses and validates the request body for page creation.
+ */
 const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
   { ok: true; data: z.infer<typeof cmsPageCreateSchema> } | { ok: false; response: Response }
 > => {
-  if (ctx.body !== undefined) {
-    const parsed = cmsPageCreateSchema.safeParse(ctx.body);
-    if (parsed.success) {
-      return { ok: true, data: parsed.data };
-    }
-    return {
-      ok: false,
-      response: await createErrorResponse(
-        validationError('Invalid payload', { issues: parsed.error.flatten() }),
-        { request: req, source: 'cms-pages' }
-      ),
-    };
-  }
+...
   return parseJsonBody(req, cmsPageCreateSchema, { logPrefix: 'cms-pages' });
 };
 
 /**
- * GET /api/cms/pages
- * Fetches a list of pages.
+ * Fetches cached CMS pages.
  */
 async function getCmsPagesCached() {
   'use cache';
@@ -46,6 +35,10 @@ async function getCmsPagesCached() {
   return cmsRepository.getPages();
 }
 
+/**
+ * API handler for GET /api/cms/pages
+ * Fetches and returns a list of CMS pages from cache.
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
@@ -54,15 +47,15 @@ export async function getHandler(
 }
 
 /**
- * POST /api/cms/pages
- * Creates a new page.
+ * API handler for POST /api/cms/pages
+ * Parses request, creates a new CMS page, links optional slugs, logs activity, and returns the created page.
  */
 export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
-  const parsed = await parseBody(req, ctx);
-  if (!parsed.ok) {
+...
+
     return parsed.response;
   }
 

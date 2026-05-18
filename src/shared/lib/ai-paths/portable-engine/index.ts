@@ -1,3 +1,14 @@
+/**
+ * Portable AI Paths Engine
+ * 
+ * Provides a framework for executing and managing AI path operations in a portable,
+ * decoupled environment.
+ * 
+ * Key capabilities:
+ * - Observability hooks for tracking envelope verification, migration, and execution.
+ * - Audit sinks for capturing security and policy usage.
+ * - Snapshot-based state management for auditing and debugging.
+ */
 export {
   getPortablePathEnvelopeVerificationAuditSinkSnapshot,
   getPortablePathEnvelopeVerificationObservabilitySnapshot,

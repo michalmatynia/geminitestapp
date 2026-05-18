@@ -1,5 +1,11 @@
 import 'server-only';
 
+/**
+ * Security attempt tracking service.
+ * Handles rate-limiting and brute-force protection for login attempts by tracking 
+ * failures and locks across IP and email scopes.
+ */
+
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
@@ -12,6 +18,9 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+/**
+ * Record of a login attempt failure, used to detect and prevent brute-force attacks.
+ */
 type AttemptRecord = {
   _id: string;
   scope: 'email' | 'ip';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { Suspense, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
@@ -45,11 +45,20 @@ function renderMobileMenuHeaderActions({
   return (
     <>
       {shouldRenderLanguageSwitcher ? (
-        <KangurLanguageSwitcher
-          basePath={basePath}
-          currentPage={currentPage}
-          forceFallbackPath={forceLanguageSwitcherFallbackPath}
-        />
+        <Suspense
+          fallback={
+            <div
+              aria-hidden='true'
+              className='min-w-[8.75rem] max-w-full h-9 shrink-0 animate-pulse rounded-2xl bg-current opacity-10'
+            />
+          }
+        >
+          <KangurLanguageSwitcher
+            basePath={basePath}
+            currentPage={currentPage}
+            forceFallbackPath={forceLanguageSwitcherFallbackPath}
+          />
+        </Suspense>
       ) : null}
       {shouldRenderAppearanceControlsInline ? (
         <div className='flex shrink-0 items-center'>

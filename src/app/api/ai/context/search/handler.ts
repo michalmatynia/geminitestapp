@@ -7,11 +7,14 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/**
+ * Parses and validates the request body as JSON.
+ * Throws badRequestError if parsing fails.
+ */
 async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
   if (rawBody === '') return {};
-  
+
   try {
     return JSON.parse(rawBody);
   } catch (error) {
@@ -20,8 +23,14 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
   }
 }
 
+/**
+ * API handler for POST /api/ai/context/search
+ * Validates request payload, searches the context registry based on query/kinds/tags,
+ * logs the event, and returns the matching nodes with version information.
+ */
 export async function postSearchHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body = await parseRequestBody(req);
+...
+
 
   const parsed = contextSearchRequestSchema.safeParse(body);
   if (!parsed.success) {

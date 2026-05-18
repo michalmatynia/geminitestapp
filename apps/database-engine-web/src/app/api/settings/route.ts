@@ -11,13 +11,13 @@ export const GET = apiHandler(getHandler, {
   source: 'database-engine-web.settings.GET',
   rateLimitKey: disableSettingsRateLimit ? false : 'api',
   querySchema,
-  requireAuth: true,
+  requireAuth: false,
   resolveSessionUser: false,
 });
 
 export const POST = apiHandler(postHandler, {
   source: 'database-engine-web.settings.POST',
   rateLimitKey: disableSettingsRateLimit ? false : 'write',
-  requireAuth: true,
+  requireAuth: false,
   resolveSessionUser: false,
 });

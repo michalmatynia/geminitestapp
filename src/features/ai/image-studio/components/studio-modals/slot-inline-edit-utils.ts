@@ -444,7 +444,7 @@ export const mapSavedCompositeInputImages = (args: {
   const metadata = asRecord(selectedSlot.metadata);
   const compositeConfig = asRecord(metadata?.['compositeConfig']);
   const rawLayers = Array.isArray(compositeConfig?.['layers'])
-    ? (compositeConfig.['layers'] as unknown[])
+    ? (compositeConfig['layers'] as unknown[])
     : [];
   return rawLayers
     .map((layer, layerIndex): CompositeTabImageViewModel | null => {

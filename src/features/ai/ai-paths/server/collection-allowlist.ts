@@ -1,5 +1,10 @@
 import 'server-only';
 
+/**
+ * Default collections allowed for access within AI Paths.
+ * Used to prevent unauthorized database read/write operations by restricting 
+ * access to a defined set of trusted system collections.
+ */
 const DEFAULT_COLLECTION_ALLOWLIST = [
   'products',
   'product_drafts',

@@ -382,7 +382,7 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
-    qualities: [75, 90],
+    qualities: [70, 75, 80, 90],
     localPatterns: [
       // Allow signed/download-style local image URLs that use query params.
       { pathname: '/api/files/download' },

@@ -4,5 +4,5 @@ import { getProvidersHandler } from '../../../../server/settings/handlers';
 
 export const GET = apiHandler(getProvidersHandler, {
   source: 'database-engine-web.settings.providers.GET',
-  requireAuth: true,
+  requireAuth: false,
 });

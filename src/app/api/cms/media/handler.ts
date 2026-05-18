@@ -62,6 +62,9 @@ const mirrorMilkbarCmsMediaToPublicHtml = async (
   );
 };
 
+/**
+ * Uploads a CMS media file, applying storage profile logic.
+ */
 const uploadCmsMediaFile = async (
   file: File,
   input: {
@@ -90,6 +93,11 @@ const uploadCmsMediaFile = async (
   return upload;
 };
 
+/**
+ * API handler for POST /api/cms/media
+ * Parses multipart form data, validates files, processes storage profiles,
+ * and uploads media content.
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {

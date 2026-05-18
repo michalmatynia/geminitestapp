@@ -7,11 +7,14 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
+/**
+ * Parses and validates the request body as JSON.
+ * Throws badRequestError if parsing fails.
+ */
 async function parseRequestBody(req: NextRequest): Promise<unknown> {
   const rawBody = await req.text();
   if (rawBody === '') return {};
-  
+
   try {
     return JSON.parse(rawBody);
   } catch (error) {
@@ -20,8 +23,14 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
   }
 }
 
+/**
+ * API handler for POST /api/ai/actions/execute
+ * Validates request payload, checks proposal existence/status, updates status to 'executed',
+ * logs the execution event, and returns a response.
+ */
 export async function postExecuteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const body = await parseRequestBody(req);
+...
+
 
   const parsed = executeActionRequestSchema.safeParse(body);
   if (!parsed.success) {

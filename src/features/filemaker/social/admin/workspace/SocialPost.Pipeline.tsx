@@ -2,8 +2,6 @@
 
 import React from 'react';
 import {
-  Badge,
-  Button,
   LoadingState,
 } from '@/shared/ui';
 import { KangurProgressBar } from '@/features/kangur/ui/design/primitives';
@@ -13,6 +11,7 @@ import {
   getSocialJobStatusLabel,
   SocialJobStatusPill,
 } from './SocialJobStatusPill';
+import { SocialPostPipelineControls } from './SocialPostPipelineControls';
 import type { PipelineStep } from './SocialPublishingPage.Constants';
 
 const PIPELINE_PROGRESS_VALUE_BY_STEP = {
@@ -245,63 +244,75 @@ export function SocialPostPipeline(): React.JSX.Element {
 
   return (
     <KangurAdminCard>
-      <div className='space-y-4'>
-        <div className='flex items-center justify-between gap-3'>
-          <div className='text-sm font-semibold text-foreground'>Social pipeline</div>
-          <div className='flex items-center gap-2'>
-            {isPipelineBusy && (
-              <Badge variant='outline' className='animate-pulse'>
-                {pipelineStep === 'capturing'
-                  ? 'Capturing...'
-                  : pipelineStep === 'loading_context'
-                    ? 'Loading context...'
-                    : 'Generating...'}
-              </Badge>
-            )}
-          </div>
+      <SocialPostPipelineControls
+        isPipelineBusy={isPipelineBusy}
+        pipelineStep={pipelineStep ?? ''}
+        hasActivePost={hasActivePost}
+        activeDraftLabel={activeDraftLabel}
+        canRunTextPipeline={canRunTextPipeline}
+        hasBlockingRuntimeJob={hasBlockingRuntimeJob}
+        textPipelineButtonTitle={textPipelineButtonTitle}
+        shouldReviewVisualAnalysis={shouldReviewVisualAnalysis}
+        canRunVisualAnalysis={canRunVisualAnalysis}
+        visualAnalysisButtonLabel={visualAnalysisButtonLabel}
+        visualAnalysisButtonTitle={visualAnalysisButtonTitle}
+        canRunFreshCapture={canRunFreshCapture}
+        freshCaptureButtonTitle={freshCaptureButtonTitle}
+        canCaptureImagesOnly={canCaptureImagesOnly}
+        captureOnlyPending={captureOnlyPending}
+        captureImagesOnlyButtonTitle={captureImagesOnlyButtonTitle}
+        handleRunFullPipeline={handleRunFullPipeline}
+        handleOpenVisualAnalysisModal={handleOpenVisualAnalysisModal}
+        handleRunFullPipelineWithFreshCapture={handleRunFullPipelineWithFreshCapture}
+        handleCaptureImagesOnly={handleCaptureImagesOnly}
+      />
+
+      {(latestVisualAnalysisJobStatus ||
+        currentPipelineJob?.status ||
+        currentGenerationJob?.status) && (
+        <div className='mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+          <span className='font-medium text-foreground/80'>Runtime jobs:</span>
+          {latestVisualAnalysisJobStatus ? (
+            <SocialJobStatusPill
+              status={latestVisualAnalysisJobStatus}
+              label='Image analysis'
+              title={latestVisualAnalysisJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentGenerationJob?.status ? (
+            <SocialJobStatusPill
+              status={currentGenerationJob.status}
+              label='Generate post'
+              title={latestGenerationJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
+          {currentPipelineJob?.status ? (
+            <SocialJobStatusPill
+              status={currentPipelineJob.status}
+              label='Pipeline'
+              title={latestPipelineJobTitle || undefined}
+              className='text-[10px]'
+            />
+          ) : null}
         </div>
+      )}
 
-        <div className='space-y-3'>
-          {hasActivePost && (
-            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
-              Active draft:{' '}
-              <span className='font-semibold text-foreground/90'>{activeDraftLabel}</span>
-            </div>
-          )}
+      {!hasActivePost && (
+        <div className='mt-4 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+          Create or select a draft before running the social pipeline.
+        </div>
+      )}
 
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              type='button'
-              size='sm'
-              onClick={() => void handleRunFullPipeline()}
-              disabled={!canRunTextPipeline || isPipelineBusy || hasBlockingRuntimeJob}
-              title={textPipelineButtonTitle}
-            >
-              Run full pipeline
-            </Button>
-            <Button
-              type='button'
-              variant={shouldReviewVisualAnalysis ? 'secondary' : 'outline'}
-              size='sm'
-              onClick={handleOpenVisualAnalysisModal}
-              disabled={!canRunVisualAnalysis || isPipelineBusy}
-              title={visualAnalysisButtonTitle}
-            >
-              {visualAnalysisButtonLabel}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() => void handleRunFullPipelineWithFreshCapture()}
-              disabled={!canRunFreshCapture || isPipelineBusy || hasBlockingRuntimeJob}
-              title={freshCaptureButtonTitle}
-            >
-              Fresh capture & pipeline
-            </Button>
-            <Button
-              type='button'
-              variant='ghost'
+      {!canGenerateSocialDraft && socialDraftBlockedReason && (
+        <div className='mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
+          {socialDraftBlockedReason}
+        </div>
+      )}
+    </KangurAdminCard>
+  );
+}
               size='sm'
               onClick={() => void handleCaptureImagesOnly()}
               disabled={

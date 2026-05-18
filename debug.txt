@@ -1,0 +1,51 @@
+                {pipelineStep === 'capturing'
+                  ? 'Capturing...'
+                  : pipelineStep === 'loading_context'
+                    ? 'Loading context...'
+                    : 'Generating...'}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className='space-y-3'>
+          {hasActivePost && (
+            <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+              Active draft:{' '}
+              <span className='font-semibold text-foreground/90'>{activeDraftLabel}</span>
+            </div>
+          )}
+
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              type='button'
+              size='sm'
+              onClick={() => void handleRunFullPipeline()}
+              disabled={!canRunTextPipeline || isPipelineBusy || hasBlockingRuntimeJob}
+              title={textPipelineButtonTitle}
+            >
+              Run full pipeline
+            </Button>
+            <Button
+              type='button'
+              variant={shouldReviewVisualAnalysis ? 'secondary' : 'outline'}
+              size='sm'
+              onClick={handleOpenVisualAnalysisModal}
+              disabled={!canRunVisualAnalysis || isPipelineBusy}
+              title={visualAnalysisButtonTitle}
+            >
+              {visualAnalysisButtonLabel}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => void handleRunFullPipelineWithFreshCapture()}
+              disabled={!canRunFreshCapture || isPipelineBusy || hasBlockingRuntimeJob}
+              title={freshCaptureButtonTitle}
+            >
+              Fresh capture & pipeline
+            </Button>
+            <Button
+              type='button'
+              variant='ghost'

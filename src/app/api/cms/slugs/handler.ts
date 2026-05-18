@@ -92,8 +92,8 @@ export async function getHandler(
 }
 
 /**
- * POST /api/cms/slugs
- * Creates a new slug.
+ * API handler for POST /api/cms/slugs
+ * Creates a new slug or links an existing one to the domain, logs the activity, and returns the slug record.
  */
 export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;

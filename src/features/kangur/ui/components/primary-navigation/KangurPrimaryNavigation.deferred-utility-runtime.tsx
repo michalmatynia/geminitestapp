@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { getKangurPageHref } from '@/features/kangur/config/routing';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
@@ -91,6 +91,13 @@ function resolveDeferredUtilityProfileLabel({
     : fallbackCopy.profileLabel;
 }
 
+const KangurLanguageSwitcherSkeleton = (): React.JSX.Element => (
+  <div
+    aria-hidden='true'
+    className='min-w-[8.75rem] max-w-full h-9 shrink-0 animate-pulse rounded-2xl bg-current opacity-10'
+  />
+);
+
 function DeferredUtilityLanguageSwitcher({
   accessibleCurrentPage,
   basePath,
@@ -110,12 +117,14 @@ function DeferredUtilityLanguageSwitcher({
   }
 
   return (
-    <KangurLanguageSwitcher
-      basePath={basePath}
-      className={mobileNavItemClassName}
-      currentPage={accessibleCurrentPage}
-      forceFallbackPath={forceLanguageSwitcherFallbackPath}
-    />
+    <Suspense fallback={<KangurLanguageSwitcherSkeleton />}>
+      <KangurLanguageSwitcher
+        basePath={basePath}
+        className={mobileNavItemClassName}
+        currentPage={accessibleCurrentPage}
+        forceFallbackPath={forceLanguageSwitcherFallbackPath}
+      />
+    </Suspense>
   );
 }
 

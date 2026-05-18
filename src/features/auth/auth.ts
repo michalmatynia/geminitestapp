@@ -20,7 +20,7 @@ import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
 
 import { getAuthAccessForUser } from '@/features/auth/services/auth-access';
-import { consumeLoginChallenge } from '@/features/auth/services/auth-login-challenge';
+import { consumeLoginChallenge, type ChallengeRecord } from '@/features/auth/services/auth-login-challenge';
 import {
   checkLoginAllowed,
   extractClientIp,
@@ -74,7 +74,7 @@ type AuthSessionUser = NonNullable<Session['user']>;
 interface UserRef { id: string; emailVerified: boolean | null; passwordHash: string | null; email: string; name?: string | null; image?: string | null; }
 
 const resolveUserAndChallenge = async (creds: AuthCredentials, ip: string | null): Promise<{
-  challenge: Awaited<ReturnType<typeof consumeLoginChallenge>> | null;
+  challenge: ChallengeRecord | null;
   user: UserRef | null;
 }> => {
   const { challengeId, email } = creds;
@@ -132,7 +132,7 @@ const checkLoginPreconditions = async (creds: AuthCredentials, request: Request)
     if (res.user !== null) await recordLoginFailure({ email: String(creds.email), ip, request });
     return null;
   }
-  return { ip, challenge: res.challenge as { purpose: string } | null, user: res.user };
+  return { ip, challenge: res.challenge, user: res.user };
 };
 
 const checkPassword = async (user: UserRef, password?: string): Promise<boolean> => {
@@ -255,7 +255,8 @@ const logSignInActivity = async (u: User): Promise<void> => {
 
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   const providersPromise = buildProviders();
-  const adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
+  const mongoClient = await getMongoClient();
+  const adapter = MongoDBAdapter(mongoClient, { databaseName: process.env['MONGODB_DB'] ?? 'app' });
   return {
     ...authConfig,
     adapter,
@@ -264,7 +265,8 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       ...authConfig.callbacks,
       async jwt({ token, user }): Promise<JWT> {
         const maybeUser = user as User | null;
-        const userId = maybeUser?.id ?? token.sub;
+        const sub = token.sub;
+        const userId = maybeUser?.id ?? sub;
         if (userId === undefined || userId === '') {
           return token;
         }

@@ -9,18 +9,17 @@ export const validatePasswordStrength = (
     errors.push(`Password must be at least ${policy.minPasswordLength} characters.`);
   }
 
-  if (policy.requireStrongPassword) {
-    if (policy.requireUppercase && !/[A-Z]/.test(password)) {
-      errors.push('Password must include at least one uppercase letter.');
-    }
-    if (policy.requireLowercase && !/[a-z]/.test(password)) {
-      errors.push('Password must include at least one lowercase letter.');
-    }
-    if (policy.requireNumber && !/[0-9]/.test(password)) {
-      errors.push('Password must include at least one number.');
-    }
-    if (policy.requireSymbol && !/[^A-Za-z0-9]/.test(password)) {
-      errors.push('Password must include at least one symbol.');
+  if (policy.requireStrongPassword === true) {
+    const checks = [
+      { cond: policy.requireUppercase, regex: /[A-Z]/, msg: 'Password must include at least one uppercase letter.' },
+      { cond: policy.requireLowercase, regex: /[a-z]/, msg: 'Password must include at least one lowercase letter.' },
+      { cond: policy.requireNumber, regex: /[0-9]/, msg: 'Password must include at least one number.' },
+      { cond: policy.requireSymbol, regex: /[^A-Za-z0-9]/, msg: 'Password must include at least one symbol.' },
+    ];
+    for (const check of checks) {
+      if (check.cond === true && !check.regex.test(password)) {
+        errors.push(check.msg);
+      }
     }
   }
 

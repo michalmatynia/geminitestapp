@@ -1,0 +1,1853 @@
+[
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/context/useGenerationRuntime.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required.",
+        "line": 50,
+        "column": 8,
+        "messageId": "conditionErrorAny",
+        "endLine": 50,
+        "endColumn": 13,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                1919,
+                1924
+              ],
+              "text": "(Boolean(value))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 72,
+        "column": 12,
+        "messageId": "conditionErrorString",
+        "endLine": 72,
+        "endColumn": 22,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                2494,
+                2505
+              ],
+              "text": "normalized.length === 0"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                2494,
+                2505
+              ],
+              "text": "normalized === \"\""
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                2494,
+                2505
+              ],
+              "text": "!Boolean(normalized)"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 139,
+        "column": 13,
+        "messageId": "conditionErrorString",
+        "endLine": 139,
+        "endColumn": 28,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                4198,
+                4213
+              ],
+              "text": "(output.filename.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                4198,
+                4213
+              ],
+              "text": "(output.filename !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                4198,
+                4213
+              ],
+              "text": "(Boolean(output.filename))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 139,
+        "column": 32,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 139,
+        "endColumn": 64,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                4217,
+                4249
+              ],
+              "text": "(output.filepath.split('/').pop() != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                4217,
+                4249
+              ],
+              "text": "(output.filepath.split('/').pop() ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                4217,
+                4249
+              ],
+              "text": "(Boolean(output.filepath.split('/').pop()))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 140,
+        "column": 13,
+        "messageId": "conditionErrorString",
+        "endLine": 140,
+        "endColumn": 28,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                4276,
+                4291
+              ],
+              "text": "(output.mimetype.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                4276,
+                4291
+              ],
+              "text": "(output.mimetype !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                4276,
+                4291
+              ],
+              "text": "(Boolean(output.mimetype))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "severity": 2,
+        "message": "Do not nest ternary expressions.",
+        "line": 158,
+        "column": 53,
+        "messageId": "noNestedTernary",
+        "endLine": 162,
+        "endColumn": 20
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 2,
+        "message": "Arrow function has a complexity of 30. Maximum allowed is 8.",
+        "line": 188,
+        "column": 94,
+        "messageId": "complex",
+        "endLine": 188,
+        "endColumn": 96
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 194,
+        "column": 40,
+        "messageId": "neverOptionalChain",
+        "endLine": 194,
+        "endColumn": 42,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                6246,
+                6248
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "severity": 2,
+        "message": "Do not nest ternary expressions.",
+        "line": 196,
+        "column": 5,
+        "messageId": "noNestedTernary",
+        "endLine": 204,
+        "endColumn": 12
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "severity": 2,
+        "message": "Do not nest ternary expressions.",
+        "line": 200,
+        "column": 9,
+        "messageId": "noNestedTernary",
+        "endLine": 204,
+        "endColumn": 12
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected number value in conditional. An explicit zero/NaN check is required.",
+        "line": 206,
+        "column": 58,
+        "messageId": "conditionErrorNumber",
+        "endLine": 206,
+        "endColumn": 90,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareZero",
+            "fix": {
+              "range": [
+                6719,
+                6751
+              ],
+              "text": "(Number(requestMask.feather ?? 0) !== 0)"
+            },
+            "desc": "Change condition to check for 0 (`value !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareNaN",
+            "fix": {
+              "range": [
+                6719,
+                6751
+              ],
+              "text": "(!Number.isNaN(Number(requestMask.feather ?? 0)))"
+            },
+            "desc": "Change condition to check for NaN (`!Number.isNaN(value)`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                6719,
+                6751
+              ],
+              "text": "(Boolean(Number(requestMask.feather ?? 0)))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined.",
+        "line": 210,
+        "column": 16,
+        "messageId": "neverNullish",
+        "endLine": 210,
+        "endColumn": 59
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined.",
+        "line": 211,
+        "column": 13,
+        "messageId": "neverNullish",
+        "endLine": 211,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 211,
+        "column": 30,
+        "messageId": "neverOptionalChain",
+        "endLine": 211,
+        "endColumn": 32,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                6908,
+                6910
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 216,
+        "column": 30,
+        "messageId": "neverOptionalChain",
+        "endLine": 216,
+        "endColumn": 32,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                7048,
+                7050
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 217,
+        "column": 32,
+        "messageId": "neverOptionalChain",
+        "endLine": 217,
+        "endColumn": 34,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                7098,
+                7100
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 217,
+        "column": 64,
+        "messageId": "neverOptionalChain",
+        "endLine": 217,
+        "endColumn": 66,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                7130,
+                7132
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Function 'useGenerationRuntime' has too many lines (546). Maximum allowed is 60.",
+        "line": 221,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 829,
+        "endColumn": 2
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable boolean value in array predicate return type. Please handle the nullish case explicitly.",
+        "line": 257,
+        "column": 9,
+        "messageId": "conditionErrorNullableBoolean",
+        "endLine": 261,
+        "endColumn": 35,
+        "suggestions": [
+          {
+            "messageId": "conditionFixDefaultFalse",
+            "fix": {
+              "range": [
+                8945,
+                9088
+              ],
+              "text": "(shape.visible &&\n          shape.closed &&\n          (shape.type === 'polygon' || shape.type === 'lasso') &&\n          shape.points.length >= 3) ?? false"
+            },
+            "desc": "Explicitly treat nullish value the same as false (`value ?? false`)"
+          },
+          {
+            "messageId": "conditionFixCompareTrue",
+            "fix": {
+              "range": [
+                8945,
+                9088
+              ],
+              "text": "(shape.visible &&\n          shape.closed &&\n          (shape.type === 'polygon' || shape.type === 'lasso') &&\n          shape.points.length >= 3) === true"
+            },
+            "desc": "Change condition to check if true (`value === true`)"
+          },
+          {
+            "messageId": "explicitBooleanReturnType",
+            "fix": {
+              "range": [
+                8931,
+                8931
+              ],
+              "text": ": boolean"
+            },
+            "desc": "Add an explicit `boolean` return type annotation."
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly.",
+        "line": 258,
+        "column": 11,
+        "messageId": "conditionErrorNullableBoolean",
+        "endLine": 258,
+        "endColumn": 24,
+        "suggestions": [
+          {
+            "messageId": "conditionFixDefaultFalse",
+            "fix": {
+              "range": [
+                8945,
+                8958
+              ],
+              "text": "(shape.visible ?? false)"
+            },
+            "desc": "Explicitly treat nullish value the same as false (`value ?? false`)"
+          },
+          {
+            "messageId": "conditionFixCompareTrue",
+            "fix": {
+              "range": [
+                8945,
+                8958
+              ],
+              "text": "(shape.visible === true)"
+            },
+            "desc": "Change condition to check if true (`value === true`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly.",
+        "line": 259,
+        "column": 11,
+        "messageId": "conditionErrorNullableBoolean",
+        "endLine": 259,
+        "endColumn": 23,
+        "suggestions": [
+          {
+            "messageId": "conditionFixDefaultFalse",
+            "fix": {
+              "range": [
+                8972,
+                8984
+              ],
+              "text": "(shape.closed ?? false)"
+            },
+            "desc": "Explicitly treat nullish value the same as false (`value ?? false`)"
+          },
+          {
+            "messageId": "conditionFixCompareTrue",
+            "fix": {
+              "range": [
+                8972,
+                8984
+              ],
+              "text": "(shape.closed === true)"
+            },
+            "desc": "Change condition to check if true (`value === true`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 286,
+        "column": 10,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 286,
+        "endColumn": 29,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                9681,
+                9701
+              ],
+              "text": "pendingSourceSlotId == null"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                9682,
+                9701
+              ],
+              "text": "(pendingSourceSlotId ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                9681,
+                9701
+              ],
+              "text": "!Boolean(pendingSourceSlotId)"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Async arrow function has too many lines (198). Maximum allowed is 60.",
+        "line": 300,
+        "column": 5,
+        "messageId": "exceed",
+        "endLine": 523,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 2,
+        "message": "Async arrow function has a complexity of 18. Maximum allowed is 8.",
+        "line": 310,
+        "column": 23,
+        "messageId": "complex",
+        "endLine": 310,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Arrow function has too many lines (77). Maximum allowed is 60.",
+        "line": 340,
+        "column": 32,
+        "messageId": "exceed",
+        "endLine": 423,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 2,
+        "message": "Arrow function has a complexity of 21. Maximum allowed is 8.",
+        "line": 340,
+        "column": 75,
+        "messageId": "complex",
+        "endLine": 340,
+        "endColumn": 77
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 2,
+        "message": "File has too many lines (738). Maximum allowed is 300.",
+        "line": 342,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 830,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 346,
+        "column": 34,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 346,
+        "endColumn": 70,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                11370,
+                11406
+              ],
+              "text": "((runRecord.request?.asset?.id?.trim()) != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                11370,
+                11406
+              ],
+              "text": "((runRecord.request?.asset?.id?.trim()) ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                11370,
+                11406
+              ],
+              "text": "(Boolean((runRecord.request?.asset?.id?.trim())))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 346,
+        "column": 51,
+        "messageId": "neverOptionalChain",
+        "endLine": 346,
+        "endColumn": 53,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                11387,
+                11389
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 360,
+        "column": 15,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 360,
+        "endColumn": 45,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                11919,
+                11949
+              ],
+              "text": "((runRecord.errorMessage?.trim()) != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                11919,
+                11949
+              ],
+              "text": "((runRecord.errorMessage?.trim()) ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                11919,
+                11949
+              ],
+              "text": "(Boolean((runRecord.errorMessage?.trim())))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 375,
+        "column": 15,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 375,
+        "endColumn": 36,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                12595,
+                12616
+              ],
+              "text": "(generatedSourceSlotId != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                12595,
+                12616
+              ],
+              "text": "(generatedSourceSlotId ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                12595,
+                12616
+              ],
+              "text": "(Boolean(generatedSourceSlotId))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 418,
+        "column": 17,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 418,
+        "endColumn": 39,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                14199,
+                14221
+              ],
+              "text": "(runRecord.errorMessage != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                14199,
+                14221
+              ],
+              "text": "(runRecord.errorMessage ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                14199,
+                14221
+              ],
+              "text": "(Boolean(runRecord.errorMessage))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 453,
+        "column": 26,
+        "messageId": "neverOptionalChain",
+        "endLine": 453,
+        "endColumn": 28,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                15389,
+                15391
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, value is always falsy.",
+        "line": 487,
+        "column": 11,
+        "messageId": "alwaysFalsy",
+        "endLine": 487,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, value is always truthy.",
+        "line": 489,
+        "column": 13,
+        "messageId": "alwaysTruthy",
+        "endLine": 489,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "no-await-in-loop",
+        "severity": 2,
+        "message": "Unexpected `await` inside a loop.",
+        "line": 491,
+        "column": 30,
+        "messageId": "unexpectedAwait",
+        "endLine": 491,
+        "endColumn": 60
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 2,
+        "message": "Blocks are nested too deeply (4). Maximum allowed is 3.",
+        "line": 492,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 494,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 2,
+        "message": "Blocks are nested too deeply (4). Maximum allowed is 3.",
+        "line": 497,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 504,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, value is always truthy.",
+        "line": 497,
+        "column": 34,
+        "messageId": "alwaysTruthy",
+        "endLine": 497,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, value is always falsy.",
+        "line": 508,
+        "column": 27,
+        "messageId": "alwaysFalsy",
+        "endLine": 508,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "no-await-in-loop",
+        "severity": 2,
+        "message": "Unexpected `await` inside a loop.",
+        "line": 509,
+        "column": 9,
+        "messageId": "unexpectedAwait",
+        "endLine": 509,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Arrow function has too many lines (92). Maximum allowed is 60.",
+        "line": 532,
+        "column": 13,
+        "messageId": "exceed",
+        "endLine": 637,
+        "endColumn": 4
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 535,
+        "column": 10,
+        "messageId": "conditionErrorString",
+        "endLine": 535,
+        "endColumn": 19,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                17867,
+                17877
+              ],
+              "text": "projectId.length === 0"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                17867,
+                17877
+              ],
+              "text": "projectId === \"\""
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                17867,
+                17877
+              ],
+              "text": "!Boolean(projectId)"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Async arrow function has too many lines (70). Maximum allowed is 60.",
+        "line": 550,
+        "column": 30,
+        "messageId": "exceed",
+        "endLine": 628,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 2,
+        "message": "Async arrow function has a complexity of 42. Maximum allowed is 8.",
+        "line": 550,
+        "column": 54,
+        "messageId": "complex",
+        "endLine": 550,
+        "endColumn": 56
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 584,
+        "column": 34,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 584,
+        "endColumn": 70,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                19612,
+                19648
+              ],
+              "text": "((latestRun.request?.asset?.id?.trim()) != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                19612,
+                19648
+              ],
+              "text": "((latestRun.request?.asset?.id?.trim()) ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                19612,
+                19648
+              ],
+              "text": "(Boolean((latestRun.request?.asset?.id?.trim())))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 584,
+        "column": 51,
+        "messageId": "neverOptionalChain",
+        "endLine": 584,
+        "endColumn": 53,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                19629,
+                19631
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 594,
+        "column": 46,
+        "messageId": "neverOptionalChain",
+        "endLine": 594,
+        "endColumn": 48,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                20035,
+                20037
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "severity": 2,
+        "message": "Do not nest ternary expressions.",
+        "line": 596,
+        "column": 11,
+        "messageId": "noNestedTernary",
+        "endLine": 604,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "severity": 2,
+        "message": "Do not nest ternary expressions.",
+        "line": 600,
+        "column": 15,
+        "messageId": "noNestedTernary",
+        "endLine": 604,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected number value in conditional. An explicit zero/NaN check is required.",
+        "line": 609,
+        "column": 46,
+        "messageId": "conditionErrorNumber",
+        "endLine": 609,
+        "endColumn": 78,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareZero",
+            "fix": {
+              "range": [
+                20619,
+                20651
+              ],
+              "text": "(Number(requestMask.feather ?? 0) !== 0)"
+            },
+            "desc": "Change condition to check for 0 (`value !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareNaN",
+            "fix": {
+              "range": [
+                20619,
+                20651
+              ],
+              "text": "(!Number.isNaN(Number(requestMask.feather ?? 0)))"
+            },
+            "desc": "Change condition to check for NaN (`!Number.isNaN(value)`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                20619,
+                20651
+              ],
+              "text": "(Boolean(Number(requestMask.feather ?? 0)))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined.",
+        "line": 613,
+        "column": 27,
+        "messageId": "neverNullish",
+        "endLine": 613,
+        "endColumn": 52
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 613,
+        "column": 44,
+        "messageId": "neverOptionalChain",
+        "endLine": 613,
+        "endColumn": 46,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                20784,
+                20786
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 617,
+        "column": 45,
+        "messageId": "neverOptionalChain",
+        "endLine": 617,
+        "endColumn": 47,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                20933,
+                20935
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 619,
+        "column": 30,
+        "messageId": "neverOptionalChain",
+        "endLine": 619,
+        "endColumn": 32,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                21010,
+                21012
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unnecessary-condition",
+        "severity": 2,
+        "message": "Unnecessary optional chain on a non-nullish value.",
+        "line": 619,
+        "column": 62,
+        "messageId": "neverOptionalChain",
+        "endLine": 619,
+        "endColumn": 64,
+        "suggestions": [
+          {
+            "messageId": "suggestRemoveOptionalChain",
+            "fix": {
+              "range": [
+                21042,
+                21044
+              ],
+              "text": "."
+            },
+            "desc": "Remove unnecessary optional chain"
+          }
+        ]
+      },
+      {
+        "ruleId": "consistent-return",
+        "severity": 2,
+        "message": "Arrow function expected no return value.",
+        "line": 632,
+        "column": 5,
+        "messageId": "unexpectedReturnValue",
+        "endLine": 636,
+        "endColumn": 7
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 2,
+        "message": "Arrow function has too many lines (81). Maximum allowed is 60.",
+        "line": 639,
+        "column": 43,
+        "messageId": "exceed",
+        "endLine": 724,
+        "endColumn": 4
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 2,
+        "message": "Arrow function has a complexity of 13. Maximum allowed is 8.",
+        "line": 639,
+        "column": 46,
+        "messageId": "complex",
+        "endLine": 639,
+        "endColumn": 48
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 640,
+        "column": 10,
+        "messageId": "conditionErrorString",
+        "endLine": 640,
+        "endColumn": 19,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                21589,
+                21599
+              ],
+              "text": "projectId.length === 0"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                21589,
+                21599
+              ],
+              "text": "projectId === \"\""
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                21589,
+                21599
+              ],
+              "text": "!Boolean(projectId)"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 644,
+        "column": 10,
+        "messageId": "conditionErrorString",
+        "endLine": 644,
+        "endColumn": 27,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                21704,
+                21722
+              ],
+              "text": "promptText.trim().length === 0"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                21704,
+                21722
+              ],
+              "text": "promptText.trim() === \"\""
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                21704,
+                21722
+              ],
+              "text": "!Boolean(promptText.trim())"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 663,
+        "column": 13,
+        "messageId": "conditionErrorNullableString",
+        "endLine": 663,
+        "endColumn": 37,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareNullish",
+            "fix": {
+              "range": [
+                22170,
+                22194
+              ],
+              "text": "(requestPreview.errors[0] != null)"
+            },
+            "desc": "Change condition to check for null/undefined (`value != null`)"
+          },
+          {
+            "messageId": "conditionFixDefaultEmptyString",
+            "fix": {
+              "range": [
+                22170,
+                22194
+              ],
+              "text": "(requestPreview.errors[0] ?? \"\")"
+            },
+            "desc": "Explicitly treat nullish value the same as an empty string (`value ?? \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                22170,
+                22194
+              ],
+              "text": "(Boolean(requestPreview.errors[0]))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 677,
+        "column": 30,
+        "messageId": "conditionErrorString",
+        "endLine": 677,
+        "endColumn": 45,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                22759,
+                22774
+              ],
+              "text": "(submittedSlotId.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                22759,
+                22774
+              ],
+              "text": "(submittedSlotId !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                22759,
+                22774
+              ],
+              "text": "(Boolean(submittedSlotId))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 691,
+        "column": 36,
+        "messageId": "conditionErrorString",
+        "endLine": 691,
+        "endColumn": 51,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                23272,
+                23287
+              ],
+              "text": "(submittedSlotId.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                23272,
+                23287
+              ],
+              "text": "(submittedSlotId !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                23272,
+                23287
+              ],
+              "text": "(Boolean(submittedSlotId))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 715,
+        "column": 29,
+        "messageId": "conditionErrorString",
+        "endLine": 715,
+        "endColumn": 42,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                24162,
+                24175
+              ],
+              "text": "(error.message.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                24162,
+                24175
+              ],
+              "text": "(error.message !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                24162,
+                24175
+              ],
+              "text": "(Boolean(error.message))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 720,
+        "column": 17,
+        "messageId": "conditionErrorString",
+        "endLine": 720,
+        "endColumn": 30,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                24375,
+                24388
+              ],
+              "text": "(error.message.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                24375,
+                24388
+              ],
+              "text": "(error.message !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                24375,
+                24388
+              ],
+              "text": "(Boolean(error.message))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 758,
+        "column": 32,
+        "messageId": "conditionErrorString",
+        "endLine": 758,
+        "endColumn": 45,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                25285,
+                25298
+              ],
+              "text": "(record.slotId.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                25285,
+                25298
+              ],
+              "text": "(record.slotId !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                25285,
+                25298
+              ],
+              "text": "(Boolean(record.slotId))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "severity": 2,
+        "message": "Unexpected string value in conditional. An explicit empty string check is required.",
+        "line": 773,
+        "column": 21,
+        "messageId": "conditionErrorString",
+        "endLine": 773,
+        "endColumn": 30,
+        "suggestions": [
+          {
+            "messageId": "conditionFixCompareStringLength",
+            "fix": {
+              "range": [
+                25818,
+                25827
+              ],
+              "text": "(projectId.length > 0)"
+            },
+            "desc": "Change condition to check string's length (`value.length !== 0`)"
+          },
+          {
+            "messageId": "conditionFixCompareEmptyString",
+            "fix": {
+              "range": [
+                25818,
+                25827
+              ],
+              "text": "(projectId !== \"\")"
+            },
+            "desc": "Change condition to check for empty string (`value !== \"\"`)"
+          },
+          {
+            "messageId": "conditionFixCastBoolean",
+            "fix": {
+              "range": [
+                25818,
+                25827
+              ],
+              "text": "(Boolean(projectId))"
+            },
+            "desc": "Explicitly convert value to a boolean (`Boolean(value)`)"
+          }
+        ]
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 68,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "'use client';\n\nimport { useCallback, useEffect, useMemo, useRef, useState } from 'react';\n\nimport { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';\nimport { useRunStudio } from '@/features/ai/image-studio/hooks/useImageStudioMutations';\nimport { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';\nimport type { ImageFileRecord } from '@/shared/contracts/files';\nimport type { ImageStudioRunDetailResponse, ImageStudioRunOutputRecord, ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio/run';\nimport type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';\nimport { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';\nimport { api } from '@/shared/lib/api-client';\nimport { useToast } from '@/shared/ui/primitives.public';\n\nimport { useMaskingActions, useMaskingState } from './MaskingContext';\nimport { useProjectsState } from './ProjectsContext';\nimport { usePromptActions, usePromptState } from './PromptContext';\nimport { useSettingsState } from './SettingsContext';\nimport { useSlotsActions, useSlotsState } from './SlotsContext';\n\nimport type {\n  GenerationActions,\n  GenerationLandingSlot,\n  GenerationRecord,\n  GenerationState,\n} from './GenerationContext.types';\nimport { logClientError } from '@/shared/utils/observability/client-error-logger';\n\n\ntype PollToken = {\n  runId: string;\n  cancelled: boolean;\n  settled: boolean;\n  eventSource: EventSource | null;\n};\n\nconst POLL_INTERVAL_MS = 1200;\nconst SSE_FALLBACK_POLL_INTERVAL_MS = 5000;\nconst POLL_MAX_ATTEMPTS = 600;\n\nconst sleep = (ms: number): Promise<void> =>\n  new Promise((resolve) => {\n    const timer = window.setTimeout((): void => {\n      window.clearTimeout(timer);\n      resolve();\n    }, ms);\n  });\n\nconst asRecord = (value: unknown): Record<string, unknown> | null => {\n  if (!value || typeof value !== 'object' || Array.isArray(value)) {\n    return null;\n  }\n  return value as Record<string, unknown>;\n};\n\nconst readCreatedSlotIdsFromPayload = (payload: unknown): string[] => {\n  const payloadRecord = asRecord(payload);\n  if (!payloadRecord) {\n    return [];\n  }\n\n  const createdIds: string[] = [];\n  const pushIds = (value: unknown): void => {\n    if (!Array.isArray(value)) {\n      return;\n    }\n    value.forEach((entry: unknown) => {\n      if (typeof entry !== 'string') {\n        return;\n      }\n      const normalized = entry.trim();\n      if (!normalized) {\n        return;\n      }\n      createdIds.push(normalized);\n    });\n  };\n\n  pushIds(payloadRecord['createdSlotIds']);\n  const callbackPayload = asRecord(payloadRecord['callbackPayload']);\n  if (callbackPayload) {\n    pushIds(callbackPayload['createdSlotIds']);\n  }\n\n  return createdIds;\n};\n\nconst extractCreatedSlotIdsFromRun = (runRecord: ImageStudioRunRecord): string[] => {\n  const historyEvents = Array.isArray(runRecord.historyEvents)\n    ? [...runRecord.historyEvents].reverse()\n    : [];\n  const createdSlotIds: string[] = [];\n  const seen = new Set<string>();\n\n  for (const event of historyEvents) {\n    const nextIds = readCreatedSlotIdsFromPayload(event.payload);\n    nextIds.forEach((slotId) => {\n      if (seen.has(slotId)) {\n        return;\n      }\n      seen.add(slotId);\n      createdSlotIds.push(slotId);\n    });\n\n    if (event.type === 'completed' && createdSlotIds.length > 0) {\n      break;\n    }\n  }\n\n  return createdSlotIds;\n};\n\nconst normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {\n  const parsed = typeof value === 'number' ? value : Number(value);\n  if (!Number.isFinite(parsed)) {\n    return fallback;\n  }\n  return Math.max(1, Math.min(10, Math.floor(parsed)));\n};\n\nconst buildPendingLandingSlots = (\n  runId: string,\n  expectedOutputs: number\n): GenerationLandingSlot[] => {\n  const count = normalizeExpectedOutputs(expectedOutputs, 1);\n  return Array.from({ length: count }, (_value, index) => ({\n    id: `${runId}:${index + 1}`,\n    index: index + 1,\n    status: 'pending',\n    output: null,\n  }));\n};\n\nconst toImageFileRecord = (\n  output: ImageStudioRunOutputRecord,\n  timestamp: string\n): ImageFileRecord => ({\n  ...output,\n  filename: output.filename || output.filepath.split('/').pop() || output.id,\n  mimetype: output.mimetype || 'image/png',\n  size: Number.isFinite(output.size) ? output.size : 0,\n  tags: Array.isArray(output.tags) ? output.tags : [],\n  createdAt: output.createdAt ?? timestamp,\n  updatedAt: output.updatedAt ?? timestamp,\n});\n\nconst toImageFileRecords = (outputs: ImageStudioRunOutputRecord[]): ImageFileRecord[] => {\n  const timestamp = new Date().toISOString();\n  return outputs.map((output) => toImageFileRecord(output, timestamp));\n};\n\nconst buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingSlot[] => {\n  const outputs = Array.isArray(run.outputs) ? run.outputs : [];\n  const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);\n  return Array.from({ length: slotCount }, (_value, index) => {\n    const rawOutput = outputs[index] ?? null;\n    const output = rawOutput ? toImageFileRecord(rawOutput, new Date().toISOString()) : null;\n    const status: GenerationLandingSlot['status'] = output\n      ? 'completed'\n      : run.status === 'failed' || run.status === 'completed'\n        ? 'failed'\n        : 'pending';\n    return {\n      id: `${run.id}:${index + 1}`,\n      index: index + 1,\n      status,\n      output,\n    };\n  });\n};\n\nconst cloneLandingSlots = (slots: GenerationLandingSlot[]): GenerationLandingSlot[] =>\n  slots.map((slot) => ({ ...slot }));\n\nconst markLandingSlotsAsFailed = (\n  slots: GenerationLandingSlot[],\n  runId: string,\n  expectedOutputs: number\n): GenerationLandingSlot[] => {\n  const baseSlots =\n    slots.length > 0 ? cloneLandingSlots(slots) : buildPendingLandingSlots(runId, expectedOutputs);\n  return baseSlots.map((slot) => ({\n    ...slot,\n    status: slot.output ? 'completed' : 'failed',\n  }));\n};\n\nconst toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationRecord | null => {\n  const outputs = Array.isArray(runRecord.outputs) ? runRecord.outputs : [];\n  if (outputs.length === 0) {\n    return null;\n  }\n\n  const requestMask = runRecord.request?.mask;\n  const maskShapeCount =\n    requestMask?.type === 'polygons'\n      ? Array.isArray(requestMask.polygons)\n        ? requestMask.polygons.length\n        : 0\n      : requestMask?.type === 'polygon'\n        ? Array.isArray(requestMask.points) && requestMask.points.length >= 3\n          ? 1\n          : 0\n        : 0;\n  const maskInvert = requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;\n  const maskFeather = requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;\n\n  return {\n    id: runRecord.id,\n    timestamp: runRecord.finishedAt ?? runRecord.updatedAt ?? runRecord.createdAt,\n    prompt: runRecord.request?.prompt ?? '',\n    maskShapeCount,\n    maskInvert,\n    maskFeather,\n    outputs: toImageFileRecords(outputs),\n    slotId: runRecord.request?.asset?.id ?? '',\n    slotName: runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,\n  };\n};\n\nexport function useGenerationRuntime(): {\n  state: GenerationState;\n  actions: GenerationActions;\n  } {\n  const { toast } = useToast();\n  const { projectId } = useProjectsState();\n  const { workingSlot, slots, compositeAssetIds } = useSlotsState();\n  const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();\n  const { maskShapes, maskInvert, maskFeather } = useMaskingState();\n  const { setMaskInvert, setMaskFeather } = useMaskingActions();\n  const { promptText, paramsState } = usePromptState();\n  const { setPromptText } = usePromptActions();\n  const { studioSettings } = useSettingsState();\n  const generationModel = useBrainAssignment({\n    capability: 'image_studio.general',\n  });\n  const contextRegistry = useOptionalContextRegistryPageEnvelope();\n\n  const runMutation = useRunStudio();\n  const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);\n  const [generationHistory, setGenerationHistory] = useState<GenerationRecord[]>([]);\n  const [activeRunId, setActiveRunId] = useState<string | null>(null);\n  const [activeRunSourceSlotId, setActiveRunSourceSlotId] = useState<string | null>(null);\n  const [activeRunStatus, setActiveRunStatus] = useState<ImageStudioRunStatus | null>(null);\n  const [activeRunError, setActiveRunError] = useState<string | null>(null);\n  const [landingSlots, setLandingSlots] = useState<GenerationLandingSlot[]>([]);\n  const [pendingSourceSlotId, setPendingSourceSlotId] = useState<string | null>(null);\n\n  const pollTokenRef = useRef<PollToken | null>(null);\n  const lastSseHandledAtRef = useRef(0);\n  const generationHistoryRef = useRef(generationHistory);\n  generationHistoryRef.current = generationHistory;\n\n  const maskEligibleCount = useMemo(\n    () =>\n      maskShapes.filter(\n        (shape) =>\n          shape.visible &&\n          shape.closed &&\n          (shape.type === 'polygon' || shape.type === 'lasso') &&\n          shape.points.length >= 3\n      ).length,\n    [maskShapes]\n  );\n\n  const isRunInFlight = activeRunStatus === 'queued' || activeRunStatus === 'running';\n\n  const cancelCurrentPoll = useCallback((): void => {\n    if (pollTokenRef.current) {\n      pollTokenRef.current.cancelled = true;\n      if (pollTokenRef.current.eventSource) {\n        pollTokenRef.current.eventSource.close();\n        pollTokenRef.current.eventSource = null;\n      }\n      pollTokenRef.current = null;\n    }\n  }, []);\n\n  useEffect(() => {\n    return () => {\n      cancelCurrentPoll();\n    };\n  }, [cancelCurrentPoll]);\n\n  useEffect(() => {\n    if (!pendingSourceSlotId) {\n      return;\n    }\n    const sourceSlotExists = slots.some((slot) => slot.id === pendingSourceSlotId);\n    if (!sourceSlotExists) {\n      return;\n    }\n\n    setSelectedSlotId(pendingSourceSlotId);\n    setWorkingSlotId(pendingSourceSlotId);\n    setPendingSourceSlotId(null);\n  }, [pendingSourceSlotId, setSelectedSlotId, setWorkingSlotId, slots]);\n\n  const pollRunUntilFinished = useCallback(\n    async (params: {\n      runId: string;\n      resolvedPrompt: string;\n      maskShapeCount: number;\n      submittedMaskInvert: boolean;\n      submittedMaskFeather: number;\n      submittedSlotId: string;\n      submittedSlotName: string;\n      submittedSlotFolderPath: string;\n      expectedOutputs: number;\n    }): Promise<void> => {\n      const token: PollToken = {\n        runId: params.runId,\n        cancelled: false,\n        settled: false,\n        eventSource: null,\n      };\n      cancelCurrentPoll();\n      pollTokenRef.current = token;\n\n      let sseConnected = false;\n\n      const closeEventSource = (): void => {\n        if (token.eventSource) {\n          token.eventSource.close();\n          token.eventSource = null;\n        }\n      };\n\n      const settle = (): void => {\n        if (token.settled) {\n          return;\n        }\n        token.settled = true;\n        closeEventSource();\n        if (pollTokenRef.current === token) {\n          pollTokenRef.current = null;\n        }\n      };\n\n      const applyRunSnapshot = (runRecord: ImageStudioRunRecord): boolean => {\n        if (token.cancelled || token.settled || pollTokenRef.current !== token) {\n          return true;\n        }\n\n        setActiveRunId(runRecord.id);\n        setActiveRunSourceSlotId(runRecord.request?.asset?.id?.trim() || null);\n        setActiveRunStatus(runRecord.status);\n        setActiveRunError(runRecord.errorMessage ?? null);\n\n        const expectedOutputs = normalizeExpectedOutputs(\n          runRecord.expectedOutputs,\n          params.expectedOutputs\n        );\n        if (runRecord.status === 'completed') {\n          const outputs = Array.isArray(runRecord.outputs)\n            ? toImageFileRecords(runRecord.outputs)\n            : [];\n          if (outputs.length === 0) {\n            const message =\n              runRecord.errorMessage?.trim() || 'Generation completed but returned no images.';\n            setActiveRunStatus('failed');\n            setActiveRunError(message);\n            setRunOutputs([]);\n            setLandingSlots(markLandingSlotsAsFailed([], runRecord.id, expectedOutputs));\n            settle();\n            toast(message, { variant: 'error' });\n            return true;\n          }\n\n          const createdSlotIds = extractCreatedSlotIdsFromRun(runRecord);\n          const generatedSourceSlotId = createdSlotIds[0] ?? null;\n          const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;\n\n          setRunOutputs(outputs);\n          if (generatedSourceSlotId && shouldPromoteGeneratedSource) {\n            setPendingSourceSlotId(generatedSourceSlotId);\n          }\n          setLandingSlots(\n            buildLandingSlotsFromRun({\n              ...runRecord,\n              expectedOutputs,\n            })\n          );\n\n          const record: GenerationRecord = {\n            id: runRecord.id,\n            timestamp: runRecord.finishedAt ?? new Date().toISOString(),\n            prompt: params.resolvedPrompt,\n            maskShapeCount: params.maskShapeCount,\n            maskInvert: params.submittedMaskInvert,\n            maskFeather: params.submittedMaskFeather,\n            outputs,\n            slotId: params.submittedSlotId,\n            slotName: params.submittedSlotName,\n          };\n          setGenerationHistory((previous) => {\n            const deduped = previous.filter((entry) => entry.id !== record.id);\n            return [record, ...deduped].slice(0, 50);\n          });\n          settle();\n          toast(`Generated ${outputs.length} image(s).`, { variant: 'success' });\n          return true;\n        }\n\n        if (runRecord.status === 'failed') {\n          const failedOutputs = Array.isArray(runRecord.outputs)\n            ? toImageFileRecords(runRecord.outputs)\n            : [];\n          const failedLandingSlots = buildLandingSlotsFromRun({\n            ...runRecord,\n            expectedOutputs,\n          });\n          setRunOutputs(failedOutputs);\n          setLandingSlots(\n            markLandingSlotsAsFailed(failedLandingSlots, runRecord.id, expectedOutputs)\n          );\n          settle();\n          toast(runRecord.errorMessage || 'Generation failed.', { variant: 'error' });\n          return true;\n        }\n\n        return false;\n      };\n\n      const fetchAndApplyRunStatus = async (): Promise<boolean> => {\n        const response = await api.get<ImageStudioRunDetailResponse>(\n          `/api/image-studio/runs/${encodeURIComponent(params.runId)}`\n        );\n        return applyRunSnapshot(response.run);\n      };\n\n      if (typeof EventSource !== 'undefined') {\n        try {\n          const source = new EventSource(\n            `/api/image-studio/runs/${encodeURIComponent(params.runId)}/stream`\n          );\n          token.eventSource = source;\n\n          source.onopen = () => {\n            if (token.cancelled || token.settled || pollTokenRef.current !== token) {\n              source.close();\n              return;\n            }\n            sseConnected = true;\n          };\n\n          source.onmessage = (event: MessageEvent) => {\n            if (token.cancelled || token.settled || pollTokenRef.current !== token) {\n              return;\n            }\n            try {\n              const payload = JSON.parse(event.data as string) as { type?: string };\n              if (payload?.type === 'heartbeat') {\n                return;\n              }\n            } catch (error) {\n              logClientError(error);\n            \n              // Continue with status refresh for unknown event payloads.\n            }\n            lastSseHandledAtRef.current = Date.now();\n            void fetchAndApplyRunStatus().catch(() => {\n              // Polling fallback handles transient failures.\n            });\n          };\n\n          source.onerror = () => {\n            sseConnected = false;\n            if (token.eventSource === source) {\n              source.close();\n              token.eventSource = null;\n            }\n          };\n        } catch (error) {\n          logClientError(error);\n        \n          // Polling fallback remains active.\n        }\n      }\n\n      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {\n        if (token.cancelled || token.settled || pollTokenRef.current !== token) {\n          return;\n        }\n\n        const sseHandledRecently =\n          sseConnected && Date.now() - lastSseHandledAtRef.current < SSE_FALLBACK_POLL_INTERVAL_MS;\n\n        if (!sseHandledRecently) {\n          try {\n            const finished = await fetchAndApplyRunStatus();\n            if (finished) {\n              return;\n            }\n          } catch (error) {\n            logClientError(error);\n            if (attempt === 0 && !sseConnected) {\n              toast(\n                error instanceof Error ? error.message : 'Failed to receive generation callback.',\n                {\n                  variant: 'error',\n                }\n              );\n            }\n          }\n        }\n\n        const nextDelay = sseConnected ? SSE_FALLBACK_POLL_INTERVAL_MS : POLL_INTERVAL_MS;\n        await sleep(nextDelay);\n      }\n\n      if (token.cancelled || token.settled || pollTokenRef.current !== token) {\n        return;\n      }\n      setActiveRunStatus('failed');\n      setActiveRunError('Generation callback timed out.');\n      setRunOutputs([]);\n      setLandingSlots((previous) =>\n        markLandingSlotsAsFailed(previous, params.runId, params.expectedOutputs)\n      );\n      settle();\n      toast('Generation callback timed out.', { variant: 'error' });\n    },\n    [cancelCurrentPoll, toast]\n  );\n\n  const pollRunUntilFinishedRef = useRef(pollRunUntilFinished);\n  useEffect(() => {\n    pollRunUntilFinishedRef.current = pollRunUntilFinished;\n  }, [pollRunUntilFinished]);\n\n  useEffect(() => {\n    cancelCurrentPoll();\n\n    if (!projectId) {\n      setRunOutputs([]);\n      setGenerationHistory([]);\n      setLandingSlots([]);\n      setActiveRunId(null);\n      setActiveRunSourceSlotId(null);\n      setActiveRunStatus(null);\n      setActiveRunError(null);\n      setPendingSourceSlotId(null);\n      return;\n    }\n\n    let cancelled = false;\n    const hydrationAbortController = new AbortController();\n\n    const hydrateLatestRun = async (): Promise<void> => {\n      try {\n        const response = await api.get<ImageStudioRunsResponse>(\n          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=25`,\n          { signal: hydrationAbortController.signal }\n        );\n        if (cancelled) {\n          return;\n        }\n\n        const runs = Array.isArray(response.runs) ? response.runs : [];\n        const historyRecords = runs\n          .map((run) => toGenerationRecordFromRun(run))\n          .filter((record): record is GenerationRecord => Boolean(record))\n          .slice(0, 50);\n        setGenerationHistory(historyRecords);\n\n        const latestRunInFlight =\n          runs.find((run) => run.status === 'queued' || run.status === 'running') ?? null;\n        const latestRun = latestRunInFlight ?? runs[0] ?? null;\n        if (!latestRun) {\n          setRunOutputs([]);\n          setGenerationHistory([]);\n          setLandingSlots([]);\n          setActiveRunId(null);\n          setActiveRunSourceSlotId(null);\n          setActiveRunStatus(null);\n          setActiveRunError(null);\n          return;\n        }\n\n        setRunOutputs(Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []);\n        setLandingSlots(buildLandingSlotsFromRun(latestRun));\n        setActiveRunId(latestRun.id);\n        setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);\n        setActiveRunStatus(latestRun.status);\n        const latestSelectedRunInFlight =\n          latestRun.status === 'queued' || latestRun.status === 'running';\n        setActiveRunError(latestSelectedRunInFlight ? (latestRun.errorMessage ?? null) : null);\n\n        if (!latestSelectedRunInFlight) {\n          return;\n        }\n\n        const requestMask = latestRun.request?.mask;\n        const maskShapeCount =\n          requestMask?.type === 'polygons'\n            ? Array.isArray(requestMask.polygons)\n              ? requestMask.polygons.length\n              : 0\n            : requestMask?.type === 'polygon'\n              ? Array.isArray(requestMask.points) && requestMask.points.length >= 3\n                ? 1\n                : 0\n              : 0;\n\n        const submittedMaskInvert =\n          requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;\n        const submittedMaskFeather =\n          requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;\n\n        void pollRunUntilFinishedRef.current({\n          runId: latestRun.id,\n          resolvedPrompt: latestRun.request?.prompt ?? '',\n          maskShapeCount,\n          submittedMaskInvert,\n          submittedMaskFeather,\n          submittedSlotId: latestRun.request?.asset?.id ?? '',\n          submittedSlotName:\n            latestRun.request?.asset?.id ?? latestRun.request?.asset?.filepath ?? latestRun.id,\n          submittedSlotFolderPath: '',\n          expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),\n        });\n      } catch (error) {\n        logClientError(error);\n      \n        // Keep current UI state on hydration failures.\n      }\n    };\n\n    void hydrateLatestRun();\n\n    return () => {\n      cancelled = true;\n      hydrationAbortController.abort();\n      cancelCurrentPoll();\n    };\n  }, [projectId, cancelCurrentPoll]);\n\n  const handleRunGeneration = useCallback(() => {\n    if (!projectId) {\n      toast('Select a project before generating.', { variant: 'info' });\n      return;\n    }\n    if (!promptText.trim()) {\n      toast('Enter a prompt before generating.', { variant: 'info' });\n      return;\n    }\n\n    const requestPreview = buildRunRequestPreview({\n      projectId,\n      workingSlot,\n      slots,\n      compositeAssetIds,\n      promptText,\n      paramsState,\n      maskShapes,\n      maskInvert,\n      maskFeather,\n      selectedModelId: generationModel.effectiveModelId,\n      studioSettings,\n    });\n    if (!requestPreview.payload) {\n      toast(requestPreview.errors[0] || 'Request payload is not valid.', { variant: 'info' });\n      return;\n    }\n\n    const resolvedPrompt = requestPreview.resolvedPrompt;\n    const submittedSlotId = workingSlot?.id ?? '';\n    const submittedSlotName = workingSlot?.name ?? workingSlot?.id ?? '';\n    const submittedMaskInvert = maskInvert;\n    const submittedMaskFeather = maskFeather;\n    const expectedOutputs = normalizeExpectedOutputs(studioSettings.targetAi.openai.image.n, 1);\n\n    cancelCurrentPoll();\n    setActiveRunError(null);\n    setActiveRunId('pending');\n    setActiveRunSourceSlotId(submittedSlotId || null);\n    setActiveRunStatus('queued');\n    setPendingSourceSlotId(null);\n    setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));\n\n    runMutation.mutate(\n      {\n        ...requestPreview.payload,\n        ...(contextRegistry ? { contextRegistry } : {}),\n      },\n      {\n        onSuccess: (data) => {\n          const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);\n          setActiveRunId(data.runId);\n          setActiveRunSourceSlotId(submittedSlotId || null);\n          setActiveRunStatus(data.status);\n          setActiveRunError(null);\n          setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));\n          if (data.dispatchMode === 'inline') {\n            toast('Redis queue unavailable, generation is running inline.', {\n              variant: 'info',\n            });\n          }\n\n          void pollRunUntilFinished({\n            runId: data.runId,\n            resolvedPrompt,\n            maskShapeCount: requestPreview.maskShapeCount,\n            submittedMaskInvert,\n            submittedMaskFeather,\n            submittedSlotId,\n            submittedSlotName,\n            submittedSlotFolderPath: workingSlot?.folderPath ?? '',\n            expectedOutputs: queuedExpected,\n          });\n        },\n        onError: (error) => {\n          setActiveRunStatus('failed');\n          setActiveRunError(error.message || 'Generation failed.');\n          setRunOutputs([]);\n          setLandingSlots((previous) =>\n            markLandingSlotsAsFailed(previous, 'pending', expectedOutputs)\n          );\n          toast(error.message || 'Generation failed.', { variant: 'error' });\n        },\n      }\n    );\n  }, [\n    cancelCurrentPoll,\n    compositeAssetIds,\n    contextRegistry,\n    generationModel.effectiveModelId,\n    maskFeather,\n    maskInvert,\n    maskShapes,\n    paramsState,\n    pollRunUntilFinished,\n    projectId,\n    promptText,\n    runMutation,\n    slots,\n    studioSettings,\n    toast,\n    workingSlot,\n  ]);\n\n  const restoreGeneration = useCallback(\n    (record: GenerationRecord) => {\n      setPromptText(record.prompt);\n      setMaskInvert(record.maskInvert);\n      setMaskFeather(record.maskFeather);\n      setRunOutputs(record.outputs);\n      setLandingSlots(\n        record.outputs.map((output, index) => ({\n          id: `${record.id}:${index + 1}`,\n          index: index + 1,\n          status: 'completed',\n          output,\n        }))\n      );\n      setActiveRunId(null);\n      setActiveRunSourceSlotId(record.slotId || null);\n      setActiveRunStatus('completed');\n      setActiveRunError(null);\n      toast('Restored generation settings.', { variant: 'info' });\n    },\n    [setPromptText, setMaskInvert, setMaskFeather, toast]\n  );\n\n  const clearActiveRunError = useCallback((): void => {\n    setActiveRunError(null);\n  }, []);\n\n  const removeGenerationRecord = useCallback(\n    async (recordId: string): Promise<void> => {\n      const record = generationHistoryRef.current.find((entry) => entry.id === recordId);\n      if (record && projectId && record.outputs.length > 0) {\n        await Promise.allSettled(\n          record.outputs.map((output) =>\n            api\n              .post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`, {\n                assetId: output.id,\n                generationRunId: record.id,\n                sourceSlotId: record.slotId,\n              })\n              .catch(() => {})\n          )\n        );\n      }\n      setGenerationHistory((previous) => previous.filter((entry) => entry.id !== recordId));\n    },\n    [projectId]\n  );\n\n  const state = useMemo<GenerationState>(\n    () => ({\n      runMutation,\n      runOutputs,\n      maskEligibleCount,\n      generationHistory,\n      activeRunId,\n      activeRunSourceSlotId,\n      activeRunStatus,\n      activeRunError,\n      isRunInFlight,\n      landingSlots,\n    }),\n    [\n      runMutation,\n      runOutputs,\n      maskEligibleCount,\n      generationHistory,\n      activeRunId,\n      activeRunSourceSlotId,\n      activeRunStatus,\n      activeRunError,\n      isRunInFlight,\n      landingSlots,\n    ]\n  );\n\n  const actions = useMemo<GenerationActions>(\n    () => ({\n      handleRunGeneration,\n      restoreGeneration,\n      clearActiveRunError,\n      removeGenerationRecord,\n    }),\n    [handleRunGeneration, restoreGeneration, clearActiveRunError, removeGenerationRecord]\n  );\n\n  return { state, actions };\n}\n",
+    "usedDeprecatedRules": [
+      {
+        "ruleId": "linebreak-style",
+        "replacedBy": [
+          "@stylistic/linebreak-style"
+        ],
+        "info": {
+          "message": "Formatting rules are being moved out of ESLint core.",
+          "url": "https://eslint.org/blog/2023/10/deprecating-formatting-rules/",
+          "deprecatedSince": "8.53.0",
+          "availableUntil": "11.0.0",
+          "replacedBy": [
+            {
+              "message": "ESLint Stylistic now maintains deprecated stylistic core rules.",
+              "url": "https://eslint.style/guide/migration",
+              "plugin": {
+                "name": "@stylistic/eslint-plugin",
+                "url": "https://eslint.style"
+              },
+              "rule": {
+                "name": "linebreak-style",
+                "url": "https://eslint.style/rules/linebreak-style"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ruleId": "quotes",
+        "replacedBy": [
+          "@stylistic/quotes"
+        ],
+        "info": {
+          "message": "Formatting rules are being moved out of ESLint core.",
+          "url": "https://eslint.org/blog/2023/10/deprecating-formatting-rules/",
+          "deprecatedSince": "8.53.0",
+          "availableUntil": "11.0.0",
+          "replacedBy": [
+            {
+              "message": "ESLint Stylistic now maintains deprecated stylistic core rules.",
+              "url": "https://eslint.style/guide/migration",
+              "plugin": {
+                "name": "@stylistic/eslint-plugin",
+                "url": "https://eslint.style"
+              },
+              "rule": {
+                "name": "quotes",
+                "url": "https://eslint.style/rules/quotes"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "replacedBy": [
+          "@stylistic/jsx-quotes"
+        ],
+        "info": {
+          "message": "Formatting rules are being moved out of ESLint core.",
+          "url": "https://eslint.org/blog/2023/10/deprecating-formatting-rules/",
+          "deprecatedSince": "8.53.0",
+          "availableUntil": "11.0.0",
+          "replacedBy": [
+            {
+              "message": "ESLint Stylistic now maintains deprecated stylistic core rules.",
+              "url": "https://eslint.style/guide/migration",
+              "plugin": {
+                "name": "@stylistic/eslint-plugin",
+                "url": "https://eslint.style"
+              },
+              "rule": {
+                "name": "jsx-quotes",
+                "url": "https://eslint.style/rules/jsx-quotes"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ruleId": "semi",
+        "replacedBy": [
+          "@stylistic/semi"
+        ],
+        "info": {
+          "message": "Formatting rules are being moved out of ESLint core.",
+          "url": "https://eslint.org/blog/2023/10/deprecating-formatting-rules/",
+          "deprecatedSince": "8.53.0",
+          "availableUntil": "11.0.0",
+          "replacedBy": [
+            {
+              "message": "ESLint Stylistic now maintains deprecated stylistic core rules.",
+              "url": "https://eslint.style/guide/migration",
+              "plugin": {
+                "name": "@stylistic/eslint-plugin",
+                "url": "https://eslint.style"
+              },
+              "rule": {
+                "name": "semi",
+                "url": "https://eslint.style/rules/semi"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ruleId": "@typescript-eslint/no-loss-of-precision",
+        "replacedBy": [
+          "no-loss-of-precision"
+        ],
+        "info": {
+          "deprecatedSince": "8.0.0",
+          "replacedBy": [
+            {
+              "rule": {
+                "name": "no-loss-of-precision",
+                "url": "https://eslint.org/docs/latest/rules/no-loss-of-precision"
+              }
+            }
+          ],
+          "url": "https://github.com/typescript-eslint/typescript-eslint/pull/8832"
+        }
+      }
+    ]
+  }
+]

@@ -40,14 +40,15 @@ const normalizeProfile = (profile: AuthSecurityProfile): AuthSecurityProfile => 
 });
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
-  if (!value) return fallback;
+  if (value === undefined || value.length === 0) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const toIsoString = (value: Date | string | null | undefined): string | null => {
-  if (!value) return null;
+  if (value === null || value === undefined) return null;
   if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string' && value.length === 0) return null;
   return value;
 };
 
@@ -60,7 +61,7 @@ const securityCache = new Map<string, { value: AuthSecurityProfile; ts: number }
 const securityInflight = new Map<string, Promise<AuthSecurityProfile>>();
 
 export const invalidateAuthSecurityProfileCache = (userId?: string): void => {
-  if (userId) {
+  if (userId !== undefined && userId.length > 0) {
     securityCache.delete(userId);
     securityInflight.delete(userId);
     return;
@@ -69,34 +70,40 @@ export const invalidateAuthSecurityProfileCache = (userId?: string): void => {
   securityInflight.clear();
 };
 
+const buildProfileFromDoc = (doc: MongoProfileDoc): AuthSecurityProfile => {
+  const userId = doc.userId;
+  return normalizeProfile({
+    userId,
+    mfaEnabled: Boolean(doc.mfaEnabled),
+    mfaSecret: doc.mfaSecret ?? null,
+    recoveryCodes: doc.recoveryCodes ?? [],
+    allowedIps: doc.allowedIps ?? [],
+    disabledAt: toIsoString(doc.disabledAt),
+    bannedAt: toIsoString(doc.bannedAt),
+    createdAt: toIsoString(doc.createdAt) ?? new Date().toISOString(),
+    updatedAt: toIsoString(doc.updatedAt) ?? new Date().toISOString(),
+  });
+};
+
 export const getAuthSecurityProfile = async (userId: string): Promise<AuthSecurityProfile> => {
   const now = Date.now();
   const cached = securityCache.get(userId);
-  if (cached && now - cached.ts < AUTH_SECURITY_CACHE_TTL_MS) {
+  if (cached !== undefined && now - cached.ts < AUTH_SECURITY_CACHE_TTL_MS) {
     return cached.value;
   }
   const inflight = securityInflight.get(userId);
-  if (inflight) return inflight;
+  if (inflight !== undefined) return inflight;
 
   const promise = (async (): Promise<AuthSecurityProfile> => {
     requireAuthProvider(await getAuthDataProvider());
-    if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
+    const mongoUri = process.env['MONGODB_URI'];
+    if (typeof mongoUri !== 'string' || mongoUri.length === 0) return buildDefaultProfile(userId);
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<MongoProfileDoc>(PROFILES_COLLECTION)
       .findOne({ _id: userId });
-    if (!doc) return buildDefaultProfile(userId);
-    return normalizeProfile({
-      userId: doc.userId ?? doc._id,
-      mfaEnabled: Boolean(doc.mfaEnabled),
-      mfaSecret: doc.mfaSecret ?? null,
-      recoveryCodes: doc.recoveryCodes ?? [],
-      allowedIps: doc.allowedIps ?? [],
-      disabledAt: toIsoString(doc.disabledAt),
-      bannedAt: toIsoString(doc.bannedAt),
-      createdAt: toIsoString(doc.createdAt) ?? new Date().toISOString(),
-      updatedAt: toIsoString(doc.updatedAt) ?? new Date().toISOString(),
-    });
+    if (doc === null) return buildDefaultProfile(userId);
+    return buildProfileFromDoc(doc);
   })();
 
   securityInflight.set(userId, promise);
@@ -109,42 +116,38 @@ export const getAuthSecurityProfile = async (userId: string): Promise<AuthSecuri
   }
 };
 
-export const updateAuthSecurityProfile = async (
-  userId: string,
-  updates: Partial<AuthSecurityProfile>
-): Promise<AuthSecurityProfile> => {
-  const now = new Date();
-  const mongoPayload: Partial<MongoProfileDoc> & {
-    updatedAt: Date;
-  } = {
-    updatedAt: now,
-  };
+const mapProfileUpdates = (updates: Partial<AuthSecurityProfile>): Partial<MongoProfileDoc> => {
+  const payload: Partial<MongoProfileDoc> = {};
   if (typeof updates.mfaEnabled === 'boolean') {
-    mongoPayload.mfaEnabled = updates.mfaEnabled;
+    payload.mfaEnabled = updates.mfaEnabled;
   }
   if (updates.mfaSecret !== undefined) {
-    mongoPayload.mfaSecret = updates.mfaSecret;
+    payload.mfaSecret = updates.mfaSecret;
   }
   if (updates.recoveryCodes !== undefined) {
-    mongoPayload.recoveryCodes = updates.recoveryCodes;
+    payload.recoveryCodes = updates.recoveryCodes;
   }
   if (updates.allowedIps !== undefined) {
-    mongoPayload.allowedIps = updates.allowedIps;
+    payload.allowedIps = updates.allowedIps;
   }
   if (updates.disabledAt !== undefined) {
-    mongoPayload.disabledAt = updates.disabledAt ? new Date(updates.disabledAt) : null;
+    const disabledAt = updates.disabledAt;
+    payload.disabledAt = (disabledAt !== null && disabledAt.length > 0) ? new Date(disabledAt) : null;
   }
   if (updates.bannedAt !== undefined) {
-    mongoPayload.bannedAt = updates.bannedAt ? new Date(updates.bannedAt) : null;
+    const bannedAt = updates.bannedAt;
+    payload.bannedAt = (bannedAt !== null && bannedAt.length > 0) ? new Date(bannedAt) : null;
   }
+  return payload;
+};
 
-  requireAuthProvider(await getAuthDataProvider());
-  if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
+const performMongoProfileUpdate = async (userId: string, mongoPayload: Partial<MongoProfileDoc>, now: Date): Promise<void> => {
   const mongo = await getMongoDb();
   const mongoSet: Partial<MongoProfileDoc> & { _id: string; userId: string; updatedAt: Date } = {
     _id: userId,
     userId,
     ...mongoPayload,
+    updatedAt: now,
   };
   await mongo.collection<MongoProfileDoc>(PROFILES_COLLECTION).updateOne(
     { _id: userId },
@@ -154,6 +157,24 @@ export const updateAuthSecurityProfile = async (
     },
     { upsert: true }
   );
+};
+
+export const updateAuthSecurityProfile = async (
+  userId: string,
+  updates: Partial<AuthSecurityProfile>
+): Promise<AuthSecurityProfile> => {
+  const now = new Date();
+  const mongoPayload = {
+    ...mapProfileUpdates(updates),
+    updatedAt: now,
+  };
+
+  requireAuthProvider(await getAuthDataProvider());
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri !== 'string' || mongoUri.length === 0) return buildDefaultProfile(userId);
+  
+  await performMongoProfileUpdate(userId, mongoPayload, now);
+  
   invalidateAuthSecurityProfileCache(userId);
   return getAuthSecurityProfile(userId);
 };

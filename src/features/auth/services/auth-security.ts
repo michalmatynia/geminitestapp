@@ -28,22 +28,22 @@ const memoryAttempts = new Map<string, AttemptRecord>();
 let indexesReady: Promise<void> | null = null;
 
 const ensureAuthSecurityIndexes = async (): Promise<void> => {
-  const provider = requireAuthProvider(await getAuthDataProvider());
-  if (provider !== 'mongodb' || process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') return;
-  if (indexesReady === null) {
-    indexesReady = (async (): Promise<void> => {
-      const mongo = await getMongoDb();
-      const collection = mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION);
-      await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-      await collection.createIndex({ scope: 1, value: 1 });
-    })();
-  }
+  requireAuthProvider(await getAuthDataProvider());
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri !== 'string' || mongoUri.length === 0) return;
+  indexesReady ??= (async (): Promise<void> => {
+    const mongo = await getMongoDb();
+    const collection = mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION);
+    await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await collection.createIndex({ scope: 1, value: 1 });
+  })();
   await indexesReady;
 };
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   requireAuthProvider(await getAuthDataProvider());
-  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') return null;
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri !== 'string' || mongoUri.length === 0) return null;
   const mongo = await getMongoDb();
   const doc = await mongo.collection<MongoSettingRecord>('settings').findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === 'string' ? doc.value : null;
@@ -56,22 +56,33 @@ export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
 
 export const validatePasswordStrength = (password: string, policy: AuthSecurityPolicy): { ok: boolean; errors: string[] } => {
   const errors: string[] = [];
-  if (password.length < policy.minPasswordLength) errors.push(`Password must be at least ${policy.minPasswordLength} characters.`);
+  if (password.length < policy.minPasswordLength) {
+    errors.push(`Password must be at least ${policy.minPasswordLength} characters.`);
+  }
+
   if (policy.requireStrongPassword === true) {
-    if (policy.requireUppercase === true && !/[A-Z]/.test(password)) errors.push('Password must include at least one uppercase letter.');
-    if (policy.requireLowercase === true && !/[a-z]/.test(password)) errors.push('Password must include at least one lowercase letter.');
-    if (policy.requireNumber === true && !/[0-9]/.test(password)) errors.push('Password must include at least one number.');
-    if (policy.requireSymbol === true && !/[^A-Za-z0-9]/.test(password)) errors.push('Password must include at least one symbol.');
+    const checks = [
+      { cond: policy.requireUppercase, regex: /[A-Z]/, msg: 'Password must include at least one uppercase letter.' },
+      { cond: policy.requireLowercase, regex: /[a-z]/, msg: 'Password must include at least one lowercase letter.' },
+      { cond: policy.requireNumber, regex: /[0-9]/, msg: 'Password must include at least one number.' },
+      { cond: policy.requireSymbol, regex: /[^A-Za-z0-9]/, msg: 'Password must include at least one symbol.' },
+    ];
+    for (const check of checks) {
+      if (check.cond === true && !check.regex.test(password)) {
+        errors.push(check.msg);
+      }
+    }
   }
   return { ok: errors.length === 0, errors };
 };
 
-const normalizeKey = (value: string | null | undefined): string => value?.trim().toLowerCase() ?? '';
+const normalizeKey = (value: string | null | undefined): string => (value ?? '').trim().toLowerCase();
 const buildAttemptKey = (scope: 'email' | 'ip', value: string): string => `${scope}:${value}`;
 
 const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
   requireAuthProvider(await getAuthDataProvider());
-  if (process.env['MONGODB_URI'] !== undefined && process.env['MONGODB_URI'] !== '') {
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri === 'string' && mongoUri.length > 0) {
     const mongo = await getMongoDb();
     return (await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).findOne({ _id: key })) ?? null;
   }
@@ -80,7 +91,8 @@ const getAttempt = async (key: string): Promise<AttemptRecord | null> => {
 
 const saveAttempt = async (record: AttemptRecord): Promise<void> => {
   requireAuthProvider(await getAuthDataProvider());
-  if (process.env['MONGODB_URI'] !== undefined && process.env['MONGODB_URI'] !== '') {
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri === 'string' && mongoUri.length > 0) {
     const mongo = await getMongoDb();
     await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).updateOne({ _id: record._id }, { $set: record }, { upsert: true });
   } else {
@@ -90,7 +102,8 @@ const saveAttempt = async (record: AttemptRecord): Promise<void> => {
 
 const clearAttempt = async (key: string): Promise<void> => {
   requireAuthProvider(await getAuthDataProvider());
-  if (process.env['MONGODB_URI'] !== undefined && process.env['MONGODB_URI'] !== '') {
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri === 'string' && mongoUri.length > 0) {
     const mongo = await getMongoDb();
     await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).deleteOne({ _id: key });
   } else {
@@ -107,7 +120,7 @@ const readActiveAttempt = async (key: string, now: Date): Promise<AttemptRecord 
 };
 
 const resolveAttemptWindowState = (existing: AttemptRecord | null, now: Date, windowMs: number): { count: number; firstAttemptAt: Date } => {
-  if (!existing || (now.getTime() - existing.firstAttemptAt.getTime() > windowMs)) return { count: 1, firstAttemptAt: now };
+  if (existing === null || (now.getTime() - existing.firstAttemptAt.getTime() > windowMs)) return { count: 1, firstAttemptAt: now };
   return { count: existing.count + 1, firstAttemptAt: existing.firstAttemptAt };
 };
 
@@ -119,11 +132,19 @@ const buildAttemptRecord = (i: { key: string; scope: 'email' | 'ip'; value: stri
 const readLockedAttemptStatus = async (i: { scope: 'email' | 'ip'; value: string; now: Date; reason: 'EMAIL_LOCKED' | 'IP_RATE_LIMIT' }): Promise<{ allowed: false; reason: 'EMAIL_LOCKED' | 'IP_RATE_LIMIT'; lockedUntil: Date | null } | null> => {
   const key = buildAttemptKey(i.scope, i.value);
   const attempt = await readActiveAttempt(key, i.now);
-  if (!attempt || (attempt.lockedUntil && attempt.lockedUntil.getTime() > i.now.getTime()) === false) return null;
-  return { allowed: false, reason: i.reason, lockedUntil: attempt.lockedUntil ?? null };
+  const lockedUntil = attempt?.lockedUntil;
+  if (attempt === null || lockedUntil === null || lockedUntil === undefined || lockedUntil.getTime() <= i.now.getTime()) return null;
+  return { allowed: false, reason: i.reason, lockedUntil };
 };
 
-const bumpAttempt = async (scope: 'email' | 'ip', value: string, max: number, winMin: number, lockMin: number): Promise<{ lockedUntil: Date | null; count: number }> => {
+const bumpAttempt = async (options: {
+  scope: 'email' | 'ip';
+  value: string;
+  max: number;
+  winMin: number;
+  lockMin: number;
+}): Promise<{ lockedUntil: Date | null; count: number }> => {
+  const { scope, value, max, winMin, lockMin } = options;
   await ensureAuthSecurityIndexes();
   const key = buildAttemptKey(scope, value);
   const now = new Date();
@@ -156,6 +177,32 @@ export const checkLoginAllowed = async (input: { email?: string | null; ip?: str
   return { allowed: true, reason: null, lockedUntil: null };
 };
 
+const recordLoginFailureForScope = async (options: {
+  scope: 'email' | 'ip';
+  value: string;
+  max: number;
+  winMin: number;
+  lockMin: number;
+  request?: Request;
+}): Promise<void> => {
+  const { scope, value, max, winMin, lockMin, request } = options;
+  const r = await bumpAttempt({ scope, value, max, winMin, lockMin });
+  const lockedUntil = r.lockedUntil;
+  const isLocked = lockedUntil !== null;
+  
+  await logSystemEvent({
+    level: isLocked ? 'warn' : 'info',
+    message: isLocked ? `Auth ${scope} lockout triggered` : `Auth login failure (${scope})`,
+    source: 'auth.security',
+    context: {
+      [scope]: value,
+      attempts: r.count,
+      ...(lockedUntil !== null ? { lockedUntil: lockedUntil.toISOString() } : {}),
+    },
+    ...(request ? { request } : {}),
+  });
+};
+
 export const recordLoginFailure = async (input: { email?: string | null; ip?: string | null; request?: Request }): Promise<void> => {
   await ensureAuthSecurityIndexes();
   const p = await getAuthSecurityPolicy();
@@ -163,32 +210,52 @@ export const recordLoginFailure = async (input: { email?: string | null; ip?: st
   const iKey = normalizeKey(input.ip);
 
   if (eKey !== '') {
-    const r = await bumpAttempt('email', eKey, p.lockoutMaxAttempts, p.lockoutWindowMinutes, p.lockoutDurationMinutes);
-    const m = r.lockedUntil ? 'Auth email lockout triggered' : 'Auth login failure (email)';
-    await logSystemEvent({ level: r.lockedUntil ? 'warn' : 'info', message: m, source: 'auth.security', context: { email: eKey, ...(r.lockedUntil ? { lockedUntil: r.lockedUntil.toISOString() } : {}), attempts: r.count }, ...(input.request ? { request: input.request } : {}) });
+    await recordLoginFailureForScope({
+      scope: 'email',
+      value: eKey,
+      max: p.lockoutMaxAttempts,
+      winMin: p.lockoutWindowMinutes,
+      lockMin: p.lockoutDurationMinutes,
+      request: input.request,
+    });
   }
   if (iKey !== '') {
-    const r = await bumpAttempt('ip', iKey, p.ipRateLimitMaxAttempts, p.ipRateLimitWindowMinutes, p.ipRateLimitDurationMinutes);
-    const m = r.lockedUntil ? 'Auth IP rate limit triggered' : 'Auth login failure (IP)';
-    await logSystemEvent({ level: r.lockedUntil ? 'warn' : 'info', message: m, source: 'auth.security', context: { ip: iKey, ...(r.lockedUntil ? { lockedUntil: r.lockedUntil.toISOString() } : {}), attempts: r.count }, ...(input.request ? { request: input.request } : {}) });
+    await recordLoginFailureForScope({
+      scope: 'ip',
+      value: iKey,
+      max: p.ipRateLimitMaxAttempts,
+      winMin: p.ipRateLimitWindowMinutes,
+      lockMin: p.ipRateLimitDurationMinutes,
+      request: input.request,
+    });
   }
 };
 
 export const recordLoginSuccess = async (input: { email?: string | null; ip?: string | null; request?: Request; userId?: string | null }): Promise<void> => {
   await ensureAuthSecurityIndexes();
-  const eK = normalizeKey(input.email); const iK = normalizeKey(input.ip);
+  const eK = normalizeKey(input.email);
+  const iK = normalizeKey(input.ip);
   if (eK !== '') await clearAttempt(buildAttemptKey('email', eK));
   if (iK !== '') await clearAttempt(buildAttemptKey('ip', iK));
-  await logSystemEvent({ level: 'info', message: 'User signed in successfully', source: 'auth.security', context: { email: eK || null, ip: iK || null }, ...(input.request ? { request: input.request } : {}), userId: input.userId ?? null });
+  const context = {
+    email: eK.length > 0 ? eK : null,
+    ip: iK.length > 0 ? iK : null
+  };
+  await logSystemEvent({ level: 'info', message: 'User signed in successfully', source: 'auth.security', context, ...(input.request ? { request: input.request } : {}), userId: input.userId ?? null });
 };
 
 export const extractClientIp = (request?: Request | null): string | null => {
-  if (!request) return null;
+  if (request === null || request === undefined) return null;
   const candidates = ['cf-connecting-ip', 'x-vercel-forwarded-for', 'x-forwarded-for', 'x-real-ip', 'x-client-ip'];
   for (const h of candidates) {
-    const v = request.headers.get(h); if (!v) continue;
+    const v = request.headers.get(h);
+    if (v === null || v === undefined || v.length === 0) continue;
     const c = v.split(',')[0]?.trim();
-    if (c) return c.startsWith('::ffff:') ? c.slice(7) : (c === '::1' ? '127.0.0.1' : c);
+    if (c !== undefined && c.length > 0) {
+      if (c.startsWith('::ffff:')) return c.slice(7);
+      if (c === '::1') return '127.0.0.1';
+      return c;
+    }
   }
   return null;
 };

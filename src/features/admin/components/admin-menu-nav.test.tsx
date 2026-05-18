@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAdminNav } from '@/features/admin/components/admin-menu-nav';
+import { flattenAdminNav } from '@/features/admin/components/menu/admin-menu-utils';
 
 type AdminNavNode = {
   id: string;
@@ -257,5 +258,17 @@ describe('buildAdminNav', () => {
 
       expect(item).not.toBeNull();
     });
+  });
+
+  it('keeps linked section nodes available as favorite candidates', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    });
+
+    const flattenedIds = flattenAdminNav(nav).map((entry) => entry.id);
+
+    expect(flattenedIds).toContain('ai/ai-paths');
+    expect(flattenedIds).toContain('image-studio');
   });
 });

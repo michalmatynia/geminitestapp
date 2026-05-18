@@ -66,12 +66,26 @@ const generateTotp = (
   buffer.writeBigInt64BE(BigInt(counter));
   const key = base32Decode(secret);
   const hmac = crypto.createHmac('sha1', key).update(buffer).digest();
-  const offset = hmac[hmac.length - 1]! & 0x0f;
+  
+  const lastByte = hmac[hmac.length - 1];
+  if (lastByte === undefined) throw new Error('Invalid HMAC');
+  
+  const offset = lastByte & 0x0f;
+  
+  const b0 = hmac[offset];
+  const b1 = hmac[offset + 1];
+  const b2 = hmac[offset + 2];
+  const b3 = hmac[offset + 3];
+  
+  if (b0 === undefined || b1 === undefined || b2 === undefined || b3 === undefined) {
+    throw new Error('Invalid HMAC offset');
+  }
+  
   const code =
-    ((hmac[offset]! & 0x7f) << 24) |
-    ((hmac[offset + 1]! & 0xff) << 16) |
-    ((hmac[offset + 2]! & 0xff) << 8) |
-    (hmac[offset + 3]! & 0xff);
+    ((b0 & 0x7f) << 24) |
+    ((b1 & 0xff) << 16) |
+    ((b2 & 0xff) << 8) |
+    (b3 & 0xff);
   const otp = (code % 10 ** digits).toString().padStart(digits, '0');
   return otp;
 };

@@ -6,6 +6,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { getRedisClient } from '@/shared/lib/redis';
+import { isTransientRedisTransportError } from '@/shared/lib/redis-error-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -63,7 +64,9 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
     await client.ping();
     connected = true;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    if (!isTransientRedisTransportError(error)) {
+      void ErrorSystem.captureException(error);
+    }
     connected = false;
   }
 

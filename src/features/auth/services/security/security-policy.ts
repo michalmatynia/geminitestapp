@@ -10,7 +10,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { type MongoSettingRecord } from '@/shared/contracts/base';
 
 const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+  const mongoUri = process.env['MONGODB_URI'];
+  if (typeof mongoUri !== 'string' || mongoUri.length === 0) return null;
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<MongoSettingRecord>('settings')
@@ -25,7 +26,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
 
 export const getAuthSecurityPolicy = async (): Promise<AuthSecurityPolicy> => {
   const storedPolicyValue = await readSettingValue(AUTH_SETTINGS_KEYS.securityPolicy);
-  if (storedPolicyValue) {
+  if (storedPolicyValue !== null && storedPolicyValue.length > 0) {
     const parsed = parseJsonSetting<AuthSecurityPolicy>(
       storedPolicyValue,
       DEFAULT_AUTH_SECURITY_POLICY

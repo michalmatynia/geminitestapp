@@ -126,8 +126,8 @@ export const flattenAdminNav = (
 ): FlattenedNavItem[] =>
   items.flatMap((item: NavItem) => {
     const nextParents = [...parents, item.label];
-    const leafEntries =
-      hasText(item.href) && !hasNavChildren(item)
+    const linkedEntries =
+      hasText(item.href)
         ? [{
             id: item.id,
             label: item.label,
@@ -138,7 +138,7 @@ export const flattenAdminNav = (
           }]
         : [];
     const childEntries = hasNavChildren(item) ? flattenAdminNav(getNavChildren(item), nextParents) : [];
-    return [...leafEntries, ...childEntries];
+    return [...linkedEntries, ...childEntries];
   });
 
 export const applySectionColors = (

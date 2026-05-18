@@ -4,8 +4,14 @@ import { useCallback } from 'react';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
-import { parseChatbotSettingsPayload, type ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
+import { parseChatbotSettingsPayload, type ChatbotSettingsDto as ChatbotSettingsPayload, type ChatbotSettingsResponse } from '@/shared/contracts/chatbot';
+import type { SingleQuery, UpdateMutation } from '@/shared/contracts/ui/queries';
 import { useSaveChatbotSettings } from './useChatbotMutations';
+
+type SaveChatbotSettingsVariables = {
+  key: string;
+  settings: ChatbotSettingsPayload;
+};
 
 export function useChatbotSettingsHandlers({
   settingsQuery,
@@ -14,7 +20,7 @@ export function useChatbotSettingsHandlers({
   setSettingsDirty,
   actions,
 }: {
-  settingsQuery: any;
+  settingsQuery: SingleQuery<ChatbotSettingsResponse>;
   currentSettings: ChatbotSettingsPayload;
   setSettingsSnapshot: React.Dispatch<React.SetStateAction<ChatbotSettingsPayload | null>>;
   setSettingsDirty: React.Dispatch<React.SetStateAction<boolean>>;
@@ -41,12 +47,16 @@ export function useChatbotSettingsHandlers({
     setAgentLoopBackoffBaseMs: (val: number) => void;
     setAgentLoopBackoffMaxMs: (val: number) => void;
   };
-}) {
+}): {
+  loadChatbotSettings: () => Promise<void>;
+  saveChatbotSettings: () => Promise<void>;
+  saveMutation: UpdateMutation<{ settings?: { settings?: ChatbotSettingsPayload } }, SaveChatbotSettingsVariables>;
+} {
   const { toast } = useToast();
   const saveMutation = useSaveChatbotSettings();
 
-  const loadChatbotSettings = useCallback(async (): Promise<void> => {
-    if (settingsQuery.data?.settings?.settings === undefined) return;
+  const loadChatbotSettings = useCallback((): Promise<void> => {
+    if (settingsQuery.data?.settings?.settings === undefined) return Promise.resolve();
 
     try {
       const stored = parseChatbotSettingsPayload(settingsQuery.data.settings.settings);
@@ -56,8 +66,8 @@ export function useChatbotSettingsHandlers({
       actions.setWebSearchEnabled(Boolean(res.webSearchEnabled));
       actions.setUseGlobalContext(Boolean(res.useGlobalContext));
       actions.setUseLocalContext(Boolean(res.useLocalContext));
-      actions.setLocalContextMode((res.localContextMode as 'append' | 'override') ?? 'override');
-      actions.setSearchProvider(res.searchProvider ?? 'serpapi');
+      actions.setLocalContextMode(res.localContextMode as 'append' | 'override');
+      actions.setSearchProvider(res.searchProvider ?? DEFAULT_CHATBOT_SETTINGS.searchProvider ?? '');
       actions.setPersonaId(res.personaId ?? null);
       actions.setPlaywrightPersonaId(res.playwrightPersonaId ?? null);
 
@@ -81,6 +91,7 @@ export function useChatbotSettingsHandlers({
       logClientCatch(err, { source: 'useChatbotSettingsState.loadChatbotSettings', key: CHATBOT_SETTINGS_KEY });
       toast(err instanceof Error ? err.message : 'Invalid chatbot settings payload.', { variant: 'error' });
     }
+    return Promise.resolve();
   }, [settingsQuery.data, actions, setSettingsSnapshot, setSettingsDirty, toast]);
 
   const saveChatbotSettings = useCallback(async (): Promise<void> => {

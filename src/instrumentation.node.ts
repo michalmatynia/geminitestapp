@@ -175,8 +175,14 @@ export async function registerNodeInstrumentation() {
         logClientError(error);
       });
 
-    void import('@/features/kangur/appearance/server/storefront-appearance')
-      .then(({ getKangurStorefrontInitialState }) => getKangurStorefrontInitialState())
+    void import('@/shared/lib/db/mongo-source-env')
+      .then(async ({ hasStudiqMongoSourceEnv }) => {
+        if (!hasStudiqMongoSourceEnv()) return;
+        const { getKangurStorefrontInitialState } = await import(
+          '@/features/kangur/appearance/server/storefront-appearance'
+        );
+        await getKangurStorefrontInitialState();
+      })
       .catch((error) => {
         logClientError(error);
       });

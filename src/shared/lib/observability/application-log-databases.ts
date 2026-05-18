@@ -4,26 +4,32 @@ import type { Db } from 'mongodb';
 
 import type { ObservabilityApplicationId } from '@/shared/contracts/system';
 import { getMongoDb as getRootMongoDb } from '@/shared/lib/db/mongo-client';
+import {
+  hasArchMongoSourceEnv,
+  hasCmsBuilderMongoSourceEnv,
+  hasEcommerceMongoSourceEnv,
+  hasStudiqMongoSourceEnv,
+} from '@/shared/lib/db/mongo-source-env';
 
 export const getObservabilityApplicationMongoDb = async (
   applicationId: ObservabilityApplicationId
 ): Promise<Db> => {
-  if (applicationId === 'studiq') {
+  if (applicationId === 'studiq' && hasStudiqMongoSourceEnv()) {
     const { getMongoDb } = await import('@/shared/lib/db/studiq-mongo-client');
     return getMongoDb();
   }
 
-  if (applicationId === 'cms-builder') {
+  if (applicationId === 'cms-builder' && hasCmsBuilderMongoSourceEnv()) {
     const { getMongoDb } = await import('@/shared/lib/db/cms-builder-mongo-client');
     return getMongoDb();
   }
 
-  if (applicationId === 'stargater') {
+  if (applicationId === 'stargater' && hasEcommerceMongoSourceEnv()) {
     const { getMongoDb } = await import('@/shared/lib/db/ecommerce-mongo-client');
     return getMongoDb();
   }
 
-  if (applicationId === 'arch') {
+  if (applicationId === 'arch' && hasArchMongoSourceEnv()) {
     const { getMongoDb } = await import('@/shared/lib/db/arch-mongo-client');
     return getMongoDb();
   }

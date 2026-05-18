@@ -34,9 +34,10 @@ export const config = {
     /*
      * Match all paths except:
      * - _next/*       (static assets, image optimisation, dev HMR)
+     * - api/*         (route handlers must not be locale-redirected)
      * - favicon.ico
      * - Files with extensions (images, fonts, etc.)
      */
-    '/((?!_next|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+    '/((?!_next|api|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
   ],
 };

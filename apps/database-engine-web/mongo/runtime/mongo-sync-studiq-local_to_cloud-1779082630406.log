@@ -1,0 +1,281 @@
+application: studiq
+
+pre-sync backups:
+
+application: studiq
+role: source
+source: local
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/studiq/studiq-local-studiq-local-source-pre-sync-local-to-cloud-1779082630406.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/studiq/studiq-local-studiq-local-source-pre-sync-local-to-cloud-1779082630406.archive.log
+
+application: studiq
+role: target
+source: cloud
+backup: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/studiq/studiq-db-studiq-cloud-target-pre-sync-local-to-cloud-1779082630406.archive
+log: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/database/mongo-backups/studiq/studiq-db-studiq-cloud-target-pre-sync-local-to-cloud-1779082630406.archive.log
+
+target database dropped before restore: true
+
+dump command: mongodump --uri mongodb://127.0.0.1:27018/studiq_local --db studiq_local --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive --gzip
+
+
+
+2026-05-18T07:37:18.564+0200	writing `studiq_local.system_logs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.567+0200	writing `studiq_local.kangur_page_content` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.569+0200	writing `studiq_local.kangur_lesson_templates` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.570+0200	writing `studiq_local.error_logs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.603+0200	done dumping `studiq_local.kangur_lesson_templates` (368 documents)
+2026-05-18T07:37:18.603+0200	writing `studiq_local.kangur_lesson_documents` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.609+0200	done dumping `studiq_local.system_logs` (721 documents)
+2026-05-18T07:37:18.609+0200	writing `studiq_local.kangur_lessons` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.621+0200	done dumping `studiq_local.error_logs` (247 documents)
+2026-05-18T07:37:18.621+0200	writing `studiq_local.kangur_games` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.621+0200	done dumping `studiq_local.kangur_page_content` (200 documents)
+2026-05-18T07:37:18.621+0200	writing `studiq_local.kangur_game_instances` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.627+0200	done dumping `studiq_local.kangur_lessons` (92 documents)
+2026-05-18T07:37:18.627+0200	writing `studiq_local.kangur_game_content_sets` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.627+0200	done dumping `studiq_local.kangur_lesson_documents` (92 documents)
+2026-05-18T07:37:18.627+0200	writing `studiq_local.kangur_lesson_sections` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.634+0200	done dumping `studiq_local.kangur_game_instances` (51 documents)
+2026-05-18T07:37:18.634+0200	writing `studiq_local.kangur_settings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.637+0200	done dumping `studiq_local.kangur_game_content_sets` (51 documents)
+2026-05-18T07:37:18.637+0200	writing `studiq_local.users` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.640+0200	done dumping `studiq_local.kangur_games` (75 documents)
+2026-05-18T07:37:18.640+0200	writing `studiq_local.kangur_ai_tutor_content` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.647+0200	done dumping `studiq_local.kangur_ai_tutor_content` (4 documents)
+2026-05-18T07:37:18.647+0200	writing `studiq_local.kangur_ai_tutor_native_guides` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.648+0200	done dumping `studiq_local.kangur_lesson_sections` (18 documents)
+2026-05-18T07:37:18.649+0200	writing `studiq_local.user_preferences` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.653+0200	done dumping `studiq_local.kangur_settings` (8 documents)
+2026-05-18T07:37:18.654+0200	writing `studiq_local.analytics_events` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.655+0200	done dumping `studiq_local.users` (6 documents)
+2026-05-18T07:37:18.655+0200	writing `studiq_local.kangur_content_metadata` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.668+0200	done dumping `studiq_local.kangur_ai_tutor_native_guides` (4 documents)
+2026-05-18T07:37:18.668+0200	writing `studiq_local.studiq_database_metadata` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.670+0200	done dumping `studiq_local.user_preferences` (4 documents)
+2026-05-18T07:37:18.670+0200	writing `studiq_local.kangur_social_posts` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.670+0200	done dumping `studiq_local.analytics_events` (2 documents)
+2026-05-18T07:37:18.670+0200	writing `studiq_local.kangur_learners` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.671+0200	done dumping `studiq_local.kangur_content_metadata` (1 document)
+2026-05-18T07:37:18.673+0200	writing `studiq_local.settings` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.674+0200	done dumping `studiq_local.kangur_social_posts` (0 documents)
+2026-05-18T07:37:18.674+0200	writing `studiq_local.kangur_social_image_addons` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.675+0200	done dumping `studiq_local.kangur_learners` (0 documents)
+2026-05-18T07:37:18.675+0200	writing `studiq_local.kangur_ai_tutor_guest_intro` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.676+0200	done dumping `studiq_local.settings` (0 documents)
+2026-05-18T07:37:18.676+0200	writing `studiq_local.kangur_duels` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.676+0200	done dumping `studiq_local.studiq_database_metadata` (1 document)
+2026-05-18T07:37:18.676+0200	writing `studiq_local.kangur_scores` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.677+0200	done dumping `studiq_local.kangur_social_image_addons` (0 documents)
+2026-05-18T07:37:18.677+0200	writing `studiq_local.activity_logs` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.678+0200	done dumping `studiq_local.kangur_duels` (0 documents)
+2026-05-18T07:37:18.678+0200	writing `studiq_local.kangur_lesson_game_sections` to "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:18.678+0200	done dumping `studiq_local.kangur_scores` (0 documents)
+2026-05-18T07:37:18.682+0200	done dumping `studiq_local.kangur_lesson_game_sections` (0 documents)
+2026-05-18T07:37:18.686+0200	done dumping `studiq_local.kangur_ai_tutor_guest_intro` (0 documents)
+2026-05-18T07:37:18.687+0200	done dumping `studiq_local.activity_logs` (0 documents)
+
+
+restore command: mongorestore --uri mongodb+srv://mmatynia_db_user:***@cluster0.wzugw6r.mongodb.net/?retryWrites=true&w=majority&authSource=admin --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive --gzip --drop --stopOnError --nsFrom studiq_local.* --nsTo studiq_db.*
+
+
+
+2026-05-18T07:37:20.951+0200	WARNING: This archive came from MongoDB `7.0.31`, but you are restoring to `8.0.23`. Cross-version dump & restore is unsupported. The restored data may be corrupted.
+2026-05-18T07:37:20.952+0200	preparing collections to restore from
+2026-05-18T07:37:20.962+0200	reading metadata for `studiq_db.kangur_game_instances` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_ai_tutor_content` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_game_content_sets` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_ai_tutor_native_guides` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_social_image_addons` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_social_posts` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_scores` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_games` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.kangur_content_metadata` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.965+0200	reading metadata for `studiq_db.analytics_events` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_learners` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_lesson_sections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.system_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_lesson_game_sections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_ai_tutor_guest_intro` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_lesson_documents` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.error_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_lessons` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.studiq_database_metadata` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.user_preferences` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_lesson_templates` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_duels` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.kangur_page_content` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.966+0200	reading metadata for `studiq_db.activity_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:20.967+0200	reading metadata for `studiq_db.users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:21.098+0200	restoring `studiq_db.kangur_lesson_templates` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:21.171+0200	restoring `studiq_db.system_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:23.174+0200	finished restoring `studiq_db.kangur_lesson_templates` (368 documents, 0 failures)
+2026-05-18T07:37:23.253+0200	restoring `studiq_db.error_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:23.719+0200	studiq_db.system_logs  1.59MB
+2026-05-18T07:37:23.719+0200	 studiq_db.error_logs   860KB
+2026-05-18T07:37:23.719+0200	
+2026-05-18T07:37:26.196+0200	studiq_db.system_logs  1.59MB
+2026-05-18T07:37:26.196+0200	finished restoring `studiq_db.system_logs` (721 documents, 0 failures)
+2026-05-18T07:37:26.275+0200	restoring `studiq_db.kangur_page_content` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:26.716+0200	         studiq_db.error_logs  860KB
+2026-05-18T07:37:26.716+0200	studiq_db.kangur_page_content  546KB
+2026-05-18T07:37:26.716+0200	
+2026-05-18T07:37:27.193+0200	studiq_db.error_logs  860KB
+2026-05-18T07:37:27.193+0200	finished restoring `studiq_db.error_logs` (247 documents, 0 failures)
+2026-05-18T07:37:28.192+0200	studiq_db.kangur_page_content  546KB
+2026-05-18T07:37:28.192+0200	finished restoring `studiq_db.kangur_page_content` (200 documents, 0 failures)
+2026-05-18T07:37:28.262+0200	restoring `studiq_db.kangur_lessons` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:28.331+0200	restoring `studiq_db.kangur_lesson_documents` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:29.236+0200	finished restoring `studiq_db.kangur_lessons` (92 documents, 0 failures)
+2026-05-18T07:37:29.716+0200	studiq_db.kangur_lesson_documents  118KB
+2026-05-18T07:37:30.158+0200	studiq_db.kangur_lesson_documents  118KB
+2026-05-18T07:37:30.158+0200	finished restoring `studiq_db.kangur_lesson_documents` (92 documents, 0 failures)
+2026-05-18T07:37:30.286+0200	restoring `studiq_db.kangur_game_instances` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:30.335+0200	finished restoring `studiq_db.kangur_game_instances` (51 documents, 0 failures)
+2026-05-18T07:37:30.405+0200	restoring `studiq_db.kangur_game_content_sets` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:31.155+0200	finished restoring `studiq_db.kangur_game_content_sets` (51 documents, 0 failures)
+2026-05-18T07:37:31.238+0200	restoring `studiq_db.kangur_games` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:31.401+0200	finished restoring `studiq_db.kangur_games` (75 documents, 0 failures)
+2026-05-18T07:37:31.468+0200	restoring `studiq_db.kangur_ai_tutor_content` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:31.551+0200	finished restoring `studiq_db.kangur_ai_tutor_content` (4 documents, 0 failures)
+2026-05-18T07:37:32.176+0200	restoring `studiq_db.kangur_lesson_sections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:32.233+0200	finished restoring `studiq_db.kangur_lesson_sections` (18 documents, 0 failures)
+2026-05-18T07:37:32.382+0200	restoring `studiq_db.kangur_settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:32.488+0200	finished restoring `studiq_db.kangur_settings` (8 documents, 0 failures)
+2026-05-18T07:37:32.554+0200	restoring `studiq_db.users` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:32.607+0200	finished restoring `studiq_db.users` (6 documents, 0 failures)
+2026-05-18T07:37:32.679+0200	restoring `studiq_db.kangur_ai_tutor_native_guides` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:32.717+0200	studiq_db.kangur_ai_tutor_native_guides  319KB
+2026-05-18T07:37:32.747+0200	restoring `studiq_db.user_preferences` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:32.907+0200	studiq_db.kangur_ai_tutor_native_guides  319KB
+2026-05-18T07:37:32.907+0200	finished restoring `studiq_db.kangur_ai_tutor_native_guides` (4 documents, 0 failures)
+2026-05-18T07:37:32.982+0200	restoring `studiq_db.analytics_events` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.032+0200	finished restoring `studiq_db.user_preferences` (4 documents, 0 failures)
+2026-05-18T07:37:33.078+0200	finished restoring `studiq_db.analytics_events` (2 documents, 0 failures)
+2026-05-18T07:37:33.148+0200	restoring `studiq_db.kangur_content_metadata` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.198+0200	finished restoring `studiq_db.kangur_content_metadata` (1 document, 0 failures)
+2026-05-18T07:37:33.271+0200	restoring `studiq_db.kangur_social_posts` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.285+0200	finished restoring `studiq_db.kangur_social_posts` (0 documents, 0 failures)
+2026-05-18T07:37:33.429+0200	restoring `studiq_db.kangur_learners` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.447+0200	finished restoring `studiq_db.kangur_learners` (0 documents, 0 failures)
+2026-05-18T07:37:33.512+0200	restoring `studiq_db.settings` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.524+0200	finished restoring `studiq_db.settings` (0 documents, 0 failures)
+2026-05-18T07:37:33.590+0200	restoring `studiq_db.studiq_database_metadata` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.638+0200	finished restoring `studiq_db.studiq_database_metadata` (1 document, 0 failures)
+2026-05-18T07:37:33.702+0200	restoring `studiq_db.kangur_social_image_addons` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.713+0200	finished restoring `studiq_db.kangur_social_image_addons` (0 documents, 0 failures)
+2026-05-18T07:37:33.778+0200	restoring `studiq_db.kangur_duels` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.790+0200	finished restoring `studiq_db.kangur_duels` (0 documents, 0 failures)
+2026-05-18T07:37:33.860+0200	restoring `studiq_db.kangur_scores` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:33.871+0200	finished restoring `studiq_db.kangur_scores` (0 documents, 0 failures)
+2026-05-18T07:37:34.017+0200	restoring `studiq_db.kangur_lesson_game_sections` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:34.034+0200	finished restoring `studiq_db.kangur_lesson_game_sections` (0 documents, 0 failures)
+2026-05-18T07:37:34.101+0200	restoring `studiq_db.kangur_ai_tutor_guest_intro` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:34.113+0200	finished restoring `studiq_db.kangur_ai_tutor_guest_intro` (0 documents, 0 failures)
+2026-05-18T07:37:34.178+0200	restoring `studiq_db.activity_logs` from "archive `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/database-engine-web/mongo/runtime/mongo-sync-studiq-local_to_cloud-1779082630406.archive`"
+2026-05-18T07:37:34.190+0200	finished restoring `studiq_db.activity_logs` (0 documents, 0 failures)
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.user_preferences`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_scores`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_social_posts`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_games`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_ai_tutor_content`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_content_metadata`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_ai_tutor_guest_intro`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_duels`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.users`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_social_image_addons`
+2026-05-18T07:37:34.191+0200	no indexes to restore for collection `studiq_db.kangur_learners`
+2026-05-18T07:37:34.191+0200	restoring indexes for collection `studiq_db.kangur_lesson_game_sections` from metadata
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_game_sections_id_unique_idx", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_game_sections_game_sort_idx", "v":2}, Key:bson.D{bson.E{Key:"gameId", Value:1}, bson.E{Key:"lessonComponentId", Value:1}, bson.E{Key:"sortOrder", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_game_sections_lesson_sort_idx", "v":2}, Key:bson.D{bson.E{Key:"lessonComponentId", Value:1}, bson.E{Key:"gameId", Value:1}, bson.E{Key:"sortOrder", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	restoring indexes for collection `studiq_db.analytics_events` from metadata
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"country_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"country", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	restoring indexes for collection `studiq_db.kangur_lesson_documents` from metadata
+2026-05-18T07:37:34.193+0200	restoring indexes for collection `studiq_db.kangur_lesson_sections` from metadata
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_sections_subject_sort_idx", "v":2}, Key:bson.D{bson.E{Key:"subject", Value:1}, bson.E{Key:"ageGroup", Value:1}, bson.E{Key:"sortOrder", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_sections_id_unique_idx", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"visitorId_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"visitorId", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"ua.browser_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"ua.browser", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"ua.isBot_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"ua.isBot", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"referrerHost_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"referrerHost", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"ts_-1", "v":2}, Key:bson.D{bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"scope_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"scope", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"type_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"type", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"path_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"path", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"referrer_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"referrer", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"sessionId_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"sessionId", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"language_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"language", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"ua.device_1_ts_-1", "v":2}, Key:bson.D{bson.E{Key:"ua.device", Value:1}, bson.E{Key:"ts", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.193+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_documents_updated_idx", "v":2}, Key:bson.D{bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.339+0200	restoring indexes for collection `studiq_db.kangur_lessons` from metadata
+2026-05-18T07:37:34.339+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lessons_component_age_group_unique_idx", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"componentId", Value:1}, bson.E{Key:"ageGroup", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.339+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lessons_subject_sort_idx", "v":2}, Key:bson.D{bson.E{Key:"subject", Value:1}, bson.E{Key:"sortOrder", Value:1}, bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.769+0200	restoring indexes for collection `studiq_db.kangur_lesson_templates` from metadata
+2026-05-18T07:37:34.769+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_templates_subject_sort_idx", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"subject", Value:1}, bson.E{Key:"sortOrder", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.769+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_lesson_templates_componentId_locale_unique_idx", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"componentId", Value:1}, bson.E{Key:"locale", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	restoring indexes for collection `studiq_db.kangur_page_content` from metadata
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_id_1", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"id", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_pageKey_1_screenKey_1_sortOrder_1", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"pageKey", Value:1}, bson.E{Key:"screenKey", Value:1}, bson.E{Key:"sortOrder", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_updatedAt_-1", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"updatedAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_nativeGuideIds_1", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"nativeGuideIds", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_anchorIdPrefix_1", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"anchorIdPrefix", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.784+0200	index: &idx.IndexDocument{Options:bson.M{"name":"locale_1_contentIdPrefixes_1", "v":2}, Key:bson.D{bson.E{Key:"locale", Value:1}, bson.E{Key:"contentIdPrefixes", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	restoring indexes for collection `studiq_db.activity_logs` from metadata
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"entityId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"entityId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"type_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"type", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_originLogId_1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"originLogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"userId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"entityType_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"entityType", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"name":"userId_1_entityId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}, bson.E{Key:"entityId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:34.808+0200	index: &idx.IndexDocument{Options:bson.M{"expireAfterSeconds":2592000, "name":"activity_logs_createdAt_ttl_idx", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	no indexes to restore for collection `studiq_db.settings`
+2026-05-18T07:37:35.004+0200	restoring indexes for collection `studiq_db.system_logs` from metadata
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"source_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"source", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"correlationId_1", "v":2}, Key:bson.D{bson.E{Key:"correlationId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"traceId_1", "v":2}, Key:bson.D{bson.E{Key:"traceId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"traceId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"traceId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"userId_1", "v":2}, Key:bson.D{bson.E{Key:"userId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"context.fingerprint_1", "v":2}, Key:bson.D{bson.E{Key:"context.fingerprint", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"path_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"path", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"requestId_1", "v":2}, Key:bson.D{bson.E{Key:"requestId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_originLogId_1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"originLogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"expireAfterSeconds":604800, "name":"system_logs_createdAt_ttl_idx", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"level_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"level", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"service_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"service", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	restoring indexes for collection `studiq_db.error_logs` from metadata
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"traceId_1", "v":2}, Key:bson.D{bson.E{Key:"traceId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"expireAfterSeconds":604800, "name":"error_logs_createdAt_ttl_idx", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"correlationId_1", "v":2}, Key:bson.D{bson.E{Key:"correlationId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"source_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"source", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"service_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"service", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"requestId_1", "v":2}, Key:bson.D{bson.E{Key:"requestId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"createdAt_-1", "v":2}, Key:bson.D{bson.E{Key:"createdAt", Value:-1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.004+0200	index: &idx.IndexDocument{Options:bson.M{"name":"applicationId_1_originLogId_1", "v":2}, Key:bson.D{bson.E{Key:"applicationId", Value:1}, bson.E{Key:"originLogId", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.430+0200	restoring indexes for collection `studiq_db.kangur_settings` from metadata
+2026-05-18T07:37:35.430+0200	index: &idx.IndexDocument{Options:bson.M{"name":"kangur_settings_key", "unique":true, "v":2}, Key:bson.D{bson.E{Key:"key", Value:1}}, PartialFilterExpression:(*bson.D)(nil)}
+2026-05-18T07:37:35.430+0200	no indexes to restore for collection `studiq_db.studiq_database_metadata`
+2026-05-18T07:37:35.430+0200	no indexes to restore for collection `studiq_db.kangur_game_instances`
+2026-05-18T07:37:35.430+0200	no indexes to restore for collection `studiq_db.kangur_game_content_sets`
+2026-05-18T07:37:35.430+0200	no indexes to restore for collection `studiq_db.kangur_ai_tutor_native_guides`
+2026-05-18T07:37:35.823+0200	1945 document(s) restored successfully. 0 document(s) failed to restore.
+
+
+post-sync verification:
+
+status: failed
+verifiedAt: 2026-05-18T05:37:38.166Z
+source: local:studiq_local
+target: cloud:studiq_db
+collectionsCompared: 27
+sourceCollections: 27
+targetCollections: 27
+mismatches:
+Collection "system_logs" document mismatch: count 720 != 721.

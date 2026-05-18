@@ -35,7 +35,11 @@ function BuiltWork({
           {displayProjects.map((project, i) => (
             <a key={project.code} href="#" className="project-card rev" data-delay={i > 0 ? String(i) : undefined}>
               <div className="project-frame">
-                <IsometricThumbnail projectIdx={i} />
+                <IsometricThumbnail
+                  projectIdx={i}
+                  modelUrl={'modelUrl' in project ? (project as Project).modelUrl : undefined}
+                  viewMode={content.projectsViewMode}
+                />
               </div>
               <div className="project-meta">
                 <span className="project-num">

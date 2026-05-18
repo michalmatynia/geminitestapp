@@ -131,7 +131,7 @@ export interface ArchPageContent {
     label: string;
     title: string;
     emphasis: string;
-    projectsViewMode: 'wireframe' | 'solid';
+    projectsViewMode: 'edges' | 'wireframe' | 'solid';
   };
   process: {
     eyebrow: string;

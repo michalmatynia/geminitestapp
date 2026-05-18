@@ -75,7 +75,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     label: 'three of recent note',
     title: 'A selection of built work rendered through the studio systems.',
     emphasis: 'built work',
-    projectsViewMode: 'wireframe',
+    projectsViewMode: 'edges',
   },
   process: {
     eyebrow: '- 05 / process',
@@ -640,7 +640,7 @@ export function normalizeArchPageContent(
       label: asString(projects['label'], d.projects.label),
       title: asString(projects['title'], d.projects.title),
       emphasis: asString(projects['emphasis'], d.projects.emphasis),
-      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : 'wireframe',
+      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : projects['projectsViewMode'] === 'wireframe' ? 'wireframe' : 'edges',
     },
     process: {
       eyebrow: asString(process['eyebrow'], d.process.eyebrow),

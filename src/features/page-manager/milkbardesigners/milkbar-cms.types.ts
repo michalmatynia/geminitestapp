@@ -87,7 +87,7 @@ export type MilkbarPageContent = {
     label: string;
     title: string;
     emphasis: string;
-    projectsViewMode: 'wireframe' | 'solid';
+    projectsViewMode: 'edges' | 'wireframe' | 'solid';
   };
   process: {
     eyebrow: string;
@@ -314,7 +314,7 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     label: 'three of recent note',
     title: 'A selection of built work rendered through the studio systems.',
     emphasis: 'built work',
-    projectsViewMode: 'wireframe',
+    projectsViewMode: 'edges',
   },
   process: {
     eyebrow: '- 05 / process',
@@ -500,7 +500,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
     label: 'drei jüngste Notizen',
     title: 'Eine Auswahl realisierter Arbeiten, dargestellt durch die Studiosysteme.',
     emphasis: 'realisierter Arbeiten',
-    projectsViewMode: 'wireframe',
+    projectsViewMode: 'edges',
   },
   process: {
     eyebrow: '- 05 / Prozess',
@@ -686,7 +686,7 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
     label: 'trzy z ostatnich',
     title: 'Wybór zrealizowanych prac przedstawionych przez systemy studia.',
     emphasis: 'zrealizowanych prac',
-    projectsViewMode: 'wireframe',
+    projectsViewMode: 'edges',
   },
   process: {
     eyebrow: '- 05 / proces',

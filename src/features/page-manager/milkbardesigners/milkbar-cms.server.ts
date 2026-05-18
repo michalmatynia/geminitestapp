@@ -708,7 +708,7 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       label: asString(projects['label'], fallback.projects.label),
       title: asString(projects['title'], fallback.projects.title),
       emphasis: asString(projects['emphasis'], fallback.projects.emphasis),
-      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : 'wireframe',
+      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : projects['projectsViewMode'] === 'wireframe' ? 'wireframe' : 'edges',
     },
     process: {
       eyebrow: asString(process['eyebrow'], fallback.process.eyebrow),

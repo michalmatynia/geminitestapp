@@ -361,7 +361,7 @@ const normalizeMilkbarPageContentForClient = (
       title: readStringValue(projects['title'], fallback.projects.title),
       emphasis: readStringValue(projects['emphasis'], fallback.projects.emphasis),
       projectsViewMode:
-        projects['projectsViewMode'] === 'solid' ? 'solid' : fallback.projects.projectsViewMode,
+        projects['projectsViewMode'] === 'solid' ? 'solid' : projects['projectsViewMode'] === 'wireframe' ? 'wireframe' : fallback.projects.projectsViewMode,
     },
     process: {
       eyebrow: readStringValue(process['eyebrow'], fallback.process.eyebrow),
@@ -3159,7 +3159,7 @@ function ContentFolderTree({
                       <div className='col-span-full'>
                         <p className='text-xs font-medium text-neutral-400 mb-2'>Card View Mode</p>
                         <div className='flex gap-4'>
-                          {(['wireframe', 'solid'] as const).map((mode) => (
+                          {(['edges', 'wireframe', 'solid'] as const).map((mode) => (
                             <label key={mode} className='flex items-center gap-2 cursor-pointer'>
                               <input
                                 type='radio'

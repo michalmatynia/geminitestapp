@@ -29,8 +29,7 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
  * logs the event, and returns the resolved context with version information.
  */
 export async function postResolveHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-...
-
+  const body = await parseRequestBody(req);
 
   const parsed = contextResolveRequestSchema.safeParse(body);
   if (!parsed.success) {

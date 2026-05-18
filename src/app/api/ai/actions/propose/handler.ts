@@ -33,8 +33,7 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
  * saves the pending proposal, logs the event, and returns the proposal details.
  */
 export async function postProposeHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-...
-
+  const body = await parseRequestBody(req);
 
   const parsed = proposeActionRequestSchema.safeParse(body);
   if (!parsed.success) {

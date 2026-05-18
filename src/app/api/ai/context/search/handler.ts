@@ -29,8 +29,7 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
  * logs the event, and returns the matching nodes with version information.
  */
 export async function postSearchHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-...
-
+  const body = await parseRequestBody(req);
 
   const parsed = contextSearchRequestSchema.safeParse(body);
   if (!parsed.success) {

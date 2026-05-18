@@ -1,3 +1,10 @@
+/**
+ * Kangur Platform
+ *
+ * This package provides foundational platform abstractions, cross-runtime interfaces,
+ * and integration ports used by the Kangur feature set and other workspace packages.
+ */
+
 import type { KangurAssignmentCreateInput, KangurAssignmentListQuery, KangurAssignmentSnapshot, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
 import type { KangurAuthUser, KangurLearnerActivitySnapshot, KangurLearnerActivityStatus, KangurLearnerActivityUpdateInput, KangurLearnerCreateInput, KangurLearnerInteractionHistory, KangurLearnerProfile, KangurLearnerSessionHistory, KangurLearnerUpdateInput, KangurProgressState, KangurScore, KangurScoreCreateInput } from '@kangur/contracts/kangur';
 import type { KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';

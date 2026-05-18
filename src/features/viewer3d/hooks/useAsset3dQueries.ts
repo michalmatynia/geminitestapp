@@ -172,11 +172,13 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: false,
     meta: {
       source: 'viewer3d.hooks.useAsset3DById',
       operation: 'detail',
       resource: 'viewer3d.asset',
       domain: 'viewer3d',
+      errorPresentation: 'inline',
 
       tags: ['viewer3d', 'asset', 'detail'],
       description: 'Loads viewer3d asset.'},

@@ -1,0 +1,144 @@
+- region "Scrollable region" [active] [ref=e1]:
+  - link "Przejdź do głównej treści" [ref=e3] [cursor=pointer]:
+    - /url: "#kangur-main-content"
+  - main [ref=e4]:
+    - heading "StudiQ" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - status [ref=e7]
+      - generic [ref=e8]:
+        - link "Skip to content" [ref=e9] [cursor=pointer]:
+          - /url: "#kangur-main-content"
+        - complementary "Admin sidebar" [ref=e10]:
+          - navigation "Admin menu" [ref=e12]:
+            - generic [ref=e15]:
+              - generic [ref=e16]:
+                - search [ref=e17]:
+                  - img [ref=e18]
+                  - searchbox "Search admin pages…" [ref=e21]
+                - button "Collapse admin sidebar" [expanded] [ref=e23] [cursor=pointer]:
+                  - img [ref=e24]
+              - generic "Collapse all folders" [ref=e28]:
+                - button "Collapse all folders" [ref=e29] [cursor=pointer]:
+                  - img [ref=e30]
+            - generic [ref=e32]:
+              - link "Home" [ref=e35] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e36]:
+                  - img [ref=e38]
+                  - generic [ref=e41]: Home
+              - button "Workspace" [ref=e44] [cursor=pointer]:
+                - generic [ref=e45]:
+                  - img [ref=e47]
+                  - generic [ref=e49]: Workspace
+                - img [ref=e50]
+              - button "Filemaker" [ref=e54] [cursor=pointer]:
+                - generic [ref=e55]:
+                  - img [ref=e57]
+                  - generic [ref=e59]: Filemaker
+                - img [ref=e60]
+              - button "Image Studio" [ref=e64] [cursor=pointer]:
+                - generic [ref=e65]:
+                  - img [ref=e67]
+                  - generic [ref=e71]: Image Studio
+                - img [ref=e72]
+              - button "Prompt Exploder" [ref=e76] [cursor=pointer]:
+                - generic [ref=e77]:
+                  - img [ref=e79]
+                  - generic [ref=e82]: Prompt Exploder
+                - img [ref=e83]
+              - generic [ref=e85]:
+                - button "Page Manager" [expanded] [ref=e87] [cursor=pointer]:
+                  - generic [ref=e88]:
+                    - img [ref=e90]
+                    - generic [ref=e92]: Page Manager
+                  - img [ref=e93]
+                - generic [ref=e95]:
+                  - button "• StudiQ" [ref=e98] [cursor=pointer]:
+                    - generic [ref=e99]:
+                      - generic [ref=e100]: •
+                      - generic [ref=e101]: StudiQ
+                    - img [ref=e102]
+                  - button "• Kangur" [ref=e106] [cursor=pointer]:
+                    - generic [ref=e107]:
+                      - generic [ref=e108]: •
+                      - generic [ref=e109]: Kangur
+                    - img [ref=e110]
+                  - link "• Stargater" [ref=e114] [cursor=pointer]:
+                    - /url: /admin/page-manager/stargater
+                    - generic [ref=e115]:
+                      - generic [ref=e116]: •
+                      - generic [ref=e117]: Stargater
+                  - link "• Milkbardesigners" [ref=e120] [cursor=pointer]:
+                    - /url: /admin/page-manager/milkbardesigners
+                    - generic [ref=e121]:
+                      - generic [ref=e122]: •
+                      - generic [ref=e123]: Milkbardesigners
+              - button "Commerce" [ref=e126] [cursor=pointer]:
+                - generic [ref=e127]:
+                  - img [ref=e129]
+                  - generic [ref=e133]: Commerce
+                - img [ref=e134]
+              - button "Integrations" [ref=e138] [cursor=pointer]:
+                - generic [ref=e139]:
+                  - img [ref=e141]
+                  - generic [ref=e143]: Integrations
+                - img [ref=e144]
+              - link "Brain" [ref=e148] [cursor=pointer]:
+                - /url: /admin/brain?tab=operations
+                - generic [ref=e149]:
+                  - img [ref=e151]
+                  - generic [ref=e159]: Brain
+              - button "Jobs" [ref=e162] [cursor=pointer]:
+                - generic [ref=e163]:
+                  - img [ref=e165]
+                  - generic [ref=e169]: Jobs
+                - img [ref=e170]
+              - button "AI" [ref=e174] [cursor=pointer]:
+                - generic [ref=e175]:
+                  - img [ref=e177]
+                  - generic [ref=e181]: AI
+                - img [ref=e182]
+              - button "Content" [ref=e186] [cursor=pointer]:
+                - generic [ref=e188]: Content
+                - img [ref=e189]
+              - button "System" [ref=e193] [cursor=pointer]:
+                - generic [ref=e194]:
+                  - img [ref=e196]
+                  - generic [ref=e199]: System
+                - img [ref=e200]
+        - generic [ref=e202]:
+          - generic "Admin toolbar"
+          - main [ref=e203]:
+            - generic [ref=e205]:
+              - tablist [ref=e207]:
+                - tab "Page Content" [selected] [ref=e208] [cursor=pointer]
+                - tab "Projects" [ref=e209] [cursor=pointer]
+                - tab "Services" [ref=e210] [cursor=pointer]
+                - tab "Inquiries" [ref=e211] [cursor=pointer]
+                - tab "3D Assets" [ref=e212] [cursor=pointer]
+                - tab "Settings" [ref=e213] [cursor=pointer]
+                - tab "Sync Status" [ref=e214] [cursor=pointer]
+              - generic [ref=e215]:
+                - generic [ref=e216]:
+                  - generic [ref=e218]:
+                    - button "Add Milkbardesigners to admin favorites" [ref=e219] [cursor=pointer]:
+                      - img [ref=e220]
+                    - navigation "Breadcrumb" [ref=e222]:
+                      - link "Admin" [ref=e223] [cursor=pointer]:
+                        - /url: /admin
+                      - generic [ref=e224]: /
+                      - link "Page Manager" [ref=e225] [cursor=pointer]:
+                        - /url: /admin/page-manager
+                      - generic [ref=e226]: /
+                      - generic [ref=e227]: Milkbardesigners
+                  - heading "Milkbardesigners CMS" [level=1] [ref=e231]
+                  - paragraph [ref=e232]: Manage Milkbar page copy and section content.
+                - generic [ref=e234]:
+                  - button "Refresh" [disabled]:
+                    - img
+                    - text: Refresh
+                  - button "Save CMS" [ref=e235] [cursor=pointer]:
+                    - img [ref=e236]
+                    - text: Save CMS
+              - status [ref=e240]: Loading Milkbardesigners CMS...
+  - alert [ref=e241]

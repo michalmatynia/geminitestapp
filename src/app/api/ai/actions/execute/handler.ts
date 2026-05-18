@@ -29,8 +29,7 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
  * logs the execution event, and returns a response.
  */
 export async function postExecuteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-...
-
+  const body = await parseRequestBody(req);
 
   const parsed = executeActionRequestSchema.safeParse(body);
   if (!parsed.success) {

@@ -1,0 +1,378 @@
+[      43ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/admin/page-manager/milkbardesigners:0
+[      91ms] [ERROR] Refused to execute script from 'http://localhost:3000/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('application/json') is not executable, and strict MIME type checking is enabled. @ http://localhost:3000/admin/page-manager/milkbardesigners:0
+[     114ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_react-dom_0bruynb._.js:15305
+[     154ms] Error: ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx
+
+
+    at <unknown> (Error: ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1)
+    at Object.getCompilationErrors (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/hot-reloader-turbopack.js:1186:59)
+    at DevBundlerService.getCompilationError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/lib/dev-bundler-service.js:44:55)
+    at DevServer.getCompilationError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:720:42)
+    at DevServer.findPageComponents (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/dev/next-dev-server.js:690:43)
+    at async DevServer.renderErrorToResponseImpl (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/next/dist/server/base-server.js:1753:26)
+[     152ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[     154ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[     210ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[     256ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[    1787ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[    2170ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[    4477ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[    4566ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[    9509ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[    9599ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   14546ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   14634ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   17596ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   17943ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   19584ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   19674ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   24620ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   24710ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   26522ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   26904ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   29659ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   29750ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   34701ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   34790ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   39741ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   39839ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   44792ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   44893ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   49837ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   49929ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   54883ms] [ERROR] ./src/shared/lib/files/services/storage/file-storage-service.ts:27:1
+Expression expected
+  25 | const CACHE_TTL_MS = 5_000;
+  26 | let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
+> 27 | ...
+     | ^^^
+  28 |
+  29 | export const isHttpFilepath = isFastCometHttpFilepath;
+  30 | export const toAbsoluteUrl = toFastCometAbsoluteUrl;
+
+Parsing ecmascript source code failed
+
+Import trace:
+  Server Component:
+    ./src/shared/lib/files/services/storage/file-storage-service.ts
+    ./src/shared/lib/files/file-uploader.ts
+    ./src/shared/lib/products/services/productService.ts
+    ./src/app/(frontend)/home/HomeContent.tsx
+    ./src/app/(frontend)/route-helpers/home-route-helpers.tsx
+    ./src/app/(frontend)/page.tsx @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1945
+[   54979ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   58564ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0u_w_5s._.js:1226
+[   59443ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   59514ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   60019ms] [WARNING] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {componentName: Button, source: a11y, service: undefined, statusCode: undefined} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   60360ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   60647ms] [LOG] [Fast Refresh] done in 388ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   75141ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c/file:0
+[   75142ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711/file:0
+[   75143ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[   75164ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[   93936ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971

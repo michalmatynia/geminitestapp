@@ -1,3 +1,11 @@
+/**
+ * Chatbot Agent Utilities
+ *
+ * Provides utility functions for processing agent-related data, such as
+ * generating result messages from audit logs, parsing agent metadata,
+ * and formatting agent-specific timeline entries.
+ */
+
 import {
   type AgentAuditLogDto as AgentAuditLog,
   type AgentBrowserLogDto as AgentBrowserLog,

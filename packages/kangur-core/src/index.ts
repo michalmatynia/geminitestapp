@@ -1,3 +1,10 @@
+/**
+ * Kangur Core
+ *
+ * This package contains the core business logic, domain models, and domain-specific
+ * algorithms for the Kangur platform (e.g., lesson logic, progress tracking,
+ * competition modes, and learner profiling).
+ */
 export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
 export {
   KANGUR_COMPETITION_MODES,

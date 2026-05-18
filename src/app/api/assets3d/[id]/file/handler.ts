@@ -207,6 +207,23 @@ const readRequiredDiskAssetFile = async (asset: Asset3DRecordWithFilepath): Prom
   return createFileResponse(await readFile(diskPath), asset.mimetype);
 };
 
+const resolveMilkbarCdnRedirectUrl = (asset: Asset3DRecord): string | null => {
+  if (getMetadataString(asset.metadata, 'storageProfile') !== 'milkbarCms') return null;
+
+  const candidates = [
+    getMetadataString(asset.metadata, 'publicPath'),
+    asset.filepath != null ? getPublicPathFromStoredPath(asset.filepath) : null,
+    asset.fileUrl != null ? getPublicPathFromStoredPath(asset.fileUrl) : null,
+  ];
+  const publicPath = candidates.find(
+    (p): p is string => typeof p === 'string' && p.startsWith('/uploads/cms/models/')
+  );
+  if (publicPath === undefined) return null;
+
+  const { publicBaseUrl } = resolveMilkbarFastCometStorageProfile();
+  return `${publicBaseUrl.replace(/\/$/, '')}${publicPath}`;
+};
+
 export async function getHandler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
@@ -218,8 +235,13 @@ export async function getHandler(
   const mirroredResponse = await readMirroredAssetFile(asset);
   if (mirroredResponse !== null) return mirroredResponse;
 
+  const cdnRedirectUrl = resolveMilkbarCdnRedirectUrl(asset);
+  if (cdnRedirectUrl !== null) {
+    return NextResponse.redirect(cdnRedirectUrl, { status: 302 });
+  }
+
   if (isHttpFilepath(asset.filepath)) {
-    return await fetchRemoteAssetFile(asset);
+    return NextResponse.redirect(asset.filepath, { status: 302 });
   }
 
   return await readRequiredDiskAssetFile(asset);

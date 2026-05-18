@@ -1,36 +1,13 @@
-/**
- * 3D Viewer Component
- * 
- * Main 3D model viewer using React Three Fiber and Three.js.
- * Provides:
- * - Interactive 3D model rendering with orbit controls
- * - Post-processing effects (bloom, tone mapping, vignette)
- * - Environment lighting and shadows
- * - Customizable visual effects and shaders
- * - Performance-optimized rendering pipeline
- */
-
 'use client';
 
 import React, { Suspense, useCallback, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import {
-  OrbitControls,
-  Center,
-  Environment,
-  ContactShadows,
-  Bounds,
-  PresentationControls,
-} from '@react-three/drei';
+import { OrbitControls, Center, Environment, ContactShadows, Bounds, PresentationControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
 
-import type {
-  Asset3dLightingPreset,
-  Asset3dEnvironmentPreset,
-  Viewer3DSettings,
-} from '@/shared/contracts/viewer3d';
+import type { Asset3dLightingPreset, Asset3dEnvironmentPreset, Viewer3DSettings } from '@/shared/contracts/viewer3d';
 
 import { useOptionalViewer3DState } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
@@ -44,6 +21,12 @@ import {
   SceneLighting,
   ScreenshotCapture,
 } from './Viewer3DSubcomponents';
+import {
+  useModelAvailability,
+  Viewer3DCanvasErrorBoundary,
+  Viewer3DLoadErrorFallback,
+  Viewer3DLoadingFallback,
+} from './Viewer3DLoadState';
 import { Model3D } from './Model3D';
 
 export type LightingPreset = Asset3dLightingPreset;
@@ -95,6 +78,24 @@ interface ResolvedSettings {
   autoRotateSpeed: number;
   modelTransform?: Viewer3DSettings['transform'];
 }
+
+type Viewer3DBaseCanvasProps = Pick<Viewer3DProps, 'captureRef' | 'controlsRef' | 'onError'> & {
+  allowUserControls: boolean;
+  autoFit: boolean;
+  modelNode: React.ReactNode;
+  modelUrl: string;
+  presentationMode: boolean;
+  s: ResolvedSettings;
+};
+
+type Viewer3DReadyCanvasProps = Viewer3DBaseCanvasProps & {
+  eventSource: HTMLDivElement;
+};
+
+type Viewer3DContentProps = Viewer3DBaseCanvasProps & {
+  eventSource: HTMLDivElement | null;
+  modelAvailability: ReturnType<typeof useModelAvailability>;
+};
 
 function useViewerSettings(propSettings?: Viewer3DSettings): ResolvedSettings {
   const context = useOptionalViewer3DState();
@@ -232,10 +233,74 @@ function ViewerCapture({
   return <ScreenshotCapture captureRef={captureRef} />;
 }
 
+function Viewer3DReadyCanvas(props: Viewer3DReadyCanvasProps): React.JSX.Element {
+  const {
+    allowUserControls,
+    autoFit,
+    captureRef,
+    controlsRef,
+    eventSource,
+    modelNode,
+    modelUrl,
+    onError,
+    presentationMode,
+    s,
+  } = props;
+
+  return (
+    <Viewer3DCanvasErrorBoundary
+      key={modelUrl}
+      onError={onError}
+      fallback={(error: Error) => <Viewer3DLoadErrorFallback error={error} />}
+    >
+      <Canvas
+        camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }}
+        shadows={s.enableShadows}
+        gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }}
+        dpr={[1, 2]}
+        eventSource={eventSource}
+      >
+        <ViewerCapture captureRef={captureRef} />
+        <color attach='background' args={[s.backgroundColor]} />
+        <SceneLighting preset={s.lighting} intensity={s.lightIntensity} />
+        <ViewerEnvironment environment={s.environment} />
+        <Suspense fallback={<Loader />}>
+          <SceneContent modelNode={modelNode} autoFit={autoFit} s={s} presentationMode={presentationMode} allowUserControls={allowUserControls} />
+        </Suspense>
+        <ViewerOrbitControls
+          presentationMode={presentationMode}
+          allowUserControls={allowUserControls}
+          autoRotate={s.autoRotate}
+          autoRotateSpeed={s.autoRotateSpeed}
+          controlsRef={controlsRef}
+        />
+        <ViewerEffects s={s} />
+      </Canvas>
+    </Viewer3DCanvasErrorBoundary>
+  );
+}
+
+function Viewer3DContent(props: Viewer3DContentProps): React.JSX.Element | null {
+  const { eventSource, modelAvailability } = props;
+
+  if (modelAvailability.status === 'failed') {
+    return <Viewer3DLoadErrorFallback error={modelAvailability.error} />;
+  }
+
+  if (modelAvailability.status === 'checking') {
+    return <Viewer3DLoadingFallback />;
+  }
+
+  if (eventSource === null) return null;
+
+  return <Viewer3DReadyCanvas {...props} eventSource={eventSource} />;
+}
+
 export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
   const { modelUrl, settings: propSettings, className, onLoad, onError, autoFit = true, presentationMode = false, allowUserControls = true, captureRef, controlsRef } = props;
   const s = useViewerSettings(propSettings);
   const [eventSource, setEventSource] = useState<HTMLDivElement | null>(null);
+  const modelAvailability = useModelAvailability(modelUrl, onError);
   const setViewerContainerRef = useCallback((node: HTMLDivElement | null): void => {
     setEventSource(node);
   }, []);
@@ -250,31 +315,19 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
 
   return (
     <div ref={setViewerContainerRef} className={className}>
-      {eventSource !== null ? (
-        <Canvas
-          camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }}
-          shadows={s.enableShadows}
-          gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }}
-          dpr={[1, 2]}
-          eventSource={eventSource}
-        >
-          <ViewerCapture captureRef={captureRef} />
-          <color attach='background' args={[s.backgroundColor]} />
-          <SceneLighting preset={s.lighting} intensity={s.lightIntensity} />
-          <ViewerEnvironment environment={s.environment} />
-          <Suspense fallback={<Loader />}>
-            <SceneContent modelNode={modelNode} autoFit={autoFit} s={s} presentationMode={presentationMode} allowUserControls={allowUserControls} />
-          </Suspense>
-          <ViewerOrbitControls
-            presentationMode={presentationMode}
-            allowUserControls={allowUserControls}
-            autoRotate={s.autoRotate}
-            autoRotateSpeed={s.autoRotateSpeed}
-            controlsRef={controlsRef}
-          />
-          <ViewerEffects s={s} />
-        </Canvas>
-      ) : null}
+      <Viewer3DContent
+        allowUserControls={allowUserControls}
+        autoFit={autoFit}
+        captureRef={captureRef}
+        controlsRef={controlsRef}
+        eventSource={eventSource}
+        modelAvailability={modelAvailability}
+        modelNode={modelNode}
+        modelUrl={modelUrl}
+        onError={onError}
+        presentationMode={presentationMode}
+        s={s}
+      />
     </div>
   );
 }

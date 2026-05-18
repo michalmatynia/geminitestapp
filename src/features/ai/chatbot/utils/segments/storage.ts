@@ -1,3 +1,10 @@
+/**
+ * Chatbot Storage Utilities
+ *
+ * Provides safe wrappers for interacting with client-side browser storage (localStorage),
+ * including error handling to prevent runtime exceptions in restricted environments.
+ */
+
 import { type ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -276,7 +276,7 @@ async function logBranchAlternatives(
     const activeStepIdForBrief = toolResult.ok ? (planSteps[stepIndex + 1]?.id ?? null) : step.id;
 
     void (async () => {
-      const tasks: Promise<unknown>[] = [];
+      const tasks: Promise<void>[] = [];
 
       if (
         activeStepIdForBrief &&

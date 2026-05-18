@@ -1,4 +1,12 @@
-/** @deprecated Do not import from this barrel! Use @kangur/contracts/[domain] instead */
+/**
+ * Kangur Contracts
+ *
+ * This package provides core type definitions, interfaces, and schemas (contracts)
+ * shared across the Kangur platform monorepo for domain-specific data structures.
+ *
+ * @deprecated Avoid direct barrel imports from this entry point. 
+ * Prefer importing specific domain modules directly from `@kangur/contracts/[domain]`.
+ */
 export * from './api-envelope';
 export * from './base';
 export * from './kangur-learner-password';

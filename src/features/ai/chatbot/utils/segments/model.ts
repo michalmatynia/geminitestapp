@@ -1,8 +1,17 @@
+/**
+ * Chatbot Model Utilities
+ *
+ * Provides utility functions for parsing and processing chatbot model metadata,
+ * such as normalizing model sizes, identifying model capabilities, and validating
+ * model profiles for use in AI interactions.
+ */
+
 import {
   type ModelProfileDto as ModelProfile,
   type ModelTaskRuleDto as ModelTaskRule,
   type ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
+...
 
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);

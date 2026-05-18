@@ -1,0 +1,824 @@
+[     320ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     363ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     862ms] [WARNING] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {componentName: Button, source: a11y, service: undefined, statusCode: undefined} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   15289ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   17176ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711/file:0
+[   17176ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c/file:0
+[   17192ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[   17192ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[   17376ms] [LOG] [Fast Refresh] done in 2183ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   17476ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   17496ms] [LOG] [Fast Refresh] done in 120ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   17666ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   37312ms] [LOG] [Fast Refresh] done in 19746ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   38647ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   39063ms] [LOG] [Fast Refresh] done in 517ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   39487ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40151ms] [LOG] [Fast Refresh] done in 766ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40284ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40311ms] [LOG] [Fast Refresh] done in 129ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40413ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40434ms] [LOG] [Fast Refresh] done in 123ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40536ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   40545ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   84263ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   84961ms] [LOG] [Fast Refresh] done in 769ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  124766ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  125440ms] [LOG] [Fast Refresh] done in 741ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  131812ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  132557ms] [LOG] [Fast Refresh] done in 815ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  313509ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/settings?scope=light:0
+[  337512ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  338590ms] [LOG] [Fast Refresh] done in 1031ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  350841ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[  350841ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[  357310ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  358185ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  358338ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  358351ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  361597ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  361697ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  366992ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  367093ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  368007ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  368080ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  372297ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  372399ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  377611ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  377711ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  382971ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  383095ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  383581ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  388318ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  388419ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  392491ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  393660ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  399006ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  399107ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  404369ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  404470ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  409688ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  409789ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  415031ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  415132ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  420389ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  420490ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  425760ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  425861ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  428206ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  428308ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  428839ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  428940ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  429290ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  431114ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  431215ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  436500ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  436601ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  441856ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  441957ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  447247ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  447347ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  452622ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  452722ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  456187ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  456617ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  457950ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  458051ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  463311ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  463413ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  468704ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  468805ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  474045ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  474146ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  479419ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  479520ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  479777ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  480223ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  484793ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  484894ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  490181ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  490281ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  495568ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  495669ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  500994ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  501094ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  505470ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  505489ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  506342ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  506443ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  511712ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  511812ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  517107ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  517208ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  522451ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  522552ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  523065ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  523580ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  527829ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  527930ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  533269ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  533370ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  538642ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  538743ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  544059ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  544160ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  549518ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  549618ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  554890ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  554991ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  560267ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  560368ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  565664ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  565765ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  571026ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  571127ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  571913ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  572422ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  575342ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  575350ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  576411ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  576512ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  582514ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  582614ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  587191ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  587293ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  592582ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  592683ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  597969ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  598070ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  601140ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  601501ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  603327ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  603414ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/client-errors:0
+[  603438ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  603503ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  606611ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  606646ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  608713ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  608814ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  614099ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  614200ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  615954ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  615977ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  619512ms] [ERROR] ./packages/kangur-core/src/index.ts:9:1
+Expression expected
+   7 |  */
+   8 | export { createKangurProgressStore, type KangurProgressStore } from './progress-store';
+>  9 | ...
+     | ^^^
+  10 |
+  11 |   KANGUR_COMPETITION_MODES,
+  12 |   getKangurCompetitionQuestions,
+
+Parsing ecmascript source code failed @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[  619612ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971

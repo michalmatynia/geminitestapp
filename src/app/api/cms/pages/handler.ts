@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsPageCreateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ActivityTypes } from '@/shared/constants/observability';
+import type { CmsRepository, Page } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
@@ -20,20 +21,55 @@ const parseBody = async (
 ): Promise<
   { ok: true; data: z.infer<typeof cmsPageCreateSchema> } | { ok: false; response: Response }
 > => {
-...
+  if (ctx.body !== undefined) {
+    const parsed = cmsPageCreateSchema.safeParse(ctx.body);
+    if (parsed.success) {
+      return { ok: true, data: parsed.data };
+    }
+    return {
+      ok: false,
+      response: await createErrorResponse(
+        validationError('Invalid payload', { issues: parsed.error.flatten() }),
+        { request: req, source: 'cms-pages' }
+      ),
+    };
+  }
   return parseJsonBody(req, cmsPageCreateSchema, { logPrefix: 'cms-pages' });
 };
 
 /**
  * Fetches cached CMS pages.
  */
-async function getCmsPagesCached() {
+async function getCmsPagesCached(): Promise<Page[]> {
   'use cache';
   applyCacheLife('swr300');
 
   const cmsRepository = await getCmsRepository();
   return cmsRepository.getPages();
 }
+
+const linkPageSlugs = async (
+  cmsRepository: CmsRepository,
+  pageId: string,
+  slugIds: string[] | undefined
+): Promise<void> => {
+  if (slugIds === undefined || slugIds.length === 0) return;
+  await Promise.all(slugIds.map((slugId) => cmsRepository.addSlugToPage(pageId, slugId)));
+};
+
+const logPageCreatedActivity = (name: string, pageId: string, userId: string | null): void => {
+  void logActivity({
+    applicationId: 'cms-builder',
+    applicationName: 'CMS Builder',
+    sourceService: 'cms.pages',
+    type: ActivityTypes.CMS.PAGE_CREATED,
+    description: `Created CMS page: ${name}`,
+    userId,
+    entityId: pageId,
+    entityType: 'cms_page',
+    metadata: { name },
+  }).catch(() => {});
+};
 
 /**
  * API handler for GET /api/cms/pages
@@ -54,8 +90,8 @@ export async function postHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
-...
-
+  const parsed = await parseBody(req, ctx);
+  if (!parsed.ok) {
     return parsed.response;
   }
 
@@ -63,29 +99,8 @@ export async function postHandler(
   const cmsRepository = await getCmsRepository();
   const created = await cmsRepository.createPage({ name, themeId });
 
-  if (slugIds && slugIds.length > 0) {
-    for (const slugId of slugIds) {
-      await cmsRepository.addSlugToPage(created.id, slugId);
-    }
-  }
-
-  const pageCreatedType = (ActivityTypes as Record<string, unknown> | undefined)?.['CMS'] as
-    | Record<string, string>
-    | undefined;
-  const activityType = pageCreatedType?.['PAGE_CREATED'];
-  if (activityType && typeof logActivity === 'function') {
-    void logActivity({
-      applicationId: 'cms-builder',
-      applicationName: 'CMS Builder',
-      sourceService: 'cms.pages',
-      type: activityType,
-      description: `Created CMS page: ${name}`,
-      userId: ctx.userId ?? null,
-      entityId: created.id,
-      entityType: 'cms_page',
-      metadata: { name },
-    }).catch(() => {});
-  }
+  await linkPageSlugs(cmsRepository, created.id, slugIds);
+  logPageCreatedActivity(name, created.id, ctx.userId ?? null);
 
   return NextResponse.json(created);
 }

@@ -93,12 +93,15 @@ const resolveKangurStorefrontIsFallbackTheme = ({
   return signature === null;
 };
 
-export const useKangurStorefrontAppearance = (): KangurStorefrontAppearance => {
-  const settingsStore = useSettingsStore();
-  const appearance = useOptionalCmsStorefrontAppearance();
-  const hydrated = useKangurStorefrontAppearanceHydrated();
-  const initialThemeSettings = useKangurStorefrontInitialThemeSettings();
-  const mode = appearance?.mode ?? 'default';
+const useKangurThemeRawData = ({
+  hydrated,
+  initialThemeSettings,
+  settingsStore,
+}: {
+  hydrated: boolean;
+  initialThemeSettings: ReturnType<typeof useKangurStorefrontInitialThemeSettings>;
+  settingsStore: ReturnType<typeof useSettingsStore>;
+}) => {
   const dailyThemeRaw = readHydratedThemeSetting({
     hydrated,
     initialValue: initialThemeSettings.default,
@@ -121,6 +124,21 @@ export const useKangurStorefrontAppearance = (): KangurStorefrontAppearance => {
     hydrated,
     initialValue: initialThemeSettings.dark,
     mode: 'dark',
+    settingsStore,
+  });
+  return { dailyThemeRaw, dawnThemeRaw, sunsetThemeRaw, nightlyThemeRaw };
+};
+
+export const useKangurStorefrontAppearance = (): KangurStorefrontAppearance => {
+  const settingsStore = useSettingsStore();
+  const appearance = useOptionalCmsStorefrontAppearance();
+  const hydrated = useKangurStorefrontAppearanceHydrated();
+  const initialThemeSettings = useKangurStorefrontInitialThemeSettings();
+  const mode = appearance?.mode ?? 'default';
+
+  const { dailyThemeRaw, dawnThemeRaw, sunsetThemeRaw, nightlyThemeRaw } = useKangurThemeRawData({
+    hydrated,
+    initialThemeSettings,
     settingsStore,
   });
   const theme = useMemo(

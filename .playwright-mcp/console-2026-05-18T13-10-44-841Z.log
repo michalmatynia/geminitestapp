@@ -1,0 +1,89 @@
+[      45ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[      92ms] [LOG] [Fast Refresh] done in 149ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     176ms] [ERROR] ClientFetchError: Failed to fetch. Read more at https://errors.authjs.dev#autherror
+    at fetchData (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:287:22)
+    at async getSession (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:454:21)
+    at async SessionProvider.useEffect [as _getSession] (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:597:51) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[     176ms] [ERROR] ClientFetchError: Failed to fetch. Read more at https://errors.authjs.dev#autherror
+    at fetchData (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:287:22)
+    at async getSession (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:454:21)
+    at async SessionProvider.useEffect (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:597:51) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[     176ms] [ERROR] ClientFetchError: Failed to fetch. Read more at https://errors.authjs.dev#autherror
+    at fetchData (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:287:22)
+    at async getSession (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:454:21)
+    at async SessionProvider.useEffect [as _getSession] (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:597:51) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[     176ms] [ERROR] ClientFetchError: Failed to fetch. Read more at https://errors.authjs.dev#autherror
+    at fetchData (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:287:22)
+    at async getSession (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:454:21)
+    at async SessionProvider.useEffect [as _getSession] (http://localhost:3000/_next/static/chunks/node_modules_0be0nlw._.js:597:51) @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:3812
+[     289ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     308ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     621ms] [WARNING] [a11y] [Button] Missing accessible label. Provide visible text, aria-label, or aria-labelledby. {componentName: Button, source: a11y, service: undefined, statusCode: undefined} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     890ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     900ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     971ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     979ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[     996ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    1020ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    1419ms] [LOG] THREE.WebGLRenderer: Context Lost. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    1422ms] [LOG] THREE.WebGLRenderer: Context Lost. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    5238ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    5239ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[    9949ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[    9949ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[   20023ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   20023ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   25058ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711/file:0
+[   25058ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c/file:0
+[   25066ms] Error: Could not load /api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711/file: fetch for "http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711/file" responded with 404: Not Found
+    at http://localhost:3000/_next/static/chunks/node_modules_%40react-three_fiber_dist_0hu0ged._.js:1272:48
+    at Object._onError [as onError] (http://localhost:3000/_next/static/chunks/node_modules_three-stdlib_0ygquve._.js:3507:17)
+    at http://localhost:3000/_next/static/chunks/node_modules_three_build_three_core_0qefhn6.js:31902:48
+[   25367ms] Error: Could not load /api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c/file: fetch for "http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c/file" responded with 404: Not Found
+    at http://localhost:3000/_next/static/chunks/node_modules_%40react-three_fiber_dist_0hu0ged._.js:1272:48
+    at Object._onError [as onError] (http://localhost:3000/_next/static/chunks/node_modules_three-stdlib_0ygquve._.js:3507:17)
+    at http://localhost:3000/_next/static/chunks/node_modules_three_build_three_core_0qefhn6.js:31902:48
+[   25594ms] [LOG] THREE.WebGLRenderer: Context Lost. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   25875ms] [LOG] THREE.WebGLRenderer: Context Lost. @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   27112ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   27316ms] [LOG] [Fast Refresh] done in 305ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   90834ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[   91646ms] [LOG] [Fast Refresh] done in 912ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  117706ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  121084ms] [LOG] [Fast Refresh] done in 3479ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  129159ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  129945ms] [LOG] [Fast Refresh] done in 618ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  131318ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/settings?scope=light:0
+[  139266ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  139666ms] [LOG] [Fast Refresh] done in 502ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  177189ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  177582ms] [LOG] [Fast Refresh] done in 494ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  298647ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  298996ms] [LOG] [Fast Refresh] done in 451ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  421302ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  421390ms] [LOG] [Fast Refresh] done in 189ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  489032ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/settings?scope=light:0
+[  516026ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  516332ms] [LOG] [Fast Refresh] done in 408ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  538465ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  539310ms] [LOG] [Fast Refresh] done in 673ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  559098ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  559502ms] [LOG] [Fast Refresh] done in 505ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  599953ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  600478ms] [LOG] [Fast Refresh] done in 626ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  604487ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  605067ms] [LOG] [Fast Refresh] done in 530ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  615251ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  615900ms] [LOG] [Fast Refresh] done in 622ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  618176ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[  618176ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[  625479ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  626160ms] [LOG] [Fast Refresh] done in 640ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  633341ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  633748ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[  633748ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[  633770ms] [LOG] [Fast Refresh] done in 529ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  644173ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/b5bc6b58-2659-4b39-9a8d-3e8376d71711:0
+[  644173ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/api/assets3d/3143d7f4-8b2b-43ae-a216-4d7006fe707c:0
+[  663631ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971
+[  664093ms] [LOG] [Fast Refresh] done in 563ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_0ifwd0~._.js:2971

@@ -10,6 +10,18 @@ import {
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * File Storage Service
+ * 
+ * Provides an abstraction layer for managing file storage operations across different 
+ * storage providers (e.g., local file system, FastComet storage).
+ * 
+ * Responsibilities:
+ * - Normalizing and resolving absolute storage paths/URLs.
+ * - Routing upload and deletion operations to the configured storage provider.
+ * - Managing storage settings and provider configurations.
+ */
+
 const CACHE_TTL_MS = 5_000;
 let settingsCache: { expiresAt: number, value: FileStorageSettings } | null = null;
 

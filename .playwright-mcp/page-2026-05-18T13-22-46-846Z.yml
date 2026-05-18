@@ -1,0 +1,1523 @@
+- region "Scrollable region":
+  - link:
+    - /url: "#kangur-main-content"
+    - text: Przejdź do głównej treści
+  - main:
+    - heading [level=1]: StudiQ
+    - generic:
+      - status
+      - generic:
+        - link:
+          - /url: "#kangur-main-content"
+          - text: Skip to content
+        - complementary:
+          - generic:
+            - navigation:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - search:
+                        - img
+                        - searchbox
+                      - generic:
+                        - button [expanded]:
+                          - img
+                    - generic:
+                      - generic:
+                        - generic:
+                          - button:
+                            - img
+              - generic:
+                - generic:
+                  - generic:
+                    - link:
+                      - /url: /admin
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Home
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Workspace
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Filemaker
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Image Studio
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Prompt Exploder
+                      - img
+                - generic:
+                  - generic:
+                    - button [expanded]:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Page Manager
+                      - img
+                  - generic:
+                    - generic:
+                      - generic:
+                        - button:
+                          - generic:
+                            - generic: •
+                            - generic: StudiQ
+                          - img
+                    - generic:
+                      - generic:
+                        - button:
+                          - generic:
+                            - generic: •
+                            - generic: Kangur
+                          - img
+                    - generic:
+                      - generic:
+                        - link:
+                          - /url: /admin/page-manager/stargater
+                          - generic:
+                            - generic: •
+                            - generic: Stargater
+                    - generic:
+                      - generic:
+                        - link:
+                          - /url: /admin/page-manager/milkbardesigners
+                          - generic:
+                            - generic: •
+                            - generic: Milkbardesigners
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Commerce
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Integrations
+                      - img
+                - generic:
+                  - generic:
+                    - link:
+                      - /url: /admin/brain?tab=operations
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Brain
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: Jobs
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: AI
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic: Content
+                      - img
+                - generic:
+                  - generic:
+                    - button:
+                      - generic:
+                        - generic:
+                          - img
+                        - generic: System
+                      - img
+        - generic:
+          - button [ref=e1685] [cursor=pointer]:
+            - img [ref=e1646]
+            - text: Log In
+          - main:
+            - generic:
+              - generic:
+                - generic:
+                  - tablist:
+                    - tab [selected]: Page Content
+                    - tab: Projects
+                    - tab: Services
+                    - tab: Inquiries
+                    - tab: 3D Assets
+                    - tab: Settings
+                    - tab: Sync Status
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - button:
+                          - img
+                        - navigation:
+                          - link:
+                            - /url: /admin
+                            - text: Admin
+                          - generic: /
+                          - link:
+                            - /url: /admin/page-manager
+                            - text: Page Manager
+                          - generic: /
+                          - generic: Milkbardesigners
+                    - generic:
+                      - heading [level=1]: Milkbardesigners CMS
+                    - paragraph: Manage Milkbar page copy and section content.
+                  - generic:
+                    - generic:
+                      - button:
+                        - img
+                        - text: Refresh
+                      - button:
+                        - img
+                        - text: Save CMS
+                - generic:
+                  - generic:
+                    - img
+                    - generic:
+                      - button: en
+                      - button: de
+                      - button: pl
+                    - generic: "Editing: English"
+                  - generic:
+                    - generic:
+                      - button: Collapse all
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Navigation4 nav links
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add link
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Brand subtitle
+                              - paragraph: Text after the brand name in the nav.
+                            - textbox: / est. Amsterdam
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: CTA label
+                              - paragraph: Enquiry CTA button text.
+                            - textbox: enquire
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: practice
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Href
+                                  - textbox: "#practice"
+                              - button:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: projects
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Href
+                                  - textbox: "#projects"
+                              - button:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: process
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Href
+                                  - textbox: "#process"
+                              - button:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: studio
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Href
+                                  - textbox: "#studio"
+                              - button:
+                                - img
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Hero
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Location line
+                            - textbox: Amsterdam / London / Zurich
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Index label
+                            - textbox: Index - MMXXV
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Headline lines
+                              - paragraph: One headline line per row.
+                            - textbox: Architecture drawn with quiet intelligence.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Lede
+                            - textbox: A small studio working between architecture and machine learning, automating the administrative so practice returns to the considered drawing.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Primary CTA
+                            - textbox: see the practice
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Secondary CTA
+                            - textbox: selected projects
+                        - generic:
+                          - generic:
+                            - generic:
+                              - paragraph:
+                                - img
+                                - text: Hero background 3D model
+                              - paragraph: Uploads to FastComet /uploads/cms/models and drives the Vercel hero background model.
+                            - generic:
+                              - generic: Assigned
+                              - button [expanded]:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img
+                                - generic: 3D model
+                              - generic:
+                                - button:
+                                  - img
+                            - generic:
+                              - generic: b5bc6b58…
+                              - generic:
+                                - button:
+                                  - img
+                                  - text: Replace
+                                - button:
+                                  - img
+                                  - text: From Library
+                                - button:
+                                  - img
+                                  - text: Preview
+                                - button:
+                                  - img
+                                  - text: Remove
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Drawing Section
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Eyebrow
+                            - textbox: "- 01 / drawing"
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Title
+                            - textbox: Every line carries
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Emphasis
+                            - textbox: intent.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: CTA label
+                            - textbox: how it works
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Description
+                            - textbox: Our systems parse architectural intent from natural language, existing drawings, and site constraint. They produce documentation a peer-reviewing architect would accept without amendment.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Interaction hint
+                            - textbox: "- drag rooms to reassign programme"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - paragraph:
+                                - img
+                                - text: Interior section 3D model
+                              - paragraph: Uploads the Every line carries intent interior model to FastComet /uploads/cms/models.
+                            - generic:
+                              - generic: Assigned
+                              - button:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img
+                                - generic: 3D model
+                              - generic:
+                                - button:
+                                  - img
+                            - generic:
+                              - generic: 3143d7f4…
+                              - generic:
+                                - button:
+                                  - img
+                                  - text: Replace
+                                - button:
+                                  - img
+                                  - text: From Library
+                                - button:
+                                  - img
+                                  - text: Preview
+                                - button:
+                                  - img
+                                  - text: Remove
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic: Drawing thumbnails
+                            - paragraph: Shown below the “drag rooms to reassign programme” hint on arch-web.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - button: Choose from media library
+                                - button: Convert All to Base64
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - button: "View: Upload"
+                                    - button:
+                                      - img
+                                  - generic:
+                                    - button:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - img
+                                            - generic: Upload
+                                          - button: File Manager
+                                    - generic: Choose, drag and drop files, or paste files.
+                                  - generic:
+                                    - generic: U
+                                    - generic: L
+                                    - generic: B
+                                    - generic: F
+                                - generic:
+                                  - generic:
+                                    - button: "View: Upload"
+                                    - button:
+                                      - img
+                                  - generic:
+                                    - button:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - img
+                                            - generic: Upload
+                                          - button: File Manager
+                                    - generic: Choose, drag and drop files, or paste files.
+                                  - generic:
+                                    - generic: U
+                                    - generic: L
+                                    - generic: B
+                                    - generic: F
+                                - generic:
+                                  - generic:
+                                    - button: "View: Upload"
+                                    - button:
+                                      - img
+                                  - generic:
+                                    - button:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - img
+                                            - generic: Upload
+                                          - button: File Manager
+                                    - generic: Choose, drag and drop files, or paste files.
+                                  - generic:
+                                    - generic: U
+                                    - generic: L
+                                    - generic: B
+                                    - generic: F
+                                - generic:
+                                  - generic:
+                                    - button: "View: Upload"
+                                    - button:
+                                      - img
+                                  - generic:
+                                    - button:
+                                      - generic:
+                                        - generic:
+                                          - generic:
+                                            - img
+                                            - generic: Upload
+                                          - button: File Manager
+                                    - generic: Choose, drag and drop files, or paste files.
+                                  - generic:
+                                    - generic: U
+                                    - generic: L
+                                    - generic: B
+                                    - generic: F
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic: Drawing 3D asset slots
+                            - paragraph: 3D model slots for the drawing section. Preview opens an interactive 3D modal.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - paragraph:
+                                        - img
+                                        - text: 3D asset 1
+                                    - generic: Empty
+                                  - generic:
+                                    - paragraph: No 3D asset attached
+                                - generic:
+                                  - button [disabled]:
+                                    - img
+                                    - text: Preview
+                                  - button:
+                                    - img
+                                    - text: Upload
+                                  - button:
+                                    - img
+                                    - text: Library
+                                  - button [disabled]:
+                                    - img
+                                    - text: Up
+                                  - button:
+                                    - img
+                                    - text: Down
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - paragraph:
+                                        - img
+                                        - text: 3D asset 2
+                                    - generic: Empty
+                                  - generic:
+                                    - paragraph: No 3D asset attached
+                                - generic:
+                                  - button [disabled]:
+                                    - img
+                                    - text: Preview
+                                  - button:
+                                    - img
+                                    - text: Upload
+                                  - button:
+                                    - img
+                                    - text: Library
+                                  - button:
+                                    - img
+                                    - text: Up
+                                  - button:
+                                    - img
+                                    - text: Down
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - paragraph:
+                                        - img
+                                        - text: 3D asset 3
+                                    - generic: Empty
+                                  - generic:
+                                    - paragraph: No 3D asset attached
+                                - generic:
+                                  - button [disabled]:
+                                    - img
+                                    - text: Preview
+                                  - button:
+                                    - img
+                                    - text: Upload
+                                  - button:
+                                    - img
+                                    - text: Library
+                                  - button:
+                                    - img
+                                    - text: Up
+                                  - button:
+                                    - img
+                                    - text: Down
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - paragraph:
+                                        - img
+                                        - text: 3D asset 4
+                                    - generic: Empty
+                                  - generic:
+                                    - paragraph: No 3D asset attached
+                                - generic:
+                                  - button [disabled]:
+                                    - img
+                                    - text: Preview
+                                  - button:
+                                    - img
+                                    - text: Upload
+                                  - button:
+                                    - img
+                                    - text: Library
+                                  - button:
+                                    - img
+                                    - text: Up
+                                  - button [disabled]:
+                                    - img
+                                    - text: Down
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Philosophy
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Eyebrow
+                            - textbox: "- 02 / philosophy"
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Title
+                            - textbox: The discipline of
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Emphasis
+                            - textbox: negative space.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Figure caption
+                            - textbox: the productive void
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Body
+                            - textbox: In architecture, the most powerful element is often what is absent. The void between walls defines a room. The pause between columns creates rhythm. We hold our software to the same standard.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Closing line
+                            - textbox: We do not add complexity. We subtract it.
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Philosophy Principles3 principles
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Principle 1
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: i.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Reduce, then refine
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Emphasis
+                              - textbox: "- restraint as method"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: Remove every redundant process before optimising what remains. Complexity is never a solution; it is a symptom.
+                        - generic:
+                          - generic:
+                            - generic: Principle 2
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: ii.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Precision over speed
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Emphasis
+                              - textbox: "- accuracy is non-negotiable"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: Our models are trained on building codes across thirty-eight jurisdictions. Output is verified against the canon before it leaves the studio.
+                        - generic:
+                          - generic:
+                            - generic: Principle 3
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: iii.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Augment, never replace
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Emphasis
+                              - textbox: "- the architect remains"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: The architect eye is irreplaceable. We automate the administrative so creativity operates unencumbered by the regulatory.
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Services & Projects Headers
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - heading [level=1]: Practice Header
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Eyebrow
+                                - textbox: "- 03 / practice"
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Label
+                                - textbox: four systems
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Title
+                                - textbox: What we quietly automate, so practice can resume.
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Emphasis
+                                - textbox: quietly automate
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - heading [level=1]: Projects Header
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Eyebrow
+                                - textbox: "- 04 / projects"
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Label
+                                - textbox: three of recent note
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Title
+                                - textbox: A selection of built work rendered through the studio systems.
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Emphasis
+                                - textbox: built work
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Process4 steps
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add step
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Eyebrow
+                            - textbox: "- 05 / process"
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Label
+                            - textbox: four movements
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Title
+                            - textbox: How an engagement unfolds.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Emphasis
+                            - textbox: unfolds.
+                        - generic:
+                          - generic:
+                            - generic: Step 1
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: i.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Audit
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: "We map your existing workflow: every touchpoint, every tool, every wasted hour. The picture is usually clarifying."
+                        - generic:
+                          - generic:
+                            - generic: Step 2
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: ii.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Configure
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: Models are trained on your project typology, drawing conventions, and the jurisdictions in which you build.
+                        - generic:
+                          - generic:
+                            - generic: Step 3
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: iii.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Integrate
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: The systems plug into Revit, AutoCAD, ArchiCAD, Rhino. No workflow disruption; new capability appears in place.
+                        - generic:
+                          - generic:
+                            - generic: Step 4
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: No.
+                              - textbox: iv.
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Title
+                              - textbox: Refine
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: With each project cycle the system learns your standards. Output improves quietly, continuously, and without ceremony.
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Metrics4 headline figures
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Metric 1
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "340"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox: +
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: Projects processed through studio systems
+                        - generic:
+                          - generic:
+                            - generic: Metric 2
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "72"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox: "%"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: Median reduction in documentation hours
+                        - generic:
+                          - generic:
+                            - generic: Metric 3
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "98"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox: .4%
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: Compliance check accuracy rate
+                        - generic:
+                          - generic:
+                            - generic: Metric 4
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "38"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: Active jurisdictional regulation models
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Case Study4 stats
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add stat
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Eyebrow
+                            - textbox: — 06 / case study
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Label
+                            - textbox: helios tower
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Title
+                            - textbox: Compliance
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Title emphasis
+                            - textbox: at scale.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Heading
+                            - textbox: Six thousand drawings
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Heading emphasis
+                            - textbox: verified in three hours.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Body paragraph
+                              - textbox: A thirty-two-storey mixed-use development in Zurich required simultaneous compliance with Swiss federal, cantonal, and municipal building codes — three concurrent regulatory frames.
+                        - generic:
+                          - generic:
+                            - generic: Stat 1
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: 6,400
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: drawings audited
+                        - generic:
+                          - generic:
+                            - generic: Stat 2
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "3"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox: hrs
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: processing time
+                        - generic:
+                          - generic:
+                            - generic: Stat 3
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "0"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: missed clauses
+                        - generic:
+                          - generic:
+                            - generic: Stat 4
+                            - button:
+                              - img
+                              - text: Remove
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Value
+                              - textbox: "2.1"
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Suffix
+                              - textbox: mo
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic: Label
+                              - textbox: manual equivalent
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Quote
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - heading [level=1]: Quote
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Eyebrow
+                                - textbox: "- 07 / note"
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Attribution
+                                - textbox: From the studio design principles / 2024
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Text
+                                - textbox: The measure of a great building is not what it shows
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Emphasis
+                                - textbox: but what it eliminates.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - heading [level=1]: CTA
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Title
+                                - textbox: Ready to eliminate the unnecessary?
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Emphasis
+                                - textbox: eliminate
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Description
+                                - textbox: Pilot programme places are limited to twelve practices per quarter. Enquiries are reviewed weekly.
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Note
+                                - textbox: No obligation. Reviewed weekly / response within five working days.
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Email placeholder
+                                - textbox: your practice email
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Submit label
+                                - textbox: send enquiry
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Loading label
+                                - textbox: sending...
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Success message
+                                - textbox: received - we will be in touch within five working days.
+                    - generic:
+                      - generic:
+                        - button [expanded]:
+                          - generic: Footer3 nav columns
+                          - img
+                        - generic:
+                          - button:
+                            - img
+                            - text: Add column
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Brand name
+                            - textbox: Milk Bar Designers
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Copyright
+                            - textbox: MMXXV / Milk Bar Designers B.V.
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Address
+                            - textbox: Herengracht 44 1017 BS / Amsterdam The Netherlands
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Tagline
+                            - textbox: A small studio designing software for architecture, and architecture with the help of software.
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Column 1 heading
+                                - textbox: Practice
+                              - button:
+                                - img
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Compliance
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Massing
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Documentation
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Intelligence
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                            - button:
+                              - img
+                              - text: Add link
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Column 2 heading
+                                - textbox: Studio
+                              - button:
+                                - img
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Philosophy
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Projects
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Research
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Careers
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                            - button:
+                              - img
+                              - text: Add link
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic: Column 3 heading
+                                - textbox: Contact
+                              - button:
+                                - img
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: hello@milkbar.studio
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Amsterdam
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: London
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                              - generic:
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic: Label
+                                  - textbox: Zurich
+                                - generic:
+                                  - generic:
+                                    - generic:
+                                      - generic:
+                                        - generic:
+                                          - generic: Href
+                                      - textbox: "#"
+                                  - button:
+                                    - img
+                            - button:
+                              - img
+                              - text: Add link
+  - alert
+  - menu "Model slot actions" [active] [ref=e1686]:
+    - menuitem "Upload model" [ref=e1687]
+    - menuitem "Choose from library" [ref=e1688]
+    - menuitem "Preview" [ref=e1689]
+    - menuitem "Remove" [ref=e1690]

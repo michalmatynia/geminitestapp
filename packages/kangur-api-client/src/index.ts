@@ -1,3 +1,10 @@
+/**
+ * Kangur API Client
+ *
+ * This package provides a typed HTTP client for interacting with the Kangur platform API.
+ * It handles request construction, header injection (auth), and response normalization.
+ */
+
 import type { KangurAssignmentCreateInput, KangurAssignmentListQuery, KangurAssignmentSnapshot, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
 import type { KangurAuthUser, KangurLearnerCreateInput, KangurLearnerActivitySnapshot, KangurLearnerActivityStatus, KangurLearnerActivityUpdateInput, KangurLearnerInteractionHistory, KangurLearnerProfile, KangurLearnerSignInInput, KangurLearnerSessionHistory, KangurLearnerUpdateInput, KangurProgressState, KangurScore, KangurScoreCreateInput } from '@kangur/contracts/kangur';
 import type { KangurLessonSubject, KangurSubjectFocus } from '@kangur/contracts/kangur-lesson-constants';

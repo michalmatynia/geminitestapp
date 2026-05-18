@@ -12,8 +12,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
  */
 export const GET = apiHandlerWithParams<{ id: string }>(
   (_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => {
-...
-
     const result = retrievalService.getRelatedNodes(params.id);
     return Promise.resolve(
       NextResponse.json(result, {

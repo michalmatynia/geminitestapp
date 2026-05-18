@@ -2,7 +2,7 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, Plus, RefreshCw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
+import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, MoreVertical, Plus, RefreshCw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Admin3DAssetsPage } from '@/features/viewer3d/admin.public';
@@ -48,8 +48,8 @@ import {
 } from '@/shared/lib/files/constants';
 import { useMutationV2, useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { AdminPageManagerLayout } from '@/shared/ui/admin.public';
-import { Alert, Badge, Button, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
-import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Alert, Badge, Button, DropdownMenuItem, Input, Switch, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { ActionMenu, FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { ProductImageManager } from '@/shared/ui/image-slot-manager';
 import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
 
@@ -1536,12 +1536,17 @@ function DrawingImageSlotsField({
 function Asset3DStorageStatusBadge({
   asset,
   isUploading = false,
+  isMissing = false,
 }: {
   asset: Asset3DRecord | undefined;
   isUploading?: boolean;
+  isMissing?: boolean;
 }): React.JSX.Element {
   if (isUploading) {
     return <Badge variant='processing'>Uploading</Badge>;
+  }
+  if (isMissing) {
+    return <Badge variant='destructive'>Missing</Badge>;
   }
   if (asset === undefined) {
     return <Badge variant='outline'>Resolving</Badge>;
@@ -1579,7 +1584,8 @@ function Drawing3DAssetSlotCard({
   const hasAsset = assetId.trim().length > 0;
   const assetQuery = useAsset3DById(hasAsset ? assetId : null);
   const asset = assetQuery.data;
-  const title = getAsset3DDisplayName(asset, assetId);
+  const isMissing = assetQuery.isError;
+  const title = isMissing ? 'Missing 3D asset' : getAsset3DDisplayName(asset, assetId);
   const uploadButtonLabel = getDrawing3DUploadButtonLabel({
     isUploading,
     uploadProgress,
@@ -1600,7 +1606,11 @@ function Drawing3DAssetSlotCard({
             ) : null}
           </div>
           {hasAsset || isUploading ? (
-            <Asset3DStorageStatusBadge asset={asset} isUploading={isUploading} />
+            <Asset3DStorageStatusBadge
+              asset={asset}
+              isUploading={isUploading}
+              isMissing={isMissing}
+            />
           ) : (
             <Badge variant='outline'>Empty</Badge>
           )}
@@ -1610,7 +1620,9 @@ function Drawing3DAssetSlotCard({
             <div className='min-w-0'>
               <p className='truncate text-xs font-medium text-white/75'>{title}</p>
               <p className='mt-0.5 text-[10px] text-muted-foreground'>
-                {asset?.format ?? asset?.mimetype ?? '3D model'}
+                {isMissing
+                  ? 'Remove or replace this stale asset ID'
+                  : asset?.format ?? asset?.mimetype ?? '3D model'}
               </p>
             </div>
           ) : (
@@ -2552,6 +2564,16 @@ function ModelAssetLabel({
   const query = useAsset3DById(modelId);
   const asset = query.data;
 
+  if (query.isError) {
+    return (
+      <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-red-300'>
+        <X className='size-3 shrink-0 text-red-400/70' />
+        <span className='truncate'>Missing 3D asset</span>
+        {showStorageStatus ? <Badge variant='destructive'>Missing</Badge> : null}
+      </span>
+    );
+  }
+
   if (asset !== undefined) {
     const name = asset.name !== '' ? asset.name : (asset.filename ?? modelId);
     return (
@@ -2802,15 +2824,13 @@ function CmsModel3DField({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [thumbnailError, setThumbnailError] = useState(false);
   const hasModel = modelId !== undefined && modelId.trim().length > 0;
   const assignedModelId = modelId ?? '';
 
-  const prevModelIdRef = useRef(assignedModelId);
-  if (prevModelIdRef.current !== assignedModelId) {
-    prevModelIdRef.current = assignedModelId;
-    setThumbnailError(false);
-  }
+  const assetQuery = useAsset3DById(hasModel ? assignedModelId : null);
+  const asset = assetQuery.data;
+  const isFastComet = isMilkbarFastCometAsset(asset);
+  const isLocalOnly = hasModel && asset !== undefined && !isFastComet;
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -2849,118 +2869,141 @@ function CmsModel3DField({
     [onChange, tags, toast, uploadName]
   );
 
+  const assetName = asset !== undefined && asset.name.trim().length > 0
+    ? asset.name
+    : (asset?.filename ?? null);
+
+  const thumbnailContent = hasModel ? (
+    <div className='flex h-full w-full flex-col items-center justify-center gap-1 px-1'>
+      <Box className='h-6 w-6 shrink-0 text-blue-400/60' />
+      {assetName !== null ? (
+        <span className='line-clamp-2 w-full text-center text-[9px] leading-tight text-white/40'>
+          {assetName}
+        </span>
+      ) : (
+        <span className='text-[9px] text-white/25'>{assignedModelId.slice(0, 6)}…</span>
+      )}
+    </div>
+  ) : (
+    <button
+      type='button'
+      aria-label={`Upload ${label}`}
+      className='flex h-full w-full flex-col items-center justify-center gap-1 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      onClick={() => fileInputRef.current?.click()}
+    >
+      <Box className='h-6 w-6 text-gray-500' />
+      <span className='text-[10px] text-gray-500'>Upload</span>
+    </button>
+  );
+
   return (
     <>
-      <div className='rounded-md border border-white/10 bg-white/5 p-3'>
-        <div className='mb-2 flex items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <p className='flex items-center gap-1.5 text-xs font-medium text-white/80'>
-              <Box className='size-3.5 text-blue-400/70' />
-              {label}
-            </p>
-            <p className='mt-1 text-[11px] leading-relaxed text-muted-foreground'>{description}</p>
-          </div>
-          {hasModel ? <Badge variant='secondary'>Assigned</Badge> : <Badge variant='outline'>Empty</Badge>}
+      <FormField label={label} description={description}>
+        {/* Image-slot-style top bar: view pill + ⋮ menu */}
+        <div className='flex w-full items-center justify-center gap-1'>
+          <ActionMenu
+            variant='outline'
+            size='sm'
+            triggerClassName='h-6 px-2 text-[10px]'
+            trigger={
+              uploading
+                ? getModelUploadButtonLabel(uploading, uploadProgress, hasModel)
+                : hasModel
+                  ? 'View: Assigned'
+                  : 'View: Empty'
+            }
+            ariaLabel='Upload model source'
+            className='min-w-[140px]'
+          >
+            <DropdownMenuItem disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+              Upload model
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPickerOpen(true)}>
+              Choose from library
+            </DropdownMenuItem>
+          </ActionMenu>
+          <ActionMenu
+            variant='ghost'
+            size='icon'
+            triggerClassName='h-6 w-6'
+            trigger={<MoreVertical className='h-3.5 w-3.5' />}
+            ariaLabel='Model slot actions'
+            className='min-w-[160px]'
+          >
+            <DropdownMenuItem disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+              Upload model
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPickerOpen(true)}>
+              Choose from library
+            </DropdownMenuItem>
+            {hasModel ? (
+              <DropdownMenuItem onClick={() => setPreviewOpen(true)}>Preview</DropdownMenuItem>
+            ) : null}
+            {hasModel ? (
+              <DropdownMenuItem
+                className='text-red-400 focus:text-red-300'
+                onClick={() => onChange(undefined)}
+              >
+                Remove
+              </DropdownMenuItem>
+            ) : null}
+          </ActionMenu>
         </div>
-        <div className='flex items-start gap-3'>
-          {/* Thumbnail frame — mirrors image slot visual */}
-          <div className='relative h-24 w-24 shrink-0 overflow-hidden rounded-md border-2 border bg-gray-800'>
-            {hasModel && !thumbnailError ? (
-              <Viewer3DProvider key={assignedModelId}>
-                <Viewer3D
-                  modelUrl={`/api/assets3d/${assignedModelId}/file`}
-                  onLoad={() => {}}
-                  onError={() => setThumbnailError(true)}
-                  className='h-full w-full'
-                />
-              </Viewer3DProvider>
-            ) : hasModel && thumbnailError ? (
-              <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
-                <Box className='h-6 w-6 text-blue-400/50' />
-                <span className='text-[10px] text-white/30'>3D model</span>
-              </div>
-            ) : (
-              <button
-                type='button'
-                aria-label={`Upload ${label}`}
-                className='flex h-full w-full flex-col items-center justify-center gap-1 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Box className='h-6 w-6 text-gray-500' />
-                <span className='text-[10px] text-gray-500'>Upload</span>
-              </button>
-            )}
-            {hasModel && (
-              <button
-                type='button'
-                aria-label={`Preview ${label}`}
-                className='absolute inset-0 cursor-pointer bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                onClick={() => setPreviewOpen(true)}
-              />
-            )}
-          </div>
-          <div className='flex min-w-0 flex-1 flex-col gap-2'>
-            {hasModel ? <ModelAssetLabel modelId={assignedModelId} showStorageStatus /> : null}
-            <div className='flex flex-wrap items-center gap-1.5'>
-              <input
-                ref={fileInputRef}
-                type='file'
-                accept='.glb,.gltf'
-                aria-label={`${label} model file`}
-                className='hidden'
-                onChange={(event) => {
-                  void handleFileChange(event);
-                }}
-              />
-              <Button
-                type='button'
-                size='sm'
-                variant='ghost'
-                className='h-7 px-2 text-xs'
-                disabled={uploading}
-                icon={<Upload className='size-3.5' />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
-              </Button>
-              <Button
-                type='button'
-                size='sm'
-                variant={hasModel ? 'ghost' : 'secondary'}
-                className='h-7 px-2 text-xs'
-                icon={<Library className='size-3.5' />}
-                onClick={() => setPickerOpen(true)}
-              >
-                From Library
-              </Button>
+
+        {/* Centred thumbnail */}
+        <div className='mt-1 flex w-full items-center justify-center'>
+          <div className='relative h-24 w-24 overflow-hidden rounded-md border-2 border bg-gray-800'>
+            {thumbnailContent}
+            <div className='absolute bottom-0 left-0 flex items-center overflow-hidden rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400'>
               {hasModel ? (
-                <>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    className='h-7 px-2 text-xs'
-                    icon={<Eye className='size-3.5' />}
-                    onClick={() => setPreviewOpen(true)}
-                  >
-                    Preview
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
-                    icon={<X className='size-3.5' />}
-                    onClick={() => onChange(undefined)}
-                  >
-                    Remove
-                  </Button>
-                </>
+                <Button
+                  variant='ghost'
+                  size='xs'
+                  onClick={() => setPreviewOpen(true)}
+                  className='h-5 w-6 rounded-none p-0 text-gray-300 hover:bg-white/10 hover:text-white'
+                  aria-label={`Open 3D preview for ${label}`}
+                  title='Open 3D preview (modal)'
+                >
+                  <Eye className='size-3' />
+                </Button>
               ) : null}
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Storage status badges — mirrors image slot U/L/B/F row */}
+        <div className='mt-1 flex w-full items-center justify-center gap-1 text-[10px] text-gray-400'>
+          <span
+            className={`rounded-full border px-1 ${
+              isFastComet
+                ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100'
+                : 'border-gray-600 text-gray-500'
+            }`}
+          >
+            FC
+          </span>
+          <span
+            className={`rounded-full border px-1 ${
+              isLocalOnly
+                ? 'border-amber-400/70 bg-amber-500/15 text-amber-100'
+                : 'border-gray-600 text-gray-500'
+            }`}
+          >
+            L
+          </span>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='.glb,.gltf'
+          aria-label={`${label} model file`}
+          className='hidden'
+          onChange={(event) => {
+            void handleFileChange(event);
+          }}
+        />
+      </FormField>
       {previewOpen && hasModel ? (
         <Model3DPreviewModal
           modelId={assignedModelId}

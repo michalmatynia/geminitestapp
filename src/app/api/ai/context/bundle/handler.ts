@@ -29,8 +29,7 @@ async function parseRequestBody(req: NextRequest): Promise<unknown> {
  * and returns the bundled resolution result.
  */
 export async function postBundleHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-...
-
+  const body = await parseRequestBody(req);
 
   const parsed = contextBundleRequestSchema.safeParse(body);
   if (!parsed.success) {

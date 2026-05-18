@@ -25,21 +25,103 @@ type SlideStatusDotProps = {
   disabled: boolean;
 };
 
+type SocialCaptureBrowserState = ReturnType<typeof useSocialCaptureBrowser>;
+type SlideMap = SocialCaptureBrowserState['slideMap'];
+type SlideMetadata = {
+  componentId: string;
+  sectionId: string;
+  subsectionId: string | null;
+};
+
+const slideStatusDotClass = ({ active, disabled }: SlideStatusDotProps): string => {
+  if (disabled) return 'bg-destructive/60';
+  if (active) return 'bg-emerald-500';
+  return 'bg-muted-foreground/30';
+};
+
 function SlideStatusDot({ active, disabled }: SlideStatusDotProps): React.JSX.Element {
   return (
     <span
       className={cn(
         'inline-block h-1.5 w-1.5 rounded-full shrink-0',
-        disabled
-          ? 'bg-destructive/60'
-          : active
-            ? 'bg-emerald-500'
-            : 'bg-muted-foreground/30'
+        slideStatusDotClass({ active, disabled })
       )}
       aria-hidden='true'
     />
   );
 }
+
+const getSlideMetadata = (
+  input: FolderTreeViewportRenderNodeInput
+): SlideMetadata | undefined =>
+  input.node.metadata?.['socialCaptureSlide'] as SlideMetadata | undefined;
+
+const renderStatusDot = (
+  input: FolderTreeViewportRenderNodeInput,
+  slideMap: SlideMap
+): React.ReactNode => {
+  if (!isSocialCaptureSlideNode(input.node.id)) return null;
+
+  const slideMetadata = getSlideMetadata(input);
+  if (slideMetadata === undefined) return null;
+
+  const key = buildSlideKey(
+    slideMetadata.componentId,
+    slideMetadata.sectionId,
+    slideMetadata.subsectionId
+  );
+  const entry = slideMap.get(key);
+  return (
+    <SlideStatusDot
+      active={entry !== undefined && entry.sections.length > 0}
+      disabled={entry?.disabled === true}
+    />
+  );
+};
+
+const renderFolderIcon = (isExpanded: boolean, className: string): React.JSX.Element => {
+  if (isExpanded) return <FolderOpen className={className} />;
+  return <Folder className={className} />;
+};
+
+const renderNodeIcon = (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
+  if (isSocialCaptureSlideNode(input.node.id)) {
+    return <Image className='h-3 w-3 text-muted-foreground/60 shrink-0' />;
+  }
+  if (isSocialCaptureSectionNode(input.node.id)) {
+    return renderFolderIcon(input.isExpanded, 'h-3.5 w-3.5 text-primary/70 shrink-0');
+  }
+  return renderFolderIcon(input.isExpanded, 'h-3 w-3 text-muted-foreground/70 shrink-0');
+};
+
+function SocialCaptureTreeNode({
+  input,
+  slideMap,
+}: {
+  input: FolderTreeViewportRenderNodeInput;
+  slideMap: SlideMap;
+}): React.JSX.Element {
+  const isSlide = isSocialCaptureSlideNode(input.node.id);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-1.5 min-w-0 py-0.5 pr-1 text-xs',
+        input.isSelected && 'font-medium',
+        isSlide ? 'text-foreground/80' : 'text-foreground/90'
+      )}
+    >
+      {renderNodeIcon(input)}
+      <span className='truncate flex-1'>{input.node.name}</span>
+      {renderStatusDot(input, slideMap)}
+    </div>
+  );
+}
+
+const getEmptyLabel = (isSearchActive: boolean): string => {
+  if (isSearchActive) return 'No lessons match your search.';
+  return 'No lesson sections configured.';
+};
 
 export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
   const state = useSocialCaptureBrowser();
@@ -47,59 +129,9 @@ export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
   const [engineModalOpen, setEngineModalOpen] = React.useState(false);
 
   const renderNode = React.useCallback(
-    ({ node, isExpanded, isSelected }: FolderTreeViewportRenderNodeInput): React.ReactNode => {
-      const isSlide = isSocialCaptureSlideNode(node.id);
-      const isSection = isSocialCaptureSectionNode(node.id);
-
-      let statusDot: React.ReactNode = null;
-      if (isSlide) {
-        const slideMetadata = node.metadata?.['socialCaptureSlide'] as
-          | { componentId: string; sectionId: string; subsectionId: string | null }
-          | undefined;
-        if (slideMetadata) {
-          const key = buildSlideKey(
-            slideMetadata.componentId,
-            slideMetadata.sectionId,
-            slideMetadata.subsectionId
-          );
-          const entry = slideMap.get(key);
-          statusDot = (
-            <SlideStatusDot
-              active={Boolean(entry && entry.sections.length > 0)}
-              disabled={entry?.disabled === true}
-            />
-          );
-        }
-      }
-
-      const IconEl = isSlide ? (
-        <Image className='h-3 w-3 text-muted-foreground/60 shrink-0' />
-      ) : isSection ? (
-        isExpanded ? (
-          <FolderOpen className='h-3.5 w-3.5 text-primary/70 shrink-0' />
-        ) : (
-          <Folder className='h-3.5 w-3.5 text-primary/70 shrink-0' />
-        )
-      ) : isExpanded ? (
-        <FolderOpen className='h-3 w-3 text-muted-foreground/70 shrink-0' />
-      ) : (
-        <Folder className='h-3 w-3 text-muted-foreground/70 shrink-0' />
-      );
-
-      return (
-        <div
-          className={cn(
-            'flex items-center gap-1.5 min-w-0 py-0.5 pr-1 text-xs',
-            isSelected && 'font-medium',
-            isSlide ? 'text-foreground/80' : 'text-foreground/90'
-          )}
-        >
-          {IconEl}
-          <span className='truncate flex-1'>{node.name}</span>
-          {statusDot}
-        </div>
-      );
-    },
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <SocialCaptureTreeNode input={input} slideMap={slideMap} />
+    ),
     [slideMap]
   );
 
@@ -115,11 +147,7 @@ export function SocialCaptureBrowserTreePanel(): React.JSX.Element {
           <MasterFolderTreeViewport
             tree={tree}
             renderNode={renderNode}
-            emptyLabel={
-              search.isActive
-                ? 'No lessons match your search.'
-                : 'No lesson sections configured.'
-            }
+            emptyLabel={getEmptyLabel(search.isActive)}
             enableDnd={false}
             className='h-full'
           />

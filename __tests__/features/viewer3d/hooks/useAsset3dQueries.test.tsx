@@ -4,11 +4,13 @@ import { http, HttpResponse } from 'msw';
 import { describe, it, expect } from 'vitest';
 
 import {
+  asset3dKeys,
   useAssets3D,
   useAsset3DCategories,
   useAsset3DTags,
   useAsset3DById,
 } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import { resolveQueryErrorPresentationFromMetaBag } from '@/shared/hooks/query/useQueryErrorHandling';
 
 import { server } from '@/mocks/server';
 
@@ -87,6 +89,29 @@ describe('useAsset3dQueries', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data!.name).toBe('Detail');
+  });
+
+  it('useAsset3DById should keep missing asset errors inline', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    Wrapper.displayName = 'InlineAssetDetailQueryWrapper';
+
+    renderHook(() => useAsset3DById('missing'), {
+      wrapper: Wrapper,
+    });
+
+    const query = queryClient
+      .getQueryCache()
+      .find({ queryKey: asset3dKeys.detail('missing') });
+    expect(resolveQueryErrorPresentationFromMetaBag(query?.meta)).toBe('inline');
   });
 
   it('useAsset3DById should be disabled if id is null', () => {

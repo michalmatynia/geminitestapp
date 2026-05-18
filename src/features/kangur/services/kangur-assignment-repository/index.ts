@@ -1,6 +1,15 @@
 import 'server-only';
 
+/**
+ * Kangur Assignment Repository
+ *
+ * This service provides the repository interface for managing Kangur platform assignments.
+ * It abstracts persistence for assignment data, facilitating database operations
+ * across the domain.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+...
 
 import { mongoKangurAssignmentRepository } from './mongo-kangur-assignment-repository';
 

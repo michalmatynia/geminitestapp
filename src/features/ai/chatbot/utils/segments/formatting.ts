@@ -1,3 +1,10 @@
+/**
+ * Chatbot Formatting Utilities
+ *
+ * Provides utility functions for parsing and formatting plan states,
+ * such as resolving robotic preferences or approval step IDs.
+ */
+
 export const resolveIgnoreRobots = (planState?: Record<string, unknown> | null): boolean => {
   if (!planState || typeof planState !== 'object') return false;
   const prefs: { ignoreRobotsTxt?: boolean } | undefined = (

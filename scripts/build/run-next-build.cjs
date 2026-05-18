@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+/**
+ * Run Next.js Build Script
+ * 
+ * Orchestrates the Next.js production build process.
+ * Handles bundler configuration (Webpack vs. Turbopack), manages race conditions
+ * for manifest file generation during build, and enforces heap size limits
+ * suitable for Vercel/CI environments.
+ */
+
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');

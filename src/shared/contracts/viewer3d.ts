@@ -97,6 +97,9 @@ export type Asset3dEnvironmentPreset = z.infer<typeof asset3dEnvironmentPresetSc
 export const asset3dViewModeSchema = z.enum(['grid', 'list']);
 export type Asset3dViewMode = z.infer<typeof asset3dViewModeSchema>;
 
+export const asset3dRenderModeSchema = z.enum(['textured', 'solid', 'wireframe']);
+export type Asset3dRenderMode = z.infer<typeof asset3dRenderModeSchema>;
+
 /**
  * 3D Viewer State Contracts
  */
@@ -105,6 +108,7 @@ export const viewer3DStateSchema = z.object({
   // View settings
   autoRotate: z.boolean(),
   autoRotateSpeed: z.number(),
+  renderMode: asset3dRenderModeSchema,
 
   // Environment & Lighting
   environment: asset3dEnvironmentPresetSchema,

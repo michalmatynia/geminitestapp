@@ -1,8 +1,15 @@
 import { analyzeAccessibilityComponentPolicies } from './lib/check-accessibility-component-policies.mjs';
 import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
+/**
+ * Accessibility Component Policy Check
+ * 
+ * Scans components for compliance with accessibility policies (e.g., Dialog, Alert Dialog).
+ * Generates a markdown report summarizing rule violations and policy status.
+ */
 const toMarkdown = (payload) => {
-  const lines = [];
+...
+
   lines.push('# Accessibility Component Policy Report');
   lines.push('');
   lines.push(`Generated at: ${payload.generatedAt}`);

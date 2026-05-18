@@ -932,17 +932,21 @@ const enrichPageContentWithModelUrls = (
   const heroUrl =
     heroAssetId !== undefined && heroAssetId.length > 0
       ? assetUrls.get(heroAssetId) ?? content.hero.modelUrl
-      : undefined;
+      : content.hero.modelUrl;
   const interiorUrl =
     interiorAssetId !== undefined && interiorAssetId.length > 0
       ? assetUrls.get(interiorAssetId) ?? content.drawing.interiorModelUrl
-      : undefined;
+      : content.drawing.interiorModelUrl;
   const asset3dSlots = content.drawing.asset3dSlots
     .map((assetId) => assetId.trim())
     .filter(Boolean);
-  const asset3dSlotUrls = asset3dSlots.map(
-    (assetId, index) => assetUrls.get(assetId) ?? content.drawing.asset3dSlotUrls?.[index] ?? ''
-  );
+  const asset3dSlotUrls =
+    asset3dSlots.length > 0
+      ? asset3dSlots.map(
+          (assetId, index) =>
+            assetUrls.get(assetId) ?? content.drawing.asset3dSlotUrls?.[index] ?? ''
+        )
+      : content.drawing.asset3dSlotUrls ?? [];
 
   const hero: MilkbarPageContent['hero'] = {
     ...withoutHeroModelFields(content.hero),
@@ -978,7 +982,7 @@ const enrichMilkbarCmsUpdateWithModelUrls = async (
       const modelUrl =
         modelAssetId !== undefined && modelAssetId.length > 0
           ? assetUrls.get(modelAssetId) ?? project.modelUrl
-          : undefined;
+          : project.modelUrl;
       return {
         ...withoutProjectModelFields(project),
         ...optionalStringProp('modelAssetId', modelAssetId),

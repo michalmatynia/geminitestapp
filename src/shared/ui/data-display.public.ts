@@ -1,3 +1,9 @@
+/**
+ * Data Display UI Components - Public API
+ *
+ * Centralized export of UI components for data visualization and structure,
+ * including tables, trees, lists, JSON viewers, and observability panels.
+ */
 export { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
 export {
   VectorCanvas,

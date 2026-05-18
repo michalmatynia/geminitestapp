@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Score Repository
+ *
+ * This service provides the repository interface for managing Kangur platform scores.
+ * It abstracts persistence for score data (e.g., operation results, correct answers),
+ * facilitating score creation and retrieval for leaderboards and progress tracking.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurScoreRepository } from './mongo-kangur-score-repository';

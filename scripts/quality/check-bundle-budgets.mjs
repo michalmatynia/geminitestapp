@@ -1,7 +1,14 @@
 import { analyzeBundleBudgets, formatBundleBytes } from './lib/check-bundle-budgets.mjs';
 import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
+/**
+ * Bundle Budget Check
+ * 
+ * Validates application bundle sizes against predefined budgets.
+ * Generates a report showing actual sizes vs budgets, including byte and count deltas.
+ */
 const renderBudgetValue = (value) => (Number.isFinite(value) ? formatBundleBytes(value) : '-');
+...
 
 const renderByteDelta = (actual, budget) => {
   if (!Number.isFinite(actual) || !Number.isFinite(budget)) return '-';

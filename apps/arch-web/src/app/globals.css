@@ -703,8 +703,8 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 .foot-bot-links a:hover { color: var(--ink); }
 
 /* ─── REVEAL ─────────────────────────────────────────────────────── */
-/* GSAP ScrollTrigger owns all .rev animations — CSS only sets the initial hidden state */
-.rev { opacity: 0; }
+/* Content stays readable if animation setup is delayed or unavailable. */
+.rev { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .rev { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }

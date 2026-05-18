@@ -23,6 +23,10 @@ const resolveRemainingIdleDelay = (startAt: number, minimumDelayMs: number): num
 // during framer-motion's div→motion.div element-type switch on first load).
 const idleReadyCache = new Map<number, true>();
 
+export const clearKangurIdleReadyCache = (): void => {
+  idleReadyCache.clear();
+};
+
 export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boolean => {
   const minimumDelayMs =
     typeof options.minimumDelayMs === 'number' && options.minimumDelayMs > 0

@@ -36,6 +36,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.6",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^25.8.0",
     "@types/react": "^19.2.7",

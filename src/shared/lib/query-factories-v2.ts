@@ -476,70 +476,92 @@ export function createMutationOptionsV2<TData, TVariables, TContext = unknown, T
         await onSuccess(data, variables, context, mutationContext);
       }
     },
-    mutationFn: async (variables: TVariables): Promise<TData> => {
-      const attempt = attemptRef.current + 1;
-      attemptRef.current = attempt;
-
-      if (attempt > 1) {
-        emitFactoryTelemetry({
-          entity: 'mutation',
-          stage: 'retry',
-          meta: telemetryMeta,
-          key: normalizedMutationKey,
-          attempt,
-          ...(telemetryContext ? { context: telemetryContext } : {}),
-        });
-      }
-
-      const startMs = Date.now();
-      emitFactoryTelemetry({
-        entity: 'mutation',
-        stage: 'start',
-        meta: telemetryMeta,
-        key: normalizedMutationKey,
-        attempt,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-      });
-
-      try {
-        if (!mutationFn) {
-          throw new Error('Mutation function is required');
-        }
-        const data = await mutationFn(variables, { queryClient });
-
-        emitFactoryTelemetry({
-          entity: 'mutation',
-          stage: 'success',
-          meta: telemetryMeta,
-          key: normalizedMutationKey,
-          attempt,
-          ...(telemetryContext ? { context: telemetryContext } : {}),
-          startedAtMs: startMs,
-        });
-        attemptRef.current = 0;
-        return data;
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'query-factories-v2',
-          action: 'mutationFn',
-          attempt,
-        });
-        const finalError = transformError ? transformError(error) : (error as TError);
-
-        emitFactoryTelemetry({
-          entity: 'mutation',
-          stage: telemetryErrorStage(error),
-          meta: telemetryMeta,
-          key: normalizedMutationKey,
-          attempt,
-          startedAtMs: startMs,
-          error,
-          ...(telemetryContext ? { context: telemetryContext } : {}),
-        });
-        throw finalError;
-      }
-    },
+    mutationFn: (variables: TVariables) => executeMutationFn(variables, {
+      mutationFn,
+      attemptRef,
+      telemetryMeta,
+      telemetryContext,
+      normalizedMutationKey,
+      transformError,
+      queryClient,
+    }),
   };
+}
+
+async function executeMutationFn<TData, TVariables, TError>(
+  variables: TVariables,
+  deps: {
+    mutationFn?: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>;
+    attemptRef: React.MutableRefObject<number>;
+    telemetryMeta: any;
+    telemetryContext?: any;
+    normalizedMutationKey?: any;
+    transformError?: (error: unknown) => TError;
+    queryClient: QueryClient;
+  }
+): Promise<TData> {
+  const { attemptRef, mutationFn, telemetryMeta, telemetryContext, normalizedMutationKey, transformError, queryClient } = deps;
+  const attempt = attemptRef.current + 1;
+  attemptRef.current = attempt;
+
+  if (attempt > 1) {
+    emitFactoryTelemetry({
+      entity: 'mutation',
+      stage: 'retry',
+      meta: telemetryMeta,
+      key: normalizedMutationKey,
+      attempt,
+      ...(telemetryContext ? { context: telemetryContext } : {}),
+    });
+  }
+
+  const startMs = Date.now();
+  emitFactoryTelemetry({
+    entity: 'mutation',
+    stage: 'start',
+    meta: telemetryMeta,
+    key: normalizedMutationKey,
+    attempt,
+    ...(telemetryContext ? { context: telemetryContext } : {}),
+  });
+
+  try {
+    if (!mutationFn) {
+      throw new Error('Mutation function is required');
+    }
+    const data = await mutationFn(variables, { queryClient });
+
+    emitFactoryTelemetry({
+      entity: 'mutation',
+      stage: 'success',
+      meta: telemetryMeta,
+      key: normalizedMutationKey,
+      attempt,
+      ...(telemetryContext ? { context: telemetryContext } : {}),
+      startedAtMs: startMs,
+    });
+    attemptRef.current = 0;
+    return data;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'query-factories-v2',
+      action: 'mutationFn',
+      attempt,
+    });
+    const finalError = transformError ? transformError(error) : (error as TError);
+
+    emitFactoryTelemetry({
+      entity: 'mutation',
+      stage: telemetryErrorStage(error),
+      meta: telemetryMeta,
+      key: normalizedMutationKey,
+      attempt,
+      startedAtMs: startMs,
+      error,
+      ...(telemetryContext ? { context: telemetryContext } : {}),
+    });
+    throw finalError;
+  }
 }
 
 export function useMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
@@ -591,7 +613,7 @@ export function useOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
     onSettled: (data, error, variables, context, mutationContext) => {
       void queryClient.invalidateQueries({ queryKey });
       if (onSettled) {
-        return onSettled(data, error, variables, context, mutationContext);
+        return onSettled({ data, error, variables, context, mutationContext });
       }
       return undefined;
     },

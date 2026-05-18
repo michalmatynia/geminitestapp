@@ -1,4 +1,13 @@
-/** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
+/**
+ * Shared Utility Libraries
+ *
+ * This package provides foundational utility functions, type helpers, and logic 
+ * modules used for data manipulation, formatting, accessibility, and UI interactions 
+ * across the entire application.
+ *
+ * @deprecated Avoid direct barrel imports from this entry point. 
+ * Prefer importing specific utility modules directly from `@/shared/utils/[module]`.
+ */
 export * from './ui-utils';
 export * from './object-utils';
 export * from './time-utils';

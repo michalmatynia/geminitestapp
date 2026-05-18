@@ -1,5 +1,6 @@
 'use client';
 
+export * from './useGuidanceCompletionEffects';
 export * from './useSelectionGuidanceEffect';
 export * from './useSectionGuidanceEffect';
 export * from './useResponseTimeoutEffect';

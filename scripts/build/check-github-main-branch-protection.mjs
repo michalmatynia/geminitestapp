@@ -6,9 +6,16 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+/**
+ * GitHub Main Branch Protection Check
+ * 
+ * Validates that the current CI/CD environment has mandatory branch protection
+ * rules applied to the main branch, ensuring toolchain contract compliance.
+ */
 const DEFAULT_API_BASE = 'https://api.github.com';
 const DEFAULT_REPOSITORY = 'michalmatynia/geminitestapp';
-const DEFAULT_BRANCH = 'main';
+...
+
 const DEFAULT_REQUIRED_CHECK = 'toolchain-contract';
 const DEFAULT_REQUIRED_CHECK_APP_ID = 15368;
 const DEFAULT_GITHUB_API_VERSION = '2022-11-28';

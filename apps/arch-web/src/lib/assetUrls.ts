@@ -5,8 +5,11 @@ const getMilkbarFastCometBaseUrl = (): string => {
     process.env.NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL?.trim() ||
     process.env.NEXT_PUBLIC_MILKBAR_FASTCOMET_BASE_URL?.trim() ||
     process.env.MILKBAR_FASTCOMET_PUBLIC_BASE_URL?.trim() ||
-    process.env.MILKBAR_FASTCOMET_BASE_URL?.trim() ||
-    DEFAULT_MILKBAR_FASTCOMET_BASE_URL;
+    process.env.MILKBAR_FASTCOMET_BASE_URL?.trim();
+
+  if (configured === undefined || configured.length === 0) {
+    return process.env.NODE_ENV === 'development' ? '' : DEFAULT_MILKBAR_FASTCOMET_BASE_URL;
+  }
 
   return configured.replace(/\/+$/, '');
 };

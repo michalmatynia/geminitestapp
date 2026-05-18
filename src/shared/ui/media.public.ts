@@ -1,3 +1,9 @@
+/**
+ * Media UI Components - Public API
+ *
+ * Centralized export of media-handling UI components, including image managers,
+ * preview modals, and placeholders for assets.
+ */
 export {
   ProductImageManager,
   ProductImageManagerControllerProvider,

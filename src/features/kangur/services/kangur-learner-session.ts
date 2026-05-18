@@ -22,6 +22,20 @@ export const readKangurLearnerSession = (
   return parsePayload(cookieValue);
 };
 
+const serializeCookieHeader = (name: string, value: string, maxAge: number): string => {
+  const opts = buildCookieOptions(maxAge);
+  const parts = [
+    `${name}=${value}`,
+    `Path=${opts.path}`,
+    `Max-Age=${opts.maxAge}`,
+    `SameSite=${opts.sameSite === 'lax' ? 'Lax' : opts.sameSite}`,
+    ...(opts.httpOnly ? ['HttpOnly'] : []),
+    ...(opts.secure ? ['Secure'] : []),
+    ...(opts.domain !== undefined ? [`Domain=${opts.domain}`] : []),
+  ];
+  return parts.join('; ');
+};
+
 export const setKangurLearnerSession = (
   response: NextResponse,
   input: { learnerId: string; ownerUserId: string }
@@ -32,12 +46,11 @@ export const setKangurLearnerSession = (
     exp: Date.now() + COOKIE_TTL_MS,
   });
   const maxAge = Math.floor(COOKIE_TTL_MS / 1000);
-
-  response.cookies.set({ name: COOKIE_NAME, value, ...buildCookieOptions(maxAge) });
+  response.headers.append('Set-Cookie', serializeCookieHeader(COOKIE_NAME, value, maxAge));
 };
 
 export const clearKangurLearnerSession = (response: NextResponse): void => {
-  response.cookies.set({ name: COOKIE_NAME, value: '', ...buildCookieOptions(0) });
+  response.headers.append('Set-Cookie', serializeCookieHeader(COOKIE_NAME, '', 0));
 };
 
 const readCookieFromHeader = (cookieHeader: string, name: string): string | undefined => {

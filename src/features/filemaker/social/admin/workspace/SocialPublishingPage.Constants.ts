@@ -39,14 +39,14 @@ export const statusLabel: Record<SocialPublishingPost['status'], string> = {
 };
 
 export const formatDatetimeLocal = (value?: string | null): string => {
-  if (!value) return '';
+  if (value === null || value === undefined || value.length === 0) return '';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '';
   return parsed.toISOString().slice(0, 16);
 };
 
 export const formatDatetimeDisplay = (value?: string | null): string => {
-  if (!value) return '';
+  if (value === null || value === undefined || value.length === 0) return '';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '';
   return parsed.toLocaleString('pl-PL', {
@@ -59,7 +59,7 @@ export const formatDatetimeDisplay = (value?: string | null): string => {
 };
 
 export const parseDatetimeLocal = (value: string): string | null => {
-  if (!value.trim()) return null;
+  if (value.trim().length === 0) return null;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed.toISOString();
@@ -88,20 +88,31 @@ export const resolveImagePreview = (asset: ImageFileSelection | null | undefined
   return raw;
 };
 
+const firstNonEmptyImageValue = (
+  values: Array<string | null | undefined>
+): string | null => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.length > 0) {
+      return value;
+    }
+  }
+  return null;
+};
+
 export const mergeImageAssets = (
   current: ImageFileSelection[],
   nextAssets: ImageFileSelection[]
 ): ImageFileSelection[] => {
   const merged = [...current];
   nextAssets.forEach((asset) => {
-    const key = asset.id || asset.filepath || asset.url;
-    if (!key) return;
+    const key = firstNonEmptyImageValue([asset.id, asset.filepath, asset.url]);
+    if (key === null) return;
     if (merged.some((existingAsset) => matchesImageAsset(existingAsset, asset))) {
       return;
     }
     merged.push({
       ...asset,
-      id: asset.id || asset.filepath || asset.url || `image-${merged.length}`,
+      id: key,
     });
   });
   return merged;
@@ -109,10 +120,12 @@ export const mergeImageAssets = (
 
 export const matchesImageAsset = (asset: ImageFileSelection, candidate: ImageFileSelection): boolean => {
   const keys = new Set(
-    [asset.id, asset.filepath, asset.url].filter((value): value is string => Boolean(value))
+    [asset.id, asset.filepath, asset.url].filter(
+      (value): value is string => typeof value === 'string' && value.length > 0
+    )
   );
   return [candidate.id, candidate.filepath, candidate.url].some(
-    (value) => Boolean(value && keys.has(value))
+    (value) => typeof value === 'string' && keys.has(value)
   );
 };
 
@@ -150,6 +163,49 @@ export function isTransientError(error: unknown): boolean {
   return false;
 }
 
+type RetryOptions = {
+  delayMs: number;
+  maxAttempts: number;
+  retryable: (error: unknown) => boolean;
+};
+
+const resolveRetryOptions = (options?: {
+  maxAttempts?: number;
+  delayMs?: number;
+  retryable?: (error: unknown) => boolean;
+}): RetryOptions => ({
+  maxAttempts: options?.maxAttempts ?? 2,
+  delayMs: options?.delayMs ?? 2000,
+  retryable: options?.retryable ?? isTransientError,
+});
+
+const waitForRetryDelay = (delayMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    safeSetTimeout(() => {
+      resolve();
+    }, delayMs);
+  });
+
+const runRetryAttempt = async <T>({
+  attempt,
+  fn,
+  options,
+}: {
+  attempt: number;
+  fn: () => Promise<T>;
+  options: RetryOptions;
+}): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (attempt < options.maxAttempts && options.retryable(error)) {
+      await waitForRetryDelay(options.delayMs * attempt);
+      return runRetryAttempt({ attempt: attempt + 1, fn, options });
+    }
+    throw error;
+  }
+};
+
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options?: {
@@ -158,21 +214,5 @@ export async function withRetry<T>(
     retryable?: (error: unknown) => boolean;
   }
 ): Promise<T> {
-  const maxAttempts = options?.maxAttempts ?? 2;
-  const delayMs = options?.delayMs ?? 2000;
-  const retryable = options?.retryable ?? isTransientError;
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxAttempts && retryable(error)) {
-        await new Promise<void>((resolve) => safeSetTimeout(() => resolve(), delayMs * attempt));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw lastError;
+  return runRetryAttempt({ attempt: 1, fn, options: resolveRetryOptions(options) });
 }

@@ -123,7 +123,7 @@ const csp = [
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "connect-src 'self' https: wss: ws:",
+  "connect-src 'self' data: https: wss: ws:",
   "object-src 'none'",
   "worker-src 'self' blob:",
 ].join('; ');

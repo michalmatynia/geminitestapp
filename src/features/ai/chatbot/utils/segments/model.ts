@@ -11,7 +11,6 @@ import {
   type ModelTaskRuleDto as ModelTaskRule,
   type ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
-...
 
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);

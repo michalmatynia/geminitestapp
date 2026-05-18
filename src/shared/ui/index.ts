@@ -1,4 +1,13 @@
-/** @deprecated Do not import from this barrel! Use @/shared/ui/[domain].public instead */
+/**
+ * Shared UI System
+ *
+ * This package serves as the centralized library for the platform's design system.
+ * It provides shared UI components, layouts, primitives, and interaction patterns
+ * used across the entire application.
+ *
+ * @deprecated Avoid direct barrel imports from this entry point. 
+ * Prefer importing specific domain modules directly from `@/shared/ui/[domain].public`.
+ */
 export * from './admin.public';
 export * from './primitives.public';
 export * from './forms-and-actions.public';

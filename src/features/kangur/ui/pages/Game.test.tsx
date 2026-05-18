@@ -8,6 +8,7 @@ import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GAME_HOME_SECONDARY_DATA_IDLE_DELAY_MS } from '@/features/kangur/ui/pages/GameHome.constants';
+import { clearKangurIdleReadyCache } from '@/features/kangur/ui/hooks/useKangurIdleReady';
 
 import { buildGameRuntime, expectStandardMobileGameLayout } from './Game.test-support';
 
@@ -358,6 +359,26 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  prefetchKangurPageContentStore: vi.fn(),
+}));
+
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+  return {
+    ...actual,
+    useQueryClient: vi.fn().mockReturnValue({
+      getQueryState: vi.fn().mockReturnValue(undefined),
+      prefetchQuery: vi.fn(),
+      setQueryData: vi.fn(),
+    }),
+  };
+});
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: vi.fn().mockReturnValue({ subject: null }),
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 
 describe('Game page', () => {
@@ -367,6 +388,7 @@ describe('Game page', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurIdleReadyCache();
     getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     useKangurMobileBreakpointMock.mockReturnValue(false);
     useKangurGameContentSetsMock.mockReturnValue({

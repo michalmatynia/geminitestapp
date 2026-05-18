@@ -18,6 +18,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
+
+import type { Asset3dRenderMode } from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 /**
@@ -45,6 +47,59 @@ interface Model3DProps {
   scale?: number | [number, number, number];
   /** Whether to enable shadow rendering */
   enableShadows: boolean;
+  /** Material/render mode for inspecting the model */
+  renderMode: Asset3dRenderMode;
+}
+
+type MeshMaterial = THREE.Material | THREE.Material[];
+type ViewerMesh = THREE.Mesh<THREE.BufferGeometry, MeshMaterial>;
+
+type ViewerMeshUserData = THREE.Object3D['userData'] & {
+  viewer3dOriginalMaterial?: MeshMaterial;
+  viewer3dOverrideMaterial?: MeshMaterial;
+};
+
+const getViewerMeshUserData = (mesh: ViewerMesh): ViewerMeshUserData =>
+  mesh.userData as ViewerMeshUserData;
+
+const forEachMaterial = (material: MeshMaterial, callback: (item: THREE.Material) => void): void => {
+  if (Array.isArray(material)) {
+    material.forEach(callback);
+    return;
+  }
+  callback(material);
+};
+
+const disposeMaterial = (material: MeshMaterial | undefined): void => {
+  if (material === undefined) return;
+  forEachMaterial(material, (item) => item.dispose());
+};
+
+function optimizeMaterial(inputMaterial: THREE.Material): void {
+  if (inputMaterial instanceof THREE.MeshStandardMaterial && inputMaterial.envMapIntensity !== 1.5) {
+    const material = inputMaterial;
+    material.envMapIntensity = 1.5;
+    material.needsUpdate = true;
+  }
+}
+
+function createRenderModeMaterial(renderMode: Asset3dRenderMode): THREE.Material | null {
+  if (renderMode === 'solid') {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#dce3ef'),
+      roughness: 0.72,
+      metalness: 0.02,
+    });
+  }
+
+  if (renderMode === 'wireframe') {
+    return new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#f8fafc'),
+      wireframe: true,
+    });
+  }
+
+  return null;
 }
 
 /**
@@ -53,25 +108,52 @@ interface Model3DProps {
  * 
  * @param scene - The Three.js scene/group containing the model
  * @param enableShadows - Whether to enable shadow casting and receiving
+ * @param renderMode - Material mode used for model inspection
  */
-function optimizeMaterials(scene: THREE.Group, enableShadows: boolean): void {
+function applyMaterialMode(
+  scene: THREE.Group,
+  enableShadows: boolean,
+  renderMode: Asset3dRenderMode
+): void {
   // Traverse all objects in the scene hierarchy
   scene.traverse((child: THREE.Object3D) => {
     // Only process mesh objects
     if (child instanceof THREE.Mesh) {
-      const mesh = child;
+      const mesh = child as ViewerMesh;
+      const userData = getViewerMeshUserData(mesh);
+
+      userData.viewer3dOriginalMaterial ??= mesh.material;
+
       // Configure shadow rendering
       mesh.castShadow = enableShadows;
       mesh.receiveShadow = enableShadows;
 
-      // Optimize standard materials
-      if (mesh.material instanceof THREE.MeshStandardMaterial) {
-        const material = mesh.material;
-        // Adjust environment map intensity for better lighting
-        if (material.envMapIntensity !== 1.5) {
-          material.envMapIntensity = 1.5;
-          material.needsUpdate = true;
-        }
+      const overrideMaterial = createRenderModeMaterial(renderMode);
+      disposeMaterial(userData.viewer3dOverrideMaterial);
+      userData.viewer3dOverrideMaterial = undefined;
+
+      if (overrideMaterial === null) {
+        mesh.material = userData.viewer3dOriginalMaterial;
+        forEachMaterial(mesh.material, optimizeMaterial);
+        return;
+      }
+
+      mesh.material = overrideMaterial;
+      userData.viewer3dOverrideMaterial = overrideMaterial;
+    }
+  });
+}
+
+function restoreMaterialMode(scene: THREE.Group): void {
+  scene.traverse((child: THREE.Object3D) => {
+    if (child instanceof THREE.Mesh) {
+      const mesh = child as ViewerMesh;
+      const userData = getViewerMeshUserData(mesh);
+      disposeMaterial(userData.viewer3dOverrideMaterial);
+      userData.viewer3dOverrideMaterial = undefined;
+      if (userData.viewer3dOriginalMaterial !== undefined) {
+        mesh.material = userData.viewer3dOriginalMaterial;
+        userData.viewer3dOriginalMaterial = undefined;
       }
     }
   });
@@ -85,7 +167,7 @@ function optimizeMaterials(scene: THREE.Group, enableShadows: boolean): void {
  * @returns JSX element or null if model fails to load
  */
 export function Model3D(props: Model3DProps): React.JSX.Element {
-  const { url, onLoad, position, rotation, scale, enableShadows } = props;
+  const { url, onLoad, position, rotation, scale, enableShadows, renderMode } = props;
 
   // Track if we've replaced blob: textures with fallback
   const replacedTextureRef = useRef(false);
@@ -120,10 +202,11 @@ export function Model3D(props: Model3DProps): React.JSX.Element {
         },
       });
     }
-    // Apply material optimizations
-    optimizeMaterials(scene, enableShadows);
+    // Apply material optimizations and inspection overrides
+    applyMaterialMode(scene, enableShadows, renderMode);
     onLoad?.();
-  }, [scene, onLoad, enableShadows]);
+    return () => restoreMaterialMode(scene);
+  }, [scene, onLoad, enableShadows, renderMode]);
 
   return (
     <primitive

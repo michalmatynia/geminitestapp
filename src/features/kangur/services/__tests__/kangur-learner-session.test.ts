@@ -11,6 +11,9 @@ import {
 
 const createRequestWithCookie = (cookie: string) =>
   ({
+    headers: {
+      get: (name: string) => (name === 'cookie' ? cookie : null),
+    },
     cookies: {
       get: (name: string) => {
         const [cookiePair] = cookie.split(';');

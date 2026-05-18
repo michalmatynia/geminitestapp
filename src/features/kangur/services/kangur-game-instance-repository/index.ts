@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Game Instance Repository
+ *
+ * This service provides the repository interface for managing Kangur game instances.
+ * It abstracts persistence for instance data, facilitating retrieval and bulk
+ * management of game configurations.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurGameInstanceRepository } from './mongo-kangur-game-instance-repository';

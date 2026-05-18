@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Lesson Section Repository
+ *
+ * This service provides the repository interface for managing Kangur lesson sections.
+ * It abstracts persistence for lesson section structure, facilitating CRUD operations,
+ * list retrieval, and bulk management of section data.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurLessonSectionRepository } from './mongo-kangur-lesson-section-repository';

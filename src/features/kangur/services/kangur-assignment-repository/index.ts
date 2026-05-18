@@ -9,7 +9,6 @@ import 'server-only';
  */
 
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-...
 
 import { mongoKangurAssignmentRepository } from './mongo-kangur-assignment-repository';
 

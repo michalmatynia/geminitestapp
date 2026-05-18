@@ -11,7 +11,7 @@ import { SettingsRangeField } from './Viewer3DSettingsPanel.controls';
 import { environmentPresets, lightingPresets } from './Viewer3DSettingsPanel.options';
 import type { Viewer3DSettingsSectionProps } from './Viewer3DSettingsPanel.types';
 
-const backgroundColors = ['#1a1a2e', '#0a0a0f', '#1f1f1f', '#2d2d3a', '#111827'];
+const backgroundColors = ['#1a1a2e', '#0a0a0f', '#1f1f1f', '#2d2d3a', '#111827', '#f3f4f6', '#ffffff'];
 
 function EnvironmentPresetField({ state, actions }: Viewer3DSettingsSectionProps): React.JSX.Element {
   return (

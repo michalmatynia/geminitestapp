@@ -1,3 +1,9 @@
+/**
+ * Templates UI Components - Public API
+ *
+ * Centralized export of reusable UI templates, including sophisticated data table panels,
+ * standardized modals, forms, pickers, and layout shells for consistent feature construction.
+ */
 export {
   SettingsFormModal,
   ConfirmDialogBatch,

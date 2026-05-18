@@ -72,6 +72,14 @@ const useForcedDismiss = (): boolean => {
   return hasForced;
 };
 
+/**
+ * Kangur App Bootstrap Gate
+ *
+ * Orchestrates the application's startup sequence.
+ * It ensures necessary initialization, settings loading, and authentication 
+ * checks are completed before rendering the main application content,
+ * displaying a boot screen during the loading process.
+ */
 export function KangurAppBootstrapGate({
   children,
 }: PropsWithChildren): React.JSX.Element {

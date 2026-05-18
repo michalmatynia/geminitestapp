@@ -9,7 +9,7 @@ import { TraderaExecutionSteps } from '@/features/integrations/components/listin
 import {
   quicklistStepTemplates,
 } from '@/features/integrations/utils/tradera-execution-steps';
-import { 
+import {
   formatTimestamp, 
   formatTraderaDuplicateMatchStrategy,
   formatTraderaSyncImageMode,
@@ -20,6 +20,12 @@ import {
   type resolveTraderaExecutionSummary,
   type resolveDisplayedTraderaDuplicateSummary,
 } from '../ProductListingDetails.utils';
+import { type TraderaExecutionStep } from '@/shared/contracts/integrations/listings';
+
+type TraderaListing = {
+  status: string;
+  title: string;
+};
 
 const paymentSolutionRunResultSchema = z.object({
   paymentSolutionTermsAccepted: z.boolean().optional(),
@@ -36,11 +42,11 @@ export function TraderaSection({
   listing,
 }: {
   execution: ReturnType<typeof resolveTraderaExecutionSummary>;
-  liveExecution: any;
+  liveExecution: TraderaExecutionStep | null;
   pendingLabel: string;
   duplicateSummary: ReturnType<typeof resolveDisplayedTraderaDuplicateSummary>;
   usesCustomScript: boolean;
-  listing: any;
+  listing: TraderaListing;
 }): React.JSX.Element {
   const pendingQuicklistAction =
     execution.pendingAction === 'list' ||

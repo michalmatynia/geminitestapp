@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Learner Activity Repository
+ *
+ * This service provides the repository interface for managing Kangur learner activity.
+ * It abstracts persistence for activity data, facilitating tracking and retrieval
+ * of learner interactions and engagement.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurLearnerActivityRepository } from './mongo-kangur-learner-activity-repository';

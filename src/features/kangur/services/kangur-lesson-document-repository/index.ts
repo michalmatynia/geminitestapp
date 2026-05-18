@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Lesson Document Repository
+ *
+ * This service provides the repository interface for managing Kangur lesson documents.
+ * It abstracts persistence for lesson content, facilitating CRUD operations,
+ * list retrieval, and locale-based management of lesson documentation.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurLessonDocumentRepository } from './mongo-kangur-lesson-document-repository';

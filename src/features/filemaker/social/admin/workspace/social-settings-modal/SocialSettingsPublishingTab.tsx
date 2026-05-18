@@ -5,74 +5,120 @@ import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminC
 import { useSocialPostContext } from '../SocialPostContext';
 import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
+type PublishingModalState = ReturnType<typeof useSocialSettingsModalContext>;
+
+const DEFAULT_HELPER_MESSAGE =
+  'Per-post editors now use the default publishing connection from this settings modal.';
+
+const MUTED_HELPER_CLASS = 'mt-3 text-xs text-muted-foreground';
+const ERROR_HELPER_CLASS = 'mt-3 text-xs text-red-500';
+const WARNING_HELPER_CLASS = 'mt-3 text-xs text-amber-500';
+
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
-  if (!normalized) return false;
+  if (normalized === undefined || normalized.length === 0) return false;
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
-export function SocialSettingsPublishingTab() {
-  const context = useSocialPostContext();
-  const state = useSocialSettingsModalContext();
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
-  const {
-    publishingConnectionId,
-    handlePublishingConnectionChange,
-    currentGenerationJob,
-    currentPipelineJob,
-    currentVisualAnalysisJob,
-  } = context;
+const hasLinkedInIntegration = (state: PublishingModalState): boolean => {
+  const integration: unknown = state.linkedinIntegration;
+  return integration !== null && integration !== undefined;
+};
 
-  const {
-    linkedInOptions,
-    linkedinIntegration,
-    selectedLinkedInConnection,
-    linkedInExpiryStatus,
-    linkedInExpiryLabel,
-    linkedInDaysRemaining,
-  } = state;
+const isSelectedConnectionUnauthorized = (state: PublishingModalState): boolean => {
+  const connection: unknown = state.selectedLinkedInConnection;
+  return isRecord(connection) && connection['hasLinkedInAccessToken'] !== true;
+};
 
-  const isRuntimeLocked =
-    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
-    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
-    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+const formatExpiryLabel = (prefix: string, label: string | null | undefined): string => {
+  const trimmedLabel = label?.trim();
+  return trimmedLabel === undefined || trimmedLabel.length === 0
+    ? prefix
+    : `${prefix} ${trimmedLabel}`;
+};
 
-  const placeholder = linkedinIntegration
+const resolveConnectionTitle = ({
+  isRuntimeLocked,
+  state,
+}: {
+  isRuntimeLocked: boolean;
+  state: PublishingModalState;
+}): string => {
+  if (isRuntimeLocked) return 'Wait for the current Social runtime job to finish.';
+  if (!hasLinkedInIntegration(state)) return 'Create LinkedIn integration first';
+  if (state.linkedInOptions.length === 0) {
+    return 'Add a publishing connection in Admin > Integrations to use it here.';
+  }
+  return 'Default publishing connection';
+};
+
+const resolveWarningMessage = (state: PublishingModalState): string => {
+  const dayText = state.linkedInDaysRemaining === 1 ? 'day' : 'days';
+  const label = state.linkedInExpiryLabel?.trim();
+  const labelText = label !== undefined && label.length > 0 ? ` (${label})` : '';
+  return `LinkedIn token expires in ${state.linkedInDaysRemaining} ${dayText}${labelText}.`;
+};
+
+const resolveHelperMessage = (state: PublishingModalState): React.ReactNode => {
+  if (!hasLinkedInIntegration(state)) {
+    return 'Create the LinkedIn integration in Admin > Integrations to enable publishing.';
+  }
+  if (state.linkedInOptions.length === 0) {
+    return 'Add a publishing connection in Admin > Integrations to use it here.';
+  }
+  if (isSelectedConnectionUnauthorized(state)) {
+    return 'Selected connection is not authorized. Reconnect in Admin > Integrations.';
+  }
+  if (state.linkedInExpiryStatus === 'expired') {
+    return `${formatExpiryLabel('LinkedIn token expired on', state.linkedInExpiryLabel)}.`;
+  }
+  if (state.linkedInExpiryStatus === 'warning') {
+    return resolveWarningMessage(state);
+  }
+  return DEFAULT_HELPER_MESSAGE;
+};
+
+const resolveHelperClassName = (state: PublishingModalState): string => {
+  if (!hasLinkedInIntegration(state) || state.linkedInOptions.length === 0) {
+    return MUTED_HELPER_CLASS;
+  }
+  if (isSelectedConnectionUnauthorized(state)) {
+    return ERROR_HELPER_CLASS;
+  }
+  if (state.linkedInExpiryStatus === 'expired') {
+    return ERROR_HELPER_CLASS;
+  }
+  return state.linkedInExpiryStatus === 'warning' ? WARNING_HELPER_CLASS : MUTED_HELPER_CLASS;
+};
+
+const isPublishingRuntimeLocked = (context: ReturnType<typeof useSocialPostContext>): boolean =>
+  [
+    context.currentVisualAnalysisJob?.status,
+    context.currentGenerationJob?.status,
+    context.currentPipelineJob?.status,
+  ].some((status) => isSocialRuntimeJobInFlight(status));
+
+const resolvePlaceholder = (state: PublishingModalState): string =>
+  hasLinkedInIntegration(state)
     ? 'Select publishing connection'
     : 'Create LinkedIn integration first';
-  const connectionTitle = isRuntimeLocked
-    ? 'Wait for the current Social runtime job to finish.'
-      : !linkedinIntegration
-        ? 'Create LinkedIn integration first'
-      : linkedInOptions.length === 0
-        ? 'Add a publishing connection in Admin > Integrations to use it here.'
-        : 'Default publishing connection';
 
-  let helperMessage: React.ReactNode =
-    'Per-post editors now use the default publishing connection from this settings modal.';
+const isPublishingSelectDisabled = ({
+  isRuntimeLocked,
+  state,
+}: {
+  isRuntimeLocked: boolean;
+  state: PublishingModalState;
+}): boolean =>
+  !hasLinkedInIntegration(state) || state.linkedInOptions.length === 0 || isRuntimeLocked;
 
-  if (!linkedinIntegration) {
-    helperMessage = 'Create the LinkedIn integration in Admin > Integrations to enable publishing.';
-  } else if (linkedInOptions.length === 0) {
-    helperMessage = 'Add a publishing connection in Admin > Integrations to use it here.';
-  } else if (selectedLinkedInConnection && !selectedLinkedInConnection.hasLinkedInAccessToken) {
-    helperMessage = 'Selected connection is not authorized. Reconnect in Admin > Integrations.';
-  } else if (linkedInExpiryStatus === 'expired') {
-    helperMessage = `LinkedIn token expired${linkedInExpiryLabel ? ` on ${linkedInExpiryLabel}` : ''}.`;
-  } else if (linkedInExpiryStatus === 'warning') {
-    helperMessage = `LinkedIn token expires in ${linkedInDaysRemaining} day${linkedInDaysRemaining === 1 ? '' : 's'}${linkedInExpiryLabel ? ` (${linkedInExpiryLabel})` : ''}.`;
-  }
-
-  const helperClassName =
-    !linkedinIntegration || linkedInOptions.length === 0
-      ? 'mt-3 text-xs text-muted-foreground'
-      : selectedLinkedInConnection && !selectedLinkedInConnection.hasLinkedInAccessToken
-        ? 'mt-3 text-xs text-red-500'
-        : linkedInExpiryStatus === 'expired'
-          ? 'mt-3 text-xs text-red-500'
-          : linkedInExpiryStatus === 'warning'
-            ? 'mt-3 text-xs text-amber-500'
-            : 'mt-3 text-xs text-muted-foreground';
+export function SocialSettingsPublishingTab(): React.JSX.Element {
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalContext();
+  const isRuntimeLocked = isPublishingRuntimeLocked(context);
 
   return (
     <KangurAdminCard>
@@ -81,20 +127,20 @@ export function SocialSettingsPublishingTab() {
         description='Applies across Social Publishing. LinkedIn is the currently available channel adapter.'
       >
         <SelectSimple
-          value={publishingConnectionId ?? undefined}
+          value={context.publishingConnectionId ?? undefined}
           onValueChange={(id) => {
-            handlePublishingConnectionChange(id);
+            context.handlePublishingConnectionChange(id);
           }}
-          options={linkedInOptions}
-          placeholder={placeholder}
-          disabled={!linkedinIntegration || linkedInOptions.length === 0 || isRuntimeLocked}
+          options={state.linkedInOptions}
+          placeholder={resolvePlaceholder(state)}
+          disabled={isPublishingSelectDisabled({ isRuntimeLocked, state })}
           size='sm'
           ariaLabel='Default publishing connection'
-          title={connectionTitle}
+          title={resolveConnectionTitle({ isRuntimeLocked, state })}
         />
       </FormField>
 
-      <div className={helperClassName}>{helperMessage}</div>
+      <div className={resolveHelperClassName(state)}>{resolveHelperMessage(state)}</div>
     </KangurAdminCard>
   );
 }

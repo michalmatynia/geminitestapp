@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
 import { StudiqQueryProvider } from '../providers/QueryProvider';
+import { StudiqRootLoadingFallback } from '../components/StudiqRootLoadingFallback';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import {
   LITE_SETTINGS_HYDRATION_ELEMENT_ID,
@@ -13,7 +14,6 @@ import type { Metadata } from 'next';
 import type { JSX, ReactNode } from 'react';
 
 import './globals.css';
-import './kangur/kangur.css';
 
 export const metadata: Metadata = {
   title: 'StudiQ',
@@ -60,7 +60,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className='kangur-surface-active'>
-        <Suspense fallback={null}>
+        <Suspense fallback={<StudiqRootLoadingFallback />}>
           <StudiqRootContent>{children}</StudiqRootContent>
         </Suspense>
       </body>

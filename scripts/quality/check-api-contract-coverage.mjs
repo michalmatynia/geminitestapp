@@ -1,8 +1,16 @@
 import { analyzeApiContractCoverage } from './lib/check-api-contract-coverage.mjs';
 import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
+/**
+ * API Contract Coverage Check
+ * 
+ * Validates that API route handlers have corresponding contract tests.
+ * Generates a report summarizing contract coverage status, including route/method counts
+ * and test adjacency statistics.
+ */
 const toMarkdown = (payload) => {
-  const lines = [];
+...
+
   lines.push('# API Contract Coverage Report');
   lines.push('');
   lines.push(`Generated at: ${payload.generatedAt}`);

@@ -1,3 +1,10 @@
+/**
+ * Forms and Actions UI Components - Public API
+ *
+ * Centralized export of form-related UI components, input controls, action buttons,
+ * and form-specific layout/modal wrappers. These components provide the core
+ * building blocks for user data input and action execution throughout the app.
+ */
 export { PasswordInput } from './password-input';
 export { Input } from './input';
 export type { InputProps } from './input';

@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Lesson Template Repository
+ *
+ * This service provides the repository interface for managing Kangur lesson templates.
+ * It abstracts persistence for lesson structure templates, facilitating CRUD operations,
+ * list retrieval, and locale-based management of template data.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurLessonTemplateRepository } from './mongo-kangur-lesson-template-repository';

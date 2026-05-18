@@ -2,7 +2,7 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, MoreVertical, Plus, RefreshCw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
+import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, MoreVertical, Plus, RefreshCw, RotateCcw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Admin3DAssetsPage } from '@/features/viewer3d/admin.public';
@@ -13,12 +13,12 @@ import { useAsset3DById, useAssets3D } from '@/features/viewer3d/hooks/useAsset3
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecord, Viewer3DState } from '@/shared/contracts/viewer3d';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import type { OrbitControlsHandle } from '@/features/viewer3d/components/Viewer3D';
 import { Viewer3DSettingsPanel } from '@/features/viewer3d/components/Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from '@/features/viewer3d/components/Viewer3DStatusInfo';
-import { Viewer3DProvider } from '@/features/viewer3d/context/Viewer3DContext';
+import { Viewer3DProvider, useViewer3DActions } from '@/features/viewer3d/context/Viewer3DContext';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
@@ -56,6 +56,11 @@ import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
 const ENDPOINT = '/api/v2/page-manager/milkbardesigners';
 const PUSH_ENDPOINT = '/api/v2/page-manager/milkbardesigners/push-to-cloud';
 const MILKBAR_CMS_SNAPSHOT_QUERY_KEY = ['page-manager', 'milkbardesigners', 'snapshot'] as const;
+const MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE = {
+  renderMode: 'solid',
+  backgroundColor: '#f3f4f6',
+  enableContactShadows: true,
+} satisfies Partial<Viewer3DState>;
 
 const TABS = [
   { label: 'Page Content', value: 'content' },
@@ -1317,6 +1322,22 @@ const getAsset3DDisplayName = (
   return asset.filename ?? fallback;
 };
 
+const getModelUrlDisplayName = (modelUrl: string): string => {
+  const trimmed = modelUrl.trim();
+  if (trimmed.length === 0) return '3D model URL';
+  try {
+    const parsed = new URL(trimmed, 'https://milkbar.local');
+    const filename = decodeURIComponent(parsed.pathname.split('/').filter(Boolean).pop() ?? '');
+    return filename.length > 0 ? filename : trimmed;
+  } catch {
+    const filename = trimmed.split('/').filter(Boolean).pop() ?? '';
+    return filename.length > 0 ? filename : trimmed;
+  }
+};
+
+const isMilkbarModelUrl = (modelUrl: string | undefined): boolean =>
+  modelUrl?.includes('/uploads/cms/models/') === true;
+
 const getDrawing3DUploadButtonLabel = ({
   isUploading,
   uploadProgress,
@@ -1537,16 +1558,25 @@ function Asset3DStorageStatusBadge({
   asset,
   isUploading = false,
   isMissing = false,
+  modelUrl,
 }: {
   asset: Asset3DRecord | undefined;
   isUploading?: boolean;
   isMissing?: boolean;
+  modelUrl?: string;
 }): React.JSX.Element {
   if (isUploading) {
     return <Badge variant='processing'>Uploading</Badge>;
   }
   if (isMissing) {
     return <Badge variant='destructive'>Missing</Badge>;
+  }
+  if (modelUrl !== undefined && modelUrl.trim().length > 0) {
+    return isMilkbarModelUrl(modelUrl) ? (
+      <Badge variant='success'>Page URL</Badge>
+    ) : (
+      <Badge variant='outline'>Model URL</Badge>
+    );
   }
   if (asset === undefined) {
     return <Badge variant='outline'>Resolving</Badge>;
@@ -1560,6 +1590,7 @@ function Asset3DStorageStatusBadge({
 
 function Drawing3DAssetSlotCard({
   assetId,
+  modelUrl,
   index,
   isUploading,
   uploadProgress,
@@ -1571,6 +1602,7 @@ function Drawing3DAssetSlotCard({
   onMoveDown,
 }: {
   assetId: string;
+  modelUrl: string;
   index: number;
   isUploading: boolean;
   uploadProgress: number | null;
@@ -1581,15 +1613,24 @@ function Drawing3DAssetSlotCard({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }): React.JSX.Element {
-  const hasAsset = assetId.trim().length > 0;
-  const assetQuery = useAsset3DById(hasAsset ? assetId : null);
+  const hasAssetId = assetId.trim().length > 0;
+  const hasModelUrl = modelUrl.trim().length > 0;
+  const hasModel = hasAssetId || hasModelUrl;
+  const assetQuery = useAsset3DById(hasAssetId ? assetId : null);
   const asset = assetQuery.data;
   const isMissing = assetQuery.isError;
-  const title = isMissing ? 'Missing 3D asset' : getAsset3DDisplayName(asset, assetId);
+  const assetTitle = isMissing ? 'Missing 3D asset' : getAsset3DDisplayName(asset, assetId);
+  const title = hasAssetId ? assetTitle : getModelUrlDisplayName(modelUrl);
+  let detailText = 'Direct model URL used by the live page';
+  if (hasAssetId) {
+    detailText = isMissing
+      ? 'Remove or replace this stale asset ID'
+      : asset?.format ?? asset?.mimetype ?? '3D model';
+  }
   const uploadButtonLabel = getDrawing3DUploadButtonLabel({
     isUploading,
     uploadProgress,
-    hasAsset,
+    hasAsset: hasModel,
   });
 
   return (
@@ -1601,28 +1642,30 @@ function Drawing3DAssetSlotCard({
               <Box className='size-3.5 text-blue-400/70' />
               3D asset {index + 1}
             </p>
-            {hasAsset ? (
+            {hasAssetId ? (
               <p className='mt-1 truncate font-mono text-[10px] text-white/30'>{assetId}</p>
             ) : null}
+            {!hasAssetId && hasModelUrl ? (
+              <p className='mt-1 truncate font-mono text-[10px] text-emerald-200/50'>{modelUrl}</p>
+            ) : null}
           </div>
-          {hasAsset || isUploading ? (
+          {hasModel || isUploading ? (
             <Asset3DStorageStatusBadge
               asset={asset}
               isUploading={isUploading}
               isMissing={isMissing}
+              modelUrl={!hasAssetId ? modelUrl : undefined}
             />
           ) : (
             <Badge variant='outline'>Empty</Badge>
           )}
         </div>
         <div className='flex min-h-[54px] items-center rounded border border-white/5 bg-black/20 px-2 py-2'>
-          {hasAsset ? (
+          {hasModel ? (
             <div className='min-w-0'>
               <p className='truncate text-xs font-medium text-white/75'>{title}</p>
               <p className='mt-0.5 text-[10px] text-muted-foreground'>
-                {isMissing
-                  ? 'Remove or replace this stale asset ID'
-                  : asset?.format ?? asset?.mimetype ?? '3D model'}
+                {detailText}
               </p>
             </div>
           ) : (
@@ -1636,7 +1679,7 @@ function Drawing3DAssetSlotCard({
           size='sm'
           variant='ghost'
           className='h-7 px-2 text-xs'
-          disabled={!hasAsset || isUploading}
+          disabled={!hasModel || isUploading}
           icon={<Eye className='size-3.5' />}
           onClick={onPreview}
         >
@@ -1656,7 +1699,7 @@ function Drawing3DAssetSlotCard({
         <Button
           type='button'
           size='sm'
-          variant={hasAsset ? 'ghost' : 'secondary'}
+          variant={hasModel ? 'ghost' : 'secondary'}
           className='h-7 px-2 text-xs'
           disabled={isUploading}
           icon={<Library className='size-3.5' />}
@@ -1686,7 +1729,7 @@ function Drawing3DAssetSlotCard({
         >
           Down
         </Button>
-        {hasAsset ? (
+        {hasModel ? (
           <Button
             type='button'
             size='sm'
@@ -1706,10 +1749,14 @@ function Drawing3DAssetSlotCard({
 
 function Drawing3DAssetSlotsField({
   value,
+  urlValue,
   onChange,
+  onUrlsChange,
 }: {
   value: string[];
+  urlValue: string[];
   onChange: (assetIds: string[]) => void;
+  onUrlsChange: (modelUrls: string[]) => void;
 }): React.JSX.Element {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1719,32 +1766,38 @@ function Drawing3DAssetSlotsField({
   const [pickerSlotIndex, setPickerSlotIndex] = useState<number | null>(null);
   const [previewSlotIndex, setPreviewSlotIndex] = useState<number | null>(null);
   const slotValues = useMemo(() => createDrawing3DAssetSlotValues(value), [value]);
+  const slotUrls = useMemo(() => createDrawing3DAssetSlotValues(urlValue), [urlValue]);
 
   const setSlotValues = useCallback(
-    (nextValues: string[]): void => {
+    (nextValues: string[], nextUrls: string[] = slotUrls): void => {
       onChange(compactDrawing3DAssetSlotValues(nextValues));
+      onUrlsChange(compactDrawing3DAssetSlotValues(nextUrls));
     },
-    [onChange]
+    [onChange, onUrlsChange, slotUrls]
   );
 
   const setSlotValue = useCallback(
-    (index: number, nextValue: string): void => {
+    (index: number, nextValue: string, nextUrl = ''): void => {
       if (index < 0 || index >= DRAWING_3D_ASSET_SLOT_COUNT) return;
       const nextValues = createDrawing3DAssetSlotValues(value);
+      const nextUrls = createDrawing3DAssetSlotValues(urlValue);
       nextValues[index] = nextValue.trim();
-      setSlotValues(nextValues);
+      nextUrls[index] = nextUrl.trim();
+      setSlotValues(nextValues, nextUrls);
     },
-    [setSlotValues, value]
+    [setSlotValues, urlValue, value]
   );
 
   const swapSlots = useCallback(
     (fromIndex: number, toIndex: number): void => {
       if (toIndex < 0 || toIndex >= DRAWING_3D_ASSET_SLOT_COUNT) return;
       const nextValues = createDrawing3DAssetSlotValues(value);
+      const nextUrls = createDrawing3DAssetSlotValues(urlValue);
       [nextValues[fromIndex], nextValues[toIndex]] = [nextValues[toIndex] ?? '', nextValues[fromIndex] ?? ''];
-      setSlotValues(nextValues);
+      [nextUrls[fromIndex], nextUrls[toIndex]] = [nextUrls[toIndex] ?? '', nextUrls[fromIndex] ?? ''];
+      setSlotValues(nextValues, nextUrls);
     },
-    [setSlotValues, value]
+    [setSlotValues, urlValue, value]
   );
 
   const handleUploadFile = useCallback(
@@ -1789,6 +1842,8 @@ function Drawing3DAssetSlotsField({
 
   const activePreviewAssetId =
     previewSlotIndex !== null ? slotValues[previewSlotIndex]?.trim() ?? '' : '';
+  const activePreviewModelUrl =
+    previewSlotIndex !== null ? slotUrls[previewSlotIndex]?.trim() ?? '' : '';
 
   return (
     <FormField
@@ -1815,6 +1870,7 @@ function Drawing3DAssetSlotsField({
             <Drawing3DAssetSlotCard
               key={`drawing-3d-asset-slot-${index}`}
               assetId={assetId}
+              modelUrl={slotUrls[index] ?? ''}
               index={index}
               isUploading={uploadingSlotIndex === index}
               uploadProgress={uploadingSlotIndex === index ? uploadProgress : null}
@@ -1824,15 +1880,16 @@ function Drawing3DAssetSlotsField({
               }}
               onChoose={() => setPickerSlotIndex(index)}
               onPreview={() => setPreviewSlotIndex(index)}
-              onRemove={() => setSlotValue(index, '')}
+              onRemove={() => setSlotValue(index, '', '')}
               onMoveUp={() => swapSlots(index, index - 1)}
               onMoveDown={() => swapSlots(index, index + 1)}
             />
           ))}
         </div>
-        {activePreviewAssetId.length > 0 ? (
+        {activePreviewAssetId.length > 0 || activePreviewModelUrl.length > 0 ? (
           <Model3DPreviewModal
-            modelId={activePreviewAssetId}
+            modelId={activePreviewAssetId.length > 0 ? activePreviewAssetId : undefined}
+            modelUrl={activePreviewAssetId.length === 0 ? activePreviewModelUrl : undefined}
             title={`Drawing 3D asset ${Number(previewSlotIndex) + 1}`}
             onClose={() => setPreviewSlotIndex(null)}
           />
@@ -1843,7 +1900,7 @@ function Drawing3DAssetSlotsField({
             confirmLabel='Assign Asset'
             storageProfileFilter='milkbarCms'
             onSelect={(assetId) => {
-              setSlotValue(pickerSlotIndex, assetId);
+              setSlotValue(pickerSlotIndex, assetId, '');
               setPickerSlotIndex(null);
             }}
             onClose={() => setPickerSlotIndex(null)}
@@ -2004,9 +2061,11 @@ function ContentTab({
           label='Hero background 3D model'
           description='Uploads to FastComet /uploads/cms/models and drives the Vercel hero background model.'
           modelId={pageContent.hero.modelAssetId}
+          modelUrl={pageContent.hero.modelUrl}
           uploadName='Milkbar hero background model'
           tags={['hero']}
           onChange={(modelAssetId) => updateHero({ modelAssetId, modelUrl: undefined })}
+          onRemove={() => updateHero({ modelAssetId: undefined, modelUrl: undefined })}
         />
       </CollapsibleSection>
 
@@ -2023,9 +2082,11 @@ function ContentTab({
           label='Interior section 3D model'
           description='Uploads the Every line carries intent interior model to FastComet /uploads/cms/models.'
           modelId={pageContent.drawing.interiorModelAssetId}
+          modelUrl={pageContent.drawing.interiorModelUrl}
           uploadName='Milkbar Every line carries intent interior model'
           tags={['interior', 'drawing']}
           onChange={(interiorModelAssetId) => updateDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
+          onRemove={() => updateDrawing({ interiorModelAssetId: undefined, interiorModelUrl: undefined })}
         />
         <DrawingImageSlotsField
           value={pageContent.drawing.thumbImages}
@@ -2033,7 +2094,9 @@ function ContentTab({
         />
         <Drawing3DAssetSlotsField
           value={pageContent.drawing.asset3dSlots}
+          urlValue={pageContent.drawing.asset3dSlotUrls ?? []}
           onChange={(asset3dSlots) => updateDrawing({ asset3dSlots })}
+          onUrlsChange={(asset3dSlotUrls) => updateDrawing({ asset3dSlotUrls })}
         />
       </CollapsibleSection>
 
@@ -2592,6 +2655,24 @@ function ModelAssetLabel({
   );
 }
 
+function ModelUrlLabel({
+  modelUrl,
+  showStorageStatus = false,
+}: {
+  modelUrl: string;
+  showStorageStatus?: boolean;
+}): React.JSX.Element {
+  return (
+    <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-white/70'>
+      <Box className='size-3 shrink-0 text-emerald-400/70' />
+      <span className='truncate'>{getModelUrlDisplayName(modelUrl)}</span>
+      {showStorageStatus ? (
+        <Asset3DStorageStatusBadge asset={undefined} modelUrl={modelUrl} />
+      ) : null}
+    </span>
+  );
+}
+
 function ModelAssetLibraryPickerModal({
   title = 'Select 3D Asset from Library',
   confirmLabel = 'Assign Model',
@@ -2685,7 +2766,7 @@ function ModelAssetLibraryPickerModal({
       );
     }
     return (
-      <Viewer3DProvider key={selectedAsset.id}>
+      <Viewer3DProvider key={selectedAsset.id} initialState={MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE}>
         <Viewer3D
           modelUrl={modelUrl}
           onError={(err) => setModelError(err.message)}
@@ -2738,40 +2819,120 @@ function ModelAssetLibraryPickerModal({
   );
 }
 
+function Model3DPreviewFooter({
+  downloadName,
+  resolvedModelUrl,
+  showSettings,
+  onToggleSettings,
+}: {
+  downloadName: string;
+  resolvedModelUrl: string;
+  showSettings: boolean;
+  onToggleSettings: () => void;
+}): React.JSX.Element {
+  const { resetSettings } = useViewer3DActions();
+
+  return (
+    <div className='flex items-center justify-between border-t border-border/60 bg-muted/10 p-2'>
+      <div className='flex items-center gap-2'>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={resetSettings}
+          title='Reset settings'
+          className='h-8 w-8 p-0'
+          aria-label='Reset settings'
+        >
+          <RotateCcw className='h-4 w-4' />
+        </Button>
+        <Button
+          variant={showSettings ? 'secondary' : 'ghost'}
+          size='sm'
+          onClick={onToggleSettings}
+          className='h-8 text-xs'
+        >
+          <Settings2 className='mr-1.5 h-3.5 w-3.5' />
+          Settings
+          {showSettings ? (
+            <ChevronUp className='ml-1.5 h-3.5 w-3.5' />
+          ) : (
+            <ChevronDown className='ml-1.5 h-3.5 w-3.5' />
+          )}
+        </Button>
+      </div>
+      {resolvedModelUrl.length > 0 ? (
+        <a href={resolvedModelUrl} download={downloadName}>
+          <Button variant='outline' size='sm' className='h-8 text-xs'>
+            <Download className='mr-1.5 h-3.5 w-3.5' />
+            Download
+          </Button>
+        </a>
+      ) : (
+        <Button variant='outline' size='sm' className='h-8 text-xs' disabled>
+          <Download className='mr-1.5 h-3.5 w-3.5' />
+          Download
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function Model3DPreviewModal({
   modelId,
+  modelUrl,
   title,
   onClose,
 }: {
-  modelId: string;
+  modelId?: string;
+  modelUrl?: string;
   title: string;
   onClose: () => void;
 }): React.JSX.Element {
   const [showSettings, setShowSettings] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
-  const modelUrl = `/api/assets3d/${modelId}/file`;
+  const assignedModelId = modelId?.trim() ?? '';
+  const assignedModelUrl = modelUrl?.trim() ?? '';
+  let resolvedModelUrl = '';
+  if (assignedModelUrl.length > 0) {
+    resolvedModelUrl = assignedModelUrl;
+  } else if (assignedModelId.length > 0) {
+    resolvedModelUrl = `/api/assets3d/${assignedModelId}/file`;
+  }
+  const downloadName = getModelUrlDisplayName(resolvedModelUrl);
+  let previewContent: React.JSX.Element;
+  if (resolvedModelUrl.length === 0) {
+    previewContent = (
+      <div className='flex h-full items-center justify-center text-center text-muted-foreground'>
+        <p>No 3D model selected</p>
+      </div>
+    );
+  } else if (modelError !== null) {
+    previewContent = (
+      <div className='flex h-full items-center justify-center text-center text-red-400'>
+        <div>
+          <p>Failed to load 3D model</p>
+          <p className='mt-2 text-sm text-gray-400'>{modelError}</p>
+        </div>
+      </div>
+    );
+  } else {
+    previewContent = (
+      <Viewer3D
+        modelUrl={resolvedModelUrl}
+        onLoad={() => {}}
+        onError={(error) => setModelError(error.message)}
+        className='h-full w-full'
+      />
+    );
+  }
 
   return (
     <DetailModal isOpen title={`3D Preview — ${title}`} onClose={onClose} size='xl'>
-      <Viewer3DProvider>
+      <Viewer3DProvider key={resolvedModelUrl} initialState={MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE}>
         <div className='flex h-[600px] min-h-0 flex-col'>
           <div className='relative flex min-h-0 flex-1'>
             <div className={`bg-black/40 ${showSettings ? 'flex-1 lg:w-2/3' : 'w-full flex-1'}`}>
-              {modelError !== null ? (
-                <div className='flex h-full items-center justify-center text-center text-red-400'>
-                  <div>
-                    <p>Failed to load 3D model</p>
-                    <p className='mt-2 text-sm text-gray-400'>{modelError}</p>
-                  </div>
-                </div>
-              ) : (
-                <Viewer3D
-                  modelUrl={modelUrl}
-                  onLoad={() => {}}
-                  onError={(error) => setModelError(error.message)}
-                  className='h-full w-full'
-                />
-              )}
+              {previewContent}
             </div>
             {showSettings ? (
               <div className='absolute bottom-0 right-0 top-0 z-10 w-full border-l border-border/60 bg-card/30 lg:static lg:w-1/3'>
@@ -2780,23 +2941,12 @@ function Model3DPreviewModal({
             ) : null}
           </div>
           <Viewer3DStatusInfo />
-          <div className='flex items-center justify-between border-t border-border/60 bg-muted/10 p-2'>
-            <Button
-              variant={showSettings ? 'secondary' : 'ghost'}
-              size='sm'
-              onClick={() => setShowSettings((v) => !v)}
-              className='h-8 text-xs'
-            >
-              <Settings2 className='mr-1.5 h-3.5 w-3.5' />
-              Settings
-            </Button>
-            <a href={`/api/assets3d/${modelId}/file`} download>
-              <Button variant='outline' size='sm' className='h-8 text-xs'>
-                <Download className='mr-1.5 h-3.5 w-3.5' />
-                Download
-              </Button>
-            </a>
-          </div>
+          <Model3DPreviewFooter
+            downloadName={downloadName}
+            resolvedModelUrl={resolvedModelUrl}
+            showSettings={showSettings}
+            onToggleSettings={() => setShowSettings((value) => !value)}
+          />
         </div>
       </Viewer3DProvider>
     </DetailModal>
@@ -2807,16 +2957,20 @@ function CmsModel3DField({
   label,
   description,
   modelId,
+  modelUrl,
   uploadName,
   tags,
   onChange,
+  onRemove,
 }: {
   label: string;
   description: string;
   modelId: string | undefined;
+  modelUrl?: string | undefined;
   uploadName: string;
   tags: string[];
   onChange: (modelAssetId: string | undefined) => void;
+  onRemove?: () => void;
 }): React.JSX.Element {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2824,13 +2978,25 @@ function CmsModel3DField({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const hasModel = modelId !== undefined && modelId.trim().length > 0;
-  const assignedModelId = modelId ?? '';
+  const assignedModelId = modelId?.trim() ?? '';
+  const assignedModelUrl = modelUrl?.trim() ?? '';
+  const hasModelId = assignedModelId.length > 0;
+  const hasModelUrl = assignedModelUrl.length > 0;
+  const hasModel = hasModelId || hasModelUrl;
 
-  const assetQuery = useAsset3DById(hasModel ? assignedModelId : null);
+  const assetQuery = useAsset3DById(hasModelId ? assignedModelId : null);
   const asset = assetQuery.data;
-  const isFastComet = isMilkbarFastCometAsset(asset);
-  const isLocalOnly = hasModel && asset !== undefined && !isFastComet;
+  const isFastComet = hasModelId
+    ? isMilkbarFastCometAsset(asset)
+    : isMilkbarModelUrl(assignedModelUrl);
+  const isLocalOnly = hasModel && !isFastComet && (hasModelUrl || asset !== undefined);
+  const removeModel = useCallback((): void => {
+    if (onRemove !== undefined) {
+      onRemove();
+      return;
+    }
+    onChange(undefined);
+  }, [onChange, onRemove]);
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -2872,17 +3038,22 @@ function CmsModel3DField({
   const assetName = asset !== undefined && asset.name.trim().length > 0
     ? asset.name
     : (asset?.filename ?? null);
+  const modelDisplayName = hasModelId
+    ? assetName ?? assignedModelId
+    : getModelUrlDisplayName(assignedModelUrl);
+  let modelViewTrigger = 'View: Empty';
+  if (uploading) {
+    modelViewTrigger = getModelUploadButtonLabel(uploading, uploadProgress, hasModel);
+  } else if (hasModel) {
+    modelViewTrigger = 'View: Assigned';
+  }
 
   const thumbnailContent = hasModel ? (
     <div className='flex h-full w-full flex-col items-center justify-center gap-1 px-1'>
-      <Box className='h-6 w-6 shrink-0 text-blue-400/60' />
-      {assetName !== null ? (
-        <span className='line-clamp-2 w-full text-center text-[9px] leading-tight text-white/40'>
-          {assetName}
-        </span>
-      ) : (
-        <span className='text-[9px] text-white/25'>{assignedModelId.slice(0, 6)}…</span>
-      )}
+      <Box className={`h-6 w-6 shrink-0 ${hasModelId ? 'text-blue-400/60' : 'text-emerald-400/60'}`} />
+      <span className='line-clamp-2 w-full text-center text-[9px] leading-tight text-white/40'>
+        {modelDisplayName}
+      </span>
     </div>
   ) : (
     <button
@@ -2905,13 +3076,7 @@ function CmsModel3DField({
             variant='outline'
             size='sm'
             triggerClassName='h-6 px-2 text-[10px]'
-            trigger={
-              uploading
-                ? getModelUploadButtonLabel(uploading, uploadProgress, hasModel)
-                : hasModel
-                  ? 'View: Assigned'
-                  : 'View: Empty'
-            }
+            trigger={modelViewTrigger}
             ariaLabel='Upload model source'
             className='min-w-[140px]'
           >
@@ -2942,7 +3107,7 @@ function CmsModel3DField({
             {hasModel ? (
               <DropdownMenuItem
                 className='text-red-400 focus:text-red-300'
-                onClick={() => onChange(undefined)}
+                onClick={removeModel}
               >
                 Remove
               </DropdownMenuItem>
@@ -3006,7 +3171,8 @@ function CmsModel3DField({
       </FormField>
       {previewOpen && hasModel ? (
         <Model3DPreviewModal
-          modelId={assignedModelId}
+          modelId={hasModelId ? assignedModelId : undefined}
+          modelUrl={!hasModelId ? assignedModelUrl : undefined}
           title={label}
           onClose={() => setPreviewOpen(false)}
         />
@@ -3045,8 +3211,14 @@ function ProjectModel3DSection({
   const [showInlineViewer, setShowInlineViewer] = useState(false);
   const controlsRef = useRef<OrbitControlsHandle | null>(null);
 
-  const hasModel = project.modelAssetId !== undefined && project.modelAssetId !== '';
-  const projectModelId = project.modelAssetId ?? '';
+  const projectModelId = project.modelAssetId?.trim() ?? '';
+  const projectModelUrl = project.modelUrl?.trim() ?? '';
+  const hasModelId = projectModelId.length > 0;
+  const hasModelUrl = projectModelUrl.length > 0;
+  const hasModel = hasModelId || hasModelUrl;
+  const activeProjectModelUrl = hasModelId
+    ? `/api/assets3d/${projectModelId}/file`
+    : projectModelUrl;
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -3104,7 +3276,11 @@ function ProjectModel3DSection({
         <span className='text-xs font-medium text-muted-foreground'>3D Model</span>
         {hasModel ? (
           <>
-            <ModelAssetLabel modelId={projectModelId} showStorageStatus />
+            {hasModelId ? (
+              <ModelAssetLabel modelId={projectModelId} showStorageStatus />
+            ) : (
+              <ModelUrlLabel modelUrl={projectModelUrl} showStorageStatus />
+            )}
             <Button
               type='button'
               size='sm'
@@ -3176,10 +3352,10 @@ function ProjectModel3DSection({
       </div>
       {showInlineViewer && hasModel ? (
         <div className='overflow-hidden rounded-md border border-white/10 bg-black/40'>
-          <Viewer3DProvider key={project.modelAssetId}>
+          <Viewer3DProvider key={activeProjectModelUrl} initialState={MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE}>
             <div className='relative h-72'>
               <Viewer3D
-                modelUrl={`/api/assets3d/${project.modelAssetId as string}/file`}
+                modelUrl={activeProjectModelUrl}
                 settings={{ autoRotate: false, enableContactShadows: true, backgroundColor: '#0d0d14' }}
                 className='h-full w-full'
                 allowUserControls
@@ -3206,7 +3382,8 @@ function ProjectModel3DSection({
       ) : null}
       {previewOpen && hasModel ? (
         <Model3DPreviewModal
-          modelId={projectModelId}
+          modelId={hasModelId ? projectModelId : undefined}
+          modelUrl={!hasModelId ? projectModelUrl : undefined}
           title={project.name.length > 0 ? project.name : project.code}
           onClose={() => setPreviewOpen(false)}
         />

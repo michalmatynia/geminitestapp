@@ -1,6 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { type z } from 'zod';
 
+/**
+ * Chatbot Sessions API Handler
+ * 
+ * Implements business logic for managing chatbot sessions, 
+ * delegating persistence to the `chatbotSessionRepository`.
+ */
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { parseJsonBody } from '@/features/products/server';
 import {

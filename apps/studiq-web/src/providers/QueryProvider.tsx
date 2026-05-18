@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { createQueryClient } from '@/shared/lib/query-client';
+
 import { readLiteSettingsHydrationData } from '@/shared/lib/lite-settings-hydration';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -40,7 +42,7 @@ const getQueryClient = (
     return new QueryClient();
   }
   if (!browserQueryClient) {
-    browserQueryClient = new QueryClient();
+    browserQueryClient = createQueryClient();
   }
   hydrateLiteSettingsQueryCache(browserQueryClient, initialLiteSettings);
   return browserQueryClient;

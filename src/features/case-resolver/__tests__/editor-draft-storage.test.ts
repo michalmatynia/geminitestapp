@@ -89,6 +89,8 @@ describe('case resolver editor draft storage', () => {
       writable: true,
       value: {
         localStorage,
+        location: { href: 'http://localhost' },
+        navigator: { userAgent: 'test' },
       },
     });
   });
@@ -102,6 +104,8 @@ describe('case resolver editor draft storage', () => {
       writable: true,
       value: {
         localStorage,
+        location: { href: 'http://localhost' },
+        navigator: { userAgent: 'test' },
       },
     });
 
@@ -121,6 +125,8 @@ describe('case resolver editor draft storage', () => {
       writable: true,
       value: {
         localStorage,
+        location: { href: 'http://localhost' },
+        navigator: { userAgent: 'test' },
       },
     });
 
@@ -161,6 +167,8 @@ describe('case resolver editor draft storage', () => {
       writable: true,
       value: {
         localStorage,
+        location: { href: 'http://localhost' },
+        navigator: { userAgent: 'test' },
       },
     });
 

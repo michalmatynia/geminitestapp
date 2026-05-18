@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Subject Focus Repository
+ *
+ * This service provides the repository interface for managing Kangur learner subject focus.
+ * It abstracts persistence for subject focus data, facilitating retrieval and updates
+ * for tailored learning experiences.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurSubjectFocusRepository } from './mongo-kangur-subject-focus-repository';

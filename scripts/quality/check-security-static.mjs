@@ -1,8 +1,15 @@
 import { analyzeSecurityStatic } from './lib/check-security-static.mjs';
 import { renderIssueTable, renderRuleTable, runQualityCheckCli } from './lib/check-runner.mjs';
 
+/**
+ * Static Security Review
+ * 
+ * Performs static analysis to identify potential security vulnerabilities.
+ * Generates a markdown report summarizing findings, file scan counts, and risk status.
+ */
 const toMarkdown = (payload) => {
-  const lines = [];
+...
+
   lines.push('# Static Security Review');
   lines.push('');
   lines.push(`Generated at: ${payload.generatedAt}`);

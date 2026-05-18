@@ -1,3 +1,11 @@
+/**
+ * Amazon Scan Probe
+ * 
+ * Diagnostic tool used to probe and analyze Amazon product scan processes.
+ * It interfaces with the product scan service, classifies failures, and reads
+ * diagnostic artifacts for debugging scan issues.
+ */
+
 import {
   type ProductScanRecord,
   isProductScanActiveStatus,

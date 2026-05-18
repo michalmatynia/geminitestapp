@@ -599,12 +599,11 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       ...(fingerprint ? { fingerprint } : {}),
     };
 
-    const critical =
-      typeof input.critical === 'boolean'
-        ? input.critical
-        : typeof input.context?.['critical'] === 'boolean'
-          ? Boolean(input.context?.['critical'])
-          : false;
+    const critical = typeof input.critical === 'boolean'
+      ? input.critical
+      : typeof input.context?.['critical'] === 'boolean'
+        ? (input.context['critical'] === true)
+        : false;
 
     // Emit to console for standard logging and capture tools
     const consoleMsg = `[${input.source || 'system'}] ${input.message}`;

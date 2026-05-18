@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Progress Repository
+ *
+ * This service provides the repository interface for managing Kangur learner progress.
+ * It abstracts persistence for progress data (e.g., XP, games played), facilitating
+ * retrieval and updates across the platform.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurProgressRepository } from './mongo-kangur-progress-repository';

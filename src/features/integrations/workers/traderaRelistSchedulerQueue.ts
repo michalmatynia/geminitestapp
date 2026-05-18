@@ -168,7 +168,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
       // Check the current state *after* potentially awaiting above
       const currentWorkerStarted = queueState.workerStarted;
       if (currentWorkerStarted === false) {
-        queueState.workerStarted = true;
+        Object.assign(queueState, { workerStarted: true });
         queue.startWorker();
       }
 
@@ -188,11 +188,10 @@ export const startTraderaRelistSchedulerQueue = (): void => {
         }
         if (schedulerRepeatJobs.length > 0) {
           await Promise.all(schedulerRepeatJobs.map((rj) => bullQueue.removeRepeatableByKey(rj.key)));
-          queueState.repeatRegistered = false;
+          Object.assign(queueState, { repeatRegistered: false });
         }
       } else {
-        const currentRepeatRegistered = queueState.repeatRegistered;
-        if (currentRepeatRegistered === true) {
+        if (queueState.repeatRegistered === true) {
           queueState.startupInFlight = false;
           return;
         }

@@ -1,3 +1,10 @@
+/**
+ * Admin UI Components - Public API
+ *
+ * Centralized export of admin-specific UI components, including page layouts,
+ * breadcrumbs, and eyebrow headers for various administrative modules.
+ * These components ensure consistent look-and-feel across the admin dashboard.
+ */
 export { AdminAgentCreatorBreadcrumbs } from './admin-agent-creator-breadcrumbs';
 export { AdminAgentCreatorPageLayout } from './admin-agent-creator-page-layout';
 export { AdminAgentTeachingBreadcrumbs } from './admin-agent-teaching-breadcrumbs';

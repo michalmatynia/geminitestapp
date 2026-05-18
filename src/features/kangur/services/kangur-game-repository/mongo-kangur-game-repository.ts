@@ -1,5 +1,12 @@
 import 'server-only';
 
+/**
+ * Kangur Game Repository (MongoDB Implementation)
+ *
+ * This repository handles MongoDB persistence for Kangur platform game definitions.
+ * It manages CRUD operations, index maintenance, and initialization of default game sets.
+ */
+
 import type { Collection, Db, Document } from 'mongodb';
 
 import { createDefaultKangurGames } from '@/features/kangur/games';

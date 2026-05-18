@@ -1,3 +1,10 @@
+/**
+ * Navigation and Layout UI Components - Public API
+ *
+ * Centralized export of structural UI components, including page layouts,
+ * navigation helpers (breadcrumbs, pagination, side panels), and layout utilities
+ * for consistent application-wide spatial organization.
+ */
 export { insetPanelVariants, InsetPanel } from './InsetPanel';
 export type { InsetPanelProps } from './InsetPanel';
 export { SkipToContentLink } from './SkipToContentLink';

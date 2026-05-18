@@ -73,6 +73,7 @@ function scrambleReveal(el: HTMLElement, final: string): () => void {
 export default function GSAPInit() {
   useEffect(() => {
     let navScrollHandler: (() => void) | null = null;
+    let revealFallbackTimer = 0;
     const injectedEls: HTMLElement[] = [];
     const scrambleCleanups: Array<() => void> = [];
     const splitH2s: Array<{ el: HTMLElement; original: string }> = [];
@@ -248,6 +249,7 @@ export default function GSAPInit() {
           const frame = card.querySelector<HTMLElement>('.project-frame, .project-frame-3d');
           if (!frame) return;
           const curtain = document.createElement('span');
+          curtain.className = 'project-reveal-curtain';
           curtain.style.cssText = [
             'position:absolute', 'inset:0', 'background:var(--ink)',
             'z-index:3', 'transform-origin:right center', 'pointer-events:none',
@@ -397,10 +399,40 @@ export default function GSAPInit() {
           },
         });
       }
+
+      revealFallbackTimer = window.setTimeout(() => {
+        document
+          .querySelectorAll<HTMLElement>(
+            [
+              '.rev',
+              '.practice-row',
+              '.project-card',
+              '.project-meta',
+              '.proc-cell',
+              '.metric-cell',
+              '.phil-figure',
+              '.case-fig',
+              '.foot-brand',
+              '.foot-col',
+              'h2.rev span',
+            ].join(',')
+          )
+          .forEach((el) => {
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+            el.style.clipPath = 'none';
+          });
+        document
+          .querySelectorAll<HTMLElement>('.project-reveal-curtain')
+          .forEach((el) => {
+            el.style.transform = 'scaleX(0)';
+          });
+      }, 2500);
     });
 
     return () => {
       ctx.revert();
+      window.clearTimeout(revealFallbackTimer);
       if (navScrollHandler) document.removeEventListener('scroll', navScrollHandler);
       scrambleCleanups.forEach((c) => c());
       injectedEls.forEach((el) => el.remove());

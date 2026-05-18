@@ -16,7 +16,11 @@
 
 import React, { useState, useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
 
-import type { Asset3dOrderedDitheringPresetKey, Viewer3DState } from '@/shared/contracts/viewer3d';
+import type {
+  Asset3dOrderedDitheringPresetKey,
+  Asset3dRenderMode,
+  Viewer3DState,
+} from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
@@ -77,6 +81,7 @@ interface Viewer3DContextType extends Viewer3DState {
   // Rendering and camera controls
   setAutoRotate: (value: boolean) => void;
   setAutoRotateSpeed: (value: number) => void;
+  setRenderMode: (value: Asset3dRenderMode) => void;
   setEnvironment: (value: EnvironmentPreset) => void;
   setLighting: (value: LightingPreset) => void;
   setLightIntensity: (value: number) => void;
@@ -123,6 +128,7 @@ interface Viewer3DContextType extends Viewer3DState {
 type Viewer3DActionsKey =
   | 'setAutoRotate'
   | 'setAutoRotateSpeed'
+  | 'setRenderMode'
   | 'setEnvironment'
   | 'setLighting'
   | 'setLightIntensity'
@@ -174,6 +180,7 @@ export const { Context: Viewer3DActionsContext, useStrictContext: useViewer3DAct
 const initialViewer3DState: Viewer3DStateContextType = {
   autoRotate: true,
   autoRotateSpeed: 2,
+  renderMode: 'textured',
   environment: 'studio',
   lighting: 'studio',
   lightIntensity: 1,
@@ -214,6 +221,7 @@ const createViewer3DActions = (
 ): Viewer3DActionsContextType => ({
   setAutoRotate: setViewerValue(setViewerState, 'autoRotate'),
   setAutoRotateSpeed: setViewerValue(setViewerState, 'autoRotateSpeed'),
+  setRenderMode: setViewerValue(setViewerState, 'renderMode'),
   setEnvironment: setViewerValue(setViewerState, 'environment'),
   setLighting: setViewerValue(setViewerState, 'lighting'),
   setLightIntensity: setViewerValue(setViewerState, 'lightIntensity'),
@@ -241,9 +249,24 @@ const createViewer3DActions = (
   applyOrderedDitheringPreset,
 });
 
-export function Viewer3DProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const [stateValue, setViewerState] = useState<Viewer3DStateContextType>(initialViewer3DState);
-  const resetSettings = useCallback((): void => setViewerState({ ...initialViewer3DState }), []);
+export function Viewer3DProvider({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState?: Partial<Viewer3DStateContextType>;
+}): React.JSX.Element {
+  const resolvedInitialState = useMemo(
+    () => ({ ...initialViewer3DState, ...initialState }),
+    [initialState]
+  );
+  const [stateValue, setViewerState] = useState<Viewer3DStateContextType>(
+    () => resolvedInitialState
+  );
+  const resetSettings = useCallback(
+    (): void => setViewerState({ ...resolvedInitialState }),
+    [resolvedInitialState]
+  );
   const applyOrderedDitheringPreset = useCallback(
     (preset: Exclude<OrderedDitheringPresetKey, 'custom'>): void => {
       const config = orderedDitheringPresets[preset];

@@ -7,26 +7,14 @@ import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
 
-import type { Asset3dLightingPreset, Asset3dEnvironmentPreset, Viewer3DSettings } from '@/shared/contracts/viewer3d';
+import type { Asset3dLightingPreset, Asset3dEnvironmentPreset, Asset3dRenderMode, Viewer3DSettings } from '@/shared/contracts/viewer3d';
 
 import { useOptionalViewer3DState } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
-import {
-  Model3DErrorBoundary,
-  Loader,
-  AutoRotateGroup,
-  Ground,
-  SceneLighting,
-  ScreenshotCapture,
-} from './Viewer3DSubcomponents';
-import {
-  useModelAvailability,
-  Viewer3DCanvasErrorBoundary,
-  Viewer3DLoadErrorFallback,
-  Viewer3DLoadingFallback,
-} from './Viewer3DLoadState';
+import { Model3DErrorBoundary, Loader, AutoRotateGroup, Ground, SceneLighting, ScreenshotCapture } from './Viewer3DSubcomponents';
+import { useModelAvailability, Viewer3DCanvasErrorBoundary, Viewer3DLoadErrorFallback, Viewer3DLoadingFallback } from './Viewer3DLoadState';
 import { Model3D } from './Model3D';
 
 export type LightingPreset = Asset3dLightingPreset;
@@ -76,6 +64,7 @@ interface ResolvedSettings {
   enableContactShadows: boolean;
   autoRotate: boolean;
   autoRotateSpeed: number;
+  renderMode: Asset3dRenderMode;
   modelTransform?: Viewer3DSettings['transform'];
 }
 
@@ -136,6 +125,7 @@ function useViewerSettings(propSettings?: Viewer3DSettings): ResolvedSettings {
     enableContactShadows: getSetting('enableContactShadows', true),
     autoRotate: getSetting('autoRotate', true),
     autoRotateSpeed: getSetting('autoRotateSpeed', 2),
+    renderMode: getSetting('renderMode', 'textured'),
     modelTransform: propSettings?.transform,
   };
 }
@@ -308,7 +298,7 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
   const modelNode = (
     <Model3DErrorBoundary onError={onError}>
       <AutoRotateGroup autoRotate={s.autoRotate} autoRotateSpeed={s.autoRotateSpeed}>
-        <Model3D url={modelUrl} onLoad={onLoad} onError={onError} position={s.modelTransform?.position} rotation={s.modelTransform?.rotation} scale={s.modelTransform?.scale} enableShadows={s.enableShadows} />
+        <Model3D url={modelUrl} onLoad={onLoad} onError={onError} position={s.modelTransform?.position} rotation={s.modelTransform?.rotation} scale={s.modelTransform?.scale} enableShadows={s.enableShadows} renderMode={s.renderMode} />
       </AutoRotateGroup>
     </Model3DErrorBoundary>
   );

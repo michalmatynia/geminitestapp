@@ -4,71 +4,133 @@ type SocialPostAddonCaptureDetailOptions = {
   personaNameById?: ReadonlyMap<string, string>;
 };
 
+type SocialPostAddonCaptureDetails = SocialPublishingImageAddon & {
+  playwrightAttemptCount?: number;
+  playwrightCaptureDurationMs?: number;
+  playwrightCaptureMode?: string;
+  playwrightCaptureStage?: string;
+  playwrightReadinessMode?: string;
+  playwrightViewportPreset?: string;
+};
+
+const trimOptional = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const appendLabel = (labels: string[], label: string | null): void => {
+  if (label !== null) {
+    labels.push(label);
+  }
+};
+
+const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+const resolvePersonaLabel = (
+  addon: SocialPostAddonCaptureDetails,
+  options: SocialPostAddonCaptureDetailOptions
+): string | null => {
+  const personaId = trimOptional(addon.playwrightPersonaId);
+  if (personaId === null) {
+    return null;
+  }
+
+  const personaName = trimOptional(options.personaNameById?.get(personaId));
+  return personaName === null
+    ? `Persona: ${personaId}`
+    : `Persona: ${personaName} (${personaId})`;
+};
+
+const resolveRouteLabelValue = ({
+  routeId,
+  routeTitle,
+}: {
+  routeId: string | null;
+  routeTitle: string | null;
+}): string | null => {
+  if (routeTitle !== null && routeId !== null && routeTitle !== routeId) {
+    return `${routeTitle} (${routeId})`;
+  }
+  return routeTitle ?? routeId;
+};
+
+const resolveRouteOrPresetLabel = (
+  addon: SocialPostAddonCaptureDetails
+): string | null => {
+  const routeTitle = trimOptional(addon.playwrightCaptureRouteTitle);
+  const routeId = trimOptional(addon.playwrightCaptureRouteId);
+  const routeLabel = resolveRouteLabelValue({ routeId, routeTitle });
+  if (routeLabel !== null) {
+    return `Route: ${routeLabel}`;
+  }
+
+  const presetId = trimOptional(addon.presetId);
+  return presetId === null ? null : `Preset: ${presetId}`;
+};
+
+const formatCaptureMode = (mode: string): string => {
+  if (mode === 'full-page') {
+    return 'Full page';
+  }
+  return mode === 'viewport' ? 'Viewport' : mode;
+};
+
+const formatReadinessMode = (mode: string): string => {
+  if (mode === 'networkidle') {
+    return 'Network idle';
+  }
+  return mode === 'load' ? 'Load' : mode;
+};
+
+const getBaseCaptureDetailLabels = (
+  addon: SocialPostAddonCaptureDetails,
+  options: SocialPostAddonCaptureDetailOptions
+): string[] => {
+  const labels: string[] = [];
+  const sourceLabel = trimOptional(addon.sourceLabel);
+  const runId = trimOptional(addon.playwrightRunId);
+  const appearanceMode = trimOptional(addon.captureAppearanceMode);
+
+  appendLabel(labels, sourceLabel === null ? null : `Source: ${sourceLabel}`);
+  appendLabel(labels, resolvePersonaLabel(addon, options));
+  appendLabel(labels, resolveRouteOrPresetLabel(addon));
+  appendLabel(labels, runId === null ? null : `Run: ${runId}`);
+  appendLabel(labels, appearanceMode === null ? null : `Appearance: ${appearanceMode}`);
+  return labels;
+};
+
+const getPlaywrightDiagnosticLabels = (
+  addon: SocialPostAddonCaptureDetails
+): string[] => {
+  const labels: string[] = [];
+  const captureMode = trimOptional(addon.playwrightCaptureMode);
+  const readinessMode = trimOptional(addon.playwrightReadinessMode);
+  const viewportPreset = trimOptional(addon.playwrightViewportPreset);
+  const stage = trimOptional(addon.playwrightCaptureStage);
+
+  appendLabel(labels, captureMode === null ? null : `Capture: ${formatCaptureMode(captureMode)}`);
+  appendLabel(labels, readinessMode === null ? null : `Ready: ${formatReadinessMode(readinessMode)}`);
+  appendLabel(labels, viewportPreset === null ? null : `Viewport: ${capitalize(viewportPreset)}`);
+  if (addon.playwrightAttemptCount !== undefined) {
+    labels.push(`Attempts: ${addon.playwrightAttemptCount}`);
+  }
+  if (addon.playwrightCaptureDurationMs !== undefined) {
+    labels.push(`Duration: ${addon.playwrightCaptureDurationMs / 1000}s`);
+  }
+  appendLabel(labels, stage === null ? null : `Stage: ${capitalize(stage)}`);
+  return labels;
+};
+
 export const getSocialPostAddonCaptureDetailLabels = (
   addon: SocialPublishingImageAddon,
   options: SocialPostAddonCaptureDetailOptions = {}
 ): string[] => {
-  const labels: string[] = [];
-  const sourceLabel = addon.sourceLabel?.trim();
-  const personaId = addon.playwrightPersonaId?.trim();
-  const personaName = personaId ? options.personaNameById?.get(personaId)?.trim() : '';
-  const routeTitle = addon.playwrightCaptureRouteTitle?.trim();
-  const routeId = addon.playwrightCaptureRouteId?.trim();
-  const presetId = addon.presetId?.trim();
-  const runId = addon.playwrightRunId?.trim();
-  const appearanceMode = addon.captureAppearanceMode?.trim();
-
-  if (sourceLabel) {
-    labels.push(`Source: ${sourceLabel}`);
-  }
-  if (personaId) {
-    labels.push(personaName ? `Persona: ${personaName} (${personaId})` : `Persona: ${personaId}`);
-  }
-  if (routeTitle || routeId) {
-    const routeLabel =
-      routeTitle && routeId && routeTitle !== routeId
-        ? `${routeTitle} (${routeId})`
-        : routeTitle || routeId;
-    labels.push(`Route: ${routeLabel}`);
-  } else if (presetId) {
-    labels.push(`Preset: ${presetId}`);
-  }
-  if (runId) {
-    labels.push(`Run: ${runId}`);
-  }
-  if (appearanceMode) {
-    labels.push(`Appearance: ${appearanceMode}`);
-  }
-  const addonAny = addon as SocialPublishingImageAddon & {
-    playwrightCaptureMode?: string;
-    playwrightReadinessMode?: string;
-    playwrightViewportPreset?: string;
-    playwrightAttemptCount?: number;
-    playwrightCaptureDurationMs?: number;
-    playwrightCaptureStage?: string;
-  };
-  if (addonAny.playwrightCaptureMode) {
-    const mode = addonAny.playwrightCaptureMode;
-    labels.push(`Capture: ${mode === 'full-page' ? 'Full page' : mode === 'viewport' ? 'Viewport' : mode}`);
-  }
-  if (addonAny.playwrightReadinessMode) {
-    const ready = addonAny.playwrightReadinessMode;
-    labels.push(`Ready: ${ready === 'networkidle' ? 'Network idle' : ready === 'load' ? 'Load' : ready}`);
-  }
-  if (addonAny.playwrightViewportPreset) {
-    const vp = addonAny.playwrightViewportPreset;
-    labels.push(`Viewport: ${vp.charAt(0).toUpperCase() + vp.slice(1)}`);
-  }
-  if (addonAny.playwrightAttemptCount !== undefined) {
-    labels.push(`Attempts: ${addonAny.playwrightAttemptCount}`);
-  }
-  if (addonAny.playwrightCaptureDurationMs !== undefined) {
-    labels.push(`Duration: ${addonAny.playwrightCaptureDurationMs / 1000}s`);
-  }
-  if (addonAny.playwrightCaptureStage) {
-    const stage = addonAny.playwrightCaptureStage;
-    labels.push(`Stage: ${stage.charAt(0).toUpperCase() + stage.slice(1)}`);
-  }
-
-  return labels;
+  const captureDetails: SocialPostAddonCaptureDetails = addon;
+  return [
+    ...getBaseCaptureDetailLabels(captureDetails, options),
+    ...getPlaywrightDiagnosticLabels(captureDetails),
+  ];
 };

@@ -79,6 +79,13 @@ const filterScopedSiteMessages = (
 ): SiteMessageDictionary =>
   Object.fromEntries(Object.entries(messages).filter(([key]) => predicate(key)));
 
+// Pre-filtered at module init so loadKangurSiteMessages('pl') skips the
+// traversal on every request — the Polish messages are bundled and never change.
+const repairedKangurPolishMessages = filterScopedSiteMessages(
+  repairedBundledPolishMessages,
+  isKangurMessageRoot
+);
+
 export const loadSiteMessages = cache(
   async (locale: string | null | undefined): Promise<SiteMessages> => {
     const normalizedLocale = normalizeSiteLocale(locale);
@@ -110,6 +117,10 @@ export const loadSiteMessages = cache(
 );
 
 export const loadKangurSiteMessages = cache(
-  async (locale: string | null | undefined): Promise<SiteMessages> =>
-    filterScopedSiteMessages(await loadSiteMessages(locale), isKangurMessageRoot) as SiteMessages
+  async (locale: string | null | undefined): Promise<SiteMessages> => {
+    if (normalizeSiteLocale(locale) === 'pl') {
+      return repairedKangurPolishMessages as SiteMessages;
+    }
+    return filterScopedSiteMessages(await loadSiteMessages(locale), isKangurMessageRoot) as SiteMessages;
+  }
 );

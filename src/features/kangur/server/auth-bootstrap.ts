@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+import { headers as nextHeaders } from 'next/headers';
 import { NextRequest } from 'next/server';
 
 import { resolveKangurActor, toKangurAuthUser } from '@/features/kangur/services/kangur-actor';
@@ -26,6 +28,19 @@ const buildKangurBootstrapRequest = (requestHeaders: Headers): NextRequest =>
 
 const isInternalNextRouteRequest = (requestHeaders: Headers): boolean =>
   NEXT_INTERNAL_ROUTE_REQUEST_HEADERS.some((headerName) => requestHeaders.has(headerName));
+
+/**
+ * Request-scoped cached version — reads headers internally so React cache()
+ * can deduplicate across layout levels within the same request.
+ * Fire-and-forget from an outer layout to overlap auth lookup with sibling
+ * async work; await from the inner layout to consume the result.
+ */
+export const getCachedKangurAuthBootstrapScript = cache(
+  async (): Promise<string | null> => {
+    const incomingHeaders = await nextHeaders();
+    return getKangurAuthBootstrapScript(new Headers(incomingHeaders));
+  }
+);
 
 export const getKangurAuthBootstrapScript = async (
   requestHeaders: Headers

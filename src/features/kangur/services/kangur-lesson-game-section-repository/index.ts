@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Lesson Game Section Repository
+ *
+ * This service provides the repository interface for managing Kangur lesson game sections.
+ * It abstracts persistence for game section configuration within lessons, facilitating
+ * retrieval and bulk management of game components.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurLessonGameSectionRepository } from './mongo-kangur-lesson-game-section-repository';

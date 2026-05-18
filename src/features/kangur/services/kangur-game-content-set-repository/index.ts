@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Kangur Game Content Set Repository
+ *
+ * This service provides the repository interface for managing Kangur game content sets.
+ * It abstracts persistence for content set configurations, facilitating retrieval
+ * and bulk management of game-specific content assets.
+ */
+
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import { mongoKangurGameContentSetRepository } from './mongo-kangur-game-content-set-repository';

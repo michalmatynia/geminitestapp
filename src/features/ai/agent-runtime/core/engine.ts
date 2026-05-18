@@ -1,3 +1,10 @@
+/**
+ * Agent Runtime Engine
+ * 
+ * Provides the core execution engine for AI agent runs.
+ * It manages the lifecycle of an agent execution, including Playwright browser
+ * session orchestration, context-aware prompt handling, and audit logging.
+ */
 interface AgentRunRecord {
   id: string;
   prompt: string;

@@ -3,6 +3,13 @@ import '@testing-library/jest-dom/vitest';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
 
+// Mock AdminFavoriteBreadcrumbRow: it calls useQueryClient() internally,
+// but admin page tests don't test favorites — just render a noop span.
+vi.mock('@/shared/ui/admin-favorite-breadcrumb-row', () => ({
+  AdminFavoriteBreadcrumbRow: ({ title }: { title?: string }) =>
+    React.createElement('div', { 'data-testid': 'admin-favorite-breadcrumb-row' }, title ?? null),
+}));
+
 // Mock React.startTransition to be synchronous in tests
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>();

@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * AI Path Run Processor
+ * 
+ * Orchestrates the execution of AI path runs.
+ * It coordinates with the path run executor, handles runtime analytics,
+ * publishes execution updates, and manages error reporting for asynchronous path runs.
+ */
+
 import { isTerminalAiPathRunStatus } from '@/features/ai/ai-paths/lib/path-run-status';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';

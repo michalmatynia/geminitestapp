@@ -27,11 +27,12 @@ const KANGUR_STOREFRONT_APPEARANCE_MODES = [
 ] as const satisfies ReadonlyArray<KangurStorefrontAppearanceMode>;
 
 const shouldRefreshKangurSeededLiteStore = (
-  _liteSettings: ReadonlyArray<SettingRecord>
+  liteSettings: ReadonlyArray<SettingRecord>
 ): boolean => {
-  // Always refresh in the browser so a stale cached HTML shell cannot keep
-  // public theme settings pinned to the fallback values.
-  return true;
+  // Only force-refresh when the SSR data island was empty (cold start or cache
+  // miss). If the server hydrated real data, trust the 5-minute staleTime
+  // instead of unconditionally bypassing the cache on every mount.
+  return liteSettings.length === 0;
 };
 
 const createKangurAppearanceSettingsEntries = (

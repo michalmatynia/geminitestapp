@@ -2,6 +2,12 @@ import { auth } from './auth';
 import { registerSessionResolver } from '@/shared/lib/api/session-registry';
 import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
+/**
+ * Server-side entrypoint for the Auth feature.
+ * Registers session resolvers and exports server-side services (Auth logic, security, user management, etc.).
+ * Should only be accessed in server environments.
+ */
+
 // Register auth function to shared API handler registry
 if (typeof auth === 'function') {
   registerSessionResolver(async () => {
@@ -17,7 +23,6 @@ if (typeof auth === 'function') {
     }
   });
 }
-
 export * from './auth';
 export {
   getAuthDefaultRoleId,

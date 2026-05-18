@@ -1,4 +1,0 @@
-
-> libapp2@0.1.0 lint:features
-> cross-env NODE_OPTIONS=--max-old-space-size=12288 eslint "src/features/**/*.{ts,tsx,js,jsx}" --cache --cache-location .eslintcache --no-error-on-unmatched-pattern --format json
-

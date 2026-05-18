@@ -28,6 +28,7 @@ import type {
 import { getMongoDb as getRootMongoDb } from '@/shared/lib/db/mongo-client';
 import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import {
   getMongoDatabaseName,
   getObservabilityApplicationMongoDb,
@@ -121,8 +122,11 @@ const buildSystemLogUpsertFilter = (payload: SystemLogRecord): Filter<MongoSyste
   originLogId: payload.originLogId ?? payload.id,
 });
 
+const INDEX_CIRCUIT_BREAKER_COOLDOWN_MS = 30_000;
+
 const indexReadyByDb = new WeakMap<Db, Set<string>>();
 const indexPromiseByDb = new WeakMap<Db, Map<string, Promise<void>>>();
+const indexCircuitOpenedAtByDb = new WeakMap<Db, Map<string, number>>();
 
 const ensureLogCollectionIndexes = async (db: Db, collectionName: string): Promise<void> => {
   let readyCollections = indexReadyByDb.get(db);
@@ -131,6 +135,21 @@ const ensureLogCollectionIndexes = async (db: Db, collectionName: string): Promi
     indexReadyByDb.set(db, readyCollections);
   }
   if (readyCollections.has(collectionName)) return;
+
+  // Circuit breaker: skip index creation for the cooldown period after a
+  // connection failure. Prevents hammering a down MongoDB on every log entry.
+  let circuitMap = indexCircuitOpenedAtByDb.get(db);
+  if (!circuitMap) {
+    circuitMap = new Map<string, number>();
+    indexCircuitOpenedAtByDb.set(db, circuitMap);
+  }
+  const circuitOpenedAt = circuitMap.get(collectionName);
+  if (circuitOpenedAt !== undefined) {
+    if (Date.now() - circuitOpenedAt < INDEX_CIRCUIT_BREAKER_COOLDOWN_MS) {
+      throw new Error(`[system-log-repository] MongoDB unavailable — skipping log write (circuit open for ${collectionName})`);
+    }
+    circuitMap.delete(collectionName);
+  }
 
   let pendingCollections = indexPromiseByDb.get(db);
   if (!pendingCollections) {
@@ -147,6 +166,9 @@ const ensureLogCollectionIndexes = async (db: Db, collectionName: string): Promi
       readyCollections.add(collectionName);
     })().catch((error: unknown) => {
       pendingCollections.delete(collectionName);
+      if (isTransientMongoConnectionError(error)) {
+        circuitMap.set(collectionName, Date.now());
+      }
       throw error;
     });
     pendingCollections.set(collectionName, pending);

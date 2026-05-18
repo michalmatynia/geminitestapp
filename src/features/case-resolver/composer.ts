@@ -38,7 +38,7 @@ export const compileCaseResolverPrompt = (
       if (node === undefined) return;
       const result = processNode(node, graph, context, outputsByNode, options);
       outputsByNode[nodeId] = result.output;
-      segments.push(result.segment as CaseResolverCompiledSegment);
+      segments.push(result.segment);
     });
 
 

@@ -143,7 +143,7 @@ export const InspectorHover = ({
   const previewEditorActions = useOptionalPreviewEditorActions();
 
   const enabled = propEnabled ?? previewEditorState?.isInspecting ?? false;
-  const showTooltip = propShowTooltip ?? previewEditorState?.inspectorSettings?.showTooltip ?? true;
+  const showTooltip = propShowTooltip ?? previewEditorState?.inspectorSettings.showTooltip ?? true;
   const onHover = propOnHover ?? previewEditorActions?.onHoverNode;
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);

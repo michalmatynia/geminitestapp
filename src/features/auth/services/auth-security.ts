@@ -249,13 +249,12 @@ export const extractClientIp = (request?: Request | null): string | null => {
   const candidates = ['cf-connecting-ip', 'x-vercel-forwarded-for', 'x-forwarded-for', 'x-real-ip', 'x-client-ip'];
   for (const h of candidates) {
     const v = request.headers.get(h);
-    if (v === null || v === undefined || v.length === 0) continue;
+    if (v === null || v === '') continue;
     const c = v.split(',')[0]?.trim();
-    if (c !== undefined && c.length > 0) {
-      if (c.startsWith('::ffff:')) return c.slice(7);
-      if (c === '::1') return '127.0.0.1';
-      return c;
-    }
+    if (c === undefined || c === '') continue;
+    if (c.startsWith('::ffff:')) return c.slice(7);
+    if (c === '::1') return '127.0.0.1';
+    return c;
   }
   return null;
 };

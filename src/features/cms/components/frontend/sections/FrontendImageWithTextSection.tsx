@@ -33,7 +33,7 @@ export function FrontendImageWithTextSection(): React.ReactNode {
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+      <div className={getSectionContainerClass({ fullWidth: layout.fullWidth })}>
         <div
           className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}
         >

@@ -116,8 +116,8 @@ export const createPromptExtractionHandlers = (
       deps.setPreviewSpecs(specs);
       deps.setPreviewControls(heuristic);
       deps.setExtractPreviewUiOverrides(heuristic);
-      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
-      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      const before = Array.isArray(result.validation.before) ? result.validation.before : [];
+      const after = Array.isArray(result.validation.after) ? result.validation.after : [];
       deps.setPreviewValidation({ before, after });
       appendExtractHistoryEntry({
         runKind: 'programmatic',
@@ -125,7 +125,7 @@ export const createPromptExtractionHandlers = (
         modeRequested: result.modeRequested ?? 'programmatic',
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -174,8 +174,8 @@ export const createPromptExtractionHandlers = (
       deps.setPreviewSpecs(specs);
       deps.setPreviewControls(heuristic);
       deps.setExtractPreviewUiOverrides(heuristic);
-      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
-      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      const before = Array.isArray(result.validation.before) ? result.validation.before : [];
+      const after = Array.isArray(result.validation.after) ? result.validation.after : [];
       deps.setPreviewValidation({ before, after });
       appendExtractHistoryEntry({
         runKind: 'smart',
@@ -183,7 +183,7 @@ export const createPromptExtractionHandlers = (
         modeRequested: result.modeRequested ?? deps.studioSettings.promptExtraction.mode,
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -243,8 +243,8 @@ export const createPromptExtractionHandlers = (
       deps.setPreviewSpecs(specs);
       deps.setPreviewControls(heuristic);
       deps.setExtractPreviewUiOverrides(heuristic);
-      const before = Array.isArray(result.validation?.before) ? result.validation?.before : [];
-      const after = Array.isArray(result.validation?.after) ? result.validation?.after : [];
+      const before = Array.isArray(result.validation.before) ? result.validation.before : [];
+      const after = Array.isArray(result.validation.after) ? result.validation.after : [];
       deps.setPreviewValidation({ before, after });
       appendExtractHistoryEntry({
         runKind: 'ai',
@@ -252,7 +252,7 @@ export const createPromptExtractionHandlers = (
         modeRequested: result.modeRequested ?? 'gpt',
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -306,7 +306,7 @@ export const createPromptExtractionHandlers = (
         });
         aiSuggestions = (response.suggestions ?? [])
           .filter((item): item is { path: string; control: string } =>
-            Boolean(item?.path && item?.control)
+            Boolean(item.path && item.control)
           )
           .map((item) => ({ path: item.path, control: item.control as ParamUiControl }))
           .filter((item) => isParamUiControl(item.control));
@@ -358,7 +358,7 @@ export const createPromptExtractionHandlers = (
 export const copyCardIdToClipboard = async (cardId: string, toast: Toast): Promise<void> => {
   const normalizedCardId = cardId.trim();
   if (!normalizedCardId) return;
-  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+  if (typeof navigator === 'undefined' || !navigator.clipboard.writeText) {
     toast('Clipboard is unavailable in this browser.', { variant: 'error' });
     return;
   }

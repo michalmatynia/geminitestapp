@@ -92,7 +92,7 @@ const sortSlotsByLatest = (slots: ImageStudioSlotRecord[]): ImageStudioSlotRecor
 const slotHasRenderableImage = (slot: ImageStudioSlotRecord | null | undefined): boolean => {
   if (!slot) return false;
   const imageFileId = slot.imageFileId?.trim() ?? '';
-  const imageFilePath = slot.imageFile?.filepath?.trim() ?? '';
+  const imageFilePath = slot.imageFile?.filepath.trim() ?? '';
   const imageUrl = slot.imageUrl?.trim() ?? '';
   const imageBase64 = slot.imageBase64?.trim() ?? '';
   return Boolean(imageFileId || imageFilePath || imageUrl || imageBase64);

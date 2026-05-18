@@ -1,3 +1,7 @@
+/**
+ * Public API entrypoint for the NotesApp feature.
+ * Exports public hooks, pages, contracts, utilities, and validation schemas for managing notes.
+ */
 export * from './hooks/NoteSettingsContext';
 export * from './pages/AdminNotesNotebooksPage';
 export * from './pages/AdminNotesPage';

@@ -80,7 +80,7 @@ export function SocialJobStatusSection(): React.JSX.Element | null {
       ) : null}
       {(currentGenerationJob?.status?.length ?? 0) > 0 ? (
         <SocialJobStatusPill
-          status={currentGenerationJob!.status!}
+          status={currentGenerationJob!.status}
           label='Generate post'
           title={latestGenerationJobTitle.length > 0 ? latestGenerationJobTitle : undefined}
           className='text-[10px]'
@@ -88,7 +88,7 @@ export function SocialJobStatusSection(): React.JSX.Element | null {
       ) : null}
       {(currentPipelineJob?.status?.length ?? 0) > 0 ? (
         <SocialJobStatusPill
-          status={currentPipelineJob!.status!}
+          status={currentPipelineJob!.status}
           label='Full pipeline'
           title={latestPipelineJobTitle.length > 0 ? latestPipelineJobTitle : undefined}
           className='text-[10px]'

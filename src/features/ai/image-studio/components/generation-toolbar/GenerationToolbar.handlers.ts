@@ -43,7 +43,7 @@ export function useGenerationToolbarHandlers(
           description: 'Loads image studio slots.',
         },
       })();
-      return data?.slots ?? [];
+      return data.slots ?? [];
     },
     [queryClient]
   );

@@ -355,7 +355,7 @@ export const buildUpscaleSuccessToastMessage = ({
   response: UpscaleActionResponse;
 }): string => {
   const effectiveMode = response.effectiveMode ?? resolvedMode;
-  const createdLabel = response.slot?.name?.trim() || `Upscale ${resolveUpscaleLabel({
+  const createdLabel = response.slot.name?.trim() || `Upscale ${resolveUpscaleLabel({
     request,
     response,
   })}`;
@@ -764,7 +764,7 @@ export const createGenerationToolbarActionHandlers = (
         setWorkingSlotId: deps.setWorkingSlotId,
       });
 
-      const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
+      const createdLabel = response.slot.name?.trim() || 'Cropped variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;
       const modeLabel = effectiveMode === 'client_bbox' ? 'Client' : 'Server';
       deps.toast(`Created ${createdLabel} (${modeLabel} crop).`, { variant: 'success' });

@@ -2,14 +2,19 @@
  * Error System
  * 
  * Centralized error classification, categorization, and handling system.
- * Provides:
- * - Error category classification and mapping
- * - Suggested action resolution for errors
- * - User-facing error message generation
- * - Error context enrichment
- * - Error reporting and observability integration
+ * This system provides a unified layer for capturing, processing, and reporting application errors.
+ * 
+ * Lifecycle of an Error:
+ * 1. Catch: Errors are caught at API boundaries or feature levels.
+ * 2. Classify: The error is passed to the ErrorSystem to map it to a known domain category (e.g., Auth, Database).
+ * 3. Contextualize: System-specific context (user ID, request ID, resource state) is enriched.
+ * 4. Resolve: User-facing messages are derived for frontend display, and mitigation actions are logged.
+ * 5. Report: The error is logged to the backend/monitoring service and, if requested, sent to the frontend.
+ * 
+ * Usage:
+ * Use the static methods provided to classify and handle errors before reporting them to ensure consistent 
+ * diagnostic data across the platform.
  */
-
 import {
   ERROR_CATEGORY,
   type ErrorCategory,

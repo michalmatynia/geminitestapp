@@ -120,7 +120,7 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
 
       if (deps.driveImportMode === 'temporary-object') {
         const primary = imported[0]!;
-        const selectedSlotId = deps.selectedSlot?.id?.trim() ?? '';
+        const selectedSlotId = deps.selectedSlot?.id.trim() ?? '';
         const selectedSlotIsEmpty = Boolean(
           selectedSlotId && !deps.slotHasRenderableImage(deps.selectedSlot)
         );
@@ -231,7 +231,7 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
 
       if (deps.localUploadMode === 'temporary-object') {
         const primary = uploaded[0]!;
-        const selectedSlotId = deps.selectedSlot?.id?.trim() ?? '';
+        const selectedSlotId = deps.selectedSlot?.id.trim() ?? '';
         const selectedSlotIsEmpty = Boolean(
           selectedSlotId && !deps.slotHasRenderableImage(deps.selectedSlot)
         );

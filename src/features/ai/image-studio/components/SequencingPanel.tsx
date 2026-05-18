@@ -140,7 +140,7 @@ export function SequencingPanel(): React.JSX.Element {
     width: number;
     height: number;
   } | null => {
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
     if (!normalizedWorkingSlotId) return null;
     const frameBinding = getPreviewCanvasImageFrame();
     if (frameBinding?.slotId !== normalizedWorkingSlotId) return null;
@@ -278,7 +278,7 @@ export function SequencingPanel(): React.JSX.Element {
                 tags: ['image-studio', 'slots', 'fetch'],
                 description: 'Loads image studio slots.'},
             })();
-            cachedSlots = Array.isArray(fresh?.slots) ? fresh.slots : [];
+            cachedSlots = Array.isArray(fresh.slots) ? fresh.slots : [];
           } catch (error) {
             logClientError(error);
             await invalidateImageStudioSlots(queryClient, normalizedProjectId);
@@ -316,7 +316,7 @@ export function SequencingPanel(): React.JSX.Element {
       setActiveSequenceStatus(run.status);
       setSequenceError(run.errorMessage ?? null);
 
-      const normalizedSourceSlotId = run.sourceSlotId?.trim() ?? '';
+      const normalizedSourceSlotId = run.sourceSlotId.trim() ?? '';
       if (normalizedSourceSlotId) {
         sourceSlotIdRef.current = normalizedSourceSlotId;
       }
@@ -335,7 +335,7 @@ export function SequencingPanel(): React.JSX.Element {
         .map((event) => toStepLogLine(event));
       setSequenceLog(nextLogs);
 
-      const stepList = Array.isArray(run.request?.steps) ? run.request.steps : [];
+      const stepList = Array.isArray(run.request.steps) ? run.request.steps : [];
       const activeStep =
         run.activeStepIndex !== null && run.activeStepIndex >= 0
           ? (stepList[run.activeStepIndex] ?? null)
@@ -365,7 +365,7 @@ export function SequencingPanel(): React.JSX.Element {
         if (normalizedProjectId) {
           await invalidateImageStudioSlots(queryClient, normalizedProjectId);
         }
-        const directSlotId = run.currentSlotId?.trim() ?? '';
+        const directSlotId = run.currentSlotId.trim() ?? '';
         if (directSlotId) {
           setWorkingSlotId(directSlotId);
           setSelectedSlotId(directSlotId);

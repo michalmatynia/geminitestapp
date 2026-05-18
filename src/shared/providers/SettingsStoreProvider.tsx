@@ -1,15 +1,22 @@
 /**
  * Settings Store Provider
  * 
- * React context provider for global settings state management.
- * Provides:
- * - Centralized settings store with React Query integration
- * - Optimistic updates and background revalidation
- * - Error handling and fallback state management
- * - Path-aware settings loading and caching
- * - Type-safe settings access throughout the application
+ * Centralized React context provider for application-wide settings state.
+ * 
+ * Orchestrates settings hydration from the server, persists changes to the backend
+ * via TanStack Query, and manages local UI state for global configurations.
+ * 
+ * Features:
+ * - Centralized Store: Unified state for settings across the application.
+ * - Hydration: Seamlessly hydrates settings from server-side initial data.
+ * - Optimistic Updates: Provides near-instant UI feedback for settings changes.
+ * - Context Splitting: Separates stable settings data from volatile fetching states 
+ *   to minimize unnecessary component re-renders.
+ * 
+ * Usage:
+ * Wrap the application (or specific sub-trees) with this provider to enable 
+ * type-safe settings access via the `useSettingsStore` hook.
  */
-
 'use client';
 
 import { usePathname } from 'next/navigation';

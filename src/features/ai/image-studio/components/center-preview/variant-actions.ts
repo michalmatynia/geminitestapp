@@ -353,9 +353,9 @@ export const deleteVariantFromCenterPreview = async ({
           tags: ['image-studio', 'slots', 'fetch'],
           description: 'Loads image studio slots.'},
       })();
-      const refreshedSlots = Array.isArray(refreshed?.slots) ? refreshed.slots : [];
+      const refreshedSlots = Array.isArray(refreshed.slots) ? refreshed.slots : [];
       const refreshedIdSet = new Set(
-        refreshedSlots.map((slot) => slot.id?.trim() ?? '').filter(Boolean)
+        refreshedSlots.map((slot) => slot.id.trim() ?? '').filter(Boolean)
       );
       const nextFocusSlotId =
         Array.from(focusSlotCandidates).find((candidateId) => refreshedIdSet.has(candidateId)) ??

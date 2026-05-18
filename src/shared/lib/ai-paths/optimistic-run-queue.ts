@@ -1,11 +1,25 @@
 /**
- * @file optimistic-run-queue.ts
- * @description Manages an optimistic queue of AI Path runs in the client.
- * This allows the UI to immediately reflect new runs before they are
- * fully processed or acknowledged by the server, improving perceived performance.
- * It handles persistence to localStorage and synchronization with server-provided data.
+ * Optimistic Run Queue
+ * 
+ * Manages an optimistic queue of AI Path runs on the client-side.
+ * 
+ * The system ensures the UI remains responsive by immediately reflecting local
+ * state changes, then synchronizing these states with the server when the background
+ * run transitions to a terminal state (e.g., success, failure).
+ * 
+ * Key Responsibilities:
+ * - Local Persistence: Maintains a mirror of pending runs in `localStorage` to survive page reloads.
+ * - Conflict Resolution: Reconciles local optimistic states with server-provided snapshots
+ *   during background polling or socket updates.
+ * - Queue Management: Enforces size limits and TTLs (Time-to-Live) to prevent stale state 
+ *   bloat in the local storage layer.
+ * - Status Tracking: Monitors run progression (queued -> running -> terminal) to 
+ *   trigger UI updates and notification dispatch.
+ * 
+ * Usage:
+ * Use this service to track user-initiated AI Path executions in components that require
+ * sub-second response times, bypassing standard request-response latency.
  */
-
 'use client';
 
 import {

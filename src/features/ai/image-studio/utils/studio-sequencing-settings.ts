@@ -489,7 +489,7 @@ const normalizeSequenceStep = (
 
   if (type === 'crop_center') {
     const kind = isCropKind(config?.['kind'])
-      ? config?.['kind']
+      ? config.['kind']
       : fallback.type === 'crop_center'
         ? fallback.config.kind
         : 'center_square';
@@ -528,7 +528,7 @@ const normalizeSequenceStep = (
     const sourceRaw = asTrimmedString(config?.['source']);
     const source: ImageStudioSequenceMaskSource =
       sourceRaw === 'preset_polygons' ? 'preset_polygons' : 'current_shapes';
-    const polygonsRaw = Array.isArray(config?.['polygons']) ? config?.['polygons'] : [];
+    const polygonsRaw = Array.isArray(config?.['polygons']) ? config.['polygons'] : [];
     const polygons = polygonsRaw
       .map((entry) => normalizeSequencePolygon(entry))
       .filter((entry): entry is ImageStudioSequencePoint[] => Boolean(entry));

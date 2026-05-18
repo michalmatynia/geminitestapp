@@ -28,6 +28,7 @@ import {
   parseDatabaseEngineOperationControlsSetting,
 } from './database-engine-settings-parsing';
 import {
+  useBackupDatabaseEngineManagedMongoMutation,
   useCreateBackupMutation,
   useDatabaseBackups,
   useDeleteBackupMutation,
@@ -83,6 +84,7 @@ export function useDatabaseBackupsState() {
   const restoreBackup = useRestoreBackupMutation();
   const uploadBackup = useUploadBackupMutation();
   const deleteBackup = useDeleteBackupMutation();
+  const backupAllMutation = useBackupDatabaseEngineManagedMongoMutation();
 
   const parsedSettings = useMemo(() => {
     const errors: string[] = [];
@@ -307,6 +309,22 @@ ${String(error)}`);
     setBackupToDelete(backupName);
   }, []);
 
+  const handleBackupAll = async (): Promise<void> => {
+    try {
+      const response = await backupAllMutation.mutateAsync('all');
+      toast(response.message ?? 'Backup All job queued for all managed databases.', {
+        variant: 'success',
+      });
+    } catch (error: unknown) {
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'backupAll',
+        application: 'all',
+      });
+      toast('An error occurred while backing up all databases.', { variant: 'error' });
+    }
+  };
+
   const handleConfirmDelete = async (): Promise<void> => {
     if (backupToDelete === '' || backupToDelete === null) return;
     try {
@@ -473,8 +491,10 @@ ${String(error)}`);
     activeTargetKey,
     isBackupScheduleSaving,
     settingsValidationErrors,
+    isBackingUpAll: backupAllMutation.isPending,
     closeLogModal,
     handleBackup,
+    handleBackupAll,
     handleUpload,
     handleRestoreRequest,
     handleRestoreConfirm,

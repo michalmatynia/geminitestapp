@@ -204,7 +204,7 @@ export const mapLinkedGeneratedVariants = (
     const outputs = Array.isArray(run.outputs) ? run.outputs : [];
     return outputs
       .map((output, outputIndex): LinkedGeneratedVariantViewModel | null => {
-        const outputPath = output.filepath?.trim() ?? '';
+        const outputPath = output.filepath.trim() ?? '';
         if (!output.id || !outputPath) return null;
         return {
           key: `${run.id}:${output.id}`,
@@ -444,7 +444,7 @@ export const mapSavedCompositeInputImages = (args: {
   const metadata = asRecord(selectedSlot.metadata);
   const compositeConfig = asRecord(metadata?.['compositeConfig']);
   const rawLayers = Array.isArray(compositeConfig?.['layers'])
-    ? (compositeConfig?.['layers'] as unknown[])
+    ? (compositeConfig.['layers'] as unknown[])
     : [];
   return rawLayers
     .map((layer, layerIndex): CompositeTabImageViewModel | null => {

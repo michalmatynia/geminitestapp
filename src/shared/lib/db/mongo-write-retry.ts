@@ -15,6 +15,7 @@
 
 import 'server-only';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { isTransientMongoConnectionError } from './utils/mongo';
 
 /**
  * Known error message patterns that indicate a single-writer conflict.
@@ -135,7 +136,12 @@ export const executeMongoWriteWithRetry = async <T>(
       try {
         return await operation();
       } catch (error) {
-        void ErrorSystem.captureException(error);
+        // Connection errors (ECONNREFUSED, server selection timeout, etc.) must not
+        // be forwarded to ErrorSystem: ErrorSystem calls logSystemEvent which writes
+        // to MongoDB, creating an infinite cascade of connection failures.
+        if (!isTransientMongoConnectionError(error)) {
+          void ErrorSystem.captureException(error);
+        }
         attempt += 1;
 
         if (attempt >= maxAttempts || !isMongoSingleWriterConflictError(error)) {

@@ -58,7 +58,7 @@ const asTrimmedString = (value: unknown): string => {
 
 const normalizePublicPath = (value: unknown): string | null => {
   const raw = asTrimmedString(value);
-  if (!raw) return null;
+  if (raw === '') return null;
 
   let normalized = raw.replace(/\\/g, '/');
   if (/^https?:\/\//i.test(normalized)) {
@@ -89,16 +89,17 @@ const normalizePublicPath = (value: unknown): string | null => {
 
 const resolveSlotIdAliases = (slotIdRaw: unknown): string[] => {
   const normalized = asTrimmedString(slotIdRaw);
-  if (!normalized) return [];
+  if (normalized === '') return [];
 
-  const unprefixed = normalized.startsWith('slot:')
-    ? asTrimmedString(normalized.slice('slot:'.length))
-    : normalized.startsWith('card:')
-      ? asTrimmedString(normalized.slice('card:'.length))
-      : normalized;
+  let unprefixed = normalized;
+  if (normalized.startsWith('slot:')) {
+    unprefixed = asTrimmedString(normalized.slice('slot:'.length));
+  } else if (normalized.startsWith('card:')) {
+    unprefixed = asTrimmedString(normalized.slice('card:'.length));
+  }
 
   const set = new Set<string>([normalized]);
-  if (unprefixed) {
+  if (unprefixed !== '') {
     set.add(unprefixed);
     set.add(`slot:${unprefixed}`);
     set.add(`card:${unprefixed}`);
@@ -108,7 +109,7 @@ const resolveSlotIdAliases = (slotIdRaw: unknown): string[] => {
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  (value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value))
     ? (value as Record<string, unknown>)
     : null;
 
@@ -143,14 +144,19 @@ const matchesVariantRunSelectors = (
   }
 ): boolean => {
   const metadata = asRecord(slot.metadata);
-  if (!metadata) return false;
+  if (metadata === null) return false;
   const generationParams = asRecord(metadata['generationParams']);
   const sequence = asRecord(metadata['sequence']);
-  const slotRunId =
-    asTrimmedString(metadata['generationRunId']) ||
-    asTrimmedString(generationParams?.['runId']) ||
-    asTrimmedString(sequence?.['runId']);
-  if (!slotRunId || slotRunId !== params.generationRunId) return false;
+
+  const slotRunIdFromMeta = asTrimmedString(metadata['generationRunId']);
+  const slotRunIdFromParams = asTrimmedString(generationParams?.['runId']);
+  const slotRunIdFromSeq = asTrimmedString(sequence?.['runId']);
+
+  const slotRunId = slotRunIdFromMeta !== ''
+    ? slotRunIdFromMeta
+    : (slotRunIdFromParams !== '' ? slotRunIdFromParams : slotRunIdFromSeq);
+
+  if (slotRunId === '' || slotRunId !== params.generationRunId) return false;
 
   if (params.generationOutputIndex !== null) {
     const slotOutputIndex =

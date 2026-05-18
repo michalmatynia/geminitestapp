@@ -1,6 +1,14 @@
 import 'server-only';
 
+/**
+ * Server-side entrypoint for the Integrations feature.
+ * Exports server-side services (repositories, exporters, importers, queues, token resolution)
+ * and utilities for managing third-party platform integrations.
+ * Should only be accessed in server environments.
+ */
+
 import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
+...
 
 export type { BaseProductRecord } from '@/shared/contracts/integrations';
 export async function getCategoryMappingRepository(): Promise<CategoryMappingRepository> {

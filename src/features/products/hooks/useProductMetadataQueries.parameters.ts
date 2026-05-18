@@ -110,6 +110,8 @@ export function useLanguages(): ListQuery<Language> {
     queryKey,
     queryFn: async (): Promise<Language[]> => getLanguages(),
     ...STABLE_METADATA_QUERY_OPTIONS,
+    refetchOnMount: (query): boolean | 'always' =>
+      Array.isArray(query.state.data) && query.state.data.length === 0 ? 'always' : false,
     meta: {
       source: 'products.hooks.useLanguages',
       operation: 'list',

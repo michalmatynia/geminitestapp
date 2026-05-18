@@ -104,7 +104,7 @@ export function useConsumeTemporaryUpload({
             throw new Error('Select a project first.');
           }
           const currentObjectSlot = objectSlot;
-          const selectedSlotIdBeforeEnsure = currentObjectSlot?.id?.trim() ?? '';
+          const selectedSlotIdBeforeEnsure = currentObjectSlot?.id.trim() ?? '';
           const selectedSlotWasEmpty = Boolean(
             selectedSlotIdBeforeEnsure && !slotHasRenderableImage(currentObjectSlot)
           );
@@ -201,7 +201,7 @@ export function useConsumeTemporaryUpload({
           if (!ensuredSlot?.id) {
             ensuredSlot = await resolveFallbackSlot();
           }
-          const targetSlotId = ensuredSlot?.id?.trim() ?? '';
+          const targetSlotId = ensuredSlot?.id.trim() ?? '';
           if (!targetSlotId) {
             throw new Error('Failed to create or resolve card from temporary upload');
           }
@@ -217,7 +217,7 @@ export function useConsumeTemporaryUpload({
                 id: targetSlotId,
                 data: {
                   metadata: setImageStudioSlotImageLocked(
-                    ensuredSlot?.metadata ?? currentObjectSlot?.metadata ?? null,
+                    ensuredSlot.metadata ?? currentObjectSlot?.metadata ?? null,
                     true
                   ),
                 },

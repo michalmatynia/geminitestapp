@@ -29,6 +29,8 @@ type DatabaseColumnDefs = ReturnType<typeof useDatabaseColumns>;
 type DatabaseHeaderActionsProps = {
   isProd: boolean;
   handleBackup: () => Promise<void>;
+  handleBackupAll: () => Promise<void>;
+  isBackingUpAll: boolean;
   handleUpload: (files: File[], helpers?: FileUploadHelpers) => Promise<void>;
   handlePreviewCurrent: () => void;
   router: ReturnType<typeof useRouter>;
@@ -53,6 +55,8 @@ type DatabasesContentLayoutProps = {
 const DatabaseHeaderActions = ({
   isProd,
   handleBackup,
+  handleBackupAll,
+  isBackingUpAll,
   handleUpload,
   handlePreviewCurrent,
   router,
@@ -66,6 +70,16 @@ const DatabaseHeaderActions = ({
       }}
     >
       Create Backup
+    </Button>
+    <Button
+      disabled={isProd || isBackingUpAll}
+      loading={isBackingUpAll}
+      title={isProd ? 'Disabled in production' : undefined}
+      onClick={() => {
+        handleBackupAll().catch(() => {});
+      }}
+    >
+      Backup All
     </Button>
     <FileUploadButton
       id='database-backup-upload'
@@ -208,6 +222,8 @@ const DatabasesContentLayout = ({
       <DatabaseHeaderActions
         isProd={isProd}
         handleBackup={actions.handleBackup}
+        handleBackupAll={actions.handleBackupAll}
+        isBackingUpAll={state.isBackingUpAll}
         handleUpload={actions.handleUpload}
         handlePreviewCurrent={actions.handlePreviewCurrent}
         router={router}

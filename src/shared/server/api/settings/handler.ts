@@ -56,6 +56,13 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import {
+  ADMIN_MENU_SETTING_KEYS,
+  isAdminMenuSettingKey,
+  listAdminMenuSettingsFromLocalAppDb,
+  readAdminMenuSettingFromLocalAppDb,
+  upsertAdminMenuSettingInLocalAppDb,
+} from '@/features/admin/server/admin-menu-settings-store';
+import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
   invalidateAppDbProviderCache,
@@ -252,6 +259,9 @@ const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
   if (isSecretSettingKey(key)) return null;
+  if (isAdminMenuSettingKey(key)) {
+    return await readAdminMenuSettingFromLocalAppDb(key);
+  }
   if (isKangurSettingKey(key)) {
     const seededCanonicalValue = await readSeededKangurAppearanceSettingValue(key);
     if (seededCanonicalValue !== null) {
@@ -389,7 +399,8 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
       (doc): doc is SettingRecord =>
         typeof doc.key === 'string' &&
         typeof doc.value === 'string' &&
-        !isSecretSettingKey(doc.key)
+        !isSecretSettingKey(doc.key) &&
+        !isAdminMenuSettingKey(doc.key)
     )
     .map((doc) => ({
       key: doc.key,
@@ -399,6 +410,7 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     return baseSettings;
   }
 
+  const adminMenuSettings = await listAdminMenuSettingsFromLocalAppDb(ADMIN_MENU_SETTING_KEYS);
   const [kangurSettings, seededStorefrontAppearanceSettings, seededThemeCatalog, seededThemePresetManifest, seededThemeSlotAssignments] =
     await Promise.all([
       listKangurSettings(),
@@ -410,6 +422,9 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
 
   const merged = new Map<string, string>();
   baseSettings.forEach((setting) => {
+    merged.set(setting.key, setting.value);
+  });
+  adminMenuSettings.forEach((setting) => {
     merged.set(setting.key, setting.value);
   });
   kangurSettings.forEach((setting) => {
@@ -432,6 +447,9 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
 
 const upsertMongoSetting = async (key: string, value: string): Promise<SettingRecord | null> => {
   await applyActiveMongoSourceEnv();
+  if (isAdminMenuSettingKey(key)) {
+    return await upsertAdminMenuSettingInLocalAppDb(key, value);
+  }
   if (isKangurSettingKey(key)) {
     return await upsertKangurSettingValue(key, value);
   }

@@ -80,7 +80,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
         header: 'Tags',
         cell: ({ row }) => (
           <div className='flex flex-wrap gap-1'>
-            {(row.original.metadata?.['tags'] as string[])?.length ? (
+            {(row.original.metadata?.['tags'] as string[]).length ? (
               (row.original.metadata?.['tags'] as string[]).map((t) => <Tag key={t} label={t} />)
             ) : (
               <span className='text-xs text-gray-600'>None</span>

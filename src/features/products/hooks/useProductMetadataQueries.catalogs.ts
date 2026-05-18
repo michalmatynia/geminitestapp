@@ -46,6 +46,8 @@ export function useCatalogs(options?: ProductMetadataQueryOptions): ListQuery<Ca
       await api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
     enabled: resolveMetadataQueryEnabled(options),
     ...STABLE_METADATA_QUERY_OPTIONS,
+    refetchOnMount: (query): boolean | 'always' =>
+      Array.isArray(query.state.data) && query.state.data.length === 0 ? 'always' : false,
     meta: {
       source: 'products.hooks.useCatalogs',
       operation: 'list',

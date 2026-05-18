@@ -283,7 +283,7 @@ export function useInspectorAiGeneration({
       }
     } catch (error) {
       logClientError(error);
-      if ((error as Error)?.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         setCssAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });
       } else {
@@ -394,7 +394,7 @@ export function useInspectorAiGeneration({
       toast(`AI output ready (${target.provider}).`, { variant: 'success' });
     } catch (error) {
       logClientError(error);
-      if ((error as Error)?.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         setContentAiError('Generation cancelled.');
         toast('Generation cancelled.', { variant: 'info' });
       } else {

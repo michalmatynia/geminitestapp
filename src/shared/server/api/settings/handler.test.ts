@@ -22,7 +22,12 @@ const mocks = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
   createIndexMock: vi.fn(),
   findOneMock: vi.fn(),
+  findMock: vi.fn(),
+  toArrayMock: vi.fn(),
   updateOneMock: vi.fn(),
+  listAdminMenuSettingsFromLocalAppDbMock: vi.fn(),
+  readAdminMenuSettingFromLocalAppDbMock: vi.fn(),
+  upsertAdminMenuSettingInLocalAppDbMock: vi.fn(),
   primeFrontPageSettingRuntimeMock: vi.fn(),
   primeKangurLaunchRouteRuntimeMock: vi.fn(),
   writeKangurLaunchRouteDevSnapshotMock: vi.fn(),
@@ -149,6 +154,23 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDbMock,
 }));
 
+vi.mock('@/features/admin/server/admin-menu-settings-store', () => {
+  const adminMenuKeys = [
+    'admin_menu_favorites',
+    'admin_menu_section_colors',
+    'admin_menu_custom_enabled',
+    'admin_menu_custom_nav',
+  ] as const;
+  const adminMenuKeySet = new Set<string>(adminMenuKeys);
+  return {
+    ADMIN_MENU_SETTING_KEYS: adminMenuKeys,
+    isAdminMenuSettingKey: (key: string) => adminMenuKeySet.has(key),
+    listAdminMenuSettingsFromLocalAppDb: mocks.listAdminMenuSettingsFromLocalAppDbMock,
+    readAdminMenuSettingFromLocalAppDb: mocks.readAdminMenuSettingFromLocalAppDbMock,
+    upsertAdminMenuSettingInLocalAppDb: mocks.upsertAdminMenuSettingInLocalAppDbMock,
+  };
+});
+
 vi.mock('@/shared/lib/db/collection-provider-map', () => ({
   invalidateCollectionProviderMapCache: mocks.invalidateCollectionProviderMapCacheMock,
 }));
@@ -228,10 +250,18 @@ describe('settings handler', () => {
     mocks.getAppDbProviderMock.mockResolvedValue('mongodb');
     mocks.createIndexMock.mockResolvedValue('settings_key');
     mocks.findOneMock.mockResolvedValue(null);
+    mocks.toArrayMock.mockResolvedValue([]);
+    mocks.findMock.mockReturnValue({ toArray: mocks.toArrayMock });
     mocks.updateOneMock.mockResolvedValue({ acknowledged: true });
+    mocks.listAdminMenuSettingsFromLocalAppDbMock.mockResolvedValue([]);
+    mocks.readAdminMenuSettingFromLocalAppDbMock.mockResolvedValue(null);
+    mocks.upsertAdminMenuSettingInLocalAppDbMock.mockImplementation(
+      async (key: string, value: string) => ({ key, value })
+    );
     mocks.getMongoDbMock.mockResolvedValue({
       collection: vi.fn(() => ({
         createIndex: mocks.createIndexMock,
+        find: mocks.findMock,
         findOne: mocks.findOneMock,
         updateOne: mocks.updateOneMock,
       })),
@@ -326,6 +356,100 @@ describe('settings handler', () => {
     await expect(response.json()).resolves.toEqual({
       key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
       value: 'EUR',
+    });
+  });
+
+  it('pins admin menu favourites writes to the local geminitestapp app database', async () => {
+    const value = JSON.stringify(['jobs/queue', 'page-manager/milkbardesigners']);
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: 'admin_menu_favorites',
+        value,
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: 'admin_menu_favorites',
+          value,
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsertAdminMenuSettingInLocalAppDbMock).toHaveBeenCalledWith(
+      'admin_menu_favorites',
+      value
+    );
+    expect(mocks.updateOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      key: 'admin_menu_favorites',
+      value,
+    });
+  });
+
+  it('reads admin menu favourites from the local geminitestapp app database', async () => {
+    const value = JSON.stringify(['jobs/queue']);
+    mocks.readAdminMenuSettingFromLocalAppDbMock.mockResolvedValue(value);
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/settings?key=admin_menu_favorites'),
+      {
+        ...createContext(),
+        query: { key: 'admin_menu_favorites' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.readAdminMenuSettingFromLocalAppDbMock).toHaveBeenCalledWith(
+      'admin_menu_favorites'
+    );
+    expect(mocks.findOneMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([
+      {
+        key: 'admin_menu_favorites',
+        value,
+      },
+    ]);
+  });
+
+  it('excludes active-source admin menu rows when listing settings', async () => {
+    const localValue = JSON.stringify(['jobs/queue']);
+    mocks.listAdminMenuSettingsFromLocalAppDbMock.mockResolvedValue([
+      { key: 'admin_menu_favorites', value: localValue },
+    ]);
+    mocks.toArrayMock.mockResolvedValue([
+      {
+        _id: 'admin_menu_favorites',
+        key: 'admin_menu_favorites',
+        value: JSON.stringify(['stale-detached-copy']),
+      },
+      {
+        _id: 'front_page_app',
+        key: 'front_page_app',
+        value: 'cms',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/settings?fresh=1'),
+      {
+        ...createContext(),
+        query: { fresh: true },
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toContainEqual({ key: 'admin_menu_favorites', value: localValue });
+    expect(payload).toContainEqual({ key: 'front_page_app', value: 'cms' });
+    expect(payload).not.toContainEqual({
+      key: 'admin_menu_favorites',
+      value: JSON.stringify(['stale-detached-copy']),
     });
   });
 

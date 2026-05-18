@@ -41,7 +41,7 @@ export function AnalysisResultSection(
   } = runtime;
 
   const resolvedSourceSlotId =
-    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
+    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId.trim() || '';
   const normalizedWorkingSlotId = currentWorkingSlotId.trim();
   const availableSourceSlot = availableSlots.find(
     (slot) => slot.id.trim() === resolvedSourceSlotId

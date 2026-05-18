@@ -136,7 +136,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   );
   const buildSlotSourceSignature = useCallback(
     (slot: typeof workingSlot): string => {
-      const slotId = slot?.id?.trim() ?? '';
+      const slotId = slot?.id.trim() ?? '';
       if (!slotId) return '';
       const slotImageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
       const slotClientProcessingImageSrc = resolveClientProcessingImageSrc(slot, slotImageSrc);
@@ -166,7 +166,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     () => (projectsQuery.data ?? []).find((project) => project.id === projectId) ?? null,
     [projectId, projectsQuery.data]
   );
-  const activeProjectId = projectId?.trim() ?? '';
+  const activeProjectId = projectId.trim() ?? '';
   const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
     const width =
       typeof activeProject?.canvasWidthPx === 'number' &&
@@ -303,9 +303,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const layoutCanSavePreset = layoutPresetDraftName.trim().length > 0;
   const layoutSavePresetLabel = selectedCustomPresetId ? 'Update Preset' : 'Save Preset';
   const resolvedAnalysisSourceSlotId =
-    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
+    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId.trim() || '';
   const resolvedAnalysisSourceSignature =
-    resultSourceSignature.trim() || persistedPlanSnapshot?.sourceSignature?.trim() || '';
+    resultSourceSignature.trim() || persistedPlanSnapshot?.sourceSignature.trim() || '';
   const analysisSourceSignatureMissing =
     resolvedAnalysisSourceSlotId !== '' && resolvedAnalysisSourceSignature === '';
   const analysisPlanIsStale = useMemo((): boolean => {
@@ -411,8 +411,8 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     target: 'object_layout' | 'auto_scaler',
     options?: { runAfterApply?: boolean }
   ): void => {
-    const fallbackSlotId = persistedPlanSnapshot?.slotId?.trim() ?? '';
-    const fallbackSourceSignature = persistedPlanSnapshot?.sourceSignature?.trim() ?? '';
+    const fallbackSlotId = persistedPlanSnapshot?.slotId.trim() ?? '';
+    const fallbackSourceSignature = persistedPlanSnapshot?.sourceSignature.trim() ?? '';
     const fallbackLayout = persistedPlanSnapshot?.layout ?? null;
     const resolvedLayout = result ? toSharedLayout(result.layout) : fallbackLayout;
     if (!resolvedLayout) {
@@ -475,7 +475,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   };
 
   const handleAnalyze = async (): Promise<void> => {
-    const slotId = workingSlot?.id?.trim() ?? '';
+    const slotId = workingSlot?.id.trim() ?? '';
     if (!slotId) {
       toast('No active source slot selected.', { variant: 'info' });
       return;
@@ -649,7 +649,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     },
     onCenterLayoutDeletePreset: () => {
       if (!selectedCustomPresetId) return;
-      const deletedName = selectedCustomPreset?.name?.trim() ?? '';
+      const deletedName = selectedCustomPreset?.name.trim() ?? '';
       const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, selectedCustomPresetId);
       setLayoutCustomPresets(nextPresets);
       setLayoutPresetDraftName('');
@@ -696,7 +696,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       result,
       resultSourceSlotId,
       persistedPlanSnapshot,
-      currentWorkingSlotId: workingSlot?.id?.trim() ?? '',
+      currentWorkingSlotId: workingSlot?.id.trim() ?? '',
       availableSlots,
       slotSelectionLocked,
       analysisSourceSignatureMissing,

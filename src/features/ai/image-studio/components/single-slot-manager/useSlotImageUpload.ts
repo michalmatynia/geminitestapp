@@ -95,7 +95,7 @@ export function useSlotImageUpload({
 
         lastConsumedTemporaryUploadIdRef.current = null;
         lastConsumedSlotIdRef.current = null;
-        const selectedSlotId = objectSlot?.id?.trim() ?? '';
+        const selectedSlotId = objectSlot?.id.trim() ?? '';
         if (selectedSlotId) {
           const updatePayload: UpdateImageStudioSlotDto = {
             imageFileId: uploaded.id,

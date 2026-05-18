@@ -62,7 +62,7 @@ export function PreviewHeroSection(): React.JSX.Element {
           )}
           <div
             className={`relative z-10 ${getSectionContainerClass({
-              fullWidth: layout?.fullWidth,
+              fullWidth: layout.fullWidth,
               maxWidthClass: 'max-w-3xl',
               paddingClass: 'px-6',
             })} text-center`}
@@ -124,7 +124,7 @@ export function PreviewImageWithTextSection(): React.JSX.Element {
           />
         }
       >
-        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+        <div className={getSectionContainerClass({ fullWidth: layout.fullWidth })}>
           <div
             className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}
           >
@@ -198,7 +198,7 @@ export function PreviewRichTextSection(): React.JSX.Element {
       >
         <div
           className={getSectionContainerClass({
-            fullWidth: layout?.fullWidth,
+            fullWidth: layout.fullWidth,
             maxWidthClass: 'max-w-3xl',
           })}
         >

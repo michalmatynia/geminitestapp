@@ -257,7 +257,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
   });
 
   const runs = useMemo(
-    () => (Array.isArray(runsQuery.data?.runs) ? runsQuery.data?.runs : []),
+    () => (Array.isArray(runsQuery.data?.runs) ? runsQuery.data.runs : []),
     [runsQuery.data?.runs]
   );
   const filteredRuns = useMemo(() => {
@@ -266,7 +266,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       if (statusFilter !== 'all' && run.status !== statusFilter) return false;
       if (showSlowOnly && classifyRunDuration(run) !== 'slow') return false;
       if (!needle) return true;
-      const prompt = run.request?.prompt?.toLowerCase() ?? '';
+      const prompt = run.request.prompt.toLowerCase() ?? '';
       const error = run.errorMessage?.toLowerCase() ?? '';
       const modelRaw = resolveExecutionSummary(run, resolveExecutionMeta(run)).model ?? '';
       const model = modelRaw.toLowerCase();
@@ -400,7 +400,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       </div>
 
       {filteredRuns.map((run) => {
-        const prompt = run.request?.prompt?.trim() ?? '';
+        const prompt = run.request.prompt.trim() ?? '';
         const promptSummary =
           prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';
         const isExpanded = expandedRunId === run.id;

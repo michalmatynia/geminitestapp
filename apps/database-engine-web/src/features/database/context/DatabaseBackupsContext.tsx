@@ -17,6 +17,7 @@ export type DatabaseBackupsStateContextValue = Omit<
   | 'setSelectedBackupForRestore'
   | 'closeLogModal'
   | 'handleBackup'
+  | 'handleBackupAll'
   | 'handleUpload'
   | 'handleRestoreRequest'
   | 'handleRestoreConfirm'
@@ -39,6 +40,7 @@ export type DatabaseBackupsActionsContextValue = Pick<
   | 'setSelectedBackupForRestore'
   | 'closeLogModal'
   | 'handleBackup'
+  | 'handleBackupAll'
   | 'handleUpload'
   | 'handleRestoreRequest'
   | 'handleRestoreConfirm'
@@ -88,6 +90,7 @@ export function DatabaseBackupsProvider({
     setSelectedBackupForRestore,
     closeLogModal,
     handleBackup,
+    handleBackupAll,
     handleUpload,
     handleRestoreRequest,
     handleRestoreConfirm,
@@ -110,6 +113,7 @@ export function DatabaseBackupsProvider({
     setSelectedBackupForRestore,
     closeLogModal,
     handleBackup,
+    handleBackupAll,
     handleUpload,
     handleRestoreRequest,
     handleRestoreConfirm,

@@ -57,7 +57,7 @@ export const processJob = async (jobId: string): Promise<void> => {
   if (job.status !== 'running') return;
 
   const payload = job.payload as ChatPayload;
-  if (!Array.isArray(payload?.messages) || payload.messages.length === 0) {
+  if (!Array.isArray(payload.messages) || payload.messages.length === 0) {
     throw new AppError('Chatbot job payload missing or invalid: messages array required.', {
         code: AppErrorCodes.validation,
         httpStatus: 400,
@@ -67,7 +67,7 @@ export const processJob = async (jobId: string): Promise<void> => {
   
   const messages = payload.messages.filter(
     (message: ChatPayloadMessage): boolean =>
-      typeof message?.role === 'string' && typeof message?.content === 'string'
+      typeof message.role === 'string' && typeof message.content === 'string'
   );
   
   if (messages.length !== payload.messages.length) {

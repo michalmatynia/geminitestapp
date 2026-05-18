@@ -53,7 +53,7 @@ export function FrontendHeroSection(): React.ReactNode {
         {/* Content overlay */}
         <div
           className={`relative z-10 ${getSectionContainerClass({
-            fullWidth: layout?.fullWidth,
+            fullWidth: layout.fullWidth,
             maxWidthClass: 'max-w-3xl',
             paddingClass: 'px-6',
           })} text-center`}

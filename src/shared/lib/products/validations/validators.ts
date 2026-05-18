@@ -8,6 +8,15 @@ import {
 import type { ZodIssue } from 'zod';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+/**
+ * Dispatches validation failures to the centralized observability/reporting system.
+ * 
+ * This ensures that validation issues (which are often transient or user-driven)
+ * are logged for analysis without disrupting the core application flow.
+ * 
+ * @param message - Descriptive message detailing the validation failure.
+ * @param context - Additional diagnostic context relevant to the failed validation.
+ */
 const reportValidationError = async (
   message: string,
   context: Record<string, unknown> = {}
@@ -23,7 +32,10 @@ const reportValidationError = async (
   }
 };
 
-// Core validation types
+/**
+ * Standardized structure for reporting validation issues.
+ * Provides granular diagnostic data for both frontend feedback and backend monitoring.
+ */
 export type ValidationError = {
   field: string;
   message: string;
@@ -32,6 +44,9 @@ export type ValidationError = {
   context?: Record<string, unknown> | undefined;
 };
 
+/**
+ * Metadata captured during validation processes for auditing and observability.
+ */
 export type ValidationMetadata = {
   validationTime: number;
   rulesApplied: string[];

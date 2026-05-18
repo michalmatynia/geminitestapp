@@ -33,6 +33,8 @@ const TRANSIENT_ERROR_LOG_COOLDOWN_MS = 30_000;
 
 /**
  * Heuristic to identify recoverable transport-level Redis errors (e.g., socket resets).
+ * These errors suggest that the connection may be momentarily unavailable or stale, 
+ * warranting a retry or safe fallback rather than crashing the worker.
  */
 const isTransientRedisTransportError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;

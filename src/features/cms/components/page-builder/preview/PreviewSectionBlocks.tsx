@@ -71,7 +71,7 @@ export function PreviewImageWithTextBlock({
   const imageFirst = placement !== 'image-second';
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
 
   const stretchClass = resolvedStretch ? 'h-full' : '';
   const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
@@ -172,7 +172,7 @@ export function PreviewRichTextBlock({
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
   const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
 
   if (children.length === 0 && !showEditorChrome) {
     return null;
@@ -232,7 +232,7 @@ export function PreviewBlockSectionBlock({
   );
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
 
   return (
     <div
@@ -272,7 +272,7 @@ export function PreviewRepeaterBlock({
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditorState();
   const runtime = useOptionalCmsRuntime();
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const collectionSource = block.settings['collectionSource'];
   const collectionPath = block.settings['collectionPath'];
   const items = React.useMemo(
@@ -383,7 +383,7 @@ export function PreviewTextAtomBlock({
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditorState();
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const text = (block.settings['text'] as string) || '';
   const alignment = (block.settings['alignment'] as string) || 'left';
   const letterGap = (block.settings['letterGap'] as number) || 0;

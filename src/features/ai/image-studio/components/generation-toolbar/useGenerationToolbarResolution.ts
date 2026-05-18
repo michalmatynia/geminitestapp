@@ -26,7 +26,7 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
   } = state;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
     if (!normalizedWorkingSlotId) return null;
     const frameBinding = getPreviewCanvasImageFrame();
     if (!frameBinding) return null;

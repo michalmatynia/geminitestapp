@@ -26,7 +26,7 @@ import type {
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
-import type { Filter } from 'mongodb';
+
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -44,7 +44,7 @@ const toMongoId = (id: string): string | ObjectId => {
 const nowIso = (): string => new Date().toISOString();
 
 const toTimestamp = (value: string | null | undefined): number | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value === '') return null;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -85,7 +85,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
     .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
     .findOne({
       $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>);
+    });
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
@@ -96,7 +96,7 @@ const writeSettingValue = async (key: string, value: string): Promise<void> => {
     .updateOne(
       {
         $or: [{ _id: toMongoId(key) }, { key }],
-      } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>,
+      },
       {
         $set: {
           key,
@@ -118,7 +118,7 @@ const deleteSettingByKey = async (key: string): Promise<void> => {
     .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
     .deleteMany({
       $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>);
+    });
 };
 
 const listSettingValuesByPrefix = async (prefix: string, take: number): Promise<string[]> => {
@@ -128,7 +128,7 @@ const listSettingValuesByPrefix = async (prefix: string, take: number): Promise<
   const docs = await mongo
     .collection<MongoTimestampedStringSettingDocument<string | ObjectId>>('settings')
     .find(
-      { key: { $regex: regex } } as Filter<MongoTimestampedStringSettingDocument<string | ObjectId>>
+      { key: { $regex: regex } }
     )
     .sort({ updatedAt: -1, createdAt: -1 })
     .limit(safeTake)

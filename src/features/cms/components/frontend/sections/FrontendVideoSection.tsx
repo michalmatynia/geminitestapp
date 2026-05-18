@@ -50,7 +50,7 @@ export function FrontendVideoSection(): React.ReactNode {
     <section style={sectionStyles}>
       <div
         className={getSectionContainerClass({
-          fullWidth: layout?.fullWidth,
+          fullWidth: layout.fullWidth,
           maxWidthClass: 'max-w-4xl',
         })}
       >

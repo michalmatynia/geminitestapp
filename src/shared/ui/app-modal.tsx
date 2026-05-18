@@ -168,6 +168,18 @@ const renderAppModal = (resolvedProps: AppModalResolvedProps): React.JSX.Element
   );
 };
 
+/**
+ * Standardized modal container for the application, built upon Radix UI Dialog primitives.
+ * 
+ * Provides a consistent wrapper for modal content with built-in support for titles, 
+ * subtitles, actions, and various sizing configurations.
+ * 
+ * Features:
+ * - Controlled Visibility: Supports both `open` and `isOpen` prop patterns.
+ * - Flexible Header/Footer: Customizable header, header actions, and footer areas.
+ * - Sizing: Preset sizes (`sm` to `xl`) for consistent look and feel across the platform.
+ * - Interaction Management: Granular control over closing behavior (outside click, escape key).
+ */
 export function AppModal(props: AppModalProps): React.JSX.Element {
   const {
     open,

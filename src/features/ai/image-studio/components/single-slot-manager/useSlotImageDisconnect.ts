@@ -150,7 +150,7 @@ export function useSlotImageDisconnect({
             Array.from(followupCandidateIds)
               .filter(
                 (candidate): candidate is string =>
-                  Boolean(candidate) && candidate !== patchedSlot?.id
+                  Boolean(candidate) && candidate !== patchedSlot.id
               )
               .map((candidate) => patchBySlotId(candidate).catch(() => null))
           );

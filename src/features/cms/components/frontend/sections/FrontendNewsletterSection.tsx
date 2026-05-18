@@ -18,7 +18,7 @@ export function FrontendNewsletterSection(): React.ReactNode {
   return (
     <section style={sectionStyles}>
       <div
-        className={`${getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-2xl' })} text-center`}
+        className={`${getSectionContainerClass({ fullWidth: layout.fullWidth, maxWidthClass: 'max-w-2xl' })} text-center`}
       >
         {blocks.length > 0 && (
           <div className='mb-6 space-y-4'>

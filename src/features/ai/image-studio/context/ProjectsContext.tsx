@@ -186,7 +186,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         { timeout: 120_000 }
       );
 
-      if (!response.projectId?.trim()) {
+      if (!response.projectId.trim()) {
         throw new Error('Failed to update project canvas size.');
       }
 
@@ -215,7 +215,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       result: ResizeStudioProjectCanvasResult,
       variables: ResizeStudioProjectCanvasPayload
     ): Promise<void> => {
-      const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
+      const normalizedProjectId = result.projectId.trim() || variables.projectId.trim();
       await invalidateImageStudioProjects(queryClient);
       if (normalizedProjectId) {
         await invalidateImageStudioSlots(queryClient, normalizedProjectId);

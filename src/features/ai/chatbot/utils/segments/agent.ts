@@ -23,7 +23,7 @@ export const buildAgentResultMessage = (
           'string'
     );
   const resolvedTaskType: string | null =
-    (taskType as { plannerMeta?: { taskType?: string } })?.plannerMeta?.taskType ?? null;
+    (taskType as { plannerMeta?: { taskType?: string } }).plannerMeta?.taskType ?? null;
   const extractionAudit: AgentAuditLog | undefined = audits.find(
     (audit: AgentAuditLog): boolean => {
       const metadata = getMetadataRecord(audit.metadata);

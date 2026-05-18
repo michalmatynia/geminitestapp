@@ -190,7 +190,7 @@ function AiPathAnalysisTriggerFull(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={() => void triggerAnalysis()}
-            disabled={!config.pathId?.trim()}
+            disabled={!config.pathId.trim()}
           >
             Trigger AI Analysis
           </Button>
@@ -480,7 +480,7 @@ function AiPathAnalysisTriggerCompact(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={() => void triggerAnalysis()}
-            disabled={!config.pathId?.trim()}
+            disabled={!config.pathId.trim()}
             loading={false}
           >
             Trigger AI Analysis

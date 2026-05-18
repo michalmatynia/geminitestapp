@@ -1,7 +1,15 @@
 import 'server-only';
 
+/**
+ * Server-side entrypoint for the Jobs feature.
+ * Exports queue initialization and management services for various background job families
+ * (AI, Integrations, Database, Filemaker, etc.).
+ * Should only be accessed in server environments.
+ */
+
 export * from '@/shared/lib/products/services/productAiService';
-export {
+...
+
   startAgentQueue,
   stopAgentQueue,
   enqueueAgentRun,

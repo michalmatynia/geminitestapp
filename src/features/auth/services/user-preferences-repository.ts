@@ -170,7 +170,14 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
 
 const sanitizeUpdate = (data: Partial<UserPreferencesData>): Record<string, unknown> => {
   const s: Record<string, unknown> = {};
-  Object.entries(data).forEach(([k, v]) => { if (v !== undefined && !IMMUTABLE_FIELDS.has(k)) s[k] = v; });
+  for (const k in data) {
+    if (Object.prototype.hasOwnProperty.call(data, k)) {
+      const v = data[k as keyof UserPreferencesData];
+      if (v !== undefined && !IMMUTABLE_FIELDS.has(k)) {
+        s[k] = v;
+      }
+    }
+  }
   return s;
 };
 

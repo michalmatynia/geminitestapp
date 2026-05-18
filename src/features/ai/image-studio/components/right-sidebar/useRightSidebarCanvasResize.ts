@@ -86,7 +86,7 @@ export function useRightSidebarCanvasResize(): UseRightSidebarCanvasResizeResult
         currentImageOffset: canvasImageOffset,
         currentImageFrame: getPreviewCanvasImageFrame()?.frame,
         sourceAspectRatio:
-          workingSlot?.imageFile?.width && workingSlot?.imageFile?.height
+          workingSlot?.imageFile?.width && workingSlot.imageFile.height
             ? workingSlot.imageFile.width / workingSlot.imageFile.height
             : null,
       });

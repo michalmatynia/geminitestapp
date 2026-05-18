@@ -16,7 +16,7 @@ export function reducePageActions(
 
     case 'SET_CURRENT_PAGE': {
       const page = action.page;
-      const sections: SectionInstance[] = (page?.components ?? []).map(
+      const sections: SectionInstance[] = (page.components ?? []).map(
         (comp): SectionInstance => {
           const content = comp.content;
           return {

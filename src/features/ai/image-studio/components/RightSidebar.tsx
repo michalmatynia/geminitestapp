@@ -243,7 +243,7 @@ export function RightSidebar(): React.JSX.Element {
     width: number;
     height: number;
   } | null => {
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
     if (!normalizedWorkingSlotId) return null;
     const frameBinding = getPreviewCanvasImageFrame();
     if (frameBinding?.slotId !== normalizedWorkingSlotId) return null;

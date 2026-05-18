@@ -2,6 +2,16 @@
 
 import * as React from 'react';
 
+/**
+ * Theme Provider
+ * 
+ * Provides application-wide theme management capability (light/dark/system).
+ * Built on `next-themes`, it enables:
+ * - Persistent theme preference storage in local storage
+ * - System theme synchronization
+ * - CSS class-based or data-attribute theme switching
+ * - Flicker-free theme application via SSR hydration support
+ */
 type Theme = 'light' | 'dark' | 'system';
 type ThemeAttribute = 'class' | `data-${string}` | Array<'class' | `data-${string}`>;
 

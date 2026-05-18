@@ -173,7 +173,7 @@ function AddFavoriteSection({
           size='sm'
         />
       </FormField>
-      <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2'>
+      <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2' tabIndex={0} role='region' aria-label='Scrollable region' data-scroll-focus-ignore>
         {filteredItems.map((item: AdminNavLeaf) => (
           <FilteredItem
             key={item.id}

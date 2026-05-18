@@ -58,7 +58,7 @@ const inferBaseKind = (value: unknown, spec?: ParamSpec): ParamSpecKind => {
 
 const canUseSlider = (value: unknown, spec?: ParamSpec): boolean => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return false;
-  if (spec?.min !== undefined && spec?.max !== undefined) return true;
+  if (spec?.min !== undefined && spec.max !== undefined) return true;
   return value >= 0 && value <= 1;
 };
 
@@ -146,7 +146,7 @@ export function recommendParamUiControl(value: unknown, spec?: ParamSpec): Param
       baseKind,
       recommended: sliderOk ? 'slider' : 'number',
       options: PARAM_UI_NUMBER_OPTIONS,
-      confidence: spec?.min !== undefined && spec?.max !== undefined ? 0.85 : 0.65,
+      confidence: spec?.min !== undefined && spec.max !== undefined ? 0.85 : 0.65,
       reason: sliderOk
         ? null
         : 'No numeric range detected (add a hint like `// 0–1` to enable a slider).',

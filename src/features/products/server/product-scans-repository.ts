@@ -46,7 +46,14 @@ const ensureIndexes = async (): Promise<void> => {
     try {
       const db = await getMongoDb();
       const collection = db.collection<ProductScanDoc>(PRODUCT_SCANS_COLLECTION);
-      const existingIndexes = await collection.indexes();
+      let existingIndexes: { name?: string }[] = [];
+      try {
+        existingIndexes = await collection.indexes();
+      } catch (e: unknown) {
+        // Code 26 = NamespaceNotFound: collection doesn't exist yet.
+        // createIndex calls below will create it automatically.
+        if ((e as { code?: number }).code !== 26) throw e;
+      }
 
       if (existingIndexes.some((index) => index.name === LEGACY_ENGINE_RUN_ID_INDEX_NAME)) {
         await collection.dropIndex(LEGACY_ENGINE_RUN_ID_INDEX_NAME);

@@ -69,7 +69,7 @@ export function LibraryItemsList({
         onClear={() => setLibraryQuery('')}
         size='sm'
       />
-      <div className='mt-3 max-h-80 space-y-2 overflow-auto pr-2'>
+      <div className='mt-3 max-h-80 space-y-2 overflow-auto pr-2' tabIndex={0} role='region' aria-label='Scrollable region' data-scroll-focus-ignore>
         {filteredLibraryItems.length === 0 ? (
           <p
             className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border text-xs text-gray-400`}

@@ -377,7 +377,7 @@ export function useAiPathsObjectAnalysis(
         );
         if (abort.signal.aborted) return;
 
-        const runId = enqueueResult?.run?.id;
+        const runId = enqueueResult.run.id;
         if (!runId || typeof runId !== 'string') {
           throw new Error('Failed to enqueue AI path run: no run ID returned.');
         }
@@ -413,7 +413,7 @@ export function useAiPathsObjectAnalysis(
 
           if (abort.signal.aborted) return;
 
-          const runStatus = runData?.run?.status ?? '';
+          const runStatus = runData.run.status ?? '';
           if (!TERMINAL_STATUSES.has(runStatus)) {
             pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
             return;
@@ -421,7 +421,7 @@ export function useAiPathsObjectAnalysis(
 
           // Terminal state reached
           if (runStatus !== 'completed') {
-            const errMsg = runData?.run?.error ?? `Path run ended with status "${runStatus}".`;
+            const errMsg = runData.run.error ?? `Path run ended with status "${runStatus}".`;
             setStatus('error');
             setErrorMessage(typeof errMsg === 'string' ? errMsg : String(errMsg));
             toast(

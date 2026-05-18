@@ -1,15 +1,25 @@
 /**
  * AI Brain Server Model Catalog
  * 
- * Server-side management of the AI model catalog.
- * Provides:
- * - Model discovery for local Ollama instances
- * - Catalog resolution from stored settings and presets
- * - Model family classification (chat, embedding, vision, etc.)
- * - Unified model descriptor generation
- * - Support for filtering and searching models
+ * Central registry and discovery service for all AI models available to the platform.
+ * 
+ * The catalog acts as the single source of truth for model availability, routing,
+ * and capability metadata. It abstracts vendor-specific configurations (OpenAI, 
+ * Anthropic, Ollama, etc.) into a unified internal descriptor format.
+ * 
+ * Key Responsibilities:
+ * - Discovery: Fetches and catalogs local Ollama models and retrieves remote presets.
+ * - Resolution: Maps stored environment configurations and platform-wide settings to 
+ *   runnable model descriptors.
+ * - Classification: Groups models by modality (text, image, embedding) and family 
+ *   (GPT-4, Claude, Llama) to facilitate intelligent routing.
+ * - Metadata Management: Enforces capabilities like streaming, JSON mode support, and 
+ *   vendor-specific runtime normalization.
+ * 
+ * Usage:
+ * Use this catalog in AI services to resolve which model to use based on the 
+ * requested task modality and the platform's current availability/configuration.
  */
-
 import 'server-only';
 
 import type {

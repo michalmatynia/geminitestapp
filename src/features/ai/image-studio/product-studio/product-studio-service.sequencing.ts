@@ -7,12 +7,18 @@ import { clamp01, trimString } from './product-studio-service.helpers';
 
 export type { ProductStudioSequenceStepPlanEntry };
 
+/**
+ * Input configuration for determining the post-production route of an image studio task.
+ */
 export type ResolvePostProductionRouteInput = {
   sequencing: ProductStudioSequencingConfig;
   requestedMode: ProductStudioSequenceGenerationMode;
   modelId: string;
 };
 
+/**
+ * Resulting execution route determined by the sequencing logic.
+ */
 export type ResolvePostProductionRouteResult = {
   executionRoute: ProductStudioExecutionRoute;
   runKind: 'generation' | 'sequence';
@@ -35,6 +41,10 @@ const buildRouteDecision = (params: {
   warnings: params.warnings ?? [],
 });
 
+/**
+ * Checks for hardcoded or forced sequencing modes based on the requested generation mode.
+ * Returns a decision object if a direct mapping is found, otherwise returns null for further resolution.
+ */
 const resolveForcedPostProductionRoute = (
   requestedMode: ProductStudioSequenceGenerationMode
 ): ResolvePostProductionRouteResult | null => {

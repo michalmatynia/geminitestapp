@@ -233,7 +233,7 @@ export function useGenerationToolbarActions(
     async (
       handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>
     ): Promise<void> => {
-      const activeSlotId = workingSlot?.id?.trim() ?? '';
+      const activeSlotId = workingSlot?.id.trim() ?? '';
       if (!activeSlotId) {
         toast('No active source slot selected.', { variant: 'info' });
         return;

@@ -32,7 +32,7 @@ export function FrontendTestimonialsSection(): React.ReactNode {
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+      <div className={getSectionContainerClass({ fullWidth: layout.fullWidth })}>
         <div className={UI_GRID_ROOMY_CLASSNAME} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
           {blocks.map((block: BlockInstance) => (
             <Card

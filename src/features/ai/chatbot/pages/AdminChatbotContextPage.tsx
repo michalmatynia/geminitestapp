@@ -17,8 +17,15 @@ import { useChatbotContextState } from '../hooks/useChatbotContextState';
 import type { ContextItem } from '../hooks/useChatbotContextState';
 import type { ColumnDef } from '@tanstack/react-table';
 
+/**
+ * Admin interface for managing chatbot context data.
+ * Handles CRUD operations, file uploads, and filtering for context items
+ * that inform the chatbot's knowledge base.
+ */
 function ChatbotContextPageInner(): React.JSX.Element {
   const { toast } = useToast();
+  
+  // Custom hook managing the business logic for context persistence, filtering, and modal state
   const {
     activeIds,
     tagQuery,
@@ -57,10 +64,10 @@ function ChatbotContextPageInner(): React.JSX.Element {
         header: 'Tags',
         cell: ({ row }) => (
           <div className='flex flex-wrap gap-1'>
-            {(row.original.tags || []).length === 0 ? (
+            {(row.original.tags ?? []).length === 0 ? (
               <span className='text-xs text-gray-500'>None</span>
             ) : (
-              (row.original.tags || []).map((tag: string) => <Tag key={tag} label={tag} />)
+              (row.original.tags ?? []).map((tag: string) => <Tag key={tag} label={tag} />)
             )}
           </div>
         ),
@@ -70,7 +77,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         header: 'Source',
         cell: ({ row }) => (
           <span className='text-xs text-gray-400 capitalize'>
-            {row.original.source || 'manual'}
+            {row.original.source ?? 'manual'}
           </span>
         ),
       },
@@ -115,7 +122,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
   const handleCopyLink = useCallback(() => {
     const params = new URLSearchParams();
-    if (tagQuery.trim()) {
+    if (tagQuery.trim() !== '') {
       params.set('q', tagQuery.trim());
     }
     if (tagFilters.length > 0) {

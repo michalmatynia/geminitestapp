@@ -218,7 +218,7 @@ export function useGenerationToolbarAutoScale({
         );
       }
 
-      const normalizedProjectId = projectId?.trim() ?? '';
+      const normalizedProjectId = projectId.trim() ?? '';
       if (normalizedProjectId) {
         setAutoScaleStatus('persisting');
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
@@ -235,12 +235,12 @@ export function useGenerationToolbarAutoScale({
         }
       }
 
-      if (response.slot?.id) {
+      if (response.slot.id) {
         setSelectedSlotId(response.slot.id);
         setWorkingSlotId(response.slot.id);
       }
 
-      const createdLabel = response.slot?.name?.trim() || 'Auto-scaled variant';
+      const createdLabel = response.slot.name?.trim() || 'Auto-scaled variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;
       const modeLabel =
         effectiveMode === 'client_auto_scaler' ? 'Client auto scaler' : 'Server auto scaler';

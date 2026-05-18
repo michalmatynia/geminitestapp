@@ -51,7 +51,7 @@ export function ShadowField(): React.ReactNode {
         <input
           type='color'
           id={colorPickerId}
-          value={(shadow['color'] as string)?.slice(0, 7) ?? '#000000'}
+          value={(shadow['color'] as string).slice(0, 7) ?? '#000000'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
             update('color', e.target.value)
           }

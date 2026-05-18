@@ -22,6 +22,10 @@ import {
   isKangurSettingKey,
   listKangurSettingsByKeys,
 } from '@/features/kangur/services/kangur-settings-repository';
+import {
+  isAdminMenuSettingKey,
+  listAdminMenuSettingsFromLocalAppDb,
+} from '@/features/admin/server/admin-menu-settings-store';
 import { KANGUR_THEME_PRESET_MANIFEST_KEY } from '@/shared/contracts/kangur-settings-keys';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -133,17 +137,20 @@ const buildLiteSettingsFallbackResponse = (input: {
 };
 
 const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord[]> => {
-  if (!process.env['MONGODB_URI']) return [];
   if (keys.length === 0) return [];
+  const adminMenuKeys = keys.filter(isAdminMenuSettingKey);
+  const mongoKeys = keys.filter((key) => !isAdminMenuSettingKey(key));
+  const adminMenuSettings = await listAdminMenuSettingsFromLocalAppDb(adminMenuKeys);
+  if (!process.env['MONGODB_URI'] || mongoKeys.length === 0) return adminMenuSettings;
   const mongo = await getMongoDb();
   const docs = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
     .find(
-      { $or: [{ key: { $in: keys as string[] } }, { _id: { $in: keys as string[] } }] },
+      { $or: [{ key: { $in: mongoKeys as string[] } }, { _id: { $in: mongoKeys as string[] } }] },
       { projection: { _id: 1, key: 1, value: 1 } }
     )
     .toArray();
-  return docs
+  const mongoSettings = docs
     .map((doc: MongoStringSettingRecord) => {
       const key = doc.key ?? (typeof doc._id === 'string' ? doc._id : '');
       const value = typeof doc.value === 'string' ? doc.value : null;
@@ -151,6 +158,11 @@ const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord
     })
     .filter((item: { key: string; value: string | null }) => item.key && item.value !== null)
     .map((item) => ({ key: item.key, value: item.value as string }));
+  if (adminMenuSettings.length === 0) return mongoSettings;
+  const merged = new Map<string, string>();
+  mongoSettings.forEach((item) => merged.set(item.key, item.value));
+  adminMenuSettings.forEach((item) => merged.set(item.key, item.value));
+  return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
 
 const fetchLiteSettings = async (): Promise<SettingRecord[]> => {

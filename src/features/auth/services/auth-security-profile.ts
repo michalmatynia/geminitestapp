@@ -130,13 +130,15 @@ const mapProfileUpdates = (updates: Partial<AuthSecurityProfile>): Partial<Mongo
   if (updates.allowedIps !== undefined) {
     payload.allowedIps = updates.allowedIps;
   }
+
+  const parseDate = (val: string | null | undefined): Date | null =>
+    (val !== null && val !== undefined && val.length > 0) ? new Date(val) : null;
+
   if (updates.disabledAt !== undefined) {
-    const disabledAt = updates.disabledAt;
-    payload.disabledAt = (disabledAt !== null && disabledAt.length > 0) ? new Date(disabledAt) : null;
+    payload.disabledAt = parseDate(updates.disabledAt);
   }
   if (updates.bannedAt !== undefined) {
-    const bannedAt = updates.bannedAt;
-    payload.bannedAt = (bannedAt !== null && bannedAt.length > 0) ? new Date(bannedAt) : null;
+    payload.bannedAt = parseDate(updates.bannedAt);
   }
   return payload;
 };

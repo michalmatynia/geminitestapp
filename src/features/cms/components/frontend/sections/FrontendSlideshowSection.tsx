@@ -34,7 +34,7 @@ export function FrontendSlideshowSection({
         {sectionCustomCss ? (
           <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style>
         ) : null}
-        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
+        <div className={getSectionContainerClass({ fullWidth: layout.fullWidth })}>
           <div className='slideshow-container relative w-full'>
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />

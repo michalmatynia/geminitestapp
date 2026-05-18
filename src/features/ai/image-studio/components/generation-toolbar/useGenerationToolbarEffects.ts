@@ -105,8 +105,8 @@ export function useGenerationToolbarEffects(
       return;
     }
 
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
-    const normalizedIntentSlotId = intent.slotId?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
+    const normalizedIntentSlotId = intent.slotId.trim() ?? '';
 
     const intentSlotExists = slots.some(
       (slot) => (slot.id ?? '').trim() === normalizedIntentSlotId
@@ -124,7 +124,7 @@ export function useGenerationToolbarEffects(
       return;
     }
 
-    const normalizedIntentSourceSignature = intent.sourceSignature?.trim() ?? '';
+    const normalizedIntentSourceSignature = intent.sourceSignature.trim() ?? '';
     if (normalizedIntentSourceSignature && !workingSourceSignature) {
       lastConsumedAnalysisIntentRef.current = intentKey;
       clearImageStudioAnalysisApplyIntent(activeProjectId);

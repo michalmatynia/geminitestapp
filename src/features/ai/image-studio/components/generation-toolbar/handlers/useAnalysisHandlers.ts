@@ -67,7 +67,7 @@ export function useAnalysisHandlers(
     mode: 'server_analysis' | 'client_analysis',
     layout: ImageStudioCenterLayoutConfig
   ): Promise<void> => {
-    const slotId = workingSlot?.id?.trim() ?? '';
+    const slotId = workingSlot?.id.trim() ?? '';
     if (!slotId) {
       toast('No active source slot selected.', { variant: 'info' });
       return;

@@ -84,7 +84,7 @@ export function MiniRichTextEditor(props: {
     else if (editor.isActive('heading', { level: 2 })) setFormatValue('heading-2');
     else if (editor.isActive('heading', { level: 3 })) setFormatValue('heading-3');
     else setFormatValue('paragraph');
-  }, [editor?.state.selection, editor]);
+  }, [editor.state.selection, editor]);
 
   const applyFormat = (type: string) => {
     if (!editor) return;

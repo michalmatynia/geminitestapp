@@ -11,9 +11,14 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 vi.mock('server-only', () => ({}));
 
-const { getMongoDbMock, getMongoClientMock } = vi.hoisted(() => ({
+const {
+  getMongoDbMock,
+  getMongoClientMock,
+  listAdminMenuSettingsFromLocalAppDbMock,
+} = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
   getMongoClientMock: vi.fn(),
+  listAdminMenuSettingsFromLocalAppDbMock: vi.fn(),
 }));
 const captureExceptionMock = vi.hoisted(() => vi.fn());
 
@@ -21,6 +26,20 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
   getMongoClient: getMongoClientMock,
 }));
+
+vi.mock('@/features/admin/server/admin-menu-settings-store', () => {
+  const adminMenuKeys = [
+    'admin_menu_favorites',
+    'admin_menu_section_colors',
+    'admin_menu_custom_enabled',
+    'admin_menu_custom_nav',
+  ] as const;
+  const adminMenuKeySet = new Set<string>(adminMenuKeys);
+  return {
+    isAdminMenuSettingKey: (key: string) => adminMenuKeySet.has(key),
+    listAdminMenuSettingsFromLocalAppDb: listAdminMenuSettingsFromLocalAppDbMock,
+  };
+});
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
@@ -58,6 +77,7 @@ describe('settings lite handler', () => {
     vi.clearAllMocks();
     clearLiteSettingsServerCache();
     process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    listAdminMenuSettingsFromLocalAppDbMock.mockResolvedValue([]);
   });
 
   it('returns lite settings without requiring admin access', async () => {
@@ -93,38 +113,9 @@ describe('settings lite handler', () => {
 
     expect(response.status).toBe(200);
     expect(collectionMock).toHaveBeenCalledWith('settings');
-    expect(collectionMock).toHaveBeenCalledWith('kangur_settings');
-    expect(findKangurMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        $or: expect.arrayContaining([
-          expect.objectContaining({
-            key: expect.objectContaining({
-              $in: expect.arrayContaining([
-                KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-                KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
-              ]),
-            }),
-          }),
-        ]),
-      }),
-      expect.any(Object)
-    );
-    await expect(response.json()).resolves.toEqual(
-      expect.arrayContaining([
-        {
-          key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
-          value: JSON.stringify({ agentPersonaId: 'persona-1' }),
-        },
-        {
-          key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
-          value: JSON.stringify({ route: 'dedicated_app' }),
-        },
-        {
-          key: KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-          value: 'default',
-        },
-      ])
-    );
+    expect(collectionMock).not.toHaveBeenCalledWith('kangur_settings');
+    expect(findKangurMock).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual([]);
   });
 
   it('prewarms the lite settings cache so the next request can serve from memory', async () => {
@@ -160,14 +151,7 @@ describe('settings lite handler', () => {
 
     expect(response.headers.get('X-Cache')).toBe('hit');
     expect(getMongoDbMock).toHaveBeenCalledTimes(dbCallsAfterPrewarm);
-    await expect(response.json()).resolves.toEqual(
-      expect.arrayContaining([
-        {
-          key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
-          value: JSON.stringify({ route: 'dedicated_app' }),
-        },
-      ])
-    );
+    await expect(response.json()).resolves.toEqual([]);
   });
 
   it('returns observability logging control settings from the lite endpoint', async () => {
@@ -219,6 +203,57 @@ describe('settings lite handler', () => {
         {
           key: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
           value: 'false',
+        },
+      ])
+    );
+  });
+
+  it('loads admin menu favourites from the local geminitestapp app database', async () => {
+    const toArrayKangurMock = vi.fn().mockResolvedValue([]);
+    const toArraySettingsMock = vi.fn().mockResolvedValue([
+      {
+        _id: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+        key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+        value: 'true',
+      },
+    ]);
+    const findKangurMock = vi.fn().mockReturnValue({ toArray: toArrayKangurMock });
+    const findSettingsMock = vi.fn().mockReturnValue({ toArray: toArraySettingsMock });
+    const collectionMock = vi.fn((name: string) => {
+      if (name === 'kangur_settings') {
+        return {
+          find: findKangurMock,
+          createIndex: vi.fn().mockResolvedValue(undefined),
+          updateOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+        };
+      }
+      return { find: findSettingsMock };
+    });
+    getMongoDbMock.mockResolvedValue({ collection: collectionMock });
+    listAdminMenuSettingsFromLocalAppDbMock.mockResolvedValue([
+      {
+        key: 'admin_menu_favorites',
+        value: JSON.stringify(['jobs/queue']),
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/settings/lite'),
+      createRequestContext()
+    );
+
+    expect(listAdminMenuSettingsFromLocalAppDbMock).toHaveBeenCalledWith(
+      expect.arrayContaining(['admin_menu_favorites'])
+    );
+    const settingsQuery = findSettingsMock.mock.calls[0]?.[0] as {
+      $or: Array<{ key?: { $in?: string[] }; _id?: { $in?: string[] } }>;
+    };
+    expect(settingsQuery.$or[0]?.key?.$in).not.toContain('admin_menu_favorites');
+    await expect(response.json()).resolves.toEqual(
+      expect.arrayContaining([
+        {
+          key: 'admin_menu_favorites',
+          value: JSON.stringify(['jobs/queue']),
         },
       ])
     );

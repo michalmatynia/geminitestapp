@@ -19,6 +19,18 @@ export type RuntimeErrorReportingContext = ClientErrorContext & {
   service?: string;
 };
 
+/**
+ * Orchestrates runtime error reporting across the platform.
+ * 
+ * This utility acts as a central dispatcher for uncaught runtime exceptions.
+ * It intelligently routes error information to the appropriate collector based on the
+ * environment:
+ * - Browser: Dispatches via `logClientCatchIfBrowser` to the client-side observability pipeline.
+ * - Server: Uses `reportObservabilityInternalError` to capture and log server-side failures.
+ * 
+ * @param error - The error caught at runtime
+ * @param context - Rich diagnostic context, including the source service, action, and environment state
+ */
 export const reportRuntimeCatch = async (
   error: unknown,
   context: RuntimeErrorReportingContext

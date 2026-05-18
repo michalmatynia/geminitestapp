@@ -32,7 +32,7 @@ export function ParallaxSection(): React.ReactNode {
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? 'y';
   const parallaxOffsetValue =
     config.parallaxOffset ??
-    (PARALLAX_DEFAULTS[parallaxPresetValue] as ParallaxDefaultValue)?.offset ??
+    (PARALLAX_DEFAULTS[parallaxPresetValue] as ParallaxDefaultValue).offset ??
     DEFAULT_ANIMATION_CONFIG.parallaxOffset ??
     0;
   const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
@@ -82,9 +82,9 @@ export function ParallaxSection(): React.ReactNode {
       const next: GsapAnimationConfig = {
         ...config,
         parallaxPreset: preset,
-        parallaxOffset: preset === 'none' ? 0 : (defaults?.offset ?? config.parallaxOffset),
+        parallaxOffset: preset === 'none' ? 0 : (defaults.offset ?? config.parallaxOffset),
       };
-      if (preset === 'depth' && defaults?.scale) {
+      if (preset === 'depth' && defaults.scale) {
         next.parallaxScaleFrom = defaults.scale;
         next.parallaxScaleTo = 1;
       }

@@ -146,7 +146,7 @@ export function useCenterPreviewVariants(
       slots,
     });
 
-    const pendingRunId = pendingSequenceThumbnail?.runId?.trim() ?? '';
+    const pendingRunId = pendingSequenceThumbnail?.runId.trim() ?? '';
     if (!pendingRunId) return builtVariants;
 
     const pendingSourceSlotId = pendingSequenceThumbnail?.sourceSlotId?.trim() ?? '';
@@ -280,7 +280,7 @@ export function useCenterPreviewVariants(
   const activeVariantId = useMemo((): string | null => {
     if (!workingSlot) return null;
 
-    const workingSlotId = workingSlot.id?.trim() ?? '';
+    const workingSlotId = workingSlot.id.trim() ?? '';
     const workingOutputId = workingSlot.imageFileId?.trim() ?? '';
     const workingImagePath = normalizeImagePath(
       workingSlot.imageFile?.url ?? workingSlot.imageUrl ?? null

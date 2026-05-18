@@ -42,7 +42,7 @@ export function VariantTooltipPortal(): React.JSX.Element | null {
       </div>
       <div>
         <span className='text-gray-400'>Resolution:</span>{' '}
-        {tooltip.variant.output?.width && tooltip.variant.output?.height
+        {tooltip.variant.output?.width && tooltip.variant.output.height
           ? `${tooltip.variant.output.width}x${tooltip.variant.output.height}`
           : 'n/a'}
       </div>

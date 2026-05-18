@@ -75,7 +75,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const activeProjectId = projectId?.trim() ?? '';
+  const activeProjectId = projectId.trim() ?? '';
 
   const toolbarContext = useGenerationToolbarContext();
   const {
@@ -173,15 +173,15 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     toolbarContext.centerMode === 'server_object_layout';
 
   const analysisPlanAvailable = Boolean(toolbarContext.analysisPlanSnapshot);
-  const analysisPlanSlotId = toolbarContext.analysisPlanSnapshot?.slotId?.trim() ?? '';
-  const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+  const analysisPlanSlotId = toolbarContext.analysisPlanSnapshot?.slotId.trim() ?? '';
+  const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
   const analysisPlanMatchesWorkingSlot =
     analysisPlanAvailable &&
     normalizedWorkingSlotId !== '' &&
     analysisPlanSlotId === normalizedWorkingSlotId;
 
   const analysisPlanSourceSignature =
-    toolbarContext.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
+    toolbarContext.analysisPlanSnapshot?.sourceSignature.trim() ?? '';
 
   const analysisSummaryData = useMemo((): ImageStudioAnalysisSummaryChipData | null => {
     if (!toolbarContext.analysisPlanSnapshot) return null;
@@ -250,7 +250,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     [workingSlot, workingSlotImageSrc]
   );
   const workingSourceSignature = useMemo(() => {
-    const slotId = workingSlot?.id?.trim() ?? '';
+    const slotId = workingSlot?.id.trim() ?? '';
     if (!slotId) return '';
     return buildImageStudioAnalysisSourceSignature({
       slotId,

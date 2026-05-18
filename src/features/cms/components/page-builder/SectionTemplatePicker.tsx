@@ -60,8 +60,8 @@ export function SectionTemplatePicker({
     const template = item.value as SectionTemplate;
     return (
       template.name.toLowerCase().includes(q) ||
-      template.category?.toLowerCase().includes(q) ||
-      template.description?.toLowerCase().includes(q) ||
+      template.category.toLowerCase().includes(q) ||
+      template.description.toLowerCase().includes(q) ||
       item.label.toLowerCase().includes(q)
     );
   };

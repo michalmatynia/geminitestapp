@@ -1,15 +1,23 @@
 /**
  * Settings Logic
  * 
- * Core business logic for settings management and optimization.
- * Provides:
- * - Heavy settings detection and filtering
- * - Settings scope management
- * - Performance optimization for large settings
- * - Key-based settings categorization
- * - Client-side error logging integration
+ * Core domain logic for settings management, categorization, and optimization.
+ * 
+ * Orchestrates efficient handling of settings, particularly distinguishing between 
+ * 'lightweight' configurations and 'heavy' data payloads that impact application performance.
+ * 
+ * Key Features:
+ * - Performance Optimization: Identifies heavy settings that should be scoped or 
+ *   deferred to prevent initialization bottlenecks.
+ * - Categorization: Provides predicates for filtering settings by scope, key prefix, 
+ *   or functional domain (e.g., AI Paths, Case Resolver).
+ * - Lifecycle Awareness: Aids in the intelligent hydration and caching of settings 
+ *   based on system load and data requirements.
+ * 
+ * Usage:
+ * Use these predicates and utilities in settings repositories and hydration layers 
+ * to ensure optimal loading strategies for various system configurations.
  */
-
 import type { SettingsScope, SettingRecord } from '@/shared/lib/settings-cache';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

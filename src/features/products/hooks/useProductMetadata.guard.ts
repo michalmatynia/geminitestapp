@@ -33,6 +33,7 @@ export const useProductMetadataFormGuard = ({
     if (product === undefined) return;
     if (!areMetadataQueriesReady(catalogsReady, languagesReady)) return;
     if (selectedCatalogIds.length === 0) return;
+    if (languages.length === 0) return;
     if (filteredLanguages.length > 0) return;
     logClientError(new Error('[ProductForm] filteredLanguages empty after queries resolved'), {
       context: {

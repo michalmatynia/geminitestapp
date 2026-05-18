@@ -16,6 +16,10 @@ import { useChatbotContextItemActions } from './useChatbotContextState.actions';
 
 export type { ContextItem, ContextDraft };
 
+/**
+ * Custom hook providing the aggregate state and interaction handlers for the chatbot context UI.
+ * Orchestrates data fetching, filtering, modal state, and persistence operations.
+ */
 export type ChatbotContextState = {
   contexts: ContextItem[];
   activeIds: string[];
@@ -38,7 +42,7 @@ export type ChatbotContextState = {
   closeModal: () => void;
   handleDeleteContext: (id: string) => void;
   handleSaveDraft: () => void;
-  handlePdfUpload: (file: File, helpers?: FileUploadHelpers) => Promise<void>;
+  handlePdfUpload: (helpers: FileUploadHelpers) => Promise<void>;
   handleSaveContexts: () => Promise<void>;
   toggleActive: (id: string, active: boolean) => void;
 };

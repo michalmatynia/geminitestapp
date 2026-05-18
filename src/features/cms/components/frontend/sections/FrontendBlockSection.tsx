@@ -57,7 +57,7 @@ export function FrontendBlockSection(): React.ReactNode {
         {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
         <div
           className={getSectionContainerClass({
-            fullWidth: layout?.fullWidth,
+            fullWidth: layout.fullWidth,
             maxWidthClass: 'max-w-6xl',
           })}
         >

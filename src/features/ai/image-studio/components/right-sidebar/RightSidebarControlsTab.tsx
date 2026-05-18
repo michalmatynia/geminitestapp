@@ -84,7 +84,7 @@ export const RightSidebarControlsTab = React.memo(
       workingSlot,
       productImagesExternalBaseUrl
     );
-    const activeProjectId = projectId?.trim() ?? '';
+    const activeProjectId = projectId.trim() ?? '';
     const activeProject = (projectsQuery.data ?? []).find((p) => p.id === projectId) ?? null;
     const projectCanvasWidth =
       typeof activeProject?.canvasWidthPx === 'number' &&

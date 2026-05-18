@@ -28,7 +28,7 @@ export function PreviewRichTextSection(): React.JSX.Element {
     >
       <div
         className={getSectionContainerClass({
-          fullWidth: layout?.fullWidth,
+          fullWidth: layout.fullWidth,
           maxWidthClass: 'max-w-3xl',
         })}
       >

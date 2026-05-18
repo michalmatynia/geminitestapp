@@ -267,10 +267,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
   );
 
   const hasSourceImage = Boolean(workingSlot);
-  const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
+  const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId.trim() ?? '';
   const analysisPlanSourceMetadataMissing =
     state.analysisPlanAvailable &&
-    (state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '') === '';
+    (state.analysisPlanSnapshot?.sourceSignature.trim() ?? '') === '';
   const analysisPlanSlotRecord =
     analysisPlanSlotId === ''
       ? null
@@ -419,7 +419,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
   ]);
   const handleCenterLayoutDeletePreset = useCallback((): void => {
     if (!state.selectedCenterCustomPresetId) return;
-    const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
+    const deletedName = state.selectedCenterCustomPreset?.name.trim() ?? '';
     const nextPresets = deleteObjectLayoutCustomPreset(
       activeProjectId,
       state.selectedCenterCustomPresetId

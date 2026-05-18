@@ -51,6 +51,10 @@ import {
 /**
  * Validates if a MIME type is permitted based on the application's security policy.
  * 
+ * Performs normalization and checks the type against the image-based whitelist, 
+ * ensuring only safe, expected file types (primarily images) are permitted for 
+ * platform uploads.
+ * 
  * @param mime - The MIME type string extracted from the upload
  * @returns true if the MIME type is in the allowed list
  */

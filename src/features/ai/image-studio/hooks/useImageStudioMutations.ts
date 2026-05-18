@@ -175,7 +175,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
           timeout: 120_000,
         }
       );
-      if (!response.projectId?.trim()) {
+      if (!response.projectId.trim()) {
         throw new Error('Failed to update project canvas size.');
       }
       const canvasWidthPx = response.project.canvasWidthPx ?? payload.canvasWidthPx ?? null;
@@ -200,7 +200,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
       description: 'Resizes an image studio project canvas.',
     },
     invalidate: (queryClient, result, variables) => {
-      const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
+      const normalizedProjectId = result.projectId.trim() || variables.projectId.trim();
       void invalidateImageStudioProjects(queryClient);
       if (normalizedProjectId) {
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
@@ -291,7 +291,7 @@ export function useUpdateStudioSlot(
       const previous = queryClient.getQueryData<StudioSlotsResponse>(slotsQueryKey);
 
       patchImageStudioSlotsCache(queryClient, projectId, (current) => {
-        if (!current?.slots?.length) return current;
+        if (!current?.slots.length) return current;
         return {
           ...current,
           slots: current.slots.map((slot: ImageStudioSlotRecord) => {
@@ -335,7 +335,7 @@ export function useUpdateStudioSlot(
     },
     onSuccess: (updatedSlot: ImageStudioSlotRecord) => {
       patchImageStudioSlotsCache(queryClient, projectId, (current) => {
-        if (!current?.slots?.length) return current;
+        if (!current?.slots.length) return current;
         return {
           ...current,
           slots: current.slots.map((slot: ImageStudioSlotRecord) =>
@@ -372,7 +372,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
   const applyOptimisticDeleteFilter = (qc: QueryClient, candidateIds: Set<string>): void => {
     if (candidateIds.size === 0) return;
     patchImageStudioSlotsCache(qc, projectId, (current) => {
-      if (!current?.slots?.length) return current;
+      if (!current?.slots.length) return current;
       const nextSlots = current.slots.filter(
         (slot: ImageStudioSlotRecord) => !candidateIds.has(normalizeStudioSlotId(slot.id))
       );

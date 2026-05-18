@@ -79,8 +79,8 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     capability: 'image_studio.general',
   });
   const hideTopBar = activeTab === 'studio' && isFocusMode;
-  const requestedSlotId = searchParams?.get('slotId')?.trim() ?? '';
-  const returnToPath = normalizeReturnToPath(searchParams?.get('returnTo'));
+  const requestedSlotId = searchParams.get('slotId')?.trim() ?? '';
+  const returnToPath = normalizeReturnToPath(searchParams.get('returnTo'));
   const slotHydrationKeyRef = useRef<string | null>(null);
   const copyCardNameTooltip = getImageStudioDocTooltip('sidebar_copy_card_name');
   const selectCardFirstTooltip = getImageStudioDocTooltip('sidebar_select_card_first');
@@ -141,7 +141,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   useRegisterContextRegistryPageSource('image-studio-workspace-state', registrySource);
 
   useEffect(() => {
-    const rawTab = searchParams?.get('tab');
+    const rawTab = searchParams.get('tab');
     const nextTab: StudioTab =
       rawTab === 'projects' || rawTab === 'settings' || rawTab === 'prompts' || rawTab === 'docs'
         ? rawTab
@@ -152,7 +152,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   }, [activeTab, searchParams]);
 
   useEffect(() => {
-    const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
+    const requestedProjectId = searchParams.get('projectId')?.trim() ?? '';
     if (!requestedProjectId || requestedProjectId === projectId) return;
     if (projectsQuery.isLoading) return;
     const availableProjects = projectsQuery.data ?? [];
@@ -203,7 +203,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
           : 'studio';
       setActiveTab(nextTab);
 
-      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      const params = new URLSearchParams(searchParams.toString() ?? '');
       if (nextTab === 'studio') {
         params.delete('tab');
       } else {
@@ -222,7 +222,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
       setProjectId(normalizedProjectId);
       setActiveTab('studio');
-      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      const params = new URLSearchParams(searchParams.toString() ?? '');
       params.set('projectId', normalizedProjectId);
       params.delete('tab');
       const query = params.toString();
@@ -238,7 +238,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     if (projectId) {
       target.searchParams.set('studioProjectId', projectId);
     }
-    const activeSlotId = selectedSlot?.id?.trim() ?? '';
+    const activeSlotId = selectedSlot?.id.trim() ?? '';
     if (activeSlotId) {
       target.searchParams.set('studioVariantSlotId', activeSlotId);
     } else {

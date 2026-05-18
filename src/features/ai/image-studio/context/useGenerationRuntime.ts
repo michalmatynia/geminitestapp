@@ -191,7 +191,7 @@ const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationR
     return null;
   }
 
-  const requestMask = runRecord.request?.mask;
+  const requestMask = runRecord.request.mask;
   const maskShapeCount =
     requestMask?.type === 'polygons'
       ? Array.isArray(requestMask.polygons)
@@ -208,13 +208,13 @@ const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationR
   return {
     id: runRecord.id,
     timestamp: runRecord.finishedAt ?? runRecord.updatedAt ?? runRecord.createdAt,
-    prompt: runRecord.request?.prompt ?? '',
+    prompt: runRecord.request.prompt ?? '',
     maskShapeCount,
     maskInvert,
     maskFeather,
     outputs: toImageFileRecords(outputs),
-    slotId: runRecord.request?.asset?.id ?? '',
-    slotName: runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,
+    slotId: runRecord.request.asset?.id ?? '',
+    slotName: runRecord.request.asset?.id ?? runRecord.request.asset?.filepath ?? runRecord.id,
   };
 };
 
@@ -343,7 +343,7 @@ export function useGenerationRuntime(): {
         }
 
         setActiveRunId(runRecord.id);
-        setActiveRunSourceSlotId(runRecord.request?.asset?.id?.trim() || null);
+        setActiveRunSourceSlotId(runRecord.request.asset?.id?.trim() || null);
         setActiveRunStatus(runRecord.status);
         setActiveRunError(runRecord.errorMessage ?? null);
 
@@ -450,7 +450,7 @@ export function useGenerationRuntime(): {
             }
             try {
               const payload = JSON.parse(event.data as string) as { type?: string };
-              if (payload?.type === 'heartbeat') {
+              if (payload.type === 'heartbeat') {
                 return;
               }
             } catch (error) {
@@ -581,7 +581,7 @@ export function useGenerationRuntime(): {
         setRunOutputs(Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []);
         setLandingSlots(buildLandingSlotsFromRun(latestRun));
         setActiveRunId(latestRun.id);
-        setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
+        setActiveRunSourceSlotId(latestRun.request.asset?.id?.trim() || null);
         setActiveRunStatus(latestRun.status);
         const latestSelectedRunInFlight =
           latestRun.status === 'queued' || latestRun.status === 'running';
@@ -591,7 +591,7 @@ export function useGenerationRuntime(): {
           return;
         }
 
-        const requestMask = latestRun.request?.mask;
+        const requestMask = latestRun.request.mask;
         const maskShapeCount =
           requestMask?.type === 'polygons'
             ? Array.isArray(requestMask.polygons)
@@ -610,13 +610,13 @@ export function useGenerationRuntime(): {
 
         void pollRunUntilFinishedRef.current({
           runId: latestRun.id,
-          resolvedPrompt: latestRun.request?.prompt ?? '',
+          resolvedPrompt: latestRun.request.prompt ?? '',
           maskShapeCount,
           submittedMaskInvert,
           submittedMaskFeather,
-          submittedSlotId: latestRun.request?.asset?.id ?? '',
+          submittedSlotId: latestRun.request.asset?.id ?? '',
           submittedSlotName:
-            latestRun.request?.asset?.id ?? latestRun.request?.asset?.filepath ?? latestRun.id,
+            latestRun.request.asset?.id ?? latestRun.request.asset?.filepath ?? latestRun.id,
           submittedSlotFolderPath: '',
           expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
         });

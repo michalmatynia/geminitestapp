@@ -137,7 +137,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
   }, [workingSlot, productImagesExternalBaseUrl]);
   const temporaryObjectImageSrc = useMemo(() => {
-    const raw = temporaryObjectUpload?.filepath?.trim() ?? '';
+    const raw = temporaryObjectUpload?.filepath.trim() ?? '';
     if (!raw) return null;
     return raw;
   }, [temporaryObjectUpload?.filepath]);
@@ -184,7 +184,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     return resolveSourceSlotIdFromGeneratedPath(selectedSlot);
   }, [selectedSlot, selectedSlotMetadata]);
   const rootVariantSourceSlotId = useMemo(() => {
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
     const normalizedWorkingSourceSlotId = sourceSlotId?.trim() ?? '';
     if (normalizedWorkingSourceSlotId) return normalizedWorkingSourceSlotId;
     if (normalizedWorkingSlotId) return normalizedWorkingSlotId;
@@ -207,7 +207,7 @@ export function CenterPreviewInner(): React.JSX.Element {
 
   const hasSourceSlotReference = useMemo(() => {
     const normalizedSourceSlotId = sourceSlotId?.trim() ?? '';
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id.trim() ?? '';
     return Boolean(
       previewMode === 'image' &&
       normalizedSourceSlotId &&
@@ -580,7 +580,7 @@ export function CenterPreviewInner(): React.JSX.Element {
 
   const handleDeleteVariant = useCallback(
     (variant: VariantThumbnailInfo): void => {
-      const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
+      const variantLabel = variant.output?.filename.trim() || `Variant ${variant.index}`;
       confirm({
         title: 'Delete Variant?',
         message: `Delete variant "${variantLabel}"? This action cannot be undone.`,

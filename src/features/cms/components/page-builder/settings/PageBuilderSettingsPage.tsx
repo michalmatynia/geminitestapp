@@ -23,8 +23,8 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
 
   // Get server values
-  const serverExtractValue = settingsMap?.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-  const serverSectionDropValue = settingsMap?.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  const serverExtractValue = settingsMap.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
+  const serverSectionDropValue = settingsMap.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
 
   // Local state for user edits (null means use server value)
   const [localExtractPlaceholder, setLocalExtractPlaceholder] = useState<boolean | null>(null);

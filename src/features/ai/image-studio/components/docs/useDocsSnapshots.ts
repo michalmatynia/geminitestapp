@@ -140,7 +140,7 @@ export function useDocsSnapshots({
   const learnedValidationRules = promptEngineSettings.promptValidation.learnedRules ?? [];
   const enabledValidationRuleCount = validationRules.filter((rule) => rule.enabled).length;
   const formatterRuleCount = validationRules.filter((rule) =>
-    Boolean(rule.autofix?.enabled && (rule.autofix.operations?.length ?? 0) > 0)
+    Boolean(rule.autofix?.enabled && (rule.autofix.operations.length ?? 0) > 0)
   ).length;
 
   const persistedTree = useMemo(

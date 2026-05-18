@@ -30,6 +30,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 
+/**
+ * Configuration and data properties for the DataTable component.
+ * 
+ * Provides an interface for TanStack Table-based data presentation, supporting
+ * advanced features like virtualization for performance, client-side sorting, 
+ * filtering, and row persistence.
+ */
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -134,6 +141,18 @@ declare module '@tanstack/react-table' {
   }
 }
 
+/**
+ * High-performance, virtualized data table built on TanStack Table.
+ * 
+ * Features:
+ * - Virtualization: Efficient rendering for large datasets using `@tanstack/react-virtual`.
+ * - State Persistence: Optional storage key for saving and restoring user-defined sort states.
+ * - Extensibility: Supports custom column definitions, footers, and row-level interactions.
+ * 
+ * Usage:
+ * Use for large-scale data lists in admin panels where performance and state management 
+ * (sorting, expansion) are critical requirements.
+ */
 export const DataTable = memo(<TData,>({
   columns,
   data,

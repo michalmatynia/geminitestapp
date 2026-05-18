@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { makeProjectGroup } from '@/lib/projectModels';
+import { disposeObject3D } from '@/lib/threeModelUtils';
 
 interface State {
   renderer: THREE.WebGLRenderer;
@@ -29,10 +30,13 @@ function SideViewThumbnail({ projectIdx }: { projectIdx: number }) {
     const scene  = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
 
+    scene.add(new THREE.AmbientLight(0xF9F8F5, 0.7));
+    const sun = new THREE.DirectionalLight(0xFFF4E0, 0.9);
+    sun.position.set(4, 8, 6);
+    scene.add(sun);
+
     stateRef.current = { renderer, scene, camera, group: null, canvas };
 
-    // Read the canvas's own clientWidth/clientHeight — these reflect the
-    // actual CSS-rendered size regardless of flex/aspect-ratio resolution.
     renderRef.current = () => {
       const s = stateRef.current;
       if (!s || !s.group) return;
@@ -53,8 +57,6 @@ function SideViewThumbnail({ projectIdx }: { projectIdx: number }) {
       const fhh = Math.max(halfH, halfW / aspect);
       const fhw = fhh * aspect;
 
-      // Frustum planes are in camera space (relative to camera position),
-      // so use ±fhw / ±fhh, not center ± fhw/fhh.
       s.camera.left   = -fhw;
       s.camera.right  = +fhw;
       s.camera.top    = +fhh;
@@ -68,37 +70,45 @@ function SideViewThumbnail({ projectIdx }: { projectIdx: number }) {
       s.renderer.render(s.scene, s.camera);
     };
 
-    // ResizeObserver on the canvas itself — fires whenever its CSS size changes
     const ro = new ResizeObserver(() => renderRef.current?.());
     ro.observe(canvas);
-
-    // Defer first sizing pass to ensure CSS layout has resolved
     requestAnimationFrame(() => renderRef.current?.());
 
     return () => {
       ro.disconnect();
+      const s = stateRef.current;
+      if (s?.group) disposeObject3D(s.group);
       renderer.dispose();
       stateRef.current = null;
     };
   }, []);
 
-  // ── Swap model when projectIdx changes ───────────────────────────
+  // ── Swap procedural elevation when the selected project changes ────────────
   useEffect(() => {
     const s = stateRef.current;
     if (!s) return;
 
-    if (s.group) s.scene.remove(s.group);
+    if (s.group) {
+      s.scene.remove(s.group);
+      disposeObject3D(s.group);
+      s.group = null;
+    }
 
+    let cancelled = false;
     const group = makeProjectGroup(projectIdx);
+    if (cancelled) {
+      disposeObject3D(group);
+      return;
+    }
     group.traverse(c => {
       const mat = (c as THREE.Mesh).material as (THREE.Material & { opacity: number }) | undefined;
       if (mat && c.userData.isSolid) mat.opacity = 0;
     });
     s.scene.add(group);
     s.group = group;
-
-    // Render on next frame so canvas dimensions are settled after swap
     requestAnimationFrame(() => renderRef.current?.());
+
+    return () => { cancelled = true; };
   }, [projectIdx]);
 
   return (

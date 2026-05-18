@@ -2,20 +2,24 @@
 
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Box, Camera, ChevronDown, ChevronUp, Copy, Download, Eye, Globe, Library, MoreVertical, Plus, RefreshCw, RotateCcw, Save, Settings2, Trash2, Upload, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, ChevronDown, ChevronUp, Copy, Download, Eye, EyeOff, Folder, FolderOpen, Globe, GripVertical, Library, MoreVertical, Plus, RefreshCw, RotateCcw, Save, Settings2, Trash2, Upload, XIcon } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Admin3DAssetsPage } from '@/features/viewer3d/admin.public';
 import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
 import { useUploadCmsMedia } from '@/features/cms/hooks/useCmsQueries';
-import { uploadAsset3DFile } from '@/features/viewer3d/api';
+import {
+  convertMilkbarModelLinkToAsset3D,
+  deleteAsset3DById,
+  uploadAsset3DFile,
+  uploadMilkbarAsset3DToFastComet,
+} from '@/features/viewer3d/api';
 import { useAsset3DById, useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord, Viewer3DState } from '@/shared/contracts/viewer3d';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
-import type { OrbitControlsHandle } from '@/features/viewer3d/components/Viewer3D';
 import { Viewer3DSettingsPanel } from '@/features/viewer3d/components/Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from '@/features/viewer3d/components/Viewer3DStatusInfo';
 import { Viewer3DProvider, useViewer3DActions } from '@/features/viewer3d/context/Viewer3DContext';
@@ -23,6 +27,7 @@ import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
   DEFAULT_MILKBAR_LOCALIZED_CONTENT,
+  DEFAULT_MILKBAR_PAGE_CONTENT,
   DEFAULT_MILKBAR_PAGE_SETTINGS,
   MILKBAR_LOCALE_LABELS,
   MILKBAR_LOCALES,
@@ -40,6 +45,21 @@ import {
   type MilkbarSeoMeta,
   type MilkbarServiceCmsRecord,
 } from './milkbar-cms.types';
+import {
+  clearMilkbarCmsEditorDraft,
+  compactDrawingImageSlotValues,
+  createDrawingImageSlotValues,
+  DRAWING_IMAGE_SLOT_COUNT,
+  fillDrawingImageSlotValues,
+  readMilkbarCmsEditorDraft,
+  setDrawingImageSlotValue,
+  swapDrawingImageSlotValues,
+  writeMilkbarCmsEditorDraft,
+} from './milkbar-cms-editor-state';
+import {
+  getDrawingImageLinkValue,
+  toLocalMilkbarCmsMediaPreviewUrl,
+} from './milkbar-cms-media-routing';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -52,13 +72,14 @@ import { Alert, Badge, Button, DropdownMenuItem, Input, Switch, Textarea, useToa
 import { ActionMenu, FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { ProductImageManager } from '@/shared/ui/image-slot-manager';
 import { LoadingPanel } from '@/shared/ui/navigation-and-layout.public';
+import { Tooltip as ProductListTooltip } from '@/shared/ui/tooltip';
 
 const ENDPOINT = '/api/v2/page-manager/milkbardesigners';
 const PUSH_ENDPOINT = '/api/v2/page-manager/milkbardesigners/push-to-cloud';
 const MILKBAR_CMS_SNAPSHOT_QUERY_KEY = ['page-manager', 'milkbardesigners', 'snapshot'] as const;
 const MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE = {
   renderMode: 'solid',
-  backgroundColor: '#f3f4f6',
+  backgroundColor: '#111827',
   enableContactShadows: true,
 } satisfies Partial<Viewer3DState>;
 
@@ -77,6 +98,9 @@ type MilkbarCmsSavePayload = Pick<
   MilkbarCmsSnapshot,
   'localizedContent' | 'pageSettings' | 'projects' | 'services'
 >;
+type MilkbarCmsFileSlotChangeOptions = {
+  autoSave?: boolean;
+};
 type MilkbarInquiryStatusUpdate = {
   email: string;
   status: 'pending' | 'contacted';
@@ -84,6 +108,9 @@ type MilkbarInquiryStatusUpdate = {
 type MilkbarInquiryStatusUpdateResponse = {
   ok: boolean;
 };
+
+const CONTENT_FOLDER_ALL_SECTIONS = ['nav', 'hero', 'drawing', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
+const CONTENT_FOLDER_DEFAULT_ORDER = ['hero', 'drawing', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
 
 const linesToText = (lines: string[]): string => lines.join('\n');
 const textToLines = (value: string): string[] =>
@@ -95,6 +122,19 @@ const textToLines = (value: string): string[] =>
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+const buildLocalizedContentWithSectionPatch = <K extends keyof MilkbarPageContent>(
+  localizedContent: MilkbarLocalizedContent,
+  locale: MilkbarLocale,
+  section: K,
+  patch: Partial<MilkbarPageContent[K]>
+): MilkbarLocalizedContent => ({
+  ...localizedContent,
+  [locale]: {
+    ...localizedContent[locale],
+    [section]: { ...(localizedContent[locale][section] as object), ...patch },
+  } as MilkbarPageContent,
+});
+
 const toOrderNumber = (value: string): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -102,6 +142,15 @@ const toOrderNumber = (value: string): number => {
 
 const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'] as const;
 const toRoman = (n: number): string => ROMAN[n - 1] ?? String(n);
+
+function swapInArray<T>(arr: T[], i: number, j: number): T[] {
+  if (i < 0 || j < 0 || i >= arr.length || j >= arr.length) return arr;
+  const next = [...arr];
+  const source = next[i] as T;
+  const target = next[j] as T;
+  [next[i], next[j]] = [target, source];
+  return next;
+}
 
 const getMetaDescriptionHint = (len: number): string => {
   if (len > 160) return ' ⚠ too long';
@@ -137,6 +186,359 @@ const getSeoDisplayDesc = (description: string): string => {
   if (description.length > 0) return description;
   return 'No description set.';
 };
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const readRecordValue = (value: unknown): Record<string, unknown> =>
+  isPlainObject(value) ? value : {};
+
+const readStringValue = (value: unknown, fallback: string): string =>
+  typeof value === 'string' ? value : fallback;
+
+const readOptionalStringValue = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+
+const readStringArrayValue = (value: unknown, fallback: string[]): string[] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source.filter((entry): entry is string => typeof entry === 'string');
+};
+
+const normalizeMilkbarLinks = (
+  value: unknown,
+  fallback: MilkbarLinkItem[]
+): MilkbarLinkItem[] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source
+    .map((entry, index) => {
+      const record = readRecordValue(entry);
+      const fallbackItem = fallback[index] ?? { label: '', href: '' };
+      return {
+        label: readStringValue(record['label'], fallbackItem.label),
+        href: readStringValue(record['href'], fallbackItem.href),
+      };
+    })
+    .filter((entry) => entry.label.length > 0 || entry.href.length > 0);
+};
+
+const normalizeMilkbarMetrics = (
+  value: unknown,
+  fallback: MilkbarMetric[]
+): MilkbarMetric[] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source.map((entry, index) => {
+    const record = readRecordValue(entry);
+    const fallbackItem = fallback[index] ?? { value: '', suffix: '', label: '' };
+    return {
+      value: readStringValue(record['value'], fallbackItem.value),
+      suffix: readStringValue(record['suffix'], fallbackItem.suffix),
+      label: readStringValue(record['label'], fallbackItem.label),
+    };
+  });
+};
+
+const normalizeMilkbarPrinciples = (
+  value: unknown,
+  fallback: MilkbarPrinciple[]
+): MilkbarPrinciple[] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source.map((entry, index) => {
+    const record = readRecordValue(entry);
+    const fallbackItem =
+      fallback[index] ?? { number: '', title: '', emphasis: '', description: '' };
+    return {
+      number: readStringValue(record['number'], fallbackItem.number),
+      title: readStringValue(record['title'], fallbackItem.title),
+      emphasis: readStringValue(record['emphasis'], fallbackItem.emphasis),
+      description: readStringValue(record['description'], fallbackItem.description),
+    };
+  });
+};
+
+const normalizeMilkbarProcessSteps = (
+  value: unknown,
+  fallback: MilkbarProcessStep[]
+): MilkbarProcessStep[] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source.map((entry, index) => {
+    const record = readRecordValue(entry);
+    const fallbackItem = fallback[index] ?? { number: '', title: '', description: '' };
+    return {
+      number: readStringValue(record['number'], fallbackItem.number),
+      title: readStringValue(record['title'], fallbackItem.title),
+      description: readStringValue(record['description'], fallbackItem.description),
+    };
+  });
+};
+
+const normalizeMilkbarFooterColumns = (
+  value: unknown,
+  fallback: MilkbarPageContent['footer']['columns']
+): MilkbarPageContent['footer']['columns'] => {
+  const source = Array.isArray(value) ? value : fallback;
+  return source.map((entry, index) => {
+    const record = readRecordValue(entry);
+    const fallbackItem = fallback[index] ?? { title: '', links: [] };
+    return {
+      title: readStringValue(record['title'], fallbackItem.title),
+      links: normalizeMilkbarLinks(record['links'], fallbackItem.links),
+    };
+  });
+};
+
+const normalizeMilkbarPageContentForClient = (
+  value: unknown,
+  fallback: MilkbarPageContent = DEFAULT_MILKBAR_PAGE_CONTENT
+): MilkbarPageContent => {
+  const content = readRecordValue(value);
+  const nav = readRecordValue(content['nav']);
+  const hero = readRecordValue(content['hero']);
+  const drawing = readRecordValue(content['drawing']);
+  const philosophy = readRecordValue(content['philosophy']);
+  const services = readRecordValue(content['services']);
+  const projects = readRecordValue(content['projects']);
+  const process = readRecordValue(content['process']);
+  const caseStudy = readRecordValue(content['caseStudy']);
+  const quote = readRecordValue(content['quote']);
+  const cta = readRecordValue(content['cta']);
+  const footer = readRecordValue(content['footer']);
+
+  return {
+    nav: {
+      brandSub: readStringValue(nav['brandSub'], fallback.nav.brandSub),
+      links: normalizeMilkbarLinks(nav['links'], fallback.nav.links),
+      ctaLabel: readStringValue(nav['ctaLabel'], fallback.nav.ctaLabel),
+    },
+    hero: {
+      location: readStringValue(hero['location'], fallback.hero.location),
+      indexLabel: readStringValue(hero['indexLabel'], fallback.hero.indexLabel),
+      titleLines: readStringArrayValue(hero['titleLines'], fallback.hero.titleLines),
+      lede: readStringValue(hero['lede'], fallback.hero.lede),
+      primaryCtaLabel: readStringValue(hero['primaryCtaLabel'], fallback.hero.primaryCtaLabel),
+      secondaryCtaLabel: readStringValue(
+        hero['secondaryCtaLabel'],
+        fallback.hero.secondaryCtaLabel
+      ),
+      modelAssetId: readOptionalStringValue(hero['modelAssetId']),
+      modelUrl: readOptionalStringValue(hero['modelUrl']),
+    },
+    drawing: {
+      eyebrow: readStringValue(drawing['eyebrow'], fallback.drawing.eyebrow),
+      title: readStringValue(drawing['title'], fallback.drawing.title),
+      emphasis: readStringValue(drawing['emphasis'], fallback.drawing.emphasis),
+      description: readStringValue(drawing['description'], fallback.drawing.description),
+      ctaLabel: readStringValue(drawing['ctaLabel'], fallback.drawing.ctaLabel),
+      hint: readStringValue(drawing['hint'], fallback.drawing.hint),
+      thumbImages: readStringArrayValue(drawing['thumbImages'], fallback.drawing.thumbImages),
+      asset3dProjectCodes: readStringArrayValue(
+        drawing['asset3dProjectCodes'],
+        fallback.drawing.asset3dProjectCodes
+      ),
+      interiorModelAssetId: readOptionalStringValue(drawing['interiorModelAssetId']),
+      interiorModelUrl: readOptionalStringValue(drawing['interiorModelUrl']),
+    },
+    philosophy: {
+      eyebrow: readStringValue(philosophy['eyebrow'], fallback.philosophy.eyebrow),
+      title: readStringValue(philosophy['title'], fallback.philosophy.title),
+      emphasis: readStringValue(philosophy['emphasis'], fallback.philosophy.emphasis),
+      body: readStringValue(philosophy['body'], fallback.philosophy.body),
+      closing: readStringValue(philosophy['closing'], fallback.philosophy.closing),
+      caption: readStringValue(philosophy['caption'], fallback.philosophy.caption),
+      principles: normalizeMilkbarPrinciples(
+        philosophy['principles'],
+        fallback.philosophy.principles
+      ),
+    },
+    services: {
+      eyebrow: readStringValue(services['eyebrow'], fallback.services.eyebrow),
+      label: readStringValue(services['label'], fallback.services.label),
+      title: readStringValue(services['title'], fallback.services.title),
+      emphasis: readStringValue(services['emphasis'], fallback.services.emphasis),
+    },
+    projects: {
+      eyebrow: readStringValue(projects['eyebrow'], fallback.projects.eyebrow),
+      label: readStringValue(projects['label'], fallback.projects.label),
+      title: readStringValue(projects['title'], fallback.projects.title),
+      emphasis: readStringValue(projects['emphasis'], fallback.projects.emphasis),
+      projectsViewMode:
+        projects['projectsViewMode'] === 'solid' ? 'solid' : fallback.projects.projectsViewMode,
+    },
+    process: {
+      eyebrow: readStringValue(process['eyebrow'], fallback.process.eyebrow),
+      label: readStringValue(process['label'], fallback.process.label),
+      title: readStringValue(process['title'], fallback.process.title),
+      emphasis: readStringValue(process['emphasis'], fallback.process.emphasis),
+      steps: normalizeMilkbarProcessSteps(process['steps'], fallback.process.steps),
+    },
+    metrics: normalizeMilkbarMetrics(content['metrics'], fallback.metrics),
+    caseStudy: {
+      eyebrow: readStringValue(caseStudy['eyebrow'], fallback.caseStudy.eyebrow),
+      label: readStringValue(caseStudy['label'], fallback.caseStudy.label),
+      title: readStringValue(caseStudy['title'], fallback.caseStudy.title),
+      titleEmphasis: readStringValue(
+        caseStudy['titleEmphasis'],
+        fallback.caseStudy.titleEmphasis
+      ),
+      heading: readStringValue(caseStudy['heading'], fallback.caseStudy.heading),
+      headingEmphasis: readStringValue(
+        caseStudy['headingEmphasis'],
+        fallback.caseStudy.headingEmphasis
+      ),
+      body: readStringValue(caseStudy['body'], fallback.caseStudy.body),
+      stats: normalizeMilkbarMetrics(caseStudy['stats'], fallback.caseStudy.stats),
+      projectCode: readOptionalStringValue(caseStudy['projectCode']),
+    },
+    quote: {
+      eyebrow: readStringValue(quote['eyebrow'], fallback.quote.eyebrow),
+      text: readStringValue(quote['text'], fallback.quote.text),
+      emphasis: readStringValue(quote['emphasis'], fallback.quote.emphasis),
+      attribution: readStringValue(quote['attribution'], fallback.quote.attribution),
+    },
+    cta: {
+      title: readStringValue(cta['title'], fallback.cta.title),
+      emphasis: readStringValue(cta['emphasis'], fallback.cta.emphasis),
+      description: readStringValue(cta['description'], fallback.cta.description),
+      emailPlaceholder: readStringValue(
+        cta['emailPlaceholder'],
+        fallback.cta.emailPlaceholder
+      ),
+      submitLabel: readStringValue(cta['submitLabel'], fallback.cta.submitLabel),
+      loadingLabel: readStringValue(cta['loadingLabel'], fallback.cta.loadingLabel),
+      successMessage: readStringValue(cta['successMessage'], fallback.cta.successMessage),
+      note: readStringValue(cta['note'], fallback.cta.note),
+    },
+    footer: {
+      brandName: readStringValue(footer['brandName'], fallback.footer.brandName),
+      address: readStringValue(footer['address'], fallback.footer.address),
+      tagline: readStringValue(footer['tagline'], fallback.footer.tagline),
+      columns: normalizeMilkbarFooterColumns(footer['columns'], fallback.footer.columns),
+      copyright: readStringValue(footer['copyright'], fallback.footer.copyright),
+    },
+  };
+};
+
+const normalizeMilkbarLocalizedContentForClient = (
+  value: unknown
+): MilkbarLocalizedContent => {
+  const source = readRecordValue(value);
+  return {
+    en: normalizeMilkbarPageContentForClient(
+      source['en'],
+      DEFAULT_MILKBAR_LOCALIZED_CONTENT.en
+    ),
+    de: normalizeMilkbarPageContentForClient(
+      source['de'],
+      DEFAULT_MILKBAR_LOCALIZED_CONTENT.de
+    ),
+    pl: normalizeMilkbarPageContentForClient(
+      source['pl'],
+      DEFAULT_MILKBAR_LOCALIZED_CONTENT.pl
+    ),
+  };
+};
+
+const isMilkbarLocaleValue = (value: unknown): value is MilkbarLocale =>
+  typeof value === 'string' && MILKBAR_LOCALES.includes(value as MilkbarLocale);
+
+const normalizeMilkbarSeoForClient = (
+  value: unknown
+): MilkbarPageSettings['seo'] => {
+  const seo = readRecordValue(value);
+  const normalizeLocaleSeo = (locale: MilkbarLocale): MilkbarSeoMeta => {
+    const localeSeo = readRecordValue(seo[locale]);
+    const fallbackSeo = DEFAULT_MILKBAR_PAGE_SETTINGS.seo[locale];
+    return {
+      title: readStringValue(localeSeo['title'], fallbackSeo.title),
+      description: readStringValue(localeSeo['description'], fallbackSeo.description),
+      ogTitle: readStringValue(localeSeo['ogTitle'], fallbackSeo.ogTitle),
+      ogDescription: readStringValue(
+        localeSeo['ogDescription'],
+        fallbackSeo.ogDescription
+      ),
+    };
+  };
+
+  return {
+    en: normalizeLocaleSeo('en'),
+    de: normalizeLocaleSeo('de'),
+    pl: normalizeLocaleSeo('pl'),
+  };
+};
+
+const normalizeMilkbarPageSettingsForClient = (value: unknown): MilkbarPageSettings => {
+  const settings = readRecordValue(value);
+  const visibility = readRecordValue(settings['visibility']);
+  const publishedLocales = readStringArrayValue(
+    settings['publishedLocales'],
+    DEFAULT_MILKBAR_PAGE_SETTINGS.publishedLocales
+  ).filter(isMilkbarLocaleValue);
+  const defaultLocale = isMilkbarLocaleValue(settings['defaultLocale'])
+    ? settings['defaultLocale']
+    : DEFAULT_MILKBAR_PAGE_SETTINGS.defaultLocale;
+
+  return {
+    visibility: {
+      drawing:
+        typeof visibility['drawing'] === 'boolean'
+          ? visibility['drawing']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.drawing,
+      philosophy:
+        typeof visibility['philosophy'] === 'boolean'
+          ? visibility['philosophy']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.philosophy,
+      services:
+        typeof visibility['services'] === 'boolean'
+          ? visibility['services']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.services,
+      projects:
+        typeof visibility['projects'] === 'boolean'
+          ? visibility['projects']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.projects,
+      process:
+        typeof visibility['process'] === 'boolean'
+          ? visibility['process']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.process,
+      metrics:
+        typeof visibility['metrics'] === 'boolean'
+          ? visibility['metrics']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.metrics,
+      caseStudy:
+        typeof visibility['caseStudy'] === 'boolean'
+          ? visibility['caseStudy']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.caseStudy,
+      quote:
+        typeof visibility['quote'] === 'boolean'
+          ? visibility['quote']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.quote,
+      cta:
+        typeof visibility['cta'] === 'boolean'
+          ? visibility['cta']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.cta,
+    },
+    seo: normalizeMilkbarSeoForClient(settings['seo']),
+    defaultLocale,
+    publishedLocales: publishedLocales.length > 0 ? publishedLocales : [defaultLocale],
+    contactEmail: readStringValue(
+      settings['contactEmail'],
+      DEFAULT_MILKBAR_PAGE_SETTINGS.contactEmail
+    ),
+  };
+};
+
+const normalizeRecordArray = <T,>(value: unknown): T[] =>
+  Array.isArray(value) ? value.filter(isPlainObject).map((entry) => entry as T) : [];
+
+const normalizeMilkbarCmsSnapshotForClient = (
+  nextSnapshot: MilkbarCmsSnapshot
+): MilkbarCmsSnapshot => ({
+  ...nextSnapshot,
+  localizedContent: normalizeMilkbarLocalizedContentForClient(
+    nextSnapshot.localizedContent
+  ),
+  pageSettings: normalizeMilkbarPageSettingsForClient(nextSnapshot.pageSettings),
+  projects: normalizeRecordArray<MilkbarProjectCmsRecord>(nextSnapshot.projects),
+  services: normalizeRecordArray<MilkbarServiceCmsRecord>(nextSnapshot.services),
+});
 
 const getLocaleStatusDotClassName = ({
   isPublished,
@@ -416,18 +818,50 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const [projects, setProjects] = useState<MilkbarProjectCmsRecord[]>([]);
   const [services, setServices] = useState<MilkbarServiceCmsRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const draftHydratedRef = useRef(false);
+  const latestEditorPayloadRef = useRef<MilkbarCmsSavePayload>({
+    localizedContent,
+    pageSettings,
+    projects,
+    services,
+  });
+  const latestSavedSnapshotRef = useRef<MilkbarCmsSnapshot | null>(null);
+
+  latestEditorPayloadRef.current = {
+    localizedContent,
+    pageSettings,
+    projects,
+    services,
+  };
+
+  const rememberSavedSnapshot = useCallback((nextSnapshot: MilkbarCmsSnapshot): MilkbarCmsSnapshot => {
+    const normalizedSnapshot = normalizeMilkbarCmsSnapshotForClient(nextSnapshot);
+    setError(null);
+    setSnapshot(normalizedSnapshot);
+    latestSavedSnapshotRef.current = normalizedSnapshot;
+    return normalizedSnapshot;
+  }, []);
 
   const applySnapshot = useCallback((nextSnapshot: MilkbarCmsSnapshot): void => {
-    setError(null);
-    setSnapshot(nextSnapshot);
-    setLocalizedContent(nextSnapshot.localizedContent);
-    setPageSettings(nextSnapshot.pageSettings);
-    setProjects(nextSnapshot.projects);
-    setServices(nextSnapshot.services);
-  }, []);
+    const normalizedSnapshot = rememberSavedSnapshot(nextSnapshot);
+    setLocalizedContent(normalizedSnapshot.localizedContent);
+    setPageSettings(normalizedSnapshot.pageSettings);
+    setProjects(normalizedSnapshot.projects);
+    setServices(normalizedSnapshot.services);
+    latestEditorPayloadRef.current = {
+      localizedContent: normalizedSnapshot.localizedContent,
+      pageSettings: normalizedSnapshot.pageSettings,
+      projects: normalizedSnapshot.projects,
+      services: normalizedSnapshot.services,
+    };
+  }, [rememberSavedSnapshot]);
 
   useEffect(() => {
     if (snapshotQuery.data !== undefined) {
+      const draft = draftHydratedRef.current ? readMilkbarCmsEditorDraft() : null;
+      if (draft !== null && draft.snapshotUpdatedAt === snapshotQuery.data.updatedAt) {
+        return;
+      }
       applySnapshot(snapshotQuery.data);
     }
   }, [applySnapshot, snapshotQuery.data]);
@@ -442,31 +876,49 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const isRefreshing = snapshotQuery.isFetching;
   const isSaving = saveSnapshotMutation.isPending;
 
+  const getAutosaveBasePayload = useCallback((): MilkbarCmsSavePayload => {
+    const savedSnapshot = latestSavedSnapshotRef.current;
+    if (savedSnapshot === null) return latestEditorPayloadRef.current;
+    return {
+      localizedContent: savedSnapshot.localizedContent,
+      pageSettings: savedSnapshot.pageSettings,
+      projects: savedSnapshot.projects,
+      services: savedSnapshot.services,
+    };
+  }, []);
+
+  const persistSnapshotPayload = useCallback(
+    async (
+      payload: MilkbarCmsSavePayload,
+      options: { hydrateEditor?: boolean } = {}
+    ): Promise<MilkbarCmsSnapshot> => {
+      setError(null);
+      try {
+        const nextSnapshot = await saveSnapshotMutation.mutateAsync(payload);
+        if (options.hydrateEditor === true) {
+          applySnapshot(nextSnapshot);
+        } else {
+          rememberSavedSnapshot(nextSnapshot);
+        }
+        return nextSnapshot;
+      } catch (saveError) {
+        const message = toErrorMessage(saveError);
+        setError(message);
+        throw saveError;
+      }
+    },
+    [applySnapshot, rememberSavedSnapshot, saveSnapshotMutation]
+  );
+
   const saveSnapshot = useCallback(async (): Promise<void> => {
-    setError(null);
     try {
-      const nextSnapshot = await saveSnapshotMutation.mutateAsync({
-        localizedContent,
-        pageSettings,
-        projects,
-        services,
-      });
-      applySnapshot(nextSnapshot);
+      await persistSnapshotPayload(latestEditorPayloadRef.current, { hydrateEditor: true });
       toast('Milkbardesigners CMS saved.', { variant: 'success' });
     } catch (saveError) {
       const message = toErrorMessage(saveError);
-      setError(message);
       toast(message, { variant: 'error' });
     }
-  }, [
-    applySnapshot,
-    localizedContent,
-    pageSettings,
-    projects,
-    saveSnapshotMutation,
-    services,
-    toast,
-  ]);
+  }, [persistSnapshotPayload, toast]);
 
   const handleRefreshClick = useCallback((): void => {
     setError(null);
@@ -552,6 +1004,49 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const updateDrawing = useCallback(
     (patch: Partial<MilkbarPageContent['drawing']>) => updateLocaleSection(activeLocale, 'drawing', patch),
     [activeLocale, updateLocaleSection]
+  );
+  const autoSaveLocaleSection = useCallback(
+    async <K extends keyof MilkbarPageContent>(
+      locale: MilkbarLocale,
+      section: K,
+      patch: Partial<MilkbarPageContent[K]>
+    ): Promise<void> => {
+      const editorPayload = latestEditorPayloadRef.current;
+      const nextEditorLocalizedContent = buildLocalizedContentWithSectionPatch(
+        editorPayload.localizedContent,
+        locale,
+        section,
+        patch
+      );
+      latestEditorPayloadRef.current = {
+        ...editorPayload,
+        localizedContent: nextEditorLocalizedContent,
+      };
+      setLocalizedContent(nextEditorLocalizedContent);
+
+      const savedPayload = getAutosaveBasePayload();
+      const nextSavedLocalizedContent = buildLocalizedContentWithSectionPatch(
+        savedPayload.localizedContent,
+        locale,
+        section,
+        patch
+      );
+      await persistSnapshotPayload({
+        ...savedPayload,
+        localizedContent: nextSavedLocalizedContent,
+      });
+    },
+    [getAutosaveBasePayload, persistSnapshotPayload]
+  );
+  const autoSaveHero = useCallback(
+    (patch: Partial<MilkbarPageContent['hero']>) =>
+      autoSaveLocaleSection(activeLocale, 'hero', patch),
+    [activeLocale, autoSaveLocaleSection]
+  );
+  const autoSaveDrawing = useCallback(
+    (patch: Partial<MilkbarPageContent['drawing']>) =>
+      autoSaveLocaleSection(activeLocale, 'drawing', patch),
+    [activeLocale, autoSaveLocaleSection]
   );
   const updatePhilosophy = useCallback(
     (patch: Partial<MilkbarPageContent['philosophy']>) => updateLocaleSection(activeLocale, 'philosophy', patch),
@@ -871,6 +1366,93 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     }));
   }, [activeLocale]);
 
+  // ── Move (reorder) handlers ──────────────────────────────────────────────────
+
+  const moveNavLink = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        nav: { ...current[activeLocale].nav, links: swapInArray(current[activeLocale].nav.links, from, to) },
+      },
+    }));
+  }, [activeLocale]);
+
+  const movePrinciple = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        philosophy: {
+          ...current[activeLocale].philosophy,
+          principles: swapInArray(current[activeLocale].philosophy.principles, from, to),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const moveProcessStep = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        process: {
+          ...current[activeLocale].process,
+          steps: swapInArray(current[activeLocale].process.steps, from, to),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const moveMetric = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        metrics: swapInArray(current[activeLocale].metrics, from, to),
+      },
+    }));
+  }, [activeLocale]);
+
+  const moveCaseStudyStat = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        caseStudy: {
+          ...current[activeLocale].caseStudy,
+          stats: swapInArray(current[activeLocale].caseStudy.stats, from, to),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const moveFooterColumn = useCallback((from: number, to: number): void => {
+    setLocalizedContent((current) => ({
+      ...current,
+      [activeLocale]: {
+        ...current[activeLocale],
+        footer: {
+          ...current[activeLocale].footer,
+          columns: swapInArray(current[activeLocale].footer.columns, from, to),
+        },
+      },
+    }));
+  }, [activeLocale]);
+
+  const moveFooterLink = useCallback((colIndex: number, from: number, to: number): void => {
+    setLocalizedContent((current) => {
+      const columns = current[activeLocale].footer.columns.map((col, ci) => {
+        if (ci !== colIndex) return col;
+        return { ...col, links: swapInArray(col.links, from, to) };
+      });
+      return {
+        ...current,
+        [activeLocale]: { ...current[activeLocale], footer: { ...current[activeLocale].footer, columns } },
+      };
+    });
+  }, [activeLocale]);
+
   const updateProject = useCallback(
     (index: number, patch: Partial<MilkbarProjectCmsRecord>): void => {
       setProjects((current) =>
@@ -878,6 +1460,41 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
       );
     },
     []
+  );
+  const autoSaveProject = useCallback(
+    async (
+      index: number,
+      patch: Partial<MilkbarProjectCmsRecord>
+    ): Promise<void> => {
+      const editorPayload = latestEditorPayloadRef.current;
+      const editorProject = editorPayload.projects[index];
+      if (editorProject === undefined) return;
+      const nextEditorProjects = editorPayload.projects.map((project, i) =>
+        i === index ? { ...project, ...patch } : project
+      );
+      latestEditorPayloadRef.current = {
+        ...editorPayload,
+        projects: nextEditorProjects,
+      };
+      setProjects(nextEditorProjects);
+
+      const savedPayload = getAutosaveBasePayload();
+      const savedProjectIndex = savedPayload.projects.findIndex(
+        (project) => project.code === editorProject.code
+      );
+      const projectSource = savedProjectIndex >= 0
+        ? savedPayload.projects
+        : nextEditorProjects;
+      const projectIndex = savedProjectIndex >= 0 ? savedProjectIndex : index;
+      const nextSavedProjects = projectSource.map((project, i) =>
+        i === projectIndex ? { ...project, ...patch } : project
+      );
+      await persistSnapshotPayload({
+        ...savedPayload,
+        projects: nextSavedProjects,
+      });
+    },
+    [getAutosaveBasePayload, persistSnapshotPayload]
   );
 
   const updateService = useCallback(
@@ -960,8 +1577,60 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     );
   }, [snapshot, localizedContent, pageSettings, projects, services]);
 
+  useEffect(() => {
+    if (snapshot === null || !draftHydratedRef.current) return;
+    if (!isDirty) {
+      clearMilkbarCmsEditorDraft();
+      return;
+    }
+    writeMilkbarCmsEditorDraft({
+      payload: {
+        localizedContent,
+        pageSettings,
+        projects,
+        services,
+      },
+      snapshotUpdatedAt: snapshot.updatedAt,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [isDirty, localizedContent, pageSettings, projects, services, snapshot]);
+
+  useEffect(() => {
+    if (snapshot === null || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    const draft = readMilkbarCmsEditorDraft();
+    if (draft === null) return;
+    if (draft.snapshotUpdatedAt !== snapshot.updatedAt) {
+      clearMilkbarCmsEditorDraft();
+      return;
+    }
+    setLocalizedContent(
+      normalizeMilkbarLocalizedContentForClient(draft.payload.localizedContent)
+    );
+    setPageSettings(normalizeMilkbarPageSettingsForClient(draft.payload.pageSettings));
+    setProjects(normalizeRecordArray<MilkbarProjectCmsRecord>(draft.payload.projects));
+    setServices(normalizeRecordArray<MilkbarServiceCmsRecord>(draft.payload.services));
+    toast('Restored unsaved Milkbardesigners CMS draft.', { variant: 'info' });
+  }, [snapshot, toast]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      Reflect.set(event, 'returnValue', '');
+    };
+    if (isDirty) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    return () => {
+      if (isDirty) {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    };
+  }, [isDirty]);
+
   const handleRevert = useCallback((): void => {
     if (snapshot === null) return;
+    clearMilkbarCmsEditorDraft();
     applySnapshot(snapshot);
     toast('Reverted to last saved state.', { variant: 'success' });
   }, [snapshot, applySnapshot, toast]);
@@ -1077,14 +1746,18 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                   </Button>
                 ) : null}
               </div>
-              <ContentTab
+              <ContentFolderTree
                 pageContent={activePageContent}
+                projects={projects}
                 updateNav={updateNav}
                 updateNavLink={updateNavLink}
                 addNavLink={addNavLink}
                 removeNavLink={removeNavLink}
+                moveNavLink={moveNavLink}
                 updateHero={updateHero}
+                autoSaveHero={autoSaveHero}
                 updateDrawing={updateDrawing}
+                autoSaveDrawing={autoSaveDrawing}
                 updatePhilosophy={updatePhilosophy}
                 updateServicesHeader={updateServicesHeader}
                 updateProjectsHeader={updateProjectsHeader}
@@ -1093,24 +1766,32 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 updateCaseStudyStat={updateCaseStudyStat}
                 addCaseStudyStat={addCaseStudyStat}
                 removeCaseStudyStat={removeCaseStudyStat}
+                moveCaseStudyStat={moveCaseStudyStat}
                 updateQuote={updateQuote}
                 updateCta={updateCta}
                 updateFooter={updateFooter}
                 updateFooterColumnTitle={updateFooterColumnTitle}
                 addFooterColumn={addFooterColumn}
                 removeFooterColumn={removeFooterColumn}
+                moveFooterColumn={moveFooterColumn}
                 updateFooterLink={updateFooterLink}
                 addFooterLink={addFooterLink}
                 removeFooterLink={removeFooterLink}
+                moveFooterLink={moveFooterLink}
                 updatePrinciple={updatePrinciple}
                 addPrinciple={addPrinciple}
                 removePrinciple={removePrinciple}
+                movePrinciple={movePrinciple}
                 updateProcessStep={updateProcessStep}
                 addProcessStep={addProcessStep}
                 removeProcessStep={removeProcessStep}
+                moveProcessStep={moveProcessStep}
                 updateMetric={updateMetric}
                 addMetric={addMetric}
                 removeMetric={removeMetric}
+                moveMetric={moveMetric}
+                sectionVisibility={pageSettings.visibility}
+                onUpdateVisibility={updateVisibility}
               />
             </>
           ) : null}
@@ -1122,6 +1803,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setProjects((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateProject}
+              onUpdateAndSave={autoSaveProject}
               onDuplicate={(index) =>
                 setProjects((current) => {
                   const src = current[index];
@@ -1227,75 +1909,184 @@ function PanelsIcon(): React.JSX.Element {
   return <span className='inline-block size-4 rounded border border-current/60' aria-hidden='true' />;
 }
 
-function CollapsibleSection({
+// ─── Master folder tree components ───────────────────────────────────────────
+
+function SectionFolderRow({
   id,
   title,
   subtitle,
-  actions,
   open,
   onToggle,
+  actions,
   children,
+  isDraggable = false,
+  isDragging = false,
+  onDragHandleMouseDown,
+  visibilityOn,
+  onToggleVisibility,
 }: {
   id: string;
   title: string;
   subtitle?: string;
-  actions?: React.ReactNode;
   open: boolean;
   onToggle: (id: string) => void;
+  actions?: React.ReactNode;
   children: React.ReactNode;
+  isDraggable?: boolean;
+  isDragging?: boolean;
+  onDragHandleMouseDown?: () => void;
+  visibilityOn?: boolean;
+  onToggleVisibility?: () => void;
 }): React.JSX.Element {
   return (
-    <div className='rounded-lg border border-white/10'>
-      <div className='flex w-full items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-white/5'>
+    <div className={`rounded-lg border transition-opacity ${open ? 'border-white/20' : 'border-white/10'} ${isDragging ? 'opacity-40' : ''}`}>
+      <div
+        className={`flex items-center gap-1 px-2 py-2.5 transition-colors ${open ? 'bg-white/5' : 'hover:bg-white/5'}`}
+      >
+        {isDraggable ? (
+          <GripVertical
+            className='size-4 shrink-0 cursor-grab text-muted-foreground/25 transition-colors hover:text-muted-foreground/60 active:cursor-grabbing'
+            onMouseDown={onDragHandleMouseDown}
+          />
+        ) : (
+          <div className='size-4 shrink-0' />
+        )}
         <button
           type='button'
           onClick={() => onToggle(id)}
-          className='flex min-w-0 flex-1 items-center gap-3 text-left'
+          className='flex min-w-0 flex-1 items-center gap-2.5 px-1 text-left'
           aria-expanded={open}
         >
-          <div className='min-w-0'>
-            <span className='text-sm font-semibold text-white'>{title}</span>
-            {subtitle !== undefined && subtitle.length > 0 ? (
-              <span className='ml-2 text-xs text-muted-foreground'>{subtitle}</span>
-            ) : null}
-          </div>
+          {open ? (
+            <FolderOpen className='size-4 shrink-0 text-amber-400/80' />
+          ) : (
+            <Folder className={`size-4 shrink-0 ${visibilityOn === false ? 'text-muted-foreground/30' : 'text-muted-foreground/70'}`} />
+          )}
+          <span className={`text-sm font-medium ${visibilityOn === false ? 'text-muted-foreground/50' : 'text-white'}`}>{title}</span>
+          {visibilityOn === false ? (
+            <span className='shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-500/70'>hidden</span>
+          ) : null}
+          {subtitle !== undefined && subtitle.length > 0 ? (
+            <span className='text-xs text-muted-foreground'>{subtitle}</span>
+          ) : null}
           <ChevronDown
-            className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            className={`ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           />
         </button>
+        {onToggleVisibility !== undefined ? (
+          <button
+            type='button'
+            onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}
+            className={`flex size-6 shrink-0 items-center justify-center rounded transition-colors hover:bg-white/10 ${visibilityOn === false ? 'text-muted-foreground/30 hover:text-muted-foreground' : 'text-muted-foreground/60 hover:text-white'}`}
+            title={visibilityOn === false ? 'Section hidden on live site — click to show' : 'Section visible on live site — click to hide'}
+            aria-label={visibilityOn === false ? 'Show section' : 'Hide section'}
+          >
+            {visibilityOn === false ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
+          </button>
+        ) : null}
         {actions !== undefined && open ? (
-          <div className='flex items-center gap-2'>{actions}</div>
+          <div className='flex shrink-0 items-center gap-1.5 pr-1'>{actions}</div>
         ) : null}
       </div>
-      {open ? <div className='space-y-3 border-t border-white/10 p-4'>{children}</div> : null}
+      {open ? (
+        <div className='space-y-3 border-t border-white/10 p-4'>
+          {visibilityOn === false ? (
+            <div className='flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
+              <EyeOff className='size-3.5 shrink-0 text-amber-500/60' />
+              <span className='text-xs text-amber-500/70'>This section is hidden on the live site. Changes are saved but not displayed to visitors.</span>
+            </div>
+          ) : null}
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-const DRAWING_IMAGE_SLOT_COUNT = 4;
-const DRAWING_3D_ASSET_SLOT_COUNT = 4;
+function SubFolderRow({
+  title,
+  count,
+  open,
+  onToggle,
+  actions,
+  children,
+}: {
+  title: string;
+  count?: number;
+  open: boolean;
+  onToggle: () => void;
+  actions?: React.ReactNode;
+  children?: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className='rounded border border-white/8 bg-white/[0.02]'>
+      <div className='flex items-center justify-between gap-2 px-2.5 py-2 transition-colors hover:bg-white/5'>
+        <button
+          type='button'
+          onClick={onToggle}
+          className='flex min-w-0 flex-1 items-center gap-2 text-left'
+          aria-expanded={open}
+        >
+          {open ? (
+            <FolderOpen className='size-3.5 shrink-0 text-amber-400/50' />
+          ) : (
+            <Folder className='size-3.5 shrink-0 text-muted-foreground/50' />
+          )}
+          <span className='text-xs font-medium text-muted-foreground'>{title}</span>
+          {count !== undefined ? (
+            <span className='rounded bg-white/10 px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground/70'>
+              {count}
+            </span>
+          ) : null}
+          <ChevronDown
+            className={`ml-auto size-3 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {actions !== undefined ? (
+          <div className='flex shrink-0 items-center gap-1'>{actions}</div>
+        ) : null}
+      </div>
+      {open && children !== undefined ? (
+        <div className='border-t border-white/8 px-2.5 py-2 space-y-1.5'>{children}</div>
+      ) : null}
+    </div>
+  );
+}
 
-const createDrawingImageSlotValues = (images: string[]): string[] =>
-  Array.from({ length: DRAWING_IMAGE_SLOT_COUNT }, (_, index) => images[index]?.trim() ?? '');
-
-const compactDrawingImageSlotValues = (values: string[]): string[] => {
-  const next = values.slice(0, DRAWING_IMAGE_SLOT_COUNT).map((value) => value.trim());
-  while (next.length > 0 && next[next.length - 1] === '') {
-    next.pop();
-  }
-  return next;
-};
-
-const createDrawing3DAssetSlotValues = (assetIds: string[]): string[] =>
-  Array.from({ length: DRAWING_3D_ASSET_SLOT_COUNT }, (_, index) => assetIds[index]?.trim() ?? '');
-
-const compactDrawing3DAssetSlotValues = (values: string[]): string[] => {
-  const next = values.slice(0, DRAWING_3D_ASSET_SLOT_COUNT).map((value) => value.trim());
-  while (next.length > 0 && next[next.length - 1] === '') {
-    next.pop();
-  }
-  return next;
-};
+function SubItemMoveButtons({
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
+}: {
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}): React.JSX.Element {
+  return (
+    <div className='flex items-center'>
+      <button
+        type='button'
+        onClick={onMoveUp}
+        disabled={index === 0}
+        className='flex size-6 items-center justify-center rounded text-muted-foreground/60 transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-20'
+        aria-label='Move up'
+      >
+        <ChevronUp className='size-3' />
+      </button>
+      <button
+        type='button'
+        onClick={onMoveDown}
+        disabled={index >= total - 1}
+        className='flex size-6 items-center justify-center rounded text-muted-foreground/60 transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-20'
+        aria-label='Move down'
+      >
+        <ChevronDown className='size-3' />
+      </button>
+    </div>
+  );
+}
 
 const getAsset3DMetadataString = (
   asset: Asset3DRecord | undefined,
@@ -1309,17 +2100,16 @@ const getAsset3DMetadataString = (
 
 const isMilkbarFastCometAsset = (asset: Asset3DRecord | undefined): boolean => {
   if (getAsset3DMetadataString(asset, 'storageProfile') !== 'milkbarCms') return false;
-  const publicPath = getAsset3DMetadataString(asset, 'publicPath') ?? asset?.filepath ?? '';
-  return publicPath.includes('/uploads/cms/models/');
-};
-
-const getAsset3DDisplayName = (
-  asset: Asset3DRecord | undefined,
-  fallback: string
-): string => {
-  if (asset === undefined) return fallback;
-  if (asset.name !== '') return asset.name;
-  return asset.filename ?? fallback;
+  const storageSource = getAsset3DMetadataString(asset, 'storageSource');
+  const uploadStatus = getAsset3DMetadataString(asset, 'fastCometUploadStatus');
+  const filepath = asset?.filepath?.trim() ?? '';
+  const fileUrl = asset?.fileUrl?.trim() ?? '';
+  return (
+    storageSource === 'fastcomet' ||
+    uploadStatus === 'completed' ||
+    /^https?:\/\//i.test(filepath) ||
+    /^https?:\/\//i.test(fileUrl)
+  );
 };
 
 const getModelUrlDisplayName = (modelUrl: string): string => {
@@ -1338,37 +2128,273 @@ const getModelUrlDisplayName = (modelUrl: string): string => {
 const isMilkbarModelUrl = (modelUrl: string | undefined): boolean =>
   modelUrl?.includes('/uploads/cms/models/') === true;
 
-const getDrawing3DUploadButtonLabel = ({
-  isUploading,
-  uploadProgress,
-  hasAsset,
-}: {
-  isUploading: boolean;
-  uploadProgress: number | null;
-  hasAsset: boolean;
-}): string => {
-  if (!isUploading) return hasAsset ? 'Replace' : 'Upload';
-  return uploadProgress !== null ? `${uploadProgress}%` : 'Uploading';
+const isMilkbarFastCometModelUrl = (modelUrl: string | undefined): boolean => {
+  const trimmed = modelUrl?.trim() ?? '';
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  return isMilkbarModelUrl(trimmed);
 };
 
-const toUploadPublicPath = (value: string): string | null => {
-  const trimmed = value.trim();
+type Model3DSlotViewMode = 'upload' | 'link' | 'fastcomet';
+type Model3DSlotSources = {
+  fastCometUrl: string;
+  linkUrl: string;
+  uploadUrl: string;
+};
+
+const MILKBAR_MODEL_PUBLIC_PATH_PREFIX = '/uploads/cms/models/';
+const DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL = 'https://uploads.milkbardesigners.com';
+
+const model3DSlotViewModeLabels: Record<Model3DSlotViewMode, string> = {
+  upload: 'Upload',
+  link: 'Link',
+  fastcomet: 'FastComet',
+};
+
+const model3DSlotViewModeOptions: Model3DSlotViewMode[] = ['upload', 'link', 'fastcomet'];
+
+const resolveModel3DSlotViewModeLabel = (mode: Model3DSlotViewMode | undefined): string =>
+  model3DSlotViewModeLabels[mode ?? 'upload'];
+
+const trimText = (value: string | undefined | null): string => value?.trim() ?? '';
+
+const getMilkbarFastCometModelBaseUrl = (): string => {
+  const configured =
+    process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'] ??
+    process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_BASE_URL'] ??
+    '';
+  const trimmed = configured.trim();
+  return trimmed.length > 0 ? trimmed.replace(/\/+$/, '') : DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL;
+};
+
+const joinPublicUrl = (baseUrl: string, publicPath: string): string =>
+  `${baseUrl.replace(/\/+$/, '')}/${publicPath.replace(/^\/+/, '')}`;
+
+const toMilkbarModelPublicPath = (value: string | undefined | null): string | null => {
+  const trimmed = trimText(value);
   if (trimmed.length === 0) return null;
-  if (trimmed.startsWith('/uploads/')) return trimmed;
+  const markerIndex = trimmed.indexOf(MILKBAR_MODEL_PUBLIC_PATH_PREFIX);
+  if (markerIndex >= 0) {
+    return trimmed.slice(markerIndex).split(/[?#]/)[0] ?? null;
+  }
   try {
-    const url = new URL(trimmed);
-    const pathname = decodeURIComponent(url.pathname);
-    return pathname.startsWith('/uploads/') ? pathname : null;
+    const parsed = new URL(trimmed, 'https://milkbar.local');
+    return parsed.pathname.startsWith(MILKBAR_MODEL_PUBLIC_PATH_PREFIX) ? parsed.pathname : null;
   } catch {
     return null;
   }
 };
 
-const toLocalMilkbarCmsMediaPreviewUrl = (src: string): string => {
-  const publicPath = toUploadPublicPath(src);
-  if (publicPath?.startsWith('/uploads/cms/visualisation/') !== true) return src;
-  return `/api/cms/media/local${publicPath}`;
+const getAsset3DModelPublicPath = (asset: Asset3DRecord | undefined): string | null => {
+  if (asset === undefined) return null;
+  const candidates = [
+    getAsset3DMetadataString(asset, 'publicPath'),
+    getAsset3DMetadataString(asset, 'localPublicPath'),
+    asset.filepath,
+    asset.fileUrl,
+  ];
+  for (const candidate of candidates) {
+    const publicPath = toMilkbarModelPublicPath(candidate);
+    if (publicPath !== null) return publicPath;
+  }
+  return null;
 };
+
+const resolveFastCometModelUrl = (publicPath: string | null): string =>
+  publicPath === null ? '' : joinPublicUrl(getMilkbarFastCometModelBaseUrl(), publicPath);
+
+const resolveModel3DSlotSources = ({
+  assetId,
+  asset,
+  modelUrl,
+  isMissing,
+}: {
+  assetId: string;
+  asset: Asset3DRecord | undefined;
+  modelUrl: string;
+  isMissing: boolean;
+}): Model3DSlotSources => {
+  const assignedAssetId = assetId.trim();
+  const assignedModelUrl = modelUrl.trim();
+  const assetPublicPath = getAsset3DModelPublicPath(asset);
+  const modelPublicPath = toMilkbarModelPublicPath(assignedModelUrl);
+  const publicPath = assetPublicPath ?? modelPublicPath;
+  const canUseFastCometSource =
+    publicPath !== null &&
+    (assignedAssetId.length === 0 ||
+      asset === undefined ||
+      isMilkbarFastCometAsset(asset) ||
+      isMilkbarFastCometModelUrl(assignedModelUrl));
+  let uploadUrl = publicPath ?? '';
+  if (uploadUrl.length === 0 && assignedAssetId.length > 0 && !isMissing) {
+    uploadUrl = `/api/assets3d/${encodeURIComponent(assignedAssetId)}/file`;
+  }
+  return {
+    uploadUrl,
+    linkUrl: assignedModelUrl.length > 0 && modelPublicPath === null ? assignedModelUrl : '',
+    fastCometUrl: canUseFastCometSource ? resolveFastCometModelUrl(publicPath) : '',
+  };
+};
+
+const isModel3DSlotViewModeDisabled = (
+  mode: Model3DSlotViewMode,
+  sources: Model3DSlotSources
+): boolean => {
+  if (mode === 'upload') return sources.uploadUrl.length === 0;
+  if (mode === 'link') return sources.linkUrl.length === 0;
+  return sources.fastCometUrl.length === 0;
+};
+
+const resolveEffectiveModel3DSlotViewMode = (
+  requestedMode: Model3DSlotViewMode,
+  sources: Model3DSlotSources
+): Model3DSlotViewMode => {
+  if (!isModel3DSlotViewModeDisabled(requestedMode, sources)) return requestedMode;
+  return model3DSlotViewModeOptions.find((mode) => !isModel3DSlotViewModeDisabled(mode, sources)) ?? 'upload';
+};
+
+const getModel3DSlotPreviewUrl = (
+  mode: Model3DSlotViewMode,
+  sources: Model3DSlotSources
+): string => {
+  if (mode === 'upload') return sources.uploadUrl;
+  if (mode === 'link') return sources.linkUrl;
+  return sources.fastCometUrl;
+};
+
+type Model3DSlotStatusTone = 'success' | 'pending' | 'failure';
+type Model3DSlotSourceIndicator = {
+  colorClass: string;
+  hasValue: boolean;
+  label: string;
+  name: string;
+  status: string;
+};
+
+const model3DSlotStatusToneClass: Record<Model3DSlotStatusTone, string> = {
+  success: 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100',
+  pending: 'border-amber-400/70 bg-amber-500/15 text-amber-100',
+  failure: 'border-rose-400/70 bg-rose-500/15 text-rose-100',
+};
+
+const getModel3DSourceBadgeTooltip = (
+  indicator: Pick<Model3DSlotSourceIndicator, 'label' | 'name' | 'status'>
+): string => `Badge: ${indicator.name} (${indicator.label})\nStatus: ${indicator.status}`;
+
+const resolveModel3DUploadBadgeStatus = ({
+  hasAssetId,
+  isMissing,
+  isResolving,
+  isUploading,
+}: {
+  hasAssetId: boolean;
+  isMissing: boolean;
+  isResolving: boolean;
+  isUploading: boolean;
+}): string => {
+  if (isMissing) return 'Missing asset';
+  if (isUploading) return 'Uploading';
+  if (isResolving) return 'Resolving asset';
+  if (hasAssetId) return 'Assigned';
+  return 'No upload or library asset';
+};
+
+const resolveModel3DLinkBadgeStatus = ({
+  hasModelUrl,
+  isFastComet,
+}: {
+  hasModelUrl: boolean;
+  isFastComet: boolean;
+}): string => {
+  if (!hasModelUrl) return 'No linked URL';
+  return isFastComet ? 'Stored as FastComet link' : 'Linked';
+};
+
+const resolveModel3DFastCometBadgeStatus = ({
+  isFastComet,
+  isUploading,
+}: {
+  isFastComet: boolean;
+  isUploading: boolean;
+}): string => {
+  if (isUploading) return 'Uploading';
+  if (isFastComet) return 'Available';
+  return 'Not uploaded';
+};
+
+function Model3DSlotSourceBadges({
+  hasAssetId,
+  hasModelUrl,
+  isFastComet,
+  isUploading,
+  isMissing = false,
+  isResolving = false,
+}: {
+  hasAssetId: boolean;
+  hasModelUrl: boolean;
+  isFastComet: boolean;
+  isUploading: boolean;
+  isMissing?: boolean;
+  isResolving?: boolean;
+}): React.JSX.Element {
+  let uploadTone: Model3DSlotStatusTone = 'success';
+  if (isMissing) {
+    uploadTone = 'failure';
+  } else if (isUploading || isResolving) {
+    uploadTone = 'pending';
+  }
+  const uploadStatus = resolveModel3DUploadBadgeStatus({
+    hasAssetId,
+    isMissing,
+    isResolving,
+    isUploading,
+  });
+  const linkStatus = resolveModel3DLinkBadgeStatus({ hasModelUrl, isFastComet });
+  const fastCometStatus = resolveModel3DFastCometBadgeStatus({ isFastComet, isUploading });
+  const indicators: Model3DSlotSourceIndicator[] = [
+    {
+      colorClass: model3DSlotStatusToneClass[uploadTone],
+      hasValue: hasAssetId || isUploading,
+      label: 'U',
+      name: 'Upload or local model',
+      status: uploadStatus,
+    },
+    {
+      colorClass: model3DSlotStatusToneClass.pending,
+      hasValue: hasModelUrl && !isFastComet,
+      label: 'L',
+      name: 'Linked model URL',
+      status: linkStatus,
+    },
+    {
+      colorClass: model3DSlotStatusToneClass[isUploading ? 'pending' : 'success'],
+      hasValue: isFastComet || isUploading,
+      label: 'F',
+      name: 'FastComet model',
+      status: fastCometStatus,
+    },
+  ];
+
+  return (
+    <div className='flex w-full items-center justify-center gap-1 text-[10px] text-gray-400'>
+      {indicators.map((indicator) => (
+        <ProductListTooltip
+          key={indicator.label}
+          content={getModel3DSourceBadgeTooltip(indicator)}
+          className='inline-flex shrink-0'
+          maxWidth='220px'
+        >
+          <span
+            className={`cursor-help rounded-full border px-1 ${
+              indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'
+            }`}
+          >
+            {indicator.label}
+          </span>
+        </ProductListTooltip>
+      ))}
+    </div>
+  );
+}
 
 const createDrawingImageSelection = (src: string, index: number): ImageFileSelection => {
   const previewUrl = toLocalMilkbarCmsMediaPreviewUrl(src);
@@ -1400,52 +2426,59 @@ function DrawingImageSlotsField({
   onChange,
 }: {
   value: string[];
-  onChange: (images: string[]) => void;
+  onChange: (
+    images: string[],
+    options?: MilkbarCmsFileSlotChangeOptions
+  ) => void | Promise<void>;
 }): React.JSX.Element {
   const { toast } = useToast();
   const uploadMutation = useUploadCmsMedia();
   const [mediaOpen, setMediaOpen] = useState(false);
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null);
   const slotValues = useMemo(() => createDrawingImageSlotValues(value), [value]);
+  const slotImageLinks = useMemo(
+    () => slotValues.map(getDrawingImageLinkValue),
+    [slotValues]
+  );
+  const slotValuesRef = useRef(slotValues);
+  slotValuesRef.current = slotValues;
 
   const setSlotValues = useCallback(
-    (nextValues: string[]): void => {
-      onChange(compactDrawingImageSlotValues(nextValues));
+    async (
+      nextValues: string[],
+      options?: MilkbarCmsFileSlotChangeOptions
+    ): Promise<void> => {
+      const compactedValues = compactDrawingImageSlotValues(nextValues);
+      slotValuesRef.current = createDrawingImageSlotValues(compactedValues);
+      await onChange(compactedValues, options);
     },
     [onChange]
   );
 
   const setSlotValue = useCallback(
-    (index: number, nextValue: string): void => {
-      if (index < 0 || index >= DRAWING_IMAGE_SLOT_COUNT) return;
-      const nextValues = createDrawingImageSlotValues(value);
-      nextValues[index] = nextValue.trim();
-      setSlotValues(nextValues);
+    async (
+      index: number,
+      nextValue: string,
+      options?: MilkbarCmsFileSlotChangeOptions
+    ): Promise<void> => {
+      const nextValues = setDrawingImageSlotValue(slotValuesRef.current, index, nextValue);
+      if (nextValues === null) return;
+      await setSlotValues(nextValues, options);
     },
-    [setSlotValues, value]
+    [setSlotValues]
   );
 
   const fillSlotsWithFilepaths = useCallback(
-    (filepaths: string[], preferredIndex: number | null): void => {
-      const accepted = filepaths
-        .map((filepath) => filepath.trim())
-        .filter((filepath) => filepath.length > 0);
-      if (accepted.length === 0) return;
-
-      const nextValues = createDrawingImageSlotValues(value);
-      let searchIndex = preferredIndex ?? 0;
-      accepted.forEach((filepath, fileIndex) => {
-        const targetIndex =
-          preferredIndex !== null && fileIndex === 0
-            ? preferredIndex
-            : nextValues.findIndex((entry, index) => index >= searchIndex && entry.length === 0);
-        if (targetIndex < 0 || targetIndex >= DRAWING_IMAGE_SLOT_COUNT) return;
-        nextValues[targetIndex] = filepath;
-        searchIndex = targetIndex + 1;
-      });
-      setSlotValues(nextValues);
+    async (
+      filepaths: string[],
+      preferredIndex: number | null,
+      options?: MilkbarCmsFileSlotChangeOptions
+    ): Promise<void> => {
+      const nextValues = fillDrawingImageSlotValues(slotValuesRef.current, filepaths, preferredIndex);
+      if (nextValues === null) return;
+      await setSlotValues(nextValues, options);
     },
-    [setSlotValues, value]
+    [setSlotValues]
   );
 
   const uploadSlotFile = useCallback(
@@ -1461,12 +2494,12 @@ function DrawingImageSlotsField({
           toast('Upload completed without a media path.', { variant: 'error' });
           return;
         }
-        setSlotValue(index, filepath);
-        toast('Drawing image uploaded. Save the CMS snapshot to publish it.', {
+        await setSlotValue(index, filepath, { autoSave: true });
+        toast('Drawing image uploaded and published to the Milkbar page.', {
           variant: 'success',
         });
       } catch (error) {
-        toast(toErrorMessage(error), { variant: 'error' });
+        toast(`Drawing image upload/save failed: ${toErrorMessage(error)}`, { variant: 'error' });
       }
     },
     [setSlotValue, toast, uploadMutation]
@@ -1475,22 +2508,25 @@ function DrawingImageSlotsField({
   const controller = useMemo<ProductImageManagerController>(
     () => ({
       imageSlots: slotValues.map(createDrawingManagedImageSlot),
-      imageLinks: slotValues,
+      imageLinks: slotImageLinks,
       imageBase64s: Array.from({ length: DRAWING_IMAGE_SLOT_COUNT }, () => ''),
-      setImageLinkAt: setSlotValue,
+      setImageLinkAt: (index: number, nextValue: string): void => {
+        void setSlotValue(index, nextValue);
+      },
       setImageBase64At: (): void => {
         // Base64 storage is intentionally not used for arch-web CMS thumbnails.
       },
       handleSlotImageChange: (file: File | null, index: number): void => {
         if (file === null) {
-          setSlotValue(index, '');
+          void setSlotValue(index, '', { autoSave: true }).catch((error: unknown) => {
+            toast(`Drawing image clear failed: ${toErrorMessage(error)}`, { variant: 'error' });
+          });
           return;
         }
         void uploadSlotFile(file, index);
       },
       handleSlotDisconnectImage: (index: number): Promise<void> => {
-        setSlotValue(index, '');
-        return Promise.resolve();
+        return setSlotValue(index, '', { autoSave: true });
       },
       setShowFileManager: (show: boolean): void => {
         setActiveSlotIndex(null);
@@ -1501,9 +2537,8 @@ function DrawingImageSlotsField({
         setMediaOpen(true);
       },
       swapImageSlots: (fromIndex: number, toIndex: number): void => {
-        const nextValues = createDrawingImageSlotValues(value);
-        [nextValues[fromIndex], nextValues[toIndex]] = [nextValues[toIndex] ?? '', nextValues[fromIndex] ?? ''];
-        setSlotValues(nextValues);
+        const nextValues = swapDrawingImageSlotValues(slotValuesRef.current, fromIndex, toIndex);
+        void setSlotValues(nextValues);
       },
       setImagesReordering: (): void => {
         // The shared image manager owns visual drag state.
@@ -1515,7 +2550,15 @@ function DrawingImageSlotsField({
         (_, index) => `Drawing image ${index + 1}`
       ),
     }),
-    [setSlotValue, setSlotValues, slotValues, uploadMutation.isPending, uploadSlotFile, value]
+    [
+      setSlotValue,
+      setSlotValues,
+      slotImageLinks,
+      slotValues,
+      toast,
+      uploadMutation.isPending,
+      uploadSlotFile,
+    ]
   );
 
   return (
@@ -1545,7 +2588,13 @@ function DrawingImageSlotsField({
           uploadFolder={MILKBAR_CMS_VISUALISATION_FOLDER}
           storageProfile='milkbarCms'
           onSelect={(filepaths: string[]): void => {
-            fillSlotsWithFilepaths(filepaths, activeSlotIndex);
+            fillSlotsWithFilepaths(filepaths, activeSlotIndex, { autoSave: true })
+              .then(() => {
+                toast('Drawing images published to the Milkbar page.', { variant: 'success' });
+              })
+              .catch((error: unknown) => {
+                toast(`Drawing image publish failed: ${toErrorMessage(error)}`, { variant: 'error' });
+              });
             setMediaOpen(false);
           }}
         />
@@ -1554,371 +2603,113 @@ function DrawingImageSlotsField({
   );
 }
 
-function Asset3DStorageStatusBadge({
-  asset,
-  isUploading = false,
-  isMissing = false,
-  modelUrl,
+// ─── Drawing Project Slots Field ─────────────────────────────────────────────
+
+const hasProjectModelSource = (project: MilkbarProjectCmsRecord): boolean =>
+  (typeof project.modelAssetId === 'string' && project.modelAssetId.trim().length > 0) ||
+  (typeof project.modelUrl === 'string' && project.modelUrl.trim().length > 0);
+
+function DrawingProjectSlotsField({
+  projects,
+  value,
+  onChange,
 }: {
-  asset: Asset3DRecord | undefined;
-  isUploading?: boolean;
-  isMissing?: boolean;
-  modelUrl?: string;
+  projects: MilkbarProjectCmsRecord[];
+  value: string[];
+  onChange: (codes: string[]) => void;
 }): React.JSX.Element {
-  if (isUploading) {
-    return <Badge variant='processing'>Uploading</Badge>;
-  }
-  if (isMissing) {
-    return <Badge variant='destructive'>Missing</Badge>;
-  }
-  if (modelUrl !== undefined && modelUrl.trim().length > 0) {
-    return isMilkbarModelUrl(modelUrl) ? (
-      <Badge variant='success'>Page URL</Badge>
-    ) : (
-      <Badge variant='outline'>Model URL</Badge>
+  const selectedCodes = Array.isArray(value) ? value : [];
+  const projectItems = Array.isArray(projects) ? projects : [];
+
+  const toggle = useCallback(
+    (code: string) => {
+      onChange(
+        selectedCodes.includes(code)
+          ? selectedCodes.filter((c) => c !== code)
+          : [...selectedCodes, code]
+      );
+    },
+    [selectedCodes, onChange]
+  );
+
+  const projectsWithModel = projectItems.filter(hasProjectModelSource);
+  const projectsWithoutModel = projectItems.filter((project) => !hasProjectModelSource(project));
+
+  if (projectItems.length === 0) {
+    return (
+      <p className='text-xs text-muted-foreground'>
+        No projects found. Add projects in the Projects tab first.
+      </p>
     );
   }
-  if (asset === undefined) {
-    return <Badge variant='outline'>Resolving</Badge>;
-  }
-  return isMilkbarFastCometAsset(asset) ? (
-    <Badge variant='success'>FastComet</Badge>
-  ) : (
-    <Badge variant='warning'>Local / unconfirmed</Badge>
-  );
-}
-
-function Drawing3DAssetSlotCard({
-  assetId,
-  modelUrl,
-  index,
-  isUploading,
-  uploadProgress,
-  onUpload,
-  onChoose,
-  onPreview,
-  onRemove,
-  onMoveUp,
-  onMoveDown,
-}: {
-  assetId: string;
-  modelUrl: string;
-  index: number;
-  isUploading: boolean;
-  uploadProgress: number | null;
-  onUpload: () => void;
-  onChoose: () => void;
-  onPreview: () => void;
-  onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}): React.JSX.Element {
-  const hasAssetId = assetId.trim().length > 0;
-  const hasModelUrl = modelUrl.trim().length > 0;
-  const hasModel = hasAssetId || hasModelUrl;
-  const assetQuery = useAsset3DById(hasAssetId ? assetId : null);
-  const asset = assetQuery.data;
-  const isMissing = assetQuery.isError;
-  const assetTitle = isMissing ? 'Missing 3D asset' : getAsset3DDisplayName(asset, assetId);
-  const title = hasAssetId ? assetTitle : getModelUrlDisplayName(modelUrl);
-  let detailText = 'Direct model URL used by the live page';
-  if (hasAssetId) {
-    detailText = isMissing
-      ? 'Remove or replace this stale asset ID'
-      : asset?.format ?? asset?.mimetype ?? '3D model';
-  }
-  const uploadButtonLabel = getDrawing3DUploadButtonLabel({
-    isUploading,
-    uploadProgress,
-    hasAsset: hasModel,
-  });
 
   return (
-    <div className='flex min-h-[190px] flex-col justify-between rounded-md border border-white/10 bg-white/5 p-3'>
-      <div className='space-y-2'>
-        <div className='flex items-start justify-between gap-2'>
-          <div className='min-w-0'>
-            <p className='flex items-center gap-1.5 text-xs font-semibold text-white/80'>
-              <Box className='size-3.5 text-blue-400/70' />
-              3D asset {index + 1}
-            </p>
-            {hasAssetId ? (
-              <p className='mt-1 truncate font-mono text-[10px] text-white/30'>{assetId}</p>
-            ) : null}
-            {!hasAssetId && hasModelUrl ? (
-              <p className='mt-1 truncate font-mono text-[10px] text-emerald-200/50'>{modelUrl}</p>
-            ) : null}
-          </div>
-          {hasModel || isUploading ? (
-            <Asset3DStorageStatusBadge
-              asset={asset}
-              isUploading={isUploading}
-              isMissing={isMissing}
-              modelUrl={!hasAssetId ? modelUrl : undefined}
-            />
-          ) : (
-            <Badge variant='outline'>Empty</Badge>
-          )}
-        </div>
-        <div className='flex min-h-[54px] items-center rounded border border-white/5 bg-black/20 px-2 py-2'>
-          {hasModel ? (
-            <div className='min-w-0'>
-              <p className='truncate text-xs font-medium text-white/75'>{title}</p>
-              <p className='mt-0.5 text-[10px] text-muted-foreground'>
-                {detailText}
-              </p>
-            </div>
-          ) : (
-            <p className='text-xs text-white/30'>No 3D asset attached</p>
-          )}
-        </div>
-      </div>
-      <div className='mt-3 flex flex-wrap items-center gap-1.5'>
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='h-7 px-2 text-xs'
-          disabled={!hasModel || isUploading}
-          icon={<Eye className='size-3.5' />}
-          onClick={onPreview}
-        >
-          Preview
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='h-7 px-2 text-xs'
-          disabled={isUploading}
-          icon={<Upload className='size-3.5' />}
-          onClick={onUpload}
-        >
-          {uploadButtonLabel}
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant={hasModel ? 'ghost' : 'secondary'}
-          className='h-7 px-2 text-xs'
-          disabled={isUploading}
-          icon={<Library className='size-3.5' />}
-          onClick={onChoose}
-        >
-          Library
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='h-7 px-2 text-xs'
-          disabled={index === 0 || isUploading}
-          icon={<ChevronUp className='size-3.5' />}
-          onClick={onMoveUp}
-        >
-          Up
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='h-7 px-2 text-xs'
-          disabled={index === DRAWING_3D_ASSET_SLOT_COUNT - 1 || isUploading}
-          icon={<ChevronDown className='size-3.5' />}
-          onClick={onMoveDown}
-        >
-          Down
-        </Button>
-        {hasModel ? (
-          <Button
-            type='button'
-            size='sm'
-            variant='ghost'
-            className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
-            disabled={isUploading}
-            icon={<X className='size-3.5' />}
-            onClick={onRemove}
+    <div className='space-y-1.5'>
+      <p className='text-xs text-muted-foreground'>
+        Select which project models appear in the Drawing section viewer. Only projects with an uploaded 3D model are selectable.
+      </p>
+      {projectsWithModel.map((project) => {
+        const checked = selectedCodes.includes(project.code);
+        return (
+          <label
+            key={project.code}
+            className='flex cursor-pointer items-center gap-3 rounded-md border border-white/10 px-3 py-2 hover:bg-white/5'
           >
-            Remove
-          </Button>
-        ) : null}
-      </div>
+            <input
+              type='checkbox'
+              className='size-4 accent-amber-400'
+              checked={checked}
+              aria-label={`Show ${project.name} in the Drawing section`}
+              onChange={() => { toggle(project.code); }}
+            />
+            <span className='flex-1 min-w-0'>
+              <span className='block text-sm font-medium text-white'>{project.name}</span>
+              <span className='block text-xs text-muted-foreground'>{project.code} · {project.projectType} · {project.city}</span>
+            </span>
+            {checked && (
+              <span className='shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-xs font-medium text-amber-300'>active</span>
+            )}
+          </label>
+        );
+      })}
+      {projectsWithoutModel.map((project) => (
+        <div
+          key={project.code}
+          className='flex items-center gap-3 rounded-md border border-white/5 px-3 py-2 opacity-40'
+        >
+          <input
+            type='checkbox'
+            className='size-4'
+            disabled
+            checked={false}
+            readOnly
+            aria-label={`${project.name} has no model uploaded`}
+          />
+          <span className='flex-1 min-w-0'>
+            <span className='block text-sm text-white/60'>{project.name}</span>
+            <span className='block text-xs text-muted-foreground'>{project.code} · {project.projectType} · {project.city}</span>
+          </span>
+          <span className='shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/40'>no model</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function Drawing3DAssetSlotsField({
-  value,
-  urlValue,
-  onChange,
-  onUrlsChange,
-}: {
-  value: string[];
-  urlValue: string[];
-  onChange: (assetIds: string[]) => void;
-  onUrlsChange: (modelUrls: string[]) => void;
-}): React.JSX.Element {
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pendingUploadSlotIndex, setPendingUploadSlotIndex] = useState<number | null>(null);
-  const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [pickerSlotIndex, setPickerSlotIndex] = useState<number | null>(null);
-  const [previewSlotIndex, setPreviewSlotIndex] = useState<number | null>(null);
-  const slotValues = useMemo(() => createDrawing3DAssetSlotValues(value), [value]);
-  const slotUrls = useMemo(() => createDrawing3DAssetSlotValues(urlValue), [urlValue]);
+// ─── Content Folder Tree ─────────────────────────────────────────────────────
 
-  const setSlotValues = useCallback(
-    (nextValues: string[], nextUrls: string[] = slotUrls): void => {
-      onChange(compactDrawing3DAssetSlotValues(nextValues));
-      onUrlsChange(compactDrawing3DAssetSlotValues(nextUrls));
-    },
-    [onChange, onUrlsChange, slotUrls]
-  );
-
-  const setSlotValue = useCallback(
-    (index: number, nextValue: string, nextUrl = ''): void => {
-      if (index < 0 || index >= DRAWING_3D_ASSET_SLOT_COUNT) return;
-      const nextValues = createDrawing3DAssetSlotValues(value);
-      const nextUrls = createDrawing3DAssetSlotValues(urlValue);
-      nextValues[index] = nextValue.trim();
-      nextUrls[index] = nextUrl.trim();
-      setSlotValues(nextValues, nextUrls);
-    },
-    [setSlotValues, urlValue, value]
-  );
-
-  const swapSlots = useCallback(
-    (fromIndex: number, toIndex: number): void => {
-      if (toIndex < 0 || toIndex >= DRAWING_3D_ASSET_SLOT_COUNT) return;
-      const nextValues = createDrawing3DAssetSlotValues(value);
-      const nextUrls = createDrawing3DAssetSlotValues(urlValue);
-      [nextValues[fromIndex], nextValues[toIndex]] = [nextValues[toIndex] ?? '', nextValues[fromIndex] ?? ''];
-      [nextUrls[fromIndex], nextUrls[toIndex]] = [nextUrls[toIndex] ?? '', nextUrls[fromIndex] ?? ''];
-      setSlotValues(nextValues, nextUrls);
-    },
-    [setSlotValues, urlValue, value]
-  );
-
-  const handleUploadFile = useCallback(
-    async (file: File, index: number): Promise<void> => {
-      setUploadingSlotIndex(index);
-      setUploadProgress(0);
-      try {
-        const record = await uploadAsset3DFile(
-          file,
-          {
-            name: `Milkbar drawing 3D asset ${index + 1}`,
-            category: 'cms',
-            tags: ['milkbardesigners', 'drawing', `slot-${index + 1}`],
-            isPublic: true,
-            storageProfile: 'milkbarCms',
-          },
-          (loaded, total) => {
-            if (total !== undefined) {
-              setUploadProgress(Math.round((loaded / total) * 100));
-            }
-          }
-        );
-        setSlotValue(index, record.id);
-        toast(
-          isMilkbarFastCometAsset(record)
-            ? '3D asset uploaded to FastComet. Save the CMS snapshot to publish it.'
-            : '3D asset uploaded. FastComet status could not be confirmed from the returned record.',
-          { variant: 'success' }
-        );
-      } catch (error) {
-        toast(`3D upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
-      } finally {
-        setUploadingSlotIndex(null);
-        setUploadProgress(null);
-        if (fileInputRef.current !== null) {
-          fileInputRef.current.value = '';
-        }
-      }
-    },
-    [setSlotValue, toast]
-  );
-
-  const activePreviewAssetId =
-    previewSlotIndex !== null ? slotValues[previewSlotIndex]?.trim() ?? '' : '';
-  const activePreviewModelUrl =
-    previewSlotIndex !== null ? slotUrls[previewSlotIndex]?.trim() ?? '' : '';
-
-  return (
-    <FormField
-      label='Drawing 3D asset slots'
-      description='3D model slots for the drawing section. Preview opens an interactive 3D modal.'
-    >
-      <div className='space-y-3'>
-        <input
-          ref={fileInputRef}
-          type='file'
-          accept='.glb,.gltf'
-          aria-label='Drawing 3D asset file'
-          className='hidden'
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            const targetIndex = pendingUploadSlotIndex;
-            setPendingUploadSlotIndex(null);
-            if (file === undefined || targetIndex === null) return;
-            void handleUploadFile(file, targetIndex);
-          }}
-        />
-        <div className='grid gap-3 md:grid-cols-2'>
-          {slotValues.map((assetId, index) => (
-            <Drawing3DAssetSlotCard
-              key={`drawing-3d-asset-slot-${index}`}
-              assetId={assetId}
-              modelUrl={slotUrls[index] ?? ''}
-              index={index}
-              isUploading={uploadingSlotIndex === index}
-              uploadProgress={uploadingSlotIndex === index ? uploadProgress : null}
-              onUpload={() => {
-                setPendingUploadSlotIndex(index);
-                fileInputRef.current?.click();
-              }}
-              onChoose={() => setPickerSlotIndex(index)}
-              onPreview={() => setPreviewSlotIndex(index)}
-              onRemove={() => setSlotValue(index, '', '')}
-              onMoveUp={() => swapSlots(index, index - 1)}
-              onMoveDown={() => swapSlots(index, index + 1)}
-            />
-          ))}
-        </div>
-        {activePreviewAssetId.length > 0 || activePreviewModelUrl.length > 0 ? (
-          <Model3DPreviewModal
-            modelId={activePreviewAssetId.length > 0 ? activePreviewAssetId : undefined}
-            modelUrl={activePreviewAssetId.length === 0 ? activePreviewModelUrl : undefined}
-            title={`Drawing 3D asset ${Number(previewSlotIndex) + 1}`}
-            onClose={() => setPreviewSlotIndex(null)}
-          />
-        ) : null}
-        {pickerSlotIndex !== null ? (
-          <ModelAssetLibraryPickerModal
-            title={`Select Drawing 3D Asset ${pickerSlotIndex + 1}`}
-            confirmLabel='Assign Asset'
-            storageProfileFilter='milkbarCms'
-            onSelect={(assetId) => {
-              setSlotValue(pickerSlotIndex, assetId, '');
-              setPickerSlotIndex(null);
-            }}
-            onClose={() => setPickerSlotIndex(null)}
-          />
-        ) : null}
-      </div>
-    </FormField>
-  );
-}
-
-function ContentTab({
+function ContentFolderTree({
   pageContent,
+  projects,
   updateNav,
   updateNavLink,
   addNavLink,
   removeNavLink,
+  moveNavLink,
   updateHero,
+  autoSaveHero,
   updateDrawing,
+  autoSaveDrawing,
   updatePhilosophy,
   updateServicesHeader,
   updateProjectsHeader,
@@ -1927,32 +2718,44 @@ function ContentTab({
   updateCaseStudyStat,
   addCaseStudyStat,
   removeCaseStudyStat,
+  moveCaseStudyStat,
   updateQuote,
   updateCta,
   updateFooter,
   updateFooterColumnTitle,
   addFooterColumn,
   removeFooterColumn,
+  moveFooterColumn,
   updateFooterLink,
   addFooterLink,
   removeFooterLink,
+  moveFooterLink,
   updatePrinciple,
   addPrinciple,
   removePrinciple,
+  movePrinciple,
   updateProcessStep,
   addProcessStep,
   removeProcessStep,
+  moveProcessStep,
   updateMetric,
   addMetric,
   removeMetric,
+  moveMetric,
+  sectionVisibility,
+  onUpdateVisibility,
 }: {
   pageContent: MilkbarPageContent;
+  projects: MilkbarProjectCmsRecord[];
   updateNav: (patch: Partial<MilkbarPageContent['nav']>) => void;
   updateNavLink: (index: number, patch: Partial<MilkbarLinkItem>) => void;
   addNavLink: () => void;
   removeNavLink: (index: number) => void;
+  moveNavLink: (from: number, to: number) => void;
   updateHero: (patch: Partial<MilkbarPageContent['hero']>) => void;
+  autoSaveHero: (patch: Partial<MilkbarPageContent['hero']>) => Promise<void>;
   updateDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => void;
+  autoSaveDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => Promise<void>;
   updatePhilosophy: (patch: Partial<MilkbarPageContent['philosophy']>) => void;
   updateServicesHeader: (patch: Partial<MilkbarPageContent['services']>) => void;
   updateProjectsHeader: (patch: Partial<MilkbarPageContent['projects']>) => void;
@@ -1961,27 +2764,36 @@ function ContentTab({
   updateCaseStudyStat: (index: number, patch: Partial<MilkbarMetric>) => void;
   addCaseStudyStat: () => void;
   removeCaseStudyStat: (index: number) => void;
+  moveCaseStudyStat: (from: number, to: number) => void;
   updateQuote: (patch: Partial<MilkbarPageContent['quote']>) => void;
   updateCta: (patch: Partial<MilkbarPageContent['cta']>) => void;
   updateFooter: (patch: Partial<MilkbarPageContent['footer']>) => void;
   updateFooterColumnTitle: (colIndex: number, title: string) => void;
   addFooterColumn: () => void;
   removeFooterColumn: (colIndex: number) => void;
+  moveFooterColumn: (from: number, to: number) => void;
   updateFooterLink: (colIndex: number, linkIndex: number, patch: Partial<MilkbarLinkItem>) => void;
   addFooterLink: (colIndex: number) => void;
   removeFooterLink: (colIndex: number, linkIndex: number) => void;
+  moveFooterLink: (colIndex: number, from: number, to: number) => void;
   updatePrinciple: (index: number, patch: Partial<MilkbarPrinciple>) => void;
   addPrinciple: () => void;
   removePrinciple: (index: number) => void;
+  movePrinciple: (from: number, to: number) => void;
   updateProcessStep: (index: number, patch: Partial<MilkbarProcessStep>) => void;
   addProcessStep: () => void;
   removeProcessStep: (index: number) => void;
+  moveProcessStep: (from: number, to: number) => void;
   updateMetric: (index: number, patch: Partial<MilkbarMetric>) => void;
   addMetric: () => void;
   removeMetric: (index: number) => void;
+  moveMetric: (from: number, to: number) => void;
+  sectionVisibility: MilkbarSectionVisibility;
+  onUpdateVisibility: (patch: Partial<MilkbarSectionVisibility>) => void;
 }): React.JSX.Element {
-  const ALL_SECTIONS = ['nav', 'hero', 'drawing', 'philosophy', 'services', 'projects', 'process', 'metrics', 'caseStudy', 'quote', 'cta', 'footer'] as const;
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(ALL_SECTIONS));
+  const ALL_SECTIONS = CONTENT_FOLDER_ALL_SECTIONS;
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [openSubFolders, setOpenSubFolders] = useState<Set<string>>(new Set());
 
   const toggleSection = useCallback((id: string): void => {
     setOpenSections((prev) => {
@@ -1991,380 +2803,710 @@ function ContentTab({
     });
   }, []);
 
+  const toggleSubFolder = useCallback((id: string): void => {
+    setOpenSubFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  }, []);
+
   const allOpen = openSections.size === ALL_SECTIONS.length;
 
+  const sectionDragArmedRef = useRef<string | null>(null);
+
+  const [sectionOrder, setSectionOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('milkbar-section-order');
+      if (saved !== null && saved.trim().length > 0) {
+        const parsed = JSON.parse(saved) as unknown;
+        if (Array.isArray(parsed) && parsed.every((x): x is string => typeof x === 'string') && parsed.length === CONTENT_FOLDER_DEFAULT_ORDER.length) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [...CONTENT_FOLDER_DEFAULT_ORDER];
+  });
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem('milkbar-section-order', JSON.stringify(sectionOrder)); } catch { /* ignore */ }
+  }, [sectionOrder]);
+
+  useEffect(() => {
+    const clearArmed = (): void => { sectionDragArmedRef.current = null; };
+    window.addEventListener('mouseup', clearArmed);
+    return () => window.removeEventListener('mouseup', clearArmed);
+  }, []);
+
+  const drawingThumbImages = Array.isArray(pageContent.drawing.thumbImages)
+    ? pageContent.drawing.thumbImages
+    : [];
+  const drawingAsset3dProjectCodes = Array.isArray(pageContent.drawing.asset3dProjectCodes)
+    ? pageContent.drawing.asset3dProjectCodes
+    : [];
+  const drawingThumbCount = drawingThumbImages.filter(Boolean).length;
+  const drawingAsset3dProjectCount = drawingAsset3dProjectCodes.length;
+
   return (
-    <div className='space-y-3'>
-      <div className='flex justify-end'>
-        <button
-          type='button'
-          onClick={() => setOpenSections(allOpen ? new Set() : new Set(ALL_SECTIONS))}
-          className='text-xs text-muted-foreground transition-colors hover:text-white'
-        >
-          {allOpen ? 'Collapse all' : 'Expand all'}
-        </button>
+    <div className='space-y-1.5'>
+      <div className='flex items-center justify-between pb-1'>
+        <span className='text-xs text-muted-foreground'>
+          {openSections.size} of {ALL_SECTIONS.length} sections open
+        </span>
+        <div className='flex items-center gap-3'>
+          {sectionOrder.join(',') !== CONTENT_FOLDER_DEFAULT_ORDER.join(',') && (
+            <button
+              type='button'
+              onClick={() => setSectionOrder([...CONTENT_FOLDER_DEFAULT_ORDER])}
+              className='text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground'
+            >
+              Reset order
+            </button>
+          )}
+          <button
+            type='button'
+            onClick={() => setOpenSections(allOpen ? new Set() : new Set(ALL_SECTIONS))}
+            className='text-xs text-muted-foreground transition-colors hover:text-white'
+          >
+            {allOpen ? 'Collapse all' : 'Expand all'}
+          </button>
+        </div>
       </div>
-      <CollapsibleSection
+      {/* Navigation — always first, not draggable */}
+      <SectionFolderRow
         id='nav'
         title='Navigation'
-        subtitle={`${pageContent.nav.links.length} nav links`}
+        subtitle={`${pageContent.nav.links.length} links`}
         open={openSections.has('nav')}
         onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addNavLink}>
-            Add link
-          </Button>
-        }
       >
         <div className='grid gap-3 md:grid-cols-2'>
           <FieldInput label='Brand subtitle' value={pageContent.nav.brandSub} onChange={(brandSub) => updateNav({ brandSub })} description='Text after the brand name in the nav.' />
           <FieldInput label='CTA label' value={pageContent.nav.ctaLabel} onChange={(ctaLabel) => updateNav({ ctaLabel })} description='Enquiry CTA button text.' />
         </div>
-        <div className='space-y-1.5'>
+        <SubFolderRow
+          title='Nav Links'
+          count={pageContent.nav.links.length}
+          open={openSubFolders.has('nav-links')}
+          onToggle={() => toggleSubFolder('nav-links')}
+          actions={
+            <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addNavLink}>
+              Add
+            </Button>
+          }
+        >
           {pageContent.nav.links.map((link, index) => (
-            <div key={`nav-link-${index}`} className='grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
-              <FieldInput label='Label' value={link.label} onChange={(label) => updateNavLink(index, { label })} />
-              <div className='flex items-end gap-1.5'>
-                <div className='flex-1'>
-                  <FieldInput label='Href' value={link.href} onChange={(href) => updateNavLink(index, { href })} />
-                </div>
-                <button
-                  type='button'
-                  onClick={() => removeNavLink(index)}
-                  className='mb-0.5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
-                  aria-label='Remove nav link'
-                >
-                  <Trash2 className='size-3.5' />
-                </button>
+            <div key={`nav-link-${index}`} className='flex items-start gap-2'>
+              <SubItemMoveButtons
+                index={index}
+                total={pageContent.nav.links.length}
+                onMoveUp={() => moveNavLink(index, index - 1)}
+                onMoveDown={() => moveNavLink(index, index + 1)}
+              />
+              <div className='flex-1 grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
+                <FieldInput label='Label' value={link.label} onChange={(label) => updateNavLink(index, { label })} />
+                <FieldInput label='Href' value={link.href} onChange={(href) => updateNavLink(index, { href })} />
               </div>
+              <button
+                type='button'
+                onClick={() => removeNavLink(index)}
+                className='mt-5 flex size-6 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                aria-label='Remove nav link'
+              >
+                <Trash2 className='size-3' />
+              </button>
             </div>
           ))}
-        </div>
-      </CollapsibleSection>
+        </SubFolderRow>
+      </SectionFolderRow>
 
-      <CollapsibleSection id='hero' title='Hero' open={openSections.has('hero')} onToggle={toggleSection}>
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Location line' value={pageContent.hero.location} onChange={(location) => updateHero({ location })} />
-          <FieldInput label='Index label' value={pageContent.hero.indexLabel} onChange={(indexLabel) => updateHero({ indexLabel })} />
-          <FieldTextarea
-            label='Headline lines'
-            value={linesToText(pageContent.hero.titleLines)}
-            onChange={(value) => updateHero({ titleLines: textToLines(value) })}
-            description='One headline line per row.'
-            rows={3}
-          />
-          <FieldTextarea label='Lede' value={pageContent.hero.lede} onChange={(lede) => updateHero({ lede })} rows={3} />
-          <FieldInput label='Primary CTA' value={pageContent.hero.primaryCtaLabel} onChange={(primaryCtaLabel) => updateHero({ primaryCtaLabel })} />
-          <FieldInput label='Secondary CTA' value={pageContent.hero.secondaryCtaLabel} onChange={(secondaryCtaLabel) => updateHero({ secondaryCtaLabel })} />
-        </div>
-        <CmsModel3DField
-          label='Hero background 3D model'
-          description='Uploads to FastComet /uploads/cms/models and drives the Vercel hero background model.'
-          modelId={pageContent.hero.modelAssetId}
-          modelUrl={pageContent.hero.modelUrl}
-          uploadName='Milkbar hero background model'
-          tags={['hero']}
-          onChange={(modelAssetId) => updateHero({ modelAssetId, modelUrl: undefined })}
-          onRemove={() => updateHero({ modelAssetId: undefined, modelUrl: undefined })}
-        />
-      </CollapsibleSection>
-
-      <CollapsibleSection id='drawing' title='Drawing Section' open={openSections.has('drawing')} onToggle={toggleSection}>
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.drawing.eyebrow} onChange={(eyebrow) => updateDrawing({ eyebrow })} />
-          <FieldInput label='Title' value={pageContent.drawing.title} onChange={(title) => updateDrawing({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.drawing.emphasis} onChange={(emphasis) => updateDrawing({ emphasis })} />
-          <FieldInput label='CTA label' value={pageContent.drawing.ctaLabel} onChange={(ctaLabel) => updateDrawing({ ctaLabel })} />
-          <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
-          <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
-        </div>
-        <CmsModel3DField
-          label='Interior section 3D model'
-          description='Uploads the Every line carries intent interior model to FastComet /uploads/cms/models.'
-          modelId={pageContent.drawing.interiorModelAssetId}
-          modelUrl={pageContent.drawing.interiorModelUrl}
-          uploadName='Milkbar Every line carries intent interior model'
-          tags={['interior', 'drawing']}
-          onChange={(interiorModelAssetId) => updateDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
-          onRemove={() => updateDrawing({ interiorModelAssetId: undefined, interiorModelUrl: undefined })}
-        />
-        <DrawingImageSlotsField
-          value={pageContent.drawing.thumbImages}
-          onChange={(thumbImages) => updateDrawing({ thumbImages })}
-        />
-        <Drawing3DAssetSlotsField
-          value={pageContent.drawing.asset3dSlots}
-          urlValue={pageContent.drawing.asset3dSlotUrls ?? []}
-          onChange={(asset3dSlots) => updateDrawing({ asset3dSlots })}
-          onUrlsChange={(asset3dSlotUrls) => updateDrawing({ asset3dSlotUrls })}
-        />
-      </CollapsibleSection>
-
-      <CollapsibleSection id='philosophy' title='Philosophy' open={openSections.has('philosophy')} onToggle={toggleSection}>
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.philosophy.eyebrow} onChange={(eyebrow) => updatePhilosophy({ eyebrow })} />
-          <FieldInput label='Title' value={pageContent.philosophy.title} onChange={(title) => updatePhilosophy({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.philosophy.emphasis} onChange={(emphasis) => updatePhilosophy({ emphasis })} />
-          <FieldInput label='Figure caption' value={pageContent.philosophy.caption} onChange={(caption) => updatePhilosophy({ caption })} />
-          <FieldTextarea label='Body' value={pageContent.philosophy.body} onChange={(body) => updatePhilosophy({ body })} rows={3} />
-          <FieldTextarea label='Closing line' value={pageContent.philosophy.closing} onChange={(closing) => updatePhilosophy({ closing })} rows={2} />
-        </div>
-
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id='philosophy'
-        title='Philosophy Principles'
-        subtitle={`${pageContent.philosophy.principles.length} principles`}
-        open={openSections.has('philosophy')}
-        onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addPrinciple}>
-            Add
-          </Button>
-        }
-      >
-        {pageContent.philosophy.principles.map((principle, index) => (
-          <div key={`${principle.number}-${index}`} className='space-y-2 rounded-md border border-white/10 p-3'>
-            <div className='flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium text-muted-foreground'>Principle {index + 1}</span>
-              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removePrinciple(index)}>
-                Remove
-              </Button>
-            </div>
-            <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)]'>
-              <FieldInput label='No.' value={principle.number} onChange={(number) => updatePrinciple(index, { number })} />
-              <FieldInput label='Title' value={principle.title} onChange={(title) => updatePrinciple(index, { title })} />
-              <FieldInput label='Emphasis' value={principle.emphasis} onChange={(emphasis) => updatePrinciple(index, { emphasis })} />
-              <div className='md:col-span-3'>
-                <FieldTextarea label='Description' value={principle.description} onChange={(description) => updatePrinciple(index, { description })} rows={2} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </CollapsibleSection>
-
-      <CollapsibleSection id='services' title='Services &amp; Projects Headers' open={openSections.has('services')} onToggle={toggleSection}>
-        <div className='grid gap-4 xl:grid-cols-2'>
-          <FormSection title='Practice Header' gridClassName='md:grid-cols-2'>
-            <FieldInput label='Eyebrow' value={pageContent.services.eyebrow} onChange={(eyebrow) => updateServicesHeader({ eyebrow })} />
-            <FieldInput label='Label' value={pageContent.services.label} onChange={(label) => updateServicesHeader({ label })} />
-            <FieldInput label='Title' value={pageContent.services.title} onChange={(title) => updateServicesHeader({ title })} />
-            <FieldInput label='Emphasis' value={pageContent.services.emphasis} onChange={(emphasis) => updateServicesHeader({ emphasis })} />
-          </FormSection>
-          <FormSection title='Projects Header' gridClassName='md:grid-cols-2'>
-            <FieldInput label='Eyebrow' value={pageContent.projects.eyebrow} onChange={(eyebrow) => updateProjectsHeader({ eyebrow })} />
-            <FieldInput label='Label' value={pageContent.projects.label} onChange={(label) => updateProjectsHeader({ label })} />
-            <FieldInput label='Title' value={pageContent.projects.title} onChange={(title) => updateProjectsHeader({ title })} />
-            <FieldInput label='Emphasis' value={pageContent.projects.emphasis} onChange={(emphasis) => updateProjectsHeader({ emphasis })} />
-          </FormSection>
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id='process'
-        title='Process'
-        subtitle={`${pageContent.process.steps.length} steps`}
-        open={openSections.has('process')}
-        onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addProcessStep}>
-            Add step
-          </Button>
-        }
-      >
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.process.eyebrow} onChange={(eyebrow) => updateProcess({ eyebrow })} />
-          <FieldInput label='Label' value={pageContent.process.label} onChange={(label) => updateProcess({ label })} />
-          <FieldInput label='Title' value={pageContent.process.title} onChange={(title) => updateProcess({ title })} />
-          <FieldInput label='Emphasis' value={pageContent.process.emphasis} onChange={(emphasis) => updateProcess({ emphasis })} />
-        </div>
-        {pageContent.process.steps.map((step, index) => (
-          <div key={`${step.number}-${index}`} className='space-y-2 rounded-md border border-white/10 p-3'>
-            <div className='flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium text-muted-foreground'>Step {index + 1}</span>
-              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeProcessStep(index)}>
-                Remove
-              </Button>
-            </div>
-            <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)]'>
-              <FieldInput label='No.' value={step.number} onChange={(number) => updateProcessStep(index, { number })} />
-              <FieldInput label='Title' value={step.title} onChange={(title) => updateProcessStep(index, { title })} />
-              <div className='md:col-span-2'>
-                <FieldTextarea label='Description' value={step.description} onChange={(description) => updateProcessStep(index, { description })} rows={2} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id='metrics'
-        title='Metrics'
-        subtitle={`${pageContent.metrics.length} headline figures`}
-        open={openSections.has('metrics')}
-        onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addMetric}>
-            Add
-          </Button>
-        }
-      >
-        {pageContent.metrics.map((metric, index) => (
-          <div key={`${metric.label}-${index}`} className='rounded-md border border-white/10 p-3'>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium text-muted-foreground'>Metric {index + 1}</span>
-              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeMetric(index)}>
-                Remove
-              </Button>
-            </div>
-            <div className='grid gap-3 md:grid-cols-[7rem_5rem_minmax(0,1fr)]'>
-              <FieldInput label='Value' value={metric.value} onChange={(value) => updateMetric(index, { value })} />
-              <FieldInput label='Suffix' value={metric.suffix} onChange={(suffix) => updateMetric(index, { suffix })} />
-              <FieldInput label='Label' value={metric.label} onChange={(label) => updateMetric(index, { label })} />
-            </div>
-          </div>
-        ))}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id='caseStudy'
-        title='Case Study'
-        subtitle={`${pageContent.caseStudy.stats.length} stats`}
-        open={openSections.has('caseStudy')}
-        onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addCaseStudyStat}>
-            Add stat
-          </Button>
-        }
-      >
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Eyebrow' value={pageContent.caseStudy.eyebrow} onChange={(eyebrow) => updateCaseStudy({ eyebrow })} />
-          <FieldInput label='Label' value={pageContent.caseStudy.label} onChange={(label) => updateCaseStudy({ label })} />
-          <FieldInput label='Title' value={pageContent.caseStudy.title} onChange={(title) => updateCaseStudy({ title })} />
-          <FieldInput label='Title emphasis' value={pageContent.caseStudy.titleEmphasis} onChange={(titleEmphasis) => updateCaseStudy({ titleEmphasis })} />
-          <FieldInput label='Heading' value={pageContent.caseStudy.heading} onChange={(heading) => updateCaseStudy({ heading })} />
-          <FieldInput label='Heading emphasis' value={pageContent.caseStudy.headingEmphasis} onChange={(headingEmphasis) => updateCaseStudy({ headingEmphasis })} />
-          <div className='md:col-span-2'>
-            <FieldTextarea label='Body paragraph' value={pageContent.caseStudy.body} onChange={(body) => updateCaseStudy({ body })} rows={3} />
-          </div>
-        </div>
-        {pageContent.caseStudy.stats.map((stat, index) => (
-          <div key={`cs-stat-${index}`} className='rounded-md border border-white/10 p-2'>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <span className='text-xs text-muted-foreground'>Stat {index + 1}</span>
-              <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeCaseStudyStat(index)}>
-                Remove
-              </Button>
-            </div>
-            <div className='grid gap-2 md:grid-cols-[6rem_4rem_minmax(0,1fr)]'>
-              <FieldInput label='Value' value={stat.value} onChange={(value) => updateCaseStudyStat(index, { value })} />
-              <FieldInput label='Suffix' value={stat.suffix} onChange={(suffix) => updateCaseStudyStat(index, { suffix })} />
-              <FieldInput label='Label' value={stat.label} onChange={(label) => updateCaseStudyStat(index, { label })} />
-            </div>
-          </div>
-        ))}
-      </CollapsibleSection>
-
-      <CollapsibleSection id='quote' title='Quote' open={openSections.has('quote')} onToggle={toggleSection}>
-        <div className='grid gap-4 xl:grid-cols-2'>
-          <FormSection title='Quote' gridClassName='md:grid-cols-2'>
-            <FieldInput label='Eyebrow' value={pageContent.quote.eyebrow} onChange={(eyebrow) => updateQuote({ eyebrow })} />
-            <FieldInput label='Attribution' value={pageContent.quote.attribution} onChange={(attribution) => updateQuote({ attribution })} />
-            <FieldTextarea label='Text' value={pageContent.quote.text} onChange={(text) => updateQuote({ text })} rows={2} />
-            <FieldTextarea label='Emphasis' value={pageContent.quote.emphasis} onChange={(emphasis) => updateQuote({ emphasis })} rows={2} />
-          </FormSection>
-          <FormSection title='CTA' gridClassName='md:grid-cols-2'>
-            <FieldInput label='Title' value={pageContent.cta.title} onChange={(title) => updateCta({ title })} />
-            <FieldInput label='Emphasis' value={pageContent.cta.emphasis} onChange={(emphasis) => updateCta({ emphasis })} />
-            <FieldTextarea label='Description' value={pageContent.cta.description} onChange={(description) => updateCta({ description })} rows={2} />
-            <FieldTextarea label='Note' value={pageContent.cta.note} onChange={(note) => updateCta({ note })} rows={2} />
-            <FieldInput label='Email placeholder' value={pageContent.cta.emailPlaceholder} onChange={(emailPlaceholder) => updateCta({ emailPlaceholder })} />
-            <FieldInput label='Submit label' value={pageContent.cta.submitLabel} onChange={(submitLabel) => updateCta({ submitLabel })} />
-            <FieldInput label='Loading label' value={pageContent.cta.loadingLabel} onChange={(loadingLabel) => updateCta({ loadingLabel })} />
-            <FieldInput label='Success message' value={pageContent.cta.successMessage} onChange={(successMessage) => updateCta({ successMessage })} />
-          </FormSection>
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id='footer'
-        title='Footer'
-        subtitle={`${pageContent.footer.columns.length} nav columns`}
-        open={openSections.has('footer')}
-        onToggle={toggleSection}
-        actions={
-          <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-4' />} onClick={addFooterColumn}>
-            Add column
-          </Button>
-        }
-      >
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FieldInput label='Brand name' value={pageContent.footer.brandName} onChange={(brandName) => updateFooter({ brandName })} />
-          <FieldInput label='Copyright' value={pageContent.footer.copyright} onChange={(copyright) => updateFooter({ copyright })} />
-          <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
-          <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
-        </div>
-        <div className='grid gap-4 md:grid-cols-3'>
-          {pageContent.footer.columns.map((column, ci) => (
-            <div key={`col-${ci}`} className='space-y-2 rounded-md border border-white/10 p-3'>
-              <div className='flex items-center justify-between gap-2'>
-                <FieldInput
-                  label={`Column ${ci + 1} heading`}
-                  value={column.title}
-                  onChange={(title) => updateFooterColumnTitle(ci, title)}
-                />
-                <button
-                  type='button'
-                  onClick={() => removeFooterColumn(ci)}
-                  className='mt-5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
-                  aria-label={`Remove column ${ci + 1}`}
+      {/* Draggable sections — rendered in sectionOrder */}
+      {sectionOrder.map((sectionId, i) => {
+        const isDragging = draggedSectionId === sectionId;
+        return (
+          <Fragment key={sectionId}>
+            {dropIndex === i && draggedSectionId !== null && (
+              <div className='mx-1 h-0.5 rounded-full bg-blue-500/70' />
+            )}
+            <div
+              draggable
+              onDragStart={(e) => {
+                if (sectionDragArmedRef.current !== sectionId) { e.preventDefault(); return; }
+                const { dataTransfer } = e;
+                dataTransfer.effectAllowed = 'move';
+                setDraggedSectionId(sectionId);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                const { dataTransfer } = e;
+                dataTransfer.dropEffect = 'move';
+                const rect = e.currentTarget.getBoundingClientRect();
+                setDropIndex(e.clientY < rect.top + rect.height / 2 ? i : i + 1);
+              }}
+              onDrop={() => {
+                if (draggedSectionId === null || dropIndex === null) return;
+                setSectionOrder((prev) => {
+                  const fromIdx = prev.indexOf(draggedSectionId);
+                  if (fromIdx === -1) return prev;
+                  const adjusted = dropIndex > fromIdx ? dropIndex - 1 : dropIndex;
+                  if (fromIdx === adjusted) return prev;
+                  const next = [...prev];
+                  next.splice(fromIdx, 1);
+                  next.splice(adjusted, 0, draggedSectionId);
+                  return next;
+                });
+                setDraggedSectionId(null);
+                setDropIndex(null);
+              }}
+              onDragEnd={() => {
+                setDraggedSectionId(null);
+                setDropIndex(null);
+                sectionDragArmedRef.current = null;
+              }}
+            >
+              {sectionId === 'hero' && (
+                <SectionFolderRow
+                  id='hero'
+                  title='Hero'
+                  open={openSections.has('hero')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'hero'; }}
                 >
-                  <Trash2 className='size-3.5' />
-                </button>
-              </div>
-              <div className='space-y-1.5'>
-                {column.links.map((link, li) => (
-                  <div key={`col-${ci}-link-${li}`} className='grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
-                    <FieldInput
-                      label='Label'
-                      value={link.label}
-                      onChange={(label) => updateFooterLink(ci, li, { label })}
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Location line' value={pageContent.hero.location} onChange={(location) => updateHero({ location })} />
+                    <FieldInput label='Index label' value={pageContent.hero.indexLabel} onChange={(indexLabel) => updateHero({ indexLabel })} />
+                    <FieldTextarea
+                      label='Headline lines'
+                      value={linesToText(pageContent.hero.titleLines)}
+                      onChange={(value) => updateHero({ titleLines: textToLines(value) })}
+                      description='One headline line per row.'
+                      rows={3}
                     />
-                    <div className='flex items-end gap-1.5'>
-                      <div className='flex-1'>
-                        <FieldInput
-                          label='Href'
-                          value={link.href}
-                          onChange={(href) => updateFooterLink(ci, li, { href })}
+                    <FieldTextarea label='Lede' value={pageContent.hero.lede} onChange={(lede) => updateHero({ lede })} rows={3} />
+                    <FieldInput label='Primary CTA' value={pageContent.hero.primaryCtaLabel} onChange={(primaryCtaLabel) => updateHero({ primaryCtaLabel })} />
+                    <FieldInput label='Secondary CTA' value={pageContent.hero.secondaryCtaLabel} onChange={(secondaryCtaLabel) => updateHero({ secondaryCtaLabel })} />
+                  </div>
+                  <CmsModel3DField
+                    label='Hero background 3D model'
+                    description='Uploads to FastComet /uploads/cms/models and drives the Vercel hero background model.'
+                    modelId={pageContent.hero.modelAssetId}
+                    modelUrl={pageContent.hero.modelUrl}
+                    uploadName='Milkbar hero background model'
+                    tags={['hero']}
+                    onChange={(modelAssetId) => autoSaveHero({ modelAssetId, modelUrl: undefined })}
+                    onClearLink={() => autoSaveHero({ modelUrl: undefined })}
+                    onClearUpload={() => autoSaveHero({ modelAssetId: undefined })}
+                  />
+                </SectionFolderRow>
+              )}
+              {sectionId === 'drawing' && (
+                <SectionFolderRow
+                  id='drawing'
+                  title='Drawing Section'
+                  subtitle={`${drawingThumbCount} thumbnails · ${drawingAsset3dProjectCount} 3D`}
+                  open={openSections.has('drawing')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'drawing'; }}
+                  visibilityOn={sectionVisibility.drawing}
+                  onToggleVisibility={() => onUpdateVisibility({ drawing: !sectionVisibility.drawing })}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Eyebrow' value={pageContent.drawing.eyebrow} onChange={(eyebrow) => updateDrawing({ eyebrow })} />
+                    <FieldInput label='Title' value={pageContent.drawing.title} onChange={(title) => updateDrawing({ title })} />
+                    <FieldInput label='Emphasis' value={pageContent.drawing.emphasis} onChange={(emphasis) => updateDrawing({ emphasis })} />
+                    <FieldInput label='CTA label' value={pageContent.drawing.ctaLabel} onChange={(ctaLabel) => updateDrawing({ ctaLabel })} />
+                    <FieldTextarea label='Description' value={pageContent.drawing.description} onChange={(description) => updateDrawing({ description })} rows={3} />
+                    <FieldInput label='Interaction hint' value={pageContent.drawing.hint} onChange={(hint) => updateDrawing({ hint })} />
+                  </div>
+                  <CmsModel3DField
+                    label='Interior section 3D model'
+                    description='Uploads the Every line carries intent interior model to FastComet /uploads/cms/models.'
+                    modelId={pageContent.drawing.interiorModelAssetId}
+                    modelUrl={pageContent.drawing.interiorModelUrl}
+                    uploadName='Milkbar Every line carries intent interior model'
+                    tags={['interior', 'drawing']}
+                    onChange={(interiorModelAssetId) => autoSaveDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
+                    onClearLink={() => autoSaveDrawing({ interiorModelUrl: undefined })}
+                    onClearUpload={() => autoSaveDrawing({ interiorModelAssetId: undefined })}
+                  />
+                  <SubFolderRow
+                    title='Drawing Thumbnails'
+                    count={drawingThumbCount}
+                    open={openSubFolders.has('drawing-thumbs')}
+                    onToggle={() => toggleSubFolder('drawing-thumbs')}
+                  >
+                    <DrawingImageSlotsField
+                      value={drawingThumbImages}
+                      onChange={(thumbImages, options) => {
+                        if (options?.autoSave === true) {
+                          return autoSaveDrawing({ thumbImages });
+                        }
+                        updateDrawing({ thumbImages });
+                        return undefined;
+                      }}
+                    />
+                  </SubFolderRow>
+                  <SubFolderRow
+                    title='Drawing 3D — Project Models'
+                    count={drawingAsset3dProjectCount}
+                    open={openSubFolders.has('drawing-3d')}
+                    onToggle={() => toggleSubFolder('drawing-3d')}
+                  >
+                    <DrawingProjectSlotsField
+                      projects={projects}
+                      value={drawingAsset3dProjectCodes}
+                      onChange={(asset3dProjectCodes) => updateDrawing({ asset3dProjectCodes })}
+                    />
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'philosophy' && (
+                <SectionFolderRow
+                  id='philosophy'
+                  title='Philosophy'
+                  subtitle={`${pageContent.philosophy.principles.length} principles`}
+                  open={openSections.has('philosophy')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'philosophy'; }}
+                  visibilityOn={sectionVisibility.philosophy}
+                  onToggleVisibility={() => onUpdateVisibility({ philosophy: !sectionVisibility.philosophy })}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Eyebrow' value={pageContent.philosophy.eyebrow} onChange={(eyebrow) => updatePhilosophy({ eyebrow })} />
+                    <FieldInput label='Title' value={pageContent.philosophy.title} onChange={(title) => updatePhilosophy({ title })} />
+                    <FieldInput label='Emphasis' value={pageContent.philosophy.emphasis} onChange={(emphasis) => updatePhilosophy({ emphasis })} />
+                    <FieldInput label='Figure caption' value={pageContent.philosophy.caption} onChange={(caption) => updatePhilosophy({ caption })} />
+                    <FieldTextarea label='Body' value={pageContent.philosophy.body} onChange={(body) => updatePhilosophy({ body })} rows={3} />
+                    <FieldTextarea label='Closing line' value={pageContent.philosophy.closing} onChange={(closing) => updatePhilosophy({ closing })} rows={2} />
+                  </div>
+                  <SubFolderRow
+                    title='Principles'
+                    count={pageContent.philosophy.principles.length}
+                    open={openSubFolders.has('principles')}
+                    onToggle={() => toggleSubFolder('principles')}
+                    actions={
+                      <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addPrinciple}>
+                        Add
+                      </Button>
+                    }
+                  >
+                    {pageContent.philosophy.principles.map((principle, index) => (
+                      <div key={`${principle.number}-${index}`} className='flex items-start gap-2'>
+                        <SubItemMoveButtons
+                          index={index}
+                          total={pageContent.philosophy.principles.length}
+                          onMoveUp={() => movePrinciple(index, index - 1)}
+                          onMoveDown={() => movePrinciple(index, index + 1)}
                         />
+                        <div className='flex-1 space-y-2 rounded-md border border-white/10 p-3'>
+                          <div className='flex items-center justify-between gap-2'>
+                            <span className='text-xs font-medium text-muted-foreground'>{principle.number} Principle {index + 1}</span>
+                            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removePrinciple(index)}>
+                              Remove
+                            </Button>
+                          </div>
+                          <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)_minmax(0,1fr)]'>
+                            <FieldInput label='No.' value={principle.number} onChange={(number) => updatePrinciple(index, { number })} />
+                            <FieldInput label='Title' value={principle.title} onChange={(title) => updatePrinciple(index, { title })} />
+                            <FieldInput label='Emphasis' value={principle.emphasis} onChange={(emphasis) => updatePrinciple(index, { emphasis })} />
+                            <div className='md:col-span-3'>
+                              <FieldTextarea label='Description' value={principle.description} onChange={(description) => updatePrinciple(index, { description })} rows={2} />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        type='button'
-                        onClick={() => removeFooterLink(ci, li)}
-                        className='mb-0.5 flex size-8 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
-                        aria-label='Remove link'
-                      >
-                        <Trash2 className='size-3.5' />
-                      </button>
+                    ))}
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'services' && (
+                <SectionFolderRow
+                  id='services'
+                  title='Services &amp; Projects'
+                  open={openSections.has('services')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'services'; }}
+                  visibilityOn={sectionVisibility.services || sectionVisibility.projects}
+                  onToggleVisibility={() => {
+                    const next = !(sectionVisibility.services || sectionVisibility.projects);
+                    onUpdateVisibility({ services: next, projects: next });
+                  }}
+                >
+                  <div className='grid gap-4 xl:grid-cols-2'>
+                    <FormSection title='Practice Header' gridClassName='md:grid-cols-2'>
+                      <FieldInput label='Eyebrow' value={pageContent.services.eyebrow} onChange={(eyebrow) => updateServicesHeader({ eyebrow })} />
+                      <FieldInput label='Label' value={pageContent.services.label} onChange={(label) => updateServicesHeader({ label })} />
+                      <FieldInput label='Title' value={pageContent.services.title} onChange={(title) => updateServicesHeader({ title })} />
+                      <FieldInput label='Emphasis' value={pageContent.services.emphasis} onChange={(emphasis) => updateServicesHeader({ emphasis })} />
+                    </FormSection>
+                    <FormSection title='Projects Header' gridClassName='md:grid-cols-2'>
+                      <FieldInput label='Eyebrow' value={pageContent.projects.eyebrow} onChange={(eyebrow) => updateProjectsHeader({ eyebrow })} />
+                      <FieldInput label='Label' value={pageContent.projects.label} onChange={(label) => updateProjectsHeader({ label })} />
+                      <FieldInput label='Title' value={pageContent.projects.title} onChange={(title) => updateProjectsHeader({ title })} />
+                      <FieldInput label='Emphasis' value={pageContent.projects.emphasis} onChange={(emphasis) => updateProjectsHeader({ emphasis })} />
+                      <div className='col-span-full'>
+                        <p className='text-xs font-medium text-neutral-400 mb-2'>Card View Mode</p>
+                        <div className='flex gap-4'>
+                          {(['wireframe', 'solid'] as const).map((mode) => (
+                            <label key={mode} className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='radio'
+                                name='projectsViewMode'
+                                value={mode}
+                                checked={pageContent.projects.projectsViewMode === mode}
+                                onChange={() => updateProjectsHeader({ projectsViewMode: mode })}
+                                className='accent-white'
+                              />
+                              <span className='text-sm capitalize'>{mode}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </FormSection>
+                  </div>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'process' && (
+                <SectionFolderRow
+                  id='process'
+                  title='Process'
+                  subtitle={`${pageContent.process.steps.length} steps`}
+                  open={openSections.has('process')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'process'; }}
+                  visibilityOn={sectionVisibility.process}
+                  onToggleVisibility={() => onUpdateVisibility({ process: !sectionVisibility.process })}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Eyebrow' value={pageContent.process.eyebrow} onChange={(eyebrow) => updateProcess({ eyebrow })} />
+                    <FieldInput label='Label' value={pageContent.process.label} onChange={(label) => updateProcess({ label })} />
+                    <FieldInput label='Title' value={pageContent.process.title} onChange={(title) => updateProcess({ title })} />
+                    <FieldInput label='Emphasis' value={pageContent.process.emphasis} onChange={(emphasis) => updateProcess({ emphasis })} />
+                  </div>
+                  <SubFolderRow
+                    title='Process Steps'
+                    count={pageContent.process.steps.length}
+                    open={openSubFolders.has('steps')}
+                    onToggle={() => toggleSubFolder('steps')}
+                    actions={
+                      <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addProcessStep}>
+                        Add
+                      </Button>
+                    }
+                  >
+                    {pageContent.process.steps.map((step, index) => (
+                      <div key={`${step.number}-${index}`} className='flex items-start gap-2'>
+                        <SubItemMoveButtons
+                          index={index}
+                          total={pageContent.process.steps.length}
+                          onMoveUp={() => moveProcessStep(index, index - 1)}
+                          onMoveDown={() => moveProcessStep(index, index + 1)}
+                        />
+                        <div className='flex-1 space-y-2 rounded-md border border-white/10 p-3'>
+                          <div className='flex items-center justify-between gap-2'>
+                            <span className='text-xs font-medium text-muted-foreground'>{step.number} Step {index + 1}</span>
+                            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeProcessStep(index)}>
+                              Remove
+                            </Button>
+                          </div>
+                          <div className='grid gap-3 md:grid-cols-[5rem_minmax(0,1fr)]'>
+                            <FieldInput label='No.' value={step.number} onChange={(number) => updateProcessStep(index, { number })} />
+                            <FieldInput label='Title' value={step.title} onChange={(title) => updateProcessStep(index, { title })} />
+                            <div className='md:col-span-2'>
+                              <FieldTextarea label='Description' value={step.description} onChange={(description) => updateProcessStep(index, { description })} rows={2} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'metrics' && (
+                <SectionFolderRow
+                  id='metrics'
+                  title='Metrics'
+                  subtitle={`${pageContent.metrics.length} headline figures`}
+                  open={openSections.has('metrics')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'metrics'; }}
+                  visibilityOn={sectionVisibility.metrics}
+                  onToggleVisibility={() => onUpdateVisibility({ metrics: !sectionVisibility.metrics })}
+                >
+                  <SubFolderRow
+                    title='Metric Items'
+                    count={pageContent.metrics.length}
+                    open={openSubFolders.has('metrics')}
+                    onToggle={() => toggleSubFolder('metrics')}
+                    actions={
+                      <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addMetric}>
+                        Add
+                      </Button>
+                    }
+                  >
+                    {pageContent.metrics.map((metric, index) => (
+                      <div key={`${metric.label}-${index}`} className='flex items-start gap-2'>
+                        <SubItemMoveButtons
+                          index={index}
+                          total={pageContent.metrics.length}
+                          onMoveUp={() => moveMetric(index, index - 1)}
+                          onMoveDown={() => moveMetric(index, index + 1)}
+                        />
+                        <div className='flex-1 rounded-md border border-white/10 p-3'>
+                          <div className='mb-2 flex items-center justify-between gap-2'>
+                            <span className='text-xs font-medium text-muted-foreground'>Metric {index + 1}</span>
+                            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeMetric(index)}>
+                              Remove
+                            </Button>
+                          </div>
+                          <div className='grid gap-3 md:grid-cols-[7rem_5rem_minmax(0,1fr)]'>
+                            <FieldInput label='Value' value={metric.value} onChange={(value) => updateMetric(index, { value })} />
+                            <FieldInput label='Suffix' value={metric.suffix} onChange={(suffix) => updateMetric(index, { suffix })} />
+                            <FieldInput label='Label' value={metric.label} onChange={(label) => updateMetric(index, { label })} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'caseStudy' && (
+                <SectionFolderRow
+                  id='caseStudy'
+                  title='Case Study'
+                  subtitle={`${pageContent.caseStudy.stats.length} stats`}
+                  open={openSections.has('caseStudy')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'caseStudy'; }}
+                  visibilityOn={sectionVisibility.caseStudy}
+                  onToggleVisibility={() => onUpdateVisibility({ caseStudy: !sectionVisibility.caseStudy })}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Eyebrow' value={pageContent.caseStudy.eyebrow} onChange={(eyebrow) => updateCaseStudy({ eyebrow })} />
+                    <FieldInput label='Label' value={pageContent.caseStudy.label} onChange={(label) => updateCaseStudy({ label })} />
+                    <FieldInput label='Title' value={pageContent.caseStudy.title} onChange={(title) => updateCaseStudy({ title })} />
+                    <FieldInput label='Title emphasis' value={pageContent.caseStudy.titleEmphasis} onChange={(titleEmphasis) => updateCaseStudy({ titleEmphasis })} />
+                    <FieldInput label='Heading' value={pageContent.caseStudy.heading} onChange={(heading) => updateCaseStudy({ heading })} />
+                    <FieldInput label='Heading emphasis' value={pageContent.caseStudy.headingEmphasis} onChange={(headingEmphasis) => updateCaseStudy({ headingEmphasis })} />
+                    <div className='md:col-span-2'>
+                      <FieldTextarea label='Body paragraph' value={pageContent.caseStudy.body} onChange={(body) => updateCaseStudy({ body })} rows={3} />
                     </div>
                   </div>
-                ))}
-              </div>
-              <Button
-                type='button'
-                variant='secondary'
-                size='sm'
-                icon={<Plus className='size-3.5' />}
-                onClick={() => addFooterLink(ci)}
-              >
-                Add link
-              </Button>
+                  <FormField label='2D View — Source Project' description='The 2D view in this case study comes directly from the uploaded model of the selected project.'>
+                    <select
+                      className='w-full rounded-md border border-white/20 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-400'
+                      value={pageContent.caseStudy.projectCode ?? ''}
+                      onChange={(e) => updateCaseStudy({ projectCode: e.target.value.length > 0 ? e.target.value : undefined })}
+                    >
+                      <option value=''>— none —</option>
+                      {projects.filter(hasProjectModelSource).map((p) => (
+                        <option key={p.code} value={p.code}>{p.name} ({p.code})</option>
+                      ))}
+                      {projects.filter((p) => !hasProjectModelSource(p)).length > 0 && (
+                        <optgroup label='No model uploaded'>
+                          {projects.filter((p) => !hasProjectModelSource(p)).map((p) => (
+                            <option key={p.code} value={p.code} disabled>{p.name} ({p.code})</option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                    {typeof pageContent.caseStudy.projectCode === 'string' && pageContent.caseStudy.projectCode.length > 0 && (
+                      <p className='mt-1 text-xs text-amber-300/80'>
+                        Using model from project: <span className='font-medium'>{pageContent.caseStudy.projectCode}</span>
+                      </p>
+                    )}
+                  </FormField>
+                  <SubFolderRow
+                    title='Case Study Stats'
+                    count={pageContent.caseStudy.stats.length}
+                    open={openSubFolders.has('cs-stats')}
+                    onToggle={() => toggleSubFolder('cs-stats')}
+                    actions={
+                      <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addCaseStudyStat}>
+                        Add
+                      </Button>
+                    }
+                  >
+                    {pageContent.caseStudy.stats.map((stat, index) => (
+                      <div key={`cs-stat-${index}`} className='flex items-start gap-2'>
+                        <SubItemMoveButtons
+                          index={index}
+                          total={pageContent.caseStudy.stats.length}
+                          onMoveUp={() => moveCaseStudyStat(index, index - 1)}
+                          onMoveDown={() => moveCaseStudyStat(index, index + 1)}
+                        />
+                        <div className='flex-1 rounded-md border border-white/10 p-2'>
+                          <div className='mb-1.5 flex items-center justify-between gap-2'>
+                            <span className='text-xs text-muted-foreground'>Stat {index + 1}</span>
+                            <Button type='button' variant='destructive' size='sm' icon={<Trash2 className='size-3.5' />} onClick={() => removeCaseStudyStat(index)}>
+                              Remove
+                            </Button>
+                          </div>
+                          <div className='grid gap-2 md:grid-cols-[6rem_4rem_minmax(0,1fr)]'>
+                            <FieldInput label='Value' value={stat.value} onChange={(value) => updateCaseStudyStat(index, { value })} />
+                            <FieldInput label='Suffix' value={stat.suffix} onChange={(suffix) => updateCaseStudyStat(index, { suffix })} />
+                            <FieldInput label='Label' value={stat.label} onChange={(label) => updateCaseStudyStat(index, { label })} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'quote' && (
+                <SectionFolderRow
+                  id='quote'
+                  title='Quote &amp; CTA'
+                  open={openSections.has('quote')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'quote'; }}
+                  visibilityOn={sectionVisibility.quote || sectionVisibility.cta}
+                  onToggleVisibility={() => {
+                    const next = !(sectionVisibility.quote || sectionVisibility.cta);
+                    onUpdateVisibility({ quote: next, cta: next });
+                  }}
+                >
+                  <div className='grid gap-4 xl:grid-cols-2'>
+                    <FormSection title='Quote' gridClassName='md:grid-cols-2'>
+                      <FieldInput label='Eyebrow' value={pageContent.quote.eyebrow} onChange={(eyebrow) => updateQuote({ eyebrow })} />
+                      <FieldInput label='Attribution' value={pageContent.quote.attribution} onChange={(attribution) => updateQuote({ attribution })} />
+                      <FieldTextarea label='Text' value={pageContent.quote.text} onChange={(text) => updateQuote({ text })} rows={2} />
+                      <FieldTextarea label='Emphasis' value={pageContent.quote.emphasis} onChange={(emphasis) => updateQuote({ emphasis })} rows={2} />
+                    </FormSection>
+                    <FormSection title='CTA' gridClassName='md:grid-cols-2'>
+                      <FieldInput label='Title' value={pageContent.cta.title} onChange={(title) => updateCta({ title })} />
+                      <FieldInput label='Emphasis' value={pageContent.cta.emphasis} onChange={(emphasis) => updateCta({ emphasis })} />
+                      <FieldTextarea label='Description' value={pageContent.cta.description} onChange={(description) => updateCta({ description })} rows={2} />
+                      <FieldTextarea label='Note' value={pageContent.cta.note} onChange={(note) => updateCta({ note })} rows={2} />
+                      <FieldInput label='Email placeholder' value={pageContent.cta.emailPlaceholder} onChange={(emailPlaceholder) => updateCta({ emailPlaceholder })} />
+                      <FieldInput label='Submit label' value={pageContent.cta.submitLabel} onChange={(submitLabel) => updateCta({ submitLabel })} />
+                      <FieldInput label='Loading label' value={pageContent.cta.loadingLabel} onChange={(loadingLabel) => updateCta({ loadingLabel })} />
+                      <FieldInput label='Success message' value={pageContent.cta.successMessage} onChange={(successMessage) => updateCta({ successMessage })} />
+                    </FormSection>
+                  </div>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'footer' && (
+                <SectionFolderRow
+                  id='footer'
+                  title='Footer'
+                  subtitle={`${pageContent.footer.columns.length} nav columns`}
+                  open={openSections.has('footer')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'footer'; }}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Brand name' value={pageContent.footer.brandName} onChange={(brandName) => updateFooter({ brandName })} />
+                    <FieldInput label='Copyright' value={pageContent.footer.copyright} onChange={(copyright) => updateFooter({ copyright })} />
+                    <FieldTextarea label='Address' value={pageContent.footer.address} onChange={(address) => updateFooter({ address })} rows={3} />
+                    <FieldTextarea label='Tagline' value={pageContent.footer.tagline} onChange={(tagline) => updateFooter({ tagline })} rows={3} />
+                  </div>
+                  <SubFolderRow
+                    title='Footer Columns'
+                    count={pageContent.footer.columns.length}
+                    open={openSubFolders.has('footer-cols')}
+                    onToggle={() => toggleSubFolder('footer-cols')}
+                    actions={
+                      <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={addFooterColumn}>
+                        Add
+                      </Button>
+                    }
+                  >
+                    {pageContent.footer.columns.map((column, ci) => (
+                      <div key={`col-${ci}`} className='flex items-start gap-2'>
+                        <SubItemMoveButtons
+                          index={ci}
+                          total={pageContent.footer.columns.length}
+                          onMoveUp={() => moveFooterColumn(ci, ci - 1)}
+                          onMoveDown={() => moveFooterColumn(ci, ci + 1)}
+                        />
+                        <div className='flex-1 space-y-2 rounded-md border border-white/10 p-3'>
+                          <div className='flex items-center gap-2'>
+                            <div className='flex-1'>
+                              <FieldInput
+                                label={`Column ${ci + 1} heading`}
+                                value={column.title}
+                                onChange={(title) => updateFooterColumnTitle(ci, title)}
+                              />
+                            </div>
+                            <button
+                              type='button'
+                              onClick={() => removeFooterColumn(ci)}
+                              className='mt-5 flex size-7 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                              aria-label={`Remove column ${ci + 1}`}
+                            >
+                              <Trash2 className='size-3.5' />
+                            </button>
+                          </div>
+                          <SubFolderRow
+                            title='Links'
+                            count={column.links.length}
+                            open={openSubFolders.has(`footer-col-${ci}-links`)}
+                            onToggle={() => toggleSubFolder(`footer-col-${ci}-links`)}
+                            actions={
+                              <Button type='button' size='sm' variant='secondary' icon={<Plus className='size-3.5' />} onClick={() => addFooterLink(ci)}>
+                                Add
+                              </Button>
+                            }
+                          >
+                            {column.links.map((link, li) => (
+                              <div key={`col-${ci}-link-${li}`} className='flex items-start gap-2'>
+                                <SubItemMoveButtons
+                                  index={li}
+                                  total={column.links.length}
+                                  onMoveUp={() => moveFooterLink(ci, li, li - 1)}
+                                  onMoveDown={() => moveFooterLink(ci, li, li + 1)}
+                                />
+                                <div className='flex-1 grid gap-1.5 rounded border border-white/5 bg-white/3 p-2 md:grid-cols-2'>
+                                  <FieldInput label='Label' value={link.label} onChange={(label) => updateFooterLink(ci, li, { label })} />
+                                  <FieldInput label='Href' value={link.href} onChange={(href) => updateFooterLink(ci, li, { href })} />
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() => removeFooterLink(ci, li)}
+                                  className='mt-5 flex size-6 shrink-0 items-center justify-center rounded border border-white/10 text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-400'
+                                  aria-label='Remove link'
+                                >
+                                  <Trash2 className='size-3' />
+                                </button>
+                              </div>
+                            ))}
+                          </SubFolderRow>
+                        </div>
+                      </div>
+                    ))}
+                  </SubFolderRow>
+                </SectionFolderRow>
+              )}
             </div>
-          ))}
-        </div>
-      </CollapsibleSection>
+          </Fragment>
+        );
+      })}
+      {dropIndex === sectionOrder.length && draggedSectionId !== null && (
+        <div className='mx-1 h-0.5 rounded-full bg-blue-500/70' />
+      )}
     </div>
   );
 }
@@ -2617,62 +3759,6 @@ function SeoPreviewCard({
   );
 }
 
-function ModelAssetLabel({
-  modelId,
-  showStorageStatus = false,
-}: {
-  modelId: string;
-  showStorageStatus?: boolean;
-}): React.JSX.Element {
-  const query = useAsset3DById(modelId);
-  const asset = query.data;
-
-  if (query.isError) {
-    return (
-      <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-red-300'>
-        <X className='size-3 shrink-0 text-red-400/70' />
-        <span className='truncate'>Missing 3D asset</span>
-        {showStorageStatus ? <Badge variant='destructive'>Missing</Badge> : null}
-      </span>
-    );
-  }
-
-  if (asset !== undefined) {
-    const name = asset.name !== '' ? asset.name : (asset.filename ?? modelId);
-    return (
-      <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-white/70'>
-        <Box className='size-3 shrink-0 text-blue-400/70' />
-        <span className='truncate'>{name}</span>
-        {showStorageStatus ? <Asset3DStorageStatusBadge asset={asset} /> : null}
-      </span>
-    );
-  }
-
-  return (
-    <span className='min-w-0 truncate font-mono text-[10px] text-white/30'>
-      {modelId.slice(0, 8)}…
-    </span>
-  );
-}
-
-function ModelUrlLabel({
-  modelUrl,
-  showStorageStatus = false,
-}: {
-  modelUrl: string;
-  showStorageStatus?: boolean;
-}): React.JSX.Element {
-  return (
-    <span className='flex min-w-0 items-center gap-1.5 truncate text-xs text-white/70'>
-      <Box className='size-3 shrink-0 text-emerald-400/70' />
-      <span className='truncate'>{getModelUrlDisplayName(modelUrl)}</span>
-      {showStorageStatus ? (
-        <Asset3DStorageStatusBadge asset={undefined} modelUrl={modelUrl} />
-      ) : null}
-    </span>
-  );
-}
-
 function ModelAssetLibraryPickerModal({
   title = 'Select 3D Asset from Library',
   confirmLabel = 'Assign Model',
@@ -2689,6 +3775,7 @@ function ModelAssetLibraryPickerModal({
   const [search, setSearch] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<Asset3DRecord | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const assetsQuery = useAssets3D({
     search: search.trim().length > 0 ? search.trim() : undefined,
@@ -2700,6 +3787,7 @@ function ModelAssetLibraryPickerModal({
   const handleAssetClick = useCallback((asset: Asset3DRecord): void => {
     setSelectedAsset(asset);
     setModelError(null);
+    setShowSettings(false);
   }, []);
 
   const handleConfirm = useCallback((): void => {
@@ -2767,12 +3855,28 @@ function ModelAssetLibraryPickerModal({
     }
     return (
       <Viewer3DProvider key={selectedAsset.id} initialState={MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE}>
-        <Viewer3D
-          modelUrl={modelUrl}
-          onError={(err) => setModelError(err.message)}
-          className='h-full w-full flex-1'
-          allowUserControls
+        <div className='relative flex min-h-0 flex-1'>
+          <div className={`bg-black/40 ${showSettings ? 'flex-1 lg:w-2/3' : 'w-full flex-1'}`}>
+            <Viewer3D
+              modelUrl={modelUrl}
+              onError={(err) => setModelError(err.message)}
+              className='h-full w-full'
+              allowUserControls
+            />
+          </div>
+          {showSettings ? (
+            <div className='absolute bottom-0 right-0 top-0 z-10 w-full border-l border-border/60 bg-card/30 lg:static lg:w-1/3'>
+              <Viewer3DSettingsPanel />
+            </div>
+          ) : null}
+        </div>
+        <Model3DPreviewFooter
+          downloadName={selectedAsset.filename ?? (selectedAsset.name !== '' ? selectedAsset.name : 'asset')}
+          resolvedModelUrl={modelUrl}
+          showSettings={showSettings}
+          onToggleSettings={() => setShowSettings((value) => !value)}
         />
+        <Viewer3DStatusInfo />
       </Viewer3DProvider>
     );
   })();
@@ -2896,8 +4000,11 @@ function Model3DPreviewModal({
   if (assignedModelUrl.length > 0) {
     resolvedModelUrl = assignedModelUrl;
   } else if (assignedModelId.length > 0) {
-    resolvedModelUrl = `/api/assets3d/${assignedModelId}/file`;
+    resolvedModelUrl = `/api/assets3d/${encodeURIComponent(assignedModelId)}/file`;
   }
+  useEffect(() => {
+    setModelError(null);
+  }, [resolvedModelUrl]);
   const downloadName = getModelUrlDisplayName(resolvedModelUrl);
   let previewContent: React.JSX.Element;
   if (resolvedModelUrl.length === 0) {
@@ -2940,13 +4047,13 @@ function Model3DPreviewModal({
               </div>
             ) : null}
           </div>
-          <Viewer3DStatusInfo />
           <Model3DPreviewFooter
             downloadName={downloadName}
             resolvedModelUrl={resolvedModelUrl}
             showSettings={showSettings}
             onToggleSettings={() => setShowSettings((value) => !value)}
           />
+          <Viewer3DStatusInfo />
         </div>
       </Viewer3DProvider>
     </DetailModal>
@@ -2961,7 +4068,8 @@ function CmsModel3DField({
   uploadName,
   tags,
   onChange,
-  onRemove,
+  onClearLink,
+  onClearUpload,
 }: {
   label: string;
   description: string;
@@ -2969,8 +4077,9 @@ function CmsModel3DField({
   modelUrl?: string | undefined;
   uploadName: string;
   tags: string[];
-  onChange: (modelAssetId: string | undefined) => void;
-  onRemove?: () => void;
+  onChange: (modelAssetId: string | undefined) => void | Promise<void>;
+  onClearLink?: () => void | Promise<void>;
+  onClearUpload?: () => void | Promise<void>;
 }): React.JSX.Element {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2978,6 +4087,8 @@ function CmsModel3DField({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<Model3DSlotViewMode>('upload');
+  const [slotAction, setSlotAction] = useState<'clear-upload' | 'convert-link' | 'fastcomet' | null>(null);
   const assignedModelId = modelId?.trim() ?? '';
   const assignedModelUrl = modelUrl?.trim() ?? '';
   const hasModelId = assignedModelId.length > 0;
@@ -2986,17 +4097,20 @@ function CmsModel3DField({
 
   const assetQuery = useAsset3DById(hasModelId ? assignedModelId : null);
   const asset = assetQuery.data;
-  const isFastComet = hasModelId
-    ? isMilkbarFastCometAsset(asset)
-    : isMilkbarModelUrl(assignedModelUrl);
-  const isLocalOnly = hasModel && !isFastComet && (hasModelUrl || asset !== undefined);
-  const removeModel = useCallback((): void => {
-    if (onRemove !== undefined) {
-      onRemove();
-      return;
-    }
-    onChange(undefined);
-  }, [onChange, onRemove]);
+  const isMissing = assetQuery.isError;
+  const isResolving = hasModelId && asset === undefined && !isMissing;
+  const modelSlotSources = resolveModel3DSlotSources({
+    assetId: assignedModelId,
+    asset,
+    modelUrl: assignedModelUrl,
+    isMissing,
+  });
+  const effectiveViewMode = resolveEffectiveModel3DSlotViewMode(viewMode, modelSlotSources);
+  const activePreviewModelUrl = getModel3DSlotPreviewUrl(effectiveViewMode, modelSlotSources);
+  const hasLocalModelSource = modelSlotSources.uploadUrl.length > 0;
+  const hasLinkedModelSource = modelSlotSources.linkUrl.length > 0;
+  const hasFastCometSource = modelSlotSources.fastCometUrl.length > 0;
+  const isActionRunning = uploading || slotAction !== null;
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -3013,6 +4127,7 @@ function CmsModel3DField({
             tags: ['milkbardesigners', ...tags],
             isPublic: true,
             storageProfile: 'milkbarCms',
+            ...(hasModelId ? { replaceAssetId: assignedModelId } : {}),
           },
           (loaded, total) => {
             if (total !== undefined) {
@@ -3020,10 +4135,10 @@ function CmsModel3DField({
             }
           }
         );
-        onChange(record.id);
-        toast(`3D model uploaded: ${record.filename ?? file.name}`, { variant: 'success' });
+        await onChange(record.id);
+        toast(`3D model uploaded and published: ${record.filename ?? file.name}`, { variant: 'success' });
       } catch (err) {
-        toast(`Upload failed: ${toErrorMessage(err)}`, { variant: 'error' });
+        toast(`3D model upload/save failed: ${toErrorMessage(err)}`, { variant: 'error' });
       } finally {
         setUploading(false);
         setUploadProgress(null);
@@ -3032,21 +4147,92 @@ function CmsModel3DField({
         }
       }
     },
-    [onChange, tags, toast, uploadName]
+    [assignedModelId, hasModelId, onChange, tags, toast, uploadName]
   );
+
+  const handleConvertLinkToFile = useCallback(async (): Promise<void> => {
+    if (modelSlotSources.linkUrl.length === 0) return;
+    setSlotAction('convert-link');
+    try {
+      const record = await convertMilkbarModelLinkToAsset3D({
+        name: uploadName,
+        tags: ['milkbardesigners', ...tags],
+        url: modelSlotSources.linkUrl,
+      });
+      await onChange(record.id);
+      setViewMode('upload');
+      toast(`3D model downloaded locally and published: ${record.filename ?? record.name}`, { variant: 'success' });
+    } catch (error) {
+      toast(`Link conversion failed: ${toErrorMessage(error)}`, { variant: 'error' });
+    } finally {
+      setSlotAction(null);
+    }
+  }, [modelSlotSources.linkUrl, onChange, tags, toast, uploadName]);
+
+  const handleUploadToFastComet = useCallback(async (): Promise<void> => {
+    if (!hasModelId || hasFastCometSource) return;
+    setSlotAction('fastcomet');
+    try {
+      const record = await uploadMilkbarAsset3DToFastComet(assignedModelId);
+      await assetQuery.refetch();
+      await onChange(assignedModelId);
+      setViewMode('fastcomet');
+      toast(`3D model uploaded to FastComet and published: ${record.filename ?? record.name}`, { variant: 'success' });
+    } catch (error) {
+      toast(`FastComet upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
+    } finally {
+      setSlotAction(null);
+    }
+  }, [assetQuery, assignedModelId, hasFastCometSource, hasModelId, onChange, toast]);
+
+  const handleClearLink = useCallback(async (): Promise<void> => {
+    try {
+      await onClearLink?.();
+      setViewMode(hasLocalModelSource ? 'upload' : 'link');
+      toast('3D model link cleared and published.', { variant: 'success' });
+    } catch (error) {
+      toast(`Clear link failed: ${toErrorMessage(error)}`, { variant: 'error' });
+    }
+  }, [hasLocalModelSource, onClearLink, toast]);
+
+  const handleClearUpload = useCallback(async (): Promise<void> => {
+    if (!hasModelId) return;
+    const confirmed = typeof window === 'undefined'
+      ? true
+      : window.confirm('Delete this uploaded 3D model from the local folder and FastComet server when present? This cannot be undone.');
+    if (!confirmed) return;
+    setSlotAction('clear-upload');
+    try {
+      if (!isMissing) {
+        await deleteAsset3DById(assignedModelId);
+      }
+      if (onClearUpload !== undefined) {
+        await onClearUpload();
+      } else {
+        await onChange(undefined);
+      }
+      setViewMode(hasModelUrl ? 'link' : 'upload');
+      toast('3D model upload deleted from local storage, FastComet when present, and published.', { variant: 'success' });
+    } catch (error) {
+      toast(`Delete upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
+    } finally {
+      setSlotAction(null);
+    }
+  }, [assignedModelId, hasModelId, hasModelUrl, isMissing, onChange, onClearUpload, toast]);
 
   const assetName = asset !== undefined && asset.name.trim().length > 0
     ? asset.name
     : (asset?.filename ?? null);
-  const modelDisplayName = hasModelId
-    ? assetName ?? assignedModelId
-    : getModelUrlDisplayName(assignedModelUrl);
-  let modelViewTrigger = 'View: Empty';
-  if (uploading) {
-    modelViewTrigger = getModelUploadButtonLabel(uploading, uploadProgress, hasModel);
-  } else if (hasModel) {
-    modelViewTrigger = 'View: Assigned';
+  let modelDisplayName = getModelUrlDisplayName(assignedModelUrl);
+  if (hasModelId) {
+    modelDisplayName = assetName ?? assignedModelId;
   }
+  if (isMissing) {
+    modelDisplayName = 'Missing 3D asset';
+  }
+  const modelViewTrigger = uploading
+    ? getModelUploadButtonLabel(uploading, uploadProgress, hasModel)
+    : `View: ${resolveModel3DSlotViewModeLabel(effectiveViewMode)}`;
 
   const thumbnailContent = hasModel ? (
     <div className='flex h-full w-full flex-col items-center justify-center gap-1 px-1'>
@@ -3060,6 +4246,7 @@ function CmsModel3DField({
       type='button'
       aria-label={`Upload ${label}`}
       className='flex h-full w-full flex-col items-center justify-center gap-1 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      disabled={isActionRunning}
       onClick={() => fileInputRef.current?.click()}
     >
       <Box className='h-6 w-6 text-gray-500' />
@@ -3077,15 +4264,18 @@ function CmsModel3DField({
             size='sm'
             triggerClassName='h-6 px-2 text-[10px]'
             trigger={modelViewTrigger}
-            ariaLabel='Upload model source'
+            ariaLabel='Select model source view'
             className='min-w-[140px]'
           >
-            <DropdownMenuItem disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-              Upload model
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setPickerOpen(true)}>
-              Choose from library
-            </DropdownMenuItem>
+            {model3DSlotViewModeOptions.map((mode) => (
+              <DropdownMenuItem
+                key={mode}
+                disabled={isActionRunning || isModel3DSlotViewModeDisabled(mode, modelSlotSources)}
+                onClick={() => setViewMode(mode)}
+              >
+                {model3DSlotViewModeLabels[mode]}
+              </DropdownMenuItem>
+            ))}
           </ActionMenu>
           <ActionMenu
             variant='ghost'
@@ -3095,23 +4285,44 @@ function CmsModel3DField({
             ariaLabel='Model slot actions'
             className='min-w-[160px]'
           >
-            <DropdownMenuItem disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-              Upload model
+            <DropdownMenuItem disabled={isActionRunning} onClick={() => fileInputRef.current?.click()}>
+              Upload Model
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setPickerOpen(true)}>
-              Choose from library
+            <DropdownMenuItem disabled={isActionRunning} onClick={() => setPickerOpen(true)}>
+              Choose from Library
             </DropdownMenuItem>
-            {hasModel ? (
-              <DropdownMenuItem onClick={() => setPreviewOpen(true)}>Preview</DropdownMenuItem>
-            ) : null}
-            {hasModel ? (
-              <DropdownMenuItem
-                className='text-red-400 focus:text-red-300'
-                onClick={removeModel}
-              >
-                Remove
-              </DropdownMenuItem>
-            ) : null}
+            <DropdownMenuItem
+              disabled={!hasLinkedModelSource || isActionRunning}
+              onClick={() => {
+                handleConvertLinkToFile().catch(() => undefined);
+              }}
+            >
+              {slotAction === 'convert-link' ? 'Converting link...' : 'Convert link to File'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!hasModelId || !hasLocalModelSource || hasFastCometSource || isActionRunning}
+              onClick={() => {
+                handleUploadToFastComet().catch(() => undefined);
+              }}
+            >
+              {slotAction === 'fastcomet' ? 'Uploading to FastComet...' : 'Upload to FastComet'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!hasModelUrl || isActionRunning}
+              onClick={() => {
+                handleClearLink().catch(() => undefined);
+              }}
+            >
+              Clear link
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!hasModelId || isActionRunning}
+              onClick={() => {
+                handleClearUpload().catch(() => undefined);
+              }}
+            >
+              {slotAction === 'clear-upload' ? 'Clearing upload...' : 'Clear upload'}
+            </DropdownMenuItem>
           </ActionMenu>
         </div>
 
@@ -3119,6 +4330,23 @@ function CmsModel3DField({
         <div className='mt-1 flex w-full items-center justify-center'>
           <div className='relative h-24 w-24 overflow-hidden rounded-md border-2 border bg-gray-800'>
             {thumbnailContent}
+            {hasModelId ? (
+              <Button
+                type='button'
+                variant='destructive'
+                size='icon'
+                className='absolute right-0 top-0 z-10 h-6 w-6 rounded-full'
+                aria-label={`Delete uploaded 3D model from ${label}`}
+                title='Delete uploaded model from local storage and FastComet'
+                disabled={isActionRunning}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleClearUpload().catch(() => undefined);
+                }}
+              >
+                <XIcon className='h-4 w-4' />
+              </Button>
+            ) : null}
             <div className='absolute bottom-0 left-0 flex items-center overflow-hidden rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400'>
               {hasModel ? (
                 <Button
@@ -3126,6 +4354,7 @@ function CmsModel3DField({
                   size='xs'
                   onClick={() => setPreviewOpen(true)}
                   className='h-5 w-6 rounded-none p-0 text-gray-300 hover:bg-white/10 hover:text-white'
+                  disabled={activePreviewModelUrl.length === 0 || isActionRunning}
                   aria-label={`Open 3D preview for ${label}`}
                   title='Open 3D preview (modal)'
                 >
@@ -3136,26 +4365,15 @@ function CmsModel3DField({
           </div>
         </div>
 
-        {/* Storage status badges — mirrors image slot U/L/B/F row */}
-        <div className='mt-1 flex w-full items-center justify-center gap-1 text-[10px] text-gray-400'>
-          <span
-            className={`rounded-full border px-1 ${
-              isFastComet
-                ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100'
-                : 'border-gray-600 text-gray-500'
-            }`}
-          >
-            FC
-          </span>
-          <span
-            className={`rounded-full border px-1 ${
-              isLocalOnly
-                ? 'border-amber-400/70 bg-amber-500/15 text-amber-100'
-                : 'border-gray-600 text-gray-500'
-            }`}
-          >
-            L
-          </span>
+        <div className='mt-1'>
+          <Model3DSlotSourceBadges
+            hasAssetId={hasLocalModelSource}
+            hasModelUrl={hasLinkedModelSource}
+            isFastComet={hasFastCometSource}
+            isUploading={uploading}
+            isMissing={isMissing && !hasLocalModelSource}
+            isResolving={isResolving && !hasLocalModelSource}
+          />
         </div>
 
         <input
@@ -3169,10 +4387,9 @@ function CmsModel3DField({
           }}
         />
       </FormField>
-      {previewOpen && hasModel ? (
+      {previewOpen && activePreviewModelUrl.length > 0 ? (
         <Model3DPreviewModal
-          modelId={hasModelId ? assignedModelId : undefined}
-          modelUrl={!hasModelId ? assignedModelUrl : undefined}
+          modelUrl={activePreviewModelUrl}
           title={label}
           onClose={() => setPreviewOpen(false)}
         />
@@ -3183,7 +4400,13 @@ function CmsModel3DField({
           confirmLabel='Assign Model'
           storageProfileFilter='milkbarCms'
           onSelect={(assetId) => {
-            onChange(assetId);
+            void Promise.resolve(onChange(assetId))
+              .then(() => {
+                toast('3D model assigned and published.', { variant: 'success' });
+              })
+              .catch((error: unknown) => {
+                toast(`3D model assignment failed: ${toErrorMessage(error)}`, { variant: 'error' });
+              });
             setPickerOpen(false);
           }}
           onClose={() => setPickerOpen(false)}
@@ -3193,214 +4416,38 @@ function CmsModel3DField({
   );
 }
 
-function ProjectModel3DSection({
+function ProjectModel3DField({
   project,
   projectIndex,
-  onUpdate,
+  onUpdateAndSave,
 }: {
   project: MilkbarProjectCmsRecord;
   projectIndex: number;
-  onUpdate: (index: number, patch: Partial<MilkbarProjectCmsRecord>) => void;
+  onUpdateAndSave: (
+    index: number,
+    patch: Partial<MilkbarProjectCmsRecord>
+  ) => Promise<void>;
 }): React.JSX.Element {
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [showInlineViewer, setShowInlineViewer] = useState(false);
-  const controlsRef = useRef<OrbitControlsHandle | null>(null);
-
-  const projectModelId = project.modelAssetId?.trim() ?? '';
-  const projectModelUrl = project.modelUrl?.trim() ?? '';
-  const hasModelId = projectModelId.length > 0;
-  const hasModelUrl = projectModelUrl.length > 0;
-  const hasModel = hasModelId || hasModelUrl;
-  const activeProjectModelUrl = hasModelId
-    ? `/api/assets3d/${projectModelId}/file`
-    : projectModelUrl;
-
-  const handleFileChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-      const file = event.target.files?.[0];
-      if (file === undefined) return;
-      setUploading(true);
-      setUploadProgress(0);
-      try {
-        const record = await uploadAsset3DFile(
-          file,
-          {
-            name: `${project.code} — ${project.name}`,
-            category: 'cms',
-            tags: ['milkbardesigners', 'project'],
-            isPublic: true,
-            storageProfile: 'milkbarCms',
-          },
-          (loaded, total) => {
-            if (total !== undefined) {
-              setUploadProgress(Math.round((loaded / total) * 100));
-            }
-          }
-        );
-        onUpdate(projectIndex, { modelAssetId: record.id, modelUrl: undefined });
-        toast(`3D model uploaded: ${record.filename ?? file.name}`, { variant: 'success' });
-      } catch (err) {
-        toast(`Upload failed: ${toErrorMessage(err)}`, { variant: 'error' });
-      } finally {
-        setUploading(false);
-        setUploadProgress(null);
-        if (fileInputRef.current !== null) {
-          fileInputRef.current.value = '';
-        }
-      }
-    },
-    [project.code, project.name, projectIndex, onUpdate, toast]
-  );
-
-  const handleSyncCamera = useCallback((): void => {
-    const ctrl = controlsRef.current;
-    if (ctrl === null) return;
-    const pos = ctrl.object.position;
-    const tgt = ctrl.target;
-    onUpdate(projectIndex, {
-      cameraPosition: { x: Math.round(pos.x * 100) / 100, y: Math.round(pos.y * 100) / 100, z: Math.round(pos.z * 100) / 100 },
-      cameraTarget: { x: Math.round(tgt.x * 100) / 100, y: Math.round(tgt.y * 100) / 100, z: Math.round(tgt.z * 100) / 100 },
-    });
-    toast('Camera position synced to CMS fields.', { variant: 'success' });
-  }, [controlsRef, onUpdate, projectIndex, toast]);
+  const projectCode = project.code.trim();
+  const projectName = project.name.trim();
+  const modelLabel = projectName.length > 0 ? `${projectName} 3D model` : 'Project 3D model';
+  const uploadName = projectName.length > 0
+    ? `${projectCode.length > 0 ? `${projectCode} - ` : ''}${projectName}`
+    : `Milkbar project ${projectIndex + 1} model`;
+  const tags = projectCode.length > 0 ? ['project', projectCode] : ['project'];
 
   return (
-    <>
-      <div className='flex flex-wrap items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2'>
-        <Box className='size-4 shrink-0 text-muted-foreground' />
-        <span className='text-xs font-medium text-muted-foreground'>3D Model</span>
-        {hasModel ? (
-          <>
-            {hasModelId ? (
-              <ModelAssetLabel modelId={projectModelId} showStorageStatus />
-            ) : (
-              <ModelUrlLabel modelUrl={projectModelUrl} showStorageStatus />
-            )}
-            <Button
-              type='button'
-              size='sm'
-              variant={showInlineViewer ? 'secondary' : 'ghost'}
-              className='h-7 px-2 text-xs'
-              icon={<Eye className='size-3.5' />}
-              onClick={() => setShowInlineViewer((v) => !v)}
-            >
-              {showInlineViewer ? 'Hide 3D' : 'Show 3D'}
-            </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='ghost'
-              className='h-7 px-2 text-xs'
-              icon={<Eye className='size-3.5' />}
-              onClick={() => setPreviewOpen(true)}
-            >
-              Full Preview
-            </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant='ghost'
-              className='h-7 px-2 text-xs text-red-400 hover:text-red-300'
-              icon={<X className='size-3.5' />}
-              onClick={() => {
-                onUpdate(projectIndex, { modelAssetId: undefined, modelUrl: undefined });
-                setShowInlineViewer(false);
-              }}
-            >
-              Remove
-            </Button>
-          </>
-        ) : (
-          <span className='text-xs text-white/30'>No model attached</span>
-        )}
-        <input
-          ref={fileInputRef}
-          type='file'
-          accept='.glb,.gltf'
-          aria-label={`${project.code} model file`}
-          className='hidden'
-          onChange={(event) => {
-            void handleFileChange(event);
-          }}
-        />
-        <Button
-          type='button'
-          size='sm'
-          variant='ghost'
-          className='h-7 px-2 text-xs'
-          disabled={uploading}
-          icon={<Upload className='size-3.5' />}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {getModelUploadButtonLabel(uploading, uploadProgress, hasModel)}
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          variant={hasModel ? 'ghost' : 'secondary'}
-          className='h-7 px-2 text-xs'
-          icon={<Library className='size-3.5' />}
-          onClick={() => setPickerOpen(true)}
-        >
-          From Library
-        </Button>
-      </div>
-      {showInlineViewer && hasModel ? (
-        <div className='overflow-hidden rounded-md border border-white/10 bg-black/40'>
-          <Viewer3DProvider key={activeProjectModelUrl} initialState={MILKBAR_MODEL_PREVIEW_INITIAL_VIEWER_STATE}>
-            <div className='relative h-72'>
-              <Viewer3D
-                modelUrl={activeProjectModelUrl}
-                settings={{ autoRotate: false, enableContactShadows: true, backgroundColor: '#0d0d14' }}
-                className='h-full w-full'
-                allowUserControls
-                controlsRef={controlsRef}
-              />
-            </div>
-            <div className='flex items-center justify-between border-t border-white/10 bg-black/20 px-3 py-1.5'>
-              <span className='text-[10px] text-muted-foreground'>
-                Orbit to frame — then sync position to CMS fields
-              </span>
-              <Button
-                type='button'
-                size='sm'
-                variant='secondary'
-                className='h-7 px-2 text-xs'
-                icon={<Camera className='size-3.5' />}
-                onClick={handleSyncCamera}
-              >
-                Sync Camera
-              </Button>
-            </div>
-          </Viewer3DProvider>
-        </div>
-      ) : null}
-      {previewOpen && hasModel ? (
-        <Model3DPreviewModal
-          modelId={hasModelId ? projectModelId : undefined}
-          modelUrl={!hasModelId ? projectModelUrl : undefined}
-          title={project.name.length > 0 ? project.name : project.code}
-          onClose={() => setPreviewOpen(false)}
-        />
-      ) : null}
-      {pickerOpen ? (
-        <ModelAssetLibraryPickerModal
-          title='Select Project 3D Asset from Library'
-          confirmLabel='Assign to Project'
-          storageProfileFilter='milkbarCms'
-          onSelect={(assetId) => {
-            onUpdate(projectIndex, { modelAssetId: assetId, modelUrl: undefined });
-            setPickerOpen(false);
-          }}
-          onClose={() => setPickerOpen(false)}
-        />
-      ) : null}
-    </>
+    <CmsModel3DField
+      label={modelLabel}
+      description='Project model upload uses the same 3D asset slot component as the Page Content tab.'
+      modelId={project.modelAssetId}
+      modelUrl={project.modelUrl}
+      uploadName={uploadName}
+      tags={tags}
+      onChange={(modelAssetId) => onUpdateAndSave(projectIndex, { modelAssetId, modelUrl: undefined })}
+      onClearLink={() => onUpdateAndSave(projectIndex, { modelUrl: undefined })}
+      onClearUpload={() => onUpdateAndSave(projectIndex, { modelAssetId: undefined })}
+    />
   );
 }
 
@@ -3409,6 +4456,7 @@ function ProjectsTab({
   onAdd,
   onRemove,
   onUpdate,
+  onUpdateAndSave,
   onDuplicate,
   onMoveUp,
   onMoveDown,
@@ -3417,6 +4465,10 @@ function ProjectsTab({
   onAdd: () => void;
   onRemove: (index: number) => void;
   onUpdate: (index: number, patch: Partial<MilkbarProjectCmsRecord>) => void;
+  onUpdateAndSave: (
+    index: number,
+    patch: Partial<MilkbarProjectCmsRecord>
+  ) => Promise<void>;
   onDuplicate: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -3529,7 +4581,11 @@ function ProjectsTab({
               onChange={(z) => onUpdate(index, { cameraTarget: { ...project.cameraTarget, z: toOrderNumber(z) } })}
             />
           </div>
-          <ProjectModel3DSection project={project} projectIndex={index} onUpdate={onUpdate} />
+          <ProjectModel3DField
+            project={project}
+            projectIndex={index}
+            onUpdateAndSave={onUpdateAndSave}
+          />
         </div>
       ))}
     </FormSection>

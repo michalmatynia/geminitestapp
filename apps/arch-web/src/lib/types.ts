@@ -102,8 +102,7 @@ export interface ArchPageContent {
     ctaLabel: string;
     hint: string;
     thumbImages: string[];
-    asset3dSlots: string[];
-    asset3dSlotUrls?: string[];
+    asset3dProjectCodes: string[];
     interiorModelAssetId?: string;
     interiorModelUrl?: string;
   };
@@ -132,6 +131,7 @@ export interface ArchPageContent {
     label: string;
     title: string;
     emphasis: string;
+    projectsViewMode: 'wireframe' | 'solid';
   };
   process: {
     eyebrow: string;
@@ -158,6 +158,7 @@ export interface ArchPageContent {
     headingEmphasis: string;
     body: string;
     stats: Array<{ value: string; suffix: string; label: string }>;
+    projectCode?: string;
   };
   quote: {
     eyebrow: string;

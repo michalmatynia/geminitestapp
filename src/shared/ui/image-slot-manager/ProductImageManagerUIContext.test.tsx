@@ -79,14 +79,21 @@ describe('ProductImageManagerUIContext', () => {
     expect(result.current.actions.clearVisibleImage).toBeTypeOf('function');
   });
 
-  it('classifies Spark upload links as FastComet source slots', async () => {
+  it.each([
+    [
+      'Spark',
+      'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
+    ],
+    [
+      'Milkbar',
+      'https://uploads.milkbardesigners.com/uploads/cms/visualisation/drawing-thumbnail.webp',
+    ],
+  ])('classifies %s upload links as FastComet source slots', async (_label, link) => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <ProductImageManagerUIProvider
         externalBaseUrl='http://localhost'
         explicitController={buildController({
-          imageLinks: [
-            'https://sparksofsindri.com/uploads/products/KEYCHA1479/e431e2d8-d67c-454b-ba68-2eb2313f51ee.png',
-          ],
+          imageLinks: [link],
         })}
       >
         {children}

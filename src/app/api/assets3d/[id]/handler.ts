@@ -5,6 +5,10 @@ import {
   findAsset3DRepositoryAsset,
   getAsset3DFromLookupRepositories,
 } from '@/features/viewer3d/server';
+import {
+  deleteMilkbarAsset3DInRedisRuntime,
+  isMilkbarAsset3DRecord,
+} from '@/features/viewer3d/workers/milkbarAsset3DDeleteQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   asset3DUpdateInputSchema,
@@ -67,6 +71,19 @@ export async function deleteHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const match = await findAsset3DRepositoryAsset(params.id);
+  if (match === null) {
+    throw notFoundError('3D asset not found', { id: params.id });
+  }
+
+  if (isMilkbarAsset3DRecord(match.asset)) {
+    await deleteMilkbarAsset3DInRedisRuntime({
+      assetId: params.id,
+      requestedAt: new Date().toISOString(),
+    });
+    return NextResponse.json({ success: true });
+  }
+
   const success = await deleteAsset3D(params.id);
 
   if (!success) {

@@ -135,9 +135,10 @@ export function useAdminMenuSettingsCollections({
   const menuNav = useMemo(() => (customEnabled ? buildAdminMenuFromCustomNav(normalizedCustomNav, baseNav) : baseNav), [baseNav, customEnabled, normalizedCustomNav]);
   const sections = useMemo(() => getAdminMenuSections(menuNav), [menuNav]);
   const flattened = useMemo(() => flattenAdminNav(menuNav), [menuNav]);
+  const baseFlattened = useMemo(() => flattenAdminNav(baseNav), [baseNav]);
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
-  const favoritesList = useMemo(() => favorites.map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id)).filter((item: AdminNavLeaf | undefined): item is AdminNavLeaf => item !== undefined), [favorites, flattened]);
-  const filteredItems = useMemo(() => filterAdminNavLeaves(flattened, query), [flattened, query]);
+  const favoritesList = useMemo(() => favorites.map((id: string) => baseFlattened.find((item: AdminNavLeaf) => item.id === id)).filter((item: AdminNavLeaf | undefined): item is AdminNavLeaf => item !== undefined), [baseFlattened, favorites]);
+  const filteredItems = useMemo(() => filterAdminNavLeaves(baseFlattened, query), [baseFlattened, query]);
   const libraryItems = useMemo(() => flattenAdminNavNodes(baseNav), [baseNav]);
   const libraryItemMap = useMemo(() => new Map(libraryItems.map((item: AdminNavNodeEntry) => [item.id, item])), [libraryItems]);
   const layoutMasterNodes = useMemo(() => buildAdminMenuLayoutMasterNodes(customNav, libraryItemMap), [customNav, libraryItemMap]);

@@ -2,6 +2,8 @@
 
 import 'server-only';
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { MongoClient, type Db } from 'mongodb';
 
 import {
@@ -49,11 +51,23 @@ const PAGE_CONTENT_KEY = 'home';
 const MILKBAR_APPLICATION_ID = 'arch';
 const MILKBAR_APPLICATION_NAME = 'Milkbar Designers';
 const MILKBAR_SOURCE_SERVICE = 'milkbar-cms';
+const MILKBAR_MODEL_PUBLIC_PATH_PREFIX = '/uploads/cms/models/';
+const MILKBAR_FASTCOMET_MODELS_MIRROR_ROOT = path.resolve(
+  process.cwd(),
+  'hosting',
+  'fastcomet',
+  'milkbardesigners.com',
+  'public_html',
+  'uploads',
+  'cms',
+  'models'
+);
 
 type AnyRecord = Record<string, unknown>;
 type Vector = { x: number; y: number; z: number };
 type RequiredMongoConfig = MongoApplicationSourceConfig & { uri: string; dbName: string };
 type MilkbarMongoOptions = { timeoutMs?: number };
+type MilkbarModelUrlTarget = 'local' | 'fastcomet';
 type MilkbarCmsCollections = {
   pageContent: string;
   projects: string;
@@ -191,8 +205,8 @@ const isAbsoluteHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value
 
 const joinUrl = (baseUrl: string, pathname: string): string => {
   const base = baseUrl.trim().replace(/\/+$/, '');
-  const path = pathname.trim().replace(/^\/+/, '');
-  return `${base}/${path}`;
+  const cleanPath = pathname.trim().replace(/^\/+/, '');
+  return `${base}/${cleanPath}`;
 };
 
 const metadataString = (
@@ -205,7 +219,58 @@ const metadataString = (
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
-const resolveMilkbarFastCometPublicUrl = (asset: Asset3DRecord): string | undefined => {
+const isMilkbarModelPublicPath = (value: string | undefined): value is string =>
+  value?.startsWith(MILKBAR_MODEL_PUBLIC_PATH_PREFIX) === true;
+
+const toMilkbarModelPublicPath = (value: string | undefined): string | undefined => {
+  if (value === undefined) return undefined;
+  const publicPath = getPublicPathFromStoredPath(value);
+  if (publicPath === null) return undefined;
+  return isMilkbarModelPublicPath(publicPath) ? publicPath : undefined;
+};
+
+const readMilkbarFastCometModelMirrorFiles = (): string[] => {
+  try {
+    return fs.readdirSync(MILKBAR_FASTCOMET_MODELS_MIRROR_ROOT);
+  } catch {
+    return [];
+  }
+};
+
+const resolveLatestMilkbarFastCometMirrorPath = (
+  publicPath: string
+): string => {
+  if (!publicPath.startsWith(`${MILKBAR_MODEL_PUBLIC_PATH_PREFIX}procedural/`)) {
+    return publicPath;
+  }
+
+  const filename = path.basename(publicPath);
+  const timestampedFile = readMilkbarFastCometModelMirrorFiles()
+    .filter((entry) => /^\d+-/.test(entry) && entry.endsWith(`-${filename}`))
+    .sort((left, right) => right.localeCompare(left))
+    .at(0);
+
+  return timestampedFile === undefined
+    ? publicPath
+    : `${MILKBAR_MODEL_PUBLIC_PATH_PREFIX}${timestampedFile}`;
+};
+
+const resolveMilkbarModelUrlForTarget = (
+  value: string | undefined,
+  target: MilkbarModelUrlTarget
+): string | undefined => {
+  const trimmed = value?.trim();
+  if (trimmed === undefined || trimmed.length === 0) return undefined;
+  const publicPath = toMilkbarModelPublicPath(trimmed);
+  if (publicPath === undefined) return trimmed;
+  if (target === 'local') return publicPath;
+  return joinUrl(
+    resolveMilkbarFastCometStorageProfile().publicBaseUrl,
+    resolveLatestMilkbarFastCometMirrorPath(publicPath)
+  );
+};
+
+const resolveMilkbarAssetPublicPath = (asset: Asset3DRecord): string | undefined => {
   if (metadataString(asset.metadata, 'storageProfile') !== 'milkbarCms') return undefined;
   const metadataPath = metadataString(asset.metadata, 'publicPath');
   const filepathPath =
@@ -213,13 +278,17 @@ const resolveMilkbarFastCometPublicUrl = (asset: Asset3DRecord): string | undefi
   const fileUrlPath =
     typeof asset.fileUrl === 'string' ? getPublicPathFromStoredPath(asset.fileUrl) : null;
   const publicPath = metadataPath ?? filepathPath ?? fileUrlPath;
-  if (publicPath?.startsWith('/uploads/cms/models/') !== true) return undefined;
-  return joinUrl(resolveMilkbarFastCometStorageProfile().publicBaseUrl, publicPath);
+  return isMilkbarModelPublicPath(publicPath ?? undefined) ? publicPath ?? undefined : undefined;
 };
 
-const resolveAssetPublicUrl = (asset: Asset3DRecord): string | undefined => {
-  const milkbarUrl = resolveMilkbarFastCometPublicUrl(asset);
-  if (milkbarUrl !== undefined) return milkbarUrl;
+const resolveMilkbarAssetUrl = (
+  asset: Asset3DRecord,
+  target: MilkbarModelUrlTarget
+): string | undefined => {
+  const milkbarPublicPath = resolveMilkbarAssetPublicPath(asset);
+  if (milkbarPublicPath !== undefined) {
+    return resolveMilkbarModelUrlForTarget(milkbarPublicPath, target);
+  }
 
   const directCandidates = [asset.filepath, asset.fileUrl].filter(
     (value): value is string => typeof value === 'string' && value.trim().length > 0
@@ -608,10 +677,10 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       ctaLabel: asString(drawing['ctaLabel'], fallback.drawing.ctaLabel),
       hint: asString(drawing['hint'], fallback.drawing.hint),
       thumbImages: asStringArray(drawing['thumbImages'], fallback.drawing.thumbImages),
-      asset3dSlots: asStringArray(drawing['asset3dSlots'], fallback.drawing.asset3dSlots),
-      ...(asStringArray(drawing['asset3dSlotUrls'], []).length > 0
-        ? { asset3dSlotUrls: asStringArray(drawing['asset3dSlotUrls'], []) }
-        : {}),
+      asset3dProjectCodes: asStringArray(
+        drawing['asset3dProjectCodes'] ?? drawing['asset3dSlots'],
+        fallback.drawing.asset3dProjectCodes
+      ),
       ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
         ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
         : {}),
@@ -639,6 +708,7 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       label: asString(projects['label'], fallback.projects.label),
       title: asString(projects['title'], fallback.projects.title),
       emphasis: asString(projects['emphasis'], fallback.projects.emphasis),
+      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : 'wireframe',
     },
     process: {
       eyebrow: asString(process['eyebrow'], fallback.process.eyebrow),
@@ -657,6 +727,9 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       headingEmphasis: asString(caseStudy['headingEmphasis'], fallback.caseStudy.headingEmphasis),
       body: asString(caseStudy['body'], fallback.caseStudy.body),
       stats: normalizeMetrics(caseStudy['stats'], fallback.caseStudy.stats),
+      ...(asOptionalString(caseStudy['projectCode']) !== undefined
+        ? { projectCode: asOptionalString(caseStudy['projectCode']) }
+        : {}),
     },
     quote: {
       eyebrow: asString(quote['eyebrow'], fallback.quote.eyebrow),
@@ -834,10 +907,6 @@ const collectModelAssetIds = (input: MilkbarCmsUpdateInput): string[] => {
     const interiorId = content.drawing.interiorModelAssetId?.trim() ?? '';
     if (heroId.length > 0) ids.add(heroId);
     if (interiorId.length > 0) ids.add(interiorId);
-    content.drawing.asset3dSlots.forEach((assetId) => {
-      const trimmed = assetId.trim();
-      if (trimmed.length > 0) ids.add(trimmed);
-    });
   });
 
   input.projects.forEach((project) => {
@@ -849,7 +918,8 @@ const collectModelAssetIds = (input: MilkbarCmsUpdateInput): string[] => {
 };
 
 const resolveModelAssetUrlMap = async (
-  input: MilkbarCmsUpdateInput
+  input: MilkbarCmsUpdateInput,
+  target: MilkbarModelUrlTarget
 ): Promise<Map<string, string>> => {
   const ids = collectModelAssetIds(input);
   if (ids.length === 0) return new Map();
@@ -861,7 +931,7 @@ const resolveModelAssetUrlMap = async (
     return new Map(
       records.flatMap(({ id, asset }) => {
         if (asset === null) return [];
-        const url = resolveAssetPublicUrl(asset);
+        const url = resolveMilkbarAssetUrl(asset, target);
         return url === undefined ? [] : [[id, url] as const];
       })
     );
@@ -881,17 +951,6 @@ const optionalStringProp = <K extends string>(
   return result;
 };
 
-const optionalStringArrayProp = <K extends string>(
-  key: K,
-  values: string[]
-): Partial<Record<K, string[]>> => {
-  const trimmed = values.map((value) => value.trim()).filter(Boolean);
-  if (trimmed.length === 0) return {};
-  const result: Partial<Record<K, string[]>> = {};
-  result[key] = trimmed;
-  return result;
-};
-
 const withoutHeroModelFields = (
   hero: MilkbarPageContent['hero']
 ): Omit<MilkbarPageContent['hero'], 'modelAssetId' | 'modelUrl'> => {
@@ -903,14 +962,10 @@ const withoutHeroModelFields = (
 
 const withoutDrawingModelFields = (
   drawing: MilkbarPageContent['drawing']
-): Omit<
-  MilkbarPageContent['drawing'],
-  'interiorModelAssetId' | 'interiorModelUrl' | 'asset3dSlotUrls'
-> => {
+): Omit<MilkbarPageContent['drawing'], 'interiorModelAssetId' | 'interiorModelUrl'> => {
   const copy = { ...drawing };
   delete copy.interiorModelAssetId;
   delete copy.interiorModelUrl;
-  delete copy.asset3dSlotUrls;
   return copy;
 };
 
@@ -923,31 +978,42 @@ const withoutProjectModelFields = (
   return copy;
 };
 
+const resolveCmsModelUrl = ({
+  assetId,
+  assetUrls,
+  currentUrl,
+  target,
+}: {
+  assetId: string | undefined;
+  assetUrls: Map<string, string>;
+  currentUrl: string | undefined;
+  target: MilkbarModelUrlTarget;
+}): string | undefined => {
+  if (assetId !== undefined && assetId.length > 0) {
+    return assetUrls.get(assetId) ?? resolveMilkbarModelUrlForTarget(currentUrl, target);
+  }
+  return resolveMilkbarModelUrlForTarget(currentUrl, target);
+};
+
 const enrichPageContentWithModelUrls = (
   content: MilkbarPageContent,
-  assetUrls: Map<string, string>
+  assetUrls: Map<string, string>,
+  target: MilkbarModelUrlTarget
 ): MilkbarPageContent => {
   const heroAssetId = content.hero.modelAssetId?.trim();
   const interiorAssetId = content.drawing.interiorModelAssetId?.trim();
-  const heroUrl =
-    heroAssetId !== undefined && heroAssetId.length > 0
-      ? assetUrls.get(heroAssetId) ?? content.hero.modelUrl
-      : content.hero.modelUrl;
-  const interiorUrl =
-    interiorAssetId !== undefined && interiorAssetId.length > 0
-      ? assetUrls.get(interiorAssetId) ?? content.drawing.interiorModelUrl
-      : content.drawing.interiorModelUrl;
-  const asset3dSlots = content.drawing.asset3dSlots
-    .map((assetId) => assetId.trim())
-    .filter(Boolean);
-  const asset3dSlotUrls =
-    asset3dSlots.length > 0
-      ? asset3dSlots.map(
-          (assetId, index) =>
-            assetUrls.get(assetId) ?? content.drawing.asset3dSlotUrls?.[index] ?? ''
-        )
-      : content.drawing.asset3dSlotUrls ?? [];
-
+  const heroUrl = resolveCmsModelUrl({
+    assetId: heroAssetId,
+    assetUrls,
+    currentUrl: content.hero.modelUrl,
+    target,
+  });
+  const interiorUrl = resolveCmsModelUrl({
+    assetId: interiorAssetId,
+    assetUrls,
+    currentUrl: content.drawing.interiorModelUrl,
+    target,
+  });
   const hero: MilkbarPageContent['hero'] = {
     ...withoutHeroModelFields(content.hero),
     ...optionalStringProp('modelAssetId', heroAssetId),
@@ -955,8 +1021,6 @@ const enrichPageContentWithModelUrls = (
   };
   const drawing: MilkbarPageContent['drawing'] = {
     ...withoutDrawingModelFields(content.drawing),
-    asset3dSlots,
-    ...optionalStringArrayProp('asset3dSlotUrls', asset3dSlotUrls),
     ...optionalStringProp('interiorModelAssetId', interiorAssetId),
     ...optionalStringProp('interiorModelUrl', interiorUrl),
   };
@@ -965,13 +1029,14 @@ const enrichPageContentWithModelUrls = (
 };
 
 const enrichMilkbarCmsUpdateWithModelUrls = async (
-  input: MilkbarCmsUpdateInput
+  input: MilkbarCmsUpdateInput,
+  target: MilkbarModelUrlTarget = 'local'
 ): Promise<MilkbarCmsUpdateInput> => {
-  const assetUrls = await resolveModelAssetUrlMap(input);
+  const assetUrls = await resolveModelAssetUrlMap(input, target);
   const localizedContent: MilkbarLocalizedContent = {
-    en: enrichPageContentWithModelUrls(input.localizedContent.en, assetUrls),
-    de: enrichPageContentWithModelUrls(input.localizedContent.de, assetUrls),
-    pl: enrichPageContentWithModelUrls(input.localizedContent.pl, assetUrls),
+    en: enrichPageContentWithModelUrls(input.localizedContent.en, assetUrls, target),
+    de: enrichPageContentWithModelUrls(input.localizedContent.de, assetUrls, target),
+    pl: enrichPageContentWithModelUrls(input.localizedContent.pl, assetUrls, target),
   };
 
   return {
@@ -979,10 +1044,12 @@ const enrichMilkbarCmsUpdateWithModelUrls = async (
     localizedContent,
     projects: input.projects.map((project) => {
       const modelAssetId = project.modelAssetId?.trim();
-      const modelUrl =
-        modelAssetId !== undefined && modelAssetId.length > 0
-          ? assetUrls.get(modelAssetId) ?? project.modelUrl
-          : project.modelUrl;
+      const modelUrl = resolveCmsModelUrl({
+        assetId: modelAssetId,
+        assetUrls,
+        currentUrl: project.modelUrl,
+        target,
+      });
       return {
         ...withoutProjectModelFields(project),
         ...optionalStringProp('modelAssetId', modelAssetId),
@@ -1061,7 +1128,7 @@ export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapsh
 export async function saveMilkbarDesignersCmsSnapshot(
   input: unknown
 ): Promise<MilkbarCmsSnapshot> {
-  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizeUpdateInput(input));
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizeUpdateInput(input), 'local');
   const now = new Date();
 
   try {
@@ -1194,12 +1261,15 @@ export async function pushMilkbarRuntimeToCloud(
     message: `Read ${localData.projects.length} projects, ${localData.services.length} services, page content`,
   });
 
-  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls({
-    localizedContent: localData.localizedContent,
-    pageSettings: localData.pageSettings,
-    projects: localData.projects,
-    services: localData.services,
-  });
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(
+    {
+      localizedContent: localData.localizedContent,
+      pageSettings: localData.pageSettings,
+      projects: localData.projects,
+      services: localData.services,
+    },
+    'fastcomet'
+  );
 
   await report({ step: 3, total: 4, phase: 'writing', message: 'Writing to cloud database…' });
 

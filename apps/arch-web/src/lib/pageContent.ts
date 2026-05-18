@@ -30,7 +30,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     ctaLabel: 'how it works',
     hint: '- drag rooms to reassign programme',
     thumbImages: [],
-    asset3dSlots: [],
+    asset3dProjectCodes: [],
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -75,6 +75,7 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     label: 'three of recent note',
     title: 'A selection of built work rendered through the studio systems.',
     emphasis: 'built work',
+    projectsViewMode: 'wireframe',
   },
   process: {
     eyebrow: '- 05 / process',
@@ -212,7 +213,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_DE: ArchPageContent = {
     ctaLabel: 'wie es funktioniert',
     hint: '- Räume ziehen, um Nutzungen neu zuzuweisen',
     thumbImages: [],
-    asset3dSlots: [],
+    asset3dProjectCodes: [],
   },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
@@ -228,7 +229,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_DE: ArchPageContent = {
     ],
   },
   services: { eyebrow: '- 03 / Praxis', label: 'vier Systeme', title: 'Was wir leise automatisieren, damit die Praxis fortgeführt werden kann.', emphasis: 'leise automatisieren' },
-  projects: { eyebrow: '- 04 / Projekte', label: 'drei jüngste Notizen', title: 'Eine Auswahl realisierter Arbeiten, dargestellt durch die Studiosysteme.', emphasis: 'realisierter Arbeiten' },
+  projects: { eyebrow: '- 04 / Projekte', label: 'drei jüngste Notizen', title: 'Eine Auswahl realisierter Arbeiten, dargestellt durch die Studiosysteme.', emphasis: 'realisierter Arbeiten', projectsViewMode: 'wireframe' },
   process: {
     eyebrow: '- 05 / Prozess',
     label: 'vier Bewegungen',
@@ -314,7 +315,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_PL: ArchPageContent = {
     ctaLabel: 'jak to działa',
     hint: '- przeciągnij pomieszczenia, by przypisać program',
     thumbImages: [],
-    asset3dSlots: [],
+    asset3dProjectCodes: [],
   },
   philosophy: {
     eyebrow: '- 02 / filozofia',
@@ -330,7 +331,7 @@ const DEFAULT_ARCH_PAGE_CONTENT_PL: ArchPageContent = {
     ],
   },
   services: { eyebrow: '- 03 / praktyka', label: 'cztery systemy', title: 'Co cicho automatyzujemy, by praktyka mogła trwać.', emphasis: 'cicho automatyzujemy' },
-  projects: { eyebrow: '- 04 / projekty', label: 'trzy z ostatnich', title: 'Wybór zrealizowanych prac przedstawionych przez systemy studia.', emphasis: 'zrealizowanych prac' },
+  projects: { eyebrow: '- 04 / projekty', label: 'trzy z ostatnich', title: 'Wybór zrealizowanych prac przedstawionych przez systemy studia.', emphasis: 'zrealizowanych prac', projectsViewMode: 'wireframe' },
   process: {
     eyebrow: '- 05 / proces',
     label: 'cztery ruchy',
@@ -604,14 +605,10 @@ export function normalizeArchPageContent(
       thumbImages: asStringArray(drawing['thumbImages'], d.drawing.thumbImages).map(
         toFastCometAssetUrl
       ),
-      asset3dSlots: asStringArray(drawing['asset3dSlots'], d.drawing.asset3dSlots),
-      ...(asStringArray(drawing['asset3dSlotUrls'], []).length > 0
-        ? {
-            asset3dSlotUrls: asStringArray(drawing['asset3dSlotUrls'], []).map(
-              toFastCometAssetUrl
-            ),
-          }
-        : {}),
+      asset3dProjectCodes: asStringArray(
+        drawing['asset3dProjectCodes'] ?? drawing['asset3dSlots'],
+        d.drawing.asset3dProjectCodes
+      ),
       ...(asOptionalString(drawing['interiorModelAssetId']) !== undefined
         ? { interiorModelAssetId: asOptionalString(drawing['interiorModelAssetId']) }
         : {}),
@@ -643,6 +640,7 @@ export function normalizeArchPageContent(
       label: asString(projects['label'], d.projects.label),
       title: asString(projects['title'], d.projects.title),
       emphasis: asString(projects['emphasis'], d.projects.emphasis),
+      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : 'wireframe',
     },
     process: {
       eyebrow: asString(process['eyebrow'], d.process.eyebrow),
@@ -661,6 +659,9 @@ export function normalizeArchPageContent(
       headingEmphasis: asString(caseStudy['headingEmphasis'], d.caseStudy.headingEmphasis),
       body: asString(caseStudy['body'], d.caseStudy.body),
       stats: normalizeCaseStudyStats(caseStudy['stats'], d.caseStudy.stats),
+      ...(asOptionalString(caseStudy['projectCode']) !== undefined
+        ? { projectCode: asOptionalString(caseStudy['projectCode']) }
+        : {}),
     },
     quote: {
       eyebrow: asString(quote['eyebrow'], d.quote.eyebrow),

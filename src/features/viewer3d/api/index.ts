@@ -66,6 +66,7 @@ interface UploadAssetData {
   tags?: string[];
   isPublic?: boolean;
   storageProfile?: FileStorageProfile;
+  replaceAssetId?: string;
 }
 
 function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): void {
@@ -76,6 +77,7 @@ function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): v
     ['tags', data.tags !== undefined && data.tags.length > 0 ? data.tags.join(',') : undefined],
     ['isPublic', data.isPublic !== undefined ? String(data.isPublic) : undefined],
     ['storageProfile', data.storageProfile],
+    ['replaceAssetId', data.replaceAssetId],
   ];
 
   entries.forEach(([key, value]) => {
@@ -84,7 +86,7 @@ function appendAssetDataToFormData(formData: FormData, data: UploadAssetData): v
     }
   });
 }
- 
+
 
 export async function uploadAsset3DFile(
   file: File,
@@ -126,6 +128,25 @@ export async function updateAsset3D(id: string, data: Asset3DUpdateInput): Promi
 
 export async function deleteAsset3DById(id: string): Promise<void> {
   await api.delete(`${API_BASE}/${id}`);
+}
+
+export async function convertMilkbarModelLinkToAsset3D(data: {
+  name?: string;
+  tags?: string[];
+  url: string;
+}): Promise<Asset3DRecord> {
+  const result = await api.post<{ asset: Asset3DRecord }>(
+    `${API_BASE}/milkbar/link-to-file`,
+    data
+  );
+  return result.asset;
+}
+
+export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset3DRecord> {
+  const result = await api.post<{ asset: Asset3DRecord }>(
+    `${API_BASE}/${encodeURIComponent(id)}/upload-to-fastcomet`
+  );
+  return result.asset;
 }
 
 export async function fetchCategories(storageProfile?: FileStorageProfile): Promise<string[]> {

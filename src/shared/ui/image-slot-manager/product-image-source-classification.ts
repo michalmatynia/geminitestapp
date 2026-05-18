@@ -1,6 +1,12 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
-const FASTCOMET_UPLOAD_HOSTS = new Set(['sparksofsindri.com', 'www.sparksofsindri.com']);
+const FASTCOMET_UPLOAD_HOSTS = new Set([
+  'sparksofsindri.com',
+  'www.sparksofsindri.com',
+  'uploads.milkbardesigners.com',
+  'milkbardesigners.com',
+  'www.milkbardesigners.com',
+]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);

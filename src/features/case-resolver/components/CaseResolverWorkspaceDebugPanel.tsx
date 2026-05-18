@@ -37,13 +37,12 @@ export function CaseResolverWorkspaceDebugPanel({
 
 
   React.useEffect(() => {
-    if (!enabled || typeof window === 'undefined') return;
+    if (!enabled || typeof window === 'undefined') return undefined;
     const eventName = getCaseResolverWorkspaceDebugEventName();
     sync();
     window.addEventListener(eventName, sync);
     return () => {
       window.removeEventListener(eventName, sync);
-      return undefined;
     };
   }, [enabled, sync]);
 

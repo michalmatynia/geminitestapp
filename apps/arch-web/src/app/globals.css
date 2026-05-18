@@ -522,14 +522,16 @@ section { padding: 140px 0; position: relative; }
 .vp-btn-type { font-family: var(--mono); font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-4); }
 .viewer-mode { margin-top: auto; padding-top: 32px; }
 .viewer-mode-label { font-family: var(--mono); font-size: 9px; letter-spacing: .28em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
-.viewer-mode-btns { display: flex; gap: 0; }
+.viewer-mode-btns { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule); }
 .vmb {
   font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: lowercase;
-  padding: 8px 16px; border: 1px solid var(--rule); color: var(--ink-3);
-  transition: all .25s; cursor: pointer;
+  padding: 8px 10px; border: none;
+  border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  color: var(--ink-3); transition: background .2s, color .2s; cursor: pointer;
 }
-.vmb:first-child { border-right: none; }
-.vmb.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.vmb:nth-child(even)      { border-right: none; }
+.vmb:nth-last-child(-n+2) { border-bottom: none; }
+.vmb.active { background: var(--ink); color: var(--paper); }
 .viewer-canvas-wrap { position: relative; background: var(--paper-3); }
 #viewer-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
 #viewer-canvas:active { cursor: grabbing; }
@@ -703,8 +705,7 @@ footer { padding: 80px 0 40px; border-top: 1px solid var(--rule); }
 .foot-bot-links a:hover { color: var(--ink); }
 
 /* ─── REVEAL ─────────────────────────────────────────────────────── */
-/* Content stays readable if animation setup is delayed or unavailable. */
-.rev { opacity: 1; }
+.rev { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   .rev { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }

@@ -9,6 +9,7 @@ import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL } from '@/shared/lib/products/constants';
 import { Button, DropdownMenuItem, DropdownMenuSeparator, Input, Tooltip } from '@/shared/ui/primitives.public';
 import { ActionMenu, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
+import { Tooltip as ProductListTooltip } from '@/shared/ui/tooltip';
 import { resolveProductImageFileUrl, resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import {
@@ -36,6 +37,13 @@ const readTrimmedText = (value: unknown): string | null => {
 };
 
 type ImageSlotStatusTone = 'success' | 'pending' | 'failure';
+type ImageSlotSourceIndicator = {
+  colorClass: string;
+  hasValue: boolean;
+  label: string;
+  name: string;
+  status: string;
+};
 
 const imageSlotStatusToneClass: Record<ImageSlotStatusTone, string> = {
   success: 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100',
@@ -45,6 +53,16 @@ const imageSlotStatusToneClass: Record<ImageSlotStatusTone, string> = {
 
 const fastCometPendingUploadStatuses = new Set(['pending', 'processing', 'queued', 'uploading']);
 const fastCometFailedUploadStatuses = new Set(['error', 'failed', 'failure']);
+const fastCometUploadStatusLabels: Record<string, string> = {
+  completed: 'Available',
+  error: 'Failed',
+  failed: 'Failed',
+  failure: 'Failed',
+  pending: 'Processing',
+  processing: 'Processing',
+  queued: 'Processing',
+  uploading: 'Processing',
+};
 
 const readFastCometUploadStatus = (slot: ProductImageSlotValue | undefined): string | null => {
   if (slot?.type !== 'existing') return null;
@@ -66,6 +84,29 @@ const resolveFastCometIndicatorTone = (input: {
   if (input.status === 'completed' || input.hasFastCometUrl) return 'success';
   return 'pending';
 };
+
+const toSourceStatusLabel = (value: string): string =>
+  value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const resolveFastCometIndicatorStatus = (input: {
+  hasFastCometUrl: boolean;
+  isUploading: boolean;
+  status: string | null;
+}): string => {
+  if (input.isUploading) return 'Uploading';
+  if (input.status !== null) {
+    return fastCometUploadStatusLabels[input.status] ?? toSourceStatusLabel(input.status);
+  }
+  if (input.hasFastCometUrl) return 'Available';
+  return 'Not uploaded';
+};
+
+const getSourceBadgeTooltip = (indicator: Pick<ImageSlotSourceIndicator, 'label' | 'name' | 'status'>): string =>
+  `Badge: ${indicator.name} (${indicator.label})\nStatus: ${indicator.status}`;
 
 const readMetadataText = (
   metadata: Record<string, unknown> | null,
@@ -158,6 +199,8 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const imageLocked = Boolean(controller.isSlotImageLocked?.(index));
   const linkValue = imageLinks[index] ?? '';
   const base64Value = imageBase64s[index] ?? '';
+  const hasLinkedUrlValue = linkValue.trim().length > 0;
+  const hasBase64SlotValue = base64Value.trim().length > 0;
   const isFastCometLink = isFastCometUploadUrl(linkValue);
   const slotFastCometUrl = resolveFastCometImageSlotUrl(slot);
   const linkedFastCometUrl = resolveLinkedFastCometUrl(linkValue);
@@ -202,25 +245,35 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
     return !hasFastCometUrl;
   };
 
-  const slotSourceIndicators: Array<{
-    colorClass: string;
-    hasValue: boolean;
-    label: string;
-  }> = [
+  let uploadIndicatorStatus = 'No upload';
+  if (hasUpload) uploadIndicatorStatus = imageLocked ? 'Stored and locked' : 'Stored';
+
+  let linkIndicatorStatus = 'No linked URL';
+  if (hasLinkedUrlValue) {
+    linkIndicatorStatus = isFastCometLink ? 'Stored as FastComet link' : 'Linked';
+  }
+
+  const slotSourceIndicators: ImageSlotSourceIndicator[] = [
     {
       colorClass: imageSlotStatusToneClass.success,
       hasValue: hasUpload,
       label: 'U',
+      name: 'Upload',
+      status: uploadIndicatorStatus,
     },
     {
       colorClass: imageSlotStatusToneClass.pending,
-      hasValue: Boolean(linkValue.trim()) && !isFastCometLink,
+      hasValue: hasLinkedUrlValue && !isFastCometLink,
       label: 'L',
+      name: 'Link',
+      status: linkIndicatorStatus,
     },
     {
       colorClass: imageSlotStatusToneClass.pending,
-      hasValue: Boolean(base64Value.trim()),
+      hasValue: hasBase64SlotValue,
       label: 'B',
+      name: 'Base64',
+      status: hasBase64SlotValue ? 'Stored' : 'No Base64 data',
     },
     {
       colorClass: imageSlotStatusToneClass[
@@ -235,6 +288,12 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
         isFastCometUploading ||
         fastCometUploadStatus !== null,
       label: 'F',
+      name: 'FastComet',
+      status: resolveFastCometIndicatorStatus({
+        hasFastCometUrl,
+        isUploading: isFastCometUploading,
+        status: fastCometUploadStatus,
+      }),
     },
   ];
 
@@ -500,12 +559,20 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
           <div className='flex w-full items-center justify-center gap-1 text-[10px] text-gray-400'>
             {slotSourceIndicators.map((indicator) => {
               return (
-                <span
+                <ProductListTooltip
                   key={indicator.label}
-                  className={`rounded-full border px-1 ${indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'}`}
+                  content={getSourceBadgeTooltip(indicator)}
+                  className='inline-flex shrink-0'
+                  maxWidth='220px'
                 >
-                  {indicator.label}
-                </span>
+                  <span
+                    className={`cursor-help rounded-full border px-1 ${
+                      indicator.hasValue ? indicator.colorClass : 'border-gray-600 text-gray-500'
+                    }`}
+                  >
+                    {indicator.label}
+                  </span>
+                </ProductListTooltip>
               );
             })}
           </div>

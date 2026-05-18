@@ -59,7 +59,7 @@ const CampaignApprovalBadge = ({ campaign }: { campaign: FilemakerEmailCampaign 
       className={isApproved ? 'text-[10px] border-emerald-500/50 text-emerald-300' : 'text-[10px] border-amber-500/50 text-amber-300'}
     >
       {isApproved
-        ? `Approved${campaign.approvedBy != null ? ` — ${campaign.approvedBy}` : ''}`
+        ? `Approved${campaign.approvedBy !== null && campaign.approvedBy !== undefined ? ` — ${campaign.approvedBy}` : ''}`
         : 'Needs Approval'}
     </Badge>
   );

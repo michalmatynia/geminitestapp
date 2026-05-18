@@ -124,6 +124,15 @@ import {
   sanitizeFilename,
 } from '@/shared/lib/files/services/upload';
 
+/**
+ * Uploads a file, processing it through validation, storage provider routing,
+ * and repository synchronization.
+ * 
+ * @param file - The file to upload.
+ * @param options - Configuration for upload category, storage routing, and repository metadata.
+ * @returns The resulting ImageFileRecord representing the persisted file.
+ * @throws AppError if validation fails or storage operation fails.
+ */
 export async function uploadFile(
   file: File,
   options?: {

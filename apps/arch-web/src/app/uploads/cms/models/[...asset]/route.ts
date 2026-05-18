@@ -4,7 +4,17 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const MODELS_ROOT = path.resolve(
+const LOCAL_MODELS_ROOT = path.resolve(
+  process.cwd(),
+  '..',
+  '..',
+  'public',
+  'uploads',
+  'cms',
+  'models'
+);
+
+const FASTCOMET_MODELS_MIRROR_ROOT = path.resolve(
   process.cwd(),
   '..',
   '..',
@@ -27,14 +37,13 @@ type RouteContext = {
   params: Promise<{ asset?: string[] }>;
 };
 
-async function serveModelAsset({ params }: RouteContext): Promise<Response> {
-  const { asset = [] } = await params;
-  const filePath = path.resolve(MODELS_ROOT, ...asset);
+const resolveAssetPath = (root: string, asset: string[]): string | null => {
+  const filePath = path.resolve(root, ...asset);
+  if (!filePath.startsWith(`${root}${path.sep}`)) return null;
+  return filePath;
+};
 
-  if (!filePath.startsWith(`${MODELS_ROOT}${path.sep}`)) {
-    return new Response('Invalid asset path', { status: 400 });
-  }
-
+const readModelAssetResponse = async (filePath: string): Promise<Response | null> => {
   try {
     const file = await readFile(filePath);
     const contentType = CONTENT_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream';
@@ -46,8 +55,26 @@ async function serveModelAsset({ params }: RouteContext): Promise<Response> {
       },
     });
   } catch {
-    return new Response('Asset not found', { status: 404 });
+    return null;
   }
+};
+
+async function serveModelAsset({ params }: RouteContext): Promise<Response> {
+  const { asset = [] } = await params;
+  const localPath = resolveAssetPath(LOCAL_MODELS_ROOT, asset);
+  const mirrorPath = resolveAssetPath(FASTCOMET_MODELS_MIRROR_ROOT, asset);
+
+  if (localPath === null || mirrorPath === null) {
+    return new Response('Invalid asset path', { status: 400 });
+  }
+
+  const localResponse = await readModelAssetResponse(localPath);
+  if (localResponse !== null) return localResponse;
+
+  const mirrorResponse = await readModelAssetResponse(mirrorPath);
+  if (mirrorResponse !== null) return mirrorResponse;
+
+  return new Response('Asset not found', { status: 404 });
 }
 
 export async function GET(_request: NextRequest, context: RouteContext): Promise<Response> {

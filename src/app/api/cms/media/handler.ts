@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { uploadCmsFastCometMediaInRedisRuntime } from '@/features/cms/workers/cmsFastCometMediaUploadQueue';
 import { getPublicPathFromStoredPath, uploadFile } from '@/features/files/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -10,7 +11,7 @@ import {
   fileStorageProfileValues,
   type FileStorageProfile,
 } from '@/shared/lib/files/constants';
-import { writeMilkbarFastCometPublicHtmlMirrorFile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
+import { getCmsBuilderImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -50,16 +51,47 @@ const resolveUploadPublicPath = (upload: ImageFileRecord): string | null => {
   return getPublicPathFromStoredPath(upload.filepath);
 };
 
-const mirrorMilkbarCmsMediaToPublicHtml = async (
+const resolveStagedUploadPathValue = (
+  publicPath: string | null,
+  primary: string | undefined,
+  fallback: string
+): string => {
+  if (publicPath !== null) return publicPath;
+  const trimmed = primary?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : fallback;
+};
+
+const stageMilkbarCmsMediaFile = async (
   file: File,
-  upload: ImageFileRecord
-): Promise<void> => {
+  input: {
+    folder: string;
+    milkbarStorage: ReturnType<typeof resolveMilkbarFastCometStorageProfile>;
+  }
+): Promise<ImageFileRecord> => {
+  const upload = await uploadFile(file, {
+    category: 'cms',
+    allowOrphanRecord: true,
+    folder: input.folder,
+    forceStorageSource: 'local',
+  });
   const publicPath = resolveUploadPublicPath(upload);
-  if (publicPath?.startsWith('/uploads/cms/visualisation/') !== true) return;
-  await writeMilkbarFastCometPublicHtmlMirrorFile(
-    publicPath,
-    Buffer.from(await file.arrayBuffer())
-  );
+  const repository = await getCmsBuilderImageFileRepository();
+  const updated = await repository.updateImageFile(upload.id, {
+    filepath: resolveStagedUploadPathValue(publicPath, upload.filepath, upload.filepath),
+    publicUrl: resolveStagedUploadPathValue(publicPath, upload.publicUrl, upload.filepath),
+    url: resolveStagedUploadPathValue(publicPath, upload.url, upload.filepath),
+    storageProvider: 'local',
+    metadata: {
+      ...(upload.metadata ?? {}),
+      fastCometUploadStatus: 'queued',
+      mirroredLocally: true,
+      publicBaseUrl: input.milkbarStorage.publicBaseUrl,
+      ...(publicPath !== null ? { publicPath } : {}),
+      storageProfile: 'milkbarCms',
+      storageSource: 'local',
+    },
+  });
+  return updated ?? upload;
 };
 
 /**
@@ -73,22 +105,30 @@ const uploadCmsMediaFile = async (
     milkbarStorage: ReturnType<typeof resolveMilkbarFastCometStorageProfile> | null;
   }
 ): Promise<ImageFileRecord> => {
+  if (input.isMilkbarCmsUpload) {
+    const folder = input.folder ?? MILKBAR_CMS_VISUALISATION_FOLDER;
+    const milkbarStorage = input.milkbarStorage ?? resolveMilkbarFastCometStorageProfile();
+    const staged = await stageMilkbarCmsMediaFile(file, { folder, milkbarStorage });
+    const publicPath = resolveUploadPublicPath(staged);
+    if (publicPath === null) {
+      throw badRequestError('Could not resolve staged CMS media path.', {
+        imageFileId: staged.id,
+      });
+    }
+    return uploadCmsFastCometMediaInRedisRuntime({
+      folder,
+      imageFileId: staged.id,
+      mimetype: staged.mimetype,
+      publicPath,
+      requestedAt: new Date().toISOString(),
+    });
+  }
+
   const upload = await uploadFile(file, {
     category: 'cms',
     allowOrphanRecord: true,
     folder: input.folder,
-    ...(input.isMilkbarCmsUpload
-      ? {
-          forceStorageSource: 'fastcomet' as const,
-          fastCometBaseUrl: input.milkbarStorage?.publicBaseUrl,
-          fastCometConfig: input.milkbarStorage?.fastCometConfig,
-        }
-      : {}),
   });
-
-  if (input.isMilkbarCmsUpload) {
-    await mirrorMilkbarCmsMediaToPublicHtml(file, upload);
-  }
 
   return upload;
 };

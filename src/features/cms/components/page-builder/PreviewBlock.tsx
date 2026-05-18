@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines, max-lines-per-function, complexity */
+
 import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import React from 'react';
 
@@ -100,12 +102,154 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
   'TextAtom',
 ]);
 
+const getStringSetting = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string' || value.length === 0) {
+    return fallback;
+  }
+  return value;
+};
+
+const resolveSectionRingBase = ({
+  isInspecting,
+  isSectionHovered,
+  isSectionSelected,
+  showEditorChrome,
+}: {
+  isInspecting: boolean;
+  isSectionHovered: boolean;
+  isSectionSelected: boolean;
+  showEditorChrome: boolean;
+}): string => {
+  if (isInspecting) {
+    if (isSectionSelected) return 'ring-4 ring-blue-500/65';
+    if (isSectionHovered) return 'ring-4 ring-blue-500/45';
+    return 'hover:ring-1 hover:ring-inset hover:ring-border/40';
+  }
+
+  if (!showEditorChrome) return '';
+  if (!isSectionSelected) return 'hover:ring-1 hover:ring-inset hover:ring-border/40';
+  return 'ring-2 ring-inset ring-blue-500/40';
+};
+
+const resolveAlignmentClasses = (alignment: string): string => {
+  if (alignment === 'left') return 'justify-start text-left';
+  if (alignment === 'right') return 'justify-end text-right';
+  return 'justify-center text-center';
+};
+
+const resolveBlockJustifyContent = (
+  alignment: string,
+  justifySetting: string
+): React.CSSProperties['justifyContent'] => {
+  const requested = justifySetting === 'inherit' ? alignment : justifySetting;
+  const resolved = resolveJustifyContent(requested);
+  if (resolved !== undefined) return resolved;
+  if (alignment === 'center') return 'center';
+  if (alignment === 'right') return 'flex-end';
+  return 'flex-start';
+};
+
+const resolveBlockWrapClass = (direction: string, wrapSetting: string): string => {
+  if (direction === 'column') return '';
+  return wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
+};
+
+const resolveCanvasFrameClass = ({
+  isInspecting,
+  isHovered,
+  isSelected,
+}: {
+  isInspecting: boolean;
+  isHovered: boolean;
+  isSelected: boolean;
+}): string => {
+  if (isSelected) {
+    return isInspecting ? 'ring-4 ring-blue-500/45' : 'ring-2 ring-blue-500/35';
+  }
+  if (isHovered) return 'ring-4 ring-blue-500/45';
+  return '';
+};
+
 // ---------------------------------------------------------------------------
 // Top-level section preview
 // ---------------------------------------------------------------------------
 
 interface PreviewSectionProps {
   section: SectionInstance;
+}
+
+function PreviewSectionSelectionButton({
+  showEditorChrome,
+  label,
+  selected,
+  onSelect,
+  className,
+}: {
+  showEditorChrome: boolean;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+  className?: string;
+}): React.ReactNode {
+  if (!showEditorChrome) return null;
+  return (
+    <PreviewNodeSelectionButton
+      label={`Select section ${label}`}
+      selected={selected}
+      onSelect={onSelect}
+      className={className}
+    />
+  );
+}
+
+function PreviewSectionActions({
+  showEditorChrome,
+  isSelected,
+  isHidden,
+  onToggleSectionVisibility,
+  onRemoveSection,
+  sectionId,
+}: {
+  showEditorChrome: boolean;
+  isSelected: boolean;
+  isHidden: boolean;
+  onToggleSectionVisibility?: (sectionId: string, isHidden: boolean) => void;
+  onRemoveSection?: (sectionId: string) => void;
+  sectionId: string;
+}): React.ReactNode {
+  if (!showEditorChrome || !isSelected) return null;
+  return (
+    <div className='absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
+      <Button
+        type='button'
+        variant='ghost'
+        size='icon'
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.stopPropagation();
+          onToggleSectionVisibility?.(sectionId, !isHidden);
+        }}
+        className='h-7 w-7 rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
+        title={isHidden ? 'Show section' : 'Hide section'}
+        aria-label={isHidden ? 'Show section' : 'Hide section'}
+      >
+        {isHidden ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
+      </Button>
+      <Button
+        type='button'
+        variant='ghost'
+        size='icon'
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.stopPropagation();
+          onRemoveSection?.(sectionId);
+        }}
+        className='h-7 w-7 rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
+        title='Delete section'
+        aria-label='Delete section'
+      >
+        <Trash2 className='size-3.5' />
+      </Button>
+    </div>
+  );
 }
 
 export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
@@ -123,7 +267,7 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   const { onSelect, onRemoveSection, onToggleSectionVisibility } = usePreviewEditorActions();
 
   const isSectionSelected = selectedNodeId === section.id;
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome;
   const isHidden = isCmsSectionHidden(section.settings['isHidden']);
   const label = resolveNodeLabel(section.type, section.settings['label']);
   const animConfig = section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
@@ -195,65 +339,12 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
     handleSelect();
   });
 
-  const renderSelectionButton = (className?: string): React.ReactNode => {
-    if (!showEditorChrome) return null;
-    return (
-      <PreviewNodeSelectionButton
-        label={`Select section ${label}`}
-        selected={isSectionSelected}
-        onSelect={handleSelect}
-        className={className}
-      />
-    );
-  };
-
-  const renderSectionActions = (): React.ReactNode => {
-    if (!showEditorChrome || !isSectionSelected) return null;
-    return (
-      <div className='absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
-        <Button
-          type='button'
-          variant='ghost'
-          size='icon'
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onToggleSectionVisibility?.(section.id, !isHidden);
-          }}
-          className='h-7 w-7 rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
-          title={isHidden ? 'Show section' : 'Hide section'}
-          aria-label={isHidden ? 'Show section' : 'Hide section'}>
-          {isHidden ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
-        </Button>
-        <Button
-          type='button'
-          variant='ghost'
-          size='icon'
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onRemoveSection?.(section.id);
-          }}
-          className='h-7 w-7 rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
-          title='Delete section'
-          aria-label={'Delete section'}>
-          <Trash2 className='size-3.5' />
-        </Button>
-      </div>
-    );
-  };
-
-  const selectedRingBase = isInspecting
-    ? isSectionSelected
-      ? 'ring-4 ring-blue-500/65'
-      : isSectionHovered
-        ? 'ring-4 ring-blue-500/45'
-        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
-    : showEditorChrome
-      ? isSectionSelected
-        ? isInspecting
-          ? 'ring-2 ring-inset ring-blue-500/60'
-          : 'ring-2 ring-inset ring-blue-500/40'
-        : 'hover:ring-1 hover:ring-inset hover:ring-border/40'
-      : '';
+  const selectedRingBase = resolveSectionRingBase({
+    isInspecting,
+    isSectionHovered,
+    isSectionSelected,
+    showEditorChrome,
+  });
   const selectedRing = `${selectedRingBase} ${inspectorZ}`.trim();
 
   if (isHidden || !isCmsNodeVisible(section.settings, runtime)) return null;
@@ -262,11 +353,28 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
     section,
     selectedRing,
     divider,
-    renderSectionActions,
-    renderSelectionButton,
-    wrapInspector,
+    renderSelectionButton: (className?: string) => (
+      <PreviewSectionSelectionButton
+        showEditorChrome={showEditorChrome}
+        label={label}
+        selected={isSectionSelected}
+        onSelect={handleSelect}
+        className={className}
+      />
+    ),
+    renderSectionActions: () => (
+      <PreviewSectionActions
+        showEditorChrome={showEditorChrome}
+        isSelected={isSectionSelected}
+        isHidden={isHidden}
+        onToggleSectionVisibility={onToggleSectionVisibility}
+        onRemoveSection={onRemoveSection}
+        sectionId={section.id}
+      />
+    ),
     handleSelect,
     PreviewBlockItem,
+    wrapInspector,
   };
 
   // Dispatch to modular section components
@@ -313,24 +421,16 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   // --- Inline simple sections (AnnouncementBar, Block, TextElement, etc) remain here for now ---
   if (section.type === 'AnnouncementBar' || section.type === 'Block') {
     const isBlockSection = section.type === 'Block';
-    const alignment = (section.settings['contentAlignment'] as string) || 'center';
-    const alignmentClasses =
-      alignment === 'left'
-        ? 'justify-start text-left'
-        : alignment === 'right'
-          ? 'justify-end text-right'
-          : 'justify-center text-center';
+    const alignment = getStringSetting(section.settings['contentAlignment'], 'center');
+    const alignmentClasses = resolveAlignmentClasses(alignment);
     const blockGap = getSpacingValue(section.settings['blockGap']);
-    const direction = (section.settings['layoutDirection'] as string) || 'row';
-    const wrapSetting = (section.settings['wrap'] as string) || 'wrap';
-    const justifySetting = (section.settings['justifyContent'] as string) || 'inherit';
-    const justifyContent =
-      resolveJustifyContent(justifySetting === 'inherit' ? alignment : justifySetting) ??
-      (alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start');
+    const direction = getStringSetting(section.settings['layoutDirection'], 'row');
+    const wrapSetting = getStringSetting(section.settings['wrap'], 'wrap');
+    const justifySetting = getStringSetting(section.settings['justifyContent'], 'inherit');
+    const justifyContent = resolveBlockJustifyContent(alignment, justifySetting);
     const alignItems = resolveAlignItems(section.settings['alignItems']) ?? 'center';
     const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-row';
-    const wrapClass =
-      direction === 'column' ? '' : wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
+    const wrapClass = resolveBlockWrapClass(direction, wrapSetting);
 
     const containerStyles: React.CSSProperties = {
       ...getSectionStyles(section.settings, colorSchemes),
@@ -347,17 +447,32 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
         style={containerStyles}
         className={`relative group w-full transition cursor-pointer ${selectedRing} ${inspectorZ}${isBlockSection ? ` cms-node-${section.id}` : ''}`}
       >
-        {sectionCustomCss ? (
+        {sectionCustomCss !== null ? (
           <style data-cms-custom-css={section.id}>{sectionCustomCss}</style>
         ) : null}
-        {renderSelectionButton()}
-        {renderSectionActions()}
+        <PreviewNodeSelectionButton
+          showEditorChrome={showEditorChrome}
+          label={label}
+          selected={isSectionSelected}
+          onSelect={handleSelect}
+        />
+
+        {showEditorChrome && isSectionSelected && (
+          <PreviewSectionActions
+            showEditorChrome={showEditorChrome}
+            isSelected={isSectionSelected}
+            isHidden={isHidden}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            onRemoveSection={onRemoveSection}
+            sectionId={section.id}
+          />
+        )}
         {divider}
-        <div
-          className={getSectionContainerClass({
-            fullWidth: layout?.fullWidth,
-            maxWidthClass: 'max-w-6xl',
-          })}
+          <div
+            className={getSectionContainerClass({
+              fullWidth: layout.fullWidth,
+              maxWidthClass: 'max-w-6xl',
+            })}
         >
           <div
             className={
@@ -391,19 +506,34 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
   // Text element section
   if (section.type === 'TextElement') {
     const resolvedSettings = resolveCmsConnectedSettings(section.type, section.settings, runtime);
-    const text = (resolvedSettings['textContent'] as string) || '';
+    const text = getStringSetting(resolvedSettings['textContent'], '');
     const typoStyles = getBlockTypographyStyles(resolvedSettings);
-    if (!text.trim() && !showEditorChrome) return null;
+    if (text.trim().length === 0 && !showEditorChrome) return null;
     return wrapInspector(
       <div
         {...selectableSectionProps}
         style={getSectionStyles(resolvedSettings, colorSchemes)}
         className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
-        {renderSelectionButton()}
-        {renderSectionActions()}
+        <PreviewNodeSelectionButton
+          showEditorChrome={showEditorChrome}
+          label={label}
+          selected={isSectionSelected}
+          onSelect={handleSelect}
+        />
+
+        {showEditorChrome && isSectionSelected && (
+          <PreviewSectionActions
+            showEditorChrome={showEditorChrome}
+            isSelected={isSectionSelected}
+            isHidden={isHidden}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            onRemoveSection={onRemoveSection}
+            sectionId={section.id}
+          />
+        )}
         {divider}
-        {text ? (
+        {text.length > 0 ? (
           <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>
             {text}
           </p>
@@ -427,8 +557,23 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
         {...selectableSectionProps}
         className={`relative group w-full text-left transition cursor-pointer ${selectedRing}`}
       >
-        {renderSelectionButton()}
-        {renderSectionActions()}
+        <PreviewNodeSelectionButton
+          showEditorChrome={showEditorChrome}
+          label={label}
+          selected={isSectionSelected}
+          onSelect={handleSelect}
+        />
+
+        {showEditorChrome && isSectionSelected && (
+          <PreviewSectionActions
+            showEditorChrome={showEditorChrome}
+            isSelected={isSectionSelected}
+            isHidden={isHidden}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            onRemoveSection={onRemoveSection}
+            sectionId={section.id}
+          />
+        )}
         {divider}
         <PreviewFrontendSection
           type={section.type}
@@ -449,8 +594,20 @@ export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
       style={sectionStyles}
       className={`relative group w-full px-4 text-left transition cursor-pointer ${selectedRing}`}
     >
-      {renderSelectionButton()}
-      {renderSectionActions()}
+      <PreviewSectionSelectionButton
+        showEditorChrome={showEditorChrome}
+        label={label}
+        selected={isSectionSelected}
+        onSelect={handleSelect}
+      />
+      <PreviewSectionActions
+        showEditorChrome={showEditorChrome}
+        isSelected={isSectionSelected}
+        isHidden={isHidden}
+        onToggleSectionVisibility={onToggleSectionVisibility}
+        onRemoveSection={onRemoveSection}
+        sectionId={section.id}
+      />
       {divider}
       <p className='text-sm text-gray-500'>Unsupported section type: {section.type}</p>
     </div>
@@ -489,7 +646,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   const isSelected = selectedNodeId === block.id;
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
-  const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome;
   const animConfig = block.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
   const cssAnimConfig = block.settings['cssAnimation'] as CssAnimationConfig | undefined;
   const parentBlockContextValue = React.useMemo(() => ({ parentBlockId: block.id }), [block.id]);
@@ -499,15 +656,12 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
   const isHovered = isInspecting && hoveredNodeId === block.id;
   const inspectorZ = isInspecting && (isHovered || isSelected) ? 'z-30' : '';
   const isFaithful = !showEditorChrome;
-  const canvasFrameClass = isSelected
-    ? isInspecting
-      ? 'ring-4 ring-blue-500/45'
-      : 'ring-2 ring-blue-500/35'
-    : isHovered
-      ? 'ring-4 ring-blue-500/45'
-      : '';
-  const buildContainerClass = (base: string, editor: string): string =>
-    `${base} ${stretch ? 'h-full' : ''} ${inspectorZ} ${isFaithful ? canvasFrameClass : `${editor} ${isHovered && !isSelected ? 'ring-4 ring-inset ring-blue-500/45' : ''}`}`.trim();
+  const canvasFrameClass = resolveCanvasFrameClass({ isInspecting, isHovered, isSelected });
+  const buildContainerClass = (base: string, editor: string): string => {
+    const editorHoverClass = isHovered && !isSelected ? 'ring-4 ring-inset ring-blue-500/45' : '';
+    const frameClass = isFaithful ? canvasFrameClass : `${editor} ${editorHoverClass}`;
+    return `${base} ${stretch ? 'h-full' : ''} ${inspectorZ} ${frameClass}`.trim();
+  };
 
   const inspectorContent = (
     <InspectorTooltip
@@ -542,7 +696,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
 
   const handleSelect = (event: React.SyntheticEvent): void => {
     event.stopPropagation();
-    onSelect?.(block.id);
+    onSelect(block.id);
   };
   const selectableBlockProps = getSelectableSurfaceProps(handleSelect);
 
@@ -553,7 +707,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <PreviewNodeSelectionButton
         label={`Select block ${blockLabel}`}
         selected={isSelected}
-        onSelect={() => onSelect?.(block.id)}
+        onSelect={() => onSelect(block.id)}
         className={className}
       />
     );
@@ -585,7 +739,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
             {block.type === 'Repeater' && <PreviewRepeaterBlock block={resolvedBlock} />}
           </BlockContextProvider>
         </div>
-        {showEditorChrome && onOpenMedia && (
+        {showEditorChrome && onOpenMedia !== undefined && (
           <Button
             type='button'
             variant='outline'
@@ -616,7 +770,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
       <PreviewHeadingBlock
         block={resolvedBlock}
         containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, '')}
-        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
+        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect(block.id); }}
         renderSelectionButton={renderBlockSelectionButton}
         wrapInspector={wrapBlock}
       />
@@ -629,7 +783,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         block={resolvedBlock}
         isSelected={isSelected}
         className={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
+        onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect(block.id); }}
         renderSelectionButton={renderBlockSelectionButton}
       />
     );
@@ -641,7 +795,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
             block={resolvedBlock}
             runtime={runtime}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />
@@ -653,7 +807,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewInputBlock
             block={resolvedBlock}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />
@@ -665,7 +819,7 @@ function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
         <PreviewProgressBlock
             block={resolvedBlock}
             containerClass={buildContainerClass(`relative group w-full text-left transition ${contained ? 'max-w-full' : ''}`, `rounded ${isSelected ? 'ring-2 ring-inset ring-blue-500/40 bg-blue-500/15' : 'ring-1 ring-inset ring-border/30 bg-gray-800/20 hover:ring-border/50'}`)}
-            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect?.(block.id); }}
+            onSelect={(e: React.SyntheticEvent) => { e.stopPropagation(); onSelect(block.id); }}
             renderSelectionButton={renderBlockSelectionButton}
             wrapInspector={wrapBlock}
         />

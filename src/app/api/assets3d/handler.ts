@@ -2,6 +2,11 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
+import {
+  assertMilkbarAsset3DFastCometUploadRedisRuntime,
+  uploadMilkbarAsset3DInRedisRuntime,
+} from '@/features/viewer3d/workers/milkbarAsset3DFastCometUploadQueue';
+import { deleteMilkbarAsset3DInRedisRuntime } from '@/features/viewer3d/workers/milkbarAsset3DDeleteQueue';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -96,6 +101,9 @@ const buildAssetUploadOptions = (formData: FormData): NonNullable<Parameters<typ
   return options;
 };
 
+const readReplacementAssetId = (formData: FormData): string | null =>
+  readOptionalFormText(formData, 'replaceAssetId');
+
 /**
  * API handler for GET /api/assets3d
  * Fetches and returns a filtered list of 3D assets from cache.
@@ -148,7 +156,38 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError(validation.error ?? 'Invalid file type');
   }
 
-  const asset = await uploadAsset3D(file, buildAssetUploadOptions(formData));
+  const uploadOptions = buildAssetUploadOptions(formData);
+  const replaceAssetId = readReplacementAssetId(formData);
+  const asset =
+    uploadOptions.storageProfile === 'milkbarCms'
+      ? await uploadMilkbarAsset3DFileInRedisRuntime(file, uploadOptions, replaceAssetId)
+      : await uploadAsset3D(file, uploadOptions);
 
   return NextResponse.json(asset, { status: 201 });
 }
+
+const uploadMilkbarAsset3DFileInRedisRuntime = async (
+  file: File,
+  uploadOptions: NonNullable<Parameters<typeof uploadAsset3D>[1]>,
+  replaceAssetId: string | null
+): Promise<Asset3DRecord> => {
+  await assertMilkbarAsset3DFastCometUploadRedisRuntime();
+  if (replaceAssetId !== null) {
+    await deleteMilkbarAsset3DInRedisRuntime({
+      assetId: replaceAssetId,
+      requestedAt: new Date().toISOString(),
+    });
+  }
+  const stagedAsset = await uploadAsset3D(file, {
+    ...uploadOptions,
+    storageSource: 'local',
+    metadata: {
+      ...(uploadOptions.metadata ?? {}),
+      fastCometUploadStatus: 'queued',
+    },
+  });
+  return uploadMilkbarAsset3DInRedisRuntime({
+    assetId: stagedAsset.id,
+    requestedAt: new Date().toISOString(),
+  });
+};

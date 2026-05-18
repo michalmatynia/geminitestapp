@@ -11,8 +11,11 @@ export default function CaseStudies({
   content: ArchPageContent['caseStudy'];
   projects: Project[];
 }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const featuredProject = projects[0];
+  const initialIdx = content.projectCode != null
+    ? Math.max(0, projects.findIndex((p) => p.code === content.projectCode))
+    : 0;
+  const [activeIdx, setActiveIdx] = useState(initialIdx);
+  const activeProject = projects[activeIdx];
 
   return (
     <section className="case">
@@ -33,8 +36,8 @@ export default function CaseStudies({
               {content.heading}<em>{content.headingEmphasis}</em>
             </h3>
             <p className="rev" data-delay="1">{content.body}</p>
-            {featuredProject?.description ? (
-              <p className="rev" data-delay="2">{featuredProject.description}</p>
+            {activeProject?.description ? (
+              <p className="rev" data-delay="2">{activeProject.description}</p>
             ) : null}
             <div className="case-stats rev" data-delay="3">
               {content.stats.map((stat, i) => (
@@ -59,7 +62,7 @@ export default function CaseStudies({
             </div>
             <div className="case-fig-footer">
               <span className="case-fig-label">
-                {projects[activeIdx]?.code ?? `MBD-00${activeIdx + 1}`} · elevation
+                {activeProject?.code ?? `MBD-00${activeIdx + 1}`} · elevation
               </span>
               <div className="csw-btns">
                 {projects.map((p, i) => (

@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 
@@ -187,6 +187,7 @@ export function Model3D(props: Model3DProps): React.JSX.Element {
   });
   
   const modelRef = useRef<THREE.Group>(null);
+  const modelScene = useMemo(() => scene.clone(true), [scene]);
 
   // Optimize materials and handle blob texture warnings
   useEffect(() => {
@@ -203,15 +204,15 @@ export function Model3D(props: Model3DProps): React.JSX.Element {
       });
     }
     // Apply material optimizations and inspection overrides
-    applyMaterialMode(scene, enableShadows, renderMode);
+    applyMaterialMode(modelScene, enableShadows, renderMode);
     onLoad?.();
-    return () => restoreMaterialMode(scene);
-  }, [scene, onLoad, enableShadows, renderMode]);
+    return () => restoreMaterialMode(modelScene);
+  }, [modelScene, onLoad, enableShadows, renderMode]);
 
   return (
     <primitive
       ref={modelRef}
-      object={scene}
+      object={modelScene}
       dispose={null}
       position={position}
       rotation={rotation}

@@ -15,4 +15,4 @@ import { normalizeCaseResolverComparable } from '@/features/case-resolver/public
  * @returns Normalized text or empty string if normalization fails
  */
 export const normalizeText = (text: string): string => 
-  normalizeCaseResolverComparable(text) || '';
+  normalizeCaseResolverComparable(text);

@@ -26,12 +26,15 @@ import {
 import {
   startTraderaRelistSchedulerQueue,
 } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
+import { startCmsFastCometMediaUploadQueue } from '@/features/cms/workers/cmsFastCometMediaUploadQueue';
 import { startProductAiJobQueue } from '@/server/queues/product-ai';
 import {
   startProductFastCometImageUploadQueue,
   startProductMarketplaceCopyDebrandBatchQueue,
 } from '@/server/queues/products';
 import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
+import { startMilkbarAsset3DDeleteQueue } from '@/features/viewer3d/workers/milkbarAsset3DDeleteQueue';
+import { startMilkbarAsset3DFastCometUploadQueue } from '@/features/viewer3d/workers/milkbarAsset3DFastCometUploadQueue';
 import { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import { startSystemLogAlertsQueue } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -56,6 +59,9 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'tradera-relist-scheduler',
   'product-marketplace-copy-debrand-batch',
   'product-fastcomet-image-upload',
+  'cms-fastcomet-media-upload',
+  'milkbar-asset3d-delete',
+  'milkbar-asset3d-fastcomet-upload',
 ] as const;
 const SOCIAL_PUBLISHING_QUEUE_NAMES = [
   'social-publishing-scheduler',
@@ -105,6 +111,9 @@ const FEATURE_AWARE_STARTERS = [
   startFilemakerJobBoardScrapeQueue,
   startProductMarketplaceCopyDebrandBatchQueue,
   startProductFastCometImageUploadQueue,
+  startCmsFastCometMediaUploadQueue,
+  startMilkbarAsset3DDeleteQueue,
+  startMilkbarAsset3DFastCometUploadQueue,
   startProductScrapeProfileQueueRuntime,
 ] as const satisfies readonly QueueStarter[];
 

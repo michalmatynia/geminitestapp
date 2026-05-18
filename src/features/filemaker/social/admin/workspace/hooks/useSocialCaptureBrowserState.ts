@@ -35,78 +35,138 @@ import {
 
 const TREE_INSTANCE = 'social_publishing_capture_browser' as const;
 
-export function useSocialCaptureBrowserState() {
-  const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const queryClient = useQueryClient();
-  const updateSetting = useUpdateSetting();
+type SlideConfig = {
+  disabled?: boolean;
+  sections: SocialPublishingCapturePageSection[];
+};
 
-  // ─── Data ──────────────────────────────────────────────────────────────────
-  const lessonsQuery = useKangurLessons();
-  const sectionsQuery = useKangurLessonSections();
-  const lessons = lessonsQuery.data ?? [];
-  const sections = sectionsQuery.data ?? [];
-  const isLoadingTree = lessonsQuery.isLoading || sectionsQuery.isLoading;
+type UseCaptureBrowserPersistenceParams = {
+  queryClient: ReturnType<typeof useQueryClient>;
+  settingsStoreRef: React.MutableRefObject<ReturnType<typeof useSettingsStore>>;
+  toast: ReturnType<typeof useToast>['toast'];
+  updateSetting: ReturnType<typeof useUpdateSetting>;
+};
 
-  // ─── Persisted config ──────────────────────────────────────────────────────
-  const rawSettings = settingsStore.get(SOCIAL_PUBLISHING_SETTINGS_KEY);
-  const persistedConfig = useMemo(
-    () => parseSocialPublishingSettings(rawSettings).captureContentConfig,
-    [rawSettings]
+type SlideUpdater = (prev: SlideConfig) => SlideConfig;
+
+type UseCaptureBrowserSlideMutationsParams = {
+  persistConfig: (nextConfig: SocialPublishingCaptureContentConfig) => Promise<void>;
+  selectedSlideKey: string | null;
+  settingsStoreRef: React.MutableRefObject<ReturnType<typeof useSettingsStore>>;
+};
+
+type UseCaptureBrowserSlideMutationsResult = {
+  toggleSection: (section: SocialPublishingCapturePageSection) => void;
+  toggleSlideDisabled: () => void;
+};
+
+type SocialCaptureBrowserStateResult = {
+  isLoadingTree: boolean;
+  isSaving: boolean;
+  search: ReturnType<typeof useMasterFolderTreeViewModel>['searchState'];
+  searchQuery: string;
+  selectedSlideDisabled: boolean;
+  selectedSlideKey: string | null;
+  selectedSlideSections: SocialPublishingCapturePageSection[];
+  setSearchQuery: (value: string) => void;
+  slideMap: Map<string, SlideConfig>;
+  toggleSection: (section: SocialPublishingCapturePageSection) => void;
+  toggleSlideDisabled: () => void;
+  tree: ReturnType<typeof useMasterFolderTreeViewModel>;
+};
+
+const buildUpdatedCaptureSlides = ({
+  slideKey,
+  slides,
+  updater,
+}: {
+  slideKey: string;
+  slides: SocialPublishingCaptureContentConfig['slides'];
+  updater: SlideUpdater;
+}): SocialPublishingCaptureContentConfig['slides'] | null => {
+  const parsed = parseSocialCaptureSlideNodeId(`social-capture-slide:${slideKey}`);
+  if (parsed === null) {
+    return null;
+  }
+
+  const existingSlide = slides.find(
+    (slide) => buildSlideKey(slide.componentId, slide.sectionId, slide.subsectionId) === slideKey
+  );
+  const prev = existingSlide !== undefined
+    ? { sections: existingSlide.sections, disabled: existingSlide.disabled }
+    : { sections: DEFAULT_CAPTURE_SECTIONS };
+  const next = updater(prev);
+  const withoutSlide = slides.filter(
+    (slide) => buildSlideKey(slide.componentId, slide.sectionId, slide.subsectionId) !== slideKey
   );
 
-  // Slide map: slideKey → { sections, disabled }
-  const slideMap = useMemo(() => {
-    const map = new Map<string, { sections: SocialPublishingCapturePageSection[]; disabled?: boolean }>();
-    for (const slide of persistedConfig.slides) {
-      map.set(buildSlideKey(slide.componentId, slide.sectionId, slide.subsectionId), {
-        sections: slide.sections,
-        disabled: slide.disabled,
-      });
-    }
-    return map;
-  }, [persistedConfig]);
+  return [
+    ...withoutSlide,
+    {
+      componentId: parsed.componentId,
+      sectionId: parsed.sectionId,
+      subsectionId: parsed.subsectionId,
+      sections: next.sections,
+      ...(next.disabled === true ? { disabled: true as const } : {}),
+    },
+  ];
+};
 
-  // ─── Tree ──────────────────────────────────────────────────────────────────
-  const nodes = useMemo(
-    () => buildSocialCaptureMasterNodes(sections, lessons),
-    [sections, lessons]
+const buildPersistedSlideMap = (
+  persistedConfig: SocialPublishingCaptureContentConfig
+): Map<string, SlideConfig> => {
+  const map = new Map<string, SlideConfig>();
+  for (const slide of persistedConfig.slides) {
+    map.set(buildSlideKey(slide.componentId, slide.sectionId, slide.subsectionId), {
+      sections: slide.sections,
+      disabled: slide.disabled,
+    });
+  }
+  return map;
+};
+
+const resolveSelectedSlideKey = (
+  selectedNodeId: string | null | undefined
+): string | null => {
+  if (selectedNodeId === null || selectedNodeId === undefined || selectedNodeId.length === 0) {
+    return null;
+  }
+  const selectedSlide = parseSocialCaptureSlideNodeId(selectedNodeId);
+  if (selectedSlide === null) {
+    return null;
+  }
+  return buildSlideKey(
+    selectedSlide.componentId,
+    selectedSlide.sectionId,
+    selectedSlide.subsectionId
   );
+};
 
-  // ─── Search ────────────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('');
-  const tree = useMasterFolderTreeViewModel({
-    instance: TREE_INSTANCE,
-    nodes,
-    searchQuery,
-  });
-  const { searchState: search } = tree;
+const resolveSelectedSlideConfig = ({
+  selectedSlideKey,
+  slideMap,
+}: {
+  selectedSlideKey: string | null;
+  slideMap: Map<string, SlideConfig>;
+}): SlideConfig => {
+  if (selectedSlideKey === null) {
+    return { sections: DEFAULT_CAPTURE_SECTIONS, disabled: false };
+  }
+  return slideMap.get(selectedSlideKey) ?? {
+    sections: DEFAULT_CAPTURE_SECTIONS,
+    disabled: false,
+  };
+};
 
-  // ─── Selected slide ────────────────────────────────────────────────────────
-  const selectedNodeId = tree.controller.selectedNodeId;
-  const selectedSlide = useMemo(
-    () => (selectedNodeId ? parseSocialCaptureSlideNodeId(selectedNodeId) : null),
-    [selectedNodeId]
-  );
-
-  const selectedSlideKey = selectedSlide
-    ? buildSlideKey(selectedSlide.componentId, selectedSlide.sectionId, selectedSlide.subsectionId)
-    : null;
-
-  const selectedSlideSections: SocialPublishingCapturePageSection[] = selectedSlideKey
-    ? (slideMap.get(selectedSlideKey)?.sections ?? DEFAULT_CAPTURE_SECTIONS)
-    : DEFAULT_CAPTURE_SECTIONS;
-
-  const selectedSlideDisabled: boolean = selectedSlideKey
-    ? (slideMap.get(selectedSlideKey)?.disabled ?? false)
-    : false;
-
-  // ─── Stable ref ────────────────────────────────────────────────────────────
-  const settingsStoreRef = useRef(settingsStore);
-  settingsStoreRef.current = settingsStore;
-
-  // ─── Persistence ───────────────────────────────────────────────────────────
-  const persistConfig = useCallback(
+const useCaptureBrowserPersistence = ({
+  queryClient,
+  settingsStoreRef,
+  toast,
+  updateSetting,
+}: UseCaptureBrowserPersistenceParams): ((
+  nextConfig: SocialPublishingCaptureContentConfig
+) => Promise<void>) =>
+  useCallback(
     async (nextConfig: SocialPublishingCaptureContentConfig): Promise<void> => {
       try {
         const currentSettings = parseSocialPublishingSettings(
@@ -144,53 +204,33 @@ export function useSocialCaptureBrowserState() {
     [queryClient, toast, updateSetting]
   );
 
-  // ─── Slide mutations ───────────────────────────────────────────────────────
+const useCaptureBrowserSlideMutations = ({
+  persistConfig,
+  selectedSlideKey,
+  settingsStoreRef,
+}: UseCaptureBrowserSlideMutationsParams): UseCaptureBrowserSlideMutationsResult => {
   const updateSlide = useCallback(
-    (
-      slideKey: string,
-      updater: (prev: {
-        sections: SocialPublishingCapturePageSection[];
-        disabled?: boolean;
-      }) => { sections: SocialPublishingCapturePageSection[]; disabled?: boolean }
-    ): void => {
+    (slideKey: string, updater: SlideUpdater): void => {
       const currentSettings = parseSocialPublishingSettings(
         settingsStoreRef.current.get(SOCIAL_PUBLISHING_SETTINGS_KEY)
       );
       const { captureContentConfig } = currentSettings;
-      const existingSlide = captureContentConfig.slides.find(
-        (s) => buildSlideKey(s.componentId, s.sectionId, s.subsectionId) === slideKey
-      );
-      const parsed = parseSocialCaptureSlideNodeId(`social-capture-slide:${slideKey}`);
-      if (!parsed) return;
+      const nextSlides = buildUpdatedCaptureSlides({
+        slideKey,
+        slides: captureContentConfig.slides,
+        updater,
+      });
 
-      const prev = existingSlide
-        ? { sections: existingSlide.sections, disabled: existingSlide.disabled }
-        : { sections: DEFAULT_CAPTURE_SECTIONS };
-
-      const next = updater(prev);
-
-      const withoutSlide = captureContentConfig.slides.filter(
-        (s) => buildSlideKey(s.componentId, s.sectionId, s.subsectionId) !== slideKey
-      );
-      const nextSlides = [
-        ...withoutSlide,
-        {
-          componentId: parsed.componentId,
-          sectionId: parsed.sectionId,
-          subsectionId: parsed.subsectionId,
-          sections: next.sections,
-          ...(next.disabled ? { disabled: true as const } : {}),
-        },
-      ];
-
-      void persistConfig({ slides: nextSlides });
+      if (nextSlides !== null) {
+        void persistConfig({ slides: nextSlides });
+      }
     },
     [persistConfig]
   );
 
   const toggleSection = useCallback(
     (section: SocialPublishingCapturePageSection): void => {
-      if (!selectedSlideKey) return;
+      if (selectedSlideKey === null) return;
       updateSlide(selectedSlideKey, (prev) => {
         const has = prev.sections.includes(section);
         const nextSections = has
@@ -206,26 +246,63 @@ export function useSocialCaptureBrowserState() {
   );
 
   const toggleSlideDisabled = useCallback((): void => {
-    if (!selectedSlideKey) return;
+    if (selectedSlideKey === null) return;
     updateSlide(selectedSlideKey, (prev) => ({
       sections: prev.sections,
-      disabled: !prev.disabled,
+      disabled: prev.disabled !== true,
     }));
   }, [selectedSlideKey, updateSlide]);
 
+  return { toggleSection, toggleSlideDisabled };
+};
+
+export function useSocialCaptureBrowserState(): SocialCaptureBrowserStateResult {
+  const { toast } = useToast();
+  const settingsStore = useSettingsStore();
+  const queryClient = useQueryClient();
+  const updateSetting = useUpdateSetting();
+  const lessonsQuery = useKangurLessons();
+  const sectionsQuery = useKangurLessonSections();
+  const lessons = lessonsQuery.data ?? [];
+  const sections = sectionsQuery.data ?? [];
+  const rawSettings = settingsStore.get(SOCIAL_PUBLISHING_SETTINGS_KEY);
+  const persistedConfig = useMemo(
+    () => parseSocialPublishingSettings(rawSettings).captureContentConfig,
+    [rawSettings]
+  );
+  const slideMap = useMemo(() => buildPersistedSlideMap(persistedConfig), [persistedConfig]);
+  const nodes = useMemo(() => buildSocialCaptureMasterNodes(sections, lessons), [sections, lessons]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const tree = useMasterFolderTreeViewModel({ instance: TREE_INSTANCE, nodes, searchQuery });
+  const selectedSlideKey = resolveSelectedSlideKey(tree.controller.selectedNodeId);
+  const selectedSlideConfig = resolveSelectedSlideConfig({ selectedSlideKey, slideMap });
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
+  const persistConfig = useCaptureBrowserPersistence({
+    queryClient,
+    settingsStoreRef,
+    toast,
+    updateSetting,
+  });
+  const { toggleSection, toggleSlideDisabled } = useCaptureBrowserSlideMutations({
+    persistConfig,
+    selectedSlideKey,
+    settingsStoreRef,
+  });
+
   return {
     tree,
-    search,
+    search: tree.searchState,
     searchQuery,
     setSearchQuery,
     selectedSlideKey,
-    selectedSlideSections,
-    selectedSlideDisabled,
+    selectedSlideSections: selectedSlideConfig.sections,
+    selectedSlideDisabled: selectedSlideConfig.disabled === true,
     slideMap,
     toggleSection,
     toggleSlideDisabled,
     isSaving: updateSetting.isPending,
-    isLoadingTree,
+    isLoadingTree: lessonsQuery.isLoading || sectionsQuery.isLoading,
   };
 }
 

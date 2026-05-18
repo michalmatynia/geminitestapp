@@ -11,6 +11,7 @@ interface PreviewNodeSelectionButtonProps {
   selected: boolean;
   onSelect: () => void;
   className?: string;
+  showEditorChrome?: boolean;
 }
 
 export function PreviewNodeSelectionButton(

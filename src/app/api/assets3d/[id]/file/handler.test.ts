@@ -135,21 +135,14 @@ describe('assets3d file handler', () => {
     vi.unstubAllGlobals();
   });
 
-  it('falls back to remote storage URLs when the filepath is absolute', async () => {
+  it('redirects to remote storage URLs when the filepath is absolute', async () => {
     getAsset3DByIdMock.mockResolvedValue({
       id: 'asset-3',
       filepath: 'https://files.example.test/assets/model.glb',
       mimetype: 'model/gltf-binary',
     });
     isHttpFilepathMock.mockReturnValue(true);
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response('remote-model', {
-          status: 200,
-          headers: { 'content-type': 'model/gltf-binary' },
-        })
-      );
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await getHandler(
@@ -158,15 +151,14 @@ describe('assets3d file handler', () => {
       { id: 'asset-2' }
     );
 
-    expect(fetchMock).toHaveBeenCalledWith('https://files.example.test/assets/model.glb', {
-      cache: 'no-store',
-    });
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('https://files.example.test/assets/model.glb');
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(getDiskPathFromPublicPathMock).not.toHaveBeenCalled();
-    expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('remote-model');
     vi.unstubAllGlobals();
   });
 
-  it('uses the Milkbar FastComet origin for CMS assets when no mirror exists', async () => {
+  it('redirects Milkbar CMS assets to the FastComet CDN when no mirror exists', async () => {
     getAsset3DByIdMock.mockResolvedValue({
       id: 'asset-4',
       filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
@@ -179,12 +171,7 @@ describe('assets3d file handler', () => {
     isHttpFilepathMock.mockReturnValue(true);
     getDiskPathFromPublicPathMock.mockReturnValue('/tmp/model.gltf');
     existsSyncMock.mockReturnValue(false);
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response('origin-model', {
-        status: 200,
-        headers: { 'content-type': 'application/octet-stream' },
-      })
-    );
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await getHandler(
@@ -193,9 +180,9 @@ describe('assets3d file handler', () => {
       { id: 'asset-4' }
     );
 
-    expect(fetchMock).toHaveBeenCalledOnce();
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://milkbardesigners.com/uploads/cms/models/model.gltf');
-    expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('origin-model');
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf');
+    expect(fetchMock).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });

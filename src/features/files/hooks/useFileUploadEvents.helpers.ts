@@ -10,11 +10,9 @@ type FileUploadEventsQueryParamBuilder = {
 
 const hasNonEmptyQueryParamValue = (value: FileUploadEventsQueryParamValue): boolean => {
   if (value instanceof Date) return !Number.isNaN(value.getTime());
-  return typeof value === 'number'
-    ? Boolean(value)
-    : typeof value === 'string'
-      ? value.length > 0
-      : false;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') return value.length > 0;
+  return false;
 };
 
 const isNonDefaultStatusQueryParamValue = (value: FileUploadEventsQueryParamValue): boolean =>

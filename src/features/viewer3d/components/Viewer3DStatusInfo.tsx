@@ -33,6 +33,7 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
     enableOrderedDithering,
     enableDithering,
     enableShadows,
+    renderMode,
   } = useViewer3DState();
 
   return (
@@ -51,6 +52,12 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
         <MetadataItem
           label='Light'
           value={lighting}
+          valueClassName='text-gray-300'
+          variant='minimal'
+        />
+        <MetadataItem
+          label='Mode'
+          value={renderMode}
           valueClassName='text-gray-300'
           variant='minimal'
         />

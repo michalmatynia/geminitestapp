@@ -15,7 +15,7 @@ const CSVImportPage = (): React.JSX.Element => {
   const importMutation = useCsvImportMutation();
 
   const handleFileChange = (files: File[]): void => {
-    setFile(files[0] || null);
+    setFile(files[0] ?? null);
   };
 
   const handleSubmit = async (helpers?: {

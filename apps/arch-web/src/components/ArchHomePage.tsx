@@ -63,6 +63,12 @@ export default function ArchHomePage({
     () => firstLocalizedModelUrl(localizedContent, (content) => content.drawing.interiorModelUrl),
     [localizedContent]
   );
+  const viewerProjects = useMemo(() => {
+    const codes = pageContent.drawing.asset3dProjectCodes;
+    if (codes.length === 0) return projects;
+    const filtered = codes.map((code) => projects.find((p) => p.code === code)).filter((p): p is typeof projects[number] => p !== undefined);
+    return filtered.length > 0 ? filtered : projects;
+  }, [pageContent.drawing.asset3dProjectCodes, projects]);
 
   const switchLocale = useCallback((nextLocale: ArchLocale) => {
     if (activeLocale === nextLocale) return;
@@ -109,8 +115,8 @@ export default function ArchHomePage({
       ) : null}
       {vis.philosophy ? <Philosophy content={pageContent.philosophy} /> : null}
       {vis.services ? <Services services={services} content={pageContent.services} /> : null}
-      {vis.projects ? <BuiltWork projects={projects} content={pageContent.projects} /> : null}
-      {vis.projects ? <ProjectViewer projects={projects} /> : null}
+      {vis.projects ? <BuiltWork projects={viewerProjects} content={pageContent.projects} /> : null}
+      {vis.projects ? <ProjectViewer projects={viewerProjects} /> : null}
       {vis.process ? <Process content={pageContent.process} /> : null}
       {vis.metrics ? <Metrics metrics={pageContent.metrics} /> : null}
       {vis.caseStudy && projects.length > 0 ? (

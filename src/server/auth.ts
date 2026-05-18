@@ -1,5 +1,13 @@
 import 'server-only';
 
+/**
+ * Server-side Auth Entry Point
+ *
+ * Provides centralized access to authentication and user management services,
+ * including session handling, security policies, user record writing, 
+ * and email verification challenges.
+ */
+
 export {
   auth,
   findAuthUserByEmail,

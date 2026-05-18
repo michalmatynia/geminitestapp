@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   startAiPathRunQueue: vi.fn(),
   startCaseResolverOcrQueue: vi.fn(),
   startChatbotJobQueue: vi.fn(),
+  startCmsFastCometMediaUploadQueue: vi.fn(),
   startDatabaseBackupSchedulerQueue: vi.fn(),
   startFilemakerEmailCampaignSchedulerQueue: vi.fn(),
   startFilemakerCampaignColdPruneSchedulerQueue: vi.fn(),
@@ -28,6 +29,8 @@ const mocks = vi.hoisted(() => ({
   startProductMarketplaceCopyDebrandBatchQueue: vi.fn(),
   startProductScrapeProfileQueue: vi.fn(),
   startProductSyncSchedulerQueue: vi.fn(),
+  startMilkbarAsset3DDeleteQueue: vi.fn(),
+  startMilkbarAsset3DFastCometUploadQueue: vi.fn(),
   startSystemLogAlertsQueue: vi.fn(),
   startTraderaListingQueue: vi.fn(),
   startTraderaRelistSchedulerQueue: vi.fn(),
@@ -83,6 +86,10 @@ vi.mock('@/features/integrations/workers/traderaRelistSchedulerQueue', () => ({
   startTraderaRelistSchedulerQueue: mocks.startTraderaRelistSchedulerQueue,
 }));
 
+vi.mock('@/features/cms/workers/cmsFastCometMediaUploadQueue', () => ({
+  startCmsFastCometMediaUploadQueue: mocks.startCmsFastCometMediaUploadQueue,
+}));
+
 vi.mock('@/server/queues/product-ai', () => ({
   startProductAiJobQueue: mocks.startProductAiJobQueue,
 }));
@@ -100,6 +107,16 @@ vi.mock('@/features/products/workers/productScrapeProfileQueue', () => ({
 
 vi.mock('@/server/queues/product-sync', () => ({
   startProductSyncSchedulerQueue: mocks.startProductSyncSchedulerQueue,
+}));
+
+vi.mock('@/features/viewer3d/workers/milkbarAsset3DFastCometUploadQueue', () => ({
+  startMilkbarAsset3DFastCometUploadQueue:
+    mocks.startMilkbarAsset3DFastCometUploadQueue,
+}));
+
+vi.mock('@/features/viewer3d/workers/milkbarAsset3DDeleteQueue', () => ({
+  startMilkbarAsset3DDeleteQueue:
+    mocks.startMilkbarAsset3DDeleteQueue,
 }));
 
 vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
@@ -197,6 +214,9 @@ describe('initializeQueues', () => {
     await waitForStartup();
     expect(mocks.startAllWorkers).toHaveBeenCalledTimes(1);
     expect(mocks.startAiInsightsQueue).not.toHaveBeenCalled();
+    expect(mocks.startCmsFastCometMediaUploadQueue).toHaveBeenCalledTimes(1);
+    expect(mocks.startMilkbarAsset3DDeleteQueue).toHaveBeenCalledTimes(1);
+    expect(mocks.startMilkbarAsset3DFastCometUploadQueue).toHaveBeenCalledTimes(1);
   });
 
   it('retries worker startup after Redis is initially unreachable', async () => {

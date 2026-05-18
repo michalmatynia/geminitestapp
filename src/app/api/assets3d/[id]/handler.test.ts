@@ -8,12 +8,14 @@ const {
   getAsset3DFromLookupRepositoriesMock,
   getAsset3DRepositoryMock,
   deleteAsset3DMock,
+  deleteMilkbarAsset3DInRedisRuntimeMock,
   parseJsonBodyMock,
 } = vi.hoisted(() => ({
   findAsset3DRepositoryAssetMock: vi.fn(),
   getAsset3DFromLookupRepositoriesMock: vi.fn(),
   getAsset3DRepositoryMock: vi.fn(),
   deleteAsset3DMock: vi.fn(),
+  deleteMilkbarAsset3DInRedisRuntimeMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
 }));
 
@@ -22,6 +24,12 @@ vi.mock('@/features/viewer3d/server', () => ({
   getAsset3DFromLookupRepositories: getAsset3DFromLookupRepositoriesMock,
   getAsset3DRepository: getAsset3DRepositoryMock,
   deleteAsset3D: deleteAsset3DMock,
+}));
+
+vi.mock('@/features/viewer3d/workers/milkbarAsset3DDeleteQueue', () => ({
+  deleteMilkbarAsset3DInRedisRuntime: deleteMilkbarAsset3DInRedisRuntimeMock,
+  isMilkbarAsset3DRecord: (asset: { metadata?: Record<string, unknown> } | null | undefined) =>
+    asset?.metadata?.['storageProfile'] === 'milkbarCms',
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -56,6 +64,10 @@ describe('assets3d by-id handler module', () => {
       return asset === null ? null : { repository, asset };
     });
     deleteAsset3DMock.mockResolvedValue(true);
+    deleteMilkbarAsset3DInRedisRuntimeMock.mockResolvedValue({
+      assetId: 'asset-1',
+      status: 'deleted',
+    });
     parseJsonBodyMock.mockResolvedValue({
       ok: true,
       data: { name: 'Updated asset' },
@@ -141,6 +153,27 @@ describe('assets3d by-id handler module', () => {
     );
 
     expect(deleteAsset3DMock).toHaveBeenCalledWith('asset-1');
+    await expect(response.json()).resolves.toEqual({ success: true });
+  });
+
+  it('deletes Milkbar CMS assets in Redis runtime', async () => {
+    repository.getAsset3DById.mockResolvedValue({
+      id: 'asset-1',
+      name: 'Milkbar model',
+      metadata: { storageProfile: 'milkbarCms' },
+    });
+
+    const response = await deleteHandler(
+      new NextRequest('http://localhost/api/assets3d/asset-1', { method: 'DELETE' }),
+      requestContext,
+      { id: 'asset-1' }
+    );
+
+    expect(deleteMilkbarAsset3DInRedisRuntimeMock).toHaveBeenCalledWith({
+      assetId: 'asset-1',
+      requestedAt: expect.any(String),
+    });
+    expect(deleteAsset3DMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({ success: true });
   });
 

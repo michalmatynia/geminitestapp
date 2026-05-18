@@ -9,7 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 const EASE = 'power3.out';
 
 /* Elements with dedicated section animations — excluded from the generic fade-up batch */
-const CUSTOM = ['.project-card', '.proc-cell', '.metric-cell', '.phil-figure', '.case-fig', '.prin-row', 'h2'];
+const CUSTOM = ['.meta-rev', '.project-card', '.proc-cell', '.metric-cell', '.phil-figure', '.case-fig', '.prin-row', 'h2'];
 const BATCH_SEL = CUSTOM.reduce((s, c) => `${s}:not(${c})`, '.rev');
 
 /* ── Word-split utility ──────────────────────────────────────────────────── */
@@ -45,40 +45,17 @@ function splitIntoWordSpans(el: HTMLElement): HTMLSpanElement[] {
   return words;
 }
 
-/* ── Text scramble utility ───────────────────────────────────────────────── */
-const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789—·/';
-
-function scrambleReveal(el: HTMLElement, final: string): () => void {
-  const totalFrames = 44;
-  let frame = 0;
-  let rafId = 0;
-
-  const tick = () => {
-    const progress = frame / totalFrames;
-    const revealed = Math.floor(progress * final.length);
-    el.textContent = Array.from(final).map((char, i) => {
-      if (char === ' ') return ' ';
-      if (i < revealed) return char;
-      return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-    }).join('');
-    frame++;
-    if (frame <= totalFrames) rafId = requestAnimationFrame(tick);
-    else el.textContent = final;
-  };
-
-  rafId = requestAnimationFrame(tick);
-  return () => { cancelAnimationFrame(rafId); el.textContent = final; };
-}
-
 export default function GSAPInit() {
   useEffect(() => {
     let navScrollHandler: (() => void) | null = null;
-    let revealFallbackTimer = 0;
     const injectedEls: HTMLElement[] = [];
-    const scrambleCleanups: Array<() => void> = [];
     const splitH2s: Array<{ el: HTMLElement; original: string }> = [];
 
     const ctx = gsap.context(() => {
+      const metaTexts = gsap.utils.toArray<HTMLElement>(
+        '.sec-head-meta .num.rev, .sec-head-meta .label.rev, .phil-text > .label.rev'
+      );
+      metaTexts.forEach((el) => el.classList.add('meta-rev'));
 
       // ── 1. NAV ENTRANCE ──────────────────────────────────────────────
       const nav = document.getElementById('topnav');
@@ -133,13 +110,23 @@ export default function GSAPInit() {
         });
       });
 
-      // ── 4. MONOSPACE LABEL SCRAMBLE ───────────────────────────────────
-      // .num and .label inside section headers get a character-scramble reveal
-      document.querySelectorAll<HTMLElement>('.sec-head-meta .num, .sec-head-meta .label').forEach((el) => {
-        const final = el.textContent ?? '';
-        ScrollTrigger.create({
-          trigger: el, start: 'top 91%', once: true,
-          onEnter: () => scrambleCleanups.push(scrambleReveal(el, final)),
+      // ── 4. SECTION META — QUIET STAGGER ──────────────────────────────
+      // Section numbers and labels should read cleanly, without competing effects.
+      gsap.set(metaTexts, { opacity: 0, y: 12 });
+      gsap.utils.toArray<HTMLElement>('.sec-head-meta, .phil-text').forEach((container) => {
+        const items = Array.from(container.querySelectorAll<HTMLElement>('.meta-rev'));
+        if (!items.length) return;
+        gsap.to(items, {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          ease: EASE,
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: container.closest('section') ?? container,
+            start: 'top 84%',
+            once: true,
+          },
         });
       });
 
@@ -234,51 +221,46 @@ export default function GSAPInit() {
       // ── 10. PROJECT CARDS — RISE + DARK CURTAIN REVEAL ───────────────
       const projectCards = gsap.utils.toArray<HTMLElement>('.project-card.rev');
       if (projectCards.length) {
-        // Cards rise and scale into view
-        gsap.fromTo(
-          projectCards,
-          { opacity: 0, y: 54, scale: 0.97 },
-          {
-            opacity: 1, y: 0, scale: 1, duration: 1.1, ease: EASE, stagger: 0.13,
-            scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
-          }
-        );
-
-        // Dark curtain slides away right→left to reveal each drawing
-        projectCards.forEach((card, i) => {
+        const curtains: HTMLElement[] = [];
+        const metas: Element[] = [];
+        projectCards.forEach((card) => {
           const frame = card.querySelector<HTMLElement>('.project-frame, .project-frame-3d');
-          if (!frame) return;
-          const curtain = document.createElement('span');
-          curtain.className = 'project-reveal-curtain';
-          curtain.style.cssText = [
-            'position:absolute', 'inset:0', 'background:var(--ink)',
-            'z-index:3', 'transform-origin:right center', 'pointer-events:none',
-          ].join(';');
-          frame.appendChild(curtain);
-          injectedEls.push(curtain);
-
-          gsap.to(curtain, {
-            scaleX: 0,
-            duration: 0.84, ease: 'power3.inOut',
-            delay: i * 0.13 + 0.44,
-            scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
-          });
-        });
-
-        // Project meta text rises in after curtain clears
-        projectCards.forEach((card, i) => {
           const meta = card.querySelector('.project-meta');
-          if (!meta) return;
-          gsap.fromTo(
-            meta,
-            { opacity: 0, y: 16 },
-            {
-              opacity: 1, y: 0, duration: 0.7, ease: EASE,
-              delay: i * 0.13 + 0.6,
-              scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
-            }
-          );
+          if (meta) metas.push(meta);
+          if (frame) {
+            const curtain = document.createElement('span');
+            curtain.className = 'project-reveal-curtain';
+            curtain.style.cssText = [
+              'position:absolute', 'inset:0', 'background:var(--ink)',
+              'z-index:3', 'transform-origin:right center', 'pointer-events:none',
+            ].join(';');
+            frame.appendChild(curtain);
+            curtains.push(curtain);
+            injectedEls.push(curtain);
+          }
         });
+        gsap.set(curtains, { scaleX: 1 });
+        gsap.set(metas, { opacity: 0, y: 16 });
+
+        const projectsTimeline = gsap.timeline({
+          scrollTrigger: { trigger: '.projects-grid', start: 'top 82%', once: true },
+        });
+        projectsTimeline
+          .fromTo(
+            projectCards,
+            { opacity: 0, y: 54, scale: 0.97 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.05, ease: EASE, stagger: 0.13 }
+          )
+          .to(
+            curtains,
+            { scaleX: 0, duration: 0.84, ease: 'power3.inOut', stagger: 0.13 },
+            '<0.34'
+          )
+          .to(
+            metas,
+            { opacity: 1, y: 0, duration: 0.7, ease: EASE, stagger: 0.13 },
+            '<0.22'
+          );
       }
 
       // ── 11. PROCESS CELLS + SVG GLYPH DRAW ───────────────────────────
@@ -400,41 +382,11 @@ export default function GSAPInit() {
         });
       }
 
-      revealFallbackTimer = window.setTimeout(() => {
-        document
-          .querySelectorAll<HTMLElement>(
-            [
-              '.rev',
-              '.practice-row',
-              '.project-card',
-              '.project-meta',
-              '.proc-cell',
-              '.metric-cell',
-              '.phil-figure',
-              '.case-fig',
-              '.foot-brand',
-              '.foot-col',
-              'h2.rev span',
-            ].join(',')
-          )
-          .forEach((el) => {
-            el.style.opacity = '1';
-            el.style.transform = 'none';
-            el.style.clipPath = 'none';
-          });
-        document
-          .querySelectorAll<HTMLElement>('.project-reveal-curtain')
-          .forEach((el) => {
-            el.style.transform = 'scaleX(0)';
-          });
-      }, 2500);
     });
 
     return () => {
       ctx.revert();
-      window.clearTimeout(revealFallbackTimer);
       if (navScrollHandler) document.removeEventListener('scroll', navScrollHandler);
-      scrambleCleanups.forEach((c) => c());
       injectedEls.forEach((el) => el.remove());
       splitH2s.forEach(({ el, original }) => {
         el.innerHTML = original;

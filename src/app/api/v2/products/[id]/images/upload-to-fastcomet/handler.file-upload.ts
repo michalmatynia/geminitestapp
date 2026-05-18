@@ -13,7 +13,6 @@ import {
   getDiskPathFromPublicPath,
   getProductImageFileRepository,
 } from '@/shared/lib/files/services/image-file-service';
-import { uploadBufferToFastComet } from '@/shared/lib/files/services/storage/file-storage-service';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import type { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
@@ -91,18 +90,6 @@ export const parseMultipartFastCometUploadBody = async (
   }
   return { ok: true, data: { ...parsed.data, file, kind: 'file' } };
 };
-
-const buildUploadedFileMetadata = (input: {
-  originalFilename: string;
-  publicPath: string;
-}): Record<string, unknown> => ({
-  localPublicPath: input.publicPath,
-  mirroredLocally: true,
-  originalFilename: input.originalFilename,
-  publicPath: input.publicPath,
-  storageSource: 'fastcomet',
-  uploadedToFastCometAt: new Date().toISOString(),
-});
 
 const buildStagedFileMetadata = (input: {
   originalFilename: string;
@@ -213,60 +200,6 @@ const persistUploadedImageSlot = async (input: {
     throw notFoundError('Product not found after FastComet upload.', { productId: input.productId });
   }
   return updatedProduct;
-};
-
-export const uploadNewImageFileToFastComet = async (input: {
-  body: FastCometFileUploadBody;
-  product: ProductWithImages;
-  productId: string;
-  productRepo: ProductRepository;
-}): Promise<{ imageFile: ImageFileRecord; product: ProductWithImages; publicPath: string; remoteUrl: string }> => {
-  const { body, product, productId, productRepo } = input;
-  const { filename, publicPath } = resolveUploadedFileTarget({
-    file: body.file,
-    filename: body.filename,
-    product,
-  });
-  const buffer = Buffer.from(await body.file.arrayBuffer());
-  const trimmedMimetype = body.file.type.trim();
-  const mimetype = trimmedMimetype.length > 0 ? trimmedMimetype : 'image/jpeg';
-  await writeLocalImageMirror({ buffer, publicPath });
-  const remoteUrl = await uploadBufferToFastComet({
-    buffer,
-    category: 'products',
-    filename,
-    mimetype,
-    publicPath,
-  });
-  const recordInput: ImageFileCreateInput = {
-    filename,
-    filepath: remoteUrl,
-    metadata: buildUploadedFileMetadata({
-      originalFilename: body.file.name,
-      publicPath,
-    }),
-    mimetype,
-    publicUrl: remoteUrl,
-    size: body.file.size,
-    storageProvider: 'fastcomet',
-    url: remoteUrl,
-  };
-  const imageFileRepo = await getProductImageFileRepository();
-  const imageFile = await imageFileRepo.createImageFile(recordInput);
-  const updatedProduct = await persistUploadedImageSlot({
-    imageFile,
-    imageSlotIndex: body.imageSlotIndex,
-    product,
-    productId,
-    productRepo,
-  });
-
-  return {
-    imageFile,
-    product: updatedProduct,
-    publicPath,
-    remoteUrl,
-  };
 };
 
 export const stageNewImageFileForFastCometUpload = async (input: {

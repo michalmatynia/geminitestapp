@@ -6,9 +6,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { makeProjectGroup, INK, INK_2, INK_3, PAPER, PAPER2, PAPER3 } from '@/lib/projectModels';
-import { disposeObject3D, fitObjectToBox, loadGltfModel, prepareLoadedModel } from '@/lib/threeModelUtils';
+import { disposeObject3D, loadGltfModel, prepareLoadedModel } from '@/lib/threeModelUtils';
 
-type RenderMode = 'wire' | 'solid' | 'texture';
+type RenderMode = 'edges' | 'wireframe' | 'transparent' | 'solid' | 'textured';
 type Props = { projects: Project[] };
 
 const fallbackProjects: Project[] = [
@@ -22,7 +22,7 @@ function ProjectViewer({ projects }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<{ loadProject: (i: number) => void; setMode: (m: RenderMode) => void; zoom: (factor: number) => void } | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [renderMode, setRenderMode] = useState<RenderMode>('solid');
+  const [renderMode, setRenderMode] = useState<RenderMode>('edges');
   const displayProjects = projects.length > 0 ? projects : fallbackProjects;
 
   useEffect(() => {
@@ -74,12 +74,10 @@ function ProjectViewer({ projects }: Props) {
     canvas.addEventListener('pointerup', resumeRotate);
     canvas.addEventListener('pointerleave', () => { if (!controls.autoRotate) resumeRotate(); });
 
-    // Environment map for PBR textured materials (MeshStandardMaterial only)
     scene.environment = envTex;
 
-    // Warm paper lighting — works for all three modes
+    // Warm paper lighting — works for all modes
     scene.add(new THREE.AmbientLight(0xF9F8F5, 0.6));
-    // Hemisphere adds sky/ground bounce that brings PBR materials to life
     scene.add(new THREE.HemisphereLight(0xD4E6F2, 0xC8A882, 0.55));
     const sun = new THREE.DirectionalLight(0xFFF4E0, 1.1);
     sun.position.set(12, 22, 10);
@@ -158,12 +156,12 @@ function ProjectViewer({ projects }: Props) {
     pavingMesh.receiveShadow = true;
     scene.add(pavingMesh);
 
-    // Silence unused-import linter — colours are re-exported for IsometricThumbnail
-    void INK; void INK_2; void INK_3; void PAPER; void PAPER2; void PAPER3;
+    // Silence unused-import linter — colours used elsewhere in this file or re-exported
+    void INK_2; void INK_3; void PAPER; void PAPER2; void PAPER3;
 
     let currentGroup: THREE.Group | null = null;
     let currentIdx = 0;
-    let mode: RenderMode = 'solid';
+    let mode: RenderMode = 'edges';
 
     const camTargets = displayProjects.map((p) => ({
       x: p.cameraPosition.x,
@@ -186,32 +184,100 @@ function ProjectViewer({ projects }: Props) {
       const startTime = Date.now();
       const entries: Array<{ mat: THREE.Material & { opacity: number }; from: number; to: number }> = [];
       group.traverse(c => {
-        const mat = (c as THREE.Mesh).material as (THREE.Material & { opacity: number }) | undefined;
-        if (!mat) return;
-        entries.push({ mat, from: mat.opacity, to: targetFn(c) });
+        if (c.userData._isEdgesOverlay) return; // managed by applyEdgesMode
+        const raw = (c as THREE.Mesh).material;
+        if (!raw) return;
+        const mats = Array.isArray(raw) ? raw : [raw];
+        const target = targetFn(c);
+        (mats as Array<THREE.Material & { opacity: number }>).forEach(mat => {
+          entries.push({ mat, from: mat.opacity, to: target });
+        });
       });
       const tick = () => {
         const t = Math.min((Date.now() - startTime) / durMs, 1);
         const ease = 1 - Math.pow(1 - t, 2);
-        entries.forEach(({ mat, from, to }) => { mat.opacity = from + (to - from) * ease; });
+        entries.forEach(({ mat, from, to: target }) => { mat.opacity = from + (target - from) * ease; });
         if (t < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     }
 
+    // Returns target opacity for each object per render mode
     function opFn(m: RenderMode) {
       return (c: THREE.Object3D) => {
-        if (c.userData.isExternalModel) return m === 'wire' ? 0.28 : 1;
-        if (c.userData.isSolid)   return m === 'solid' ? 1 : 0;
-        if (c.userData.isTexture) return m === 'texture' ? 1 : 0;
+        // GLTF meshes — wireframe toggled via material.wireframe, edges via overlay LineSegments
+        if (c.userData.isExternalModel) {
+          if (m === 'transparent') return 0.28;
+          if (m === 'edges')       return 0; // mesh hidden; EdgesGeometry overlay provides visuals
+          return 1;
+        }
+        // Procedural solid-fill (MeshLambertMaterial)
+        if (c.userData.isSolid) {
+          if (m === 'solid')       return 1;
+          if (m === 'transparent') return 0.35;
+          return 0;
+        }
+        // Procedural facade texture (MeshStandardMaterial with canvas map)
+        if (c.userData.isTexture) return m === 'textured' ? 1 : 0;
+        // Procedural edge line segments (LineSegments / Line)
         if (c.userData.isWire) {
           const lineMat = (c as THREE.LineSegments).material as THREE.LineBasicMaterial;
-          if (m === 'wire')    return lineMat.opacity || 0.75;
-          if (m === 'texture') return (lineMat.opacity || 0.75) * 0.22; // structural overlay
-          return 0;
+          const nat = lineMat.opacity ?? 0.75;
+          if (m === 'edges' || m === 'wireframe') return nat;
+          if (m === 'transparent') return nat * 0.45;
+          if (m === 'textured')    return nat * 0.22; // dim structural overlay
+          return 0; // solid
         }
         return 0;
       };
+    }
+
+    // Toggle material.wireframe on GLTF meshes (marked isExternalModel by prepareLoadedModel)
+    function applyWireframeMode(group: THREE.Group, on: boolean) {
+      group.traverse(c => {
+        if (!c.userData.isExternalModel) return;
+        const mesh = c as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach(m => {
+          const mat = m as THREE.MeshStandardMaterial;
+          if (!('wireframe' in mat)) return;
+          mat.wireframe = on;
+          if (on) {
+            // Cache original color; use dark ink so edges are visible on parchment bg
+            if (!(mat.userData as Record<string, unknown>)['_origColor']) {
+              (mat.userData as Record<string, unknown>)['_origColor'] = mat.color.clone();
+            }
+            mat.color.set(INK);
+          } else {
+            const orig = (mat.userData as Record<string, unknown>)['_origColor'] as THREE.Color | undefined;
+            if (orig) mat.color.copy(orig);
+          }
+        });
+      });
+    }
+
+    // Build EdgesGeometry + LineSegments overlays on GLTF meshes for the edges mode.
+    // Overlays are cached in mesh.userData._edgesLines and reused on subsequent toggles.
+    function applyEdgesMode(group: THREE.Group, on: boolean) {
+      group.traverse(c => {
+        if (!c.userData.isExternalModel) return;
+        const mesh = c as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        if (on) {
+          if (!mesh.userData._edgesLines) {
+            const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 15);
+            const linesMat = new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.85 });
+            const lines = new THREE.LineSegments(edgesGeo, linesMat);
+            lines.userData._isEdgesOverlay = true;
+            mesh.add(lines);
+            mesh.userData._edgesLines = lines;
+          }
+          (mesh.userData._edgesLines as THREE.LineSegments).visible = true;
+        } else if (mesh.userData._edgesLines) {
+          (mesh.userData._edgesLines as THREE.LineSegments).visible = false;
+        }
+      });
     }
 
     let loadToken = 0;
@@ -230,10 +296,7 @@ function ProjectViewer({ projects }: Props) {
       }
 
       const addGroup = (g: THREE.Group) => {
-        if (loadToken !== token) {
-          disposeObject3D(g);
-          return;
-        }
+        if (loadToken !== token) { disposeObject3D(g); return; }
         g.traverse(c => {
           const mesh = c as THREE.Mesh;
           const mats = Array.isArray(mesh.material)
@@ -246,6 +309,8 @@ function ProjectViewer({ projects }: Props) {
             mat.opacity = 0;
           });
         });
+        applyWireframeMode(g, mode === 'wireframe');
+        applyEdgesMode(g, mode === 'edges');
         scene.add(g);
         currentGroup = g;
         setTimeout(() => { if (currentGroup === g) animateOpacity(g, opFn(mode), 600); }, 50);
@@ -256,7 +321,13 @@ function ProjectViewer({ projects }: Props) {
         void loadGltfModel(projectModelUrl)
           .then((g) => {
             prepareLoadedModel(g);
-            fitObjectToBox(g, 18, new THREE.Vector3(0, 6, 0));
+            const box0 = new THREE.Box3().setFromObject(g);
+            const size0 = box0.getSize(new THREE.Vector3());
+            const maxAxis = Math.max(size0.x, size0.y, size0.z);
+            if (maxAxis > 0) g.scale.multiplyScalar(18 / maxAxis);
+            const box1 = new THREE.Box3().setFromObject(g);
+            const cx = box1.getCenter(new THREE.Vector3());
+            g.position.set(-cx.x, -box1.min.y, -cx.z);
             addGroup(g);
           })
           .catch(() => addGroup(makeProjectGroup(idx)));
@@ -301,11 +372,13 @@ function ProjectViewer({ projects }: Props) {
       loadProject,
       setMode: (m: RenderMode) => {
         mode = m;
-        // Paving fades in for textured, out otherwise
-        animateMat(pavingMat, m === 'texture' ? 0.88 : 0, 600);
-        // Grid dims in textured mode (still readable as site context)
-        animateMat(gridMat, m === 'texture' ? 0.18 : 0.60, 600);
-        if (currentGroup) animateOpacity(currentGroup, opFn(m), 500);
+        animateMat(pavingMat, m === 'textured' ? 0.88 : 0, 600);
+        animateMat(gridMat, m === 'textured' ? 0.18 : 0.60, 600);
+        if (currentGroup) {
+          applyWireframeMode(currentGroup, m === 'wireframe');
+          applyEdgesMode(currentGroup, m === 'edges');
+          animateOpacity(currentGroup, opFn(m), 500);
+        }
       },
       zoom: doZoom,
     };
@@ -328,7 +401,7 @@ function ProjectViewer({ projects }: Props) {
     function animate() {
       rafId = requestAnimationFrame(animate);
       controls.update();
-      bgCurrent.lerp(mode === 'texture' ? bgSky : bgParchment, 0.05);
+      bgCurrent.lerp(mode === 'textured' ? bgSky : bgParchment, 0.05);
       renderer.setClearColor(bgCurrent, 1);
       renderer.render(scene, camera);
     }
@@ -385,9 +458,11 @@ function ProjectViewer({ projects }: Props) {
           <div className="viewer-mode">
             <div className="viewer-mode-label">render mode</div>
             <div className="viewer-mode-btns">
-              <button className={`vmb${renderMode === 'wire' ? ' active' : ''}`} onClick={() => setMode('wire')}>wireframe</button>
-              <button className={`vmb${renderMode === 'solid' ? ' active' : ''}`} onClick={() => setMode('solid')}>solid</button>
-              <button className={`vmb${renderMode === 'texture' ? ' active' : ''}`} onClick={() => setMode('texture')}>textured</button>
+              <button className={`vmb${renderMode === 'edges'       ? ' active' : ''}`} onClick={() => setMode('edges')}>edges</button>
+              <button className={`vmb${renderMode === 'wireframe'   ? ' active' : ''}`} onClick={() => setMode('wireframe')}>wireframe</button>
+              <button className={`vmb${renderMode === 'transparent' ? ' active' : ''}`} onClick={() => setMode('transparent')}>transparent</button>
+              <button className={`vmb${renderMode === 'solid'       ? ' active' : ''}`} onClick={() => setMode('solid')}>solid</button>
+              <button className={`vmb${renderMode === 'textured'    ? ' active' : ''}`} onClick={() => setMode('textured')}>textured</button>
             </div>
           </div>
         </div>

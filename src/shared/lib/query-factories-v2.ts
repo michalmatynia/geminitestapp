@@ -613,7 +613,7 @@ export function useOptimisticMutationV2<TData, TVariables, TCacheData = TData>(
     onSettled: (data, error, variables, context, mutationContext) => {
       void queryClient.invalidateQueries({ queryKey });
       if (onSettled) {
-        return onSettled({ data, error, variables, context, mutationContext });
+        return onSettled(data, error, variables, context, mutationContext);
       }
       return undefined;
     },

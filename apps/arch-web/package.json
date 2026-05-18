@@ -7,6 +7,7 @@
     "dev": "next dev --webpack --port 3400",
     "build": "next build --webpack",
     "start": "next start --port 3400",
+    "check:gsap-guards": "node scripts/check-gsap-guards.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
     "mongo:arch:up": "MONGODB_PORT=27022 MONGODB_DATA_DIR=../../../database/arch-mongo-data MONGODB_RUNTIME_DIR=../../../database/arch-mongo-runtime node ../../scripts/db/local-mongo.mjs up",
     "mongo:arch:down": "MONGODB_PORT=27022 MONGODB_DATA_DIR=../../../database/arch-mongo-data MONGODB_RUNTIME_DIR=../../../database/arch-mongo-runtime node ../../scripts/db/local-mongo.mjs down",

@@ -32,6 +32,7 @@ vi.mock('@/shared/lib/db/utils/mongo', () => ({
 }));
 
 vi.mock('@/features/viewer3d/server', () => ({
+  getAsset3DFromLookupRepositories: mocks.getAsset3DById,
   getAsset3DRepository: () => ({
     getAsset3DById: mocks.getAsset3DById,
   }),
@@ -46,6 +47,7 @@ import {
 import {
   getMilkbarDesignersCmsSnapshot,
   patchMilkbarInquiryStatus,
+  pushMilkbarRuntimeToCloud,
   saveMilkbarDesignersCmsSnapshot,
 } from '@/features/page-manager/milkbardesigners/milkbar-cms.server';
 
@@ -134,11 +136,13 @@ function createFakeDb(initialCollections: Record<string, FakeDoc[]> = {}) {
 describe('milkbar cms server', () => {
   let sourceDb: FakeDb;
   let runtimeDb: FakeDb;
+  let cloudDb: FakeDb;
 
   beforeEach(() => {
     vi.clearAllMocks();
     sourceDb = createFakeDb();
     runtimeDb = createFakeDb();
+    cloudDb = createFakeDb();
     mocks.resolveMongoSourceConfig.mockResolvedValue({
       configured: true,
       dbName: 'app_local',
@@ -153,9 +157,11 @@ describe('milkbar cms server', () => {
       uri: source === 'local' ? 'mongodb://127.0.0.1:27022/arch_web_local' : null,
       usesLegacyEnv: false,
     }));
-    mocks.mongoClientDb.mockImplementation((dbName: string) =>
-      dbName === 'app_local' ? sourceDb : runtimeDb
-    );
+    mocks.mongoClientDb.mockImplementation((dbName: string) => {
+      if (dbName === 'app_local') return sourceDb;
+      if (dbName === 'arch_web_cloud') return cloudDb;
+      return runtimeDb;
+    });
     mocks.getAsset3DById.mockResolvedValue(null);
   });
 
@@ -209,11 +215,11 @@ describe('milkbar cms server', () => {
         en: { hero: { lede: 'Source-controlled Milkbar content.' } },
       },
     });
-    expect(sourceDb.collection('milkbar_page_content').docs[0]).toMatchObject({
+    expect(runtimeDb.collection('milkbar_page_content').docs[0]).toMatchObject({
       localizedContent: payload.localizedContent,
       key: 'home',
     });
-    expect(sourceDb.collection('milkbar_projects').docs[0]).toMatchObject({
+    expect(runtimeDb.collection('milkbar_projects').docs[0]).toMatchObject({
       code: 'MBD-001',
       name: 'Source Project',
     });
@@ -300,7 +306,7 @@ describe('milkbar cms server', () => {
   });
 
   it('prefers source-of-truth content over stale runtime content', async () => {
-    sourceDb = createFakeDb({
+    runtimeDb = createFakeDb({
       milkbar_page_content: [
         {
           localizedContent: {
@@ -312,8 +318,6 @@ describe('milkbar cms server', () => {
           updatedAt: new Date('2026-05-15T12:30:00.000Z'),
         },
       ],
-    });
-    runtimeDb = createFakeDb({
       page_content: [
         {
           localizedContent: {
@@ -335,7 +339,7 @@ describe('milkbar cms server', () => {
   });
 
   it('prunes projects and services removed from the CMS payload in both databases', async () => {
-    sourceDb = createFakeDb({
+    runtimeDb = createFakeDb({
       milkbar_projects: [
         { code: 'MBD-001', name: 'Keep' },
         { code: 'MBD-OLD', name: 'Remove' },
@@ -344,8 +348,6 @@ describe('milkbar cms server', () => {
         { code: 'S-01', title: 'Keep' },
         { code: 'S-OLD', title: 'Remove' },
       ],
-    });
-    runtimeDb = createFakeDb({
       projects: [
         { code: 'MBD-001', name: 'Keep' },
         { code: 'MBD-OLD', name: 'Remove' },
@@ -384,10 +386,10 @@ describe('milkbar cms server', () => {
       ],
     });
 
-    expect(sourceDb.collection('milkbar_projects').docs).toHaveLength(1);
-    expect(sourceDb.collection('milkbar_projects').docs[0]?.['code']).toBe('MBD-001');
-    expect(sourceDb.collection('milkbar_services').docs).toHaveLength(1);
-    expect(sourceDb.collection('milkbar_services').docs[0]?.['code']).toBe('S-01');
+    expect(runtimeDb.collection('milkbar_projects').docs).toHaveLength(1);
+    expect(runtimeDb.collection('milkbar_projects').docs[0]?.['code']).toBe('MBD-001');
+    expect(runtimeDb.collection('milkbar_services').docs).toHaveLength(1);
+    expect(runtimeDb.collection('milkbar_services').docs[0]?.['code']).toBe('S-01');
     expect(runtimeDb.collection('projects').docs).toHaveLength(1);
     expect(runtimeDb.collection('projects').docs[0]?.['code']).toBe('MBD-001');
     expect(runtimeDb.collection('services').docs).toHaveLength(1);
@@ -533,7 +535,7 @@ describe('milkbar cms server', () => {
     expect(en.nav.ctaLabel).toBe(DEFAULT_MILKBAR_PAGE_CONTENT.nav.ctaLabel);
   });
 
-  it('publishes Milkbar model asset ids as FastComet model URLs', async () => {
+  it('saves Milkbar model asset ids as local model URLs', async () => {
     mocks.getAsset3DById.mockImplementation(async (id: string) => ({
       id,
       filename: `${id}.gltf`,
@@ -584,13 +586,74 @@ describe('milkbar cms server', () => {
       services: [],
     });
 
-    expect(snapshot.localizedContent.en.hero.modelUrl).toBe(
+    expect(snapshot.localizedContent.en.hero.modelUrl).toBe('/uploads/cms/models/hero-asset.gltf');
+    expect(snapshot.localizedContent.en.drawing.interiorModelUrl).toBe(
+      '/uploads/cms/models/interior-asset.gltf'
+    );
+    expect(snapshot.projects[0]?.modelUrl).toBe('/uploads/cms/models/project-asset.gltf');
+  });
+
+  it('pushes Milkbar runtime model URLs to cloud as FastComet URLs', async () => {
+    mocks.resolveArchMongoSourceConfig.mockImplementation((source: 'local' | 'cloud') => ({
+      configured: true,
+      dbName: source === 'local' ? 'arch_web_local' : 'arch_web_cloud',
+      source,
+      uri:
+        source === 'local'
+          ? 'mongodb://127.0.0.1:27022/arch_web_local'
+          : 'mongodb+srv://user:password@example.mongodb.net/arch_web_cloud',
+      usesLegacyEnv: false,
+    }));
+
+    const content = {
+      ...DEFAULT_MILKBAR_PAGE_CONTENT,
+      hero: {
+        ...DEFAULT_MILKBAR_PAGE_CONTENT.hero,
+        modelUrl: '/uploads/cms/models/hero-asset.gltf',
+      },
+      drawing: {
+        ...DEFAULT_MILKBAR_PAGE_CONTENT.drawing,
+        interiorModelUrl: '/uploads/cms/models/interior-asset.gltf',
+      },
+    };
+
+    await saveMilkbarDesignersCmsSnapshot({
+      localizedContent: { ...DEFAULT_MILKBAR_LOCALIZED_CONTENT, en: content },
+      pageSettings: DEFAULT_MILKBAR_PAGE_SETTINGS,
+      projects: [
+        {
+          cameraPosition: { x: 1, y: 2, z: 3 },
+          cameraTarget: { x: 0, y: 1, z: 0 },
+          city: 'Amsterdam',
+          code: 'MBD-001',
+          country: 'NL',
+          description: 'Cloud model project.',
+          modelUrl: '/uploads/cms/models/project-asset.gltf',
+          name: 'Cloud Model Project',
+          order: 1,
+          projectType: 'Architecture Project',
+          stats: [],
+          status: 'published',
+        },
+      ],
+      services: [],
+    });
+
+    await pushMilkbarRuntimeToCloud();
+
+    const pageContent = cloudDb.collection('page_content').docs[0];
+    const localizedContent = pageContent?.['localizedContent'] as {
+      en: typeof DEFAULT_MILKBAR_PAGE_CONTENT;
+    };
+    const project = cloudDb.collection('projects').docs[0];
+
+    expect(localizedContent.en.hero.modelUrl).toBe(
       'https://uploads.milkbardesigners.com/uploads/cms/models/hero-asset.gltf'
     );
-    expect(snapshot.localizedContent.en.drawing.interiorModelUrl).toBe(
+    expect(localizedContent.en.drawing.interiorModelUrl).toBe(
       'https://uploads.milkbardesigners.com/uploads/cms/models/interior-asset.gltf'
     );
-    expect(snapshot.projects[0]?.modelUrl).toBe(
+    expect(project?.['modelUrl']).toBe(
       'https://uploads.milkbardesigners.com/uploads/cms/models/project-asset.gltf'
     );
   });

@@ -158,9 +158,23 @@ export {
 } from './filemaker-organization-presence-runtime-constants';
 
 export {
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY,
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_NAME,
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEP_IDS,
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS,
+  type SocialArticleAggregatorScrapeRuntimeStepId,
+} from './social-article-aggregator-runtime-constants';
+
+export {
   FilemakerOrganizationPresenceSequencer,
   type FilemakerOrganizationPresenceScrapeInput,
   type FilemakerOrganizationPresenceScrapePayload,
   type FilemakerOrganizationPresenceSocialProfile,
   type FilemakerOrganizationPresenceWebsite,
 } from './sequencers/FilemakerOrganizationPresenceSequencer';
+
+export {
+  SocialArticleAggregatorSequencer,
+  type SocialArticleAggregatorScrapeInput,
+  type SocialArticleAggregatorScrapePayload,
+} from './sequencers/SocialArticleAggregatorSequencer';

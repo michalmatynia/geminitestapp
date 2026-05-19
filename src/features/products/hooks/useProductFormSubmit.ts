@@ -49,7 +49,10 @@ export interface UseProductFormSubmitProps {
   parameterValues: ProductParameterValue[];
   studioProjectId: string | null;
   refreshImages: (savedProduct: ProductWithImages) => void;
-  onSuccess?: ((info?: { queued?: boolean }) => void) | undefined;
+  onSuccess?: ((info?: {
+    queued?: boolean;
+    product?: ProductWithImages | undefined;
+  }) => void) | undefined;
   onEditSave?: ((saved: ProductWithImages) => void) | undefined;
   requireHydratedEditProduct?: boolean;
 }
@@ -120,10 +123,12 @@ type LockedSubmitArgs = {
 
 const releaseSubmitLockAfterBackgroundTask = (
   submitInFlightRef: MutableRefObject<boolean>,
-  backgroundTask: Promise<void>
+  backgroundTask: Promise<void>,
+  setIsSubmitting: (value: boolean) => void
 ): void => {
   void backgroundTask
     .finally((): void => {
+      setIsSubmitting(false);
       releaseSubmitLock(submitInFlightRef);
     })
     .catch((): void => undefined);
@@ -146,12 +151,14 @@ const runSubmitWithLock = async ({
     const result = await operation();
     if (result?.backgroundTask !== undefined) {
       releaseLockImmediately = false;
-      releaseSubmitLockAfterBackgroundTask(submitInFlightRef, result.backgroundTask);
+      releaseSubmitLockAfterBackgroundTask(submitInFlightRef, result.backgroundTask, setIsSubmitting);
       return;
     }
   } finally {
-    setIsSubmitting(false);
-    if (releaseLockImmediately) releaseSubmitLock(submitInFlightRef);
+    if (releaseLockImmediately) {
+      setIsSubmitting(false);
+      releaseSubmitLock(submitInFlightRef);
+    }
   }
 };
 

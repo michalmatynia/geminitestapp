@@ -1,4 +1,4 @@
-import type { KangurTestChoice, KangurTestQuestion, KangurTestSuiteItem } from '@kangur/contracts/kangur-tests';
+import type { KangurTestChoice, KangurTestQuestion } from '@kangur/contracts/kangur-tests';
 import { Text, View } from 'react-native';
 
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
@@ -22,6 +22,7 @@ import {
 import type { KangurMobileLocale, KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import { formatKangurMobileQuestionCount } from '../shared/questionCountLabel';
 import { createKangurTestsHref } from './testsHref';
+import type { KangurMobileTestSuiteItem } from './useKangurMobileTests';
 
 export const TESTS_ROUTE = createKangurTestsHref();
 export const LESSONS_ROUTE = createKangurLessonsCatalogHref();
@@ -38,7 +39,7 @@ export const ERROR_TONE: Tone = {
 export const formatFocusToken = (value: string): string => value.replace(/[-_]+/g, ' ').trim();
 
 export const formatSuiteMeta = (
-  suite: KangurTestSuiteItem['suite'],
+  suite: KangurMobileTestSuiteItem['suite'],
   locale: KangurMobileLocale,
 ): string[] => {
   const parts: string[] = [];
@@ -298,24 +299,6 @@ export function TestPlayerResultsView({
             })}
           />
         </View>
-        <View style={{ gap: 8 }}>
-          <OutlineLink
-            href={RESULTS_ROUTE}
-            label={copy({
-              de: 'Ergebnisse öffnen',
-              en: 'Open results',
-              pl: 'Otwórz wyniki',
-            })}
-          />
-          <OutlineLink
-            href={PLAN_ROUTE}
-            label={copy({
-              de: 'Tagesplan öffnen',
-              en: 'Go to daily plan',
-              pl: 'Przejdź do planu dnia',
-            })}
-          />
-        </View>
       </View>
     </SectionCard>
   );
@@ -323,7 +306,7 @@ export function TestPlayerResultsView({
 
 type TestSuiteCardProps = {
   copy: KangurMobileCopy;
-  item: KangurTestSuiteItem;
+  item: KangurMobileTestSuiteItem;
   locale: KangurMobileLocale;
   onOpen: (suiteId: string) => void;
 };

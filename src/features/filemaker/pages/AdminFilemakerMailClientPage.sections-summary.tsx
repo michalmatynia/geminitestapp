@@ -13,6 +13,7 @@ import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.rou
 type MailClientSummaryCardsProps = {
   accountCount: number;
   attentionCount: number;
+  campaignsSummaryCard?: React.ReactNode;
   dashboardQuery: string;
   focusedAccount: FilemakerMailAccount | null;
   folderCount: number;
@@ -123,12 +124,14 @@ function MailClientSummaryCard({ card }: { card: MailClientSummaryCardModel }): 
 
 function MailClientSummaryCards(props: MailClientSummaryCardsProps): React.JSX.Element {
   const cards = buildMailClientSummaryCardModels(props);
+  const hasCampaignsSlot = props.campaignsSummaryCard !== undefined;
 
   return (
-    <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+    <div className={`grid gap-3 sm:grid-cols-2 ${hasCampaignsSlot ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
       {cards.map((card) => (
         <MailClientSummaryCard key={card.id} card={card} />
       ))}
+      {props.campaignsSummaryCard}
     </div>
   );
 }

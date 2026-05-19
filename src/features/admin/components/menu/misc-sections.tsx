@@ -54,6 +54,7 @@ const FILEMAKER_NAV_CHILDREN: NavItem[] = [
     keywords: ['blocked emails', 'unsubscribed', 'suppression list'],
   },
   { id: 'filemaker/social', label: 'Social Publishing', href: '/admin/filemaker/social', keywords: ['linkedin', 'social', 'posts', 'publishing'] },
+  { id: 'filemaker/article-aggregator', label: 'Article Aggregator', href: '/admin/filemaker/article-aggregator', keywords: ['articles', 'scrape', 'aggregator', 'article sources', 'prompt presets'] },
   { id: 'filemaker/emails', label: 'Email Records', href: '/admin/filemaker/emails' },
   { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
   { id: 'filemaker/settings', label: 'Settings', href: '/admin/settings/filemaker' },

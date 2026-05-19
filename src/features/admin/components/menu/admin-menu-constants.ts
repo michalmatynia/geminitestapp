@@ -66,6 +66,7 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
 export const OPEN_KEY = 'adminMenuOpenIds.v2';
 export const POPULAR_ADMIN_PREFETCH_HREFS = [
   '/admin/products',
+  '/admin/patterns',
   '/admin/integrations',
   '/admin/filemaker/social',
   '/admin/settings',

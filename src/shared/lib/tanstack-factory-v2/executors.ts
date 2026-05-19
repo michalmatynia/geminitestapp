@@ -32,6 +32,7 @@ export const createManualQueryExecutor = <
 
   return async (): Promise<TResult | undefined> => {
     const startMs = Date.now();
+    // Emit telemetry start event to track when query execution begins, enabling performance monitoring.
     emitFactoryTelemetry({
       entity: 'query',
       stage: 'start',
@@ -49,6 +50,7 @@ export const createManualQueryExecutor = <
         staleTime,
       });
 
+      // Record successful completion with duration to measure query performance and success rates.
       emitFactoryTelemetry({
         entity: 'query',
         stage: 'success',
@@ -67,6 +69,7 @@ export const createManualQueryExecutor = <
           action: 'createManualQueryExecutor',
         });
       }
+      // Map error stage to telemetry category (e.g., 'error' or 'failure') for proper observability bucketing.
       emitFactoryTelemetry({
         entity: 'query',
         stage: telemetryErrorStage(error),
@@ -78,10 +81,12 @@ export const createManualQueryExecutor = <
         ...(telemetryContext ? { context: telemetryContext } : {}),
       });
 
+      // swallowErrors mode is used for prefetch operations where failures are non-blocking.
       if (options?.swallowErrors) {
         return undefined;
       }
 
+      // Transform error if a custom transformer is provided, otherwise pass the error as-is.
       const finalError = transformError ? transformError(error) : (error as TError);
       throw finalError;
     }

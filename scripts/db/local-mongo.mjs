@@ -8,8 +8,13 @@ const runtimeDir = path.resolve(repoRoot, process.env.MONGODB_RUNTIME_DIR?.trim(
 const pidFile = path.join(runtimeDir, 'mongod.pid');
 const logFile = path.join(runtimeDir, 'mongod.log');
 const port = process.env['MONGODB_PORT']?.trim() || '27017';
+const bindIp = '127.0.0.1';
+const shutdownWaitMs = 10000;
+const shutdownPollMs = 100;
 
 const command = process.argv[2] || 'status';
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const readPid = async () => {
   try {
@@ -32,14 +37,63 @@ const isPidRunning = (pid) => {
   }
 };
 
+const waitForPidExit = async (pid, timeoutMs) => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (!isPidRunning(pid)) return true;
+    await sleep(shutdownPollMs);
+  }
+  return !isPidRunning(pid);
+};
+
+const signalPid = (pid, signal) => {
+  try {
+    process.kill(pid, signal);
+    return true;
+  } catch (error) {
+    if (error?.code === 'ESRCH') return false;
+    throw error;
+  }
+};
+
 const ensureDirs = async () => {
   await fs.mkdir(dataDir, { recursive: true });
   await fs.mkdir(runtimeDir, { recursive: true });
 };
 
+const removeStalePidFile = async (pid) => {
+  if (!pid || isPidRunning(pid)) return;
+  await fs.rm(pidFile, { force: true }).catch(() => undefined);
+};
+
+const getReachableMongoDbPath = () => {
+  try {
+    const raw = execFileSync(
+      'mongosh',
+      [
+        '--quiet',
+        '--host',
+        bindIp,
+        '--port',
+        port,
+        '--eval',
+        'const result = db.adminCommand({ getCmdLineOpts: 1 }); print(result?.parsed?.storage?.dbPath || "");',
+      ],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }
+    );
+    return raw.trim() || null;
+  } catch {
+    return null;
+  }
+};
+
+const isExpectedDbPath = (activeDbPath) =>
+  typeof activeDbPath === 'string' && path.resolve(activeDbPath) === dataDir;
+
 const printStatus = async () => {
   const pid = await readPid();
   const running = pid ? isPidRunning(pid) : false;
+  const activeDbPath = getReachableMongoDbPath();
   console.log(
     JSON.stringify(
       {
@@ -48,6 +102,8 @@ const printStatus = async () => {
         runtimeDir,
         pid,
         running,
+        reachable: activeDbPath !== null,
+        activeDbPath,
         logFile,
       },
       null,
@@ -63,6 +119,19 @@ const startMongo = async () => {
     console.log(`MongoDB already running on port ${port} (pid ${pid}).`);
     return;
   }
+  await removeStalePidFile(pid);
+
+  const activeDbPath = getReachableMongoDbPath();
+  if (isExpectedDbPath(activeDbPath)) {
+    console.log(`MongoDB already running on ${bindIp}:${port} with ${dataDir}.`);
+    return;
+  }
+  if (activeDbPath) {
+    throw new Error(
+      `MongoDB is already reachable on ${bindIp}:${port}, but it uses ${activeDbPath}. ` +
+        `Expected ${dataDir}. Stop the other MongoDB process or choose a different MONGODB_PORT.`
+    );
+  }
 
   try {
     execFileSync(
@@ -71,7 +140,7 @@ const startMongo = async () => {
         '--dbpath',
         dataDir,
         '--bind_ip',
-        '127.0.0.1',
+        bindIp,
         '--port',
         port,
         '--fork',
@@ -94,16 +163,19 @@ const stopMongo = async () => {
   const pid = await readPid();
   if (!pid || !isPidRunning(pid)) {
     await fs.rm(pidFile, { force: true }).catch(() => undefined);
-    console.log('MongoDB is not running.');
+    console.log('No locally managed MongoDB process is running.');
     return;
   }
 
   try {
-    execFileSync(
-      'mongod',
-      ['--dbpath', dataDir, '--shutdown', '--pidfilepath', pidFile],
-      { stdio: 'inherit' }
-    );
+    signalPid(pid, 'SIGTERM');
+    if (!(await waitForPidExit(pid, shutdownWaitMs))) {
+      console.log(`MongoDB process ${pid} did not exit after SIGTERM; forcing SIGKILL.`);
+      signalPid(pid, 'SIGKILL');
+      if (!(await waitForPidExit(pid, 2000))) {
+        throw new Error(`MongoDB process ${pid} is still running after SIGKILL.`);
+      }
+    }
   } catch (error) {
     throw new Error(`Failed to stop local MongoDB from ${dataDir}: ${String(error)}`);
   }

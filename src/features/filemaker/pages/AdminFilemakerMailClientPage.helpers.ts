@@ -197,8 +197,19 @@ const buildMailClientWorkspaceHref = ({
       })
     : '/admin/filemaker/mail-client';
 
+const buildMailClientCreateCampaignHref = ({
+  accountId,
+}: {
+  accountId: string | null;
+}): string => {
+  const base = '/admin/filemaker/campaigns/create';
+  if (accountId === null || accountId.length === 0) return base;
+  return `${base}?mailAccountId=${encodeURIComponent(accountId)}`;
+};
+
 export {
   buildMailClientComposeHref,
+  buildMailClientCreateCampaignHref,
   buildMailClientSearchHref,
   buildMailClientWorkspaceHref,
   getFilemakerMailAccountStatusLabel,

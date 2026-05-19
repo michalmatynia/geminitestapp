@@ -36,7 +36,7 @@ const KANGUR_PROGRESS_STORAGE_KEY = 'sprycio_progress';
 const KANGUR_PROGRESS_OWNER_STORAGE_KEY = 'sprycio_progress_owner';
 
 export const readWebCookieValue = (name: string): string | null => {
-  if (typeof document === 'undefined' || document === null) {
+  if (typeof document === 'undefined') {
     return null;
   }
 
@@ -46,7 +46,7 @@ export const readWebCookieValue = (name: string): string | null => {
     .map((entry) => entry.trim())
     .find((entry) => entry.startsWith(cookiePrefix));
 
-  return rawCookie ? decodeURIComponent(rawCookie.slice(cookiePrefix.length)) : null;
+  return rawCookie !== undefined ? decodeURIComponent(rawCookie.slice(cookiePrefix.length)) : null;
 };
 
 export const buildKangurMobileRuntimeHeaders = (
@@ -100,7 +100,7 @@ const createKangurMobileApiBaseUrlState = (): ReturnType<typeof resolveKangurMob
     configuredApiBaseUrl: resolveKangurMobilePublicConfig().apiUrl ?? null,
     developmentHost: extractExpoDevelopmentHost({
       hostUri: (Constants.expoConfig?.hostUri ?? Constants.platform?.hostUri ?? null),
-      linkingUri: Constants.linkingUri ?? null,
+      linkingUri: Constants.linkingUri,
     }),
     platformOs: Platform.OS,
   });

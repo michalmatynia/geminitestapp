@@ -1,11 +1,12 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageFileRecord, ImageFileUpdateInput } from '@/shared/contracts/files';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   getDiskPathFromPublicPath,
+  getImageFileRepository,
   getProductImageFileRepository,
 } from '@/shared/lib/files/services/image-file-service';
 import {
@@ -109,6 +110,30 @@ const resolveUploadMimetype = (imageFile: ImageFileRecord): string => {
   return normalizedMimetype.length > 0 ? normalizedMimetype : 'image/jpeg';
 };
 
+const updateImageFileAfterFastCometUpload = async (
+  imageFileId: string,
+  update: ImageFileUpdateInput
+): Promise<ImageFileRecord | null> => {
+  const [sharedRepository, productRepository] = await Promise.all([
+    getImageFileRepository(),
+    getProductImageFileRepository(),
+  ]);
+  const results = await Promise.allSettled([
+    sharedRepository.updateImageFile(imageFileId, update),
+    productRepository.updateImageFile(imageFileId, update),
+  ]);
+  const updated = results.find(
+    (result): result is PromiseFulfilledResult<ImageFileRecord> =>
+      result.status === 'fulfilled' && result.value !== null
+  );
+  if (updated !== undefined) return updated.value;
+  const rejected = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected'
+  );
+  if (rejected !== undefined) throw rejected.reason;
+  return null;
+};
+
 export const uploadLinkedImageFileToFastComet = async (input: {
   linkedImageFile: ImageFileRecord;
   product: ProductWithImages;
@@ -131,8 +156,7 @@ export const uploadLinkedImageFileToFastComet = async (input: {
     publicPath,
   });
 
-  const imageFileRepo = await getProductImageFileRepository();
-  const updatedImageFile = await imageFileRepo.updateImageFile(linkedImageFile.id, {
+  const updatedImageFile = await updateImageFileAfterFastCometUpload(linkedImageFile.id, {
     filepath: remoteUrl,
     metadata: buildUpdatedImageMetadata({
       imageFile: linkedImageFile,

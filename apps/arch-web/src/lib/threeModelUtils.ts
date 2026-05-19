@@ -11,6 +11,8 @@ const textureKeys = [
   'alphaMap',
 ] as const;
 
+const generatedTextureKeys = ['_milkbarGeneratedTextureMap'] as const;
+
 export async function loadGltfModel(url: string): Promise<THREE.Group> {
   const loader = new GLTFLoader();
   loader.setCrossOrigin('anonymous');
@@ -64,9 +66,17 @@ export function disposeObject3D(object: THREE.Object3D): void {
     const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
     materials.forEach((material) => {
       const record = material as THREE.Material & Record<string, unknown>;
+      const disposedTextures = new Set<THREE.Texture>();
+      const disposeTexture = (texture: unknown): void => {
+        if (!(texture instanceof THREE.Texture) || disposedTextures.has(texture)) return;
+        disposedTextures.add(texture);
+        texture.dispose();
+      };
       textureKeys.forEach((key) => {
-        const texture = record[key] as THREE.Texture | undefined;
-        texture?.dispose();
+        disposeTexture(record[key]);
+      });
+      generatedTextureKeys.forEach((key) => {
+        disposeTexture(material.userData[key]);
       });
       material.dispose();
     });

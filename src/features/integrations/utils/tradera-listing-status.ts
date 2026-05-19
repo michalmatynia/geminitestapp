@@ -1,10 +1,10 @@
 const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  (value !== null && typeof value === 'object' && !Array.isArray(value))
     ? (value as Record<string, unknown>)
     : {};
 
 const readString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+  (typeof value === 'string' && value.trim().length > 0) ? value.trim() : null;
 
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
@@ -14,7 +14,8 @@ export const resolvePendingTraderaExecutionAction = (
 ): string | null => {
   const traderaData = toRecord(toRecord(marketplaceData)['tradera']);
   const pendingExecution = toRecord(traderaData['pendingExecution']);
-  return normalizeStatus(readString(pendingExecution['action'])) || null;
+  const action = normalizeStatus(readString(pendingExecution['action']));
+  return action.length > 0 ? action : null;
 };
 
 export const resolveLatestCheckedTraderaStatusFromMarketplaceData = (
@@ -28,11 +29,14 @@ export const resolveLatestCheckedTraderaStatusFromMarketplaceData = (
 
   const metadata = toRecord(lastExecution['metadata']);
   const rawResult = toRecord(metadata['rawResult']);
-  return (
-    normalizeStatus(readString(metadata['checkedStatus'])) ||
-    normalizeStatus(readString(rawResult['status'])) ||
-    null
-  );
+  
+  const checkedStatus = normalizeStatus(readString(metadata['checkedStatus']));
+  if (checkedStatus.length > 0) return checkedStatus;
+
+  const rawStatus = normalizeStatus(readString(rawResult['status']));
+  if (rawStatus.length > 0) return rawStatus;
+
+  return null;
 };
 
 export const resolveDisplayedTraderaListingStatus = ({
@@ -43,13 +47,13 @@ export const resolveDisplayedTraderaListingStatus = ({
   marketplaceData: unknown;
 }): string | null => {
   const checkedStatus = resolveLatestCheckedTraderaStatusFromMarketplaceData(marketplaceData);
-  if (checkedStatus) {
+  if (checkedStatus !== null && checkedStatus.length > 0) {
     return checkedStatus;
   }
 
   const normalizedStatus = normalizeStatus(status);
   const pendingAction = resolvePendingTraderaExecutionAction(marketplaceData);
-  if (normalizedStatus === 'queued_relist' && pendingAction && pendingAction !== 'relist') {
+  if (normalizedStatus === 'queued_relist' && pendingAction !== null && pendingAction.length > 0 && pendingAction !== 'relist') {
     return 'queued';
   }
 

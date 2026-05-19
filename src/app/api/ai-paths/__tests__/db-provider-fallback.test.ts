@@ -8,11 +8,13 @@ const {
   enforceAiPathsActionRateLimitMock,
   isCollectionAllowedMock,
   getMongoDbMock,
+  getProductsMongoDbMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessOrInternalMock: vi.fn() as Mock,
   enforceAiPathsActionRateLimitMock: vi.fn() as Mock,
   isCollectionAllowedMock: vi.fn() as Mock,
   getMongoDbMock: vi.fn() as Mock,
+  getProductsMongoDbMock: vi.fn() as Mock,
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -23,6 +25,10 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
+}));
+
+vi.mock('@/shared/lib/db/product-mongo-client', () => ({
+  getMongoDb: getProductsMongoDbMock,
 }));
 
 import { postAiPathsDbActionHandler } from '@/app/api/ai-paths/db-action/handler';
@@ -64,6 +70,7 @@ describe('AI Paths DB action handler', () => {
     enforceAiPathsActionRateLimitMock.mockReset();
     isCollectionAllowedMock.mockReset();
     getMongoDbMock.mockReset();
+    getProductsMongoDbMock.mockReset();
 
     requireAiPathsAccessOrInternalMock.mockResolvedValue({
       access: {
@@ -92,6 +99,7 @@ describe('AI Paths DB action handler', () => {
     ).rejects.toThrow('MongoDB is not configured');
 
     expect(getMongoDbMock).not.toHaveBeenCalled();
+    expect(getProductsMongoDbMock).not.toHaveBeenCalled();
   });
 
   it('rejects unmapped collection names that are not allowlisted', async () => {
@@ -110,6 +118,7 @@ describe('AI Paths DB action handler', () => {
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('Product');
     expect(getMongoDbMock).not.toHaveBeenCalled();
+    expect(getProductsMongoDbMock).not.toHaveBeenCalled();
   });
 
   it('maps collection name only when explicit collectionMap is provided', async () => {
@@ -118,7 +127,7 @@ describe('AI Paths DB action handler', () => {
       updateOne: updateOneMock,
       updateMany: vi.fn(),
     });
-    getMongoDbMock.mockResolvedValue({
+    getProductsMongoDbMock.mockResolvedValue({
       collection: mongoCollectionMock,
     });
     isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
@@ -138,6 +147,8 @@ describe('AI Paths DB action handler', () => {
     const body = await parseResponseBody(response);
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('products');
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(mongoCollectionMock).toHaveBeenCalledWith('products');
     expect(body['collection']).toBe('products');
     expect(body['requestedCollection']).toBe('Product');
@@ -149,7 +160,7 @@ describe('AI Paths DB action handler', () => {
   it('runs aggregate actions against mongodb', async () => {
     const aggregateToArrayMock = vi.fn().mockResolvedValue([{ id: 'product-1' }]);
     const aggregateMock = vi.fn().mockReturnValue({ toArray: aggregateToArrayMock });
-    getMongoDbMock.mockResolvedValue({
+    getProductsMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         aggregate: aggregateMock,
       }),
@@ -165,6 +176,8 @@ describe('AI Paths DB action handler', () => {
     const body = await parseResponseBody(response);
 
     expect(aggregateMock).toHaveBeenCalledWith([{ $match: { id: 'product-1' } }]);
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(aggregateToArrayMock).toHaveBeenCalledTimes(1);
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['requestedProvider']).toBe('auto');
@@ -174,10 +187,10 @@ describe('AI Paths DB action handler', () => {
 
   it('stamps updatedAt on mongodb findOneAndUpdate for products', async () => {
     const findOneAndUpdateMock = vi.fn().mockResolvedValue({
-      value: { id: 'product-1', name_en: 'Updated name' },
-      ok: 1,
+      id: 'product-1',
+      name_en: 'Updated name',
     });
-    getMongoDbMock.mockResolvedValue({
+    getProductsMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         findOneAndUpdate: findOneAndUpdateMock,
       }),
@@ -195,6 +208,8 @@ describe('AI Paths DB action handler', () => {
     const body = await parseResponseBody(response);
 
     const findOneAndUpdateInvocation = findOneAndUpdateMock.mock.calls[0];
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(findOneAndUpdateInvocation).toBeDefined();
     if (!findOneAndUpdateInvocation) {
       throw new Error('Expected MongoDB findOneAndUpdate to be called.');
@@ -226,7 +241,7 @@ describe('AI Paths DB action handler', () => {
       modifiedCount: 1,
       upsertedId: null,
     });
-    getMongoDbMock.mockResolvedValue({
+    getProductsMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         updateOne: updateOneMock,
       }),
@@ -243,6 +258,8 @@ describe('AI Paths DB action handler', () => {
     });
     const body = await parseResponseBody(response);
 
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(updateOneMock).toHaveBeenCalledWith(
       {
         $or: [{ id: 'legacy-product-1' }, { _id: 'legacy-product-1' }],

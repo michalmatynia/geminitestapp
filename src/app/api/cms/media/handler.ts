@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { uploadCmsFastCometMediaInRedisRuntime } from '@/features/cms/workers/cmsFastCometMediaUploadQueue';
 import { getPublicPathFromStoredPath, uploadFile } from '@/features/files/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -109,19 +108,12 @@ const uploadCmsMediaFile = async (
     const folder = input.folder ?? MILKBAR_CMS_VISUALISATION_FOLDER;
     const milkbarStorage = input.milkbarStorage ?? resolveMilkbarFastCometStorageProfile();
     const staged = await stageMilkbarCmsMediaFile(file, { folder, milkbarStorage });
-    const publicPath = resolveUploadPublicPath(staged);
-    if (publicPath === null) {
+    if (resolveUploadPublicPath(staged) === null) {
       throw badRequestError('Could not resolve staged CMS media path.', {
         imageFileId: staged.id,
       });
     }
-    return uploadCmsFastCometMediaInRedisRuntime({
-      folder,
-      imageFileId: staged.id,
-      mimetype: staged.mimetype,
-      publicPath,
-      requestedAt: new Date().toISOString(),
-    });
+    return staged;
   }
 
   const upload = await uploadFile(file, {

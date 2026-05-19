@@ -1,0 +1,32 @@
+{
+  "name": "@app/patterns-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev --webpack --port 3500",
+    "build": "next build --webpack",
+    "start": "next start --port 3500",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "seed": "tsx scripts/seed.ts",
+    "mongo:patterns:up": "MONGODB_PORT=27023 MONGODB_DATA_DIR=../../../database/patterns-mongo-data MONGODB_RUNTIME_DIR=../../../database/patterns-mongo-runtime node ../../scripts/db/local-mongo.mjs up",
+    "mongo:patterns:down": "MONGODB_PORT=27023 MONGODB_DATA_DIR=../../../database/patterns-mongo-data MONGODB_RUNTIME_DIR=../../../database/patterns-mongo-runtime node ../../scripts/db/local-mongo.mjs down",
+    "mongo:patterns:status": "MONGODB_PORT=27023 MONGODB_DATA_DIR=../../../database/patterns-mongo-data MONGODB_RUNTIME_DIR=../../../database/patterns-mongo-runtime node ../../scripts/db/local-mongo.mjs status"
+  },
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "mongodb": "^7.2.0",
+    "next": "16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

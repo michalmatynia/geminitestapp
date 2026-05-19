@@ -1,3 +1,30 @@
+/**
+ * OpenTelemetry Node SDK Initialization
+ * 
+ * Manages the initialization and lifecycle of OpenTelemetry instrumentation for Node.js runtime.
+ * This module handles:
+ * - Environment-based OTel SDK configuration (traces, logs, resources)
+ * - Lazy loading of OTel packages to avoid unnecessary imports
+ * - Graceful shutdown hooks on process termination
+ * - Status monitoring and runtime introspection
+ * - Integration with the OTLP exporter for sending data to observability backends
+ * 
+ * Key architectural decisions:
+ * - Browser detection: OTel SDK only initializes in Node.js (not in browser/edge)
+ * - Idempotent initialization: Multiple calls to initializeNodeOtel are safe (only runs once)
+ * - Lazy module loading: OTel packages are imported dynamically only if needed
+ * - Signal handling: Registers SIGTERM/SIGINT/beforeExit to gracefully shut down exporters
+ * 
+ * Configuration via environment variables:
+ * - OTEL_ENABLED: Explicit toggle to enable OTel
+ * - OTEL_EXPORTER_OTLP_ENDPOINT: Base endpoint (used for both traces and logs)
+ * - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: Specific traces endpoint (overrides base)
+ * - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: Specific logs endpoint (overrides base)
+ * - OTEL_EXPORTER_OTLP_HEADERS: Comma-separated auth headers (format: "key1=val1,key2=val2")
+ * - OTEL_SERVICE_NAME: Service name for the resource (default: 'geminitestapp')
+ * - OTEL_SERVICE_VERSION: Version string for the resource (optional)
+ */
+
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 type NodeSdkConstructor = typeof import('@opentelemetry/sdk-node').NodeSDK;
 type NodeSdkInstance = InstanceType<NodeSdkConstructor>;
@@ -162,6 +189,12 @@ export type NodeOtelRuntimeStatus = {
   logsEndpoint: string | null;
 };
 
+/**
+ * Retrieves the current OpenTelemetry SDK runtime status.
+ * Useful for diagnostics, health checks, and admin interfaces.
+ * 
+ * @returns Current OTel status including configuration, initialization state, and endpoint info
+ */
 export const getNodeOtelRuntimeStatus = (): NodeOtelRuntimeStatus => {
   const globalScope = globalThis as OTelGlobal;
   return {
@@ -207,6 +240,24 @@ const registerShutdownHooks = (globalScope: OTelGlobal, sdk: NodeSdkInstance): v
   });
 };
 
+/**
+ * Initializes and starts the OpenTelemetry Node SDK.
+ * Idempotent—safe to call multiple times; only initializes once per process.
+ * 
+ * Initialization flow:
+ * 1. Browser detection: Skips initialization if running in browser (window is defined)
+ * 2. Idempotency check: Returns early if already initialized
+ * 3. Feature check: Only proceeds if OTel is explicitly enabled or endpoint is configured
+ * 4. Lazy module loading: Dynamically imports OTel packages to avoid bundle bloat
+ * 5. Configuration: Builds trace/log exporters with environment-provided endpoints/headers
+ * 6. SDK startup: Calls NodeSDK.start() to begin collecting traces and logs
+ * 7. Shutdown hooks: Registers process signal handlers for graceful shutdown
+ * 
+ * If initialization fails, the failure is logged but does not crash the process.
+ * The __otelNodeInitialized flag is set to false on error to allow future retry.
+ * 
+ * @returns Resolves when initialization completes (or is skipped)
+ */
 export const initializeNodeOtel = async (): Promise<void> => {
   if (typeof window !== 'undefined') return;
 

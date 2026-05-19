@@ -253,17 +253,21 @@ export const recordLoginSuccess = async (input: { email?: string | null; ip?: st
   await logSystemEvent({ level: 'info', message: 'User signed in successfully', source: 'auth.security', context, ...(input.request ? { request: input.request } : {}), userId: input.userId ?? null });
 };
 
+const normalizeIpValue = (value: string): string => {
+  const clean = value.split(',')[0]?.trim() ?? '';
+  if (clean.startsWith('::ffff:')) return clean.slice(7);
+  if (clean === '::1') return '127.0.0.1';
+  return clean;
+};
+
 export const extractClientIp = (request?: Request | null): string | null => {
   if (request === null || request === undefined) return null;
   const candidates = ['cf-connecting-ip', 'x-vercel-forwarded-for', 'x-forwarded-for', 'x-real-ip', 'x-client-ip'];
   for (const h of candidates) {
     const v = request.headers.get(h);
     if (v === null || v === '') continue;
-    const c = v.split(',')[0]?.trim();
-    if (c === undefined || c === '') continue;
-    if (c.startsWith('::ffff:')) return c.slice(7);
-    if (c === '::1') return '127.0.0.1';
-    return c;
+    const ip = normalizeIpValue(v);
+    if (ip !== '') return ip;
   }
   return null;
 };

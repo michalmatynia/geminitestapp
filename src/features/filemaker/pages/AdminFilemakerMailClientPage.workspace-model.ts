@@ -40,6 +40,7 @@ export type MailClientSelection = {
   accountId: string | null;
   mailboxPath: string | null;
   threadId: string | null;
+  campaignId: string | null;
 };
 
 export type MailClientReplyDraftState = {
@@ -91,12 +92,14 @@ export const formatDateTime = (value: string | null | undefined): string => {
 export const buildThreadListUrl = (selection: {
   accountId: string;
   mailboxPath: string | null;
+  campaignId: string | null;
 }): string => {
   const search = new URLSearchParams({
     accountId: selection.accountId,
     limit: String(THREAD_LIST_LIMIT),
   });
   if (selection.mailboxPath !== null) search.set('mailboxPath', selection.mailboxPath);
+  if (selection.campaignId !== null) search.set('campaignId', selection.campaignId);
   return `/api/filemaker/mail/threads?${search.toString()}`;
 };
 
@@ -105,6 +108,7 @@ export const buildClientSelectionHref = (selection: MailClientSelection): string
   if (selection.accountId !== null) search.set('accountId', selection.accountId);
   if (selection.mailboxPath !== null) search.set('mailboxPath', selection.mailboxPath);
   if (selection.threadId !== null) search.set('threadId', selection.threadId);
+  if (selection.campaignId !== null) search.set('campaignId', selection.campaignId);
   const nextSearch = search.toString();
   return nextSearch === ''
     ? '/admin/filemaker/mail-client'

@@ -131,6 +131,41 @@ const createBattleStockLengthIssues = (): ProductValidatorFieldIssues => ({
   ],
 });
 
+const createSizeLengthPattern = (): ProductValidationPattern => ({
+  ...createBattleStockLengthPattern(),
+  id: 'pattern-size-length-from-validator',
+  label: 'Size length from validator issue',
+  target: 'size_length',
+  regex: '^0$',
+  message: 'Set Length (sizeLength) from validated Size segment',
+  replacementFields: ['sizeLength'],
+});
+
+const createSizeLengthIssues = ({
+  replacementActive = true,
+}: {
+  replacementActive?: boolean;
+} = {}): ProductValidatorFieldIssues => ({
+  sizeLength: [
+    {
+      patternId: 'pattern-size-length-from-validator',
+      message: 'Set Length (sizeLength) from validated Size segment',
+      severity: 'warning',
+      matchText: '0',
+      index: 0,
+      length: 1,
+      regex: '^0$',
+      flags: null,
+      replacementValue: '4',
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive,
+      postAcceptBehavior: 'revalidate',
+      debounceMs: 0,
+    },
+  ],
+});
+
 const createWrapper = () =>
   function Wrapper({ children }: { children: ReactNode }) {
     const methods = useForm<ProductFormData>({
@@ -212,5 +247,86 @@ describe('useProductFormValidator auto accept', () => {
       })
     );
     expect(apiPostMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses validator issues as the single source for Length formatter replacements', async () => {
+    vi.useFakeTimers();
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [createSizeLengthPattern()],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: createSizeLengthIssues(),
+    });
+
+    renderHook(() => useProductFormValidator(), { wrapper: createWrapper() });
+    await flushAutoAcceptTimer();
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      4,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      })
+    );
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/products/validator-decisions/batch',
+      expect.objectContaining({
+        decisions: [
+          expect.objectContaining({
+            action: 'accept',
+            fieldName: 'sizeLength',
+            patternId: 'pattern-size-length-from-validator',
+            replacementValue: '4',
+          }),
+        ],
+      }),
+      expect.anything()
+    );
+  });
+
+  it('does not apply inactive replacement proposals from validator issues', async () => {
+    vi.useFakeTimers();
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [createSizeLengthPattern()],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: createSizeLengthIssues({ replacementActive: false }),
+    });
+
+    renderHook(() => useProductFormValidator(), { wrapper: createWrapper() });
+    await flushAutoAcceptTimer();
+
+    expect(setValueSpy).not.toHaveBeenCalledWith(
+      'sizeLength',
+      4,
+      expect.anything()
+    );
+    expect(apiPostMock).toHaveBeenCalledTimes(1);
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/products/validator-decisions/batch',
+      expect.objectContaining({
+        decisions: [
+          expect.objectContaining({
+            action: 'accept',
+            fieldName: 'sizeLength',
+            patternId: 'pattern-size-length-from-validator',
+            replacementValue: '4',
+          }),
+        ],
+      }),
+      expect.anything()
+    );
   });
 });

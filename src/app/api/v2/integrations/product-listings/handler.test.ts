@@ -5,13 +5,11 @@ const {
   listAllListingsMock,
   listProductListingsByProductIdsMock,
   listIntegrationsMock,
-  findVisibleEcommerceProductIdsMock,
   applyRemoteBaseSkuBadgeFallbackMock,
 } = vi.hoisted(() => ({
   listAllListingsMock: vi.fn(),
   listProductListingsByProductIdsMock: vi.fn(),
   listIntegrationsMock: vi.fn(),
-  findVisibleEcommerceProductIdsMock: vi.fn(),
   applyRemoteBaseSkuBadgeFallbackMock: vi.fn(),
 }));
 
@@ -31,11 +29,6 @@ vi.mock('@/features/integrations/services/base-listing-canonicalization', () => 
   applyCanonicalBaseBadgeFallback: async (payload: unknown) => payload,
   isCanonicalBaseIntegrationSlug: (value: string | null | undefined) =>
     ['baselinker', 'base', 'base-com'].includes((value ?? '').trim().toLowerCase()),
-}));
-
-vi.mock('@/features/integrations/services/ecommerce-product-export.listings', () => ({
-  findVisibleEcommerceProductIds: (...args: unknown[]) =>
-    findVisibleEcommerceProductIdsMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/base-sku-badge-fallback', () => ({
@@ -59,7 +52,6 @@ describe('integration product listings handler', () => {
       },
     ]);
     listAllListingsMock.mockResolvedValue([]);
-    findVisibleEcommerceProductIdsMock.mockResolvedValue(new Set<string>());
     applyRemoteBaseSkuBadgeFallbackMock.mockImplementation(async (payload: unknown) => payload);
   });
 
@@ -302,30 +294,6 @@ describe('integration product listings handler', () => {
     const payload = await response.json();
 
     expect(payload).toEqual({});
-    expect(findVisibleEcommerceProductIdsMock).toHaveBeenCalledWith(['product-1', 'product-2']);
-  });
-
-  it('fills ecommerce badges from already visible ecommerce products', async () => {
-    listIntegrationsMock.mockResolvedValue([]);
-    listProductListingsByProductIdsMock.mockResolvedValue([]);
-    findVisibleEcommerceProductIdsMock.mockResolvedValue(new Set(['product-2']));
-
-    const response = await getHandler(
-      new NextRequest(
-        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1,product-2'
-      ),
-      {
-        query: { productIds: ['product-1', 'product-2'] },
-      } as never
-    );
-
-    const payload = await response.json();
-
-    expect(payload).toEqual({
-      'product-2': {
-        ecommerce: 'active',
-      },
-    });
   });
 
   it('fills base badges from remote Base SKU fallback before ecommerce badges', async () => {
@@ -352,7 +320,6 @@ describe('integration product listings handler', () => {
       'product-1',
       'product-2',
     ]);
-    expect(findVisibleEcommerceProductIdsMock).toHaveBeenCalledWith(['product-1', 'product-2']);
     expect(payload).toEqual({
       'product-1': {
         base: 'active',

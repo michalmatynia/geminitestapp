@@ -37,6 +37,7 @@ const {
   subscribeToTrackedAiPathRunMock,
   getAiPathRunMock,
   getAiPathRunResultMock,
+  getProductByIdMock,
 } = vi.hoisted(() => {
   let providerInstanceCounter = 0;
 
@@ -51,6 +52,7 @@ const {
     subscribeToTrackedAiPathRunMock: vi.fn(),
     getAiPathRunMock: vi.fn(),
     getAiPathRunResultMock: vi.fn(),
+    getProductByIdMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -65,6 +67,10 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
   useProductListHeaderActionsContext: useProductListHeaderActionsContextMock,
   useProductListModalsContext: useProductListModalsContextMock,
   useProductListSelectionContext: useProductListSelectionContextMock,
+}));
+
+vi.mock('@/features/products/api/products', () => ({
+  getProductById: (...args: unknown[]) => getProductByIdMock(...args),
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
@@ -131,7 +137,11 @@ vi.mock('@/shared/lib/ai-paths/api/client', () => ({
 
 vi.mock('@/features/products/hooks/editingProductHydration', () => ({
   isEditingProductHydrated: vi.fn((p) => p?._isHydrated),
-  markEditingProductHydrated: vi.fn((p) => ({ ...p, _isHydrated: true, description: 'full description' })),
+  markEditingProductHydrated: vi.fn((p) => ({
+    ...p,
+    _isHydrated: true,
+    description: 'full description',
+  })),
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -305,6 +315,14 @@ describe('ProductModals', () => {
         nodes: [],
       },
     });
+    getProductByIdMock.mockReset().mockResolvedValue({
+      id: 'product-1',
+      sku: 'SKU-1',
+      name: 'Product 1',
+      images: [],
+      catalogIds: [],
+      updatedAt: '2026-03-27T10:00:00Z',
+    });
     useProductListHeaderActionsContextMock.mockReturnValue({
       showTriggerRunFeedback: false,
       setShowTriggerRunFeedback: vi.fn(),
@@ -353,8 +371,41 @@ describe('ProductModals', () => {
     });
   });
 
+  it('keeps the create modal open as an edit form after create returns the saved product', async () => {
+    const onCreateSuccess = vi.fn();
+    const createdProduct = createProduct();
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        isCreateOpen: true,
+        initialSku: 'SKU-1',
+        onCreateSuccess,
+      })
+    );
+
+    render(<ProductModals />);
+
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+    const providerProps = productFormProviderPropsMock.mock.calls[0]?.[0];
+
+    await act(async () => {
+      providerProps.onSuccess({ product: createdProduct });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+    });
+    expect(onCreateSuccess).toHaveBeenCalledWith({ product: createdProduct });
+    expect(productFormProviderPropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        product: createdProduct,
+        draft: undefined,
+        initialSku: undefined,
+      })
+    );
+  });
+
   describe('edit hydration guard', () => {
-    it('renders the edit modal shell while hydration is in progress', () => {
+    it('renders the edit modal body while hydration is in progress', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: createProduct(),
@@ -366,10 +417,7 @@ describe('ProductModals', () => {
 
       expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
       expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
-      expect(
-        screen.getByText('Please wait while complete product data is loaded.')
-      ).toBeInTheDocument();
-      expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+      expect(screen.getByTestId('product-form')).toBeInTheDocument();
     });
 
     it('disables save while hydration is in progress', () => {
@@ -408,6 +456,86 @@ describe('ProductModals', () => {
       ).toBeInTheDocument();
     });
 
+    it('refreshes product descriptions after a product trigger run completes', async () => {
+      const product = {
+        ...markEditingProductHydrated(createProduct()),
+        description_en: '',
+        description_pl: '',
+        description_de: '',
+      };
+      const setValue = vi.fn();
+      useProductFormCoreMock.mockReturnValue({
+        product,
+        draft: null,
+        getValues: (field?: string) => {
+          if (field === 'description_en') return '';
+          if (field === 'description_pl') return '';
+          if (field === 'description_de') return '';
+          return {};
+        },
+        handleSubmit: vi.fn(),
+        uploading: false,
+        hasUnsavedChanges: false,
+        setValue,
+        setNormalizeNameError: vi.fn(),
+      });
+      getProductByIdMock.mockResolvedValue({
+        ...product,
+        description_en: 'Generated English description',
+        updatedAt: '2026-04-09T00:00:05.000Z',
+      });
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+        })
+      );
+
+      render(<ProductModals />);
+
+      const onRunSnapshot = triggerButtonBarMock.mock.calls[0][0].onRunSnapshot;
+      expect(typeof onRunSnapshot).toBe('function');
+
+      await act(async () => {
+        onRunSnapshot({
+          button: {
+            id: 'button-description',
+            name: 'Description',
+            iconId: null,
+            locations: ['product_modal'],
+            mode: 'execute_path',
+            display: { label: 'Description' },
+            pathId: 'path-description',
+            enabled: true,
+            sortIndex: 0,
+            createdAt: '2026-04-09T00:00:00.000Z',
+            updatedAt: '2026-04-09T00:00:00.000Z',
+          },
+          runId: 'run-description-1',
+          entityId: 'product-1',
+          entityType: 'product',
+          snapshot: {
+            runId: 'run-description-1',
+            status: 'completed',
+            updatedAt: '2026-04-09T00:00:05.000Z',
+            finishedAt: '2026-04-09T00:00:05.000Z',
+            errorMessage: null,
+            entityId: 'product-1',
+            entityType: 'product',
+            trackingState: 'stopped',
+          },
+        });
+      });
+
+      await waitFor(() => {
+        expect(getProductByIdMock).toHaveBeenCalledWith('product-1', { fresh: true });
+      });
+      expect(setValue).toHaveBeenCalledWith('description_en', 'Generated English description', {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+    });
+
     it('renders edit form for non-hydrated edit product snapshots while keeping save enabled state external', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
@@ -439,13 +567,13 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       await waitFor(() => {
-          expect(productListingsModalPropsMock).toHaveBeenCalledWith(
-            expect.objectContaining({
-              item: expect.objectContaining({ id: 'product-1' }),
-              filterIntegrationSlug: 'tradera',
-              recoveryContext: {
-                source: 'base_quick_export_failed',
-                integrationSlug: 'baselinker',
+        expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            item: expect.objectContaining({ id: 'product-1' }),
+            filterIntegrationSlug: 'tradera',
+            recoveryContext: {
+              source: 'base_quick_export_failed',
+              integrationSlug: 'baselinker',
               status: 'failed',
               runId: 'run-failed-42',
             },
@@ -531,7 +659,7 @@ describe('ProductModals', () => {
       });
     });
 
-  it('renders edit form when the editing product is hydrated', () => {
+    it('renders edit form when the editing product is hydrated', () => {
       const hydrated = markEditingProductHydrated(createProduct());
       useProductFormCoreMock.mockReturnValue({
         product: hydrated,
@@ -1727,7 +1855,7 @@ describe('ProductModals', () => {
   describe('provider stability', () => {
     it('keeps the same edit provider instance after save refreshes updatedAt', () => {
       const product = markEditingProductHydrated(createProduct());
-      
+
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: product,
@@ -1735,7 +1863,9 @@ describe('ProductModals', () => {
       );
       const { rerender } = render(<ProductModals />);
 
-      const firstInstanceId = screen.getByTestId('product-form-provider').getAttribute('data-instance-id');
+      const firstInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
 
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
@@ -1744,13 +1874,15 @@ describe('ProductModals', () => {
       );
       rerender(<ProductModals />);
 
-      const secondInstanceId = screen.getByTestId('product-form-provider').getAttribute('data-instance-id');
+      const secondInstanceId = screen
+        .getByTestId('product-form-provider')
+        .getAttribute('data-instance-id');
       expect(firstInstanceId).toBe(secondInstanceId);
     });
 
     it('keeps the same validator session while edit hydration upgrades a product snapshot', () => {
       const product = createProduct();
-      
+
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: product,
@@ -1831,7 +1963,7 @@ describe('ProductModals', () => {
 
     it('starts a fresh validator session when reopening edit for the same product', () => {
       const product = createProduct();
-      
+
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           editingProduct: product,
@@ -1851,7 +1983,10 @@ describe('ProductModals', () => {
       );
       rerender(<ProductModals />);
 
-      const secondSessionId = productFormProviderPropsMock.mock.calls[productFormProviderPropsMock.mock.calls.length - 1][0].validatorSessionKey;
+      const secondSessionId =
+        productFormProviderPropsMock.mock.calls[
+          productFormProviderPropsMock.mock.calls.length - 1
+        ][0].validatorSessionKey;
       expect(firstSessionId).not.toBe(secondSessionId);
     });
   });

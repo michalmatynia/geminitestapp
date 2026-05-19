@@ -31,7 +31,7 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
     const createdCount = (templateResult.outcomes ?? []).filter(
       (item) => item.action === 'created'
     ).length;
-    notifySuccess('Name segment -> Length & Height patterns created or updated.');
+    notifySuccess('Name segment -> Length pattern created or updated.');
     if (createdCount > 0) {
       notifyInfo(
         createdCount === 1

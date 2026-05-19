@@ -17,6 +17,7 @@ import { env } from '@/shared/lib/env';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import { enqueueProductImagesFastCometUploadOnSave } from '../product-fastcomet-save-sync';
 
 export const getQuerySchema = z.object({
   fresh: optionalBooleanQuerySchema().default(false),
@@ -248,6 +249,7 @@ export async function putHandler(
   if (product === null) {
     throw notFoundError('Product not found', { productId: id });
   }
+  await enqueueProductImagesFastCometUploadOnSave(product, _ctx.userId);
   CachedProductService.invalidateProduct(id);
   timings.set('total', performance.now() - totalStart);
   await logProductTiming('[timing] products.[id].PUT', id, timings);

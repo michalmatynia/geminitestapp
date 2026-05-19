@@ -61,6 +61,8 @@ const buildSettingsResult = ({
   canRunFreshCapturePipeline: resolved.canGenerateSocialDraft && resolved.hasBatchCaptureConfig,
   socialBatchCaptureBlockedReason: resolved.socialBatchCaptureBlockedReason,
   socialVisionWarning: resolved.socialVisionWarning,
+  articleAggregatorPathId: settings.articleAggregatorPathId,
+  setArticleAggregatorPathId: settings.setArticleAggregatorPathId,
   projectUrl: settings.projectUrl,
   projectUrlError: settings.projectUrlError,
   setProjectUrl: settings.setProjectUrl,

@@ -56,11 +56,13 @@ const collectionRouteMapCache = new SafeDatabaseCache<Record<string, DatabaseEng
  */
 const parseMap = (raw: unknown): Record<string, DatabaseEngineProvider> => {
   if (!raw) return {};
+  // Normalize input: if already a string, use as-is; if object, serialize then re-parse to ensure consistent handling.
   const str = typeof raw === 'string' ? raw : JSON.stringify(raw);
   try {
     const parsed = JSON.parse(str) as Record<string, string>;
     const result: Record<string, DatabaseEngineProvider> = {};
     for (const [key, value] of Object.entries(parsed)) {
+      // Only accept known providers ('mongodb' | 'redis') to prevent accidental misconfiguration.
       if (value === 'mongodb' || value === 'redis') {
         result[key] = value;
       }
@@ -91,6 +93,7 @@ const findCollectionRoute = (
 ): DatabaseEngineProvider | undefined => {
   const direct = map[collectionName];
   if (direct) return direct;
+  // Case-insensitive fallback: normalize whitespace and case to match entries like "Products" with "products".
   const normalized = collectionName.trim().toLowerCase();
   if (!normalized) return undefined;
   const matchedKey = Object.keys(map).find((key) => key.trim().toLowerCase() === normalized);
@@ -174,18 +177,21 @@ export async function getCollectionProvider(collectionName: string): Promise<App
   
   if (explicit === 'mongodb') return explicit;
   if (explicit === 'redis') {
+    // Prevent accidental use of Redis-routed collections in contexts requiring MongoDB (e.g., transactions).
     throw internalError(
       `Collection "${collectionName}" is routed to Redis, but this code path requires MongoDB.`
     );
   }
   
   // Enforce Database Engine routing policy.
+  // If strict routing is required, all collections must have explicit entries to prevent accidental defaults.
   if (policy.requireExplicitCollectionRouting) {
     throw internalError(
       `Collection "${collectionName}" has no explicit route in Database Engine and explicit collection routing is required.`
     );
   }
   
+  // Fallback to app-wide provider when no explicit routing is set and strict policy allows it.
   return getAppDbProvider();
 }
 

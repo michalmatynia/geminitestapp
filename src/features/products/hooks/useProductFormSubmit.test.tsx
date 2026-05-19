@@ -355,9 +355,10 @@ describe('useProductFormSubmit', () => {
     expect(mocks.createMutationMock).toHaveBeenCalledTimes(1);
   });
 
-  it('closes create modal immediately while product creation continues in runtime', async () => {
+  it('keeps create submission in progress until product creation finishes', async () => {
     const deferredCreate = createDeferred<{ id: string }>();
     const onSuccess = vi.fn();
+    const refreshImages = vi.fn();
     mocks.createMutationMock.mockImplementation(() => deferredCreate.promise);
 
     const { result } = renderHook(() => {
@@ -381,30 +382,36 @@ describe('useProductFormSubmit', () => {
         customFieldValues: [],
         parameterValues: [],
         studioProjectId: null,
-        refreshImages: vi.fn(),
+        refreshImages,
         onSuccess,
       });
     });
 
+    let submitPromise: Promise<void> | undefined;
     await act(async () => {
-      await result.current.handleSubmit();
+      submitPromise = result.current.handleSubmit();
+      await Promise.resolve();
     });
 
-    expect(result.current.uploading).toBe(false);
-    expect(onSuccess).toHaveBeenCalledWith({ queued: true });
-    expect(mocks.toastMock).toHaveBeenCalledWith('Product creation is running in runtime.', {
+    expect(result.current.uploading).toBe(true);
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(mocks.toastMock).not.toHaveBeenCalledWith('Product creation is running in runtime.', {
       variant: 'info',
     });
 
     await act(async () => {
       deferredCreate.resolve({ id: 'created-product-id' });
-      await deferredCreate.promise;
+      await submitPromise;
     });
 
     await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledTimes(2);
+      expect(result.current.uploading).toBe(false);
+      expect(onSuccess).toHaveBeenCalledTimes(1);
     });
-    expect(onSuccess).toHaveBeenLastCalledWith();
+    expect(refreshImages).toHaveBeenCalledWith(expect.objectContaining({ id: 'created-product-id' }));
+    expect(onSuccess).toHaveBeenCalledWith({
+      product: expect.objectContaining({ id: 'created-product-id' }),
+    });
   });
 
   it('polls runtime create status before refreshing the product list', async () => {
@@ -448,12 +455,12 @@ describe('useProductFormSubmit', () => {
       await result.current.handleSubmit();
     });
 
-    expect(onSuccess).toHaveBeenCalledWith({ queued: true });
+    expect(onSuccess).not.toHaveBeenCalledWith({ queued: true });
 
     await waitFor(() => {
       expect(mocks.getProductCreateRuntimeStatusMock).toHaveBeenCalledWith('runtime-request');
-      expect(onSuccess).toHaveBeenCalledTimes(2);
+      expect(onSuccess).toHaveBeenCalledTimes(1);
     });
-    expect(onSuccess).toHaveBeenLastCalledWith();
+    expect(onSuccess).toHaveBeenCalledWith();
   });
 });

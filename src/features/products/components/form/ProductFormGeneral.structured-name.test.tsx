@@ -12,17 +12,14 @@ import type {
   ProductTitleTerm,
   ProductTitleTermType,
 } from '@/shared/contracts/products/title-terms';
-import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 const {
   useProductFormCoreMock,
   useProductFormMetadataMock,
-  useProductValidationStateMock,
   useTitleTermsMock,
 } = vi.hoisted(() => ({
   useProductFormCoreMock: vi.fn(),
   useProductFormMetadataMock: vi.fn(),
-  useProductValidationStateMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
 
@@ -32,10 +29,6 @@ vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
 
 vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: () => useProductFormMetadataMock(),
-}));
-
-vi.mock('@/features/products/context/ProductValidationSettingsContext', () => ({
-  useProductValidationState: () => useProductValidationStateMock(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
@@ -76,57 +69,6 @@ vi.mock('./ProductFormLatestAmazonExtraction', () => ({
 }));
 
 import ProductFormGeneral from './ProductFormGeneral';
-
-const createPattern = (
-  overrides: Partial<ProductValidationPattern> & {
-    regex: string;
-    target: ProductValidationPattern['target'];
-  }
-): ProductValidationPattern => {
-  const pattern: ProductValidationPattern = {
-    id: 'pattern-name-lore',
-    label: 'Name formatter',
-    target: overrides.target,
-    locale: null,
-    regex: overrides.regex,
-    flags: null,
-    message: 'Pattern mismatch',
-    severity: 'warning',
-    enabled: true,
-    replacementEnabled: true,
-    replacementAutoApply: true,
-    skipNoopReplacementProposal: false,
-    replacementValue: 'Attack On Titan',
-    replacementFields: ['name_en'],
-    replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
-    runtimeEnabled: false,
-    runtimeType: 'none',
-    runtimeConfig: null,
-    postAcceptBehavior: 'revalidate',
-    denyBehaviorOverride: null,
-    validationDebounceMs: 0,
-    sequenceGroupId: null,
-    sequenceGroupLabel: null,
-    sequenceGroupDebounceMs: 0,
-    sequence: null,
-    chainMode: 'continue',
-    maxExecutions: 1,
-    passOutputToNext: true,
-    launchEnabled: false,
-    launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
-    launchScopeBehavior: 'gate',
-    launchSourceMode: 'current_field',
-    launchSourceField: null,
-    launchOperator: 'equals',
-    launchValue: null,
-    launchFlags: null,
-    appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-  return pattern;
-};
 
 function NameValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
@@ -292,24 +234,7 @@ describe('ProductFormGeneral structured name editing', () => {
     });
   });
 
-  it('keeps the lore segment stable while the structured field is focused and only formats after blur', async () => {
-    const validationState = {
-      validationInstanceScope: 'product_create',
-      validatorEnabled: true,
-      formatterEnabled: false,
-      validatorPatterns: [
-        createPattern({
-          regex: 'Lore$',
-          target: 'name',
-          replacementAutoApply: true,
-          replacementValue: 'Attack On Titan',
-          replacementFields: ['name_en'],
-        }),
-      ],
-      latestProductValues: null,
-    };
-    useProductValidationStateMock.mockImplementation(() => validationState);
-
+  it('keeps the lore segment stable while the structured field is focused and after blur', async () => {
     const view = renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
     const nameInput = screen.getByLabelText('English Name');
 
@@ -320,8 +245,6 @@ describe('ProductFormGeneral structured name editing', () => {
     fireEvent.change(nameInput, {
       target: { value: 'Scout Regiment | 4 cm | Metal | Anime Pin | Lore' },
     });
-
-    validationState.formatterEnabled = true;
 
     act(() => {
       view.rerenderForm();
@@ -335,29 +258,10 @@ describe('ProductFormGeneral structured name editing', () => {
       nameInput.blur();
     });
 
-    await waitFor(() => {
-      expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
-    });
+    expect(nameInput).toHaveValue('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
   });
 
   it('preserves a shortened lore segment while the formatter is already enabled', async () => {
-    const validationState = {
-      validationInstanceScope: 'product_create',
-      validatorEnabled: true,
-      formatterEnabled: true,
-      validatorPatterns: [
-        createPattern({
-          regex: 'Lore$',
-          target: 'name',
-          replacementAutoApply: true,
-          replacementValue: 'Attack On Titan',
-          replacementFields: ['name_en'],
-        }),
-      ],
-      latestProductValues: null,
-    };
-    useProductValidationStateMock.mockImplementation(() => validationState);
-
     renderProductFormGeneral('Scout Regiment | 4 cm | Metal | Anime Pin | Lore');
     const nameInput = screen.getByLabelText('English Name');
 

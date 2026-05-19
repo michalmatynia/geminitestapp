@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Db } from 'mongodb';
 
 import {
@@ -43,6 +43,13 @@ vi.mock('@/shared/lib/db/arch-mongo-client', () => ({
 }));
 
 describe('mongo-activity-repository', () => {
+  const dedicatedMongoEnv = {
+    STUDIQ_MONGODB_LOCAL_URI: 'mongodb://localhost:27018/studiq_local',
+    CMS_BUILDER_MONGODB_LOCAL_URI: 'mongodb://localhost:27019/cms_builder_local',
+    ECOM_MONGODB_LOCAL_URI: 'mongodb://localhost:27021/ecom_local',
+    ARCH_MONGODB_LOCAL_URI: 'mongodb://localhost:27022/arch_web_local',
+  } as const;
+
   const collectionMock = {
     find: vi.fn().mockReturnThis(),
     sort: vi.fn().mockReturnThis(),
@@ -133,11 +140,20 @@ describe('mongo-activity-repository', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    delete process.env['OBSERVABILITY_FEDERATED_APPLICATION_IDS'];
+    delete process.env['OBSERVABILITY_DISABLED_APPLICATION_IDS'];
+    Object.assign(process.env, dedicatedMongoEnv);
     getMongoDbMock.mockResolvedValue(dbMock as unknown as Db);
     getStudiqMongoDbMock.mockResolvedValue(studiqDbMock as unknown as Db);
     getCmsBuilderMongoDbMock.mockResolvedValue(cmsBuilderDbMock as unknown as Db);
     getEcommerceMongoDbMock.mockResolvedValue(ecommerceDbMock as unknown as Db);
     getArchMongoDbMock.mockResolvedValue(archDbMock as unknown as Db);
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(dedicatedMongoEnv)) {
+      delete process.env[key];
+    }
   });
 
   it('ensures activity indexes including TTL before listing activity', async () => {
@@ -154,6 +170,19 @@ describe('mongo-activity-repository', () => {
     );
     expect(collectionMock.find).toHaveBeenCalledWith({});
     expect(collectionMock.sort).toHaveBeenCalledWith({ createdAt: -1 });
+  });
+
+  it('limits unfiltered federated activity reads to configured application ids', async () => {
+    process.env['OBSERVABILITY_FEDERATED_APPLICATION_IDS'] = 'geminitestapp,stargater';
+    const { mongoActivityRepository } = await import('./mongo-activity-repository');
+
+    await mongoActivityRepository.listActivity({});
+
+    expect(getMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getEcommerceMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getStudiqMongoDbMock).not.toHaveBeenCalled();
+    expect(getCmsBuilderMongoDbMock).not.toHaveBeenCalled();
+    expect(getArchMongoDbMock).not.toHaveBeenCalled();
   });
 
   it('writes StudiQ activity locally without mirroring it to the central activity log', async () => {

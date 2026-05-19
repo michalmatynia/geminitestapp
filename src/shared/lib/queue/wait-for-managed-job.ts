@@ -24,6 +24,7 @@ export async function waitForManagedQueueJobResult<TJobData, TResult>(
   }
 ): Promise<TResult> {
   const bullQueue = queue.getQueue();
+  // Type guard ensures we're working with BullMQ queue, not an inline fallback implementation.
   if (!isBullQueue(bullQueue)) {
     throw serviceUnavailableError('Redis queue is unavailable. Configure Redis and retry.', 3_000, {
       queue: input.queueName,
@@ -37,6 +38,7 @@ export async function waitForManagedQueueJobResult<TJobData, TResult>(
     });
   }
 
+  // Duplicate the connection to create an independent event listener; prevents interference with queue operations.
   const eventsConnection = baseConnection.duplicate();
   const queueEvents = new QueueEvents(input.queueName, {
     connection: eventsConnection as BullMqQueueEventsConnection,
@@ -51,8 +53,10 @@ export async function waitForManagedQueueJobResult<TJobData, TResult>(
         queue: input.queueName,
       });
     }
+    // Block on the job until it completes or timeout, streaming events to allow real-time updates.
     return (await job.waitUntilFinished(queueEvents, input.timeoutMs)) as TResult;
   } finally {
+    // Clean up event listeners and connections to prevent resource leaks and dangling subscriptions.
     await queueEvents.close().catch(() => undefined);
     eventsConnection.disconnect();
   }

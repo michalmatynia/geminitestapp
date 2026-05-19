@@ -11,6 +11,7 @@ import {
   isEditingProductHydrated,
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
+import type { ProductOperationInfo } from '@/features/products/hooks/useProductOperations.helpers';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 
@@ -45,7 +46,7 @@ type ProductFormProviderProps = {
   children: React.ReactNode;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
-  onSuccess?: (info?: { queued?: boolean }) => void;
+  onSuccess?: (info?: ProductOperationInfo) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   requireSku?: boolean;
   requireHydratedEditProduct?: boolean;

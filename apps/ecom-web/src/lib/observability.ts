@@ -28,8 +28,13 @@ type StargaterLogInput = {
   context?: Record<string, unknown> | null;
 };
 
-const getRuntimeEnvironment = (): string | null =>
-  process.env.VERCEL_ENV?.trim() || process.env.NODE_ENV?.trim() || null;
+const getRuntimeEnvironment = (): string | null => {
+  const vercelEnv = process.env['VERCEL_ENV'];
+  if (typeof vercelEnv === 'string' && vercelEnv.trim().length > 0) return vercelEnv.trim();
+  const nodeEnv = process.env['NODE_ENV'];
+  if (typeof nodeEnv === 'string' && nodeEnv.trim().length > 0) return nodeEnv.trim();
+  return null;
+};
 
 const ensureStargaterObservabilityIndexes = async (): Promise<void> => {
   const db = await getDb();

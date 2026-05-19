@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { type Collection, type WithId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
-import { ORDERS_COLLECTION } from '@/lib/orders';
+import { type Order, ORDERS_COLLECTION, serializeOrder } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { capturePayPalOrder } from '@/lib/paypal';
 import { sendOrderConfirmation } from '@/lib/email';
 import { fulfillInpostOrder } from '@/lib/inpost';
-import { serializeOrder } from '@/lib/orders';
 
 const ORDER_ID_RE = /^ARC-\d{4}-[0-9A-F]{8}$/;
 
@@ -15,6 +15,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+async function handleFulfillment(collection: Collection<Order>, order: WithId<Order>): Promise<void> {
+  const emailClaim = await collection.updateOne(
+    { _id: order._id, confirmationEmailQueuedAt: { $exists: false } },
+    { $set: { confirmationEmailQueuedAt: new Date().toISOString() } } as any,
+  ).catch(() => ({ modifiedCount: 0 }));
+  
+  if (emailClaim.modifiedCount > 0) {
+    await sendOrderConfirmation(serializeOrder(order)).catch(() => undefined);
+    await fulfillInpostOrder(serializeOrder(order)).catch(() => undefined);
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -41,15 +53,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const orderId = readString(body['orderId']).toUpperCase();
   const paypalOrderId = readString(body['paypalOrderId']);
 
-  if (!ORDER_ID_RE.test(orderId)) {
-    return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
-  }
-  if (paypalOrderId.length === 0) {
-    return NextResponse.json({ error: 'Invalid PayPal order ID' }, { status: 400 });
+  if (!ORDER_ID_RE.test(orderId) || paypalOrderId.length === 0) {
+    return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
   }
 
   const db = await getDb();
-  const collection = db.collection(ORDERS_COLLECTION);
+  const collection = db.collection<Order>(ORDERS_COLLECTION);
 
   const existing = await collection.findOne(
     { orderId, paymentMethod: 'paypal' },
@@ -59,26 +68,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!existing) {
     return NextResponse.json({ error: 'Order not found' }, { status: 404 });
   }
-  if (existing['status'] !== 'pending_payment') {
-    // Already processed (idempotent)
-    return NextResponse.json({ orderId, status: existing['status'] }, { status: 200 });
+  if (existing.status !== 'pending_payment') {
+    return NextResponse.json({ orderId, status: existing.status }, { status: 200 });
   }
 
-  let captureStatus: string;
   try {
     const captureResult = await capturePayPalOrder(paypalOrderId);
-    captureStatus = captureResult.status;
+    if (captureResult.status !== 'COMPLETED') {
+      await collection.updateOne(
+        { orderId, status: 'pending_payment' },
+        { $set: { status: 'cancelled' } },
+      ).catch(() => undefined);
+      return NextResponse.json({ error: 'PayPal payment was declined.' }, { status: 422 });
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'PayPal capture failed';
     return NextResponse.json({ error: msg }, { status: 502 });
-  }
-
-  if (captureStatus !== 'COMPLETED') {
-    await collection.updateOne(
-      { orderId, status: 'pending_payment' },
-      { $set: { status: 'cancelled' } },
-    ).catch(() => undefined);
-    return NextResponse.json({ error: 'PayPal payment was declined.' }, { status: 422 });
   }
 
   const updated = await collection.findOneAndUpdate(
@@ -87,17 +92,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     { returnDocument: 'after' },
   ).catch(() => null);
 
-  if (updated !== null) {
-    // Atomic guard: claim the right to send the confirmation email once, even if
-    // the PayPal webhook fires concurrently and also tries to send it.
-    const emailClaim = await collection.updateOne(
-      { _id: updated._id, confirmationEmailQueuedAt: { $exists: false } },
-      { $set: { confirmationEmailQueuedAt: new Date().toISOString() } },
-    ).catch(() => ({ modifiedCount: 0 }));
-    if (emailClaim.modifiedCount > 0) {
-      await sendOrderConfirmation(serializeOrder(updated)).catch(() => undefined);
-      await fulfillInpostOrder(serializeOrder(updated)).catch(() => undefined);
-    }
+  if (updated !== null && updated !== undefined) {
+    await handleFulfillment(collection, updated);
   }
 
   return NextResponse.json({ orderId, status: 'processing' }, { status: 200 });

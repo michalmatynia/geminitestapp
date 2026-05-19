@@ -1,6 +1,6 @@
 /**
  * AI Path Run Executor
- * 
+ *
  * Core execution engine for AI automation path workflows.
  * Provides:
  * - Path execution orchestration and coordination
@@ -13,9 +13,7 @@
 import 'server-only';
 
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
-import {
-  recordRuntimeRunFinished,
-} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import type {
   AiPathRunNodeRecord,
@@ -115,7 +113,9 @@ export const executePathRun = async (
   perfLog('preflight', preflightStart);
 
   const updateRunSnapshot = async (
-    data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'errorMessage'>>
+    data: Partial<
+      Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'errorMessage' | 'finishedAt'>
+    >
   ): Promise<boolean> => {
     try {
       const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
@@ -215,7 +215,7 @@ export const executePathRun = async (
     accInputs,
     accOutputs,
     repo,
-    resolvedRunStartedAt
+    resolvedRunStartedAt,
   });
 
   const saveIntermediateState = async (): Promise<void> => {
@@ -524,6 +524,7 @@ export const executePathRun = async (
         finishedAt,
         durationMs: computeDurationMs(runStartedAt, finishedAt),
       },
+      finishedAt,
     });
 
     if (!isCancelled) {

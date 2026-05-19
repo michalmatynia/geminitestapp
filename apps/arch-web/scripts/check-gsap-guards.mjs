@@ -52,23 +52,30 @@ assert(
 );
 
 assert(
-  !builtWork.includes('modelUrl=') && !builtWork.includes('.modelUrl'),
-  'Project still cards must use procedural wireframe thumbnails, not CMS model URLs.'
+  builtWork.includes('viewMode={content.projectsViewMode}'),
+  'Project still cards must keep respecting the CMS project render mode.'
 );
 
 assert(
-  !isometricThumbnail.includes('loadGltfModel') && !isometricThumbnail.includes('modelUrl'),
-  'IsometricThumbnail must stay a procedural wireframe still, not a GLTF asset loader.'
+  isometricThumbnail.includes('loadGltfModel') && isometricThumbnail.includes('applyViewMode'),
+  'IsometricThumbnail must support CMS model URLs and the configured edge/wireframe/solid view mode.'
 );
 
 assert(
-  !caseStudies.includes('modelUrl=') && !caseStudies.includes('.modelUrl'),
-  'Case-study drawing panels must use procedural wireframe thumbnails, not CMS model URLs.'
+  !isometricThumbnail.includes('.catch(() => addGroup(makeProjectGroup(projectIdx)))'),
+  'IsometricThumbnail must not fall back to retired procedural geometry when a CMS model URL fails.'
 );
 
 assert(
-  !sideViewThumbnail.includes('loadGltfModel') && !sideViewThumbnail.includes('modelUrl'),
-  'SideViewThumbnail must stay a procedural elevation drawing, not a GLTF asset loader.'
+  caseStudies.includes('modelUrl={activeProject?.modelUrl}'),
+  'Case-study drawing panels must pass the active CMS project model URL to the side-view thumbnail.'
+);
+
+assert(
+  sideViewThumbnail.includes('loadGltfModel') &&
+    sideViewThumbnail.includes('addEdgesRenderMode') &&
+    !sideViewThumbnail.includes('makeProjectGroup'),
+  'SideViewThumbnail must render uploaded CMS project models in edge elevation mode, not retired procedural models.'
 );
 
 if (failures.length > 0) {

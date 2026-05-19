@@ -37,17 +37,13 @@ export const isAdminMenuSettingKey = (key: string): key is AdminMenuSettingKey =
   ADMIN_MENU_SETTING_KEY_SET.has(key);
 
 const getClientByKeyStore = (): Map<string, MongoClient> => {
-  if (!globalForAdminMenuSettings.__adminMenuLocalMongoClientByKey) {
-    globalForAdminMenuSettings.__adminMenuLocalMongoClientByKey = new Map<string, MongoClient>();
-  }
+  globalForAdminMenuSettings.__adminMenuLocalMongoClientByKey ??= new Map<string, MongoClient>();
   return globalForAdminMenuSettings.__adminMenuLocalMongoClientByKey;
 };
 
 const getClientPromiseByKeyStore = (): Map<string, Promise<MongoClient>> => {
-  if (!globalForAdminMenuSettings.__adminMenuLocalMongoClientPromiseByKey) {
-    globalForAdminMenuSettings.__adminMenuLocalMongoClientPromiseByKey =
-      new Map<string, Promise<MongoClient>>();
-  }
+  globalForAdminMenuSettings.__adminMenuLocalMongoClientPromiseByKey ??=
+    new Map<string, Promise<MongoClient>>();
   return globalForAdminMenuSettings.__adminMenuLocalMongoClientPromiseByKey;
 };
 
@@ -78,23 +74,33 @@ const isSingleNodeLocalMongoUri = (uri: string): boolean => {
   }
 };
 
+const resolveLocalAppMongoUri = (): string => {
+  const explicitLocalUri = (process.env['MONGODB_LOCAL_URI'] ?? '').trim();
+  if (explicitLocalUri.length > 0) return explicitLocalUri;
+
+  const activeUri = (process.env['MONGODB_URI'] ?? '').trim();
+  if (activeUri.length > 0 && isLocalMongoUri(activeUri)) return activeUri;
+
+  throw configurationError(
+    'Admin menu settings require the geminitestapp local MongoDB source. Set MONGODB_LOCAL_URI.'
+  );
+};
+
+const resolveLocalAppMongoDbName = (uri: string): string => {
+  const envDbName = (process.env['MONGODB_LOCAL_DB'] ?? '').trim();
+  if (envDbName.length > 0) return envDbName;
+
+  const parsedDbName = parseDbNameFromUri(uri) ?? '';
+  if (parsedDbName.length > 0) return parsedDbName;
+
+  return 'app';
+};
+
 const resolveLocalAppMongoConfig = (): LocalAppMongoConfig => {
-  const explicitLocalUri = process.env['MONGODB_LOCAL_URI']?.trim() ?? '';
-  const activeUri = process.env['MONGODB_URI']?.trim() ?? '';
-  const uri = explicitLocalUri || (activeUri && isLocalMongoUri(activeUri) ? activeUri : '');
-
-  if (!uri) {
-    throw configurationError(
-      'Admin menu settings require the geminitestapp local MongoDB source. Set MONGODB_LOCAL_URI.'
-    );
-  }
-
+  const uri = resolveLocalAppMongoUri();
   return {
     uri,
-    dbName:
-      process.env['MONGODB_LOCAL_DB']?.trim() ||
-      parseDbNameFromUri(uri) ||
-      'app',
+    dbName: resolveLocalAppMongoDbName(uri),
   };
 };
 
@@ -116,12 +122,14 @@ const getAdminMenuLocalMongoClient = async (): Promise<MongoClient> => {
   const cached = clients.get(cacheKey);
   if (cached) return cached;
 
-  if (!promises.has(cacheKey)) {
-    promises.set(cacheKey, new MongoClient(config.uri, getMongoClientOptions(config.uri)).connect());
+  let promise = promises.get(cacheKey);
+  if (!promise) {
+    promise = new MongoClient(config.uri, getMongoClientOptions(config.uri)).connect();
+    promises.set(cacheKey, promise);
   }
 
   try {
-    const client = await promises.get(cacheKey)!;
+    const client = await promise;
     clients.set(cacheKey, client);
     return client;
   } catch (error) {
@@ -138,8 +146,13 @@ const getAdminMenuLocalMongoDb = async (): Promise<Db> => {
 
 const toSettingRecord = (doc: MongoStringSettingRecord | null): { key: string; value: string } | null => {
   if (!doc) return null;
-  const key = doc.key ?? (typeof doc._id === 'string' ? doc._id : '');
-  if (!key || !isAdminMenuSettingKey(key) || typeof doc.value !== 'string') return null;
+  
+  let key = doc.key ?? '';
+  if (key.length === 0 && typeof doc._id === 'string') {
+    key = doc._id;
+  }
+
+  if (key.length === 0 || !isAdminMenuSettingKey(key) || typeof doc.value !== 'string') return null;
   return { key, value: decodeSettingValue(key, doc.value) };
 };
 

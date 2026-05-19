@@ -41,8 +41,17 @@ export type SocialPublishingPostStatus = z.infer<typeof socialPublishingPostStat
 export const socialPublishingProviderSchema = z.enum(['linkedin']);
 export type SocialPublishingProvider = z.infer<typeof socialPublishingProviderSchema>;
 
+export const socialPublishingPostContentTypeSchema = z.enum([
+  'social-pipeline',
+  'article-aggregator',
+]);
+export type SocialPublishingPostContentType = z.infer<
+  typeof socialPublishingPostContentTypeSchema
+>;
+
 export const socialPublishingPostSchema = z.object({
   id: trimmedString.min(1).max(160),
+  contentType: socialPublishingPostContentTypeSchema.default('social-pipeline'),
   titlePl: optionalText(200),
   titleEn: optionalText(200),
   bodyPl: optionalText(8000),
@@ -63,6 +72,15 @@ export const socialPublishingPostSchema = z.object({
   docReferences: z.array(trimmedString.max(240)).max(80).default([]),
   contextSummary: trimmedString.max(8000).nullable().default(null),
   generatedSummary: trimmedString.max(8000).nullable().default(null),
+  articleSourcePresetIds: z.array(trimmedString.max(160)).max(80).default([]),
+  articleSourceUrls: z.array(trimmedString.max(1000)).max(80).default([]),
+  articleScrapeRunId: trimmedString.max(160).nullable().default(null),
+  articleIds: z.array(trimmedString.max(160)).max(1000).default([]),
+  articleAggregationPrompt: trimmedString.max(12000).nullable().default(null),
+  articlePromptPresetId: trimmedString.max(160).nullable().default(null),
+  articleAggregationPathId: trimmedString.max(160).nullable().default(null),
+  articleAggregationRunId: trimmedString.max(160).nullable().default(null),
+  articleAggregationSummary: trimmedString.max(8000).nullable().default(null),
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
   visualAnalysisSourceImageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),

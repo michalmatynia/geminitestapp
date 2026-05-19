@@ -14,6 +14,7 @@ import {
 } from './AdminFilemakerMailClientPage.workspace-model';
 import type { ReplyPanelProps } from './AdminFilemakerMailClientPage.workspace-reply';
 import { MailClientStatusLine } from './AdminFilemakerMailClientPage.workspace-shared';
+import { FilemakerCampaignContextLinks } from './FilemakerCampaignMailLinks';
 
 const ReplyPanel = dynamic<ReplyPanelProps>(
   () =>
@@ -96,14 +97,20 @@ function ReaderHeader({
 }: {
   detail: FilemakerMailThreadDetail | null;
 }): React.JSX.Element {
+  const campaignContext = detail?.thread.campaignContext ?? null;
   return (
-    <div className='border-b border-border/60 px-4 py-3'>
-      <h2 className='truncate text-sm font-semibold text-foreground'>
-        {detail === null ? 'Reader / editor' : detail.thread.subject}
-      </h2>
-      <p className='truncate text-xs text-muted-foreground'>
-        {detail === null ? 'Select an email above to read and reply.' : `${detail.messages.length} message thread`}
-      </p>
+    <div className='border-b border-border/60 px-4 py-3 space-y-2'>
+      <div>
+        <h2 className='truncate text-sm font-semibold text-foreground'>
+          {detail === null ? 'Reader / editor' : detail.thread.subject}
+        </h2>
+        <p className='truncate text-xs text-muted-foreground'>
+          {detail === null ? 'Select an email above to read and reply.' : `${detail.messages.length} message thread`}
+        </p>
+      </div>
+      {campaignContext !== null ? (
+        <FilemakerCampaignContextLinks context={campaignContext} className='flex flex-wrap gap-2' />
+      ) : null}
     </div>
   );
 }

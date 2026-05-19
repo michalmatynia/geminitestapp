@@ -8,6 +8,8 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
+import type { ProductOperationInfo } from '@/features/products/hooks/useProductOperations.helpers';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
@@ -18,29 +20,98 @@ import {
 
 import { ProductEditorModal } from './ProductEditorModal';
 import { ProductIntegrationSelectionModal } from './ProductIntegrationSelectionModal';
+import type { ProductFormScope } from './ProductModals.types';
+
+type ProductCreateModalViewState = {
+  draft?: ProductDraft | null | undefined;
+  initialCatalogId?: string | undefined;
+  initialSku?: string | undefined;
+  product?: ProductWithImages | undefined;
+  providerKey: string;
+  saveText: string;
+  submitButtonText: string;
+  subtitle?: string | undefined;
+  title: string;
+  validationInstanceScopeOverride: ProductFormScope;
+};
+
+const buildProductCreateModalViewState = (input: {
+  createDraft: ProductDraft | null;
+  createdProduct: ProductWithImages | null;
+  initialCatalogId: string | null;
+  initialSku: string;
+}): ProductCreateModalViewState => {
+  if (input.createdProduct !== null) {
+    return {
+      product: input.createdProduct,
+      providerKey: `create:created:${input.createdProduct.id}:${input.createdProduct.updatedAt ?? ''}`,
+      saveText: 'Update',
+      submitButtonText: 'Update',
+      title: 'Edit Product',
+      validationInstanceScopeOverride: 'product_edit',
+    };
+  }
+
+  return {
+    draft: input.createDraft,
+    initialCatalogId: input.initialCatalogId ?? undefined,
+    initialSku: input.initialSku,
+    providerKey: input.createDraft !== null ? `create:${input.createDraft.id}` : 'create',
+    saveText: 'Create',
+    submitButtonText: 'Create',
+    subtitle: input.createDraft !== null ? `Using draft template: ${input.createDraft.name}` : undefined,
+    title: 'Create Product',
+    validationInstanceScopeOverride: 'product_create',
+  };
+};
 
 function ProductCreateModalWrapper(): React.JSX.Element {
   const {
     isCreateOpen, initialSku, createDraft, initialCatalogId,
     onCloseCreate, onCreateSuccess
   } = useProductListModalsContext();
+  const [createdProduct, setCreatedProduct] = React.useState<ProductWithImages | null>(null);
 
-  const providerKey = createDraft !== null ? `create:${createDraft.id}` : 'create';
+  React.useEffect(() => {
+    if (isCreateOpen === false) {
+      setCreatedProduct(null);
+    }
+  }, [isCreateOpen]);
+
+  const handleCloseCreate = React.useCallback((): void => {
+    setCreatedProduct(null);
+    onCloseCreate();
+  }, [onCloseCreate]);
+
+  const handleCreateSuccess = React.useCallback((info?: ProductOperationInfo): void => {
+    if (info?.product !== undefined) {
+      setCreatedProduct(info.product);
+    }
+    onCreateSuccess(info);
+  }, [onCreateSuccess]);
+
+  const viewState = buildProductCreateModalViewState({
+    createDraft,
+    createdProduct,
+    initialCatalogId: initialCatalogId ?? null,
+    initialSku,
+  });
   
   return (
     <ProductEditorModal
       isOpen={isCreateOpen}
-      onClose={onCloseCreate}
-      title='Create Product'
-      subtitle={createDraft !== null ? `Using draft template: ${createDraft.name}` : undefined}
-      saveText='Create'
-      submitButtonText='Create'
-      providerKey={providerKey}
-      draft={createDraft}
-      onSuccess={onCreateSuccess}
-      initialSku={initialSku}
-      initialCatalogId={initialCatalogId ?? undefined}
-      validationInstanceScopeOverride='product_create'
+      onClose={handleCloseCreate}
+      title={viewState.title}
+      subtitle={viewState.subtitle}
+      saveText={viewState.saveText}
+      submitButtonText={viewState.submitButtonText}
+      providerKey={viewState.providerKey}
+      product={viewState.product}
+      draft={viewState.draft}
+      onSuccess={handleCreateSuccess}
+      initialSku={viewState.initialSku}
+      initialCatalogId={viewState.initialCatalogId}
+      validationInstanceScopeOverride={viewState.validationInstanceScopeOverride}
     />
   );
 }

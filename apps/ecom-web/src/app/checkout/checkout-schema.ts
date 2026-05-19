@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { EcomLocale } from '@/lib/locales';
 
-export function buildCheckoutInfoSchema(locale: EcomLocale) {
+export function buildCheckoutInfoSchema(locale: EcomLocale): z.ZodObject<any> {
   const req = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
   const emailInvalid = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
   const phoneInvalid = locale === 'pl' ? 'Wpisz poprawny numer telefonu.' : 'Enter a valid phone number.';
@@ -16,7 +16,7 @@ export function buildCheckoutInfoSchema(locale: EcomLocale) {
     postcode: z.string().min(1, req),
     country: z.string().min(1, req),
     phone: z.string().optional().refine(
-      (val) => !val || val.trim() === '' || /^[+\d][\d\s\-()+.]{5,}$/.test(val.trim()),
+      (val) => val === undefined || val === null || val.trim() === '' || /^[+\d][\d\s\-()+.]{5,}$/.test(val.trim()),
       { message: phoneInvalid },
     ),
   });

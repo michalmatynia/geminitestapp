@@ -1,9 +1,15 @@
 import { ObjectId, type Db, type Filter } from 'mongodb';
 
-import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
+import {
+  observabilityApplicationIdValues,
+  type ActivityRepository,
+  type ActivityFilters,
+  type ObservabilityApplicationId,
+} from '@/shared/contracts/system';
 import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';
 import { getMongoDb as getRootMongoDb } from '@/shared/lib/db/mongo-client';
 import {
+  getFederatedObservabilityApplicationIds,
   getMongoDatabaseName,
   getObservabilityApplicationMongoDb,
 } from '@/shared/lib/observability/application-log-databases';
@@ -16,14 +22,8 @@ import {
 import { getObservabilityIndexManifestEntries } from '@/shared/lib/observability/observability-index-manifest';
 
 const COLLECTION = 'activity_logs';
-const OBSERVABILITY_APPLICATION_IDS = [
-  'geminitestapp',
-  'studiq',
-  'cms-builder',
-  'stargater',
-  'arch',
-] as const;
-type ActivityApplicationId = (typeof OBSERVABILITY_APPLICATION_IDS)[number];
+const OBSERVABILITY_APPLICATION_IDS = observabilityApplicationIdValues;
+type ActivityApplicationId = ObservabilityApplicationId;
 
 type ActivityLogSource = {
   applicationId: ActivityApplicationId;
@@ -213,7 +213,8 @@ const ensureActivityLogIndexes = async (db?: Db): Promise<void> => {
 
 const resolveActivitySourceApplicationIds = (filters?: ActivityFilters): ActivityApplicationId[] => {
   const applicationId = normalizeObservabilityApplicationId(filters?.applicationId);
-  return applicationId ? [applicationId] : [...OBSERVABILITY_APPLICATION_IDS];
+  if (applicationId !== null) return [applicationId];
+  return getFederatedObservabilityApplicationIds(OBSERVABILITY_APPLICATION_IDS);
 };
 
 const getActivityLogSources = async (filters?: ActivityFilters): Promise<ActivityLogSource[]> => {

@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
-import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 import { ProductFormDimensionsFields } from './ProductFormDimensionsFields';
@@ -15,11 +14,6 @@ import type {
   ProductFormGeneralDisplayValues,
   ProductFormLanguage,
 } from './ProductFormGeneral.types';
-import { useProductFormGeneralFocus } from './useProductFormGeneralFocus';
-import {
-  useCompiledProductValidationPatterns,
-  useProductFormGeneralFormatter,
-} from './useProductFormGeneralFormatter';
 import { useProductFormGeneralWatchedValues } from './useProductFormGeneralWatchedValues';
 import { useProductFormLanguageTabs } from './useProductFormLanguageTabs';
 import {
@@ -51,14 +45,8 @@ const useProductFormGeneralState = (): {
 	  displayValues: ProductFormGeneralDisplayValues;
 	  languageTabs: ReturnType<typeof useProductFormLanguageTabs>;
 	} => {
-  const validationState = useProductValidationState();
   const productFormMetadata = useProductFormMetadata();
   const { getValues, setValue, watch } = useFormContext<ProductFormData>();
-  const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
-  const formatterLoopGuardRef = useRef<{ recentSignatures: string[]; cycleHits: number }>({
-    recentSignatures: [],
-    cycleHits: 0,
-  });
   const rawFilteredLanguages = readMetadataArray<ProductFormLanguage>(
     productFormMetadata.filteredLanguages
   );
@@ -70,10 +58,8 @@ const useProductFormGeneralState = (): {
   const categories = readMetadataArray<NonNullable<ProductFormPolishNameCategories>[number]>(
     productFormMetadata.categories
   );
-  const focusedFieldName = useProductFormGeneralFocus();
   const { watchedValues, displayValues } = useProductFormGeneralWatchedValues(watch);
   const languageTabs = useProductFormLanguageTabs(filteredLanguages);
-  const compiledPatterns = useCompiledProductValidationPatterns(validationState.validatorPatterns);
 
   useProductFormPolishNameAutoSync({
     languageTabValues: languageTabs.languageTabValues,
@@ -83,20 +69,6 @@ const useProductFormGeneralState = (): {
     namePl: watchedValues.namePl,
     getValues,
     setValue,
-  });
-
-  useProductFormGeneralFormatter({
-    validatorEnabled: validationState.validatorEnabled,
-    formatterEnabled: validationState.formatterEnabled,
-    validationInstanceScope: validationState.validationInstanceScope,
-    compiledPatterns,
-    latestProductValues: validationState.latestProductValues,
-    watchedValues,
-    focusedFieldName,
-    getValues,
-    setValue,
-    sequenceGroupDebounceRef,
-    formatterLoopGuardRef,
   });
 
   return {

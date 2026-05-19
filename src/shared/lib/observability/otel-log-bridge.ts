@@ -55,12 +55,15 @@ const mapSeverity = (level: SystemLogLevel): SeverityNumber => {
 
 const asAttributeValue = (key: string, value: unknown): string | number | boolean | undefined => {
   if (value === null || value === undefined) return undefined;
+  // Redact sensitive fields (passwords, tokens, keys) before serialization to prevent data leaks.
   if (isSensitiveKey(key)) return REDACTED_VALUE;
 
   if (typeof value === 'string') {
+    // Apply redaction and truncation to strings to prevent injection of sensitive data and size bloat.
     return truncateString(redactSensitiveText(value), MAX_ATTRIBUTE_VALUE_LENGTH);
   }
   if (typeof value === 'number') {
+    // Only accept finite numbers to prevent Infinity/-Infinity from being emitted as attributes.
     return Number.isFinite(value) ? value : undefined;
   }
   if (typeof value === 'boolean') return value;
@@ -69,6 +72,7 @@ const asAttributeValue = (key: string, value: unknown): string | number | boolea
   }
 
   try {
+    // Serialize complex objects to JSON for OTel emission; catch unserializable types gracefully.
     const serialized = JSON.stringify(value);
     if (!serialized) return undefined;
     return truncateString(redactSensitiveText(serialized), MAX_ATTRIBUTE_VALUE_LENGTH);
@@ -87,11 +91,13 @@ const sanitizeContextAttributes = (
 ): Record<string, string | number | boolean> => {
   if (!context) return {};
   const attributes: Record<string, string | number | boolean> = {};
+  // Limit to MAX_CONTEXT_KEYS to prevent OTel from rejecting logs with too many attributes.
   const entries = Object.entries(context).slice(0, MAX_CONTEXT_KEYS);
 
   for (const [key, value] of entries) {
     const attributeKey = `context.${key}`;
     const attributeValue = asAttributeValue(key, value);
+    // Only include attributes with defined values to avoid sparse maps in OTel backend.
     if (attributeValue !== undefined) {
       attributes[attributeKey] = attributeValue;
     }

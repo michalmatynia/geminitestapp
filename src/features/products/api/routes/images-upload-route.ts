@@ -7,6 +7,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
 import { withFileUploadSecurity } from '@/features/products/security';
+import type { FileStorageSource } from '@/shared/lib/files/constants';
 import { uploadProductImageFileWithLocalFallback } from '@/shared/lib/products/services/product-image-upload-fallback';
 
 interface UploadedFile {
@@ -21,11 +22,20 @@ const getSkuFromRequest = (req: NextRequest): string | null => {
   return normalized !== undefined && normalized.length > 0 ? normalized : null;
 };
 
+const getForceStorageSourceFromRequest = (req: NextRequest): FileStorageSource | null => {
+  const value =
+    req.nextUrl.searchParams.get('storage') ??
+    req.nextUrl.searchParams.get('forceStorageSource');
+  const normalized = value?.trim().toLowerCase() ?? '';
+  return normalized === 'local' || normalized === 'fastcomet' ? normalized : null;
+};
+
 export async function uploadProductImages(
   req: NextRequest,
   files: UploadedFile[]
 ): Promise<Response> {
   const sku = getSkuFromRequest(req);
+  const forceStorageSource = getForceStorageSourceFromRequest(req);
   const results = await Promise.all(
     files.map(async ({ file, sanitizedName, hash }) => {
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -43,6 +53,7 @@ export async function uploadProductImages(
         action: 'uploadProductImages',
         file,
         filename: sanitizedName,
+        ...(forceStorageSource !== null ? { forceStorageSource } : {}),
         service: 'products.images-upload',
         sku,
       });

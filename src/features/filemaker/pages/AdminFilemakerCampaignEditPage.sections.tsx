@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
@@ -227,6 +228,18 @@ export function CampaignDetailsSection(): React.JSX.Element {
         {isMailAccountUnassigned ? (
           <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 md:col-span-2'>
             Assign an email account before sending tests or launching this campaign.
+          </div>
+        ) : null}
+        {selectedMailAccount !== null ? (
+          <div className='text-xs text-muted-foreground md:col-span-2'>
+            Sender account is active in the{' '}
+            <Link
+              href={`/admin/filemaker/mail-client?accountId=${encodeURIComponent(selectedMailAccount.id)}${draft.id.length > 0 ? `&campaignId=${encodeURIComponent(draft.id)}` : ''}`}
+              className='text-sky-400 underline underline-offset-2 hover:text-sky-300'
+            >
+              Mail Client
+            </Link>
+            {' '}— click to review mailbox health, folders, and recent threads.
           </div>
         ) : null}
         <FormField

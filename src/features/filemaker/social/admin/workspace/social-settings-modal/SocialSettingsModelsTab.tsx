@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Badge, FormField, SelectSimple } from '@/shared/ui';
+import { Badge, FormField, Input, SelectSimple } from '@/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../SocialPublishingPage.Constants';
 import { useSocialPostContext } from '../SocialPostContext';
@@ -26,6 +26,8 @@ export function SocialSettingsModelsTab() {
     currentGenerationJob,
     currentPipelineJob,
     currentVisualAnalysisJob,
+    articleAggregatorPathId,
+    setArticleAggregatorPathId,
   } = context;
 
   const {
@@ -72,7 +74,7 @@ export function SocialSettingsModelsTab() {
     variant: 'subtle' as const,
   };
   return (
-    <div className='grid gap-4 xl:grid-cols-2'>
+    <div className='grid gap-4 xl:grid-cols-2' data-testid='social-settings-models-tab'>
       <KangurAdminCard>
         <div className='flex items-center justify-between gap-3'>
           <div>
@@ -127,6 +129,34 @@ export function SocialSettingsModelsTab() {
             className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
           >
             Open AI Brain routing
+          </Link>
+        </div>
+      </KangurAdminCard>
+
+      <KangurAdminCard>
+        <div className='text-sm font-semibold text-foreground'>Article Aggregator AI Path</div>
+        <div className='mt-1 text-sm text-muted-foreground'>
+          AI Path used by the Article Aggregator content type to generate post drafts from scraped articles.
+        </div>
+        <div className='mt-3'>
+          <FormField
+            label='AI Path ID'
+            description='Paste the ID of an AI Path that accepts a custom prompt and article context.'
+          >
+            <Input
+              value={articleAggregatorPathId}
+              onChange={(e) => setArticleAggregatorPathId(e.target.value)}
+              placeholder='e.g. path_abc123'
+              className='font-mono text-xs'
+            />
+          </FormField>
+        </div>
+        <div className='mt-3'>
+          <Link
+            href='/admin/ai-paths'
+            className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
+          >
+            Open AI Paths
           </Link>
         </div>
       </KangurAdminCard>

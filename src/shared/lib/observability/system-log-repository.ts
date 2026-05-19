@@ -16,7 +16,10 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId, type Db, type Filter, type OptionalId } from 'mongodb';
 
-import type { ObservabilityApplicationId } from '@/shared/contracts/system';
+import {
+  observabilityApplicationIdValues,
+  type ObservabilityApplicationId,
+} from '@/shared/contracts/system';
 import type {
   SystemLogLevelDto as SystemLogLevel,
   SystemLogMetricsDto as SystemLogMetrics,
@@ -30,6 +33,7 @@ import { readMongoSyncLock } from '@/shared/lib/db/mongo-sync-lock';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import {
+  getFederatedObservabilityApplicationIds,
   getMongoDatabaseName,
   getObservabilityApplicationMongoDb,
 } from '@/shared/lib/observability/application-log-databases';
@@ -65,13 +69,7 @@ const toIsoString = (value?: string | Date | null): string => {
 
 const SYSTEM_LOGS_COLLECTION = 'system_logs';
 const ERROR_LOGS_COLLECTION = 'error_logs';
-const OBSERVABILITY_APPLICATION_IDS: ObservabilityApplicationId[] = [
-  'geminitestapp',
-  'studiq',
-  'cms-builder',
-  'stargater',
-  'arch',
-];
+const OBSERVABILITY_APPLICATION_IDS = observabilityApplicationIdValues;
 
 type ObservabilityLogSource = {
   applicationId: ObservabilityApplicationId;
@@ -404,7 +402,8 @@ const resolveLogSourceApplicationIds = (
   input?: Pick<ListSystemLogsInput, 'applicationId'>
 ): ObservabilityApplicationId[] => {
   const applicationId = normalizeObservabilityApplicationId(input?.applicationId);
-  return applicationId ? [applicationId] : OBSERVABILITY_APPLICATION_IDS;
+  if (applicationId !== null) return [applicationId];
+  return getFederatedObservabilityApplicationIds(OBSERVABILITY_APPLICATION_IDS);
 };
 
 const getObservabilityLogSources = async (

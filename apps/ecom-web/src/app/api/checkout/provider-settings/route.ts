@@ -28,8 +28,11 @@ function envPayPalMode(): 'sandbox' | 'live' {
 function envBankTransferDetails(): { enabled: boolean; accountName: string; iban: string; bic: string; bankName: string } {
   const iban = process.env['BANK_TRANSFER_IBAN']?.trim() ?? '';
   const accountName = process.env['BANK_TRANSFER_ACCOUNT_NAME']?.trim() ?? '';
+  const enabledEnv = process.env['BANK_TRANSFER_ENABLED']?.trim() === 'true';
+  const hasDetails = iban !== '' && accountName !== '';
+
   return {
-    enabled: process.env['BANK_TRANSFER_ENABLED']?.trim() === 'true' || (iban !== '' && accountName !== ''),
+    enabled: enabledEnv || hasDetails,
     accountName,
     iban,
     bic: process.env['BANK_TRANSFER_BIC']?.trim() ?? '',
@@ -56,17 +59,24 @@ export async function GET(): Promise<NextResponse> {
   const stripeEnabled = settings !== null
     ? settings.payment.stripe.enabled
     : envStripeKey !== '';
-  const stripePublishableKey = stripeEnabled
-    ? (settings?.payment.stripe.publishableKey.trim() || envStripeKey)
-    : '';
+
+  let stripePublishableKey = '';
+  if (stripeEnabled) {
+    const dbKey = settings?.payment.stripe.publishableKey.trim() ?? '';
+    stripePublishableKey = dbKey !== '' ? dbKey : envStripeKey;
+  }
 
   const envPayPalId = envPayPalClientId();
   const paypalEnabled = settings !== null
     ? settings.payment.paypal.enabled
     : envPayPalId !== '';
-  const paypalClientId = paypalEnabled
-    ? (settings?.payment.paypal.clientId.trim() || envPayPalId)
-    : '';
+
+  let paypalClientId = '';
+  if (paypalEnabled) {
+    const dbId = settings?.payment.paypal.clientId.trim() ?? '';
+    paypalClientId = dbId !== '' ? dbId : envPayPalId;
+  }
+
   const paypalMode: 'sandbox' | 'live' = settings?.payment.paypal.mode ?? envPayPalMode();
 
   const bankTransfer = envBankTransferDetails();

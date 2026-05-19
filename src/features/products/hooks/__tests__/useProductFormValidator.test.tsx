@@ -65,6 +65,7 @@ import type { ProductValidationPattern } from '@/shared/contracts/products/valid
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { buildSkuAutoIncrementSequenceBundle } from '@/features/products/lib/validatorSemanticPresets';
+import { PRODUCT_VALIDATION_SOURCE_FIELD_IDS } from '@/features/products/lib/validatorSourceFields';
 
 import { useProductFormValidator } from '../useProductFormValidator';
 
@@ -166,9 +167,11 @@ const createPattern = (
   }) as ProductValidationPattern;
 
 const createWrapper = ({
+  defaultNameEn = '',
   defaultSku = 'KEYCHA000',
   defaultSizeLength = 0,
 }: {
+  defaultNameEn?: string;
   defaultSku?: string;
   defaultSizeLength?: number;
 } = {}) =>
@@ -176,7 +179,7 @@ const createWrapper = ({
     const methods = useForm<ProductFormData>({
       defaultValues: {
         sku: defaultSku,
-        name_en: '',
+        name_en: defaultNameEn,
         name_pl: '',
         name_de: '',
         description_en: '',
@@ -380,6 +383,32 @@ describe('useProductFormValidator latest SKU source', () => {
       ([args]) => (args as { values: { sizeLength?: unknown } }).values.sizeLength
     );
     expect(observedSizeLengthValues).toContain(4);
+  });
+
+  it('provides the Name EN Size segment as a source value for Length validators in edit mode', () => {
+    useProductFormCoreMock.mockReturnValue({
+      product: createProduct({ id: 'product-edit-size-segment' }),
+      draft: null,
+    });
+
+    renderHook(() => useProductFormValidator(undefined, 'edit-size-segment'), {
+      wrapper: createWrapper({
+        defaultNameEn: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
+        defaultSizeLength: 0,
+      }),
+    });
+
+    const validatorArgs = useProductValidatorIssuesMock.mock.calls.at(-1)?.[0] as
+      | { values: Record<string, unknown>; validationScope: string }
+      | undefined;
+
+    expect(validatorArgs?.validationScope).toBe('product_edit');
+    expect(validatorArgs?.values).toMatchObject({
+      name_en: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
+      sizeLength: 0,
+      [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2]: '4 cm',
+      [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2RegexEscaped]: '4 cm',
+    });
   });
 
   it('requests a fresh latest-product source snapshot for SKU sequencing', async () => {

@@ -28,6 +28,7 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { freshQuerySchema } from './fresh-query-schema';
+import { enqueueProductImagesFastCometUploadOnSave } from './product-fastcomet-save-sync';
 
 export const querySchema = z.intersection(
   productFilterSchema,
@@ -149,6 +150,7 @@ const startProductCreateRuntimeTask = ({
         formData,
         resolveProductCreateOptions(userId)
       );
+      await enqueueProductImagesFastCometUploadOnSave(product, userId);
       CachedProductService.invalidateAll();
       markProductCreateRuntimeCompleted({ requestId, product });
       await logSystemEvent({
@@ -266,6 +268,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     formData,
     resolveProductCreateOptions(_ctx.userId)
   );
+  await enqueueProductImagesFastCometUploadOnSave(product, _ctx.userId);
 
   // Invalidate relevant caches
   CachedProductService.invalidateAll();

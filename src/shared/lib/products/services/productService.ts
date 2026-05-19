@@ -58,6 +58,16 @@ const resolveImageFileRepository = async (
   provider?: ProductDbProvider
 ): Promise<ImageFileRepository> => getImageFileRepository(provider);
 
+const resolveImageFileRepositories = async (
+  provider: ProductDbProvider
+): Promise<ImageFileRepository[]> => {
+  const primaryRepository = await resolveImageFileRepository(provider);
+  const sharedRepository = await getImageFileRepository();
+  return primaryRepository === sharedRepository
+    ? [primaryRepository]
+    : [primaryRepository, sharedRepository];
+};
+
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
@@ -966,7 +976,7 @@ const resolveDeletedProductDisplayName = (product: ProductRecord, fallback: stri
 
 const resolveProductImageFiles = async (
   product: ProductRecord,
-  imageRepository: ImageFileRepository
+  imageRepositories: ImageFileRepository[]
 ): Promise<ImageFileRecord[]> => {
   const images = Array.isArray(product.images) ? product.images : [];
   if (images.length === 0) return [];
@@ -988,7 +998,8 @@ const resolveProductImageFiles = async (
   }
 
   if (missingImageFileIds.length > 0) {
-    const missingImageFiles = await imageRepository.findImageFilesByIds(
+    const missingImageFiles = await findImageFilesByIdsInRepositories(
+      imageRepositories,
       Array.from(new Set(missingImageFileIds))
     );
     for (const imageFile of missingImageFiles) {
@@ -1013,6 +1024,39 @@ const resolveEmbeddedProductImageFile = (
   };
 };
 
+const findImageFileByIdInRepositories = async (
+  repositories: ImageFileRepository[],
+  imageFileId: string
+): Promise<ImageFileRecord | null> => {
+  const imageFiles = await Promise.all(
+    repositories.map((repository) => repository.getImageFileById(imageFileId))
+  );
+  return imageFiles.find((imageFile) => imageFile !== null) ?? null;
+};
+
+const findImageFilesByIdsInRepositories = async (
+  repositories: ImageFileRepository[],
+  imageFileIds: string[]
+): Promise<ImageFileRecord[]> => {
+  const results = await Promise.all(
+    repositories.map((repository) => repository.findImageFilesByIds(imageFileIds))
+  );
+  const filesById = new Map<string, ImageFileRecord>();
+  results.flat().forEach((imageFile) => {
+    if (!filesById.has(imageFile.id)) {
+      filesById.set(imageFile.id, imageFile);
+    }
+  });
+  return Array.from(filesById.values());
+};
+
+const deleteImageFileFromRepositories = async (
+  repositories: ImageFileRepository[],
+  imageFileId: string
+): Promise<void> => {
+  await Promise.all(repositories.map((repository) => repository.deleteImageFile(imageFileId)));
+};
+
 const deleteOrphanedProductImageFiles = async (
   product: ProductRecord,
   productRepository: ProductRepository,
@@ -1020,8 +1064,8 @@ const deleteOrphanedProductImageFiles = async (
 ): Promise<void> => {
   if (!Array.isArray(product.images) || product.images.length === 0) return;
 
-  const imageRepository = await resolveImageFileRepository(provider);
-  const imageFiles = await resolveProductImageFiles(product, imageRepository);
+  const imageRepositories = await resolveImageFileRepositories(provider);
+  const imageFiles = await resolveProductImageFiles(product, imageRepositories);
   if (imageFiles.length === 0) return;
 
   await Promise.all(
@@ -1030,7 +1074,7 @@ const deleteOrphanedProductImageFiles = async (
       if (remainingLinksCount > 0) return;
 
       await deleteFileFromStorage(imageFile.filepath);
-      await imageRepository.deleteImageFile(imageFile.id);
+      await deleteImageFileFromRepositories(imageRepositories, imageFile.id);
     })
   );
 };
@@ -1075,13 +1119,13 @@ async function deleteProductImage(
 ): Promise<void> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const imageRepository = await resolveImageFileRepository(provider);
+  const imageRepositories = await resolveImageFileRepositories(provider);
 
-  const imageFile = await imageRepository.getImageFileById(imageId);
-  if (!imageFile) return;
+  const imageFile = await findImageFileByIdInRepositories(imageRepositories, imageId);
 
   // 1. Remove the link
   await productRepository.removeProductImage(productId, imageId);
+  if (imageFile === null) return;
 
   // 2. Check if others use it
   const remainingLinksCount = await productRepository.countProductsByImageFileId(imageId);
@@ -1089,7 +1133,7 @@ async function deleteProductImage(
   // 3. Cleanup if last link
   if (remainingLinksCount === 0) {
     await deleteFileFromStorage(imageFile.filepath);
-    await imageRepository.deleteImageFile(imageId);
+    await deleteImageFileFromRepositories(imageRepositories, imageId);
   }
 }
 

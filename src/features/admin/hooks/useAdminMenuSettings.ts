@@ -1,4 +1,5 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   ADMIN_MENU_CUSTOM_ENABLED_KEY,
@@ -22,8 +23,24 @@ export interface AdminMenuSettingsResult {
 export function useAdminMenuSettings(menuSettingsReady: boolean): AdminMenuSettingsResult {
   const settingsStore = useSettingsStore();
   const settingsStoreRef = useRef(settingsStore);
+  const retriedMissingFavoritesRef = useRef(false);
   settingsStoreRef.current = settingsStore;
   const settingsMap = settingsStore.map;
+
+  useEffect(() => {
+    if (
+      menuSettingsReady === false ||
+      settingsStore.isLoading ||
+      settingsMap.has(ADMIN_MENU_FAVORITES_KEY) ||
+      retriedMissingFavoritesRef.current
+    ) {
+      return;
+    }
+
+    retriedMissingFavoritesRef.current = true;
+    invalidateSettingsCache();
+    settingsStore.refetch();
+  }, [menuSettingsReady, settingsMap, settingsStore]);
 
   const favoriteIds = useMemo<string[]>(() => {
     if (menuSettingsReady === false) return [];

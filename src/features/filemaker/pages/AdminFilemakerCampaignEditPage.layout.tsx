@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge } from '@/shared/ui/primitives.public';
+import { badgeVariants } from '@/shared/ui/badge';
 
 import {
   CampaignBackActions,
@@ -49,6 +51,15 @@ const getDeliveryRouteLabel = (
   }
   if (mailAccountId !== null && mailAccountId.length > 0) return `Missing account (${mailAccountId})`;
   return 'No sender account assigned';
+};
+
+const getDeliveryRouteMailClientHref = (
+  selectedMailAccount: SelectedMailAccount,
+  campaignId: string
+): string | null => {
+  if (selectedMailAccount === null) return null;
+  const base = `/admin/filemaker/mail-client?accountId=${encodeURIComponent(selectedMailAccount.id)}`;
+  return campaignId.length > 0 ? `${base}&campaignId=${encodeURIComponent(campaignId)}` : base;
 };
 
 const formatNextAutomationAt = (nextAutomationAt: string | null): string =>
@@ -106,6 +117,8 @@ function CampaignEditBadges({
 }: {
   context: CampaignEditContextValue;
 }): React.JSX.Element {
+  const deliveryRouteLabel = getDeliveryRouteLabel(context.selectedMailAccount, context.draft.mailAccountId ?? null);
+  const mailClientHref = getDeliveryRouteMailClientHref(context.selectedMailAccount, context.draft.id);
   return (
     <div className='flex flex-wrap gap-2'>
       <Badge variant='outline' className='text-[10px]'>
@@ -126,9 +139,18 @@ function CampaignEditBadges({
       <Badge variant='outline' className='text-[10px] capitalize'>
         Automation: {context.draft.launch.mode}
       </Badge>
-      <Badge variant='outline' className='text-[10px]'>
-        Delivery Route: {getDeliveryRouteLabel(context.selectedMailAccount, context.draft.mailAccountId ?? null)}
-      </Badge>
+      {mailClientHref !== null ? (
+        <Link
+          href={mailClientHref}
+          className={badgeVariants({ variant: 'outline' }) + ' text-[10px] cursor-pointer transition hover:border-sky-400/60 hover:text-sky-300'}
+        >
+          Delivery Route: {deliveryRouteLabel}
+        </Link>
+      ) : (
+        <Badge variant='outline' className='text-[10px]'>
+          Delivery Route: {deliveryRouteLabel}
+        </Badge>
+      )}
       <Badge variant='outline' className='text-[10px]'>
         Next Due: {formatNextAutomationAt(context.nextAutomationAt)}
       </Badge>

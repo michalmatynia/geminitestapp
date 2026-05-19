@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCcw, Star } from 'lucide-react';
+import { Megaphone, RefreshCcw, Star } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
 import { Badge } from '@/shared/ui/badge';
@@ -27,34 +27,67 @@ const getThreadListSubtitle = (
   return `${account.emailAddress} / ${mailboxPath}`;
 };
 
+function CampaignFilterBanner({
+  campaignId,
+  onClearCampaignFilter,
+}: {
+  campaignId: string;
+  onClearCampaignFilter: () => void;
+}): React.JSX.Element {
+  return (
+    <div className='flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2'>
+      <span className='flex min-w-0 items-center gap-1.5 text-[11px] text-amber-300'>
+        <Megaphone className='size-3 shrink-0' />
+        <span className='truncate'>Filtered by campaign: {campaignId}</span>
+      </span>
+      <button
+        type='button'
+        onClick={onClearCampaignFilter}
+        className='shrink-0 text-[11px] text-amber-300 underline-offset-2 hover:text-amber-200 hover:underline'
+      >
+        Clear
+      </button>
+    </div>
+  );
+}
+
 function ThreadListHeader({
   account,
+  campaignId,
   mailboxPath,
   threadCount,
+  onClearCampaignFilter,
   onRefresh,
 }: {
   account: FilemakerMailAccount | null;
+  campaignId: string | null;
   mailboxPath: string | null;
   threadCount: number;
+  onClearCampaignFilter: () => void;
   onRefresh: () => void;
 }): React.JSX.Element {
   return (
-    <div className='flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
-      <div className='min-w-0'>
-        <h2 className='truncate text-sm font-semibold text-foreground'>
-          {getThreadListTitle(account)}
-        </h2>
-        <p className='truncate text-xs text-muted-foreground'>
-          {getThreadListSubtitle(account, mailboxPath)}
-        </p>
+    <div>
+      <div className='flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
+        <div className='min-w-0'>
+          <h2 className='truncate text-sm font-semibold text-foreground'>
+            {getThreadListTitle(account)}
+          </h2>
+          <p className='truncate text-xs text-muted-foreground'>
+            {getThreadListSubtitle(account, mailboxPath)}
+          </p>
+        </div>
+        <div className='flex shrink-0 items-center gap-2'>
+          <Badge variant='outline'>{threadCount} shown</Badge>
+          <Button type='button' variant='outline' size='sm' onClick={onRefresh}>
+            <RefreshCcw className='mr-2 size-4' />
+            Refresh
+          </Button>
+        </div>
       </div>
-      <div className='flex shrink-0 items-center gap-2'>
-        <Badge variant='outline'>{threadCount} shown</Badge>
-        <Button type='button' variant='outline' size='sm' onClick={onRefresh}>
-          <RefreshCcw className='mr-2 size-4' />
-          Refresh
-        </Button>
-      </div>
+      {campaignId !== null ? (
+        <CampaignFilterBanner campaignId={campaignId} onClearCampaignFilter={onClearCampaignFilter} />
+      ) : null}
     </div>
   );
 }
@@ -146,6 +179,14 @@ function ThreadRowMeta({ thread }: { thread: FilemakerMailThread }): React.JSX.E
       <span className='flex gap-1'>
         <Badge variant='outline'>{thread.messageCount}</Badge>
         {thread.unreadCount > 0 ? <Badge variant='default'>{thread.unreadCount}</Badge> : null}
+        {thread.campaignContext != null ? (
+          <span
+            title={`Campaign: ${thread.campaignContext.campaignId}`}
+            className='inline-flex items-center rounded-md border border-border/60 px-1.5 py-0.5'
+          >
+            <Megaphone className='size-3 text-sky-400' />
+          </span>
+        ) : null}
       </span>
     </span>
   );
@@ -217,20 +258,24 @@ function ThreadListContent({
 
 export function MailClientThreadList({
   account,
+  campaignId,
   error,
   isLoading,
   mailboxPath,
   selectedThreadId,
   threads,
+  onClearCampaignFilter,
   onRefresh,
   onSelectThread,
 }: {
   account: FilemakerMailAccount | null;
+  campaignId: string | null;
   error: string | null;
   isLoading: boolean;
   mailboxPath: string | null;
   selectedThreadId: string | null;
   threads: FilemakerMailThread[];
+  onClearCampaignFilter: () => void;
   onRefresh: () => void;
   onSelectThread: (thread: FilemakerMailThread) => void;
 }): React.JSX.Element {
@@ -251,8 +296,10 @@ export function MailClientThreadList({
     <section className='flex min-h-0 flex-col border-b border-border/60'>
       <ThreadListHeader
         account={account}
+        campaignId={campaignId}
         mailboxPath={mailboxPath}
         threadCount={threads.length}
+        onClearCampaignFilter={onClearCampaignFilter}
         onRefresh={onRefresh}
       />
       <div className='min-h-0 flex-1 overflow-auto'>

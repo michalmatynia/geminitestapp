@@ -9,7 +9,7 @@ import { ProductImage } from '@/components/ProductImage';
 import type { Product } from '@/data/products';
 import type { ProductsContent } from '@/data/productsContent';
 import { formatPrice, type EcomLocale } from '@/lib/locales';
-import { getCategorySelectorTitle, type ProductCategoryDisplayOption } from '@/lib/productFilterLabels';
+import { type ProductCategoryDisplayOption } from '@/lib/productFilterLabels';
 import { productMatchesThemes } from '@/lib/productThemes';
 import { productMatchesMaterials } from '@/lib/productMaterial';
 import { productMatchesSizes } from '@/lib/productSizeInfo';
@@ -523,7 +523,7 @@ function SidebarFilters({
   hasFilters,
   onClear,
   onClose,
-  totalCount,
+  totalCount: _totalCount,
   content,
 }: {
   selectedTypes: string[];
@@ -557,7 +557,6 @@ function SidebarFilters({
   const col = content.collection;
   const locale = useLocale();
 
-  const wrap = <T,>(fn: (v: T) => void) => (v: T) => { fn(v); onClose?.(); };
   const fmtPrice = (v: number) => formatPrice(v, locale);
 
   return (

@@ -20,7 +20,6 @@ export const POST = apiHandler(postHandler, {
   source: 'chatbot.sessions.POST',
   requireAuth: true,
 });
-...
 
 export const GET = apiHandler(getHandler, {
   source: 'chatbot.sessions.GET',

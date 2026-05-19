@@ -285,7 +285,7 @@ describe('Product form validation formatter flow', () => {
     });
   });
 
-  it('runs the mounted general-form SKU formatter when the validation-tab formatter toggle is enabled', async () => {
+  it('does not execute SKU pattern replacements directly when the formatter toggle is enabled', async () => {
     render(
       <ValidationHarness
         patterns={[
@@ -309,19 +309,16 @@ describe('Product form validation formatter flow', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('sku-value')).toHaveTextContent('SKU-101');
+      expect(screen.getByTestId('sku-value')).toHaveTextContent('AUTO');
     });
-    expect(setValueSpy).toHaveBeenCalledWith(
+    expect(setValueSpy).not.toHaveBeenCalledWith(
       'sku',
       'SKU-101',
-      expect.objectContaining({
-        shouldDirty: true,
-        shouldTouch: true,
-      })
+      expect.anything()
     );
   });
 
-  it('runs decimal Length (cm) formatter replacements when the validation-tab formatter toggle is enabled', async () => {
+  it('does not execute Length pattern replacements directly when the formatter toggle is enabled', async () => {
     render(
       <ValidationHarness
         defaultSizeLength={10}
@@ -346,15 +343,12 @@ describe('Product form validation formatter flow', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('size-length-value')).toHaveTextContent('12.5');
+      expect(screen.getByTestId('size-length-value')).toHaveTextContent('10');
     });
-    expect(setValueSpy).toHaveBeenCalledWith(
+    expect(setValueSpy).not.toHaveBeenCalledWith(
       'sizeLength',
       12.5,
-      expect.objectContaining({
-        shouldDirty: true,
-        shouldTouch: true,
-      })
+      expect.anything()
     );
   });
 });

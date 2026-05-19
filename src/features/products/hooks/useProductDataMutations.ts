@@ -7,13 +7,14 @@
 
 import { type UseMutationResult } from '@tanstack/react-query';
 
-import { createProductInRuntime, deleteProduct } from '@/features/products/api';
+import { createProduct, deleteProduct } from '@/features/products/api';
 import {
   addQueuedProductSource,
   buildQueuedProductOfflineMutationSource,
   removeQueuedProductSource,
 } from '@/features/products/state/queued-product-ops';
 import type { ProductCreateMutationResult } from '@/shared/contracts/products';
+import { isProductCreateRuntimeQueuedResponse } from '@/shared/contracts/products';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
@@ -27,6 +28,7 @@ import {
   invalidateProductTitleTerms,
 } from './productCache';
 import { updateProductByPayload } from './useProductDataMutations.form-data';
+import { scheduleProductSaveFastCometRefresh } from './useProductDataMutations.fastcomet-refresh';
 import type { ProductUpdateVariables } from './useProductDataMutations.types';
 import {
   getProductUpdateExtraInvalidateKeys,
@@ -46,7 +48,7 @@ export function useCreateProductMutation(): UseMutationResult<
   unknown
 > {
   return useOfflineMutation<ProductCreateMutationResult | null, Error, FormData, unknown>(
-    (formData: FormData) => createProductInRuntime(formData),
+    (formData: FormData) => createProduct(formData),
     {
       queryKey: productsAllQueryKey,
       meta: {
@@ -57,13 +59,15 @@ export function useCreateProductMutation(): UseMutationResult<
         tags: ['products', 'create'],
       },
       extraInvalidateKeys: [productsCountsQueryKey],
-      invalidate: async (queryClient) => {
+      invalidate: async (queryClient, data) => {
         await Promise.all([
           invalidateProductsAndCounts(queryClient),
           invalidateProductTitleTerms(queryClient),
         ]);
+        if (data === null || isProductCreateRuntimeQueuedResponse(data)) return;
+        scheduleProductSaveFastCometRefresh(queryClient, data);
       },
-      queuedMessage: 'Product creation queued in runtime queue.',
+      queuedMessage: 'Product creation queued.',
       processedMessage: 'Queued product creation completed.',
     }
   );

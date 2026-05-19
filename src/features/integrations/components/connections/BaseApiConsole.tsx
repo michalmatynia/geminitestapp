@@ -6,6 +6,28 @@ import {
 import type { ApiPreset } from '@/shared/contracts/ui/api';
 import { GenericApiConsole } from '@/shared/ui/templates.public';
 
+const createBaseApiPresets = (defaultInventoryId: string): ApiPreset[] => [
+  { label: 'Inventories', method: 'getInventories', params: {} },
+  {
+    label: 'Products List',
+    method: 'getInventoryProductsList',
+    params: { inventory_id: defaultInventoryId, limit: 10 },
+  },
+  {
+    label: 'Inventory Products',
+    method: 'getInventoryProductsList',
+    params: { inventory_id: defaultInventoryId },
+  },
+  {
+    label: 'Detailed Product',
+    method: 'getInventoryProductDetailed',
+    params: { inventory_id: defaultInventoryId, product_id: '' },
+  },
+  { label: 'Orders', method: 'getOrders', params: { get_unconfirmed_orders: 1, limit: 10 } },
+  { label: 'Order Statuses', method: 'getOrderStatusList', params: {} },
+  { label: 'Orders Log', method: 'getOrdersLog', params: { limit: 10 } },
+];
+
 export function BaseApiConsole(): React.JSX.Element {
   const { connections } = useIntegrationsData();
   const {
@@ -19,30 +41,8 @@ export function BaseApiConsole(): React.JSX.Element {
   } = useIntegrationsApiConsole();
   const { handleBaseApiRequest } = useIntegrationsActions();
 
-  const activeConnection = connections[0] || null;
+  const activeConnection = connections[0] ?? null;
   const defaultInventoryId = activeConnection?.baseLastInventoryId ?? '';
-
-  const baseApiPresets: ApiPreset[] = [
-    { label: 'Inventories', method: 'getInventories', params: {} },
-    {
-      label: 'Products List',
-      method: 'getInventoryProductsList',
-      params: { inventory_id: defaultInventoryId, limit: 10 },
-    },
-    {
-      label: 'Inventory Products',
-      method: 'getInventoryProductsList',
-      params: { inventory_id: defaultInventoryId },
-    },
-    {
-      label: 'Detailed Product',
-      method: 'getInventoryProductDetailed',
-      params: { inventory_id: defaultInventoryId, product_id: '' },
-    },
-    { label: 'Orders', method: 'getOrders', params: { get_unconfirmed_orders: 1, limit: 10 } },
-    { label: 'Order Statuses', method: 'getOrderStatusList', params: {} },
-    { label: 'Orders Log', method: 'getOrdersLog', params: { limit: 10 } },
-  ];
 
   return (
     <GenericApiConsole
@@ -58,13 +58,9 @@ export function BaseApiConsole(): React.JSX.Element {
         bodyOrParams: baseApiParams,
         loading: baseApiLoading,
         error: baseApiError,
-        response: baseApiResponse
-          ? {
-            data: baseApiResponse.data ?? null,
-          }
-          : null,
+        response: baseApiResponse !== null ? { data: baseApiResponse.data ?? null } : null,
       }}
-      presets={baseApiPresets}
+      presets={createBaseApiPresets(defaultInventoryId)}
       isConnected={true}
       onSetMethod={setBaseApiMethod}
       onSetBodyOrParams={setBaseApiParams}

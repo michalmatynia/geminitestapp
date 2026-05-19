@@ -305,6 +305,50 @@ describe('product list status helpers', () => {
     });
   });
 
+  it('does not activate the FastComet badge circle until every uploaded slot completed FastComet upload', () => {
+    const status = resolveProductImageStorageStatus(
+      createProduct({
+        images: [
+          {
+            productId: 'product-1',
+            imageFileId: 'completed-fastcomet-image',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+            imageFile: {
+              id: 'completed-fastcomet-image',
+              filename: 'completed-fastcomet.jpg',
+              filepath: 'https://sparksofsindri.com/uploads/products/SKU/completed-fastcomet.jpg',
+              mimetype: 'image/jpeg',
+              size: 1,
+              storageProvider: 'fastcomet',
+              metadata: { storageSource: 'fastcomet' },
+            },
+          },
+          {
+            productId: 'product-1',
+            imageFileId: 'pending-local-image',
+            assignedAt: '2026-01-01T00:00:00.000Z',
+            imageFile: {
+              id: 'pending-local-image',
+              filename: 'pending-local.jpg',
+              filepath: '/uploads/products/SKU/pending-local.jpg',
+              mimetype: 'image/jpeg',
+              size: 1,
+              storageProvider: 'local',
+              metadata: { storageSource: 'local' },
+            },
+          },
+        ] as ProductWithImages['images'],
+      })
+    );
+
+    expect(status).toEqual({
+      hasFastCometImage: false,
+      hasLocalImage: true,
+      hasExternalLinkImage: false,
+      hasBase64Image: false,
+    });
+  });
+
   it('detects legacy local uploads from non-http image file paths', () => {
     const status = resolveProductImageStorageStatus(
       createProduct({

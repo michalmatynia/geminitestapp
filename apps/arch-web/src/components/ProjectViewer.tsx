@@ -11,6 +11,180 @@ import { disposeObject3D, loadGltfModel, prepareLoadedModel } from '@/lib/threeM
 type RenderMode = 'edges' | 'wireframe' | 'transparent' | 'solid' | 'textured';
 type Props = { projects: Project[] };
 
+const externalTextureMapKey = '_milkbarGeneratedTextureMap';
+const externalTextureOriginalMapKey = '_milkbarOriginalTextureMap';
+const externalTextureOriginalColorKey = '_milkbarOriginalTextureColor';
+const externalTextureOriginalRoughnessKey = '_milkbarOriginalTextureRoughness';
+const externalTextureOriginalMetalnessKey = '_milkbarOriginalTextureMetalness';
+const externalTextureOriginalEnvMapIntensityKey = '_milkbarOriginalTextureEnvMapIntensity';
+
+type TextureCapableMaterial = THREE.Material & {
+  color?: THREE.Color;
+  envMapIntensity?: number;
+  map?: THREE.Texture | null;
+  metalness?: number;
+  roughness?: number;
+};
+
+const getMaterialColor = (material: TextureCapableMaterial): THREE.Color =>
+  material.color?.clone() ?? new THREE.Color(0xb8b2aa);
+
+const getColorLuminance = (color: THREE.Color): number =>
+  0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+
+const getTextureTint = (material: TextureCapableMaterial): THREE.Color => {
+  const source = getMaterialColor(material);
+  if (getColorLuminance(source) < 0.08) {
+    return new THREE.Color(0xb8cfe0);
+  }
+  return source.lerp(new THREE.Color(0xffffff), 0.22);
+};
+
+function createExternalFacadeTexture(material: TextureCapableMaterial): THREE.CanvasTexture {
+  const size = 256;
+  const base = getTextureTint(material);
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) {
+    throw new Error('Could not create texture canvas.');
+  }
+  const baseStyle = `rgb(${Math.round(base.r * 255)},${Math.round(base.g * 255)},${Math.round(base.b * 255)})`;
+  ctx.fillStyle = baseStyle;
+  ctx.fillRect(0, 0, size, size);
+
+  const isDark = getColorLuminance(getMaterialColor(material)) < 0.18;
+  if (isDark) {
+    for (let y = 0; y < size; y += 44) {
+      for (let x = 0; x < size; x += 38) {
+        const gradient = ctx.createLinearGradient(x, y, x + 38, y + 44);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.28)');
+        gradient.addColorStop(0.45, 'rgba(120,165,190,0.18)');
+        gradient.addColorStop(1, 'rgba(20,28,34,0.32)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + 2, y + 2, 34, 40);
+      }
+    }
+    ctx.strokeStyle = 'rgba(18,22,24,0.72)';
+    ctx.lineWidth = 2;
+  } else {
+    for (let i = 0; i < 900; i += 1) {
+      const shade = i % 2 === 0 ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+      ctx.fillStyle = shade;
+      ctx.fillRect((i * 37) % size, (i * 67) % size, 2, 2);
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+    ctx.lineWidth = 1;
+  }
+
+  for (let x = 0; x <= size; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, 0);
+    ctx.lineTo(x + 0.5, size);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= size; y += isDark ? 44 : 38) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + 0.5);
+    ctx.lineTo(size, y + 0.5);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(isDark ? 2 : 3, isDark ? 4 : 3);
+  texture.anisotropy = 8;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function ensureProjectedUv(mesh: THREE.Mesh): void {
+  const geometry = mesh.geometry;
+  if (geometry.getAttribute('uv') !== undefined) return;
+  const position = geometry.getAttribute('position');
+  if (position === undefined) return;
+  if (geometry.getAttribute('normal') === undefined) {
+    geometry.computeVertexNormals();
+  }
+  const normal = geometry.getAttribute('normal');
+  geometry.computeBoundingBox();
+  const box = geometry.boundingBox;
+  if (box === null) return;
+  const size = box.getSize(new THREE.Vector3());
+  const uv = new Float32Array(position.count * 2);
+
+  for (let index = 0; index < position.count; index += 1) {
+    const x = position.getX(index);
+    const y = position.getY(index);
+    const z = position.getZ(index);
+    const nx = normal?.getX(index) ?? 0;
+    const ny = normal?.getY(index) ?? 0;
+    const nz = normal?.getZ(index) ?? 0;
+    const ax = Math.abs(nx);
+    const ay = Math.abs(ny);
+    const az = Math.abs(nz);
+    let u = 0;
+    let v = 0;
+
+    if (ay >= ax && ay >= az) {
+      u = (x - box.min.x) / (size.x || 1);
+      v = (z - box.min.z) / (size.z || 1);
+    } else if (ax >= az) {
+      u = (z - box.min.z) / (size.z || 1);
+      v = (y - box.min.y) / (size.y || 1);
+    } else {
+      u = (x - box.min.x) / (size.x || 1);
+      v = (y - box.min.y) / (size.y || 1);
+    }
+
+    uv[index * 2] = u;
+    uv[index * 2 + 1] = v;
+  }
+
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+}
+
+function applyGeneratedTextureModeToMaterial(
+  material: THREE.Material,
+  enabled: boolean
+): void {
+  if (!('map' in material)) return;
+  const typedMaterial = material as TextureCapableMaterial;
+  const userData = typedMaterial.userData as Record<string, unknown>;
+  if (enabled) {
+    if (userData[externalTextureOriginalMapKey] === undefined) {
+      userData[externalTextureOriginalMapKey] = typedMaterial.map ?? null;
+      userData[externalTextureOriginalColorKey] = typedMaterial.color?.clone();
+      userData[externalTextureOriginalRoughnessKey] = typedMaterial.roughness;
+      userData[externalTextureOriginalMetalnessKey] = typedMaterial.metalness;
+      userData[externalTextureOriginalEnvMapIntensityKey] = typedMaterial.envMapIntensity;
+    }
+    if (typedMaterial.map === null || typedMaterial.map === undefined) {
+      let generatedMap = userData[externalTextureMapKey] as THREE.Texture | undefined;
+      if (generatedMap === undefined) {
+        generatedMap = createExternalFacadeTexture(typedMaterial);
+        userData[externalTextureMapKey] = generatedMap;
+      }
+      typedMaterial.map = generatedMap;
+    }
+    typedMaterial.color?.copy(getTextureTint(typedMaterial));
+    if (typedMaterial.roughness !== undefined) typedMaterial.roughness = 0.72;
+    if (typedMaterial.metalness !== undefined) typedMaterial.metalness = 0.02;
+    if (typedMaterial.envMapIntensity !== undefined) typedMaterial.envMapIntensity = 0.55;
+  } else if (userData[externalTextureOriginalMapKey] !== undefined) {
+    typedMaterial.map = userData[externalTextureOriginalMapKey] as THREE.Texture | null;
+    const originalColor = userData[externalTextureOriginalColorKey] as THREE.Color | undefined;
+    if (originalColor !== undefined) typedMaterial.color?.copy(originalColor);
+    typedMaterial.roughness = userData[externalTextureOriginalRoughnessKey] as number | undefined;
+    typedMaterial.metalness = userData[externalTextureOriginalMetalnessKey] as number | undefined;
+    typedMaterial.envMapIntensity = userData[externalTextureOriginalEnvMapIntensityKey] as number | undefined;
+  }
+  typedMaterial.needsUpdate = true;
+}
+
 const fallbackProjects: Project[] = [
   { code: 'MBD-001', name: 'Helios Tower', projectType: 'Mixed-Use Tower', city: 'Zurich', country: 'CH', stats: ['32 Floors · 42,000 m²', 'Mixed-Use · Zurich, CH'], description: '', order: 0, status: 'published', cameraPosition: { x: 22, y: 18, z: 22 }, cameraTarget: { x: 0, y: 8, z: 0 } },
   { code: 'MBD-002', name: 'Kulturhaus', projectType: 'Cultural Centre', city: 'Amsterdam', country: 'NL', stats: ['3 Volumes · 4,200 m²', 'Cultural · Amsterdam, NL'], description: '', order: 1, status: 'published', cameraPosition: { x: 20, y: 12, z: 20 }, cameraTarget: { x: 0, y: 5, z: 0 } },
@@ -257,6 +431,17 @@ function ProjectViewer({ projects }: Props) {
       });
     }
 
+    function applyExternalTextureMode(group: THREE.Group, on: boolean) {
+      group.traverse(c => {
+        if (!c.userData.isExternalModel) return;
+        const mesh = c as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        if (on) ensureProjectedUv(mesh);
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((mat) => applyGeneratedTextureModeToMaterial(mat, on));
+      });
+    }
+
     // Build EdgesGeometry + LineSegments overlays on GLTF meshes for the edges mode.
     // Overlays are cached in mesh.userData._edgesLines and reused on subsequent toggles.
     function applyEdgesMode(group: THREE.Group, on: boolean) {
@@ -309,6 +494,7 @@ function ProjectViewer({ projects }: Props) {
             mat.opacity = 0;
           });
         });
+        applyExternalTextureMode(g, mode === 'textured');
         applyWireframeMode(g, mode === 'wireframe');
         applyEdgesMode(g, mode === 'edges');
         scene.add(g);
@@ -375,6 +561,8 @@ function ProjectViewer({ projects }: Props) {
         animateMat(pavingMat, m === 'textured' ? 0.88 : 0, 600);
         animateMat(gridMat, m === 'textured' ? 0.18 : 0.60, 600);
         if (currentGroup) {
+          applyWireframeMode(currentGroup, false);
+          applyExternalTextureMode(currentGroup, m === 'textured');
           applyWireframeMode(currentGroup, m === 'wireframe');
           applyEdgesMode(currentGroup, m === 'edges');
           animateOpacity(currentGroup, opFn(m), 500);

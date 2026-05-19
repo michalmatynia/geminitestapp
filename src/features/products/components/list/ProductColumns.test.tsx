@@ -1373,6 +1373,53 @@ describe('ProductColumns queued badge', () => {
     expect(container.querySelector('[data-product-image-storage-kind="base64"]')).toHaveAttribute('data-product-image-storage-shape', 'trapezoid');
   });
 
+  it('keeps the FastComet storage badge inactive until all uploaded product images complete', () => {
+    const product = createProduct({
+      images: [
+        {
+          productId: 'product-1',
+          imageFileId: 'fastcomet-image',
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          imageFile: {
+            id: 'fastcomet-image',
+            filename: 'fastcomet.jpg',
+            filepath: 'https://sparksofsindri.com/uploads/products/SKU/fastcomet.jpg',
+            mimetype: 'image/jpeg',
+            size: 1,
+            storageProvider: 'fastcomet',
+            metadata: { storageSource: 'fastcomet' },
+          },
+        },
+        {
+          productId: 'product-1',
+          imageFileId: 'local-image',
+          assignedAt: '2026-01-01T00:00:00.000Z',
+          imageFile: {
+            id: 'local-image',
+            filename: 'local.jpg',
+            filepath: '/uploads/products/SKU/local.jpg',
+            mimetype: 'image/jpeg',
+            size: 1,
+            storageProvider: 'local',
+            metadata: { storageSource: 'local' },
+          },
+        },
+      ] as ProductWithImages['images'],
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByLabelText('Product image storage: upload')).toBeInTheDocument();
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[data-product-image-storage-kind="fastcomet"]')).toHaveClass('invisible');
+    expect(container.querySelector('[data-product-image-storage-kind="local"]')).toHaveAttribute('data-active', 'true');
+  });
+
   it('renders Spark upload links as FastComet storage instead of Link in the desktop product row', () => {
     const product = createProduct({
       imageLinks: [

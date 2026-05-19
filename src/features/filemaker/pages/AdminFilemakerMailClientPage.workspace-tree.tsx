@@ -1,6 +1,6 @@
 'use client';
 
-import { Folder, Inbox, MailOpen, MailPlus, UserRound } from 'lucide-react';
+import { Folder, Inbox, MailOpen, MailPlus, Megaphone, UserRound } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -23,8 +23,13 @@ import type {
   FilemakerMailFolderSummary,
   FilemakerMailThread,
 } from '../types';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { isClientTreeNode, type MailClientSelection } from './AdminFilemakerMailClientPage.workspace-model';
 import type { AddMailboxModalProps } from './AdminFilemakerMailClientPage.add-mailbox-modal';
+import {
+  FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  parseFilemakerEmailCampaignRegistry,
+} from '../settings';
 
 const AddMailboxModal = dynamic<AddMailboxModalProps>(
   () => import('./AdminFilemakerMailClientPage.add-mailbox-modal').then((mod) => mod.AddMailboxModal),
@@ -84,15 +89,37 @@ const handleTreeNodeSelection = (
   }
 };
 
+const useCampaignCountByAccountId = (): Map<string, number> => {
+  const settingsStore = useSettingsStore();
+  const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
+  return useMemo(() => {
+    const map = new Map<string, number>();
+    parseFilemakerEmailCampaignRegistry(rawCampaigns).campaigns.forEach((c) => {
+      if (c.mailAccountId !== null && c.mailAccountId !== undefined) {
+        map.set(c.mailAccountId, (map.get(c.mailAccountId) ?? 0) + 1);
+      }
+    });
+    return map;
+  }, [rawCampaigns]);
+};
+
 function TreeCountBadges({
+  campaignCount,
   threadCount,
   unreadCount,
 }: {
+  campaignCount: number;
   threadCount: number;
   unreadCount: number;
 }): React.JSX.Element {
   return (
     <>
+      {campaignCount > 0 ? (
+        <Badge variant='outline' className='gap-0.5 px-1.5'>
+          <Megaphone className='size-2.5' />
+          {campaignCount}
+        </Badge>
+      ) : null}
       {threadCount > 0 ? <Badge variant='outline'>{threadCount}</Badge> : null}
       {unreadCount > 0 ? <Badge variant='default'>{unreadCount}</Badge> : null}
     </>
@@ -100,9 +127,11 @@ function TreeCountBadges({
 }
 
 function MailClientTreeNode({
+  campaignCountByAccountId,
   input,
   handlers,
 }: {
+  campaignCountByAccountId: Map<string, number>;
   input: FolderTreeViewportRenderNodeInput;
   handlers: MailClientTreeHandlers;
 }): React.JSX.Element {
@@ -110,6 +139,10 @@ function MailClientTreeNode({
   const mailboxRole = readStringMeta(input, 'mailboxRole');
   const emailAddress = readStringMeta(input, 'emailAddress');
   const Icon = getTreeNodeIcon(parsed?.kind ?? null, mailboxRole);
+  const campaignCount =
+    parsed?.kind === 'mail_account'
+      ? (campaignCountByAccountId.get(parsed.accountId) ?? 0)
+      : 0;
 
   return (
     <button
@@ -134,6 +167,7 @@ function MailClientTreeNode({
         ) : null}
       </span>
       <TreeCountBadges
+        campaignCount={campaignCount}
         threadCount={readNumberMeta(input, 'threadCount')}
         unreadCount={readNumberMeta(input, 'unreadCount')}
       />
@@ -231,6 +265,7 @@ export function MailClientAccountsTree({
   const treeNodes = useClientTreeNodes({ accounts, folders, threads });
   const selectedNodeId = useSelectedTreeNodeId(selection);
   const initiallyExpandedNodeIds = useExpandedTreeNodeIds(accounts, selection);
+  const campaignCountByAccountId = useCampaignCountByAccountId();
   const tree = useMasterFolderTreeViewModel({
     instance: 'filemaker_mail',
     nodes: treeNodes,
@@ -239,9 +274,13 @@ export function MailClientAccountsTree({
   });
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
-      <MailClientTreeNode input={input} handlers={handlers} />
+      <MailClientTreeNode
+        campaignCountByAccountId={campaignCountByAccountId}
+        input={input}
+        handlers={handlers}
+      />
     ),
-    [handlers]
+    [campaignCountByAccountId, handlers]
   );
 
   return (

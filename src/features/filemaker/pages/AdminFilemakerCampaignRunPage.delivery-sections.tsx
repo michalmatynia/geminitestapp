@@ -112,11 +112,18 @@ function DeliveryMeta({
 }
 
 function DeliveryMailThreadAction({
+  campaign,
   linkedThread,
 }: {
+  campaign: FilemakerEmailCampaign;
   linkedThread: FilemakerMailThread | null;
 }): React.JSX.Element | null {
   if (linkedThread === null) return null;
+  const mailAccountId = campaign.mailAccountId;
+  const mailClientHref =
+    hasNonEmptyString(mailAccountId)
+      ? `/admin/filemaker/mail-client?accountId=${encodeURIComponent(mailAccountId)}`
+      : null;
   return (
     <div className='mt-3 flex flex-wrap gap-2'>
       <Button asChild variant='outline' size='sm'>
@@ -130,6 +137,11 @@ function DeliveryMailThreadAction({
           Open Mail Thread
         </Link>
       </Button>
+      {mailClientHref !== null ? (
+        <Button asChild variant='outline' size='sm'>
+          <Link href={mailClientHref}>View Sender Mailbox</Link>
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -158,7 +170,7 @@ function DeliveryCard({
     <div className='rounded-lg border border-gray-200 p-3 text-sm text-gray-700'>
       <DeliveryHeader delivery={delivery} mailFilingBadge={mailFilingBadge} />
       <DeliveryMeta delivery={delivery} />
-      <DeliveryMailThreadAction linkedThread={linkedThread} />
+      <DeliveryMailThreadAction campaign={campaign} linkedThread={linkedThread} />
       <DeliveryError lastError={delivery.lastError} />
     </div>
   );

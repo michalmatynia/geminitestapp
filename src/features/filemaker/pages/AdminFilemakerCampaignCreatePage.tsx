@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 
 import { api } from '@/shared/lib/api-client';
@@ -60,15 +61,18 @@ function useMailAccounts(): FilemakerMailAccount[] {
 
 export function AdminFilemakerCampaignCreatePage(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const mailAccounts = useMailAccounts();
 
+  const preseededMailAccountId = searchParams.get('mailAccountId') ?? '';
+
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [status, setStatus] = useState<'draft' | 'active' | 'paused' | 'archived'>('draft');
-  const [mailAccountId, setMailAccountId] = useState('');
+  const [mailAccountId, setMailAccountId] = useState(preseededMailAccountId);
   const [fromName, setFromName] = useState('');
   const [replyToEmail, setReplyToEmail] = useState('');
   const [description, setDescription] = useState('');
@@ -204,7 +208,11 @@ export function AdminFilemakerCampaignCreatePage(): React.JSX.Element {
           </FormField>
           <FormField
             label='Sender email account'
-            description='The mailbox used for SMTP delivery and sender defaults. Can be assigned later.'
+            description={
+              preseededMailAccountId.length > 0 && mailAccountId === preseededMailAccountId
+                ? 'Pre-filled from the mail client. Change or clear to assign a different mailbox.'
+                : 'The mailbox used for SMTP delivery and sender defaults. Can be assigned later.'
+            }
           >
             <SelectSimple
               ariaLabel='Campaign sender account'

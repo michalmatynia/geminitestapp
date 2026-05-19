@@ -15,6 +15,7 @@ import {
   invalidateProductTitleTerms,
 } from './productCache';
 import { refreshUpdatedProductCaches } from './useProductDataMutations.cache';
+import { scheduleProductSaveFastCometRefresh } from './useProductDataMutations.fastcomet-refresh';
 import type {
   ProductUpdateVariables,
   QueryClientMutationContext,
@@ -44,6 +45,7 @@ export const handleProductUpdateInvalidate = (
   void invalidateProductTitleTerms(queryClient);
   if (savedProduct === null) return;
   refreshUpdatedProductCaches(queryClient, savedProduct);
+  scheduleProductSaveFastCometRefresh(queryClient, savedProduct);
 };
 
 export const markProductUpdateQueued = (variables: ProductUpdateVariables): void => {

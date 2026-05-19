@@ -45,14 +45,17 @@ const parseRawControls = (raw: unknown): ManagedMongoSyncControls => {
 
   try {
     const parsed = JSON.parse(raw) as unknown;
+    // Extract 'applications' sub-object to support both flat and nested JSON structures from settings.
     const rawApplications = readApplicationsPayload(parsed);
     if (!isRecord(rawApplications)) return {};
 
     const controls: ManagedMongoSyncControls = {};
     for (const [application, value] of Object.entries(rawApplications)) {
+      // Validate application name against schema; skip invalid entries to prevent misconfiguration.
       const parsedApplication = databaseEngineManagedMongoApplicationSchema.safeParse(application);
       if (!parsedApplication.success || !isRecord(value)) continue;
 
+      // Extract only known control fields and apply type coercion for booleans and optional strings.
       controls[parsedApplication.data] = {
         disabled: value['disabled'] === true,
         reason: readOptionalString(value['reason']),
@@ -112,6 +115,7 @@ export const setManagedMongoApplicationSyncDisabled = async (
   const controls = await getManagedMongoSyncControls();
   const updatedAt = new Date().toISOString();
   const trimmedReason = readOptionalString(reason);
+  // Provide a default reason when disabling sync without explicit reason; supply null when enabling.
   const fallbackReason = disabled ? 'Temporarily disabled from Database Engine.' : null;
   const nextControl: ManagedMongoSyncControl = {
     disabled,
@@ -124,6 +128,7 @@ export const setManagedMongoApplicationSyncDisabled = async (
   };
 
   const settings = mongo.collection<ManagedMongoSyncControlSettingDoc>('settings');
+  // Find existing document to preserve its _id and creation metadata if present.
   const existing = await settings.findOne({
     $or: [
       { _id: DATABASE_ENGINE_MANAGED_MONGO_SYNC_CONTROLS_KEY },
@@ -131,6 +136,7 @@ export const setManagedMongoApplicationSyncDisabled = async (
     ],
   });
 
+  // Upsert uses existing _id if found, otherwise creates new document; $setOnInsert ensures createdAt only on insert.
   await settings.updateOne(
     existing?._id !== undefined
       ? { _id: existing._id }

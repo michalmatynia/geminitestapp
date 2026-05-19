@@ -13,6 +13,7 @@ import type {
   ProductBatchEditResponse,
 } from '@/shared/contracts/products/batch-edit';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { isEcommerceDbConnectionError } from '@/features/products/components/list/columns/buttons/ecommerce-export-warning';
 
 import {
   getParsedMatchToastMessage,
@@ -258,7 +259,7 @@ export const useBulkEcommerceExportAction = ({
       );
       if (response.failed === 0) selection.clearSelection();
     } catch (error) {
-      logClientError(error);
+      if (!isEcommerceDbConnectionError(error)) logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to export products to ecommerce.', {
         variant: 'error',
       });

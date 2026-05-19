@@ -47,6 +47,7 @@ type ValidatorTemplatePatternDefinition = {
   key: string;
   buildPayload: () => CreateProductValidationPatternInput;
   matchesExisting: (pattern: ProductValidationPattern) => boolean;
+  needsUpdate?: (pattern: ProductValidationPattern) => boolean;
 };
 
 export type ValidatorTemplatePresetDefinition = {

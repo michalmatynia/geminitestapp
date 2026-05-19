@@ -19,48 +19,57 @@ type DatabaseEngineOperationJobRecord = Awaited<ReturnType<typeof getProductAiJo
 const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): boolean =>
   job.jobType === 'db_backup';
 
+const mapJobStatus = (jobStatus: string | null | undefined): DatabaseEngineOperationJob['status'] => {
+  if (jobStatus === 'running') return 'running';
+  if (jobStatus === 'completed') return 'completed';
+  if (jobStatus === 'failed') return 'failed';
+  if (jobStatus === 'canceled' || jobStatus === 'cancelled') return 'canceled';
+  return 'queued';
+};
+
+const formatJobDate = (date: string | null | undefined): string | null => {
+  if (date === undefined || date === null || date === '') return null;
+  return new Date(date).toISOString();
+};
+
+const extractDbType = (payload: Record<string, unknown> | null): DatabaseEngineOperationJob['dbType'] => {
+  const raw = payload?.['dbType'];
+  return raw === 'mongodb' ? 'mongodb' : null;
+};
+
+const extractSource = (payload: Record<string, unknown> | null): string | null => {
+  const raw = payload?.['source'];
+  return typeof raw === 'string' ? raw : null;
+};
+
+const extractResultSummary = (result: Record<string, unknown> | null): string | null => {
+  if (typeof result?.['message'] === 'string') return result['message'] as string;
+  if (typeof result?.['warning'] === 'string') return result['warning'] as string;
+  return null;
+};
+
 const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJob => {
   const payload =
-    job.payload && typeof job.payload === 'object'
+    (job.payload !== undefined && job.payload !== null) && typeof job.payload === 'object'
       ? (job.payload as Record<string, unknown>)
       : null;
-  const result = job.result && typeof job.result === 'object' ? job.result : null;
-
-  const rawDbType = payload?.['dbType'];
-  const dbType =
-    rawDbType === 'mongodb' ? (rawDbType as DatabaseEngineOperationJob['dbType']) : null;
-  const direction = null;
-  const source = typeof payload?.['source'] === 'string' ? payload['source'] : null;
-  const resultSummary =
-    typeof result?.['message'] === 'string'
-      ? result['message']
-      : typeof result?.['warning'] === 'string'
-        ? result['warning']
-        : null;
-
-  let status: DatabaseEngineOperationJob['status'] = 'queued';
-  if (job.status === 'running') status = 'running';
-  if (job.status === 'completed') status = 'completed';
-  if (job.status === 'failed') status = 'failed';
-  if (job.status === 'canceled' || job.status === 'cancelled') status = 'canceled';
+  const result = (job.result !== undefined && job.result !== null) && typeof job.result === 'object' 
+    ? (job.result as Record<string, unknown>) 
+    : null;
 
   return {
     id: job.id,
     type: (job.jobType ?? 'db_backup') as DatabaseEngineOperationJob['type'],
-    status,
-    dbType,
-    direction,
-    source,
-    createdAt: new Date(job.createdAt || Date.now()).toISOString(),
-    updatedAt:
-      typeof job.updatedAt === 'string' && job.updatedAt.length > 0
-        ? new Date(job.updatedAt).toISOString()
-        : null,
+    status: mapJobStatus(job.status),
+    dbType: extractDbType(payload),
+    direction: null,
+    source: extractSource(payload),
+    createdAt: new Date((job.createdAt !== undefined && job.createdAt !== null && job.createdAt !== '') ? job.createdAt : Date.now()).toISOString(),
+    updatedAt: formatJobDate(job.updatedAt),
     startedAt: typeof job.startedAt === 'string' && job.startedAt.length > 0 ? job.startedAt : null,
-    finishedAt:
-      typeof job.finishedAt === 'string' && job.finishedAt.length > 0 ? job.finishedAt : null,
+    finishedAt: typeof job.finishedAt === 'string' && job.finishedAt.length > 0 ? job.finishedAt : null,
     errorMessage: job.errorMessage ?? null,
-    resultSummary,
+    resultSummary: extractResultSummary(result),
     payload: payload ?? {},
     result: result ?? null,
     progress: job.progress ?? 0,

@@ -84,16 +84,6 @@ type ProductImagesUploadResponse = {
   }>;
 };
 
-type ImmediateFileUploadEvent = {
-  productId: string;
-  imageFileId: string;
-  imageSlotIndex: number;
-  filename: string | null;
-};
-
-type FastCometUploadStartHandler = ProductImageManagerController['onFastCometUploadStart'];
-type FastCometUploadSuccessHandler = ProductImageManagerController['onFastCometUploadSuccess'];
-type FastCometUploadErrorHandler = ProductImageManagerController['onFastCometUploadError'];
 type SlotFileSelectHandler = NonNullable<ProductImageManagerController['handleSlotFileSelect']>;
 
 const isBrowserFile = (value: unknown): value is File =>
@@ -158,24 +148,16 @@ const postFastCometUploadRequest = async (input: {
   return await api.post<FastCometUploadResponse>(endpoint, formData, { timeout: 120_000 });
 };
 
-const postFastCometFileUploadRequest = async (input: {
-  file: File;
-  index: number;
-  productId: string;
-}): Promise<FastCometUploadResponse> => {
-  const endpoint = `/api/v2/products/${encodeURIComponent(input.productId)}/images/upload-to-fastcomet`;
-  const formData = new FormData();
-  formData.append('file', input.file);
-  formData.append('filename', input.file.name);
-  formData.append('imageSlotIndex', String(input.index));
-  return await api.post<FastCometUploadResponse>(endpoint, formData, { timeout: 120_000 });
-};
-
-const buildConfiguredProductImageUploadEndpoint = (productSku: string | null): string => {
+const buildConfiguredProductImageUploadEndpoint = (
+  productSku: string | null,
+  storageSource: 'local' | 'fastcomet' | null = null
+): string => {
   const normalizedSku = productSku?.trim() ?? '';
-  if (normalizedSku.length === 0) return '/api/v2/products/images/upload';
-  const params = new URLSearchParams({ sku: normalizedSku });
-  return `/api/v2/products/images/upload?${params.toString()}`;
+  const params = new URLSearchParams();
+  if (normalizedSku.length > 0) params.set('sku', normalizedSku);
+  if (storageSource !== null) params.set('storage', storageSource);
+  const query = params.toString();
+  return `/api/v2/products/images/upload${query.length > 0 ? `?${query}` : ''}`;
 };
 
 const postConfiguredProductImageUploadRequest = async (input: {
@@ -185,7 +167,7 @@ const postConfiguredProductImageUploadRequest = async (input: {
   const formData = new FormData();
   formData.append('file', input.file);
   const response = await api.post<ProductImagesUploadResponse>(
-    buildConfiguredProductImageUploadEndpoint(input.productSku),
+    buildConfiguredProductImageUploadEndpoint(input.productSku, 'local'),
     formData,
     { timeout: 120_000 }
   );
@@ -196,66 +178,8 @@ const postConfiguredProductImageUploadRequest = async (input: {
   return { status: 'ok', imageFile };
 };
 
-const buildImmediateFileUploadEvent = (input: {
-  file: File;
-  index: number;
-  productId: string | null | undefined;
-}): ImmediateFileUploadEvent | null => {
-  const normalizedProductId = input.productId?.trim() ?? '';
-  if (normalizedProductId.length === 0) return null;
-  return {
-    productId: normalizedProductId,
-    imageFileId: 'pending-file',
-    imageSlotIndex: input.index,
-    filename: input.file.name.length > 0 ? input.file.name : null,
-  };
-};
-
-const postImmediateFileUploadRequest = async (input: {
-  file: File;
-  index: number;
-  productSku: string | null;
-  uploadEvent: ImmediateFileUploadEvent | null;
-}): Promise<FastCometUploadResponse> => {
-  if (input.uploadEvent !== null) {
-    return await postFastCometFileUploadRequest({
-      file: input.file,
-      index: input.index,
-      productId: input.uploadEvent.productId,
-    });
-  }
-  return await postConfiguredProductImageUploadRequest({
-    file: input.file,
-    productSku: input.productSku,
-  });
-};
-
 const resolveSlotViewModeForImageFile = (imageFile: ImageFileSelection): SlotViewMode =>
   isFastCometImageFile(imageFile) ? 'fastcomet' : 'upload';
-
-const notifyImmediateUploadStart = (
-  uploadEvent: ImmediateFileUploadEvent | null,
-  onStart: FastCometUploadStartHandler
-): void => {
-  if (uploadEvent === null) return;
-  onStart?.(uploadEvent);
-};
-
-const notifyImmediateUploadSuccess = (input: {
-  onSuccess: FastCometUploadSuccessHandler;
-  result: FastCometUploadOkResponse;
-  uploadEvent: ImmediateFileUploadEvent | null;
-}): void => {
-  if (input.uploadEvent === null) return;
-  input.onSuccess?.({
-    ...input.uploadEvent,
-    alreadyUploaded: input.result.alreadyUploaded,
-    imageFile: input.result.imageFile,
-    product: input.result.product,
-    publicPath: input.result.publicPath,
-    remoteUrl: input.result.remoteUrl,
-  });
-};
 
 const applyQueuedFastCometUploadResult = (input: {
   handleSlotFileSelect: SlotFileSelectHandler;
@@ -278,15 +202,6 @@ const applyQueuedFastCometUploadResult = (input: {
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
-
-const notifyImmediateUploadError = (input: {
-  error: unknown;
-  onError: FastCometUploadErrorHandler;
-  uploadEvent: ImmediateFileUploadEvent | null;
-}): void => {
-  if (input.uploadEvent === null) return;
-  input.onError?.({ ...input.uploadEvent, error: input.error });
-};
 
 export function ProductImageManagerUIProvider({
   children,
@@ -427,16 +342,12 @@ export function ProductImageManagerUIProvider({
   const uploadNewFileSlotImmediately = useCallback(
     async (index: number, file: File): Promise<void> => {
       if (!handleSlotFileSelect) return;
-      const uploadEvent = buildImmediateFileUploadEvent({ file, index, productId });
 
       try {
         setFastCometLoadingSlots((prev) => ({ ...prev, [index]: true }));
-        notifyImmediateUploadStart(uploadEvent, onFastCometUploadStart);
-        const result = await postImmediateFileUploadRequest({
+        const result = await postConfiguredProductImageUploadRequest({
           file,
-          index,
           productSku: productSku ?? null,
-          uploadEvent,
         });
         if (applyQueuedFastCometUploadResult({
           handleSlotFileSelect,
@@ -451,15 +362,9 @@ export function ProductImageManagerUIProvider({
         setImageLinkAt(index, '');
         setImageBase64At(index, '');
         setSlotViewMode(index, resolveSlotViewModeForImageFile(completedResult.imageFile));
-        notifyImmediateUploadSuccess({
-          onSuccess: onFastCometUploadSuccess,
-          result: completedResult,
-          uploadEvent,
-        });
       } catch (error: unknown) {
         logClientError(error);
-        pushDebug({ action: 'immediate-file-upload', message: toErrorMessage(error), slotIndex: index });
-        notifyImmediateUploadError({ error, onError: onFastCometUploadError, uploadEvent });
+        pushDebug({ action: 'immediate-local-file-upload', message: toErrorMessage(error), slotIndex: index });
       } finally {
         setFastCometLoadingSlots((prev) => {
           const next = { ...prev };
@@ -470,15 +375,11 @@ export function ProductImageManagerUIProvider({
     },
     [
       handleSlotFileSelect,
-      productId,
       productSku,
       setImageLinkAt,
       setImageBase64At,
       setSlotViewMode,
       pushDebug,
-      onFastCometUploadStart,
-      onFastCometUploadSuccess,
-      onFastCometUploadError,
     ]
   );
 

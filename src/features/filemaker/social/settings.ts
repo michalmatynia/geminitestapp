@@ -26,6 +26,7 @@ export type SocialPublishingSettings = {
   programmableCaptureRoutes: SocialPublishingProgrammableCaptureRoute[];
   projectUrl: string | null;
   captureContentConfig: SocialPublishingCaptureContentConfig;
+  articleAggregatorPathId: string | null;
 };
 
 const DEFAULT_PRESET_IDS = SOCIAL_PUBLISHING_CAPTURE_PRESETS.map((preset) => preset.id);
@@ -44,6 +45,7 @@ export const DEFAULT_SOCIAL_PUBLISHING_SETTINGS: Readonly<SocialPublishingSettin
   programmableCaptureRoutes: [],
   projectUrl: null,
   captureContentConfig: DEFAULT_SOCIAL_PUBLISHING_CAPTURE_CONTENT_CONFIG,
+  articleAggregatorPathId: null,
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -144,5 +146,6 @@ export const parseSocialPublishingSettings = (
     ),
     projectUrl: normalizeBaseUrl(parsed['projectUrl']),
     captureContentConfig: normalizeCaptureContentConfig(parsed['captureContentConfig']),
+    articleAggregatorPathId: normalizeOptionalId(parsed['articleAggregatorPathId']),
   };
 };

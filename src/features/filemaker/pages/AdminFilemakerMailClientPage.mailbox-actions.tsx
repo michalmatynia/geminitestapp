@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
-import { CirclePause, CirclePlay, RefreshCcw } from 'lucide-react';
+import { CirclePause, CirclePlay, Megaphone, RefreshCcw } from 'lucide-react';
 
 import { Button } from '@/shared/ui/primitives.public';
 
@@ -8,6 +8,7 @@ import { buildFilemakerMailComposeHref, formatFilemakerMailFolderLabel } from '.
 import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailFolderSummary } from '../types';
 import {
+  buildMailClientCreateCampaignHref,
   buildMailClientSearchHref,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
@@ -125,6 +126,12 @@ function MailClientMailboxActions({
         dashboardQuery={dashboardQuery}
         dashboardScope={dashboardScope}
       />
+      <Button asChild variant='outline' size='sm'>
+        <Link href={buildMailClientCreateCampaignHref({ accountId: account.id })}>
+          <Megaphone className='mr-1 size-3.5' />
+          Start Campaign
+        </Link>
+      </Button>
     </div>
   );
 }

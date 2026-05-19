@@ -88,6 +88,16 @@ const isFastCometImageFileRecord = (imageFile: Record<string, unknown>): boolean
   );
 };
 
+const hasCompletedFastCometImageStorage = (
+  imageFiles: Record<string, unknown>[],
+  imageLinks: string[]
+): boolean => {
+  if (imageFiles.length > 0) {
+    return imageFiles.every(isFastCometImageFileRecord);
+  }
+  return imageLinks.some(isFastCometUploadUrl);
+};
+
 export const hasAnyProductImageStorageStatus = (status: ProductImageStorageStatus): boolean =>
   status.hasFastCometImage ||
   status.hasLocalImage ||
@@ -101,8 +111,7 @@ export const resolveProductImageStorageStatus = (
   const imageLinks = Array.isArray(product.imageLinks) ? product.imageLinks : [];
 
   return {
-    hasFastCometImage:
-      imageFiles.some(isFastCometImageFileRecord) || imageLinks.some(isFastCometUploadUrl),
+    hasFastCometImage: hasCompletedFastCometImageStorage(imageFiles, imageLinks),
     hasLocalImage: imageFiles.length > 0 || imageLinks.some(isLocalProductUploadUrl),
     hasExternalLinkImage: imageLinks.some(isExternalProductImageLink),
     hasBase64Image: Array.isArray(product.imageBase64s)

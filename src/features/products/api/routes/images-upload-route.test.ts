@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 import { imageOptimizer } from '@/features/products/performance';
@@ -21,6 +21,10 @@ vi.mock('@/shared/lib/products/services/product-image-upload-fallback', () => ({
 }));
 
 describe('uploadProductImages', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('persists validated product images through configured storage', async () => {
     vi.mocked(imageOptimizer.optimize).mockResolvedValue([
       {
@@ -75,6 +79,42 @@ describe('uploadProductImages', () => {
           url: 'https://sparksofsindri.com/uploads/products/SKU_123/stored.png',
         }),
       ],
+    });
+  });
+
+  it('can force immediate product image uploads to local storage', async () => {
+    vi.mocked(imageOptimizer.optimize).mockResolvedValue([]);
+    vi.mocked(uploadProductImageFileWithLocalFallback).mockResolvedValue({
+      id: 'image-file-local',
+      filename: 'stored.png',
+      filepath: '/uploads/products/SKU_123/stored.png',
+      mimetype: 'image/png',
+      size: 4,
+      storageProvider: 'local',
+    });
+
+    const req = new NextRequest(
+      'http://localhost/api/v2/products/images/upload?sku=SKU%20123&storage=local'
+    );
+    const file = new File([new Uint8Array([1, 2, 3, 4])], 'original.png', {
+      type: 'image/png',
+    });
+
+    await uploadProductImages(req, [
+      {
+        file,
+        sanitizedName: 'clean.png',
+        hash: 'abcdef1234567890',
+      },
+    ]);
+
+    expect(uploadProductImageFileWithLocalFallback).toHaveBeenCalledWith({
+      action: 'uploadProductImages',
+      file,
+      filename: 'clean.png',
+      forceStorageSource: 'local',
+      service: 'products.images-upload',
+      sku: 'SKU 123',
     });
   });
 });

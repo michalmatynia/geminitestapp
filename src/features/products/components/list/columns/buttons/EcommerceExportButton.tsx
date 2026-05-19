@@ -21,6 +21,7 @@ import {
 } from './ProductListMarketplaceButton';
 import {
   getEcommerceExportToastVariant,
+  isEcommerceDbConnectionError,
   isMissingEcommerceCategoryError,
 } from './ecommerce-export-warning';
 
@@ -67,7 +68,9 @@ export function EcommerceExportButton({
         void invalidateListingBadges(queryClient);
       })
       .catch((error: unknown) => {
-        if (!isMissingEcommerceCategoryError(error)) logClientError(error);
+        if (!isMissingEcommerceCategoryError(error) && !isEcommerceDbConnectionError(error)) {
+          logClientError(error);
+        }
         toast(
           error instanceof Error ? error.message : 'Failed to export product to ecommerce.',
           { variant: getEcommerceExportToastVariant(error) }

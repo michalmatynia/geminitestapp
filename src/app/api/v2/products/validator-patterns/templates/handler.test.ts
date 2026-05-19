@@ -131,7 +131,7 @@ describe('validator-patterns templates handler module', () => {
     });
   });
 
-  it('returns structured outcomes for the legacy dimensions template preset', async () => {
+  it('returns structured outcomes for the dimensions Length template preset', async () => {
     const createPattern = vi.fn(async (input) => ({
       id: 'pattern-dimensions',
       label: input.label,
@@ -153,6 +153,11 @@ describe('validator-patterns templates handler module', () => {
     expect(createPattern).toHaveBeenCalledWith(
       expect.objectContaining({
         label: 'Name Segment: Dimensions',
+        target: 'size_length',
+        replacementEnabled: true,
+        replacementAutoApply: false,
+        replacementFields: ['sizeLength'],
+        launchSourceField: 'nameEnSegment2',
         semanticState: expect.objectContaining({
           presetId: 'products.name-segment-dimensions.v2',
           operation: 'validate_name_contains_dimensions_token',
@@ -164,7 +169,7 @@ describe('validator-patterns templates handler module', () => {
       outcomes: [
         {
           action: 'created',
-          target: 'name',
+          target: 'size_length',
           patternId: 'pattern-dimensions',
           label: 'Name Segment: Dimensions',
         },

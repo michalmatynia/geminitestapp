@@ -1,114 +1,130 @@
 /**
- * Engine Core: AI Paths Execution Engine
- * 
- * Provides the core orchestration and execution logic for AI automation graphs.
- * This module is the entry point for evaluating graph workflows and manages
- * cross-boundary execution state and lifecycle events.
- * 
- * Key Responsibilities:
- * - Graph Preparation: Normalizes and validates the graph structure before execution.
- * - Signal Orchestration: Manages cancellation and execution timeouts for long-running workflows.
- * - Runtime State Management: Maintains the state of the graph during evaluation.
- * - Telemetry & Observability: Records lifecycle events and performance metrics for the execution engine.
- * 
- * Usage:
- * This module is the primary engine interface, called by the AI Path executor (service-level).
- * It delegates to specific modules within the `engine-modules/` directory for discrete tasks
- * (validation, loop control, state management).
+ * @module EngineCore
+ * @description Core entry point for evaluating AI Paths runtime graphs.
  */
-
 import { type AiNode, type Edge } from '@/shared/contracts/ai-paths';
 import { type RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
+import { MAX_ITERATIONS } from './engine-modules/engine-constants';
+import { runExecutionLoop } from './engine-modules/engine-execution-loop';
+import { prepareGraphForExecution } from './engine-modules/engine-execution-preparation';
+import { checkTriggerProvenance } from './engine-modules/engine-execution-provenance';
+import { RuntimeTelemetryResolver } from './engine-modules/engine-execution-telemetry';
 import {
-  GraphExecutionError,
   GraphExecutionCancelled,
+  GraphExecutionError,
   type EvaluateGraphOptions,
 } from './engine-modules/engine-types';
+import {
+  assertSupportedGraph,
+  createExecutedState,
+  createExecutionContext,
+  createHaltEmitter,
+  hasTerminalBlockedNodes,
+  prepareEngineState,
+  resolveTriggerSource,
+  runGraphValidations,
+  validateTriggerProvenanceOrThrow,
+  type ExecutionContext,
+} from './engine-modules/engine-core-setup';
 
 export { GraphExecutionError, GraphExecutionCancelled };
 
-/**
- * Constructs an AbortSignal that handles both parent abort signals and timeout limits.
- * 
- * @param options - Options defining timeout and parent signal requirements.
- * @returns Object containing the constructed signal and a cleanup function to prevent memory leaks.
- */
-const buildExecutionAbortSignal = (
-  options: EvaluateGraphOptions
-): {
-  signal: AbortSignal | undefined;
-  cleanup: () => void;
-} => {
-  const parentSignal = options.abortSignal;
-  const maxDurationMs =
-    typeof options.maxDurationMs === 'number' &&
-    Number.isFinite(options.maxDurationMs) &&
-    options.maxDurationMs > 0
-      ? Math.max(1, Math.trunc(options.maxDurationMs))
-      : null;
-
-  if (!parentSignal && !maxDurationMs) {
-    return {
-      signal: undefined,
-      cleanup: () => undefined,
-    };
-  }
-
-  const controller = new AbortController();
-  const timeoutId =
-    maxDurationMs !== null
-      ? setTimeout(() => {
-        controller.abort(new Error(`Graph execution timed out after ${maxDurationMs}ms.`));
-      }, maxDurationMs)
-      : null;
-
-  const handleParentAbort = (): void => {
-    controller.abort(parentSignal?.reason);
-  };
-
-  if (parentSignal) {
-    if (parentSignal.aborted) {
-      handleParentAbort();
-    } else {
-      parentSignal.addEventListener('abort', handleParentAbort, { once: true });
-    }
-  }
-
-  return {
-    signal: controller.signal,
-    cleanup: () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (parentSignal) {
-        parentSignal.removeEventListener('abort', handleParentAbort);
-      }
-    },
-  };
+type PreparedGraph = ReturnType<typeof prepareGraphForExecution>;
+type EngineLoopInput = {
+  nodes: AiNode[];
+  options: EvaluateGraphOptions;
+  executionContext: ExecutionContext;
+  preparedGraph: PreparedGraph;
+  state: ReturnType<typeof prepareEngineState>;
+  triggerContext: Record<string, unknown> | null;
+  provenanceContext: Parameters<typeof checkTriggerProvenance>[0];
+  emitHalt: ReturnType<typeof createHaltEmitter>;
 };
 
-/**
- * Internally evaluates the provided graph workflow.
- * Manages the high-level execution context, signal orchestration, and error reporting.
- * 
- * @param nodes - Array of nodes representing the automation steps.
- * @param edges - Array of edges defining the connectivity of the graph.
- * @param options - Options for execution control (e.g., timeout, run ID).
- * @returns The resulting state of the execution after the graph run completes.
- */
+const runPreparedExecutionLoop = async (input: EngineLoopInput): Promise<void> => {
+  const telemetryResolver = new RuntimeTelemetryResolver(input.options);
+  await runExecutionLoop({
+    state: input.state,
+    options: input.executionContext.executionOptions,
+    resolvedRunId: input.executionContext.resolvedRunId,
+    resolvedRunStartedAt: input.executionContext.resolvedRunStartedAt,
+    maxIterationsLimit: input.options.maxIterations ?? MAX_ITERATIONS,
+    orderedNodes: input.preparedGraph.orderedNodes,
+    scopedNodeIds: input.preparedGraph.scopedNodeIds,
+    nodeById: input.preparedGraph.nodeById,
+    incomingEdgesByNode: input.preparedGraph.incomingEdgesByNode,
+    outgoingEdgesByNode: input.preparedGraph.outgoingEdgesByNode,
+    triggerContext: input.triggerContext,
+    internalCheckTriggerProvenance: () => checkTriggerProvenance(input.provenanceContext),
+    telemetryResolver,
+    seedHashes: input.executionContext.executionOptions.seedHashes ?? {},
+    nodes: input.nodes,
+    sanitizedEdges: input.preparedGraph.sanitizedEdges,
+    emitHalt: input.emitHalt,
+    executed: createExecutedState(),
+  });
+};
+
 export async function evaluateGraphInternal(
   nodes: AiNode[],
   edges: Edge[],
   options: EvaluateGraphOptions
 ): Promise<RuntimeState> {
-    const { cleanup } = buildExecutionAbortSignal(options);
-    void nodes;
-    void edges;
-    try {
-      // ... logic continues
-      return {} as RuntimeState;
-    } finally {
-      cleanup();
-    }
+  const executionContext = createExecutionContext(options);
+  const preparedGraph = prepareGraphForExecution({
+    nodes,
+    edges,
+    triggerNodeId: options.triggerNodeId,
+    seedHashes: options.seedHashes,
+  });
+  const state = prepareEngineState({
+    nodes,
+    executionOptions: executionContext.executionOptions,
+    preparedGraph,
+  });
+
+  assertSupportedGraph(preparedGraph.unsupportedCycleMessage, state);
+
+  const triggerContext = options.triggerContext ?? null;
+  const triggerSource = resolveTriggerSource(options, preparedGraph.nodeById);
+  const emitHalt = createHaltEmitter({
+    state,
+    executionOptions: executionContext.executionOptions,
+    resolvedRunId: executionContext.resolvedRunId,
+  });
+  const provenanceContext = {
+    scopedNodeIds: preparedGraph.scopedNodeIds,
+    nodeById: preparedGraph.nodeById,
+    state,
+    triggerContext,
+    triggerSource,
+  };
+
+  validateTriggerProvenanceOrThrow(provenanceContext);
+  await runGraphValidations({ nodes, preparedGraph, executionContext, state });
+
+  try {
+    await runPreparedExecutionLoop({
+      nodes,
+      options,
+      executionContext,
+      preparedGraph,
+      state,
+      triggerContext,
+      provenanceContext,
+      emitHalt,
+    });
+  } finally {
+    executionContext.cleanupExecutionAbortSignal();
+  }
+
+  if (
+    hasTerminalBlockedNodes(state) === true &&
+    state.finishedNodes.size < preparedGraph.scopedNodeIds.size
+  ) {
+    await emitHalt('blocked');
+  }
+
+  return state.buildRuntimeStateSnapshot(state.inputs);
 }

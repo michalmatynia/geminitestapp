@@ -58,7 +58,7 @@ export default function CaseStudies({
 
           <div className="case-fig rev" data-delay="2">
             <div className="case-fig-canvas">
-              <SideViewThumbnail projectIdx={activeIdx} />
+              <SideViewThumbnail projectIdx={activeIdx} modelUrl={activeProject?.modelUrl} />
             </div>
             <div className="case-fig-footer">
               <span className="case-fig-label">

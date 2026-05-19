@@ -27,6 +27,7 @@ import {
   MailClientMailboxFolderStatus,
   MailClientMailboxSyncStatus,
 } from './AdminFilemakerMailClientPage.mailboxes-status';
+import { MailClientMailboxCampaignsBadge } from './AdminFilemakerMailClientPage.account-campaigns';
 
 type MailClientMailboxSectionProps = {
   accounts: FilemakerMailAccount[];
@@ -242,6 +243,7 @@ function MailClientMailboxHeader({
             )}
           </Badge>
         ) : null}
+        <MailClientMailboxCampaignsBadge accountId={account.id} />
       </div>
     </CardHeader>
   );

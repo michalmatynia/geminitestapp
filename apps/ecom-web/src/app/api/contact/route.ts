@@ -78,22 +78,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (subject.length === 0) return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
   if (message.length < 10) return NextResponse.json({ error: 'Message is too short.' }, { status: 400 });
 
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) {
+  const resendApiKey = process.env['RESEND_API_KEY']?.trim() ?? '';
+  if (resendApiKey === '') {
     // No email service configured — acknowledge without sending.
     return NextResponse.json({ ok: true });
   }
 
-  const toEmail = process.env.RESEND_CONTACT_EMAIL?.trim() ?? process.env.RESEND_FROM_EMAIL?.trim();
-  if (!toEmail) {
+  const resendContactEmail = process.env['RESEND_CONTACT_EMAIL']?.trim() ?? '';
+  const resendFromEmail = process.env['RESEND_FROM_EMAIL']?.trim() ?? '';
+  const toEmail = resendContactEmail !== '' ? resendContactEmail : resendFromEmail;
+  if (toEmail === '') {
     return NextResponse.json({ ok: true });
   }
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
-  const from = fromEmail ? `STARGATER <${fromEmail}>` : 'STARGATER <orders@arcana.store>';
+  const from = resendFromEmail !== '' ? `STARGATER <${resendFromEmail}>` : 'STARGATER <orders@arcana.store>';
 
   try {
-    const resend = new Resend(apiKey);
+    const resend = new Resend(resendApiKey);
     await resend.emails.send({
       from,
       to: toEmail,

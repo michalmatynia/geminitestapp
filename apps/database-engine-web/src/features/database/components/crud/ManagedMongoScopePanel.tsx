@@ -191,6 +191,19 @@ function ManagedMongoDatabaseScopeCard({
   );
 }
 
+interface ManagedMongoPanelHeaderProps {
+  backupRoot: string;
+  backupDisabled: boolean;
+  pullDisabled: boolean;
+  syncDisabled: boolean;
+  backupManagedMongo: (app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
+  refetchAll: () => void;
+  syncManagedMongo: (
+    action: 'local_to_cloud' | 'cloud_to_local',
+    app: DatabaseEngineManagedMongoApplication | 'all'
+  ) => Promise<void>;
+}
+
 function ManagedMongoPanelHeader({
   backupRoot,
   backupDisabled,
@@ -199,15 +212,7 @@ function ManagedMongoPanelHeader({
   backupManagedMongo,
   refetchAll,
   syncManagedMongo,
-}: {
-  backupRoot: string;
-  backupDisabled: boolean;
-  pullDisabled: boolean;
-  syncDisabled: boolean;
-  backupManagedMongo: (app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
-  refetchAll: () => void;
-  syncManagedMongo: (action: 'local_to_cloud' | 'cloud_to_local', app: DatabaseEngineManagedMongoApplication | 'all') => Promise<void>;
-}): JSX.Element {
+}: ManagedMongoPanelHeaderProps): JSX.Element {
   return (
     <div className='flex flex-wrap items-center justify-between gap-3'>
       <div className='space-y-1'>

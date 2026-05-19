@@ -14,6 +14,7 @@ export {
   withAmazonScanActionRunSteps,
   withFilemakerOrganizationPresenceScanActionRunSteps,
   withJobBoardScanActionRunSteps,
+  withSocialArticleAggregatorScanActionRunSteps,
   withSupplier1688ScanActionRunSteps,
 } from './action-run-steps.presets';
 

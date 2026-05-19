@@ -100,6 +100,9 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
   const [batchCapturePresetLimit, setBatchCapturePresetLimit] = useState<number | null>(
     persistedSocialSettings.batchCapturePresetLimit
   );
+  const [articleAggregatorPathId, setArticleAggregatorPathId] = useState<string>(
+    persistedSocialSettings.articleAggregatorPathId ?? ''
+  );
   const hasManualBatchBaseUrlRef = useRef(false);
   const persistedRef = useRef(persistedSocialSettings);
 
@@ -143,6 +146,8 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
   const normalizedProjectUrl = normalizeSocialPublishingProjectUrl(projectUrl) || null;
   const projectUrlError = getSocialPublishingProjectUrlError(projectUrl);
 
+  const normalizedArticleAggregatorPathId = articleAggregatorPathId.trim() || null;
+
   const isSettingsDirty =
     persistedSocialSettings.brainModelId !== brainModelId ||
     persistedSocialSettings.visionModelId !== visionModelId ||
@@ -150,6 +155,7 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
     persistedSocialSettings.batchCaptureBaseUrl !== normalizedBatchCaptureBaseUrl ||
     persistedSocialSettings.batchCapturePresetLimit !== normalizedBatchCapturePresetLimit ||
     persistedSocialSettings.projectUrl !== normalizedProjectUrl ||
+    persistedSocialSettings.articleAggregatorPathId !== normalizedArticleAggregatorPathId ||
     !arePresetSetsEqual(
       persistedSocialSettings.batchCapturePresetIds,
       normalizedBatchCapturePresetIds
@@ -221,6 +227,7 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
       programmableCaptureRoutes: persistedSocialSettings.programmableCaptureRoutes,
       projectUrl: normalizedProjectUrl,
       captureContentConfig: persistedSocialSettings.captureContentConfig,
+      articleAggregatorPathId: normalizedArticleAggregatorPathId,
     };
     return await persistSettingsValue(payload, {
       successMessage: 'Social settings saved.',
@@ -233,6 +240,7 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
     normalizedBatchCapturePresetLimit,
     normalizedBatchCapturePresetIds,
     normalizedProjectUrl,
+    normalizedArticleAggregatorPathId,
     persistSettingsValue,
     persistedSocialSettings.programmableCaptureBaseUrl,
     persistedSocialSettings.programmableCapturePersonaId,
@@ -393,6 +401,8 @@ export function useSocialSettings(options?: UseSocialSettingsOptions) {
     setBatchCapturePresetIds,
     batchCapturePresetLimit: normalizedBatchCapturePresetLimit,
     setBatchCapturePresetLimit: handleBatchCapturePresetLimitChange,
+    articleAggregatorPathId,
+    setArticleAggregatorPathId,
     isSettingsDirty,
     isSavingSettings: updateSetting.isPending,
     handleSaveSettings,

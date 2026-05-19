@@ -19,7 +19,6 @@ import {
   isCanonicalBaseIntegrationSlug,
 } from '@/features/integrations/services/base-listing-canonicalization';
 import { applyRemoteBaseSkuBadgeFallback } from '@/features/integrations/services/base-sku-badge-fallback';
-import { findVisibleEcommerceProductIds } from '@/features/integrations/services/ecommerce-product-export.listings';
 import { resolvePendingTraderaExecutionAction } from '@/features/integrations/utils/tradera-listing-status';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -169,30 +168,6 @@ const productIdsBodySchema = z.object({
   traderaConnectionId: z.string().trim().min(1).nullable().optional(),
 });
 
-const applyVisibleEcommerceBadgeFallback = async (
-  payload: ListingBadgesPayload,
-  requestedProductIds: readonly string[]
-): Promise<ListingBadgesPayload> => {
-  const missingEcommerceProductIds = requestedProductIds.filter((productId) => {
-    const currentStatus = normalizeStatus(payload[productId]?.ecommerce);
-    return currentStatus.length === 0;
-  });
-  if (missingEcommerceProductIds.length === 0) return payload;
-
-  const visibleEcommerceProductIds = await findVisibleEcommerceProductIds(
-    missingEcommerceProductIds
-  );
-  if (visibleEcommerceProductIds.size === 0) return payload;
-
-  const nextPayload: ListingBadgesPayload = { ...payload };
-  visibleEcommerceProductIds.forEach((productId) => {
-    nextPayload[productId] = {
-      ...(nextPayload[productId] ?? {}),
-      ecommerce: 'active',
-    };
-  });
-  return nextPayload;
-};
 
 export const querySchema = z.object({
   productIds: optionalCsvQueryStringArray(),
@@ -366,12 +341,8 @@ const buildPayload = async (
     canonicalPayload,
     normalizedRequestedProductIds
   );
-  const ecommercePayload = await applyVisibleEcommerceBadgeFallback(
-    remoteBasePayload,
-    normalizedRequestedProductIds
-  );
 
-  return NextResponse.json(ecommercePayload);
+  return NextResponse.json(remoteBasePayload);
 };
 
 /**

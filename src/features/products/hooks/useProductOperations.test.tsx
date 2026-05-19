@@ -66,7 +66,7 @@ describe('useProductOperations', () => {
     expect(result.current.isCreateOpen).toBe(true);
   });
 
-  it('closes create modal without refreshing immediately for queued runtime creation', () => {
+  it('keeps create modal open without refreshing immediately for queued creation', () => {
     const setRefreshTrigger = vi.fn();
     const toast = vi.fn();
     useToastMock.mockReturnValue({ toast });
@@ -82,13 +82,13 @@ describe('useProductOperations', () => {
       result.current.handleCreateSuccess({ queued: true });
     });
 
-    expect(result.current.isCreateOpen).toBe(false);
-    expect(result.current.initialSku).toBe('');
+    expect(result.current.isCreateOpen).toBe(true);
+    expect(result.current.initialSku).toBe('SKU-RUNTIME');
     expect(setRefreshTrigger).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
   });
 
-  it('refreshes and toasts when runtime product creation completes', () => {
+  it('keeps the create modal open while refreshing after product creation completes', () => {
     const setRefreshTrigger = vi.fn();
     const toast = vi.fn();
     useToastMock.mockReturnValue({ toast });
@@ -96,9 +96,15 @@ describe('useProductOperations', () => {
     const { result } = renderHook(() => useProductOperations(setRefreshTrigger));
 
     act(() => {
-      result.current.handleCreateSuccess();
+      result.current.setIsCreateOpen(true);
     });
 
+    act(() => {
+      result.current.handleCreateSuccess({ product: { id: 'created-product-id' } as never });
+    });
+
+    expect(result.current.isCreateOpen).toBe(true);
+    expect(result.current.lastEditedId).toBe('created-product-id');
     expect(setRefreshTrigger).toHaveBeenCalledTimes(1);
     expect(toast).toHaveBeenCalledWith('Product created successfully.', { variant: 'success' });
   });

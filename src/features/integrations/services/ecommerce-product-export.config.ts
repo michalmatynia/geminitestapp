@@ -88,6 +88,16 @@ const resolveRequiredEcommerceMongoSourceConfig = (
   );
 };
 
+const resolveOptionalEcommerceMongoSourceConfig = (
+  source: EcommerceMongoSource
+): ResolvedEcommerceMongoConfig | null => {
+  const config = resolveEcommerceMongoSourceConfig(source);
+  if (config.configured && config.uri !== null) {
+    return completeSourceConfig(source, config.uri, config.dbName);
+  }
+  return null;
+};
+
 const getClientStore = (): Map<string, MongoClient> => {
   globalForEcommerceMongo.__ecommerceExportMongoClientByKey ??= new Map<string, MongoClient>();
   return globalForEcommerceMongo.__ecommerceExportMongoClientByKey;
@@ -229,10 +239,25 @@ export async function getAllEcommerceExportDbsForWrite(): Promise<Db[]> {
 }
 
 export async function getAllEcommerceExportDbTargetsForWrite(): Promise<EcommerceExportDbTarget[]> {
-  const configs = dedupeResolvedEcommerceConfigs([
-    resolveRequiredEcommerceMongoSourceConfig('local'),
-    resolveRequiredEcommerceMongoSourceConfig('cloud'),
-  ]);
+  const sources: EcommerceMongoSource[] = ['local', 'cloud'];
+  const resolved = sources
+    .map(resolveOptionalEcommerceMongoSourceConfig)
+    .filter((c): c is ResolvedEcommerceMongoConfig => c !== null);
+  const configs = dedupeResolvedEcommerceConfigs(resolved);
+
+  if (configs.length === 0) {
+    throw createAppError(
+      'No ecommerce database is configured. Set ECOM_MONGODB_LOCAL_URI or ECOM_MONGODB_CLOUD_URI and try again.',
+      {
+        code: AppErrorCodes.configurationError,
+        httpStatus: 503,
+        expected: true,
+        critical: false,
+        retryable: false,
+      }
+    );
+  }
+
   return connectResolvedEcommerceTargets(configs);
 }
 

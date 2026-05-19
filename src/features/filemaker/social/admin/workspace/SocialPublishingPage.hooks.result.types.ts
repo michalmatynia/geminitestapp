@@ -78,6 +78,7 @@ export type EditorResult = Pick<
 
 export type SettingsResult = Pick<
   SettingsState,
+  | 'articleAggregatorPathId'
   | 'batchCaptureBaseUrl'
   | 'batchCapturePresetIds'
   | 'batchCapturePresetLimit'
@@ -94,6 +95,7 @@ export type SettingsResult = Pick<
   | 'projectUrlError'
   | 'publishingConnectionId'
   | 'selectAllCapturePresets'
+  | 'setArticleAggregatorPathId'
   | 'setBatchCaptureBaseUrl'
   | 'setBatchCapturePresetLimit'
   | 'setProjectUrl'

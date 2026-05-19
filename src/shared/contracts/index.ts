@@ -33,6 +33,7 @@ export * from './kangur-cms';
 export * from './kangur-observability';
 export * from './social-publishing-image-addons';
 export * from './social-publishing-posts';
+export * from './social-article-aggregator';
 export * from './notes';
 export * from './observability';
 export * from './products';

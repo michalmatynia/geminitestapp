@@ -86,23 +86,20 @@ describe('assets3d postHandler', () => {
     });
   });
 
-  it('stages Milkbar 3D uploads locally before queueing the FastComet Redis runtime job', async () => {
+  it('stages Milkbar 3D uploads locally without queueing the FastComet Redis runtime job', async () => {
     const response = await postHandler(createUploadRequest('milkbarCms'), { source: 'test' });
     const [file, options] = mocks.uploadAsset3D.mock.calls[0] ?? [];
 
     expect(response.status).toBe(201);
     expect(file).toBeDefined();
-    expect(mocks.assertMilkbarAsset3DFastCometUploadRedisRuntime).toHaveBeenCalledTimes(1);
+    expect(mocks.assertMilkbarAsset3DFastCometUploadRedisRuntime).not.toHaveBeenCalled();
     expect(options).toMatchObject({
       metadata: { fastCometUploadStatus: 'queued' },
       name: 'Project Model',
       storageProfile: 'milkbarCms',
       storageSource: 'local',
     });
-    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
-      assetId: 'asset-1',
-      requestedAt: expect.any(String),
-    });
+    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).not.toHaveBeenCalled();
   });
 
   it('deletes the previous Milkbar model in Redis before staging the replacement upload', async () => {
@@ -118,10 +115,7 @@ describe('assets3d postHandler', () => {
     });
     expect(mocks.deleteMilkbarAsset3DInRedisRuntime.mock.invocationCallOrder[0])
       .toBeLessThan(mocks.uploadAsset3D.mock.invocationCallOrder[0] ?? 0);
-    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
-      assetId: 'asset-1',
-      requestedAt: expect.any(String),
-    });
+    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).not.toHaveBeenCalled();
   });
 
   it('does not stage a replacement upload when deleting the previous Milkbar model fails', async () => {

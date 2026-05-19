@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ObjectId, type Db } from 'mongodb';
 
 import {
@@ -40,6 +40,13 @@ vi.mock('@/shared/lib/db/mongo-sync-lock', () => ({
 }));
 
 describe('system-log-repository', () => {
+  const dedicatedMongoEnv = {
+    STUDIQ_MONGODB_LOCAL_URI: 'mongodb://localhost:27018/studiq_local',
+    CMS_BUILDER_MONGODB_LOCAL_URI: 'mongodb://localhost:27019/cms_builder_local',
+    ECOM_MONGODB_LOCAL_URI: 'mongodb://localhost:27021/ecom_local',
+    ARCH_MONGODB_LOCAL_URI: 'mongodb://localhost:27022/arch_web_local',
+  } as const;
+
   const mockMongoCollection = {
     insertOne: vi.fn(),
     findOne: vi.fn(),
@@ -134,12 +141,21 @@ describe('system-log-repository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env['OBSERVABILITY_FEDERATED_APPLICATION_IDS'];
+    delete process.env['OBSERVABILITY_DISABLED_APPLICATION_IDS'];
+    Object.assign(process.env, dedicatedMongoEnv);
     vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
     vi.mocked(getStudiqMongoDb).mockResolvedValue(mockStudiqMongoDb as unknown as Db);
     vi.mocked(getCmsBuilderMongoDb).mockResolvedValue(mockCmsBuilderMongoDb as unknown as Db);
     vi.mocked(getEcommerceMongoDb).mockResolvedValue(mockEcommerceMongoDb as unknown as Db);
     vi.mocked(getArchMongoDb).mockResolvedValue(mockArchMongoDb as unknown as Db);
     vi.mocked(readMongoSyncLock).mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(dedicatedMongoEnv)) {
+      delete process.env[key];
+    }
   });
 
   it('creates a system log in MongoDB', async () => {

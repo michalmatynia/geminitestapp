@@ -1,22 +1,12 @@
 import {
-  getLocalizedKangurCoreLessonTitle,
-  type KangurAssignmentPlan,
   type KangurAssignmentPriority,
-  type KangurLessonMasteryInsight,
 } from '@kangur/core';
-import type { Href } from 'expo-router';
 import {
   getKangurMobileLocaleTag,
-  useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
 import {
-  KangurMobileInsetPanel as InsetPanel,
-  KangurMobileLinkButton as LinkButton,
-  KangurMobileMutedActionChip as MutedActionChip,
-  KangurMobilePill as Pill,
   type KangurMobileTone as Tone,
 } from '../shared/KangurMobileUi';
-import { getSessionAccentTone } from './profile-tones';
 
 export { getSessionAccentTone } from './profile-tones';
 

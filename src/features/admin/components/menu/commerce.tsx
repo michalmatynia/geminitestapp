@@ -56,6 +56,11 @@ export const getCommerceNav = (): NavItem => ({
       children: PRODUCT_NAV_CHILDREN,
     },
     {
+      id: 'commerce/patterns',
+      label: 'Patterns',
+      href: '/admin/patterns',
+    },
+    {
       id: 'commerce/assets',
       label: 'Assets',
       href: '/admin/3d-assets',

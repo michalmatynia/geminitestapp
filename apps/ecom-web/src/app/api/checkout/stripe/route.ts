@@ -7,7 +7,34 @@ import { createStripePaymentIntent } from '@/lib/stripe';
 import { readPaymentProviderAvailability } from '@/lib/providerSettings';
 import { buildValidatedCheckoutOrder, isRecord, toMinorCurrencyUnit } from '@/lib/checkout-order';
 
-// eslint-disable-next-line max-lines-per-function, complexity
+function buildOrderPayload(result: any, pricedItems: any, now: string): Omit<Order, '_id'> {
+  const {
+    orderId, userId, email,
+    shippingSelection, shippingAddress, inpostPoint,
+    subtotal, discount, promoCode, total,
+  } = result.order;
+
+  return {
+    orderId,
+    ...(userId !== undefined ? { userId } : {}),
+    email,
+    status: 'pending_payment',
+    paymentMethod: 'stripe',
+    items: pricedItems,
+    shippingMethod: shippingSelection.shippingMethod,
+    shippingPrice: shippingSelection.shippingPrice,
+    shippingCarrier: shippingSelection.shippingCarrier,
+    shippingService: shippingSelection.shippingService,
+    ...(inpostPoint !== null ? { inpostPoint } : {}),
+    shippingAddress,
+    subtotal,
+    discount,
+    promoCode,
+    total,
+    createdAt: now,
+  };
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   void ensureAppIndexes();
   const ip = getClientIp(req);
@@ -40,67 +67,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  const {
-    orderId, userId, email, pricedItems,
-    shippingSelection, shippingAddress, inpostPoint,
-    subtotal, discount, promoCode, total, currencyCode,
-  } = result.order;
-
-  const now = new Date().toISOString();
-  const order: Omit<Order, '_id'> = {
-    orderId,
-    ...(userId !== undefined ? { userId } : {}),
-    email,
-    status: 'pending_payment',
-    paymentMethod: 'stripe',
-    items: pricedItems,
-    shippingMethod: shippingSelection.shippingMethod,
-    shippingPrice: shippingSelection.shippingPrice,
-    shippingCarrier: shippingSelection.shippingCarrier,
-    shippingService: shippingSelection.shippingService,
-    ...(inpostPoint !== null ? { inpostPoint } : {}),
-    shippingAddress,
-    subtotal,
-    discount,
-    promoCode,
-    total,
-    createdAt: now,
-  };
+  const { pricedItems, currencyCode } = result.order;
+  const orderPayload = buildOrderPayload(result, pricedItems, new Date().toISOString());
 
   const db = await getDb();
-  const collection = db.collection(ORDERS_COLLECTION);
-  const insertResult = await collection.insertOne(order);
+  const collection = db.collection<Order>(ORDERS_COLLECTION);
+  const insertResult = await collection.insertOne(orderPayload as Order);
 
-  let paymentIntentId: string;
-  let clientSecret: string;
-  let publishableKey: string;
   try {
     const stripeResult = await createStripePaymentIntent({
-      amount: toMinorCurrencyUnit(total),
+      amount: toMinorCurrencyUnit(orderPayload.total),
       currency: currencyCode,
-      description: `Stargater order ${orderId}`,
-      metadata: { orderId, email },
-      extOrderId: orderId,
+      description: `Stargater order ${orderPayload.orderId}`,
+      metadata: { orderId: orderPayload.orderId, email: orderPayload.email },
+      extOrderId: orderPayload.orderId,
     });
-    paymentIntentId = stripeResult.paymentIntentId;
-    clientSecret = stripeResult.clientSecret;
-    publishableKey = stripeResult.publishableKey;
+    const { paymentIntentId, clientSecret, publishableKey } = stripeResult;
+    await collection.updateOne({ orderId: orderPayload.orderId }, { $set: { stripePaymentIntentId: paymentIntentId } }).catch(() => undefined);
+    return NextResponse.json(
+      { orderId: orderPayload.orderId, clientSecret, publishableKey, _id: insertResult.insertedId.toString() },
+      { status: 201 },
+    );
   } catch (err: unknown) {
-    await collection.updateOne(
-      { orderId, status: 'pending_payment' },
-      { $set: { status: 'cancelled' } },
-    ).catch(() => undefined);
+    await collection.updateOne({ orderId: orderPayload.orderId, status: 'pending_payment' }, { $set: { status: 'cancelled' } }).catch(() => undefined);
     const msg = err instanceof Error ? err.message : 'Payment gateway error';
     return NextResponse.json({ error: msg }, { status: 502 });
   }
-
-  await collection.updateOne(
-    { orderId },
-    { $set: { stripePaymentIntentId: paymentIntentId } },
-  ).catch(() => undefined);
-
-  return NextResponse.json(
-    { orderId, clientSecret, publishableKey, _id: insertResult.insertedId.toString() },
-    { status: 201 },
-  );
 }

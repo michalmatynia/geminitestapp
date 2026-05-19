@@ -5,6 +5,7 @@ import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
 import type { ProductScanRunFeedback } from '@/features/products/lib/product-scan-run-feedback';
+import type { ProductOperationInfo } from '@/features/products/hooks/useProductOperations.helpers';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
@@ -133,11 +134,11 @@ export interface ProductListContextType {
   createDraft: ProductDraft | null;
   initialCatalogId: string | null;
   onCloseCreate: () => void;
-  onCreateSuccess: (info?: { queued?: boolean }) => void;
+  onCreateSuccess: (info?: ProductOperationInfo) => void;
   editingProduct: ProductWithImages | null;
   isEditHydrating: boolean;
   onCloseEdit: () => void;
-  onEditSuccess: (info?: { queued?: boolean }) => void;
+  onEditSuccess: (info?: ProductOperationInfo) => void;
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   integrationsRecoveryContext: ProductListingsRecoveryContext | null;

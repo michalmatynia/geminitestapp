@@ -7,8 +7,12 @@ import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/vali
 import {
   buildLatestFieldMirrorSemanticState,
   buildNameSegmentCategorySemanticState,
+  buildNameSegmentDimensionsSemanticState,
 } from '@/features/products/lib/validatorSemanticPresets';
-import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
+import {
+  PRODUCT_VALIDATION_SOURCE_FIELD_IDS,
+  buildProductValidationSourceValues,
+} from '@/features/products/lib/validatorSourceFields';
 import {
   allowsPatternExecutionWithoutRegexMatch,
   areIssueMapsEquivalent,
@@ -561,6 +565,146 @@ describe('buildFieldIssues', () => {
       replacementScope: 'field',
       replacementActive: true,
     });
+  });
+
+  it('supports Length validation driven by Name EN segment #2 from the full product title', () => {
+    const pattern = makePattern({
+      regex: '^0$',
+      target: 'size_length',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['sizeLength'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2,
+        sourceRegex: '([+-]?\\d+(?:[.,]\\d+)?)',
+        sourceFlags: null,
+        sourceMatchGroup: 1,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2,
+      launchOperator: 'is_not_empty',
+      message: 'Propose Length (sizeLength) from Name segment #2',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentDimensionsSemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: buildProductValidationSourceValues({
+        baseValues: {
+          name_en: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
+          sizeLength: 0,
+        },
+      }),
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['sizeLength']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      message: 'Propose Length (sizeLength) from Name segment #2',
+      replacementValue: '4',
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
+  });
+
+  it('supports Length validation from Name EN segment #2 when the Length field is blank', () => {
+    const pattern = makePattern({
+      regex: '^0$',
+      target: 'size_length',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['sizeLength'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2,
+        sourceRegex: '([+-]?\\d+(?:[.,]\\d+)?)',
+        sourceFlags: null,
+        sourceMatchGroup: 1,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2,
+      launchOperator: 'is_not_empty',
+      message: 'Propose Length (sizeLength) from Name segment #2',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentDimensionsSemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: buildProductValidationSourceValues({
+        baseValues: {
+          name_en: 'Darth Vader | 13 cm | Eko-Skóra | Movie Wallet | Star Wars',
+          sizeLength: Number.NaN,
+        },
+      }),
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['sizeLength']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: '13',
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
+  });
+
+  it('keeps plain name dimensions validations bound to their regex match', () => {
+    const pattern = makePattern({
+      regex: '13 cm',
+      target: 'name',
+      replacementEnabled: false,
+      message: 'Product name must contain dimensions.',
+      semanticState: buildNameSegmentDimensionsSemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        name_en: 'Darth Vader | Movie Wallet | Star Wars',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['name_en']).toBeUndefined();
   });
 
   it('suppresses category inference when the inferred name segment does not resolve to a category', () => {

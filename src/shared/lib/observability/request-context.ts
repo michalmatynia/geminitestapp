@@ -22,6 +22,8 @@ type RequestContextGlobal = typeof globalThis & {
 
 const requestContextGlobal = globalThis as RequestContextGlobal;
 
+// Initialize storage once at module load, reusing if already set (for HMR and multiple imports).
+// This singleton pattern ensures all code shares the same async context store across hot reloads.
 const storage =
   requestContextGlobal.__geminitestappRequestContextStorage ??
   new AsyncLocalStorage<RequestContext>();

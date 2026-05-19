@@ -98,9 +98,6 @@ type MilkbarCmsSavePayload = Pick<
   MilkbarCmsSnapshot,
   'localizedContent' | 'pageSettings' | 'projects' | 'services'
 >;
-type MilkbarCmsFileSlotChangeOptions = {
-  autoSave?: boolean;
-};
 type MilkbarInquiryStatusUpdate = {
   email: string;
   status: 'pending' | 'contacted';
@@ -121,19 +118,6 @@ const textToLines = (value: string): string[] =>
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
-
-const buildLocalizedContentWithSectionPatch = <K extends keyof MilkbarPageContent>(
-  localizedContent: MilkbarLocalizedContent,
-  locale: MilkbarLocale,
-  section: K,
-  patch: Partial<MilkbarPageContent[K]>
-): MilkbarLocalizedContent => ({
-  ...localizedContent,
-  [locale]: {
-    ...localizedContent[locale],
-    [section]: { ...(localizedContent[locale][section] as object), ...patch },
-  } as MilkbarPageContent,
-});
 
 const toOrderNumber = (value: string): number => {
   const parsed = Number(value);
@@ -360,8 +344,11 @@ const normalizeMilkbarPageContentForClient = (
       label: readStringValue(projects['label'], fallback.projects.label),
       title: readStringValue(projects['title'], fallback.projects.title),
       emphasis: readStringValue(projects['emphasis'], fallback.projects.emphasis),
-      projectsViewMode:
-        projects['projectsViewMode'] === 'solid' ? 'solid' : projects['projectsViewMode'] === 'wireframe' ? 'wireframe' : fallback.projects.projectsViewMode,
+      projectsViewMode: ((): 'solid' | 'wireframe' | 'edges' => {
+        const val = projects['projectsViewMode'];
+        if (val === 'solid' || val === 'wireframe' || val === 'edges') return val;
+        return fallback.projects.projectsViewMode;
+      })(),
     },
     process: {
       eyebrow: readStringValue(process['eyebrow'], fallback.process.eyebrow),
@@ -876,17 +863,6 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const isRefreshing = snapshotQuery.isFetching;
   const isSaving = saveSnapshotMutation.isPending;
 
-  const getAutosaveBasePayload = useCallback((): MilkbarCmsSavePayload => {
-    const savedSnapshot = latestSavedSnapshotRef.current;
-    if (savedSnapshot === null) return latestEditorPayloadRef.current;
-    return {
-      localizedContent: savedSnapshot.localizedContent,
-      pageSettings: savedSnapshot.pageSettings,
-      projects: savedSnapshot.projects,
-      services: savedSnapshot.services,
-    };
-  }, []);
-
   const persistSnapshotPayload = useCallback(
     async (
       payload: MilkbarCmsSavePayload,
@@ -1004,49 +980,6 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const updateDrawing = useCallback(
     (patch: Partial<MilkbarPageContent['drawing']>) => updateLocaleSection(activeLocale, 'drawing', patch),
     [activeLocale, updateLocaleSection]
-  );
-  const autoSaveLocaleSection = useCallback(
-    async <K extends keyof MilkbarPageContent>(
-      locale: MilkbarLocale,
-      section: K,
-      patch: Partial<MilkbarPageContent[K]>
-    ): Promise<void> => {
-      const editorPayload = latestEditorPayloadRef.current;
-      const nextEditorLocalizedContent = buildLocalizedContentWithSectionPatch(
-        editorPayload.localizedContent,
-        locale,
-        section,
-        patch
-      );
-      latestEditorPayloadRef.current = {
-        ...editorPayload,
-        localizedContent: nextEditorLocalizedContent,
-      };
-      setLocalizedContent(nextEditorLocalizedContent);
-
-      const savedPayload = getAutosaveBasePayload();
-      const nextSavedLocalizedContent = buildLocalizedContentWithSectionPatch(
-        savedPayload.localizedContent,
-        locale,
-        section,
-        patch
-      );
-      await persistSnapshotPayload({
-        ...savedPayload,
-        localizedContent: nextSavedLocalizedContent,
-      });
-    },
-    [getAutosaveBasePayload, persistSnapshotPayload]
-  );
-  const autoSaveHero = useCallback(
-    (patch: Partial<MilkbarPageContent['hero']>) =>
-      autoSaveLocaleSection(activeLocale, 'hero', patch),
-    [activeLocale, autoSaveLocaleSection]
-  );
-  const autoSaveDrawing = useCallback(
-    (patch: Partial<MilkbarPageContent['drawing']>) =>
-      autoSaveLocaleSection(activeLocale, 'drawing', patch),
-    [activeLocale, autoSaveLocaleSection]
   );
   const updatePhilosophy = useCallback(
     (patch: Partial<MilkbarPageContent['philosophy']>) => updateLocaleSection(activeLocale, 'philosophy', patch),
@@ -1461,41 +1394,6 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
     },
     []
   );
-  const autoSaveProject = useCallback(
-    async (
-      index: number,
-      patch: Partial<MilkbarProjectCmsRecord>
-    ): Promise<void> => {
-      const editorPayload = latestEditorPayloadRef.current;
-      const editorProject = editorPayload.projects[index];
-      if (editorProject === undefined) return;
-      const nextEditorProjects = editorPayload.projects.map((project, i) =>
-        i === index ? { ...project, ...patch } : project
-      );
-      latestEditorPayloadRef.current = {
-        ...editorPayload,
-        projects: nextEditorProjects,
-      };
-      setProjects(nextEditorProjects);
-
-      const savedPayload = getAutosaveBasePayload();
-      const savedProjectIndex = savedPayload.projects.findIndex(
-        (project) => project.code === editorProject.code
-      );
-      const projectSource = savedProjectIndex >= 0
-        ? savedPayload.projects
-        : nextEditorProjects;
-      const projectIndex = savedProjectIndex >= 0 ? savedProjectIndex : index;
-      const nextSavedProjects = projectSource.map((project, i) =>
-        i === projectIndex ? { ...project, ...patch } : project
-      );
-      await persistSnapshotPayload({
-        ...savedPayload,
-        projects: nextSavedProjects,
-      });
-    },
-    [getAutosaveBasePayload, persistSnapshotPayload]
-  );
 
   const updateService = useCallback(
     (index: number, patch: Partial<MilkbarServiceCmsRecord>): void => {
@@ -1755,9 +1653,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 removeNavLink={removeNavLink}
                 moveNavLink={moveNavLink}
                 updateHero={updateHero}
-                autoSaveHero={autoSaveHero}
                 updateDrawing={updateDrawing}
-                autoSaveDrawing={autoSaveDrawing}
                 updatePhilosophy={updatePhilosophy}
                 updateServicesHeader={updateServicesHeader}
                 updateProjectsHeader={updateProjectsHeader}
@@ -1803,7 +1699,6 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 setProjects((current) => current.filter((_, i) => i !== index))
               }
               onUpdate={updateProject}
-              onUpdateAndSave={autoSaveProject}
               onDuplicate={(index) =>
                 setProjects((current) => {
                   const src = current[index];
@@ -2426,10 +2321,7 @@ function DrawingImageSlotsField({
   onChange,
 }: {
   value: string[];
-  onChange: (
-    images: string[],
-    options?: MilkbarCmsFileSlotChangeOptions
-  ) => void | Promise<void>;
+  onChange: (images: string[]) => void | Promise<void>;
 }): React.JSX.Element {
   const { toast } = useToast();
   const uploadMutation = useUploadCmsMedia();
@@ -2444,39 +2336,28 @@ function DrawingImageSlotsField({
   slotValuesRef.current = slotValues;
 
   const setSlotValues = useCallback(
-    async (
-      nextValues: string[],
-      options?: MilkbarCmsFileSlotChangeOptions
-    ): Promise<void> => {
+    async (nextValues: string[]): Promise<void> => {
       const compactedValues = compactDrawingImageSlotValues(nextValues);
       slotValuesRef.current = createDrawingImageSlotValues(compactedValues);
-      await onChange(compactedValues, options);
+      await onChange(compactedValues);
     },
     [onChange]
   );
 
   const setSlotValue = useCallback(
-    async (
-      index: number,
-      nextValue: string,
-      options?: MilkbarCmsFileSlotChangeOptions
-    ): Promise<void> => {
+    async (index: number, nextValue: string): Promise<void> => {
       const nextValues = setDrawingImageSlotValue(slotValuesRef.current, index, nextValue);
       if (nextValues === null) return;
-      await setSlotValues(nextValues, options);
+      await setSlotValues(nextValues);
     },
     [setSlotValues]
   );
 
   const fillSlotsWithFilepaths = useCallback(
-    async (
-      filepaths: string[],
-      preferredIndex: number | null,
-      options?: MilkbarCmsFileSlotChangeOptions
-    ): Promise<void> => {
+    async (filepaths: string[], preferredIndex: number | null): Promise<void> => {
       const nextValues = fillDrawingImageSlotValues(slotValuesRef.current, filepaths, preferredIndex);
       if (nextValues === null) return;
-      await setSlotValues(nextValues, options);
+      await setSlotValues(nextValues);
     },
     [setSlotValues]
   );
@@ -2494,8 +2375,8 @@ function DrawingImageSlotsField({
           toast('Upload completed without a media path.', { variant: 'error' });
           return;
         }
-        await setSlotValue(index, filepath, { autoSave: true });
-        toast('Drawing image uploaded and published to the Milkbar page.', {
+        await setSlotValue(index, filepath);
+        toast('Drawing image uploaded locally. Save CMS to publish it to FastComet.', {
           variant: 'success',
         });
       } catch (error) {
@@ -2518,7 +2399,7 @@ function DrawingImageSlotsField({
       },
       handleSlotImageChange: (file: File | null, index: number): void => {
         if (file === null) {
-          void setSlotValue(index, '', { autoSave: true }).catch((error: unknown) => {
+          void setSlotValue(index, '').catch((error: unknown) => {
             toast(`Drawing image clear failed: ${toErrorMessage(error)}`, { variant: 'error' });
           });
           return;
@@ -2526,7 +2407,7 @@ function DrawingImageSlotsField({
         void uploadSlotFile(file, index);
       },
       handleSlotDisconnectImage: (index: number): Promise<void> => {
-        return setSlotValue(index, '', { autoSave: true });
+        return setSlotValue(index, '');
       },
       setShowFileManager: (show: boolean): void => {
         setActiveSlotIndex(null);
@@ -2588,12 +2469,12 @@ function DrawingImageSlotsField({
           uploadFolder={MILKBAR_CMS_VISUALISATION_FOLDER}
           storageProfile='milkbarCms'
           onSelect={(filepaths: string[]): void => {
-            fillSlotsWithFilepaths(filepaths, activeSlotIndex, { autoSave: true })
+            fillSlotsWithFilepaths(filepaths, activeSlotIndex)
               .then(() => {
-                toast('Drawing images published to the Milkbar page.', { variant: 'success' });
+                toast('Drawing images assigned locally. Save CMS to publish them to FastComet.', { variant: 'success' });
               })
               .catch((error: unknown) => {
-                toast(`Drawing image publish failed: ${toErrorMessage(error)}`, { variant: 'error' });
+                toast(`Drawing image assignment failed: ${toErrorMessage(error)}`, { variant: 'error' });
               });
             setMediaOpen(false);
           }}
@@ -2707,9 +2588,7 @@ function ContentFolderTree({
   removeNavLink,
   moveNavLink,
   updateHero,
-  autoSaveHero,
   updateDrawing,
-  autoSaveDrawing,
   updatePhilosophy,
   updateServicesHeader,
   updateProjectsHeader,
@@ -2753,9 +2632,7 @@ function ContentFolderTree({
   removeNavLink: (index: number) => void;
   moveNavLink: (from: number, to: number) => void;
   updateHero: (patch: Partial<MilkbarPageContent['hero']>) => void;
-  autoSaveHero: (patch: Partial<MilkbarPageContent['hero']>) => Promise<void>;
   updateDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => void;
-  autoSaveDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => Promise<void>;
   updatePhilosophy: (patch: Partial<MilkbarPageContent['philosophy']>) => void;
   updateServicesHeader: (patch: Partial<MilkbarPageContent['services']>) => void;
   updateProjectsHeader: (patch: Partial<MilkbarPageContent['projects']>) => void;
@@ -2999,9 +2876,9 @@ function ContentFolderTree({
                     modelUrl={pageContent.hero.modelUrl}
                     uploadName='Milkbar hero background model'
                     tags={['hero']}
-                    onChange={(modelAssetId) => autoSaveHero({ modelAssetId, modelUrl: undefined })}
-                    onClearLink={() => autoSaveHero({ modelUrl: undefined })}
-                    onClearUpload={() => autoSaveHero({ modelAssetId: undefined })}
+                    onChange={(modelAssetId) => updateHero({ modelAssetId, modelUrl: undefined })}
+                    onClearLink={() => updateHero({ modelUrl: undefined })}
+                    onClearUpload={() => updateHero({ modelAssetId: undefined })}
                   />
                 </SectionFolderRow>
               )}
@@ -3033,9 +2910,9 @@ function ContentFolderTree({
                     modelUrl={pageContent.drawing.interiorModelUrl}
                     uploadName='Milkbar Every line carries intent interior model'
                     tags={['interior', 'drawing']}
-                    onChange={(interiorModelAssetId) => autoSaveDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
-                    onClearLink={() => autoSaveDrawing({ interiorModelUrl: undefined })}
-                    onClearUpload={() => autoSaveDrawing({ interiorModelAssetId: undefined })}
+                    onChange={(interiorModelAssetId) => updateDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
+                    onClearLink={() => updateDrawing({ interiorModelUrl: undefined })}
+                    onClearUpload={() => updateDrawing({ interiorModelAssetId: undefined })}
                   />
                   <SubFolderRow
                     title='Drawing Thumbnails'
@@ -3045,10 +2922,7 @@ function ContentFolderTree({
                   >
                     <DrawingImageSlotsField
                       value={drawingThumbImages}
-                      onChange={(thumbImages, options) => {
-                        if (options?.autoSave === true) {
-                          return autoSaveDrawing({ thumbImages });
-                        }
+                      onChange={(thumbImages) => {
                         updateDrawing({ thumbImages });
                         return undefined;
                       }}
@@ -3168,6 +3042,7 @@ function ContentFolderTree({
                                 checked={pageContent.projects.projectsViewMode === mode}
                                 onChange={() => updateProjectsHeader({ projectsViewMode: mode })}
                                 className='accent-white'
+                                aria-label={`${mode} mode`}
                               />
                               <span className='text-sm capitalize'>{mode}</span>
                             </label>
@@ -4136,7 +4011,7 @@ function CmsModel3DField({
           }
         );
         await onChange(record.id);
-        toast(`3D model uploaded and published: ${record.filename ?? file.name}`, { variant: 'success' });
+        toast(`3D model uploaded locally. Save CMS to publish it to FastComet: ${record.filename ?? file.name}`, { variant: 'success' });
       } catch (err) {
         toast(`3D model upload/save failed: ${toErrorMessage(err)}`, { variant: 'error' });
       } finally {
@@ -4161,7 +4036,7 @@ function CmsModel3DField({
       });
       await onChange(record.id);
       setViewMode('upload');
-      toast(`3D model downloaded locally and published: ${record.filename ?? record.name}`, { variant: 'success' });
+      toast(`3D model downloaded locally. Save CMS to publish it to FastComet: ${record.filename ?? record.name}`, { variant: 'success' });
     } catch (error) {
       toast(`Link conversion failed: ${toErrorMessage(error)}`, { variant: 'error' });
     } finally {
@@ -4177,7 +4052,7 @@ function CmsModel3DField({
       await assetQuery.refetch();
       await onChange(assignedModelId);
       setViewMode('fastcomet');
-      toast(`3D model uploaded to FastComet and published: ${record.filename ?? record.name}`, { variant: 'success' });
+      toast(`3D model uploaded to FastComet. Save CMS to publish the updated reference: ${record.filename ?? record.name}`, { variant: 'success' });
     } catch (error) {
       toast(`FastComet upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
     } finally {
@@ -4189,7 +4064,7 @@ function CmsModel3DField({
     try {
       await onClearLink?.();
       setViewMode(hasLocalModelSource ? 'upload' : 'link');
-      toast('3D model link cleared and published.', { variant: 'success' });
+      toast('3D model link cleared locally. Save CMS to publish the change.', { variant: 'success' });
     } catch (error) {
       toast(`Clear link failed: ${toErrorMessage(error)}`, { variant: 'error' });
     }
@@ -4212,7 +4087,7 @@ function CmsModel3DField({
         await onChange(undefined);
       }
       setViewMode(hasModelUrl ? 'link' : 'upload');
-      toast('3D model upload deleted from local storage, FastComet when present, and published.', { variant: 'success' });
+      toast('3D model upload deleted from local storage and FastComet when present. Save CMS to publish the change.', { variant: 'success' });
     } catch (error) {
       toast(`Delete upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
     } finally {
@@ -4402,7 +4277,7 @@ function CmsModel3DField({
           onSelect={(assetId) => {
             void Promise.resolve(onChange(assetId))
               .then(() => {
-                toast('3D model assigned and published.', { variant: 'success' });
+                toast('3D model assigned locally. Save CMS to publish it to FastComet.', { variant: 'success' });
               })
               .catch((error: unknown) => {
                 toast(`3D model assignment failed: ${toErrorMessage(error)}`, { variant: 'error' });
@@ -4419,14 +4294,14 @@ function CmsModel3DField({
 function ProjectModel3DField({
   project,
   projectIndex,
-  onUpdateAndSave,
+  onUpdate,
 }: {
   project: MilkbarProjectCmsRecord;
   projectIndex: number;
-  onUpdateAndSave: (
+  onUpdate: (
     index: number,
     patch: Partial<MilkbarProjectCmsRecord>
-  ) => Promise<void>;
+  ) => void;
 }): React.JSX.Element {
   const projectCode = project.code.trim();
   const projectName = project.name.trim();
@@ -4444,9 +4319,9 @@ function ProjectModel3DField({
       modelUrl={project.modelUrl}
       uploadName={uploadName}
       tags={tags}
-      onChange={(modelAssetId) => onUpdateAndSave(projectIndex, { modelAssetId, modelUrl: undefined })}
-      onClearLink={() => onUpdateAndSave(projectIndex, { modelUrl: undefined })}
-      onClearUpload={() => onUpdateAndSave(projectIndex, { modelAssetId: undefined })}
+      onChange={(modelAssetId) => onUpdate(projectIndex, { modelAssetId, modelUrl: undefined })}
+      onClearLink={() => onUpdate(projectIndex, { modelUrl: undefined })}
+      onClearUpload={() => onUpdate(projectIndex, { modelAssetId: undefined })}
     />
   );
 }
@@ -4456,7 +4331,6 @@ function ProjectsTab({
   onAdd,
   onRemove,
   onUpdate,
-  onUpdateAndSave,
   onDuplicate,
   onMoveUp,
   onMoveDown,
@@ -4465,10 +4339,6 @@ function ProjectsTab({
   onAdd: () => void;
   onRemove: (index: number) => void;
   onUpdate: (index: number, patch: Partial<MilkbarProjectCmsRecord>) => void;
-  onUpdateAndSave: (
-    index: number,
-    patch: Partial<MilkbarProjectCmsRecord>
-  ) => Promise<void>;
   onDuplicate: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -4584,7 +4454,7 @@ function ProjectsTab({
           <ProjectModel3DField
             project={project}
             projectIndex={index}
-            onUpdateAndSave={onUpdateAndSave}
+            onUpdate={onUpdate}
           />
         </div>
       ))}

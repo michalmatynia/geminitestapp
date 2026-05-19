@@ -6,6 +6,8 @@ import React, { startTransition, useDeferredValue, useMemo, useState } from 'rea
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { api } from '@/shared/lib/api-client';
+import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -51,6 +53,7 @@ import type {
   FilemakerEmailCampaignEventRegistry,
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignSuppressionRegistry,
+  FilemakerMailAccount,
 } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -80,6 +83,33 @@ export type AdminFilemakerCampaignsPageModel = {
   showDeliverabilityBanner: boolean;
   onOpenCampaign: (campaignId: string) => void;
   ConfirmationModal: ConfirmationModalComponent;
+};
+
+type FilemakerMailAccountsResponse = { accounts: FilemakerMailAccount[] };
+
+const useMailAccountById = (): Map<string, FilemakerMailAccount> => {
+  const query = useSingleQueryV2<
+    FilemakerMailAccountsResponse,
+    FilemakerMailAccountsResponse,
+    readonly ['filemaker', 'mail', 'accounts', 'campaigns-list']
+  >({
+    queryKey: ['filemaker', 'mail', 'accounts', 'campaigns-list'] as const,
+    queryFn: async ({ signal }) =>
+      api.get<FilemakerMailAccountsResponse>('/api/filemaker/mail/accounts', { signal }),
+    meta: {
+      source: 'features.filemaker.pages.AdminFilemakerCampaignsPage.model.useMailAccountById',
+      operation: 'list',
+      resource: 'filemaker.mail-accounts',
+      domain: 'files',
+      description: 'Load Filemaker mail accounts for sender name display in campaign list.',
+      errorPresentation: 'none',
+    },
+  });
+  return useMemo(() => {
+    const map = new Map<string, FilemakerMailAccount>();
+    (query.data?.accounts ?? []).forEach((account) => { map.set(account.id, account); });
+    return map;
+  }, [query.data]);
 };
 
 const useParsedCampaignSettings = (settingsStore: SettingsStore): ParsedCampaignSettings => {
@@ -199,12 +229,14 @@ const includeCampaignRow = (row: CampaignRow, query: string): boolean =>
 const useCampaignColumns = (
   settings: ParsedCampaignSettings,
   router: Router,
-  actions: CampaignActionHandlers
+  actions: CampaignActionHandlers,
+  mailAccountById: Map<string, FilemakerMailAccount>
 ): ColumnDef<CampaignRow, unknown>[] =>
   useMemo(
     () =>
       buildCampaignColumns({
         deliveryRegistry: settings.deliveryRegistry,
+        mailAccountById,
         onOpenCampaign: (campaignId: string): void => { openCampaign(router, campaignId); },
         onOpenRun: (runId: string): void => { openCampaignRun(router, runId); },
         onDuplicateCampaign: (campaign: FilemakerEmailCampaign): void => { void actions.duplicateCampaign(campaign); },
@@ -212,7 +244,7 @@ const useCampaignColumns = (
         onToggleCampaignRunState: (campaign: FilemakerEmailCampaign): void => { void actions.toggleCampaignRunState(campaign); },
         onDeleteCampaign: actions.deleteCampaign,
       }),
-    [actions, router, settings.deliveryRegistry]
+    [actions, mailAccountById, router, settings.deliveryRegistry]
   );
 
 const CAMPAIGN_EXPORT_HEADERS = [
@@ -299,6 +331,7 @@ export const useAdminFilemakerCampaignsPageModel = (): AdminFilemakerCampaignsPa
   const settings = useParsedCampaignSettings(settingsStore);
   const maps = useCampaignLookupMaps(settings);
   const rows = useCampaignRows(settings, maps, deferredQuery);
+  const mailAccountById = useMailAccountById();
   const campaignActions = buildCampaignActionHandlers({
     settings,
     updateSetting,
@@ -307,7 +340,7 @@ export const useAdminFilemakerCampaignsPageModel = (): AdminFilemakerCampaignsPa
     toast,
     confirm,
   });
-  const columns = useCampaignColumns(settings, router, campaignActions);
+  const columns = useCampaignColumns(settings, router, campaignActions, mailAccountById);
   const deliverabilitySummary = useMemo(() => buildCampaignDeliverabilitySummary(rows), [rows]);
   const pageActions = usePageActions(router, rows);
   return {

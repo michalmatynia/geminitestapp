@@ -14,19 +14,19 @@ import {
   resolveAiPathsCollectionName,
 } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getAppMongoDb } from '@/shared/lib/db/mongo-client';
+import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/product-mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import {
-  expandFilter,
-  isProviderResolutionError,
-  normalizeObjectId,
-} from './handler.helpers';
+import { expandFilter, isProviderResolutionError, normalizeObjectId } from './handler.helpers';
 import { handlers } from './actions';
 import { type MongoActionContext } from './handler.mongo';
 
 type AiPathsDbActionRequest = z.infer<typeof aiPathsDbActionRequestSchema>;
 
-const resolveCollection = (requestedCollection: string, collectionMap: unknown): ReturnType<typeof resolveAiPathsCollectionName> => {
+const resolveCollection = (
+  requestedCollection: string,
+  collectionMap: unknown
+): ReturnType<typeof resolveAiPathsCollectionName> => {
   const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
   const resolution = resolveAiPathsCollectionName(
     requestedCollection.trim(),
@@ -45,6 +45,38 @@ const assertMongoConfigured = (): void => {
     throw internalError('MongoDB is not configured');
   }
 };
+
+const PRODUCT_DOMAIN_COLLECTIONS = new Set([
+  'catalogs',
+  'custom_fields',
+  'image_files',
+  'price_groups',
+  'product_ai_jobs',
+  'product_categories',
+  'product_category_assignments',
+  'product_custom_fields',
+  'product_drafts',
+  'product_parameters',
+  'product_producer_assignments',
+  'product_shipping_groups',
+  'product_tag_assignments',
+  'product_tags',
+  'products',
+  'producers',
+  'shipping_groups',
+  'title_terms',
+  'validation_patterns',
+  'validator_patterns',
+  'validator_settings',
+]);
+
+const shouldUseProductsMongoDb = (collectionName: string): boolean =>
+  PRODUCT_DOMAIN_COLLECTIONS.has(collectionName.trim().toLowerCase());
+
+const getMongoDbForCollection = async (
+  resolvedCollection: string
+): Promise<Awaited<ReturnType<typeof getAppMongoDb>>> =>
+  shouldUseProductsMongoDb(resolvedCollection) ? getProductsMongoDb() : getAppMongoDb();
 
 const createMongoActionContext = (
   resolvedCollection: string,
@@ -70,7 +102,9 @@ const createMongoActionContext = (
   returnDocument: data.returnDocument ?? 'after',
 });
 
-const executeMongoAction = async (actionCtx: MongoActionContext): Promise<Record<string, unknown>> => {
+const executeMongoAction = async (
+  actionCtx: MongoActionContext
+): Promise<Record<string, unknown>> => {
   const handler = handlers[actionCtx.action];
   if (handler === undefined) {
     throw badRequestError('Unsupported action');
@@ -88,9 +122,11 @@ const executeAction = async (
   data: AiPathsDbActionRequest
 ): Promise<Record<string, unknown>> => {
   assertMongoConfigured();
-  const mongo = await getMongoDb();
+  const mongo = await getMongoDbForCollection(resolvedCollection);
   const collectionRef = mongo.collection(resolvedCollection);
-  return await executeMongoAction(createMongoActionContext(resolvedCollection, data, collectionRef));
+  return await executeMongoAction(
+    createMongoActionContext(resolvedCollection, data, collectionRef)
+  );
 };
 
 const processAction = async (
@@ -142,7 +178,6 @@ export async function postAiPathsDbActionHandler(
     throw error;
   }
 }
-
 
 export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   return postAiPathsDbActionHandler(req, ctx);

@@ -48,6 +48,11 @@ describe('validatorSourceFields', () => {
         { value: 'producerIds', label: 'Producers' },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.primaryCatalogId, label: 'Primary Catalog ID' },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.categoryName, label: 'Category Name' },
+        { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2, label: 'Name EN Segment #2' },
+        {
+          value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2RegexEscaped,
+          label: 'Name EN Segment #2 (Regex Escaped)',
+        },
         { value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment4, label: 'Name EN Segment #4' },
       ])
     );
@@ -74,6 +79,8 @@ describe('validatorSourceFields', () => {
       categoryName: 'Keychains',
       producerIds: 'StarGater.net',
       primaryCatalogId: 'catalog-selected',
+      nameEnSegment2: 'Leather',
+      nameEnSegment2RegexEscaped: 'Leather',
       nameEnSegment4: 'Keychains',
       nameEnSegment4RegexEscaped: 'Keychains',
     });
@@ -94,12 +101,14 @@ describe('validatorSourceFields', () => {
       categoryId: 'category-1',
       categoryName: 'Keychains',
       primaryCatalogId: 'catalog-fallback',
+      nameEnSegment2: 'Leather',
+      nameEnSegment2RegexEscaped: 'Leather',
       nameEnSegment4: 'Keychains (XL)+',
       nameEnSegment4RegexEscaped: 'Keychains \\(XL\\)\\+',
     });
   });
 
-  it('extracts the fourth name segment from the product title example used for category inference', () => {
+  it('extracts the second and fourth name segments from the structured product title example', () => {
     expect(
       buildProductValidationSourceValues({
         baseValues: {
@@ -110,6 +119,8 @@ describe('validatorSourceFields', () => {
         selectedCatalogIds: ['catalog-fallback'],
       })
     ).toMatchObject({
+      nameEnSegment2: '4 cm',
+      nameEnSegment2RegexEscaped: '4 cm',
       nameEnSegment4: 'Anime Pin',
       nameEnSegment4RegexEscaped: 'Anime Pin',
     });

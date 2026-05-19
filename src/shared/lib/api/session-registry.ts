@@ -68,12 +68,14 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const sessionHeader = requestHeaders.get(ADMIN_LAYOUT_SESSION_HEADER);
     if (sessionHeader) {
       const session = parseAdminLayoutSessionHeaderValue(sessionHeader);
+      // Header-based sessions must have a user ID to be considered valid and prevent null propagation.
       if (session?.user?.id) {
         return session.user;
       }
     }
   } catch (error) {
     // ignore request scope errors (e.g. calling outside a request)
+    // These are expected when getSessionUser is called outside request context and do not indicate failures.
     if (!isMissingRequestScopeError(error)) {
       logger.warn('[SessionRegistry] Header-based session resolution failed', { error });
     }

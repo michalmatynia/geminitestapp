@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { findImageFilesByIdsMock } = vi.hoisted(() => ({
+const { findImageFilesByIdsMock, findProductImageFilesByIdsMock } = vi.hoisted(() => ({
   findImageFilesByIdsMock: vi.fn(),
+  findProductImageFilesByIdsMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/files/services/image-file-service', () => ({
   mongoImageFileRepository: {
     findImageFilesByIds: findImageFilesByIdsMock,
+  },
+  productMongoImageFileRepository: {
+    findImageFilesByIds: findProductImageFilesByIdsMock,
   },
 }));
 
@@ -33,6 +37,7 @@ const createImageFile = (
 describe('mongoProductAssociationsImpl.replaceProductImages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    findProductImageFilesByIdsMock.mockResolvedValue([]);
   });
 
   it('persists images in the requested order even when lookup results are unordered', async () => {
@@ -97,5 +102,46 @@ describe('mongoProductAssociationsImpl.replaceProductImages', () => {
     );
     expect(update.$set.images.every((image) => image.productId === 'product-1')).toBe(true);
     expect(update.$set.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it('falls back to the Products database image repository when the shared repository misses', async () => {
+    findImageFilesByIdsMock.mockResolvedValue([]);
+    findProductImageFilesByIdsMock.mockResolvedValue([
+      createImageFile('image-product-db', '/uploads/products/product-db.jpg'),
+    ]);
+
+    const updateOne = vi.fn().mockResolvedValue({ acknowledged: true });
+    const getCollection = vi.fn().mockResolvedValue({ updateOne });
+
+    await mongoProductAssociationsImpl.replaceProductImages(
+      'product-1',
+      ['image-product-db'],
+      getCollection as never
+    );
+
+    expect(findImageFilesByIdsMock).toHaveBeenCalledWith(['image-product-db']);
+    expect(findProductImageFilesByIdsMock).toHaveBeenCalledWith(['image-product-db']);
+
+    const [, update] = updateOne.mock.calls[0] as [
+      unknown,
+      {
+        $set: {
+          images: Array<{
+            imageFileId: string;
+            imageFile: { filepath: string; id: string };
+          }>;
+        };
+      },
+    ];
+
+    expect(update.$set.images).toEqual([
+      expect.objectContaining({
+        imageFileId: 'image-product-db',
+        imageFile: expect.objectContaining({
+          filepath: '/uploads/products/product-db.jpg',
+          id: 'image-product-db',
+        }),
+      }),
+    ]);
   });
 });

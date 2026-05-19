@@ -81,11 +81,13 @@ vi.mock('@/shared/ui', () => ({
   }: {
     children: React.ReactNode;
   }) => <section>{children}</section>,
-  LoadingState: ({
-    message,
+  EmptyState: ({
+    title,
+    description,
   }: {
-    message?: string;
-  }) => <div role='status'>{message ?? 'Loading...'}</div>,
+    title: string;
+    description?: string;
+  }) => <div role='status'>{title}{description ? ` — ${description}` : ''}</div>,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea {...props} />
@@ -586,9 +588,7 @@ describe('AdminSocialPublishingPage', () => {
 
     render(<AdminSocialPublishingPage />);
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Select a social post to open its pipeline workspace.'
-    );
+    expect(screen.getByRole('status')).toHaveTextContent('No post selected');
     expect(screen.getByTestId('social-post-list')).toBeInTheDocument();
     expect(screen.queryByTestId('social-post-pipeline')).not.toBeInTheDocument();
   });

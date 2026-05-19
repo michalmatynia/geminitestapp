@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import { getImageFileRepository, uploadFile } from '@/shared/lib/files/services/image-file-service';
+import type { FileStorageSource } from '@/shared/lib/files/constants';
 import { productsRoot } from '@/shared/lib/files/server-constants';
 import type { ProductDbProvider } from '@/shared/lib/products/services/product-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -26,6 +27,7 @@ export type ProductImageUploadWithFallbackInput = {
   action: string;
   file: File;
   filename: string;
+  forceStorageSource?: FileStorageSource | null;
   provider?: ProductDbProvider;
   service: string;
   sku?: string | null;
@@ -123,6 +125,7 @@ export const uploadProductImageFileWithLocalFallback = async (
     return await uploadFile(input.file, {
       category: 'products',
       filenameOverride: input.filename,
+      forceStorageSource: input.forceStorageSource ?? null,
       provider: input.provider,
       sku: input.sku ?? undefined,
     });

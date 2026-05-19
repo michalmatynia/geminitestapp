@@ -10,12 +10,16 @@ import {
   PRODUCT_PARSE_ACTIONS_TRADERA_PATTERN_DEFINITIONS,
 } from '@/features/products/lib/parseActionsValidationPatterns';
 
-const DEFAULT_VALIDATOR_TEMPLATE_TYPES = ['producer-stargater'] as const;
+const DEFAULT_VALIDATOR_TEMPLATE_TYPES = [
+  'name-segment-dimensions',
+  'producer-stargater',
+] as const;
 const TEMPLATE_AUDIT_OPTIONS = { semanticAuditSource: 'template' } as const;
 
 type DefaultValidatorTemplatePattern = {
   buildPayload: () => CreateProductValidationPatternInput;
   matchesExisting: (pattern: ProductValidationPattern) => boolean;
+  needsUpdate?: (pattern: ProductValidationPattern) => boolean;
 };
 
 const normalizeSequence = (pattern: ProductValidationPattern): number =>
@@ -68,7 +72,22 @@ export const ensureDefaultProductValidationPatterns = async ({
   const createdPatternIds: string[] = [];
 
   for (const templatePattern of getDefaultValidatorTemplatePatterns()) {
-    if (patterns.some((pattern) => templatePattern.matchesExisting(pattern))) continue;
+    const existingPattern = patterns.find((pattern) => templatePattern.matchesExisting(pattern));
+    if (existingPattern) {
+      if (templatePattern.needsUpdate?.(existingPattern) === true) {
+        // Sequential updates keep template-backed rules current without creating duplicates.
+        // eslint-disable-next-line no-await-in-loop
+        const updatedPattern = await repository.updatePattern(
+          existingPattern.id,
+          templatePattern.buildPayload(),
+          TEMPLATE_AUDIT_OPTIONS
+        );
+        patterns = patterns.map((pattern) =>
+          pattern.id === existingPattern.id ? updatedPattern : pattern
+        );
+      }
+      continue;
+    }
 
     // Sequential creation preserves stable sequence assignment when multiple defaults are missing.
     // eslint-disable-next-line no-await-in-loop

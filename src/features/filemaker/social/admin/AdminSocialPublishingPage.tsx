@@ -1,5 +1,6 @@
 'use client';
 
+import { MousePointerClick } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -7,7 +8,7 @@ import { KangurAdminContentShell } from '@/features/kangur/admin/components/Kang
 import {
   Breadcrumbs,
   Button,
-  LoadingState,
+  EmptyState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils/ui-utils';
@@ -17,7 +18,7 @@ import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrum
 import { SocialPublishingSettingsModal } from './workspace/SocialPublishingSettingsModal';
 import { SocialPostList } from './workspace/SocialPost.List';
 import { SocialPostEditorModal } from './workspace/SocialPost.EditorModal';
-import { SocialPostPipeline } from './workspace/SocialPost.Pipeline';
+import { SocialPostWorkspace } from './workspace/SocialPost.Workspace';
 import { SocialPostPlaywrightCaptureModal } from './workspace/SocialPost.PlaywrightCaptureModal';
 import { SocialPostVisualAnalysisModal } from './workspace/SocialPost.VisualAnalysisModal';
 import { SocialPublishingPipelineQueuePanel } from './workspace/SocialPublishingPipelineQueuePanel';
@@ -200,12 +201,13 @@ function AdminSocialPublishingPageContent({
 
         <div className='space-y-6'>
           {activePost ? (
-            <SocialPostPipeline />
+            <SocialPostWorkspace />
           ) : (
-            <LoadingState
-              message='Select a social post to open its pipeline workspace.'
-              size='lg'
-              className='min-h-[240px] rounded-2xl border border-border/60 bg-card/40 shadow-sm'
+            <EmptyState
+              title='No post selected'
+              description='Select a social post to open its pipeline workspace.'
+              icon={<MousePointerClick className='size-8 text-muted-foreground' />}
+              className='min-h-[240px] rounded-2xl border-border/60 bg-card/40 shadow-sm'
             />
           )}
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
@@ -43,12 +44,20 @@ export function CampaignRunMissingState({
 }
 
 function CampaignRunHeader({
+  campaignId,
   campaignName,
+  mailAccountId,
   onBackToCampaign,
 }: {
+  campaignId: string;
   campaignName: string;
+  mailAccountId: string | null | undefined;
   onBackToCampaign: () => void;
 }): React.JSX.Element {
+  const hasMailAccount = mailAccountId !== null && mailAccountId !== undefined && mailAccountId.trim().length > 0;
+  const mailClientHref = hasMailAccount
+    ? `/admin/filemaker/mail-client?accountId=${encodeURIComponent(mailAccountId ?? '')}${campaignId.length > 0 ? `&campaignId=${encodeURIComponent(campaignId)}` : ''}`
+    : null;
   return (
     <SectionHeader
       title='Campaign Run'
@@ -61,9 +70,16 @@ function CampaignRunHeader({
         />
       }
       actions={
-        <Button type='button' variant='outline' onClick={onBackToCampaign}>
-          Back to Campaign
-        </Button>
+        <div className='flex flex-wrap items-center gap-2'>
+          {mailClientHref !== null ? (
+            <Button asChild variant='outline' size='sm'>
+              <Link href={mailClientHref}>View Sender Mailbox</Link>
+            </Button>
+          ) : null}
+          <Button type='button' variant='outline' onClick={onBackToCampaign}>
+            Back to Campaign
+          </Button>
+        </div>
       }
     />
   );
@@ -224,7 +240,12 @@ export function CampaignRunLoadedView({
 }): React.JSX.Element {
   return (
     <div className='page-section-compact space-y-6'>
-      <CampaignRunHeader campaignName={state.campaign.name} onBackToCampaign={state.handleBackToCampaign} />
+      <CampaignRunHeader
+        campaignId={state.campaign.id}
+        campaignName={state.campaign.name}
+        mailAccountId={state.campaign.mailAccountId}
+        onBackToCampaign={state.handleBackToCampaign}
+      />
       <CampaignRunBadges state={state} />
       <MailLinkageWarning message={state.linkedMailThreadsError} />
       <RunActionsBar state={state} />

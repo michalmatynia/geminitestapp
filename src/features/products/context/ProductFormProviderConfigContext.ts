@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 
+import type { ProductOperationInfo } from '@/features/products/hooks/useProductOperations.helpers';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
@@ -8,7 +9,7 @@ export type ProductFormProviderConfigContextType = {
   product?: ProductWithImages;
   draft?: ProductDraft | null;
   initialCatalogId?: string;
-  onSuccess?: (info?: { queued?: boolean }) => void;
+  onSuccess?: (info?: ProductOperationInfo) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   requireHydratedEditProduct?: boolean;
   suppressNonHydratedEditWarning?: boolean;

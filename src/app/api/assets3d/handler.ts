@@ -2,10 +2,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
-import {
-  assertMilkbarAsset3DFastCometUploadRedisRuntime,
-  uploadMilkbarAsset3DInRedisRuntime,
-} from '@/features/viewer3d/workers/milkbarAsset3DFastCometUploadQueue';
 import { deleteMilkbarAsset3DInRedisRuntime } from '@/features/viewer3d/workers/milkbarAsset3DDeleteQueue';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
@@ -171,7 +167,6 @@ const uploadMilkbarAsset3DFileInRedisRuntime = async (
   uploadOptions: NonNullable<Parameters<typeof uploadAsset3D>[1]>,
   replaceAssetId: string | null
 ): Promise<Asset3DRecord> => {
-  await assertMilkbarAsset3DFastCometUploadRedisRuntime();
   if (replaceAssetId !== null) {
     await deleteMilkbarAsset3DInRedisRuntime({
       assetId: replaceAssetId,
@@ -186,8 +181,5 @@ const uploadMilkbarAsset3DFileInRedisRuntime = async (
       fastCometUploadStatus: 'queued',
     },
   });
-  return uploadMilkbarAsset3DInRedisRuntime({
-    assetId: stagedAsset.id,
-    requestedAt: new Date().toISOString(),
-  });
+  return stagedAsset;
 };

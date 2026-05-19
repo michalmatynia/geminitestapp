@@ -6,6 +6,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { getRedisClient } from '@/shared/lib/redis';
+import type { Redis } from 'ioredis';
 import { isTransientRedisTransportError } from '@/shared/lib/redis-error-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -30,28 +31,54 @@ const getNamespace = (key: string): string => {
   return key.slice(0, idx);
 };
 
+const getDisabledResponse = (): RedisOverview => ({
+  enabled: false,
+  connected: false,
+  urlConfigured: Boolean(process.env['REDIS_URL']),
+  dbSize: 0,
+  usedMemory: null,
+  maxMemory: null,
+  namespaces: [],
+  sampleKeys: [],
+  status: 'disabled',
+  version: 'n/a',
+  keysCount: 0,
+  memoryUsed: '0',
+  uptime: '0',
+  clients: 0,
+});
+
+async function checkRedisConnection(client: Redis): Promise<boolean> {
+  try {
+    await client.ping();
+    return true;
+  } catch (error) {
+    if (!isTransientRedisTransportError(error)) {
+      void ErrorSystem.captureException(error);
+    }
+    return false;
+  }
+}
+
+async function scanRedisKeys(client: Redis, count: number, limit: number): Promise<string[]> {
+  const keys: string[] = [];
+  let cursor = '0';
+  do {
+    const response = await client.scan(cursor, 'COUNT', String(count));
+    const batch = response[1] ?? [];
+    keys.push(...batch);
+    cursor = response[0] ?? '0';
+    if (keys.length >= limit) break;
+  } while (cursor !== '0');
+  return keys;
+}
+
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const client = getRedisClient();
   if (!client) {
-    const disabled: RedisOverview = {
-      enabled: false,
-      connected: false,
-      urlConfigured: Boolean(process.env['REDIS_URL']),
-      dbSize: 0,
-      usedMemory: null,
-      maxMemory: null,
-      namespaces: [],
-      sampleKeys: [],
-      status: 'disabled',
-      version: 'n/a',
-      keysCount: 0,
-      memoryUsed: '0',
-      uptime: '0',
-      clients: 0,
-    };
-    return NextResponse.json(disabled, {
+    return NextResponse.json(getDisabledResponse(), {
       headers: { 'Cache-Control': 'no-store' },
     });
   }
@@ -59,33 +86,13 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
   const limit = query.limit ?? 200;
   const count = query.count ?? 200;
 
-  let connected: boolean;
-  try {
-    await client.ping();
-    connected = true;
-  } catch (error) {
-    if (!isTransientRedisTransportError(error)) {
-      void ErrorSystem.captureException(error);
-    }
-    connected = false;
-  }
-
+  const connected = await checkRedisConnection(client);
   const dbSize = connected ? await client.dbsize().catch(() => 0) : 0;
   const memoryInfo = connected ? await client.info('memory').catch(() => '') : '';
   const usedMemory = parseInfoValue(memoryInfo, 'used_memory_human');
   const maxMemory = parseInfoValue(memoryInfo, 'maxmemory_human');
 
-  const keys: string[] = [];
-  if (connected) {
-    let cursor = '0';
-    do {
-      const response = await client.scan(cursor, 'COUNT', String(count));
-      const batch = response[1] ?? [];
-      keys.push(...batch);
-      cursor = response[0] ?? '0';
-      if (keys.length >= limit) break;
-    } while (cursor !== '0');
-  }
+  const keys = connected ? await scanRedisKeys(client, count, limit) : [];
 
   const cappedKeys = keys.slice(0, limit);
   const namespaceMap = new Map<string, { keyCount: number; sampleKeys: string[] }>();

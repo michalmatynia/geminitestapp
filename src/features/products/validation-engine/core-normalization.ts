@@ -11,6 +11,7 @@ import {
 } from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
   allowsProductValidationSemanticOperationExecutionWithoutRegexMatch,
+  PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
 } from '@/shared/lib/products/utils/validator-semantic-operations';
 import { getProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-state';
 
@@ -206,9 +207,24 @@ export const isPatternConfiguredForFormatterAutoApply = ({
   hasPatternFormatterAutoApplyBaseConfig(pattern, validationScope) &&
   doesPatternFormatterAutoApplyMatchField(pattern, fieldName);
 
+const isSourceDrivenDimensionReplacementPattern = (
+  pattern: ProductValidationPattern
+): boolean => {
+  const semanticState = getProductValidationSemanticState(pattern);
+  return (
+    semanticState?.operation ===
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken &&
+    (pattern.target === 'size_length' || pattern.target === 'length') &&
+    hasPatternReplacementValue(pattern) &&
+    pattern.launchEnabled === true &&
+    pattern.launchSourceMode !== 'current_field'
+  );
+};
+
 export const allowsPatternExecutionWithoutRegexMatch = (
   pattern: ProductValidationPattern
 ): boolean =>
+  isSourceDrivenDimensionReplacementPattern(pattern) ||
   allowsProductValidationSemanticOperationExecutionWithoutRegexMatch(
     getProductValidationSemanticState(pattern)?.operation
   );

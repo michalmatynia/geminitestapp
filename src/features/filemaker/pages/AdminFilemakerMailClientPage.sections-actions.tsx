@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Inbox, MailPlus, Search } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Inbox, Megaphone, MailPlus, Search } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -11,6 +11,7 @@ import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount } from '../types';
 import {
   buildMailClientComposeHref,
+  buildMailClientCreateCampaignHref,
   buildMailClientSearchHref,
   buildMailClientWorkspaceHref,
   hasFilemakerMailSyncIssue,
@@ -32,6 +33,8 @@ type MailClientQuickActionContext = {
   attentionCount: number;
   attentionDescription: string;
   attentionHref: string;
+  campaignDescription: string;
+  campaignHref: string;
   composeDescription: string;
   composeHref: string;
   healthyBadge: string;
@@ -81,6 +84,11 @@ const getComposeDescription = (composeAccount: FilemakerMailAccount | null): str
   composeAccount !== null
     ? `Start a message from ${composeAccount.name}.`
     : 'Open the composer and choose a mailbox.';
+
+const getCampaignDescription = (focusedAccount: FilemakerMailAccount | null): string =>
+  focusedAccount !== null
+    ? `Start a new campaign using ${focusedAccount.name} as the sender.`
+    : 'Create a new email campaign and assign a sender mailbox.';
 
 const getAttentionDescription = (attentionCount: number): string =>
   attentionCount > 0
@@ -149,6 +157,10 @@ function buildMailClientQuickActionContext({
       scope: 'attention',
       query: dashboardQuery,
       accountId: getDashboardScopedAccountId(focusedAccount, focusedAccountHasSyncIssue),
+    }),
+    campaignDescription: getCampaignDescription(focusedAccount),
+    campaignHref: buildMailClientCreateCampaignHref({
+      accountId: focusedAccount?.status === 'active' ? (focusedAccount?.id ?? null) : (firstActiveAccount?.id ?? null),
     }),
     composeDescription: getComposeDescription(composeAccount),
     composeHref: buildMailClientComposeHref({
@@ -286,14 +298,30 @@ function MailClientAttentionAction({ context }: { context: MailClientQuickAction
   );
 }
 
+function MailClientStartCampaignAction({ context }: { context: MailClientQuickActionContext }): React.JSX.Element {
+  return (
+    <MailClientQuickActionCard
+      href={context.campaignHref}
+      ariaLabel='Start Campaign'
+      className='border-border/70 bg-card/50 group-hover:border-rose-500/40 group-hover:bg-card/70'
+      iconClassName='flex size-12 items-center justify-center rounded-lg bg-rose-500/10 text-rose-300'
+      icon={<Megaphone className='size-6' />}
+      title='Start Campaign'
+      description={context.campaignDescription}
+      badge='Email Creator'
+    />
+  );
+}
+
 function MailClientQuickActions(props: MailClientQuickActionsProps): React.JSX.Element {
   const context = buildMailClientQuickActionContext(props);
 
   return (
-    <NavigationCardGrid className='sm:grid-cols-2 xl:grid-cols-6'>
+    <NavigationCardGrid className='sm:grid-cols-2 xl:grid-cols-7'>
       <MailClientWorkspaceAction context={context} />
       <MailClientAddMailboxAction />
       <MailClientComposeAction context={context} />
+      <MailClientStartCampaignAction context={context} />
       <MailClientSearchAction context={context} />
       <MailClientHealthyAction context={context} />
       <MailClientAttentionAction context={context} />

@@ -13,7 +13,10 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
 import { buildProductFormData, type BuildProductFormDataInput } from './useProductFormSubmit.payload';
 
-type ProductFormSubmitSuccess = (info?: { queued?: boolean }) => void;
+type ProductFormSubmitSuccess = (info?: {
+  queued?: boolean;
+  product?: ProductWithImages | undefined;
+}) => void;
 type ProductFormEditSave = (saved: ProductWithImages) => void;
 type CreateProductMutation = (
   formData: FormData
@@ -121,12 +124,25 @@ const handleUpdatedProductSave = (
 };
 
 const handleCreatedProductSave = (
-  savedProduct: ProductCreateMutationResult | null | undefined,
+  savedProduct: ProductWithImages,
   input: ProductFormSubmitExecutionInput
 ): void => {
-  if (isProductCreateRuntimeQueuedResponse(savedProduct)) return;
-  if (savedProduct === null || savedProduct === undefined) return;
-  input.onSuccess?.();
+  const hydratedProduct = markEditingProductHydrated(savedProduct);
+  input.refreshImages(hydratedProduct);
+  input.setUploadSuccess(true);
+  scheduleUploadSuccessReset(input.successTimerRef, input.setUploadSuccess);
+  input.onSuccess?.({ product: hydratedProduct });
+};
+
+const continueQueuedCreateProduct = (
+  response: ProductCreateRuntimeQueuedResponse,
+  input: ProductFormSubmitExecutionInput
+): ProductFormSubmitExecutionResult => {
+  const backgroundTask = waitForRuntimeCreateCompletion(response, input).catch((error: unknown): void => {
+    handleSubmitError(error, input);
+  });
+  input.toast('Product creation is running in runtime.', { variant: 'info' });
+  return { backgroundTask };
 };
 
 const delayRuntimePoll = (): Promise<void> =>
@@ -173,55 +189,33 @@ const waitForRuntimeCreateCompletion = async (
   });
 };
 
-const startCreateProductInRuntime = (
-  input: ProductFormSubmitExecutionInput,
-  formData: FormData
-): ProductFormSubmitExecutionResult => {
-  const backgroundTask = Promise.resolve()
-    .then(() => input.createProduct(formData))
-    .then(async (savedProduct: ProductCreateMutationResult | null | undefined): Promise<void> => {
-      if (isProductCreateRuntimeQueuedResponse(savedProduct)) {
-        await waitForRuntimeCreateCompletion(savedProduct, input);
-        return;
-      }
-      handleCreatedProductSave(savedProduct, input);
-    })
-    .catch((error: unknown): void => {
-      handleSubmitError(error, input);
-    });
-
-  input.onSuccess?.({ queued: true });
-  input.toast('Product creation is running in runtime.', { variant: 'info' });
-  return { backgroundTask };
-};
-
 const handleSavedProduct = (
   savedProduct: ProductCreateMutationResult | null | undefined,
   input: ProductFormSubmitExecutionInput
-): void => {
+): ProductFormSubmitExecutionResult => {
   if (isProductCreateRuntimeQueuedResponse(savedProduct)) {
-    input.onSuccess?.({ queued: true });
-    return;
+    return continueQueuedCreateProduct(savedProduct, input);
   }
   if (savedProduct === null || savedProduct === undefined) {
     input.onSuccess?.({ queued: true });
-    return;
+    return {};
   }
   if (input.product === undefined) {
-    input.onSuccess?.();
-    return;
+    handleCreatedProductSave(savedProduct, input);
+    return {};
   }
   handleUpdatedProductSave(savedProduct, input);
+  return {};
 };
 
-const handleSubmitError = (error: unknown, input: ProductFormSubmitExecutionInput): void => {
+function handleSubmitError(error: unknown, input: ProductFormSubmitExecutionInput): void {
   logClientCatch(error, {
     service: 'product-form',
     action: 'submit',
     productId: input.product?.id,
   });
   input.setUploadError(error instanceof Error ? error.message : 'An unknown error occurred');
-};
+}
 
 export const executeProductFormSubmit = async (
   input: ProductFormSubmitExecutionInput
@@ -229,13 +223,8 @@ export const executeProductFormSubmit = async (
   try {
     if (!guardHydratedEditProduct(input)) return {};
     const formData = buildProductFormData(input);
-    if (input.product === undefined) {
-      return startCreateProductInRuntime(input, formData);
-    }
-
     const savedProduct = await saveProductForm(input, formData);
-    handleSavedProduct(savedProduct, input);
-    return {};
+    return handleSavedProduct(savedProduct, input);
   } catch (error: unknown) {
     handleSubmitError(error, input);
     return {};

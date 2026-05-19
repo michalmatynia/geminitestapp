@@ -11,6 +11,7 @@ const {
   customFieldRepositoryMock,
   titleTermRepositoryMock,
   imageRepositoryMock,
+  sharedImageRepositoryMock,
   getProductRepositoryMock,
   getProductDataProviderMock,
   getShippingGroupRepositoryMock,
@@ -69,6 +70,11 @@ const {
     createTitleTerm: vi.fn(),
   },
   imageRepositoryMock: {
+    getImageFileById: vi.fn(),
+    findImageFilesByIds: vi.fn(),
+    deleteImageFile: vi.fn(),
+  },
+  sharedImageRepositoryMock: {
     getImageFileById: vi.fn(),
     findImageFilesByIds: vi.fn(),
     deleteImageFile: vi.fn(),
@@ -268,6 +274,9 @@ describe('productService parameter normalization', () => {
       },
     ]);
     imageRepositoryMock.deleteImageFile.mockResolvedValue(undefined);
+    sharedImageRepositoryMock.getImageFileById.mockResolvedValue(null);
+    sharedImageRepositoryMock.findImageFilesByIds.mockResolvedValue([]);
+    sharedImageRepositoryMock.deleteImageFile.mockResolvedValue(undefined);
     uploadFileMock.mockResolvedValue({
       id: 'image-file-1',
     });
@@ -1280,6 +1289,46 @@ describe('productService parameter normalization', () => {
     expect(repositoryMock.countProductsByImageFileId).toHaveBeenCalledWith('image-file-1');
     expect(deleteFileFromStorageMock).toHaveBeenCalledWith('/uploads/product-1.png');
     expect(imageRepositoryMock.deleteImageFile).toHaveBeenCalledWith('image-file-1');
+  });
+
+  it('removes product image links when the image file record lives in the shared repository', async () => {
+    getImageFileRepositoryMock.mockImplementation(async (provider?: unknown) =>
+      provider === undefined ? sharedImageRepositoryMock : imageRepositoryMock
+    );
+    imageRepositoryMock.getImageFileById.mockResolvedValueOnce(null);
+    sharedImageRepositoryMock.getImageFileById.mockResolvedValueOnce({
+      id: 'shared-image-file-1',
+      filepath: '/uploads/shared-image.png',
+    });
+
+    await productService.deleteProductImage('product-1', 'shared-image-file-1');
+
+    expect(repositoryMock.removeProductImage).toHaveBeenCalledWith(
+      'product-1',
+      'shared-image-file-1'
+    );
+    expect(repositoryMock.countProductsByImageFileId).toHaveBeenCalledWith(
+      'shared-image-file-1'
+    );
+    expect(deleteFileFromStorageMock).toHaveBeenCalledWith('/uploads/shared-image.png');
+    expect(imageRepositoryMock.deleteImageFile).toHaveBeenCalledWith('shared-image-file-1');
+    expect(sharedImageRepositoryMock.deleteImageFile).toHaveBeenCalledWith(
+      'shared-image-file-1'
+    );
+  });
+
+  it('still removes product image links when the image file record is missing', async () => {
+    imageRepositoryMock.getImageFileById.mockResolvedValueOnce(null);
+
+    await productService.deleteProductImage('product-1', 'missing-image-file');
+
+    expect(repositoryMock.removeProductImage).toHaveBeenCalledWith(
+      'product-1',
+      'missing-image-file'
+    );
+    expect(repositoryMock.countProductsByImageFileId).not.toHaveBeenCalled();
+    expect(deleteFileFromStorageMock).not.toHaveBeenCalled();
+    expect(imageRepositoryMock.deleteImageFile).not.toHaveBeenCalled();
   });
 
   it('leaves shared image files in storage when other products still reference them', async () => {

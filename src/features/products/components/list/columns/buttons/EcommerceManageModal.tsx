@@ -22,6 +22,7 @@ import {
 } from '@/features/products/hooks/useProductEcommerceExportMutations';
 import {
   getEcommerceExportToastVariant,
+  isEcommerceDbConnectionError,
   isMissingEcommerceCategoryError,
 } from './ecommerce-export-warning';
 
@@ -59,7 +60,9 @@ function useEcommerceManageModalModel(
         onClose();
       })
       .catch((error: unknown) => {
-        if (!isMissingEcommerceCategoryError(error)) logClientError(error);
+        if (!isMissingEcommerceCategoryError(error) && !isEcommerceDbConnectionError(error)) {
+          logClientError(error);
+        }
         toast(
           error instanceof Error ? error.message : 'Failed to sync product to ecommerce.',
           { variant: getEcommerceExportToastVariant(error) }
@@ -76,7 +79,7 @@ function useEcommerceManageModalModel(
         onClose();
       })
       .catch((error: unknown) => {
-        logClientError(error);
+        if (!isEcommerceDbConnectionError(error)) logClientError(error);
         toast(
           error instanceof Error ? error.message : 'Failed to remove product from ecommerce.',
           { variant: 'error' }

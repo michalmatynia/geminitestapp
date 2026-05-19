@@ -84,102 +84,22 @@ const resolveRestoreTarget = (backupName: string): { mongoUri: string; databaseN
   };
 };
 
-export async function postDatabasesRestoreHandler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
-  await assertDatabaseEngineManageAccess();
-  await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
-
-  let stage = 'validate';
-
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const type = query.type ?? 'mongodb';
-  if (type !== 'mongodb') {
-    throw badRequestError('Only MongoDB restores are supported.');
-  }
-
-  const parsed = await parseObjectJsonBody(req, {
-    logPrefix: 'database-engine-web.databases.restore',
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-
-  const body = z
-    .object({
-      backupName: z.string(),
-      truncateBeforeRestore: z.boolean().optional(),
-    })
-    .parse(parsed.data);
-
-  const backupName = body.backupName;
-  const truncateBeforeRestore = Boolean(body.truncateBeforeRestore);
-  if (!backupName) {
-    throw badRequestError('Backup name is required');
-  }
-
-  assertValidMongoBackupName(backupName);
-  await ensureMongoBackupsDir();
-
-  const backupPath = await resolveMongoBackupPath(backupName);
-  const { mongoUri, databaseName } = resolveRestoreTarget(backupName);
-
-  if (truncateBeforeRestore) {
-    const mongoClient = new MongoClient(mongoUri);
-    try {
-      await mongoClient.connect();
-      const db = mongoClient.db(databaseName);
-      const collections = await db.listCollections().toArray();
-
-      for (const collection of collections) {
-        await db.collection(collection.name).drop();
-      }
-    } finally {
-      await mongoClient.close();
-    }
-  }
-
-  stage = 'mongorestore';
-  const logPath = `${backupPath}.restore.log`;
-  const command = getMongoRestoreCommand();
-  const args = [
-    '--uri',
-    mongoUri,
-    '--db',
-    databaseName,
-    `--archive=${backupPath}`,
-    '--gzip',
-    '--drop',
-  ];
-  const commandString = `${command} ${args.join(' ')}`;
-
-  let stdout = '';
-  let stderr = '';
-
+async function truncateDatabase(mongoUri: string, databaseName: string): Promise<void> {
+  const mongoClient = new MongoClient(mongoUri);
   try {
-    const result = await mongoExecFileAsync(command, args);
-    stdout = result.stdout;
-    stderr = result.stderr;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    const err = error as ExecOutputishError;
-    stdout = err.stdout ?? err.cause?.stdout ?? '';
-    stderr = err.stderr ?? err.cause?.stderr ?? '';
+    await mongoClient.connect();
+    const db = mongoClient.db(databaseName);
+    const collections = await db.listCollections().toArray();
 
-    const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
-    await fs.writeFile(logPath, logContent);
-    throw internalError('Failed to restore backup', {
-      stage,
-      backupName,
-      log: logContent,
-    });
+    for (const collection of collections) {
+      await db.collection(collection.name).drop();
+    }
+  } finally {
+    await mongoClient.close();
   }
+}
 
-  const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
-  await fs.writeFile(logPath, logContent);
-
-  stage = 'log';
+async function updateRestoreLog(backupPath: string, backupName: string): Promise<void> {
   const restoreLogPath = path.join(path.dirname(backupPath), 'restore-log.json');
   let logData: Record<string, { date: string; logFile: string }> = {};
 
@@ -188,8 +108,6 @@ export async function postDatabasesRestoreHandler(
     logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    const { ErrorSystem: SystemLogger } = await import('@/shared/lib/observability/system-logger');
-    void SystemLogger.logWarning('Failed to load restore-log.json', { error, stage, backupName });
   }
 
   logData[backupName] = {
@@ -198,9 +116,59 @@ export async function postDatabasesRestoreHandler(
   };
 
   await fs.writeFile(restoreLogPath, JSON.stringify(logData, null, 2));
+}
 
-  return NextResponse.json({
-    message: 'Backup restored',
-    log: logContent,
+export async function postDatabasesRestoreHandler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
+  await assertDatabaseEngineManageAccess();
+  await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
+
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  if ((query.type ?? 'mongodb') !== 'mongodb') {
+    throw badRequestError('Only MongoDB restores are supported.');
+  }
+
+  const parsed = await parseObjectJsonBody(req, {
+    logPrefix: 'database-engine-web.databases.restore',
   });
+  if (!parsed.ok) return parsed.response;
+
+  const body = z.object({
+    backupName: z.string(),
+    truncateBeforeRestore: z.boolean().optional(),
+  }).parse(parsed.data);
+
+  const backupName = body.backupName;
+  assertValidMongoBackupName(backupName);
+  await ensureMongoBackupsDir();
+
+  const backupPath = await resolveMongoBackupPath(backupName);
+  const { mongoUri, databaseName } = resolveRestoreTarget(backupName);
+
+  if (body.truncateBeforeRestore) {
+    await truncateDatabase(mongoUri, databaseName);
+  }
+
+  const command = getMongoRestoreCommand();
+  const args = ['--uri', mongoUri, '--db', databaseName, `--archive=${backupPath}`, '--gzip', '--drop'];
+  const logPath = `${backupPath}.restore.log`;
+  const commandString = `${command} ${args.join(' ')}`;
+
+  try {
+    const result = await mongoExecFileAsync(command, args);
+    const logContent = `command:\n${commandString}\n\nstdout:\n${result.stdout}\n\nstderr:\n${result.stderr}`;
+    await fs.writeFile(logPath, logContent);
+    await updateRestoreLog(backupPath, backupName);
+    return NextResponse.json({ message: 'Backup restored', log: logContent });
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    const err = error as ExecOutputishError;
+    const stdout = err.stdout ?? err.cause?.stdout ?? '';
+    const stderr = err.stderr ?? err.cause?.stderr ?? '';
+    const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+    await fs.writeFile(logPath, logContent);
+    throw internalError('Failed to restore backup', { stage: 'mongorestore', backupName, log: logContent });
+  }
 }

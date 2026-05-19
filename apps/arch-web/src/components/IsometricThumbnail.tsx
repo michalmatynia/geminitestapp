@@ -5,13 +5,77 @@ import * as THREE from 'three';
 import { makeProjectGroup, INK } from '@/lib/projectModels';
 import { loadGltfModel, prepareLoadedModel, disposeObject3D } from '@/lib/threeModelUtils';
 
-const ISO_DIR = new THREE.Vector3(1, 0.72, 1).normalize();
+type Axis = 'x' | 'y' | 'z';
 
 interface ThumbState {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.OrthographicCamera;
   pad: number;
+}
+
+type LineOpacityMaterial = THREE.Material & {
+  color?: THREE.Color;
+  depthWrite?: boolean;
+  opacity: number;
+  transparent?: boolean;
+};
+
+const axes: Axis[] = ['x', 'y', 'z'];
+
+const getAxisValue = (vector: THREE.Vector3, axis: Axis): number => {
+  if (axis === 'x') return vector.x;
+  if (axis === 'y') return vector.y;
+  return vector.z;
+};
+
+const axisVector = (axis: Axis, value: number): THREE.Vector3 => {
+  if (axis === 'x') return new THREE.Vector3(value, 0, 0);
+  if (axis === 'y') return new THREE.Vector3(0, value, 0);
+  return new THREE.Vector3(0, 0, value);
+};
+
+const setAxisValue = (vector: THREE.Vector3, axis: Axis, value: number): void => {
+  if (axis === 'x') {
+    vector.x = value;
+  } else if (axis === 'y') {
+    vector.y = value;
+  } else {
+    vector.z = value;
+  }
+};
+
+function detectUpAxis(box: THREE.Box3, size: THREE.Vector3): Axis {
+  return axes.reduce<Axis>((best, axis) => {
+    const bestSize = getAxisValue(size, best) || 1;
+    const axisSize = getAxisValue(size, axis) || 1;
+    const bestScore = Math.abs(getAxisValue(box.min, best)) / bestSize;
+    const axisScore = Math.abs(getAxisValue(box.min, axis)) / axisSize;
+    return axisScore < bestScore ? axis : best;
+  }, 'y');
+}
+
+function getOrthographicDirection(upAxis: Axis): THREE.Vector3 {
+  const horizontalAxes = axes.filter((axis) => axis !== upAxis);
+  const direction = axisVector(horizontalAxes[0], 1)
+    .add(axisVector(horizontalAxes[1], 1))
+    .add(axisVector(upAxis, 0.72));
+  return direction.normalize();
+}
+
+function normalizeLoadedModel(group: THREE.Group): void {
+  const box = new THREE.Box3().setFromObject(group);
+  const size = box.getSize(new THREE.Vector3());
+  const upAxis = detectUpAxis(box, size);
+  const maxAxis = Math.max(size.x, size.y, size.z);
+  group.userData._milkbarThumbnailUpAxis = upAxis;
+  if (maxAxis > 0) group.scale.multiplyScalar(18 / maxAxis);
+
+  const normalizedBox = new THREE.Box3().setFromObject(group);
+  const center = normalizedBox.getCenter(new THREE.Vector3());
+  const offset = new THREE.Vector3(-center.x, -center.y, -center.z);
+  setAxisValue(offset, upAxis, -getAxisValue(normalizedBox.min, upAxis));
+  group.position.add(offset);
 }
 
 function fitCamera(
@@ -24,13 +88,15 @@ function fitCamera(
   const center = sphere.center;
   const r = sphere.radius;
   const pad = r * 1.25;
+  const upAxis = (group.userData._milkbarThumbnailUpAxis as Axis | undefined) ?? 'y';
   camera.left = -pad * aspect;
   camera.right = pad * aspect;
   camera.top = pad;
   camera.bottom = -pad;
   camera.near = 0.1;
   camera.far = r * 10;
-  camera.position.copy(center).addScaledVector(ISO_DIR, r * 4);
+  camera.up.copy(axisVector(upAxis, 1));
+  camera.position.copy(center).addScaledVector(getOrthographicDirection(upAxis), r * 4);
   camera.lookAt(center);
   camera.updateProjectionMatrix();
   return pad;
@@ -45,9 +111,14 @@ function applyEdgesMode(root: THREE.Object3D, on: boolean): void {
       const raw = (c as THREE.LineSegments).material;
       if (!raw) return;
       const mats = Array.isArray(raw) ? raw : [raw];
-      (mats as Array<THREE.Material & { opacity: number }>).forEach((mat) => {
-        if (c.userData._origOpacity === undefined) c.userData._origOpacity = mat.opacity;
-        mat.opacity = on ? (c.userData._origOpacity as number) : 0;
+      (mats as LineOpacityMaterial[]).forEach((mat) => {
+        const userData = mat.userData as Record<string, unknown>;
+        if (userData._milkbarOrigOpacity === undefined) userData._milkbarOrigOpacity = mat.opacity;
+        mat.color?.set(INK);
+        mat.transparent = true;
+        mat.opacity = on ? Math.max(userData._milkbarOrigOpacity as number, 0.78) : 0;
+        mat.depthWrite = false;
+        mat.needsUpdate = true;
       });
       return;
     }
@@ -62,7 +133,12 @@ function applyEdgesMode(root: THREE.Object3D, on: boolean): void {
       return;
     }
     // GLTF mesh: hide face, show feature-edge overlay
-    mats.forEach((m) => { m.opacity = 0; });
+    mats.forEach((m) => {
+      m.transparent = true;
+      m.opacity = 0;
+      m.depthWrite = false;
+      m.needsUpdate = true;
+    });
     if (on) {
       if (!mesh.userData._edgesLines) {
         const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 15);
@@ -85,9 +161,14 @@ function applyWireframeMode(root: THREE.Object3D, on: boolean): void {
       const raw = (c as THREE.LineSegments).material;
       if (!raw) return;
       const mats = Array.isArray(raw) ? raw : [raw];
-      (mats as Array<THREE.Material & { opacity: number }>).forEach((mat) => {
-        if (c.userData._origOpacity === undefined) c.userData._origOpacity = mat.opacity;
-        mat.opacity = on ? (c.userData._origOpacity as number) : 0;
+      (mats as LineOpacityMaterial[]).forEach((mat) => {
+        const userData = mat.userData as Record<string, unknown>;
+        if (userData._milkbarOrigOpacity === undefined) userData._milkbarOrigOpacity = mat.opacity;
+        mat.color?.set(INK);
+        mat.transparent = true;
+        mat.opacity = on ? Math.max(userData._milkbarOrigOpacity as number, 0.78) : 0;
+        mat.depthWrite = false;
+        mat.needsUpdate = true;
       });
       return;
     }
@@ -116,6 +197,8 @@ function applyWireframeMode(root: THREE.Object3D, on: boolean): void {
         }
       }
       mat.opacity = 1;
+      mat.depthWrite = true;
+      mat.needsUpdate = true;
     });
   });
 }
@@ -145,6 +228,8 @@ function applySolidMode(root: THREE.Object3D): void {
         if (orig) mat.color.copy(orig);
       }
       mat.opacity = 1;
+      mat.depthWrite = true;
+      mat.needsUpdate = true;
     });
   });
 }
@@ -259,16 +344,14 @@ function IsometricThumbnail({
       void loadGltfModel(trimmedUrl)
         .then((g) => {
           prepareLoadedModel(g);
-          const box0 = new THREE.Box3().setFromObject(g);
-          const size0 = box0.getSize(new THREE.Vector3());
-          const maxAxis = Math.max(size0.x, size0.y, size0.z);
-          if (maxAxis > 0) g.scale.multiplyScalar(18 / maxAxis);
-          const box1 = new THREE.Box3().setFromObject(g);
-          const cx = box1.getCenter(new THREE.Vector3());
-          g.position.set(-cx.x, -box1.min.y, -cx.z);
+          normalizeLoadedModel(g);
           addGroup(g);
         })
-        .catch(() => addGroup(makeProjectGroup(projectIdx)));
+        .catch(() => {
+          if (!cancelled && stateRef.current) {
+            stateRef.current.renderer.render(scene, camera);
+          }
+        });
     } else {
       addGroup(makeProjectGroup(projectIdx));
     }

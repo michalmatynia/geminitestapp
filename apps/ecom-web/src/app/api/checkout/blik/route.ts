@@ -5,11 +5,39 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { createPayUBlikOrder } from '@/lib/payu';
 import { readPaymentProviderAvailability } from '@/lib/providerSettings';
-import { buildValidatedCheckoutOrder, isRecord, readString, toMinorCurrencyUnit } from '@/lib/checkout-order';
+import { buildValidatedCheckoutOrder, isRecord, readString, toMinorCurrencyUnit, type BuildCheckoutOrderResult } from '@/lib/checkout-order';
+import type { OrderItem } from '@/lib/orders';
 
 const BLIK_RE = /^\d{6}$/;
 
-// eslint-disable-next-line max-lines-per-function, complexity
+function buildOrderPayload(result: Extract<BuildCheckoutOrderResult, { ok: true }>, pricedItems: OrderItem[], now: string): Omit<Order, '_id'> {
+  const {
+    orderId, userId, email,
+    shippingSelection, shippingAddress, inpostPoint,
+    subtotal, discount, promoCode, total,
+  } = result.order;
+
+  return {
+    orderId,
+    ...(userId !== undefined ? { userId } : {}),
+    email,
+    status: 'pending_payment',
+    paymentMethod: 'blik',
+    items: pricedItems,
+    shippingMethod: shippingSelection.shippingMethod,
+    shippingPrice: shippingSelection.shippingPrice,
+    shippingCarrier: shippingSelection.shippingCarrier,
+    shippingService: shippingSelection.shippingService,
+    ...(inpostPoint !== null ? { inpostPoint } : {}),
+    shippingAddress,
+    subtotal,
+    discount,
+    promoCode,
+    total,
+    createdAt: now,
+  };
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   void ensureAppIndexes();
   const ip = getClientIp(req);
@@ -33,10 +61,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const blikCode = readString(body['blikCode']);
-  if (blikCode.length !== 6) {
-    return NextResponse.json({ error: 'Enter a valid 6-digit BLIK code.' }, { status: 400 });
-  }
-  if (!BLIK_RE.test(blikCode)) {
+  if (blikCode.length !== 6 || !BLIK_RE.test(blikCode)) {
     return NextResponse.json({ error: 'Enter a valid 6-digit BLIK code.' }, { status: 400 });
   }
 
@@ -50,67 +75,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  const {
-    orderId, userId, email, pricedItems,
-    shippingSelection, shippingAddress, inpostPoint,
-    subtotal, discount, promoCode, total, currencyCode, baseUrl,
-  } = result.order;
-
-  const notifyUrl = `${baseUrl}/api/webhooks/payu`;
-  const now = new Date().toISOString();
-  const order: Omit<Order, '_id'> = {
-    orderId,
-    ...(userId !== undefined ? { userId } : {}),
-    email,
-    status: 'pending_payment',
-    paymentMethod: 'blik',
-    items: pricedItems,
-    shippingMethod: shippingSelection.shippingMethod,
-    shippingPrice: shippingSelection.shippingPrice,
-    shippingCarrier: shippingSelection.shippingCarrier,
-    shippingService: shippingSelection.shippingService,
-    ...(inpostPoint !== null ? { inpostPoint } : {}),
-    shippingAddress,
-    subtotal,
-    discount,
-    promoCode,
-    total,
-    createdAt: now,
-  };
+  const { pricedItems, currencyCode, baseUrl } = result.order;
+  const orderPayload = buildOrderPayload(result, pricedItems, new Date().toISOString());
 
   const db = await getDb();
-  const collection = db.collection(ORDERS_COLLECTION);
-  const insertResult = await collection.insertOne(order);
+  const collection = db.collection<Order>(ORDERS_COLLECTION);
+  const insertResult = await collection.insertOne(orderPayload as Order);
 
-  let payuOrderId: string;
   try {
     const payuResult = await createPayUBlikOrder({
-      notifyUrl,
+      notifyUrl: `${baseUrl}/api/webhooks/payu`,
       customerIp: ip,
-      description: `Stargater order ${orderId}`,
+      description: `Stargater order ${orderPayload.orderId}`,
       currencyCode,
-      totalAmount: toMinorCurrencyUnit(total),
-      extOrderId: orderId,
+      totalAmount: toMinorCurrencyUnit(orderPayload.total),
+      extOrderId: orderPayload.orderId,
       buyer: {
-        email,
-        firstName: shippingAddress.firstName,
-        lastName: shippingAddress.lastName,
-        phone: shippingAddress.phone,
+        email: orderPayload.email,
+        firstName: orderPayload.shippingAddress.firstName,
+        lastName: orderPayload.shippingAddress.lastName,
+        phone: orderPayload.shippingAddress.phone,
         language: 'pl',
       },
-      products: pricedItems.map((item) => ({
+      products: pricedItems.map((item: OrderItem) => ({
         name: `${item.name} (${item.size})`,
         unitPrice: toMinorCurrencyUnit(item.price),
         quantity: item.quantity,
       })),
       blikCode,
     });
-    payuOrderId = payuResult.payuOrderId;
+    const payuOrderId = payuResult.payuOrderId;
+    await collection.updateOne({ orderId: orderPayload.orderId }, { $set: { payuOrderId } }).catch(() => undefined);
+    return NextResponse.json(
+      { orderId: orderPayload.orderId, payuOrderId, _id: insertResult.insertedId.toString() },
+      { status: 201 },
+    );
   } catch (err: unknown) {
-    await collection.updateOne(
-      { orderId, status: 'pending_payment' },
-      { $set: { status: 'cancelled' } },
-    ).catch(() => undefined);
+    await collection.updateOne({ orderId: orderPayload.orderId, status: 'pending_payment' }, { $set: { status: 'cancelled' } }).catch(() => undefined);
     const msg = err instanceof Error ? err.message : 'BLIK payment failed';
     const isBadCode = msg.includes('BLIK') || msg.includes('authorization') || msg.includes('ERROR_VALUE_INVALID');
     return NextResponse.json(
@@ -118,14 +119,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: isBadCode ? 422 : 502 },
     );
   }
-
-  await collection.updateOne(
-    { orderId },
-    { $set: { payuOrderId } },
-  ).catch(() => undefined);
-
-  return NextResponse.json(
-    { orderId: order.orderId, payuOrderId, _id: insertResult.insertedId.toString() },
-    { status: 201 },
-  );
 }

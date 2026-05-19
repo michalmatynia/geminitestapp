@@ -191,7 +191,7 @@ const commonRules = {
   // --- style ---
   indent: 'off',
   'linebreak-style': ['error', 'unix'],
-  quotes: ['error', 'single'],
+  quotes: ['error', 'single', { avoidEscape: true }],
   'jsx-quotes': ['error', 'prefer-single'],
   semi: ['error', 'always'],
   // --- correctness ---
@@ -333,6 +333,7 @@ export default defineConfig([
     'build/**',
     'out/**',
     'coverage/**',
+    '**/next-env.d.ts',
     'temp/**',
     'tmp/**',
     '__tests__/mocks/**/*',
@@ -371,7 +372,7 @@ export default defineConfig([
     rules: {
       ...js.configs.recommended.rules,
       ...preservedLegacyCoreRuleOffs,
-      quotes: ['error', 'single'],
+      quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'always'],
     },
   },
@@ -396,7 +397,7 @@ export default defineConfig([
     rules: {
       ...js.configs.recommended.rules,
       ...preservedLegacyCoreRuleOffs,
-      quotes: ['error', 'single'],
+      quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'always'],
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [

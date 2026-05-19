@@ -39,6 +39,8 @@ export const PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS: ReadonlyArray<Labeled
 export const PRODUCT_VALIDATION_SOURCE_FIELD_IDS = {
   primaryCatalogId: 'primaryCatalogId',
   categoryName: 'categoryName',
+  nameEnSegment2: 'nameEnSegment2',
+  nameEnSegment2RegexEscaped: 'nameEnSegment2RegexEscaped',
   nameEnSegment4: 'nameEnSegment4',
   nameEnSegment4RegexEscaped: 'nameEnSegment4RegexEscaped',
 } as const;
@@ -53,6 +55,14 @@ export const PRODUCT_VALIDATION_DERIVED_SOURCE_FIELD_OPTIONS: ReadonlyArray<
   {
     value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.categoryName,
     label: 'Category Name',
+  },
+  {
+    value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2,
+    label: 'Name EN Segment #2',
+  },
+  {
+    value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2RegexEscaped,
+    label: 'Name EN Segment #2 (Regex Escaped)',
   },
   {
     value: PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment4,
@@ -161,6 +171,7 @@ export const buildProductValidationSourceValues = (
 ): Record<string, unknown> => {
   const baseValues = input.baseValues;
   const categoryId = resolveCategoryId(input.selectedCategoryId, baseValues);
+  const nameEnSegment2 = extractNameSegment(baseValues['name_en'], 1);
   const nameEnSegment4 = extractNameSegment(baseValues['name_en'], 3);
 
   return {
@@ -179,6 +190,9 @@ export const buildProductValidationSourceValues = (
       categoryId,
       input.categories
     ),
+    [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2]: nameEnSegment2,
+    [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment2RegexEscaped]:
+      escapeRegexLiteral(nameEnSegment2),
     [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment4]: nameEnSegment4,
     [PRODUCT_VALIDATION_SOURCE_FIELD_IDS.nameEnSegment4RegexEscaped]:
       escapeRegexLiteral(nameEnSegment4),

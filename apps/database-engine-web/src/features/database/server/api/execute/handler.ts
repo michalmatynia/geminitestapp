@@ -44,6 +44,14 @@ const databaseExecuteRequestSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),
   sort: z.record(z.string(), z.union([z.literal(1), z.literal(-1)])).optional(),
 });
+function validateExecuteRequest(parsed: z.infer<typeof databaseExecuteRequestSchema>): void {
+  if (parsed.sql !== undefined && parsed.sql !== '') {
+    throw badRequestError('SQL execution is no longer supported. Use MongoDB collection operations.');
+  }
+  if (parsed.collection === undefined || parsed.collection === '') {
+    throw badRequestError('Collection name is required for MongoDB operations.');
+  }
+}
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
@@ -59,16 +67,13 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const parsed = parsedBody.data;
-  if (parsed.sql) {
-    throw badRequestError('SQL execution is no longer supported. Use MongoDB collection operations.');
-  }
-  if (!parsed.collection) {
-    throw badRequestError('Collection name is required for MongoDB operations.');
-  }
+  validateExecuteRequest(parsed);
 
   try {
     return await handleMongoOperation(parsed);
-  } catch (error) {
+  } catch (error: unknown) {
+...
+
     void ErrorSystem.captureException(error);
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
@@ -113,14 +118,14 @@ async function handleMongoOperation(parsed: {
     sort,
   } = parsed;
 
-  if (!collName) {
+  if (collName === undefined || collName === '') {
     throw badRequestError('Collection name is required for MongoDB operations.');
   }
-  if (!operation) {
+  if (operation === undefined || operation === '') {
     throw badRequestError('Operation is required for MongoDB operations.');
   }
 
-  const managedMongo = application
+  const managedMongo = (application !== undefined && application !== null)
     ? await createManagedMongoClient(application, source ?? 'local')
     : null;
   const mongoClient = managedMongo?.client ?? (await getMongoClient());

@@ -27,6 +27,10 @@ import {
   executeJobBoardScrapeRuntime,
 } from './playwright-node-runner.job-board-runtime';
 import {
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY,
+  executeSocialArticleAggregatorScrapeRuntime,
+} from './playwright-node-runner.social-article-runtime';
+import {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   executeSupplier1688ProbeScanRuntime,
 } from './playwright-node-runner.supplier-1688-runtime';
@@ -86,6 +90,12 @@ export const PLAYWRIGHT_RUNTIME_REGISTRY: readonly RuntimeRegistryEntry[] = [
     timeoutMessage: 'Job board scrape runtime timed out.',
     handle: ({ page, input, emit, log, helpers }) =>
       executeJobBoardScrapeRuntime({ page, input, emit, log, helpers }),
+  },
+  {
+    keys: [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY],
+    timeoutMessage: 'Social article aggregator scrape runtime timed out.',
+    handle: ({ page, input, emit, log }) =>
+      executeSocialArticleAggregatorScrapeRuntime({ page, input, emit, log }),
   },
 ];
 

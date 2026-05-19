@@ -31,6 +31,7 @@ type WorkspaceMainProps = {
   threadsState: ReturnType<typeof useMailClientThreads>;
   detailState: ReturnType<typeof useMailClientDetail>;
   isSending: boolean;
+  onClearCampaignFilter: () => void;
   onOpenPrimaryFolder: () => void;
   onRefreshThreads: () => void;
   onSelectThread: (thread: FilemakerMailThread) => void;
@@ -43,7 +44,7 @@ type WorkspaceViewModel = Omit<WorkspaceMainProps, 'loadError'> & {
   selectTreeThread: ReturnType<typeof useMailClientSelection>['applySelection'];
 };
 
-type WorkspaceSelectionActions = Pick<WorkspaceViewModel, 'onOpenPrimaryFolder' | 'onRefreshThreads' | 'onSelectThread' | 'selectAccount' | 'selectFolder' | 'selectTreeThread'>;
+type WorkspaceSelectionActions = Pick<WorkspaceViewModel, 'onClearCampaignFilter' | 'onOpenPrimaryFolder' | 'onRefreshThreads' | 'onSelectThread' | 'selectAccount' | 'selectFolder' | 'selectTreeThread'>;
 
 function SelectionBanner({
   selectedAccount,
@@ -82,6 +83,7 @@ function WorkspaceMain({
   selectedMailboxLabel,
   selection,
   threadsState,
+  onClearCampaignFilter,
   onOpenPrimaryFolder,
   onRefreshThreads,
   onSelectThread,
@@ -98,11 +100,13 @@ function WorkspaceMain({
     <>
       <MailClientThreadList
         account={selectedAccount}
+        campaignId={selection.campaignId}
         error={threadsState.threadsError}
         isLoading={threadsState.isThreadsLoading}
         mailboxPath={selection.mailboxPath}
         selectedThreadId={selection.threadId}
         threads={threadsState.threads}
+        onClearCampaignFilter={onClearCampaignFilter}
         onRefresh={onRefreshThreads}
         onSelectThread={onSelectThread}
       />
@@ -147,7 +151,7 @@ function useWorkspaceSelectionActions({
   threadsState: ReturnType<typeof useMailClientThreads>;
 }): WorkspaceSelectionActions {
   const selectAccount = useCallback(
-    (accountId: string): void => selectionController.applySelection({ accountId, mailboxPath: null, threadId: null }),
+    (accountId: string): void => selectionController.applySelection({ accountId, mailboxPath: null, threadId: null, campaignId: null }),
     [selectionController]
   );
   const selectThread = useCallback(
@@ -155,12 +159,13 @@ function useWorkspaceSelectionActions({
       accountId: thread.accountId,
       mailboxPath: thread.mailboxPath,
       threadId: thread.id,
+      campaignId: selectionController.selection.campaignId,
     }),
     [selectionController]
   );
   const selectFolder = useCallback(
     (selection: { accountId: string; mailboxPath: string }): void =>
-      selectionController.applySelection({ ...selection, threadId: null }),
+      selectionController.applySelection({ ...selection, threadId: null, campaignId: null }),
     [selectionController]
   );
   const openPrimaryFolder = useCallback((): void => {
@@ -169,14 +174,23 @@ function useWorkspaceSelectionActions({
       accountId: selectionController.selection.accountId,
       mailboxPath: getPrimaryFolderPath(folders, selectionController.selection.accountId),
       threadId: null,
+      campaignId: null,
     });
   }, [folders, selectionController]);
   const refreshThreads = useCallback((): void => {
     threadsState.refreshThreads();
     void loadMailboxData();
   }, [loadMailboxData, threadsState]);
+  const clearCampaignFilter = useCallback((): void => {
+    selectionController.applySelection({
+      ...selectionController.selection,
+      campaignId: null,
+      threadId: null,
+    });
+  }, [selectionController]);
 
   return {
+    onClearCampaignFilter: clearCampaignFilter,
     onOpenPrimaryFolder: openPrimaryFolder,
     onRefreshThreads: refreshThreads,
     onSelectThread: selectThread,
@@ -275,6 +289,7 @@ function WorkspaceLayout({
           selectedMailboxLabel={viewModel.selectedMailboxLabel}
           selection={viewModel.selection}
           threadsState={viewModel.threadsState}
+          onClearCampaignFilter={viewModel.onClearCampaignFilter}
           onOpenPrimaryFolder={viewModel.onOpenPrimaryFolder}
           onRefreshThreads={viewModel.onRefreshThreads}
           onSelectThread={viewModel.onSelectThread}

@@ -56,6 +56,7 @@ const getInitialSelection = (searchParams: ReturnType<typeof useSearchParams>): 
   accountId: normalizeSearchValue(searchParams.get('accountId')),
   mailboxPath: normalizeSearchValue(searchParams.get('mailboxPath')),
   threadId: normalizeSearchValue(searchParams.get('threadId')),
+  campaignId: normalizeSearchValue(searchParams.get('campaignId')),
 });
 
 export const useMailClientSelection = ({
@@ -82,7 +83,7 @@ export const useMailClientSelection = ({
 
   useEffect(() => {
     if (accounts.length === 0) {
-      setSelection({ accountId: null, mailboxPath: null, threadId: null });
+      setSelection({ accountId: null, mailboxPath: null, threadId: null, campaignId: null });
       return;
     }
     const accountExists =
@@ -90,7 +91,7 @@ export const useMailClientSelection = ({
       accounts.some((account) => account.id === selection.accountId);
     if (accountExists) return;
     const nextAccountId = firstActiveAccount?.id ?? accounts[0]?.id ?? null;
-    setSelection({ accountId: nextAccountId, mailboxPath: null, threadId: null });
+    setSelection({ accountId: nextAccountId, mailboxPath: null, threadId: null, campaignId: null });
   }, [accounts, firstActiveAccount, selection.accountId]);
 
   return { selection, applySelection, setSelection };
@@ -125,6 +126,7 @@ export const useMailClientThreads = ({
       buildThreadListUrl({
         accountId: selection.accountId,
         mailboxPath: selection.mailboxPath,
+        campaignId: selection.campaignId,
       })
     )
       .then((result) => {
@@ -144,7 +146,7 @@ export const useMailClientThreads = ({
     return () => {
       isCancelled = true;
     };
-  }, [selection.accountId, selection.mailboxPath, setSelection, threadsRefreshKey]);
+  }, [selection.accountId, selection.mailboxPath, selection.campaignId, setSelection, threadsRefreshKey]);
 
   return { threads, threadsError, isThreadsLoading, refreshThreads };
 };

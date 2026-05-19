@@ -1,12 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import type {
-  KangurAiTutorConversationContext,
-  KangurAiTutorNativeGuideEntry,
-} from '../../../../src/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorConversationContext } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorNativeGuideEntry } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
-import type { useKangurMobileAiTutor } from './useKangurMobileAiTutor';
 import {
   useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
@@ -174,6 +171,87 @@ const resolveAvailabilityInfo = (
   };
 };
 
+const TutorWebsiteHelp = ({
+  target,
+  showLocaleOpen,
+  copy,
+}: {
+  target: NonNullable<ReturnType<typeof useKangurMobileAiTutor>['websiteHelpTarget']>;
+  showLocaleOpen: string;
+  copy: (v: { de: string; en: string; pl: string }) => string;
+}): React.JSX.Element => (
+  <View>
+    <OutlineLink
+      href={target.href}
+      hint={copy({
+        de: 'Hilfeseite öffnen.',
+        en: 'Opens help content.',
+        pl: 'Otwiera stronę pomocy.',
+      })}
+      label={copy({
+        de: `${showLocaleOpen} ${target.label}`,
+        en: `${showLocaleOpen} ${target.label}`,
+        pl: `${showLocaleOpen} ${target.label}`,
+      })}
+    />
+  </View>
+);
+
+const TutorStarterHints = ({
+  hints,
+  copy,
+}: {
+  hints: string[];
+  copy: (v: { de: string; en: string; pl: string }) => string;
+}): React.JSX.Element => (
+  <KangurMobileInsetPanel gap={8} padding={16}>
+    <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
+      {copy({ de: 'Wskazówki startowe', en: 'Starter hints', pl: 'Wskazówki startowe' })}
+    </Text>
+    {hints.slice(0, 2).map((hint) => (
+      <Text key={hint} style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+        {`• ${hint}`}
+      </Text>
+    ))}
+  </KangurMobileInsetPanel>
+);
+
+const TutorQuickActions = ({
+  actions,
+  canSendMessages,
+  isSending,
+  sendQuickAction,
+}: {
+  actions: ReturnType<typeof useKangurMobileAiTutor>['quickActions'];
+  canSendMessages: boolean;
+  isSending: boolean;
+  sendQuickAction: (id: string) => Promise<void>;
+}): React.JSX.Element => (
+  <View style={{ flexDirection: 'column', gap: 8 }}>
+    {actions.map((action) => (
+      <KangurMobileActionButton
+        accessibilityLabel={action.label}
+        centered
+        disabled={!canSendMessages || isSending}
+        key={action.id}
+        label={action.label}
+        minHeight={44}
+        onPress={() => {
+          void sendQuickAction(action.id);
+        }}
+        tone='secondary'
+      />
+    ))}
+  </View>
+);
+
+const formatUsageLabel = (usage: NonNullable<ReturnType<typeof useKangurMobileAiTutor>['usage']> | null): string | null => {
+  if (usage === null) return null;
+  return usage.dailyMessageLimit === null
+    ? `Today ${usage.messageCount}`
+    : `Today ${usage.messageCount}/${usage.dailyMessageLimit}`;
+};
+
 export function KangurMobileAiTutorCard({
   context,
   gameTarget = 'practice',
@@ -186,13 +264,8 @@ export function KangurMobileAiTutorCard({
     copy,
   );
 
+  const usageLabel = formatUsageLabel(tutor.usage);
   const showLocaleOpen = resolveCopy(locale);
-  let usageLabel: string | null = null;
-  if (tutor.usage !== null) {
-    usageLabel = tutor.usage.dailyMessageLimit === null
-      ? `Today ${tutor.usage.messageCount}`
-      : `Today ${tutor.usage.messageCount}/${tutor.usage.dailyMessageLimit}`;
-  }
 
   return (
     <KangurMobileCard gap={12} padding={20}>
@@ -211,60 +284,32 @@ export function KangurMobileAiTutorCard({
       />
 
       {tutor.websiteHelpTarget !== null && (
-        <View>
-          <OutlineLink
-            href={tutor.websiteHelpTarget.href}
-            hint={copy({
-              de: 'Hilfeseite öffnen.',
-              en: 'Opens help content.',
-              pl: 'Otwiera stronę pomocy.',
-            })}
-            label={copy({
-              de: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
-              en: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
-              pl: `${showLocaleOpen} ${tutor.websiteHelpTarget.label}`,
-            })}
-          />
-        </View>
+        <TutorWebsiteHelp
+          target={tutor.websiteHelpTarget}
+          showLocaleOpen={showLocaleOpen}
+          copy={copy}
+        />
       )}
 
-      {tutor.responseActions.length > 0 ? (
+      {tutor.responseActions.length > 0 && (
         <KangurMobileInsetPanel gap={8} padding={16}>
           <ResponseActionsPanel copy={copy} locale={locale} actions={tutor.responseActions} />
         </KangurMobileInsetPanel>
-      ) : null}
+      )}
 
       {tutor.guideEntry?.hints !== undefined && tutor.guideEntry.hints.length > 0 && (
-        <KangurMobileInsetPanel gap={8} padding={16}>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
-            {copy({ de: 'Wskazówki startowe', en: 'Starter hints', pl: 'Wskazówki startowe' })}
-          </Text>
-          {tutor.guideEntry.hints.slice(0, 2).map((hint) => (
-            <Text key={hint} style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-              {`• ${hint}`}
-            </Text>
-          ))}
-        </KangurMobileInsetPanel>
+        <TutorStarterHints hints={tutor.guideEntry.hints} copy={copy} />
       )}
 
       {tutor.quickActions.length > 0 && (
-        <View style={{ flexDirection: 'column', gap: 8 }}>
-          {tutor.quickActions.map((action) => (
-            <KangurMobileActionButton
-              accessibilityLabel={action.label}
-              centered
-              disabled={!tutor.canSendMessages || tutor.isSending}
-              key={action.id}
-              label={action.label}
-              minHeight={44}
-              onPress={() => {
-                void tutor.sendQuickAction(action.id);
-              }}
-              tone='secondary'
-            />
-          ))}
-        </View>
+        <TutorQuickActions
+          actions={tutor.quickActions}
+          canSendMessages={tutor.canSendMessages}
+          isSending={tutor.isSending}
+          sendQuickAction={tutor.sendQuickAction}
+        />
       )}
     </KangurMobileCard>
   );
 }
+

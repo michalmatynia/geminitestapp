@@ -16,7 +16,10 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 const SKU_LOOKUP_TIMEOUT_MS = 30_000;
 const PRODUCT_SKU_PATTERN = /^[A-Z0-9-]+$/;
 
-export type ProductOperationInfo = { queued?: boolean };
+export type ProductOperationInfo = {
+  queued?: boolean;
+  product?: ProductWithImages | undefined;
+};
 
 export type ProductOperationsController = {
   isCreateOpen: boolean;
@@ -255,12 +258,13 @@ export const createProductOperationHandlers = (
       state.setIsCreateOpen(true);
     },
     handleCreateSuccess: (info?: ProductOperationInfo) => {
-      state.setIsCreateOpen(false);
-      state.setInitialSku('');
-      if (!isQueuedOperation(info)) {
-        setRefreshTrigger((prev) => prev + 1);
-        toast('Product created successfully.', { variant: 'success' });
+      if (isQueuedOperation(info)) return;
+      if (info?.product !== undefined) {
+        state.setLastEditedId(info.product.id);
       }
+      state.setInitialSku('');
+      setRefreshTrigger((prev) => prev + 1);
+      toast('Product created successfully.', { variant: 'success' });
     },
     handleEditSuccess: (info?: ProductOperationInfo) => {
       if (!isQueuedOperation(info) && state.editingProduct !== null) {

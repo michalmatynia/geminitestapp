@@ -10,6 +10,7 @@ const {
   parseJsonBodyMock,
   invalidateProductMock,
   deleteProductFromEcommerceExportMock,
+  enqueueProductImagesFastCometUploadOnSaveMock,
   logSystemEventMock,
 } = vi.hoisted(() => ({
   updateProductMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   parseJsonBodyMock: vi.fn(),
   invalidateProductMock: vi.fn(),
   deleteProductFromEcommerceExportMock: vi.fn(),
+  enqueueProductImagesFastCometUploadOnSaveMock: vi.fn(),
   logSystemEventMock: vi.fn(),
 }));
 
@@ -50,6 +52,11 @@ vi.mock('@/features/products/server', () => ({
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
+}));
+
+vi.mock('../product-fastcomet-save-sync', () => ({
+  enqueueProductImagesFastCometUploadOnSave: (...args: unknown[]) =>
+    enqueueProductImagesFastCometUploadOnSaveMock(...args),
 }));
 
 import { deleteHandler, patchHandler, putHandler } from './handler';
@@ -245,5 +252,40 @@ describe('products/[id] handler cache invalidation', () => {
     expect((request as unknown as { formData: ReturnType<typeof vi.fn> }).formData).not.toHaveBeenCalled();
     expect(invalidateProductMock).not.toHaveBeenCalled();
     expect(response.headers.get('Server-Timing')).toContain('jsonBody;dur=');
+  });
+
+  it('enqueues local product images for FastComet after successful PUT', async () => {
+    const updatedProduct = {
+      id: 'product-1',
+      name_en: 'Updated',
+      images: [
+        {
+          imageFileId: 'image-local-1',
+          imageFile: {
+            id: 'image-local-1',
+            filepath: '/uploads/products/SKU/photo.webp',
+            storageProvider: 'local',
+          },
+        },
+      ],
+    };
+    updateProductMock.mockResolvedValueOnce(updatedProduct);
+    const formData = new FormData();
+    formData.append('name_en', 'Updated');
+    formData.append('imageFileIds', 'image-local-1');
+    const request = {
+      headers: new Headers(),
+      formData: vi.fn().mockResolvedValue(formData),
+    } as unknown as NextRequest;
+
+    const response = await putHandler(request, buildContext('user-1'), { id: 'product-1' });
+
+    expect(response.status).toBe(200);
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledTimes(1);
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledWith(
+      updatedProduct,
+      'user-1'
+    );
+    expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
   });
 });

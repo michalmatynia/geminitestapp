@@ -205,6 +205,7 @@ describe('useSocialSettings', () => {
       programmableCaptureRoutes: [],
       projectUrl: 'https://project.example.com',
       captureContentConfig: { slides: [] },
+      articleAggregatorPathId: null,
     });
     expect(settingsStoreMock.refetch).toHaveBeenCalledTimes(1);
     expect(toastMock).toHaveBeenCalledWith('Social settings saved.', {
@@ -378,6 +379,7 @@ describe('useSocialSettings', () => {
       ],
       projectUrl: 'https://project.persisted.example.com',
       captureContentConfig: { slides: [] },
+      articleAggregatorPathId: null,
     });
     expect(toastMock).toHaveBeenCalledWith('Programmable Playwright defaults saved.', {
       variant: 'success',

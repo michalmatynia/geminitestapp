@@ -10,6 +10,7 @@ import {
   MailClientQuickActions,
   MailClientSummaryCards,
 } from './AdminFilemakerMailClientPage.sections';
+import { MailClientCampaignsSummaryCard } from './AdminFilemakerMailClientPage.account-campaigns';
 
 type MailClientDashboardOverviewProps = Pick<
   MailClientDashboardState,
@@ -45,6 +46,7 @@ function MailClientDashboardOverview({
       <MailClientSummaryCards
         accountCount={accounts.length}
         attentionCount={attentionAccounts.length}
+        campaignsSummaryCard={<MailClientCampaignsSummaryCard />}
         dashboardQuery={dashboardQuery}
         focusedAccount={focusedAccount}
         folderCount={folders.length}

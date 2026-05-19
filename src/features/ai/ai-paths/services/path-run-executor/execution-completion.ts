@@ -44,6 +44,7 @@ export type ExecutionCompletionArgs = {
     runtimeState: unknown;
     errorMessage: string | null;
     meta: Record<string, unknown>;
+    finishedAt: string;
   }) => Promise<boolean | void>;
 };
 
@@ -53,11 +54,18 @@ type CompletionStatusInput = {
   runtimeHaltReason: ExecutionCompletionArgs['runtimeHaltReason'];
   nodeValidationEnabled: boolean;
   blockedRunPolicy: ExecutionCompletionArgs['blockedRunPolicy'];
+  requiredProcessingNodeIds: string[];
 };
 
 type CompletionDiagnostics = {
   failedNodeDiagnostics: ReturnType<typeof collectFailedNodeDiagnostics>;
   waitingNodeDiagnostics: ReturnType<typeof collectWaitingNodeDiagnostics>;
+};
+
+type MissingRequiredNodeDiagnostic = {
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
 };
 
 type CompletionStatusResolution = {
@@ -85,7 +93,8 @@ const shouldPersistCompletedProductSideEffects = (
   return (
     asTrimmedString(runMetaWithRuntimeContext['source']) ===
       MARKETPLACE_COPY_DEBRAND_BATCH_META_SOURCE ||
-    asTrimmedString(runMetaWithRuntimeContext['source']) === MARKETPLACE_COPY_DEBRAND_ROW_META_SOURCE ||
+    asTrimmedString(runMetaWithRuntimeContext['source']) ===
+      MARKETPLACE_COPY_DEBRAND_ROW_META_SOURCE ||
     asTrimmedString(serverMetadata?.['source']) === MARKETPLACE_COPY_DEBRAND_BATCH_SERVER_SOURCE ||
     asTrimmedString(serverMetadata?.['source']) === MARKETPLACE_COPY_DEBRAND_ROW_SERVER_SOURCE
   );
@@ -148,6 +157,57 @@ const resolveWaitingFailure = (
       }
     : null;
 
+const collectMissingRequiredNodeDiagnostics = (input: {
+  nodes: AiNode[];
+  accOutputs: Record<string, RuntimePortValues>;
+  requiredProcessingNodeIds: string[];
+}): MissingRequiredNodeDiagnostic[] => {
+  if (input.requiredProcessingNodeIds.length === 0) return [];
+
+  const nodeById = new Map(input.nodes.map((node) => [node.id, node]));
+  return input.requiredProcessingNodeIds
+    .filter((nodeId) => {
+      const output = input.accOutputs[nodeId];
+      return output === undefined || Object.keys(output).length === 0;
+    })
+    .map((nodeId) => {
+      const node = nodeById.get(nodeId);
+      return {
+        nodeId,
+        nodeType: node?.type ?? 'unknown',
+        nodeTitle: typeof node?.title === 'string' ? node.title : null,
+      };
+    });
+};
+
+const buildMissingRequiredNodesFailureMessage = (
+  diagnostics: MissingRequiredNodeDiagnostic[]
+): string => {
+  const visibleNodes = diagnostics.slice(0, 4).map((diagnostic) => {
+    const label = diagnostic.nodeTitle ?? diagnostic.nodeId;
+    return `${label} (${diagnostic.nodeType})`;
+  });
+  const suffix =
+    diagnostics.length > visibleNodes.length
+      ? ` and ${diagnostics.length - visibleNodes.length} more`
+      : '';
+  return `Run finished before executing required AI-Path node${diagnostics.length === 1 ? '' : 's'}: ${visibleNodes.join(', ')}${suffix}.`;
+};
+
+const resolveMissingRequiredNodeFailure = (input: {
+  nodes: AiNode[];
+  accOutputs: Record<string, RuntimePortValues>;
+  requiredProcessingNodeIds: string[];
+}): CompletionStatusResolution | null => {
+  const diagnostics = collectMissingRequiredNodeDiagnostics(input);
+  return diagnostics.length > 0
+    ? {
+        finalStatus: 'failed',
+        finalError: buildMissingRequiredNodesFailureMessage(diagnostics),
+      }
+    : null;
+};
+
 const resolveCompletedRunFailure = (
   failedNodeDiagnostics: CompletionDiagnostics['failedNodeDiagnostics']
 ): CompletionStatusResolution | null =>
@@ -158,9 +218,7 @@ const resolveCompletedRunFailure = (
       }
     : null;
 
-const resolveCompletionStatus = (
-  input: CompletionStatusInput
-): CompletionStatusResolution => {
+const resolveCompletionStatus = (input: CompletionStatusInput): CompletionStatusResolution => {
   const failedNodeDiagnostics = collectFailedNodeDiagnostics(input.nodes, input.accOutputs);
   const waitingNodeDiagnostics = collectWaitingNodeDiagnostics(input.nodes, input.accOutputs);
 
@@ -174,6 +232,11 @@ const resolveCompletionStatus = (
       failedNodeDiagnostics,
     }) ??
     resolveWaitingFailure(waitingNodeDiagnostics) ??
+    resolveMissingRequiredNodeFailure({
+      nodes: input.nodes,
+      accOutputs: input.accOutputs,
+      requiredProcessingNodeIds: input.requiredProcessingNodeIds,
+    }) ??
     resolveCompletedRunFailure(failedNodeDiagnostics) ?? {
       finalStatus: 'completed',
       finalError: null,
@@ -190,9 +253,8 @@ const persistCompletedProductSideEffects = async (input: {
   if (!shouldPersistCompletedProductSideEffects(input.runMetaWithRuntimeContext)) return;
 
   try {
-    const { persistMarketplaceCopyDebrandBatchRunResult } = await import(
-      '@/features/products/server/marketplace-copy-debrand-run-completion'
-    );
+    const { persistMarketplaceCopyDebrandBatchRunResult } =
+      await import('@/features/products/server/marketplace-copy-debrand-run-completion');
     await persistMarketplaceCopyDebrandBatchRunResult({
       run: input.run,
       runMeta: input.runMetaWithRuntimeContext,
@@ -265,6 +327,7 @@ export const handleExecutionCompletion = async (
     runtimeHaltReason,
     nodeValidationEnabled,
     blockedRunPolicy,
+    requiredProcessingNodeIds: args.requiredProcessingNodeIds,
   });
 
   const finishedAt = new Date().toISOString();
@@ -282,6 +345,7 @@ export const handleExecutionCompletion = async (
     runtimeState: finalRuntimeState as unknown,
     errorMessage: finalError,
     meta: finalMeta,
+    finishedAt,
   });
 
   if (finalStatus === 'completed' && snapshotUpdated !== false) {

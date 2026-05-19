@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import { Badge, DropdownMenuItem } from '@/shared/ui/primitives.public';
 import React from 'react';
@@ -11,7 +12,7 @@ import {
 import { formatTimestamp } from './filemaker-page-utils';
 
 import type { CampaignRow } from './AdminFilemakerCampaignsPage.types';
-import type { FilemakerEmailCampaign, FilemakerEmailCampaignDeliveryRegistry } from '../types';
+import type { FilemakerEmailCampaign, FilemakerEmailCampaignDeliveryRegistry, FilemakerMailAccount } from '../types';
 import type { CellContext, ColumnDef } from '@tanstack/react-table';
 
 type CampaignCellContext = CellContext<CampaignRow, unknown>;
@@ -27,11 +28,18 @@ type CampaignColumnActions = {
 
 type BuildCampaignColumnsOptions = CampaignColumnActions & {
   deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  mailAccountById: Map<string, FilemakerMailAccount>;
 };
 
-export const formatCampaignSenderAccountLabel = (mailAccountId: string | null | undefined): string => {
+export const formatCampaignSenderAccountLabel = (
+  mailAccountId: string | null | undefined,
+  mailAccountById: Map<string, FilemakerMailAccount>
+): string => {
   const normalized = mailAccountId?.trim() ?? '';
-  return normalized.length > 0 ? normalized : 'Not assigned';
+  if (normalized.length === 0) return 'Not assigned';
+  const account = mailAccountById.get(normalized);
+  if (account === undefined) return normalized;
+  return account.emailAddress.length > 0 ? account.emailAddress : account.name;
 };
 
 const resolveBounceRateClassName = (bounceRatePercent: number): string => {
@@ -65,8 +73,17 @@ const CampaignApprovalBadge = ({ campaign }: { campaign: FilemakerEmailCampaign 
   );
 };
 
-const CampaignStatusCell = ({ row }: CampaignCellContext): React.JSX.Element => {
+const CampaignStatusCell = ({
+  row,
+  mailAccountById,
+}: CampaignCellContext & { mailAccountById: Map<string, FilemakerMailAccount> }): React.JSX.Element => {
   const failureMessage = row.original.schedulerFailureMessage;
+  const mailAccountId = row.original.campaign.mailAccountId;
+  const senderLabel = formatCampaignSenderAccountLabel(mailAccountId, mailAccountById);
+  const mailClientHref =
+    mailAccountId !== null && mailAccountId !== undefined && mailAccountId.trim().length > 0
+      ? `/admin/filemaker/mail-client?accountId=${encodeURIComponent(mailAccountId)}`
+      : null;
   return (
     <div className='space-y-1'>
       <Badge variant='outline' className='text-[10px] capitalize'>
@@ -77,7 +94,17 @@ const CampaignStatusCell = ({ row }: CampaignCellContext): React.JSX.Element => 
         {row.original.isLaunchReady ? 'Ready to launch' : 'Blocked by launch conditions'}
       </div>
       <div className='text-[11px] text-gray-500'>
-        Sender: {formatCampaignSenderAccountLabel(row.original.campaign.mailAccountId)}
+        {'Sender: '}
+        {mailClientHref !== null ? (
+          <Link
+            href={mailClientHref}
+            className='text-sky-400 underline-offset-2 hover:text-sky-300 hover:underline'
+          >
+            {senderLabel}
+          </Link>
+        ) : (
+          senderLabel
+        )}
       </div>
       <div className='text-[11px] text-gray-500 capitalize'>
         Automation: {row.original.campaign.launch.mode}
@@ -182,6 +209,8 @@ const createActionsColumn = (actions: CampaignColumnActions): ColumnDef<Campaign
   header: (): React.JSX.Element => <div className='text-right'>Actions</div>,
   cell: ({ row }: CampaignCellContext): React.JSX.Element => {
     const latestRun = row.original.latestRun;
+    const mailAccountId = row.original.campaign.mailAccountId;
+    const hasMailAccount = mailAccountId !== null && mailAccountId !== undefined && mailAccountId.trim().length > 0;
     return (
       <div className='flex justify-end'>
         <ActionMenu ariaLabel={`Actions for campaign ${row.original.campaign.name}`}>
@@ -193,6 +222,13 @@ const createActionsColumn = (actions: CampaignColumnActions): ColumnDef<Campaign
           <DropdownMenuItem onSelect={(event: Event): void => { event.preventDefault(); actions.onOpenCampaign(row.original.campaign.id); }}>
             Edit Campaign
           </DropdownMenuItem>
+          {hasMailAccount ? (
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/filemaker/mail-client?accountId=${encodeURIComponent(mailAccountId ?? '')}`}>
+                View Sender Mailbox
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem onSelect={(event: Event): void => { event.preventDefault(); actions.onDuplicateCampaign(row.original.campaign); }}>
             Duplicate Campaign
           </DropdownMenuItem>
@@ -215,7 +251,12 @@ const createActionsColumn = (actions: CampaignColumnActions): ColumnDef<Campaign
 
 export const buildCampaignColumns = (options: BuildCampaignColumnsOptions): ColumnDef<CampaignRow>[] => [
   { id: 'campaign', header: 'Campaign', cell: CampaignNameCell },
-  { id: 'status', header: 'Status', cell: CampaignStatusCell },
+  {
+    id: 'status',
+    header: 'Status',
+    cell: (ctx: CampaignCellContext): React.JSX.Element =>
+      CampaignStatusCell({ ...ctx, mailAccountById: options.mailAccountById }),
+  },
   { id: 'audience', header: 'Audience', cell: CampaignAudienceCell },
   { id: 'performance', header: 'Performance', cell: PerformanceCell },
   createLatestRunColumn(options.deliveryRegistry),

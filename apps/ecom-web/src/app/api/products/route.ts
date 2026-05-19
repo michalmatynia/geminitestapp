@@ -209,7 +209,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const materialSet = new Set(materialNames.map((m) => m.toLowerCase()));
       staticProducts = staticProducts.filter((p) => {
         const segments = p.name.split('|');
-        const mat = (p.material?.trim() ?? segments[2]?.trim() ?? '').toLowerCase();
+        const rawMat = p.material ?? segments[2] ?? '';
+        const mat = rawMat.trim().toLowerCase();
         return mat.length > 0 && materialSet.has(mat);
       });
     }
@@ -218,7 +219,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const sizeSet = new Set(sizeNames.map((s) => s.toLowerCase()));
       staticProducts = staticProducts.filter((p) => {
         const segments = p.name.split('|');
-        const sz = (p.sizeInfo?.trim() ?? segments[1]?.trim() ?? '').toLowerCase();
+        const rawSize = p.sizeInfo ?? segments[1] ?? '';
+        const sz = rawSize.trim().toLowerCase();
         return sz.length > 0 && sizeSet.has(sz);
       });
     }
@@ -227,7 +229,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const loreSet = new Set(loreNames.map((l) => l.toLowerCase()));
       staticProducts = staticProducts.filter((p) => {
         const segments = p.name.split('|');
-        const lr = (p.lore?.trim() ?? segments[4]?.trim() ?? '').toLowerCase();
+        const rawLore = p.lore ?? segments[4] ?? '';
+        const lr = rawLore.trim().toLowerCase();
         return lr.length > 0 && loreSet.has(lr);
       });
     }

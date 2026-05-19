@@ -2,6 +2,7 @@ import type { ProductScanStep } from '@/shared/contracts/product-scans';
 import { AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_STEPS } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from '@/shared/lib/browser-execution/filemaker-organization-presence-runtime-constants';
 import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from '@/shared/lib/browser-execution/job-board-runtime-constants';
+import { SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS } from '@/shared/lib/browser-execution/social-article-aggregator-runtime-constants';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from '@/shared/lib/browser-execution/supplier-1688-runtime-constants';
 
 import {
@@ -267,6 +268,36 @@ export const withFilemakerOrganizationPresenceScanActionRunSteps = (
       label: 'Close browser',
       message: 'Browser runtime released after FileMaker organisation discovery.',
       output: (scanPayload: Record<string, unknown>) => ({
+        status: readString(scanPayload['status']),
+      }),
+    }),
+  });
+
+export const withSocialArticleAggregatorScanActionRunSteps = (
+  payload: unknown
+): unknown =>
+  withPlaywrightScanActionRunSteps(payload, {
+    mapStep: mapGenericSequencerStep,
+    includeLifecycleWithoutMappedSteps: true,
+    preparation: createStartLifecycleStep({
+      key: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.browserPreparation,
+      label: 'Prepare browser runtime',
+      message: 'Browser runtime prepared for social article aggregation.',
+    }),
+    open: createStartLifecycleStep({
+      key: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.browserOpen,
+      label: 'Open browser',
+      message: 'Browser page opened for social article aggregation.',
+      url: (scanPayload: Record<string, unknown>) => readString(scanPayload['currentUrl']),
+    }),
+    close: createLifecycleStep({
+      key: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.browserClose,
+      label: 'Close browser',
+      message: 'Browser runtime released after social article aggregation.',
+      output: (scanPayload: Record<string, unknown>) => ({
+        articleCount: Array.isArray(scanPayload['articles'])
+          ? scanPayload['articles'].length
+          : 0,
         status: readString(scanPayload['status']),
       }),
     }),

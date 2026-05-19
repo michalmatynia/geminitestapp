@@ -15,6 +15,7 @@ import {
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
 import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.route';
+import { FilemakerCampaignContextLinks } from './FilemakerCampaignMailLinks';
 
 const FOCUSED_RECENT_THREAD_LIMIT = 2;
 
@@ -88,6 +89,9 @@ function MailClientFocusedThreadCard({
         <Badge variant='outline'>{thread.mailboxPath}</Badge>
         <Badge variant='outline'>Unread: {thread.unreadCount}</Badge>
       </div>
+      {thread.campaignContext != null ? (
+        <FilemakerCampaignContextLinks context={thread.campaignContext} className='flex flex-wrap gap-2' />
+      ) : null}
       <div className='flex flex-wrap gap-2'>
         <Button asChild variant='outline' size='sm'>
           <Link href={buildFocusedThreadHref(thread, trimmedDashboardQuery)}>Open Thread</Link>

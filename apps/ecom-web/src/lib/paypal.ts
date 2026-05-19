@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { readPayPalProviderSettings, type PayPalProviderSettings } from './providerSettings';
+import { readPayPalProviderSettings } from './providerSettings';
 
 const PAYPAL_LIVE_URL = 'https://api-m.paypal.com';
 const PAYPAL_SANDBOX_URL = 'https://api-m.sandbox.paypal.com';

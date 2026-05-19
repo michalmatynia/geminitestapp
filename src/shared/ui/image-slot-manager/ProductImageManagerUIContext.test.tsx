@@ -105,28 +105,26 @@ describe('ProductImageManagerUIContext', () => {
     await waitFor(() => expect(result.current.slotViewModes[0]).toBe('fastcomet'));
   });
 
-  it('uploads selected slot files immediately through the product FastComet route', async () => {
+  it('uploads selected slot files immediately through local product storage', async () => {
     const file = new File(['image'], 'fresh.png', { type: 'image/png' });
     const imageFile = {
       id: 'image-file-2',
-      filepath: 'https://sparksofsindri.com/uploads/products/SKU/fresh.png',
+      filepath: '/uploads/products/SKU/fresh.png',
       filename: 'fresh.png',
       metadata: {
         mirroredLocally: true,
         publicPath: '/uploads/products/SKU/fresh.png',
-        storageSource: 'fastcomet',
+        storageSource: 'local',
       },
-      storageProvider: 'fastcomet' as const,
+      storageProvider: 'local' as const,
     };
     const handleSlotFileSelect = vi.fn();
     const handleSlotImageChange = vi.fn();
     const onFastCometUploadStart = vi.fn();
     const onFastCometUploadSuccess = vi.fn();
     mocks.apiPost.mockResolvedValueOnce({
-      imageFile,
-      publicPath: '/uploads/products/SKU/fresh.png',
-      remoteUrl: imageFile.filepath,
-      status: 'ok',
+      success: true,
+      files: [{ imageFile }],
     });
     const controller = buildController({
       handleSlotFileSelect,
@@ -155,43 +153,27 @@ describe('ProductImageManagerUIContext', () => {
 
     const requestBody = mocks.apiPost.mock.calls[0]?.[1];
     expect(mocks.apiPost.mock.calls[0]?.[0]).toBe(
-      '/api/v2/products/product-1/images/upload-to-fastcomet'
+      '/api/v2/products/images/upload?storage=local'
     );
     expect(requestBody).toBeInstanceOf(FormData);
     expect((requestBody as FormData).get('file')).toBe(file);
-    expect((requestBody as FormData).get('filename')).toBe('fresh.png');
-    expect((requestBody as FormData).get('imageSlotIndex')).toBe('0');
     expect(mocks.apiPost.mock.calls[0]?.[2]).toEqual({ timeout: 120_000 });
-    expect(onFastCometUploadStart).toHaveBeenCalledWith({
-      filename: 'fresh.png',
-      imageFileId: 'pending-file',
-      imageSlotIndex: 0,
-      productId: 'product-1',
-    });
-    expect(onFastCometUploadSuccess).toHaveBeenCalledWith({
-      alreadyUploaded: undefined,
-      filename: 'fresh.png',
-      imageFile,
-      imageFileId: 'pending-file',
-      imageSlotIndex: 0,
-      productId: 'product-1',
-      publicPath: '/uploads/products/SKU/fresh.png',
-      remoteUrl: imageFile.filepath,
-    });
+    expect(onFastCometUploadStart).not.toHaveBeenCalled();
+    expect(onFastCometUploadSuccess).not.toHaveBeenCalled();
   });
 
   it('uploads selected draft slot files immediately through configured product storage', async () => {
     const file = new File(['image'], 'draft.png', { type: 'image/png' });
     const imageFile = {
       id: 'image-file-draft',
-      filepath: 'https://sparksofsindri.com/uploads/products/SKU_123/draft.png',
+      filepath: '/uploads/products/SKU_123/draft.png',
       filename: 'draft.png',
       metadata: {
         mirroredLocally: true,
         publicPath: '/uploads/products/SKU_123/draft.png',
-        storageSource: 'fastcomet',
+        storageSource: 'local',
       },
-      storageProvider: 'fastcomet' as const,
+      storageProvider: 'local' as const,
     };
     const handleSlotFileSelect = vi.fn();
     const handleSlotImageChange = vi.fn();
@@ -226,7 +208,7 @@ describe('ProductImageManagerUIContext', () => {
 
     const requestBody = mocks.apiPost.mock.calls[0]?.[1];
     expect(mocks.apiPost.mock.calls[0]?.[0]).toBe(
-      '/api/v2/products/images/upload?sku=SKU+123'
+      '/api/v2/products/images/upload?sku=SKU+123&storage=local'
     );
     expect(requestBody).toBeInstanceOf(FormData);
     expect((requestBody as FormData).get('file')).toBe(file);

@@ -3,7 +3,10 @@ import { type Collection, type Document, type AnyBulkWriteOperation, type Update
 import type { ImageFile } from '@/shared/contracts/files';
 import { type ProductImageRecord } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
-import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
+import {
+  mongoImageFileRepository,
+  productMongoImageFileRepository,
+} from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 
 import { type ProductDocument } from '../mongo-product-repository-mappers';
@@ -21,6 +24,35 @@ const orderImageFilesByRequestedIds = (
 ): ImageFile[] => {
   const filesById = new Map<string, ImageFile>(imageFiles.map((file) => [file.id, file]));
   return requestedIds
+    .map((id) => filesById.get(id) ?? null)
+    .filter((file): file is ImageFile => file !== null);
+};
+
+const mergeImageFilesById = (imageFiles: ImageFile[][]): Map<string, ImageFile> => {
+  const filesById = new Map<string, ImageFile>();
+  imageFiles.forEach((files) => {
+    files.forEach((file) => {
+      if (!filesById.has(file.id)) {
+        filesById.set(file.id, file);
+      }
+    });
+  });
+  return filesById;
+};
+
+const findProductImageFilesByIds = async (imageFileIds: string[]): Promise<ImageFile[]> => {
+  const normalizedIds = normalizeImageFileIds(imageFileIds);
+  if (normalizedIds.length === 0) return [];
+
+  const [sharedImageFiles, productImageFiles] = await Promise.all([
+    mongoImageFileRepository.findImageFilesByIds(normalizedIds),
+    productMongoImageFileRepository.findImageFilesByIds(normalizedIds),
+  ]);
+  const filesById = mergeImageFilesById([
+    sharedImageFiles as ImageFile[],
+    productImageFiles as ImageFile[],
+  ]);
+  return normalizedIds
     .map((id) => filesById.get(id) ?? null)
     .filter((file): file is ImageFile => file !== null);
 };
@@ -120,9 +152,9 @@ export const mongoProductAssociationsImpl = {
     const missingImageFileIds = parsedEntries.filter((e) => !e.imageFile).map((e) => e.imageFileId);
 
     if (missingImageFileIds.length > 0) {
-      const imageFiles = await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds);
+      const imageFiles = await findProductImageFilesByIds(missingImageFileIds);
       const imageFileMap = new Map<string, ImageFile>(
-        (imageFiles as ImageFile[]).map((f) => [f.id, f])
+        imageFiles.map((f) => [f.id, f])
       );
       parsedEntries.forEach((entry) => {
         if (!entry.imageFile) {
@@ -144,7 +176,7 @@ export const mongoProductAssociationsImpl = {
     if (normalizedIds.length === 0) return;
 
     const imageFiles = orderImageFilesByRequestedIds(
-      (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[],
+      await findProductImageFilesByIds(normalizedIds),
       normalizedIds
     );
     const now = new Date().toISOString();
@@ -170,7 +202,7 @@ export const mongoProductAssociationsImpl = {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     const imageFiles = orderImageFilesByRequestedIds(
-      (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[],
+      await findProductImageFilesByIds(normalizedIds),
       normalizedIds
     );
     const now = new Date().toISOString();

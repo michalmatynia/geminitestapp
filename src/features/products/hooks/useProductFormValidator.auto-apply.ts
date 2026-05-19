@@ -21,7 +21,9 @@ type AutoApplyIssueResult = {
 const hasAutoReplacementValue = (
   issue: FieldValidatorIssue
 ): issue is FieldValidatorIssue & { replacementValue: string } =>
-  issue.replacementValue !== null && issue.replacementValue.trim().length > 0;
+  issue.replacementActive === true &&
+  issue.replacementValue !== null &&
+  issue.replacementValue.trim().length > 0;
 
 const hasPatternReplacementValue = (pattern: ProductValidationPattern): boolean =>
   pattern.replacementValue !== null && pattern.replacementValue.trim().length > 0;

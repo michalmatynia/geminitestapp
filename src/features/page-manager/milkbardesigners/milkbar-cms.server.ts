@@ -34,7 +34,12 @@ import {
   type MongoApplicationSourceConfig,
 } from '@/shared/lib/db/utils/mongo';
 import { getAsset3DFromLookupRepositories } from '@/features/viewer3d/server';
+import { uploadMilkbarAsset3DInRedisRuntime } from '@/features/viewer3d/workers/milkbarAsset3DFastCometUploadQueue';
+import { uploadCmsFastCometMediaInRedisRuntime } from '@/features/cms/workers/cmsFastCometMediaUploadQueue';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import { MILKBAR_CMS_VISUALISATION_FOLDER } from '@/shared/lib/files/constants';
+import { getCmsBuilderImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getPublicPathFromStoredPath } from '@/shared/lib/files/services/storage/file-storage-service';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -52,6 +57,7 @@ const MILKBAR_APPLICATION_ID = 'arch';
 const MILKBAR_APPLICATION_NAME = 'Milkbar Designers';
 const MILKBAR_SOURCE_SERVICE = 'milkbar-cms';
 const MILKBAR_MODEL_PUBLIC_PATH_PREFIX = '/uploads/cms/models/';
+const MILKBAR_VISUALISATION_PUBLIC_PATH_PREFIX = '/uploads/cms/visualisation/';
 const MILKBAR_FASTCOMET_MODELS_MIRROR_ROOT = path.resolve(
   process.cwd(),
   'hosting',
@@ -210,7 +216,7 @@ const joinUrl = (baseUrl: string, pathname: string): string => {
 };
 
 const metadataString = (
-  metadata: Record<string, unknown> | undefined,
+  metadata: Record<string, unknown> | null | undefined,
   key: string
 ): string | undefined => {
   const value = metadata?.[key];
@@ -708,7 +714,11 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       label: asString(projects['label'], fallback.projects.label),
       title: asString(projects['title'], fallback.projects.title),
       emphasis: asString(projects['emphasis'], fallback.projects.emphasis),
-      projectsViewMode: projects['projectsViewMode'] === 'solid' ? 'solid' : projects['projectsViewMode'] === 'wireframe' ? 'wireframe' : 'edges',
+      projectsViewMode: ((): 'solid' | 'wireframe' | 'edges' => {
+        const val = projects['projectsViewMode'];
+        if (val === 'solid' || val === 'wireframe' || val === 'edges') return val;
+        return 'edges';
+      })(),
     },
     process: {
       eyebrow: asString(process['eyebrow'], fallback.process.eyebrow),
@@ -940,6 +950,139 @@ const resolveModelAssetUrlMap = async (
   }
 };
 
+const isMilkbarVisualisationPublicPath = (value: string | undefined): value is string =>
+  value?.startsWith(MILKBAR_VISUALISATION_PUBLIC_PATH_PREFIX) === true;
+
+const resolveMilkbarVisualisationPublicPath = (
+  value: string | undefined
+): string | undefined => {
+  const trimmed = value?.trim();
+  if (trimmed === undefined || trimmed.length === 0) return undefined;
+  const publicPath = getPublicPathFromStoredPath(trimmed) ?? undefined;
+  return isMilkbarVisualisationPublicPath(publicPath) ? publicPath : undefined;
+};
+
+const collectDrawingImagePublicPaths = (input: MilkbarCmsUpdateInput): string[] => {
+  const paths = new Set<string>();
+  MILKBAR_LOCALES.forEach((locale) => {
+    const content = input.localizedContent[locale];
+    content.drawing.thumbImages.forEach((image) => {
+      const publicPath = resolveMilkbarVisualisationPublicPath(image);
+      if (publicPath !== undefined) paths.add(publicPath);
+    });
+  });
+  return Array.from(paths);
+};
+
+const resolveCmsImageRecordPublicPath = (
+  imageFile: ImageFileRecord
+): string | undefined => {
+  const metadataPath = metadataString(imageFile.metadata, 'publicPath');
+  const filepathPath =
+    typeof imageFile.filepath === 'string'
+      ? getPublicPathFromStoredPath(imageFile.filepath) ?? undefined
+      : undefined;
+  const publicUrlPath =
+    typeof imageFile.publicUrl === 'string'
+      ? getPublicPathFromStoredPath(imageFile.publicUrl) ?? undefined
+      : undefined;
+  const urlPath =
+    typeof imageFile.url === 'string'
+      ? getPublicPathFromStoredPath(imageFile.url) ?? undefined
+      : undefined;
+  return [metadataPath, filepathPath, publicUrlPath, urlPath].find(
+    isMilkbarVisualisationPublicPath
+  );
+};
+
+const isCmsImageUploadedToFastComet = (imageFile: ImageFileRecord): boolean => {
+  if (imageFile.storageProvider === 'fastcomet') return true;
+  const storageSource = metadataString(imageFile.metadata, 'storageSource');
+  const status = metadataString(imageFile.metadata, 'fastCometUploadStatus');
+  return storageSource === 'fastcomet' || status === 'completed';
+};
+
+const uploadMilkbarCmsMediaToFastCometOnSave = async (
+  input: MilkbarCmsUpdateInput
+): Promise<void> => {
+  const publicPaths = collectDrawingImagePublicPaths(input);
+  if (publicPaths.length === 0) return;
+
+  const repository = await getCmsBuilderImageFileRepository();
+  const imageFiles = await repository.listImageFiles();
+  const imageFileByPublicPath = new Map<string, ImageFileRecord>();
+  imageFiles.forEach((imageFile) => {
+    const publicPath = resolveCmsImageRecordPublicPath(imageFile);
+    if (publicPath !== undefined) imageFileByPublicPath.set(publicPath, imageFile);
+  });
+
+  await Promise.all(
+    publicPaths.map(async (publicPath) => {
+      const imageFile = imageFileByPublicPath.get(publicPath);
+      if (imageFile === undefined) {
+        logMilkbarSystemEvent({
+          level: 'warn',
+          message: '[milkbar-cms] staged drawing image record was not found for FastComet upload.',
+          context: { publicPath },
+        });
+        return;
+      }
+      if (isCmsImageUploadedToFastComet(imageFile)) return;
+      await uploadCmsFastCometMediaInRedisRuntime({
+        folder: MILKBAR_CMS_VISUALISATION_FOLDER,
+        imageFileId: imageFile.id,
+        mimetype: imageFile.mimetype,
+        publicPath,
+        requestedAt: new Date().toISOString(),
+      });
+    })
+  );
+};
+
+const isMilkbarAssetUploadedToFastComet = (asset: Asset3DRecord): boolean => {
+  const storageSource = metadataString(asset.metadata, 'storageSource');
+  const status = metadataString(asset.metadata, 'fastCometUploadStatus');
+  if (storageSource === 'fastcomet' || status === 'completed') return true;
+  return [asset.filepath, asset.fileUrl].some(
+    (value) => typeof value === 'string' && isAbsoluteHttpUrl(value)
+  );
+};
+
+const uploadMilkbarModelAssetsToFastCometOnSave = async (
+  input: MilkbarCmsUpdateInput
+): Promise<void> => {
+  const assetIds = collectModelAssetIds(input);
+  if (assetIds.length === 0) return;
+
+  await Promise.all(
+    assetIds.map(async (assetId) => {
+      const asset = await getAsset3DFromLookupRepositories(assetId);
+      if (asset === null) {
+        logMilkbarSystemEvent({
+          level: 'warn',
+          message: '[milkbar-cms] staged 3D asset record was not found for FastComet upload.',
+          context: { assetId },
+        });
+        return;
+      }
+      if (isMilkbarAssetUploadedToFastComet(asset)) return;
+      await uploadMilkbarAsset3DInRedisRuntime({
+        assetId,
+        requestedAt: new Date().toISOString(),
+      });
+    })
+  );
+};
+
+export const uploadMilkbarCmsFilesToFastCometOnSave = async (
+  input: MilkbarCmsUpdateInput
+): Promise<void> => {
+  await Promise.all([
+    uploadMilkbarCmsMediaToFastCometOnSave(input),
+    uploadMilkbarModelAssetsToFastCometOnSave(input),
+  ]);
+};
+
 const optionalStringProp = <K extends string>(
   key: K,
   value: string | undefined
@@ -1128,7 +1271,9 @@ export async function getMilkbarDesignersCmsSnapshot(): Promise<MilkbarCmsSnapsh
 export async function saveMilkbarDesignersCmsSnapshot(
   input: unknown
 ): Promise<MilkbarCmsSnapshot> {
-  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizeUpdateInput(input), 'local');
+  const normalizedInput = normalizeUpdateInput(input);
+  await uploadMilkbarCmsFilesToFastCometOnSave(normalizedInput);
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizedInput, 'local');
   const now = new Date();
 
   try {

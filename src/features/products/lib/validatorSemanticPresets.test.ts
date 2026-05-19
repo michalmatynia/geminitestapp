@@ -7,6 +7,7 @@ import {
   buildLatestFieldMirrorPatternPayload,
   buildNameMirrorPolishSequenceBundle,
   buildNameSegmentCategoryTemplatePayload,
+  buildNameSegmentDimensionsTemplatePayload,
   buildStarGaterProducerTemplatePayload,
   buildSkuAutoIncrementSequenceBundle,
   getValidatorTemplatePresetByType,
@@ -57,6 +58,31 @@ describe('validator semantic presets', () => {
     expect(getValidatorTemplatePresetByType('name-segment-dimensions')?.patterns).toHaveLength(1);
     expect(getValidatorTemplatePresetByType('producer-stargater')?.patterns).toHaveLength(1);
     expect(getValidatorTemplatePresetByType('missing')).toBeNull();
+  });
+
+  it('builds the name segment dimensions template as a Length replacement proposal', () => {
+    const payload = buildNameSegmentDimensionsTemplatePayload();
+    const recipe = parseDynamicReplacementRecipe(payload.replacementValue);
+
+    expect(payload).toMatchObject({
+      label: 'Name Segment: Dimensions',
+      target: 'size_length',
+      regex: '^0$',
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      replacementFields: ['sizeLength'],
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment2',
+      launchOperator: 'regex',
+    });
+    expect(recipe).toMatchObject({
+      sourceMode: 'form_field',
+      sourceField: 'nameEnSegment2',
+      sourceRegex: '([+-]?\\d+(?:[.,]\\d+)?)',
+      sourceMatchGroup: 1,
+      targetApply: 'replace_whole_field',
+    });
   });
 
   it('builds the StarGater producer template with producer replacement wiring', () => {

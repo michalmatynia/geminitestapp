@@ -11,10 +11,10 @@ const normalizeErrorMessage = (error: unknown): string | null => {
 };
 
 export const resolveIntegrationSelectionErrorMessage = (error: unknown): string | null => {
-  if (!error) return null;
+  if (error === null || error === undefined) return null;
 
   const message = normalizeErrorMessage(error);
-  return message
+  return (message !== null && message.length > 0)
     ? `Unable to load integrations: ${message}.`
     : 'Unable to load integrations.';
 };

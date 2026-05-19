@@ -26,67 +26,6 @@ import { DailyPlanCheckpointsSection } from './components/DailyPlanCheckpointsSe
 import { DailyPlanResultsSection } from './components/DailyPlanResultsSection';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 
-function PlanSections({
-  copy,
-  locale,
-  lessonCheckpoints,
-  lessonMastery,
-  dailyPlanBadges,
-  dailyPlanAssignments,
-  duelPlan,
-  openDuelSession,
-  lessonFocusSummary,
-}: {
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  locale: string;
-  lessonCheckpoints: ReturnType<typeof useKangurMobileLessonCheckpoints>;
-  lessonMastery: ReturnType<typeof useKangurMobileDailyPlanLessonMastery>;
-  dailyPlanBadges: ReturnType<typeof useKangurMobileDailyPlanBadges>;
-  dailyPlanAssignments: ReturnType<typeof useKangurMobileDailyPlanAssignments>;
-  duelPlan: ReturnType<typeof useKangurMobileDailyPlanDuels>;
-  openDuelSession: (sessionId: string) => void;
-  lessonFocusSummary: string | null;
-}): React.JSX.Element {
-  return (
-    <>
-      <DailyPlanFocusSection
-        copy={copy}
-        isAuthenticated={duelPlan.isAuthenticated}
-        isLoading={duelPlan.isLoading}
-        scoreError={duelPlan.scoreError}
-        strongestFocus={duelPlan.strongestFocus}
-        weakestFocus={duelPlan.weakestFocus}
-      />
-      <DailyPlanBadgesSection
-        copy={copy}
-        recentBadges={dailyPlanBadges.recentBadges}
-        remainingBadges={dailyPlanBadges.remainingBadges}
-        totalBadges={dailyPlanBadges.totalBadges}
-        unlockedBadges={dailyPlanBadges.unlockedBadges}
-      />
-      <DailyPlanDuelsSection
-        copy={copy}
-        duelPlan={duelPlan}
-        locale={locale}
-        openDuelSession={openDuelSession}
-      />
-      <DailyPlanAssignmentsSection
-        assignmentItems={dailyPlanAssignments.assignmentItems}
-        copy={copy}
-      />
-      <DailyPlanMasterySection
-        copy={copy}
-        lessonFocusSummary={lessonFocusSummary}
-        lessonMastery={lessonMastery}
-      />
-      <DailyPlanCheckpointsSection
-        copy={copy}
-        lessonCheckpoints={lessonCheckpoints}
-      />
-    </>
-  );
-}
-
 function DailyPlanHeader({
   assignmentsCount,
   authError,
@@ -126,67 +65,6 @@ function DailyPlanHeader({
       signIn={() => { void signIn(); }}
       supportsLearnerCredentials={supportsLearnerCredentials}
     />
-  );
-}
-
-function PlanContentSections({
-  copy,
-  locale,
-  lessonCheckpoints,
-  lessonMastery,
-  dailyPlanBadges,
-  dailyPlanAssignments,
-  duelPlan,
-  openDuelSession,
-  lessonFocusSummary,
-}: {
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  locale: string;
-  lessonCheckpoints: ReturnType<typeof useKangurMobileLessonCheckpoints>;
-  lessonMastery: ReturnType<typeof useKangurMobileDailyPlanLessonMastery>;
-  dailyPlanBadges: ReturnType<typeof useKangurMobileDailyPlanBadges>;
-  dailyPlanAssignments: ReturnType<typeof useKangurMobileDailyPlanAssignments>;
-  duelPlan: ReturnType<typeof useKangurMobileDailyPlanDuels>;
-  openDuelSession: (sessionId: string) => void;
-  lessonFocusSummary: string | null;
-}): React.JSX.Element {
-  return (
-    <>
-      <DailyPlanFocusSection
-        copy={copy}
-        isAuthenticated={duelPlan.isAuthenticated}
-        isLoading={duelPlan.isLoading}
-        scoreError={duelPlan.scoreError}
-        strongestFocus={duelPlan.strongestFocus}
-        weakestFocus={duelPlan.weakestFocus}
-      />
-      <DailyPlanBadgesSection
-        copy={copy}
-        recentBadges={dailyPlanBadges.recentBadges}
-        remainingBadges={dailyPlanBadges.remainingBadges}
-        totalBadges={dailyPlanBadges.totalBadges}
-        unlockedBadges={dailyPlanBadges.unlockedBadges}
-      />
-      <DailyPlanDuelsSection
-        copy={copy}
-        duelPlan={duelPlan}
-        locale={locale}
-        openDuelSession={openDuelSession}
-      />
-      <DailyPlanAssignmentsSection
-        assignmentItems={dailyPlanAssignments.assignmentItems}
-        copy={copy}
-      />
-      <DailyPlanMasterySection
-        copy={copy}
-        lessonFocusSummary={lessonFocusSummary}
-        lessonMastery={lessonMastery}
-      />
-      <DailyPlanCheckpointsSection
-        copy={copy}
-        lessonCheckpoints={lessonCheckpoints}
-      />
-    </>
   );
 }
 

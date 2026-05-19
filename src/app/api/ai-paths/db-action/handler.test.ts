@@ -9,12 +9,14 @@ const {
   isCollectionAllowedMock,
   parseJsonBodyMock,
   getMongoDbMock,
+  getProductsMongoDbMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessOrInternalMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
   isCollectionAllowedMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
   getMongoDbMock: vi.fn(),
+  getProductsMongoDbMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -29,6 +31,10 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
+}));
+
+vi.mock('@/shared/lib/db/product-mongo-client', () => ({
+  getMongoDb: getProductsMongoDbMock,
 }));
 
 import { postHandler } from './handler';
@@ -56,7 +62,8 @@ describe('ai-paths db-action handler', () => {
     const findMock = vi.fn().mockReturnValue({ limit: limitMock });
     const countDocumentsMock = vi.fn().mockResolvedValue(1);
 
-    getMongoDbMock.mockReset().mockResolvedValue({
+    getMongoDbMock.mockReset();
+    getProductsMongoDbMock.mockReset().mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         find: findMock,
         countDocuments: countDocumentsMock,
@@ -91,6 +98,8 @@ describe('ai-paths db-action handler', () => {
       expect.objectContaining({ userId: 'user-1' }),
       'db-action'
     );
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       items: [{ _id: '1', name: 'Sample' }],
       count: 1,
@@ -108,7 +117,7 @@ describe('ai-paths db-action handler', () => {
       upsertedId: null,
     });
 
-    getMongoDbMock.mockResolvedValueOnce({
+    getProductsMongoDbMock.mockResolvedValueOnce({
       collection: vi.fn().mockReturnValue({
         updateOne: updateOneMock,
       }),
@@ -138,6 +147,8 @@ describe('ai-paths db-action handler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(getProductsMongoDbMock).toHaveBeenCalledTimes(1);
+    expect(getMongoDbMock).not.toHaveBeenCalled();
     expect(updateOneMock).toHaveBeenCalledWith(
       {
         $or: [{ id: 'product-1' }, { _id: 'product-1' }],

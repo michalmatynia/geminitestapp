@@ -12,12 +12,14 @@ const {
   invalidateAllMock,
   getProductBySkuMock,
   createProductMock,
+  enqueueProductImagesFastCometUploadOnSaveMock,
   formDataToObjectMock,
   validateProductCreateMiddlewareMock,
 } = vi.hoisted(() => ({
   invalidateAllMock: vi.fn(),
   getProductBySkuMock: vi.fn(),
   createProductMock: vi.fn(),
+  enqueueProductImagesFastCometUploadOnSaveMock: vi.fn(),
   formDataToObjectMock: vi.fn(),
   validateProductCreateMiddlewareMock: vi.fn(),
 }));
@@ -46,6 +48,11 @@ vi.mock('@/features/products/server', async () => {
 
 vi.mock('@/features/products/validations/middleware', () => ({
   validateProductCreateMiddleware: (...args: unknown[]) => validateProductCreateMiddlewareMock(...args),
+}));
+
+vi.mock('./product-fastcomet-save-sync', () => ({
+  enqueueProductImagesFastCometUploadOnSave: (...args: unknown[]) =>
+    enqueueProductImagesFastCometUploadOnSaveMock(...args),
 }));
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
@@ -100,6 +107,7 @@ describe('products postHandler', () => {
     invalidateAllMock.mockReset();
     getProductBySkuMock.mockReset();
     createProductMock.mockReset();
+    enqueueProductImagesFastCometUploadOnSaveMock.mockReset();
     formDataToObjectMock.mockReset();
     validateProductCreateMiddlewareMock.mockReset();
     clearProductCreateRuntimeStatuses();
@@ -134,6 +142,10 @@ describe('products postHandler', () => {
 
     expect(validateProductCreateMiddlewareMock).toHaveBeenCalledTimes(1);
     expect(createProductMock).toHaveBeenCalledTimes(1);
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledWith(
+      createdProduct,
+      'user-1'
+    );
     const [submittedFormData, submittedOptions]: [
       FormData,
       { userId: string },
@@ -144,6 +156,45 @@ describe('products postHandler', () => {
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(createdProduct);
+  });
+
+  it('enqueues local product images for FastComet after create save', async () => {
+    const createdProduct = {
+      id: 'product-1',
+      sku: 'KEYCHA9999',
+      images: [
+        {
+          imageFileId: 'image-local-1',
+          imageFile: {
+            id: 'image-local-1',
+            filepath: '/uploads/products/KEYCHA9999/photo.webp',
+            storageProvider: 'local',
+          },
+        },
+      ],
+    };
+
+    validateProductCreateMiddlewareMock.mockResolvedValue({ success: true, data: {} });
+    createProductMock.mockResolvedValue(createdProduct);
+
+    const formData = new FormData();
+    formData.append('sku', 'KEYCHA9999');
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products', {
+        method: 'POST',
+        body: formData,
+      }),
+      createContext('user-1')
+    );
+
+    expect(response.status).toBe(200);
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledTimes(1);
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledWith(
+      createdProduct,
+      'user-1'
+    );
+    expect(invalidateAllMock).toHaveBeenCalledTimes(1);
   });
 
   it('queues runtime product creation and exposes completion status', async () => {
@@ -191,6 +242,10 @@ describe('products postHandler', () => {
     await deferredCreate.promise;
     await flushRuntimeTasks();
 
+    expect(enqueueProductImagesFastCometUploadOnSaveMock).toHaveBeenCalledWith(
+      createdProduct,
+      'user-1'
+    );
     expect(invalidateAllMock).toHaveBeenCalledTimes(1);
     expect(getProductCreateRuntimeStatus('test-request')).toMatchObject({
       status: 'completed',

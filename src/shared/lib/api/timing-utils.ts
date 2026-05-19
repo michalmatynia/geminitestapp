@@ -20,6 +20,7 @@ export const buildServerTiming = (
   return Object.entries(entries)
     .filter(
       ([, value]) =>
+        // Only include valid, non-negative finite numbers to prevent malformed Server-Timing headers.
         typeof value === 'number' && Number.isFinite(value) && value >= 0
     )
     .map(([name, value]) => `${name};dur=${Math.round(value as number)}`)
@@ -46,6 +47,7 @@ export const attachTimingHeaders = (
     } catch (error) {
       // In some environments, headers might be read-only at this point.
       // We log but don't crash the request for a non-critical timing header.
+      // This is a graceful degradation: missing metrics are better than a failed request.
       void logSystemEvent({
         level: 'warn',
         message: '[timing] Failed to attach Server-Timing headers',

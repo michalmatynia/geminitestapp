@@ -34,6 +34,7 @@ import {
   MailClientFocusedRecentThreads,
 } from './AdminFilemakerMailClientPage.focused-recent';
 import { MailClientFocusedSyncStatus } from './AdminFilemakerMailClientPage.focused-sync';
+import { MailClientAccountCampaignsPanel } from './AdminFilemakerMailClientPage.account-campaigns';
 
 type MailClientFocusedAccountSectionProps = {
   account: FilemakerMailAccount | null;
@@ -214,6 +215,7 @@ function MailClientFocusedAccountRelatedContent({
         primaryFolder={primaryFolder}
       />
       {folders.length > 0 ? <MailClientMailboxShortcuts accountId={accountId} folders={folders} /> : null}
+      <MailClientAccountCampaignsPanel accountId={accountId} />
     </>
   );
 }

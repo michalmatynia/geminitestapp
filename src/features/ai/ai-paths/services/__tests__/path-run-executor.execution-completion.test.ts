@@ -82,7 +82,8 @@ describe('handleExecutionCompletion', () => {
       accOutputs: {
         'node-prompt': {
           status: 'waiting_callback',
-          message: 'Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)',
+          message:
+            'Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)',
           waitingOnPorts: ['bundle'],
         },
       },
@@ -117,6 +118,62 @@ describe('handleExecutionCompletion', () => {
         status: 'failed',
         errorMessage:
           'Run failed while waiting at Prompt: Description EN->PL (waiting on: bundle). Upstream waiting diagnostics: Upstream status for bundle: JSON Parser (waiting_callback)',
+      })
+    );
+  });
+
+  it('fails when required processing nodes never produced runtime outputs', async () => {
+    const updateRunSnapshot = vi.fn().mockResolvedValue(true);
+
+    const status = await handleExecutionCompletion({
+      run: {
+        id: 'run-3',
+      } as never,
+      nodes: [
+        {
+          id: 'node-trigger',
+          type: 'trigger',
+          title: 'Description trigger',
+        },
+        {
+          id: 'node-db',
+          type: 'database',
+          title: 'Save generated description',
+        },
+      ] as never,
+      accOutputs: {},
+      runtimeHaltReason: null,
+      nodeValidationEnabled: true,
+      blockedRunPolicy: 'fail_run',
+      requiredProcessingNodeIds: ['node-db'],
+      runMetaWithRuntimeContext: {},
+      runStartedAt: '2026-04-09T15:29:17.699Z',
+      traceId: 'trace-3',
+      profileSnapshot: {
+        traceId: 'trace-3',
+        recordedAt: '2026-04-09T15:29:20.165Z',
+        eventCount: 0,
+        sampledEventCount: 0,
+        droppedEventCount: 0,
+        summary: null,
+        highlights: [],
+        nodeSpans: [],
+      },
+      stateManager: {
+        buildCurrentRuntimeStateSnapshot: vi.fn().mockResolvedValue({
+          history: [],
+        }),
+      } as never,
+      updateRunSnapshot,
+    });
+
+    expect(status).toBe('failed');
+    expect(updateRunSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'failed',
+        errorMessage:
+          'Run finished before executing required AI-Path node: Save generated description (database).',
+        finishedAt: expect.any(String),
       })
     );
   });

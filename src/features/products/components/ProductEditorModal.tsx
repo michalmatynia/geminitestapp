@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductNormalizeTracking } from '@/features/products/hooks/useProductNormalizeTracking';
+import type { ProductOperationInfo } from '@/features/products/hooks/useProductOperations.helpers';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { FormModal } from '@/shared/ui/FormModal';
@@ -25,7 +26,7 @@ export type ProductEditorModalProps = {
   providerKey: string;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
-  onSuccess: (info?: { queued?: boolean }) => void;
+  onSuccess: (info?: ProductOperationInfo) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   initialSku?: string;
   initialCatalogId?: string;

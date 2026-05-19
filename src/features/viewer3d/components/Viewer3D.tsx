@@ -245,7 +245,7 @@ function Viewer3DReadyCanvas(props: Viewer3DReadyCanvasProps): React.JSX.Element
     >
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }}
-        shadows={s.enableShadows}
+        shadows={s.enableShadows ? 'soft' : false}
         gl={{ preserveDrawingBuffer: true, antialias: !s.enableAntiAliasing, toneMapping: resolveToneMapping(s.enableToneMapping), toneMappingExposure: s.exposure, outputColorSpace: THREE.SRGBColorSpace }}
         dpr={[1, 2]}
         eventSource={eventSource}

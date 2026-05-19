@@ -452,17 +452,22 @@ export async function listSocialArticles(options: {
   offset?: number;
   search?: string;
   scrapeRunId?: string;
+  sourcePresetId?: string;
 } = {}): Promise<{ articles: SocialArticleRecord[]; total: number }> {
   const limit = Math.min(options.limit ?? 50, 200);
   const offset = options.offset ?? 0;
   const search = options.search?.trim().toLowerCase() ?? '';
   const scrapeRunId = options.scrapeRunId?.trim() ?? '';
+  const sourcePresetId = options.sourcePresetId?.trim() ?? '';
 
   if (!hasMongo()) {
     const store = await readLocalStore();
     let filtered = scrapeRunId
       ? store.articles.filter((a) => a.lastScrapeRunId === scrapeRunId)
       : store.articles;
+    if (sourcePresetId) {
+      filtered = filtered.filter((a) => a.sourcePresetId === sourcePresetId);
+    }
     if (search) {
       filtered = filtered.filter(
         (a) =>
@@ -480,6 +485,7 @@ export async function listSocialArticles(options: {
   const col = await collection<ArticleDoc>(SOCIAL_ARTICLES_COLLECTION);
   const andClauses: Filter<ArticleDoc>[] = [];
   if (scrapeRunId) andClauses.push({ lastScrapeRunId: scrapeRunId });
+  if (sourcePresetId) andClauses.push({ sourcePresetId });
   if (search) {
     andClauses.push({ $or: [
       { title: { $regex: search, $options: 'i' } },

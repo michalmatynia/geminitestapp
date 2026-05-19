@@ -15,6 +15,7 @@ import { useProductListHeaderActionsContext } from '@/features/products/context/
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import { isNormalizeProductNamePath } from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { Button } from '@/shared/ui/button';
@@ -240,7 +241,7 @@ function ProductFormModalActions(props: {
 
 function ProductFormModalContent(props: {
   showFileManager: boolean;
-  handleMultiFileSelect: (selected: unknown) => void;
+  handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   submitButtonText: string;
   validatorSessionKey?: string;
   validationInstanceScopeOverride?: ProductFormScope;

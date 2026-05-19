@@ -31,9 +31,11 @@ type BrainPersistenceParams = Parameters<typeof useBrainPersistence>[0];
 const createParams = (
   overrides: Partial<BrainPersistenceParams> = {}
 ): BrainPersistenceParams & {
+  updateBrainRoutingMutateAsync: ReturnType<typeof vi.fn>;
   updateSettingMutateAsync: ReturnType<typeof vi.fn>;
   updateSettingsBulkMutateAsync: ReturnType<typeof vi.fn>;
 } => {
+  const updateBrainRoutingMutateAsync = vi.fn().mockResolvedValue({ settings: defaultBrainSettings });
   const updateSettingMutateAsync = vi.fn().mockResolvedValue({});
   const updateSettingsBulkMutateAsync = vi.fn().mockResolvedValue([]);
 
@@ -120,7 +122,12 @@ const createParams = (
       },
     },
     settingsMap: undefined,
+    storedRoutingSettings: undefined,
     toast: vi.fn(),
+    updateBrainRouting: {
+      mutateAsync: updateBrainRoutingMutateAsync,
+      isPending: false,
+    } as BrainPersistenceParams['updateBrainRouting'],
     updateSetting: {
       mutateAsync: updateSettingMutateAsync,
       isPending: false,
@@ -134,6 +141,7 @@ const createParams = (
   return {
     ...params,
     ...overrides,
+    updateBrainRoutingMutateAsync,
     updateSettingMutateAsync,
     updateSettingsBulkMutateAsync,
   };
@@ -195,7 +203,7 @@ describe('useBrainPersistence', () => {
       result.current.hydrateFromSettingsMap(settingsMap);
     });
 
-    expect(params.setSettings).toHaveBeenCalledWith(parsedSettings);
+    expect(params.setSettings).not.toHaveBeenCalled();
     expect(params.setOpenaiApiKey).toHaveBeenCalledWith('openai-live');
     expect(params.setAnthropicApiKey).toHaveBeenCalledWith('anthropic-live');
     expect(params.setGeminiApiKey).toHaveBeenCalledWith('gemini-live');
@@ -212,20 +220,7 @@ describe('useBrainPersistence', () => {
       { pool: 'playwrightPersonas', value: 'persona-b' },
     ]);
 
-    expect(params.setOverridesEnabled).toHaveBeenCalledWith({
-      ...DEFAULT_BRAIN_OVERRIDES_ENABLED,
-      products: true,
-      integrations: true,
-      cms_builder: false,
-      image_studio: false,
-      prompt_engine: false,
-      ai_paths: false,
-      chatbot: false,
-      kangur_ai_tutor: false,
-      case_resolver: false,
-      agent_runtime: false,
-      agent_teaching: false,
-    });
+    expect(params.setOverridesEnabled).not.toHaveBeenCalled();
 
     const analyticsMinutesUpdater = params.setAnalyticsScheduleMinutes.mock.calls[0]?.[0] as (
       prev: number
@@ -277,16 +272,11 @@ describe('useBrainPersistence', () => {
       await result.current.handleSave();
     });
 
-    expect(params.updateSettingMutateAsync).toHaveBeenCalledTimes(2);
+    expect(params.updateBrainRoutingMutateAsync).toHaveBeenCalledTimes(1);
+    expect(params.updateSettingMutateAsync).toHaveBeenCalledTimes(1);
     expect(params.updateSettingsBulkMutateAsync).toHaveBeenCalledTimes(1);
 
-    const savedSettingsPayload = params.updateSettingMutateAsync.mock.calls[0]?.[0] as {
-      key: string;
-      value: string;
-    };
-    expect(savedSettingsPayload.key).toBe(AI_BRAIN_SETTINGS_KEY);
-
-    const savedSettings = JSON.parse(savedSettingsPayload.value) as AiBrainSettings;
+    const savedSettings = params.updateBrainRoutingMutateAsync.mock.calls[0]?.[0] as AiBrainSettings;
     expect(savedSettings.defaults.provider).toBe('model');
     expect(savedSettings.assignments.products?.provider).toBe('model');
     expect(savedSettings.assignments.products?.modelId).toBe('product-agent');
@@ -295,7 +285,7 @@ describe('useBrainPersistence', () => {
     expect(savedSettings.capabilities['product.description.generation']?.provider).toBe('model');
     expect(savedSettings.capabilities['image_studio.general']?.modelId).toBe('gpt-image-2');
 
-    const savedCatalogPayload = params.updateSettingMutateAsync.mock.calls[1]?.[0] as {
+    const savedCatalogPayload = params.updateSettingMutateAsync.mock.calls[0]?.[0] as {
       key: string;
       value: string;
     };
@@ -339,7 +329,7 @@ describe('useBrainPersistence', () => {
 
   it('logs and toasts when saving fails', async () => {
     const params = createParams();
-    params.updateSettingMutateAsync.mockRejectedValueOnce(new Error('boom'));
+    params.updateBrainRoutingMutateAsync.mockRejectedValueOnce(new Error('boom'));
 
     const { result } = renderHook(() => useBrainPersistence(params));
 
@@ -367,6 +357,7 @@ describe('useBrainPersistence', () => {
     ]);
     const params = createParams({
       settingsMap,
+      storedRoutingSettings: resetSettings,
     });
 
     const { result } = renderHook(() => useBrainPersistence(params));

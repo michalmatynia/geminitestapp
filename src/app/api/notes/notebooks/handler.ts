@@ -7,8 +7,30 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
+ * Note Notebooks API Handlers
+ *
+ * HTTP request handlers for notebook management.
+ * Handlers: getHandler, postHandler
+ *
+ * - Lists and creates notebooks for organizing notes
+ * - Manages notebook metadata and settings
+ * - Handles notebook access control
+ */
+
+/**
  * GET /api/notes/notebooks
  * Fetches all notebooks (creates a default if none exist).
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const notebooks = await noteService.getAllNotebooks();
@@ -18,6 +40,17 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
 /**
  * POST /api/notes/notebooks
  * Creates a notebook.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, notebookCreateSchema, {

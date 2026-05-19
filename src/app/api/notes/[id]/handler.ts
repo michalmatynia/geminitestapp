@@ -9,8 +9,30 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
+ * Note Detail API Handlers
+ *
+ * HTTP request handlers for individual note operations.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Retrieves, updates, and deletes individual notes
+ * - Manages note content and metadata
+ * - Handles note archival and restoration
+ */
+
+/**
  * GET /api/notes/[id]
  * Fetches a single note by ID.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(
   _req: NextRequest,
@@ -30,6 +52,17 @@ export async function getHandler(
 /**
  * PATCH /api/notes/[id]
  * Updates a note.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function patchHandler(
   req: NextRequest,
@@ -53,6 +86,17 @@ export async function patchHandler(
 /**
  * DELETE /api/notes/[id]
  * Deletes a note.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   _req: NextRequest,

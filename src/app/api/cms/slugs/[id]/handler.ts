@@ -21,6 +21,17 @@ import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * CMS Slug Detail API Handlers
+ *
+ * HTTP request handlers for individual CMS slug operations.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Retrieves, updates, and deletes CMS slugs
+ * - Manages URL slug generation and validation
+ * - Handles slug uniqueness and redirects
+ */
+
 export const querySchema = z.object({
   domainId: optionalTrimmedQueryString(),
 });
@@ -44,6 +55,17 @@ const resolveDomainFromRequest = async (
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -65,6 +87,17 @@ export async function getHandler(
 /**
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   req: NextRequest,
@@ -97,6 +130,17 @@ export async function deleteHandler(
 /**
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function putHandler(
   req: NextRequest,

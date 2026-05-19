@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 
+import { runSocialArticleSourceScripter } from '@/features/playwright/scripters/social-article-adapter';
 import { withSocialArticleAggregatorScanActionRunSteps } from '@/features/playwright/scan-steps';
 import { SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/social-article-aggregator-runtime-constants';
 import {
@@ -28,6 +29,8 @@ export async function executeSocialArticleAggregatorScrapeRuntime(
         input.emit(type, payload);
       },
       log: (message, context) => input.log(message, context),
+      runScripter: (source, options) =>
+        runSocialArticleSourceScripter(input.page, source, options),
     },
     input.input as SocialArticleAggregatorScrapeInput
   );

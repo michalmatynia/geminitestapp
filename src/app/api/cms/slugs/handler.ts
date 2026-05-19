@@ -16,6 +16,17 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import {
+
+/**
+ * CMS Slugs API Handlers
+ *
+ * HTTP request handlers for CMS slug management.
+ * Handlers: getHandler, postHandler
+ *
+ * - Lists and creates CMS page slugs
+ * - Manages slug routing and resolution
+ * - Validates slug naming conventions
+ */
   normalizeOptionalQueryString,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
@@ -75,6 +86,17 @@ const parseBody = async (
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -94,6 +116,17 @@ export async function getHandler(
 /**
  * API handler for POST /api/cms/slugs
  * Creates a new slug or links an existing one to the domain, logs the activity, and returns the slug record.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;

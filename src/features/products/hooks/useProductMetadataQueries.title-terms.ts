@@ -12,7 +12,6 @@ import {
 
 import {
   hasMutationId,
-  normalizeOptionalIdentifier,
   productMetadataKeys,
   resolveMetadataQueryEnabled,
   STABLE_METADATA_QUERY_OPTIONS,
@@ -20,44 +19,32 @@ import {
 } from './useProductMetadataQueries.shared';
 
 type TitleTermRequestParams = {
-  catalogId?: string;
   type?: ProductTitleTermType;
 };
 
-const buildTitleTermRequestParams = (
-  catalogId: string | null,
-  type: ProductTitleTermType | null
-): TitleTermRequestParams => ({
-  ...(catalogId !== null ? { catalogId } : {}),
+const buildTitleTermRequestParams = (type: ProductTitleTermType | null): TitleTermRequestParams => ({
   ...(type !== null ? { type } : {}),
 });
 
-const resolveTitleTermsEnabled = (
-  catalogId: string | null,
-  allowWithoutCatalog: boolean,
-  options?: ProductMetadataQueryOptions
-): boolean =>
-  (allowWithoutCatalog || catalogId !== null) && resolveMetadataQueryEnabled(options);
+const resolveTitleTermsEnabled = (options?: ProductMetadataQueryOptions): boolean =>
+  resolveMetadataQueryEnabled(options);
 
 export function useTitleTerms(
-  catalogId?: string,
+  _catalogId?: string,
   type?: ProductTitleTermType | null,
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductTitleTerm> {
-  const allowWithoutCatalog = options?.allowWithoutCatalog ?? false;
-  const resolvedCatalogId = normalizeOptionalIdentifier(catalogId);
   const resolvedType = type ?? null;
-  const queryKey = productMetadataKeys.titleTerms(resolvedCatalogId, resolvedType);
+  const queryKey = productMetadataKeys.titleTerms(null, resolvedType);
   return useListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductTitleTerm[]> => {
-      if (resolvedCatalogId === null && !allowWithoutCatalog) return [];
       return await api.get<ProductTitleTerm[]>('/api/v2/products/title-terms', {
-        params: buildTitleTermRequestParams(resolvedCatalogId, resolvedType),
+        params: buildTitleTermRequestParams(resolvedType),
         cache: 'no-store',
       });
     },
-    enabled: resolveTitleTermsEnabled(resolvedCatalogId, allowWithoutCatalog, options),
+    enabled: resolveTitleTermsEnabled(options),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useTitleTerms',
@@ -76,7 +63,6 @@ export function useSaveTitleTermMutation(): SaveMutation<
   {
     id?: string;
     data: {
-      catalogId: string;
       type: ProductTitleTermType;
       name_en: string;
       name_pl?: string | null;
@@ -85,10 +71,16 @@ export function useSaveTitleTermMutation(): SaveMutation<
 > {
   const mutationKey = [...productMetadataKeys.all, 'title-terms', 'save'] as const;
   return useMutationV2({
-    mutationFn: ({ id, data }) =>
-      hasMutationId(id)
-        ? api.put<ProductTitleTerm>(`/api/v2/products/title-terms/${id}`, data)
-        : api.post<ProductTitleTerm>('/api/v2/products/title-terms', data),
+    mutationFn: ({ id, data }) => {
+      const payload = {
+        type: data.type,
+        name_en: data.name_en,
+        name_pl: data.name_pl,
+      };
+      return hasMutationId(id)
+        ? api.put<ProductTitleTerm>(`/api/v2/products/title-terms/${id}`, payload)
+        : api.post<ProductTitleTerm>('/api/v2/products/title-terms', payload);
+    },
     mutationKey,
     meta: {
       source: 'products.hooks.useSaveTitleTermMutation',
@@ -108,10 +100,7 @@ export function useSaveTitleTermMutation(): SaveMutation<
   });
 }
 
-export function useDeleteTitleTermMutation(): DeleteMutation<
-  void,
-  { id: string; catalogId?: string | null }
-> {
+export function useDeleteTitleTermMutation(): DeleteMutation<void, { id: string }> {
   const mutationKey = [...productMetadataKeys.all, 'title-terms', 'delete'] as const;
   return useDeleteMutationV2({
     mutationFn: async ({ id }): Promise<void> => {
@@ -127,9 +116,9 @@ export function useDeleteTitleTermMutation(): DeleteMutation<
       tags: ['products', 'metadata', 'title-terms', 'delete'],
       description: 'Deletes products metadata title terms.',
     },
-    invalidate: async (queryClient, _data, variables): Promise<void> => {
+    invalidate: async (queryClient): Promise<void> => {
       await Promise.all([
-        invalidateProductTitleTerms(queryClient, variables.catalogId ?? null),
+        invalidateProductTitleTerms(queryClient),
         invalidateProductMetadata(queryClient),
       ]);
     },

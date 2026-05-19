@@ -10,6 +10,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
 import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
+  ASSETS3D_STORAGE_SOURCE_SETTING_KEY,
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
@@ -45,6 +46,20 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
     void ErrorSystem.captureException(error);
     return null;
   }
+};
+
+/**
+ * Reads the storage source for generic 3D assets from the database or environment variables.
+ * Defaults to 'local' so 3D asset uploads never fall through to the global FastComet config
+ * unless explicitly configured.
+ */
+export const getAssets3DStorageSource = async (): Promise<FileStorageSource> => {
+  const raw = await readMongoSettingValue(ASSETS3D_STORAGE_SOURCE_SETTING_KEY);
+  return (
+    parseFileStorageSource(raw) ??
+    parseFileStorageSource(process.env['ASSETS3D_STORAGE_SOURCE'] ?? null) ??
+    'local'
+  );
 };
 
 /**

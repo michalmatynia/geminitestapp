@@ -12,6 +12,17 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Files API Handlers
+ *
+ * HTTP request handlers for file management.
+ * Handlers: getHandler, postHandler
+ *
+ * - Lists and uploads files
+ * - Manages file metadata and associations
+ * - Handles file storage and CDN routing
+ */
+
 export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
   productId: optionalTrimmedQueryString(),
@@ -63,6 +74,17 @@ const applyFileFiltering = (
   imageFileToProducts: Map<string, Array<{ product: { id: string; name: string } }>>
 ): boolean => (!isFilterActive || imageFileToProducts.has(file.id));
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 

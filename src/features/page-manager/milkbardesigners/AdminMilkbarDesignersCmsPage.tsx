@@ -106,8 +106,8 @@ type MilkbarInquiryStatusUpdateResponse = {
   ok: boolean;
 };
 
-const CONTENT_FOLDER_ALL_SECTIONS = ['nav', 'hero', 'drawing', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
-const CONTENT_FOLDER_DEFAULT_ORDER = ['hero', 'drawing', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
+const CONTENT_FOLDER_ALL_SECTIONS = ['nav', 'hero', 'drawing', 'codeStudio', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
+const CONTENT_FOLDER_DEFAULT_ORDER = ['hero', 'drawing', 'codeStudio', 'philosophy', 'services', 'process', 'metrics', 'caseStudy', 'quote', 'footer'] as const;
 
 const linesToText = (lines: string[]): string => lines.join('\n');
 const textToLines = (value: string): string[] =>
@@ -278,6 +278,7 @@ const normalizeMilkbarPageContentForClient = (
   const nav = readRecordValue(content['nav']);
   const hero = readRecordValue(content['hero']);
   const drawing = readRecordValue(content['drawing']);
+  const codeStudio = readRecordValue(content['codeStudio']);
   const philosophy = readRecordValue(content['philosophy']);
   const services = readRecordValue(content['services']);
   const projects = readRecordValue(content['projects']);
@@ -320,6 +321,13 @@ const normalizeMilkbarPageContentForClient = (
       ),
       interiorModelAssetId: readOptionalStringValue(drawing['interiorModelAssetId']),
       interiorModelUrl: readOptionalStringValue(drawing['interiorModelUrl']),
+    },
+    codeStudio: {
+      eyebrow: readStringValue(codeStudio['eyebrow'], fallback.codeStudio.eyebrow),
+      subLabel: readStringValue(codeStudio['subLabel'], fallback.codeStudio.subLabel),
+      heading: readStringValue(codeStudio['heading'], fallback.codeStudio.heading),
+      headingEmphasis: readStringValue(codeStudio['headingEmphasis'], fallback.codeStudio.headingEmphasis),
+      copy: readStringValue(codeStudio['copy'], fallback.codeStudio.copy),
     },
     philosophy: {
       eyebrow: readStringValue(philosophy['eyebrow'], fallback.philosophy.eyebrow),
@@ -469,6 +477,10 @@ const normalizeMilkbarPageSettingsForClient = (value: unknown): MilkbarPageSetti
         typeof visibility['drawing'] === 'boolean'
           ? visibility['drawing']
           : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.drawing,
+      codeStudio:
+        typeof visibility['codeStudio'] === 'boolean'
+          ? visibility['codeStudio']
+          : DEFAULT_MILKBAR_PAGE_SETTINGS.visibility.codeStudio,
       philosophy:
         typeof visibility['philosophy'] === 'boolean'
           ? visibility['philosophy']
@@ -979,6 +991,10 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   );
   const updateDrawing = useCallback(
     (patch: Partial<MilkbarPageContent['drawing']>) => updateLocaleSection(activeLocale, 'drawing', patch),
+    [activeLocale, updateLocaleSection]
+  );
+  const updateCodeStudio = useCallback(
+    (patch: Partial<MilkbarPageContent['codeStudio']>) => updateLocaleSection(activeLocale, 'codeStudio', patch),
     [activeLocale, updateLocaleSection]
   );
   const updatePhilosophy = useCallback(
@@ -1654,6 +1670,7 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
                 moveNavLink={moveNavLink}
                 updateHero={updateHero}
                 updateDrawing={updateDrawing}
+                updateCodeStudio={updateCodeStudio}
                 updatePhilosophy={updatePhilosophy}
                 updateServicesHeader={updateServicesHeader}
                 updateProjectsHeader={updateProjectsHeader}
@@ -2119,9 +2136,11 @@ const resolveModel3DSlotSources = ({
       asset === undefined ||
       isMilkbarFastCometAsset(asset) ||
       isMilkbarFastCometModelUrl(assignedModelUrl));
-  let uploadUrl = publicPath ?? '';
-  if (uploadUrl.length === 0 && assignedAssetId.length > 0 && !isMissing) {
+  let uploadUrl = '';
+  if (assignedAssetId.length > 0 && !isMissing) {
     uploadUrl = `/api/assets3d/${encodeURIComponent(assignedAssetId)}/file`;
+  } else if (publicPath !== null) {
+    uploadUrl = publicPath;
   }
   return {
     uploadUrl,
@@ -2589,6 +2608,7 @@ function ContentFolderTree({
   moveNavLink,
   updateHero,
   updateDrawing,
+  updateCodeStudio,
   updatePhilosophy,
   updateServicesHeader,
   updateProjectsHeader,
@@ -2633,6 +2653,7 @@ function ContentFolderTree({
   moveNavLink: (from: number, to: number) => void;
   updateHero: (patch: Partial<MilkbarPageContent['hero']>) => void;
   updateDrawing: (patch: Partial<MilkbarPageContent['drawing']>) => void;
+  updateCodeStudio: (patch: Partial<MilkbarPageContent['codeStudio']>) => void;
   updatePhilosophy: (patch: Partial<MilkbarPageContent['philosophy']>) => void;
   updateServicesHeader: (patch: Partial<MilkbarPageContent['services']>) => void;
   updateProjectsHeader: (patch: Partial<MilkbarPageContent['projects']>) => void;
@@ -2940,6 +2961,28 @@ function ContentFolderTree({
                       onChange={(asset3dProjectCodes) => updateDrawing({ asset3dProjectCodes })}
                     />
                   </SubFolderRow>
+                </SectionFolderRow>
+              )}
+              {sectionId === 'codeStudio' && (
+                <SectionFolderRow
+                  id='codeStudio'
+                  title='Code Studio Section'
+                  subtitle='parametric BIM animation'
+                  open={openSections.has('codeStudio')}
+                  onToggle={toggleSection}
+                  isDraggable
+                  isDragging={isDragging}
+                  onDragHandleMouseDown={() => { sectionDragArmedRef.current = 'codeStudio'; }}
+                  visibilityOn={sectionVisibility.codeStudio}
+                  onToggleVisibility={() => onUpdateVisibility({ codeStudio: !sectionVisibility.codeStudio })}
+                >
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <FieldInput label='Eyebrow' value={pageContent.codeStudio.eyebrow} onChange={(eyebrow) => updateCodeStudio({ eyebrow })} />
+                    <FieldInput label='Sub-label' value={pageContent.codeStudio.subLabel} onChange={(subLabel) => updateCodeStudio({ subLabel })} />
+                    <FieldInput label='Heading' value={pageContent.codeStudio.heading} onChange={(heading) => updateCodeStudio({ heading })} />
+                    <FieldInput label='Heading emphasis' value={pageContent.codeStudio.headingEmphasis} onChange={(headingEmphasis) => updateCodeStudio({ headingEmphasis })} />
+                    <FieldTextarea label='Copy' value={pageContent.codeStudio.copy} onChange={(copy) => updateCodeStudio({ copy })} rows={3} />
+                  </div>
                 </SectionFolderRow>
               )}
               {sectionId === 'philosophy' && (
@@ -3405,6 +3448,7 @@ function SettingsTab({
 
   const SECTION_LABELS: Record<keyof MilkbarSectionVisibility, string> = {
     drawing: 'Drawing — interactive floor plan section',
+    codeStudio: 'Code Studio — live architecture code editor section',
     philosophy: 'Philosophy — principles and body copy',
     services: 'Services — practice offerings grid',
     projects: 'Projects — built work gallery',

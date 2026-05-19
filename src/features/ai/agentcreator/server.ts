@@ -1,3 +1,20 @@
+/**
+ * Agent Creator Feature - Server Entry Point
+ *
+ * This module serves as the server-only entry point for the Agent Creator feature.
+ * It exports API route handlers, repositories, services, and persona management utilities.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - API route handlers: GET, POST, DELETE, and control operations for agents
+ * - Persona memory service: Management of agent personas and embeddings
+ * - Teaching & embedding services: Repository, retrieval, and chat utilities
+ *
+ * Example usage:
+ * import { AgentCreatorAgentGET, PersonaMemoryService } from '@/features/ai/agentcreator/server';
+ */
+
 import 'server-only';
 
 export {

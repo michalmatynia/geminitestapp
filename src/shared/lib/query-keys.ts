@@ -575,6 +575,9 @@ export const QUERY_KEYS = {
   brain: {
     all: ['brain'] as const,
     lists: () => [...QUERY_KEYS.brain.all, 'list'] as const,
+    mutations: () => [...QUERY_KEYS.brain.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.brain.mutations(), name] as const,
+    routing: () => [...QUERY_KEYS.brain.all, 'routing'] as const,
     models: () => [...QUERY_KEYS.brain.lists(), 'models'] as const,
     operationsOverview: (range: string = '1h') =>
       [...QUERY_KEYS.brain.all, 'operations-overview', range] as const,

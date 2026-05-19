@@ -102,7 +102,7 @@ const useMailAccountById = (): Map<string, FilemakerMailAccount> => {
       resource: 'filemaker.mail-accounts',
       domain: 'files',
       description: 'Load Filemaker mail accounts for sender name display in campaign list.',
-      errorPresentation: 'none',
+      errorPresentation: 'silent',
     },
   });
   return useMemo(() => {

@@ -41,9 +41,7 @@ const getQueryClient = (
   if (typeof window === 'undefined') {
     return new QueryClient();
   }
-  if (!browserQueryClient) {
-    browserQueryClient = createQueryClient();
-  }
+  browserQueryClient ??= createQueryClient();
   hydrateLiteSettingsQueryCache(browserQueryClient, initialLiteSettings);
   return browserQueryClient;
 };

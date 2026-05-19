@@ -646,6 +646,7 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
   const nav = isRecord(source['nav']) ? source['nav'] : {};
   const hero = isRecord(source['hero']) ? source['hero'] : {};
   const drawing = isRecord(source['drawing']) ? source['drawing'] : {};
+  const codeStudio = isRecord(source['codeStudio']) ? source['codeStudio'] : {};
   const philosophy = isRecord(source['philosophy']) ? source['philosophy'] : {};
   const services = isRecord(source['services']) ? source['services'] : {};
   const projects = isRecord(source['projects']) ? source['projects'] : {};
@@ -693,6 +694,13 @@ export const normalizeMilkbarPageContent = (input: unknown, fallback: MilkbarPag
       ...(asOptionalString(drawing['interiorModelUrl']) !== undefined
         ? { interiorModelUrl: asOptionalString(drawing['interiorModelUrl']) }
         : {}),
+    },
+    codeStudio: {
+      eyebrow: asString(codeStudio['eyebrow'], fallback.codeStudio.eyebrow),
+      subLabel: asString(codeStudio['subLabel'], fallback.codeStudio.subLabel),
+      heading: asString(codeStudio['heading'], fallback.codeStudio.heading),
+      headingEmphasis: asString(codeStudio['headingEmphasis'], fallback.codeStudio.headingEmphasis),
+      copy: asString(codeStudio['copy'], fallback.codeStudio.copy),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], fallback.philosophy.eyebrow),
@@ -791,6 +799,7 @@ const normalizeSectionVisibility = (input: unknown): MilkbarSectionVisibility =>
   const defaults = DEFAULT_MILKBAR_PAGE_SETTINGS.visibility;
   return {
     drawing: asBoolean(record['drawing'], defaults.drawing),
+    codeStudio: asBoolean(record['codeStudio'], defaults.codeStudio),
     philosophy: asBoolean(record['philosophy'], defaults.philosophy),
     services: asBoolean(record['services'], defaults.services),
     projects: asBoolean(record['projects'], defaults.projects),

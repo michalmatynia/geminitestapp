@@ -17,6 +17,7 @@ import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemake
 import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from './job-board-runtime-constants';
 import { JOB_APPLICATION_APPLY_RUNTIME_STEPS } from './job-application-apply-runtime-constants';
 import { PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS } from './product-scrape-runtime-constants';
+import { SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS } from './social-article-aggregator-runtime-constants';
 
 /** Central registry of all available automation steps */
 export const STEP_REGISTRY = {
@@ -255,6 +256,24 @@ export const STEP_REGISTRY = {
   [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize]: {
     id: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEPS.finalize,
     label: 'Finalize product scrape',
+  },
+
+  // Social article aggregator scrape runtime
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.inputValidate]: {
+    id: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.inputValidate,
+    label: 'Validate article sources',
+  },
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.discoverArticles]: {
+    id: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.discoverArticles,
+    label: 'Discover article links',
+  },
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.extractArticles]: {
+    id: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.extractArticles,
+    label: 'Extract article content',
+  },
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.finalize]: {
+    id: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.finalize,
+    label: 'Finalize article scrape',
   },
 
   // Product scan shared / Amazon runtime flow

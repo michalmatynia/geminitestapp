@@ -223,7 +223,7 @@ describe('ProductFilters layout contract', () => {
     });
   });
 
-  it('loads catalog-scoped tags without querying all tags when a catalog is selected', () => {
+  it('loads catalog-scoped tags and shared title terms when a catalog is selected', () => {
     useProductListFiltersContextMock.mockReturnValue(
       buildFiltersContextValue({ catalogFilter: 'catalog-1' })
     );
@@ -232,15 +232,15 @@ describe('ProductFilters layout contract', () => {
 
     expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: true });
     expect(useFilterTagsMock).toHaveBeenCalledWith('catalog-1', { enabled: true });
-    expect(useTitleTermsMock).toHaveBeenNthCalledWith(1, 'catalog-1', 'size', {
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(1, undefined, 'size', {
       enabled: true,
       allowWithoutCatalog: true,
     });
-    expect(useTitleTermsMock).toHaveBeenNthCalledWith(2, 'catalog-1', 'material', {
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(2, undefined, 'material', {
       enabled: true,
       allowWithoutCatalog: true,
     });
-    expect(useTitleTermsMock).toHaveBeenNthCalledWith(3, 'catalog-1', 'theme', {
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(3, undefined, 'theme', {
       enabled: true,
       allowWithoutCatalog: true,
     });

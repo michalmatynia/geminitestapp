@@ -41,7 +41,11 @@ type WorkspaceMainProps = {
 type WorkspaceViewModel = Omit<WorkspaceMainProps, 'loadError'> & {
   selectAccount: (accountId: string) => void;
   selectFolder: (selection: { accountId: string; mailboxPath: string }) => void;
-  selectTreeThread: ReturnType<typeof useMailClientSelection>['applySelection'];
+  selectTreeThread: (selection: {
+    accountId: string;
+    mailboxPath: string;
+    threadId: string;
+  }) => void;
 };
 
 type WorkspaceSelectionActions = Pick<WorkspaceViewModel, 'onClearCampaignFilter' | 'onOpenPrimaryFolder' | 'onRefreshThreads' | 'onSelectThread' | 'selectAccount' | 'selectFolder' | 'selectTreeThread'>;
@@ -168,6 +172,14 @@ function useWorkspaceSelectionActions({
       selectionController.applySelection({ ...selection, threadId: null, campaignId: null }),
     [selectionController]
   );
+  const selectTreeThread = useCallback(
+    (selection: { accountId: string; mailboxPath: string; threadId: string }): void =>
+      selectionController.applySelection({
+        ...selection,
+        campaignId: selectionController.selection.campaignId,
+      }),
+    [selectionController]
+  );
   const openPrimaryFolder = useCallback((): void => {
     if (selectionController.selection.accountId === null) return;
     selectionController.applySelection({
@@ -196,7 +208,7 @@ function useWorkspaceSelectionActions({
     onSelectThread: selectThread,
     selectAccount,
     selectFolder,
-    selectTreeThread: selectionController.applySelection,
+    selectTreeThread,
   };
 }
 

@@ -14,6 +14,7 @@ import { useBrainSyncPersonas } from './useBrainSyncPersonas';
 import type {
   AiBrainFeature,
   AiBrainProviderCatalog,
+  AiBrainRoutingResponse,
   AiBrainSettings,
 } from '../settings';
 
@@ -51,7 +52,9 @@ export interface BrainPersistenceParams {
   setSettings: Dispatch<SetStateAction<AiBrainSettings>>;
   settings: AiBrainSettings;
   settingsMap: Map<string, string> | undefined;
+  storedRoutingSettings: AiBrainSettings | undefined;
   toast: Toast;
+  updateBrainRouting: MutationResult<AiBrainRoutingResponse, AiBrainSettings>;
   updateSetting: MutationResult<SystemSetting, { key: string; value: string }>;
   updateSettingsBulk: MutationResult<SystemSetting[], Array<{ key: string; value: string }>>;
 }
@@ -59,22 +62,31 @@ export interface BrainPersistenceParams {
 interface BrainPersistenceResult {
   handleReset: () => void;
   handleSave: () => Promise<void>;
+  hydrateBrainRoutingSettings: (settings: AiBrainSettings) => void;
   hydrateFromSettingsMap: (map: Map<string, string>) => void;
   saving: boolean;
   syncPlaywrightPersonas: () => void;
 }
 
 export function useBrainPersistence(params: BrainPersistenceParams): BrainPersistenceResult {
-  const { hydrateFromSettingsMap } = useBrainHydration(params);
+  const { hydrateBrainRoutingSettings, hydrateFromSettingsMap } = useBrainHydration(params);
   const { handleSave } = useBrainSaveAction(params);
-  const { handleReset } = useBrainResetAction({ ...params, hydrateFromSettingsMap });
+  const { handleReset } = useBrainResetAction({
+    ...params,
+    hydrateBrainRoutingSettings,
+    hydrateFromSettingsMap,
+  });
   const { syncPlaywrightPersonas } = useBrainSyncPersonas(params);
 
   return {
     handleReset,
     handleSave,
+    hydrateBrainRoutingSettings,
     hydrateFromSettingsMap,
-    saving: params.updateSetting.isPending || params.updateSettingsBulk.isPending,
+    saving:
+      params.updateBrainRouting.isPending ||
+      params.updateSetting.isPending ||
+      params.updateSettingsBulk.isPending,
     syncPlaywrightPersonas,
   };
 }

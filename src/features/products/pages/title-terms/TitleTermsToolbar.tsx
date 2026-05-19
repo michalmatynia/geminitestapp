@@ -8,22 +8,16 @@ import { SelectSimple } from '@/shared/ui/select-simple';
 interface TitleTermsToolbarProps {
   query: string;
   setQuery: (query: string) => void;
-  catalogFilter: string;
-  setCatalogFilter: (catalogId: string) => void;
   typeFilter: string;
   setTypeFilter: (type: string) => void;
-  catalogOptions: Array<{ label: string; value: string }>;
   openCreate: () => void;
 }
 
 export function TitleTermsToolbar({
   query,
   setQuery,
-  catalogFilter,
-  setCatalogFilter,
   typeFilter,
   setTypeFilter,
-  catalogOptions,
   openCreate,
 }: TitleTermsToolbarProps): JSX.Element {
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -41,13 +35,6 @@ export function TitleTermsToolbar({
           size='sm'
         />
       </div>
-      <SelectSimple
-        ariaLabel='Filter by catalog'
-        size='sm'
-        value={catalogFilter}
-        onValueChange={setCatalogFilter}
-        options={[{ label: 'All catalogs', value: 'all' }, ...catalogOptions]}
-      />
       <SelectSimple
         ariaLabel='Filter by type'
         size='sm'

@@ -51,6 +51,7 @@ describe('filemaker job application cover letter PDF handler', () => {
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
     expect(createFilemakerJobApplicationCoverLetterPdfResponseMock).toHaveBeenCalledWith({
       applicationId: 'application-1',
+      coverLetterVersionId: null,
     });
     expect(response.headers.get('Content-Type')).toBe('application/pdf');
   });

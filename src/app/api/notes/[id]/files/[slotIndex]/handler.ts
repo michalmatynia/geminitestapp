@@ -6,11 +6,33 @@ import type { NoteFileRecord } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * Note File Slot Handlers
+ *
+ * HTTP request handlers for specific note file slots.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Manages individual file slots in notes
+ * - Handles file replacement and deletion
+ * - Validates file slot constraints
+ */
+
 const MAX_SLOT_INDEX = 9;
 
 /**
  * DELETE /api/notes/[id]/files/[slotIndex]
  * Delete a file from a specific slot
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   _req: NextRequest,

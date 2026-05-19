@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
+  ASSETS3D_STORAGE_SOURCE_SETTING_KEY,
   DEFAULT_FASTCOMET_STORAGE_BASE_URL,
   DEFAULT_FASTCOMET_STORAGE_PORT,
   DEFAULT_FASTCOMET_STORAGE_RESOLVE_IP,
@@ -206,6 +207,7 @@ const toastSaveError = (toast: ToastFn, error: Error): void => {
 };
 
 type FileStorageSettingsViewModel = {
+  assets3dSource: FileStorageSource;
   fastCometConfig: FastCometStorageConfig;
   isDirty: boolean;
   isFastCometMisconfigured: boolean;
@@ -213,6 +215,7 @@ type FileStorageSettingsViewModel = {
   isSaving: boolean;
   resetSettings: () => void;
   saveSettings: () => void;
+  setAssets3dSource: React.Dispatch<React.SetStateAction<FileStorageSource>>;
   setFastCometConfig: React.Dispatch<React.SetStateAction<FastCometStorageConfig>>;
   setSource: React.Dispatch<React.SetStateAction<FileStorageSource>>;
   source: FileStorageSource;
@@ -228,12 +231,18 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
     [settingsQuery.data]
   );
 
+  const storedAssets3dSource = useMemo(
+    () => normalizeSource(settingsQuery.data?.get(ASSETS3D_STORAGE_SOURCE_SETTING_KEY)),
+    [settingsQuery.data]
+  );
+
   const storedFastCometConfig = useMemo(
     () => normalizeFastCometConfig(settingsQuery.data?.get(FASTCOMET_STORAGE_CONFIG_SETTING_KEY)),
     [settingsQuery.data]
   );
 
   const [source, setSource] = useState<FileStorageSource>(storedSource);
+  const [assets3dSource, setAssets3dSource] = useState<FileStorageSource>(storedAssets3dSource);
   const [fastCometConfig, setFastCometConfig] =
     useState<FastCometStorageConfig>(storedFastCometConfig);
 
@@ -242,13 +251,20 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
   }, [storedSource]);
 
   useEffect(() => {
+    setAssets3dSource(storedAssets3dSource);
+  }, [storedAssets3dSource]);
+
+  useEffect(() => {
     setFastCometConfig(storedFastCometConfig);
   }, [storedFastCometConfig]);
 
   const normalizedDraft = normalizeConfigForSave(fastCometConfig);
   const normalizedStored = normalizeConfigForSave(storedFastCometConfig);
 
-  const isDirty = source !== storedSource || areConfigsEqual(normalizedDraft, normalizedStored) === false;
+  const isDirty =
+    source !== storedSource ||
+    assets3dSource !== storedAssets3dSource ||
+    areConfigsEqual(normalizedDraft, normalizedStored) === false;
 
   const isFastCometMisconfigured =
     source === 'fastcomet' &&
@@ -258,12 +274,14 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
 
   const resetSettings = (): void => {
     setSource(storedSource);
+    setAssets3dSource(storedAssets3dSource);
     setFastCometConfig(storedFastCometConfig);
   };
 
   const saveSettings = (): void => {
     const payloads = [
       { key: FILE_STORAGE_SOURCE_SETTING_KEY, value: source },
+      { key: ASSETS3D_STORAGE_SOURCE_SETTING_KEY, value: assets3dSource },
       { key: FASTCOMET_STORAGE_CONFIG_SETTING_KEY, value: serializeSetting(normalizedDraft) },
     ];
 
@@ -278,6 +296,7 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
   };
 
   return {
+    assets3dSource,
     fastCometConfig,
     isDirty,
     isFastCometMisconfigured,
@@ -285,6 +304,7 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
     isSaving: updateSettingsBulk.isPending,
     resetSettings,
     saveSettings,
+    setAssets3dSource,
     setFastCometConfig,
     setSource,
     source,
@@ -292,6 +312,7 @@ const useFileStorageSettingsViewModel = (): FileStorageSettingsViewModel => {
 };
 
 const FileStorageSettingsView = ({
+  assets3dSource,
   fastCometConfig,
   isDirty,
   isFastCometMisconfigured,
@@ -299,6 +320,7 @@ const FileStorageSettingsView = ({
   isSaving,
   resetSettings,
   saveSettings,
+  setAssets3dSource,
   setFastCometConfig,
   setSource,
   source,
@@ -310,8 +332,21 @@ const FileStorageSettingsView = ({
       description='Choose whether files are served from local uploads or FastComet storage.'
     >
       <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
-        <StorageSourceSection source={source} setSource={setSource} />
+        <StorageSourceSection
+          source={source}
+          setSource={setSource}
+          title='General File Storage'
+          description='Where images, documents, and other media uploads are stored.'
+        />
         <FastCometConfigSection config={fastCometConfig} setConfig={setFastCometConfig} />
+      </div>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2 mt-6`}>
+        <StorageSourceSection
+          source={assets3dSource}
+          setSource={setAssets3dSource}
+          title='3D Assets Storage'
+          description='Where generic .glb/.gltf uploads are stored. Milkbar CMS models use their own separate FastComet config.'
+        />
       </div>
 
       {isFastCometMisconfigured && (

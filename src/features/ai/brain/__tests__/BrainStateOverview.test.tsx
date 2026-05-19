@@ -4,15 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BrainStateOverview } from '../components/BrainStateOverview';
 import { useBrain } from '../context/BrainContext';
-import { AI_BRAIN_SETTINGS_KEY } from '@/shared/lib/ai-brain/settings';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useBrainRoutingSettings } from '../hooks/useBrainQueries';
 
 vi.mock('../context/BrainContext', () => ({
   useBrain: vi.fn(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: vi.fn(),
+vi.mock('../hooks/useBrainQueries', () => ({
+  useBrainRoutingSettings: vi.fn(),
+  brainKeys: { routing: () => ['brain', 'routing'] },
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -37,9 +37,11 @@ vi.mock('@/shared/ui/data-display.public', () => ({
 
 describe('BrainStateOverview', () => {
   beforeEach(() => {
-    vi.mocked(useSettingsMap).mockReturnValue({
-      data: new Map([[AI_BRAIN_SETTINGS_KEY, { saved: true }]]),
-    } as unknown as ReturnType<typeof useSettingsMap>);
+    vi.mocked(useBrainRoutingSettings).mockReturnValue({
+      data: { configured: true, settings: {} },
+      isLoading: false,
+      dataUpdatedAt: 0,
+    } as unknown as ReturnType<typeof useBrainRoutingSettings>);
   });
 
   it('renders saved-state, cadence, and latest runtime insight details', () => {
@@ -92,7 +94,7 @@ describe('BrainStateOverview', () => {
 
     render(<BrainStateOverview />);
 
-    expect(screen.getByText('Source: saved settings')).toBeInTheDocument();
+    expect(screen.getByText('Source: global routing')).toBeInTheDocument();
     expect(screen.getByText('Custom routing active')).toBeInTheDocument();
     expect(screen.getByText(/Analytics every 15m/)).toBeInTheDocument();
     expect(screen.getByText(/Runtime paused/)).toBeInTheDocument();
@@ -104,9 +106,11 @@ describe('BrainStateOverview', () => {
   });
 
   it('falls back to defaults when no saved settings or insights exist', () => {
-    vi.mocked(useSettingsMap).mockReturnValue({
+    vi.mocked(useBrainRoutingSettings).mockReturnValue({
       data: undefined,
-    } as unknown as ReturnType<typeof useSettingsMap>);
+      isLoading: false,
+      dataUpdatedAt: 0,
+    } as unknown as ReturnType<typeof useBrainRoutingSettings>);
 
     vi.mocked(useBrain).mockReturnValue({
       insightsQuery: {

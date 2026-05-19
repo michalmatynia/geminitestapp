@@ -16,6 +16,7 @@ import { normalizeTitleTermName } from '@/shared/lib/products/title-terms';
 import type { Document, Filter, UpdateFilter } from 'mongodb';
 
 const COLLECTION = 'product_title_terms';
+const GLOBAL_TITLE_TERM_CATALOG_ID = 'global';
 
 interface ProductTitleTermDoc extends Document {
   _id: ObjectId | string;
@@ -26,38 +27,39 @@ interface ProductTitleTermDoc extends Document {
   name_en: string;
   name_pl: string | null;
   normalizedNameEn: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
 
+const createIndexes = async (): Promise<void> => {
+  const db = await getMongoDb();
+  const collection = db.collection<ProductTitleTermDoc>(COLLECTION);
+  await Promise.all([
+    collection.createIndex(
+      { type: 1, name_en: 1 },
+      { name: 'product_title_terms_type_display_name' }
+    ),
+    collection.createIndex(
+      { type: 1, normalizedNameEn: 1 },
+      { unique: true, name: 'product_title_terms_type_normalized_name' }
+    ),
+  ]);
+  indexesInitialized = true;
+};
+
 const ensureIndexes = async (): Promise<void> => {
   if (indexesInitialized) return;
-  if (indexesInFlight) {
-    await indexesInFlight;
-    return;
-  }
-  indexesInFlight = (async (): Promise<void> => {
-    const db = await getMongoDb();
-    const collection = db.collection<ProductTitleTermDoc>(COLLECTION);
-    await Promise.all([
-      collection.createIndex(
-        { catalogId: 1, type: 1, normalizedNameEn: 1 },
-        { unique: true, name: 'product_title_terms_catalog_type_name' }
-      ),
-      collection.createIndex(
-        { catalogId: 1, type: 1, name_en: 1 },
-        { name: 'product_title_terms_catalog_type_display_name' }
-      ),
-    ]);
-    indexesInitialized = true;
-  })();
+  const inFlight = indexesInFlight ?? createIndexes();
+  indexesInFlight = inFlight;
   try {
-    await indexesInFlight;
+    await inFlight;
   } finally {
-    indexesInFlight = null;
+    if (indexesInFlight === inFlight) {
+      indexesInFlight = null;
+    }
   }
 };
 
@@ -69,7 +71,7 @@ const toTitleTermDomain = (doc: ProductTitleTermDoc): ProductTitleTerm => ({
   description: null,
   name_en: doc.name_en,
   name_pl: doc.name_pl ?? null,
-  catalogId: doc.catalogId,
+  catalogId: GLOBAL_TITLE_TERM_CATALOG_ID,
   type: doc.type,
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -78,28 +80,35 @@ const toTitleTermDomain = (doc: ProductTitleTermDoc): ProductTitleTerm => ({
 const buildIdFilter = (id: string): Filter<ProductTitleTermDoc> => {
   const trimmed = id.trim();
   const filters: Filter<ProductTitleTermDoc>[] = [
-    { _id: trimmed } as Filter<ProductTitleTermDoc>,
-    { id: trimmed } as Filter<ProductTitleTermDoc>,
+    { _id: trimmed },
+    { id: trimmed },
   ];
   if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
-    filters.push({ _id: new ObjectId(trimmed) } as Filter<ProductTitleTermDoc>);
+    filters.push({ _id: new ObjectId(trimmed) });
   }
   return { $or: filters };
+};
+
+const buildListQuery = (filters: TitleTermFilters): Filter<ProductTitleTermDoc> => {
+  const query: Filter<ProductTitleTermDoc> = {};
+  if (filters.type !== undefined) {
+    query.type = filters.type;
+  }
+  if (filters.search !== undefined && filters.search.length > 0) {
+    const searchFilters: Filter<ProductTitleTermDoc>[] = [
+      { name_en: { $regex: filters.search, $options: 'i' } },
+      { name_pl: { $regex: filters.search, $options: 'i' } },
+    ];
+    query.$or = searchFilters;
+  }
+  return query;
 };
 
 export const mongoTitleTermRepository: TitleTermRepository = {
   async listTitleTerms(filters: TitleTermFilters): Promise<ProductTitleTerm[]> {
     await ensureIndexes();
     const db = await getMongoDb();
-    const query: Filter<ProductTitleTermDoc> = {};
-    if (filters.catalogId) query.catalogId = filters.catalogId;
-    if (filters.type) query.type = filters.type;
-    if (filters.search) {
-      query.$or = [
-        { name_en: { $regex: filters.search, $options: 'i' } },
-        { name_pl: { $regex: filters.search, $options: 'i' } },
-      ] as Filter<ProductTitleTermDoc>[];
-    }
+    const query = buildListQuery(filters);
 
     const cursor = db.collection<ProductTitleTermDoc>(COLLECTION).find(query).sort({
       type: 1,
@@ -108,8 +117,7 @@ export const mongoTitleTermRepository: TitleTermRepository = {
     if (typeof filters.skip === 'number') cursor.skip(filters.skip);
     if (typeof filters.limit === 'number') cursor.limit(filters.limit);
 
-    const docs = await cursor.toArray();
-    return docs.map(toTitleTermDomain);
+    return (await cursor.toArray()).map(toTitleTermDomain);
   },
 
   async getTitleTermById(id: string): Promise<ProductTitleTerm | null> {
@@ -123,30 +131,34 @@ export const mongoTitleTermRepository: TitleTermRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
-    const name_en = normalizeName(data.name_en);
-    const doc: Omit<ProductTitleTermDoc, '_id'> = {
+    const nameEn = normalizeName(data.name_en);
+    const doc: ProductTitleTermDoc = {
+      _id: new ObjectId(),
       id: randomUUID(),
-      catalogId: data.catalogId,
+      catalogId: GLOBAL_TITLE_TERM_CATALOG_ID,
       type: data.type,
-      name: name_en,
-      name_en,
-      name_pl: data.name_pl ? normalizeName(data.name_pl) : null,
-      normalizedNameEn: normalizeTitleTermName(name_en),
+      name: nameEn,
+      name_en: nameEn,
+      name_pl:
+        data.name_pl !== undefined && data.name_pl !== null && data.name_pl.length > 0
+          ? normalizeName(data.name_pl)
+          : null,
+      normalizedNameEn: normalizeTitleTermName(nameEn),
       createdAt: now,
       updatedAt: now,
     };
-    const result = await db.collection<Omit<ProductTitleTermDoc, '_id'>>(COLLECTION).insertOne(doc);
-    return toTitleTermDomain({ ...doc, _id: result.insertedId } as ProductTitleTermDoc);
+    await db.collection<ProductTitleTermDoc>(COLLECTION).insertOne(doc);
+    return toTitleTermDomain(doc);
   },
 
   async updateTitleTerm(id: string, data: TitleTermUpdateInput): Promise<ProductTitleTerm> {
     await ensureIndexes();
     const db = await getMongoDb();
     const set: Partial<ProductTitleTermDoc> = {
+      catalogId: GLOBAL_TITLE_TERM_CATALOG_ID,
       updatedAt: new Date(),
     };
 
-    if (data.catalogId !== undefined) set.catalogId = data.catalogId;
     if (data.type !== undefined) set.type = data.type;
     if (data.name_en !== undefined) {
       const normalized = normalizeName(data.name_en);
@@ -155,15 +167,17 @@ export const mongoTitleTermRepository: TitleTermRepository = {
       set.normalizedNameEn = normalizeTitleTermName(normalized);
     }
     if (data.name_pl !== undefined) {
-      set.name_pl = data.name_pl ? normalizeName(data.name_pl) : null;
+      set.name_pl =
+        data.name_pl !== null && data.name_pl.length > 0 ? normalizeName(data.name_pl) : null;
     }
 
+    const update: UpdateFilter<ProductTitleTermDoc> = { $set: set };
     await db
       .collection<ProductTitleTermDoc>(COLLECTION)
-      .updateOne(buildIdFilter(id), { $set: set } as UpdateFilter<ProductTitleTermDoc>);
+      .updateOne(buildIdFilter(id), update);
 
     const updated = await this.getTitleTermById(id);
-    if (!updated) throw internalError('Failed to update title term', { titleTermId: id });
+    if (updated === null) throw internalError('Failed to update title term', { titleTermId: id });
     return updated;
   },
 
@@ -174,16 +188,14 @@ export const mongoTitleTermRepository: TitleTermRepository = {
   },
 
   async findByName(
-    catalogId: string,
     type: ProductTitleTermDoc['type'],
-    name_en: string
+    nameEn: string
   ): Promise<ProductTitleTerm | null> {
     await ensureIndexes();
     const db = await getMongoDb();
     const doc = await db.collection<ProductTitleTermDoc>(COLLECTION).findOne({
-      catalogId,
       type,
-      normalizedNameEn: normalizeTitleTermName(name_en),
+      normalizedNameEn: normalizeTitleTermName(nameEn),
     });
     return doc ? toTitleTermDomain(doc) : null;
   },

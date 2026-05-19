@@ -16,6 +16,13 @@ import { api } from '@/shared/lib/api-client';
 import { Button, Input, Textarea, useToast } from '@/shared/ui';
 
 type ArticleListResult = { articles: SocialArticleRecord[]; total: number };
+type PlaywrightScripterListEntry = {
+  description: string | null;
+  id: string;
+  siteHost: string;
+  version: number;
+};
+type PlaywrightScripterListResult = { scripters: PlaywrightScripterListEntry[] };
 
 const TABS = ['articles', 'source-presets', 'prompt-presets', 'scrape-runs', 'run-scrape'] as const;
 type Tab = (typeof TABS)[number];
@@ -56,10 +63,13 @@ type SourcePresetFormState = {
   name: string;
   urls: string;
   maxArticlesPerSource: number;
+  crawlDepth: number;
   obeyRobotsTxt: boolean;
   enabled: boolean;
   includePatterns: string;
   excludePatterns: string;
+  playwrightScripterId: string;
+  playwrightScripterMode: 'assist' | 'replace';
 };
 
 const emptySourcePresetForm = (): SourcePresetFormState => ({
@@ -67,10 +77,13 @@ const emptySourcePresetForm = (): SourcePresetFormState => ({
   name: '',
   urls: '',
   maxArticlesPerSource: 10,
+  crawlDepth: 1,
   obeyRobotsTxt: true,
   enabled: true,
   includePatterns: '',
   excludePatterns: '',
+  playwrightScripterId: '',
+  playwrightScripterMode: 'assist',
 });
 
 const presetToForm = (preset: SocialArticleSourcePreset): SourcePresetFormState => ({
@@ -78,10 +91,13 @@ const presetToForm = (preset: SocialArticleSourcePreset): SourcePresetFormState 
   name: preset.name,
   urls: joinLines(preset.urls),
   maxArticlesPerSource: preset.maxArticlesPerSource,
+  crawlDepth: preset.crawlDepth,
   obeyRobotsTxt: preset.obeyRobotsTxt,
   enabled: preset.enabled,
   includePatterns: joinLines(preset.includePatterns),
   excludePatterns: joinLines(preset.excludePatterns),
+  playwrightScripterId: preset.playwrightScripterId ?? '',
+  playwrightScripterMode: preset.playwrightScripterMode,
 });
 
 export function AdminArticleAggregatorPage(): React.JSX.Element {
@@ -95,14 +111,19 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   const [articlesSearch, setArticlesSearch] = useState('');
   const [articlesSearchInput, setArticlesSearchInput] = useState('');
   const [articlesScrapeRunFilter, setArticlesScrapeRunFilter] = useState('');
+  const [articlesPresetFilter, setArticlesPresetFilter] = useState('');
   const [articlesLoading, setArticlesLoading] = useState(false);
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null);
+  const [selectedArticleIds, setSelectedArticleIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // ── Source presets tab ────────────────────────────────────────────────────
   const [sourcePresets, setSourcePresets] = useState<SocialArticleSourcePreset[]>([]);
   const [sourcePresetsLoading, setSourcePresetsLoading] = useState(false);
   const [sourcePresetForm, setSourcePresetForm] = useState<SourcePresetFormState>(emptySourcePresetForm());
+  const [playwrightScripters, setPlaywrightScripters] = useState<PlaywrightScripterListEntry[]>([]);
+  const [playwrightScriptersLoading, setPlaywrightScriptersLoading] = useState(false);
 
   // ── Prompt presets tab ────────────────────────────────────────────────────
   const [promptPresets, setPromptPresets] = useState<SocialArticlePromptPreset[]>([]);
@@ -127,7 +148,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   const [scrapeError, setScrapeError] = useState<string | null>(null);
 
   // ── Data loaders ──────────────────────────────────────────────────────────
-  const loadArticles = useCallback(async (offset: number, search: string, scrapeRunId = ''): Promise<void> => {
+  const loadArticles = useCallback(async (offset: number, search: string, scrapeRunId = '', sourcePresetId = ''): Promise<void> => {
     setArticlesLoading(true);
     try {
       const params = new URLSearchParams({
@@ -135,6 +156,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
         offset: String(offset),
         ...(search ? { search } : {}),
         ...(scrapeRunId ? { scrapeRunId } : {}),
+        ...(sourcePresetId ? { sourcePresetId } : {}),
       });
       const result = await api.get<ArticleListResult>(
         `/api/filemaker/social-article-aggregator/articles?${params.toString()}`,
@@ -143,6 +165,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
       setArticles(result.articles);
       setArticlesTotal(result.total);
       setArticlesOffset(offset);
+      setSelectedArticleIds(new Set());
     } finally {
       setArticlesLoading(false);
     }
@@ -158,6 +181,21 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
       setSourcePresets(presets);
     } finally {
       setSourcePresetsLoading(false);
+    }
+  }, []);
+
+  const loadPlaywrightScripters = useCallback(async (): Promise<void> => {
+    setPlaywrightScriptersLoading(true);
+    try {
+      const result = await api.get<PlaywrightScripterListResult>(
+        '/api/playwright/scripters',
+        { timeout: 60_000 }
+      );
+      setPlaywrightScripters(result.scripters);
+    } catch {
+      setPlaywrightScripters([]);
+    } finally {
+      setPlaywrightScriptersLoading(false);
     }
   }, []);
 
@@ -195,25 +233,39 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
     setRunScrapePresets(presets);
   }, []);
 
+  // Eager initial load so stats strip is populated before any tab switch.
   useEffect(() => {
-    if (tab === 'articles') void loadArticles(0, articlesSearch, articlesScrapeRunFilter).catch(() => undefined);
-    if (tab === 'source-presets') void loadSourcePresets().catch(() => undefined);
+    void loadPromptPresets().catch(() => undefined);
+    void loadScrapeRuns().catch(() => undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'articles') {
+      void loadArticles(0, articlesSearch, articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined);
+      void loadSourcePresets().catch(() => undefined);
+    }
+    if (tab === 'source-presets') {
+      void loadSourcePresets().catch(() => undefined);
+      void loadPlaywrightScripters().catch(() => undefined);
+    }
     if (tab === 'prompt-presets') void loadPromptPresets().catch(() => undefined);
     if (tab === 'scrape-runs') {
       void loadScrapeRuns().catch(() => undefined);
       void loadSourcePresets().catch(() => undefined);
     }
     if (tab === 'run-scrape') void loadRunScrapePresets().catch(() => undefined);
-  }, [tab, loadArticles, loadSourcePresets, loadPromptPresets, loadScrapeRuns, loadRunScrapePresets]);
+  }, [tab, loadArticles, loadSourcePresets, loadPlaywrightScripters, loadPromptPresets, loadScrapeRuns, loadRunScrapePresets]);
 
   // ── Articles handlers ─────────────────────────────────────────────────────
   const handleArticleSearch = useCallback((): void => {
     setArticlesSearch(articlesSearchInput);
-    void loadArticles(0, articlesSearchInput, articlesScrapeRunFilter).catch(() => undefined);
-  }, [articlesSearchInput, articlesScrapeRunFilter, loadArticles]);
+    void loadArticles(0, articlesSearchInput, articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined);
+  }, [articlesSearchInput, articlesScrapeRunFilter, articlesPresetFilter, loadArticles]);
 
   const handleViewRunArticles = useCallback((runId: string): void => {
     setArticlesScrapeRunFilter(runId);
+    setArticlesPresetFilter('');
     setArticlesSearch('');
     setArticlesSearchInput('');
     setTab('articles');
@@ -222,8 +274,8 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
 
   const handleClearRunFilter = useCallback((): void => {
     setArticlesScrapeRunFilter('');
-    void loadArticles(0, articlesSearch, '').catch(() => undefined);
-  }, [articlesSearch, loadArticles]);
+    void loadArticles(0, articlesSearch, '', articlesPresetFilter).catch(() => undefined);
+  }, [articlesSearch, articlesPresetFilter, loadArticles]);
 
   const handleDeleteArticle = useCallback(async (id: string): Promise<void> => {
     setDeletingArticleId(id);
@@ -240,6 +292,76 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
     }
   }, [expandedArticleId, toast]);
 
+  const handleToggleArticleSelection = useCallback((id: string): void => {
+    setSelectedArticleIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAllArticles = useCallback((): void => {
+    setSelectedArticleIds(new Set(articles.map((a) => a.id)));
+  }, [articles]);
+
+  const handleDeselectAllArticles = useCallback((): void => {
+    setSelectedArticleIds(new Set());
+  }, []);
+
+  const handleBulkDeleteArticles = useCallback(async (): Promise<void> => {
+    if (selectedArticleIds.size === 0) return;
+    setIsBulkDeleting(true);
+    const ids = Array.from(selectedArticleIds);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          api.delete('/api/filemaker/social-article-aggregator/articles', { params: { id }, timeout: 30_000 })
+        )
+      );
+      const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.length - succeeded;
+      setArticles((current) => current.filter((a) => !selectedArticleIds.has(a.id)));
+      setArticlesTotal((current) => Math.max(0, current - succeeded));
+      setSelectedArticleIds(new Set());
+      if (expandedArticleId !== null && selectedArticleIds.has(expandedArticleId)) {
+        setExpandedArticleId(null);
+      }
+      toast(
+        failed > 0
+          ? `Deleted ${succeeded}, failed to delete ${failed}`
+          : `Deleted ${succeeded} article${succeeded === 1 ? '' : 's'}`,
+        { variant: failed > 0 ? 'error' : 'success' }
+      );
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }, [expandedArticleId, selectedArticleIds, toast]);
+
+  const handleExportCsv = useCallback((): void => {
+    if (articles.length === 0) return;
+    const header = ['title', 'resolvedUrl', 'wordCount', 'sourcePreset', 'scrapedAt', 'author', 'publishedAt'];
+    const rows = articles.map((a) => [
+      a.title ?? '',
+      a.resolvedUrl,
+      String(a.wordCount),
+      sourcePresets.find((p) => p.id === a.sourcePresetId)?.name ?? '',
+      a.scrapedAt ?? '',
+      a.author ?? '',
+      a.publishedAt ?? '',
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `articles-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [articles, sourcePresets]);
+
   // ── Source preset handlers ────────────────────────────────────────────────
   const handleSaveSourcePreset = useCallback(async (): Promise<void> => {
     const urls = splitLines(sourcePresetForm.urls);
@@ -248,11 +370,14 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
       preset: {
         ...(sourcePresetForm.id ? { id: sourcePresetForm.id } : {}),
         enabled: sourcePresetForm.enabled,
+        crawlDepth: sourcePresetForm.crawlDepth,
         excludePatterns: splitLines(sourcePresetForm.excludePatterns),
         includePatterns: splitLines(sourcePresetForm.includePatterns),
         maxArticlesPerSource: sourcePresetForm.maxArticlesPerSource,
         name: sourcePresetForm.name.trim(),
         obeyRobotsTxt: sourcePresetForm.obeyRobotsTxt,
+        playwrightScripterId: sourcePresetForm.playwrightScripterId.trim() || null,
+        playwrightScripterMode: sourcePresetForm.playwrightScripterMode,
         urls,
       },
     }, { timeout: 60_000 });
@@ -280,12 +405,15 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
     await api.post('/api/filemaker/social-article-aggregator/source-presets', {
       preset: {
         enabled: !preset.enabled,
+        crawlDepth: preset.crawlDepth,
         excludePatterns: preset.excludePatterns,
         id: preset.id,
         includePatterns: preset.includePatterns,
         maxArticlesPerSource: preset.maxArticlesPerSource,
         name: preset.name,
         obeyRobotsTxt: preset.obeyRobotsTxt,
+        playwrightScripterId: preset.playwrightScripterId,
+        playwrightScripterMode: preset.playwrightScripterMode,
         urls: preset.urls,
       },
     }, { timeout: 60_000 });
@@ -374,11 +502,28 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className='space-y-6 p-4 md:p-6'>
-      <div>
-        <h1 className='text-xl font-bold text-foreground'>Article Aggregator</h1>
-        <p className='mt-1 text-sm text-muted-foreground'>
-          Manage scraped articles, source presets, prompt presets, and scrape run history.
-        </p>
+      <div className='flex flex-wrap items-start justify-between gap-4'>
+        <div>
+          <h1 className='text-xl font-bold text-foreground'>Article Aggregator</h1>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            Manage scraped articles, source presets, prompt presets, and scrape run history.
+          </p>
+        </div>
+        <div className='flex flex-wrap gap-4'>
+          {(
+            [
+              ['articles', articlesTotal],
+              ['source presets', sourcePresets.length],
+              ['prompt presets', promptPresets.length],
+              ['recent runs', scrapeRuns.length],
+            ] as [string, number][]
+          ).map(([label, value]) => (
+            <div key={label} className='text-center'>
+              <div className='text-2xl font-bold tabular-nums text-foreground'>{value}</div>
+              <div className='text-xs text-muted-foreground'>{label}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className='flex flex-wrap gap-1 border-b border-border'>
@@ -414,7 +559,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               size='sm'
               variant='ghost'
               disabled={articlesLoading}
-              onClick={() => void loadArticles(articlesOffset, articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
+              onClick={() => void loadArticles(articlesOffset, articlesSearch, articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined)}
               title='Refresh'
             >
               ↺
@@ -423,12 +568,43 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               <Button size='sm' variant='ghost' onClick={() => {
                 setArticlesSearchInput('');
                 setArticlesSearch('');
-                void loadArticles(0, '', articlesScrapeRunFilter).catch(() => undefined);
+                void loadArticles(0, '', articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined);
               }}>
                 Clear search
               </Button>
             )}
           </div>
+
+          {sourcePresets.length > 0 && (
+            <div className='flex items-center gap-2'>
+              <select
+                value={articlesPresetFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setArticlesPresetFilter(val);
+                  void loadArticles(0, articlesSearch, articlesScrapeRunFilter, val).catch(() => undefined);
+                }}
+                className='h-8 rounded border border-border bg-background px-2 text-xs text-foreground'
+                aria-label='Filter by source preset'
+              >
+                <option value=''>All source presets</option>
+                {sourcePresets.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              {articlesPresetFilter && (
+                <Button
+                  size='sm' variant='ghost' className='h-7 px-2 text-xs'
+                  onClick={() => {
+                    setArticlesPresetFilter('');
+                    void loadArticles(0, articlesSearch, articlesScrapeRunFilter, '').catch(() => undefined);
+                  }}
+                >
+                  ✕ Clear preset filter
+                </Button>
+              )}
+            </div>
+          )}
 
           {articlesScrapeRunFilter && (
             <div className='flex items-center gap-2 rounded-md border border-border/50 bg-muted/30 px-3 py-1.5'>
@@ -441,11 +617,66 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
             </div>
           )}
 
-          <div className='text-xs text-muted-foreground'>
-            {articlesTotal} article{articlesTotal === 1 ? '' : 's'} total
-            {articlesSearch ? ` matching "${articlesSearch}"` : ''}
-            {articlesScrapeRunFilter ? ' (run filter active)' : ''}
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='text-xs text-muted-foreground'>
+              {articlesTotal} article{articlesTotal === 1 ? '' : 's'} total
+              {articlesSearch ? ` matching "${articlesSearch}"` : ''}
+              {articlesScrapeRunFilter ? ' (run filter active)' : ''}
+              {articlesPresetFilter
+                ? ` · preset: ${sourcePresets.find((p) => p.id === articlesPresetFilter)?.name ?? articlesPresetFilter}`
+                : ''}
+            </div>
+            {articles.length > 0 && (
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-6 px-2 text-xs text-muted-foreground'
+                onClick={handleExportCsv}
+                title='Export current page to CSV'
+              >
+                ↓ CSV
+              </Button>
+            )}
           </div>
+
+          {articles.length > 0 && (
+            <div className='flex items-center gap-3 border-b border-border/40 pb-2'>
+              <label className='flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground'>
+                <input
+                  type='checkbox'
+                  checked={selectedArticleIds.size === articles.length}
+                  onChange={() => {
+                    if (selectedArticleIds.size === articles.length) handleDeselectAllArticles();
+                    else handleSelectAllArticles();
+                  }}
+                  disabled={isBulkDeleting}
+                />
+                {selectedArticleIds.size === 0 ? 'Select all' : `${selectedArticleIds.size} selected`}
+              </label>
+              {selectedArticleIds.size > 0 && (
+                <>
+                  <Button
+                    size='sm'
+                    variant='ghost'
+                    className='h-6 px-2 text-xs text-destructive hover:text-destructive'
+                    disabled={isBulkDeleting}
+                    onClick={() => { void handleBulkDeleteArticles(); }}
+                  >
+                    {isBulkDeleting ? 'Deleting…' : `Delete selected (${selectedArticleIds.size})`}
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='ghost'
+                    className='h-6 px-2 text-xs'
+                    disabled={isBulkDeleting}
+                    onClick={handleDeselectAllArticles}
+                  >
+                    Deselect all
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
 
           <div className='rounded-md border border-border'>
             {articlesLoading && articles.length === 0 && (
@@ -457,13 +688,29 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
             {articles.map((article) => (
               <div key={article.id} className='border-b border-border/40 last:border-b-0'>
                 <div className='flex items-start gap-2 px-4 py-3'>
+                  <input
+                    type='checkbox'
+                    checked={selectedArticleIds.has(article.id)}
+                    onChange={() => handleToggleArticleSelection(article.id)}
+                    disabled={isBulkDeleting || deletingArticleId === article.id}
+                    onClick={(e) => e.stopPropagation()}
+                    className='mt-1 shrink-0'
+                    aria-label={`Select article ${article.title ?? article.id}`}
+                  />
                   <button
                     className='min-w-0 flex-1 text-left'
                     onClick={() => setExpandedArticleId(expandedArticleId === article.id ? null : article.id)}
                   >
-                    <p className='truncate text-sm font-medium text-foreground'>
-                      {article.title || '(untitled)'}
-                    </p>
+                    <div className='flex flex-wrap items-center gap-1.5'>
+                      <p className='truncate text-sm font-medium text-foreground'>
+                        {article.title || '(untitled)'}
+                      </p>
+                      {article.sourcePresetId && (
+                        <span className='shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground'>
+                          {sourcePresets.find((p) => p.id === article.sourcePresetId)?.name ?? 'preset'}
+                        </span>
+                      )}
+                    </div>
                     <p className='truncate text-xs text-primary'>{article.resolvedUrl}</p>
                     {(article.description ?? article.excerpt) && (
                       <p className='mt-1 line-clamp-2 text-xs text-muted-foreground'>
@@ -480,7 +727,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                       size='sm'
                       variant='ghost'
                       className='h-6 px-2 text-xs text-destructive hover:text-destructive'
-                      disabled={deletingArticleId === article.id}
+                      disabled={deletingArticleId === article.id || isBulkDeleting}
                       onClick={() => { void handleDeleteArticle(article.id); }}
                     >
                       {deletingArticleId === article.id ? '…' : 'Delete'}
@@ -544,7 +791,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               <Button
                 size='sm' variant='outline'
                 disabled={articlesOffset === 0 || articlesLoading}
-                onClick={() => void loadArticles(Math.max(0, articlesOffset - PAGE_SIZE), articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
+                onClick={() => void loadArticles(Math.max(0, articlesOffset - PAGE_SIZE), articlesSearch, articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined)}
               >
                 Previous
               </Button>
@@ -554,7 +801,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               <Button
                 size='sm' variant='outline'
                 disabled={articlesOffset + PAGE_SIZE >= articlesTotal || articlesLoading}
-                onClick={() => void loadArticles(articlesOffset + PAGE_SIZE, articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
+                onClick={() => void loadArticles(articlesOffset + PAGE_SIZE, articlesSearch, articlesScrapeRunFilter, articlesPresetFilter).catch(() => undefined)}
               >
                 Next
               </Button>
@@ -587,8 +834,10 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                     </div>
                     <p className='mt-0.5 text-xs text-muted-foreground'>
                       Max {preset.maxArticlesPerSource} · {preset.obeyRobotsTxt ? 'obeys robots.txt' : 'ignores robots.txt'}
+                      {' · '}depth {preset.crawlDepth}
                       {preset.includePatterns.length > 0 && ` · ${preset.includePatterns.length} include`}
                       {preset.excludePatterns.length > 0 && ` · ${preset.excludePatterns.length} exclude`}
+                      {preset.playwrightScripterId && ` · scripter ${preset.playwrightScripterMode}: ${preset.playwrightScripterId}`}
                     </p>
                     <ul className='mt-1.5 space-y-0.5'>
                       {preset.urls.map((url) => (
@@ -651,6 +900,26 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                     className='h-7 text-xs'
                   />
                 </div>
+                <div className='space-y-1'>
+                  <span className='text-xs text-muted-foreground'>Crawl depth</span>
+                  <Input
+                    type='number'
+                    value={sourcePresetForm.crawlDepth}
+                    min={0}
+                    max={2}
+                    onChange={(e) => {
+                      const parsed = Number(e.target.value);
+                      setSourcePresetForm((f) => ({
+                        ...f,
+                        crawlDepth: Number.isFinite(parsed)
+                          ? Math.max(0, Math.min(2, Math.floor(parsed)))
+                          : 0,
+                      }));
+                    }}
+                    className='h-7 text-xs'
+                    aria-label='Crawl depth'
+                  />
+                </div>
                 <div className='flex flex-col gap-2 pt-4'>
                   <label className='flex items-center gap-2 text-xs text-muted-foreground cursor-pointer'>
                     <input
@@ -693,6 +962,49 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                   rows={2}
                   className='font-mono text-xs'
                 />
+              </div>
+              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                <div>
+                  <label className='mb-1 block text-xs text-muted-foreground'>
+                    Playwright scripter
+                  </label>
+                  <select
+                    value={sourcePresetForm.playwrightScripterId}
+                    onChange={(e) => setSourcePresetForm((f) => ({
+                      ...f,
+                      playwrightScripterId: e.target.value,
+                    }))}
+                    className='h-8 w-full rounded border border-border bg-background px-2 text-xs text-foreground'
+                    aria-label='Playwright scripter'
+                  >
+                    <option value=''>
+                      {playwrightScriptersLoading ? 'Loading scripters…' : 'Generic scraper only'}
+                    </option>
+                    {playwrightScripters.map((scripter) => (
+                      <option key={scripter.id} value={scripter.id}>
+                        {scripter.id} · {scripter.siteHost}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className='mb-1 block text-xs text-muted-foreground'>
+                    Scripter mode
+                  </label>
+                  <select
+                    value={sourcePresetForm.playwrightScripterMode}
+                    onChange={(e) => setSourcePresetForm((f) => ({
+                      ...f,
+                      playwrightScripterMode: e.target.value === 'replace' ? 'replace' : 'assist',
+                    }))}
+                    disabled={!sourcePresetForm.playwrightScripterId}
+                    className='h-8 w-full rounded border border-border bg-background px-2 text-xs text-foreground disabled:opacity-60'
+                    aria-label='Playwright scripter mode'
+                  >
+                    <option value='assist'>Assist generic scrape</option>
+                    <option value='replace'>Replace generic discovery</option>
+                  </select>
+                </div>
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -848,6 +1160,11 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                             · {run.warnings.length} warning{run.warnings.length === 1 ? '' : 's'}
                           </span>
                         )}
+                        {run.playwrightScripterIds.length > 0 && (
+                          <span className='text-xs text-muted-foreground'>
+                            · {run.playwrightScripterIds.length} scripter{run.playwrightScripterIds.length === 1 ? '' : 's'}
+                          </span>
+                        )}
                       </div>
                       {run.message && (
                         <p className='mt-1 text-xs text-muted-foreground'>{run.message}</p>
@@ -896,6 +1213,31 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                               >
                                 {url}
                               </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {run.scripterDiagnostics.length > 0 && (
+                      <div>
+                        <p className='mb-1 text-xs font-medium text-muted-foreground'>
+                          Playwright scripter diagnostics
+                        </p>
+                        <ul className='space-y-1'>
+                          {run.scripterDiagnostics.map((diagnostic) => (
+                            <li
+                              key={`${diagnostic.sourceUrl}-${diagnostic.scripterId ?? 'generic'}`}
+                              className='rounded border border-border/40 px-2 py-1 text-xs text-muted-foreground'
+                            >
+                              <span className='font-mono text-foreground'>
+                                {diagnostic.scripterId ?? 'unresolved'}
+                              </span>
+                              {' '}· {diagnostic.rawRecordCount} raw · {diagnostic.candidateCount} candidates · {diagnostic.articleCount} direct
+                              {diagnostic.errors.length > 0 && (
+                                <span className='text-destructive'>
+                                  {' '}· {diagnostic.errors.length} error{diagnostic.errors.length === 1 ? '' : 's'}
+                                </span>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -972,7 +1314,8 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                           )}
                         </span>
                         <span className='block truncate text-xs text-muted-foreground'>
-                          {preset.urls.length} URL{preset.urls.length === 1 ? '' : 's'} · max {preset.maxArticlesPerSource}
+                          {preset.urls.length} URL{preset.urls.length === 1 ? '' : 's'} · max {preset.maxArticlesPerSource} · depth {preset.crawlDepth}
+                          {preset.playwrightScripterId && ` · scripter ${preset.playwrightScripterMode}`}
                         </span>
                       </span>
                     </label>
@@ -1069,6 +1412,8 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                   className='mt-3 w-full'
                   onClick={() => {
                     setTab('articles');
+                    setArticlesPresetFilter('');
+                    setArticlesScrapeRunFilter('');
                     void loadArticles(0, '').catch(() => undefined);
                   }}
                 >

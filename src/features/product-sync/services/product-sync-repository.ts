@@ -24,6 +24,10 @@ import type {
   ProductSyncRunTrigger,
 } from '@/shared/contracts/product-sync';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
+import {
+  readIntegrationSettingValue,
+  writeIntegrationSettingValue,
+} from '@/features/integrations/services/integration-settings-store';
 import { getMongoDb } from '@/shared/lib/db/product-mongo-client';
 
 
@@ -248,7 +252,7 @@ const normalizeProfile = (
 };
 
 const readProfiles = async (): Promise<ProductSyncProfile[]> => {
-  const raw = await readSettingValue(PROFILE_SETTINGS_KEY);
+  const raw = await readIntegrationSettingValue(PROFILE_SETTINGS_KEY);
   const parsed = parseJson<unknown[]>(raw);
   const items = Array.isArray(parsed) ? parsed : [];
   const normalized = items
@@ -265,7 +269,7 @@ const readProfiles = async (): Promise<ProductSyncProfile[]> => {
 };
 
 const writeProfiles = async (profiles: ProductSyncProfile[]): Promise<void> => {
-  await writeSettingValue(
+  await writeIntegrationSettingValue(
     PROFILE_SETTINGS_KEY,
     JSON.stringify(enforceSingleDefaultProfile(profiles))
   );

@@ -15,11 +15,13 @@ import type {
   VisualAnalysisModalSelectionState,
 } from './SocialPost.VisualAnalysisModalState';
 
+type RuntimeJobLike = Parameters<typeof runtimeJobStatus>[0];
+
 function QueueJobPill({
   job,
   label,
 }: {
-  job: SocialVisualAnalysisModalContext['currentGenerationJob'];
+  job: RuntimeJobLike;
   label: string;
 }): React.JSX.Element | null {
   const status = runtimeJobStatus(job);

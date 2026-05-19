@@ -43,10 +43,10 @@ describe('products/title-terms/[id] handler', () => {
     expect(typeof titleTermUpdateSchema.safeParse).toBe('function');
   });
 
-  it('updates a title term using current catalog and type for duplicate checks', async () => {
+  it('updates a title term using current type for duplicate checks', async () => {
     getTitleTermByIdMock.mockResolvedValue({
       id: 'term-1',
-      catalogId: 'catalog-1',
+      catalogId: 'global',
       type: 'material',
       name: 'Metal',
       description: null,
@@ -58,7 +58,7 @@ describe('products/title-terms/[id] handler', () => {
     findByNameMock.mockResolvedValue(null);
     updateTitleTermMock.mockResolvedValue({
       id: 'term-1',
-      catalogId: 'catalog-1',
+      catalogId: 'global',
       type: 'material',
       name: 'Enamel Metal',
       description: null,
@@ -80,7 +80,7 @@ describe('products/title-terms/[id] handler', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(findByNameMock).toHaveBeenCalledWith('catalog-1', 'material', 'Enamel Metal');
+    expect(findByNameMock).toHaveBeenCalledWith('material', 'Enamel Metal');
     expect(updateTitleTermMock).toHaveBeenCalledWith('term-1', {
       name_en: 'Enamel Metal',
       name_pl: 'Metal emaliowany',

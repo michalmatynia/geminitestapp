@@ -1,3 +1,18 @@
+/**
+ * AI Paths Context Registry - Server Entry Point
+ *
+ * This module serves as the server-only entry point for AI Paths context registry integration.
+ * It exports utilities for building and resolving context registry envelopes for path execution.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - resolveAiPathsContextRegistryEnvelope: Resolve context registry references for AI Paths
+ *
+ * Example usage:
+ * import { resolveAiPathsContextRegistryEnvelope } from '@/features/ai/ai-paths/context-registry/server';
+ */
+
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,

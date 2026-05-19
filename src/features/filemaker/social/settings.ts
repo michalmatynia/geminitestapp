@@ -5,6 +5,7 @@ import {
   socialPublishingProgrammableCaptureRouteSchema,
   type SocialPublishingProgrammableCaptureRoute,
 } from '@/shared/contracts/social-publishing-image-addons';
+import { SOCIAL_ARTICLE_AGGREGATION_PATH_ID } from '@/shared/lib/ai-paths/social-article-aggregation';
 import {
   type SocialPublishingCaptureContentConfig,
   DEFAULT_SOCIAL_PUBLISHING_CAPTURE_CONTENT_CONFIG,
@@ -45,7 +46,7 @@ export const DEFAULT_SOCIAL_PUBLISHING_SETTINGS: Readonly<SocialPublishingSettin
   programmableCaptureRoutes: [],
   projectUrl: null,
   captureContentConfig: DEFAULT_SOCIAL_PUBLISHING_CAPTURE_CONTENT_CONFIG,
-  articleAggregatorPathId: null,
+  articleAggregatorPathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -93,7 +94,7 @@ const normalizePresetLimit = (value: unknown): number | null => {
   }
   if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (!trimmed) return null;
+    if (trimmed.length === 0) return null;
     const parsed = Number(trimmed);
     if (Number.isFinite(parsed)) {
       const normalized = Math.floor(parsed);
@@ -121,6 +122,9 @@ const normalizePresetIds = (value: unknown): string[] => {
   return DEFAULT_PRESET_IDS.filter((id) => unique.has(id));
 };
 
+const hasOwnSetting = (record: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
+
 export const parseSocialPublishingSettings = (
   value: string | null | undefined
 ): SocialPublishingSettings => {
@@ -146,6 +150,8 @@ export const parseSocialPublishingSettings = (
     ),
     projectUrl: normalizeBaseUrl(parsed['projectUrl']),
     captureContentConfig: normalizeCaptureContentConfig(parsed['captureContentConfig']),
-    articleAggregatorPathId: normalizeOptionalId(parsed['articleAggregatorPathId']),
+    articleAggregatorPathId: hasOwnSetting(parsed, 'articleAggregatorPathId')
+      ? normalizeOptionalId(parsed['articleAggregatorPathId'])
+      : DEFAULT_SOCIAL_PUBLISHING_SETTINGS.articleAggregatorPathId,
   };
 };

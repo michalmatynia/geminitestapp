@@ -16,6 +16,8 @@
 
 import { useState, useMemo, useCallback, type Dispatch, type SetStateAction } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { FileStorageProfile } from '@/shared/lib/files/constants';
@@ -28,6 +30,7 @@ import {
   useAsset3DTags,
   useDeleteAsset3DMutation,
   useReindexAssets3DMutation,
+  invalidateAsset3d,
 } from '../hooks/useAsset3dQueries';
 
 import type { ViewMode } from './view-mode';
@@ -173,6 +176,7 @@ export function useAdmin3DAssetsState(options?: {
 }): UseAdmin3DAssetsStateReturn {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
+  const queryClient = useQueryClient();
   const local = useAdmin3DLocalState();
 
   const filters = useAdmin3DAssetFilters(
@@ -194,7 +198,15 @@ export function useAdmin3DAssetsState(options?: {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const handleUpload = useCallback((_asset: Asset3DRecord) => local.setShowUploader(false), [local]);
+  const handleUpload = useCallback(
+    (_asset: Asset3DRecord) => {
+      local.setShowUploader(false);
+      invalidateAsset3d(queryClient).catch((err: unknown) => {
+        logClientCatch(err, { source: 'useAdmin3DAssetsState', action: 'invalidateAfterUpload' });
+      });
+    },
+    [local, queryClient]
+  );
   const handleEdit = useCallback((_updated: Asset3DRecord) => {}, []);
   const handleDelete = useAdmin3DDeleteHandler({ confirm, deleteMutation, toast });
   const handleReindex = useAdmin3DReindexHandler(reindexMutation, toast);

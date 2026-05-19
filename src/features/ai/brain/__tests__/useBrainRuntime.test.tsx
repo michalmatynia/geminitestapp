@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useBrainRuntime } from '../context/useBrainRuntime';
 import { useBrainDerivedState } from '../context/useBrainDerivedState';
 import { useBrainPersistence } from '../context/useBrainPersistence';
+import { useBrainRoutingSettings, useUpdateBrainRoutingSettings } from '../hooks/useBrainQueries';
 import {
   defaultBrainAssignment,
   defaultBrainSettings,
@@ -23,6 +24,12 @@ vi.mock('../context/useBrainPersistence', () => ({
   useBrainPersistence: vi.fn(),
 }));
 
+vi.mock('../hooks/useBrainQueries', () => ({
+  useBrainRoutingSettings: vi.fn(),
+  useUpdateBrainRoutingSettings: vi.fn(),
+  brainKeys: { routing: () => ['brain', 'routing'] },
+}));
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
   useUpdateSetting: vi.fn(),
@@ -36,6 +43,7 @@ vi.mock('@/shared/ui', () => ({
 describe('useBrainRuntime', () => {
   const toast = vi.fn();
   const hydrateFromSettingsMap = vi.fn();
+  const hydrateBrainRoutingSettings = vi.fn();
   const handleSave = vi.fn();
   const handleReset = vi.fn();
   const syncPlaywrightPersonas = vi.fn();
@@ -43,10 +51,20 @@ describe('useBrainRuntime', () => {
   beforeEach(() => {
     toast.mockReset();
     hydrateFromSettingsMap.mockReset();
+    hydrateBrainRoutingSettings.mockReset();
     handleSave.mockReset();
     handleReset.mockReset();
     syncPlaywrightPersonas.mockReset();
 
+    vi.mocked(useBrainRoutingSettings).mockReturnValue({
+      data: undefined,
+      dataUpdatedAt: 0,
+      isLoading: false,
+    } as ReturnType<typeof useBrainRoutingSettings>);
+    vi.mocked(useUpdateBrainRoutingSettings).mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    } as unknown as ReturnType<typeof useUpdateBrainRoutingSettings>);
     vi.mocked(useToast).mockReturnValue({ toast } as ReturnType<typeof useToast>);
     vi.mocked(useSettingsMap).mockReturnValue({
       data: undefined,
@@ -78,6 +96,7 @@ describe('useBrainRuntime', () => {
     vi.mocked(useBrainPersistence).mockReturnValue({
       handleReset,
       handleSave,
+      hydrateBrainRoutingSettings,
       hydrateFromSettingsMap,
       saving: false,
       syncPlaywrightPersonas,

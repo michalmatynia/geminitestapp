@@ -1,4 +1,6 @@
 import type {
+  AiBrainRoutingResponse,
+  AiBrainSettings,
   BrainOperationsOverviewResponse,
   BrainOperationsRange,
   BrainModelsResponse,
@@ -15,16 +17,63 @@ import type {
   SystemLogMetrics,
   SystemLogMetricsResponseDto as SystemLogMetricsResponse,
 } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui/queries';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
-import { useSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSingleQueryV2, useUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
-export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResponse };
+export type {
+  AiBrainRoutingResponse,
+  BrainModelsResponse,
+  InsightsSnapshot,
+  BrainOperationsOverviewResponse,
+};
 
 const INSIGHTS_LIMIT = 5;
 const EMPTY_INSIGHTS_RESPONSE: AiInsightsResponse = { insights: [] };
+
+export function useBrainRoutingSettings(options?: {
+  enabled?: boolean;
+}): SingleQuery<AiBrainRoutingResponse> {
+  const queryKey = brainKeys.routing();
+  return useSingleQueryV2<AiBrainRoutingResponse>({
+    queryKey,
+    queryFn: () => api.get<AiBrainRoutingResponse>('/api/brain/routing'),
+    id: 'brain-routing',
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 30,
+    meta: {
+      source: 'brain.hooks.useBrainRoutingSettings',
+      operation: 'detail',
+      resource: 'brain.routing',
+      domain: 'global',
+      queryKey,
+      tags: ['brain', 'routing'],
+      description: 'Loads the global AI Brain routing configuration.',
+    },
+  });
+}
+
+export function useUpdateBrainRoutingSettings(): MutationResult<
+  AiBrainRoutingResponse,
+  AiBrainSettings
+> {
+  return useUpdateMutationV2<AiBrainRoutingResponse, AiBrainSettings>({
+    mutationKey: brainKeys.mutation('update-routing'),
+    mutationFn: (settings: AiBrainSettings) =>
+      api.post<AiBrainRoutingResponse>('/api/brain/routing', { settings }),
+    invalidateKeys: [brainKeys.routing()],
+    meta: {
+      source: 'brain.hooks.useUpdateBrainRoutingSettings',
+      operation: 'update',
+      resource: 'brain.routing',
+      domain: 'global',
+      tags: ['brain', 'routing', 'update'],
+      description: 'Updates the global AI Brain routing configuration.',
+    },
+  });
+}
 
 export async function fetchBrainInsightsSnapshot(options?: {
   includeRuntimeAnalytics?: boolean;

@@ -8,7 +8,8 @@ import type { Db } from 'mongodb';
 import type { AiBrainAssignment, AiBrainSettings } from '@/shared/contracts/ai-brain';
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
-  AI_BRAIN_SETTINGS_KEY,
+  AI_BRAIN_ROUTING_COLLECTION,
+  AI_BRAIN_ROUTING_GLOBAL_ID,
   defaultBrainAssignment,
   parseBrainSettings,
   sanitizeBrainAssignment,
@@ -18,6 +19,10 @@ type SettingDoc = {
   _id?: string;
   key?: string;
   value?: string;
+  settings?: unknown;
+  schemaVersion?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 type CliOptions = {
@@ -80,10 +85,12 @@ const looksLikeVisionModel = (modelId: string): boolean => {
 };
 
 const readBrainSettings = async (db: Db): Promise<AiBrainSettings> => {
-  const doc = await db.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+  const doc = await db.collection<SettingDoc>(AI_BRAIN_ROUTING_COLLECTION).findOne({
+    _id: AI_BRAIN_ROUTING_GLOBAL_ID,
   });
-  return parseBrainSettings(doc?.value ?? null);
+  return doc?.settings === undefined
+    ? parseBrainSettings(null)
+    : parseBrainSettings(JSON.stringify(doc.settings));
 };
 
 const readProviderCatalogModels = async (db: Db): Promise<string[]> => {
@@ -208,17 +215,18 @@ const resolveCandidateModels = (input: {
 };
 
 const writeBrainSettings = async (db: Db, settings: AiBrainSettings): Promise<void> => {
-  await db.collection<SettingDoc>('settings').updateOne(
-    {
-      $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
-    },
+  const now = new Date();
+  await db.collection<SettingDoc>(AI_BRAIN_ROUTING_COLLECTION).updateOne(
+    { _id: AI_BRAIN_ROUTING_GLOBAL_ID },
     {
       $set: {
-        key: AI_BRAIN_SETTINGS_KEY,
-        value: JSON.stringify(settings),
+        key: AI_BRAIN_ROUTING_GLOBAL_ID,
+        schemaVersion: 1,
+        settings,
+        updatedAt: now,
       },
       $setOnInsert: {
-        _id: AI_BRAIN_SETTINGS_KEY,
+        createdAt: now,
       },
     },
     { upsert: true }

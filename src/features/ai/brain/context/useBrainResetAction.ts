@@ -17,6 +17,7 @@ import {
 } from '../settings';
 
 interface BrainResetParams {
+  hydrateBrainRoutingSettings: (settings: AiBrainSettings) => void;
   hydrateFromSettingsMap: (map: Map<string, string>) => void;
   setAnalyticsPromptSystem: Dispatch<SetStateAction<string>>;
   setAnalyticsScheduleEnabled: Dispatch<SetStateAction<boolean>>;
@@ -35,6 +36,7 @@ interface BrainResetParams {
   setRuntimeAnalyticsScheduleMinutes: Dispatch<SetStateAction<number>>;
   setSettings: Dispatch<SetStateAction<AiBrainSettings>>;
   settingsMap: Map<string, string> | undefined;
+  storedRoutingSettings: AiBrainSettings | undefined;
 }
 
 interface BrainResetResult {
@@ -45,6 +47,9 @@ export function useBrainResetAction(params: BrainResetParams): BrainResetResult 
   const handleReset = useCallback((): void => {
     if (params.settingsMap) {
       params.hydrateFromSettingsMap(params.settingsMap);
+      if (params.storedRoutingSettings) {
+        params.hydrateBrainRoutingSettings(params.storedRoutingSettings);
+      }
       return;
     }
     params.setSettings(defaultBrainSettings);

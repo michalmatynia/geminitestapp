@@ -1,3 +1,18 @@
+/**
+ * Image Studio Context Registry - Server Entry Point
+ *
+ * This module serves as the server-only entry point for image studio context registry integration.
+ * It exports utilities for building and resolving context registry envelopes for image generation.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - resolveImageStudioContextRegistryEnvelope: Resolve context registry references for image studio
+ *
+ * Example usage:
+ * import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
+ */
+
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,

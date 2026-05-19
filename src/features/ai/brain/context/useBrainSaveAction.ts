@@ -16,7 +16,6 @@ import {
 } from './brain-runtime-shared';
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
-  AI_BRAIN_SETTINGS_KEY,
   BRAIN_CAPABILITY_KEYS,
   getBrainCapabilityDefinition,
   resolveBrainAssignment,
@@ -27,6 +26,7 @@ import {
   type AiBrainCapabilityKey,
   type AiBrainFeature,
   type AiBrainProviderCatalog,
+  type AiBrainRoutingResponse,
   type AiBrainSettings,
 } from '../settings';
 
@@ -44,6 +44,7 @@ interface BrainSaveParams {
   runtimeAnalyticsScheduleMinutes: number;
   settings: AiBrainSettings;
   toast: Toast;
+  updateBrainRouting: MutationResult<AiBrainRoutingResponse, AiBrainSettings>;
   updateSetting: MutationResult<SystemSetting, { key: string; value: string }>;
   updateSettingsBulk: MutationResult<SystemSetting[], Array<{ key: string; value: string }>>;
 }
@@ -91,7 +92,15 @@ function buildNextCapabilities(
 
 export function useBrainSaveAction(params: BrainSaveParams): BrainSaveResult {
   const handleSave = useCallback(async (): Promise<void> => {
-    const { settings, overridesEnabled, providerCatalog, toast, updateSetting, updateSettingsBulk } = params;
+    const {
+      settings,
+      overridesEnabled,
+      providerCatalog,
+      toast,
+      updateBrainRouting,
+      updateSetting,
+      updateSettingsBulk,
+    } = params;
     const nextSettings: AiBrainSettings = {
       ...settings,
       defaults: sanitizeBrainAssignmentForProviders(settings.defaults, ['model']),
@@ -104,7 +113,7 @@ export function useBrainSaveAction(params: BrainSaveParams): BrainSaveResult {
     const logs = resolveBrainAssignment(nextSettings, 'system_logs');
 
     try {
-      await updateSetting.mutateAsync({ key: AI_BRAIN_SETTINGS_KEY, value: serializeSetting(nextSettings) });
+      await updateBrainRouting.mutateAsync(nextSettings);
       await updateSetting.mutateAsync({
         key: AI_BRAIN_PROVIDER_CATALOG_KEY,
         value: serializeSetting(toPersistedBrainProviderCatalog(sanitizeBrainProviderCatalog(providerCatalog))),

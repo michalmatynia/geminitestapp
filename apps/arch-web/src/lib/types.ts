@@ -20,6 +20,7 @@ export function isArchLocale(value: unknown): value is ArchLocale {
 
 export type ArchSectionVisibility = {
   drawing: boolean;
+  codeStudio: boolean;
   philosophy: boolean;
   services: boolean;
   projects: boolean;
@@ -105,6 +106,13 @@ export interface ArchPageContent {
     asset3dProjectCodes: string[];
     interiorModelAssetId?: string;
     interiorModelUrl?: string;
+  };
+  codeStudio: {
+    eyebrow: string;
+    subLabel: string;
+    heading: string;
+    headingEmphasis: string;
+    copy: string;
   };
   philosophy: {
     eyebrow: string;

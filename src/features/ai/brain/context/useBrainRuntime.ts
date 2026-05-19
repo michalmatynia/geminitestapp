@@ -5,6 +5,10 @@ import { useEffect, useMemo } from 'react';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';
 
+import {
+  useBrainRoutingSettings,
+  useUpdateBrainRoutingSettings,
+} from '../hooks/useBrainQueries';
 import { hasAnyBrainOrInsightsSetting } from './brain-runtime-shared';
 import { useBrainDerivedState } from './useBrainDerivedState';
 import { useBrainPersistence } from './useBrainPersistence';
@@ -17,15 +21,45 @@ import type {
   BrainActionsContextType,
   BrainStateContextType,
 } from './BrainContext.types';
+import type { AiBrainSettings } from '../settings';
 
 interface BrainRuntimeResult {
   actionsValue: BrainActionsContextType;
   stateValue: BrainStateContextType;
 }
 
+interface BrainRuntimeHydrationParams {
+  hydrateBrainRoutingSettings: (settings: AiBrainSettings) => void;
+  hydrateFromSettingsMap: (map: Map<string, string>) => void;
+  routingDataUpdatedAt: number;
+  routingSettings: AiBrainSettings | undefined;
+  settingsDataUpdatedAt: number;
+  settingsMap: Map<string, string> | undefined;
+}
+
+function useBrainRuntimeHydration(params: BrainRuntimeHydrationParams): void {
+  useEffect(() => {
+    if (params.routingSettings !== undefined) {
+      params.hydrateBrainRoutingSettings(params.routingSettings);
+    }
+  }, [
+    params.hydrateBrainRoutingSettings,
+    params.routingDataUpdatedAt,
+    params.routingSettings,
+  ]);
+
+  useEffect(() => {
+    if (params.settingsMap !== undefined && hasAnyBrainOrInsightsSetting(params.settingsMap)) {
+      params.hydrateFromSettingsMap(params.settingsMap);
+    }
+  }, [params.hydrateFromSettingsMap, params.settingsDataUpdatedAt, params.settingsMap]);
+}
+
 export function useBrainRuntime(): BrainRuntimeResult {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
+  const brainRoutingQuery = useBrainRoutingSettings();
+  const updateBrainRouting = useUpdateBrainRoutingSettings();
   const updateSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
 
@@ -42,16 +76,30 @@ export function useBrainRuntime(): BrainRuntimeResult {
   });
 
   const {
-    handleReset, handleSave, hydrateFromSettingsMap, saving, syncPlaywrightPersonas,
+    handleReset,
+    handleSave,
+    hydrateBrainRoutingSettings,
+    hydrateFromSettingsMap,
+    saving,
+    syncPlaywrightPersonas,
   } = useBrainPersistence({
-    ...state, settingsMap: settingsQuery.data, toast, updateSetting, updateSettingsBulk,
+    ...state,
+    settingsMap: settingsQuery.data,
+    storedRoutingSettings: brainRoutingQuery.data?.settings,
+    toast,
+    updateBrainRouting,
+    updateSetting,
+    updateSettingsBulk,
   });
 
-  useEffect(() => {
-    if (settingsQuery.data && hasAnyBrainOrInsightsSetting(settingsQuery.data)) {
-      hydrateFromSettingsMap(settingsQuery.data);
-    }
-  }, [hydrateFromSettingsMap, settingsQuery.data, settingsQuery.dataUpdatedAt]);
+  useBrainRuntimeHydration({
+    hydrateBrainRoutingSettings,
+    hydrateFromSettingsMap,
+    routingDataUpdatedAt: brainRoutingQuery.dataUpdatedAt,
+    routingSettings: brainRoutingQuery.data?.settings,
+    settingsDataUpdatedAt: settingsQuery.dataUpdatedAt,
+    settingsMap: settingsQuery.data,
+  });
 
   const stateValue = useMemo((): BrainStateContextType => ({
     ...state, ...derived, saving,

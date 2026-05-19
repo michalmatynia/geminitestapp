@@ -18,6 +18,17 @@ import { getSystemLogAlertsQueueStatus } from '@/shared/lib/observability/worker
 import { getQueueHealth } from '@/shared/lib/queue/registry';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Health Check API Handlers
+ *
+ * HTTP request handlers for application health monitoring.
+ * Handlers: getHandler
+ *
+ * - Checks application availability and status
+ * - Verifies database connectivity
+ * - Reports system readiness for load balancers
+ */
+
 
 const pingMongo = async (uri: string): Promise<void> => {
   const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
@@ -55,6 +66,17 @@ const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
  * Retrieves overall system health status. 
  * Includes DB ping check and runtime observability metrics.
  * Returns 200 if healthy, 503 if unhealthy.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const startedAtMs = Date.now();

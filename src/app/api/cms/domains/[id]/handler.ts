@@ -7,6 +7,28 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { IdDto as ApiParams } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
+/**
+ * CMS Domain Detail API Handlers
+ *
+ * HTTP request handlers for individual CMS domain operations.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Retrieves, updates, and deletes CMS domains
+ * - Manages domain configuration and routing
+ * - Validates domain settings before persistence
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function putHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
@@ -31,6 +53,17 @@ export async function putHandler(
   return NextResponse.json(updated ?? {});
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function deleteHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,

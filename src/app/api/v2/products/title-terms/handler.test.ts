@@ -45,7 +45,7 @@ describe('products/title-terms handler', () => {
         id: 'term-1',
         name: 'Metal',
         description: null,
-        catalogId: 'catalog-1',
+        catalogId: 'global',
         type: 'material',
         name_en: 'Metal',
         name_pl: 'Metal',
@@ -66,7 +66,6 @@ describe('products/title-terms handler', () => {
 
     expect(response.status).toBe(200);
     expect(listTitleTermsMock).toHaveBeenCalledWith({
-      catalogId: 'catalog-1',
       type: 'material',
       search: 'metal',
     });
@@ -85,7 +84,7 @@ describe('products/title-terms handler', () => {
       id: 'term-2',
       name: '4 cm',
       description: null,
-      catalogId: 'catalog-1',
+      catalogId: 'global',
       type: 'size',
       name_en: '4 cm',
       name_pl: null,
@@ -97,7 +96,6 @@ describe('products/title-terms handler', () => {
       new NextRequest('http://localhost/api/v2/products/title-terms'),
       {
         body: {
-          catalogId: 'catalog-1',
           type: 'size',
           name_en: '4 cm',
         },
@@ -105,19 +103,18 @@ describe('products/title-terms handler', () => {
     );
 
     expect(response.status).toBe(201);
-    expect(findByNameMock).toHaveBeenCalledWith('catalog-1', 'size', '4 cm');
+    expect(findByNameMock).toHaveBeenCalledWith('size', '4 cm');
     expect(createTitleTermMock).toHaveBeenCalledWith({
-      catalogId: 'catalog-1',
       type: 'size',
       name_en: '4 cm',
       name_pl: null,
     });
   });
 
-  it('rejects duplicate title terms within the same catalog and type', async () => {
+  it('rejects duplicate title terms within the same type', async () => {
     findByNameMock.mockResolvedValue({
       id: 'term-existing',
-      catalogId: 'catalog-1',
+      catalogId: 'global',
       type: 'size',
       name: '4 cm',
       description: null,
@@ -130,7 +127,6 @@ describe('products/title-terms handler', () => {
     await expect(
       postHandler(new NextRequest('http://localhost/api/v2/products/title-terms'), {
         body: {
-          catalogId: 'catalog-1',
           type: 'size',
           name_en: '4 cm',
         },

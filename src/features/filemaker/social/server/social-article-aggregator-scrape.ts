@@ -3,15 +3,22 @@ import 'server-only';
 import { createCustomPlaywrightInstance } from '@/features/playwright/server/instances';
 import { runPlaywrightEngineTask } from '@/features/playwright/server/runtime';
 import {
+  getDefaultScripterRegistry,
+  type ScripterDefinition,
+} from '@/features/playwright/scripters/public';
+import {
   SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY,
   type SocialArticleAggregatorScrapePayload,
 } from '@/shared/lib/browser-execution';
 import {
   scrapedSocialArticleSchema,
+  socialArticleScripterDiagnosticSchema,
   socialArticleScrapeRequestSchema,
   type ScrapedSocialArticle,
+  type SocialArticleScripterDiagnostic,
   type SocialArticleScrapeRequest,
   type SocialArticleScrapeResponse,
+  type SocialArticleScrapeRun,
   type SocialArticleSourcePreset,
 } from '@/shared/contracts/social-article-aggregator';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -26,16 +33,31 @@ import {
 type ArticleScrapeRun = Awaited<ReturnType<typeof runPlaywrightEngineTask>>;
 
 type RuntimeSource = {
+  crawlDepth: number;
   excludePatterns: string[];
   includePatterns: string[];
   maxArticles: number;
+  obeyRobotsTxt: boolean;
   presetId: string | null;
   presetName: string | null;
+  playwrightScripterDefinition: ScripterDefinition | null;
+  playwrightScripterId: string | null;
+  playwrightScripterMode: 'assist' | 'replace';
   url: string;
+};
+
+type ScripterDefinitionById = Map<string, ScripterDefinition>;
+
+type RuntimeSourcePlan = {
+  customUrls: string[];
+  sourcePresetIds: string[];
+  sources: RuntimeSource[];
 };
 
 const uniqueStrings = (values: string[]): string[] =>
   Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+
+const NO_ARTICLES_WARNING = 'No articles were found. Post generation requires at least one scraped article.';
 
 const normalizeHttpUrl = (value: string): string | null => {
   try {
@@ -49,16 +71,27 @@ const normalizeHttpUrl = (value: string): string | null => {
   }
 };
 
-const toPresetSources = (preset: SocialArticleSourcePreset): RuntimeSource[] =>
+const toPresetSources = (
+  preset: SocialArticleSourcePreset,
+  scripterDefinitions: ScripterDefinitionById
+): RuntimeSource[] =>
   preset.urls
     .map(normalizeHttpUrl)
     .filter((url): url is string => url !== null)
     .map((url) => ({
+      crawlDepth: preset.crawlDepth,
       excludePatterns: preset.excludePatterns,
       includePatterns: preset.includePatterns,
       maxArticles: preset.maxArticlesPerSource,
+      obeyRobotsTxt: preset.obeyRobotsTxt,
       presetId: preset.id,
       presetName: preset.name,
+      playwrightScripterDefinition:
+        preset.playwrightScripterId !== null
+          ? scripterDefinitions.get(preset.playwrightScripterId) ?? null
+          : null,
+      playwrightScripterId: preset.playwrightScripterId,
+      playwrightScripterMode: preset.playwrightScripterMode,
       url,
     }));
 
@@ -70,27 +103,60 @@ const toCustomSources = (
     .map(normalizeHttpUrl)
     .filter((url): url is string => url !== null)
     .map((url) => ({
+      crawlDepth: 1,
       excludePatterns: [],
       includePatterns: [],
       maxArticles: maxArticlesPerSource,
+      obeyRobotsTxt: true,
       presetId: null,
       presetName: null,
+      playwrightScripterDefinition: null,
+      playwrightScripterId: null,
+      playwrightScripterMode: 'assist',
       url,
     }));
 
-const buildRuntimeSources = async (
+const loadScripterDefinitions = async (
+  presets: SocialArticleSourcePreset[]
+): Promise<ScripterDefinitionById> => {
+  const ids = uniqueStrings(
+    presets
+      .map((preset) => preset.playwrightScripterId ?? '')
+      .filter((id) => id.length > 0)
+  );
+  if (ids.length === 0) return new Map();
+  const registry = getDefaultScripterRegistry();
+  const definitions = await Promise.all(
+    ids.map(async (id): Promise<[string, ScripterDefinition | null]> => [
+      id,
+      await registry.get(id),
+    ])
+  );
+  return new Map(
+    definitions.filter((entry): entry is [string, ScripterDefinition] => entry[1] !== null)
+  );
+};
+
+const buildRuntimeSourcePlan = async (
   input: SocialArticleScrapeRequest
-): Promise<RuntimeSource[]> => {
+): Promise<RuntimeSourcePlan> => {
   const presets = await getSocialArticleSourcePresetsByIds(input.sourcePresetIds);
+  const enabledPresets = presets.filter((preset) => preset.enabled);
+  const scripterDefinitions = await loadScripterDefinitions(enabledPresets);
   const sources = [
-    ...presets.flatMap(toPresetSources),
+    ...enabledPresets.flatMap((preset) => toPresetSources(preset, scripterDefinitions)),
     ...toCustomSources(input.customUrls, input.maxArticlesPerSource),
   ];
   const byUrl = new Map<string, RuntimeSource>();
   for (const source of sources) {
     if (!byUrl.has(source.url)) byUrl.set(source.url, source);
   }
-  return Array.from(byUrl.values());
+  const runtimeSources = Array.from(byUrl.values());
+  return {
+    customUrls: uniqueStrings(runtimeSources.filter((source) => source.presetId === null).map((source) => source.url)),
+    sourcePresetIds: uniqueStrings(runtimeSources.map((source) => source.presetId ?? '')),
+    sources: runtimeSources,
+  };
 };
 
 const buildArticleScrapeTask = (input: {
@@ -135,9 +201,19 @@ const normalizeStringArray = (value: unknown): string[] =>
     ? uniqueStrings(value.filter((item): item is string => typeof item === 'string'))
     : [];
 
+const parseScripterDiagnostics = (value: unknown): SocialArticleScripterDiagnostic[] =>
+  Array.isArray(value)
+    ? value
+        .map((item) => socialArticleScripterDiagnosticSchema.safeParse(item))
+        .filter((result): result is { success: true; data: SocialArticleScripterDiagnostic } =>
+          result.success
+        )
+        .map((result) => result.data)
+    : [];
+
 const parsePayload = (value: unknown): Pick<
   SocialArticleAggregatorScrapePayload,
-  'articles' | 'message' | 'visitedUrls' | 'warnings'
+  'articles' | 'message' | 'scripterDiagnostics' | 'visitedUrls' | 'warnings'
 > => {
   const record = isRecord(value) ? value : {};
   const rawArticles = Array.isArray(record['articles']) ? record['articles'] : [];
@@ -151,30 +227,76 @@ const parsePayload = (value: unknown): Pick<
       typeof record['message'] === 'string'
         ? record['message']
         : `Scraped ${articles.length} article(s).`,
+    scripterDiagnostics: parseScripterDiagnostics(record['scripterDiagnostics']),
     visitedUrls: normalizeStringArray(record['visitedUrls']),
     warnings: normalizeStringArray(record['warnings']),
   };
 };
 
+type ParsedScrapePayload = ReturnType<typeof parsePayload>;
+
+const markScrapeRunFailed = async (
+  run: SocialArticleScrapeRun,
+  runtimeRun: ArticleScrapeRun
+): Promise<SocialArticleScrapeRun> =>
+  upsertSocialArticleScrapeRun({
+    ...run,
+    error: runtimeRun.error ?? `Article scrape run status=${runtimeRun.status}`,
+    finishedAt: new Date().toISOString(),
+    message: 'Article scrape failed.',
+    playwrightRunId: runtimeRun.runId,
+    playwrightScripterIds: run.playwrightScripterIds,
+    scripterDiagnostics: run.scripterDiagnostics,
+    status: 'failed',
+    warnings: normalizeStringArray(runtimeRun.logs),
+  });
+
+const markScrapeRunCompleted = async (input: {
+  articles: Awaited<ReturnType<typeof upsertScrapedSocialArticles>>;
+  payload: ParsedScrapePayload;
+  run: SocialArticleScrapeRun;
+  runtimeRun: ArticleScrapeRun;
+}): Promise<SocialArticleScrapeRun> =>
+  upsertSocialArticleScrapeRun({
+    ...input.run,
+    articleIds: input.articles.map((article) => article.id),
+    finishedAt: new Date().toISOString(),
+    message: input.articles.length === 0 ? NO_ARTICLES_WARNING : input.payload.message,
+    playwrightRunId: input.runtimeRun.runId,
+    playwrightScripterIds: input.run.playwrightScripterIds,
+    scripterDiagnostics: input.payload.scripterDiagnostics,
+    status: 'completed',
+    totalArticleCount: input.articles.length,
+    visitedUrls: input.payload.visitedUrls,
+    warnings: input.articles.length === 0
+      ? uniqueStrings([...input.payload.warnings, NO_ARTICLES_WARNING])
+      : input.payload.warnings,
+  });
+
 export async function runSocialArticleAggregatorScrape(
   rawInput: unknown
 ): Promise<SocialArticleScrapeResponse> {
   const input = socialArticleScrapeRequestSchema.parse(rawInput ?? {});
-  const sources = await buildRuntimeSources(input);
+  const sourcePlan = await buildRuntimeSourcePlan(input);
+  const sources = sourcePlan.sources;
   if (sources.length === 0) {
-    throw badRequestError('Select at least one source preset or custom article source URL.');
+    throw badRequestError('Select at least one enabled source preset or custom article source URL.');
   }
 
   let run = await createSocialArticleScrapeRun({
     articleIds: [],
-    customUrls: uniqueStrings(input.customUrls),
+    customUrls: sourcePlan.customUrls,
     error: null,
     finishedAt: null,
     maxArticlesPerSource: input.maxArticlesPerSource,
     message: 'Starting article scrape.',
     obeyRobotsTxt: input.obeyRobotsTxt,
     playwrightRunId: null,
-    sourcePresetIds: uniqueStrings(input.sourcePresetIds),
+    playwrightScripterIds: uniqueStrings(
+      sources.map((source) => source.playwrightScripterId ?? '')
+    ),
+    scripterDiagnostics: [],
+    sourcePresetIds: sourcePlan.sourcePresetIds,
     startedAt: new Date().toISOString(),
     status: 'running',
     totalArticleCount: 0,
@@ -190,15 +312,7 @@ export async function runSocialArticleAggregatorScrape(
 
   const runtimeRun = await runPlaywrightEngineTask(task);
   if (isFailedRun(runtimeRun)) {
-    run = await upsertSocialArticleScrapeRun({
-      ...run,
-      error: runtimeRun.error ?? `Article scrape run status=${runtimeRun.status}`,
-      finishedAt: new Date().toISOString(),
-      message: 'Article scrape failed.',
-      playwrightRunId: runtimeRun.runId,
-      status: 'failed',
-      warnings: normalizeStringArray(runtimeRun.logs),
-    });
+    run = await markScrapeRunFailed(run, runtimeRun);
     return { articles: [], run };
   }
 
@@ -207,17 +321,7 @@ export async function runSocialArticleAggregatorScrape(
     articles: payload.articles,
     runId: run.id,
   });
-  run = await upsertSocialArticleScrapeRun({
-    ...run,
-    articleIds: articles.map((article) => article.id),
-    finishedAt: new Date().toISOString(),
-    message: payload.message,
-    playwrightRunId: runtimeRun.runId,
-    status: 'completed',
-    totalArticleCount: articles.length,
-    visitedUrls: payload.visitedUrls,
-    warnings: payload.warnings,
-  });
+  run = await markScrapeRunCompleted({ articles, payload, run, runtimeRun });
 
   return { articles, run };
 }

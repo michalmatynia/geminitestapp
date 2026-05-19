@@ -14,6 +14,17 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getMilkbarFastCometPublicHtmlMirrorPath } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
 
+/**
+ * CMS Local Media API Handlers
+ *
+ * HTTP request handlers for local CMS media storage.
+ * Handlers: postHandler
+ *
+ * - Handles local file uploads for CMS media
+ * - Manages local storage file operations
+ * - Validates and processes media files
+ */
+
 export const querySchema = z.object({
   path: optionalTrimmedQueryString(),
 });
@@ -49,6 +60,17 @@ const readPathParam = (params: ApiHandlerContext['params']): string | undefined 
   return undefined;
 };
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext

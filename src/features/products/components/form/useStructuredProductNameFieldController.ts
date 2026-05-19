@@ -85,11 +85,7 @@ const resolveFieldConfig = (
   };
 };
 
-const resolveTitleTermsHref = (primaryCatalogId: string | undefined): string => {
-  const normalizedCatalogId = typeof primaryCatalogId === 'string' ? primaryCatalogId.trim() : '';
-  if (normalizedCatalogId === '') return '/admin/products/title-terms';
-  return `/admin/products/title-terms?catalogId=${encodeURIComponent(normalizedCatalogId)}`;
-};
+const resolveTitleTermsHref = (): string => '/admin/products/title-terms';
 
 const toTitleTerms = (data: ProductTitleTerm[] | undefined): ProductTitleTerm[] => data ?? [];
 
@@ -283,7 +279,7 @@ export function useStructuredProductNameFieldController({
     description: resolvedConfig.description,
     placeholder: resolvedConfig.placeholder,
     error,
-    titleTermsHref: resolveTitleTermsHref(categoryController.primaryCatalogId),
+    titleTermsHref: resolveTitleTermsHref(),
     primaryCatalogId: categoryController.primaryCatalogId,
     selectedCategoryLabel: categoryController.selectedCategoryLabel,
     listboxId,

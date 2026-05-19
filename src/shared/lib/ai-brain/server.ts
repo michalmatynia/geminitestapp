@@ -9,5 +9,6 @@ import 'server-only';
  */
 
 export * from './segments/database';
+export * from './segments/routing-store';
 export * from './segments/settings';
 export * from './segments/api';

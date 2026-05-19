@@ -23,6 +23,14 @@ export type SocialArticleScrapeRunStatus = z.infer<
   typeof socialArticleScrapeRunStatusSchema
 >;
 
+export const socialArticleSourcePresetScripterModeSchema = z.enum([
+  'assist',
+  'replace',
+]);
+export type SocialArticleSourcePresetScripterMode = z.infer<
+  typeof socialArticleSourcePresetScripterModeSchema
+>;
+
 export const socialArticleSourcePresetSchema = z.object({
   id: trimmedString.min(1).max(160),
   name: trimmedString.min(1).max(160),
@@ -33,6 +41,8 @@ export const socialArticleSourcePresetSchema = z.object({
   crawlDepth: z.number().int().min(0).max(2).default(1),
   includePatterns: z.array(trimmedString.max(240)).max(20).default([]),
   excludePatterns: z.array(trimmedString.max(240)).max(20).default([]),
+  playwrightScripterId: trimmedString.max(160).nullable().default(null),
+  playwrightScripterMode: socialArticleSourcePresetScripterModeSchema.default('assist'),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
@@ -88,6 +98,34 @@ export const scrapedSocialArticleSchema = socialArticleRecordSchema
   });
 export type ScrapedSocialArticle = z.infer<typeof scrapedSocialArticleSchema>;
 
+export const socialArticleScripterDiagnosticSchema = z.object({
+  articleCount: z.number().int().min(0).default(0),
+  candidateCount: z.number().int().min(0).default(0),
+  errors: z.array(trimmedString.max(1000)).max(100).default([]),
+  mode: socialArticleSourcePresetScripterModeSchema.default('assist'),
+  rawRecordCount: z.number().int().min(0).default(0),
+  scripterId: trimmedString.max(160).nullable().default(null),
+  sourcePresetId: trimmedString.max(160).nullable().default(null),
+  sourceUrl: trimmedString.url().max(1000),
+  telemetry: z
+    .array(
+      z.object({
+        durationMs: z.number().int().min(0).default(0),
+        error: trimmedString.max(1000).nullable().default(null),
+        kind: trimmedString.max(120),
+        recordsAdded: z.number().int().min(0).default(0),
+        stepId: trimmedString.max(160),
+      })
+    )
+    .max(500)
+    .default([]),
+  visitedUrls: z.array(trimmedString.max(1000)).max(500).default([]),
+  warnings: z.array(trimmedString.max(1000)).max(100).default([]),
+});
+export type SocialArticleScripterDiagnostic = z.infer<
+  typeof socialArticleScripterDiagnosticSchema
+>;
+
 export const socialArticleScrapeRunSchema = z.object({
   id: trimmedString.min(1).max(160),
   articleIds: z.array(trimmedString.max(160)).max(1000).default([]),
@@ -98,6 +136,8 @@ export const socialArticleScrapeRunSchema = z.object({
   message: optionalTrimmedText(1000),
   obeyRobotsTxt: z.boolean().default(true),
   playwrightRunId: trimmedString.max(160).nullable().default(null),
+  playwrightScripterIds: z.array(trimmedString.max(160)).max(80).default([]),
+  scripterDiagnostics: z.array(socialArticleScripterDiagnosticSchema).max(500).default([]),
   sourcePresetIds: z.array(trimmedString.max(160)).max(80).default([]),
   startedAt: z.string().datetime(),
   status: socialArticleScrapeRunStatusSchema.default('pending'),

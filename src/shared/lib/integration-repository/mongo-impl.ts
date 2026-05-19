@@ -1,6 +1,14 @@
 import { type ObjectId, type WithId } from 'mongodb';
 
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import {
+  readImportExportSettingValue,
+  writeImportExportSettingValue,
+} from '@/features/integrations/services/import-export-settings-store';
+import {
+  readIntegrationSettingValue,
+  writeIntegrationSettingValue,
+} from '@/features/integrations/services/integration-settings-store';
 import { getMongoDb as getMainMongoDb } from '@/shared/lib/db/mongo-client';
 import { getMongoDb as getProductsMongoDb } from '@/shared/lib/db/integration-mongo-client';
 import { isBaseIntegrationSlug, isPlaywrightProgrammableSlug } from '@/shared/lib/integration-slugs';
@@ -221,89 +229,36 @@ const reassignMongoConnectionReferences = async (
 const updateMongoConnectionScopedSettings = async (
   connectionId: string,
   replacementConnectionId: string | null,
-  getMongoDb: IntegrationMongoDbGetter
+  _getMongoDb: IntegrationMongoDbGetter
 ): Promise<void> => {
-  const db = await getMongoDb();
-  const settings = db.collection<{
-    _id: string | ObjectId;
-    key?: string;
-    value?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-  }>('settings');
-  const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] = await Promise.all([
-    settings.findOne({
-      $or: [{ _id: DEFAULT_CONNECTION_SETTING_KEY }, { key: DEFAULT_CONNECTION_SETTING_KEY }],
-    }),
-    settings.findOne({
-      $or: [{ _id: ACTIVE_TEMPLATE_SETTING_KEY }, { key: ACTIVE_TEMPLATE_SETTING_KEY }],
-    }),
-    settings.findOne({
-      $or: [{ _id: PRODUCT_SYNC_PROFILE_SETTINGS_KEY }, { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY }],
-    }),
+  const [defaultConnectionValue, activeTemplateValue, syncProfilesValue] = await Promise.all([
+    readImportExportSettingValue(DEFAULT_CONNECTION_SETTING_KEY),
+    readImportExportSettingValue(ACTIVE_TEMPLATE_SETTING_KEY),
+    readIntegrationSettingValue(PRODUCT_SYNC_PROFILE_SETTINGS_KEY),
   ]);
 
-  if (defaultConnectionSetting?.value?.trim() === connectionId) {
-    await settings.updateMany(
-      {
-        $or: [{ _id: DEFAULT_CONNECTION_SETTING_KEY }, { key: DEFAULT_CONNECTION_SETTING_KEY }],
-      },
-      {
-        $set: {
-          value: replacementConnectionId ?? '',
-          key: DEFAULT_CONNECTION_SETTING_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
+  if (defaultConnectionValue?.trim() === connectionId) {
+    await writeImportExportSettingValue(
+      DEFAULT_CONNECTION_SETTING_KEY,
+      replacementConnectionId ?? ''
     );
   }
 
   const nextActiveTemplateValue = stripActiveTemplateScopesForConnection(
-    activeTemplateSetting?.value ?? null,
+    activeTemplateValue,
     connectionId
   );
-  if (nextActiveTemplateValue !== (activeTemplateSetting?.value ?? null)) {
-    await settings.updateMany(
-      {
-        $or: [{ _id: ACTIVE_TEMPLATE_SETTING_KEY }, { key: ACTIVE_TEMPLATE_SETTING_KEY }],
-      },
-      {
-        $set: {
-          value: nextActiveTemplateValue ?? '',
-          key: ACTIVE_TEMPLATE_SETTING_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  if (nextActiveTemplateValue !== activeTemplateValue) {
+    await writeImportExportSettingValue(ACTIVE_TEMPLATE_SETTING_KEY, nextActiveTemplateValue ?? '');
   }
 
   const nextSyncProfilesValue = remapProductSyncProfilesSetting(
-    syncProfilesSetting?.value ?? null,
+    syncProfilesValue,
     connectionId,
     replacementConnectionId
   );
-  if (nextSyncProfilesValue !== (syncProfilesSetting?.value ?? null)) {
-    await settings.updateMany(
-      {
-        $or: [
-          { _id: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
-          { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
-        ],
-      },
-      {
-        $set: {
-          value: nextSyncProfilesValue ?? '[]',
-          key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  if (nextSyncProfilesValue !== syncProfilesValue) {
+    await writeIntegrationSettingValue(PRODUCT_SYNC_PROFILE_SETTINGS_KEY, nextSyncProfilesValue ?? '[]');
   }
 };
 

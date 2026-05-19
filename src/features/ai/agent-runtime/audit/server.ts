@@ -1,3 +1,18 @@
+/**
+ * Agent Runtime Audit - Server Entry Point
+ *
+ * This module serves as the server-only entry point for agent audit logging.
+ * It exports functions for recording and managing agent execution audit trails.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - logAgentAudit: Function to record audit events with level, message, and metadata
+ *
+ * Example usage:
+ * import { logAgentAudit } from '@/features/ai/agent-runtime/audit/server';
+ */
+
 import 'server-only';
 
 import type { AuditLevel } from '@/shared/contracts/agent-runtime';

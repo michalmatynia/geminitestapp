@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../SocialPublishingPage.Constants';
 import { SOCIAL_PUBLISHING_CAPTURE_PRESETS } from '@/features/filemaker/social/shared/social-capture-presets';
 import { SOCIAL_PUBLISHING_SETTINGS_KEY } from '@/features/filemaker/social/settings';
+import { SOCIAL_ARTICLE_AGGREGATION_PATH_ID } from '@/shared/lib/ai-paths/social-article-aggregation';
 
 const {
   toastMock,
@@ -29,18 +30,21 @@ const {
   mutateAsyncMock: vi.fn(),
   logSocialPublishingClientErrorMock: vi.fn(),
   isRecoverableSocialPublishingClientFetchErrorMock: vi.fn((error: unknown) => {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === 'string'
-          ? error
-          : error &&
-              typeof error === 'object' &&
-              'message' in error &&
-              typeof error.message === 'string'
-            ? error.message
-            : null;
-    if (!message) {
+    let message: string | null = null;
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === 'string') {
+      message = error;
+    } else if (
+      error !== null &&
+      error !== undefined &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      message = error.message;
+    }
+    if (message === null || message.trim().length === 0) {
       return false;
     }
     const normalizedMessage = message.trim().toLowerCase();
@@ -205,7 +209,7 @@ describe('useSocialSettings', () => {
       programmableCaptureRoutes: [],
       projectUrl: 'https://project.example.com',
       captureContentConfig: { slides: [] },
-      articleAggregatorPathId: null,
+      articleAggregatorPathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
     });
     expect(settingsStoreMock.refetch).toHaveBeenCalledTimes(1);
     expect(toastMock).toHaveBeenCalledWith('Social settings saved.', {
@@ -379,7 +383,7 @@ describe('useSocialSettings', () => {
       ],
       projectUrl: 'https://project.persisted.example.com',
       captureContentConfig: { slides: [] },
-      articleAggregatorPathId: null,
+      articleAggregatorPathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
     });
     expect(toastMock).toHaveBeenCalledWith('Programmable Playwright defaults saved.', {
       variant: 'success',

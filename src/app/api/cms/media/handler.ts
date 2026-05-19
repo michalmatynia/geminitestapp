@@ -14,6 +14,17 @@ import { getCmsBuilderImageFileRepository } from '@/shared/lib/files/services/im
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * CMS Media API Handlers
+ *
+ * HTTP request handlers for CMS media file operations.
+ * Handlers: getHandler, postHandler
+ *
+ * - Lists and uploads media files for CMS
+ * - Manages media metadata and associations
+ * - Handles file storage routing (local or remote)
+ */
+
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === 'object' && 'arrayBuffer' in entry && 'size' in entry;
@@ -129,6 +140,17 @@ const uploadCmsMediaFile = async (
  * API handler for POST /api/cms/media
  * Parses multipart form data, validates files, processes storage profiles,
  * and uploads media content.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;

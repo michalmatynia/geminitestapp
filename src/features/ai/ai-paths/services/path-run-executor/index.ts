@@ -23,6 +23,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';
 import type {
   RuntimeProfileSummary,
   RuntimeTraceRecord,
@@ -164,7 +165,11 @@ export const executePathRun = async (
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
   const runtimeState = parseRuntimeState(run.runtimeState);
-  const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
+  const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta ?? {};
+  const parsedContextRegistry = contextRegistryConsumerEnvelopeSchema.safeParse(
+    runMetaRecord['contextRegistry']
+  );
+  const contextRegistry = parsedContextRegistry.success ? parsedContextRegistry.data : null;
 
   const seedOutputs: Record<string, RuntimePortValues> = {};
   const seedHashes: Record<string, string> = {};
@@ -380,7 +385,8 @@ export const executePathRun = async (
       activePathName: run.pathName ?? null,
       runId: run.id,
       runStartedAt,
-      runMeta: run.meta as Record<string, unknown>,
+      runMeta: runMetaRecord,
+      ...(contextRegistry ? { contextRegistry } : {}),
       skipNodeIds,
       seedOutputs,
       seedHashes,
@@ -391,7 +397,7 @@ export const executePathRun = async (
       strictFlowMode,
       recordHistory: true,
       historyLimit:
-        ((run.meta as Record<string, unknown>)?.['historyRetentionPasses'] as number) ?? 20,
+        (runMetaRecord['historyRetentionPasses'] as number) ?? 20,
       fetchEntityByType,
       reportAiPathsError,
       toast,

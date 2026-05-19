@@ -218,7 +218,7 @@ export const productStudioVariantsResponseSchema = z.object({
   sourceSlotId: z.string().nullable(),
   sourceSlot: imageStudioSlotSchema.nullable(),
   variants: z.array(imageStudioSlotSchema),
-  activeRun: productStudioActiveRunInfoSchema.nullable(),
+  activeRun: productStudioActiveRunInfoSchema.nullable().optional(),
 });
 
 export type ProductStudioVariantsResponse = z.infer<typeof productStudioVariantsResponseSchema>;

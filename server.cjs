@@ -1,3 +1,34 @@
+/**
+ * Custom Next.js Server Entry Point (CommonJS)
+ * 
+ * This is the primary server bootstrap file that replaces the default Next CLI.
+ * It runs in Node.js (not Edge) and handles:
+ * 
+ * Core responsibilities:
+ * - Node version validation (requires >= 20.9, rejects 24+)
+ * - ESM/TypeScript module loading for observability and logging
+ * - HTTP/WebSocket server creation with Next.js app
+ * - Request processing: URL normalization, scraper defense, error handling
+ * - Async local storage for request context tracking
+ * - Redis connection initialization (if available)
+ * - Graceful shutdown on SIGTERM/SIGINT
+ * 
+ * Why a custom server?
+ * - Enforces strict Node version constraints (critical for compatibility)
+ * - Provides early access to observability/error reporting
+ * - Normalizes malformed URLs before reaching Next.js
+ * - Implements security filtering and request guards
+ * - Manages WebSocket upgrade routing for different features
+ * 
+ * Environment variables:
+ * - NODE_ENV: 'development' or 'production' (default: development if not set)
+ * - ALLOW_UNSUPPORTED_NODE_DEV: '1' to skip Node 24+ rejection (not recommended)
+ * - REDIS_URL: Redis connection string (optional)
+ * 
+ * Entry point: npm start (production) or npm run dev (development)
+ * Port: 3000 (default) or process.env.PORT
+ */
+
 const { createServer } = require('http');
 const { createHash } = require('crypto');
 const { AsyncLocalStorage } = require('async_hooks');
@@ -8,10 +39,13 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { resolveWebSocketUpgradeTarget } = require('./scripts/runtime/server-upgrade-routing.cjs');
 
+// Determine runtime environment (development vs production)
 const dev = process.env.NODE_ENV !== 'production';
 if (dev && !process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
+
+// Parse and validate Node.js version (requires 20.9+, rejects 24+ for dev)
 const nodeVersion = process.versions.node || '';
 const nodeMajor = Number((nodeVersion.split('.')[0] || '').trim());
 const allowUnsupportedNodeDev = process.env['ALLOW_UNSUPPORTED_NODE_DEV'] === '1';

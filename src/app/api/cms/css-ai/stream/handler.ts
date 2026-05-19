@@ -16,6 +16,17 @@ import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * CMS CSS AI Stream Handlers
+ *
+ * HTTP request handlers for AI-powered CSS generation streaming.
+ * Handlers: postStreamHandler
+ *
+ * - Streams CSS generation responses from AI models
+ * - Provides real-time feedback during CSS design
+ * - Handles streaming cancellation and error recovery
+ */
+
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>
   messages.length > 0 &&
@@ -56,6 +67,17 @@ const toTeachingChatMessages = (messages: ChatMessage[]): AgentTeachingChatMessa
     content: message.content,
   }));
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'cms.css-ai.stream',

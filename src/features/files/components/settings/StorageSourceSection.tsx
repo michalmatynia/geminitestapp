@@ -25,13 +25,17 @@ const sourceOptions = [
 export const StorageSourceSection = ({
   source,
   setSource,
+  title = 'Storage Source',
+  description = 'Switch where new uploads are written and where file URLs point.',
 }: {
   source: FileStorageSource;
   setSource: (s: FileStorageSource) => void;
+  title?: string;
+  description?: string;
 }): React.JSX.Element => (
   <FormSection
-    title='Storage Source'
-    description='Switch where new uploads are written and where file URLs point.'
+    title={title}
+    description={description}
     className='p-6'
   >
     <FormField label='Active provider'>

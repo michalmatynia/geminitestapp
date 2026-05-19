@@ -45,6 +45,9 @@ import {
   deleteFromFastComet,
 } from '@/shared/lib/files/services/storage/fastcomet-storage-client';
 import {
+  getAssets3DStorageSource,
+} from '@/shared/lib/files/services/storage/storage-settings-service';
+import {
   getMilkbarFastCometPublicHtmlMirrorPath,
   writeMilkbarFastCometPublicHtmlMirrorFile,
 } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
@@ -368,7 +371,7 @@ function resolveAssetStorageTarget(
     category: 'assets3d',
     folder: null,
     mirrorPublicHtml: false,
-    fastCometUploadOptions: {},
+    fastCometUploadOptions: storageSource === 'local' ? { forceSource: 'local' as const } : {},
   };
 }
 
@@ -524,7 +527,15 @@ export async function uploadAsset3D(
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const safeOptions: UploadOptions = options ?? {};
-  
+
+  // For non-milkbar profiles, resolve the per-feature storage source (defaults to 'local').
+  // This ensures generic 3D assets are never silently routed to the global FastComet config.
+  const resolvedStorageSource =
+    safeOptions.storageProfile !== 'milkbarCms' && safeOptions.storageSource === undefined
+      ? await getAssets3DStorageSource()
+      : safeOptions.storageSource;
+  const resolvedOptions: UploadOptions = { ...safeOptions, storageSource: resolvedStorageSource };
+
   try {
     const {
       filename,
@@ -535,15 +546,15 @@ export async function uploadAsset3D(
     } = await prepareAssetStorage(
       file,
       fileBuffer,
-      safeOptions
+      resolvedOptions
     );
-    const repository = getAsset3DRepository({ storageProfile: safeOptions.storageProfile });
+    const repository = getAsset3DRepository({ storageProfile: resolvedOptions.storageProfile });
     const payload = mapAssetOptionsToCreatePayload({
       filename,
       storedFilepath,
       file,
       mirroredLocally,
-      options: safeOptions,
+      options: resolvedOptions,
       publicPath,
       storageSource,
     });

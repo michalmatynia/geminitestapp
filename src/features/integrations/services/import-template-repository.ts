@@ -14,25 +14,17 @@ import {
   parseExportWarehouseByInventoryMap,
   stringifyExportWarehouseByInventoryMap,
 } from '@/features/integrations/services/export-warehouse-preference';
+import {
+  readImportExportSettingValue,
+  writeImportExportSettingValue,
+} from '@/features/integrations/services/import-export-settings-store';
 import type { ImportParameterCacheResponse } from '@/shared/contracts/integrations/base-com';
 import type { IntegrationTemplate as Template, IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
 import { normalizeBaseImportParameterImportSettings, defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
-import { getMongoDb } from '@/shared/lib/db/integration-mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import type { Document, Filter } from 'mongodb';
-import { ObjectId as _ObjectId } from 'mongodb';
-
 const LOG_SOURCE = 'import-template-repository';
-type SettingDoc = Document & {
-  _id?: string | _ObjectId;
-  key?: string;
-  value?: string;
-};
-
-const toMongoId = (value: string): string | _ObjectId =>
-  _ObjectId.isValid(value) ? new _ObjectId(value) : value;
 
 const getImportTemplateProvider = async (): Promise<'mongodb'> => {
   const provider = 'mongodb';
@@ -101,11 +93,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-  });
-  const val = doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  const val = await readImportExportSettingValue(SETTINGS_KEY);
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
@@ -116,51 +104,27 @@ const readTemplatesValue = async (): Promise<string | null> => {
 };
 
 const readSampleProductValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(SAMPLE_PRODUCT_KEY) }, { key: SAMPLE_PRODUCT_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(SAMPLE_PRODUCT_KEY);
 };
 
 const readSampleInventoryValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(SAMPLE_INVENTORY_KEY) }, { key: SAMPLE_INVENTORY_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(SAMPLE_INVENTORY_KEY);
 };
 
 const readLastTemplateValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(LAST_TEMPLATE_KEY) }, { key: LAST_TEMPLATE_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(LAST_TEMPLATE_KEY);
 };
 
 const readActiveTemplateValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(ACTIVE_TEMPLATE_KEY);
 };
 
 const readParameterCacheValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(PARAMETER_CACHE_KEY) }, { key: PARAMETER_CACHE_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(PARAMETER_CACHE_KEY);
 };
 
 const readExportWarehouseMapValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: toMongoId(EXPORT_WAREHOUSE_MAP_KEY) }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-  });
-  return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
+  return readImportExportSettingValue(EXPORT_WAREHOUSE_MAP_KEY);
 };
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
@@ -171,19 +135,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     message: 'Writing templates...',
     context: { length: value.length, provider },
   });
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateMany(
-    { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: SETTINGS_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(SETTINGS_KEY, value);
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
@@ -192,109 +144,27 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
 };
 
 const writeSampleProductValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    {
-      $or: [{ _id: toMongoId(SAMPLE_PRODUCT_KEY) }, { key: SAMPLE_PRODUCT_KEY }],
-    } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: SAMPLE_PRODUCT_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(SAMPLE_PRODUCT_KEY, value);
 };
 
 const writeSampleInventoryValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    {
-      $or: [{ _id: toMongoId(SAMPLE_INVENTORY_KEY) }, { key: SAMPLE_INVENTORY_KEY }],
-    } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: SAMPLE_INVENTORY_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(SAMPLE_INVENTORY_KEY, value);
 };
 
 const writeExportWarehouseMapValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    {
-      $or: [{ _id: toMongoId(EXPORT_WAREHOUSE_MAP_KEY) }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-    } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: EXPORT_WAREHOUSE_MAP_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(EXPORT_WAREHOUSE_MAP_KEY, value);
 };
 
 const writeLastTemplateValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    { $or: [{ _id: toMongoId(LAST_TEMPLATE_KEY) }, { key: LAST_TEMPLATE_KEY }] } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: LAST_TEMPLATE_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(LAST_TEMPLATE_KEY, value);
 };
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    {
-      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-    } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: ACTIVE_TEMPLATE_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(ACTIVE_TEMPLATE_KEY, value);
 };
 
 const writeParameterCacheValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo.collection('settings').updateOne(
-    {
-      $or: [{ _id: toMongoId(PARAMETER_CACHE_KEY) }, { key: PARAMETER_CACHE_KEY }],
-    } as Filter<Document>,
-    {
-      $set: {
-        value,
-        key: PARAMETER_CACHE_KEY,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: { createdAt: new Date() },
-    },
-    { upsert: true }
-  );
+  await writeImportExportSettingValue(PARAMETER_CACHE_KEY, value);
 };
 export const listImportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();

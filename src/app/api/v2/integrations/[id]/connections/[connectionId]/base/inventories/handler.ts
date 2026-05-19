@@ -7,8 +7,30 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 /**
+ * Base Inventory Integration Handlers
+ *
+ * HTTP request handlers for Airtable Base inventory operations.
+ * Handlers: getHandler, postHandler
+ *
+ * - Manages inventory synchronization with Airtable
+ * - Lists and updates inventory records
+ * - Handles inventory data transformation and mapping
+ */
+
+/**
  * GET /api/v2/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(
   _req: NextRequest,

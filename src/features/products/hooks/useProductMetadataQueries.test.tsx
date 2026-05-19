@@ -46,7 +46,7 @@ describe('useSaveTitleTermMutation', () => {
     vi.clearAllMocks();
   });
 
-  it('invalidates all title-term queries after updating a term', async () => {
+  it('saves title terms without catalog scoping and invalidates all title-term queries', async () => {
     const queryClient = createQueryClient();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -54,7 +54,7 @@ describe('useSaveTitleTermMutation', () => {
       id: 'term-1',
       name: 'Metal',
       description: null,
-      catalogId: 'catalog-b',
+      catalogId: 'global',
       type: 'material',
       name_en: 'Metal',
       name_pl: 'Metal',
@@ -70,7 +70,6 @@ describe('useSaveTitleTermMutation', () => {
       await result.current.mutateAsync({
         id: 'term-1',
         data: {
-          catalogId: 'catalog-b',
           type: 'material',
           name_en: 'Metal',
           name_pl: 'Metal',
@@ -79,7 +78,6 @@ describe('useSaveTitleTermMutation', () => {
     });
 
     expect(apiPutMock).toHaveBeenCalledWith('/api/v2/products/title-terms/term-1', {
-      catalogId: 'catalog-b',
       type: 'material',
       name_en: 'Metal',
       name_pl: 'Metal',

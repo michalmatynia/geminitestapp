@@ -13,6 +13,28 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 
+/**
+ * System Logs Insights Handlers
+ *
+ * HTTP request handlers for log analysis and insights.
+ * Handlers: getHandler
+ *
+ * - Generates insights from system logs
+ * - Identifies patterns and anomalies
+ * - Provides intelligent log summarization
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
@@ -24,6 +46,17 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   return NextResponse.json(response);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const parsed = await parseJsonBody(req, systemLogsInsightRequestSchema, {

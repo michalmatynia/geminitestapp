@@ -10,7 +10,10 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { TraderaSelectorProfileOverrideSelect } from '@/features/integrations/components/listings/TraderaSelectorProfileOverrideSelect';
-import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import {
+  useIntegrationSettingsMap,
+  useUpdateIntegrationSettingsBulk,
+} from '@/features/integrations/hooks/useIntegrationSettings';
 import { Input, useToast } from '@/shared/ui/primitives.public';
 import { FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
@@ -19,8 +22,8 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 export default function TraderaSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap();
-  const saveMutation = useUpdateSettingsBulk();
+  const settingsQuery = useIntegrationSettingsMap(Object.values(TRADERA_SETTINGS_KEYS));
+  const saveMutation = useUpdateIntegrationSettingsBulk();
   const [durationHours, setDurationHours] = useState<number>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.defaultDurationHours
   );

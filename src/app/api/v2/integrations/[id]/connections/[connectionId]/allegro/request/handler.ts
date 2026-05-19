@@ -14,6 +14,17 @@ import {
 } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Allegro Request Handlers
+ *
+ * HTTP request handlers for Allegro API requests.
+ * Handlers: postHandler
+ *
+ * - Proxies requests to Allegro API
+ * - Manages authentication and credentials
+ * - Handles rate limiting and retries
+ */
+
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
@@ -26,6 +37,17 @@ const SANDBOX_TOKEN_URL =
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/allegro/request
  * Proxy Allegro API requests using the stored access token.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(
   _req: NextRequest,

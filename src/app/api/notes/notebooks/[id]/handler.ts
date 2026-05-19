@@ -8,8 +8,30 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
+ * Notebook Detail API Handlers
+ *
+ * HTTP request handlers for individual notebooks.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Manages individual notebook properties
+ * - Updates notebook configuration
+ * - Handles notebook deletion
+ */
+
+/**
  * PATCH /api/notes/notebooks/[id]
  * Updates a notebook.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function patchHandler(
   req: NextRequest,
@@ -34,6 +56,17 @@ export async function patchHandler(
 /**
  * DELETE /api/notes/notebooks/[id]
  * Deletes a notebook (and its notes/tags/categories).
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   _req: NextRequest,

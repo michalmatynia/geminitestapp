@@ -2,8 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { ObjectId as _ObjectId } from 'mongodb';
-
 import {
   buildActiveTemplateScopeKey,
   normalizeActiveTemplateId,
@@ -15,20 +13,23 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/public';
+import {
+  readImportExportSettingValue,
+  writeImportExportSettingValue,
+} from '@/features/integrations/services/import-export-settings-store';
+import {
+  readIntegrationSettingValue,
+  writeIntegrationSettingValue,
+} from '@/features/integrations/services/integration-settings-store';
 import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
-import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/integration-mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { Template, TemplateMapping };
 
 const LOG_SOURCE = 'export-template-repository';
-
-const toMongoId = (value: string): string | _ObjectId =>
-  _ObjectId.isValid(value) ? new _ObjectId(value) : value;
 
 const getExportTemplateProvider = async (): Promise<'mongodb'> => {
   const provider = 'mongodb';
@@ -155,13 +156,7 @@ const assertNoUnsupportedParameterSourceMappings = (args: {
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-    });
-  const val = typeof doc?.value === 'string' ? doc.value : null;
+  const val = await readImportExportSettingValue(SETTINGS_KEY);
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
@@ -172,86 +167,35 @@ const readTemplatesValue = async (): Promise<string | null> => {
 };
 
 const readActiveTemplateValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readImportExportSettingValue(ACTIVE_TEMPLATE_KEY);
 };
 
 const readDefaultInventoryValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readImportExportSettingValue(DEFAULT_INVENTORY_KEY);
 };
 
 const readStockFallbackValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readImportExportSettingValue(STOCK_FALLBACK_KEY);
 };
 
 const readDefaultConnectionValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readImportExportSettingValue(DEFAULT_CONNECTION_KEY);
 };
 
 const readTraderaDefaultConnectionValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(TRADERA_DEFAULT_CONNECTION_KEY) }, { key: TRADERA_DEFAULT_CONNECTION_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readIntegrationSettingValue(TRADERA_DEFAULT_CONNECTION_KEY);
 };
 
 const readVintedDefaultConnectionValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(VINTED_DEFAULT_CONNECTION_KEY) }, { key: VINTED_DEFAULT_CONNECTION_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readIntegrationSettingValue(VINTED_DEFAULT_CONNECTION_KEY);
 };
 
 const read1688DefaultConnectionValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [
-        { _id: toMongoId(SCANNER_1688_DEFAULT_CONNECTION_KEY) },
-        { key: SCANNER_1688_DEFAULT_CONNECTION_KEY },
-      ],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readIntegrationSettingValue(SCANNER_1688_DEFAULT_CONNECTION_KEY);
 };
 
 const readImageRetryPresetsValue = async (): Promise<string | null> => {
-  const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .findOne({
-      $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
-    });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  return readImportExportSettingValue(IMAGE_RETRY_PRESETS_KEY);
 };
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
@@ -262,21 +206,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     message: 'Writing templates...',
     context: { length: value.length, provider },
   });
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateMany(
-      { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
-      {
-        $set: {
-          value,
-          key: SETTINGS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(SETTINGS_KEY, value);
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
@@ -285,162 +215,35 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
 };
 
 const writeActiveTemplateValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
-      {
-        $set: {
-          value,
-          key: ACTIVE_TEMPLATE_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(ACTIVE_TEMPLATE_KEY, value);
 };
 
 const writeDefaultInventoryValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
-      {
-        $set: {
-          value,
-          key: DEFAULT_INVENTORY_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(DEFAULT_INVENTORY_KEY, value);
 };
 
 const writeStockFallbackValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
-      {
-        $set: {
-          value,
-          key: STOCK_FALLBACK_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(STOCK_FALLBACK_KEY, value);
 };
 
 const writeDefaultConnectionValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
-      {
-        $set: {
-          value,
-          key: DEFAULT_CONNECTION_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(DEFAULT_CONNECTION_KEY, value);
 };
 
 const writeTraderaDefaultConnectionValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      {
-        $or: [
-          { _id: toMongoId(TRADERA_DEFAULT_CONNECTION_KEY) },
-          { key: TRADERA_DEFAULT_CONNECTION_KEY },
-        ],
-      },
-      {
-        $set: {
-          value,
-          key: TRADERA_DEFAULT_CONNECTION_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeIntegrationSettingValue(TRADERA_DEFAULT_CONNECTION_KEY, value);
 };
 
 const writeVintedDefaultConnectionValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      {
-        $or: [
-          { _id: toMongoId(VINTED_DEFAULT_CONNECTION_KEY) },
-          { key: VINTED_DEFAULT_CONNECTION_KEY },
-        ],
-      },
-      {
-        $set: {
-          value,
-          key: VINTED_DEFAULT_CONNECTION_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeIntegrationSettingValue(VINTED_DEFAULT_CONNECTION_KEY, value);
 };
 
 const write1688DefaultConnectionValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      {
-        $or: [
-          { _id: toMongoId(SCANNER_1688_DEFAULT_CONNECTION_KEY) },
-          { key: SCANNER_1688_DEFAULT_CONNECTION_KEY },
-        ],
-      },
-      {
-        $set: {
-          value,
-          key: SCANNER_1688_DEFAULT_CONNECTION_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeIntegrationSettingValue(SCANNER_1688_DEFAULT_CONNECTION_KEY, value);
 };
 
 const writeImageRetryPresetsValue = async (value: string): Promise<void> => {
-  const mongo = await getMongoDb();
-  await mongo
-    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
-    .updateOne(
-      { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
-      {
-        $set: {
-          value,
-          key: IMAGE_RETRY_PRESETS_KEY,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true }
-    );
+  await writeImportExportSettingValue(IMAGE_RETRY_PRESETS_KEY, value);
 };
 
 export const listExportTemplates = async (): Promise<Template[]> => {

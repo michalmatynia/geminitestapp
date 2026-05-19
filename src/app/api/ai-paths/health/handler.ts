@@ -20,6 +20,18 @@ import {
 } from '@/shared/lib/products/services/product-ai-job-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * AI Paths Health Check API Handlers
+ *
+ * HTTP request handlers for monitoring AI Paths runtime health and diagnostics.
+ * Handlers: getHealthHandler
+ *
+ * - Monitors AI Path run statuses (queued, running, completed, failed, canceled)
+ * - Tracks product AI job health
+ * - Evaluates queue status and SLO breaches
+ * - Generates 24-hour runtime analytics
+ */
+
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',
@@ -223,6 +235,17 @@ async function getRuntimeHealth(): Promise<{ summary: RuntimeSummary | null; err
 let globalCriticalSloSinceMs: number | null = null;
 
 // eslint-disable-next-line complexity
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHealthHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext

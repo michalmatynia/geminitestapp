@@ -15,10 +15,13 @@ import {
   optionalCsvQueryStringArray,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
+import { cacheTag, revalidateTag } from 'next/cache';
+
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const ASSETS3D_LIST_CACHE_TAG = 'assets3d-list';
 
 export const querySchema = z.object({
   filename: optionalTrimmedQueryString(),
@@ -68,6 +71,7 @@ const toAssetListFilters = (query: Asset3DListQuery): Asset3DListFilters => {
 async function listAssets3DCached(query: Asset3DListQuery): Promise<Asset3DRecord[]> {
   'use cache';
   applyCacheLife('swr60');
+  cacheTag(ASSETS3D_LIST_CACHE_TAG);
 
   const repository = getAsset3DRepository({ storageProfile: query.storageProfile });
   return repository.listAssets3D(toAssetListFilters(query));
@@ -158,6 +162,8 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     uploadOptions.storageProfile === 'milkbarCms'
       ? await uploadMilkbarAsset3DFileInRedisRuntime(file, uploadOptions, replaceAssetId)
       : await uploadAsset3D(file, uploadOptions);
+
+  revalidateTag(ASSETS3D_LIST_CACHE_TAG, 'max');
 
   return NextResponse.json(asset, { status: 201 });
 }

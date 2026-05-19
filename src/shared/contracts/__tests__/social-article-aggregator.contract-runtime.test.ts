@@ -19,9 +19,25 @@ describe('social article aggregator contract', () => {
     });
 
     expect(preset.enabled).toBe(true);
+    expect(preset.crawlDepth).toBe(1);
     expect(preset.obeyRobotsTxt).toBe(true);
+    expect(preset.playwrightScripterId).toBeNull();
+    expect(preset.playwrightScripterMode).toBe('assist');
     expect(request.obeyRobotsTxt).toBe(true);
     expect(request.sourcePresetIds).toEqual(['preset-1']);
+  });
+
+  it('accepts source-bound Playwright scripter configuration and run diagnostics', () => {
+    const preset = socialArticleSourcePresetSchema.parse({
+      id: 'preset-1',
+      name: 'Scripted News',
+      playwrightScripterId: 'news-scripter',
+      playwrightScripterMode: 'replace',
+      urls: ['https://example.com/news'],
+    });
+
+    expect(preset.playwrightScripterId).toBe('news-scripter');
+    expect(preset.playwrightScripterMode).toBe('replace');
   });
 
   it('builds bounded AI-Path article context from retained articles', () => {

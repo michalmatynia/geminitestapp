@@ -13,11 +13,33 @@ import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * File Preview API Handlers
+ *
+ * HTTP request handlers for file preview generation.
+ * Handlers: postHandler
+ *
+ * - Generates file previews and thumbnails
+ * - Handles image optimization and resizing
+ * - Manages preview caching and storage
+ */
+
 
 export const querySchema = z.object({
   fileId: optionalTrimmedQueryString(),
 });
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const nodeFs = getFsPromises();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;

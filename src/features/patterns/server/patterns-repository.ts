@@ -118,9 +118,9 @@ const normalizeLicense = (value: unknown, licenseId: PatternLicenseId): PatternL
   if (!isRecord(value)) return fallback;
   return {
     id: licenseId,
-    label: asText(value.label, fallback.label),
-    price: Math.max(0, Math.round(asNumber(value.price, fallback.price))),
-    summary: asText(value.summary, fallback.summary),
+    label: asText(value['label'], fallback.label),
+    price: Math.max(0, Math.round(asNumber(value['price'], fallback.price))),
+    summary: asText(value['summary'], fallback.summary),
   };
 };
 
@@ -129,7 +129,7 @@ const normalizeLicenses = (value: unknown): PatternLicense[] => {
   const inputById = new Map<PatternLicenseId, unknown>();
   entries.forEach((entry) => {
     if (!isRecord(entry)) return;
-    const id = asLicenseId(entry.id, 'studio');
+    const id = asLicenseId(entry['id'], 'studio');
     inputById.set(id, entry);
   });
   return PATTERN_LICENSE_IDS.map((licenseId) => normalizeLicense(inputById.get(licenseId), licenseId));
@@ -138,11 +138,11 @@ const normalizeLicenses = (value: unknown): PatternLicense[] => {
 const normalizePreview = (value: unknown): PatternPreview => {
   if (!isRecord(value)) return DEFAULT_PREVIEW;
   return {
-    motif: asMotif(value.motif),
-    paper: normalizeHexColor(value.paper, DEFAULT_PREVIEW.paper),
-    ink: normalizeHexColor(value.ink, DEFAULT_PREVIEW.ink),
-    accent: normalizeHexColor(value.accent, DEFAULT_PREVIEW.accent),
-    density: Math.max(3, Math.min(10, Math.round(asNumber(value.density, DEFAULT_PREVIEW.density)))),
+    motif: asMotif(value['motif']),
+    paper: normalizeHexColor(value['paper'], DEFAULT_PREVIEW.paper),
+    ink: normalizeHexColor(value['ink'], DEFAULT_PREVIEW.ink),
+    accent: normalizeHexColor(value['accent'], DEFAULT_PREVIEW.accent),
+    density: Math.max(3, Math.min(10, Math.round(asNumber(value['density'], DEFAULT_PREVIEW.density)))),
   };
 };
 
@@ -159,11 +159,11 @@ export const createPatternSlug = (nameOrSlug: string): string => {
 export function normalizePatternProduct(input: unknown): PatternProduct | null {
   if (!isRecord(input)) return null;
 
-  const name = asText(input.name, 'Untitled pattern');
-  const slug = createPatternSlug(asText(input.slug, name));
-  const id = asText(input.id, createPatternId(slug));
-  const licenses = normalizeLicenses(input.licenses);
-  const defaultLicense = asLicenseId(input.defaultLicense, 'studio');
+  const name = asText(input['name'], 'Untitled pattern');
+  const slug = createPatternSlug(asText(input['slug'], name));
+  const id = asText(input['id'], createPatternId(slug));
+  const licenses = normalizeLicenses(input['licenses']);
+  const defaultLicense = asLicenseId(input['defaultLicense'], 'studio');
 
   if (id.length === 0 || slug.length === 0) return null;
 
@@ -171,18 +171,18 @@ export function normalizePatternProduct(input: unknown): PatternProduct | null {
     id,
     slug,
     name,
-    collection: asText(input.collection, 'Pattern archive'),
-    edition: asText(input.edition, 'Digital vector repeat'),
-    category: asCategory(input.category),
-    description: asText(input.description, 'Downloadable vector repeat pattern.'),
-    tags: asTextArray(input.tags),
-    formats: normalizeFormats(input.formats),
-    repeatSize: asText(input.repeatSize, '24 x 24 cm'),
-    fileSize: asText(input.fileSize, '4 MB'),
-    updatedAt: asText(input.updatedAt, new Date().toISOString()),
-    featured: asBoolean(input.featured),
-    status: input.status === 'draft' ? 'draft' : 'published',
-    preview: normalizePreview(input.preview),
+    collection: asText(input['collection'], 'Pattern archive'),
+    edition: asText(input['edition'], 'Digital vector repeat'),
+    category: asCategory(input['category']),
+    description: asText(input['description'], 'Downloadable vector repeat pattern.'),
+    tags: asTextArray(input['tags']),
+    formats: normalizeFormats(input['formats']),
+    repeatSize: asText(input['repeatSize'], '24 x 24 cm'),
+    fileSize: asText(input['fileSize'], '4 MB'),
+    updatedAt: asText(input['updatedAt'], new Date().toISOString()),
+    featured: asBoolean(input['featured']),
+    status: input['status'] === 'draft' ? 'draft' : 'published',
+    preview: normalizePreview(input['preview']),
     defaultLicense,
     licenses,
   };

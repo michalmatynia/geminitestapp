@@ -1,0 +1,205 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_social_article_aggregation_v1",
+    "version": 1,
+    "name": "Social Article Aggregation",
+    "description": "Create an English social post draft from scraped article context and a custom aggregation prompt.",
+    "trigger": "Social Article Aggregator - Generate Post",
+    "updatedAt": "2026-05-19T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-social-article-aggregation",
+      "type": "trigger",
+      "title": "Trigger: Social Article Aggregation",
+      "description": "Receives the Article Aggregator prompt, selected articles, and post draft context.",
+      "position": { "x": 24, "y": 240 },
+      "inputs": [],
+      "outputs": ["trigger", "triggerName", "context", "entityId", "entityType", "entityJson"],
+      "config": {
+        "trigger": {
+          "event": "social_article_aggregation",
+          "contextMode": "trigger_only",
+          "entitySnapshotMode": "always"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-social-article-aggregation",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build the article aggregation prompt from trigger context and selected article material.",
+      "position": { "x": 380, "y": 240 },
+      "inputs": ["context"],
+      "outputs": ["prompt"],
+      "config": {
+        "prompt": {
+          "template": "You are preparing an English social publishing post from aggregated article context. Use the selected article context supplied in this prompt and in the Context Registry system context when available.\n\nUser aggregation prompt:\n{{context.prompt}}\n\nSelected article count: {{context.articleCount}}\nSelected article IDs: {{context.articleIds}}\nSource URLs: {{context.sourceUrls}}\nPrompt preset ID: {{context.promptPresetId}}\nScrape run ID: {{context.articleRunId}}\nContext character count: {{context.contextCharacterCount}}\nContext character budget: {{context.contextCharacterBudget}}\nContext truncated: {{context.contextTruncated}}\n\nExisting post draft JSON:\n{{context.entityJson}}\n\nSelected article context JSON:\n{{context.articles}}\n\nReturn ONLY valid JSON with this exact schema:\n{\"titleEn\":\"\",\"bodyEn\":\"\",\"summary\":\"\",\"sourceNotes\":[\"\"]}\n\nRules:\n1. Follow the user aggregation prompt as the primary editorial instruction.\n2. Write in English for a global social audience.\n3. bodyEn should be ready to paste into a social post: concise, readable, and grounded in the scraped article evidence.\n4. Use only information present in the selected article context or Context Registry context. Do not invent facts, numbers, quotes, product claims, or source names.\n5. When multiple articles disagree, describe the uncertainty instead of forcing one version.\n6. Keep titleEn under 120 characters and bodyEn under 2200 characters unless the user prompt explicitly asks for a longer draft.\n7. summary should briefly explain the angle and evidence used.\n8. sourceNotes should list compact source/evidence notes using article titles or domains when available.\n9. No markdown, no code fences, no commentary outside the JSON object."
+        }
+      }
+    },
+    {
+      "id": "node-model-social-article-aggregation",
+      "type": "model",
+      "title": "Model",
+      "description": "Generate the final social post JSON from the aggregation prompt.",
+      "position": { "x": 780, "y": 240 },
+      "inputs": ["prompt", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 0.25,
+          "maxTokens": 1800,
+          "vision": false,
+          "waitForResult": true
+        }
+      }
+    },
+    {
+      "id": "node-regex-social-article-aggregation",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Extract and repair the generated social post JSON.",
+      "position": { "x": 1140, "y": 240 },
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-view-social-article-aggregation",
+      "type": "viewer",
+      "title": "Generated Post",
+      "description": "Inspect the generated post payload and source context.",
+      "position": { "x": 1500, "y": 240 },
+      "inputs": ["bundle", "context", "prompt", "result", "entityId", "entityType"],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "context": "",
+            "prompt": "",
+            "result": "",
+            "entityId": "",
+            "entityType": ""
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-prompt-context-social-article-aggregation",
+      "fromNodeId": "node-trigger-social-article-aggregation",
+      "toNodeId": "node-prompt-social-article-aggregation",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-model-social-article-aggregation",
+      "fromNodeId": "node-prompt-social-article-aggregation",
+      "toNodeId": "node-model-social-article-aggregation",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-trigger-model-context-social-article-aggregation",
+      "fromNodeId": "node-trigger-social-article-aggregation",
+      "toNodeId": "node-model-social-article-aggregation",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-regex-social-article-aggregation",
+      "fromNodeId": "node-model-social-article-aggregation",
+      "toNodeId": "node-regex-social-article-aggregation",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-regex-viewer-social-article-aggregation",
+      "fromNodeId": "node-regex-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-trigger-viewer-context-social-article-aggregation",
+      "fromNodeId": "node-trigger-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-viewer-social-article-aggregation",
+      "fromNodeId": "node-prompt-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-model-viewer-social-article-aggregation",
+      "fromNodeId": "node-model-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-trigger-entity-id-viewer-social-article-aggregation",
+      "fromNodeId": "node-trigger-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-trigger-entity-type-viewer-social-article-aggregation",
+      "fromNodeId": "node-trigger-social-article-aggregation",
+      "toNodeId": "node-view-social-article-aggregation",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-05-19T00:00:00.000Z",
+    "pathId": "path_social_article_aggregation_v1"
+  }
+}

@@ -80,7 +80,7 @@ export const processRun = async (
     });
     return;
   } catch (error: unknown) {
-    const wrappedError = new AppError(`Execution failed for path run: ${run.id}`, {
+    const wrappedError = new AppError(`AI-Paths run execution failed: ${run.id}`, {
       code: AppErrorCodes.operationFailed,
       httpStatus: 500,
       meta: { runId: run.id, pathId: run.pathId, action: 'executePathRun' },

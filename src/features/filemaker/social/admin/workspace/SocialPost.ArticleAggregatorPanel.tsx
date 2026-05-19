@@ -11,24 +11,42 @@ import {
   type SocialArticleAggregationContextArticle,
   type SocialArticlePromptPreset,
   type SocialArticleRecord,
+  type SocialArticleScrapeRun,
   type SocialArticleScrapeResponse,
   type SocialArticleSourcePreset,
 } from '@/shared/contracts/social-article-aggregator';
 import type { SocialPublishingPost } from '@/shared/contracts/social-publishing-posts';
 import { enqueueAiPathRun, getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
+import { SOCIAL_ARTICLE_AGGREGATION_PATH_ID } from '@/shared/lib/ai-paths/social-article-aggregation';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeSetTimeout } from '@/shared/lib/timers';
 import { Button, Input, Textarea, useToast } from '@/shared/ui';
 
+import {
+  buildSocialArticleAggregationAiPathPayload,
+  resolveSocialArticleAggregationPathId,
+  SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
+} from './SocialPost.ArticleAggregatorPanel.ai-path';
+import { extractSocialArticleAggregationAiPathRunText } from './SocialPost.ArticleAggregatorPanel.ai-path-result';
+import {
+  buildRetainedArticleLoadState,
+  deriveArticleSourcePresetIds,
+  deriveArticleSourceUrls,
+  deriveScrapeResultSourceMetadata,
+  splitLooseUrls,
+} from './SocialPost.ArticleAggregatorPanel.utils';
 import { useSocialPostContext } from './SocialPostContext';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 120;
 const ARTICLE_CONTEXT_CHAR_BUDGET = 60000;
+const RETAINED_ARTICLE_PAGE_SIZE = 50;
 
 const DEFAULT_AGGREGATION_PROMPT =
   'Write one English social post that summarizes the selected articles. Use only the article context, keep the post clear and publish-ready, and include source-aware claims without inventing facts.';
+const NO_ARTICLES_GENERATION_MESSAGE =
+  'No articles were found. Scrape or select at least one article before generating a post.';
 
 type AiPathPollResult = {
   rawResult: unknown;
@@ -41,45 +59,27 @@ type ParsedGeneratedPost = {
   titleEn: string;
 };
 
-const splitLooseUrls = (value: string): string[] =>
-  Array.from(
-    new Set(
-      value
-        .split(/[\n,]+/)
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-    )
-  );
+type RetainedArticleListResponse = {
+  articles: SocialArticleRecord[];
+  total: number;
+};
+
+type PlaywrightScripterListEntry = {
+  description: string | null;
+  id: string;
+  siteHost: string;
+  version: number;
+};
+
+type PlaywrightScripterListResponse = {
+  scripters: PlaywrightScripterListEntry[];
+};
 
 const compactText = (value: string | null | undefined, max = 8000): string =>
   (value ?? '').trim().slice(0, max).trimEnd();
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const extractTextFromUnknown = (value: unknown, depth = 0): string | null => {
-  if (typeof value === 'string' && value.trim().length > 0) return value.trim();
-  if (depth > 4 || value === null || value === undefined) return null;
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const result = extractTextFromUnknown(item, depth + 1);
-      if (result !== null) return result;
-    }
-    return null;
-  }
-  if (isRecord(value)) {
-    const priorityKeys = ['post', 'body', 'bodyEn', 'text', 'content', 'summary', 'output', 'result'];
-    for (const key of priorityKeys) {
-      const result = extractTextFromUnknown(value[key], depth + 1);
-      if (result !== null) return result;
-    }
-    for (const item of Object.values(value)) {
-      const result = extractTextFromUnknown(item, depth + 1);
-      if (result !== null) return result;
-    }
-  }
-  return null;
-};
 
 const parseJsonLikeOutput = (text: string): Record<string, unknown> | null => {
   const trimmed = text.trim();
@@ -149,8 +149,8 @@ const pollAiPathRunResult = async (
   const { run } = result.data;
   if (run.status === 'completed') {
     return {
-      rawResult: run.result,
-      text: extractTextFromUnknown(run.result),
+      rawResult: run.result ?? run.runtimeState,
+      text: extractSocialArticleAggregationAiPathRunText(run),
     };
   }
   if (run.status === 'failed' || run.status === 'canceled') {
@@ -198,11 +198,27 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
   const [maxArticlesPerSource, setMaxArticlesPerSource] = useState(10);
   const [sourcePresetName, setSourcePresetName] = useState('');
   const [sourcePresetUrls, setSourcePresetUrls] = useState('');
+  const [sourcePresetCrawlDepth, setSourcePresetCrawlDepth] = useState(1);
+  const [sourcePresetScripterId, setSourcePresetScripterId] = useState('');
+  const [sourcePresetScripterMode, setSourcePresetScripterMode] = useState<'assist' | 'replace'>('assist');
+  const [playwrightScripters, setPlaywrightScripters] = useState<PlaywrightScripterListEntry[]>([]);
+  const [isLoadingPlaywrightScripters, setIsLoadingPlaywrightScripters] = useState(false);
 
   const [articles, setArticles] = useState<SocialArticleRecord[]>([]);
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
   const [articleFilter, setArticleFilter] = useState('');
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
+  const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null);
+  const [retainedSearch, setRetainedSearch] = useState('');
+  const [retainedSourcePresetId, setRetainedSourcePresetId] = useState('');
+  const [retainedArticleOffset, setRetainedArticleOffset] = useState(0);
+  const [retainedArticlePageCount, setRetainedArticlePageCount] = useState(0);
+  const [retainedArticleTotal, setRetainedArticleTotal] = useState<number | null>(null);
+  const [retainedArticleError, setRetainedArticleError] = useState<string | null>(null);
+  const [isLoadingRetainedArticles, setIsLoadingRetainedArticles] = useState(false);
+  const [recentRuns, setRecentRuns] = useState<SocialArticleScrapeRun[]>([]);
+  const [isLoadingRecentRuns, setIsLoadingRecentRuns] = useState(false);
+  const [runHistoryError, setRunHistoryError] = useState<string | null>(null);
   const [scrapeRunId, setScrapeRunId] = useState<string | null>(null);
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
@@ -244,6 +260,18 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     return base;
   }, [articles, articleFilter, articleSort]);
 
+  const filteredArticleIds = useMemo(
+    () => filteredArticles.map((article) => article.id),
+    [filteredArticles]
+  );
+
+  const allFilteredArticlesSelected = useMemo(
+    () =>
+      filteredArticleIds.length > 0 &&
+      filteredArticleIds.every((articleId) => selectedArticleIds.includes(articleId)),
+    [filteredArticleIds, selectedArticleIds]
+  );
+
   const selectedWordCount = useMemo(
     () => selectedArticles.reduce((sum, a) => sum + (a.wordCount ?? 0), 0),
     [selectedArticles]
@@ -254,7 +282,44 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     [selectedArticles]
   );
 
+  const selectedArticleSourcePresetIds = useMemo(
+    () =>
+      deriveArticleSourcePresetIds(selectedArticles, selectedPresetIds),
+    [selectedArticles, selectedPresetIds]
+  );
+
+  const selectedArticleSourceUrls = useMemo(
+    () =>
+      deriveArticleSourceUrls(selectedArticles, splitLooseUrls(customUrls)),
+    [customUrls, selectedArticles]
+  );
+
   const contextBudgetExceeded = selectedCharCount > ARTICLE_CONTEXT_CHAR_BUDGET;
+  const retainedArticlePageStart =
+    retainedArticleTotal !== null && retainedArticlePageCount > 0
+      ? retainedArticleOffset + 1
+      : 0;
+  const retainedArticlePageEnd =
+    retainedArticleTotal !== null
+      ? Math.min(retainedArticleOffset + retainedArticlePageCount, retainedArticleTotal)
+      : 0;
+  const canLoadPreviousRetainedArticles = retainedArticleOffset > 0;
+  const canLoadNextRetainedArticles =
+    retainedArticleTotal !== null &&
+    retainedArticleOffset + retainedArticlePageCount < retainedArticleTotal;
+  const noArticlesSelected = selectedArticles.length === 0;
+  const articleAggregatorPathResolution = resolveSocialArticleAggregationPathId(
+    articleAggregatorPathId
+  );
+  const effectiveArticleAggregatorPathId = articleAggregatorPathResolution.pathId;
+  const isUsingDefaultArticleAggregatorPath = articleAggregatorPathResolution.isDefault;
+
+  const resetRetainedArticlePaging = useCallback((): void => {
+    setRetainedArticleOffset(0);
+    setRetainedArticlePageCount(0);
+    setRetainedArticleTotal(null);
+    setRetainedArticleError(null);
+  }, []);
 
   const loadPresets = useCallback(
     async (options: { applyDefaultPrompt?: boolean } = {}): Promise<void> => {
@@ -286,25 +351,52 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     []
   );
 
+  const loadRecentRuns = useCallback(async (): Promise<void> => {
+    setIsLoadingRecentRuns(true);
+    setRunHistoryError(null);
+    try {
+      const runs = await api.get<SocialArticleScrapeRun[]>(
+        '/api/filemaker/social-article-aggregator/runs',
+        { params: { limit: 12 }, timeout: 60_000 }
+      );
+      setRecentRuns(runs);
+    } catch (error) {
+      setRunHistoryError(error instanceof Error ? error.message : 'Failed to load scrape runs.');
+    } finally {
+      setIsLoadingRecentRuns(false);
+    }
+  }, []);
+
+  const loadPlaywrightScripters = useCallback(async (): Promise<void> => {
+    setIsLoadingPlaywrightScripters(true);
+    try {
+      const response = await api.get<PlaywrightScripterListResponse>(
+        '/api/playwright/scripters',
+        { timeout: 60_000 }
+      );
+      setPlaywrightScripters(response.scripters);
+    } catch {
+      setPlaywrightScripters([]);
+    } finally {
+      setIsLoadingPlaywrightScripters(false);
+    }
+  }, []);
+
   useEffect(() => {
-    void loadPresets({ applyDefaultPrompt: true }).catch((error) => {
+    void Promise.all([
+      loadPresets({ applyDefaultPrompt: true }),
+      loadRecentRuns(),
+      loadPlaywrightScripters(),
+    ]).catch((error) => {
       setScrapeError(error instanceof Error ? error.message : 'Failed to load article presets.');
     });
-  }, [loadPresets]);
+  }, [loadPresets, loadPlaywrightScripters, loadRecentRuns]);
 
   const handleTogglePreset = useCallback((presetId: string): void => {
     setSelectedPresetIds((current) =>
       current.includes(presetId)
         ? current.filter((id) => id !== presetId)
         : [...current, presetId]
-    );
-  }, []);
-
-  const handleToggleArticle = useCallback((articleId: string): void => {
-    setSelectedArticleIds((current) =>
-      current.includes(articleId)
-        ? current.filter((id) => id !== articleId)
-        : [...current, articleId]
     );
   }, []);
 
@@ -316,9 +408,12 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
       {
         preset: {
           enabled: true,
+          crawlDepth: sourcePresetCrawlDepth,
           maxArticlesPerSource,
           name: sourcePresetName.trim(),
           obeyRobotsTxt,
+          playwrightScripterId: sourcePresetScripterId.trim() || null,
+          playwrightScripterMode: sourcePresetScripterMode,
           urls,
         },
       },
@@ -326,11 +421,23 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     );
     setSourcePresetName('');
     setSourcePresetUrls('');
+    setSourcePresetCrawlDepth(1);
+    setSourcePresetScripterId('');
+    setSourcePresetScripterMode('assist');
     await loadPresets();
     setSelectedPresetIds((current) =>
       current.includes(saved.id) ? current : [...current, saved.id]
     );
-  }, [loadPresets, maxArticlesPerSource, obeyRobotsTxt, sourcePresetName, sourcePresetUrls]);
+  }, [
+    loadPresets,
+    maxArticlesPerSource,
+    obeyRobotsTxt,
+    sourcePresetName,
+    sourcePresetCrawlDepth,
+    sourcePresetScripterId,
+    sourcePresetScripterMode,
+    sourcePresetUrls,
+  ]);
 
   const handleDeleteSourcePreset = useCallback(
     async (presetId: string): Promise<void> => {
@@ -400,6 +507,254 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     [loadPresets, toast]
   );
 
+  const resolveTargetPost = useCallback(async (): Promise<SocialPublishingPost | null> => {
+    if (activePost) return activePost;
+    return handleCreateDraft();
+  }, [activePost, handleCreateDraft]);
+
+  const persistPostArticleMetadata = useCallback(
+    async (
+      post: SocialPublishingPost,
+      updates: Partial<SocialPublishingPost>
+    ): Promise<SocialPublishingPost> => {
+      const updated = await patchMutation.mutateAsync({
+        id: post.id,
+        updates,
+      });
+      queryClient.setQueryData<SocialPublishingPost>(
+        QUERY_KEYS.socialPublishing.post(updated.id),
+        updated
+      );
+      return updated;
+    },
+    [patchMutation, queryClient]
+  );
+
+  const persistSelectedArticleIds = useCallback(
+    async (nextSelectedArticleIds: string[]): Promise<void> => {
+      const targetPost = await resolveTargetPost();
+      if (!targetPost) return;
+      const nextSelectedArticles = articles.filter((article) =>
+        nextSelectedArticleIds.includes(article.id)
+      );
+      await persistPostArticleMetadata(targetPost, {
+        articleIds: nextSelectedArticleIds,
+        articleScrapeRunId: scrapeRunId,
+        articleSourcePresetIds: deriveArticleSourcePresetIds(
+          nextSelectedArticles,
+          selectedPresetIds
+        ),
+        articleSourceUrls: deriveArticleSourceUrls(
+          nextSelectedArticles,
+          splitLooseUrls(customUrls)
+        ),
+      });
+    },
+    [
+      articles,
+      customUrls,
+      persistPostArticleMetadata,
+      resolveTargetPost,
+      scrapeRunId,
+      selectedPresetIds,
+    ]
+  );
+
+  const handlePersistArticleSelectionError = useCallback((error: unknown): void => {
+    setScrapeError(
+      error instanceof Error ? error.message : 'Failed to persist article selection.'
+    );
+  }, []);
+
+  const handleToggleArticle = useCallback((articleId: string): void => {
+    const nextSelectedArticleIds = selectedArticleIds.includes(articleId)
+      ? selectedArticleIds.filter((id) => id !== articleId)
+      : [...selectedArticleIds, articleId];
+    setSelectedArticleIds(nextSelectedArticleIds);
+    void persistSelectedArticleIds(nextSelectedArticleIds).catch(
+      handlePersistArticleSelectionError
+    );
+  }, [
+    handlePersistArticleSelectionError,
+    persistSelectedArticleIds,
+    selectedArticleIds,
+  ]);
+
+  const handleToggleFilteredArticles = useCallback((): void => {
+    const nextSelectedArticleIds = allFilteredArticlesSelected
+      ? selectedArticleIds.filter((id) => !filteredArticleIds.includes(id))
+      : [...new Set([...selectedArticleIds, ...filteredArticleIds])];
+    setSelectedArticleIds(nextSelectedArticleIds);
+    void persistSelectedArticleIds(nextSelectedArticleIds).catch(
+      handlePersistArticleSelectionError
+    );
+  }, [
+    allFilteredArticlesSelected,
+    filteredArticleIds,
+    handlePersistArticleSelectionError,
+    persistSelectedArticleIds,
+    selectedArticleIds,
+  ]);
+
+  const handleLoadScrapeRun = useCallback(async (run: SocialArticleScrapeRun): Promise<void> => {
+    if (run.articleIds.length === 0) {
+      setArticles([]);
+      setSelectedArticleIds([]);
+      setScrapeRunId(run.id);
+      setScrapeStatus('Loaded scrape run with no retained articles.');
+      const targetPost = await resolveTargetPost();
+      if (targetPost) {
+        await persistPostArticleMetadata(targetPost, {
+          articleIds: [],
+          articleScrapeRunId: run.id,
+          articleSourcePresetIds: run.sourcePresetIds,
+          articleSourceUrls: run.customUrls,
+        });
+      }
+      return;
+    }
+
+    setScrapeError(null);
+    setScrapeStatus('Loading retained articles…');
+    const params = new URLSearchParams({ ids: run.articleIds.join(',') });
+    try {
+      const retainedArticles = await api.get<SocialArticleRecord[]>(
+        `/api/filemaker/social-article-aggregator/articles?${params.toString()}`,
+        { timeout: 60_000 }
+      );
+      const articleIds = retainedArticles.map((article) => article.id);
+      const sourcePresetIds = deriveArticleSourcePresetIds(
+        retainedArticles,
+        run.sourcePresetIds
+      );
+      const sourceUrls = deriveArticleSourceUrls(retainedArticles, run.customUrls);
+      setArticles(retainedArticles);
+      setSelectedArticleIds(articleIds);
+      setArticleFilter('');
+      setExpandedArticleId(null);
+      setScrapeRunId(run.id);
+      setSelectedPresetIds(sourcePresetIds);
+      setCustomUrls(sourceUrls.join('\n'));
+      setObeyRobotsTxt(run.obeyRobotsTxt);
+      setMaxArticlesPerSource(run.maxArticlesPerSource);
+      setScrapeStatus(
+        `Loaded ${retainedArticles.length} retained article${retainedArticles.length === 1 ? '' : 's'} from scrape run.`
+      );
+      const targetPost = await resolveTargetPost();
+      if (targetPost) {
+        await persistPostArticleMetadata(targetPost, {
+          articleIds,
+          articleScrapeRunId: run.id,
+          articleSourcePresetIds: sourcePresetIds,
+          articleSourceUrls: sourceUrls,
+        });
+      }
+    } catch (error) {
+      setScrapeError(error instanceof Error ? error.message : 'Failed to load retained articles.');
+    }
+  }, [persistPostArticleMetadata, resolveTargetPost]);
+
+  const handleLoadRetainedArticles = useCallback(async (
+    options: { append?: boolean; offset?: number } = {}
+  ): Promise<void> => {
+    const append = options.append === true;
+    const offset = Math.max(0, options.offset ?? 0);
+    setIsLoadingRetainedArticles(true);
+    setRetainedArticleError(null);
+    setScrapeStatus('Loading retained article library…');
+    try {
+      const response = await api.get<RetainedArticleListResponse>(
+        '/api/filemaker/social-article-aggregator/articles',
+        {
+          params: {
+            limit: RETAINED_ARTICLE_PAGE_SIZE,
+            offset,
+            search: retainedSearch.trim(),
+            sourcePresetId: retainedSourcePresetId || undefined,
+          },
+          timeout: 60_000,
+        }
+      );
+      const loadState = buildRetainedArticleLoadState({
+        append,
+        currentArticles: articles,
+        currentSelectedArticleIds: selectedArticleIds,
+        fallbackSourcePresetIds: retainedSourcePresetId ? [retainedSourcePresetId] : [],
+        incomingArticles: response.articles,
+        offset,
+        total: response.total,
+      });
+      setArticles(loadState.articles);
+      setSelectedArticleIds(loadState.selectedArticleIds);
+      setArticleFilter('');
+      setExpandedArticleId(null);
+      setScrapeRunId(null);
+      setSelectedPresetIds(loadState.sourcePresetIds);
+      setCustomUrls(loadState.sourceUrls.join('\n'));
+      setRetainedArticleOffset(offset);
+      setRetainedArticlePageCount(response.articles.length);
+      setRetainedArticleTotal(response.total);
+      setScrapeStatus(loadState.status);
+      const targetPost = await resolveTargetPost();
+      if (targetPost) {
+        await persistPostArticleMetadata(targetPost, {
+          articleIds: loadState.selectedArticleIds,
+          articleScrapeRunId: null,
+          articleSourcePresetIds: loadState.sourcePresetIds,
+          articleSourceUrls: loadState.sourceUrls,
+        });
+      }
+    } catch (error) {
+      setRetainedArticleError(
+        error instanceof Error ? error.message : 'Failed to load retained articles.'
+      );
+      setScrapeStatus(null);
+    } finally {
+      setIsLoadingRetainedArticles(false);
+    }
+  }, [
+    articles,
+    persistPostArticleMetadata,
+    resolveTargetPost,
+    retainedSearch,
+    retainedSourcePresetId,
+    selectedArticleIds,
+  ]);
+
+  const handleDeleteRetainedArticle = useCallback(async (article: SocialArticleRecord): Promise<void> => {
+    const label = article.title || article.resolvedUrl;
+    if (typeof window !== 'undefined' && !window.confirm(`Delete retained article "${label}"?`)) {
+      return;
+    }
+
+    setDeletingArticleId(article.id);
+    try {
+      await api.delete<SocialArticleRecord>(
+        '/api/filemaker/social-article-aggregator/articles',
+        { params: { id: article.id }, timeout: 60_000 }
+      );
+      const nextSelectedArticleIds = selectedArticleIds.filter((id) => id !== article.id);
+      const nextSelectedArticles = articles.filter(
+        (entry) => entry.id !== article.id && nextSelectedArticleIds.includes(entry.id)
+      );
+      setArticles((current) => current.filter((entry) => entry.id !== article.id));
+      setSelectedArticleIds(nextSelectedArticleIds);
+      setExpandedArticleId((current) => current === article.id ? null : current);
+      if (activePost) {
+        await persistPostArticleMetadata(activePost, {
+          articleIds: nextSelectedArticleIds,
+          articleSourcePresetIds: deriveArticleSourcePresetIds(nextSelectedArticles),
+          articleSourceUrls: deriveArticleSourceUrls(nextSelectedArticles),
+        });
+      }
+      toast('Retained article deleted', { variant: 'success' });
+    } catch (error) {
+      setScrapeError(error instanceof Error ? error.message : 'Failed to delete retained article.');
+    } finally {
+      setDeletingArticleId(null);
+    }
+  }, [activePost, articles, persistPostArticleMetadata, selectedArticleIds, toast]);
+
   useEffect(() => {
     const postId = activePost?.id ?? null;
     if (!postId || restoredPostIdRef.current === postId) return;
@@ -440,13 +795,9 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     }
   }, [activePost]);
 
-  const resolveTargetPost = useCallback(async (): Promise<SocialPublishingPost | null> => {
-    if (activePost) return activePost;
-    return handleCreateDraft();
-  }, [activePost, handleCreateDraft]);
-
   const handleScrape = useCallback(async (): Promise<void> => {
     setScrapeError(null);
+    setGenerationError(null);
     setScrapeStatus('Scraping article sources...');
     setGeneratedOutput(null);
     setIsScraping(true);
@@ -461,16 +812,34 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         },
         { timeout: 260_000 }
       );
+      const articleIds = response.articles.map((article) => article.id);
+      const { sourcePresetIds, sourceUrls } = deriveScrapeResultSourceMetadata({
+        articles: response.articles,
+        fallbackSourcePresetIds: selectedPresetIds,
+        fallbackSourceUrls: splitLooseUrls(customUrls),
+        run: response.run,
+      });
       setArticles(response.articles);
-      setSelectedArticleIds(response.articles.map((article) => article.id));
+      setSelectedArticleIds(articleIds);
       setArticleFilter('');
       setExpandedArticleId(null);
       setScrapeRunId(response.run.id);
+      setSelectedPresetIds(sourcePresetIds);
+      setCustomUrls(sourceUrls.join('\n'));
+      setRecentRuns((current) => [
+        response.run,
+        ...current.filter((run) => run.id !== response.run.id),
+      ].slice(0, 12));
       setScrapeStatus(
         response.run.status === 'completed'
           ? `Scraped ${response.articles.length} article${response.articles.length === 1 ? '' : 's'}.`
           : response.run.message || 'Article scrape finished.'
       );
+      if (articleIds.length === 0) {
+        setScrapeStatus(NO_ARTICLES_GENERATION_MESSAGE);
+        setGenerationError(NO_ARTICLES_GENERATION_MESSAGE);
+        toast(NO_ARTICLES_GENERATION_MESSAGE, { variant: 'warning' });
+      }
       if (response.run.warnings.length > 0) {
         toast(`${response.run.warnings.length} scrape warning${response.run.warnings.length === 1 ? '' : 's'}`, {
           variant: 'warning',
@@ -478,14 +847,11 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
       }
       const targetPost = await resolveTargetPost();
       if (targetPost) {
-        await patchMutation.mutateAsync({
-          id: targetPost.id,
-          updates: {
-            articleIds: response.articles.map((article) => article.id),
-            articleScrapeRunId: response.run.id,
-            articleSourcePresetIds: selectedPresetIds,
-            articleSourceUrls: splitLooseUrls(customUrls),
-          },
+        await persistPostArticleMetadata(targetPost, {
+          articleIds,
+          articleScrapeRunId: response.run.id,
+          articleSourcePresetIds: sourcePresetIds,
+          articleSourceUrls: sourceUrls,
         });
       }
     } catch (error) {
@@ -493,16 +859,13 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     } finally {
       setIsScraping(false);
     }
-  }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, patchMutation, resolveTargetPost, selectedPresetIds, toast]);
+  }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, persistPostArticleMetadata, resolveTargetPost, selectedPresetIds, toast]);
 
   const handleGenerate = useCallback(async (): Promise<void> => {
-    const pathId = articleAggregatorPathId?.trim();
-    if (!pathId) {
-      setGenerationError('Configure Article Aggregator AI Path ID in Settings -> Models.');
-      return;
-    }
-    if (selectedArticles.length === 0) {
-      setGenerationError('Select at least one scraped article.');
+    const pathId = effectiveArticleAggregatorPathId;
+    if (noArticlesSelected) {
+      setGenerationError(NO_ARTICLES_GENERATION_MESSAGE);
+      toast(NO_ARTICLES_GENERATION_MESSAGE, { variant: 'warning' });
       return;
     }
 
@@ -521,22 +884,33 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
       }
       const prompt = customPrompt.trim() || DEFAULT_AGGREGATION_PROMPT;
       const contextArticles = buildContextArticles(selectedArticles);
+      const aiPathPayload = buildSocialArticleAggregationAiPathPayload({
+        articleIds: selectedArticles.map((article) => article.id),
+        articleRunId: scrapeRunId,
+        articleWordCount: selectedWordCount,
+        articles: contextArticles,
+        contextCharacterBudget: ARTICLE_CONTEXT_CHAR_BUDGET,
+        originalCharacterCount: selectedCharCount,
+        post: targetPost,
+        prompt,
+        promptPresetId: selectedPromptId || null,
+        sourcePresetIds: selectedArticleSourcePresetIds,
+        sourceUrls: selectedArticleSourceUrls,
+      });
       const enqueueResult = await enqueueAiPathRun(
         {
+          contextRegistry: aiPathPayload.contextRegistry,
           pathId,
           entityId: targetPost.id,
           entityType: 'social-publishing-post',
-          triggerContext: {
-            articleIds: selectedArticles.map((article) => article.id),
+          meta: {
+            articleCount: contextArticles.length,
             articleRunId: scrapeRunId,
-            articles: contextArticles,
-            language: 'en',
-            mode: 'social_article_aggregation',
-            postId: targetPost.id,
-            prompt,
-            promptPresetId: selectedPromptId || null,
-            sourcePresetIds: selectedPresetIds,
+            source: 'social-article-aggregator',
+            workflow: SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
           },
+          triggerContext: aiPathPayload.triggerContext,
+          triggerEvent: SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
         },
         { timeoutMs: 60_000 }
       );
@@ -565,8 +939,8 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         articleIds: selectedArticles.map((article) => article.id),
         articlePromptPresetId: selectedPromptId || null,
         articleScrapeRunId: scrapeRunId,
-        articleSourcePresetIds: selectedPresetIds,
-        articleSourceUrls: splitLooseUrls(customUrls),
+        articleSourcePresetIds: selectedArticleSourcePresetIds,
+        articleSourceUrls: selectedArticleSourceUrls,
         bodyEn: parsed.bodyEn,
         bodyPl: '',
         combinedBody: parsed.bodyEn,
@@ -602,18 +976,21 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     }
   }, [
     activePost,
-    articleAggregatorPathId,
     customPrompt,
     customUrls,
+    effectiveArticleAggregatorPathId,
     patchMutation,
     queryClient,
     resolveTargetPost,
     scrapeRunId,
-    selectedArticleIds,
+    selectedArticleSourcePresetIds,
+    selectedArticleSourceUrls,
     selectedArticles,
-    selectedPresetIds,
+    selectedCharCount,
     selectedPromptId,
+    selectedWordCount,
     setEditorState,
+    noArticlesSelected,
     toast,
   ]);
 
@@ -625,10 +1002,10 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         <div>
           <div className='mb-3 flex items-center justify-between gap-2'>
             <span className='text-sm font-semibold text-foreground'>Article Aggregator</span>
-            <Button
-              size='sm'
-              variant='ghost'
-              className='h-6 px-2 text-xs'
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        className='h-6 px-2 text-xs'
               disabled={isLoadingPresets || isScraping}
               onClick={() => { void loadPresets().catch(() => undefined); }}
               title='Refresh presets'
@@ -699,6 +1076,61 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                 className='font-mono text-xs'
                 aria-label='Source preset URLs'
               />
+              <div className='block text-xs text-muted-foreground'>
+                <span className='mb-1 block'>Crawl depth</span>
+                <Input
+                  type='number'
+                  value={sourcePresetCrawlDepth}
+                  min={0}
+                  max={2}
+                  onChange={(event) =>
+                    setSourcePresetCrawlDepth(
+                      Math.max(0, Math.min(2, Number(event.target.value) || 0))
+                    )
+                  }
+                  disabled={isScraping}
+                  className='h-8 text-xs'
+                  aria-label='Source preset crawl depth'
+                />
+              </div>
+              <div className='grid gap-2 sm:grid-cols-2'>
+                <label className='block text-xs text-muted-foreground'>
+                  <span className='mb-1 block'>Playwright scripter</span>
+                  <select
+                    value={sourcePresetScripterId}
+                    onChange={(event) => setSourcePresetScripterId(event.target.value)}
+                    disabled={isScraping || isLoadingPlaywrightScripters}
+                    className='h-8 w-full rounded border border-border bg-background px-2 text-xs text-foreground disabled:opacity-60'
+                    aria-label='Source preset Playwright scripter'
+                  >
+                    <option value=''>
+                      {isLoadingPlaywrightScripters ? 'Loading...' : 'Generic scraper'}
+                    </option>
+                    {playwrightScripters.map((scripter) => (
+                      <option key={scripter.id} value={scripter.id}>
+                        {scripter.id} · {scripter.siteHost}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className='block text-xs text-muted-foreground'>
+                  <span className='mb-1 block'>Scripter mode</span>
+                  <select
+                    value={sourcePresetScripterMode}
+                    onChange={(event) =>
+                      setSourcePresetScripterMode(
+                        event.target.value === 'replace' ? 'replace' : 'assist'
+                      )
+                    }
+                    disabled={isScraping || sourcePresetScripterId.length === 0}
+                    className='h-8 w-full rounded border border-border bg-background px-2 text-xs text-foreground disabled:opacity-60'
+                    aria-label='Source preset Playwright scripter mode'
+                  >
+                    <option value='assist'>Assist scrape</option>
+                    <option value='replace'>Replace discovery</option>
+                  </select>
+                </label>
+              </div>
               <Button
                 size='sm'
                 variant='outline'
@@ -743,6 +1175,8 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                       <span className='text-xs text-muted-foreground'>
                         {preset.urls.length} URL{preset.urls.length === 1 ? '' : 's'}
                         {' · '}max {preset.maxArticlesPerSource}
+                        {' · '}depth {preset.crawlDepth}
+                        {preset.playwrightScripterId && ` · ${preset.playwrightScripterMode}: ${preset.playwrightScripterId}`}
                       </span>
                     </span>
                   </label>
@@ -759,6 +1193,200 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
               ))}
             </div>
           )}
+
+          <div className='mt-4 rounded-md border border-border/50'>
+            <div className='flex items-center justify-between gap-2 border-b border-border/40 px-3 py-2'>
+              <div className='text-xs font-medium text-muted-foreground'>
+                Recent scrape runs
+              </div>
+              <Button
+                size='sm'
+                variant='ghost'
+                className='h-6 px-2 text-xs'
+                disabled={isLoadingRecentRuns || isScraping}
+                onClick={() => { void loadRecentRuns(); }}
+              >
+                {isLoadingRecentRuns ? 'Loading…' : 'Refresh'}
+              </Button>
+            </div>
+            {runHistoryError && (
+              <div className='border-b border-border/40 px-3 py-2 text-xs text-destructive'>
+                {runHistoryError}
+              </div>
+            )}
+            {recentRuns.length === 0 ? (
+              <div className='px-3 py-3 text-xs text-muted-foreground'>
+                No retained scrape runs yet.
+              </div>
+            ) : (
+              <div className='max-h-44 overflow-y-auto'>
+                {recentRuns.map((run) => (
+                  <div
+                    key={run.id}
+                    className={[
+                      'flex items-center justify-between gap-3 border-b border-border/40 px-3 py-2 last:border-b-0',
+                      scrapeRunId === run.id ? 'bg-primary/5' : '',
+                    ].join(' ')}
+                  >
+                    <div className='min-w-0'>
+                      <div className='flex items-center gap-1.5 text-xs font-medium text-foreground'>
+                        <span className='truncate'>
+                          {new Date(run.startedAt).toLocaleString()}
+                        </span>
+                        <span className='shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground'>
+                          {run.status}
+                        </span>
+                      </div>
+                      <div className='truncate text-xs text-muted-foreground'>
+                        {run.totalArticleCount} article{run.totalArticleCount === 1 ? '' : 's'}
+                        {' · '}
+                        {run.sourcePresetIds.length + run.customUrls.length} source
+                        {run.sourcePresetIds.length + run.customUrls.length === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                    <Button
+                      size='sm'
+                      variant={scrapeRunId === run.id ? 'outline' : 'ghost'}
+                      className='h-6 shrink-0 px-2 text-xs'
+                      disabled={isScraping || isGenerating}
+                      onClick={() => { void handleLoadScrapeRun(run); }}
+                    >
+                      {scrapeRunId === run.id ? 'Loaded' : 'Load'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className='mt-3 rounded-md border border-border/50'>
+            <div className='border-b border-border/40 px-3 py-2 text-xs font-medium text-muted-foreground'>
+              Retained article library
+            </div>
+            <div className='grid gap-2 p-3 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
+              <Input
+                value={retainedSearch}
+                onChange={(event) => {
+                  setRetainedSearch(event.target.value);
+                  resetRetainedArticlePaging();
+                }}
+                placeholder='Search retained articles'
+                className='h-8 text-xs'
+                aria-label='Search retained articles'
+              />
+              <select
+                value={retainedSourcePresetId}
+                onChange={(event) => {
+                  setRetainedSourcePresetId(event.target.value);
+                  resetRetainedArticlePaging();
+                }}
+                className='h-8 rounded border border-border bg-background px-2 text-xs text-foreground'
+                aria-label='Filter retained articles by source preset'
+              >
+                <option value=''>All sources</option>
+                {sourcePresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+              <div className='flex flex-wrap items-center gap-1'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  disabled={isLoadingRetainedArticles || isScraping || isGenerating}
+                  onClick={() => { void handleLoadRetainedArticles({ offset: 0 }); }}
+                >
+                  {isLoadingRetainedArticles ? 'Loading…' : 'Load retained'}
+                </Button>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  disabled={isLoadingRetainedArticles || isScraping || isGenerating}
+                  onClick={() => {
+                    void handleLoadRetainedArticles({ append: true, offset: 0 });
+                  }}
+                >
+                  Append retained
+                </Button>
+              </div>
+            </div>
+            {(retainedArticleTotal !== null || retainedArticleError) && (
+              <div className='flex flex-wrap items-center justify-between gap-2 border-t border-border/40 px-3 py-2 text-xs'>
+                {retainedArticleError ? (
+                  <span className='text-destructive'>{retainedArticleError}</span>
+                ) : (
+                  <span className='text-muted-foreground'>
+                    {retainedArticleTotal === 0
+                      ? 'No retained articles matched.'
+                      : `Showing ${retainedArticlePageStart}-${retainedArticlePageEnd} of ${retainedArticleTotal} retained article${retainedArticleTotal === 1 ? '' : 's'}.`}
+                  </span>
+                )}
+                {!retainedArticleError && retainedArticleTotal !== null && retainedArticleTotal > 0 && (
+                  <div className='flex items-center gap-1'>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      className='h-6 px-2 text-xs'
+                      disabled={
+                        isLoadingRetainedArticles ||
+                        isScraping ||
+                        isGenerating ||
+                        !canLoadPreviousRetainedArticles
+                      }
+                      onClick={() => {
+                        void handleLoadRetainedArticles({
+                          offset: Math.max(
+                            retainedArticleOffset - RETAINED_ARTICLE_PAGE_SIZE,
+                            0
+                          ),
+                        });
+                      }}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      className='h-6 px-2 text-xs'
+                      disabled={
+                        isLoadingRetainedArticles ||
+                        isScraping ||
+                        isGenerating ||
+                        !canLoadNextRetainedArticles
+                      }
+                      onClick={() => {
+                        void handleLoadRetainedArticles({
+                          offset: retainedArticleOffset + RETAINED_ARTICLE_PAGE_SIZE,
+                        });
+                      }}
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='h-6 px-2 text-xs'
+                      disabled={
+                        isLoadingRetainedArticles ||
+                        isScraping ||
+                        isGenerating ||
+                        !canLoadNextRetainedArticles
+                      }
+                      onClick={() => {
+                        void handleLoadRetainedArticles({
+                          append: true,
+                          offset: retainedArticleOffset + RETAINED_ARTICLE_PAGE_SIZE,
+                        });
+                      }}
+                    >
+                      Append next
+                    </Button>
+                    </div>
+                  )}
+                </div>
+            )}
+          </div>
 
           {scrapeStatus && (
             <p className='mt-2 text-xs text-muted-foreground'>{scrapeStatus}</p>
@@ -806,17 +1434,9 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                 <Button
                   size='sm'
                   variant='ghost'
-                  onClick={() =>
-                    setSelectedArticleIds(
-                      selectedArticles.length === filteredArticles.length
-                        ? selectedArticleIds.filter(
-                            (id) => !filteredArticles.some((a) => a.id === id)
-                          )
-                        : [...new Set([...selectedArticleIds, ...filteredArticles.map((a) => a.id)])]
-                    )
-                  }
+                  onClick={handleToggleFilteredArticles}
                 >
-                  {selectedArticles.length === filteredArticles.length && filteredArticles.length > 0
+                  {allFilteredArticlesSelected
                     ? 'Deselect filtered'
                     : 'Select filtered'}
                 </Button>
@@ -877,6 +1497,13 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                           {expandedArticleId === article.id ? '▲' : '▼'}
                         </button>
                       )}
+                      <button
+                        className='text-xs text-destructive hover:underline disabled:opacity-50'
+                        disabled={deletingArticleId === article.id}
+                        onClick={() => { void handleDeleteRetainedArticle(article); }}
+                      >
+                        {deletingArticleId === article.id ? 'Deleting…' : 'Delete'}
+                      </button>
                     </div>
                   </div>
                   {expandedArticleId === article.id && article.bodyText && (
@@ -992,10 +1619,12 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
               <Button
                 size='sm'
                 onClick={() => { void handleGenerate(); }}
-                disabled={isGenerating || selectedArticles.length === 0}
+                disabled={isGenerating}
                 title={
-                  !articleAggregatorPathId?.trim()
-                    ? 'Configure Article Aggregator AI Path ID in Settings -> Models.'
+                  noArticlesSelected
+                    ? 'Scrape or select at least one article before generating a post.'
+                    : isUsingDefaultArticleAggregatorPath
+                    ? `Using default Article Aggregator AI Path: ${SOCIAL_ARTICLE_AGGREGATION_PATH_ID}.`
                     : undefined
                 }
               >
@@ -1005,9 +1634,10 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                 <p className='text-xs text-muted-foreground'>{generationStatus}</p>
               )}
             </div>
-            {!articleAggregatorPathId?.trim() && (
-              <p className='text-xs text-amber-600 dark:text-amber-400'>
-                Article Aggregator AI Path ID is required.
+            {isUsingDefaultArticleAggregatorPath && (
+              <p className='text-xs text-muted-foreground'>
+                Using default Article Aggregator AI Path:{' '}
+                <span className='font-mono'>{SOCIAL_ARTICLE_AGGREGATION_PATH_ID}</span>.
               </p>
             )}
             {contextBudgetExceeded && (

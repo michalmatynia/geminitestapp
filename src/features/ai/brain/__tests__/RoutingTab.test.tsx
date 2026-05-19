@@ -7,7 +7,6 @@ import { useBrainRoutingActionsContext } from '../components/BrainRoutingContext
 import { RoutingTab } from '../components/RoutingTab';
 import { useBrain } from '../context/BrainContext';
 import {
-  AI_BRAIN_SETTINGS_KEY,
   BRAIN_CAPABILITY_KEYS,
   BRAIN_FEATURE_KEYS,
   defaultBrainAssignment,
@@ -16,11 +15,20 @@ import {
 
 const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
+  updateBrainRoutingMutateAsync: vi.fn(),
   updateSettingMutateAsync: vi.fn(),
 }));
 
 vi.mock('../context/BrainContext', () => ({
   useBrain: vi.fn(),
+}));
+
+vi.mock('../hooks/useBrainQueries', () => ({
+  useUpdateBrainRoutingSettings: () => ({
+    isPending: false,
+    mutateAsync: mocks.updateBrainRoutingMutateAsync,
+  }),
+  brainKeys: { routing: () => ['brain', 'routing'] },
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -272,6 +280,8 @@ const buildUseBrainMock = (overrides?: {
 describe('RoutingTab', () => {
   beforeEach(() => {
     mocks.toast.mockReset();
+    mocks.updateBrainRoutingMutateAsync.mockReset();
+    mocks.updateBrainRoutingMutateAsync.mockResolvedValue({});
     mocks.updateSettingMutateAsync.mockReset();
     mocks.updateSettingMutateAsync.mockResolvedValue({});
   });
@@ -327,9 +337,13 @@ describe('RoutingTab', () => {
       'prompt_engine.prompt_exploder',
       expect.objectContaining({ modelId: 'gpt-4o-mini' })
     ));
-    expect(mocks.updateSettingMutateAsync).toHaveBeenCalledWith(
+    expect(mocks.updateBrainRoutingMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({
-        key: AI_BRAIN_SETTINGS_KEY,
+        capabilities: expect.objectContaining({
+          'prompt_engine.prompt_exploder': expect.objectContaining({
+            modelId: 'gpt-4o-mini',
+          }),
+        }),
       })
     );
   });
@@ -356,12 +370,8 @@ describe('RoutingTab', () => {
         modelId: 'gpt-image-2',
       })
     ));
-    const savedPayload = mocks.updateSettingMutateAsync.mock.calls[0]?.[0] as {
-      key: string;
-      value: string;
-    };
-    expect(savedPayload.key).toBe(AI_BRAIN_SETTINGS_KEY);
-    expect(JSON.parse(savedPayload.value).capabilities['image_studio.general']).toEqual(
+    const savedPayload = mocks.updateBrainRoutingMutateAsync.mock.calls[0]?.[0] as typeof defaultBrainSettings;
+    expect(savedPayload.capabilities['image_studio.general']).toEqual(
       expect.objectContaining({
         apiKey: 'route-openai-key',
         modelId: 'gpt-image-2',
@@ -391,11 +401,8 @@ describe('RoutingTab', () => {
     expect(nextAssignment).toEqual(expect.objectContaining({ modelId: 'gpt-image-2' }));
     expect(nextAssignment?.apiKey).toBeUndefined();
 
-    const savedPayload = mocks.updateSettingMutateAsync.mock.calls[0]?.[0] as {
-      key: string;
-      value: string;
-    };
-    const savedRoute = JSON.parse(savedPayload.value).capabilities['image_studio.general'] as {
+    const savedPayload = mocks.updateBrainRoutingMutateAsync.mock.calls[0]?.[0] as typeof defaultBrainSettings;
+    const savedRoute = savedPayload.capabilities['image_studio.general'] as {
       apiKey?: string;
       modelId?: string;
     };

@@ -45,9 +45,12 @@ export type RunGenerationOptions = {
 };
 
 export type GenerationMutation = ReturnType<typeof useGenerateSocialPublishingPost>;
+export type GenerationMutationView = Omit<GenerationMutation, 'isPending'> & {
+  isPending: boolean;
+};
 
 export type SocialGenerationHookResult = {
-  generateMutation: GenerationMutation;
+  generateMutation: GenerationMutationView;
   currentGenerationJob: GenerationJobRecord | null;
   handleGenerate: () => Promise<boolean>;
   handleGenerateWithVisualAnalysis: (

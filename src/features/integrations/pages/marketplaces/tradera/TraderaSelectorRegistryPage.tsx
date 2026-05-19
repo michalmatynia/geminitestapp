@@ -25,9 +25,9 @@ import {
   useSyncTraderaSelectorRegistryMutation,
   useTraderaSelectorRegistry,
 } from '@/features/integrations/hooks/useTraderaSelectorRegistry';
+import { useIntegrationSettingsMap } from '@/features/integrations/hooks/useIntegrationSettings';
 import type { TraderaSelectorRegistryEntry } from '@/shared/contracts/integrations/tradera-selector-registry';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -297,7 +297,7 @@ export default function TraderaSelectorRegistryPage(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const registryQuery = useTraderaSelectorRegistry();
-  const settingsQuery = useSettingsMap();
+  const settingsQuery = useIntegrationSettingsMap([TRADERA_SETTINGS_KEYS.selectorProfile]);
   const syncMutation = useSyncTraderaSelectorRegistryMutation();
   const saveMutation = useSaveTraderaSelectorRegistryEntryMutation();
   const deleteMutation = useDeleteTraderaSelectorRegistryEntryMutation();

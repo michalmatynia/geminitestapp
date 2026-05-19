@@ -30,6 +30,17 @@ import { authError, badRequestError, internalError } from '@/shared/errors/app-e
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Image Studio Prompt Extract Handlers
+ *
+ * HTTP request handlers for image prompt extraction.
+ * Handlers: postHandler
+ *
+ * - Extracts prompts from images using AI
+ * - Analyzes image content for description
+ * - Generates structured prompt data
+ */
+
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -201,6 +212,17 @@ function createResponse(payload: ImageStudioPromptExtractResponse): Response {
   return NextResponse.json(payload);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =

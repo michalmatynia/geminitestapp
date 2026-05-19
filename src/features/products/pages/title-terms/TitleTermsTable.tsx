@@ -7,7 +7,6 @@ import type React from 'react';
 type TitleTermsTableProps = {
   filteredTerms: ProductTitleTerm[];
   isLoading: boolean;
-  catalogNameById: Map<string, string>;
   openEdit: (term: ProductTitleTerm) => void;
   deleteTerm: (term: ProductTitleTerm) => void;
 };
@@ -30,7 +29,6 @@ const resolveTitleTermTranslatedSubtext = (term: ProductTitleTerm): string | nul
 export function TitleTermsTable({
   filteredTerms,
   isLoading,
-  catalogNameById,
   openEdit,
   deleteTerm,
 }: TitleTermsTableProps): React.JSX.Element {
@@ -54,12 +52,6 @@ export function TitleTermsTable({
           </div>
         );
       },
-    },
-    {
-      id: 'catalog',
-      header: 'Catalog',
-      cell: ({ row }: { row: { original: ProductTitleTerm } }) =>
-        catalogNameById.get(row.original.catalogId) ?? row.original.catalogId,
     },
     {
       accessorKey: 'type',

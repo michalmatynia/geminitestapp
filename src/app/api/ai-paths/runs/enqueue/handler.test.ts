@@ -7,6 +7,11 @@ import {
   getStarterWorkflowTemplateById,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import {
+  SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+  SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID,
+  SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
+} from '@/shared/lib/ai-paths/social-article-aggregation';
 
 const {
   requireAiPathsRunAccessMock,
@@ -86,6 +91,16 @@ const parseResponseBody = async (response: Response): Promise<Record<string, unk
 
 const serializeStoredPathConfig = (config: ReturnType<typeof createDefaultPathConfig>): string =>
   JSON.stringify(sanitizePathConfig(config));
+
+const buildStoredSocialArticleAggregationConfig = () => {
+  const entry = getStarterWorkflowTemplateById(SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID);
+  if (!entry) throw new Error('Missing social article aggregation starter entry');
+
+  return materializeStarterWorkflowPathConfig(entry, {
+    pathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+    seededDefault: true,
+  });
+};
 
 const buildLegacyStoredTranslationConfig = () => {
   const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
@@ -304,7 +319,7 @@ describe('ai-paths runs enqueue handler', () => {
       collection: 'ai_path_runs',
       repo: {
         listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
-        createRun: vi.fn().mockImplementation(async (data) => ({ id: 'run-1', ...data })),
+        createRun: vi.fn().mockImplementation((data) => Promise.resolve({ id: 'run-1', ...data })),
         createRunNodes: vi.fn().mockResolvedValue(undefined),
         createRunEvent: vi.fn().mockResolvedValue(undefined),
         updateRunIfStatus: vi.fn().mockResolvedValue(true),
@@ -354,13 +369,15 @@ describe('ai-paths runs enqueue handler', () => {
       },
       ...restNodes,
     ];
-    const edges = config.edges.map((edge) =>
-      edge.from === firstNode.id
-        ? { ...edge, from: legacyNodeId }
-        : edge.to === firstNode.id
-          ? { ...edge, to: legacyNodeId }
-          : edge
-    );
+    const edges = config.edges.map((edge) => {
+      if (edge.from === firstNode.id) {
+        return { ...edge, from: legacyNodeId };
+      }
+      if (edge.to === firstNode.id) {
+        return { ...edge, to: legacyNodeId };
+      }
+      return edge;
+    });
 
     await expect(
       postHandler(
@@ -668,6 +685,68 @@ describe('ai-paths runs enqueue handler', () => {
       | undefined;
     expect(logInvocation?.source).toBe('ai-paths.runs.enqueue');
     expect(logInvocation?.context?.['graphSource']).toBe('settings');
+  });
+
+  it('loads the canonical Social Article Aggregation starter by default path id', async () => {
+    const config = buildStoredSocialArticleAggregationConfig();
+    const triggerNode = config.nodes.find((node) => node.type === 'trigger');
+    getAiPathsSettingMock.mockResolvedValueOnce(serializeStoredPathConfig(config));
+
+    const response = await postHandler(
+      makeRequest({
+        pathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+        triggerEvent: SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
+        triggerNodeId: triggerNode?.id,
+        triggerContext: {
+          articleCount: 1,
+          articles: [
+            {
+              bodyText: 'Article body',
+              id: 'article-1',
+              resolvedUrl: 'https://example.com/article',
+              sourceUrl: 'https://example.com',
+              title: 'Article title',
+            },
+          ],
+          entityId: 'post-1',
+          entityType: 'social-publishing-post',
+          prompt: 'Summarize this article.',
+        },
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+          source: 'social-article-aggregator',
+        },
+      }),
+      {} as Parameters<typeof postHandler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).toHaveBeenCalledWith([
+      SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+    ]);
+    expect(getAiPathsSettingMock).toHaveBeenCalledWith(
+      `ai_paths_config_${SOCIAL_ARTICLE_AGGREGATION_PATH_ID}`
+    );
+    const enqueueArgs = enqueuePathRunMock.mock.calls[0]?.[0] as
+      | {
+          nodes?: Array<{ config?: { trigger?: { event?: string } }; type?: string }>;
+          pathId?: string;
+          pathName?: string;
+          triggerContext?: Record<string, unknown> | null;
+          triggerEvent?: string | null;
+        }
+      | undefined;
+    const enqueuedTriggerNode = enqueueArgs?.nodes?.find((node) => node.type === 'trigger');
+
+    expect(enqueueArgs?.pathId).toBe(SOCIAL_ARTICLE_AGGREGATION_PATH_ID);
+    expect(enqueueArgs?.pathName).toBe('Social Article Aggregation');
+    expect(enqueueArgs?.triggerEvent).toBe(SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT);
+    expect(enqueueArgs?.triggerContext?.['articleCount']).toBe(1);
+    expect(enqueuedTriggerNode?.config?.trigger?.event).toBe(
+      SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT
+    );
   });
 
   it('rejects legacy _id run payloads from the enqueue service', async () => {

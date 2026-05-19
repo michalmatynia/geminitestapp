@@ -308,6 +308,24 @@ export type InsightsSnapshot = z.infer<typeof insightsSnapshotSchema>;
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';
+export const AI_BRAIN_ROUTING_COLLECTION = 'ai_brain_routing';
+export const AI_BRAIN_ROUTING_GLOBAL_ID = 'global';
+
+export const aiBrainRoutingResponseSchema = z
+  .object({
+    settings: aiBrainSettingsSchema,
+    configured: z.boolean().default(false),
+    updatedAt: z.string().nullable().default(null),
+  })
+  .strict();
+export type AiBrainRoutingResponse = z.infer<typeof aiBrainRoutingResponseSchema>;
+
+export const updateAiBrainRoutingRequestSchema = z
+  .object({
+    settings: aiBrainSettingsSchema,
+  })
+  .strict();
+export type UpdateAiBrainRoutingRequest = z.infer<typeof updateAiBrainRoutingRequestSchema>;
 
 /**
  * Brain Execution DTOs

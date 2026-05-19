@@ -2,7 +2,8 @@ import 'dotenv/config';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
-  AI_BRAIN_SETTINGS_KEY,
+  AI_BRAIN_ROUTING_COLLECTION,
+  AI_BRAIN_ROUTING_GLOBAL_ID,
   parseBrainSettings,
   sanitizeBrainAssignment,
   defaultBrainAssignment,
@@ -17,7 +18,10 @@ type CliOptions = {
 type SettingDoc = {
   _id?: string;
   key?: string;
-  value?: string;
+  settings?: unknown;
+  schemaVersion?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 const CHATBOT_SETTINGS_KEY = 'default';
@@ -28,10 +32,12 @@ const parseArgs = (argv: string[]): CliOptions => ({
 
 const readBrainSettings = async (): Promise<AiBrainSettings> => {
   const mongo = await getMongoDb();
-  const doc = await mongo.collection<SettingDoc>('settings').findOne({
-    $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+  const doc = await mongo.collection<SettingDoc>(AI_BRAIN_ROUTING_COLLECTION).findOne({
+    _id: AI_BRAIN_ROUTING_GLOBAL_ID,
   });
-  return parseBrainSettings(doc?.value ?? null);
+  return doc?.settings === undefined
+    ? parseBrainSettings(null)
+    : parseBrainSettings(JSON.stringify(doc.settings));
 };
 
 const readChatbotSettings = async (): Promise<ChatbotSettings | null> => {
@@ -50,19 +56,19 @@ const readChatbotSettings = async (): Promise<ChatbotSettings | null> => {
 };
 
 const writeBrainSettings = async (settings: AiBrainSettings): Promise<void> => {
-  const value = JSON.stringify(settings);
   const mongo = await getMongoDb();
-  await mongo.collection<SettingDoc>('settings').updateOne(
-    {
-      $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
-    },
+  const now = new Date();
+  await mongo.collection<SettingDoc>(AI_BRAIN_ROUTING_COLLECTION).updateOne(
+    { _id: AI_BRAIN_ROUTING_GLOBAL_ID },
     {
       $set: {
-        key: AI_BRAIN_SETTINGS_KEY,
-        value,
+        key: AI_BRAIN_ROUTING_GLOBAL_ID,
+        schemaVersion: 1,
+        settings,
+        updatedAt: now,
       },
       $setOnInsert: {
-        _id: AI_BRAIN_SETTINGS_KEY,
+        createdAt: now,
       },
     },
     { upsert: true }

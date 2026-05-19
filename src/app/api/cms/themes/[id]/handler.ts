@@ -8,6 +8,28 @@ import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * CMS Theme Detail API Handlers
+ *
+ * HTTP request handlers for individual CMS theme operations.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Retrieves, updates, and deletes CMS themes
+ * - Manages theme styling and configuration
+ * - Handles theme application and inheritance
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -24,6 +46,17 @@ export async function getHandler(
   return NextResponse.json(theme);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function putHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
@@ -60,6 +93,17 @@ export async function putHandler(
   return NextResponse.json(updated);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function deleteHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext,

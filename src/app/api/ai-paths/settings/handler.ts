@@ -25,6 +25,17 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * AI Paths Settings API Handlers
+ *
+ * HTTP request handlers for AI Paths configuration management.
+ * Handlers: getSettingsHandler, postSettingsHandler
+ *
+ * - Retrieves and updates AI Paths settings
+ * - Manages run concurrency and timeout configurations
+ * - Controls durable queue behavior and fallback policies
+ */
+
 const MAX_SETTINGS_QUERY_KEYS = 500;
 const MAX_SETTINGS_QUERY_KEY_LENGTH = 200;
 const VERSIONED_AI_PATHS_KEY_PATTERN = /^ai_paths_.*_v\d+$/;
@@ -80,6 +91,17 @@ const getRequestedConfigPathIds = (keys: string[]): string[] =>
  * Retrieves AI Path settings. Accepts optional 'keys' search parameter.
  * Logs performance metrics for high-latency or filtered queries.
  */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
   if (requestedKeys.length > 0) {
@@ -118,6 +140,17 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
  * Handles creation or updates of settings. Supports both bulk operations 
  * and single setting updates based on payload shape.
  */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
@@ -154,6 +187,17 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
 /**
  * Deletes specified settings by keys.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();

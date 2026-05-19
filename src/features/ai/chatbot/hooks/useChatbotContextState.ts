@@ -42,7 +42,7 @@ export type ChatbotContextState = {
   closeModal: () => void;
   handleDeleteContext: (id: string) => void;
   handleSaveDraft: () => void;
-  handlePdfUpload: (helpers: FileUploadHelpers) => Promise<void>;
+  handlePdfUpload: (file: File, helpers?: FileUploadHelpers) => Promise<void>;
   handleSaveContexts: () => Promise<void>;
   toggleActive: (id: string, active: boolean) => void;
 };

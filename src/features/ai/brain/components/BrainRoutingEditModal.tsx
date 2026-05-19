@@ -3,10 +3,10 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { useBrain } from '../context/BrainContext';
+import { useUpdateBrainRoutingSettings } from '../hooks/useBrainQueries';
 import type { AiBrainCapabilityKey } from '../settings';
 import { BrainRoutingEditForm } from './BrainRoutingEditForm';
 import {
@@ -23,7 +23,7 @@ export interface BrainRoutingEditModalProps {
 
 export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.JSX.Element | null {
   const { toast } = useToast();
-  const updateSetting = useUpdateSetting();
+  const updateBrainRouting = useUpdateBrainRoutingSettings();
   const { open, capability, onClose } = useModalIdentity(props);
   const brain = useBrain();
   const [state, setState] = useSyncedRouteState(
@@ -52,10 +52,10 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
       definition={capabilityDefinition}
       effectiveAssignments={brain.effectiveCapabilityAssignments}
       handleCapabilityChange={brain.handleCapabilityChange}
-      isSaving={updateSetting.isPending}
+      isSaving={updateBrainRouting.isPending}
       onClose={onClose}
       open={open}
-      persistSetting={updateSetting.mutateAsync}
+      persistRoutingSettings={updateBrainRouting.mutateAsync}
       settings={brain.settings}
       setState={setState}
       state={state}

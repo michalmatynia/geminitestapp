@@ -114,7 +114,7 @@ export default function ArchHomePage({
           <FloorPlan content={pageContent.drawing} interiorModelUrl={interiorModelUrl} />
         </FloorPlanSlotsProvider>
       ) : null}
-      <CodeStudio />
+      {vis.codeStudio ? <CodeStudio content={pageContent.codeStudio} /> : null}
       {vis.philosophy ? <Philosophy content={pageContent.philosophy} /> : null}
       {vis.services ? <Services services={services} content={pageContent.services} /> : null}
       {vis.projects ? <BuiltWork projects={viewerProjects} content={pageContent.projects} /> : null}

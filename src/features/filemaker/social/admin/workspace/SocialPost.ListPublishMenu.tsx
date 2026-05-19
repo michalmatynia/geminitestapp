@@ -175,7 +175,7 @@ function OpenPublishedPostAction({
       <DropdownMenuSeparator />
       <DropdownMenuItem
         onSelect={() => {
-          window.open(postUrl, '_blank', 'noopener,noreferrer');
+          window.open(postUrl ?? undefined, '_blank', 'noopener,noreferrer');
         }}
       >
         Open published post

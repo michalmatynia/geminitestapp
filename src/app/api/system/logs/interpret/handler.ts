@@ -17,6 +17,17 @@ import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observ
 import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/entry-server';
 import { getSystemLogById } from '@/shared/lib/observability/system-log-repository';;
 
+/**
+ * System Logs Interpretation Handlers
+ *
+ * HTTP request handlers for log interpretation and explanation.
+ * Handlers: postHandler
+ *
+ * - Interprets and explains system logs
+ * - Provides human-readable log summaries
+ * - Suggests corrective actions for errors
+ */
+
 const readContextRegistryEnvelope = (
   value: unknown
 ): ContextRegistryConsumerEnvelope | null => {
@@ -28,6 +39,17 @@ const readContextRegistryEnvelope = (
   return Array.isArray(record['refs']) ? (value as ContextRegistryConsumerEnvelope) : null;
 };
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const parsed = await parseJsonBody(req, systemLogsInterpretRequestSchema, {

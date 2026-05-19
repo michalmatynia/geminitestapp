@@ -133,8 +133,11 @@ import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { PLAYWRIGHT_ACTIONS_SETTINGS_KEY } from '@/shared/contracts/playwright-steps';
-import { AI_BRAIN_SETTINGS_KEY } from '@/shared/lib/ai-brain/settings';
-import { invalidateBrainSettingsCache } from '@/shared/lib/ai-brain/server';
+import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings } from '@/shared/lib/ai-brain/settings';
+import {
+  invalidateBrainSettingsCache,
+  upsertBrainRoutingSettings,
+} from '@/shared/lib/ai-brain/server';
 
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
@@ -258,6 +261,7 @@ const readSeededKangurAppearanceSettingValue = async (
 const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
+  if (key === AI_BRAIN_SETTINGS_KEY) return null;
   if (isSecretSettingKey(key)) return null;
   if (isAdminMenuSettingKey(key)) {
     return await readAdminMenuSettingFromLocalAppDb(key);
@@ -400,6 +404,7 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
         typeof doc.key === 'string' &&
         typeof doc.value === 'string' &&
         !isSecretSettingKey(doc.key) &&
+        doc.key !== AI_BRAIN_SETTINGS_KEY &&
         !isAdminMenuSettingKey(doc.key)
     )
     .map((doc) => ({
@@ -466,6 +471,15 @@ const upsertMongoSetting = async (key: string, value: string): Promise<SettingRe
     { upsert: true }
   );
   return { key, value: encodedValue };
+};
+
+const deleteLegacyAiBrainSettingsSetting = async (): Promise<void> => {
+  await applyActiveMongoSourceEnv();
+  if ((process.env['MONGODB_URI'] ?? '').trim().length === 0) return;
+  const mongo = await getMongoDb();
+  await mongo.collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION).deleteMany({
+    $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+  });
 };
 
 const normalizeIncomingSettingValue = (
@@ -969,6 +983,15 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       value: SECRET_SETTING_REDACTED_VALUE,
     });
   }
+  if (key === AI_BRAIN_SETTINGS_KEY) {
+    const persisted = await upsertBrainRoutingSettings(parseBrainSettings(value));
+    if (!persisted) {
+      throw internalError('No AI Brain routing store configured.');
+    }
+    await deleteLegacyAiBrainSettingsSetting();
+    invalidateBrainSettingsCache();
+    return NextResponse.json({ key, value });
+  }
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] upserting', {
       service: 'api/settings',
@@ -1038,9 +1061,6 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
-  }
-  if (setting.key === AI_BRAIN_SETTINGS_KEY) {
-    invalidateBrainSettingsCache();
   }
   if (setting.key === KANGUR_LAUNCH_ROUTE_SETTINGS_KEY) {
     primeKangurLaunchRouteRuntime(normalizedSetting.value);

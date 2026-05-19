@@ -17,7 +17,7 @@ export type SocialPostContextValue = ReturnType<typeof useSocialPostContext>;
 type SocialSettingsSelectOption = {
   value: string;
   label: string;
-  description?: string | null;
+  description?: string;
   disabled?: boolean;
 };
 
@@ -159,7 +159,7 @@ const resolveLinkedInState = (context: SocialPostContextValue): SocialSettingsLi
     linkedInOptions: linkedInConnections.map((connection) => ({
       value: connection.id,
       label: connection.name,
-      description: connection.username ?? linkedinIntegration?.name ?? null,
+      description: connection.username ?? linkedinIntegration?.name ?? undefined,
       disabled: connection.hasLinkedInAccessToken !== true,
     })),
     linkedinIntegration,

@@ -8,6 +8,28 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';
 
+/**
+ * System Logs Metrics Handlers
+ *
+ * HTTP request handlers for system log metrics and aggregation.
+ * Handlers: getHandler
+ *
+ * - Aggregates metrics from system logs
+ * - Calculates performance statistics
+ * - Provides trend analysis and forecasting
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);

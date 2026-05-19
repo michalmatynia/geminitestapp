@@ -4,10 +4,8 @@ import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
-  AI_BRAIN_SETTINGS_KEY,
   getBrainCapabilityDefinition,
   sanitizeBrainAssignmentForProviders,
   type AiBrainAssignment,
@@ -27,7 +25,7 @@ export type BrainRoutingEditModalState = {
 };
 
 export type ToastFn = (message: string, options: { variant: 'success' | 'error' }) => void;
-export type PersistSettingFn = (payload: { key: string; value: string }) => Promise<unknown>;
+export type PersistRoutingSettingsFn = (settings: AiBrainSettings) => Promise<unknown>;
 
 export type BrainRoutingEditModalIdentityProps = {
   open?: boolean;
@@ -158,7 +156,7 @@ export async function persistRoute(props: {
   clearCapabilityOverride: (capability: AiBrainCapabilityKey) => void;
   handleCapabilityChange: (capability: AiBrainCapabilityKey, assignment: AiBrainAssignment) => void;
   onClose: () => void;
-  persistSetting: PersistSettingFn;
+  persistRoutingSettings: PersistRoutingSettingsFn;
   settings: AiBrainSettings;
   state: BrainRoutingEditModalState;
   toast: ToastFn;
@@ -169,14 +167,14 @@ export async function persistRoute(props: {
     clearCapabilityOverride,
     handleCapabilityChange,
     onClose,
-    persistSetting,
+    persistRoutingSettings,
     settings,
     state,
     toast,
   } = props;
   try {
     const nextSettings = buildNextSettings(settings, capability, state, allowedProviders);
-    await persistSetting({ key: AI_BRAIN_SETTINGS_KEY, value: serializeSetting(nextSettings) });
+    await persistRoutingSettings(nextSettings);
     if (state.overrideEnabled) {
       handleCapabilityChange(capability, state.assignment);
     } else {

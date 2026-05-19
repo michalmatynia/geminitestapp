@@ -21,6 +21,8 @@ const toNonEmptyText = (value: string | null | undefined): string | null => {
 
 const getCurrentGenerationJobTitle = (context: SocialPostContextState): string | undefined => {
   const job = context.currentGenerationJob;
+  if (job === null) return undefined;
+
   const parts = [
     toNonEmptyText(job.progress?.message),
     toNonEmptyText(job.failedReason),
@@ -34,7 +36,7 @@ const hasBlockingDocumentationRuntimeJob = (context: SocialPostContextState): bo
   isSocialRuntimeJobInFlight(context.currentGenerationJob?.status) ||
   isSocialRuntimeJobInFlight(context.currentPipelineJob?.status);
 
-const runAsyncAction = (action: () => void | Promise<void>): void => {
+const runAsyncAction = (action: () => unknown): void => {
   Promise.resolve(action()).catch(() => undefined);
 };
 
@@ -202,7 +204,7 @@ function SocialDocsUsedPanel({
         <div className='text-xs text-muted-foreground'>No documentation references selected yet.</div>
       )}
       {toNonEmptyText(context.activePost?.generatedSummary) !== null ? (
-        <Textarea value={context.activePost?.generatedSummary} rows={4} readOnly className='text-xs' />
+        <Textarea value={context.activePost?.generatedSummary ?? ''} rows={4} readOnly className='text-xs' />
       ) : (
         <div className='text-xs text-muted-foreground'>Generate a draft to preview the documentation summary.</div>
       )}

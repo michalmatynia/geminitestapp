@@ -17,6 +17,7 @@ export const MAX_STUDIO_IMAGE_BYTES = 100 * 1024 * 1024; // 100MB
 export const ALLOWED_MIME_EXACT = new Set(['application/pdf', 'application/octet-stream']);
 
 export const FILE_STORAGE_SOURCE_SETTING_KEY = 'file_storage_source_v1';
+export const ASSETS3D_STORAGE_SOURCE_SETTING_KEY = 'assets3d_storage_source_v1';
 export const FASTCOMET_STORAGE_CONFIG_SETTING_KEY = 'fastcomet_storage_config_v1';
 export const DEFAULT_FASTCOMET_STORAGE_BASE_URL = 'https://sparksofsindri.com';
 export const DEFAULT_FASTCOMET_STORAGE_SERVER = 'sparksofsindri.com';

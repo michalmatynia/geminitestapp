@@ -355,7 +355,7 @@ export const buildUpscaleSuccessToastMessage = ({
   response: UpscaleActionResponse;
 }): string => {
   const effectiveMode = response.effectiveMode ?? resolvedMode;
-  const createdLabel = response.slot.name?.trim() || `Upscale ${resolveUpscaleLabel({
+  const createdLabel = response.slot?.name?.trim() || `Upscale ${resolveUpscaleLabel({
     request,
     response,
   })}`;

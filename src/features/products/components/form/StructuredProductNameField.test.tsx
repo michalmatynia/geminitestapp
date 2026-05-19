@@ -208,15 +208,12 @@ describe('StructuredProductNameField', () => {
     expect(within(listbox).getByText('Metal')).toBeInTheDocument();
   });
 
-  it('renders a title-terms shortcut next to English Name for the active catalog', () => {
+  it('renders a shared title-terms shortcut next to English Name', () => {
     renderField();
 
     const titleTermsLink = screen.getByRole('link', { name: /open title terms/i });
 
-    expect(titleTermsLink).toHaveAttribute(
-      'href',
-      '/admin/products/title-terms?catalogId=catalog-a'
-    );
+    expect(titleTermsLink).toHaveAttribute('href', '/admin/products/title-terms');
     expect(titleTermsLink).toHaveAttribute('target', '_blank');
   });
 

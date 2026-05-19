@@ -5,7 +5,7 @@ import {
   TRADERA_SETTINGS_KEYS,
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { readIntegrationSettingValue } from '@/features/integrations/services/integration-settings-store';
 
 export const toTruthyBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
   if (!value) return fallback;
@@ -23,7 +23,7 @@ const parseSettingsFromMap = (map: Map<string, string>): TraderaSystemSettings =
 export const loadTraderaSystemSettings = async (): Promise<TraderaSystemSettings> => {
   const keys = Object.values(TRADERA_SETTINGS_KEYS);
   const values = await Promise.all(
-    keys.map(async (key: string) => [key, await getSettingValue(key)] as const)
+    keys.map(async (key: string) => [key, await readIntegrationSettingValue(key)] as const)
   );
   const map = new Map<string, string>();
   for (const [key, value] of values) {

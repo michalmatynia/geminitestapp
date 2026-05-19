@@ -111,7 +111,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const canvas = useUiCanvasStateInit();
   const tools = useUiToolsStateInit();
   const sequence = useUiSequenceStateInit();
-  const actions = useUiActionsInit();
+  const actions = useUiActionsInit(layout, canvas, tools, sequence);
 
   const state = useMemo<UiState>(
     () => ({
@@ -186,11 +186,13 @@ function useUiSequenceStateInit() {
   return { sequenceState, setPendingSequenceThumbnail };
 }
 
-function useUiActionsInit(): UiActions {
-  const { setIsFocusMode } = useUiLayoutStateInit();
-  const canvas = useUiCanvasStateInit();
-  const tools = useUiToolsStateInit();
-  const sequence = useUiSequenceStateInit();
+function useUiActionsInit(
+  layout: ReturnType<typeof useUiLayoutStateInit>,
+  canvas: ReturnType<typeof useUiCanvasStateInit>,
+  tools: ReturnType<typeof useUiToolsStateInit>,
+  sequence: ReturnType<typeof useUiSequenceStateInit>
+): UiActions {
+  const { setIsFocusMode } = layout;
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
   const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 

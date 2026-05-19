@@ -36,7 +36,7 @@ export function AnalyticsSection({
     );
   }
 
-  if (query.data !== undefined) {
+  if (query.data != null) {
     return (
       <FormSection
         title='General Analytics'
@@ -96,7 +96,7 @@ export function SystemLogsSection({
     );
   }
 
-  if (query.data !== undefined) {
+  if (query.data != null) {
     return (
       <FormSection
         title='System Logs'
@@ -215,7 +215,7 @@ function AiPathsRuntimeContent({
     return <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>;
   }
 
-  if (query.data !== undefined) {
+  if (query.data != null) {
     return (
       <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
         <AiPathsKernelMetrics data={query.data} />

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   resetServerLoggingControlsCacheMock: vi.fn(),
   clearLiteSettingsServerCacheMock: vi.fn(),
   invalidateBrainSettingsCacheMock: vi.fn(),
+  upsertBrainRoutingSettingsMock: vi.fn(),
   invalidateKangurStorefrontInitialStateCacheMock: vi.fn(),
   isKangurStorefrontInitialStateDependencyKeyMock: vi.fn(),
   getAppDbProviderMock: vi.fn(),
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   findOneMock: vi.fn(),
   findMock: vi.fn(),
   toArrayMock: vi.fn(),
+  deleteManyMock: vi.fn(),
   updateOneMock: vi.fn(),
   listAdminMenuSettingsFromLocalAppDbMock: vi.fn(),
   readAdminMenuSettingFromLocalAppDbMock: vi.fn(),
@@ -87,6 +89,7 @@ vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   invalidateBrainSettingsCache: mocks.invalidateBrainSettingsCacheMock,
+  upsertBrainRoutingSettings: mocks.upsertBrainRoutingSettingsMock,
 }));
 
 vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
@@ -251,6 +254,7 @@ describe('settings handler', () => {
     mocks.createIndexMock.mockResolvedValue('settings_key');
     mocks.findOneMock.mockResolvedValue(null);
     mocks.toArrayMock.mockResolvedValue([]);
+    mocks.deleteManyMock.mockResolvedValue({ deletedCount: 1 });
     mocks.findMock.mockReturnValue({ toArray: mocks.toArrayMock });
     mocks.updateOneMock.mockResolvedValue({ acknowledged: true });
     mocks.listAdminMenuSettingsFromLocalAppDbMock.mockResolvedValue([]);
@@ -263,6 +267,7 @@ describe('settings handler', () => {
         createIndex: mocks.createIndexMock,
         find: mocks.findMock,
         findOne: mocks.findOneMock,
+        deleteMany: mocks.deleteManyMock,
         updateOne: mocks.updateOneMock,
       })),
     });
@@ -296,6 +301,7 @@ describe('settings handler', () => {
       value,
     }));
     mocks.upsertSecretSettingValueMock.mockResolvedValue(undefined);
+    mocks.upsertBrainRoutingSettingsMock.mockResolvedValue(true);
     mocks.deleteSecretSettingValuesMock.mockResolvedValue(undefined);
     mocks.isKangurSettingKeyMock.mockReturnValue(false);
     mocks.listKangurSettingsMock.mockResolvedValue([]);

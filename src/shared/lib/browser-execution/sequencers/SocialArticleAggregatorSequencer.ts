@@ -2,7 +2,11 @@
 
 import type { Page } from 'playwright';
 
-import type { ScrapedSocialArticle } from '@/shared/contracts/social-article-aggregator';
+import type {
+  ScrapedSocialArticle,
+  SocialArticleScripterDiagnostic,
+  SocialArticleSourcePresetScripterMode,
+} from '@/shared/contracts/social-article-aggregator';
 
 import { SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS } from '../social-article-aggregator-runtime-constants';
 
@@ -27,11 +31,16 @@ export type SocialArticleAggregatorStep = {
 };
 
 export type SocialArticleAggregatorInputSource = {
+  crawlDepth?: number | null;
   excludePatterns?: string[] | null;
   includePatterns?: string[] | null;
   maxArticles?: number | null;
+  obeyRobotsTxt?: boolean | null;
   presetId?: string | null;
   presetName?: string | null;
+  playwrightScripterDefinition?: unknown;
+  playwrightScripterId?: string | null;
+  playwrightScripterMode?: SocialArticleSourcePresetScripterMode | null;
   url: string;
 };
 
@@ -42,10 +51,26 @@ export type SocialArticleAggregatorScrapeInput = {
   sources?: SocialArticleAggregatorInputSource[] | null;
 };
 
+export type SocialArticleAggregatorScripterCandidate = {
+  description?: string | null;
+  rawMetadata?: Record<string, unknown>;
+  title: string | null;
+  url: string;
+};
+
+export type SocialArticleAggregatorScripterRunOutput = {
+  articles: ScrapedSocialArticle[];
+  candidates: SocialArticleAggregatorScripterCandidate[];
+  diagnostic: SocialArticleScripterDiagnostic;
+  visitedUrls: string[];
+  warnings: string[];
+};
+
 export type SocialArticleAggregatorScrapePayload = {
   articles: ScrapedSocialArticle[];
   currentUrl: string | null;
   message: string;
+  scripterDiagnostics: SocialArticleScripterDiagnostic[];
   status: 'completed' | 'failed';
   steps: SocialArticleAggregatorStep[];
   visitedUrls: string[];
@@ -56,12 +81,21 @@ export type SocialArticleAggregatorSequencerContext = {
   emit: (type: string, payload: unknown) => void;
   log?: (message: string, context?: unknown) => void;
   page: Page;
+  runScripter?: (
+    source: SocialArticleAggregatorInputSource,
+    options: { limit: number; maxArticleChars: number }
+  ) => Promise<SocialArticleAggregatorScripterRunOutput>;
 };
 
 type ArticleCandidate = {
   source: SocialArticleAggregatorInputSource;
   title: string | null;
   url: string;
+};
+
+type ScriptedSourceResult = {
+  candidates: ArticleCandidate[];
+  replacesGenericDiscovery: boolean;
 };
 
 type ExtractedArticleSnapshot = {
@@ -84,6 +118,8 @@ const STEP_LABELS: Record<string, string> = {
 
 const DEFAULT_MAX_ARTICLES_PER_SOURCE = 10;
 const MAX_ARTICLES_PER_SOURCE = 50;
+const DEFAULT_CRAWL_DEPTH = 1;
+const MAX_CRAWL_DEPTH = 2;
 const DEFAULT_MAX_ARTICLE_CHARS = 45000;
 const MAX_ARTICLE_CHARS = 100000;
 
@@ -113,6 +149,12 @@ const clipText = (value: string, max: number): string =>
 const clampInt = (value: unknown, fallback: number, max: number): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return Math.min(Math.floor(parsed), max);
+};
+
+const clampNonNegativeInt = (value: unknown, fallback: number, max: number): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
   return Math.min(Math.floor(parsed), max);
 };
 
@@ -206,6 +248,7 @@ export class SocialArticleAggregatorSequencer {
   private readonly input: SocialArticleAggregatorScrapeInput;
   private readonly log: (message: string, context?: unknown) => void;
   private readonly page: Page;
+  private readonly runScripter: SocialArticleAggregatorSequencerContext['runScripter'];
   private readonly steps: SocialArticleAggregatorStep[];
   private readonly visitedUrls: string[] = [];
   private readonly warnings: string[] = [];
@@ -215,6 +258,7 @@ export class SocialArticleAggregatorSequencer {
   private maxArticleChars = DEFAULT_MAX_ARTICLE_CHARS;
   private maxArticlesPerSource = DEFAULT_MAX_ARTICLES_PER_SOURCE;
   private obeyRobotsTxt = true;
+  private scripterDiagnostics: SocialArticleScripterDiagnostic[] = [];
   private sources: SocialArticleAggregatorInputSource[] = [];
 
   constructor(
@@ -224,6 +268,7 @@ export class SocialArticleAggregatorSequencer {
     this.page = context.page;
     this.emit = context.emit;
     this.log = context.log ?? (() => undefined);
+    this.runScripter = context.runScripter;
     this.input = input;
     this.steps = [
       createStep(SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEPS.inputValidate),
@@ -264,6 +309,11 @@ export class SocialArticleAggregatorSequencer {
     this.sources = (this.input.sources ?? [])
       .map((source) => ({
         ...source,
+        crawlDepth: clampNonNegativeInt(source.crawlDepth, DEFAULT_CRAWL_DEPTH, MAX_CRAWL_DEPTH),
+        obeyRobotsTxt: source.obeyRobotsTxt !== false,
+        playwrightScripterId: normalizeNullableText(source.playwrightScripterId),
+        playwrightScripterMode:
+          source.playwrightScripterMode === 'replace' ? ('replace' as const) : ('assist' as const),
         url: normalizeUrl(source.url) ?? '',
       }))
       .filter((source) => source.url.length > 0);
@@ -292,20 +342,31 @@ export class SocialArticleAggregatorSequencer {
   private async discoverArticles(): Promise<void> {
     const candidates: ArticleCandidate[] = [];
     for (const source of this.sources) {
-      const allowed = await this.isAllowedByRobots(source.url);
+      const allowed = await this.isAllowedByRobots(source.url, source);
       if (!allowed) {
         this.warnings.push(`Robots.txt disallows source ${source.url}`);
         continue;
       }
       try {
+        const scripted = await this.runScriptedSource(source);
+        candidates.push(...scripted.candidates);
+        if (
+          source.playwrightScripterMode === 'replace' &&
+          scripted.replacesGenericDiscovery
+        ) {
+          this.updateCurrentStep({
+            message: `Scripter discovered ${scripted.candidates.length} candidate article(s).`,
+            url: source.url,
+          });
+          continue;
+        }
         await this.openUrl(source.url);
         await this.dismissCookieConsent();
         const rootSnapshot = await this.extractCurrentArticleSnapshot();
         if (this.isUsableArticleSnapshot(rootSnapshot, true)) {
           candidates.push({ source, title: rootSnapshot.title, url: this.page.url() });
         }
-        const discovered = await this.collectArticleLinks(source);
-        candidates.push(...discovered);
+        candidates.push(...await this.collectCrawledArticleLinks(source));
         this.updateCurrentStep({
           message: `Discovered ${candidates.length} candidate article(s).`,
           url: this.page.url(),
@@ -319,7 +380,7 @@ export class SocialArticleAggregatorSequencer {
   }
 
   private async extractArticles(): Promise<void> {
-    const perSourceCounts = new Map<string, number>();
+    const perSourceCounts = this.countArticlesBySource();
     for (const candidate of this.candidates) {
       const sourceKey = candidate.source.presetId ?? candidate.source.url;
       const sourceLimit = clampInt(
@@ -329,7 +390,7 @@ export class SocialArticleAggregatorSequencer {
       );
       const currentCount = perSourceCounts.get(sourceKey) ?? 0;
       if (currentCount >= sourceLimit) continue;
-      const allowed = await this.isAllowedByRobots(candidate.url);
+      const allowed = await this.isAllowedByRobots(candidate.url, candidate.source);
       if (!allowed) {
         this.warnings.push(`Robots.txt disallows article ${candidate.url}`);
         continue;
@@ -372,6 +433,162 @@ export class SocialArticleAggregatorSequencer {
         this.warnings.push(`Failed to extract ${candidate.url}: ${message}`);
       }
     }
+  }
+
+  private async runScriptedSource(
+    source: SocialArticleAggregatorInputSource
+  ): Promise<ScriptedSourceResult> {
+    if (
+      !source.playwrightScripterId &&
+      (source.playwrightScripterDefinition === null ||
+        source.playwrightScripterDefinition === undefined)
+    ) {
+      return { candidates: [], replacesGenericDiscovery: false };
+    }
+    if (!this.runScripter) {
+      this.warnings.push(`No Playwright scripter runner is available for ${source.url}.`);
+      return { candidates: [], replacesGenericDiscovery: false };
+    }
+    const sourceLimit = clampInt(
+      source.maxArticles,
+      this.maxArticlesPerSource,
+      MAX_ARTICLES_PER_SOURCE
+    );
+    try {
+      const result = await this.runScripter(source, {
+        limit: sourceLimit * 3,
+        maxArticleChars: this.maxArticleChars,
+      });
+      this.scripterDiagnostics.push(result.diagnostic);
+      this.visitedUrls.push(...result.visitedUrls);
+      this.warnings.push(...result.warnings);
+      const appendedArticleCount = await this.appendScripterArticles(
+        source,
+        result.articles,
+        sourceLimit
+      );
+      const candidates = this.normalizeScripterCandidates(source, result.candidates);
+      return {
+        candidates,
+        replacesGenericDiscovery:
+          result.diagnostic.errors.length === 0 &&
+          appendedArticleCount + candidates.length > 0,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.warnings.push(`Playwright scripter failed for ${source.url}: ${message}`);
+      return { candidates: [], replacesGenericDiscovery: false };
+    }
+  }
+
+  private async appendScripterArticles(
+    source: SocialArticleAggregatorInputSource,
+    articles: ScrapedSocialArticle[],
+    limit: number
+  ): Promise<number> {
+    const existingCount = this.countArticlesBySource().get(source.presetId ?? source.url) ?? 0;
+    const remaining = Math.max(0, limit - existingCount);
+    if (remaining === 0) return 0;
+    let appended = 0;
+    for (const article of articles) {
+      if (appended >= remaining) return appended;
+      const resolvedUrl = normalizeUrl(article.resolvedUrl, source.url);
+      if (resolvedUrl === null || !this.isAllowedSourceArticleUrl(source, resolvedUrl)) {
+        this.warnings.push(`Skipped scripted article ${article.resolvedUrl}: outside source filters.`);
+        continue;
+      }
+      if (!(await this.isAllowedByRobots(resolvedUrl, source))) {
+        this.warnings.push(`Robots.txt disallows scripted article ${resolvedUrl}`);
+        continue;
+      }
+      this.articles.push({
+        ...article,
+        resolvedUrl,
+        sourcePresetId: article.sourcePresetId ?? source.presetId ?? null,
+        sourceUrl: article.sourceUrl || source.url,
+      });
+      appended += 1;
+    }
+    return appended;
+  }
+
+  private isAllowedSourceArticleUrl(
+    source: SocialArticleAggregatorInputSource,
+    url: string
+  ): boolean {
+    if (!isSameHost(url, source.url)) return false;
+    if (isLowValueUrl(url)) return false;
+    if (matchesPatternList(url, source.excludePatterns)) return false;
+    return (source.includePatterns?.filter((entry) => entry.trim().length > 0).length ?? 0) > 0
+      ? matchesPatternList(url, source.includePatterns)
+      : true;
+  }
+
+  private normalizeScripterCandidates(
+    source: SocialArticleAggregatorInputSource,
+    candidates: SocialArticleAggregatorScripterCandidate[]
+  ): ArticleCandidate[] {
+    return candidates
+      .map((candidate) => ({
+        source,
+        title: normalizeNullableText(candidate.title ?? candidate.description),
+        url: normalizeUrl(candidate.url, source.url) ?? '',
+      }))
+      .filter((candidate) => candidate.url.length > 0)
+      .filter((candidate) => this.isAllowedSourceArticleUrl(source, candidate.url));
+  }
+
+  private countArticlesBySource(): Map<string, number> {
+    const counts = new Map<string, number>();
+    for (const article of this.articles) {
+      const key = article.sourcePresetId ?? article.sourceUrl;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }
+
+  private async collectCrawledArticleLinks(
+    source: SocialArticleAggregatorInputSource
+  ): Promise<ArticleCandidate[]> {
+    const crawlDepth = clampNonNegativeInt(source.crawlDepth, DEFAULT_CRAWL_DEPTH, MAX_CRAWL_DEPTH);
+    if (crawlDepth <= 0) return [];
+    const discovered = await this.collectArticleLinks(source);
+    if (crawlDepth <= 1) return discovered;
+    return [
+      ...discovered,
+      ...(await this.collectNestedArticleLinks(source, discovered)),
+    ];
+  }
+
+  private async collectNestedArticleLinks(
+    source: SocialArticleAggregatorInputSource,
+    firstLevelCandidates: ArticleCandidate[]
+  ): Promise<ArticleCandidate[]> {
+    const sourceLimit = clampInt(
+      source.maxArticles,
+      this.maxArticlesPerSource,
+      MAX_ARTICLES_PER_SOURCE
+    );
+    const nestedCandidates: ArticleCandidate[] = [];
+    const visited = new Set([source.url]);
+    for (const candidate of firstLevelCandidates.slice(0, sourceLimit)) {
+      if (visited.has(candidate.url)) continue;
+      visited.add(candidate.url);
+      const allowed = await this.isAllowedByRobots(candidate.url, source);
+      if (!allowed) {
+        this.warnings.push(`Robots.txt disallows discovery page ${candidate.url}`);
+        continue;
+      }
+      try {
+        await this.openUrl(candidate.url);
+        await this.dismissCookieConsent();
+        nestedCandidates.push(...await this.collectArticleLinks(source));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.warnings.push(`Failed to crawl discovery page ${candidate.url}: ${message}`);
+      }
+    }
+    return nestedCandidates;
   }
 
   private async openUrl(url: string): Promise<void> {
@@ -462,21 +679,15 @@ export class SocialArticleAggregatorSequencer {
       return [...readJsonLdUrls(), ...anchorLinks];
     });
 
+    const baseUrl = normalizeUrl(this.page.url()) ?? source.url;
     return links
       .map((link) => ({
         source,
         title: normalizeNullableText(link.title),
-        url: normalizeUrl(link.url, source.url) ?? '',
+        url: normalizeUrl(link.url, baseUrl) ?? '',
       }))
       .filter((candidate) => candidate.url.length > 0)
-      .filter((candidate) => isSameHost(candidate.url, source.url))
-      .filter((candidate) => !isLowValueUrl(candidate.url))
-      .filter((candidate) => !matchesPatternList(candidate.url, source.excludePatterns))
-      .filter((candidate) =>
-        (source.includePatterns?.filter((entry) => entry.trim().length > 0).length ?? 0) > 0
-          ? matchesPatternList(candidate.url, source.includePatterns)
-          : true
-      )
+      .filter((candidate) => this.isAllowedSourceArticleUrl(source, candidate.url))
       .map((candidate) => ({
         candidate,
         score: articleLinkScore(candidate.url, candidate.title),
@@ -639,8 +850,12 @@ export class SocialArticleAggregatorSequencer {
     return allowMetadataOnly && snapshot.hasArticleMetadata && (snapshot.title?.trim().length ?? 0) > 0;
   }
 
-  private async isAllowedByRobots(url: string): Promise<boolean> {
+  private async isAllowedByRobots(
+    url: string,
+    source?: SocialArticleAggregatorInputSource
+  ): Promise<boolean> {
     if (!this.obeyRobotsTxt) return true;
+    if (source?.obeyRobotsTxt === false) return true;
     const parsed = normalizeUrl(url);
     if (!parsed) return false;
     const target = new URL(parsed);
@@ -761,6 +976,7 @@ export class SocialArticleAggregatorSequencer {
       articles: this.articles,
       currentUrl: this.page.url(),
       message,
+      scripterDiagnostics: this.scripterDiagnostics,
       status,
       steps: this.steps,
       visitedUrls: Array.from(new Set(this.visitedUrls)),

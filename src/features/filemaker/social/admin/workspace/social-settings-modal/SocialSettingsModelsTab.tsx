@@ -1,18 +1,37 @@
+/* eslint-disable max-lines-per-function, complexity */
+
 import Link from 'next/link';
+import type React from 'react';
 
 import { Badge, FormField, Input, SelectSimple } from '@/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
+import { SOCIAL_ARTICLE_AGGREGATION_PATH_ID } from '@/shared/lib/ai-paths/social-article-aggregation';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../SocialPublishingPage.Constants';
 import { useSocialPostContext } from '../SocialPostContext';
 import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
-  if (!normalized) return false;
+  if (normalized === undefined || normalized.length === 0) return false;
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
-export function SocialSettingsModelsTab() {
+const resolveModelTitle = (
+  isRuntimeLocked: boolean,
+  isLoading: boolean,
+  loadingTitle: string,
+  selectedTitle: string
+): string => {
+  if (isRuntimeLocked) {
+    return 'Wait for the current Social runtime job to finish.';
+  }
+  if (isLoading) {
+    return loadingTitle;
+  }
+  return selectedTitle;
+};
+
+export function SocialSettingsModelsTab(): React.JSX.Element {
   const context = useSocialPostContext();
   const state = useSocialSettingsModalContext();
 
@@ -45,16 +64,18 @@ export function SocialSettingsModelsTab() {
   const brainModelOptionsLoading = brainModelOptions.isLoading;
   const visionModelOptionsLoading = visionModelOptions.isLoading;
 
-  const brainModelTitle = isRuntimeLocked
-    ? 'Wait for the current Social runtime job to finish.'
-    : brainModelOptionsLoading
-      ? 'Loading AI Brain model options...'
-      : 'Selected brain model';
-  const visionModelTitle = isRuntimeLocked
-    ? 'Wait for the current Social runtime job to finish.'
-    : visionModelOptionsLoading
-      ? 'Loading AI Brain vision model options...'
-      : 'Selected vision model';
+  const brainModelTitle = resolveModelTitle(
+    isRuntimeLocked,
+    brainModelOptionsLoading,
+    'Loading AI Brain model options...',
+    'Selected brain model'
+  );
+  const visionModelTitle = resolveModelTitle(
+    isRuntimeLocked,
+    visionModelOptionsLoading,
+    'Loading AI Brain vision model options...',
+    'Selected vision model'
+  );
   const brainModelSelectProps = {
     value: brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE,
     onValueChange: handleBrainModelChange,
@@ -141,12 +162,12 @@ export function SocialSettingsModelsTab() {
         <div className='mt-3'>
           <FormField
             label='AI Path ID'
-            description='Paste the ID of an AI Path that accepts a custom prompt and article context.'
+            description='Defaults to the canonical Social Article Aggregation starter path. Use a custom AI Path ID only when overriding the graph.'
           >
             <Input
               value={articleAggregatorPathId}
               onChange={(e) => setArticleAggregatorPathId(e.target.value)}
-              placeholder='e.g. path_abc123'
+              placeholder={SOCIAL_ARTICLE_AGGREGATION_PATH_ID}
               className='font-mono text-xs'
             />
           </FormField>

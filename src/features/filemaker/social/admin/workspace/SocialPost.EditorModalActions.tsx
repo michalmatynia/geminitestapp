@@ -8,15 +8,16 @@ import { SocialJobStatusPill } from './SocialJobStatusPill';
 import {
   buildSocialRuntimeJobTitle,
   resolveEditorModalRuntimeState,
-  type SocialPostEditorContextValue,
 } from './SocialPost.EditorModal.runtime';
 import { useSocialPostContext } from './SocialPostContext';
+
+type SocialRuntimeJobLike = Parameters<typeof buildSocialRuntimeJobTitle>[0];
 
 const RuntimeJobPill = ({
   job,
   label,
 }: {
-  job: SocialPostEditorContextValue['currentGenerationJob'];
+  job: SocialRuntimeJobLike;
   label: string;
 }): React.ReactNode => {
   const status = job?.status ?? null;

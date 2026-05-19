@@ -9,6 +9,17 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { IndexSpecification } from 'mongodb';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * MongoDB Indexes Diagnostics Handlers
+ *
+ * HTTP request handlers for MongoDB index diagnostics.
+ * Handlers: getHandler
+ *
+ * - Analyzes MongoDB collection indexes
+ * - Identifies missing or inefficient indexes
+ * - Provides optimization recommendations
+ */
+
 
 type ComparableIndexOptions = {
   expireAfterSeconds?: number;
@@ -116,6 +127,17 @@ const buildDiagnostics = async (
 };
 
  
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();
@@ -127,6 +149,17 @@ export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Pr
 }
 
  
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const db = await getMongoDb();

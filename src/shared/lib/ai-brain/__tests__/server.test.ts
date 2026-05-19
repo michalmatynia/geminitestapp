@@ -58,13 +58,31 @@ describe('ai-brain server helpers', () => {
     deleteKangurSettingValueMock.mockResolvedValue(true);
   });
 
-  it('caches AI brain settings reads and resets the cache on upsert/delete', async () => {
+  it('caches global AI brain routing reads and resets the cache on upsert/delete', async () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    const storedSettingsJson = createBrainSettingsJson({
+      defaults: {
+        ...defaultBrainSettings.defaults,
+        modelId: 'stored-value',
+      },
+    });
+    const freshAfterInvalidateJson = createBrainSettingsJson({
+      defaults: {
+        ...defaultBrainSettings.defaults,
+        modelId: 'fresh-after-invalidate',
+      },
+    });
+    const freshAfterDeleteJson = createBrainSettingsJson({
+      defaults: {
+        ...defaultBrainSettings.defaults,
+        modelId: 'fresh-after-delete',
+      },
+    });
     const findOne = vi
       .fn()
-      .mockResolvedValueOnce({ value: 'stored-value' })
-      .mockResolvedValueOnce({ value: 'fresh-after-invalidate' })
-      .mockResolvedValueOnce({ value: 'fresh-after-delete' });
+      .mockResolvedValueOnce({ settings: JSON.parse(storedSettingsJson) })
+      .mockResolvedValueOnce({ settings: JSON.parse(freshAfterInvalidateJson) })
+      .mockResolvedValueOnce({ settings: JSON.parse(freshAfterDeleteJson) });
     const updateOne = vi.fn().mockResolvedValue({});
     const deleteOne = vi.fn().mockResolvedValue({});
     getMongoDbMock.mockResolvedValue({
@@ -79,27 +97,39 @@ describe('ai-brain server helpers', () => {
       .mockReturnValueOnce(4_000)
       .mockReturnValueOnce(5_000);
 
-    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe('stored-value');
-    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe('stored-value');
+    await expect(server.getBrainSettings()).resolves.toMatchObject({
+      defaults: expect.objectContaining({ modelId: 'stored-value' }),
+    });
+    await expect(server.getBrainSettings()).resolves.toMatchObject({
+      defaults: expect.objectContaining({ modelId: 'stored-value' }),
+    });
     expect(findOne).toHaveBeenCalledTimes(1);
 
     server.invalidateBrainSettingsCache();
-    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(
-      'fresh-after-invalidate'
-    );
+    await expect(server.getBrainSettings()).resolves.toMatchObject({
+      defaults: expect.objectContaining({ modelId: 'fresh-after-invalidate' }),
+    });
     expect(findOne).toHaveBeenCalledTimes(2);
 
-    await expect(server.upsertStoredSettingValue(AI_BRAIN_SETTINGS_KEY, 'updated-value')).resolves.toBe(
-      true
-    );
-    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe('updated-value');
+    const updatedSettingsJson = createBrainSettingsJson({
+      defaults: {
+        ...defaultBrainSettings.defaults,
+        modelId: 'updated-value',
+      },
+    });
+    await expect(
+      server.upsertStoredSettingValue(AI_BRAIN_SETTINGS_KEY, updatedSettingsJson)
+    ).resolves.toBe(true);
+    await expect(server.getBrainSettings()).resolves.toMatchObject({
+      defaults: expect.objectContaining({ modelId: 'updated-value' }),
+    });
     expect(updateOne).toHaveBeenCalledTimes(1);
     expect(findOne).toHaveBeenCalledTimes(2);
 
     await expect(server.deleteStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(true);
-    await expect(server.readStoredSettingValue(AI_BRAIN_SETTINGS_KEY)).resolves.toBe(
-      'fresh-after-delete'
-    );
+    await expect(server.getBrainSettings()).resolves.toMatchObject({
+      defaults: expect.objectContaining({ modelId: 'fresh-after-delete' }),
+    });
     expect(deleteOne).toHaveBeenCalledTimes(1);
     expect(findOne).toHaveBeenCalledTimes(3);
   });

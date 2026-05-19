@@ -9,6 +9,7 @@ import { TraderaExecutionSteps } from '@/features/integrations/components/listin
 import {
   quicklistStepTemplates,
 } from '@/features/integrations/utils/tradera-execution-steps';
+import type { LiveTraderaExecutionState } from '@/features/integrations/hooks/useTraderaLiveExecution';
 import {
   formatTimestamp, 
   formatTraderaDuplicateMatchStrategy,
@@ -20,18 +21,64 @@ import {
   type resolveTraderaExecutionSummary,
   type resolveDisplayedTraderaDuplicateSummary,
 } from '../ProductListingDetails.utils';
-import { type TraderaExecutionStep } from '@/shared/contracts/integrations/listings';
+import type {
+  ProductListingWithDetails,
+  TraderaExecutionStep,
+} from '@/shared/contracts/integrations/listings';
 
-type TraderaListing = {
-  status: string;
-  title: string;
-};
+type TraderaListing = Pick<
+  ProductListingWithDetails,
+  'expiresAt' | 'nextRelistAt' | 'relistAttempts'
+>;
 
 const paymentSolutionRunResultSchema = z.object({
   paymentSolutionTermsAccepted: z.boolean().optional(),
   retryAfterPaymentSolutionTerms: z.boolean().optional(),
   initialPublishInteractionReason: z.string().trim().min(1).optional(),
 }).passthrough();
+
+const resolveDisplayedExecutionSteps = ({
+  liveExecutionSteps,
+  persistedExecutionSteps,
+  plannedQueuedExecutionSteps,
+}: {
+  liveExecutionSteps: TraderaExecutionStep[];
+  persistedExecutionSteps: TraderaExecutionStep[];
+  plannedQueuedExecutionSteps: TraderaExecutionStep[];
+}): TraderaExecutionStep[] => {
+  if (liveExecutionSteps.length > 0) return liveExecutionSteps;
+  if (persistedExecutionSteps.length > 0) return persistedExecutionSteps;
+  return plannedQueuedExecutionSteps;
+};
+
+const resolveLiveStatus = ({
+  liveExecution,
+  showingPendingExecutionSteps,
+  showingQueuedStepPlan,
+}: {
+  liveExecution: LiveTraderaExecutionState | null;
+  showingPendingExecutionSteps: boolean;
+  showingQueuedStepPlan: boolean;
+}): 'queued' | 'running' | null => {
+  if (liveExecution?.status === 'queued' || liveExecution?.status === 'running') {
+    return liveExecution.status;
+  }
+  if (showingQueuedStepPlan) return 'queued';
+  if (showingPendingExecutionSteps) return 'running';
+  return null;
+};
+
+const resolveExecutionStepsTitle = ({
+  displayedLastAction,
+  showingQueuedStepPlan,
+}: {
+  displayedLastAction: string | null;
+  showingQueuedStepPlan: boolean;
+}): string => {
+  if (showingQueuedStepPlan) return 'Queued listing steps';
+  if (displayedLastAction === 'check_status') return 'Status check steps';
+  return 'Execution steps';
+};
 
 export function TraderaSection({
   execution,
@@ -42,7 +89,7 @@ export function TraderaSection({
   listing,
 }: {
   execution: ReturnType<typeof resolveTraderaExecutionSummary>;
-  liveExecution: TraderaExecutionStep | null;
+  liveExecution: LiveTraderaExecutionState | null;
   pendingLabel: string;
   duplicateSummary: ReturnType<typeof resolveDisplayedTraderaDuplicateSummary>;
   usesCustomScript: boolean;
@@ -54,11 +101,16 @@ export function TraderaSection({
     execution.pendingAction === 'sync'
       ? execution.pendingAction
       : null;
-  const displayedRunId = (liveExecution?.runId ?? '') !== '' ? liveExecution.runId : execution.runId;
-  const displayedLatestStage = (liveExecution?.latestStage ?? '') !== '' ? liveExecution.latestStage : execution.latestStage;
-  const displayedLatestStageUrl = (liveExecution?.latestStageUrl ?? '') !== '' ? liveExecution.latestStageUrl : execution.latestStageUrl;
-  const liveExecutionSteps =
-    (liveExecution?.executionSteps?.length ?? 0) > 0 ? liveExecution.executionSteps : [];
+  const liveRunId = liveExecution?.runId ?? '';
+  const liveLatestStage = liveExecution?.latestStage ?? '';
+  const liveLatestStageUrl = liveExecution?.latestStageUrl ?? '';
+  const liveExecutionSteps = liveExecution?.executionSteps ?? [];
+  const liveLogTail = liveExecution?.logTail ?? [];
+  const liveAction = liveExecution?.action ?? '';
+  const displayedRunId = liveRunId !== '' ? liveRunId : execution.runId;
+  const displayedLatestStage = liveLatestStage !== '' ? liveLatestStage : execution.latestStage;
+  const displayedLatestStageUrl =
+    liveLatestStageUrl !== '' ? liveLatestStageUrl : execution.latestStageUrl;
   const persistedExecutionSteps = execution.executionSteps;
   const plannedQueuedExecutionSteps =
     liveExecutionSteps.length === 0 &&
@@ -67,12 +119,11 @@ export function TraderaSection({
     (execution.pendingQueuedAt ?? null) !== null
       ? quicklistStepTemplates(pendingQuicklistAction)
       : [];
-  const displayedExecutionSteps =
-    liveExecutionSteps.length > 0
-      ? liveExecutionSteps
-      : persistedExecutionSteps.length > 0
-        ? persistedExecutionSteps
-        : plannedQueuedExecutionSteps;
+  const displayedExecutionSteps = resolveDisplayedExecutionSteps({
+    liveExecutionSteps,
+    persistedExecutionSteps,
+    plannedQueuedExecutionSteps,
+  });
   const showingQueuedStepPlan =
     liveExecutionSteps.length === 0 &&
     persistedExecutionSteps.length === 0 &&
@@ -83,16 +134,13 @@ export function TraderaSection({
     pendingQuicklistAction !== null &&
     (execution.pendingQueuedAt ?? null) !== null;
   const displayedRawResult = liveExecution?.rawResult ?? execution.rawResult;
-  const displayedLogTail = (liveExecution?.logTail?.length ?? 0) > 0 ? liveExecution.logTail : execution.logTail;
-  const displayedLastAction = (liveExecution?.action ?? '') !== '' ? liveExecution.action : execution.lastAction;
-  const liveStatus =
-    liveExecution?.status === 'queued' || liveExecution?.status === 'running'
-      ? liveExecution.status
-      : showingQueuedStepPlan
-        ? 'queued'
-        : showingPendingExecutionSteps
-          ? 'running'
-          : null;
+  const displayedLogTail = liveLogTail.length > 0 ? liveLogTail : execution.logTail;
+  const displayedLastAction = liveAction !== '' ? liveAction : execution.lastAction;
+  const liveStatus = resolveLiveStatus({
+    liveExecution,
+    showingPendingExecutionSteps,
+    showingQueuedStepPlan,
+  });
   const livePaymentSolutionDiagnostics =
     paymentSolutionRunResultSchema.catch({}).parse(displayedRawResult);
   const paymentSolutionTermsAccepted =
@@ -111,6 +159,11 @@ export function TraderaSection({
     execution.pendingSelectorProfile;
   const displayedResolvedSelectorProfile =
     liveExecution?.resolvedSelectorProfile ?? execution.resolvedSelectorProfile;
+  const displayedListingUrl = execution.listingUrl ?? '';
+  const displayedExecutionStepsTitle = resolveExecutionStepsTitle({
+    displayedLastAction,
+    showingQueuedStepPlan,
+  });
 
   return (
     <>
@@ -382,7 +435,7 @@ export function TraderaSection({
         {(execution.categorySource ?? '') !== '' && (
           <MetadataItem label='Category source' value={execution.categorySource} variant='minimal' />
         )}
-        {execution.categoryFallbackUsed && (
+        {execution.categoryFallbackUsed === true && (
           <MetadataItem label='Category fallback used' value='Yes' valueClassName='text-amber-300' variant='minimal' />
         )}
         {(execution.categoryMappingReason ?? '') !== '' && (
@@ -394,7 +447,7 @@ export function TraderaSection({
         {(execution.categoryInternalCategoryId ?? '') !== '' && (
           <MetadataItem label='Internal category' value={execution.categoryInternalCategoryId} mono variant='minimal' />
         )}
-        {execution.categoryMappingRecoveredFromAnotherConnection && (
+        {execution.categoryMappingRecoveredFromAnotherConnection === true && (
           <MetadataItem label='Recovered category mapping' value='Yes' valueClassName='text-amber-300' variant='minimal' />
         )}
         {(execution.categoryMappingSourceConnectionId ?? '') !== '' && (
@@ -402,7 +455,7 @@ export function TraderaSection({
         )}
         {(execution.categoryId ?? '') !== '' && <MetadataItem label='Category ID' value={execution.categoryId} mono variant='minimal' />}
         {(execution.categoryPath ?? '') !== '' && <MetadataItem label='Category path' value={execution.categoryPath} variant='minimal' />}
-        {duplicateSummary.duplicateLinked && <MetadataItem label='Existing listing linked' value='Yes' variant='minimal' />}
+        {duplicateSummary.duplicateLinked === true && <MetadataItem label='Existing listing linked' value='Yes' variant='minimal' />}
         {(duplicateSummary.duplicateMatchStrategy ?? '') !== '' && (
           <MetadataItem
             label='Duplicate match strategy'
@@ -422,19 +475,19 @@ export function TraderaSection({
         {duplicateSummary.duplicateIgnoredNonExactCandidateCount !== null && duplicateSummary.duplicateIgnoredNonExactCandidateCount > 0 && (
           <MetadataItem label='Ignored non-exact duplicate matches' value={String(duplicateSummary.duplicateIgnoredNonExactCandidateCount)} variant='minimal' />
         )}
-        {(duplicateSummary.duplicateIgnoredCandidateTitles?.length ?? 0) > 0 && (
+        {duplicateSummary.duplicateIgnoredCandidateTitles.length > 0 && (
           <MetadataItem label='Ignored duplicate titles' value={duplicateSummary.duplicateIgnoredCandidateTitles.join(', ')} wrap variant='minimal' />
         )}
         {(execution.shippingCondition ?? '') !== '' && <MetadataItem label='Shipping condition' value={execution.shippingCondition} variant='minimal' />}
         {execution.shippingPriceEur !== null && <MetadataItem label='Shipping EUR' value={execution.shippingPriceEur.toFixed(2)} variant='minimal' />}
         {(execution.imageInputSource ?? '') !== '' && <MetadataItem label='Image input source' value={execution.imageInputSource} variant='minimal' />}
         {(execution.imageUploadSource ?? '') !== '' && <MetadataItem label='Actual image upload source' value={execution.imageUploadSource} variant='minimal' />}
-        {execution.imageUploadFallbackUsed && <MetadataItem label='Image upload fallback used' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
+        {execution.imageUploadFallbackUsed === true && <MetadataItem label='Image upload fallback used' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
         {(execution.failureCode ?? '') !== '' && <MetadataItem label='Failure code' value={execution.failureCode} mono variant='minimal' />}
-        {execution.staleDraftImages && <MetadataItem label='Stale draft images' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
-        {execution.duplicateRisk && <MetadataItem label='Duplicate risk' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
-        {execution.imageRetryCleanupUnsettled && <MetadataItem label='Retry cleanup unsettled' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
-        {execution.imagePreviewMismatch && <MetadataItem label='Image preview mismatch' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
+        {execution.staleDraftImages === true && <MetadataItem label='Stale draft images' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
+        {execution.duplicateRisk === true && <MetadataItem label='Duplicate risk' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
+        {execution.imageRetryCleanupUnsettled === true && <MetadataItem label='Retry cleanup unsettled' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
+        {execution.imagePreviewMismatch === true && <MetadataItem label='Image preview mismatch' value='Yes' valueClassName='text-amber-300' variant='minimal' />}
         {execution.expectedImageUploadCount !== null && <MetadataItem label='Expected image uploads' value={String(execution.expectedImageUploadCount)} variant='minimal' />}
         {execution.plannedImageCount !== null && <MetadataItem label='Planned image count' value={String(execution.plannedImageCount)} variant='minimal' />}
         {execution.observedImagePreviewDelta !== null && (
@@ -445,11 +498,11 @@ export function TraderaSection({
         )}
         {execution.localImagePathCount !== null && <MetadataItem label='Local image files' value={String(execution.localImagePathCount)} variant='minimal' />}
         {execution.imageUrlCount !== null && <MetadataItem label='Image URLs' value={String(execution.imageUrlCount)} variant='minimal' />}
-        {(execution.listingUrl ?? '') !== '' && (
+        {displayedListingUrl !== '' && (
           <MetadataItem
             label='Listing URL'
             value={(
-              <ExternalLink href={execution.listingUrl!} className='text-sky-400 hover:text-sky-300'>
+              <ExternalLink href={displayedListingUrl} className='text-sky-400 hover:text-sky-300'>
                 Open listing
               </ExternalLink>
             )}
@@ -459,16 +512,10 @@ export function TraderaSection({
         {(execution.errorCategory ?? '') !== '' && <MetadataItem label='Error category' value={execution.errorCategory} variant='minimal' />}
       </div>
 
-      {(displayedExecutionSteps?.length ?? 0) > 0 && (
+      {displayedExecutionSteps.length > 0 && (
         <div className='mt-4'>
           <TraderaExecutionSteps
-            title={
-              showingQueuedStepPlan
-                ? 'Queued listing steps'
-                : displayedLastAction === 'check_status'
-                  ? 'Status check steps'
-                  : 'Execution steps'
-            }
+            title={displayedExecutionStepsTitle}
             steps={displayedExecutionSteps}
             live={liveStatus !== null}
             liveStatus={liveStatus}

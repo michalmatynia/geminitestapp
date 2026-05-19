@@ -3,16 +3,15 @@
 import { useMemo } from 'react';
 
 import {
-  AI_BRAIN_SETTINGS_KEY,
-  parseBrainSettings,
+  defaultBrainSettings,
   resolveBrainAssignment,
   resolveBrainCapabilityAssignment,
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
   type AiBrainFeature,
 } from '@/shared/lib/ai-brain/settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+
+import { useBrainRoutingSettings } from './useBrainQueries';
 
 type UseBrainAssignmentInput = {
   feature?: AiBrainFeature;
@@ -28,20 +27,8 @@ export function useBrainAssignment({
   feature,
   capability,
 }: UseBrainAssignmentInput): UseBrainAssignmentResult {
-  const settingsStore = useSettingsStore();
-  const rawBrainSettings = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
-  const brainSettings = useMemo(() => {
-    try {
-      return parseBrainSettings(rawBrainSettings);
-    } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'useBrainAssignment',
-        action: 'parseBrainSettings',
-        settingKey: AI_BRAIN_SETTINGS_KEY,
-      });
-      throw error;
-    }
-  }, [rawBrainSettings]);
+  const routingQuery = useBrainRoutingSettings();
+  const brainSettings = routingQuery.data?.settings ?? defaultBrainSettings;
 
   const assignment = useMemo(() => {
     if (capability !== undefined) {

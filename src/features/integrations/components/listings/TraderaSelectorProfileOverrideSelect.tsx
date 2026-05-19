@@ -4,8 +4,8 @@ import React from 'react';
 import { useMemo } from 'react';
 
 import { TRADERA_SETTINGS_KEYS, DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
+import { useIntegrationSettingsMap } from '@/features/integrations/hooks/useIntegrationSettings';
 import { useTraderaSelectorRegistry } from '@/features/integrations/hooks/useTraderaSelectorRegistry';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { cn } from '@/shared/utils/ui-utils';
 
 const DEFAULT_PROFILE = 'default';
@@ -35,7 +35,7 @@ export function TraderaSelectorProfileOverrideSelect(
     includeConfiguredOption = true,
   } = props;
   const registryQuery = useTraderaSelectorRegistry();
-  const settingsQuery = useSettingsMap();
+  const settingsQuery = useIntegrationSettingsMap([TRADERA_SETTINGS_KEYS.selectorProfile]);
   const normalizedValue =
     typeof value === 'string' && value.trim().length > 0 ? value.trim() : '';
   const configuredProfile = useMemo(() => {

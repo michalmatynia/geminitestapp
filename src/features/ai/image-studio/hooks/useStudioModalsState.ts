@@ -15,7 +15,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { toSlotName } from '../components/studio-modals/prompt-extract-utils';
-import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
+import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-mapping';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState, usePromptActions } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';

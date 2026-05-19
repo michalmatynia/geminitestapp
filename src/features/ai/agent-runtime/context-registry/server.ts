@@ -1,3 +1,21 @@
+/**
+ * Agent Runtime Context Registry - Server Entry Point
+ *
+ * This module serves as the server-only entry point for agent runtime context registry integration.
+ * It exports utilities for building and resolving context registry envelopes for agent execution.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - applyAgentRuntimeContextMemory: Apply context memory to agent state
+ * - buildAgentRuntimeContextRegistryPrompt: Build prompt with context registry content
+ * - readAgentRuntimeContextRegistry: Read and parse context registry data
+ * - resolveAgentRuntimeContextRegistryEnvelope: Resolve context registry references
+ *
+ * Example usage:
+ * import { resolveAgentRuntimeContextRegistryEnvelope } from '@/features/ai/agent-runtime/context-registry/server';
+ */
+
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,

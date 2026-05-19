@@ -11,10 +11,7 @@ import { type Toast } from '@/shared/contracts/ui/base';
 
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
-  AI_BRAIN_SETTINGS_KEY,
-  defaultBrainSettings,
   parseBrainProviderCatalog,
-  parseBrainSettings,
   sanitizeBrainProviderCatalog,
   type AiBrainFeature,
   type AiBrainProviderCatalog,
@@ -53,26 +50,17 @@ interface BrainHydrationParams {
 }
 
 interface BrainHydrationResult {
+  hydrateBrainRoutingSettings: (settings: AiBrainSettings) => void;
   hydrateFromSettingsMap: (map: Map<string, string>) => void;
 }
 
 export function useBrainHydration(params: BrainHydrationParams): BrainHydrationResult {
   const { toast, setSettings, setProviderCatalog, setOverridesEnabled } = params;
 
-  const parseAndSetBrain = useCallback((raw: string | null): AiBrainSettings | null => {
-    try {
-      const parsed = parseBrainSettings(raw);
-      setSettings(parsed);
-      setOverridesEnabled(buildBrainOverridesEnabled(parsed));
-      return parsed;
-    } catch (error: unknown) {
-      logClientCatch(error, {
-        source: 'BrainContext', action: 'hydrateSettings', settingKey: AI_BRAIN_SETTINGS_KEY,
-      });
-      toast(error instanceof Error ? error.message : 'Invalid AI Brain settings.', { variant: 'error' });
-      return raw !== null && raw.trim() !== '' ? null : defaultBrainSettings;
-    }
-  }, [setSettings, setOverridesEnabled, toast]);
+  const hydrateBrainRoutingSettings = useCallback((settings: AiBrainSettings): void => {
+    setSettings(settings);
+    setOverridesEnabled(buildBrainOverridesEnabled(settings));
+  }, [setSettings, setOverridesEnabled]);
 
   const parseAndSetCatalog = useCallback((raw: string | null, map: Map<string, string>): void => {
     try {
@@ -104,13 +92,12 @@ export function useBrainHydration(params: BrainHydrationParams): BrainHydrationR
   }, [params]);
 
   const hydrateFromSettingsMap = useCallback((map: Map<string, string>): void => {
-    if (!parseAndSetBrain(map.get(AI_BRAIN_SETTINGS_KEY) ?? null)) return;
     parseAndSetCatalog(map.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null, map);
     params.setOpenaiApiKey(map.get('openai_api_key') ?? '');
     params.setAnthropicApiKey(map.get('anthropic_api_key') ?? '');
     params.setGeminiApiKey(map.get('gemini_api_key') ?? '');
     hydrateInsights(map);
-  }, [params, parseAndSetBrain, parseAndSetCatalog, hydrateInsights]);
+  }, [params, parseAndSetCatalog, hydrateInsights]);
 
-  return { hydrateFromSettingsMap };
+  return { hydrateBrainRoutingSettings, hydrateFromSettingsMap };
 }

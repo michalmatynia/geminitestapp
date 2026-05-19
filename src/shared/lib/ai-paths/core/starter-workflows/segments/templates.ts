@@ -50,6 +50,11 @@ import {
   PARAMETER_VALUE_INFERENCE_TRIGGER_NAME,
   PARAMETER_VALUE_INFERENCE_TRIGGER_SORT_INDEX,
 } from '@/shared/lib/ai-paths/parameter-value-inference';
+import {
+  SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+  SOCIAL_ARTICLE_AGGREGATION_STARTER_SORT_INDEX,
+  SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID,
+} from '@/shared/lib/ai-paths/social-article-aggregation';
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
@@ -62,6 +67,7 @@ import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canv
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import parameterValueInferenceAsset from '../assets/parameter-value-inference.canvas.json';
 import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
+import socialArticleAggregationAsset from '../assets/social-article-aggregation.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
 import { hasParameterInferencePromptStructure } from './structural-matchers';
 import {
@@ -546,6 +552,29 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'marketplace_copy_debrand',
       templateVersion: 7,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID,
+    name: 'Social Article Aggregation',
+    description:
+      'Create an English social post draft from scraped article context and a custom aggregation prompt.',
+    semanticAsset: socialArticleAggregationAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: SOCIAL_ARTICLE_AGGREGATION_STARTER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    starterLineage: {
+      starterKey: 'social_article_aggregation',
+      templateVersion: 1,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

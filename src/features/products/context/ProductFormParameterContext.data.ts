@@ -34,6 +34,8 @@ import {
   type MergedParameterValuesResult,
 } from './ProductFormParameterContext.utils';
 
+const CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS = { allowWithoutCatalog: true } as const;
+
 type ParameterProviderDataArgs = {
   product?: ProductWithImages;
   draft?: ProductDraft | null;
@@ -204,7 +206,7 @@ export function useProductFormParameterProviderData({
 }
 
 export function useMergedProductParameterValues({
-  primaryCatalogId,
+  primaryCatalogId: _primaryCatalogId,
   parameterDefinitions,
   baseParameterValues,
   currentStructuredName,
@@ -212,9 +214,9 @@ export function useMergedProductParameterValues({
   ParameterProviderData,
   'primaryCatalogId' | 'parameterDefinitions' | 'baseParameterValues' | 'currentStructuredName'
 >): MergedParameterData {
-  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
-  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
-  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
+  const sizeTermsQuery = useTitleTerms(undefined, 'size', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS);
+  const materialTermsQuery = useTitleTerms(undefined, 'material', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS);
+  const themeTermsQuery = useTitleTerms(undefined, 'theme', CATALOG_AGNOSTIC_TITLE_TERM_OPTIONS);
   const linkedParameters = useMemo(
     () =>
       parameterDefinitions.filter((parameter) =>

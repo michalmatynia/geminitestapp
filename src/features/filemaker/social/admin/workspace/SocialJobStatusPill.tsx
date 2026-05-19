@@ -19,7 +19,7 @@ const STATUS_LABEL_BY_KEY: Record<string, string> = {
 
 const normalizeSocialJobStatus = (status: SocialJobStatusValue): string | null => {
   const normalized = status?.trim().toLowerCase();
-  if ((normalized?.length ?? 0) === 0) return null;
+  if (normalized === undefined || normalized.length === 0) return null;
   return normalized;
 };
 

@@ -67,6 +67,13 @@ export type MilkbarPageContent = {
     interiorModelAssetId?: string | undefined;
     interiorModelUrl?: string | undefined;
   };
+  codeStudio: {
+    eyebrow: string;
+    subLabel: string;
+    heading: string;
+    headingEmphasis: string;
+    copy: string;
+  };
   philosophy: {
     eyebrow: string;
     title: string;
@@ -139,6 +146,7 @@ export type MilkbarLocalizedContent = {
 
 export type MilkbarSectionVisibility = {
   drawing: boolean;
+  codeStudio: boolean;
   philosophy: boolean;
   services: boolean;
   projects: boolean;
@@ -270,6 +278,13 @@ export const DEFAULT_MILKBAR_PAGE_CONTENT: MilkbarPageContent = {
     hint: '- drag rooms to reassign programme',
     thumbImages: [],
     asset3dProjectCodes: [],
+  },
+  codeStudio: {
+    eyebrow: '— 04c / computation',
+    subLabel: 'parametric bim',
+    heading: 'Code is how we',
+    headingEmphasis: 'design at scale.',
+    copy: 'We parse IFC models, generate thousands of massing alternatives against a structural grid, and validate each one for daylight and GFA compliance — all in code. Adjust the parameters and watch the solution space change.',
   },
   philosophy: {
     eyebrow: '- 02 / philosophy',
@@ -457,6 +472,13 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_DE: MilkbarPageContent = {
     thumbImages: [],
     asset3dProjectCodes: [],
   },
+  codeStudio: {
+    eyebrow: '— 04c / Berechnung',
+    subLabel: 'parametrisches BIM',
+    heading: 'Code ist unsere Methode,',
+    headingEmphasis: 'im Maßstab zu entwerfen.',
+    copy: 'Wir parsen IFC-Modelle, generieren Tausende von Bebauungsalternativen auf Basis eines Konstruktionsrasters und prüfen jede Option auf Tageslicht und GFA-Konformität — alles im Code. Passen Sie die Parameter an und beobachten Sie, wie sich der Lösungsraum verändert.',
+  },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
     title: 'Die Disziplin des',
@@ -643,6 +665,13 @@ const DEFAULT_MILKBAR_PAGE_CONTENT_PL: MilkbarPageContent = {
     thumbImages: [],
     asset3dProjectCodes: [],
   },
+  codeStudio: {
+    eyebrow: '— 04c / obliczenia',
+    subLabel: 'parametryczny BIM',
+    heading: 'Kod to nasz sposób na',
+    headingEmphasis: 'projektowanie w skali.',
+    copy: 'Parsujemy modele IFC, generujemy tysiące wariantów bryły na podstawie siatki konstrukcyjnej i weryfikujemy każdy pod kątem nasłonecznienia oraz zgodności z GFA — wszystko w kodzie. Dostosuj parametry i obserwuj, jak zmienia się przestrzeń rozwiązań.',
+  },
   philosophy: {
     eyebrow: '- 02 / filozofia',
     title: 'Dyscyplina',
@@ -807,6 +836,7 @@ export const DEFAULT_MILKBAR_LOCALIZED_CONTENT: MilkbarLocalizedContent = {
 export const DEFAULT_MILKBAR_PAGE_SETTINGS: MilkbarPageSettings = {
   visibility: {
     drawing: true,
+    codeStudio: true,
     philosophy: true,
     services: true,
     projects: true,

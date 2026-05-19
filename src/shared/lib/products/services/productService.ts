@@ -31,10 +31,7 @@ import {
 import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getCustomFieldRepository } from '@/shared/lib/products/services/custom-field-repository';
 import { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
-import {
-  resolveEffectiveShippingGroup,
-  resolveProductPrimaryCatalogId,
-} from '@/shared/lib/products/utils/effective-shipping-group';
+import { resolveEffectiveShippingGroup } from '@/shared/lib/products/utils/effective-shipping-group';
 import { getTitleTermRepository } from '@/shared/lib/products/services/title-term-repository';
 import {
   normalizeStructuredProductName,
@@ -213,19 +210,6 @@ const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, un
   } as TData;
 };
 
-const resolvePrimaryCatalogIdFromPayload = (input: {
-  catalogIds?: string[] | undefined;
-  product?: ProductWithImages | null | undefined;
-}): string | null => {
-  const payloadCatalogId = input.catalogIds?.find(
-    (catalogId: string): boolean => catalogId.trim().length > 0
-  );
-  if (payloadCatalogId) {
-    return payloadCatalogId;
-  }
-  return input.product ? resolveProductPrimaryCatalogId(input.product) ?? null : null;
-};
-
 const normalizeStructuredProductNameField = <TData extends Record<string, unknown>>(
   data: TData
 ): TData => {
@@ -241,10 +225,9 @@ const normalizeStructuredProductNameField = <TData extends Record<string, unknow
 
 const ensureStructuredProductNameTerms = async (input: {
   provider: ProductDbProvider;
-  catalogId: string | null;
   nameEn: unknown;
 }): Promise<void> => {
-  if (!input.catalogId || typeof input.nameEn !== 'string') return;
+  if (typeof input.nameEn !== 'string') return;
   const parsed = parseStructuredProductName(input.nameEn);
   if (!parsed) return;
 
@@ -255,10 +238,9 @@ const ensureStructuredProductNameTerms = async (input: {
       { type: 'material' as const, value: parsed.material },
       { type: 'theme' as const, value: parsed.theme },
     ].map(async ({ type, value }) => {
-      const existing = await titleTermRepository.findByName(input.catalogId as string, type, value);
+      const existing = await titleTermRepository.findByName(type, value);
       if (existing) return;
       await titleTermRepository.createTitleTerm({
-        catalogId: input.catalogId as string,
         type,
         name_en: value,
         name_pl: null,
@@ -728,9 +710,6 @@ async function createProduct(
 
   await ensureStructuredProductNameTerms({
     provider,
-    catalogId: resolvePrimaryCatalogIdFromPayload({
-      catalogIds: relationPayload.catalogIds,
-    }),
     nameEn: normalized.name_en,
   });
 
@@ -875,10 +854,6 @@ async function updateProduct(
 
   await ensureStructuredProductNameTerms({
     provider,
-    catalogId: resolvePrimaryCatalogIdFromPayload({
-      catalogIds: relationPayload.catalogIds,
-      product: existing,
-    }),
     nameEn: normalized['name_en'] ?? existing.name_en,
   });
 

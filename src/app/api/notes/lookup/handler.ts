@@ -7,6 +7,17 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 
+/**
+ * Note Lookup Handlers
+ *
+ * HTTP request handlers for note search and lookup.
+ * Handlers: getHandler
+ *
+ * - Searches notes by various criteria
+ * - Provides fast lookup functionality
+ * - Returns matching note summaries
+ */
+
 export const querySchema = z.object({
   ids: optionalCsvQueryStringArray(),
 });
@@ -16,6 +27,17 @@ export const querySchema = z.object({
  * Fetches a minimal note payload for a list of ids.
  * Query params:
  * - ids: comma-separated note ids (required)
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;

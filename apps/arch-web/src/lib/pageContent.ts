@@ -32,6 +32,13 @@ export const DEFAULT_ARCH_PAGE_CONTENT: ArchPageContent = {
     thumbImages: [],
     asset3dProjectCodes: [],
   },
+  codeStudio: {
+    eyebrow: '— 04c / computation',
+    subLabel: 'parametric bim',
+    heading: 'Code is how we',
+    headingEmphasis: 'design at scale.',
+    copy: 'We parse IFC models, generate thousands of massing alternatives against a structural grid, and validate each one for daylight and GFA compliance — all in code. Adjust the parameters and watch the solution space change.',
+  },
   philosophy: {
     eyebrow: '- 02 / philosophy',
     title: 'The discipline of',
@@ -215,6 +222,13 @@ const DEFAULT_ARCH_PAGE_CONTENT_DE: ArchPageContent = {
     thumbImages: [],
     asset3dProjectCodes: [],
   },
+  codeStudio: {
+    eyebrow: '— 04c / Berechnung',
+    subLabel: 'parametrisches BIM',
+    heading: 'Code ist unsere Methode,',
+    headingEmphasis: 'im Maßstab zu entwerfen.',
+    copy: 'Wir parsen IFC-Modelle, generieren Tausende von Massierungsalternativen auf einem Konstruktionsraster und validieren jede einzelne auf Tageslicht und BGF-Konformität — alles im Code. Passen Sie die Parameter an und beobachten Sie, wie sich der Lösungsraum verändert.',
+  },
   philosophy: {
     eyebrow: '- 02 / Philosophie',
     title: 'Die Disziplin des',
@@ -317,6 +331,13 @@ const DEFAULT_ARCH_PAGE_CONTENT_PL: ArchPageContent = {
     thumbImages: [],
     asset3dProjectCodes: [],
   },
+  codeStudio: {
+    eyebrow: '— 04c / obliczenia',
+    subLabel: 'parametryczny BIM',
+    heading: 'Kod to nasz sposób na',
+    headingEmphasis: 'projektowanie w skali.',
+    copy: 'Parsujemy modele IFC, generujemy tysiące wariantów bryły na siatce konstrukcyjnej i walidujemy każdy pod kątem dostępu do dziennego światła i zgodności z PUM — wszystko w kodzie. Dostosuj parametry i obserwuj, jak zmienia się przestrzeń rozwiązań.',
+  },
   philosophy: {
     eyebrow: '- 02 / filozofia',
     title: 'Dyscyplina',
@@ -399,6 +420,7 @@ export const DEFAULT_ARCH_LOCALIZED_CONTENT: Record<ArchLocale, ArchPageContent>
 export const DEFAULT_ARCH_PAGE_SETTINGS: ArchPageSettings = {
   visibility: {
     drawing: true,
+    codeStudio: true,
     philosophy: true,
     services: true,
     projects: true,
@@ -565,6 +587,7 @@ export function normalizeArchPageContent(
   const nav = isRecord(source['nav']) ? source['nav'] : {};
   const hero = isRecord(source['hero']) ? source['hero'] : {};
   const drawing = isRecord(source['drawing']) ? source['drawing'] : {};
+  const codeStudio = isRecord(source['codeStudio']) ? source['codeStudio'] : {};
   const philosophy = isRecord(source['philosophy']) ? source['philosophy'] : {};
   const services = isRecord(source['services']) ? source['services'] : {};
   const projects = isRecord(source['projects']) ? source['projects'] : {};
@@ -619,6 +642,13 @@ export function normalizeArchPageContent(
             ),
           }
         : {}),
+    },
+    codeStudio: {
+      eyebrow: asString(codeStudio['eyebrow'], d.codeStudio.eyebrow),
+      subLabel: asString(codeStudio['subLabel'], d.codeStudio.subLabel),
+      heading: asString(codeStudio['heading'], d.codeStudio.heading),
+      headingEmphasis: asString(codeStudio['headingEmphasis'], d.codeStudio.headingEmphasis),
+      copy: asString(codeStudio['copy'], d.codeStudio.copy),
     },
     philosophy: {
       eyebrow: asString(philosophy['eyebrow'], d.philosophy.eyebrow),
@@ -720,6 +750,7 @@ function normalizeArchPageSettings(input: unknown): ArchPageSettings {
   return {
     visibility: {
       drawing: asBoolean(vis['drawing'], d.visibility.drawing),
+      codeStudio: asBoolean(vis['codeStudio'], d.visibility.codeStudio),
       philosophy: asBoolean(vis['philosophy'], d.visibility.philosophy),
       services: asBoolean(vis['services'], d.visibility.services),
       projects: asBoolean(vis['projects'], d.visibility.projects),

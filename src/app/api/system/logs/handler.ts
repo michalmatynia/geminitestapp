@@ -27,6 +27,17 @@ import {
 } from '@/shared/lib/observability/system-log-repository';
 import { normalizeObservabilityApplicationId } from '@/shared/lib/observability/application-log-origin';
 
+/**
+ * System Logs API Handlers
+ *
+ * HTTP request handlers for system log retrieval and filtering.
+ * Handlers: getHandler
+ *
+ * - Retrieves system logs with filtering
+ * - Manages log storage and retention
+ * - Provides log search and analysis
+ */
+
 type SystemLogCreateInput = Parameters<typeof createSystemLog>[0];
 type SystemLogsListQuery = ReturnType<typeof systemLogsListQuerySchema.parse>;
 type SystemLogsListInput = Parameters<typeof listSystemLogs>[0];
@@ -193,6 +204,17 @@ const clearLogsForTarget = async (
   });
 };
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
@@ -214,6 +236,17 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   );
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const parsed = await parseCreateBody(req, ctx);
@@ -224,6 +257,17 @@ export async function postHandler(req: NextRequest, ctx: ApiHandlerContext): Pro
   return NextResponse.json({ log: created });
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function deleteHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);

@@ -8,9 +8,14 @@ import {
   useIntegrationsForm,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
+import {
+  useIntegrationSettingsMap,
+  useUpdateIntegrationSettingsBulk,
+} from '@/features/integrations/hooks/useIntegrationSettings';
 import { useUpdateDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
-import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+
+const BASE_SYNC_POLL_INTERVAL_MINUTES_KEY = 'base_sync_poll_interval_minutes';
 
 export function useBaselinkerSettingsState() {
   const { connections } = useIntegrationsData();
@@ -29,16 +34,13 @@ export function useBaselinkerSettingsState() {
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
     : '—';
 
-  const settingsQuery = useSettings();
-  const updateSettingsBulkMutation = useUpdateSettingsBulk();
+  const settingsQuery = useIntegrationSettingsMap([BASE_SYNC_POLL_INTERVAL_MINUTES_KEY]);
+  const updateSettingsBulkMutation = useUpdateIntegrationSettingsBulk();
   const defaultExportConnectionQuery = useDefaultExportConnection();
   const updateDefaultConnectionMutation = useUpdateDefaultExportConnection();
 
   const storedSyncInterval = useMemo(() => {
-    const found = settingsQuery.data?.find(
-      (setting: { key: string; value: string }) => setting.key === 'base_sync_poll_interval_minutes'
-    );
-    return found?.value ?? '10';
+    return settingsQuery.data?.get(BASE_SYNC_POLL_INTERVAL_MINUTES_KEY) ?? '10';
   }, [settingsQuery.data]);
 
   const storedDefaultConnectionId = useMemo(() => {
@@ -95,7 +97,7 @@ export function useBaselinkerSettingsState() {
 
       if (syncIntervalMinutes !== storedSyncInterval) {
         updates.push({
-          key: 'base_sync_poll_interval_minutes',
+          key: BASE_SYNC_POLL_INTERVAL_MINUTES_KEY,
           value: String(intervalParsed),
         });
       }

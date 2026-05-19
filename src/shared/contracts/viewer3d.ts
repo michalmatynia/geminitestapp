@@ -97,7 +97,7 @@ export type Asset3dEnvironmentPreset = z.infer<typeof asset3dEnvironmentPresetSc
 export const asset3dViewModeSchema = z.enum(['grid', 'list']);
 export type Asset3dViewMode = z.infer<typeof asset3dViewModeSchema>;
 
-export const asset3dRenderModeSchema = z.enum(['textured', 'solid', 'wireframe']);
+export const asset3dRenderModeSchema = z.enum(['textured', 'solid', 'wireframe', 'edges', 'flat']);
 export type Asset3dRenderMode = z.infer<typeof asset3dRenderModeSchema>;
 
 /**

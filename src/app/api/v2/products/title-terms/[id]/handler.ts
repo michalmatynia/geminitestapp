@@ -40,14 +40,12 @@ export async function putHandler(
   }
 
   const data = ctx.body as z.infer<typeof updateProductTitleTermSchema>;
-  const nextCatalogId = data.catalogId ?? current.catalogId;
   const nextType: ProductTitleTermType = data.type ?? current.type;
   const nextNameEn = data.name_en ?? current.name_en;
-  const existing = await repository.findByName(nextCatalogId, nextType, nextNameEn);
+  const existing = await repository.findByName(nextType, nextNameEn);
 
   if (existing && existing.id !== current.id) {
-    throw conflictError('A title term with this English name already exists in this catalog', {
-      catalogId: nextCatalogId,
+    throw conflictError('A title term with this English name already exists', {
       type: nextType,
       name_en: nextNameEn,
       titleTermId: existing.id,

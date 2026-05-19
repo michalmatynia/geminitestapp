@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 export {
   filemakerSocialPostDeleteHandler as DELETE,
   filemakerSocialPostGetHandler as GET,

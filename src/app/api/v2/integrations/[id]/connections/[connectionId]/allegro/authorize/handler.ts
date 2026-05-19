@@ -6,11 +6,33 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * Allegro OAuth Authorization Handlers
+ *
+ * HTTP request handlers for Allegro OAuth authorization flow.
+ * Handlers: postHandler
+ *
+ * - Initiates Allegro OAuth authorization
+ * - Manages authorization state and tokens
+ * - Handles credential exchange
+ */
+
 const PROD_AUTH_URL = process.env['ALLEGRO_AUTH_URL'] ?? 'https://allegro.pl/auth/oauth/authorize';
 const SANDBOX_AUTH_URL =
   process.env['ALLEGRO_SANDBOX_AUTH_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize';
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,

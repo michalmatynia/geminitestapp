@@ -5,6 +5,28 @@ import type { IntegrationDisconnectResponse } from '@/shared/contracts/integrati
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * Allegro Disconnect Handlers
+ *
+ * HTTP request handlers for Allegro connection disconnection.
+ * Handlers: postHandler
+ *
+ * - Disconnects Allegro integration
+ * - Revokes authorization tokens
+ * - Cleans up connection data
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,

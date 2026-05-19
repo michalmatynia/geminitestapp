@@ -14,6 +14,17 @@ import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logger } from '@/shared/utils/logger';
 
+/**
+ * Chatbot Settings API Handlers
+ *
+ * HTTP request handlers for chatbot configuration.
+ * Handlers: getSettingsHandler, postSettingsHandler
+ *
+ * - Retrieves and updates chatbot settings
+ * - Manages model selection and provider routing
+ * - Controls conversation behavior and parameters
+ */
+
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_SETTINGS_KEY = 'default';
 const CHATBOT_SETTINGS_COLLECTION = 'chatbot_settings';
@@ -66,6 +77,17 @@ const getChatbotSettingsCollection = async () => {
   return mongo.collection<ChatbotSettingsRecord>(CHATBOT_SETTINGS_COLLECTION);
 };
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const query = chatbotSettingsQuerySchema.parse(resolveChatbotSettingsQueryInput(req, _ctx));
@@ -88,6 +110,17 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   return NextResponse.json(response);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const parsed = await parseJsonBody(req, chatbotSettingsSaveRequestSchema, {

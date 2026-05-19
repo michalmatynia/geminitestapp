@@ -2,6 +2,8 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { ArchPageContent } from '@/lib/types';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type NodeState = 'inactive' | 'active' | 'done';
@@ -253,7 +255,7 @@ function ParamSlider({
 
 // ─── Root component ───────────────────────────────────────────────────────────
 
-function CodeStudio() {
+function CodeStudio({ content }: { content: ArchPageContent['codeStudio'] }) {
   const [params, setParams] = useState<Params>(DEFAULT_PARAMS);
   const [shown, setShown] = useState(0);
   const [cursor, setCursor] = useState(false);
@@ -382,16 +384,12 @@ function CodeStudio() {
 
         {/* ── Sidebar ─────────────────────────────────────── */}
         <aside className="cs-sidebar">
-          <p className="cs-eyebrow">— 04c / computation</p>
-          <p className="cs-sub-label">parametric bim</p>
+          <p className="cs-eyebrow">{content.eyebrow}</p>
+          <p className="cs-sub-label">{content.subLabel}</p>
           <h2 className="cs-heading">
-            Code is how we<br /><em>design at scale.</em>
+            {content.heading}<br /><em>{content.headingEmphasis}</em>
           </h2>
-          <p className="cs-copy">
-            We parse IFC models, generate thousands of massing alternatives against
-            a structural grid, and validate each one for daylight and GFA compliance —
-            all in code. Adjust the parameters and watch the solution space change.
-          </p>
+          <p className="cs-copy">{content.copy}</p>
           <div className="cs-params">
             {PARAM_DEFS.map(def => (
               <ParamSlider

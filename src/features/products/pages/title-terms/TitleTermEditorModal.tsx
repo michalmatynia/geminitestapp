@@ -6,7 +6,6 @@ import type {
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 type TitleTermFormState = {
-  catalogId: string;
   type: ProductTitleTermType;
   name_en: string;
   name_pl: string;

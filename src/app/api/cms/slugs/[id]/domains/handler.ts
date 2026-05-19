@@ -14,6 +14,28 @@ import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
+/**
+ * CMS Slug Domain Association Handlers
+ *
+ * HTTP request handlers for CMS slug domain relationships.
+ * Handlers: getHandler, putHandler
+ *
+ * - Manages domain associations for CMS slugs
+ * - Handles slug routing to domains
+ * - Validates slug-domain relationships
+ */
+
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -33,6 +55,17 @@ export async function getHandler(
   return NextResponse.json({ domainIds });
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function putHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,

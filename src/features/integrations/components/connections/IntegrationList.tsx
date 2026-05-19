@@ -3,9 +3,10 @@
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'nextjs-toploader/app';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
+import type { IntegrationDefinition } from '@/features/integrations/context/integrations-context-types';
 import {
   Badge,
   Button,
@@ -24,7 +25,7 @@ interface IntegrationNode {
   type: string;
   variant: 'warning' | 'info' | 'processing';
   color: 'info' | 'success' | 'warning' | 'active';
-  definition: any;
+  definition: IntegrationDefinition | null;
 }
 
 function MarketplaceBadge({ 
@@ -32,7 +33,7 @@ function MarketplaceBadge({
   onClick 
 }: { 
   node: IntegrationNode; 
-  onClick: (def: any) => void;
+  onClick: (def: IntegrationDefinition) => void;
 }): React.JSX.Element {
   return (
     <Badge variant={node.color} className='flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-normal'>
@@ -40,7 +41,7 @@ function MarketplaceBadge({
       <span className='font-medium'>{node.label}</span>
       <Button
         type='button'
-        onClick={() => { if (node.definition) onClick(node.definition); }}
+        onClick={() => { if (node.definition !== null) onClick(node.definition); }}
         className='h-6 w-6 rounded-full border border-white/20 bg-white/10 p-0 text-white hover:bg-white/20'
         aria-label={`Manage ${node.label} settings`}
         title={`Manage ${node.label} settings`}
@@ -58,7 +59,7 @@ function MarketplaceSystem({
 }: { 
   nodes: IntegrationNode[]; 
   slugs: string[]; 
-  onClick: (def: any) => void;
+  onClick: (def: IntegrationDefinition) => void;
 }): React.JSX.Element {
   return (
     <Card variant='glass' padding='lg' className='relative overflow-hidden'>
@@ -88,14 +89,22 @@ function MarketplaceSystem({
   );
 }
 
+interface JobPlatformNode {
+  slug: string;
+  label: string;
+  type: string;
+  definition: IntegrationDefinition | null;
+  description: string;
+}
+
 function JobSearchPlatforms({ 
   platforms, 
   slugs, 
   onClick 
 }: { 
-  platforms: any[]; 
+  platforms: JobPlatformNode[]; 
   slugs: string[]; 
-  onClick: (def: any) => void;
+  onClick: (def: IntegrationDefinition) => void;
 }): React.JSX.Element {
   return (
     <div className='grid gap-3 md:grid-cols-2'>
@@ -112,7 +121,7 @@ function JobSearchPlatforms({
                 </div>
                 <p className='max-w-xl text-sm text-muted-foreground'>{platform.description}</p>
               </div>
-              <Button type='button' variant='outline' className='gap-2' onClick={() => { if (platform.definition) onClick(platform.definition); }}>
+              <Button type='button' variant='outline' className='gap-2' onClick={() => { if (platform.definition !== null) onClick(platform.definition); }}>
                 <SettingsIcon className='size-4' />
                 {configured ? 'Manage' : 'Configure'}
               </Button>
@@ -140,7 +149,15 @@ export function IntegrationList(): React.JSX.Element {
     { slug: 'linkedin', label: 'LinkedIn', type: 'Social', variant: 'info', color: 'info', definition: linkedinDefinition },
   ];
 
-  const jobPlatforms = [{ slug: 'pracuj-pl', label: 'Pracuj.pl', type: 'Browser', definition: pracujDefinition, description: 'Connect a reusable Pracuj.pl candidate profile for authenticated job applications.' }];
+  const jobPlatforms: JobPlatformNode[] = useMemo(() => [
+    { 
+      slug: 'pracuj-pl', 
+      label: 'Pracuj.pl', 
+      type: 'Browser', 
+      definition: pracujDefinition, 
+      description: 'Connect a reusable Pracuj.pl candidate profile for authenticated job applications.' 
+    }
+  ], [pracujDefinition]);
 
   return (
     <ListPanel title='Integrations' description='Manage marketplace systems separately from job-search platform profiles.' headerActions={<Button asChild className='gap-2'><Link href='/admin/integrations/add'><PlusIcon className='size-4' />Add Integration</Link></Button>}>
@@ -150,10 +167,10 @@ export function IntegrationList(): React.JSX.Element {
           <TabsTrigger value='job-search-platforms'>Job Search Platforms</TabsTrigger>
         </TabsList>
         <TabsContent value='marketplace-system'>
-          <MarketplaceSystem nodes={marketplaceNodes} slugs={integrationSlugs} onClick={handleIntegrationClick} />
+          <MarketplaceSystem nodes={marketplaceNodes} slugs={integrationSlugs} onClick={(def) => { void handleIntegrationClick(def); }} />
         </TabsContent>
         <TabsContent value='job-search-platforms'>
-          <JobSearchPlatforms platforms={jobPlatforms} slugs={integrationSlugs} onClick={handleIntegrationClick} />
+          <JobSearchPlatforms platforms={jobPlatforms} slugs={integrationSlugs} onClick={(def) => { void handleIntegrationClick(def); }} />
         </TabsContent>
       </Tabs>
     </ListPanel>

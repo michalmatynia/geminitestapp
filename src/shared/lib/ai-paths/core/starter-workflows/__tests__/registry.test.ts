@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import {
   STARTER_WORKFLOW_REGISTRY,
-  computeStarterWorkflowGraphHash,
   materializeStarterWorkflowSeedBundle,
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
@@ -13,6 +12,11 @@ import {
   JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
   JOB_BOARD_LEXICON_CLASSIFICATION_STARTER_TEMPLATE_ID,
 } from '@/shared/lib/ai-paths/job-board-lexicon-classification';
+import {
+  SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+  SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID,
+  SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
+} from '@/shared/lib/ai-paths/social-article-aggregation';
 import {
   buildPathConfigFromTemplate,
   PATH_TEMPLATES,
@@ -30,13 +34,11 @@ import {
   buildV5TranslationPathConfig,
   evaluateStrictRunPreflight,
   expectSuccessfulStrictRunPreflight,
-  findNodeByTitle,
   findNodeByType,
   findNodeByTypeAndTitle,
   getStarterWorkflowTemplateByIdOrThrow,
   hasDatabaseNodeWithUpdatePayloadMode,
   hasNodeByTitle,
-  hasNodeId,
   hasNodeWithType,
   toLegacyAliasOnlyEdges,
 } from './registry.test-helpers';
@@ -601,12 +603,39 @@ describe('starter workflow registry', () => {
     expect(modelNode?.config?.model?.modelId ?? '').toBe('');
   });
 
+  it('materializes a runnable Social Article Aggregation starter graph', () => {
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow(SOCIAL_ARTICLE_AGGREGATION_STARTER_TEMPLATE_ID),
+      {
+        pathId: SOCIAL_ARTICLE_AGGREGATION_PATH_ID,
+        seededDefault: false,
+      }
+    );
+    const report = evaluateStrictRunPreflight(config);
+    const triggerNode = findNodeByType(config, 'trigger');
+    const promptNode = findNodeByType(config, 'prompt');
+    const modelNode = findNodeByType(config, 'model');
+    const promptTemplate =
+      typeof promptNode?.config?.prompt?.template === 'string'
+        ? promptNode.config.prompt.template
+        : '';
+
+    expect(config.id).toBe(SOCIAL_ARTICLE_AGGREGATION_PATH_ID);
+    expect(triggerNode?.config?.trigger?.event).toBe(SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT);
+    expect(promptTemplate).toContain('{{context.prompt}}');
+    expect(promptTemplate).toContain('{{context.articles}}');
+    expect(promptTemplate).toContain('"bodyEn"');
+    expect(modelNode?.config?.model?.modelId ?? '').toBe('');
+    expectSuccessfulStrictRunPreflight(report);
+  });
+
   it('materializes a canonical starter bundle that includes all canonical seed workflows', () => {
     const bundle = materializeStarterWorkflowSeedBundle('canonical_seed');
 
     expect(bundle.pathConfigs.some((config) => config.id === 'path_descv3lite')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_name_normalize_v1')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_marketplace_copy_debrand_v1')).toBe(true);
+    expect(bundle.pathConfigs.some((config) => config.id === SOCIAL_ARTICLE_AGGREGATION_PATH_ID)).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_96708d')).toBe(true);
     expect(bundle.triggerButtons.some((button) => button.id === '4c07d35b-ea92-4d1f-b86b-c586359f68de')).toBe(true);
     expect(bundle.triggerButtons.some((button) => button.id === '7d58d6a0-44c7-4d69-a2e4-8d8d1f3f5a27')).toBe(true);

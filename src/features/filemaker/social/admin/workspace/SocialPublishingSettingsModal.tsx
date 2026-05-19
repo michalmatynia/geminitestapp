@@ -186,7 +186,7 @@ type SocialPublishingSettingsModalProps = {
 };
 
 type SettingsModalControls = {
-  handleSave: () => void | Promise<void>;
+  handleSave: () => unknown;
   hasBlockingRuntimeJob: boolean;
   hasUnsavedChanges: boolean;
   isSaving: boolean;

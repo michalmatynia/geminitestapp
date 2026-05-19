@@ -19,6 +19,7 @@ import {
   type AiBrainAssignment,
   type AiBrainSettings,
   type AiBrainProviderCatalog,
+  type AiBrainRoutingResponse,
   type BrainModelFamily,
   type BrainAppliedMeta,
   type BrainExecutionConfig,
@@ -27,6 +28,8 @@ import {
   aiBrainProviderCatalogSchema as providerCatalogSchema,
   AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
+  AI_BRAIN_ROUTING_COLLECTION as ROUTING_COLLECTION,
+  AI_BRAIN_ROUTING_GLOBAL_ID as ROUTING_GLOBAL_ID,
 } from '@/shared/contracts/ai-brain';
 import { validationError } from '@/shared/errors/app-error';
 import { catalogToEntries, sanitizeCatalogEntries } from '@/shared/lib/ai-brain/catalog-entries';
@@ -42,6 +45,7 @@ export type {
   AiBrainAssignment,
   AiBrainSettings,
   AiBrainProviderCatalog,
+  AiBrainRoutingResponse,
   BrainModelFamily,
   BrainAppliedMeta,
   BrainExecutionConfig,
@@ -50,6 +54,8 @@ export type {
 
 export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = CATALOG_KEY;
+export const AI_BRAIN_ROUTING_COLLECTION = ROUTING_COLLECTION;
+export const AI_BRAIN_ROUTING_GLOBAL_ID = ROUTING_GLOBAL_ID;
 
 /**
  * List of all available feature keys that can have AI Brain assignments.

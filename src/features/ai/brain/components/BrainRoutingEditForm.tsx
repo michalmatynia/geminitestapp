@@ -16,7 +16,7 @@ import {
 import { AssignmentEditor } from './AssignmentEditor';
 import {
   type BrainRoutingEditModalState,
-  type PersistSettingFn,
+  type PersistRoutingSettingsFn,
   type ToastFn,
   getAllowedProviders,
   mergeAssignmentState,
@@ -35,7 +35,7 @@ type BrainRoutingEditFormProps = {
   isSaving: boolean;
   onClose: () => void;
   open: boolean;
-  persistSetting: PersistSettingFn;
+  persistRoutingSettings: PersistRoutingSettingsFn;
   settings: AiBrainSettings;
   setState: React.Dispatch<React.SetStateAction<BrainRoutingEditModalState | null>>;
   state: BrainRoutingEditModalState;
@@ -59,7 +59,7 @@ function buildRouteFormModel(props: BrainRoutingEditFormProps): RouteFormModel {
     effectiveAssignments,
     handleCapabilityChange,
     onClose,
-    persistSetting,
+    persistRoutingSettings,
     settings,
     setState,
     state,
@@ -82,7 +82,7 @@ function buildRouteFormModel(props: BrainRoutingEditFormProps): RouteFormModel {
       clearCapabilityOverride,
       handleCapabilityChange,
       onClose,
-      persistSetting,
+      persistRoutingSettings,
       settings,
       state,
       toast,

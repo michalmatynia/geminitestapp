@@ -10,6 +10,17 @@ import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Allegro OAuth Callback Handlers
+ *
+ * HTTP request handlers for Allegro OAuth callback.
+ * Handlers: postHandler
+ *
+ * - Handles Allegro OAuth callback response
+ * - Exchanges authorization code for tokens
+ * - Stores connection credentials
+ */
+
 const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
   process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
@@ -29,6 +40,17 @@ export const querySchema = z.object({
   state: optionalTrimmedQueryString(),
 });
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,

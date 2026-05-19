@@ -7,6 +7,7 @@ export {
 } from './chatbot/public';
 export { AdminAiContextRegistryPage } from './ai-context-registry/pages/AdminAiContextRegistryPage';
 export { AdminAiPathsPage } from './ai-paths/pages/AdminAiPathsPage';
+export { AdminAiPathsDeadLetterPage } from './ai-paths/pages/AdminAiPathsDeadLetterPage';
 export { AdminAiPathsQueuePage } from './ai-paths/pages/AdminAiPathsQueuePage';
 export { AdminAiPathsTriggerButtonsPage } from './ai-paths/pages/AdminAiPathsTriggerButtonsPage';
 export { AdminAiPathsValidationPage } from './ai-paths/pages/AdminAiPathsValidationPage';

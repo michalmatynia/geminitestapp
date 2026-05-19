@@ -5,7 +5,7 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/services/product-listing-repository';
-import { getSettingValue } from '@/shared/lib/ai/server-settings';
+import { readIntegrationSettingValue } from '@/features/integrations/services/integration-settings-store';
 import { createManagedQueue } from '@/shared/lib/queue';
 import type { ScheduledTickJobData } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -172,7 +172,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
         queue.startWorker();
       }
 
-      const rawInterval = await getSettingValue(TRADERA_SETTINGS_KEYS.schedulerIntervalMs);
+      const rawInterval = await readIntegrationSettingValue(TRADERA_SETTINGS_KEYS.schedulerIntervalMs);
       const intervalMs = parseMs(rawInterval, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs);
 
       const bullQueue = await ensureBullQueue();

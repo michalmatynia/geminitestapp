@@ -8,6 +8,17 @@ import { configurationError, externalServiceError } from '@/shared/errors/app-er
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Allegro Connection Test Handlers
+ *
+ * HTTP request handlers for testing Allegro integration connections.
+ * Handlers: postHandler
+ *
+ * - Tests Allegro API connection validity
+ * - Verifies authentication and credentials
+ * - Reports connection status and issues
+ */
+
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
@@ -20,6 +31,17 @@ const SANDBOX_TOKEN_URL =
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/allegro/test
  * Tests Allegro API access using stored credentials.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(
   _req: NextRequest,

@@ -26,6 +26,10 @@ import {
   PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
   PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS,
 } from './product-scrape-runtime-constants';
+import {
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY,
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEP_IDS,
+} from './social-article-aggregator-runtime-constants';
 
 export type ActionSequenceKey =
   | 'playwright_programmable_listing'
@@ -47,6 +51,7 @@ export type ActionSequenceKey =
   | typeof JOB_BOARD_SCRAPE_RUNTIME_KEY
   | typeof JOB_APPLICATION_APPLY_RUNTIME_KEY
   | typeof PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY
+  | typeof SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY
   | 'vinted_list'
   | 'vinted_relist'
   | 'vinted_sync';
@@ -185,6 +190,8 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
   [JOB_APPLICATION_APPLY_RUNTIME_KEY]: JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS,
 
   [PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY]: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_STEP_IDS,
+
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY]: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_STEP_IDS,
 
   vinted_list: [
     ...BROWSER_AND_AUTH,

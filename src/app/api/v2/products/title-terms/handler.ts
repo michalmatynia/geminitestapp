@@ -16,7 +16,6 @@ const optionalTrimmedString = (value: unknown): string | undefined => {
 };
 
 export const querySchema = z.object({
-  catalogId: z.preprocess(optionalTrimmedString, z.string().optional()),
   type: z.preprocess(optionalTrimmedString, productTitleTermTypeSchema.optional()),
   search: z.preprocess(optionalTrimmedString, z.string().optional()),
 });
@@ -27,18 +26,20 @@ export async function getHandler(req: NextRequest, ctx: ApiHandlerContext): Prom
     ...((ctx.query ?? {}) as Record<string, unknown>),
   });
   const repository = await getTitleTermRepository();
-  const titleTerms = await repository.listTitleTerms(query);
+  const titleTerms = await repository.listTitleTerms({
+    type: query.type,
+    search: query.search,
+  });
   return NextResponse.json(titleTerms);
 }
 
 export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductTitleTermSchema>;
   const repository = await getTitleTermRepository();
-  const existing = await repository.findByName(data.catalogId, data.type, data.name_en);
+  const existing = await repository.findByName(data.type, data.name_en);
 
   if (existing) {
-    throw conflictError('A title term with this English name already exists in this catalog', {
-      catalogId: data.catalogId,
+    throw conflictError('A title term with this English name already exists', {
       type: data.type,
       name_en: data.name_en,
       titleTermId: existing.id,
@@ -46,7 +47,6 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   }
 
   const titleTerm = await repository.createTitleTerm({
-    catalogId: data.catalogId,
     type: data.type,
     name_en: data.name_en,
     name_pl: data.name_pl ?? null,

@@ -1,3 +1,18 @@
+/**
+ * AI Insights Context Registry - Server Entry Point
+ *
+ * This module serves as the server-only entry point for AI insights context registry integration.
+ * It exports utilities for building and resolving context registry envelopes for insights generation.
+ *
+ * Boundary Warning: This module must only be imported into server-side code.
+ *
+ * Exported members:
+ * - resolveAiInsightsContextRegistryEnvelope: Resolve context registry references for insights
+ *
+ * Example usage:
+ * import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
+ */
+
 import {
   buildContextRegistryConsumerEnvelope,
   mergeContextRegistryResolutionBundles,

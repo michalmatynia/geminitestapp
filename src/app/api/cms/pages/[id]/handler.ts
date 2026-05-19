@@ -11,6 +11,17 @@ import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 
+/**
+ * CMS Page Detail API Handlers
+ *
+ * HTTP request handlers for individual CMS page operations.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Retrieves, updates, and deletes CMS pages
+ * - Manages page content and metadata
+ * - Handles page visibility and publishing
+ */
+
 // ... existing logCmsActivity function ...
 
 const parseBody = async (
@@ -47,6 +58,17 @@ async function getCmsPageByIdCached(id: string) {
   return cmsRepository.getPageById(id);
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -65,6 +87,17 @@ export async function getHandler(
 /**
  * PUT /api/cms/pages/[id]
  * Updates a page.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function putHandler(
   req: NextRequest,
@@ -132,6 +165,17 @@ export async function putHandler(
 /**
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   _req: NextRequest,

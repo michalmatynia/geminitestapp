@@ -201,8 +201,8 @@ export default async function AllProductsPage({
     if (initialThemes.length > 0) {
       filtered = filtered.filter((p) => productMatchesThemes(p, initialThemes));
     }
-    if (Number.isFinite(initialPriceMin)) filtered = filtered.filter((p) => p.price >= initialPriceMin!);
-    if (Number.isFinite(initialPriceMax)) filtered = filtered.filter((p) => p.price <= initialPriceMax!);
+    if (Number.isFinite(initialPriceMin)) filtered = filtered.filter((p) => p.price >= initialPriceMin);
+    if (Number.isFinite(initialPriceMax)) filtered = filtered.filter((p) => p.price <= initialPriceMax);
     total = filtered.length;
     products = filtered.slice(0, PAGE_SIZE);
   }

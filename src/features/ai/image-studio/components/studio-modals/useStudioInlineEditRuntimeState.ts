@@ -15,13 +15,15 @@ import { flattenParams } from '@/shared/utils/prompt-params';
 
 import { buildPromptDiffLines } from './prompt-extract-utils';
 import {
-  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
-  estimateBase64Bytes,
   mapActiveCompositeInputImages,
   mapLinkedGeneratedVariants,
   mapLinkedMaskSlots,
   mapSavedCompositeInputImages,
   mapSourceCompositeImage,
+} from './slot-inline-edit-mapping';
+import {
+  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
+  estimateBase64Bytes,
   readEnvironmentReferenceDraft,
   resolveCompositeTabInputSourceLabel,
   resolveDimensionLabel,

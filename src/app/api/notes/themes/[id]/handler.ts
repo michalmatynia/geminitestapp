@@ -9,8 +9,30 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
+ * Note Theme Detail Handlers
+ *
+ * HTTP request handlers for individual note themes.
+ * Handlers: getHandler, putHandler, deleteHandler
+ *
+ * - Manages individual theme configurations
+ * - Updates theme styles and properties
+ * - Handles theme deletion and cleanup
+ */
+
+/**
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(
   _req: NextRequest,
@@ -28,6 +50,17 @@ export async function getHandler(
 /**
  * PATCH /api/notes/themes/[id]
  * Updates a theme.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function patchHandler(
   req: NextRequest,
@@ -54,6 +87,17 @@ export async function patchHandler(
 /**
  * DELETE /api/notes/themes/[id]
  * Deletes a theme.
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function deleteHandler(
   _req: NextRequest,

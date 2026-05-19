@@ -83,6 +83,8 @@ describe('social article source preset handlers', () => {
           preset: {
             id: 'preset-1',
             name: 'News',
+            playwrightScripterId: 'news-scripter',
+            playwrightScripterMode: 'replace',
             urls: ['example.com/news'],
           },
         }),
@@ -92,11 +94,15 @@ describe('social article source preset handlers', () => {
 
     expect(response.status).toBe(200);
     expect(payload.obeyRobotsTxt).toBe(true);
+    expect(payload.crawlDepth).toBe(1);
     expect(upsertSocialArticleSourcePresetMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        crawlDepth: 1,
         id: 'preset-1',
         name: 'News',
         obeyRobotsTxt: true,
+        playwrightScripterId: 'news-scripter',
+        playwrightScripterMode: 'replace',
         urls: ['example.com/news'],
       })
     );

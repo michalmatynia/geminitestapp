@@ -216,6 +216,62 @@ describe('path-run-executor runtime-kernel settings integration', () => {
     }
   }, 15_000);
 
+  it('passes persisted context registry metadata to runtime evaluation', async () => {
+    const contextRegistry = {
+      engineVersion: 'social-article-aggregation:v1',
+      refs: [
+        {
+          id: 'runtime:social-article-aggregation:post-1:run-1',
+          kind: 'runtime_document' as const,
+        },
+      ],
+      resolved: {
+        documents: [
+          {
+            entityType: 'social-publishing-post',
+            id: 'runtime:social-article-aggregation:post-1:run-1',
+            kind: 'runtime_document' as const,
+            relatedNodeIds: [],
+            sections: [
+              {
+                kind: 'text' as const,
+                text: 'Article context',
+                title: 'Selected article context',
+              },
+            ],
+            summary: 'Article context',
+            tags: ['social-publishing'],
+            title: 'Social article aggregation',
+          },
+        ],
+        engineVersion: 'social-article-aggregation:v1',
+        nodes: [],
+        refs: [
+          {
+            id: 'runtime:social-article-aggregation:post-1:run-1',
+            kind: 'runtime_document' as const,
+          },
+        ],
+        truncated: false,
+      },
+    };
+    const run = {
+      ...buildRunRecord(),
+      meta: {
+        contextRegistry,
+      },
+    };
+    const { executePathRun } = await loadModule();
+
+    await executePathRun(run);
+
+    expect(evaluateGraphWithIteratorAutoContinueMock).toHaveBeenCalledTimes(1);
+    const args = evaluateGraphWithIteratorAutoContinueMock.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(args?.['contextRegistry']).toEqual(contextRegistry);
+  }, 15_000);
+
   it('keeps env node-type override precedence', async () => {
     process.env['AI_PATHS_RUNTIME_KERNEL_NODE_TYPES'] = 'template';
     process.env['AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS'] = 'resolver.env';

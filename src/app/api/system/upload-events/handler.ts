@@ -10,6 +10,17 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 
+/**
+ * System Upload Events Handlers
+ *
+ * HTTP request handlers for file upload event tracking.
+ * Handlers: getHandler
+ *
+ * - Tracks file upload events and progress
+ * - Manages upload history and metadata
+ * - Handles upload error reporting
+ */
+
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;
   const suffix = endOfDay ? 'T23:59:59.999' : 'T00:00:00.000';
@@ -34,6 +45,17 @@ export const querySchema = z.object({
   to: optionalTrimmedQueryString(),
 });
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function getHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;

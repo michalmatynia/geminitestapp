@@ -46,6 +46,10 @@ import {
   PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_KEY,
   PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_NAME,
 } from './product-scrape-runtime-constants';
+import {
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY,
+  SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_NAME,
+} from './social-article-aggregator-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -143,6 +147,14 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: PRODUCT_SCRAPE_BATTLESTOCK_RUNTIME_NAME,
     description:
       'Runs the BattleStock product scrape through the shared Playwright runtime action settings, then maps scraped records into product drafts.',
+    executionSettings: {
+      headless: true,
+    },
+  },
+  [SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_KEY]: {
+    name: SOCIAL_ARTICLE_AGGREGATOR_SCRAPE_RUNTIME_NAME,
+    description:
+      'Discovers and extracts article content from configured source URLs through the shared Playwright runtime, respecting robots.txt and per-source crawl depth and article limits.',
     executionSettings: {
       headless: true,
     },

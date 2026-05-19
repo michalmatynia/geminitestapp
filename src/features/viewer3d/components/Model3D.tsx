@@ -57,6 +57,7 @@ type ViewerMesh = THREE.Mesh<THREE.BufferGeometry, MeshMaterial>;
 type ViewerMeshUserData = THREE.Object3D['userData'] & {
   viewer3dOriginalMaterial?: MeshMaterial;
   viewer3dOverrideMaterial?: MeshMaterial;
+  viewer3dEdgeLines?: THREE.LineSegments;
 };
 
 const getViewerMeshUserData = (mesh: ViewerMesh): ViewerMeshUserData =>
@@ -83,6 +84,24 @@ function optimizeMaterial(inputMaterial: THREE.Material): void {
   }
 }
 
+const EDGES_LINE_COLOR = new THREE.Color('#7dd3fc');
+const FLAT_EDGES_LINE_COLOR = new THREE.Color('#334155');
+const EDGES_THRESHOLD_DEGREES = 15;
+
+function removeEdgeLines(mesh: ViewerMesh, userData: ViewerMeshUserData): void {
+  if (userData.viewer3dEdgeLines === undefined) return;
+  mesh.remove(userData.viewer3dEdgeLines);
+  userData.viewer3dEdgeLines.geometry.dispose();
+  (userData.viewer3dEdgeLines.material as THREE.Material).dispose();
+  userData.viewer3dEdgeLines = undefined;
+}
+
+function createEdgeLines(mesh: ViewerMesh, color: THREE.Color = EDGES_LINE_COLOR): THREE.LineSegments {
+  const edgesGeometry = new THREE.EdgesGeometry(mesh.geometry, EDGES_THRESHOLD_DEGREES);
+  const edgesMaterial = new THREE.LineBasicMaterial({ color });
+  return new THREE.LineSegments(edgesGeometry, edgesMaterial);
+}
+
 function createRenderModeMaterial(renderMode: Asset3dRenderMode): THREE.Material | null {
   if (renderMode === 'solid') {
     return new THREE.MeshStandardMaterial({
@@ -96,6 +115,17 @@ function createRenderModeMaterial(renderMode: Asset3dRenderMode): THREE.Material
     return new THREE.MeshBasicMaterial({
       color: new THREE.Color('#f8fafc'),
       wireframe: true,
+    });
+  }
+
+  if (renderMode === 'flat') {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#dce3ef'),
+      roughness: 0.72,
+      metalness: 0.02,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
   }
 
@@ -117,7 +147,7 @@ function applyMaterialMode(
 ): void {
   // Traverse all objects in the scene hierarchy
   scene.traverse((child: THREE.Object3D) => {
-    // Only process mesh objects
+    // Only process mesh objects (LineSegments children are skipped)
     if (child instanceof THREE.Mesh) {
       const mesh = child as ViewerMesh;
       const userData = getViewerMeshUserData(mesh);
@@ -127,6 +157,26 @@ function applyMaterialMode(
       // Configure shadow rendering
       mesh.castShadow = enableShadows;
       mesh.receiveShadow = enableShadows;
+
+      // Always remove stale edge lines before applying the current mode
+      removeEdgeLines(mesh, userData);
+
+      if (renderMode === 'edges') {
+        // Transparent mesh faces so only the LineSegments edges are visible
+        disposeMaterial(userData.viewer3dOverrideMaterial);
+        const transparentMaterial = new THREE.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+        });
+        mesh.material = transparentMaterial;
+        userData.viewer3dOverrideMaterial = transparentMaterial;
+
+        const lineSegments = createEdgeLines(mesh);
+        userData.viewer3dEdgeLines = lineSegments;
+        mesh.add(lineSegments);
+        return;
+      }
 
       const overrideMaterial = createRenderModeMaterial(renderMode);
       disposeMaterial(userData.viewer3dOverrideMaterial);
@@ -140,6 +190,12 @@ function applyMaterialMode(
 
       mesh.material = overrideMaterial;
       userData.viewer3dOverrideMaterial = overrideMaterial;
+
+      if (renderMode === 'flat') {
+        const lineSegments = createEdgeLines(mesh, FLAT_EDGES_LINE_COLOR);
+        userData.viewer3dEdgeLines = lineSegments;
+        mesh.add(lineSegments);
+      }
     }
   });
 }
@@ -149,6 +205,7 @@ function restoreMaterialMode(scene: THREE.Group): void {
     if (child instanceof THREE.Mesh) {
       const mesh = child as ViewerMesh;
       const userData = getViewerMeshUserData(mesh);
+      removeEdgeLines(mesh, userData);
       disposeMaterial(userData.viewer3dOverrideMaterial);
       userData.viewer3dOverrideMaterial = undefined;
       if (userData.viewer3dOriginalMaterial !== undefined) {

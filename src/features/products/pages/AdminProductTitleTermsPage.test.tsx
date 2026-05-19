@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   toastMock,
   confirmMock,
-  useCatalogsMock,
   useTitleTermsMock,
   useSaveTitleTermMutationMock,
   saveTitleTermMutateAsyncMock,
@@ -16,7 +15,6 @@ const {
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   confirmMock: vi.fn(),
-  useCatalogsMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
   useSaveTitleTermMutationMock: vi.fn(),
   saveTitleTermMutateAsyncMock: vi.fn(),
@@ -39,7 +37,6 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
-  useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
   useTitleTerms: (...args: unknown[]) => useTitleTermsMock(...args),
   useSaveTitleTermMutation: () => useSaveTitleTermMutationMock(),
   useDeleteTitleTermMutation: () => useDeleteTitleTermMutationMock(),
@@ -197,7 +194,12 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
             )}
           </label>
         ))}
-        <button type='button' onClick={() => void onSave()}>
+        <button
+          type='button'
+          onClick={() => {
+            onSave().catch(() => undefined);
+          }}
+        >
           Save
         </button>
       </section>
@@ -265,17 +267,12 @@ const buildQueryResult = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const catalogs = [
-  { id: 'catalog-a', name: 'Catalog A', isDefault: true },
-  { id: 'catalog-b', name: 'Catalog B', isDefault: false },
-];
-
 const titleTerms = [
   {
     id: 'term-1',
     name: '4 cm',
     description: null,
-    catalogId: 'catalog-a',
+    catalogId: 'global',
     type: 'size',
     name_en: '4 cm',
     name_pl: '4 cm',
@@ -286,7 +283,7 @@ const titleTerms = [
     id: 'term-2',
     name: 'Metal',
     description: null,
-    catalogId: 'catalog-b',
+    catalogId: 'global',
     type: 'material',
     name_en: 'Metal',
     name_pl: 'Metal PL',
@@ -301,18 +298,10 @@ describe('AdminProductTitleTermsPage', () => {
     saveTitleTermMutateAsyncMock.mockResolvedValue(titleTerms[0]);
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
 
-    useCatalogsMock.mockReturnValue(
-      buildQueryResult({
-        data: catalogs,
-      })
-    );
     useTitleTermsMock.mockImplementation(
-      (catalogId?: string, type?: 'size' | 'material' | 'theme') =>
+      (_catalogId?: string, type?: 'size' | 'material' | 'theme') =>
         buildQueryResult({
-          data: titleTerms.filter(
-            (term) =>
-              (!catalogId || term.catalogId === catalogId) && (!type || term.type === type)
-          ),
+          data: titleTerms.filter((term) => !type || term.type === type),
         })
     );
     useSaveTitleTermMutationMock.mockReturnValue({
@@ -325,7 +314,7 @@ describe('AdminProductTitleTermsPage', () => {
     });
   });
 
-  it('loads all-catalog title terms when the catalog filter is not selected', () => {
+  it('loads shared title terms without a catalog filter', () => {
     render(<AdminProductTitleTermsPage />);
 
     expect(useTitleTermsMock).toHaveBeenLastCalledWith(undefined, undefined, {
@@ -336,28 +325,12 @@ describe('AdminProductTitleTermsPage', () => {
     expect(screen.getByText('Metal PL')).toBeInTheDocument();
   });
 
-  it('switches to a catalog-specific query when the catalog filter changes', async () => {
-    render(<AdminProductTitleTermsPage />);
-
-    fireEvent.change(screen.getByLabelText('Filter by catalog'), {
-      target: { value: 'catalog-b' },
-    });
-
-    await waitFor(() => {
-      expect(useTitleTermsMock).toHaveBeenLastCalledWith('catalog-b', undefined, {
-        allowWithoutCatalog: true,
-      });
-    });
-    expect(screen.queryByText('4 cm')).not.toBeInTheDocument();
-    expect(screen.getByText('Metal')).toBeInTheDocument();
-  });
-
-  it('hydrates the initial catalog filter from the page query string', () => {
-    useSearchParamsMock.mockReturnValue(new URLSearchParams('catalogId=catalog-b'));
+  it('hydrates the initial type filter from the page query string', () => {
+    useSearchParamsMock.mockReturnValue(new URLSearchParams('type=material'));
 
     render(<AdminProductTitleTermsPage />);
 
-    expect(useTitleTermsMock).toHaveBeenLastCalledWith('catalog-b', undefined, {
+    expect(useTitleTermsMock).toHaveBeenLastCalledWith(undefined, 'material', {
       allowWithoutCatalog: true,
     });
     expect(screen.queryByText('4 cm')).not.toBeInTheDocument();
@@ -370,7 +343,6 @@ describe('AdminProductTitleTermsPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]!);
 
     expect(screen.getByText('Edit Title Term')).toBeInTheDocument();
-    expect(screen.getByLabelText('Catalog')).toHaveValue('catalog-a');
     expect(screen.getByLabelText('Type')).toHaveValue('size');
     expect(screen.getByLabelText('English name')).toHaveValue('4 cm');
     expect(screen.getByLabelText('Polish translation')).toHaveValue('4 cm');
@@ -385,7 +357,6 @@ describe('AdminProductTitleTermsPage', () => {
       expect(saveTitleTermMutateAsyncMock).toHaveBeenCalledWith({
         id: 'term-1',
         data: {
-          catalogId: 'catalog-a',
           type: 'size',
           name_en: '4.5 cm',
           name_pl: '4 cm',

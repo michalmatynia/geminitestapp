@@ -556,39 +556,25 @@ describe('productService parameter normalization', () => {
       })
     );
     expect(getTitleTermRepositoryMock).toHaveBeenCalledTimes(1);
-    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
-      1,
-      'catalog-1',
-      'size',
-      '4 cm'
-    );
-    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
-      2,
-      'catalog-1',
-      'material',
-      'Metal'
-    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(1, 'size', '4 cm');
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(2, 'material', 'Metal');
     expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
       3,
-      'catalog-1',
       'theme',
       'Attack On Titan'
     );
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenCalledTimes(3);
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(1, {
-      catalogId: 'catalog-1',
       type: 'size',
       name_en: '4 cm',
       name_pl: null,
     });
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(2, {
-      catalogId: 'catalog-1',
       type: 'material',
       name_en: 'Metal',
       name_pl: null,
     });
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(3, {
-      catalogId: 'catalog-1',
       type: 'theme',
       name_en: 'Attack On Titan',
       name_pl: null,
@@ -695,7 +681,7 @@ describe('productService parameter normalization', () => {
     expect(repositoryMock.createProduct).not.toHaveBeenCalled();
   });
 
-  it('auto-creates missing title terms during update by using the existing product catalog', async () => {
+  it('auto-creates missing shared title terms during update', async () => {
     repositoryMock.getProductById.mockResolvedValue(
       createProductRecord({
         id: 'product-1',
@@ -714,38 +700,20 @@ describe('productService parameter normalization', () => {
     });
 
     expect(getTitleTermRepositoryMock).toHaveBeenCalledTimes(1);
-    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
-      1,
-      'catalog-existing',
-      'size',
-      '5 cm'
-    );
-    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
-      2,
-      'catalog-existing',
-      'material',
-      'Acrylic'
-    );
-    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(
-      3,
-      'catalog-existing',
-      'theme',
-      'Survey Corps'
-    );
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(1, 'size', '5 cm');
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(2, 'material', 'Acrylic');
+    expect(titleTermRepositoryMock.findByName).toHaveBeenNthCalledWith(3, 'theme', 'Survey Corps');
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(1, {
-      catalogId: 'catalog-existing',
       type: 'size',
       name_en: '5 cm',
       name_pl: null,
     });
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(2, {
-      catalogId: 'catalog-existing',
       type: 'material',
       name_en: 'Acrylic',
       name_pl: null,
     });
     expect(titleTermRepositoryMock.createTitleTerm).toHaveBeenNthCalledWith(3, {
-      catalogId: 'catalog-existing',
       type: 'theme',
       name_en: 'Survey Corps',
       name_pl: null,

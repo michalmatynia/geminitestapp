@@ -336,11 +336,7 @@ export type TitleTermRepository = {
   createTitleTerm(data: TitleTermCreateInput): Promise<ProductTitleTerm>;
   updateTitleTerm(id: string, data: TitleTermUpdateInput): Promise<ProductTitleTerm>;
   deleteTitleTerm(id: string): Promise<void>;
-  findByName(
-    catalogId: string,
-    type: ProductTitleTermType,
-    name_en: string
-  ): Promise<ProductTitleTerm | null>;
+  findByName(type: ProductTitleTermType, name_en: string): Promise<ProductTitleTerm | null>;
 };
 
 export type PatternFormData = ProductValidationPatternFormData;

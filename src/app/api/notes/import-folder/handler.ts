@@ -9,6 +9,17 @@ import {
 } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
+/**
+ * Note Import Folder Handlers
+ *
+ * HTTP request handlers for bulk note import.
+ * Handlers: postHandler
+ *
+ * - Imports notes from folder structures
+ * - Handles batch note creation
+ * - Manages import progress and error reporting
+ */
+
 async function createFolderStructure(
   node: NoteFolderImportNodeDto,
   notebookId: string,
@@ -50,6 +61,17 @@ async function createFolderStructure(
   }
 }
 
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
+ */
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, noteFolderImportRequestSchema, {
     logPrefix: 'notes.import-folder',

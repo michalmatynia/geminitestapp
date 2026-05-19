@@ -7,6 +7,17 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+/**
+ * Note Files API Handlers
+ *
+ * HTTP request handlers for note file attachments.
+ * Handlers: getHandler, postHandler
+ *
+ * - Lists and uploads files attached to notes
+ * - Manages file metadata and associations
+ * - Handles file storage and cleanup
+ */
+
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -14,6 +25,17 @@ const MAX_SLOT_INDEX = 9;
 /**
  * GET /api/notes/[id]/files
  * Get all files for a note
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function getHandler(
   _req: NextRequest,
@@ -28,6 +50,17 @@ export async function getHandler(
 /**
  * POST /api/notes/[id]/files
  * Upload a file to a specific slot
+ */
+/**
+ * Handles HTTP requests.
+ *
+ * - Validates request inputs
+ * - Performs business logic
+ * - Returns appropriate response
+ *
+ * @param req - NextRequest object
+ * @param ctx - API handler context
+ * @returns Response with operation result
  */
 export async function postHandler(
   req: NextRequest,

@@ -2,14 +2,13 @@
 
 import React from 'react';
 
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Card } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 import { useBrain } from '../context/BrainContext';
 import type { BrainContextType } from '../context/BrainContext.types';
-import { AI_BRAIN_SETTINGS_KEY } from '../settings';
+import { useBrainRoutingSettings } from '../hooks/useBrainQueries';
 
 const formatDate = (value: string | Date | null | undefined): string => {
   if (value === null || value === undefined || value === '') return 'never';
@@ -35,7 +34,7 @@ const getRuntimeKernelRisk = (metadata: unknown): string => {
 
 export function BrainStateOverview(): React.JSX.Element {
   const brain = useBrain();
-  const settingsQuery = useSettingsMap();
+  const routingQuery = useBrainRoutingSettings();
 
   const insightsData = brain.insightsQuery.data;
   const latestLogsInsight = insightsData?.logs[0];
@@ -58,7 +57,7 @@ export function BrainStateOverview(): React.JSX.Element {
     ? getRuntimeKernelRisk(latestRuntimeInsight.metadata)
     : '';
 
-  const brainConfigured = settingsQuery.data?.get(AI_BRAIN_SETTINGS_KEY) !== undefined;
+  const brainConfigured = routingQuery.data?.configured === true;
   const hasCustomRouting =
     Object.values(brain.overridesEnabled).some((value) => Boolean(value)) ||
     Object.values(brain.settings.capabilities).some((value) => Boolean(value));
@@ -90,7 +89,7 @@ function BrainStateColumn({
     <div>
       <div className='text-[11px] uppercase tracking-wide text-emerald-300'>Brain state</div>
       <div className='mt-1 text-gray-200'>
-        Source: {brainConfigured ? 'saved settings' : 'defaults'}
+        Source: {brainConfigured ? 'global routing' : 'defaults'}
       </div>
       <div className='mt-2 flex items-center gap-2'>
         <StatusBadge

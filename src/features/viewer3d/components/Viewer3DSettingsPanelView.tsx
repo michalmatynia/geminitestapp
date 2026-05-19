@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Grid3X3, ImageIcon, type LucideIcon } from 'lucide-react';
+import { Box, Grid3X3, ImageIcon, Layers, Spline, type LucideIcon } from 'lucide-react';
 import React from 'react';
 
 import type { Asset3dRenderMode } from '@/shared/contracts/viewer3d';
@@ -19,6 +19,8 @@ const renderModeOptions: Array<{
   { value: 'textured', label: 'Textured', icon: ImageIcon },
   { value: 'solid', label: 'Solid', icon: Box },
   { value: 'wireframe', label: 'Wireframe', icon: Grid3X3 },
+  { value: 'edges', label: 'Edges', icon: Spline },
+  { value: 'flat', label: 'Flat', icon: Layers },
 ];
 
 function RenderModeSection({ state, actions }: Viewer3DSettingsSectionProps): React.JSX.Element {

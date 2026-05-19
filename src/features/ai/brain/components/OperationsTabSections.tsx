@@ -135,7 +135,10 @@ function DomainCardRuntimeRiskBadge({
   if (!showBadge || !runtimeRiskMetric) return null;
 
   return (
-    <div className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium uppercase tracking-wide ${runtimeRiskToneClass(runtimeRiskValue)}`}>
+    <div
+      data-testid={`operations-runtime-risk-${domain.key}`}
+      className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium uppercase tracking-wide ${runtimeRiskToneClass(runtimeRiskValue)}`}
+    >
       Kernel parity risk: {formatMetricValue(runtimeRiskMetric.value)}
     </div>
   );
@@ -152,7 +155,10 @@ function DomainCardRuntimeRiskSummary({
   if (currentCount === null || previousCount === null) return null;
 
   return (
-    <div className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium ${runtimeRiskSummaryToneClass(currentCount, previousCount)}`}>
+    <div
+      data-testid={`operations-runtime-risk-summary-${domain.key}`}
+      className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium ${runtimeRiskSummaryToneClass(currentCount, previousCount)}`}
+    >
       Runtime risk events: {currentCount} current / {previousCount} previous
     </div>
   );

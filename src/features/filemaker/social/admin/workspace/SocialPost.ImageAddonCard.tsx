@@ -177,7 +177,7 @@ export function SocialImageAddonCard(props: SocialImageAddonCardProps): React.JS
         <div className='min-w-0 flex-1 space-y-0.5'>
           <div className='truncate text-[10px] font-medium text-foreground/90'>{addon.title}</div>
           <div className='truncate text-[9px] text-muted-foreground'>
-            {hasText(addon.createdAt) ? new Date(addon.createdAt).toLocaleDateString() : ''}
+            {hasText(addon.createdAt) ? new Date(addon.createdAt ?? '').toLocaleDateString() : ''}
           </div>
           <AddonCaptureLabels addon={addon} personaNameById={personaNameById} />
         </div>

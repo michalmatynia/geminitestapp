@@ -64,7 +64,7 @@ const deleteAvatarFiles = async (fileIds: string[]): Promise<void> => {
   if (uniqueFileIds.length === 0) {
     return;
   }
-  const results = await Promise.allSettled(uniqueFileIds.map(deletePersonaAvatar));
+  const results = await Promise.allSettled(uniqueFileIds.map((id) => deletePersonaAvatar(id)));
   logRejectedCleanupResults(results, uniqueFileIds, 'deleteAvatarFile', 'fileId');
 };
 
@@ -73,7 +73,7 @@ const deleteAvatarThumbnails = async (thumbnailRefs: string[]): Promise<void> =>
   if (uniqueRefs.length === 0) {
     return;
   }
-  const results = await Promise.allSettled(uniqueRefs.map(deletePersonaAvatarThumbnail));
+  const results = await Promise.allSettled(uniqueRefs.map((ref) => deletePersonaAvatarThumbnail(ref)));
   logRejectedCleanupResults(results, uniqueRefs, 'deleteAvatarThumbnail', 'thumbnailRef');
 };
 

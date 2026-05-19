@@ -7,8 +7,8 @@ const useIntegrationsData = vi.fn();
 const useIntegrationsForm = vi.fn();
 const useIntegrationsActions = vi.fn();
 const useIntegrationsTesting = vi.fn();
-const useSettings = vi.fn();
-const useUpdateSettingsBulk = vi.fn();
+const useIntegrationSettingsMap = vi.fn();
+const useUpdateIntegrationSettingsBulk = vi.fn();
 const useDefaultExportConnection = vi.fn();
 const useUpdateDefaultExportConnection = vi.fn();
 
@@ -19,9 +19,9 @@ vi.mock('@/features/integrations/context/IntegrationsContext', () => ({
   useIntegrationsTesting: () => useIntegrationsTesting(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettings: () => useSettings(),
-  useUpdateSettingsBulk: () => useUpdateSettingsBulk(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMap(),
+  useUpdateIntegrationSettingsBulk: () => useUpdateIntegrationSettingsBulk(),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
@@ -43,10 +43,10 @@ describe('useBaselinkerSettingsState', () => {
     useIntegrationsTesting.mockReturnValue({
       isTesting: false,
     });
-    useSettings.mockReturnValue({
-      data: [],
+    useIntegrationSettingsMap.mockReturnValue({
+      data: new Map<string, string>(),
     });
-    useUpdateSettingsBulk.mockReturnValue({
+    useUpdateIntegrationSettingsBulk.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });

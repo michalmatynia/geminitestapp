@@ -26,7 +26,7 @@ const buildEndpoint = (keys?: readonly string[]): string => {
 };
 
 const responseToMap = (response: IntegrationSettingsResponse): Map<string, string> =>
-  new Map(Object.entries(response.settings ?? {}));
+  new Map(Object.entries(response.settings));
 
 export function useIntegrationSettingsMap(keys?: readonly string[]): SingleQuery<Map<string, string>> {
   const queryKey = integrationSettingsKeys.map(keys);
@@ -69,7 +69,6 @@ export function useUpdateIntegrationSettingsBulk(): MutationResult<
       tags: ['integrations', 'settings', 'save'],
       description: 'Updates global integration settings.',
     },
-    invalidateKeys: [integrationSettingsKeys.all],
     invalidate: async (queryClient) => {
       await queryClient.invalidateQueries({ queryKey: integrationSettingsKeys.all });
     },

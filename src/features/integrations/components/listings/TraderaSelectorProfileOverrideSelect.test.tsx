@@ -5,13 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 
-const { useSettingsMapMock, useTraderaSelectorRegistryMock } = vi.hoisted(() => ({
-  useSettingsMapMock: vi.fn(),
+const { useIntegrationSettingsMapMock, useTraderaSelectorRegistryMock } = vi.hoisted(() => ({
+  useIntegrationSettingsMapMock: vi.fn(),
   useTraderaSelectorRegistryMock: vi.fn(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: () => useSettingsMapMock(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMapMock(),
 }));
 
 vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
@@ -24,7 +24,7 @@ describe('TraderaSelectorProfileOverrideSelect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useSettingsMapMock.mockReturnValue({
+    useIntegrationSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
     });
     useTraderaSelectorRegistryMock.mockReturnValue({

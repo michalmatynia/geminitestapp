@@ -6,20 +6,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 
 const {
-  useSettingsMapMock,
+  useIntegrationSettingsMapMock,
   mutateAsyncMock,
   toastMock,
   useTraderaSelectorRegistryMock,
 } = vi.hoisted(() => ({
-  useSettingsMapMock: vi.fn(),
+  useIntegrationSettingsMapMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
   toastMock: vi.fn(),
   useTraderaSelectorRegistryMock: vi.fn(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: () => useSettingsMapMock(),
-  useUpdateSettingsBulk: () => ({
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMapMock(),
+  useUpdateIntegrationSettingsBulk: () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,
   }),
@@ -103,7 +103,7 @@ describe('TraderaSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mutateAsyncMock.mockResolvedValue(undefined);
-    useSettingsMapMock.mockReturnValue({
+    useIntegrationSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([
         [TRADERA_SETTINGS_KEYS.defaultDurationHours, '24'],
         [TRADERA_SETTINGS_KEYS.autoRelistEnabled, 'true'],

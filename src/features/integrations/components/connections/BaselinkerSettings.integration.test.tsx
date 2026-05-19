@@ -14,8 +14,8 @@ import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 const useQuickImportBaseOrdersMutation = vi.fn();
-const useSettings = vi.fn();
-const useUpdateSettingsBulk = vi.fn();
+const useIntegrationSettingsMap = vi.fn();
+const useUpdateIntegrationSettingsBulk = vi.fn();
 const useDefaultExportConnection = vi.fn();
 const useUpdateDefaultExportConnection = vi.fn();
 const toastMock = vi.fn();
@@ -24,9 +24,9 @@ vi.mock('@/shared/hooks/useBaseOrderQuickImport', () => ({
   useQuickImportBaseOrdersMutation: () => useQuickImportBaseOrdersMutation(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettings: () => useSettings(),
-  useUpdateSettingsBulk: () => useUpdateSettingsBulk(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMap(),
+  useUpdateIntegrationSettingsBulk: () => useUpdateIntegrationSettingsBulk(),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
@@ -361,10 +361,10 @@ const renderWithProviders = ({
 describe('BaselinkerSettings integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useSettings.mockReturnValue({
-      data: [{ key: 'base_sync_poll_interval_minutes', value: '10' }],
+    useIntegrationSettingsMap.mockReturnValue({
+      data: new Map<string, string>([['base_sync_poll_interval_minutes', '10']]),
     });
-    useUpdateSettingsBulk.mockReturnValue({
+    useUpdateIntegrationSettingsBulk.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });

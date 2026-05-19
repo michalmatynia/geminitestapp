@@ -6,6 +6,7 @@ import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import type {
   EnvironmentReferenceDraftViewModel,
   InlinePreviewSourceViewModel,
+  LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
 
 export const INLINE_CARD_IMAGE_SLOT_INDEX = 0;
@@ -132,7 +133,12 @@ export const formatBytes = (value: number | null): string => {
     size /= 1024;
     unitIndex += 1;
   }
-  const precision = unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
+  let precision = 2;
+  if (unitIndex === 0) {
+    precision = 0;
+  } else if (size >= 10) {
+    precision = 1;
+  }
   return `${size.toFixed(precision)} ${units[unitIndex]}`;
 };
 
@@ -149,7 +155,12 @@ export const estimateBase64Bytes = (value: string): number | null => {
   const payload = trimmed.includes(',') ? trimmed.slice(trimmed.indexOf(',') + 1) : trimmed;
   const compact = payload.replace(/\s+/g, '');
   if (compact.length === 0) return null;
-  const padding = compact.endsWith('==') ? 2 : compact.endsWith('=') ? 1 : 0;
+  let padding = 0;
+  if (compact.endsWith('==')) {
+    padding = 2;
+  } else if (compact.endsWith('=')) {
+    padding = 1;
+  }
   const estimated = Math.floor((compact.length * 3) / 4) - padding;
   return estimated > 0 ? estimated : null;
 };
@@ -205,11 +216,15 @@ const resolvePreviewFromDraftBase64 = (base64: string): InlinePreviewSourceViewM
   return { src: normalized, sourceType: 'Draft Base64', rawSource: '(inline base64)', resolvedSource: '(inline base64)' };
 };
 
-const resolvePreviewFromUrl = (url: string | null | undefined, type: string, baseUrl: string): InlinePreviewSourceViewModel | null => {
+const resolvePreviewFromUrl = (
+  url: string | null | undefined, 
+  type: InlinePreviewSourceViewModel['sourceType'], 
+  baseUrl: string
+): InlinePreviewSourceViewModel | null => {
   const normalized = (url ?? '').trim();
   if (normalized.length === 0) return null;
   const res = resolveProductImageUrl(normalized, baseUrl) ?? normalized;
-  return { src: res, sourceType: type as any, rawSource: normalized, resolvedSource: res };
+  return { src: res, sourceType: type, rawSource: normalized, resolvedSource: res };
 };
 
 export function resolveInlinePreviewSource(
@@ -250,6 +265,16 @@ export function resolveEnvironmentPreviewSource(
     resolvedSource: res,
   };
 }
+
+export const resolveSelectedGenerationPreview = (
+  variants: LinkedGeneratedVariantViewModel[],
+  selectedKey: string | null
+): LinkedGeneratedVariantViewModel | null => {
+  if (selectedKey === null) return variants[0] ?? null;
+  const found = variants.find((variant) => variant.key === selectedKey);
+  if (found !== undefined) return found;
+  return variants[0] ?? null;
+};
 
 export const resolveCompositeTabInputSourceLabel = (
   savedCount: number,

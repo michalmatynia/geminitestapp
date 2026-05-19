@@ -31,15 +31,33 @@ type IntegrationSettingDocument = {
   updatedAt?: Date;
 };
 
+type LegacySettingDocument = {
+  _id?: string;
+  key?: string;
+  value?: string;
+};
+
 export const isIntegrationSettingKey = (key: string): key is IntegrationSettingsKey =>
   INTEGRATION_SETTINGS_KEY_SET.has(key);
+
+const readLegacySettingValue = async (key: string): Promise<string | null> => {
+  const mongo = await getMongoDb();
+  const doc = await mongo.collection<LegacySettingDocument>('settings').findOne(
+    {
+      $or: [{ _id: key }, { key }],
+    },
+    { projection: { value: 1 } }
+  );
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
 
 export const readIntegrationSettingValue = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<IntegrationSettingDocument>(INTEGRATION_SETTINGS_COLLECTION)
     .findOne({ _id: key }, { projection: { value: 1 } });
-  return typeof doc?.value === 'string' ? doc.value : null;
+  if (typeof doc?.value === 'string') return doc.value;
+  return readLegacySettingValue(key);
 };
 
 export const writeIntegrationSettingValue = async (
@@ -80,10 +98,18 @@ export const listIntegrationSettingValues = async (
     .collection<IntegrationSettingDocument>(INTEGRATION_SETTINGS_COLLECTION)
     .find({ _id: { $in: [...keys] } }, { projection: { _id: 1, value: 1 } })
     .toArray();
-  return docs.reduce((map: Map<string, string>, doc: WithId<IntegrationSettingDocument>) => {
+  const values = docs.reduce((map: Map<string, string>, doc: WithId<IntegrationSettingDocument>) => {
     if (typeof doc.value === 'string') {
       map.set(String(doc._id), doc.value);
     }
     return map;
   }, new Map<string, string>());
+  await Promise.all(
+    keys.map(async (key) => {
+      if (values.has(key)) return;
+      const legacyValue = await readLegacySettingValue(key);
+      if (legacyValue !== null) values.set(key, legacyValue);
+    })
+  );
+  return values;
 };

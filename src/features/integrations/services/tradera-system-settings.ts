@@ -8,7 +8,7 @@ import {
 import { readIntegrationSettingValue } from '@/features/integrations/services/integration-settings-store';
 
 export const toTruthyBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
-  if (!value) return fallback;
+  if (typeof value !== 'string' || value.trim().length === 0) return fallback;
   const normalized = value.trim().toLowerCase();
   if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
   if (['false', '0', 'no', 'off'].includes(normalized)) return false;

@@ -252,7 +252,9 @@ const normalizeProfile = (
 };
 
 const readProfiles = async (): Promise<ProductSyncProfile[]> => {
-  const raw = await readIntegrationSettingValue(PROFILE_SETTINGS_KEY);
+  const raw =
+    (await readIntegrationSettingValue(PROFILE_SETTINGS_KEY)) ??
+    (await readSettingValue(PROFILE_SETTINGS_KEY));
   const parsed = parseJson<unknown[]>(raw);
   const items = Array.isArray(parsed) ? parsed : [];
   const normalized = items

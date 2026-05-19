@@ -151,7 +151,7 @@ export function WishlistProvider({ children }: { children: ReactNode }): JSX.Ele
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { wishlisted?: boolean; count?: number } | null) => {
         if (data?.count !== undefined) {
-          setCountsCache((prev) => ({ ...prev, [item.productId]: data.count! }));
+          setCountsCache((prev) => ({ ...prev, [item.productId]: data.count }));
         }
       })
       .catch(() => {

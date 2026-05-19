@@ -234,10 +234,10 @@ export function useStudioInlineEditRuntimeState({
     () =>
       mapSourceCompositeImage({
         selectedSlot,
-        inlinePreviewNaturalSize,
-        inlinePreviewSource,
-        inlinePreviewBase64Bytes,
-        slotNameDraft,
+        naturalSize: inlinePreviewNaturalSize,
+        source: inlinePreviewSource,
+        base64Bytes: inlinePreviewBase64Bytes,
+        nameDraft: slotNameDraft,
       }),
     [
       inlinePreviewBase64Bytes,
@@ -249,7 +249,12 @@ export function useStudioInlineEditRuntimeState({
   );
 
   const savedCompositeInputImages = useMemo(
-    () => mapSavedCompositeInputImages({ selectedSlot, slots, productImagesExternalBaseUrl }),
+    () =>
+      mapSavedCompositeInputImages({
+        selectedSlot,
+        slots,
+        baseUrl: productImagesExternalBaseUrl,
+      }),
     [productImagesExternalBaseUrl, selectedSlot, slots]
   );
 

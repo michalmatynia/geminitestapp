@@ -1,4 +1,3 @@
-export const runtime = 'nodejs';
 export {
   filemakerSocialImageAddonsBatchGetHandler as GET,
   filemakerSocialImageAddonsBatchPostHandler as POST,

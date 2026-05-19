@@ -50,6 +50,10 @@ const mocks = vi.hoisted(() => ({
   deleteSecretSettingValuesMock: vi.fn(),
   isKangurSettingKeyMock: vi.fn(),
   listKangurSettingsMock: vi.fn(),
+  readImportExportSettingValueMock: vi.fn(),
+  writeImportExportSettingValueMock: vi.fn(),
+  readIntegrationSettingValueMock: vi.fn(),
+  writeIntegrationSettingValueMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -214,6 +218,21 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   upsertAiPathsSetting: vi.fn(),
 }));
 
+vi.mock('@/features/integrations/services/import-export-settings-store', () => ({
+  isImportExportSettingKey: (key: string) => key.startsWith('base_import_') || key.startsWith('base_export_'),
+  readImportExportSettingValue: mocks.readImportExportSettingValueMock,
+  writeImportExportSettingValue: mocks.writeImportExportSettingValueMock,
+}));
+
+vi.mock('@/features/integrations/services/integration-settings-store', () => {
+  const integrationKeys = new Set<string>(Object.values(TRADERA_SETTINGS_KEYS));
+  return {
+    isIntegrationSettingKey: (key: string) => integrationKeys.has(key),
+    readIntegrationSettingValue: mocks.readIntegrationSettingValueMock,
+    writeIntegrationSettingValue: mocks.writeIntegrationSettingValueMock,
+  };
+});
+
 vi.mock('@/shared/lib/settings/secret-settings', () => ({
   upsertSecretSettingValue: mocks.upsertSecretSettingValueMock,
   deleteSecretSettingValues: mocks.deleteSecretSettingValuesMock,
@@ -302,6 +321,10 @@ describe('settings handler', () => {
     }));
     mocks.upsertSecretSettingValueMock.mockResolvedValue(undefined);
     mocks.upsertBrainRoutingSettingsMock.mockResolvedValue(true);
+    mocks.writeImportExportSettingValueMock.mockResolvedValue(undefined);
+    mocks.writeIntegrationSettingValueMock.mockResolvedValue(undefined);
+    mocks.readImportExportSettingValueMock.mockResolvedValue(null);
+    mocks.readIntegrationSettingValueMock.mockResolvedValue(null);
     mocks.deleteSecretSettingValuesMock.mockResolvedValue(undefined);
     mocks.isKangurSettingKeyMock.mockReturnValue(false);
     mocks.listKangurSettingsMock.mockResolvedValue([]);
@@ -352,12 +375,17 @@ describe('settings handler', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mocks.updateOneMock).toHaveBeenCalledWith(
-      { key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode },
+    expect(mocks.writeIntegrationSettingValueMock).toHaveBeenCalledWith(
+      TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,
+      'EUR'
+    );
+    expect(mocks.deleteManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        $set: expect.objectContaining({ value: 'EUR' }),
-      }),
-      { upsert: true }
+        $or: expect.arrayContaining([
+          { _id: { $in: [TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode] } },
+          { key: { $in: [TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode] } },
+        ]),
+      })
     );
     await expect(response.json()).resolves.toEqual({
       key: TRADERA_SETTINGS_KEYS.listingPriceCurrencyCode,

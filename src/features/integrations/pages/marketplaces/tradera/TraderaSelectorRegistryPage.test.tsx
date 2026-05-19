@@ -8,7 +8,7 @@ import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera
 
 const {
   toastMock,
-  useSettingsMapMock,
+  useIntegrationSettingsMapMock,
   useTraderaSelectorRegistryMock,
   useSyncMutationMock,
   useSaveMutationMock,
@@ -16,7 +16,7 @@ const {
   useProfileMutationMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
-  useSettingsMapMock: vi.fn(),
+  useIntegrationSettingsMapMock: vi.fn(),
   useTraderaSelectorRegistryMock: vi.fn(),
   useSyncMutationMock: vi.fn(),
   useSaveMutationMock: vi.fn(),
@@ -36,8 +36,8 @@ vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
   useMutateTraderaSelectorRegistryProfileMutation: () => useProfileMutationMock(),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: () => useSettingsMapMock(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMapMock(),
 }));
 
 vi.mock('@/shared/hooks/ui/useConfirm', () => ({
@@ -165,7 +165,7 @@ describe('TraderaSelectorRegistryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useSettingsMapMock.mockReturnValue({
+    useIntegrationSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
     });
     useTraderaSelectorRegistryMock.mockReturnValue({

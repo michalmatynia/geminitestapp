@@ -12,7 +12,7 @@ const {
   useImageRetryPresetsMock,
   useTraderaLiveExecutionMock,
   useTraderaSelectorRegistryMock,
-  useSettingsMapMock,
+  useIntegrationSettingsMapMock,
 } = vi.hoisted(() => ({
   useProductListingsUIStateMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
@@ -20,7 +20,7 @@ const {
   useImageRetryPresetsMock: vi.fn(),
   useTraderaLiveExecutionMock: vi.fn(),
   useTraderaSelectorRegistryMock: vi.fn(),
-  useSettingsMapMock: vi.fn(),
+  useIntegrationSettingsMapMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
@@ -42,8 +42,8 @@ vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
     useTraderaSelectorRegistryMock(...args),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: () => useSettingsMapMock(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMapMock(),
 }));
 
 vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
@@ -100,7 +100,7 @@ describe('ProductListingActions', () => {
         ],
       },
     });
-    useSettingsMapMock.mockReturnValue({
+    useIntegrationSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
     });
     useProductListingsUIStateMock.mockReturnValue({

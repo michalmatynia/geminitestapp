@@ -37,6 +37,16 @@ import {
 import { writeKangurLaunchRouteDevSnapshot } from '@/features/kangur/server/launch-route-dev-snapshot';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/server';
 import {
+  isImportExportSettingKey,
+  readImportExportSettingValue,
+  writeImportExportSettingValue,
+} from '@/features/integrations/services/import-export-settings-store';
+import {
+  isIntegrationSettingKey,
+  readIntegrationSettingValue,
+  writeIntegrationSettingValue,
+} from '@/features/integrations/services/integration-settings-store';
+import {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   KANGUR_THEME_CATALOG_KEY,
@@ -262,6 +272,8 @@ const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
   if (key === AI_BRAIN_SETTINGS_KEY) return null;
+  if (isImportExportSettingKey(key)) return await readImportExportSettingValue(key);
+  if (isIntegrationSettingKey(key)) return await readIntegrationSettingValue(key);
   if (isSecretSettingKey(key)) return null;
   if (isAdminMenuSettingKey(key)) {
     return await readAdminMenuSettingFromLocalAppDb(key);
@@ -405,6 +417,8 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
         typeof doc.value === 'string' &&
         !isSecretSettingKey(doc.key) &&
         doc.key !== AI_BRAIN_SETTINGS_KEY &&
+        !isImportExportSettingKey(doc.key) &&
+        !isIntegrationSettingKey(doc.key) &&
         !isAdminMenuSettingKey(doc.key)
     )
     .map((doc) => ({
@@ -479,6 +493,15 @@ const deleteLegacyAiBrainSettingsSetting = async (): Promise<void> => {
   const mongo = await getMongoDb();
   await mongo.collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION).deleteMany({
     $or: [{ _id: AI_BRAIN_SETTINGS_KEY }, { key: AI_BRAIN_SETTINGS_KEY }],
+  });
+};
+
+const deleteLegacyDetachedSettings = async (keys: readonly string[]): Promise<void> => {
+  await applyActiveMongoSourceEnv();
+  if ((process.env['MONGODB_URI'] ?? '').trim().length === 0 || keys.length === 0) return;
+  const mongo = await getMongoDb();
+  await mongo.collection<MongoPersistedStringSettingDocument>(SETTINGS_COLLECTION).deleteMany({
+    $or: [{ _id: { $in: [...keys] } }, { key: { $in: [...keys] } }],
   });
 };
 
@@ -990,6 +1013,17 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }
     await deleteLegacyAiBrainSettingsSetting();
     invalidateBrainSettingsCache();
+    return NextResponse.json({ key, value });
+  }
+  if (isImportExportSettingKey(key)) {
+    await writeImportExportSettingValue(key, value);
+    await deleteLegacyDetachedSettings([key]);
+    return NextResponse.json({ key, value });
+  }
+  if (isIntegrationSettingKey(key)) {
+    await writeIntegrationSettingValue(key, value);
+    await deleteLegacyDetachedSettings([key]);
+    await syncTraderaRelistSchedulerWorker(key);
     return NextResponse.json({ key, value });
   }
   if (shouldLog()) {

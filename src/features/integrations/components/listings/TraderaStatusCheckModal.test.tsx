@@ -17,8 +17,8 @@ const { useTraderaSelectorRegistryMock } = vi.hoisted(() => ({
   useTraderaSelectorRegistryMock: vi.fn(),
 }));
 
-const { useSettingsMapMock } = vi.hoisted(() => ({
-  useSettingsMapMock: vi.fn(),
+const { useIntegrationSettingsMapMock } = vi.hoisted(() => ({
+  useIntegrationSettingsMapMock: vi.fn(),
 }));
 
 const { invalidateQueriesMock } = vi.hoisted(() => ({
@@ -99,8 +99,8 @@ vi.mock('@/features/integrations/hooks/useTraderaSelectorRegistry', () => ({
     useTraderaSelectorRegistryMock(...args),
 }));
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: () => useSettingsMapMock(),
+vi.mock('@/features/integrations/hooks/useIntegrationSettings', () => ({
+  useIntegrationSettingsMap: () => useIntegrationSettingsMapMock(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
@@ -162,7 +162,7 @@ describe('TraderaStatusCheckModal', () => {
         ],
       },
     });
-    useSettingsMapMock.mockReturnValue({
+    useIntegrationSettingsMapMock.mockReturnValue({
       data: new Map<string, string>([[TRADERA_SETTINGS_KEYS.selectorProfile, 'profile-market-a']]),
     });
     useCustomFieldsMock.mockReturnValue({

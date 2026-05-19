@@ -2,6 +2,7 @@
 
 import { spawn, spawnSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +19,7 @@ const mongoPort =
   '27020';
 const appMongoUri = `mongodb://127.0.0.1:${mongoPort}/app`;
 const productsMongoUri = `mongodb://127.0.0.1:${mongoPort}/products_local`;
+const appPort = process.env.PORT?.trim() || '3000';
 const appProductsMongoEnv = {
   APP_PRODUCTS_MONGODB_PORT: mongoPort,
   MONGODB_PORT: mongoPort,
@@ -58,6 +60,36 @@ const isPidRunning = (pid) => {
   } catch (error) {
     return error?.code === 'EPERM';
   }
+};
+
+const isTcpPortAvailable = (port) =>
+  new Promise((resolve) => {
+    const server = net.createServer();
+    server.unref();
+    server.once('error', (error) => {
+      if (error?.code === 'EADDRINUSE') {
+        resolve(false);
+        return;
+      }
+      resolve(true);
+    });
+    server.listen({ host: '127.0.0.1', port }, () => {
+      server.close(() => resolve(true));
+    });
+  });
+
+const assertAppPortAvailable = async () => {
+  const portNumber = Number.parseInt(appPort, 10);
+  if (!Number.isInteger(portNumber) || portNumber <= 0) return;
+  if (await isTcpPortAvailable(portNumber)) return;
+
+  throw new Error(
+    [
+      `Port ${appPort} is already in use, but no tracked dev:app-products process is running.`,
+      'Stop the existing dev server, then run npm run dev:app-products:up again.',
+      `For a temporary parallel server, run PORT=${portNumber + 1} npm run dev:app-products:up.`,
+    ].join('\n')
+  );
 };
 
 const readState = async () => {
@@ -206,6 +238,7 @@ const startDev = async () => {
     startMongo();
     return;
   }
+  await assertAppPortAvailable();
   await clearState();
   startMongo();
 

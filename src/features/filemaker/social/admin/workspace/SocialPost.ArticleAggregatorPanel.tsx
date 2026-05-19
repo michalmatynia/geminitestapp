@@ -140,6 +140,7 @@ const parseGeneratedPost = (text: string): ParsedGeneratedPost => {
 
 const pollAiPathRunResult = async (
   runId: string,
+  onProgress: (attempt: number, status: string) => void,
   attempt = 0
 ): Promise<AiPathPollResult | null> => {
   if (attempt >= MAX_POLL_ATTEMPTS) return null;
@@ -155,10 +156,11 @@ const pollAiPathRunResult = async (
   if (run.status === 'failed' || run.status === 'canceled') {
     throw new Error(run.status === 'failed' ? 'AI-Path run failed.' : 'AI-Path run canceled.');
   }
+  onProgress(attempt + 1, run.status);
   await new Promise<void>((resolve) => {
     safeSetTimeout(() => resolve(), POLL_INTERVAL_MS);
   });
-  return pollAiPathRunResult(runId, attempt + 1);
+  return pollAiPathRunResult(runId, onProgress, attempt + 1);
 };
 
 const buildContextArticles = (
@@ -199,6 +201,8 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
 
   const [articles, setArticles] = useState<SocialArticleRecord[]>([]);
   const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
+  const [articleFilter, setArticleFilter] = useState('');
+  const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [scrapeRunId, setScrapeRunId] = useState<string | null>(null);
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
@@ -208,34 +212,75 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
   const [promptPresetName, setPromptPresetName] = useState('');
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_AGGREGATION_PROMPT);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generatedOutput, setGeneratedOutput] = useState<string | null>(null);
+  const [generatedParsed, setGeneratedParsed] = useState<ParsedGeneratedPost | null>(null);
+  const [showRawOutput, setShowRawOutput] = useState(false);
+
+  const [articleSort, setArticleSort] = useState<'date-desc' | 'words-desc' | 'title-asc'>('date-desc');
+  const [isLoadingPresets, setIsLoadingPresets] = useState(false);
 
   const selectedArticles = useMemo(
     () => articles.filter((article) => selectedArticleIds.includes(article.id)),
     [articles, selectedArticleIds]
   );
 
+  const filteredArticles = useMemo(() => {
+    const q = articleFilter.trim().toLowerCase();
+    const base = q
+      ? articles.filter(
+          (a) =>
+            (a.title ?? '').toLowerCase().includes(q) ||
+            a.resolvedUrl.toLowerCase().includes(q) ||
+            (a.description ?? '').toLowerCase().includes(q)
+        )
+      : [...articles];
+    if (articleSort === 'words-desc') {
+      base.sort((a, b) => (b.wordCount ?? 0) - (a.wordCount ?? 0));
+    } else if (articleSort === 'title-asc') {
+      base.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+    }
+    return base;
+  }, [articles, articleFilter, articleSort]);
+
+  const selectedWordCount = useMemo(
+    () => selectedArticles.reduce((sum, a) => sum + (a.wordCount ?? 0), 0),
+    [selectedArticles]
+  );
+
+  const selectedCharCount = useMemo(
+    () => selectedArticles.reduce((sum, a) => sum + (a.bodyText?.length ?? 0), 0),
+    [selectedArticles]
+  );
+
+  const contextBudgetExceeded = selectedCharCount > ARTICLE_CONTEXT_CHAR_BUDGET;
+
   const loadPresets = useCallback(
     async (options: { applyDefaultPrompt?: boolean } = {}): Promise<void> => {
-      const [sources, prompts] = await Promise.all([
-        api.get<SocialArticleSourcePreset[]>(
-          '/api/filemaker/social-article-aggregator/source-presets',
-          { timeout: 60_000 }
-        ),
-        api.get<SocialArticlePromptPreset[]>(
-          '/api/filemaker/social-article-aggregator/prompt-presets',
-          { timeout: 60_000 }
-        ),
-      ]);
-      setSourcePresets(sources);
-      setPromptPresets(prompts);
-      if (options.applyDefaultPrompt === true) {
-        const defaultPrompt = prompts.find((preset) => preset.isDefault);
-        if (defaultPrompt) {
-          setSelectedPromptId(defaultPrompt.id);
-          setCustomPrompt(defaultPrompt.prompt);
+      setIsLoadingPresets(true);
+      try {
+        const [sources, prompts] = await Promise.all([
+          api.get<SocialArticleSourcePreset[]>(
+            '/api/filemaker/social-article-aggregator/source-presets',
+            { timeout: 60_000 }
+          ),
+          api.get<SocialArticlePromptPreset[]>(
+            '/api/filemaker/social-article-aggregator/prompt-presets',
+            { timeout: 60_000 }
+          ),
+        ]);
+        setSourcePresets(sources);
+        setPromptPresets(prompts);
+        if (options.applyDefaultPrompt === true) {
+          const defaultPrompt = prompts.find((preset) => preset.isDefault);
+          if (defaultPrompt) {
+            setSelectedPromptId(defaultPrompt.id);
+            setCustomPrompt(defaultPrompt.prompt);
+          }
         }
+      } finally {
+        setIsLoadingPresets(false);
       }
     },
     []
@@ -342,6 +387,19 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     [promptPresets]
   );
 
+  const handleSetDefaultPromptPreset = useCallback(
+    async (preset: SocialArticlePromptPreset): Promise<void> => {
+      await api.post(
+        '/api/filemaker/social-article-aggregator/prompt-presets',
+        { preset: { id: preset.id, isDefault: true, name: preset.name, prompt: preset.prompt } },
+        { timeout: 60_000 }
+      );
+      await loadPresets();
+      toast(`"${preset.name}" set as default`, { variant: 'success' });
+    },
+    [loadPresets, toast]
+  );
+
   useEffect(() => {
     const postId = activePost?.id ?? null;
     if (!postId || restoredPostIdRef.current === postId) return;
@@ -382,6 +440,11 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     }
   }, [activePost]);
 
+  const resolveTargetPost = useCallback(async (): Promise<SocialPublishingPost | null> => {
+    if (activePost) return activePost;
+    return handleCreateDraft();
+  }, [activePost, handleCreateDraft]);
+
   const handleScrape = useCallback(async (): Promise<void> => {
     setScrapeError(null);
     setScrapeStatus('Scraping article sources...');
@@ -400,6 +463,8 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
       );
       setArticles(response.articles);
       setSelectedArticleIds(response.articles.map((article) => article.id));
+      setArticleFilter('');
+      setExpandedArticleId(null);
       setScrapeRunId(response.run.id);
       setScrapeStatus(
         response.run.status === 'completed'
@@ -411,17 +476,24 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
           variant: 'warning',
         });
       }
+      const targetPost = await resolveTargetPost();
+      if (targetPost) {
+        await patchMutation.mutateAsync({
+          id: targetPost.id,
+          updates: {
+            articleIds: response.articles.map((article) => article.id),
+            articleScrapeRunId: response.run.id,
+            articleSourcePresetIds: selectedPresetIds,
+            articleSourceUrls: splitLooseUrls(customUrls),
+          },
+        });
+      }
     } catch (error) {
       setScrapeError(error instanceof Error ? error.message : 'Article scrape failed.');
     } finally {
       setIsScraping(false);
     }
-  }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, selectedPresetIds, toast]);
-
-  const resolveTargetPost = useCallback(async (): Promise<SocialPublishingPost | null> => {
-    if (activePost) return activePost;
-    return handleCreateDraft();
-  }, [activePost, handleCreateDraft]);
+  }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, patchMutation, resolveTargetPost, selectedPresetIds, toast]);
 
   const handleGenerate = useCallback(async (): Promise<void> => {
     const pathId = articleAggregatorPathId?.trim();
@@ -436,6 +508,9 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
 
     setGenerationError(null);
     setGeneratedOutput(null);
+    setGeneratedParsed(null);
+    setGenerationStatus('Enqueueing AI-Path run…');
+    setShowRawOutput(false);
     setIsGenerating(true);
 
     try {
@@ -471,7 +546,11 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
       }
 
       const runId = enqueueResult.data.run.id;
-      const runResult = await pollAiPathRunResult(runId);
+      setGenerationStatus('Waiting for AI-Path run…');
+      const runResult = await pollAiPathRunResult(runId, (attempt, status) => {
+        const elapsed = Math.round((attempt * POLL_INTERVAL_MS) / 1000);
+        setGenerationStatus(`Running (${status} · ${elapsed}s elapsed)…`);
+      });
       if (runResult?.text === null || runResult?.text === undefined) {
         setGenerationError('AI-Path completed but returned no text output.');
         return;
@@ -512,8 +591,11 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         titlePl: updated.titlePl,
       }));
       setGeneratedOutput(runResult.text);
+      setGeneratedParsed(parsed);
+      setGenerationStatus(null);
       toast('Article post generated', { variant: 'success' });
     } catch (error) {
+      setGenerationStatus(null);
       setGenerationError(error instanceof Error ? error.message : 'Article aggregation failed.');
     } finally {
       setIsGenerating(false);
@@ -541,7 +623,19 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     <KangurAdminCard>
       <div className='space-y-6'>
         <div>
-          <div className='mb-3 text-sm font-semibold text-foreground'>Article Aggregator</div>
+          <div className='mb-3 flex items-center justify-between gap-2'>
+            <span className='text-sm font-semibold text-foreground'>Article Aggregator</span>
+            <Button
+              size='sm'
+              variant='ghost'
+              className='h-6 px-2 text-xs'
+              disabled={isLoadingPresets || isScraping}
+              onClick={() => { void loadPresets().catch(() => undefined); }}
+              title='Refresh presets'
+            >
+              {isLoadingPresets ? '…' : '↺ Presets'}
+            </Button>
+          </div>
           <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]'>
             <div className='space-y-3'>
               <Textarea
@@ -621,23 +715,34 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
               {sourcePresets.map((preset) => (
                 <div
                   key={preset.id}
-                  className='flex items-start justify-between gap-3 rounded-md border border-border/50 px-3 py-2'
+                  className={[
+                    'flex items-start justify-between gap-3 rounded-md border px-3 py-2',
+                    preset.enabled
+                      ? 'border-border/50'
+                      : 'border-border/30 opacity-60',
+                  ].join(' ')}
                 >
-                  <label className='flex min-w-0 items-start gap-2'>
+                  <label className='flex min-w-0 items-start gap-2 cursor-pointer'>
                     <input
                       type='checkbox'
                       checked={selectedPresetIds.includes(preset.id)}
                       onChange={() => handleTogglePreset(preset.id)}
-                      disabled={isScraping}
+                      disabled={isScraping || !preset.enabled}
                       className='mt-0.5'
                       aria-label={`Select source preset ${preset.name}`}
                     />
                     <span className='min-w-0'>
-                      <span className='block truncate text-xs font-medium text-foreground'>
-                        {preset.name}
+                      <span className='flex items-center gap-1.5 text-xs font-medium text-foreground'>
+                        <span className='truncate'>{preset.name}</span>
+                        {!preset.enabled && (
+                          <span className='shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground'>
+                            disabled
+                          </span>
+                        )}
                       </span>
-                      <span className='block truncate text-xs text-muted-foreground'>
-                        {preset.urls.join(', ')}
+                      <span className='text-xs text-muted-foreground'>
+                        {preset.urls.length} URL{preset.urls.length === 1 ? '' : 's'}
+                        {' · '}max {preset.maxArticlesPerSource}
                       </span>
                     </span>
                   </label>
@@ -646,6 +751,7 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                     variant='ghost'
                     onClick={() => { void handleDeleteSourcePreset(preset.id); }}
                     disabled={isScraping}
+                    className='shrink-0 px-2 text-xs'
                   >
                     Delete
                   </Button>
@@ -666,49 +772,126 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
 
         {articles.length > 0 && (
           <div>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <div className='text-xs font-medium text-muted-foreground'>
-                Articles ({selectedArticles.length}/{articles.length})
-              </div>
-              <Button
-                size='sm'
-                variant='ghost'
-                onClick={() =>
-                  setSelectedArticleIds(
-                    selectedArticles.length === articles.length
-                      ? []
-                      : articles.map((article) => article.id)
-                  )
-                }
-              >
-                {selectedArticles.length === articles.length ? 'Clear' : 'Select all'}
-              </Button>
-            </div>
-            <div className='max-h-72 overflow-y-auto rounded-md border border-border/50'>
-              {articles.map((article) => (
-                <label
-                  key={article.id}
-                  className='flex gap-3 border-b border-border/40 px-3 py-2 last:border-b-0'
-                >
-                  <input
-                    type='checkbox'
-                    checked={selectedArticleIds.includes(article.id)}
-                    onChange={() => handleToggleArticle(article.id)}
-                    className='mt-1'
-                    aria-label={`Select article ${article.title || article.resolvedUrl}`}
+            <div className='mb-2 space-y-1.5'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <div className='flex-1'>
+                  <Input
+                    value={articleFilter}
+                    onChange={(e) => setArticleFilter(e.target.value)}
+                    placeholder='Filter articles…'
+                    className='h-7 text-xs'
+                    aria-label='Filter scraped articles'
                   />
-                  <span className='min-w-0'>
-                    <span className='block truncate text-xs font-medium text-foreground'>
-                      {article.title || '(untitled)'}
+                </div>
+                <select
+                  value={articleSort}
+                  onChange={(e) => setArticleSort(e.target.value as typeof articleSort)}
+                  className='h-7 rounded border border-border bg-background px-1.5 text-xs text-foreground'
+                  aria-label='Sort articles'
+                >
+                  <option value='date-desc'>Newest first</option>
+                  <option value='words-desc'>Most words first</option>
+                  <option value='title-asc'>Title A–Z</option>
+                </select>
+              </div>
+              <div className='flex items-center justify-between gap-2'>
+                <div className='text-xs text-muted-foreground'>
+                  {selectedArticles.length}/{articles.length} selected
+                  {selectedWordCount > 0 && (
+                    <span className='ml-2 text-foreground'>
+                      ~{selectedWordCount.toLocaleString()} words
                     </span>
-                    <span className='block truncate text-xs text-muted-foreground'>
-                      {article.canonicalUrl || article.resolvedUrl}
-                    </span>
-                    <span className='mt-1 line-clamp-2 block text-xs text-muted-foreground'>
-                      {article.description || article.excerpt}
-                    </span>
-                  </span>
-                </label>
+                  )}
+                </div>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  onClick={() =>
+                    setSelectedArticleIds(
+                      selectedArticles.length === filteredArticles.length
+                        ? selectedArticleIds.filter(
+                            (id) => !filteredArticles.some((a) => a.id === id)
+                          )
+                        : [...new Set([...selectedArticleIds, ...filteredArticles.map((a) => a.id)])]
+                    )
+                  }
+                >
+                  {selectedArticles.length === filteredArticles.length && filteredArticles.length > 0
+                    ? 'Deselect filtered'
+                    : 'Select filtered'}
+                </Button>
+              </div>
+            </div>
+            <div className='max-h-80 overflow-y-auto rounded-md border border-border/50'>
+              {filteredArticles.length === 0 && (
+                <div className='px-3 py-4 text-center text-xs text-muted-foreground'>
+                  No articles match the filter.
+                </div>
+              )}
+              {filteredArticles.map((article) => (
+                <div key={article.id} className='border-b border-border/40 last:border-b-0'>
+                  <div className='flex items-start gap-2 px-3 py-2'>
+                    <input
+                      type='checkbox'
+                      checked={selectedArticleIds.includes(article.id)}
+                      onChange={() => handleToggleArticle(article.id)}
+                      className='mt-1 shrink-0'
+                      aria-label={`Select article ${article.title || article.resolvedUrl}`}
+                    />
+                    <div className='min-w-0 flex-1'>
+                      <span className='block truncate text-xs font-medium text-foreground'>
+                        {article.title || '(untitled)'}
+                      </span>
+                      <span className='flex items-center gap-1.5 text-xs text-muted-foreground'>
+                        <span className='truncate'>{article.canonicalUrl || article.resolvedUrl}</span>
+                        {article.sourcePresetId && (
+                          <span className='shrink-0 rounded bg-muted px-1 py-0.5 text-[10px]'>
+                            {sourcePresets.find((p) => p.id === article.sourcePresetId)?.name ?? 'preset'}
+                          </span>
+                        )}
+                      </span>
+                      {(article.description ?? article.excerpt) && (
+                        <span className='mt-0.5 line-clamp-2 block text-xs text-muted-foreground'>
+                          {article.description ?? article.excerpt}
+                        </span>
+                      )}
+                    </div>
+                    <div className='flex shrink-0 flex-col items-end gap-1'>
+                      {article.wordCount > 0 && (
+                        <span className='text-xs text-muted-foreground'>
+                          {article.wordCount.toLocaleString()}w
+                        </span>
+                      )}
+                      {article.bodyText && (
+                        <button
+                          className='text-xs text-primary hover:underline'
+                          onClick={() =>
+                            setExpandedArticleId(
+                              expandedArticleId === article.id ? null : article.id
+                            )
+                          }
+                          aria-label={
+                            expandedArticleId === article.id ? 'Collapse preview' : 'Preview body'
+                          }
+                        >
+                          {expandedArticleId === article.id ? '▲' : '▼'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {expandedArticleId === article.id && article.bodyText && (
+                    <div className='border-t border-border/20 bg-muted/20 px-3 pb-2 pt-1'>
+                      <p className='max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-foreground'>
+                        {article.bodyText.slice(0, 1200)}
+                        {article.bodyText.length > 1200 && (
+                          <span className='text-muted-foreground'>
+                            {' '}…({article.bodyText.length - 1200} more chars)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -746,16 +929,34 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                         aria-label={`Select prompt preset ${preset.name}`}
                       />
                       <span className='truncate font-medium text-foreground'>{preset.name}</span>
+                      {preset.isDefault && (
+                        <span className='shrink-0 rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary'>
+                          Default
+                        </span>
+                      )}
                     </label>
-                    <Button
-                      size='sm'
-                      variant='ghost'
-                      onClick={() => { void handleDeletePromptPreset(preset.id); }}
-                      disabled={isGenerating}
-                      className='shrink-0 px-2 text-xs'
-                    >
-                      Delete
-                    </Button>
+                    <div className='flex shrink-0 items-center gap-1'>
+                      {!preset.isDefault && (
+                        <Button
+                          size='sm'
+                          variant='ghost'
+                          onClick={() => { void handleSetDefaultPromptPreset(preset); }}
+                          disabled={isGenerating}
+                          className='h-5 px-1.5 text-[10px]'
+                        >
+                          Set default
+                        </Button>
+                      )}
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={() => { void handleDeletePromptPreset(preset.id); }}
+                        disabled={isGenerating}
+                        className='shrink-0 px-2 text-xs'
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -787,7 +988,7 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
             >
               Save prompt preset
             </Button>
-            <div className='pt-2'>
+            <div className='space-y-1 pt-2'>
               <Button
                 size='sm'
                 onClick={() => { void handleGenerate(); }}
@@ -798,12 +999,22 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
                     : undefined
                 }
               >
-                {isGenerating ? 'Generating...' : 'Generate post'}
+                {isGenerating ? 'Generating…' : 'Generate post'}
               </Button>
+              {generationStatus && (
+                <p className='text-xs text-muted-foreground'>{generationStatus}</p>
+              )}
             </div>
             {!articleAggregatorPathId?.trim() && (
               <p className='text-xs text-amber-600 dark:text-amber-400'>
                 Article Aggregator AI Path ID is required.
+              </p>
+            )}
+            {contextBudgetExceeded && (
+              <p className='text-xs text-amber-600 dark:text-amber-400'>
+                Selected articles exceed the{' '}
+                {(ARTICLE_CONTEXT_CHAR_BUDGET / 1000).toFixed(0)}k char budget —
+                body text will be truncated.
               </p>
             )}
           </div>
@@ -816,29 +1027,64 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         )}
 
         {generatedOutput !== null && (
-          <div>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <span className='text-xs font-medium text-muted-foreground'>Generated output</span>
-              <Button
-                size='sm'
-                variant='ghost'
-                className='h-6 px-2 text-xs'
-                onClick={() => {
-                  void navigator.clipboard.writeText(generatedOutput).then(() => {
-                    toast('Copied to clipboard', { variant: 'success' });
-                  });
-                }}
-              >
-                Copy
-              </Button>
+          <div className='space-y-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-sm font-semibold text-foreground'>Generated post</span>
+              <div className='flex items-center gap-2'>
+                <button
+                  className='text-xs text-muted-foreground hover:text-foreground'
+                  onClick={() => setShowRawOutput((v) => !v)}
+                >
+                  {showRawOutput ? 'Structured view' : 'Raw output'}
+                </button>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  className='h-6 px-2 text-xs'
+                  onClick={() => {
+                    const textToCopy = generatedParsed
+                      ? `${generatedParsed.titleEn}\n\n${generatedParsed.bodyEn}`
+                      : generatedOutput;
+                    void navigator.clipboard.writeText(textToCopy).then(() => {
+                      toast('Copied to clipboard', { variant: 'success' });
+                    });
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
             </div>
-            <Textarea
-              value={generatedOutput}
-              readOnly
-              rows={8}
-              className='font-mono text-xs'
-              aria-label='Generated article aggregation output'
-            />
+
+            {generatedParsed && !showRawOutput ? (
+              <div className='space-y-3 rounded-md border border-border/50 p-3'>
+                <div>
+                  <p className='mb-1 text-xs font-medium text-muted-foreground'>Title</p>
+                  <p className='text-sm font-medium text-foreground'>{generatedParsed.titleEn}</p>
+                </div>
+                <div>
+                  <p className='mb-1 text-xs font-medium text-muted-foreground'>Body</p>
+                  <p className='whitespace-pre-wrap text-xs leading-relaxed text-foreground'>
+                    {generatedParsed.bodyEn}
+                  </p>
+                </div>
+                {generatedParsed.summary && (
+                  <div>
+                    <p className='mb-1 text-xs font-medium text-muted-foreground'>Summary / source notes</p>
+                    <p className='whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground'>
+                      {generatedParsed.summary}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                value={generatedOutput}
+                readOnly
+                rows={8}
+                className='font-mono text-xs'
+                aria-label='Generated article aggregation output'
+              />
+            )}
           </div>
         )}
       </div>

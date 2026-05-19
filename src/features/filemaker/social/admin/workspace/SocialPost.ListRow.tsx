@@ -125,7 +125,14 @@ function PostSummary({
   return (
     <div className='flex min-w-0 flex-1 items-center justify-between gap-3'>
       <div className='min-w-0'>
-        <PostTitleButton onOpen={onOpen} rowState={rowState} />
+        <div className='flex min-w-0 items-center gap-1.5'>
+          <PostTitleButton onOpen={onOpen} rowState={rowState} />
+          {post.contentType === 'article-aggregator' && (
+            <span className='shrink-0 rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400'>
+              Aggregator
+            </span>
+          )}
+        </div>
         <div className='space-y-0.5 text-xs text-muted-foreground'>
           <div>{primaryStatusText(post, rowState)}</div>
           <div>{createdPublishedText(post)}</div>

@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 
-import type { Collection } from 'mongodb';
+import type { Collection, Filter } from 'mongodb';
 
 import {
   SOCIAL_ARTICLE_PROMPT_PRESETS_COLLECTION,
@@ -451,21 +451,26 @@ export async function listSocialArticles(options: {
   limit?: number;
   offset?: number;
   search?: string;
+  scrapeRunId?: string;
 } = {}): Promise<{ articles: SocialArticleRecord[]; total: number }> {
   const limit = Math.min(options.limit ?? 50, 200);
   const offset = options.offset ?? 0;
   const search = options.search?.trim().toLowerCase() ?? '';
+  const scrapeRunId = options.scrapeRunId?.trim() ?? '';
 
   if (!hasMongo()) {
     const store = await readLocalStore();
-    const filtered = search
-      ? store.articles.filter(
-          (a) =>
-            a.title.toLowerCase().includes(search) ||
-            a.resolvedUrl.toLowerCase().includes(search) ||
-            (a.description ?? '').toLowerCase().includes(search)
-        )
+    let filtered = scrapeRunId
+      ? store.articles.filter((a) => a.lastScrapeRunId === scrapeRunId)
       : store.articles;
+    if (search) {
+      filtered = filtered.filter(
+        (a) =>
+          a.title.toLowerCase().includes(search) ||
+          a.resolvedUrl.toLowerCase().includes(search) ||
+          (a.description ?? '').toLowerCase().includes(search)
+      );
+    }
     const sorted = [...filtered].sort((a, b) =>
       (b.scrapedAt ?? '').localeCompare(a.scrapedAt ?? '')
     );
@@ -473,13 +478,16 @@ export async function listSocialArticles(options: {
   }
 
   const col = await collection<ArticleDoc>(SOCIAL_ARTICLES_COLLECTION);
-  const filter = search
-    ? { $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { resolvedUrl: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ] }
-    : {};
+  const andClauses: Filter<ArticleDoc>[] = [];
+  if (scrapeRunId) andClauses.push({ lastScrapeRunId: scrapeRunId });
+  if (search) {
+    andClauses.push({ $or: [
+      { title: { $regex: search, $options: 'i' } },
+      { resolvedUrl: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ] });
+  }
+  const filter: Filter<ArticleDoc> = andClauses.length === 0 ? {} : andClauses.length === 1 ? andClauses[0]! : { $and: andClauses };
   const [docs, total] = await Promise.all([
     col.find(filter).sort({ scrapedAt: -1 }).skip(offset).limit(limit).toArray(),
     col.countDocuments(filter),

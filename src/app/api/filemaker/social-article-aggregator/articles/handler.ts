@@ -23,7 +23,8 @@ export async function getHandler(req: NextRequest): Promise<Response> {
   const limit = Math.min(Number(params.get('limit') ?? '50'), 200);
   const offset = Number(params.get('offset') ?? '0');
   const search = params.get('search') ?? '';
-  const result = await listSocialArticles({ limit, offset, search });
+  const scrapeRunId = params.get('scrapeRunId') ?? '';
+  const result = await listSocialArticles({ limit, offset, scrapeRunId, search });
   return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
 }
 

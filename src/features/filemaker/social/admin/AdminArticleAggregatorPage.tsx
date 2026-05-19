@@ -94,6 +94,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   const [articlesOffset, setArticlesOffset] = useState(0);
   const [articlesSearch, setArticlesSearch] = useState('');
   const [articlesSearchInput, setArticlesSearchInput] = useState('');
+  const [articlesScrapeRunFilter, setArticlesScrapeRunFilter] = useState('');
   const [articlesLoading, setArticlesLoading] = useState(false);
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null);
@@ -126,13 +127,14 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   const [scrapeError, setScrapeError] = useState<string | null>(null);
 
   // ── Data loaders ──────────────────────────────────────────────────────────
-  const loadArticles = useCallback(async (offset: number, search: string): Promise<void> => {
+  const loadArticles = useCallback(async (offset: number, search: string, scrapeRunId = ''): Promise<void> => {
     setArticlesLoading(true);
     try {
       const params = new URLSearchParams({
         limit: String(PAGE_SIZE),
         offset: String(offset),
         ...(search ? { search } : {}),
+        ...(scrapeRunId ? { scrapeRunId } : {}),
       });
       const result = await api.get<ArticleListResult>(
         `/api/filemaker/social-article-aggregator/articles?${params.toString()}`,
@@ -194,18 +196,34 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (tab === 'articles') void loadArticles(0, '').catch(() => undefined);
+    if (tab === 'articles') void loadArticles(0, articlesSearch, articlesScrapeRunFilter).catch(() => undefined);
     if (tab === 'source-presets') void loadSourcePresets().catch(() => undefined);
     if (tab === 'prompt-presets') void loadPromptPresets().catch(() => undefined);
-    if (tab === 'scrape-runs') void loadScrapeRuns().catch(() => undefined);
+    if (tab === 'scrape-runs') {
+      void loadScrapeRuns().catch(() => undefined);
+      void loadSourcePresets().catch(() => undefined);
+    }
     if (tab === 'run-scrape') void loadRunScrapePresets().catch(() => undefined);
   }, [tab, loadArticles, loadSourcePresets, loadPromptPresets, loadScrapeRuns, loadRunScrapePresets]);
 
   // ── Articles handlers ─────────────────────────────────────────────────────
   const handleArticleSearch = useCallback((): void => {
     setArticlesSearch(articlesSearchInput);
-    void loadArticles(0, articlesSearchInput).catch(() => undefined);
-  }, [articlesSearchInput, loadArticles]);
+    void loadArticles(0, articlesSearchInput, articlesScrapeRunFilter).catch(() => undefined);
+  }, [articlesSearchInput, articlesScrapeRunFilter, loadArticles]);
+
+  const handleViewRunArticles = useCallback((runId: string): void => {
+    setArticlesScrapeRunFilter(runId);
+    setArticlesSearch('');
+    setArticlesSearchInput('');
+    setTab('articles');
+    void loadArticles(0, '', runId).catch(() => undefined);
+  }, [loadArticles]);
+
+  const handleClearRunFilter = useCallback((): void => {
+    setArticlesScrapeRunFilter('');
+    void loadArticles(0, articlesSearch, '').catch(() => undefined);
+  }, [articlesSearch, loadArticles]);
 
   const handleDeleteArticle = useCallback(async (id: string): Promise<void> => {
     setDeletingArticleId(id);
@@ -257,6 +275,23 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
     await loadSourcePresets();
     toast('Source preset deleted', { variant: 'success' });
   }, [loadSourcePresets, sourcePresetForm.id, toast]);
+
+  const handleToggleSourcePreset = useCallback(async (preset: SocialArticleSourcePreset): Promise<void> => {
+    await api.post('/api/filemaker/social-article-aggregator/source-presets', {
+      preset: {
+        enabled: !preset.enabled,
+        excludePatterns: preset.excludePatterns,
+        id: preset.id,
+        includePatterns: preset.includePatterns,
+        maxArticlesPerSource: preset.maxArticlesPerSource,
+        name: preset.name,
+        obeyRobotsTxt: preset.obeyRobotsTxt,
+        urls: preset.urls,
+      },
+    }, { timeout: 60_000 });
+    await loadSourcePresets();
+    toast(preset.enabled ? 'Source preset disabled' : 'Source preset enabled', { variant: 'success' });
+  }, [loadSourcePresets, toast]);
 
   // ── Prompt preset handlers ────────────────────────────────────────────────
   const handleSavePromptPreset = useCallback(async (): Promise<void> => {
@@ -375,20 +410,41 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               className='max-w-md'
             />
             <Button size='sm' onClick={handleArticleSearch} disabled={articlesLoading}>Search</Button>
+            <Button
+              size='sm'
+              variant='ghost'
+              disabled={articlesLoading}
+              onClick={() => void loadArticles(articlesOffset, articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
+              title='Refresh'
+            >
+              ↺
+            </Button>
             {articlesSearch && (
               <Button size='sm' variant='ghost' onClick={() => {
                 setArticlesSearchInput('');
                 setArticlesSearch('');
-                void loadArticles(0, '').catch(() => undefined);
+                void loadArticles(0, '', articlesScrapeRunFilter).catch(() => undefined);
               }}>
-                Clear
+                Clear search
               </Button>
             )}
           </div>
 
+          {articlesScrapeRunFilter && (
+            <div className='flex items-center gap-2 rounded-md border border-border/50 bg-muted/30 px-3 py-1.5'>
+              <span className='text-xs text-muted-foreground'>
+                Filtered by scrape run: <span className='font-mono text-foreground'>{articlesScrapeRunFilter}</span>
+              </span>
+              <Button size='sm' variant='ghost' className='h-5 px-1.5 text-xs' onClick={handleClearRunFilter}>
+                ✕ Clear
+              </Button>
+            </div>
+          )}
+
           <div className='text-xs text-muted-foreground'>
             {articlesTotal} article{articlesTotal === 1 ? '' : 's'} total
             {articlesSearch ? ` matching "${articlesSearch}"` : ''}
+            {articlesScrapeRunFilter ? ' (run filter active)' : ''}
           </div>
 
           <div className='rounded-md border border-border'>
@@ -435,7 +491,21 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                   <div className='border-t border-border/30 bg-muted/20 px-4 py-3'>
                     {article.bodyText ? (
                       <>
-                        <p className='mb-1 text-xs font-medium text-muted-foreground'>Body text</p>
+                        <div className='mb-1 flex items-center justify-between gap-2'>
+                          <p className='text-xs font-medium text-muted-foreground'>Body text</p>
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className='h-5 px-1.5 text-[10px]'
+                            onClick={() => {
+                              void navigator.clipboard.writeText(article.bodyText ?? '').then(() => {
+                                toast('Body text copied', { variant: 'success' });
+                              });
+                            }}
+                          >
+                            Copy
+                          </Button>
+                        </div>
                         <p className='max-h-64 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-foreground'>
                           {article.bodyText}
                         </p>
@@ -449,14 +519,20 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                     {article.publishedAt && (
                       <p className='text-xs text-muted-foreground'>Published: {article.publishedAt}</p>
                     )}
-                    <a
-                      href={article.resolvedUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='mt-2 block text-xs text-primary hover:underline'
-                    >
-                      Open original ↗
-                    </a>
+                    <div className='mt-2 flex items-center gap-3'>
+                      <a
+                        href={article.resolvedUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-xs text-primary hover:underline'
+                      >
+                        Open original ↗
+                      </a>
+                      <span className='text-xs text-muted-foreground'>
+                        {article.wordCount.toLocaleString()} words
+                        {article.scrapeCount > 1 && ` · scraped ${article.scrapeCount}×`}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -468,7 +544,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               <Button
                 size='sm' variant='outline'
                 disabled={articlesOffset === 0 || articlesLoading}
-                onClick={() => void loadArticles(Math.max(0, articlesOffset - PAGE_SIZE), articlesSearch).catch(() => undefined)}
+                onClick={() => void loadArticles(Math.max(0, articlesOffset - PAGE_SIZE), articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
               >
                 Previous
               </Button>
@@ -478,7 +554,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
               <Button
                 size='sm' variant='outline'
                 disabled={articlesOffset + PAGE_SIZE >= articlesTotal || articlesLoading}
-                onClick={() => void loadArticles(articlesOffset + PAGE_SIZE, articlesSearch).catch(() => undefined)}
+                onClick={() => void loadArticles(articlesOffset + PAGE_SIZE, articlesSearch, articlesScrapeRunFilter).catch(() => undefined)}
               >
                 Next
               </Button>
@@ -520,7 +596,15 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                       ))}
                     </ul>
                   </div>
-                  <div className='flex shrink-0 gap-1'>
+                  <div className='flex shrink-0 flex-wrap justify-end gap-1'>
+                    <Button
+                      size='sm'
+                      variant='ghost'
+                      className='text-xs'
+                      onClick={() => { void handleToggleSourcePreset(preset); }}
+                    >
+                      {preset.enabled ? 'Disable' : 'Enable'}
+                    </Button>
                     <Button size='sm' variant='outline' onClick={() => handleEditSourcePreset(preset)}>
                       Edit
                     </Button>
@@ -722,6 +806,16 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
       {/* ── Scrape Runs ───────────────────────────────────────────────────── */}
       {tab === 'scrape-runs' && (
         <div className='space-y-3'>
+          <div className='flex justify-end'>
+            <Button
+              size='sm'
+              variant='ghost'
+              disabled={scrapeRunsLoading}
+              onClick={() => void loadScrapeRuns().catch(() => undefined)}
+            >
+              ↺ Refresh
+            </Button>
+          </div>
           {scrapeRunsLoading && scrapeRuns.length === 0 && (
             <div className='py-6 text-center text-sm text-muted-foreground'>Loading…</div>
           )}
@@ -808,9 +902,19 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                       </div>
                     )}
                     {run.sourcePresetIds.length > 0 && (
-                      <p className='text-xs text-muted-foreground'>
-                        Source presets: {run.sourcePresetIds.join(', ')}
-                      </p>
+                      <div>
+                        <p className='mb-1 text-xs font-medium text-muted-foreground'>Source presets</p>
+                        <ul className='space-y-0.5'>
+                          {run.sourcePresetIds.map((id) => {
+                            const preset = sourcePresets.find((p) => p.id === id);
+                            return (
+                              <li key={id} className='text-xs text-muted-foreground'>
+                                {preset ? preset.name : id}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     )}
                     {run.customUrls.length > 0 && (
                       <div>
@@ -821,6 +925,16 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
                           ))}
                         </ul>
                       </div>
+                    )}
+                    {run.totalArticleCount > 0 && (
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className='w-full text-xs'
+                        onClick={() => handleViewRunArticles(run.id)}
+                      >
+                        View {run.totalArticleCount} article{run.totalArticleCount === 1 ? '' : 's'} from this run
+                      </Button>
                     )}
                   </div>
                 )}

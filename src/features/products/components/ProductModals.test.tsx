@@ -86,9 +86,7 @@ vi.mock('@/features/products/context/ProductFormContext', () => ({
   }) => {
     productFormProviderPropsMock(props);
     const instanceIdRef = React.useRef<number | null>(null);
-    if (instanceIdRef.current === null) {
-      instanceIdRef.current = getNextProviderInstanceIdMock();
-    }
+    instanceIdRef.current ??= getNextProviderInstanceIdMock();
 
     return (
       <div data-testid='product-form-provider' data-instance-id={String(instanceIdRef.current)}>
@@ -120,7 +118,7 @@ vi.mock('@/features/products/context-registry/ProductLeafCategoriesContextRegist
 }));
 
 vi.mock('./product-form-preload', () => ({
-  loadProductForm: async () => ({
+  loadProductForm: () => Promise.resolve({
     default: () => <div data-testid='product-form' />,
   }),
   preloadProductFormChunk: vi.fn(),
@@ -387,7 +385,7 @@ describe('ProductModals', () => {
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
     const providerProps = productFormProviderPropsMock.mock.calls[0]?.[0];
 
-    await act(async () => {
+    act(() => {
       providerProps.onSuccess({ product: createdProduct });
     });
 
@@ -495,7 +493,7 @@ describe('ProductModals', () => {
       const onRunSnapshot = triggerButtonBarMock.mock.calls[0][0].onRunSnapshot;
       expect(typeof onRunSnapshot).toBe('function');
 
-      await act(async () => {
+      act(() => {
         onRunSnapshot({
           button: {
             id: 'button-description',
@@ -766,7 +764,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -853,7 +851,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -980,7 +978,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1081,7 +1079,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1208,7 +1206,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1335,7 +1333,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1432,7 +1430,7 @@ describe('ProductModals', () => {
         .getAttribute('data-instance-id');
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1547,7 +1545,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-normalize',
@@ -1677,7 +1675,7 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       const onRunQueued = triggerButtonBarMock.mock.calls[0][0].onRunQueued;
-      await act(async () => {
+      act(() => {
         onRunQueued({
           button: {
             id: 'button-translate',

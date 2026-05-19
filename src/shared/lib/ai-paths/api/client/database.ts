@@ -66,13 +66,23 @@ const parsePositiveInt = (raw: string | undefined): number | null => {
 };
 
 const DEFAULT_API_TIMEOUT_MS = 15_000;
-const DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS = 30_000;
+const DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS = 120_000;
 const SERVER_DB_ACTION_TIMEOUT_MS =
   parsePositiveInt(process.env['AI_PATHS_DB_ACTION_TIMEOUT_MS']) ??
   DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS;
 
 const normalizeDbProvider = (provider: unknown): DbProvider | undefined =>
   provider === 'auto' || provider === 'mongodb' ? provider : undefined;
+
+const assignDefined = <T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K] | undefined
+): void => {
+  if (value !== undefined) {
+    Object.assign(target, { [key]: value });
+  }
+};
 
 const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
   if (typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0) {
@@ -84,61 +94,82 @@ const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
   return DEFAULT_API_TIMEOUT_MS;
 };
 
+const createDbRequestOptions = (
+  options?: DbRequestOptions
+): { timeoutMs: number; signal?: AbortSignal } => {
+  const requestOptions: { timeoutMs: number; signal?: AbortSignal } = {
+    timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
+  };
+  if (options?.signal !== undefined) {
+    requestOptions.signal = options.signal;
+  }
+  return requestOptions;
+};
+
+const createDbActionPayload = (input: DbActionPayload): DbActionPayload => {
+  const payload: DbActionPayload = {
+    collection: input.collection,
+    action: input.action,
+  };
+  assignDefined(payload, 'provider', normalizeDbProvider(input.provider));
+  assignDefined(payload, 'collectionMap', input.collectionMap);
+  assignDefined(payload, 'filter', input.filter);
+  assignDefined(payload, 'pipeline', input.pipeline);
+  assignDefined(payload, 'document', input.document);
+  assignDefined(payload, 'documents', input.documents);
+  assignDefined(payload, 'update', input.update);
+  assignDefined(payload, 'projection', input.projection);
+  assignDefined(payload, 'sort', input.sort);
+  assignDefined(payload, 'limit', input.limit);
+  assignDefined(payload, 'idType', input.idType);
+  assignDefined(payload, 'distinctField', input.distinctField);
+  assignDefined(payload, 'upsert', input.upsert);
+  assignDefined(payload, 'returnDocument', input.returnDocument);
+  return payload;
+};
+
 export async function databaseAction<T>(
   input: DbActionPayload,
   options?: DbRequestOptions
 ): Promise<HttpResult<T>> {
-  const provider = normalizeDbProvider(input.provider);
-  const payload: DbActionPayload = {
-    ...(provider ? { provider } : {}),
-    collection: input.collection,
-    ...(input.collectionMap ? { collectionMap: input.collectionMap } : {}),
-    action: input.action,
-    ...(input.filter !== undefined ? { filter: input.filter } : {}),
-    ...(input.pipeline !== undefined ? { pipeline: input.pipeline } : {}),
-    ...(input.document !== undefined ? { document: input.document } : {}),
-    ...(input.documents !== undefined ? { documents: input.documents } : {}),
-    ...(input.update !== undefined ? { update: input.update } : {}),
-    ...(input.projection !== undefined ? { projection: input.projection } : {}),
-    ...(input.sort !== undefined ? { sort: input.sort } : {}),
-    ...(input.limit !== undefined ? { limit: input.limit } : {}),
-    ...(input.idType !== undefined ? { idType: input.idType } : {}),
-    ...(input.distinctField !== undefined ? { distinctField: input.distinctField } : {}),
-    ...(input.upsert !== undefined ? { upsert: input.upsert } : {}),
-    ...(input.returnDocument !== undefined ? { returnDocument: input.returnDocument } : {}),
-  };
-  return apiPost<T>('/api/ai-paths/db-action', payload, {
-    timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
-    ...(options?.signal ? { signal: options.signal } : {}),
-  });
+  return apiPost<T>(
+    '/api/ai-paths/db-action',
+    createDbActionPayload(input),
+    createDbRequestOptions(options)
+  );
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<HttpResult<T>> {
-  const provider = normalizeDbProvider(payload.provider);
-  return apiPost<T>('/api/ai-paths/db-action', {
-    ...(provider ? { provider } : {}),
+  const requestPayload: DbActionPayload = {
     collection: payload.collection,
-    ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
-    action: payload.single ? 'findOne' : 'find',
+    action: payload.single === true ? 'findOne' : 'find',
     filter: payload.filter,
-    ...(payload.projection !== undefined ? { projection: payload.projection } : {}),
-    ...(payload.sort !== undefined ? { sort: payload.sort } : {}),
-    ...(payload.limit !== undefined ? { limit: payload.limit } : {}),
-    ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+  };
+  assignDefined(requestPayload, 'provider', normalizeDbProvider(payload.provider));
+  assignDefined(requestPayload, 'collectionMap', payload.collectionMap);
+  assignDefined(requestPayload, 'projection', payload.projection);
+  assignDefined(requestPayload, 'sort', payload.sort);
+  assignDefined(requestPayload, 'limit', payload.limit);
+  assignDefined(requestPayload, 'idType', payload.idType);
+  return apiPost<T>('/api/ai-paths/db-action', requestPayload, {
+    timeoutMs: resolveDbActionTimeoutMs(),
   });
 }
 
-export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<HttpResult<T>> {
-  const provider = normalizeDbProvider(payload.provider);
-  return apiPost<T>('/api/ai-paths/db-action', {
-    ...(provider ? { provider } : {}),
+export async function databaseUpdate<T>(
+  payload: DbUpdatePayload,
+  options?: DbRequestOptions
+): Promise<HttpResult<T>> {
+  const requestPayload: DbActionPayload = {
     collection: payload.collection,
-    ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
     action: payload.single === false ? 'updateMany' : 'updateOne',
     filter: payload.filter,
     update: payload.update,
-    ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
-  });
+  };
+  assignDefined(requestPayload, 'provider', normalizeDbProvider(payload.provider));
+  assignDefined(requestPayload, 'collectionMap', payload.collectionMap);
+  assignDefined(requestPayload, 'idType', payload.idType);
+  return apiPost<T>('/api/ai-paths/db-action', requestPayload, createDbRequestOptions(options));
 }
 
 export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<HttpResult<T>> {
@@ -150,10 +181,10 @@ export async function fetchSchema(args?: {
   includeCounts?: boolean;
 }): Promise<HttpResult<SchemaResponse>> {
   const params = new URLSearchParams();
-  if (args?.provider) params.set('provider', args.provider);
-  if (args?.includeCounts) params.set('includeCounts', 'true');
+  if (args?.provider !== undefined) params.set('provider', args.provider);
+  if (args?.includeCounts === true) params.set('includeCounts', 'true');
   const query = params.toString();
-  const url = query ? `/api/databases/schema?${query}` : '/api/databases/schema';
+  const url = query.length > 0 ? `/api/databases/schema?${query}` : '/api/databases/schema';
   return apiFetch<SchemaResponse>(url, {
     headers: await withApiCsrfHeaders(),
   });
@@ -171,8 +202,9 @@ export async function browseDatabase(args: {
   params.set('provider', args.provider ?? 'auto');
   if (typeof args.limit === 'number') params.set('limit', String(args.limit));
   if (typeof args.skip === 'number') params.set('skip', String(args.skip));
-  if (typeof args.query === 'string' && args.query.trim()) {
-    params.set('query', args.query.trim());
+  const query = typeof args.query === 'string' ? args.query.trim() : '';
+  if (query.length > 0) {
+    params.set('query', query);
   }
   return apiFetch<DatabaseBrowse>(`/api/databases/browse?${params.toString()}`, {
     headers: await withApiCsrfHeaders(),

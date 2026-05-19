@@ -34,17 +34,23 @@ describe('database client canonical db-action routing', () => {
       idType: 'string',
     });
 
-    expect(apiPostMock).toHaveBeenCalledWith('/api/ai-paths/db-action', {
-      provider: 'auto',
-      collection: 'products',
-      collectionMap: { Product: 'products' },
-      action: 'find',
-      filter: { id: 'p-1' },
-      projection: { id: 1 },
-      sort: { createdAt: -1 },
-      limit: 10,
-      idType: 'string',
-    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/ai-paths/db-action',
+      {
+        provider: 'auto',
+        collection: 'products',
+        collectionMap: { Product: 'products' },
+        action: 'find',
+        filter: { id: 'p-1' },
+        projection: { id: 1 },
+        sort: { createdAt: -1 },
+        limit: 10,
+        idType: 'string',
+      },
+      {
+        timeoutMs: 15_000,
+      }
+    );
   });
 
   it('routes canonical Mongo databaseUpdate providers to the db-action contract', async () => {
@@ -57,14 +63,20 @@ describe('database client canonical db-action routing', () => {
       idType: 'string',
     });
 
-    expect(apiPostMock).toHaveBeenCalledWith('/api/ai-paths/db-action', {
-      provider: 'mongodb',
-      collection: 'products',
-      action: 'updateMany',
-      filter: { id: 'p-1' },
-      update: { name_en: 'Updated' },
-      idType: 'string',
-    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/ai-paths/db-action',
+      {
+        provider: 'mongodb',
+        collection: 'products',
+        action: 'updateMany',
+        filter: { id: 'p-1' },
+        update: { name_en: 'Updated' },
+        idType: 'string',
+      },
+      {
+        timeoutMs: 15_000,
+      }
+    );
   });
 
   it('drops invalid provider values and keeps canonical db-action mapping', async () => {
@@ -75,11 +87,17 @@ describe('database client canonical db-action routing', () => {
       single: true,
     });
 
-    expect(apiPostMock).toHaveBeenCalledWith('/api/ai-paths/db-action', {
-      collection: 'products',
-      action: 'findOne',
-      filter: { id: 'p-2' },
-    });
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/ai-paths/db-action',
+      {
+        collection: 'products',
+        action: 'findOne',
+        filter: { id: 'p-2' },
+      },
+      {
+        timeoutMs: 15_000,
+      }
+    );
   });
 
   it('allows overriding db-action timeout for long-running runtime operations', async () => {

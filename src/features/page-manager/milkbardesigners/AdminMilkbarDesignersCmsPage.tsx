@@ -3859,6 +3859,11 @@ function CmsModel3DField({
   onClearLink?: () => void | Promise<void>;
   onClearUpload?: () => void | Promise<void>;
 }): React.JSX.Element {
+  type ModelAssetOverride = {
+    asset: Asset3DRecord;
+    previousModelId: string;
+  };
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -3869,18 +3874,19 @@ function CmsModel3DField({
   const [viewMode, setViewMode] = useState<Model3DSlotViewMode>('fastcomet');
   const [slotAction, setSlotAction] =
     useState<'clear-upload' | 'convert-link' | 'fastcomet' | null>(null);
-  const [fastCometAssetOverride, setFastCometAssetOverride] = useState<Asset3DRecord | null>(null);
+  const [modelAssetOverride, setModelAssetOverride] = useState<ModelAssetOverride | null>(null);
   const deleteModelAssetMutation = useDeleteAsset3DMutation();
-  const assignedModelId = modelId?.trim() ?? '';
+  const sourceModelId = modelId?.trim() ?? '';
+  const assignedModelId = modelAssetOverride?.asset.id ?? sourceModelId;
   const assignedModelUrl = modelUrl?.trim() ?? '';
   const hasModelId = assignedModelId.length > 0;
   const hasModelUrl = assignedModelUrl.length > 0;
   const hasModel = hasModelId || hasModelUrl;
 
   const assetQuery = useAsset3DById(hasModelId ? assignedModelId : null);
-  const hasFastCometAssetOverride = fastCometAssetOverride?.id === assignedModelId;
-  const asset = hasFastCometAssetOverride ? fastCometAssetOverride : assetQuery.data;
-  const isMissing = !hasFastCometAssetOverride && assetQuery.isError;
+  const hasModelAssetOverride = modelAssetOverride?.asset.id === assignedModelId;
+  const asset = hasModelAssetOverride ? modelAssetOverride.asset : assetQuery.data;
+  const isMissing = !hasModelAssetOverride && assetQuery.isError;
   const isResolving = hasModelId && asset === undefined && !isMissing;
   const modelSlotSources = resolveModel3DSlotSources({
     assetId: assignedModelId,
@@ -3896,10 +3902,14 @@ function CmsModel3DField({
   const isActionRunning = uploading || slotAction !== null || deleteModelAssetMutation.isPending;
 
   useEffect(() => {
-    if (fastCometAssetOverride !== null && fastCometAssetOverride.id !== assignedModelId) {
-      setFastCometAssetOverride(null);
+    if (modelAssetOverride === null) return;
+    const overrideModelId = modelAssetOverride.asset.id;
+    const sourceMatchesOverride = sourceModelId === overrideModelId;
+    const sourceStillPrevious = sourceModelId === modelAssetOverride.previousModelId;
+    if (!sourceMatchesOverride && !sourceStillPrevious) {
+      setModelAssetOverride(null);
     }
-  }, [assignedModelId, fastCometAssetOverride]);
+  }, [modelAssetOverride, sourceModelId]);
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -3925,7 +3935,9 @@ function CmsModel3DField({
           }
         );
         queryClient.setQueryData(asset3dKeys.detail(record.id), record);
+        setModelAssetOverride({ asset: record, previousModelId: assignedModelId });
         await onChange(record.id);
+        setViewMode('upload');
         toast(`3D model uploaded locally. Save CMS to publish it to FastComet: ${record.filename ?? file.name}`, { variant: 'success' });
       } catch (err) {
         toast(`3D model upload/save failed: ${toErrorMessage(err)}`, { variant: 'error' });
@@ -3950,6 +3962,7 @@ function CmsModel3DField({
         url: modelSlotSources.linkUrl,
       });
       queryClient.setQueryData(asset3dKeys.detail(record.id), record);
+      setModelAssetOverride({ asset: record, previousModelId: assignedModelId });
       await onChange(record.id);
       setViewMode('upload');
       toast(`3D model downloaded locally. Save CMS to publish it to FastComet: ${record.filename ?? record.name}`, { variant: 'success' });
@@ -3958,14 +3971,32 @@ function CmsModel3DField({
     } finally {
       setSlotAction(null);
     }
-  }, [modelSlotSources.linkUrl, onChange, queryClient, tags, toast, uploadName]);
+  }, [
+    assignedModelId,
+    modelSlotSources.linkUrl,
+    onChange,
+    queryClient,
+    tags,
+    toast,
+    uploadName,
+  ]);
 
   const handleUploadToFastComet = useCallback(async (): Promise<void> => {
-    if (!hasModelId || hasFastCometSource) return;
+    if (!hasModelId) {
+      toast('Upload a 3D model before publishing it to FastComet.', { variant: 'error' });
+      return;
+    }
+    if (!hasLocalModelSource) {
+      toast('The local 3D model file is not available. Upload the model again, then publish it to FastComet.', { variant: 'error' });
+      return;
+    }
     setSlotAction('fastcomet');
     try {
       const record = await uploadMilkbarAsset3DToFastComet(assignedModelId);
-      setFastCometAssetOverride(record);
+      setModelAssetOverride({
+        asset: record,
+        previousModelId: modelAssetOverride?.previousModelId ?? assignedModelId,
+      });
       queryClient.setQueryData(asset3dKeys.detail(record.id), record);
       void invalidateAsset3d(queryClient);
       await onChange(assignedModelId);
@@ -3976,7 +4007,15 @@ function CmsModel3DField({
     } finally {
       setSlotAction(null);
     }
-  }, [assignedModelId, hasFastCometSource, hasModelId, onChange, queryClient, toast]);
+  }, [
+    assignedModelId,
+    hasModelId,
+    hasLocalModelSource,
+    modelAssetOverride,
+    onChange,
+    queryClient,
+    toast,
+  ]);
 
   const handleClearLink = useCallback(async (): Promise<void> => {
     try {
@@ -4006,7 +4045,7 @@ function CmsModel3DField({
       } else {
         await onChange(undefined);
       }
-      setFastCometAssetOverride(null);
+      setModelAssetOverride(null);
       setViewMode(hasModelUrl ? 'link' : 'upload');
       toast('3D model upload deleted from server storage. Save CMS to publish the cleared slot.', { variant: 'success' });
     } catch (error) {
@@ -4037,6 +4076,12 @@ function CmsModel3DField({
   const modelViewTrigger = uploading
     ? getModelUploadButtonLabel(uploading, uploadProgress, hasModel)
     : `View: ${resolveModel3DSlotViewModeLabel(effectiveViewMode)}`;
+  let fastCometUploadActionLabel = 'Upload to FastComet';
+  if (slotAction === 'fastcomet') {
+    fastCometUploadActionLabel = 'Uploading to FastComet...';
+  } else if (hasFastCometSource) {
+    fastCometUploadActionLabel = 'Re-upload to FastComet';
+  }
 
   const thumbnailContent = hasModel ? (
     <div className='flex h-full w-full flex-col items-center justify-center gap-1 px-1'>
@@ -4108,12 +4153,12 @@ function CmsModel3DField({
               {slotAction === 'convert-link' ? 'Converting link...' : 'Convert link to File'}
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={!hasModelId || !hasLocalModelSource || hasFastCometSource || isActionRunning}
+              disabled={!hasModelId || !hasLocalModelSource || isActionRunning}
               onClick={() => {
                 handleUploadToFastComet().catch(() => undefined);
               }}
             >
-              {slotAction === 'fastcomet' ? 'Uploading to FastComet...' : 'Upload to FastComet'}
+              {fastCometUploadActionLabel}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={!hasModelUrl || isActionRunning}

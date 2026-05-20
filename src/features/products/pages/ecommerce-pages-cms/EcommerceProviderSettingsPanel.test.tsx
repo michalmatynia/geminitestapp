@@ -50,6 +50,7 @@ const renderPanel = (): ReturnType<typeof render> => {
 const makeSettings = (): EcommerceProviderSettingsInput => ({
   ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS,
   payment: {
+    ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment,
     payu: {
       ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment.payu,
       clientId: 'payu-client',
@@ -92,6 +93,7 @@ describe('EcommerceProviderSettingsPanel', () => {
       settings: {
         ...settings,
         payment: {
+          ...settings.payment,
           payu: {
             ...settings.payment.payu,
             posId: '654321',
@@ -123,11 +125,11 @@ describe('EcommerceProviderSettingsPanel', () => {
         expect.objectContaining({
           pushToEcommerce: true,
           settings: expect.objectContaining({
-            payment: {
+            payment: expect.objectContaining({
               payu: expect.objectContaining({
                 posId: '654321',
               }),
-            },
+            }),
           }),
         }),
         { logError: false, timeout: 120_000 }

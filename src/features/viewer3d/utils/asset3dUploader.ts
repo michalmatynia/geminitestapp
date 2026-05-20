@@ -23,8 +23,12 @@ import {
   findAsset3DRepositoryAsset,
   getAsset3DRepository,
 } from '@/features/viewer3d/services/asset3d-repository';
-import type { Asset3DCreateInput, Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { badRequestError } from '@/shared/errors/app-error';
+import type {
+  Asset3DCreateInput,
+  Asset3DRecord,
+  Asset3DRepository,
+} from '@/shared/contracts/viewer3d';
+import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 import {
   MILKBAR_CMS_MODELS_FOLDER,
   type FastCometStorageConfig,
@@ -308,6 +312,59 @@ const toMilkbarFastCometAssetUrl = (publicPath: string): string => {
   return `${baseUrl}/${publicPath.replace(/^\/+/, '')}`;
 };
 
+const isMilkbarFastCometModelUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value.trim());
+    const baseUrl = new URL(resolveMilkbarFastCometStorageProfile().publicBaseUrl);
+    return url.origin === baseUrl.origin && url.pathname.startsWith(MILKBAR_MODEL_PUBLIC_PATH_PREFIX);
+  } catch {
+    return false;
+  }
+};
+
+const verifyMilkbarFastCometModelUrl = async (url: string): Promise<string | undefined> => {
+  const trimmed = url.trim();
+  if (!isMilkbarFastCometModelUrl(trimmed)) return undefined;
+
+  try {
+    const response = await fetch(trimmed, {
+      method: 'HEAD',
+      cache: 'no-store',
+    });
+    if (response.ok || (response.status >= 300 && response.status < 400)) {
+      return new Date().toISOString();
+    }
+    throw externalServiceError(
+      'FastComet upload completed, but the public model URL is not reachable. Confirm uploads.milkbardesigners.com points at the document root that contains /uploads.',
+      {
+        status: response.status,
+        url: trimmed,
+      }
+    );
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) throw error;
+    throw externalServiceError(
+      'FastComet upload completed, but the public model URL could not be verified. Confirm uploads.milkbardesigners.com DNS, SSL, and document root are configured.',
+      {
+        url: trimmed,
+        cause: error,
+      }
+    );
+  }
+};
+
+const requireMilkbarFastCometModelUrlVerification = async (url: string): Promise<string> => {
+  const verifiedAt = await verifyMilkbarFastCometModelUrl(url);
+  if (verifiedAt !== undefined) return verifiedAt;
+  throw externalServiceError(
+    'FastComet upload completed, but it did not return a public Milkbar model URL on uploads.milkbardesigners.com.',
+    {
+      publicBaseUrl: resolveMilkbarFastCometStorageProfile().publicBaseUrl,
+      url,
+    }
+  );
+};
+
 const deleteMilkbarLocalPublicFile = async (asset: Asset3DRecord): Promise<void> => {
   if (!isMilkbarCmsAsset(asset)) return;
   const publicPath = resolveAssetPublicPath(asset);
@@ -319,8 +376,7 @@ const deleteMilkbarFastCometRemote = async (asset: Asset3DRecord): Promise<void>
   if (!isMilkbarCmsAsset(asset) || !isMilkbarAssetStoredOnFastComet(asset)) return;
   const publicPath = resolveAssetPublicPath(asset);
   if (!isMilkbarModelPublicPath(publicPath)) return;
-  const storedPath = asset.filepath?.trim() ?? asset.fileUrl?.trim() ?? '';
-  const filepath = isHttpUrl(storedPath) ? storedPath : toMilkbarFastCometAssetUrl(publicPath);
+  const filepath = toMilkbarFastCometAssetUrl(publicPath);
   await deleteFromFastComet({
     filepath,
     publicPath,
@@ -361,6 +417,33 @@ const readMilkbarModelAssetBuffer = async (
     id: asset.id,
     publicPath,
   });
+};
+
+type Asset3DRepositoryMatch = {
+  repository: Asset3DRepository;
+  asset: Asset3DRecord;
+};
+
+const findMilkbarAsset3DRepositoryAsset = async (
+  id: string
+): Promise<Asset3DRepositoryMatch | null> => {
+  const repository = getAsset3DRepository({ storageProfile: 'milkbarCms' });
+  let milkbarLookupError: unknown;
+  let hasMilkbarLookupError = false;
+
+  try {
+    const asset = await repository.getAsset3DById(id);
+    if (asset !== null) return { repository, asset };
+  } catch (error) {
+    milkbarLookupError = error;
+    hasMilkbarLookupError = true;
+  }
+
+  const fallbackMatch = await findAsset3DRepositoryAsset(id);
+  if (fallbackMatch !== null) return fallbackMatch;
+
+  if (hasMilkbarLookupError) throw milkbarLookupError;
+  return null;
 };
 
 function resolveAssetStorageTarget(
@@ -415,6 +498,7 @@ async function prepareAssetStorage(
   fileBuffer: Buffer,
   options: UploadOptions
 ): Promise<{
+  fastCometVerifiedAt?: string;
   filename: string;
   mirroredLocally: boolean;
   publicPath: string;
@@ -450,8 +534,13 @@ async function prepareAssetStorage(
   if (storageTarget.mirrorPublicHtml) {
     await writeMilkbarPublicHtmlMirror(publicPath, fileBuffer);
   }
+  const fastCometVerifiedAt =
+    options.storageProfile === 'milkbarCms' && storageResult.source === 'fastcomet'
+      ? await requireMilkbarFastCometModelUrlVerification(storageResult.filepath)
+      : undefined;
 
   return {
+    ...(fastCometVerifiedAt !== undefined ? { fastCometVerifiedAt } : {}),
     filename,
     mirroredLocally: storageResult.mirroredLocally,
     publicPath,
@@ -489,6 +578,7 @@ function getAssetName(filename: string, nameOption?: string): string {
 }
 
 function mapAssetOptionsToCreatePayload(input: {
+  fastCometVerifiedAt?: string;
   filename: string;
   storedFilepath: string;
   file: File;
@@ -498,6 +588,7 @@ function mapAssetOptionsToCreatePayload(input: {
   storageSource: FileStorageSource;
 }): Asset3DCreateInput {
   const {
+    fastCometVerifiedAt,
     filename,
     file,
     mirroredLocally,
@@ -533,6 +624,13 @@ function mapAssetOptionsToCreatePayload(input: {
       ...(options.storageProfile === 'milkbarCms'
         ? { publicBaseUrl: resolveMilkbarFastCometStorageProfile().publicBaseUrl }
         : {}),
+      ...(options.storageProfile === 'milkbarCms' && storageSource === 'fastcomet'
+        ? {
+            fastCometUploadStatus: 'completed',
+            uploadedToFastCometAt: fastCometVerifiedAt ?? new Date().toISOString(),
+            ...(fastCometVerifiedAt !== undefined ? { fastCometVerifiedAt } : {}),
+          }
+        : {}),
     },
   };
 }
@@ -562,6 +660,7 @@ export async function uploadAsset3D(
 
   try {
     const {
+      fastCometVerifiedAt,
       filename,
       mirroredLocally,
       publicPath,
@@ -574,6 +673,7 @@ export async function uploadAsset3D(
     );
     const repository = getAsset3DRepository({ storageProfile: resolvedOptions.storageProfile });
     const payload = mapAssetOptionsToCreatePayload({
+      ...(fastCometVerifiedAt !== undefined ? { fastCometVerifiedAt } : {}),
       filename,
       storedFilepath,
       file,
@@ -666,7 +766,7 @@ export async function createMilkbarAsset3DFromLink(input: {
 }
 
 export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset3DRecord | null> {
-  const match = await findAsset3DRepositoryAsset(id);
+  const match = await findMilkbarAsset3DRepositoryAsset(id);
   if (match === null) return null;
 
   const { asset } = match;
@@ -693,6 +793,9 @@ export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset
     },
   });
   await writeMilkbarPublicHtmlMirror(uploadPublicPath, buffer);
+  const fastCometVerifiedAt = await requireMilkbarFastCometModelUrlVerification(
+    storageResult.filepath
+  );
 
   return await match.repository.updateAsset3D(id, {
     filepath: storageResult.filepath,
@@ -705,6 +808,7 @@ export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset
       storageSource: 'fastcomet',
       fastCometUploadStatus: 'completed',
       uploadedToFastCometAt: new Date().toISOString(),
+      fastCometVerifiedAt,
       mirroredLocally: true,
     },
   });

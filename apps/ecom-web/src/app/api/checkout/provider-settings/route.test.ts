@@ -39,6 +39,13 @@ function makeProviderSettings(overrides: Record<string, unknown> = {}): Record<s
         mode: 'sandbox',
         enabled: false,
       },
+      bankTransfer: {
+        accountName: 'Stargater Test Store',
+        bankName: 'Test Bank',
+        bic: 'TESTPLPW',
+        enabled: true,
+        iban: 'PL00123456789012345678901234',
+      },
     },
     shipping: {
       dpd: {
@@ -104,6 +111,13 @@ describe('GET /api/checkout/provider-settings', () => {
           enabled: false,
           clientId: '',
           mode: 'sandbox',
+        },
+        bankTransfer: {
+          accountName: 'Stargater Test Store',
+          bankName: 'Test Bank',
+          bic: 'TESTPLPW',
+          enabled: true,
+          iban: 'PL00123456789012345678901234',
         },
       },
       shipping: {

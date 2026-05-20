@@ -39,21 +39,29 @@ const isMilkbarFastCometAsset = (asset: Asset3DRecord | undefined): boolean => {
   if (getAsset3DMetadataString(asset, 'storageProfile') !== 'milkbarCms') return false;
   const storageSource = getAsset3DMetadataString(asset, 'storageSource');
   const uploadStatus = getAsset3DMetadataString(asset, 'fastCometUploadStatus');
+  const verifiedAt = getAsset3DMetadataString(asset, 'fastCometVerifiedAt');
   const hasRemotePath = [asset?.filepath, asset?.fileUrl].some(
     (value) => /^https?:\/\//i.test(value?.trim() ?? '')
   );
-  return [storageSource === 'fastcomet', uploadStatus === 'completed', hasRemotePath].some(
-    (value) => value
+  return (
+    verifiedAt !== null &&
+    [storageSource === 'fastcomet', uploadStatus === 'completed', hasRemotePath].some(
+      (value) => value
+    )
   );
 };
 
 const isMilkbarModelUrl = (modelUrl: string | undefined): boolean =>
   modelUrl?.includes(MILKBAR_MODEL_PUBLIC_PATH_PREFIX) === true;
 
-const isMilkbarFastCometModelUrl = (modelUrl: string | undefined): boolean => {
-  const trimmed = modelUrl?.trim() ?? '';
-  if (!/^https?:\/\//i.test(trimmed)) return false;
-  return isMilkbarModelUrl(trimmed);
+const normalizeAbsoluteHttpBaseUrl = (value: string): string | null => {
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    return null;
+  }
 };
 
 const getMilkbarFastCometModelBaseUrl = (): string => {
@@ -61,12 +69,25 @@ const getMilkbarFastCometModelBaseUrl = (): string => {
     process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'] ??
     process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_BASE_URL'] ??
     '';
-  const trimmed = configured.trim();
-  return trimmed.length > 0 ? trimmed.replace(/\/+$/, '') : DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL;
+  return (
+    normalizeAbsoluteHttpBaseUrl(configured) ??
+    normalizeAbsoluteHttpBaseUrl(DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL) ??
+    DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL
+  );
 };
 
 const joinPublicUrl = (baseUrl: string, publicPath: string): string =>
   `${baseUrl.replace(/\/+$/, '')}/${publicPath.replace(/^\/+/, '')}`;
+
+const isMilkbarFastCometModelUrl = (modelUrl: string | undefined): boolean => {
+  const trimmed = modelUrl?.trim() ?? '';
+  if (!/^https?:\/\//i.test(trimmed) || !isMilkbarModelUrl(trimmed)) return false;
+  try {
+    return new URL(trimmed).origin === new URL(getMilkbarFastCometModelBaseUrl()).origin;
+  } catch {
+    return false;
+  }
+};
 
 const toMilkbarModelPublicPath = (value: string | undefined | null): string | null => {
   const trimmed = trimText(value);
@@ -103,25 +124,17 @@ const resolveFastCometModelUrl = (publicPath: string | null): string =>
 
 const canUseFastCometModelSource = ({
   asset,
-  assignedAssetId,
   assignedModelUrl,
-  hasSavedMilkbarModelPath,
   publicPath,
 }: {
   asset: Asset3DRecord | undefined;
-  assignedAssetId: string;
   assignedModelUrl: string;
-  hasSavedMilkbarModelPath: boolean;
   publicPath: string | null;
 }): boolean =>
   publicPath !== null &&
-  [
-    hasSavedMilkbarModelPath,
-    assignedAssetId.length === 0,
-    asset === undefined,
-    isMilkbarFastCometAsset(asset),
-    isMilkbarFastCometModelUrl(assignedModelUrl),
-  ].some((value) => value);
+  [isMilkbarFastCometAsset(asset), isMilkbarFastCometModelUrl(assignedModelUrl)].some(
+    (value) => value
+  );
 
 const resolveModel3DUploadUrl = ({
   assignedAssetId,
@@ -154,12 +167,9 @@ export const resolveModel3DSlotSources = ({
   const assetPublicPath = getAsset3DModelPublicPath(asset);
   const modelPublicPath = toMilkbarModelPublicPath(assignedModelUrl);
   const publicPath = assetPublicPath ?? modelPublicPath;
-  const hasSavedMilkbarModelPath = modelPublicPath !== null && assignedModelUrl.length > 0;
   const canUseFastCometSource = canUseFastCometModelSource({
     asset,
-    assignedAssetId,
     assignedModelUrl,
-    hasSavedMilkbarModelPath,
     publicPath,
   });
   return {

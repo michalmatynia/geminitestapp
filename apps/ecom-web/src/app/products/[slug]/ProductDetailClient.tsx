@@ -541,6 +541,7 @@ export function ProductDetailClient({
                 className='btn-primary w-full justify-center mb-3'
                 style={{
                   background: adding ? 'var(--accent)' : 'var(--fg)',
+                  color: 'var(--bg)',
                   transition: 'background 0.3s ease, transform 0.2s ease',
                 }}
               >

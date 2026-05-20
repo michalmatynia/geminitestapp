@@ -27,6 +27,13 @@ const SETTINGS_KEY = 'payment_shipping_provider_settings_v1';
 function makeSettings(): Record<string, unknown> {
   return {
     payment: {
+      bankTransfer: {
+        accountName: 'Stargater Test Store',
+        bankName: 'Test Bank',
+        bic: 'TESTPLPW',
+        enabled: true,
+        iban: 'PL00123456789012345678901234',
+      },
       payu: {
         apiUrl: 'https://payu.example.test',
         clientId: 'payu-client',
@@ -35,6 +42,19 @@ function makeSettings(): Record<string, unknown> {
         notifyUrl: '',
         posId: 'payu-pos',
         secondKey: 'payu-second-key',
+      },
+      paypal: {
+        clientId: '',
+        clientSecret: '',
+        enabled: false,
+        mode: 'sandbox',
+        webhookId: '',
+      },
+      stripe: {
+        enabled: false,
+        publishableKey: '',
+        secretKey: '',
+        webhookSecret: '',
       },
     },
     shipping: {
@@ -89,7 +109,14 @@ describe('ecommerce provider settings reader', () => {
       $or: [{ key: SETTINGS_KEY }, { _id: SETTINGS_KEY }],
     });
     expect(settings).toMatchObject({
-      payment: { payu: { clientId: 'payu-client', enabled: true } },
+      payment: {
+        bankTransfer: {
+          accountName: 'Stargater Test Store',
+          enabled: true,
+          iban: 'PL00123456789012345678901234',
+        },
+        payu: { clientId: 'payu-client', enabled: true },
+      },
       shipping: {
         dpd: { enabled: false, trackingUrlTemplate: 'https://dpd.example.test/{trackingNumber}' },
         inpost: { enabled: true, geowidgetToken: 'geo-token' },
@@ -107,6 +134,17 @@ describe('ecommerce provider settings reader', () => {
       poczta_polska: false,
     });
     expect(mocks.findOne).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns payment provider availability including bank transfer', async () => {
+    mocks.findOne.mockResolvedValue({ key: SETTINGS_KEY, value: makeSettings() });
+
+    await expect(readPaymentProviderAvailability()).resolves.toEqual({
+      bankTransfer: true,
+      payu: true,
+      paypal: false,
+      stripe: false,
+    });
   });
 
   it('returns empty availability when provider settings are absent or unreadable', async () => {

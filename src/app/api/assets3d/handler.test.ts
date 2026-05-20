@@ -2,12 +2,19 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  cacheTag: vi.fn(),
   getAsset3DRepository: vi.fn(),
   assertMilkbarAsset3DFastCometUploadRedisRuntime: vi.fn(),
   deleteMilkbarAsset3DInRedisRuntime: vi.fn(),
+  revalidateTag: vi.fn(),
   uploadAsset3D: vi.fn(),
   uploadMilkbarAsset3DInRedisRuntime: vi.fn(),
   validate3DFile: vi.fn(),
+}));
+
+vi.mock('next/cache', () => ({
+  cacheTag: mocks.cacheTag,
+  revalidateTag: mocks.revalidateTag,
 }));
 
 vi.mock('@/features/viewer3d/server', () => ({

@@ -65,7 +65,7 @@ type RetainedArticleListResponse = {
   total: number;
 };
 
-type PlaywrightScripterListEntry = {
+export type PlaywrightScripterListEntry = {
   description: string | null;
   id: string;
   siteHost: string;
@@ -797,72 +797,6 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     }
   }, [activePost]);
 
-  const handleScrape = useCallback(async (): Promise<void> => {
-    setScrapeError(null);
-    setGenerationError(null);
-    setScrapeStatus('Scraping article sources...');
-    setGeneratedOutput(null);
-    setIsScraping(true);
-    try {
-      const response = await api.post<SocialArticleScrapeResponse>(
-        '/api/filemaker/social-article-aggregator/scrape',
-        {
-          customUrls: splitLooseUrls(customUrls),
-          maxArticlesPerSource,
-          obeyRobotsTxt,
-          sourcePresetIds: selectedPresetIds,
-        },
-        { timeout: 260_000 }
-      );
-      const articleIds = response.articles.map((article) => article.id);
-      const { sourcePresetIds, sourceUrls } = deriveScrapeResultSourceMetadata({
-        articles: response.articles,
-        fallbackSourcePresetIds: selectedPresetIds,
-        fallbackSourceUrls: splitLooseUrls(customUrls),
-        run: response.run,
-      });
-      setArticles(response.articles);
-      setSelectedArticleIds(articleIds);
-      setArticleFilter('');
-      setExpandedArticleId(null);
-      setScrapeRunId(response.run.id);
-      setSelectedPresetIds(sourcePresetIds);
-      setCustomUrls(sourceUrls.join('\n'));
-      setRecentRuns((current) => [
-        response.run,
-        ...current.filter((run) => run.id !== response.run.id),
-      ].slice(0, 12));
-      setScrapeStatus(
-        response.run.status === 'completed'
-          ? `Scraped ${response.articles.length} article${response.articles.length === 1 ? '' : 's'}.`
-          : response.run.message || 'Article scrape finished.'
-      );
-      if (articleIds.length === 0) {
-        setScrapeStatus(NO_ARTICLES_GENERATION_MESSAGE);
-        setGenerationError(NO_ARTICLES_GENERATION_MESSAGE);
-        toast(NO_ARTICLES_GENERATION_MESSAGE, { variant: 'warning' });
-      }
-      if (response.run.warnings.length > 0) {
-        toast(`${response.run.warnings.length} scrape warning${response.run.warnings.length === 1 ? '' : 's'}`, {
-          variant: 'warning',
-        });
-      }
-      const targetPost = await resolveTargetPost();
-      if (targetPost) {
-        await persistPostArticleMetadata(targetPost, {
-          articleIds,
-          articleScrapeRunId: response.run.id,
-          articleSourcePresetIds: sourcePresetIds,
-          articleSourceUrls: sourceUrls,
-        });
-      }
-    } catch (error) {
-      setScrapeError(error instanceof Error ? error.message : 'Article scrape failed.');
-    } finally {
-      setIsScraping(false);
-    }
-  }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, persistPostArticleMetadata, resolveTargetPost, selectedPresetIds, toast]);
-
   const handleScrapeCompleted = useCallback(async (response: SocialArticleScrapeResponse): Promise<void> => {
     setScrapeError(null);
     setGenerationError(null);
@@ -1043,8 +977,6 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     noArticlesSelected,
     toast,
   ]);
-
-  const canScrape = selectedPresetIds.length > 0 || splitLooseUrls(customUrls).length > 0;
 
   return (
     <>

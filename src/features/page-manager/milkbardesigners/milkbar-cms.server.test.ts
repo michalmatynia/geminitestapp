@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MilkbarCmsUpdateInput, MilkbarProjectCmsRecord } from './milkbar-cms.types';
 import {
@@ -62,6 +62,10 @@ const buildInput = (): MilkbarCmsUpdateInput => ({
 describe('uploadMilkbarCmsFilesToFastCometOnSave', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
+    );
     mocks.getCmsBuilderImageFileRepository.mockResolvedValue({
       listImageFiles: vi.fn().mockResolvedValue([
         {
@@ -122,6 +126,10 @@ describe('uploadMilkbarCmsFilesToFastCometOnSave', () => {
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('uploads only local Milkbar CMS images and 3D assets to FastComet on save', async () => {
     await uploadMilkbarCmsFilesToFastCometOnSave(buildInput());
 
@@ -134,6 +142,28 @@ describe('uploadMilkbarCmsFilesToFastCometOnSave', () => {
       requestedAt: expect.any(String),
     });
     expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledTimes(1);
+    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
+      assetId: 'asset-local',
+      requestedAt: expect.any(String),
+    });
+  });
+
+  it('re-uploads stale FastComet model records when the public uploads URL is missing', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    await uploadMilkbarCmsFilesToFastCometOnSave(buildInput());
+
+    expect(fetch).toHaveBeenCalledWith(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/fastcomet.glb',
+      {
+        cache: 'no-store',
+        method: 'HEAD',
+      }
+    );
+    expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
+      assetId: 'asset-fastcomet',
+      requestedAt: expect.any(String),
+    });
     expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
       assetId: 'asset-local',
       requestedAt: expect.any(String),

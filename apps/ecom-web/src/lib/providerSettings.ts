@@ -69,8 +69,24 @@ export type PayPalProviderSettings = {
   enabled: boolean;
 };
 
+export type BankTransferProviderSettings = {
+  accountName: string;
+  bankName: string;
+  bic: string;
+  enabled: boolean;
+  iban: string;
+};
+
+export type PaymentProviderAvailability = {
+  bankTransfer?: boolean;
+  payu?: boolean;
+  paypal?: boolean;
+  stripe?: boolean;
+};
+
 export type ProviderSettings = {
   payment: {
+    bankTransfer: BankTransferProviderSettings;
     payu: PayUProviderSettings;
     stripe: StripeProviderSettings;
     paypal: PayPalProviderSettings;
@@ -84,6 +100,13 @@ export type ProviderSettings = {
 
 const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {
   payment: {
+    bankTransfer: {
+      accountName: '',
+      bankName: '',
+      bic: '',
+      enabled: false,
+      iban: '',
+    },
     payu: {
       apiUrl: '',
       clientId: '',
@@ -259,11 +282,22 @@ function normalizePayPal(input: Record<string, unknown>): PayPalProviderSettings
   };
 }
 
+function normalizeBankTransfer(input: Record<string, unknown>): BankTransferProviderSettings {
+  return {
+    accountName: readString(input['accountName']),
+    bankName: readString(input['bankName']),
+    bic: readString(input['bic']),
+    enabled: readBoolean(input['enabled'], false),
+    iban: readString(input['iban']),
+  };
+}
+
 function normalizeProviderSettings(value: unknown): ProviderSettings | null {
   const root = parseRecord(value);
   if (root === null) return null;
   return {
     payment: {
+      bankTransfer: normalizeBankTransfer(readNestedRecord(root, 'payment', 'bankTransfer')),
       payu: normalizePayU(readNestedRecord(root, 'payment', 'payu')),
       stripe: normalizeStripe(readNestedRecord(root, 'payment', 'stripe')),
       paypal: normalizePayPal(readNestedRecord(root, 'payment', 'paypal')),
@@ -322,10 +356,15 @@ export async function readPayPalProviderSettings(): Promise<PayPalProviderSettin
   return (await readEcommerceProviderSettings())?.payment.paypal ?? null;
 }
 
-export async function readPaymentProviderAvailability(): Promise<{ payu?: boolean; stripe?: boolean; paypal?: boolean }> {
+export async function readBankTransferProviderSettings(): Promise<BankTransferProviderSettings | null> {
+  return (await readEcommerceProviderSettings())?.payment.bankTransfer ?? null;
+}
+
+export async function readPaymentProviderAvailability(): Promise<PaymentProviderAvailability> {
   const settings = await readEcommerceProviderSettings();
   if (settings === null) return {};
   return {
+    bankTransfer: settings.payment.bankTransfer.enabled,
     payu: settings.payment.payu.enabled,
     stripe: settings.payment.stripe.enabled,
     paypal: settings.payment.paypal.enabled,

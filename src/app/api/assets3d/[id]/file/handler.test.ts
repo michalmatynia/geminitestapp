@@ -158,7 +158,7 @@ describe('assets3d file handler', () => {
     vi.unstubAllGlobals();
   });
 
-  it('redirects Milkbar CMS assets to the FastComet CDN when no mirror exists', async () => {
+  it('proxies Milkbar CMS assets from FastComet when no mirror exists', async () => {
     getAsset3DByIdMock.mockResolvedValue({
       id: 'asset-4',
       filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
@@ -171,7 +171,14 @@ describe('assets3d file handler', () => {
     isHttpFilepathMock.mockReturnValue(true);
     getDiskPathFromPublicPathMock.mockReturnValue('/tmp/model.gltf');
     existsSyncMock.mockReturnValue(false);
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('remote-model', {
+        headers: {
+          'content-length': '12',
+          'content-type': 'model/gltf+json',
+        },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const response = await getHandler(
@@ -180,9 +187,62 @@ describe('assets3d file handler', () => {
       { id: 'asset-4' }
     );
 
-    expect(response.status).toBe(302);
-    expect(response.headers.get('location')).toBe('https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(response.headers.get('location')).toBeNull();
+    expect(response.headers.get('content-type')).toBe('model/gltf+json');
+    expect(response.headers.get('content-length')).toBe('12');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/model.gltf',
+      {
+        cache: 'no-store',
+        method: 'GET',
+      }
+    );
+    expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('remote-model');
+    vi.unstubAllGlobals();
+  });
+
+  it('checks Milkbar FastComet assets through the local API for HEAD preview probes', async () => {
+    getAsset3DByIdMock.mockResolvedValue({
+      id: 'asset-head',
+      filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb',
+      mimetype: 'model/gltf-binary',
+      metadata: {
+        publicPath: '/uploads/cms/models/model.glb',
+        storageProfile: 'milkbarCms',
+      },
+    });
+    isHttpFilepathMock.mockReturnValue(true);
+    getDiskPathFromPublicPathMock.mockReturnValue('/tmp/model.glb');
+    existsSyncMock.mockReturnValue(false);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, {
+        headers: {
+          'content-length': '123',
+          'content-type': 'model/gltf-binary',
+        },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await getHandler(
+      new Request('http://localhost/api/assets3d/asset-head/file', {
+        method: 'HEAD',
+      }) as Parameters<typeof getHandler>[0],
+      {} as Parameters<typeof getHandler>[1],
+      { id: 'asset-head' }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('model/gltf-binary');
+    expect(response.headers.get('content-length')).toBe('123');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb',
+      {
+        cache: 'no-store',
+        method: 'HEAD',
+      }
+    );
     vi.unstubAllGlobals();
   });
 });

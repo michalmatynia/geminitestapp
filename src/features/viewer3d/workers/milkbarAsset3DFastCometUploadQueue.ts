@@ -4,9 +4,15 @@ import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   AppErrorCodes,
   createAppError,
+  databaseError,
+  isAppError,
   notFoundError,
   serviceUnavailableError,
 } from '@/shared/errors/app-error';
+import {
+  isLocalDatabaseConnectionRefused,
+  LOCAL_DATABASE_SERVER_UNAVAILABLE_MESSAGE,
+} from '@/shared/errors/database-error-guidance';
 import {
   createManagedQueue,
   isRedisAvailable,
@@ -33,21 +39,33 @@ const WAIT_FOR_UPLOAD_TIMEOUT_MS = 2 * 60 * 1000;
 const createMilkbarFastCometPublishError = (
   error: unknown,
   data: MilkbarAsset3DFastCometUploadJobData
-): Error =>
-  createAppError(
-    'FastComet rejected the Milkbar 3D model upload. The model was kept locally; try Save CMS again after checking the FastComet upload endpoint.',
-    {
-      code: AppErrorCodes.externalService,
-      httpStatus: 502,
-      expected: true,
-      retryable: true,
-      cause: error,
-      meta: {
-        assetId: data.assetId,
-        queue: MILKBAR_ASSET3D_FASTCOMET_UPLOAD_QUEUE_NAME,
-      },
-    }
-  );
+): Error => {
+  const meta = {
+    assetId: data.assetId,
+    queue: MILKBAR_ASSET3D_FASTCOMET_UPLOAD_QUEUE_NAME,
+  };
+  if (isAppError(error)) {
+    return error.withMeta(meta);
+  }
+  if (isLocalDatabaseConnectionRefused(error)) {
+    return databaseError(LOCAL_DATABASE_SERVER_UNAVAILABLE_MESSAGE, error, meta);
+  }
+
+  const causeMessage = error instanceof Error ? error.message.trim() : String(error).trim();
+  const message =
+    causeMessage.length > 0
+      ? `FastComet rejected the Milkbar 3D model upload: ${causeMessage}`
+      : 'FastComet rejected the Milkbar 3D model upload. The model was kept locally; try Save CMS again after checking the FastComet upload endpoint.';
+
+  return createAppError(message, {
+    code: AppErrorCodes.externalService,
+    httpStatus: 502,
+    expected: true,
+    retryable: true,
+    cause: error,
+    meta,
+  });
+};
 
 const isWorkerHealthReady = (health: QueueHealthStatus): boolean =>
   health.deliveryMode === 'queue' &&

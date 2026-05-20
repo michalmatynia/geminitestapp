@@ -13,15 +13,15 @@ import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   PROVIDER_SETTINGS_ENDPOINT,
-  type DpdSettings,
-  type InpostSettings,
-  type PayuSettings,
-  type PocztaPolskaSettings,
   type ProviderSettingsMeta,
   type ProviderSettingsResponse,
   type ProviderSettingsTarget,
   type ProviderSettingsWriteResponse,
 } from './EcommerceProviderSettingsPanel.types';
+import {
+  useProviderSettingsUpdaters,
+  type ProviderSettingsUpdaters,
+} from './EcommerceProviderSettingsPanel.updaters';
 
 type SettingsSetter = Dispatch<SetStateAction<EcommerceProviderSettingsInput>>;
 type Toast = ReturnType<typeof useToast>['toast'];
@@ -40,20 +40,16 @@ type ProviderSettingsPanelModel = {
   setPushToEcommerce: (value: boolean) => void;
   settings: EcommerceProviderSettingsInput;
   targets: ProviderSettingsTarget[];
-  updateDpd: <K extends keyof DpdSettings>(field: K, value: DpdSettings[K]) => void;
-  updateInpost: <K extends keyof InpostSettings>(field: K, value: InpostSettings[K]) => void;
-  updatePayu: <K extends keyof PayuSettings>(field: K, value: PayuSettings[K]) => void;
-  updatePocztaPolska: <K extends keyof PocztaPolskaSettings>(
-    field: K,
-    value: PocztaPolskaSettings[K]
-  ) => void;
-};
+} & ProviderSettingsUpdaters;
 
 export const cloneProviderSettings = (
   settings: EcommerceProviderSettingsInput = DEFAULT_ECOMMERCE_PROVIDER_SETTINGS
 ): EcommerceProviderSettingsInput => ({
   payment: {
+    bankTransfer: { ...settings.payment.bankTransfer },
+    paypal: { ...settings.payment.paypal },
     payu: { ...settings.payment.payu },
+    stripe: { ...settings.payment.stripe },
   },
   shipping: {
     dpd: { ...settings.shipping.dpd },
@@ -209,61 +205,6 @@ function useSaveProviderSettings(args: {
   }, [pushToEcommerce, saveMutation, setError, settings]);
 
   return { handleSave, isSaving: saveMutation.isPending };
-}
-
-function useProviderSettingsUpdaters(setSettings: SettingsSetter): {
-  updateDpd: <K extends keyof DpdSettings>(field: K, value: DpdSettings[K]) => void;
-  updateInpost: <K extends keyof InpostSettings>(field: K, value: InpostSettings[K]) => void;
-  updatePayu: <K extends keyof PayuSettings>(field: K, value: PayuSettings[K]) => void;
-  updatePocztaPolska: <K extends keyof PocztaPolskaSettings>(
-    field: K,
-    value: PocztaPolskaSettings[K]
-  ) => void;
-} {
-  const updatePayu = useCallback(<K extends keyof PayuSettings>(
-    field: K,
-    value: PayuSettings[K]
-  ): void => {
-    setSettings((current) => ({
-      ...current,
-      payment: { ...current.payment, payu: { ...current.payment.payu, [field]: value } },
-    }));
-  }, [setSettings]);
-
-  const updateInpost = useCallback(<K extends keyof InpostSettings>(
-    field: K,
-    value: InpostSettings[K]
-  ): void => {
-    setSettings((current) => ({
-      ...current,
-      shipping: { ...current.shipping, inpost: { ...current.shipping.inpost, [field]: value } },
-    }));
-  }, [setSettings]);
-
-  const updateDpd = useCallback(<K extends keyof DpdSettings>(
-    field: K,
-    value: DpdSettings[K]
-  ): void => {
-    setSettings((current) => ({
-      ...current,
-      shipping: { ...current.shipping, dpd: { ...current.shipping.dpd, [field]: value } },
-    }));
-  }, [setSettings]);
-
-  const updatePocztaPolska = useCallback(<K extends keyof PocztaPolskaSettings>(
-    field: K,
-    value: PocztaPolskaSettings[K]
-  ): void => {
-    setSettings((current) => ({
-      ...current,
-      shipping: {
-        ...current.shipping,
-        pocztaPolska: { ...current.shipping.pocztaPolska, [field]: value },
-      },
-    }));
-  }, [setSettings]);
-
-  return { updateDpd, updateInpost, updatePayu, updatePocztaPolska };
 }
 
 export function useProviderSettingsPanelModel(): ProviderSettingsPanelModel {

@@ -44,6 +44,7 @@ const buildContext = (
 const makeSettings = (): EcommerceProviderSettingsInput => ({
   ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS,
   payment: {
+    ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment,
     payu: {
       ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment.payu,
       clientId: 'payu-client',
@@ -86,9 +87,10 @@ describe('products ecommerce provider settings handler', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(body).toMatchObject({
-      ok: true,
-      settings: { payment: { payu: { clientId: 'payu-client', enabled: true } } },
+    expect(body.ok).toBe(true);
+    expect(body.settings.payment.payu).toMatchObject({
+      clientId: 'payu-client',
+      enabled: true,
     });
   });
 

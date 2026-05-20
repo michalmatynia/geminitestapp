@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   listCategoryMappingsMock: vi.fn(),
   listProducerMappingsMock: vi.fn(),
   listTagMappingsMock: vi.fn(),
+  listParametersMock: vi.fn(),
+  getParameterByIdMock: vi.fn(),
   getProducerByIdMock: vi.fn(),
   findProducerByNameMock: vi.fn(),
   getTagByIdMock: vi.fn(),
@@ -38,6 +40,13 @@ vi.mock('@/shared/lib/products/services/producer-repository', () => ({
   getProducerRepository: () => ({
     getProducerById: (...args: unknown[]) => mocks.getProducerByIdMock(...args),
     findByName: (...args: unknown[]) => mocks.findProducerByNameMock(...args),
+  }),
+}));
+
+vi.mock('@/shared/lib/products/services/parameter-repository', () => ({
+  getParameterRepository: () => ({
+    listParameters: (...args: unknown[]) => mocks.listParametersMock(...args),
+    getParameterById: (...args: unknown[]) => mocks.getParameterByIdMock(...args),
   }),
 }));
 
@@ -126,6 +135,8 @@ describe('prepareBaseExportMappingsAndProduct', () => {
     mocks.listCategoryMappingsMock.mockResolvedValue([]);
     mocks.listProducerMappingsMock.mockResolvedValue([]);
     mocks.listTagMappingsMock.mockResolvedValue([]);
+    mocks.listParametersMock.mockResolvedValue([]);
+    mocks.getParameterByIdMock.mockResolvedValue(null);
     mocks.getProducerByIdMock.mockResolvedValue(null);
     mocks.findProducerByNameMock.mockResolvedValue(null);
     mocks.getTagByIdMock.mockResolvedValue(null);
@@ -171,6 +182,75 @@ describe('prepareBaseExportMappingsAndProduct', () => {
         internalCategoryId: 'category-1',
       })
     );
+  });
+
+  it('adds unmapped product parameters as Base feature mappings', async () => {
+    mocks.listExportTemplatesMock.mockResolvedValue([
+      {
+        id: 'template-1',
+        mappings: [
+          {
+            sourceKey: 'text_fields.features.Material',
+            targetField: 'parameter:material',
+          },
+          {
+            sourceKey: 'text_fields.name',
+            targetField: 'name_en',
+          },
+        ],
+      },
+    ]);
+    mocks.listParametersMock.mockResolvedValue([
+      {
+        id: 'material',
+        name_en: 'Material',
+        name_pl: 'Materiał',
+        name_de: null,
+        selectorType: 'text',
+        optionLabels: [],
+        linkedTitleTermType: null,
+        catalogId: 'catalog-1',
+      },
+      {
+        id: 'condition',
+        name_en: 'Condition',
+        name_pl: 'Stan',
+        name_de: null,
+        selectorType: 'text',
+        optionLabels: [],
+        linkedTitleTermType: null,
+        catalogId: 'catalog-1',
+      },
+    ]);
+
+    const result = await prepareBaseExportMappingsAndProduct({
+      data: baseRequest,
+      imagesOnly: false,
+      productId: 'product-1',
+      resolvedInventoryId: 'inventory-1',
+      product: createProduct({
+        parameters: [
+          { parameterId: 'material', value: 'Steel' },
+          { parameterId: 'condition', value: 'New' },
+        ],
+      }),
+    });
+
+    expect(result.mappings).toEqual([
+      {
+        sourceKey: 'text_fields.features.Condition',
+        targetField: 'parameter:condition',
+      },
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:material',
+      },
+      {
+        sourceKey: 'text_fields.name',
+        targetField: 'name_en',
+      },
+    ]);
+    expect(mocks.listParametersMock).toHaveBeenCalledWith({ catalogId: 'catalog-1' });
   });
 
   it('loads producer lookups for active templates that explicitly map producer ids', async () => {

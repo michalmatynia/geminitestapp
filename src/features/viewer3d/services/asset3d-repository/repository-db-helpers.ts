@@ -4,12 +4,13 @@ import { type Asset3DDocument } from './repository-utils';
 const PRIMARY_COLLECTION = 'Asset3D';
 const LEGACY_COLLECTION = 'asset3d';
 
-let collectionNamePromise: Promise<string> | null = null;
+const collectionNamePromises = new WeakMap<Db, Promise<string>>();
 
 const resolveCollectionName = async (db: Db): Promise<string> => {
-  if (collectionNamePromise !== null) return collectionNamePromise;
+  const cachedCollectionName = collectionNamePromises.get(db);
+  if (cachedCollectionName !== undefined) return cachedCollectionName;
 
-  collectionNamePromise = (async () => {
+  const collectionNamePromise = (async () => {
     try {
       const collections = await db.listCollections({}, { nameOnly: true }).toArray();
       const names = collections.map((c) => c.name);
@@ -25,6 +26,7 @@ const resolveCollectionName = async (db: Db): Promise<string> => {
       return PRIMARY_COLLECTION;
     }
   })();
+  collectionNamePromises.set(db, collectionNamePromise);
 
   return collectionNamePromise;
 };

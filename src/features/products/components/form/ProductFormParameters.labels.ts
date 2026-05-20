@@ -111,8 +111,8 @@ export const getParameterLanguageValue = (
   if (typeof localizedValue === 'string') return localizedValue;
   // For non-primary languages: never fall back to other-language values or scalar
   if (normalizedLanguageCode !== primaryLanguageCode) return '';
-  // For the primary language: fall back to scalar value even when valuesByLanguage
-  // has entries for other language codes (e.g. "Default" tab with en/pl-only values)
+  // For the primary language: fall back to scalar only for legacy non-localized values.
+  if (valuesByLanguage && Object.keys(valuesByLanguage).length > 0) return '';
   return typeof entry.value === 'string' ? entry.value : '';
 };
 

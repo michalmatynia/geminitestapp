@@ -100,8 +100,13 @@ export const useProductFormParametersModel = (): ProductFormParametersViewModel 
     updateParameterInferenceSkip,
     removeParameterValue,
   } = useProductFormParameters();
-  const { selectedCatalogIds, filteredLanguages } = useProductFormMetadata();
-  const languageState = useProductParameterLanguageState(filteredLanguages);
+  const { selectedCatalogIds, filteredLanguages, catalogsLoading, languagesLoading } =
+    useProductFormMetadata();
+  const languageState = useProductParameterLanguageState({
+    filteredLanguages,
+    catalogsLoading,
+    languagesLoading,
+  });
   const [sequenceState, setSequenceState] = useState<ParameterSequenceState>(
     INITIAL_SEQUENCE_STATE
   );

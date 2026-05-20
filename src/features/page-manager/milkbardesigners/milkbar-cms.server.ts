@@ -1086,13 +1086,48 @@ const uploadMilkbarCmsMediaToFastCometOnSave = async (
   );
 };
 
-const isMilkbarAssetUploadedToFastComet = (asset: Asset3DRecord): boolean => {
+const getMilkbarAssetFastCometUrl = (asset: Asset3DRecord): string | undefined => {
+  const publicPath = resolveMilkbarAssetPublicPath(asset);
+  if (publicPath !== undefined) {
+    return joinUrl(resolveMilkbarFastCometStorageProfile().publicBaseUrl, publicPath);
+  }
+  const candidates = [asset.filepath, asset.fileUrl].filter(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  );
+  return candidates.find(isAbsoluteHttpUrl)?.trim();
+};
+
+const verifyMilkbarAssetFastCometUrl = async (asset: Asset3DRecord): Promise<boolean> => {
+  const url = getMilkbarAssetFastCometUrl(asset);
+  if (url === undefined) return false;
+  try {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      method: 'HEAD',
+    });
+    return response.ok || (response.status >= 300 && response.status < 400);
+  } catch (error) {
+    logMilkbarSystemEvent({
+      level: 'warn',
+      message: '[milkbar-cms] FastComet model URL verification failed before save upload.',
+      error,
+      context: { assetId: asset.id, url },
+    });
+    return false;
+  }
+};
+
+const isMilkbarAssetUploadedToFastComet = async (asset: Asset3DRecord): Promise<boolean> => {
   const storageSource = metadataString(asset.metadata, 'storageSource');
   const status = metadataString(asset.metadata, 'fastCometUploadStatus');
-  if (storageSource === 'fastcomet' || status === 'completed') return true;
-  return [asset.filepath, asset.fileUrl].some(
-    (value) => typeof value === 'string' && isAbsoluteHttpUrl(value)
-  );
+  const looksUploaded =
+    storageSource === 'fastcomet' ||
+    status === 'completed' ||
+    [asset.filepath, asset.fileUrl].some(
+      (value) => typeof value === 'string' && isAbsoluteHttpUrl(value)
+    );
+  if (!looksUploaded) return false;
+  return await verifyMilkbarAssetFastCometUrl(asset);
 };
 
 const uploadMilkbarModelAssetsToFastCometOnSave = async (
@@ -1112,7 +1147,7 @@ const uploadMilkbarModelAssetsToFastCometOnSave = async (
         });
         return;
       }
-      if (isMilkbarAssetUploadedToFastComet(asset)) return;
+      if (await isMilkbarAssetUploadedToFastComet(asset)) return;
       await uploadMilkbarAsset3DInRedisRuntime({
         assetId,
         requestedAt: new Date().toISOString(),

@@ -600,31 +600,14 @@ function shouldPinEcommerceToLocalDevelopment(): boolean {
   return !isProductionLike() && !isVercelRuntime();
 }
 
-function resolveLocalEcommerceProductsMongoConfig(): MongoConfig {
-  return resolveProductsLocalMongoConfig() ?? fallbackProductsMongoConfig();
-}
-
 function resolveEcommerceProductsMongoConfig(): MongoConfig {
-  if (shouldPinEcommerceToLocalDevelopment()) {
-    return resolveLocalEcommerceProductsMongoConfig();
-  }
-
-  const directConfig = resolveProductsDirectMongoConfig();
-  if (directConfig) return directConfig;
-
-  const source = resolveProductsMongoSource();
-  const localConfig = resolveProductsLocalMongoConfig();
-  const cloudConfig = resolveProductsCloudMongoConfig();
-
-  return selectSourceMongoConfig(source, localConfig, cloudConfig, fallbackProductsMongoConfig());
+  // Product catalog data is shared with the main Product List app, so storefront
+  // reads must honor PRODUCTS_MONGODB_* source selection even during localhost dev.
+  return resolveProductsMongoConfig();
 }
 
 // eslint-disable-next-line complexity
 function resolveEcommerceProductsMongoConfigCandidates(): MongoConfig[] {
-  if (shouldPinEcommerceToLocalDevelopment()) {
-    return [resolveLocalEcommerceProductsMongoConfig()];
-  }
-
   const source = resolveProductsMongoSource();
   const directConfig = resolveProductsDirectMongoConfig();
   const localConfig = resolveProductsLocalMongoConfig();

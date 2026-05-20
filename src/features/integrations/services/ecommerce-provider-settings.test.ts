@@ -33,6 +33,13 @@ import {
 const makeSettings = (): EcommerceProviderSettingsInput => ({
   ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS,
   payment: {
+    ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment,
+    bankTransfer: {
+      ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment.bankTransfer,
+      accountName: 'Stargater Test Store',
+      enabled: true,
+      iban: 'PL00123456789012345678901234',
+    },
     payu: {
       ...DEFAULT_ECOMMERCE_PROVIDER_SETTINGS.payment.payu,
       clientId: 'payu-client',

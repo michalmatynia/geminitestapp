@@ -17,6 +17,16 @@ type ProductParameterLanguageState = {
 };
 
 const FALLBACK_LANGUAGE: CatalogLanguageOption = { code: 'default', label: 'Default' };
+const DEFAULT_PARAMETER_LANGUAGES: CatalogLanguageOption[] = [
+  { code: 'en', label: 'English' },
+  { code: 'pl', label: 'Polish' },
+];
+
+type ProductParameterLanguageStateInput = {
+  filteredLanguages: Language[];
+  catalogsLoading: boolean;
+  languagesLoading: boolean;
+};
 
 const resolveLanguageLabel = (language: Language, code: string): string => {
   if (typeof language.name === 'string' && language.name.trim().length > 0) {
@@ -28,7 +38,11 @@ const resolveLanguageLabel = (language: Language, code: string): string => {
   return code.toUpperCase();
 };
 
-const buildCatalogLanguages = (filteredLanguages: Language[]): CatalogLanguageOption[] => {
+const buildCatalogLanguages = ({
+  filteredLanguages,
+  catalogsLoading,
+  languagesLoading,
+}: ProductParameterLanguageStateInput): CatalogLanguageOption[] => {
   const byCode = new Map<string, CatalogLanguageOption>();
   filteredLanguages.forEach((language: Language) => {
     const code = normalizeLanguageCode(language.code);
@@ -38,7 +52,10 @@ const buildCatalogLanguages = (filteredLanguages: Language[]): CatalogLanguageOp
       label: resolveLanguageLabel(language, code),
     });
   });
-  if (byCode.size === 0) byCode.set(FALLBACK_LANGUAGE.code, FALLBACK_LANGUAGE);
+  if (byCode.size === 0) {
+    if (catalogsLoading || languagesLoading) return [FALLBACK_LANGUAGE];
+    return DEFAULT_PARAMETER_LANGUAGES;
+  }
   return Array.from(byCode.values());
 };
 
@@ -68,11 +85,13 @@ const resolveActiveLanguage = (args: {
   FALLBACK_LANGUAGE;
 
 export const useProductParameterLanguageState = (
-  filteredLanguages: Language[]
+  input: ProductParameterLanguageStateInput
 ): ProductParameterLanguageState => {
+  const { filteredLanguages, catalogsLoading, languagesLoading } = input;
   const catalogLanguages = useMemo(
-    (): CatalogLanguageOption[] => buildCatalogLanguages(filteredLanguages),
-    [filteredLanguages]
+    (): CatalogLanguageOption[] =>
+      buildCatalogLanguages({ filteredLanguages, catalogsLoading, languagesLoading }),
+    [catalogsLoading, filteredLanguages, languagesLoading]
   );
   const primaryLanguageCode = catalogLanguages[0]?.code ?? FALLBACK_LANGUAGE.code;
   const languageTabValues = useMemo(

@@ -1671,7 +1671,10 @@ export function CheckoutPageClient({ content }: { content: CheckoutContent }): J
   const isPayuPaymentAvailable = paymentProviderAvailability.payu !== false;
   const isStripePaymentAvailable = paymentProviderAvailability.stripe === true && stripeSettings.publishableKey !== '';
   const isPayPalPaymentAvailable = paymentProviderAvailability.paypal === true && paypalSettings.clientId !== '';
-  const isBankTransferAvailable = paymentProviderAvailability.bankTransfer === true && bankTransferSettings.iban !== '';
+  const isBankTransferAvailable =
+    paymentProviderAvailability.bankTransfer === true &&
+    bankTransferSettings.accountName !== '' &&
+    bankTransferSettings.iban !== '';
   const availablePaymentMethods: ActivePaymentMethod[] = [
     ...(isPayuPaymentAvailable ? ['blik' as const] : []),
     ...(isStripePaymentAvailable ? ['stripe' as const] : []),

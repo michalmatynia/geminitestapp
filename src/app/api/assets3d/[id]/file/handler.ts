@@ -11,7 +11,7 @@ import {
 import { getAsset3DFromLookupRepositories } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { notFoundError } from '@/shared/errors/app-error';
+import { externalServiceError, notFoundError } from '@/shared/errors/app-error';
 import { getMilkbarFastCometPublicHtmlMirrorPath } from '@/shared/lib/files/services/storage/milkbar-fastcomet-public-html-mirror';
 import { resolveMilkbarFastCometStorageProfile } from '@/shared/lib/files/services/storage/milkbar-fastcomet-storage';
 
@@ -46,16 +46,67 @@ const resolveMirroredPublicPath = (asset: Asset3DRecord): string | null => {
   return publicPath.startsWith('/uploads/') ? publicPath : null;
 };
 
-const createFileResponse = (
-  fileBuffer: Buffer,
-  contentType: string | undefined
-): Response =>
-  new NextResponse(new Uint8Array(fileBuffer), {
-    headers: {
-      'Content-Type': contentType ?? 'application/octet-stream',
-      'Cache-Control': 'public, max-age=31536000',
-    },
+const createFileHeaders = (contentType: string | undefined): Headers => {
+  const headers = new Headers({
+    'Content-Type': contentType ?? 'application/octet-stream',
+    'Cache-Control': 'public, max-age=31536000',
   });
+  return headers;
+};
+
+const createFileResponse = (fileBuffer: Buffer, contentType: string | undefined): Response =>
+  new NextResponse(new Uint8Array(fileBuffer), {
+    headers: createFileHeaders(contentType),
+  });
+
+const proxyRemoteFileResponse = async ({
+  contentType,
+  request,
+  url,
+}: {
+  contentType: string | undefined;
+  request: NextRequest;
+  url: string;
+}): Promise<Response> => {
+  let response: globalThis.Response;
+  try {
+    response = await fetch(url, {
+      cache: 'no-store',
+      method: request.method === 'HEAD' ? 'HEAD' : 'GET',
+    });
+  } catch (error) {
+    throw externalServiceError(
+      'The remote 3D model file could not be fetched. Confirm the FastComet upload exists and try previewing again.',
+      {
+        cause: error instanceof Error ? error.message : String(error),
+        url,
+      }
+    );
+  }
+
+  if (!response.ok) {
+    throw externalServiceError(
+      'The remote 3D model file is not reachable. Confirm the FastComet upload exists and try previewing again.',
+      {
+        status: response.status,
+        url,
+      }
+    );
+  }
+
+  const headers = createFileHeaders(response.headers.get('content-type') ?? contentType);
+  const contentLength = response.headers.get('content-length');
+  if (contentLength !== null) headers.set('Content-Length', contentLength);
+
+  if (request.method === 'HEAD') {
+    return new NextResponse(null, {
+      headers,
+      status: 200,
+    });
+  }
+
+  return new NextResponse(new Uint8Array(await response.arrayBuffer()), { headers });
+};
 
 const readExistingDiskFileResponse = async (
   diskPath: string,
@@ -128,7 +179,7 @@ const resolveMilkbarCdnRedirectUrl = (asset: Asset3DRecord): string | null => {
 };
 
 export async function getHandler(
-  _request: NextRequest,
+  request: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
@@ -140,7 +191,11 @@ export async function getHandler(
 
   const cdnRedirectUrl = resolveMilkbarCdnRedirectUrl(asset);
   if (cdnRedirectUrl !== null) {
-    return NextResponse.redirect(cdnRedirectUrl, 302);
+    return await proxyRemoteFileResponse({
+      contentType: asset.mimetype,
+      request,
+      url: cdnRedirectUrl,
+    });
   }
 
   if (isHttpFilepath(asset.filepath)) {

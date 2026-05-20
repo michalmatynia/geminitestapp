@@ -9,6 +9,21 @@ type PublicInpostSettings = {
   geowidgetToken: string;
 };
 
+type PublicBankTransferSettings = {
+  accountName: string;
+  bankName: string;
+  bic: string;
+  enabled: boolean;
+  iban: string;
+};
+
+function firstNonEmpty(...values: string[]): string {
+  for (const value of values) {
+    if (value.trim() !== '') return value.trim();
+  }
+  return '';
+}
+
 function envGeowidgetToken(): string {
   return process.env['NEXT_PUBLIC_INPOST_GEO_WIDGET_TOKEN']?.trim() ?? '';
 }
@@ -32,7 +47,7 @@ function envBankTransferDetails(): { enabled: boolean; accountName: string; iban
   const hasDetails = iban !== '' && accountName !== '';
 
   return {
-    enabled: enabledEnv || hasDetails,
+    enabled: (enabledEnv || hasDetails) && hasDetails,
     accountName,
     iban,
     bic: process.env['BANK_TRANSFER_BIC']?.trim() ?? '',
@@ -48,6 +63,25 @@ function publicInpostSettings(settings: ProviderSettings | null): PublicInpostSe
   return {
     enabled: inpost.enabled,
     geowidgetToken: inpost.enabled ? token : '',
+  };
+}
+
+function publicBankTransferSettings(settings: ProviderSettings | null): PublicBankTransferSettings {
+  const envDetails = envBankTransferDetails();
+  if (settings === null) return envDetails;
+
+  const bankTransfer = settings.payment.bankTransfer;
+  const accountName = firstNonEmpty(bankTransfer.accountName, envDetails.accountName);
+  const iban = firstNonEmpty(bankTransfer.iban, envDetails.iban);
+  const bic = firstNonEmpty(bankTransfer.bic, envDetails.bic);
+  const bankName = firstNonEmpty(bankTransfer.bankName, envDetails.bankName);
+
+  return {
+    accountName,
+    bankName,
+    bic,
+    enabled: bankTransfer.enabled && accountName !== '' && iban !== '',
+    iban,
   };
 }
 
@@ -79,7 +113,7 @@ export async function GET(): Promise<NextResponse> {
 
   const paypalMode: 'sandbox' | 'live' = settings?.payment.paypal.mode ?? envPayPalMode();
 
-  const bankTransfer = envBankTransferDetails();
+  const bankTransfer = publicBankTransferSettings(settings);
 
   return NextResponse.json(
     {

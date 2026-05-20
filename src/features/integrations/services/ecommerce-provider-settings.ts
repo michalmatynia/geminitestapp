@@ -65,7 +65,10 @@ const cloneProviderSettings = (
   settings: EcommerceProviderSettingsInput = DEFAULT_ECOMMERCE_PROVIDER_SETTINGS
 ): EcommerceProviderSettingsInput => ({
   payment: {
+    bankTransfer: { ...settings.payment.bankTransfer },
+    paypal: { ...settings.payment.paypal },
     payu: { ...settings.payment.payu },
+    stripe: { ...settings.payment.stripe },
   },
   shipping: {
     dpd: { ...settings.shipping.dpd },
@@ -169,13 +172,14 @@ export const pushEcommerceProviderSettingsToEcommerce = async (
 
   return Promise.all(
     targets.map(async (target) => {
+      const settingsFilter: Document = {
+        $or: [
+          { key: ECOMMERCE_PROVIDER_SETTINGS_KEY },
+          { _id: ECOMMERCE_PROVIDER_SETTINGS_KEY },
+        ],
+      };
       const result = await target.db.collection<Document>(ECOM_SETTINGS_COLLECTION).updateOne(
-        {
-          $or: [
-            { key: ECOMMERCE_PROVIDER_SETTINGS_KEY },
-            { _id: ECOMMERCE_PROVIDER_SETTINGS_KEY },
-          ],
-        } as Document,
+        settingsFilter,
         {
           $set: {
             key: ECOMMERCE_PROVIDER_SETTINGS_KEY,

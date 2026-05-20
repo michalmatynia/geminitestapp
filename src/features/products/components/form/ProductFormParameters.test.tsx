@@ -528,6 +528,25 @@ describe('ProductFormParameters', () => {
     expect(englishInput).toHaveValue('Soft plush');
   });
 
+  it('keeps English and Polish parameter tabs available when catalog languages are empty', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      languages: [],
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used', pl: 'Uzywany' },
+        },
+      ],
+    });
+
+    expect(screen.getByRole('tab', { name: 'English' })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Uzywany');
+  });
+
   it('fires the row-level parameter trigger with product copy, images, and selected parameter metadata', async () => {
     const user = userEvent.setup();
     renderParameters({

@@ -4,6 +4,7 @@ export const ECOMMERCE_PROVIDER_SETTINGS_KEY = 'payment_shipping_provider_settin
 export const ECOMMERCE_PROVIDER_SETTINGS_SOURCE = 'geminitestapp-products';
 
 export const ecommerceProviderEnvironmentSchema = z.enum(['sandbox', 'production']);
+export const ecommercePayPalModeSchema = z.enum(['sandbox', 'live']);
 
 const settingsStringSchema = z.string().trim().max(2048);
 const secretStringSchema = z.string().trim().max(4096);
@@ -20,6 +21,26 @@ export const ecommerceProviderSettingsSchema = z.object({
       notifyUrl: settingsStringSchema,
       posId: settingsStringSchema,
       secondKey: secretStringSchema,
+    }),
+    stripe: z.object({
+      enabled: providerToggleSchema,
+      publishableKey: settingsStringSchema,
+      secretKey: secretStringSchema,
+      webhookSecret: secretStringSchema,
+    }),
+    paypal: z.object({
+      clientId: settingsStringSchema,
+      clientSecret: secretStringSchema,
+      enabled: providerToggleSchema,
+      mode: ecommercePayPalModeSchema,
+      webhookId: settingsStringSchema,
+    }),
+    bankTransfer: z.object({
+      accountName: settingsStringSchema,
+      bankName: settingsStringSchema,
+      bic: settingsStringSchema,
+      enabled: providerToggleSchema,
+      iban: settingsStringSchema,
     }),
   }),
   shipping: z.object({
@@ -62,6 +83,7 @@ export const ecommerceProviderSettingsSaveRequestSchema = z.object({
 });
 
 export type EcommerceProviderEnvironment = z.infer<typeof ecommerceProviderEnvironmentSchema>;
+export type EcommercePayPalMode = z.infer<typeof ecommercePayPalModeSchema>;
 export type EcommerceProviderSettingsInput = z.infer<typeof ecommerceProviderSettingsSchema>;
 export type EcommerceProviderSettingsSaveRequest = z.infer<
   typeof ecommerceProviderSettingsSaveRequestSchema
@@ -78,6 +100,26 @@ export const DEFAULT_ECOMMERCE_PROVIDER_SETTINGS: EcommerceProviderSettingsInput
       notifyUrl: '',
       posId: '',
       secondKey: '',
+    },
+    stripe: {
+      enabled: false,
+      publishableKey: '',
+      secretKey: '',
+      webhookSecret: '',
+    },
+    paypal: {
+      clientId: '',
+      clientSecret: '',
+      enabled: false,
+      mode: 'sandbox',
+      webhookId: '',
+    },
+    bankTransfer: {
+      accountName: '',
+      bankName: '',
+      bic: '',
+      enabled: false,
+      iban: '',
     },
   },
   shipping: {

@@ -30,6 +30,9 @@ export type ProviderSettingsMeta = Pick<
 >;
 
 export type PayuSettings = EcommerceProviderSettingsInput['payment']['payu'];
+export type StripeSettings = EcommerceProviderSettingsInput['payment']['stripe'];
+export type PayPalSettings = EcommerceProviderSettingsInput['payment']['paypal'];
+export type BankTransferSettings = EcommerceProviderSettingsInput['payment']['bankTransfer'];
 export type InpostSettings = EcommerceProviderSettingsInput['shipping']['inpost'];
 export type DpdSettings = EcommerceProviderSettingsInput['shipping']['dpd'];
 export type PocztaPolskaSettings = EcommerceProviderSettingsInput['shipping']['pocztaPolska'];

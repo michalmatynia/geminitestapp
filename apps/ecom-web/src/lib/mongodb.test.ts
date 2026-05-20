@@ -282,6 +282,22 @@ describe('ecommerce MongoDB resolver', () => {
     expect(mongoMocks.dbNames).toEqual(['products_local']);
   });
 
+  it('honors selected Products cloud source for ecommerce product reads during localhost development', async () => {
+    setEnv('NODE_ENV', 'development');
+    process.env['PRODUCTS_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
+    process.env['PRODUCTS_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27017/products_local';
+    process.env['PRODUCTS_MONGODB_LOCAL_DB'] = 'products_local';
+    process.env['PRODUCTS_MONGODB_CLOUD_URI'] = 'mongodb+srv://products.example.test/';
+    process.env['PRODUCTS_MONGODB_CLOUD_DB'] = 'products_db';
+
+    const { getEcommerceProductsDb } = await import('./mongodb');
+
+    await getEcommerceProductsDb();
+
+    expect(mongoMocks.createdUris).toEqual(['mongodb+srv://products.example.test/']);
+    expect(mongoMocks.dbNames).toEqual(['products_db']);
+  });
+
   it('ignores ecommerce runtime source variables for detached product reads during localhost development', async () => {
     process.env['ECOM_MONGODB_ACTIVE_SOURCE_DEFAULT'] = 'cloud';
     process.env['ECOM_MONGODB_LOCAL_URI'] = 'mongodb://127.0.0.1:27021/ecom_local';

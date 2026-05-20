@@ -1,31 +1,20 @@
 'use client';
 
-import { ShieldCheck, Truck } from 'lucide-react';
+import { Truck } from 'lucide-react';
+
+import type { EcommerceProviderSettingsInput } from '@/shared/contracts/integrations/ecommerce-provider-settings';
 
 import {
   EnvironmentField,
-  ProviderSectionHeader,
   ProviderTextFields,
   ShippingProviderBlock,
   type TextFieldConfig,
 } from './EcommerceProviderSettingsFormControls';
-import type { EcommerceProviderSettingsInput } from '@/shared/contracts/integrations/ecommerce-provider-settings';
-
 import type {
   DpdSettings,
   InpostSettings,
-  PayuSettings,
   PocztaPolskaSettings,
 } from './EcommerceProviderSettingsPanel.types';
-
-const PAYU_FIELDS: Array<TextFieldConfig<PayuSettings>> = [
-  { field: 'apiUrl', id: 'payu-api-url', label: 'API URL' },
-  { field: 'posId', id: 'payu-pos-id', label: 'POS ID' },
-  { field: 'clientId', id: 'payu-client-id', label: 'Client ID' },
-  { field: 'clientSecret', id: 'payu-client-secret', label: 'Client Secret', type: 'password' },
-  { field: 'secondKey', id: 'payu-second-key', label: 'Second Key', type: 'password' },
-  { field: 'notifyUrl', id: 'payu-notify-url', label: 'Notify URL', className: 'xl:col-span-2' },
-];
 
 const INPOST_FIELDS: Array<TextFieldConfig<InpostSettings>> = [
   { field: 'apiUrl', id: 'inpost-api-url', label: 'API URL' },
@@ -55,38 +44,6 @@ const POCZTA_FIELDS: Array<TextFieldConfig<PocztaPolskaSettings>> = [
   { field: 'cardNumber', id: 'poczta-card-number', label: 'Card Number' },
   { field: 'trackingUrlTemplate', id: 'poczta-tracking-template', label: 'Tracking URL Template', className: 'xl:col-span-4' },
 ];
-
-export function PaymentProviderFields({
-  disabled,
-  onChange,
-  settings,
-}: {
-  disabled: boolean;
-  onChange: <K extends keyof PayuSettings>(field: K, value: PayuSettings[K]) => void;
-  settings: PayuSettings;
-}): React.JSX.Element {
-  return (
-    <section className='rounded-md border border-border/70 bg-background/35 p-4'>
-      <ProviderSectionHeader
-        disabled={disabled}
-        enabled={settings.enabled}
-        icon={<ShieldCheck className='size-4' aria-hidden='true' />}
-        label='PayU'
-        onEnabledChange={(enabled) => onChange('enabled', enabled)}
-      />
-      <div className='mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        <EnvironmentField
-          id='payu-environment'
-          label='Environment'
-          value={settings.environment}
-          disabled={disabled}
-          onChange={(value) => onChange('environment', value)}
-        />
-        <ProviderTextFields disabled={disabled} fields={PAYU_FIELDS} onChange={onChange} settings={settings} />
-      </div>
-    </section>
-  );
-}
 
 export function ShippingProviderFields({
   disabled,

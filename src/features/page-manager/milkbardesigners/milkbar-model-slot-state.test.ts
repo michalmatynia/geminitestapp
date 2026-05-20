@@ -33,7 +33,7 @@ describe('milkbar model slot state', () => {
     expect(resolveEffectiveModel3DSlotViewMode('fastcomet', sources)).toBe('upload');
   });
 
-  it('exposes a FastComet link when a saved CMS model URL contains the Milkbar model path', () => {
+  it('does not expose a FastComet link for a saved local model path without confirmed remote upload', () => {
     const sources = resolveModel3DSlotSources({
       assetId: 'asset-1',
       asset: createAsset({
@@ -42,6 +42,19 @@ describe('milkbar model slot state', () => {
       }),
       isMissing: false,
       modelUrl: '/uploads/cms/models/local-model.glb',
+    });
+
+    expect(sources.uploadUrl).toBe('/api/assets3d/asset-1/file');
+    expect(sources.fastCometUrl).toBe('');
+    expect(resolveEffectiveModel3DSlotViewMode('fastcomet', sources)).toBe('upload');
+  });
+
+  it('exposes a FastComet link when a saved CMS model URL is already on the uploads host', () => {
+    const sources = resolveModel3DSlotSources({
+      assetId: '',
+      asset: undefined,
+      isMissing: false,
+      modelUrl: 'https://uploads.milkbardesigners.com/uploads/cms/models/local-model.glb',
     });
 
     expect(sources.fastCometUrl).toBe(
@@ -57,6 +70,7 @@ describe('milkbar model slot state', () => {
         filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb',
         metadata: {
           fastCometUploadStatus: 'completed',
+          fastCometVerifiedAt: '2026-05-19T00:00:00.000Z',
           publicPath: '/uploads/cms/models/model.glb',
           storageProfile: 'milkbarCms',
           storageSource: 'fastcomet',
@@ -69,5 +83,59 @@ describe('milkbar model slot state', () => {
     expect(sources.fastCometUrl).toBe(
       'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb'
     );
+  });
+
+  it('does not expose stale completed FastComet metadata without public URL verification', () => {
+    const sources = resolveModel3DSlotSources({
+      assetId: 'asset-1',
+      asset: createAsset({
+        filepath: 'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb',
+        metadata: {
+          fastCometUploadStatus: 'completed',
+          publicPath: '/uploads/cms/models/model.glb',
+          storageProfile: 'milkbarCms',
+          storageSource: 'fastcomet',
+        },
+      }),
+      isMissing: false,
+      modelUrl: '',
+    });
+
+    expect(sources.fastCometUrl).toBe('');
+    expect(resolveEffectiveModel3DSlotViewMode('fastcomet', sources)).toBe('upload');
+  });
+
+  it('does not build a localhost-relative FastComet link from a bad base URL override', () => {
+    const original = process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'];
+    process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'] =
+      '/admin/page-manager/milkbardesigners';
+
+    try {
+      const sources = resolveModel3DSlotSources({
+        assetId: 'asset-1',
+        asset: createAsset({
+          filepath: '/uploads/cms/models/model.glb',
+          metadata: {
+            fastCometUploadStatus: 'completed',
+            fastCometVerifiedAt: '2026-05-19T00:00:00.000Z',
+            publicPath: '/uploads/cms/models/model.glb',
+            storageProfile: 'milkbarCms',
+            storageSource: 'fastcomet',
+          },
+        }),
+        isMissing: false,
+        modelUrl: '',
+      });
+
+      expect(sources.fastCometUrl).toBe(
+        'https://uploads.milkbardesigners.com/uploads/cms/models/model.glb'
+      );
+    } finally {
+      if (original === undefined) {
+        delete process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'];
+      } else {
+        process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'] = original;
+      }
+    }
   });
 });

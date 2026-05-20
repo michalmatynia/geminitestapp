@@ -9,7 +9,9 @@ import {
 } from '@/features/integrations/server';
 import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { ProducerRepository } from '@/shared/contracts/products/drafts';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -130,6 +132,188 @@ const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
   );
 };
 const UNSUPPORTED_PARAMETER_SOURCE_PREFIX = 'parameter:';
+const PARAMETER_TARGET_PREFIX = 'parameter:';
+const BASE_FEATURE_SOURCE_PREFIX = 'text_fields.features.';
+
+type ProductParameterRef = {
+  parameterId: string;
+  fallbackLabel: string;
+};
+
+const getProductParameterRef = (entry: unknown): ProductParameterRef | null => {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  const record = entry as Record<string, unknown>;
+  const parameterId = toTrimmedString(record['parameterId']) || toTrimmedString(record['id']);
+  if (!parameterId) return null;
+  return {
+    parameterId,
+    fallbackLabel:
+      toTrimmedString(record['name']) ||
+      toTrimmedString(record['label']) ||
+      toTrimmedString(record['parameterName']) ||
+      parameterId,
+  };
+};
+
+const collectProductParameterRefs = (product: BaseExportProductLike): ProductParameterRef[] => {
+  const entries = Array.isArray(product.parameters) ? product.parameters : [];
+  const seen = new Set<string>();
+  const refs: ProductParameterRef[] = [];
+  for (const entry of entries) {
+    const ref = getProductParameterRef(entry);
+    if (!ref) continue;
+    const normalizedId = ref.parameterId.toLowerCase();
+    if (seen.has(normalizedId)) continue;
+    seen.add(normalizedId);
+    refs.push(ref);
+  }
+  return refs;
+};
+
+const parseParameterTargetId = (targetField: unknown): string => {
+  const target = toTrimmedString(targetField);
+  if (!target.toLowerCase().startsWith(PARAMETER_TARGET_PREFIX)) return '';
+  const payload = target.slice(PARAMETER_TARGET_PREFIX.length).trim();
+  if (!payload) return '';
+  return payload.split('|')[0]?.trim().toLowerCase() ?? '';
+};
+
+const collectExplicitlyMappedParameterIds = (mappings: BaseFieldMapping[]): Set<string> =>
+  new Set(
+    mappings
+      .map((mapping: BaseFieldMapping) => parseParameterTargetId(mapping.targetField))
+      .filter((parameterId: string): parameterId is string => parameterId.length > 0)
+  );
+
+const normalizeFeatureName = (value: string): string =>
+  value.replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
+
+const readFeatureSourceName = (sourceKey: unknown): string => {
+  const source = toTrimmedString(sourceKey);
+  if (!source.toLowerCase().startsWith(BASE_FEATURE_SOURCE_PREFIX)) return '';
+  return normalizeFeatureName(source.slice(BASE_FEATURE_SOURCE_PREFIX.length));
+};
+
+const collectUsedFeatureNames = (mappings: BaseFieldMapping[]): Set<string> =>
+  new Set(
+    mappings
+      .map((mapping: BaseFieldMapping) => readFeatureSourceName(mapping.sourceKey).toLowerCase())
+      .filter((featureName: string): featureName is string => featureName.length > 0)
+  );
+
+const makeUniqueFeatureName = (
+  label: string,
+  parameterId: string,
+  usedFeatureNames: Set<string>
+): string => {
+  const normalizedLabel = normalizeFeatureName(label) || parameterId;
+  let candidate = normalizedLabel;
+  let suffix = 2;
+  while (usedFeatureNames.has(candidate.toLowerCase())) {
+    candidate = `${normalizedLabel} ${suffix}`;
+    suffix += 1;
+  }
+  usedFeatureNames.add(candidate.toLowerCase());
+  return candidate;
+};
+
+const getParameterDefinitionLabel = (parameter: ProductParameter | null | undefined): string => {
+  if (!parameter) return '';
+  return (
+    toTrimmedString(parameter.name_en) ||
+    toTrimmedString(parameter.name) ||
+    toTrimmedString(parameter.name_pl) ||
+    toTrimmedString(parameter.name_de) ||
+    toTrimmedString(parameter.id)
+  );
+};
+
+const collectParameterLookupCatalogIds = (product: BaseExportProductLike): string[] => {
+  const catalogIds = new Set<string>();
+  const directCatalogId = toTrimmedString(product['catalogId']);
+  if (directCatalogId) catalogIds.add(directCatalogId);
+  (product.catalogs ?? []).forEach((catalog) => {
+    const catalogId = toTrimmedString(catalog.catalogId);
+    if (catalogId) catalogIds.add(catalogId);
+  });
+  return Array.from(catalogIds);
+};
+
+const resolveParameterDefinitionsById = async (
+  product: BaseExportProductLike,
+  refs: ProductParameterRef[],
+  productId: string
+): Promise<Map<string, ProductParameter>> => {
+  const definitionsById = new Map<string, ProductParameter>();
+  const parameterIds = refs.map((ref: ProductParameterRef) => ref.parameterId);
+  if (parameterIds.length === 0) return definitionsById;
+
+  try {
+    const parameterRepository = await getParameterRepository();
+    const catalogIds = collectParameterLookupCatalogIds(product);
+    const catalogDefinitions = (
+      await Promise.all(
+        catalogIds.map((catalogId: string) => parameterRepository.listParameters({ catalogId }))
+      )
+    ).flat();
+
+    catalogDefinitions.forEach((parameter: ProductParameter) => {
+      definitionsById.set(parameter.id.toLowerCase(), parameter);
+    });
+
+    const missingIds = parameterIds.filter(
+      (parameterId: string) => !definitionsById.has(parameterId.toLowerCase())
+    );
+    const directDefinitions = await Promise.all(
+      missingIds.map(async (parameterId: string) => {
+        try {
+          return await parameterRepository.getParameterById(parameterId);
+        } catch {
+          return null;
+        }
+      })
+    );
+    directDefinitions.forEach((parameter: ProductParameter | null) => {
+      if (parameter) definitionsById.set(parameter.id.toLowerCase(), parameter);
+    });
+  } catch (error) {
+    await ErrorSystem.logWarning('[export-to-base] Failed to resolve parameter labels for export', {
+      productId,
+      parameterCount: parameterIds.length,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  return definitionsById;
+};
+
+const buildAutomaticParameterFeatureMappings = async (
+  product: BaseExportProductLike,
+  productId: string,
+  mappings: BaseFieldMapping[]
+): Promise<BaseFieldMapping[]> => {
+  const parameterRefs = collectProductParameterRefs(product);
+  if (parameterRefs.length === 0) return [];
+
+  const explicitlyMappedParameterIds = collectExplicitlyMappedParameterIds(mappings);
+  const unmappedRefs = parameterRefs.filter(
+    (ref: ProductParameterRef) => !explicitlyMappedParameterIds.has(ref.parameterId.toLowerCase())
+  );
+  if (unmappedRefs.length === 0) return [];
+
+  const definitionsById = await resolveParameterDefinitionsById(product, unmappedRefs, productId);
+  const usedFeatureNames = collectUsedFeatureNames(mappings);
+
+  return unmappedRefs.map((ref: ProductParameterRef) => {
+    const definition = definitionsById.get(ref.parameterId.toLowerCase()) ?? null;
+    const label = getParameterDefinitionLabel(definition) || ref.fallbackLabel;
+    const featureName = makeUniqueFeatureName(label, ref.parameterId, usedFeatureNames);
+    return {
+      sourceKey: `${BASE_FEATURE_SOURCE_PREFIX}${featureName}`,
+      targetField: `${PARAMETER_TARGET_PREFIX}${ref.parameterId}`,
+    };
+  });
+};
 
 export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseExportProductLike>({
   data,
@@ -235,6 +419,17 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           exportImagesAsBase64 = templateExportImagesAsBase64;
         }
       }
+    }
+  }
+
+  if (!imagesOnly) {
+    const automaticParameterMappings = await buildAutomaticParameterFeatureMappings(
+      product,
+      productId,
+      mappings
+    );
+    if (automaticParameterMappings.length > 0) {
+      mappings = [...automaticParameterMappings, ...mappings];
     }
   }
 

@@ -4,17 +4,59 @@ import { ORDERS_COLLECTION, type Order } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { buildValidatedCheckoutOrder, isRecord } from '@/lib/checkout-order';
+import {
+  readBankTransferProviderSettings,
+  type BankTransferProviderSettings,
+} from '@/lib/providerSettings';
 
-function readBankTransferDetails(): { enabled: boolean; accountName: string; iban: string; bic: string; bankName: string } {
+type BankTransferDetails = {
+  accountName: string;
+  bankName: string;
+  bic: string;
+  enabled: boolean;
+  iban: string;
+};
+
+function firstNonEmpty(...values: string[]): string {
+  for (const value of values) {
+    if (value.trim() !== '') return value.trim();
+  }
+  return '';
+}
+
+function readEnvBankTransferDetails(): BankTransferDetails {
   const iban = process.env['BANK_TRANSFER_IBAN']?.trim() ?? '';
   const accountName = process.env['BANK_TRANSFER_ACCOUNT_NAME']?.trim() ?? '';
+  const hasRequiredDetails = iban !== '' && accountName !== '';
   return {
-    enabled: process.env['BANK_TRANSFER_ENABLED']?.trim() === 'true' || (iban !== '' && accountName !== ''),
+    enabled: (process.env['BANK_TRANSFER_ENABLED']?.trim() === 'true' || hasRequiredDetails) && hasRequiredDetails,
     accountName,
     iban,
     bic: process.env['BANK_TRANSFER_BIC']?.trim() ?? '',
     bankName: process.env['BANK_TRANSFER_BANK_NAME']?.trim() ?? '',
   };
+}
+
+function resolveBankTransferDetails(settings: BankTransferProviderSettings | null): BankTransferDetails {
+  const envDetails = readEnvBankTransferDetails();
+  if (settings === null) return envDetails;
+
+  const accountName = firstNonEmpty(settings.accountName, envDetails.accountName);
+  const iban = firstNonEmpty(settings.iban, envDetails.iban);
+  const bic = firstNonEmpty(settings.bic, envDetails.bic);
+  const bankName = firstNonEmpty(settings.bankName, envDetails.bankName);
+
+  return {
+    accountName,
+    bankName,
+    bic,
+    enabled: settings.enabled && accountName !== '' && iban !== '',
+    iban,
+  };
+}
+
+async function readBankTransferDetails(): Promise<BankTransferDetails> {
+  return resolveBankTransferDetails(await readBankTransferProviderSettings());
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -28,7 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const bankDetails = readBankTransferDetails();
+  const bankDetails = await readBankTransferDetails();
   if (!bankDetails.enabled) {
     return NextResponse.json({ error: 'Bank transfer is not available.' }, { status: 503 });
   }

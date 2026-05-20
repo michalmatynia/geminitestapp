@@ -2,11 +2,9 @@
 
 import { RefreshCw, Save, ShieldCheck, XCircle } from 'lucide-react';
 
-import {
-  PaymentProviderFields,
-  ShippingProviderFields,
-} from './EcommerceProviderSettingsFields';
+import { ShippingProviderFields } from './EcommerceProviderSettingsFields';
 import { useProviderSettingsPanelModel } from './EcommerceProviderSettingsPanel.model';
+import { PaymentProviderFields } from './EcommerceProviderSettingsPaymentFields';
 import { ProviderPushResults } from './EcommerceProviderSettingsPushResults';
 import {
   Alert,
@@ -65,8 +63,11 @@ export function EcommerceProviderSettingsPanel(): React.JSX.Element {
         <CardContent className='space-y-5'>
           <PaymentProviderFields
             disabled={model.isLoading || model.isSaving}
-            settings={model.settings.payment.payu}
-            onChange={model.updatePayu}
+            settings={model.settings.payment}
+            onBankTransferChange={model.updateBankTransfer}
+            onPayPalChange={model.updatePayPal}
+            onPayuChange={model.updatePayu}
+            onStripeChange={model.updateStripe}
           />
           <ShippingProviderFields
             disabled={model.isLoading || model.isSaving}

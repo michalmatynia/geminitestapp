@@ -8,16 +8,6 @@ import {
 import { KangurMobileAuthProvider } from '../auth/KangurMobileAuthContext';
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 import { KangurRuntimeProvider } from './KangurRuntimeContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, type PropsWithChildren } from 'react';
-import {
-  SafeAreaProvider,
-  initialWindowMetrics,
-} from 'react-native-safe-area-context';
-
-import { KangurMobileAuthProvider } from '../auth/KangurMobileAuthContext';
-import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
-import { KangurRuntimeProvider } from './KangurRuntimeContext';
 
 /**
  * Kangur App Providers
@@ -30,8 +20,6 @@ import { KangurRuntimeProvider } from './KangurRuntimeContext';
  * - KangurMobileAuthProvider: Mobile authentication session management.
  */
 const createQueryClient = (): QueryClient =>
-...
-
   new QueryClient({
     defaultOptions: {
       mutations: {
@@ -50,14 +38,14 @@ export function KangurAppProviders({
   const [queryClient] = useState(createQueryClient);
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <KangurRuntimeProvider>
           <KangurMobileI18nProvider>
             <KangurMobileAuthProvider>{children}</KangurMobileAuthProvider>
           </KangurMobileI18nProvider>
         </KangurRuntimeProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

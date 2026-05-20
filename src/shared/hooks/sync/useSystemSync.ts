@@ -105,11 +105,6 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     if (!enabled || !isOnline) return (): void => {};
 
     const syncCriticalData = (): void => {
-      logClientEvent({
-        level: 'info',
-        message: 'Syncing critical system data',
-        context: { source: 'useSystemSync', action: 'periodic-sync', intervalMs: interval },
-      });
       const canRefetch = (query: {
         queryKey: unknown;
         options?: { queryFn?: unknown };

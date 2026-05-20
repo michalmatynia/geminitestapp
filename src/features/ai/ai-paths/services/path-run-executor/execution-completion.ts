@@ -21,11 +21,6 @@ import { summarizeRuntimeKernelParityFromHistory } from '../path-run-executor.ru
 import { type PathRunRuntimeStateManager } from './runtime-state-manager';
 import { type RuntimeProfileSnapshot } from '../path-run-executor.types';
 
-const MARKETPLACE_COPY_DEBRAND_BATCH_META_SOURCE = 'product_marketplace_copy_debrand_batch';
-const MARKETPLACE_COPY_DEBRAND_BATCH_SERVER_SOURCE = 'marketplace-copy-debrand-batch';
-const MARKETPLACE_COPY_DEBRAND_ROW_META_SOURCE = 'product_marketplace_copy_debrand_row';
-const MARKETPLACE_COPY_DEBRAND_ROW_SERVER_SOURCE = 'marketplace-copy-debrand-row';
-
 export type ExecutionCompletionArgs = {
   run: AiPathRunRecord;
   nodes: AiNode[];
@@ -86,19 +81,8 @@ const asTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const shouldPersistCompletedProductSideEffects = (
-  runMetaWithRuntimeContext: Record<string, unknown>
-): boolean => {
-  const serverMetadata = asRecord(runMetaWithRuntimeContext['serverMetadata']);
-  return (
-    asTrimmedString(runMetaWithRuntimeContext['source']) ===
-      MARKETPLACE_COPY_DEBRAND_BATCH_META_SOURCE ||
-    asTrimmedString(runMetaWithRuntimeContext['source']) ===
-      MARKETPLACE_COPY_DEBRAND_ROW_META_SOURCE ||
-    asTrimmedString(serverMetadata?.['source']) === MARKETPLACE_COPY_DEBRAND_BATCH_SERVER_SOURCE ||
-    asTrimmedString(serverMetadata?.['source']) === MARKETPLACE_COPY_DEBRAND_ROW_SERVER_SOURCE
-  );
-};
+const isProductRun = (run: AiPathRunRecord): boolean =>
+  asTrimmedString(run.entityType)?.toLowerCase() === 'product';
 
 const resolveRuntimeHaltFailure = (input: {
   runtimeHaltReason: CompletionStatusInput['runtimeHaltReason'];
@@ -250,12 +234,13 @@ const persistCompletedProductSideEffects = async (input: {
   finalRuntimeState: unknown;
   accOutputs: Record<string, RuntimePortValues>;
 }): Promise<void> => {
-  if (!shouldPersistCompletedProductSideEffects(input.runMetaWithRuntimeContext)) return;
+  if (!isProductRun(input.run)) return;
 
   try {
-    const { persistMarketplaceCopyDebrandBatchRunResult } =
-      await import('@/features/products/server/marketplace-copy-debrand-run-completion');
-    await persistMarketplaceCopyDebrandBatchRunResult({
+    const { persistCompletedProductAiPathRunSideEffects } = await import(
+      '@/features/products/server/product-ai-path-run-completion'
+    );
+    await persistCompletedProductAiPathRunSideEffects({
       run: input.run,
       runMeta: input.runMetaWithRuntimeContext,
       runtimeState: input.finalRuntimeState,

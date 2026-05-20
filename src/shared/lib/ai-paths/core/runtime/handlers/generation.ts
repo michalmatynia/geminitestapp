@@ -232,7 +232,7 @@ export const handleModel: NodeHandler = async ({
   );
   const defaultModelPollTimeoutMs = parseIntWithMin(
     process.env['AI_PATHS_MODEL_POLL_TIMEOUT_MS'],
-    300_000,
+    25 * 60_000,
     30_000
   );
   const defaultModelEnqueueRetryAttempts = parseIntWithMin(

@@ -3,6 +3,7 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
+import { resolveAiPathsRunFailureUserMessage } from '@/shared/lib/ai-paths/model-configuration-errors';
 import { Label, Alert, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
@@ -82,6 +83,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
           selectedHistoryNodeId && runHistory ? (runHistory[selectedHistoryNodeId] ?? []) : [];
         const isPrimary = compareMode && primaryRunId === run.id;
         const isSecondary = compareMode && secondaryRunId === run.id;
+        const displayedErrorMessage = resolveAiPathsRunFailureUserMessage(run.errorMessage);
         return (
           <Card key={run.id} variant='subtle-compact' padding='sm' className='bg-card/70'>
             <div className='flex items-center justify-between gap-2'>
@@ -160,9 +162,9 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 )}
               </div>
             </div>
-            {run.errorMessage && (
+            {displayedErrorMessage && (
               <Alert variant='error' className='mt-2 px-2 py-1 text-[10px]'>
-                {run.errorMessage}
+                {displayedErrorMessage}
               </Alert>
             )}
             {historyOpen && (

@@ -200,6 +200,8 @@ export const useSaveSocialPublishingPost = (): MutationResult<
     },
   });
 
+const SOCIAL_POSTS_PATCH_TIMEOUT_MS = 60_000;
+
 export const usePatchSocialPublishingPost = (): MutationResult<
   SocialPublishingPost,
   { id: string; updates: Partial<SocialPublishingPost> }
@@ -213,8 +215,13 @@ export const usePatchSocialPublishingPost = (): MutationResult<
       id: string;
       updates: Partial<SocialPublishingPost>;
     }): Promise<SocialPublishingPost> =>
-      await api.patch<SocialPublishingPost>(`/api/filemaker/social-posts/${id}`, { updates }),
-    invalidate: invalidateSocialPosts,
+      await api.patch<SocialPublishingPost>(`/api/filemaker/social-posts/${id}`, { updates }, {
+        timeout: SOCIAL_POSTS_PATCH_TIMEOUT_MS,
+      }),
+    invalidate: (queryClient, updatedPost) => {
+      invalidateSocialPosts(queryClient);
+      queryClient.setQueryData(QUERY_KEYS.socialPublishing.post(updatedPost.id), updatedPost);
+    },
     meta: {
       source: 'social-publishing.hooks.usePatchSocialPublishingPost',
       operation: 'update',

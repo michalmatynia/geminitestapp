@@ -72,8 +72,6 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   try {
     return await handleMongoOperation(parsed);
   } catch (error: unknown) {
-...
-
     void ErrorSystem.captureException(error);
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');

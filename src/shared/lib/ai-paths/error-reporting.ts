@@ -10,6 +10,12 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_HINTS,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+  isAiPathsModelNotConfiguredMessage,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 
 /** Severity levels for AI Path errors. */
 export type AiPathErrorSeverity = 'info' | 'warning' | 'error' | 'fatal';
@@ -261,16 +267,27 @@ export const buildAiPathErrorReport = (input: BuildAiPathErrorReportInput): AiPa
   const message = toErrorMessage(input.error);
   const causeChain = toCauseChain(input.error);
   const reportCause = causeChain[0] ?? null;
-  const retryable = input.retryable ?? inferRetryable(input.error);
+  const isModelNotConfigured =
+    isAiPathsModelNotConfiguredMessage(message) ||
+    causeChain.some((causeMessage) => isAiPathsModelNotConfiguredMessage(causeMessage));
+  const inputHints = input.hints ? toHints(input.hints) : [];
+  const hints = isModelNotConfigured
+    ? Array.from(new Set([...inputHints, ...AI_PATHS_MODEL_NOT_CONFIGURED_HINTS]))
+    : inputHints;
+  const retryable = isModelNotConfigured ? false : (input.retryable ?? inferRetryable(input.error));
 
   return {
     version: 1,
-    code: normalizeCode(input.code ?? null, 'AI_PATHS_RUNTIME_UNHANDLED_ERROR'),
-    category: toNonEmptyString(input.category) ?? 'runtime',
+    code: isModelNotConfigured
+      ? AI_PATHS_MODEL_NOT_CONFIGURED_CODE
+      : normalizeCode(input.code ?? null, 'AI_PATHS_RUNTIME_UNHANDLED_ERROR'),
+    category: isModelNotConfigured ? 'configuration' : (toNonEmptyString(input.category) ?? 'runtime'),
     severity: normalizeSeverity(input.severity, 'error'),
     scope: normalizeScope(input.scope),
     message,
-    userMessage: toNonEmptyString(input.userMessage) ?? message,
+    userMessage: isModelNotConfigured
+      ? AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE
+      : (toNonEmptyString(input.userMessage) ?? message),
     timestamp: toIsoTimestamp(input.timestamp),
     traceId: toNonEmptyString(input.traceId),
     runId: toNonEmptyString(input.runId),
@@ -284,7 +301,7 @@ export const buildAiPathErrorReport = (input: BuildAiPathErrorReportInput): AiPa
     statusCode: toOptionalFiniteNumber(input.statusCode),
     cause: reportCause,
     causeChain,
-    hints: input.hints ? toHints(input.hints) : [],
+    hints,
     metadata: input.metadata ?? null,
   };
 };
@@ -459,6 +476,15 @@ const dedupeReports = (reports: AiPathErrorReport[]): AiPathErrorReport[] => {
   return deduped;
 };
 
+const selectPrimaryReport = (reports: AiPathErrorReport[]): AiPathErrorReport | null => {
+  const modelConfigurationReport = reports
+    .slice()
+    .reverse()
+    .find((report) => report.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE);
+  if (modelConfigurationReport) return modelConfigurationReport;
+  return reports[reports.length - 1] ?? null;
+};
+
 /**
  * Aggregates error reports from run, node, and event records into a high-level summary.
  * @param input The run, nodes, and events to summarize.
@@ -488,7 +514,7 @@ export const buildAiPathRunErrorSummary = (input: {
 
   if (reports.length === 0) return null;
 
-  const primary = reports[reports.length - 1] ?? null;
+  const primary = selectPrimaryReport(reports);
   const codeMap = new Map<string, number>();
   const nodeMap = new Map<string, AiPathRunErrorSummaryNode>();
 

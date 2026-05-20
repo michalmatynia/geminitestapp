@@ -1,7 +1,12 @@
 import 'server-only';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { notFoundError, serviceUnavailableError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  createAppError,
+  notFoundError,
+  serviceUnavailableError,
+} from '@/shared/errors/app-error';
 import {
   createManagedQueue,
   isRedisAvailable,
@@ -24,6 +29,25 @@ export type MilkbarAsset3DFastCometUploadJobData = {
 
 const QUEUE_UNAVAILABLE_RETRY_AFTER_MS = 3_000;
 const WAIT_FOR_UPLOAD_TIMEOUT_MS = 2 * 60 * 1000;
+
+const createMilkbarFastCometPublishError = (
+  error: unknown,
+  data: MilkbarAsset3DFastCometUploadJobData
+): Error =>
+  createAppError(
+    'FastComet rejected the Milkbar 3D model upload. The model was kept locally; try Save CMS again after checking the FastComet upload endpoint.',
+    {
+      code: AppErrorCodes.externalService,
+      httpStatus: 502,
+      expected: true,
+      retryable: true,
+      cause: error,
+      meta: {
+        assetId: data.assetId,
+        queue: MILKBAR_ASSET3D_FASTCOMET_UPLOAD_QUEUE_NAME,
+      },
+    }
+  );
 
 const isWorkerHealthReady = (health: QueueHealthStatus): boolean =>
   health.deliveryMode === 'queue' &&
@@ -112,12 +136,16 @@ export const uploadMilkbarAsset3DInRedisRuntime = async (
   data: MilkbarAsset3DFastCometUploadJobData
 ): Promise<Asset3DRecord> => {
   const jobId = await enqueueMilkbarAsset3DFastCometUploadJob(data);
-  return waitForManagedQueueJobResult<
-    MilkbarAsset3DFastCometUploadJobData,
-    Asset3DRecord
-  >(queue, {
-    jobId,
-    queueName: MILKBAR_ASSET3D_FASTCOMET_UPLOAD_QUEUE_NAME,
-    timeoutMs: WAIT_FOR_UPLOAD_TIMEOUT_MS,
-  });
+  try {
+    return await waitForManagedQueueJobResult<
+      MilkbarAsset3DFastCometUploadJobData,
+      Asset3DRecord
+    >(queue, {
+      jobId,
+      queueName: MILKBAR_ASSET3D_FASTCOMET_UPLOAD_QUEUE_NAME,
+      timeoutMs: WAIT_FOR_UPLOAD_TIMEOUT_MS,
+    });
+  } catch (error) {
+    throw createMilkbarFastCometPublishError(error, data);
+  }
 };

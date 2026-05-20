@@ -17,6 +17,63 @@ import {
 import { getValueAtMappingPath, renderTemplate } from '../../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const URL_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
+const DEFAULT_INTERNAL_APP_BASE_URL = 'http://localhost:3000';
+
+const readVercelInternalAppBaseUrl = (): string | undefined => {
+  const value = process.env['VERCEL_URL'];
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? `https://${trimmed}` : undefined;
+};
+
+const parseInternalAppBaseOrigin = (candidate: string | undefined): string | null => {
+  if (typeof candidate !== 'string') return null;
+  const trimmed = candidate.trim();
+  if (trimmed.length === 0) return null;
+  const normalized = URL_SCHEME_PATTERN.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.origin : null;
+  } catch (error) {
+    logClientError(error);
+    return null;
+  }
+};
+
+const readConfiguredInternalAppBaseUrl = (): string => {
+  const candidates = [
+    process.env['AI_PATHS_INTERNAL_API_BASE_URL'],
+    process.env['NEXT_PUBLIC_APP_URL'],
+    process.env['APP_URL'],
+    process.env['NEXTAUTH_URL'],
+    readVercelInternalAppBaseUrl(),
+    DEFAULT_INTERNAL_APP_BASE_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const origin = parseInternalAppBaseOrigin(candidate);
+    if (origin !== null) return origin;
+  }
+
+  return DEFAULT_INTERNAL_APP_BASE_URL;
+};
+
+const isInternalApiRelativeUrl = (url: string): boolean => {
+  if (!url.startsWith('/api')) return false;
+  const next = url.charAt('/api'.length);
+  return next === '' || next === '/' || next === '?' || next === '#';
+};
+
+const resolveHttpRequestUrl = (url: string): string => {
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.startsWith('//') || URL_SCHEME_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+  if (!isInternalApiRelativeUrl(trimmed)) return trimmed;
+  return new URL(trimmed, readConfiguredInternalAppBaseUrl()).toString();
+};
 
 export const handleHttp: NodeHandler = async ({
   node,
@@ -36,7 +93,8 @@ export const handleHttp: NodeHandler = async ({
     responseMode: 'json',
     responsePath: '',
   };
-  const resolvedUrl: string = renderTemplate(httpConfig.url ?? '', nodeInputs, '');
+  const renderedUrl: string = renderTemplate(httpConfig.url ?? '', nodeInputs, '');
+  const resolvedUrl = resolveHttpRequestUrl(renderedUrl);
   if (!resolvedUrl) {
     return {
       value: null,

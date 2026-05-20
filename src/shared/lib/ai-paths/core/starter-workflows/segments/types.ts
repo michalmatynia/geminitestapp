@@ -44,6 +44,8 @@ export type StarterWorkflowUpgradePolicy = {
   lowOverlapReplacementMode?: StarterWorkflowLowOverlapReplacementMode;
   allowCurrentVersionSeededDefaultZeroOverlap?: boolean;
   lowOverlapStructuralMatcher?: (config: PathConfig) => boolean;
+  preservedConfigKeysByNodeType?: Record<string, string[]>;
+  applySingleModelSelectionToAllModelNodes?: boolean;
 };
 
 export type AiPathTemplateRegistryEntry = {

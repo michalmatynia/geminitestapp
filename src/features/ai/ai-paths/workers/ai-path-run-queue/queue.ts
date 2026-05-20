@@ -34,6 +34,7 @@ import {
   DEFAULT_CONCURRENCY,
   JOB_EXECUTION_TIMEOUT_MS,
   LOG_SOURCE,
+  STALE_RUNNING_TTL_MS,
 } from './config';
 import {
   AI_PATH_EXECUTION_LEASE_MS,
@@ -82,6 +83,41 @@ export const enqueuePathRunJob = async (
 
 const jobTimeout = JOB_EXECUTION_TIMEOUT_MS > 0 ? JOB_EXECUTION_TIMEOUT_MS : undefined;
 
+export const markStaleRunningAiPathRuns = async (
+  reason: string,
+  repoOverride?: AiPathRunRepository
+): Promise<{ count: number }> => {
+  try {
+    const repo = repoOverride ?? await getPathRunRepository();
+    const result = await repo.markStaleRunningRuns(STALE_RUNNING_TTL_MS);
+    if (result.count > 0) {
+      await logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: `Marked ${result.count} stale running AI-Paths run${result.count === 1 ? '' : 's'} as failed`,
+        context: {
+          staleCount: result.count,
+          staleRunningTtlMs: STALE_RUNNING_TTL_MS,
+          reason,
+        },
+      });
+    }
+    return result;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: LOG_SOURCE,
+      action: 'markStaleRunningAiPathRuns',
+      reason,
+      staleRunningTtlMs: STALE_RUNNING_TTL_MS,
+    });
+    debugQueueWarn('[aiPathRunQueue] Failed to mark stale running runs', {
+      reason,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { count: 0 };
+  }
+};
+
 /**
  * Attempts to claim a run from the repository and acquire an execution lease.
  */
@@ -108,6 +144,14 @@ const handleLease = async (
       return null;
     }
     if (latest.status === 'running') {
+      await markStaleRunningAiPathRuns('duplicate-running-job', repo);
+      const afterStaleSweep = await repo.findRunById(runId);
+      if (afterStaleSweep?.status !== 'running') {
+        debugQueueLog(
+          `[aiPathRunQueue] Run ${runId} has status "${afterStaleSweep?.status ?? 'missing'}" after stale sweep, skipping`
+        );
+        return null;
+      }
       debugQueueLog(`[aiPathRunQueue] Run ${runId} is already running, skipping duplicate job`);
       return null;
     }

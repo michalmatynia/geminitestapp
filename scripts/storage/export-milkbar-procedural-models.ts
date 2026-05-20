@@ -37,7 +37,7 @@ type ExportEntry = {
 };
 
 const DEFAULT_OUT_DIR =
-  'hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/procedural';
+  'hosting/fastcomet/uploads.milkbardesigners.com/public_html/uploads/cms/models/procedural';
 
 const projectCodes = ['MBD-001', 'MBD-002', 'MBD-003'] as const;
 

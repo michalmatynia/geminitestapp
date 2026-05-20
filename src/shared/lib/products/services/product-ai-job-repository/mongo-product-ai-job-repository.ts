@@ -218,7 +218,9 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
         $set: {
           status: 'failed',
           finishedAt: new Date(),
-          errorMessage: 'Job marked failed due to stale running state.',
+          updatedAt: new Date(),
+          errorMessage:
+            'Job marked failed due to stale running state. The worker likely stopped before reporting completion; retry the run.',
         },
       }
     );

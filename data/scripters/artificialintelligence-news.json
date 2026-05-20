@@ -1,0 +1,90 @@
+{
+  "id": "artificialintelligence-news",
+  "version": 2,
+  "siteHost": "www.artificialintelligence-news.com",
+  "description": "Extracts AI news articles from artificialintelligence-news.com (Elementor loop-grid layout, migrated from JegTheme May 2026).",
+  "entryUrl": "https://www.artificialintelligence-news.com/",
+  "rateLimit": {
+    "requestsPerMinute": 20,
+    "concurrency": 1
+  },
+  "steps": [
+    {
+      "id": "open",
+      "kind": "goto",
+      "url": "https://www.artificialintelligence-news.com/",
+      "waitUntil": "domcontentloaded"
+    },
+    {
+      "id": "dismiss-consent",
+      "kind": "dismissConsent",
+      "selectors": [
+        "#onetrust-accept-btn-handler",
+        ".cc-btn.cc-allow",
+        ".cookie-accept",
+        "[aria-label='Accept cookies']",
+        ".gdpr-accept",
+        "#accept-cookies",
+        ".accept-all-cookies",
+        "[data-cookiebanner='accept_button']"
+      ]
+    },
+    {
+      "id": "wait-for-articles",
+      "kind": "waitFor",
+      "selector": "div[data-elementor-type=\"loop-item\"].post",
+      "timeoutMs": 15000,
+      "state": "visible"
+    },
+    {
+      "id": "extract-articles",
+      "kind": "extractList",
+      "itemSelector": "div[data-elementor-type=\"loop-item\"].post",
+      "fields": {
+        "url": {
+          "selector": ".elementor-widget-theme-post-title a",
+          "attribute": "href"
+        },
+        "title": {
+          "selector": ".elementor-widget-theme-post-title .elementor-heading-title"
+        },
+        "imageUrl": {
+          "selector": ".elementor-widget-theme-post-featured-image img",
+          "attribute": "src"
+        },
+        "date": {
+          "selector": "[data-widget_type=\"heading.default\"] .elementor-heading-title"
+        }
+      }
+    }
+  ],
+  "fieldMap": {
+    "bindings": {
+      "title": {
+        "path": "title",
+        "transforms": [{ "name": "trim" }],
+        "required": true
+      },
+      "sourceUrl": {
+        "path": "url",
+        "transforms": [
+          {
+            "name": "absoluteUrl",
+            "args": { "base": "https://www.artificialintelligence-news.com" }
+          }
+        ],
+        "required": true
+      },
+      "images": {
+        "path": "imageUrl",
+        "transforms": [
+          {
+            "name": "absoluteUrl",
+            "args": { "base": "https://www.artificialintelligence-news.com" }
+          },
+          { "name": "toStringArray" }
+        ]
+      }
+    }
+  }
+}

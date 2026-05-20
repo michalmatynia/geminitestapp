@@ -35,26 +35,11 @@ import {
   type AiPathsSettingRecord,
 } from './settings-store.constants';
 import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons, preservePathConfigFlagsOnSeed } from './settings-store.parsing';
+import {
+  isDeprecatedStarterWorkflowPathId,
+  isDeprecatedStarterWorkflowTriggerButton,
+} from './starter-workflow-deprecations';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-const DEPRECATED_STARTER_WORKFLOW_PATH_IDS = new Set<string>(['path_base_export_blwo_v1']);
-const DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS = new Set<string>([
-  '5f36f340-3d89-4f6f-a08f-2387f380b90b',
-]);
-
-const isDeprecatedStarterWorkflowPathId = (pathId: string | null | undefined): boolean =>
-  typeof pathId === 'string' && DEPRECATED_STARTER_WORKFLOW_PATH_IDS.has(pathId.trim());
-
-const isDeprecatedStarterWorkflowTriggerButton = (
-  button: Pick<AiTriggerButtonRecord, 'id' | 'pathId'> | null | undefined
-): boolean => {
-  if (!button) return false;
-  const buttonId = typeof button.id === 'string' ? button.id.trim() : '';
-  return (
-    DEPRECATED_STARTER_WORKFLOW_TRIGGER_BUTTON_IDS.has(buttonId) ||
-    isDeprecatedStarterWorkflowPathId(button.pathId)
-  );
-};
 
 
 const toTriggerButtonRecord = (

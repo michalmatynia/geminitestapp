@@ -230,7 +230,39 @@ function StepProgress({
   return <nav aria-label={ariaLabel} className='flex items-center gap-3'>{steps.map(renderStep)}</nav>;
 }
 
-// eslint-disable-next-line complexity
+const getFormInputStyle = (hasError: boolean, hasMonospace: boolean): React.CSSProperties => ({
+  width: '100%',
+  padding: '0.75rem 1rem',
+  background: 'transparent',
+  border: `1px solid ${hasError ? 'var(--accent)' : 'var(--border)'}`,
+  outline: 'none',
+  fontFamily: hasMonospace ? 'var(--font-mono)' : 'var(--font-body)',
+  fontSize: '0.875rem',
+  fontWeight: 300,
+  color: 'var(--fg)',
+  letterSpacing: hasMonospace ? '0.08em' : undefined,
+  transition: 'border-color 0.2s ease',
+});
+
+const FormLabel = ({
+  label,
+  isPhone,
+  optionalSuffix,
+}: {
+  label: string;
+  isPhone: boolean;
+  optionalSuffix: string;
+}): JSX.Element => (
+  <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
+    {label}
+    {isPhone && (
+      <span style={{ color: 'var(--muted)', fontWeight: 300, marginLeft: '0.4em' }}>
+        ({optionalSuffix})
+      </span>
+    )}
+  </label>
+);
+
 function FormInput({ field, value, error, onChange, locale }: {
   field: CheckoutFieldContent;
   value: string;
@@ -249,17 +281,10 @@ function FormInput({ field, value, error, onChange, locale }: {
     : field.label;
   const optionalSuffix = locale === 'pl' ? 'opcjonalnie' : 'optional';
   return (
-    <div className={isHalf ? 'flex-1 min-w-0' : 'w-full'}>
-      <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
-        {label}
-        {isPhone && (
-          <span style={{ color: 'var(--muted)', fontWeight: 300, marginLeft: '0.4em' }}>
-            ({optionalSuffix})
-          </span>
-        )}
-      </label>
+    <div className={isTruthyBoolean(field.half) ? 'flex-1 min-w-0' : 'w-full'}>
+      <FormLabel label={label} isPhone={isPhone} optionalSuffix={optionalSuffix} />
       <input
-        type={inputType}
+        type={field.type ?? 'text'}
         id={field.id}
         value={value}
         onChange={(e) => onChange(field.id, e.target.value)}
@@ -267,26 +292,12 @@ function FormInput({ field, value, error, onChange, locale }: {
         maxLength={field.maxLength}
         aria-invalid={hasError}
         aria-describedby={describedBy}
-        style={{
-          width: '100%',
-          padding: '0.75rem 1rem',
-          background: 'transparent',
-          border: `1px solid ${hasError ? 'var(--accent)' : 'var(--border)'}`,
-          outline: 'none',
-          fontFamily: hasMonospace ? 'var(--font-mono)' : 'var(--font-body)',
-          fontSize: '0.875rem',
-          fontWeight: 300,
-          color: 'var(--fg)',
-          letterSpacing: hasMonospace ? '0.08em' : undefined,
-          transition: 'border-color 0.2s ease',
-        }}
+        style={getFormInputStyle(hasError, isTruthyBoolean(field.monospace))}
         onFocus={(event) => {
-          const target = event.currentTarget;
-          target.style.borderColor = 'var(--fg)';
+          event.currentTarget.style.borderColor = 'var(--fg)';
         }}
         onBlur={(event) => {
-          const target = event.currentTarget;
-          target.style.borderColor = hasError ? 'var(--accent)' : 'var(--border)';
+          event.currentTarget.style.borderColor = hasError ? 'var(--accent)' : 'var(--border)';
         }}
       />
       {hasError && (
@@ -298,7 +309,6 @@ function FormInput({ field, value, error, onChange, locale }: {
   );
 }
 
-// eslint-disable-next-line max-lines-per-function
 function CountrySelect({
   field,
   value,
@@ -315,12 +325,10 @@ function CountrySelect({
   const hasError = isNonEmptyString(error);
   const isHalf = isTruthyBoolean(field.half);
   const describedBy = hasError ? `${field.id}-error` : undefined;
-  const hasValue = value !== '';
+  const optionalSuffix = locale === 'pl' ? 'opcjonalnie' : 'optional';
   return (
     <div className={isHalf ? 'flex-1 min-w-0' : 'w-full'}>
-      <label className='type-label block mb-1.5' style={{ color: 'var(--fg)' }}>
-        {field.label}
-      </label>
+      <FormLabel label={field.label} isPhone={false} optionalSuffix={optionalSuffix} />
       <select
         id={field.id}
         value={value}
@@ -699,7 +707,7 @@ function InpostPointSelector({
         // Pre-fill the widget's search origin with the shipping city/postcode so
         // the map opens focused on the right area without requiring geolocation.
         const origin = [postcode, city].filter(Boolean).join(' ');
-        if (origin) widget.setAttribute('origin', origin);
+        if (origin !== '') widget.setAttribute('origin', origin);
         widget.style.display = 'block';
         widget.style.height = '100%';
         widget.style.width = '100%';
@@ -727,11 +735,6 @@ function InpostPointSelector({
     point?.addressLine2,
     `${point?.postCode ?? ''} ${point?.city ?? ''}`.trim(),
   ].filter((value): value is string => value !== '').join(', ');
-
-  const handleModalSelect = (selected: InpostPoint | null): void => {
-    onSelect(selected);
-    if (selected !== null) setModalOpen(false);
-  };
 
   return (
     <div

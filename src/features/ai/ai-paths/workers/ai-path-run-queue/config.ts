@@ -11,8 +11,16 @@ export const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true
 export const DEFAULT_CONCURRENCY = parseEnvNumber('AI_PATHS_RUN_CONCURRENCY', 3);
 // Maximum retry attempts for failed jobs before giving up (default: 3, min: 1)
 export const DEFAULT_MAX_ATTEMPTS = parseEnvNumber('AI_PATHS_RUN_MAX_ATTEMPTS', 3, 1);
-// Maximum execution time for a single AI path job in milliseconds (default: 10 minutes)
-export const JOB_EXECUTION_TIMEOUT_MS = parseEnvNumber('AI_PATHS_JOB_TIMEOUT_MS', 10 * 60 * 1000);
+// Maximum execution time for a single AI path job in milliseconds (default: 30 minutes)
+export const JOB_EXECUTION_TIMEOUT_MS = parseEnvNumber('AI_PATHS_JOB_TIMEOUT_MS', 30 * 60 * 1000);
+// Maximum age before a persisted "running" run is treated as orphaned after a worker crash/restart.
+// Keep this comfortably above the per-job timeout so slow local model calls are not marked stale
+// while their worker is still alive.
+export const STALE_RUNNING_TTL_MS = parseEnvNumber(
+  'AI_PATHS_STALE_RUNNING_TTL_MS',
+  Math.max(JOB_EXECUTION_TIMEOUT_MS + 5 * 60_000, 35 * 60_000),
+  60_000
+);
 // Enable recovery of orphaned jobs that were queued but never processed
 export const ORPHAN_QUEUED_RECOVERY_ENABLED =
   process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_ENABLED'] === 'true';

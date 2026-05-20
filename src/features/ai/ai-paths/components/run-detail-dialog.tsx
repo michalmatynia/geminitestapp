@@ -264,6 +264,13 @@ export function RunDetailDialog(): React.JSX.Element {
                     {errorSummary.primary.nodeId ? ` node=${errorSummary.primary.nodeId}` : ''}
                     {errorSummary.primary.retryable ? ' retryable=true' : ''}
                   </div>
+                  {errorSummary.primary.hints.length > 0 ? (
+                    <div className='mt-2 space-y-1 text-[10px] text-rose-100/90'>
+                      {errorSummary.primary.hints.map((hint) => (
+                        <div key={hint}>{hint}</div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               {errorSummary.codes.length > 0 ? (

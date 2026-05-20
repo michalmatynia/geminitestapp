@@ -44,7 +44,6 @@ interface ResultsContentProps {
   lessonMastery: UseKangurMobileResultsLessonMasteryResult;
   duelResults: UseKangurMobileLearnerDuelsSummaryResult;
   lessonCheckpoints: UseKangurMobileLessonCheckpointsResult;
-  filterFamily: string | undefined;
   filterOperation: string | undefined;
   lessonFocusSummary: string | null;
   copy: (text: Record<string, string>) => string;
@@ -59,7 +58,6 @@ function ResultsContent({
   lessonMastery,
   duelResults,
   lessonCheckpoints,
-  filterFamily,
   filterOperation,
   lessonFocusSummary,
   copy,
@@ -69,7 +67,7 @@ function ResultsContent({
   return (
     <>
       <ResultsOverview results={results} copy={copy} />
-      <ResultsAssignmentsSection assignmentItems={resultsAssignments?.assignmentItems} copy={copy} />
+      <ResultsAssignmentsSection assignmentItems={resultsAssignments.assignmentItems} copy={copy} />
       <ResultsBadgesSection resultsBadges={resultsBadges} copy={copy} profileHref={PROFILE_ROUTE} />
       <ResultsLessonMasterySection lessonMastery={lessonMastery} lessonFocusSummary={lessonFocusSummary} copy={copy} />
       <ResultsDuelsSection duelResults={duelResults} duelsHref={DUELS_ROUTE} openDuelSession={openDuelSession} />
@@ -106,7 +104,22 @@ function resolveLessonFocusSummary(
   return null;
 }
 
-export function KangurResultsScreen(): React.JSX.Element {
+interface KangurResultsScreenData {
+  results: UseKangurMobileResultsResult;
+  duelResults: UseKangurMobileLearnerDuelsSummaryResult;
+  resultsAssignments: UseKangurMobileResultsAssignmentsResult;
+  lessonMastery: UseKangurMobileResultsLessonMasteryResult;
+  resultsBadges: UseKangurMobileResultsBadgesResult;
+  lessonCheckpoints: UseKangurMobileLessonCheckpointsResult;
+  filterFamily: string | undefined;
+  filterOperation: string | undefined;
+  lessonFocusSummary: string | null;
+  copy: (text: Record<string, string>) => string;
+  locale: string;
+  openDuelSession: (sessionId: string) => void;
+}
+
+function useKangurResultsScreenData(): KangurResultsScreenData {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -117,17 +130,16 @@ export function KangurResultsScreen(): React.JSX.Element {
   const filterFamily = resolveResultsFilterFamily(params.family);
   const filterOperation = resolveResultsFilterOperation(params.operation);
 
-  const results: UseKangurMobileResultsResult = useKangurMobileResults({
+  const results = useKangurMobileResults({
     family: filterOperation !== null ? 'all' : filterFamily,
     operation: filterOperation,
   });
-  const duelResults: UseKangurMobileLearnerDuelsSummaryResult = useKangurMobileResultsDuels();
-  const resultsAssignments: UseKangurMobileResultsAssignmentsResult =
-    useKangurMobileResultsAssignments();
-  const lessonMastery: UseKangurMobileResultsLessonMasteryResult = useKangurMobileResultsLessonMastery();
-  const resultsBadges: UseKangurMobileResultsBadgesResult = useKangurMobileResultsBadges();
-  const lessonCheckpoints: UseKangurMobileLessonCheckpointsResult =
-    useKangurMobileLessonCheckpoints({ limit: 2 });
+  
+  const duelResults = useKangurMobileResultsDuels();
+  const resultsAssignments = useKangurMobileResultsAssignments();
+  const lessonMastery = useKangurMobileResultsLessonMastery();
+  const resultsBadges = useKangurMobileResultsBadges();
+  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
 
   const lessonFocusSummary = resolveLessonFocusSummary(
     lessonMastery.weakest[0] ?? null,
@@ -139,72 +151,92 @@ export function KangurResultsScreen(): React.JSX.Element {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
 
-  const resultsContent: React.JSX.Element = (() => {
-    if (!results.isEnabled) {
-      return (
-        <View style={{ gap: 10 }}>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: 'Melden Sie sich an, um die Ergebnisse zu sehen.',
-              en: 'Sign in to see results.',
-              pl: 'Zaloguj się, aby zobaczyć wyniki.',
-            })}
-          </Text>
-          <LinkButton
-            href='/'
-            label={copy({
-              de: 'Zum Login',
-              en: 'Go to sign in',
-              pl: 'Przejdź do logowania',
-            })}
-          />
-        </View>
-      );
-    }
+  return {
+    results,
+    duelResults,
+    resultsAssignments,
+    lessonMastery,
+    resultsBadges,
+    lessonCheckpoints,
+    filterFamily,
+    filterOperation,
+    lessonFocusSummary,
+    copy,
+    locale,
+    openDuelSession,
+  };
+}
 
-    if (results.isLoading || results.isRestoringAuth) {
-      return (
+function ResultsStateView({ data }: { data: KangurResultsScreenData }): React.JSX.Element {
+  const { results, copy } = data;
+
+  if (!results.isEnabled) {
+    return (
+      <View style={{ gap: 10 }}>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
-            de: 'Wir stellen die Anmeldung und Ergebnisse wieder her.',
-            en: 'Restoring sign-in and results.',
-            pl: 'Przywracamy logowanie i wyniki.',
+            de: 'Melden Sie sich an, um die Ergebnisse zu sehen.',
+            en: 'Sign in to see results.',
+            pl: 'Zaloguj się, aby zobaczyć wyniki.',
           })}
         </Text>
-      );
-    }
-
-    if (results.error !== null) {
-      return (
-        <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-          {results.error}
-        </Text>
-      );
-    }
-
-    return (
-      <ResultsContent
-        results={results}
-        resultsAssignments={resultsAssignments}
-        resultsBadges={resultsBadges}
-        lessonMastery={lessonMastery}
-        duelResults={duelResults}
-        lessonCheckpoints={lessonCheckpoints}
-        filterFamily={filterFamily}
-        filterOperation={filterOperation}
-        lessonFocusSummary={lessonFocusSummary}
-        copy={copy}
-        locale={locale}
-        openDuelSession={openDuelSession}
-      />
+        <LinkButton
+          href='/'
+          label={copy({
+            de: 'Zum Login',
+            en: 'Go to sign in',
+            pl: 'Przejdź do logowania',
+          })}
+        />
+      </View>
     );
-  })();
+  }
+
+  if (results.isLoading || results.isRestoringAuth) {
+    return (
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {copy({
+          de: 'Wir stellen die Anmeldung und Ergebnisse wieder her.',
+          en: 'Restoring sign-in and results.',
+          pl: 'Przywracamy logowanie i wyniki.',
+        })}
+      </Text>
+    );
+  }
+
+  if (results.error !== null) {
+    return (
+      <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+        {results.error}
+      </Text>
+    );
+  }
+
+  return (
+    <ResultsContent
+      results={results}
+      resultsAssignments={data.resultsAssignments}
+      resultsBadges={data.resultsBadges}
+      lessonMastery={data.lessonMastery}
+      duelResults={data.duelResults}
+      lessonCheckpoints={data.lessonCheckpoints}
+      filterOperation={data.filterOperation}
+      lessonFocusSummary={data.lessonFocusSummary}
+      copy={copy}
+      locale={data.locale}
+      openDuelSession={data.openDuelSession}
+    />
+  );
+}
+
+export function KangurResultsScreen(): React.JSX.Element {
+  const data = useKangurResultsScreenData();
 
   return (
     <KangurMobileScrollScreen contentContainerStyle={{ gap: 18, paddingHorizontal: 20, paddingVertical: 24 }}>
       <View style={{ gap: 14 }}>
-        <ResultsHeader copy={copy} />
-        {resultsContent}
+        <ResultsHeader copy={data.copy} />
+        <ResultsStateView data={data} />
       </View>
     </KangurMobileScrollScreen>
   );

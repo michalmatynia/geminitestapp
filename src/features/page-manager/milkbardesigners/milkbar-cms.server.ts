@@ -58,11 +58,12 @@ const MILKBAR_APPLICATION_NAME = 'Milkbar Designers';
 const MILKBAR_SOURCE_SERVICE = 'milkbar-cms';
 const MILKBAR_MODEL_PUBLIC_PATH_PREFIX = '/uploads/cms/models/';
 const MILKBAR_VISUALISATION_PUBLIC_PATH_PREFIX = '/uploads/cms/visualisation/';
+const ASSET3D_FILE_API_PATH_PATTERN = /^\/api\/assets3d\/([^/?#]+)\/file\/?$/;
 const MILKBAR_FASTCOMET_MODELS_MIRROR_ROOT = path.resolve(
   process.cwd(),
   'hosting',
   'fastcomet',
-  'milkbardesigners.com',
+  'uploads.milkbardesigners.com',
   'public_html',
   'uploads',
   'cms',
@@ -233,6 +234,20 @@ const toMilkbarModelPublicPath = (value: string | undefined): string | undefined
   const publicPath = getPublicPathFromStoredPath(value);
   if (publicPath === null) return undefined;
   return isMilkbarModelPublicPath(publicPath) ? publicPath : undefined;
+};
+
+const getAssetIdFromAsset3DFileUrl = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim();
+  if (trimmed === undefined || trimmed.length === 0) return undefined;
+  try {
+    const pathname = new URL(trimmed, 'https://milkbar.local').pathname;
+    const match = pathname.match(ASSET3D_FILE_API_PATH_PATTERN);
+    if (match?.[1] === undefined) return undefined;
+    const decoded = decodeURIComponent(match[1]).trim();
+    return decoded.length > 0 ? decoded : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const readMilkbarFastCometModelMirrorFiles = (): string[] => {
@@ -433,15 +448,7 @@ async function writeMilkbarCmsData(
     input.projects.map((project) =>
       db.collection(collections.projects).updateOne(
         { code: project.code },
-        {
-          $set: {
-            ...project,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            createdAt: now,
-          },
-        },
+        buildMilkbarProjectUpdateDocument(project, now),
         { upsert: true }
       )
     )
@@ -472,6 +479,33 @@ async function writeMilkbarCmsData(
     .collection(collections.services)
     .deleteMany(serviceCodes.length > 0 ? { code: { $nin: serviceCodes } } : {});
 }
+
+export const buildMilkbarProjectUpdateDocument = (
+  project: MilkbarProjectCmsRecord,
+  now: Date
+): {
+  $set: MilkbarProjectCmsRecord & { updatedAt: Date };
+  $setOnInsert: { createdAt: Date };
+  $unset?: Partial<Record<'modelAssetId' | 'modelUrl', ''>>;
+} => {
+  const unset: Partial<Record<'modelAssetId' | 'modelUrl', ''>> = {};
+  if (project.modelAssetId === undefined) unset.modelAssetId = '';
+  if (project.modelUrl === undefined) unset.modelUrl = '';
+  const { modelAssetId, modelUrl, ...baseProject } = project;
+
+  return {
+    $set: {
+      ...baseProject,
+      ...(modelAssetId !== undefined ? { modelAssetId } : {}),
+      ...(modelUrl !== undefined ? { modelUrl } : {}),
+      updatedAt: now,
+    },
+    ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
+    $setOnInsert: {
+      createdAt: now,
+    },
+  };
+};
 
 async function readMilkbarCmsData(
   db: Db,
@@ -919,18 +953,22 @@ const normalizeUpdateInput = (input: unknown): MilkbarCmsUpdateInput => {
 
 const collectModelAssetIds = (input: MilkbarCmsUpdateInput): string[] => {
   const ids = new Set<string>();
+  const addAssetId = (value: string | undefined): void => {
+    const assetId = value?.trim();
+    if (assetId !== undefined && assetId.length > 0) ids.add(assetId);
+  };
 
   MILKBAR_LOCALES.forEach((locale) => {
     const content = input.localizedContent[locale];
-    const heroId = content.hero.modelAssetId?.trim() ?? '';
-    const interiorId = content.drawing.interiorModelAssetId?.trim() ?? '';
-    if (heroId.length > 0) ids.add(heroId);
-    if (interiorId.length > 0) ids.add(interiorId);
+    addAssetId(content.hero.modelAssetId);
+    addAssetId(getAssetIdFromAsset3DFileUrl(content.hero.modelUrl));
+    addAssetId(content.drawing.interiorModelAssetId);
+    addAssetId(getAssetIdFromAsset3DFileUrl(content.drawing.interiorModelUrl));
   });
 
   input.projects.forEach((project) => {
-    const modelId = project.modelAssetId?.trim() ?? '';
-    if (modelId.length > 0) ids.add(modelId);
+    addAssetId(project.modelAssetId);
+    addAssetId(getAssetIdFromAsset3DFileUrl(project.modelUrl));
   });
 
   return Array.from(ids);
@@ -1130,6 +1168,87 @@ const withoutProjectModelFields = (
   return copy;
 };
 
+const resolveModelReferenceAssetId = (
+  modelAssetId: string | undefined,
+  modelUrl: string | undefined
+): string | undefined => {
+  const assetId = modelAssetId?.trim();
+  if (assetId !== undefined && assetId.length > 0) return assetId;
+  return getAssetIdFromAsset3DFileUrl(modelUrl);
+};
+
+const hasMissingModelReference = (
+  modelAssetId: string | undefined,
+  modelUrl: string | undefined,
+  missingAssetIds: Set<string>
+): boolean => {
+  const assetId = resolveModelReferenceAssetId(modelAssetId, modelUrl);
+  return assetId !== undefined && missingAssetIds.has(assetId);
+};
+
+const pruneMissingPageContentModelReferences = (
+  content: MilkbarPageContent,
+  missingAssetIds: Set<string>
+): MilkbarPageContent => {
+  const hero =
+    hasMissingModelReference(content.hero.modelAssetId, content.hero.modelUrl, missingAssetIds)
+      ? withoutHeroModelFields(content.hero)
+      : content.hero;
+  const drawing =
+    hasMissingModelReference(
+      content.drawing.interiorModelAssetId,
+      content.drawing.interiorModelUrl,
+      missingAssetIds
+    )
+      ? withoutDrawingModelFields(content.drawing)
+      : content.drawing;
+  return {
+    ...content,
+    hero,
+    drawing,
+  };
+};
+
+export const pruneMissingMilkbarModelAssetReferences = async (
+  input: MilkbarCmsUpdateInput
+): Promise<MilkbarCmsUpdateInput> => {
+  const assetIds = collectModelAssetIds(input);
+  if (assetIds.length === 0) return input;
+
+  const lookupResults = await Promise.all(
+    assetIds.map(async (assetId) => ({
+      assetId,
+      asset: await getAsset3DFromLookupRepositories(assetId),
+    }))
+  );
+  const missingAssetIds = new Set(
+    lookupResults
+      .filter(({ asset }) => asset === null)
+      .map(({ assetId }) => assetId)
+  );
+  if (missingAssetIds.size === 0) return input;
+
+  logMilkbarSystemEvent({
+    level: 'warn',
+    message: '[milkbar-cms] removed missing 3D asset references from CMS save payload.',
+    context: { assetIds: Array.from(missingAssetIds) },
+  });
+
+  return {
+    ...input,
+    localizedContent: {
+      en: pruneMissingPageContentModelReferences(input.localizedContent.en, missingAssetIds),
+      de: pruneMissingPageContentModelReferences(input.localizedContent.de, missingAssetIds),
+      pl: pruneMissingPageContentModelReferences(input.localizedContent.pl, missingAssetIds),
+    },
+    projects: input.projects.map((project) =>
+      hasMissingModelReference(project.modelAssetId, project.modelUrl, missingAssetIds)
+        ? (withoutProjectModelFields(project) as MilkbarProjectCmsRecord)
+        : project
+    ),
+  };
+};
+
 const resolveCmsModelUrl = ({
   assetId,
   assetUrls,
@@ -1281,8 +1400,9 @@ export async function saveMilkbarDesignersCmsSnapshot(
   input: unknown
 ): Promise<MilkbarCmsSnapshot> {
   const normalizedInput = normalizeUpdateInput(input);
-  await uploadMilkbarCmsFilesToFastCometOnSave(normalizedInput);
-  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(normalizedInput, 'local');
+  const prunedInput = await pruneMissingMilkbarModelAssetReferences(normalizedInput);
+  await uploadMilkbarCmsFilesToFastCometOnSave(prunedInput);
+  const updateInput = await enrichMilkbarCmsUpdateWithModelUrls(prunedInput, 'local');
   const now = new Date();
 
   try {

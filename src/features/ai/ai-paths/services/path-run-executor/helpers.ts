@@ -28,7 +28,7 @@ export const resolveGraphExecutionMaxDurationMs = (): number => {
   }
 
   const jobTimeoutMs =
-    Number.parseInt(process.env['AI_PATHS_JOB_TIMEOUT_MS'] ?? '', 10) || 10 * 60 * 1000;
+    Number.parseInt(process.env['AI_PATHS_JOB_TIMEOUT_MS'] ?? '', 10) || 30 * 60 * 1000;
   return Math.max(30_000, jobTimeoutMs - 15_000);
 };
 

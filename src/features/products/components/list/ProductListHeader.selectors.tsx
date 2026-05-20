@@ -19,6 +19,7 @@ export interface ProductListSelectorsAndTriggersProps {
   setCatalogFilter: (value: string) => void;
   setCurrencyCode: (value: string) => void;
   setNameLocale: (value: ProductNameLocale) => void;
+  showTriggerRunFeedback: boolean;
   triggerButtonsReady: boolean;
 }
 
@@ -110,8 +111,12 @@ function ProductCatalogSelector({
 }
 
 function ProductTriggerButtons({
+  showTriggerRunFeedback,
   triggerButtonsReady,
-}: Pick<ProductListSelectorsAndTriggersProps, 'triggerButtonsReady'>): JSX.Element | null {
+}: Pick<
+  ProductListSelectorsAndTriggersProps,
+  'showTriggerRunFeedback' | 'triggerButtonsReady'
+>): JSX.Element | null {
   if (triggerButtonsReady === false) return null;
 
   return (
@@ -119,6 +124,7 @@ function ProductTriggerButtons({
       <TriggerButtonBar
         location='product_list'
         entityType='product'
+        showRunFeedback={showTriggerRunFeedback}
         className='w-full flex-nowrap sm:w-auto'
       />
     </div>
@@ -145,7 +151,10 @@ export function ProductListSelectorsAndTriggers(
         catalogFilterOptions={props.catalogFilterOptions}
         setCatalogFilter={props.setCatalogFilter}
       />
-      <ProductTriggerButtons triggerButtonsReady={props.triggerButtonsReady} />
+      <ProductTriggerButtons
+        showTriggerRunFeedback={props.showTriggerRunFeedback}
+        triggerButtonsReady={props.triggerButtonsReady}
+      />
     </>
   );
 }

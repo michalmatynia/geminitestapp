@@ -466,7 +466,9 @@ describe('mongo-path-run-repository behavior', () => {
         $set: expect.objectContaining({
           status: 'failed',
           finishedAt: expect.any(Date),
-          errorMessage: 'Run marked failed due to stale running state.',
+          updatedAt: expect.any(Date),
+          errorMessage:
+            'Run marked failed due to stale running state. The worker likely stopped before reporting completion; retry the run.',
         }),
       }
     );

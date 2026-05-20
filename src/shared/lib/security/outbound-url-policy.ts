@@ -60,25 +60,35 @@ const LOCAL_HOSTS = new Set<string>([
 /** Private metadata service IPs/hostnames that should be blocked (e.g., cloud provider metadata) */
 const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.200']);
 
+const resolveVercelSelfOriginCandidate = (): string | null => {
+  const value = process.env['VERCEL_URL'];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? `https://${trimmed}` : null;
+};
+
 /**
  * Returns the set of `host` strings (hostname[:port]) that belong to this app's own
- * configured asset origin. Only AI_PATHS_ASSET_BASE_URL and NEXT_PUBLIC_APP_URL are
- * consulted. Evaluated on every call so tests can override env vars.
+ * configured origins. Evaluated on every call so tests can override env vars.
  */
 const resolveAppSelfOriginHosts = (): Set<string> => {
   const envCandidates: (string | null | undefined)[] = [
+    process.env['AI_PATHS_INTERNAL_API_BASE_URL'],
     process.env['AI_PATHS_ASSET_BASE_URL'],
     process.env['NEXT_PUBLIC_APP_URL'],
+    process.env['APP_URL'],
+    process.env['NEXTAUTH_URL'],
+    resolveVercelSelfOriginCandidate(),
   ];
   const hosts = new Set<string>();
   for (const candidate of envCandidates) {
-    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    if (typeof candidate !== 'string' || candidate.trim().length === 0) continue;
     try {
       const raw = candidate.trim();
       const withProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw) ? raw : `https://${raw}`;
       const parsed = new URL(withProtocol);
       const host = parsed.host.toLowerCase();
-      if (host) hosts.add(host);
+      if (host.length > 0) hosts.add(host);
     } catch (error) {
       reportObservabilityInternalError(error, {
         source: 'outbound-url-policy',

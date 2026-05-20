@@ -4,6 +4,10 @@ import { act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 const { getAiPathRunMock, streamAiPathRunMock } = vi.hoisted(() => ({
   getAiPathRunMock: vi.fn(),
   streamAiPathRunMock: vi.fn(),
@@ -572,6 +576,81 @@ describe('client-run-tracker', () => {
       status: 'failed',
       trackingState: 'stopped',
       errorMessage: 'Database write affected 0 records for update.',
+    });
+  });
+
+  it('prefers the missing-model configuration message over generic run failure text', async () => {
+    const eventSource = new MockEventSource();
+    streamAiPathRunMock.mockReturnValue(eventSource as unknown as EventSource);
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: createRunRecord({
+          id: 'run-missing-model',
+          status: 'failed',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          errorMessage: 'AI-Paths run execution failed: run-missing-model',
+        }),
+        errorSummary: {
+          primary: {
+            version: 1,
+            code: 'AI_PATHS_RUN_FAILED',
+            category: 'runtime',
+            severity: 'error',
+            scope: 'run',
+            message: 'AI-Paths run execution failed: run-missing-model',
+            userMessage: 'AI-Paths run execution failed: run-missing-model',
+            timestamp: '2026-03-09T12:00:05.000Z',
+            traceId: null,
+            runId: 'run-missing-model',
+            nodeId: null,
+            nodeType: null,
+            nodeTitle: null,
+            attempt: null,
+            iteration: null,
+            retryable: false,
+            retryAfterMs: null,
+            statusCode: null,
+            cause: null,
+            causeChain: [],
+            hints: [],
+            metadata: null,
+          },
+          totalErrors: 2,
+          reportCount: 2,
+          retryable: false,
+          lastErrorAt: '2026-03-09T12:00:05.000Z',
+          codes: [{ code: AI_PATHS_MODEL_NOT_CONFIGURED_CODE, count: 1 }],
+          nodeFailures: [
+            {
+              nodeId: 'node-model',
+              nodeType: 'model',
+              nodeTitle: 'Model',
+              code: AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+              message: AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+              count: 1,
+              lastAt: '2026-03-09T12:00:04.000Z',
+            },
+          ],
+        },
+      },
+    });
+
+    const snapshots: TrackedAiPathRunSnapshot[] = [];
+    subscribeToTrackedAiPathRun('run-missing-model', (snapshot) => {
+      snapshots.push(snapshot);
+    });
+
+    act(() => {
+      eventSource.emit('done', new Event('done'));
+    });
+    await flushAsync();
+
+    expect(snapshots.at(-1)).toMatchObject({
+      status: 'failed',
+      trackingState: 'stopped',
+      errorMessage: AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
     });
   });
 

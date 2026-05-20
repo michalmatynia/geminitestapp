@@ -10,6 +10,7 @@ import {
   type TrackedAiPathRunSnapshot,
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
+import { resolveAiPathsRunFailureToastMessage } from '@/shared/lib/ai-paths/model-configuration-errors';
 import {
   clearTriggerButtonRunFeedback,
   isTriggerButtonRunFeedbackTerminal,
@@ -186,6 +187,7 @@ export function useTriggerButtons({
   const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
   const [lastRuns, setLastRuns] = useState<Record<string, TriggerButtonLastRun>>({});
   const runSubscriptionsRef = useRef<Map<string, () => void>>(new Map());
+  const notifiedFailedRunIdsRef = useRef<Set<string>>(new Set());
   const previousFeedbackScopeKeyRef = useRef<string | null>(null);
 
   const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
@@ -259,6 +261,17 @@ export function useTriggerButtons({
           });
           options.onSnapshot?.(snapshot);
 
+          if (
+            snapshot.status === 'failed' &&
+            snapshot.trackingState === 'stopped' &&
+            !notifiedFailedRunIdsRef.current.has(snapshot.runId)
+          ) {
+            notifiedFailedRunIdsRef.current.add(snapshot.runId);
+            toast(resolveAiPathsRunFailureToastMessage(snapshot.errorMessage), {
+              variant: 'error',
+            });
+          }
+
           if (snapshot.trackingState !== 'stopped' || didStop) return;
           didStop = true;
           stopRunSubscription(buttonId);
@@ -267,7 +280,7 @@ export function useTriggerButtons({
       );
       runSubscriptionsRef.current.set(buttonId, unsubscribe);
     },
-    [location, stopRunSubscription]
+    [location, stopRunSubscription, toast]
   );
 
   useEffect(() => {

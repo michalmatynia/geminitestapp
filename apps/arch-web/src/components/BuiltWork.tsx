@@ -9,6 +9,8 @@ const FALLBACK_PROJECTS: Pick<Project, 'code' | 'name' | 'projectType' | 'city'>
   { code: 'MBD-003', name: 'South Quarter', projectType: 'Residential Ensemble', city: 'Berlin' },
 ];
 
+const PROJECT_VIEWER_ANCHOR = '#viewer';
+
 function BuiltWork({
   content,
   projects,
@@ -33,7 +35,7 @@ function BuiltWork({
 
         <div className="projects-grid">
           {displayProjects.map((project, i) => (
-            <a key={project.code} href="#" className="project-card rev" data-delay={i > 0 ? String(i) : undefined}>
+            <a key={project.code} href={PROJECT_VIEWER_ANCHOR} className="project-card rev" data-delay={i > 0 ? String(i) : undefined}>
               <div className="project-frame">
                 <IsometricThumbnail
                   projectIdx={i}

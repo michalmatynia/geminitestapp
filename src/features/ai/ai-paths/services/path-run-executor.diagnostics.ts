@@ -8,6 +8,19 @@ export type BlockedNodeDiagnostic = {
   message: string | null;
   requiredPorts: string[];
   waitingOnPorts: string[];
+  waitingOnDetails: BlockedNodeWaitingDetail[];
+};
+
+type BlockedNodeWaitingDetail = {
+  port: string;
+  upstream: Array<{
+    nodeId: string;
+    nodeType: string | null;
+    nodeTitle: string | null;
+    sourcePort: string | null;
+    status: string;
+    output?: RuntimePortValues;
+  }>;
 };
 
 export type FailedNodeDiagnostic = {
@@ -31,6 +44,56 @@ export const normalizePortList = (value: unknown): string[] => {
     .filter((entry: unknown): entry is string => typeof entry === 'string')
     .map((entry: string): string => entry.trim())
     .filter((entry: string): boolean => entry.length > 0);
+};
+
+const normalizeWaitingOnDetails = (
+  value: unknown,
+  outputs: Record<string, RuntimePortValues>
+): BlockedNodeWaitingDetail[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry: unknown): BlockedNodeWaitingDetail | null => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+      const record = entry as Record<string, unknown>;
+      const port = typeof record['port'] === 'string' ? record['port'].trim() : '';
+      if (port.length === 0 || !Array.isArray(record['upstream'])) return null;
+      const upstream = record['upstream']
+        .map((upstreamEntry: unknown): BlockedNodeWaitingDetail['upstream'][number] | null => {
+          if (!upstreamEntry || typeof upstreamEntry !== 'object' || Array.isArray(upstreamEntry)) {
+            return null;
+          }
+          const upstreamRecord = upstreamEntry as Record<string, unknown>;
+          const nodeId =
+            typeof upstreamRecord['nodeId'] === 'string' ? upstreamRecord['nodeId'].trim() : '';
+          const status =
+            typeof upstreamRecord['status'] === 'string' ? upstreamRecord['status'].trim() : '';
+          if (nodeId.length === 0 || status.length === 0) return null;
+          return {
+            nodeId,
+            nodeType:
+              typeof upstreamRecord['nodeType'] === 'string'
+                ? upstreamRecord['nodeType'].trim()
+                : null,
+            nodeTitle:
+              typeof upstreamRecord['nodeTitle'] === 'string'
+                ? upstreamRecord['nodeTitle'].trim()
+                : null,
+            sourcePort:
+              typeof upstreamRecord['sourcePort'] === 'string'
+                ? upstreamRecord['sourcePort'].trim()
+                : null,
+            status,
+            output: outputs[nodeId],
+          };
+        })
+        .filter(
+          (
+            upstream
+          ): upstream is BlockedNodeWaitingDetail['upstream'][number] => upstream !== null
+        );
+      return { port, upstream };
+    })
+    .filter((entry): entry is BlockedNodeWaitingDetail => entry !== null);
 };
 
 export const collectBlockedNodeDiagnostics = (
@@ -63,6 +126,7 @@ export const collectBlockedNodeDiagnostics = (
         message,
         requiredPorts: normalizePortList(value['requiredPorts']),
         waitingOnPorts: normalizePortList(value['waitingOnPorts']),
+        waitingOnDetails: normalizeWaitingOnDetails(value['waitingOnDetails'], outputs),
       };
     })
     .filter((entry: BlockedNodeDiagnostic | null): entry is BlockedNodeDiagnostic =>
@@ -70,10 +134,42 @@ export const collectBlockedNodeDiagnostics = (
     );
 };
 
+const buildCompletedUpstreamMissingOutputMessage = (
+  diagnostic: BlockedNodeDiagnostic
+): string | null => {
+  const nodeTitle = diagnostic.nodeTitle ?? diagnostic.nodeId;
+  for (const detail of diagnostic.waitingOnDetails) {
+    const completedUpstream = detail.upstream.find((upstream) => {
+      const status = upstream.status.trim().toLowerCase();
+      return (status === 'completed' || status === 'cached') && upstream.sourcePort !== null;
+    });
+    const sourcePort = completedUpstream?.sourcePort ?? null;
+    if (sourcePort === null) continue;
+    const upstreamTitle = completedUpstream?.nodeTitle ?? completedUpstream?.nodeId ?? 'upstream node';
+    const upstreamErrors = normalizePortList(completedUpstream?.output?.['errors']);
+    const upstreamValid = completedUpstream?.output?.['valid'];
+    if (upstreamErrors.length > 0 || upstreamValid === false) {
+      const errorDetail =
+        upstreamErrors.length > 0 ? `: ${upstreamErrors.join('; ')}` : '.';
+      return `Run blocked by ${nodeTitle}: ${upstreamTitle} rejected its input${errorDetail}`;
+    }
+    return `Run blocked by ${nodeTitle}: ${upstreamTitle} completed without output "${sourcePort}" required for input "${detail.port}". Check the model output and mapper schema.`;
+  }
+  return null;
+};
+
 export const buildBlockedRunFailureMessage = (blockedNodes: BlockedNodeDiagnostic[]): string => {
   const [first] = blockedNodes;
   if (!first) {
     return 'Run blocked: one or more nodes are missing required inputs.';
+  }
+  const upstreamMissingOutputMessage = buildCompletedUpstreamMissingOutputMessage(first);
+  if (upstreamMissingOutputMessage) {
+    const suffix =
+      blockedNodes.length > 1
+        ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
+        : '';
+    return `${upstreamMissingOutputMessage}${suffix}`;
   }
   const title = first.nodeTitle ?? first.nodeId;
   const waiting =

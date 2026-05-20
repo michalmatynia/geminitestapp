@@ -166,4 +166,67 @@ describe('starter workflow guardrails', () => {
     expect(upgradeSource.includes('legacy_alias')).toBe(false);
     expect(templatesSource.includes('legacyRepairMatcher')).toBe(false);
   });
+
+  it('does not hardcode Description Lite flow semantics in runtime or product workers', () => {
+    const workspaceRoot = process.cwd();
+    const sourceRoots = [
+      join(workspaceRoot, 'src', 'app', 'api', 'ai-paths'),
+      join(workspaceRoot, 'src', 'features', 'ai', 'ai-paths', 'services'),
+      join(workspaceRoot, 'src', 'features', 'ai', 'ai-paths', 'workers'),
+      join(workspaceRoot, 'src', 'features', 'products', 'workers'),
+      join(workspaceRoot, 'src', 'shared', 'lib', 'ai-paths', 'core', 'runtime'),
+    ];
+    const forbiddenFlowLiterals = [
+      'path_descv3lite',
+      'description_inference_lite',
+      'starter_description_inference_lite',
+      'selectedDescription',
+      'qualityScore',
+      'finalDescription',
+      'fallbackDescription',
+    ];
+
+    const offenders = sourceRoots.flatMap((root) =>
+      readTsFilesRecursively(root).flatMap((filePath) => {
+        const source = readFileSync(filePath, 'utf8');
+        return forbiddenFlowLiterals
+          .filter((literal) => source.includes(literal))
+          .map((literal) => `${filePath.replace(`${workspaceRoot}/`, '')}: ${literal}`);
+      })
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps product workflow identifiers out of AI-Paths execution services', () => {
+    const workspaceRoot = process.cwd();
+    const sourceRoots = [
+      join(workspaceRoot, 'src', 'features', 'ai', 'ai-paths', 'services'),
+      join(workspaceRoot, 'src', 'features', 'ai', 'ai-paths', 'workers'),
+      join(workspaceRoot, 'src', 'shared', 'lib', 'ai-paths', 'core', 'runtime'),
+    ];
+    const forbiddenProductFlowLiterals = [
+      'path_descv3lite',
+      'description_inference_lite',
+      'starter_description_inference_lite',
+      'path_marketplace_copy_debrand_v1',
+      'marketplace_copy_debrand',
+      'product_marketplace_copy_debrand',
+      'marketplace-copy-debrand',
+      'path_name_normalize_v1',
+      'product_name_normalize',
+      'starter_product_name_normalize',
+    ];
+
+    const offenders = sourceRoots.flatMap((root) =>
+      readTsFilesRecursively(root).flatMap((filePath) => {
+        const source = readFileSync(filePath, 'utf8');
+        return forbiddenProductFlowLiterals
+          .filter((literal) => source.includes(literal))
+          .map((literal) => `${filePath.replace(`${workspaceRoot}/`, '')}: ${literal}`);
+      })
+    );
+
+    expect(offenders).toEqual([]);
+  });
 });

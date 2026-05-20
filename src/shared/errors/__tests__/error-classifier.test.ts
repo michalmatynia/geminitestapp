@@ -80,4 +80,14 @@ describe('error-classifier', () => {
     expect(classifyError(error)).toBe(ERROR_CATEGORY.AI);
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(true);
   });
+
+  it('suggests starting the database server for local Mongo connection refusal', () => {
+    const error = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:27022'), {
+      name: 'MongoServerSelectionError',
+    });
+    const actions = getSuggestedActions(classifyError(error), error);
+
+    expect(classifyError(error)).toBe(ERROR_CATEGORY.DATABASE);
+    expect(actions[0]?.label).toBe('Start Database Server');
+  });
 });

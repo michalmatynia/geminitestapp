@@ -544,6 +544,36 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(upsertAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons', '[]');
   });
 
+  it('prunes legacy unbound description starter buttons before they can resolve by trigger event', async () => {
+    getAllAiPathsSettingsMock.mockResolvedValue(
+      createSettingsSnapshot({
+        triggerButtons: [
+          {
+            id: 'f5af953f-632d-4704-adec-cc7e58aa68c6',
+            name: 'Description',
+            iconId: null,
+            pathId: null,
+            enabled: true,
+            locations: ['product_modal'],
+            mode: 'click',
+            display: 'icon_label',
+            createdAt: '2026-03-03T00:00:00.000Z',
+            updatedAt: '2026-03-03T00:00:00.000Z',
+            sortIndex: 0,
+          },
+        ],
+      })
+    );
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
+      createRequestContext()
+    );
+
+    await expect(response.json()).resolves.toEqual([]);
+    expect(upsertAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons', '[]');
+  });
+
   it('fails open when the AI Paths index payload is malformed', async () => {
     getAllAiPathsSettingsMock.mockResolvedValue(
       createSettingsSnapshot({

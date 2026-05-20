@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MilkbarCmsUpdateInput } from './milkbar-cms.types';
+import type { MilkbarCmsUpdateInput, MilkbarProjectCmsRecord } from './milkbar-cms.types';
 import {
   DEFAULT_MILKBAR_LOCALIZED_CONTENT,
   DEFAULT_MILKBAR_PAGE_SETTINGS,
@@ -29,7 +29,11 @@ vi.mock('@/shared/lib/files/services/image-file-repository', () => ({
   getCmsBuilderImageFileRepository: mocks.getCmsBuilderImageFileRepository,
 }));
 
-import { uploadMilkbarCmsFilesToFastCometOnSave } from './milkbar-cms.server';
+import {
+  buildMilkbarProjectUpdateDocument,
+  pruneMissingMilkbarModelAssetReferences,
+  uploadMilkbarCmsFilesToFastCometOnSave,
+} from './milkbar-cms.server';
 
 const buildInput = (): MilkbarCmsUpdateInput => ({
   localizedContent: {
@@ -133,6 +137,132 @@ describe('uploadMilkbarCmsFilesToFastCometOnSave', () => {
     expect(mocks.uploadMilkbarAsset3DInRedisRuntime).toHaveBeenCalledWith({
       assetId: 'asset-local',
       requestedAt: expect.any(String),
+    });
+  });
+});
+
+const buildProject = (
+  overrides: Partial<MilkbarProjectCmsRecord> = {}
+): MilkbarProjectCmsRecord => ({
+  cameraPosition: { x: 20, y: 15, z: 20 },
+  cameraTarget: { x: 0, y: 6, z: 0 },
+  city: 'Amsterdam',
+  code: 'MBD-001',
+  country: 'NL',
+  description: 'Project description.',
+  name: 'Helios Tower',
+  order: 0,
+  projectType: 'Mixed-Use Tower',
+  stats: [],
+  status: 'published',
+  ...overrides,
+});
+
+describe('pruneMissingMilkbarModelAssetReferences', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getAsset3DFromLookupRepositories.mockImplementation(async (assetId: string) =>
+      assetId === 'asset-present'
+        ? {
+            id: assetId,
+            name: 'Present model',
+            description: null,
+            categoryId: null,
+            filepath: '/uploads/cms/models/present.glb',
+            fileUrl: '/uploads/cms/models/present.glb',
+            metadata: {
+              publicPath: '/uploads/cms/models/present.glb',
+              storageProfile: 'milkbarCms',
+            },
+          }
+        : null
+    );
+  });
+
+  it('removes stale missing asset references before saving the CMS payload', async () => {
+    const input: MilkbarCmsUpdateInput = {
+      localizedContent: {
+        ...DEFAULT_MILKBAR_LOCALIZED_CONTENT,
+        en: {
+          ...DEFAULT_MILKBAR_LOCALIZED_CONTENT.en,
+          hero: {
+            ...DEFAULT_MILKBAR_LOCALIZED_CONTENT.en.hero,
+            modelAssetId: 'asset-missing',
+            modelUrl: '/api/assets3d/asset-missing/file',
+          },
+          drawing: {
+            ...DEFAULT_MILKBAR_LOCALIZED_CONTENT.en.drawing,
+            interiorModelAssetId: 'asset-present',
+            interiorModelUrl: '/api/assets3d/asset-present/file',
+          },
+        },
+      },
+      pageSettings: DEFAULT_MILKBAR_PAGE_SETTINGS,
+      projects: [
+        buildProject({
+          code: 'MBD-001',
+          modelUrl: '/api/assets3d/asset-missing/file',
+        }),
+        buildProject({
+          code: 'MBD-002',
+          modelAssetId: 'asset-present',
+          modelUrl: '/api/assets3d/asset-present/file',
+        }),
+        buildProject({
+          code: 'MBD-003',
+          modelUrl: 'https://example.com/model.glb',
+        }),
+      ],
+      services: [],
+    };
+
+    const pruned = await pruneMissingMilkbarModelAssetReferences(input);
+
+    expect(pruned.localizedContent.en.hero).not.toHaveProperty('modelAssetId');
+    expect(pruned.localizedContent.en.hero).not.toHaveProperty('modelUrl');
+    expect(pruned.localizedContent.en.drawing).toMatchObject({
+      interiorModelAssetId: 'asset-present',
+      interiorModelUrl: '/api/assets3d/asset-present/file',
+    });
+    expect(pruned.projects[0]).not.toHaveProperty('modelAssetId');
+    expect(pruned.projects[0]).not.toHaveProperty('modelUrl');
+    expect(pruned.projects[1]).toMatchObject({
+      modelAssetId: 'asset-present',
+      modelUrl: '/api/assets3d/asset-present/file',
+    });
+    expect(pruned.projects[2]).toMatchObject({
+      modelUrl: 'https://example.com/model.glb',
+    });
+  });
+});
+
+describe('buildMilkbarProjectUpdateDocument', () => {
+  const now = new Date('2026-05-19T20:00:00.000Z');
+
+  it('unsets saved model fields when a project model slot has been cleared', () => {
+    const update = buildMilkbarProjectUpdateDocument(buildProject(), now);
+
+    expect(update.$unset).toEqual({
+      modelAssetId: '',
+      modelUrl: '',
+    });
+    expect(update.$set).not.toHaveProperty('modelAssetId');
+    expect(update.$set).not.toHaveProperty('modelUrl');
+  });
+
+  it('keeps model fields when a project model slot is assigned', () => {
+    const update = buildMilkbarProjectUpdateDocument(
+      buildProject({
+        modelAssetId: 'asset-1',
+        modelUrl: '/api/assets3d/asset-1/file',
+      }),
+      now
+    );
+
+    expect(update.$unset).toBeUndefined();
+    expect(update.$set).toMatchObject({
+      modelAssetId: 'asset-1',
+      modelUrl: '/api/assets3d/asset-1/file',
     });
   });
 });

@@ -37,10 +37,21 @@ type ModelConfigOverride = {
   systemPrompt?: string;
 };
 
-const STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE: Record<string, string[]> = {
+const DEFAULT_STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE: Record<string, string[]> = {
   fetcher: ['fetcher'],
   model: ['model'],
   prompt: ['prompt'],
+};
+
+const getStarterOverlayPreservedConfigKeys = (
+  entry: AiPathTemplateRegistryEntry,
+  nodeType: string
+): string[] => {
+  const policyOverrides = entry.upgradePolicy?.preservedConfigKeysByNodeType;
+  if (policyOverrides && Object.prototype.hasOwnProperty.call(policyOverrides, nodeType)) {
+    return policyOverrides[nodeType] ?? [];
+  }
+  return DEFAULT_STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE[nodeType] ?? [];
 };
 
 const isLegacyNormalizePromptUpgradeCandidate = (
@@ -50,13 +61,15 @@ const isLegacyNormalizePromptUpgradeCandidate = (
   const currentTemplate = normalizeText(toRecord(currentValue)?.['template']).toLowerCase();
   const latestTemplate = normalizeText(toRecord(latestValue)?.['template']).toLowerCase();
 
-  if (!currentTemplate || !latestTemplate) {
+  if (currentTemplate.length === 0 || latestTemplate.length === 0) {
     return false;
   }
 
   return (
     currentTemplate.includes('context registry bundle supplied in the system context') &&
-    currentTemplate.includes('authoritative leaf-category vocabulary for the active catalog selection') &&
+    currentTemplate.includes(
+      'authoritative leaf-category vocabulary for the active catalog selection'
+    ) &&
     latestTemplate.includes('live product_categories context fetched during this workflow run') &&
     latestTemplate.includes('bundle.categorycontext.leafcategories')
   );
@@ -75,10 +88,7 @@ const collectExplicitModelSelections = (config: PathConfig): ExplicitModelSelect
     return acc;
   }, []);
 
-const applyModelConfigOverrideToNode = (
-  node: AiNode,
-  override: ModelConfigOverride
-): AiNode => {
+const applyModelConfigOverrideToNode = (node: AiNode, override: ModelConfigOverride): AiNode => {
   const currentConfig = node.config ?? {};
   const currentModel = node.config?.model;
   return {
@@ -131,7 +141,8 @@ const buildStarterNodeMatchKey = (node: Pick<AiNode, 'type' | 'title'>): string 
 
 const preserveNonCanonicalStarterNodeConfigById = (
   current: PathConfig,
-  next: PathConfig
+  next: PathConfig,
+  entry: AiPathTemplateRegistryEntry
 ): PathConfig => {
   if (!Array.isArray(current.nodes) || !Array.isArray(next.nodes) || next.nodes.length === 0) {
     return next;
@@ -148,7 +159,7 @@ const preserveNonCanonicalStarterNodeConfigById = (
 
   let changed = false;
   const nextNodes = next.nodes.map((node: AiNode): AiNode => {
-    const preservedConfigKeys = STARTER_OVERLAY_PRESERVED_CONFIG_KEYS_BY_NODE_TYPE[node.type] ?? [];
+    const preservedConfigKeys = getStarterOverlayPreservedConfigKeys(entry, node.type);
     if (preservedConfigKeys.length === 0) {
       return node;
     }
@@ -220,7 +231,11 @@ const preserveNonCanonicalStarterNodeConfigById = (
     : next;
 };
 
-const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig): PathConfig => {
+const preserveExplicitModelSelections = (
+  current: PathConfig,
+  next: PathConfig,
+  entry: AiPathTemplateRegistryEntry
+): PathConfig => {
   const explicitSelections = collectExplicitModelSelections(current);
   if (explicitSelections.length === 0 || !Array.isArray(next.nodes) || next.nodes.length === 0) {
     return next;
@@ -241,6 +256,8 @@ const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig):
     new Map<string, ExplicitModelSelection[]>()
   );
   const nextModelNodes = next.nodes.filter((node: AiNode): boolean => node.type === 'model');
+  const applySingleSelectionToAllModelNodes =
+    entry.upgradePolicy?.applySingleModelSelectionToAllModelNodes === true;
 
   let changed = false;
   const nextNodes = next.nodes.map((node: AiNode): AiNode => {
@@ -254,9 +271,12 @@ const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig):
 
     const byId = selectionByNodeId.get(node.id) ?? null;
     const byTitleCandidates = selectionsByTitle.get(normalizeText(node.title)) ?? [];
-    const byTitle = byTitleCandidates.length === 1 ? byTitleCandidates[0] ?? null : null;
+    const byTitle = byTitleCandidates.length === 1 ? (byTitleCandidates[0] ?? null) : null;
     const fallbackSingle =
-      explicitSelections.length === 1 && nextModelNodes.length === 1 ? explicitSelections[0] ?? null : null;
+      explicitSelections.length === 1 &&
+      (nextModelNodes.length === 1 || applySingleSelectionToAllModelNodes)
+        ? (explicitSelections[0] ?? null)
+        : null;
     const preservedModelId = byId?.modelId ?? byTitle?.modelId ?? fallbackSingle?.modelId ?? '';
     if (!preservedModelId) {
       return node;
@@ -274,27 +294,35 @@ const preserveExplicitModelSelections = (current: PathConfig, next: PathConfig):
     : next;
 };
 
-const buildStarterGraphReplacement = (current: PathConfig, latest: PathConfig): PathConfig => {
+const buildStarterGraphReplacement = (
+  current: PathConfig,
+  latest: PathConfig,
+  entry: AiPathTemplateRegistryEntry
+): PathConfig => {
   const currentExtensions = toRecord(current.extensions);
   const latestExtensions = toRecord(latest.extensions);
-  return preserveExplicitModelSelections(current, {
-    ...latest,
-    id: current.id,
-    name: normalizeText(current.name) || latest.name,
-    description: normalizeText(current.description) || latest.description,
-    trigger: normalizeText(current.trigger) || latest.trigger,
-    isActive: current.isActive ?? latest.isActive,
-    isLocked: current.isLocked ?? latest.isLocked,
-    updatedAt: current.updatedAt ?? latest.updatedAt,
-    ...(currentExtensions || latestExtensions
-      ? {
-          extensions: {
-            ...(currentExtensions ?? {}),
-            ...(latestExtensions ?? {}),
-          },
-        }
-      : {}),
-  });
+  return preserveExplicitModelSelections(
+    current,
+    {
+      ...latest,
+      id: current.id,
+      name: normalizeText(current.name) || latest.name,
+      description: normalizeText(current.description) || latest.description,
+      trigger: normalizeText(current.trigger) || latest.trigger,
+      isActive: current.isActive ?? latest.isActive,
+      isLocked: current.isLocked ?? latest.isLocked,
+      updatedAt: current.updatedAt ?? latest.updatedAt,
+      ...(currentExtensions || latestExtensions
+        ? {
+            extensions: {
+              ...(currentExtensions ?? {}),
+              ...(latestExtensions ?? {}),
+            },
+          }
+        : {}),
+    },
+    entry
+  );
 };
 
 const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {
@@ -302,10 +330,8 @@ const countNodeIdOverlap = (left: PathConfig, right: PathConfig): number => {
   return (left.nodes ?? []).reduce((count, node) => count + Number(rightNodeIds.has(node.id)), 0);
 };
 
-const isSeededDefaultPath = (
-  entry: AiPathTemplateRegistryEntry,
-  config: PathConfig
-): boolean => config.id === entry.seedPolicy?.defaultPathId;
+const isSeededDefaultPath = (entry: AiPathTemplateRegistryEntry, config: PathConfig): boolean =>
+  config.id === entry.seedPolicy?.defaultPathId;
 
 const hasMatchingStarterProvenance = (
   provenance: AiPathsStarterProvenance | null,
@@ -327,7 +353,8 @@ const hasOutdatedStarterProvenance = (
   config: PathConfig
 ): boolean =>
   hasMatchingStarterProvenance(provenance, entry) &&
-  (provenance?.templateVersion ?? Number.POSITIVE_INFINITY) < entry.starterLineage.templateVersion &&
+  (provenance?.templateVersion ?? Number.POSITIVE_INFINITY) <
+    entry.starterLineage.templateVersion &&
   isPathEligibleForVersionedOverlay(entry, config);
 
 const shouldReplaceLowOverlapStarterGraph = (args: {
@@ -446,10 +473,10 @@ export const upgradeStarterWorkflowPathConfig = (
     return { config, changed: false, resolution };
   }
 
-  const next = buildStarterGraphReplacement(config, latest);
+  const next = buildStarterGraphReplacement(config, latest, resolution.entry);
   const nextWithPreservedModelConfig = currentMatchesCanonicalHash
     ? next
-    : preserveNonCanonicalStarterNodeConfigById(config, next);
+    : preserveNonCanonicalStarterNodeConfigById(config, next, resolution.entry);
   if (
     nextWithPreservedModelConfig === config ||
     JSON.stringify(nextWithPreservedModelConfig) === JSON.stringify(config)

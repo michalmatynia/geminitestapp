@@ -128,7 +128,7 @@ describe('assets3d file handler', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(readFileMock).toHaveBeenCalledWith(
       expect.stringContaining(
-        'hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/models/model.gltf'
+        'hosting/fastcomet/uploads.milkbardesigners.com/public_html/uploads/cms/models/model.gltf'
       )
     );
     expect(Buffer.from(await response.arrayBuffer()).toString('utf8')).toBe('public-html-model');

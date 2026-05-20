@@ -5,7 +5,7 @@ import {
 
 export type KangurMobileResultsLessonMasteryItem = KangurMobileHomeLessonMasteryItem;
 
-type UseKangurMobileResultsLessonMasteryResult = {
+export type UseKangurMobileResultsLessonMasteryResult = {
   masteredLessons: number;
   strongest: KangurMobileResultsLessonMasteryItem[];
   trackedLessons: number;

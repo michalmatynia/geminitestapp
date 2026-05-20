@@ -12,6 +12,10 @@ import {
   parseAiPathErrorReport,
   parseAiPathRunErrorSummary,
 } from '@/shared/lib/ai-paths/error-reporting';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 
 const buildRun = (overrides: Partial<AiPathRunRecord> = {}): AiPathRunRecord =>
   ({
@@ -260,6 +264,65 @@ describe('ai path error reporting shared-lib behavior', () => {
           count: 2,
         }),
       ])
+    );
+  });
+
+  it('marks missing AI Path model assignment as a configuration error', () => {
+    const message =
+      'AI Paths Model has no model assigned in AI Brain, and this Model node did not select one.';
+    const report = buildAiPathErrorReport({
+      error: message,
+      code: 'AI_PATHS_NODE_FAILED',
+      category: 'runtime',
+      scope: 'node',
+      runId: 'run-model-missing',
+      nodeId: 'node-model',
+      nodeType: 'model',
+      nodeTitle: 'Model',
+    });
+
+    expect(report).toEqual(
+      expect.objectContaining({
+        code: AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+        category: 'configuration',
+        retryable: false,
+        userMessage: AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+      })
+    );
+    expect(report.hints).toContain(
+      'Alternatively set AI Brain > Routing > AI Paths Model to an installed model.'
+    );
+
+    const summary = buildAiPathRunErrorSummary({
+      run: buildRun({ id: 'run-model-missing', errorMessage: null }),
+      nodes: [],
+      events: [
+        {
+          id: 'event-model-missing',
+          runId: 'run-model-missing',
+          nodeId: 'node-model',
+          nodeType: 'model',
+          nodeTitle: 'Model',
+          level: 'error',
+          message,
+          metadata: { errorReport: report },
+          createdAt: '2026-03-09T12:00:04.000Z',
+        } as AiPathRunEventRecord,
+      ],
+    });
+
+    expect(summary?.primary).toEqual(
+      expect.objectContaining({
+        code: AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+        userMessage: AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+      })
+    );
+    expect(summary?.nodeFailures[0]).toEqual(
+      expect.objectContaining({
+        nodeId: 'node-model',
+        code: AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+        message: AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+      })
     );
   });
 });

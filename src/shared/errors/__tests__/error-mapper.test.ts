@@ -30,4 +30,18 @@ describe('error-mapper', () => {
     expect(error?.code).toBe(AppErrorCodes.serviceUnavailable);
     expect(error?.retryAfterMs).toBe(3000);
   });
+
+  it('tells the operator to start the local database server for local Mongo connection refusal', () => {
+    const error = mapErrorToAppError({
+      name: 'MongoServerSelectionError',
+      message: 'connect ECONNREFUSED 127.0.0.1:27022',
+    });
+
+    expect(error?.code).toBe(AppErrorCodes.databaseError);
+    expect(error?.httpStatus).toBe(503);
+    expect(error?.message).toContain('Start the database server');
+    expect(error?.expected).toBe(true);
+    expect(error?.retryable).toBe(true);
+    expect(error?.retryAfterMs).toBe(5000);
+  });
 });

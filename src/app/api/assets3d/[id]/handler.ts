@@ -18,6 +18,16 @@ import {
 import { notFoundError } from '@/shared/errors/app-error';
 import { applyCacheLife } from '@/shared/lib/next/cache-life';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { cacheTag, revalidateTag } from 'next/cache';
+
+const ASSETS3D_LIST_CACHE_TAG = 'assets3d-list';
+
+const getAsset3DDetailCacheTag = (id: string): string => `assets3d-detail:${id}`;
+
+const revalidateAsset3DCache = (id: string): void => {
+  revalidateTag(ASSETS3D_LIST_CACHE_TAG, 'max');
+  revalidateTag(getAsset3DDetailCacheTag(id), 'max');
+};
 
 export async function getHandler(
   _req: NextRequest,
@@ -36,6 +46,7 @@ export async function getHandler(
 async function getAsset3DByIdCached(id: string): Promise<Asset3DRecord | null> {
   'use cache';
   applyCacheLife('swr60');
+  cacheTag(getAsset3DDetailCacheTag(id));
 
   return getAsset3DFromLookupRepositories(id);
 }
@@ -63,6 +74,8 @@ export async function patchHandler(
     throw notFoundError('3D asset not found', { id: params.id });
   }
 
+  revalidateAsset3DCache(params.id);
+
   return NextResponse.json(asset);
 }
 
@@ -81,6 +94,7 @@ export async function deleteHandler(
       assetId: params.id,
       requestedAt: new Date().toISOString(),
     });
+    revalidateAsset3DCache(params.id);
     return NextResponse.json({ success: true });
   }
 
@@ -89,6 +103,8 @@ export async function deleteHandler(
   if (!success) {
     throw notFoundError('3D asset not found', { id: params.id });
   }
+
+  revalidateAsset3DCache(params.id);
 
   return NextResponse.json({ success: true });
 }

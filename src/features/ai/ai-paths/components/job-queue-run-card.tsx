@@ -4,6 +4,11 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+  resolveAiPathsRunFailureUserMessage,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 import { Alert, Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
@@ -142,6 +147,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
 
   const isExpanded = expandedRunIds.has(runId);
   const detail = normalizeRunDetail(runDetails[runId]);
+  const errorSummary = detail?.errorSummary ?? null;
   const detailLoading = runDetailLoading.has(runId);
   const detailError = runDetailErrors[runId];
   const detailRun = detail?.run ?? run;
@@ -200,6 +206,18 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
   const isCancellingThisRun = isCancelingRun(runId);
   const isDeletingThisRun = isDeletingRun(runId);
   const paused = pausedStreams.has(runId);
+  const errorSummaryHasMissingModel =
+    errorSummary?.primary?.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE ||
+    (errorSummary?.codes ?? []).some((entry) => entry.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE) ||
+    (errorSummary?.nodeFailures ?? []).some(
+      (node) => node.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE
+    );
+  const errorSummaryMessage =
+    errorSummaryHasMissingModel
+      ? AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE
+      : (errorSummary?.primary?.userMessage ?? null);
+  const displayedRunErrorMessage =
+    errorSummaryMessage ?? resolveAiPathsRunFailureUserMessage(detailRun.errorMessage) ?? null;
 
   return (
     <div className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'>
@@ -257,9 +275,9 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
               Entity: {detailRun.entityType ?? '?'} {detailRun.entityId ?? ''}
             </div>
           )}
-          {detailRun.errorMessage && (
+          {displayedRunErrorMessage && (
             <Alert variant='error' className='mt-1 px-2 py-1 text-[11px]'>
-              Error: {detailRun.errorMessage}
+              Error: {displayedRunErrorMessage}
             </Alert>
           )}
         </div>
@@ -317,6 +335,27 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
 
           {detail ? (
             <>
+              {errorSummary ? (
+                <Alert variant='error' className='px-3 py-2 text-[11px]'>
+                  <div className='font-semibold text-rose-100'>Job Run error</div>
+                  {errorSummary.primary ? (
+                    <div className='mt-1 font-mono text-[10px] text-rose-200'>
+                      {errorSummary.primary.code}
+                    </div>
+                  ) : null}
+                  <div className='mt-1 text-rose-100'>
+                    {displayedRunErrorMessage ?? 'Run failed. Open the events below for details.'}
+                  </div>
+                  {errorSummary.primary?.hints.length ? (
+                    <div className='mt-2 space-y-1 text-rose-100/90'>
+                      {errorSummary.primary.hints.map((hint) => (
+                        <div key={hint}>{hint}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                </Alert>
+              ) : null}
+
               <div className='grid gap-3 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
                 {renderJobQueueDetailField({ label: 'Path ID', value: detailRun.pathId ?? '-' })}
                 {renderJobQueueDetailField({ label: 'Status', value: detailRun.status })}

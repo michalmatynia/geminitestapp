@@ -7,7 +7,16 @@ import type {
 } from '@kangur/contracts/kangur';
 import { type KangurLearnerProfileSnapshot } from '@kangur/core';
 import { type UseQueryResult } from '@tanstack/react-query';
-import { type KangurMobileParentAssignmentMonitoring } from './useParentDashboardAssignments';
+
+export type KangurMobileParentAssignmentMonitoring = {
+  completedCount: number;
+  highPriorityCount: number;
+  inProgressCount: number;
+  lessonCount: number;
+  notStartedCount: number;
+  practiceCount: number;
+  totalCount: number;
+};
 
 export type KangurMobileParentAssignmentItem = {
   assignment: KangurAssignmentSnapshot;

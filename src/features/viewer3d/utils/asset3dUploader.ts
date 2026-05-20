@@ -158,6 +158,17 @@ const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value.trim())
 const isMilkbarModelPublicPath = (value: string | null): value is string =>
   value?.startsWith(MILKBAR_MODEL_PUBLIC_PATH_PREFIX) === true;
 
+const isFastCometSafePathSegment = (value: string): boolean => /^[A-Za-z0-9._-]+$/.test(value);
+
+const isFastCometSafePublicPath = (publicPath: string): boolean => {
+  if (!publicPath.startsWith('/uploads/')) return false;
+  return publicPath
+    .slice('/uploads/'.length)
+    .split('/')
+    .filter((segment) => segment.length > 0)
+    .every((segment) => segment !== '.' && segment !== '..' && isFastCometSafePathSegment(segment));
+};
+
 const resolveSafeMilkbarLocalModelDiskPath = (publicPath: string): string => {
   const relativePath = publicPath.slice(MILKBAR_MODEL_PUBLIC_PATH_PREFIX.length);
   const resolved = path.resolve(MILKBAR_LOCAL_MODELS_ROOT, relativePath);
@@ -205,6 +216,18 @@ const sanitizeMilkbarModelFilename = (filename: string, contentType?: string | n
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
   return `${Date.now()}-${stem.length > 0 ? stem : 'model'}${ext}`;
+};
+
+export const resolveMilkbarFastCometModelUploadPublicPath = (input: {
+  filename: string;
+  mimetype: string;
+  publicPath: string;
+}): string => {
+  if (isFastCometSafePublicPath(input.publicPath)) return input.publicPath;
+  return `${MILKBAR_MODEL_PUBLIC_PATH_PREFIX}${sanitizeMilkbarModelFilename(
+    input.filename,
+    input.mimetype
+  )}`;
 };
 
 const createMilkbarAssetPayload = (input: {
@@ -302,8 +325,6 @@ const deleteMilkbarFastCometRemote = async (asset: Asset3DRecord): Promise<void>
     filepath,
     publicPath,
     fastComet: await resolveMilkbarFastCometConfig(),
-  }).catch((error: unknown) => {
-    void ErrorSystem.captureException(error);
   });
 };
 
@@ -401,7 +422,10 @@ async function prepareAssetStorage(
   storedFilepath: string;
 }> {
   // Generate unique filename with timestamp to prevent collisions
-  const filename = `${Date.now()}-${path.basename(file.name)}`;
+  const filename =
+    options.storageProfile === 'milkbarCms'
+      ? sanitizeMilkbarModelFilename(file.name, file.type)
+      : `${Date.now()}-${path.basename(file.name)}`;
   const storageTarget = resolveAssetStorageTarget(options.storageProfile, options.storageSource);
   const { diskDir, publicDir } = storageTarget;
   const publicPath = `${publicDir}/${filename}`;
@@ -647,12 +671,17 @@ export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset
 
   const { asset } = match;
   const { buffer, filename, mimetype, publicPath } = await readMilkbarModelAssetBuffer(asset);
+  const uploadPublicPath = resolveMilkbarFastCometModelUploadPublicPath({
+    filename,
+    mimetype,
+    publicPath,
+  });
   const milkbarStorage = resolveMilkbarFastCometStorageProfile();
   const storageResult = await uploadToConfiguredStorage({
     buffer,
     filename,
     mimetype,
-    publicPath,
+    publicPath: uploadPublicPath,
     category: 'cms',
     projectId: null,
     folder: MILKBAR_CMS_MODELS_FOLDER,
@@ -660,17 +689,17 @@ export async function uploadMilkbarAsset3DToFastComet(id: string): Promise<Asset
     fastCometBaseUrl: milkbarStorage.publicBaseUrl,
     fastCometConfig: milkbarStorage.fastCometConfig,
     writeLocalCopy: async (): Promise<void> => {
-      await writeFileBuffer(resolveSafeMilkbarLocalModelDiskPath(publicPath), buffer);
+      await writeFileBuffer(resolveSafeMilkbarLocalModelDiskPath(uploadPublicPath), buffer);
     },
   });
-  await writeMilkbarPublicHtmlMirror(publicPath, buffer);
+  await writeMilkbarPublicHtmlMirror(uploadPublicPath, buffer);
 
   return await match.repository.updateAsset3D(id, {
     filepath: storageResult.filepath,
     fileUrl: storageResult.filepath,
     metadata: {
       ...(asset.metadata ?? {}),
-      publicPath,
+      publicPath: uploadPublicPath,
       publicBaseUrl: milkbarStorage.publicBaseUrl,
       storageProfile: 'milkbarCms',
       storageSource: 'fastcomet',
@@ -710,6 +739,6 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
       action: 'deleteAsset3D',
       id,
     });
-    return false;
+    throw error;
   }
 }

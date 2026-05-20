@@ -5,10 +5,10 @@ import { connect as connectTls } from 'node:tls';
 import { MongoClient } from 'mongodb';
 import { Agent } from 'undici';
 
-const DEFAULT_UPLOAD_ENDPOINT = 'https://milkbardesigners.com/api/uploads/index.php';
-const DEFAULT_DELETE_ENDPOINT = 'https://milkbardesigners.com/api/uploads/delete/index.php';
+const DEFAULT_UPLOAD_ENDPOINT = 'https://uploads.milkbardesigners.com/api/uploads/index.php';
+const DEFAULT_DELETE_ENDPOINT = 'https://uploads.milkbardesigners.com/api/uploads/delete/index.php';
 const DEFAULT_PUBLIC_BASE_URL = 'https://uploads.milkbardesigners.com';
-const DEFAULT_SERVER = 'milkbardesigners.com';
+const DEFAULT_SERVER = 'uploads.milkbardesigners.com';
 const DEFAULT_RESOLVE_IP = '209.42.31.54';
 const DEFAULT_TIMEOUT_MS = 20_000;
 

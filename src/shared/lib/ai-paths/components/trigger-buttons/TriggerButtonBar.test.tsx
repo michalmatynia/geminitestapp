@@ -47,7 +47,7 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     loading?: boolean;
     loadingText?: string;
   }) => (
-    <button type='button' onClick={onClick} disabled={loading || disabled} {...props}>
+    <button type='button' onClick={onClick} disabled={(loading ?? false) || (disabled ?? false)} {...props}>
       {loading ? <span data-testid='mock-button-spinner'>{loadingText ?? 'Loading'}</span> : null}
       {children}
     </button>
@@ -297,6 +297,31 @@ describe('TriggerButtonBar', () => {
     );
 
     expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Job Queue' })).toBeInTheDocument();
+  });
+
+  it('shows product run feedback for product list trigger locations', () => {
+    useTriggerButtonsMock.mockReturnValue({
+      buttons: [{ ...BUTTON, locations: ['product_list'] }],
+      toggleMap: {},
+      successMap: {},
+      runStates: {},
+      lastRuns: {
+        [BUTTON.id]: {
+          runId: 'run-product-list-feedback',
+          status: 'queued',
+          updatedAt: '2026-03-11T12:00:00.000Z',
+          finishedAt: null,
+          errorMessage: null,
+        },
+      },
+      handleTrigger: vi.fn(),
+      isLoading: false,
+    });
+
+    render(<TriggerButtonBar location='product_list' entityType='product' />);
+
+    expect(screen.getByText('Queued')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Job Queue' })).toBeInTheDocument();
   });
 

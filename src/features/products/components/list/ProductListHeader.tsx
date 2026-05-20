@@ -67,6 +67,7 @@ function ProductListHeaderView({
       setCatalogFilter={filters.setCatalogFilter}
       setCurrencyCode={filters.setCurrencyCode}
       setNameLocale={filters.setNameLocale}
+      showTriggerRunFeedback={headerActions.showTriggerRunFeedback !== false}
       triggerButtonsReady={headerActions.triggerButtonsReady !== false}
     />
   );

@@ -267,14 +267,14 @@ describe('file-storage-service', () => {
       projectId: null,
       folder: 'visualisation',
       forceSource: 'fastcomet',
-      fastCometBaseUrl: 'https://milkbardesigners.com/',
+      fastCometBaseUrl: 'https://cdn.example.test/',
       writeLocalCopy,
     });
 
     expect(writeLocalCopy).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
-      filepath: 'https://milkbardesigners.com/uploads/cms/visualisation/image.png',
+      filepath: 'https://cdn.example.test/uploads/cms/visualisation/image.png',
       source: 'fastcomet',
       mirroredLocally: true,
     });
@@ -295,7 +295,7 @@ describe('file-storage-service', () => {
       ok: true,
       text: async () =>
         JSON.stringify({
-          filepath: 'https://milkbardesigners.com/uploads/cms/visualisation/image.png',
+          filepath: 'https://uploads.milkbardesigners.com/uploads/cms/visualisation/image.png',
         }),
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -312,9 +312,9 @@ describe('file-storage-service', () => {
       forceSource: 'fastcomet',
       fastCometConfig: {
         baseUrl: 'https://uploads.milkbardesigners.com/',
-        uploadEndpoint: 'https://milkbardesigners.com/api/uploads/index.php/',
-        deleteEndpoint: 'https://milkbardesigners.com/api/uploads/delete/index.php/',
-        server: 'milkbardesigners.com',
+        uploadEndpoint: 'https://uploads.milkbardesigners.com/api/uploads/index.php/',
+        deleteEndpoint: 'https://uploads.milkbardesigners.com/api/uploads/delete/index.php/',
+        server: 'uploads.milkbardesigners.com',
         resolveIp: '209.42.31.54',
       },
       writeLocalCopy,
@@ -322,7 +322,9 @@ describe('file-storage-service', () => {
 
     expect(writeLocalCopy).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://milkbardesigners.com/api/uploads/index.php');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      'https://uploads.milkbardesigners.com/api/uploads/index.php'
+    );
     expect(result).toEqual({
       filepath: 'https://uploads.milkbardesigners.com/uploads/cms/visualisation/image.png',
       source: 'fastcomet',

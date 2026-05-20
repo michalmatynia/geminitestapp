@@ -4,17 +4,23 @@
 
 import { Box, ChevronDown, ChevronUp, Copy, Download, Eye, EyeOff, Folder, FolderOpen, Globe, GripVertical, Library, MoreVertical, Plus, RefreshCw, RotateCcw, Save, Settings2, Trash2, Upload, XIcon } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Admin3DAssetsPage } from '@/features/viewer3d/admin.public';
 import { MediaLibraryPanel } from '@/features/cms/components/page-builder/MediaLibraryPanel';
 import { useUploadCmsMedia } from '@/features/cms/hooks/useCmsQueries';
 import {
   convertMilkbarModelLinkToAsset3D,
-  deleteAsset3DById,
   uploadAsset3DFile,
   uploadMilkbarAsset3DToFastComet,
 } from '@/features/viewer3d/api';
-import { useAsset3DById, useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import {
+  asset3dKeys,
+  invalidateAsset3d,
+  useAsset3DById,
+  useAssets3D,
+  useDeleteAsset3DMutation,
+} from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
@@ -60,8 +66,18 @@ import {
   getDrawingImageLinkValue,
   toLocalMilkbarCmsMediaPreviewUrl,
 } from './milkbar-cms-media-routing';
+import {
+  getModel3DSlotPreviewUrl,
+  isModel3DSlotViewModeDisabled,
+  model3DSlotViewModeLabels,
+  model3DSlotViewModeOptions,
+  resolveEffectiveModel3DSlotViewMode,
+  resolveModel3DSlotSources,
+  resolveModel3DSlotViewModeLabel,
+  type Model3DSlotViewMode,
+} from './milkbar-model-slot-state';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import {
   MILKBAR_CMS_VISUALISATION_FOLDER,
   type FileStorageProfile,
@@ -118,6 +134,9 @@ const textToLines = (value: string): string[] =>
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
+
+const isNotFoundApiError = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 404;
 
 const toOrderNumber = (value: string): number => {
   const parsed = Number(value);
@@ -806,6 +825,7 @@ function LocaleSwitcher({
 
 export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const snapshotQuery = useMilkbarCmsSnapshotQuery();
   const saveSnapshotMutation = useSaveMilkbarCmsSnapshotMutation();
   const inquiryStatusMutation = useUpdateMilkbarInquiryStatusMutation();
@@ -901,12 +921,13 @@ export function AdminMilkbarDesignersCmsPage(): React.JSX.Element {
   const saveSnapshot = useCallback(async (): Promise<void> => {
     try {
       await persistSnapshotPayload(latestEditorPayloadRef.current, { hydrateEditor: true });
-      toast('Milkbardesigners CMS saved.', { variant: 'success' });
+      void invalidateAsset3d(queryClient);
+      toast('Milkbardesigners CMS saved. Published model slots now expose FastComet links.', { variant: 'success' });
     } catch (saveError) {
       const message = toErrorMessage(saveError);
       toast(message, { variant: 'error' });
     }
-  }, [persistSnapshotPayload, toast]);
+  }, [persistSnapshotPayload, queryClient, toast]);
 
   const handleRefreshClick = useCallback((): void => {
     setError(null);
@@ -2000,30 +2021,6 @@ function SubItemMoveButtons({
   );
 }
 
-const getAsset3DMetadataString = (
-  asset: Asset3DRecord | undefined,
-  key: string
-): string | null => {
-  const value = asset?.metadata?.[key];
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const isMilkbarFastCometAsset = (asset: Asset3DRecord | undefined): boolean => {
-  if (getAsset3DMetadataString(asset, 'storageProfile') !== 'milkbarCms') return false;
-  const storageSource = getAsset3DMetadataString(asset, 'storageSource');
-  const uploadStatus = getAsset3DMetadataString(asset, 'fastCometUploadStatus');
-  const filepath = asset?.filepath?.trim() ?? '';
-  const fileUrl = asset?.fileUrl?.trim() ?? '';
-  return (
-    storageSource === 'fastcomet' ||
-    uploadStatus === 'completed' ||
-    /^https?:\/\//i.test(filepath) ||
-    /^https?:\/\//i.test(fileUrl)
-  );
-};
-
 const getModelUrlDisplayName = (modelUrl: string): string => {
   const trimmed = modelUrl.trim();
   if (trimmed.length === 0) return '3D model URL';
@@ -2035,144 +2032,6 @@ const getModelUrlDisplayName = (modelUrl: string): string => {
     const filename = trimmed.split('/').filter(Boolean).pop() ?? '';
     return filename.length > 0 ? filename : trimmed;
   }
-};
-
-const isMilkbarModelUrl = (modelUrl: string | undefined): boolean =>
-  modelUrl?.includes('/uploads/cms/models/') === true;
-
-const isMilkbarFastCometModelUrl = (modelUrl: string | undefined): boolean => {
-  const trimmed = modelUrl?.trim() ?? '';
-  if (!/^https?:\/\//i.test(trimmed)) return false;
-  return isMilkbarModelUrl(trimmed);
-};
-
-type Model3DSlotViewMode = 'upload' | 'link' | 'fastcomet';
-type Model3DSlotSources = {
-  fastCometUrl: string;
-  linkUrl: string;
-  uploadUrl: string;
-};
-
-const MILKBAR_MODEL_PUBLIC_PATH_PREFIX = '/uploads/cms/models/';
-const DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL = 'https://uploads.milkbardesigners.com';
-
-const model3DSlotViewModeLabels: Record<Model3DSlotViewMode, string> = {
-  upload: 'Upload',
-  link: 'Link',
-  fastcomet: 'FastComet',
-};
-
-const model3DSlotViewModeOptions: Model3DSlotViewMode[] = ['upload', 'link', 'fastcomet'];
-
-const resolveModel3DSlotViewModeLabel = (mode: Model3DSlotViewMode | undefined): string =>
-  model3DSlotViewModeLabels[mode ?? 'upload'];
-
-const trimText = (value: string | undefined | null): string => value?.trim() ?? '';
-
-const getMilkbarFastCometModelBaseUrl = (): string => {
-  const configured =
-    process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_PUBLIC_BASE_URL'] ??
-    process.env['NEXT_PUBLIC_MILKBAR_FASTCOMET_BASE_URL'] ??
-    '';
-  const trimmed = configured.trim();
-  return trimmed.length > 0 ? trimmed.replace(/\/+$/, '') : DEFAULT_MILKBAR_FASTCOMET_PUBLIC_BASE_URL;
-};
-
-const joinPublicUrl = (baseUrl: string, publicPath: string): string =>
-  `${baseUrl.replace(/\/+$/, '')}/${publicPath.replace(/^\/+/, '')}`;
-
-const toMilkbarModelPublicPath = (value: string | undefined | null): string | null => {
-  const trimmed = trimText(value);
-  if (trimmed.length === 0) return null;
-  const markerIndex = trimmed.indexOf(MILKBAR_MODEL_PUBLIC_PATH_PREFIX);
-  if (markerIndex >= 0) {
-    return trimmed.slice(markerIndex).split(/[?#]/)[0] ?? null;
-  }
-  try {
-    const parsed = new URL(trimmed, 'https://milkbar.local');
-    return parsed.pathname.startsWith(MILKBAR_MODEL_PUBLIC_PATH_PREFIX) ? parsed.pathname : null;
-  } catch {
-    return null;
-  }
-};
-
-const getAsset3DModelPublicPath = (asset: Asset3DRecord | undefined): string | null => {
-  if (asset === undefined) return null;
-  const candidates = [
-    getAsset3DMetadataString(asset, 'publicPath'),
-    getAsset3DMetadataString(asset, 'localPublicPath'),
-    asset.filepath,
-    asset.fileUrl,
-  ];
-  for (const candidate of candidates) {
-    const publicPath = toMilkbarModelPublicPath(candidate);
-    if (publicPath !== null) return publicPath;
-  }
-  return null;
-};
-
-const resolveFastCometModelUrl = (publicPath: string | null): string =>
-  publicPath === null ? '' : joinPublicUrl(getMilkbarFastCometModelBaseUrl(), publicPath);
-
-const resolveModel3DSlotSources = ({
-  assetId,
-  asset,
-  modelUrl,
-  isMissing,
-}: {
-  assetId: string;
-  asset: Asset3DRecord | undefined;
-  modelUrl: string;
-  isMissing: boolean;
-}): Model3DSlotSources => {
-  const assignedAssetId = assetId.trim();
-  const assignedModelUrl = modelUrl.trim();
-  const assetPublicPath = getAsset3DModelPublicPath(asset);
-  const modelPublicPath = toMilkbarModelPublicPath(assignedModelUrl);
-  const publicPath = assetPublicPath ?? modelPublicPath;
-  const canUseFastCometSource =
-    publicPath !== null &&
-    (assignedAssetId.length === 0 ||
-      asset === undefined ||
-      isMilkbarFastCometAsset(asset) ||
-      isMilkbarFastCometModelUrl(assignedModelUrl));
-  let uploadUrl = '';
-  if (assignedAssetId.length > 0 && !isMissing) {
-    uploadUrl = `/api/assets3d/${encodeURIComponent(assignedAssetId)}/file`;
-  } else if (publicPath !== null) {
-    uploadUrl = publicPath;
-  }
-  return {
-    uploadUrl,
-    linkUrl: assignedModelUrl.length > 0 && modelPublicPath === null ? assignedModelUrl : '',
-    fastCometUrl: canUseFastCometSource ? resolveFastCometModelUrl(publicPath) : '',
-  };
-};
-
-const isModel3DSlotViewModeDisabled = (
-  mode: Model3DSlotViewMode,
-  sources: Model3DSlotSources
-): boolean => {
-  if (mode === 'upload') return sources.uploadUrl.length === 0;
-  if (mode === 'link') return sources.linkUrl.length === 0;
-  return sources.fastCometUrl.length === 0;
-};
-
-const resolveEffectiveModel3DSlotViewMode = (
-  requestedMode: Model3DSlotViewMode,
-  sources: Model3DSlotSources
-): Model3DSlotViewMode => {
-  if (!isModel3DSlotViewModeDisabled(requestedMode, sources)) return requestedMode;
-  return model3DSlotViewModeOptions.find((mode) => !isModel3DSlotViewModeDisabled(mode, sources)) ?? 'upload';
-};
-
-const getModel3DSlotPreviewUrl = (
-  mode: Model3DSlotViewMode,
-  sources: Model3DSlotSources
-): string => {
-  if (mode === 'upload') return sources.uploadUrl;
-  if (mode === 'link') return sources.linkUrl;
-  return sources.fastCometUrl;
 };
 
 type Model3DSlotStatusTone = 'success' | 'pending' | 'failure';
@@ -2899,7 +2758,7 @@ function ContentFolderTree({
                     tags={['hero']}
                     onChange={(modelAssetId) => updateHero({ modelAssetId, modelUrl: undefined })}
                     onClearLink={() => updateHero({ modelUrl: undefined })}
-                    onClearUpload={() => updateHero({ modelAssetId: undefined })}
+                    onClearUpload={() => updateHero({ modelAssetId: undefined, modelUrl: undefined })}
                   />
                 </SectionFolderRow>
               )}
@@ -2933,7 +2792,7 @@ function ContentFolderTree({
                     tags={['interior', 'drawing']}
                     onChange={(interiorModelAssetId) => updateDrawing({ interiorModelAssetId, interiorModelUrl: undefined })}
                     onClearLink={() => updateDrawing({ interiorModelUrl: undefined })}
-                    onClearUpload={() => updateDrawing({ interiorModelAssetId: undefined })}
+                    onClearUpload={() => updateDrawing({ interiorModelAssetId: undefined, interiorModelUrl: undefined })}
                   />
                   <SubFolderRow
                     title='Drawing Thumbnails'
@@ -4001,13 +3860,17 @@ function CmsModel3DField({
   onClearUpload?: () => void | Promise<void>;
 }): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<Model3DSlotViewMode>('upload');
-  const [slotAction, setSlotAction] = useState<'clear-upload' | 'convert-link' | 'fastcomet' | null>(null);
+  const [viewMode, setViewMode] = useState<Model3DSlotViewMode>('fastcomet');
+  const [slotAction, setSlotAction] =
+    useState<'clear-upload' | 'convert-link' | 'fastcomet' | null>(null);
+  const [fastCometAssetOverride, setFastCometAssetOverride] = useState<Asset3DRecord | null>(null);
+  const deleteModelAssetMutation = useDeleteAsset3DMutation();
   const assignedModelId = modelId?.trim() ?? '';
   const assignedModelUrl = modelUrl?.trim() ?? '';
   const hasModelId = assignedModelId.length > 0;
@@ -4015,8 +3878,9 @@ function CmsModel3DField({
   const hasModel = hasModelId || hasModelUrl;
 
   const assetQuery = useAsset3DById(hasModelId ? assignedModelId : null);
-  const asset = assetQuery.data;
-  const isMissing = assetQuery.isError;
+  const hasFastCometAssetOverride = fastCometAssetOverride?.id === assignedModelId;
+  const asset = hasFastCometAssetOverride ? fastCometAssetOverride : assetQuery.data;
+  const isMissing = !hasFastCometAssetOverride && assetQuery.isError;
   const isResolving = hasModelId && asset === undefined && !isMissing;
   const modelSlotSources = resolveModel3DSlotSources({
     assetId: assignedModelId,
@@ -4029,7 +3893,13 @@ function CmsModel3DField({
   const hasLocalModelSource = modelSlotSources.uploadUrl.length > 0;
   const hasLinkedModelSource = modelSlotSources.linkUrl.length > 0;
   const hasFastCometSource = modelSlotSources.fastCometUrl.length > 0;
-  const isActionRunning = uploading || slotAction !== null;
+  const isActionRunning = uploading || slotAction !== null || deleteModelAssetMutation.isPending;
+
+  useEffect(() => {
+    if (fastCometAssetOverride !== null && fastCometAssetOverride.id !== assignedModelId) {
+      setFastCometAssetOverride(null);
+    }
+  }, [assignedModelId, fastCometAssetOverride]);
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -4054,6 +3924,7 @@ function CmsModel3DField({
             }
           }
         );
+        queryClient.setQueryData(asset3dKeys.detail(record.id), record);
         await onChange(record.id);
         toast(`3D model uploaded locally. Save CMS to publish it to FastComet: ${record.filename ?? file.name}`, { variant: 'success' });
       } catch (err) {
@@ -4066,7 +3937,7 @@ function CmsModel3DField({
         }
       }
     },
-    [assignedModelId, hasModelId, onChange, tags, toast, uploadName]
+    [assignedModelId, hasModelId, onChange, queryClient, tags, toast, uploadName]
   );
 
   const handleConvertLinkToFile = useCallback(async (): Promise<void> => {
@@ -4078,6 +3949,7 @@ function CmsModel3DField({
         tags: ['milkbardesigners', ...tags],
         url: modelSlotSources.linkUrl,
       });
+      queryClient.setQueryData(asset3dKeys.detail(record.id), record);
       await onChange(record.id);
       setViewMode('upload');
       toast(`3D model downloaded locally. Save CMS to publish it to FastComet: ${record.filename ?? record.name}`, { variant: 'success' });
@@ -4086,14 +3958,16 @@ function CmsModel3DField({
     } finally {
       setSlotAction(null);
     }
-  }, [modelSlotSources.linkUrl, onChange, tags, toast, uploadName]);
+  }, [modelSlotSources.linkUrl, onChange, queryClient, tags, toast, uploadName]);
 
   const handleUploadToFastComet = useCallback(async (): Promise<void> => {
     if (!hasModelId || hasFastCometSource) return;
     setSlotAction('fastcomet');
     try {
       const record = await uploadMilkbarAsset3DToFastComet(assignedModelId);
-      await assetQuery.refetch();
+      setFastCometAssetOverride(record);
+      queryClient.setQueryData(asset3dKeys.detail(record.id), record);
+      void invalidateAsset3d(queryClient);
       await onChange(assignedModelId);
       setViewMode('fastcomet');
       toast(`3D model uploaded to FastComet. Save CMS to publish the updated reference: ${record.filename ?? record.name}`, { variant: 'success' });
@@ -4102,7 +3976,7 @@ function CmsModel3DField({
     } finally {
       setSlotAction(null);
     }
-  }, [assetQuery, assignedModelId, hasFastCometSource, hasModelId, onChange, toast]);
+  }, [assignedModelId, hasFastCometSource, hasModelId, onChange, queryClient, toast]);
 
   const handleClearLink = useCallback(async (): Promise<void> => {
     try {
@@ -4122,22 +3996,33 @@ function CmsModel3DField({
     if (!confirmed) return;
     setSlotAction('clear-upload');
     try {
-      if (!isMissing) {
-        await deleteAsset3DById(assignedModelId);
+      try {
+        await deleteModelAssetMutation.mutateAsync(assignedModelId);
+      } catch (error) {
+        if (!isNotFoundApiError(error)) throw error;
       }
       if (onClearUpload !== undefined) {
         await onClearUpload();
       } else {
         await onChange(undefined);
       }
+      setFastCometAssetOverride(null);
       setViewMode(hasModelUrl ? 'link' : 'upload');
-      toast('3D model upload deleted from local storage and FastComet when present. Save CMS to publish the change.', { variant: 'success' });
+      toast('3D model upload deleted from server storage. Save CMS to publish the cleared slot.', { variant: 'success' });
     } catch (error) {
       toast(`Delete upload failed: ${toErrorMessage(error)}`, { variant: 'error' });
     } finally {
       setSlotAction(null);
     }
-  }, [assignedModelId, hasModelId, hasModelUrl, isMissing, onChange, onClearUpload, toast]);
+  }, [
+    assignedModelId,
+    deleteModelAssetMutation,
+    hasModelId,
+    hasModelUrl,
+    onChange,
+    onClearUpload,
+    toast,
+  ]);
 
   const assetName = asset !== undefined && asset.name.trim().length > 0
     ? asset.name
@@ -4181,7 +4066,11 @@ function CmsModel3DField({
           <ActionMenu
             variant='outline'
             size='sm'
-            triggerClassName='h-6 px-2 text-[10px]'
+            triggerClassName={`h-6 px-2 text-[10px] ${
+              hasFastCometSource
+                ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/20'
+                : ''
+            }`}
             trigger={modelViewTrigger}
             ariaLabel='Select model source view'
             className='min-w-[140px]'
@@ -4256,7 +4145,7 @@ function CmsModel3DField({
                 size='icon'
                 className='absolute right-0 top-0 z-10 h-6 w-6 rounded-full'
                 aria-label={`Delete uploaded 3D model from ${label}`}
-                title='Delete uploaded model from local storage and FastComet'
+                title='Delete uploaded model from server storage'
                 disabled={isActionRunning}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -4294,6 +4183,25 @@ function CmsModel3DField({
             isResolving={isResolving && !hasLocalModelSource}
           />
         </div>
+        {hasFastCometSource ? (
+          <div className='mt-1 flex w-full justify-center'>
+            <a
+              href={modelSlotSources.fastCometUrl}
+              target='_blank'
+              rel='noreferrer'
+              className={`inline-flex h-6 max-w-full items-center gap-1 rounded border px-2 text-[10px] font-medium transition-colors ${
+                effectiveViewMode === 'fastcomet'
+                  ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/20'
+                  : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white'
+              }`}
+              aria-label={`Open FastComet upload for ${label}`}
+              title={modelSlotSources.fastCometUrl}
+            >
+              <Globe className='size-3 shrink-0' />
+              <span className='truncate'>FastComet link</span>
+            </a>
+          </div>
+        ) : null}
 
         <input
           ref={fileInputRef}
@@ -4365,7 +4273,7 @@ function ProjectModel3DField({
       tags={tags}
       onChange={(modelAssetId) => onUpdate(projectIndex, { modelAssetId, modelUrl: undefined })}
       onClearLink={() => onUpdate(projectIndex, { modelUrl: undefined })}
-      onClearUpload={() => onUpdate(projectIndex, { modelAssetId: undefined })}
+      onClearUpload={() => onUpdate(projectIndex, { modelAssetId: undefined, modelUrl: undefined })}
     />
   );
 }

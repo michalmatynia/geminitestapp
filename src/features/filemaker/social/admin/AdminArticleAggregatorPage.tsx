@@ -121,6 +121,7 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
   // ── Source presets tab ────────────────────────────────────────────────────
   const [sourcePresets, setSourcePresets] = useState<SocialArticleSourcePreset[]>([]);
   const [sourcePresetsLoading, setSourcePresetsLoading] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [sourcePresetForm, setSourcePresetForm] = useState<SourcePresetFormState>(emptySourcePresetForm());
   const [playwrightScripters, setPlaywrightScripters] = useState<PlaywrightScripterListEntry[]>([]);
   const [playwrightScriptersLoading, setPlaywrightScriptersLoading] = useState(false);
@@ -419,6 +420,25 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
     }, { timeout: 60_000 });
     await loadSourcePresets();
     toast(preset.enabled ? 'Source preset disabled' : 'Source preset enabled', { variant: 'success' });
+  }, [loadSourcePresets, toast]);
+
+  const handleSeedSourcePresets = useCallback(async (): Promise<void> => {
+    setIsSeeding(true);
+    try {
+      const result = await api.post<{ seeded: string[]; skipped: string[] }>(
+        '/api/filemaker/social-article-aggregator/source-presets/seed',
+        {},
+        { timeout: 30_000 }
+      );
+      await loadSourcePresets();
+      if (result.seeded.length > 0) {
+        toast(`Seeded ${result.seeded.length} preset(s): ${result.seeded.join(', ')}`, { variant: 'success' });
+      } else {
+        toast('All default presets already exist — nothing to seed.', { variant: 'default' });
+      }
+    } finally {
+      setIsSeeding(false);
+    }
   }, [loadSourcePresets, toast]);
 
   // ── Prompt preset handlers ────────────────────────────────────────────────
@@ -814,11 +834,25 @@ export function AdminArticleAggregatorPage(): React.JSX.Element {
       {tab === 'source-presets' && (
         <div className='grid gap-6 lg:grid-cols-[1fr_360px]'>
           <div className='space-y-3'>
+            <div className='flex items-center justify-between'>
+              <p className='text-xs text-muted-foreground'>
+                {sourcePresets.length} preset{sourcePresets.length !== 1 ? 's' : ''}
+              </p>
+              <Button
+                size='sm'
+                variant='outline'
+                className='text-xs'
+                disabled={isSeeding}
+                onClick={() => { void handleSeedSourcePresets(); }}
+              >
+                {isSeeding ? 'Seeding…' : 'Seed defaults'}
+              </Button>
+            </div>
             {sourcePresetsLoading && sourcePresets.length === 0 && (
               <div className='py-6 text-center text-sm text-muted-foreground'>Loading…</div>
             )}
             {!sourcePresetsLoading && sourcePresets.length === 0 && (
-              <div className='py-6 text-center text-sm text-muted-foreground'>No source presets yet.</div>
+              <div className='py-6 text-center text-sm text-muted-foreground'>No source presets yet. Click "Seed defaults" to add the built-in presets.</div>
             )}
             {sourcePresets.map((preset) => (
               <KangurAdminCard key={preset.id}>

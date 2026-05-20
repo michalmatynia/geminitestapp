@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
+import { AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE } from '@/shared/lib/ai-paths/model-configuration-errors';
 import { __resetTriggerButtonRunFeedbackForTests } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 
 const {
@@ -781,7 +782,40 @@ describe('useTriggerButtons', () => {
     });
   });
 
-  it('clears the waiting run placeholder when the trigger fails before enqueue', async () => {
+  it('toasts a meaningful terminal failure when no AI Path model is configured', async () => {
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    toastMock.mockClear();
+
+    act(() => {
+      emitTrackedRunSnapshot('run-queued-1', {
+        status: 'failed',
+        updatedAt: '2026-03-09T12:00:05.000Z',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        errorMessage:
+          'AI Paths Model has no model assigned in AI Brain, and this Model node did not select one.',
+        trackingState: 'stopped',
+      });
+    });
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE, {
+        variant: 'error',
+      });
+    });
+  });
+
+  it('replaces the waiting run placeholder with failed feedback when the trigger fails before enqueue', async () => {
     fireAiPathTriggerEventMock.mockImplementation(
       async (args: {
         onError?: (error: string) => void;
@@ -820,7 +854,11 @@ describe('useTriggerButtons', () => {
       await result.current.handleTrigger(BUTTON, { mode: 'click' });
     });
 
-    expect(result.current.lastRuns[BUTTON.id]).toBeUndefined();
+    expect(result.current.lastRuns[BUTTON.id]).toMatchObject({
+      status: 'failed',
+      errorMessage: 'Trigger node not found in path: Trigger',
+      finishedAt: expect.any(String),
+    });
     expect(result.current.runStates[BUTTON.id]).toMatchObject({
       status: 'idle',
       progress: 0,

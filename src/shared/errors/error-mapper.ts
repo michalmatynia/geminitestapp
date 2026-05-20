@@ -10,6 +10,8 @@
  * - Standardized error transformation
  */
 
+/* eslint-disable complexity, max-lines-per-function */
+
 import {
   type AppError,
   AppErrorCodes,
@@ -28,10 +30,16 @@ import {
   databaseError,
 } from '@/shared/errors/app-error';
 import { resolveErrorCatalogMessage } from '@/shared/errors/error-catalog';
+import {
+  isLocalDatabaseConnectionRefused,
+  LOCAL_DATABASE_SERVER_UNAVAILABLE_MESSAGE,
+} from '@/shared/errors/database-error-guidance';
 import type { MapStatusOptions } from '@/shared/contracts/base';
 
-const safeMessage = (message: string | null | undefined, fallback: string): string =>
-  message?.trim() ? message : fallback;
+const safeMessage = (message: string | null | undefined, fallback: string): string => {
+  const trimmed = message?.trim() ?? '';
+  return trimmed.length > 0 ? (message ?? fallback) : fallback;
+};
 
 const resolveFallbackMessage = (
   code: (typeof AppErrorCodes)[keyof typeof AppErrorCodes],
@@ -172,6 +180,12 @@ const resolveRetryAfterMs = (error: {
   return undefined;
 };
 
+const resolveErrorStatus = (error: { status?: number; statusCode?: number }): number | null => {
+  if (typeof error.status === 'number') return error.status;
+  if (typeof error.statusCode === 'number') return error.statusCode;
+  return null;
+};
+
 /**
  * Attempts to map an unknown error to an AppError instance.
  * 
@@ -191,7 +205,7 @@ export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): Ap
   // Already an AppError - return as-is
   if (isAppError(error)) return error;
 
-  if (error && typeof error === 'object') {
+  if (error !== null && error !== undefined && typeof error === 'object') {
     const err = error as {
       name?: string;
       message?: string;
@@ -203,12 +217,7 @@ export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): Ap
     };
 
     // Extract HTTP status code from error object
-    const status =
-      typeof err.status === 'number'
-        ? err.status
-        : typeof err.statusCode === 'number'
-          ? err.statusCode
-          : null;
+    const status = resolveErrorStatus(err);
 
     // Map HTTP status codes to appropriate AppError types
     if (status !== null) {
@@ -227,10 +236,22 @@ export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): Ap
     }
 
     // Handle MongoDB-specific errors by name pattern
-    if (err.name?.toLowerCase().includes('mongo')) {
+    if (err.name?.toLowerCase().includes('mongo') === true) {
       const codeNumber = typeof err.code === 'number' ? err.code : Number(err.code);
       const message = err.message ?? '';
-      
+
+      if (isLocalDatabaseConnectionRefused(error)) {
+        return createAppError(LOCAL_DATABASE_SERVER_UNAVAILABLE_MESSAGE, {
+          code: AppErrorCodes.databaseError,
+          httpStatus: 503,
+          cause: error,
+          expected: true,
+          critical: true,
+          retryable: true,
+          retryAfterMs: 5000,
+        });
+      }
+
       // MongoDB Error 11000 - Duplicate key error (unique constraint violation)
       if (codeNumber === 11000 || message.includes('E11000') || message.includes('duplicate key')) {
         return conflictError('Duplicate entry', {

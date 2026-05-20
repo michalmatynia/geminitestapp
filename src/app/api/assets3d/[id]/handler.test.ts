@@ -10,6 +10,9 @@ const {
   deleteAsset3DMock,
   deleteMilkbarAsset3DInRedisRuntimeMock,
   parseJsonBodyMock,
+  cacheLifeMock,
+  cacheTagMock,
+  revalidateTagMock,
 } = vi.hoisted(() => ({
   findAsset3DRepositoryAssetMock: vi.fn(),
   getAsset3DFromLookupRepositoriesMock: vi.fn(),
@@ -17,6 +20,9 @@ const {
   deleteAsset3DMock: vi.fn(),
   deleteMilkbarAsset3DInRedisRuntimeMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
+  cacheLifeMock: vi.fn(),
+  cacheTagMock: vi.fn(),
+  revalidateTagMock: vi.fn(),
 }));
 
 vi.mock('@/features/viewer3d/server', () => ({
@@ -34,6 +40,12 @@ vi.mock('@/features/viewer3d/workers/milkbarAsset3DDeleteQueue', () => ({
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
+}));
+
+vi.mock('next/cache', () => ({
+  cacheLife: cacheLifeMock,
+  cacheTag: cacheTagMock,
+  revalidateTag: revalidateTagMock,
 }));
 
 import { deleteHandler, getHandler, patchHandler } from './handler';
@@ -87,6 +99,7 @@ describe('assets3d by-id handler module', () => {
     );
 
     expect(repository.getAsset3DById).toHaveBeenCalledWith('asset-1');
+    expect(cacheTagMock).toHaveBeenCalledWith('assets3d-detail:asset-1');
     await expect(response.json()).resolves.toEqual({
       id: 'asset-1',
       name: 'Preview asset',
@@ -139,6 +152,8 @@ describe('assets3d by-id handler module', () => {
     expect(repository.updateAsset3D).toHaveBeenCalledWith('asset-1', {
       name: 'Updated asset',
     });
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-list', 'max');
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-detail:asset-1', 'max');
     await expect(response.json()).resolves.toEqual({
       id: 'asset-1',
       name: 'Updated asset',
@@ -153,7 +168,24 @@ describe('assets3d by-id handler module', () => {
     );
 
     expect(deleteAsset3DMock).toHaveBeenCalledWith('asset-1');
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-list', 'max');
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-detail:asset-1', 'max');
     await expect(response.json()).resolves.toEqual({ success: true });
+  });
+
+  it('propagates delete failures without revalidating stale cache', async () => {
+    deleteAsset3DMock.mockRejectedValueOnce(new Error('FastComet delete failed'));
+
+    await expect(
+      deleteHandler(
+        new NextRequest('http://localhost/api/assets3d/asset-1', { method: 'DELETE' }),
+        requestContext,
+        { id: 'asset-1' }
+      )
+    ).rejects.toThrow('FastComet delete failed');
+
+    expect(revalidateTagMock).not.toHaveBeenCalledWith('assets3d-list', 'max');
+    expect(revalidateTagMock).not.toHaveBeenCalledWith('assets3d-detail:asset-1', 'max');
   });
 
   it('deletes Milkbar CMS assets in Redis runtime', async () => {
@@ -174,6 +206,8 @@ describe('assets3d by-id handler module', () => {
       requestedAt: expect.any(String),
     });
     expect(deleteAsset3DMock).not.toHaveBeenCalled();
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-list', 'max');
+    expect(revalidateTagMock).toHaveBeenCalledWith('assets3d-detail:asset-1', 'max');
     await expect(response.json()).resolves.toEqual({ success: true });
   });
 

@@ -346,7 +346,9 @@ describe('mongo-product-ai-job-repository', () => {
         $set: {
           status: 'failed',
           finishedAt: new Date('2026-03-25T16:00:00.000Z'),
-          errorMessage: 'Job marked failed due to stale running state.',
+          updatedAt: new Date('2026-03-25T16:00:00.000Z'),
+          errorMessage:
+            'Job marked failed due to stale running state. The worker likely stopped before reporting completion; retry the run.',
         },
       }
     );

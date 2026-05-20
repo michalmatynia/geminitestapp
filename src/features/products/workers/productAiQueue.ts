@@ -10,8 +10,24 @@ import { getProductAiJobRepository } from '@/shared/lib/products/services/produc
 import { createManagedQueue } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-const STALE_RUNNING_TTL_MS = 1000 * 60 * 10;
 const LOG_SOURCE = 'product-ai-queue';
+
+const parsePositiveEnvNumber = (
+  name: string,
+  fallback: number,
+  minimum = 1
+): number => {
+  const raw = process.env[name];
+  if (typeof raw !== 'string' || raw.trim().length === 0) return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= minimum ? parsed : fallback;
+};
+
+const STALE_RUNNING_TTL_MS = parsePositiveEnvNumber(
+  'PRODUCT_AI_STALE_RUNNING_TTL_MS',
+  30 * 60_000,
+  60_000
+);
 
 type ProductAiJobData = {
   jobId: string;
@@ -59,6 +75,26 @@ function toDispatchJob(job: ProductAiJobRecord): Job {
 }
 
 type JobRepo = Awaited<ReturnType<typeof getProductAiJobRepository>>;
+
+async function markStaleRunningProductAiJobs(
+  jobRepository: JobRepo,
+  reason: string
+): Promise<{ count: number }> {
+  const staleResult = await jobRepository.markStaleRunningJobs(STALE_RUNNING_TTL_MS);
+  if (staleResult.count > 0) {
+    await logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: `Marked ${staleResult.count} stale running jobs as failed`,
+      context: {
+        staleCount: staleResult.count,
+        staleRunningTtlMs: STALE_RUNNING_TTL_MS,
+        reason,
+      },
+    });
+  }
+  return staleResult;
+}
 
 async function updateJobStatus(repo: JobRepo, job: ProductAiJobRecord, status: ProductAiJobRecord['status'], extra: ProductAiJobUpdate = {}): Promise<void> {
   const update: ProductAiJobUpdate = {
@@ -109,10 +145,7 @@ const queue = createManagedQueue<ProductAiJobData>({
   defaultJobOptions: { attempts: 1, removeOnComplete: true, removeOnFail: false },
   processor: async (data) => {
     const jobRepository = await getProductAiJobRepository();
-    const staleResult = await jobRepository.markStaleRunningJobs(STALE_RUNNING_TTL_MS);
-    if (staleResult.count > 0) {
-      await logSystemEvent({ level: 'info', source: LOG_SOURCE, message: `Marked ${staleResult.count} stale running jobs as failed`, context: { staleCount: staleResult.count } });
-    }
+    await markStaleRunningProductAiJobs(jobRepository, 'before-processing-job');
 
     const job = await jobRepository.findJobById(data.jobId);
     if (job === null) {
@@ -130,6 +163,17 @@ const queue = createManagedQueue<ProductAiJobData>({
 
 export const startProductAiJobQueue = (): void => {
   queue.startWorker();
+  void (async (): Promise<void> => {
+    try {
+      const jobRepository = await getProductAiJobRepository();
+      await markStaleRunningProductAiJobs(jobRepository, 'worker-start');
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: LOG_SOURCE,
+        action: 'markStaleRunningProductAiJobs',
+      });
+    }
+  })();
 };
 
 export const stopProductAiJobQueue = async (reason?: string): Promise<void> => {

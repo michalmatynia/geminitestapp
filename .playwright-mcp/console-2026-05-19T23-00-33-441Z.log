@@ -1,0 +1,35 @@
+[    1121ms] [LOG] JQMIGRATE: Migrate is installed, version 3.4.1 @ https://www.artificialintelligence-news.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1:1
+[    1906ms] [LOG] opt-in @ https://www.artificialintelligence-news.com/wp-content/plugins/complianz-gdpr/cookiebanner/js/complianz.min.js?ver=1776677031:0
+[    1917ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111532 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[    1917ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111449 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[    1917ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-107119 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[    1917ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111259 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[    1917ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-109978 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[    2052ms] [WARNING] [GPT] PubAdsService.enableSingleRequest is deprecated, use googletag.setConfig({singleRequest: ...}) instead.
+https://goo.gle/gpt-message#170 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[    2072ms] [WARNING] [GPT] This ad request is subject to Google's EU User Consent Policy. An IAB TCF signal was not received. This ad request will not be eligible for personalized ads.
+https://goo.gle/gpt-message#175 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[    3057ms] [WARNING] [GPT] Attempted to load GPT from both standard and limited ads domains.
+https://goo.gle/gpt-message#153 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5981308ms] [LOG] JQMIGRATE: Migrate is installed, version 3.4.1 @ https://www.artificialintelligence-news.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1:1
+[ 5981563ms] [LOG] opt-in @ https://www.artificialintelligence-news.com/wp-content/plugins/complianz-gdpr/cookiebanner/js/complianz.min.js?ver=1776677031:0
+[ 5981585ms] [LOG] No links found within element with class: elementor-element elementor-element-68b0691d strip-after-comma-author-113392 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/:550
+[ 5981765ms] [WARNING] [GPT] PubAdsService.enableSingleRequest is deprecated, use googletag.setConfig({singleRequest: ...}) instead.
+https://goo.gle/gpt-message#170 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5981770ms] [WARNING] [GPT] This ad request is subject to Google's EU User Consent Policy. An IAB TCF signal was not received. This ad request will not be eligible for personalized ads.
+https://goo.gle/gpt-message#175 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5982770ms] [WARNING] [GPT] Attempted to load GPT from both standard and limited ads domains.
+https://goo.gle/gpt-message#153 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5993109ms] [LOG] JQMIGRATE: Migrate is installed, version 3.4.1 @ https://www.artificialintelligence-news.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1:1
+[ 5993153ms] [LOG] opt-in @ https://www.artificialintelligence-news.com/wp-content/plugins/complianz-gdpr/cookiebanner/js/complianz.min.js?ver=1776677031:0
+[ 5993189ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111532 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[ 5993189ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111449 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[ 5993189ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-107119 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[ 5993189ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-111259 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[ 5993189ms] [LOG] No links found within element with class: elementor-element elementor-element-5ff22cd6 strip-after-comma-109978 elementor-widget elementor-widget-heading @ https://www.artificialintelligence-news.com/:580
+[ 5993378ms] [WARNING] [GPT] PubAdsService.enableSingleRequest is deprecated, use googletag.setConfig({singleRequest: ...}) instead.
+https://goo.gle/gpt-message#170 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5993393ms] [WARNING] [GPT] This ad request is subject to Google's EU User Consent Policy. An IAB TCF signal was not received. This ad request will not be eligible for personalized ads.
+https://goo.gle/gpt-message#175 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18
+[ 5994380ms] [WARNING] [GPT] Attempted to load GPT from both standard and limited ads domains.
+https://goo.gle/gpt-message#153 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202605130201/pubads_impl.js?cb=31098619:18

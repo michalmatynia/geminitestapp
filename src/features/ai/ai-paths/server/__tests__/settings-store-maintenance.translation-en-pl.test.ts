@@ -301,6 +301,50 @@ const buildDeprecatedBlwoStarterRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
+const buildDeprecatedDescriptionStarterRecords = (): AiPathsSettingRecord[] => [
+  {
+    key: AI_PATHS_INDEX_KEY,
+    value: JSON.stringify([
+      {
+        id: 'path_72l57d',
+        name: 'Description v4 Hybrid human AI',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ]),
+  },
+  {
+    key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_72l57d`,
+    value: JSON.stringify({
+      id: 'path_72l57d',
+      name: 'Description v4 Hybrid human AI',
+      nodes: [{ id: 'node-description-trigger', type: 'trigger' }],
+      edges: [],
+    }),
+  },
+  {
+    key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+    value: serializeAiTriggerButtonsRaw([
+      {
+        id: 'f5af953f-632d-4704-adec-cc7e58aa68c6',
+        name: 'Description',
+        iconId: null,
+        pathId: null,
+        enabled: true,
+        locations: ['product_modal'],
+        mode: 'click',
+        display: {
+          label: 'Description',
+          showLabel: true,
+        },
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:00:00.000Z',
+        sortIndex: 0,
+      },
+    ]),
+  },
+];
+
 const buildBrokenTranslationDefaultPathRecords = (): AiPathsSettingRecord[] => [
   {
     key: AI_PATHS_INDEX_KEY,
@@ -511,6 +555,42 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(
       result.nextRecords.some(
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+      )
+    ).toBe(false);
+    const indexRecord = result.nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY);
+    if (!indexRecord) throw new Error('Expected index record');
+    expect(indexRecord.value).toBe('[]');
+    const triggerButtonsRecord = result.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    expect(triggerButtonsRecord.value).toBe('[]');
+  });
+
+  it('surfaces legacy description starter artifacts for pruning and removes them through maintenance', () => {
+    const report = buildAiPathsMaintenanceReport(buildDeprecatedDescriptionStarterRecords());
+
+    expect(report.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'prune_deprecated_starter_workflows',
+          status: 'pending',
+          affectedRecords: 3,
+        }),
+      ])
+    );
+
+    const result = runMaintenanceAction({
+      actionId: 'prune_deprecated_starter_workflows',
+      records: buildDeprecatedDescriptionStarterRecords(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.affectedCount).toBe(3);
+    expect(result.deletedKeys).toEqual([`${AI_PATHS_CONFIG_KEY_PREFIX}path_72l57d`]);
+    expect(
+      result.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_72l57d`
       )
     ).toBe(false);
     const indexRecord = result.nextRecords.find((record) => record.key === AI_PATHS_INDEX_KEY);

@@ -113,19 +113,15 @@ const resolveMongoSourceOverviewModel = (
 };
 
 const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): string[] => {
-  const hasValue = (value: string | null): value is string =>
-    value !== null && value !== '';
-  const applicationTransfers = lastSync.applicationTransfers ?? [];
-  const preSyncBackups = lastSync.preSyncBackups ?? [];
   const metrics = [`Synced at: ${lastSync.syncedAt}`, `Direction: ${lastSync.direction}`];
 
-  if (hasValue(lastSync.archivePath)) {
+  if (lastSync.archivePath !== null && lastSync.archivePath !== '') {
     metrics.push(`Transfer archive: ${lastSync.archivePath}`);
   }
-  if (hasValue(lastSync.logPath)) {
+  if (lastSync.logPath !== null && lastSync.logPath !== '') {
     metrics.push(`Transfer log: ${lastSync.logPath}`);
   }
-  if (lastSync.verification !== null && lastSync.verification !== undefined) {
+  if (lastSync.verification) {
     metrics.push(
       `Verification: ${lastSync.verification.status} at ${lastSync.verification.verifiedAt}`
     );
@@ -136,11 +132,11 @@ const resolveLastTransferMetrics = (lastSync: DatabaseEngineMongoLastSync): stri
     metrics.push(verificationSummary);
   }
 
-  if (applicationTransfers.length > 0) {
-    metrics.push(`Application databases synced: ${applicationTransfers.length}`);
+  if (lastSync.applicationTransfers.length > 0) {
+    metrics.push(`Application databases synced: ${lastSync.applicationTransfers.length}`);
   }
 
-  metrics.push(`Pre-sync backups: ${preSyncBackups.length}`);
+  metrics.push(`Pre-sync backups: ${lastSync.preSyncBackups.length}`);
 
   return metrics;
 };
@@ -181,7 +177,7 @@ const resolveApplicationTransfer = (
   lastSync: DatabaseEngineMongoLastSync,
   application: DatabaseEngineManagedMongoApplication
 ): DatabaseEngineMongoSyncApplicationTransfer | null => {
-  const applicationTransfers = lastSync.applicationTransfers ?? [];
+  const applicationTransfers = lastSync.applicationTransfers;
   const transferFromList = applicationTransfers.find(
     (item) => item.application === application
   );
@@ -214,7 +210,7 @@ export const buildMongoApplicationTransferSummaries = (
 ): MongoApplicationTransferSummary[] =>
   MANAGED_APPLICATIONS.map(({ application, label }) => {
     const transfer = resolveApplicationTransfer(lastSync, application);
-    const backups = (lastSync.preSyncBackups ?? []).filter(
+    const backups = lastSync.preSyncBackups.filter(
       (backup) => getBackupApplication(backup) === application
     );
 
@@ -465,7 +461,7 @@ const MongoTransferHistory = ({
         <MongoTransferSummaryCard key={summary.application} summary={summary} />
       ))}
     </div>
-    {(lastSync.applicationTransfers ?? []).map((transfer) => (
+    {lastSync.applicationTransfers.map((transfer) => (
       <div key={`${transfer.application}-${transfer.archivePath}`} className='space-y-1'>
         <p>{`Application transfer (${transfer.application}): ${transfer.sourceDbName} -> ${transfer.targetDbName}`}</p>
         <p>{`Transfer archive: ${transfer.archivePath}`}</p>
@@ -473,7 +469,7 @@ const MongoTransferHistory = ({
         <p>{`Verification: ${transfer.verification.status} at ${transfer.verification.verifiedAt}`}</p>
       </div>
     ))}
-    {(lastSync.preSyncBackups ?? []).map((backup) => (
+    {lastSync.preSyncBackups.map((backup) => (
       <div key={`${backup.role}-${backup.source}-${backup.backupName}`} className='space-y-1'>
         <p>
           {`${backup.role === 'source' ? 'Source' : 'Target'} backup (${getBackupApplication(backup)} ${backup.source}): ${backup.backupName}`}

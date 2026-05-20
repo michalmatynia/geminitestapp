@@ -28,6 +28,7 @@ import {
   resolveSocialArticleAggregationPathId,
   SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
 } from './SocialPost.ArticleAggregatorPanel.ai-path';
+import { SocialArticleScrapeModal } from './SocialPost.ArticleScrapeModal';
 import { extractSocialArticleAggregationAiPathRunText } from './SocialPost.ArticleAggregatorPanel.ai-path-result';
 import {
   buildRetainedArticleLoadState,
@@ -223,6 +224,7 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [isScraping, setIsScraping] = useState(false);
+  const [scrapeModalOpen, setScrapeModalOpen] = useState(false);
 
   const [selectedPromptId, setSelectedPromptId] = useState('');
   const [promptPresetName, setPromptPresetName] = useState('');
@@ -861,6 +863,54 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
     }
   }, [customUrls, maxArticlesPerSource, obeyRobotsTxt, persistPostArticleMetadata, resolveTargetPost, selectedPresetIds, toast]);
 
+  const handleScrapeCompleted = useCallback(async (response: SocialArticleScrapeResponse): Promise<void> => {
+    setScrapeError(null);
+    setGenerationError(null);
+    setScrapeModalOpen(false);
+    const articleIds = response.articles.map((article) => article.id);
+    const { sourcePresetIds, sourceUrls } = deriveScrapeResultSourceMetadata({
+      articles: response.articles,
+      fallbackSourcePresetIds: selectedPresetIds,
+      fallbackSourceUrls: splitLooseUrls(customUrls),
+      run: response.run,
+    });
+    setArticles(response.articles);
+    setSelectedArticleIds(articleIds);
+    setArticleFilter('');
+    setExpandedArticleId(null);
+    setScrapeRunId(response.run.id);
+    setSelectedPresetIds(sourcePresetIds);
+    setCustomUrls(sourceUrls.join('\n'));
+    setRecentRuns((current) => [
+      response.run,
+      ...current.filter((run) => run.id !== response.run.id),
+    ].slice(0, 12));
+    setScrapeStatus(
+      response.run.status === 'completed'
+        ? `Scraped ${response.articles.length} article${response.articles.length === 1 ? '' : 's'}.`
+        : response.run.message || 'Article scrape finished.'
+    );
+    if (articleIds.length === 0) {
+      setScrapeStatus(NO_ARTICLES_GENERATION_MESSAGE);
+      setGenerationError(NO_ARTICLES_GENERATION_MESSAGE);
+      toast(NO_ARTICLES_GENERATION_MESSAGE, { variant: 'warning' });
+    }
+    if (response.run.warnings.length > 0) {
+      toast(`${response.run.warnings.length} scrape warning${response.run.warnings.length === 1 ? '' : 's'}`, {
+        variant: 'warning',
+      });
+    }
+    const targetPost = await resolveTargetPost();
+    if (targetPost) {
+      await persistPostArticleMetadata(targetPost, {
+        articleIds,
+        articleScrapeRunId: response.run.id,
+        articleSourcePresetIds: sourcePresetIds,
+        articleSourceUrls: sourceUrls,
+      });
+    }
+  }, [customUrls, persistPostArticleMetadata, resolveTargetPost, selectedPresetIds, toast]);
+
   const handleGenerate = useCallback(async (): Promise<void> => {
     const pathId = effectiveArticleAggregatorPathId;
     if (noArticlesSelected) {
@@ -997,6 +1047,7 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
   const canScrape = selectedPresetIds.length > 0 || splitLooseUrls(customUrls).length > 0;
 
   return (
+    <>
     <KangurAdminCard>
       <div className='space-y-6'>
         <div>
@@ -1015,47 +1066,24 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
           </div>
           <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]'>
             <div className='space-y-3'>
-              <Textarea
-                value={customUrls}
-                onChange={(event) => setCustomUrls(event.target.value)}
-                placeholder='https://example.com/news'
-                rows={3}
+              <Button
+                size='sm'
+                onClick={() => setScrapeModalOpen(true)}
                 disabled={isScraping}
-                className='font-mono text-xs'
-                aria-label='Custom article source URLs'
-              />
-              <div className='flex flex-wrap items-center gap-3'>
-                <label className='flex items-center gap-2 text-xs text-muted-foreground'>
-                  <input
-                    type='checkbox'
-                    checked={obeyRobotsTxt}
-                    onChange={(event) => setObeyRobotsTxt(event.target.checked)}
-                    disabled={isScraping}
-                    aria-label='Obey robots.txt'
-                  />
-                  Obey robots.txt
-                </label>
-                <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                  <span>Max articles</span>
-                  <Input
-                    type='number'
-                    value={maxArticlesPerSource}
-                    min={1}
-                    max={50}
-                    onChange={(event) => setMaxArticlesPerSource(Number(event.target.value) || 1)}
-                    disabled={isScraping}
-                    className='h-8 w-20 text-xs'
-                    aria-label='Maximum articles per source'
-                  />
-                </div>
-                <Button
-                  size='sm'
-                  onClick={() => { void handleScrape(); }}
-                  disabled={isScraping || !canScrape}
-                >
-                  {isScraping ? 'Scraping...' : 'Scrape articles'}
-                </Button>
-              </div>
+              >
+                {isScraping ? 'Scraping...' : 'Scrape articles'}
+              </Button>
+              {customUrls.trim().length > 0 && (
+                <p className='text-xs text-muted-foreground'>
+                  Custom URLs active · <button
+                    type='button'
+                    className='underline hover:no-underline'
+                    onClick={() => setScrapeModalOpen(true)}
+                  >
+                    Edit in scrape modal
+                  </button>
+                </p>
+              )}
             </div>
 
             <div className='space-y-2'>
@@ -1719,5 +1747,20 @@ export function SocialArticleAggregatorPanel(): React.JSX.Element {
         )}
       </div>
     </KangurAdminCard>
+
+    <SocialArticleScrapeModal
+      open={scrapeModalOpen}
+      onClose={() => setScrapeModalOpen(false)}
+      onCompleted={(response) => { void handleScrapeCompleted(response); }}
+      onScrapeStart={() => setIsScraping(true)}
+      onScrapeEnd={() => setIsScraping(false)}
+      sourcePresets={sourcePresets}
+      selectedPresetIds={selectedPresetIds}
+      onSelectedPresetIdsChange={setSelectedPresetIds}
+      initialCustomUrls={customUrls}
+      initialMaxArticlesPerSource={maxArticlesPerSource}
+      initialObeyRobotsTxt={obeyRobotsTxt}
+    />
+    </>
   );
 }

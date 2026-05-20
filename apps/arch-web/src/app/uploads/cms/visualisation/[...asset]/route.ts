@@ -20,7 +20,7 @@ const FASTCOMET_VISUALISATION_MIRROR_ROOT = path.resolve(
   '..',
   'hosting',
   'fastcomet',
-  'milkbardesigners.com',
+  'uploads.milkbardesigners.com',
   'public_html',
   'uploads',
   'cms',

@@ -16,6 +16,7 @@ import type {
   RuntimeNodeFinishEvent,
   RuntimeNodeStartEvent,
 } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { cloneJsonSafe, hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -658,6 +659,36 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           runtimeCodeObjectId: (runtimeCodeObjectId as string) ?? null,
         });
 
+        const errorEventMetadata = {
+          traceId,
+          spanId: nodeSpanId,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          iteration,
+          attempt,
+          durationMs,
+          ...toRunEventRuntimeKernelMetadata({
+            runtimeStrategy,
+            runtimeResolutionSource,
+            runtimeCodeObjectId,
+          }),
+        };
+        const errorReport = buildAiPathErrorReport({
+          error,
+          code: 'AI_PATHS_NODE_FAILED',
+          category: 'runtime',
+          scope: 'node',
+          traceId,
+          runId: run.id,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle: node.title ?? null,
+          iteration,
+          attempt,
+          metadata: errorEventMetadata,
+        });
+
         await Promise.all([
           repo
             .upsertRunNode(run.id, node.id, {
@@ -666,6 +697,7 @@ export const createCallbacks = (ctx: CallbackCtx) => {
               outputs: safeOutputs,
               finishedAt,
               nodeType: node.type,
+              nodeTitle: node.title ?? null,
               error: errorMessage,
             })
             .catch(() => {}),
@@ -675,18 +707,13 @@ export const createCallbacks = (ctx: CallbackCtx) => {
               level: 'error',
               message: `Node ${node.title ?? node.id} failed: ${errorMessage}`,
               metadata: {
-                traceId,
-                spanId: nodeSpanId,
-                nodeId: node.id,
-                nodeType: node.type,
-                iteration,
-                attempt,
-                durationMs,
-                ...toRunEventRuntimeKernelMetadata({
-                  runtimeStrategy,
-                  runtimeResolutionSource,
-                  runtimeCodeObjectId,
-                }),
+                ...errorEventMetadata,
+                error: errorReport.message,
+                errorCode: errorReport.code,
+                errorCategory: errorReport.category,
+                errorScope: errorReport.scope,
+                retryable: errorReport.retryable,
+                errorReport,
               },
             })
             .catch(() => {}),

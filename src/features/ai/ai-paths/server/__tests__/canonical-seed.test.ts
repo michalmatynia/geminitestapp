@@ -8,6 +8,7 @@ import {
   SOCIAL_ARTICLE_AGGREGATION_TRIGGER_EVENT,
 } from '@/shared/lib/ai-paths/social-article-aggregation';
 import { loadStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import { compileGraph } from '@/shared/lib/ai-paths/core/utils/graph.compile';
 
 describe('canonical seeded path configs', () => {
   it('path_descv3lite seed is canonical', () => {
@@ -16,6 +17,9 @@ describe('canonical seeded path configs', () => {
     expect(record).toBeDefined();
     const result = loadStoredPathConfig({ pathId: 'path_descv3lite', rawConfig: record!.value });
     expect(result.changed).toBe(false);
+
+    const report = compileGraph(result.config.nodes, result.config.edges);
+    expect(report.findings.filter((finding) => finding.severity === 'error')).toEqual([]);
   });
 
   it('social article aggregation seed is canonical', () => {

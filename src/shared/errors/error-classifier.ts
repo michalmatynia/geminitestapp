@@ -10,6 +10,8 @@
  * - Error type identification
  */
 
+/* eslint-disable complexity, max-lines-per-function */
+
 import { z } from 'zod';
 
 import {
@@ -18,6 +20,7 @@ import {
   type SuggestedAction,
 } from '@/shared/contracts/observability';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
+import { isLocalDatabaseConnectionRefused } from '@/shared/errors/database-error-guidance';
 
 type ApiErrorLike = {
   status: number;
@@ -71,6 +74,10 @@ export function classifyError(error: unknown): ErrorCategory {
   // Zod validation errors - Schema validation failures
   if (error instanceof z.ZodError) {
     return ERROR_CATEGORY.VALIDATION;
+  }
+
+  if (isLocalDatabaseConnectionRefused(error)) {
+    return ERROR_CATEGORY.DATABASE;
   }
 
   // AppError instances - Use error code for classification
@@ -184,6 +191,15 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.DATABASE:
+      if (isLocalDatabaseConnectionRefused(error)) {
+        actions.push({
+          label: 'Start Database Server',
+          description:
+            'The local database service is not accepting connections. Start it, then retry the request.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
       // Schema migration issues - Suggest running migrations
       if (normalizedMessage.includes('migration') || normalizedMessage.includes('schema')) {
         actions.push({

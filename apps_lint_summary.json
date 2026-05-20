@@ -1,345 +1,195 @@
 {
-  "totalFiles": 834,
-  "filesWithErrors": 64,
-  "totalErrors": 443,
-  "totalWarnings": 0,
+  "totalFiles": 857,
+  "filesWithErrors": 61,
+  "totalErrors": 239,
+  "totalWarnings": 4,
   "errorCountsByRule": {
-    "quotes": 2,
-    "max-lines-per-function": 24,
-    "complexity": 40,
-    "max-lines": 7,
-    "no-nested-ternary": 4,
-    "max-params": 2,
-    "no-await-in-loop": 9,
-    "@typescript-eslint/strict-boolean-expressions": 40,
+    "@typescript-eslint/no-unnecessary-condition": 49,
+    "@typescript-eslint/strict-boolean-expressions": 37,
+    "max-lines-per-function": 22,
+    "@typescript-eslint/no-unnecessary-type-assertion": 3,
+    "complexity": 31,
     "@typescript-eslint/no-shadow": 2,
-    "@typescript-eslint/no-unused-vars": 17,
-    "@typescript-eslint/no-unnecessary-condition": 32,
-    "@typescript-eslint/no-non-null-assertion": 2,
-    "@typescript-eslint/explicit-function-return-type": 2,
+    "max-params": 1,
+    "@typescript-eslint/explicit-function-return-type": 10,
+    "no-await-in-loop": 3,
     "require-atomic-updates": 1,
+    "max-lines": 4,
     "@typescript-eslint/await-thenable": 1,
     "@typescript-eslint/consistent-type-assertions": 1,
-    "fatal": 3,
-    "@typescript-eslint/no-unsafe-assignment": 80,
-    "@typescript-eslint/no-unnecessary-type-assertion": 1,
-    "no-param-reassign": 4,
-    "no-void": 5,
-    "@typescript-eslint/no-redeclare": 1,
-    "@typescript-eslint/no-redundant-type-constituents": 4,
-    "@typescript-eslint/no-unsafe-member-access": 104,
-    "@typescript-eslint/no-unsafe-argument": 17,
-    "@typescript-eslint/no-unsafe-return": 4,
-    "@typescript-eslint/no-explicit-any": 2,
-    "@typescript-eslint/no-unsafe-call": 30,
-    "@typescript-eslint/no-misused-promises": 1,
+    "@typescript-eslint/consistent-type-imports": 3,
+    "no-console": 8,
+    "@typescript-eslint/require-await": 1,
+    "@typescript-eslint/prefer-nullish-coalescing": 1,
+    "no-param-reassign": 1,
+    "@typescript-eslint/no-unsafe-assignment": 24,
+    "@typescript-eslint/no-unsafe-argument": 2,
+    "@typescript-eslint/no-explicit-any": 3,
+    "@typescript-eslint/no-unsafe-member-access": 12,
+    "@typescript-eslint/no-unsafe-call": 7,
+    "@typescript-eslint/no-misused-promises": 2,
+    "@typescript-eslint/naming-convention": 2,
+    "fatal": 4,
+    "@typescript-eslint/no-redundant-type-constituents": 1,
+    "@typescript-eslint/no-unsafe-return": 1,
+    "no-void": 3,
+    "no-nested-ternary": 2,
     "@typescript-eslint/no-confusing-void-expression": 1
   },
   "files": [
     {
-      "filePath": "/apps/database-engine-web/next-env.d.ts",
-      "errorCount": 1,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "quotes",
-          "line": 3,
-          "message": "Strings must use singlequote."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/components/crud/ManagedMongoScopePanel.tsx",
+      "filePath": "/apps/database-engine-web/src/features/database/components/engine/DatabaseEngineMongoSourceCards.tsx",
       "errorCount": 4,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "max-lines-per-function",
-          "line": 54,
-          "message": "Function 'ManagedMongoDatabaseScopeCard' has too many lines (99). Maximum allowed is 60."
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 180,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
         },
         {
-          "ruleId": "complexity",
-          "line": 54,
-          "message": "Function 'ManagedMongoDatabaseScopeCard' has a complexity of 13. Maximum allowed is 8."
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 213,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
         },
         {
-          "ruleId": "max-lines-per-function",
-          "line": 157,
-          "message": "Function 'ManagedMongoScopePanel' has too many lines (104). Maximum allowed is 60."
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 464,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
         }
       ]
     },
     {
-      "filePath": "/apps/database-engine-web/src/features/database/components/engine/DatabaseEngineManagedMongoSection.tsx",
-      "errorCount": 4,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "max-lines-per-function",
-          "line": 134,
-          "message": "Function 'ManagedDatabaseCard' has too many lines (90). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "max-lines-per-function",
-          "line": 227,
-          "message": "Function 'DatabaseEngineManagedMongoSection' has too many lines (122). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "complexity",
-          "line": 227,
-          "message": "Function 'DatabaseEngineManagedMongoSection' has a complexity of 13. Maximum allowed is 8."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/components/engine/DatabaseEngineMongoSyncCard.tsx",
-      "errorCount": 4,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "no-nested-ternary",
-          "line": 135,
-          "message": "Do not nest ternary expressions."
-        },
-        {
-          "ruleId": "max-lines-per-function",
-          "line": 243,
-          "message": "Function 'MongoSyncCard' has too many lines (87). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "complexity",
-          "line": 243,
-          "message": "Function 'MongoSyncCard' has a complexity of 12. Maximum allowed is 8."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/backup/handler.ts",
-      "errorCount": 1,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "complexity",
-          "line": 21,
-          "message": "Async function 'postHandler' has a complexity of 9. Maximum allowed is 8."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/crud/handler.ts",
-      "errorCount": 3,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "max-params",
-          "line": 151,
-          "message": "Async function 'handleMongoCrud' has too many parameters (6). Maximum allowed is 4."
-        },
-        {
-          "ruleId": "max-lines-per-function",
-          "line": 151,
-          "message": "Async function 'handleMongoCrud' has too many lines (61). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "complexity",
-          "line": 151,
-          "message": "Async function 'handleMongoCrud' has a complexity of 23. Maximum allowed is 8."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/engine/backup-scheduler/run-now/handler.ts",
-      "errorCount": 6,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "complexity",
-          "line": 31,
-          "message": "Async function 'postHandler' has a complexity of 9. Maximum allowed is 8."
-        },
-        {
-          "ruleId": "no-await-in-loop",
-          "line": 57,
-          "message": "Unexpected `await` inside a loop."
-        },
-        {
-          "ruleId": "no-await-in-loop",
-          "line": 65,
-          "message": "Unexpected `await` inside a loop."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/engine/backup-scheduler/status/handler.ts",
+      "filePath": "/apps/database-engine-web/src/features/database/pages/DatabaseEnginePage.tsx",
       "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
           "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 26,
-          "message": "Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly."
+          "line": 279,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
         }
       ]
     },
     {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/engine/backup-scheduler/tick/handler.ts",
+      "filePath": "/apps/database-engine-web/src/features/database/pages/DatabasesPage.tsx",
       "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 37,
-          "message": "Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/engine/operations/jobs/[jobId]/cancel/handler.ts",
-      "errorCount": 2,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 15,
-          "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
-        },
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 37,
-          "message": "Unexpected string value in conditional. An explicit empty string check is required."
+          "ruleId": "max-lines-per-function",
+          "line": 55,
+          "message": "Arrow function has too many lines (65). Maximum allowed is 60."
         }
       ]
     },
     {
       "filePath": "/apps/database-engine-web/src/features/database/server/api/engine/operations/jobs/handler.ts",
-      "errorCount": 4,
+      "errorCount": 5,
       "warningCount": 0,
       "topErrors": [
         {
+          "ruleId": "@typescript-eslint/no-unnecessary-type-assertion",
+          "line": 46,
+          "message": "This assertion is unnecessary since it does not change the type of the expression."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-type-assertion",
+          "line": 47,
+          "message": "This assertion is unnecessary since it does not change the type of the expression."
+        },
+        {
           "ruleId": "complexity",
-          "line": 22,
-          "message": "Arrow function has a complexity of 31. Maximum allowed is 8."
-        },
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 24,
-          "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
-        },
-        {
-          "ruleId": "no-nested-ternary",
-          "line": 35,
-          "message": "Do not nest ternary expressions."
+          "line": 51,
+          "message": "Arrow function has a complexity of 20. Maximum allowed is 8."
         }
       ]
     },
     {
       "filePath": "/apps/database-engine-web/src/features/database/server/api/execute/handler.ts",
-      "errorCount": 9,
+      "errorCount": 5,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 62,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
-        },
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 65,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+          "ruleId": "@typescript-eslint/no-shadow",
+          "line": 77,
+          "message": "'ErrorSystem' is already declared in the upper scope on line 14 column 10."
         },
         {
           "ruleId": "@typescript-eslint/no-shadow",
-          "line": 74,
-          "message": "'ErrorSystem' is already declared in the upper scope on line 14 column 10."
+          "line": 83,
+          "message": "'error' is already declared in the upper scope on line 74 column 12."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 92,
+          "message": "Async function 'handleMongoOperation' has too many lines (125). Maximum allowed is 60."
         }
       ]
     },
     {
       "filePath": "/apps/database-engine-web/src/features/database/server/api/preview/handler.ts",
-      "errorCount": 13,
+      "errorCount": 6,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 11,
-          "message": "'MongoSource' is defined but never used. Allowed unused vars must match /^_/u."
+          "ruleId": "max-params",
+          "line": 59,
+          "message": "Arrow function has too many parameters (5). Maximum allowed is 4."
         },
         {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 12,
-          "message": "'DatabaseEngineManagedMongoApplication' is defined but never used. Allowed unused vars must match /^_/u."
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 59,
+          "message": "Missing return type on function."
         },
         {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 41,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
+          "ruleId": "max-lines-per-function",
+          "line": 97,
+          "message": "Async function 'postDatabasesPreviewHandler' has too many lines (93). Maximum allowed is 60."
         }
       ]
     },
     {
       "filePath": "/apps/database-engine-web/src/features/database/server/api/redis/handler.ts",
-      "errorCount": 8,
+      "errorCount": 6,
       "warningCount": 0,
       "topErrors": [
         {
           "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 22,
+          "line": 24,
           "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
         },
         {
           "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 23,
+          "line": 25,
           "message": "Unexpected string value in conditional. An explicit empty string check is required."
         },
         {
-          "ruleId": "max-lines-per-function",
-          "line": 32,
-          "message": "Async function 'getHandler' has too many lines (82). Maximum allowed is 60."
+          "ruleId": "no-await-in-loop",
+          "line": 67,
+          "message": "Unexpected `await` inside a loop."
         }
       ]
     },
     {
       "filePath": "/apps/database-engine-web/src/features/database/server/api/restore/handler.ts",
-      "errorCount": 5,
+      "errorCount": 4,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "max-lines-per-function",
-          "line": 78,
-          "message": "Async function 'postDatabasesRestoreHandler' has too many lines (101). Maximum allowed is 60."
+          "ruleId": "no-await-in-loop",
+          "line": 95,
+          "message": "Unexpected `await` inside a loop."
         },
         {
           "ruleId": "complexity",
-          "line": 78,
-          "message": "Async function 'postDatabasesRestoreHandler' has a complexity of 16. Maximum allowed is 8."
+          "line": 121,
+          "message": "Async function 'postDatabasesRestoreHandler' has a complexity of 13. Maximum allowed is 8."
         },
         {
           "ruleId": "@typescript-eslint/no-unnecessary-condition",
-          "line": 89,
+          "line": 129,
           "message": "Unnecessary conditional, comparison is always false, since `\"mongodb\" !== \"mongodb\"` is false."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/src/features/database/server/api/schema/handler.ts",
-      "errorCount": 7,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-unnecessary-condition",
-          "line": 50,
-          "message": "Unnecessary conditional, value is always truthy."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-non-null-assertion",
-          "line": 54,
-          "message": "Forbidden non-null assertion."
-        },
-        {
-          "ruleId": "no-await-in-loop",
-          "line": 55,
-          "message": "Unexpected `await` inside a loop."
         }
       ]
     },
@@ -350,17 +200,17 @@
       "topErrors": [
         {
           "ruleId": "@typescript-eslint/explicit-function-return-type",
-          "line": 170,
+          "line": 189,
           "message": "Missing return type on function."
         },
         {
           "ruleId": "no-await-in-loop",
-          "line": 202,
+          "line": 221,
           "message": "Unexpected `await` inside a loop."
         },
         {
           "ruleId": "require-atomic-updates",
-          "line": 210,
+          "line": 229,
           "message": "Possible race condition: `backupJobRecoveryInFlight` might be reassigned based on an outdated value of `backupJobRecoveryInFlight`."
         }
       ]
@@ -388,47 +238,63 @@
       ]
     },
     {
-      "filePath": "/apps/database-engine-web/tailwind.config.ts",
-      "errorCount": 1,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": null,
-          "message": "Parsing error: \"parserOptions.project\" has been provided for @typescript-eslint/parser.\nThe file was not found in any of the provided project(s): apps/database-engine-web/tailwind.config.ts"
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/database-engine-web/vitest.config.ts",
-      "errorCount": 1,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": null,
-          "message": "Parsing error: \"parserOptions.project\" has been provided for @typescript-eslint/parser.\nThe file was not found in any of the provided project(s): apps/database-engine-web/vitest.config.ts"
-        }
-      ]
-    },
-    {
       "filePath": "/apps/database-engine-web/vitest.setup.ts",
-      "errorCount": 1,
+      "errorCount": 51,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": null,
-          "message": "Parsing error: \"parserOptions.project\" has been provided for @typescript-eslint/parser.\nThe file was not found in any of the provided project(s): apps/database-engine-web/vitest.setup.ts"
+          "ruleId": "@typescript-eslint/consistent-type-imports",
+          "line": 8,
+          "message": "`import()` type annotations are forbidden."
+        },
+        {
+          "ruleId": "no-console",
+          "line": 21,
+          "message": "Unexpected console statement."
+        },
+        {
+          "ruleId": "no-console",
+          "line": 22,
+          "message": "Unexpected console statement."
         }
       ]
     },
     {
-      "filePath": "/apps/ecom-web/next-env.d.ts",
-      "errorCount": 1,
+      "filePath": "/apps/ecom-web/src/app/account/components/AdminNewsletterPanel.tsx",
+      "errorCount": 2,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "quotes",
-          "line": 3,
-          "message": "Strings must use singlequote."
+          "ruleId": "max-lines-per-function",
+          "line": 29,
+          "message": "Function 'AdminNewsletterPanel' has too many lines (88). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 29,
+          "message": "Function 'AdminNewsletterPanel' has a complexity of 18. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/app/api/checkout/bank-transfer/route.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 8,
+          "message": "Function 'readBankTransferDetails' has a complexity of 12. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 20,
+          "message": "Async function 'POST' has too many lines (71). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "complexity",
+          "line": 20,
+          "message": "Async function 'POST' has a complexity of 9. Maximum allowed is 8."
         }
       ]
     },
@@ -439,52 +305,47 @@
       "topErrors": [
         {
           "ruleId": "max-lines-per-function",
-          "line": 12,
-          "message": "Async function 'POST' has too many lines (108). Maximum allowed is 60."
+          "line": 41,
+          "message": "Async function 'POST' has too many lines (74). Maximum allowed is 60."
         },
         {
           "ruleId": "complexity",
-          "line": 12,
-          "message": "Async function 'POST' has a complexity of 16. Maximum allowed is 8."
+          "line": 41,
+          "message": "Async function 'POST' has a complexity of 14. Maximum allowed is 8."
         }
       ]
     },
     {
       "filePath": "/apps/ecom-web/src/app/api/checkout/paypal/capture/route.ts",
-      "errorCount": 3,
+      "errorCount": 4,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "max-lines-per-function",
-          "line": 20,
-          "message": "Async function 'POST' has too many lines (64). Maximum allowed is 60."
+          "ruleId": "@typescript-eslint/no-unsafe-argument",
+          "line": 23,
+          "message": "Unsafe argument of type `any` assigned to a parameter of type `Document[] | UpdateFilter<Order>`."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 23,
+          "message": "Unexpected any. Specify a different type."
         },
         {
           "ruleId": "complexity",
-          "line": 20,
-          "message": "Async function 'POST' has a complexity of 12. Maximum allowed is 8."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 64,
-          "message": "Unsafe assignment of an `any` value."
+          "line": 32,
+          "message": "Async function 'POST' has a complexity of 13. Maximum allowed is 8."
         }
       ]
     },
     {
       "filePath": "/apps/ecom-web/src/app/api/checkout/paypal/create/route.ts",
-      "errorCount": 2,
+      "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
           "ruleId": "max-lines-per-function",
-          "line": 10,
-          "message": "Async function 'POST' has too many lines (91). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "complexity",
-          "line": 10,
-          "message": "Async function 'POST' has a complexity of 10. Maximum allowed is 8."
+          "line": 38,
+          "message": "Async function 'POST' has too many lines (61). Maximum allowed is 60."
         }
       ]
     },
@@ -495,47 +356,64 @@
       "topErrors": [
         {
           "ruleId": "complexity",
-          "line": 39,
-          "message": "Async function 'GET' has a complexity of 14. Maximum allowed is 8."
+          "line": 28,
+          "message": "Function 'envBankTransferDetails' has a complexity of 12. Maximum allowed is 8."
         },
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 47,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
-        },
-        {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 54,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/ecom-web/src/app/api/checkout/stripe/route.ts",
-      "errorCount": 2,
-      "warningCount": 0,
-      "topErrors": [
         {
           "ruleId": "max-lines-per-function",
-          "line": 10,
-          "message": "Async function 'POST' has too many lines (86). Maximum allowed is 60."
+          "line": 54,
+          "message": "Async function 'GET' has too many lines (62). Maximum allowed is 60."
         },
         {
           "ruleId": "complexity",
-          "line": 10,
-          "message": "Async function 'POST' has a complexity of 10. Maximum allowed is 8."
+          "line": 54,
+          "message": "Async function 'GET' has a complexity of 16. Maximum allowed is 8."
         }
       ]
     },
     {
-      "filePath": "/apps/ecom-web/src/app/api/product-images/fallback/route.ts",
+      "filePath": "/apps/ecom-web/src/app/api/contact/route.ts",
       "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
           "ruleId": "complexity",
-          "line": 31,
-          "message": "Function 'sanitizeUploadPath' has a complexity of 10. Maximum allowed is 8."
+          "line": 50,
+          "message": "Async function 'POST' has a complexity of 19. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/app/api/newsletter/route.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 8,
+          "message": "Async function 'POST' has a complexity of 9. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/app/api/products/route.ts",
+      "errorCount": 3,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 212,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 222,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 232,
+          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
         }
       ]
     },
@@ -552,7 +430,7 @@
         {
           "ruleId": "complexity",
           "line": 41,
-          "message": "Async function 'POST' has a complexity of 15. Maximum allowed is 8."
+          "message": "Async function 'POST' has a complexity of 16. Maximum allowed is 8."
         }
       ]
     },
@@ -564,7 +442,7 @@
         {
           "ruleId": "complexity",
           "line": 36,
-          "message": "Async function 'POST' has a complexity of 20. Maximum allowed is 8."
+          "message": "Async function 'POST' has a complexity of 21. Maximum allowed is 8."
         },
         {
           "ruleId": "@typescript-eslint/no-unnecessary-condition",
@@ -574,66 +452,170 @@
       ]
     },
     {
+      "filePath": "/apps/ecom-web/src/app/api/wishlist/toggle/route.ts",
+      "errorCount": 8,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 7,
+          "message": "Function 'sanitizeItem' has a complexity of 17. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 13,
+          "message": "Unexpected string value in conditional. An explicit empty string check is required."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 13,
+          "message": "Unexpected string value in conditional. An explicit empty string check is required."
+        }
+      ]
+    },
+    {
       "filePath": "/apps/ecom-web/src/app/checkout/CheckoutPageClient.tsx",
       "errorCount": 12,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "complexity",
-          "line": 1085,
-          "message": "Function 'StripePaymentSection' has a complexity of 28. Maximum allowed is 8."
+          "ruleId": "max-lines-per-function",
+          "line": 234,
+          "message": "Function 'FormInput' has too many lines (66). Maximum allowed is 60."
         },
         {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 1129,
-          "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required."
+          "ruleId": "@typescript-eslint/no-unsafe-assignment",
+          "line": 1733,
+          "message": "Unsafe assignment of an error typed value."
         },
         {
-          "ruleId": "complexity",
-          "line": 1150,
-          "message": "Async arrow function has a complexity of 10. Maximum allowed is 8."
+          "ruleId": "@typescript-eslint/no-unsafe-call",
+          "line": 1733,
+          "message": "Unsafe call of a type that could not be resolved."
         }
       ]
     },
     {
-      "filePath": "/apps/ecom-web/src/app/checkout/checkout-schema.ts",
+      "filePath": "/apps/ecom-web/src/app/contact/ContactPageClient.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-misused-promises",
+          "line": 248,
+          "message": "Promise-returning function provided to attribute where a void return was expected."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/app/order-status/OrderStatusPageClient.tsx",
       "errorCount": 2,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/explicit-function-return-type",
-          "line": 4,
-          "message": "Missing return type on function."
+          "ruleId": "max-lines-per-function",
+          "line": 222,
+          "message": "Function 'OrderStatusPageClient' has too many lines (70). Maximum allowed is 60."
         },
         {
           "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 19,
+          "line": 271,
           "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
         }
       ]
     },
     {
-      "filePath": "/apps/ecom-web/src/components/FeaturedProducts.tsx",
+      "filePath": "/apps/ecom-web/src/app/page.tsx",
+      "errorCount": 2,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 54,
+          "message": "Async function 'HomePage' has too many lines (62). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 73,
+          "message": "Unexpected nullable number value in conditional. Please handle the nullish/zero/NaN cases explicitly."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/components/HeroSection.tsx",
       "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "max-lines",
-          "line": 330,
-          "message": "File has too many lines (316). Maximum allowed is 300."
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 635,
+          "message": "Missing return type on function."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/components/SiteFooter.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-misused-promises",
+          "line": 67,
+          "message": "Promise-returning function provided to attribute where a void return was expected."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/context/WishlistContext.tsx",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "@typescript-eslint/no-unnecessary-condition",
+          "line": 97,
+          "message": "Unnecessary conditional, the types have no overlap."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/lib/db-indexes.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 75,
+          "message": "Async function 'ensureAppIndexes' has too many lines (68). Maximum allowed is 60."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/ecom-web/src/lib/observability.ts",
+      "errorCount": 4,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "complexity",
+          "line": 54,
+          "message": "Async arrow function has a complexity of 10. Maximum allowed is 8."
+        },
+        {
+          "ruleId": "@typescript-eslint/naming-convention",
+          "line": 58,
+          "message": "Variable name `_id` must match one of the following formats: camelCase, UPPER_CASE, PascalCase"
+        },
+        {
+          "ruleId": "complexity",
+          "line": 79,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 8."
         }
       ]
     },
     {
       "filePath": "/apps/ecom-web/src/lib/paypal.ts",
-      "errorCount": 3,
+      "errorCount": 2,
       "warningCount": 0,
       "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 3,
-          "message": "'PayPalProviderSettings' is defined but never used. Allowed unused vars must match /^_/u."
-        },
         {
           "ruleId": "complexity",
           "line": 32,
@@ -647,36 +629,14 @@
       ]
     },
     {
-      "filePath": "/apps/ecom-web/src/lib/stripe.ts",
+      "filePath": "/apps/mobile/src/ai-tutor/useKangurMobileAiTutorHooks.ts",
       "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "complexity",
-          "line": 122,
-          "message": "Function 'verifyStripeWebhookSignature' has a complexity of 11. Maximum allowed is 8."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.tsx",
-      "errorCount": 7,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-redeclare",
-          "line": 19,
-          "message": "'useKangurMobileAiTutor' is already defined."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-redundant-type-constituents",
-          "line": 59,
-          "message": "'KangurAiTutorNativeGuideEntry' is an 'error' type that acts as 'any' and overrides all other types in this union type."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 67,
-          "message": "Unsafe member access .title on a type that cannot be resolved."
+          "ruleId": "max-lines-per-function",
+          "line": 95,
+          "message": "Arrow function has too many lines (70). Maximum allowed is 60."
         }
       ]
     },
@@ -689,6 +649,30 @@
           "ruleId": "complexity",
           "line": 23,
           "message": "Function 'DuelSessionSeriesCard' has a complexity of 10. Maximum allowed is 8."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/duels/useKangurMobileDuelSession.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines",
+          "line": 335,
+          "message": "File has too many lines (309). Maximum allowed is 300."
+        }
+      ]
+    },
+    {
+      "filePath": "/apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.ts",
+      "errorCount": 1,
+      "warningCount": 0,
+      "topErrors": [
+        {
+          "ruleId": "max-lines-per-function",
+          "line": 30,
+          "message": "Arrow function has too many lines (71). Maximum allowed is 60."
         }
       ]
     },
@@ -754,84 +738,35 @@
       ]
     },
     {
-      "filePath": "/apps/mobile/src/parent/useKangurMobileParentDashboard.ts",
-      "errorCount": 12,
+      "filePath": "/apps/mobile/src/home/useKangurMobileHomeDuelsRematches.ts",
+      "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unsafe-argument",
-          "line": 30,
-          "message": "Unsafe argument of type error typed assigned to a parameter of type `Error | null`."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 30,
-          "message": "Unsafe member access .assignmentsQuery on a type that cannot be resolved."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-argument",
-          "line": 31,
-          "message": "Unsafe argument of type error typed assigned to a parameter of type `Error | null`."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/mobile/src/parent/useParentDashboardAssignments.ts",
-      "errorCount": 17,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 20,
-          "message": "Unsafe assignment of an error typed value."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 20,
-          "message": "Unsafe member access .highPriorityCount on a type that cannot be resolved."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 21,
-          "message": "Unsafe assignment of an error typed value."
+          "ruleId": "max-lines-per-function",
+          "line": 56,
+          "message": "Arrow function has too many lines (66). Maximum allowed is 60."
         }
       ]
     },
     {
       "filePath": "/apps/mobile/src/plan/KangurDailyPlanScreen.tsx",
-      "errorCount": 17,
+      "errorCount": 8,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 29,
-          "message": "'PlanSections' is defined but never used. Allowed unused vars must match /^_/u."
+          "ruleId": "max-lines-per-function",
+          "line": 71,
+          "message": "Function 'DailyPlanContent' has too many lines (118). Maximum allowed is 60."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-explicit-any",
+          "line": 102,
+          "message": "Unexpected any. Specify a different type."
         },
         {
           "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 56,
-          "message": "Unsafe assignment of an error typed value."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 57,
-          "message": "Unsafe assignment of an error typed value."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/mobile/src/practice/KangurPracticeScreen.tsx",
-      "errorCount": 2,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 8,
-          "message": "Unsafe assignment of an error typed value."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 15,
+          "line": 113,
           "message": "Unsafe assignment of an error typed value."
         }
       ]
@@ -879,28 +814,6 @@
           "ruleId": "@typescript-eslint/no-redundant-type-constituents",
           "line": 15,
           "message": "'PracticeCompletionCardProps' is an 'error' type that acts as 'any' and overrides all other types in this union type."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/mobile/src/practice/useKangurPracticeActions.ts",
-      "errorCount": 69,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-redundant-type-constituents",
-          "line": 16,
-          "message": "'SyncInput' is an 'error' type that acts as 'any' and overrides all other types in this union type."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 18,
-          "message": "Unsafe assignment of an error typed value."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 20,
-          "message": "Unsafe member access .status on a type that cannot be resolved."
         }
       ]
     },
@@ -967,23 +880,13 @@
     },
     {
       "filePath": "/apps/mobile/src/profile/profile-primitives.tsx",
-      "errorCount": 11,
+      "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 2,
-          "message": "'getLocalizedKangurCoreLessonTitle' is defined but never used. Allowed unused vars must match /^_/u."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 3,
-          "message": "'KangurAssignmentPlan' is defined but never used. Allowed unused vars must match /^_/u."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 5,
-          "message": "'KangurLessonMasteryInsight' is defined but never used. Allowed unused vars must match /^_/u."
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 15,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
         }
       ]
     },
@@ -1010,45 +913,23 @@
       ]
     },
     {
-      "filePath": "/apps/mobile/src/providers/KangurRuntimeContext.runtime.ts",
+      "filePath": "/apps/mobile/src/scores/KangurResultsScreen.tsx",
       "errorCount": 3,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unnecessary-condition",
-          "line": 39,
-          "message": "Unnecessary conditional, the types have no overlap."
+          "ruleId": "@typescript-eslint/explicit-function-return-type",
+          "line": 107,
+          "message": "Missing return type on function."
         },
         {
-          "ruleId": "@typescript-eslint/strict-boolean-expressions",
-          "line": 49,
-          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unnecessary-condition",
-          "line": 103,
-          "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined."
-        }
-      ]
-    },
-    {
-      "filePath": "/apps/mobile/src/scores/KangurResultsScreen.tsx",
-      "errorCount": 24,
-      "warningCount": 0,
-      "topErrors": [
-        {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 62,
-          "message": "'filterFamily' is defined but never used. Allowed unused args must match /^_/u."
+          "ruleId": "max-lines-per-function",
+          "line": 154,
+          "message": "Function 'KangurResultsScreen' has too many lines (80). Maximum allowed is 60."
         },
         {
           "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 71,
-          "message": "Unsafe assignment of an error typed value."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-assignment",
-          "line": 72,
+          "line": 220,
           "message": "Unsafe assignment of an error typed value."
         }
       ]
@@ -1174,45 +1055,30 @@
     },
     {
       "filePath": "/apps/mobile/src/tests/KangurTestsScreen.tsx",
-      "errorCount": 63,
+      "errorCount": 1,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unused-vars",
-          "line": 20,
-          "message": "'KangurTestQuestion' is defined but never used. Allowed unused vars must match /^_/u."
-        },
-        {
-          "ruleId": "max-lines-per-function",
-          "line": 29,
-          "message": "Function 'KangurMobileTestPlayer' has too many lines (131). Maximum allowed is 60."
-        },
-        {
-          "ruleId": "complexity",
-          "line": 29,
-          "message": "Function 'KangurMobileTestPlayer' has a complexity of 12. Maximum allowed is 8."
+          "ruleId": "@typescript-eslint/no-confusing-void-expression",
+          "line": 138,
+          "message": "Placing a void expression inside another expression is forbidden. Move it to its own statement instead."
         }
       ]
     },
     {
       "filePath": "/apps/mobile/src/tests/tests-primitives.tsx",
-      "errorCount": 27,
+      "errorCount": 2,
       "warningCount": 0,
       "topErrors": [
         {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 46,
-          "message": "Unsafe member access .year on a type that cannot be resolved."
+          "ruleId": "@typescript-eslint/strict-boolean-expressions",
+          "line": 156,
+          "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly."
         },
         {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 49,
-          "message": "Unsafe member access .year on a type that cannot be resolved."
-        },
-        {
-          "ruleId": "@typescript-eslint/no-unsafe-member-access",
-          "line": 50,
-          "message": "Unsafe member access .year on a type that cannot be resolved."
+          "ruleId": "max-lines",
+          "line": 327,
+          "message": "File has too many lines (324). Maximum allowed is 300."
         }
       ]
     }

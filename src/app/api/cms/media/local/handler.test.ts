@@ -48,7 +48,7 @@ describe('cms media local handler', () => {
     });
     getDiskPathFromPublicPathMock.mockReturnValue('/runtime/cms/visualisation/image.webp');
     getMilkbarFastCometPublicHtmlMirrorPathMock.mockReturnValue(
-      '/repo/hosting/fastcomet/milkbardesigners.com/public_html/uploads/cms/visualisation/image.webp'
+      '/repo/hosting/fastcomet/uploads.milkbardesigners.com/public_html/uploads/cms/visualisation/image.webp'
     );
   });
 

@@ -61,6 +61,9 @@ const {
   displayName: 'TriggerButtonToggleRuntimeContext',
 });
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
+  'product_list',
+  'product_list_header',
+  'product_list_item',
   'product_row',
   'product_marketplace_copy_row',
   'product_parameter_row',

@@ -7,7 +7,7 @@ export const MILKBAR_FASTCOMET_PUBLIC_HTML_ROOT = path.resolve(
   process.cwd(),
   'hosting',
   'fastcomet',
-  'milkbardesigners.com',
+  'uploads.milkbardesigners.com',
   'public_html'
 );
 

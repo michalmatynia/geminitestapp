@@ -66,14 +66,85 @@ const resolveMapperContextValue = (
 ): unknown => sources['context'] ?? sources['result'] ?? sources['bundle'] ?? sources['value'];
 
 const MAPPER_SOURCE_PATH_PATTERN = /^(context|result|bundle|value)(?:\.|\[|$)/;
+const MAPPER_FALLBACK_OPERATOR_PATTERN = /(\?\?|\|\|)/;
 
-const resolveMappedValue = (
+type MapperFallbackOperator = 'first' | 'nullish' | 'empty';
+
+type MapperMappingCandidate = {
+  expression: string;
+  operator: MapperFallbackOperator;
+};
+
+const parseMappingCandidates = (mapping: string): MapperMappingCandidate[] => {
+  const parts = mapping
+    .split(MAPPER_FALLBACK_OPERATOR_PATTERN)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  const expressions: string[] = [];
+  const operators: MapperFallbackOperator[] = [];
+
+  parts.forEach((part) => {
+    if (part === '??') {
+      operators.push('nullish');
+      return;
+    }
+    if (part === '||') {
+      operators.push('empty');
+      return;
+    }
+    expressions.push(part);
+  });
+
+  const onlyExpression = expressions[0];
+  if (expressions.length === 1 && onlyExpression !== undefined) {
+    return [{ expression: onlyExpression, operator: 'first' }];
+  }
+
+  return expressions.map((expression, index) => ({
+    expression,
+    operator: operators[index] ?? operators[index - 1] ?? 'nullish',
+  }));
+};
+
+const parseMappingLiteral = (
+  expression: string
+): { matched: true; value: unknown } | { matched: false } => {
+  if (/^-?\d+(?:\.\d+)?$/.test(expression)) {
+    return { matched: true, value: Number(expression) };
+  }
+  if (expression === 'true') return { matched: true, value: true };
+  if (expression === 'false') return { matched: true, value: false };
+  if (expression === 'null') return { matched: true, value: null };
+  const quotedMatch = expression.match(/^(['"])([\s\S]*)\1$/);
+  if (quotedMatch) {
+    return { matched: true, value: quotedMatch[2] ?? '' };
+  }
+  return { matched: false };
+};
+
+const hasResolvedMappedValue = (
+  value: unknown,
+  operator: MapperFallbackOperator
+): boolean => {
+  if (value === undefined) return false;
+  if (operator === 'nullish') return value !== null;
+  if (operator === 'empty') {
+    if (value === null) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    return true;
+  }
+  return true;
+};
+
+const resolveSingleMappedValue = (
   path: string,
   sources: Record<'context' | 'result' | 'bundle' | 'value', unknown>,
   contextValue: unknown,
   jsonIntegrityPolicy: ReturnType<typeof normalizeJsonIntegrityPolicy>
 ): unknown => {
-  if (!path) return undefined;
+  if (path.length === 0) return undefined;
+  const literal = parseMappingLiteral(path);
+  if (literal.matched) return literal.value;
   if (MAPPER_SOURCE_PATH_PATTERN.test(path)) {
     return getValueAtMappingPath(sources, path, {
       jsonIntegrityPolicy,
@@ -86,6 +157,31 @@ const resolveMappedValue = (
   return getValueAtMappingPath(sources, path, {
     jsonIntegrityPolicy,
   });
+};
+
+const resolveMappedValue = (
+  mapping: string,
+  sources: Record<'context' | 'result' | 'bundle' | 'value', unknown>,
+  contextValue: unknown,
+  jsonIntegrityPolicy: ReturnType<typeof normalizeJsonIntegrityPolicy>
+): unknown => {
+  if (mapping.length === 0) return undefined;
+  const candidates = parseMappingCandidates(mapping);
+  if (candidates.length === 0) return undefined;
+
+  for (const candidate of candidates) {
+    const value = resolveSingleMappedValue(
+      candidate.expression,
+      sources,
+      contextValue,
+      jsonIntegrityPolicy
+    );
+    if (hasResolvedMappedValue(value, candidate.operator)) {
+      return value;
+    }
+  }
+
+  return undefined;
 };
 
 const collectConnectedOutputPorts = (nodeId: string, edges: NodeHandlerContext['edges']): Set<string> =>
@@ -122,16 +218,17 @@ export const handleMapper: NodeHandler = ({
 
     (mapperConfig.outputs ?? []).forEach((output: string): void => {
       const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
-      const value = mapping
-        ? resolveMappedValue(mapping, sources, contextValue, jsonIntegrityPolicy)
-        : output === 'value'
-          ? contextValue
-          : resolveMappedValue(output, sources, contextValue, jsonIntegrityPolicy);
+      const value =
+        mapping.length > 0
+          ? resolveMappedValue(mapping, sources, contextValue, jsonIntegrityPolicy)
+          : output === 'value'
+            ? contextValue
+            : resolveMappedValue(output, sources, contextValue, jsonIntegrityPolicy);
       if (value !== undefined) {
         mapped[output] = value;
         return;
       }
-      if (!mapping) return;
+      if (mapping.length === 0) return;
       if (connectedOutputPorts.size > 0 && connectedOutputPorts.has(output)) {
         unresolvedMappings.push(`${output} <- ${mapping}`);
       }

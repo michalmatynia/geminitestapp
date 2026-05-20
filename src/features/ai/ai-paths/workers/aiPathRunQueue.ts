@@ -15,7 +15,11 @@ import {
   QUEUE_HOT_WAITING_LIMIT,
   QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
 } from './ai-path-run-queue/config';
-import { queue, enqueuePathRunJob } from './ai-path-run-queue/queue';
+import {
+  queue,
+  enqueuePathRunJob,
+  markStaleRunningAiPathRuns,
+} from './ai-path-run-queue/queue';
 import {
   aiPathRunQueueState,
   localFallbackTimers,
@@ -104,6 +108,8 @@ export const startAiPathRunQueue = (): void => {
       if (!wasStarted) {
         aiPathRunQueueState.workerStarted = true;
       }
+
+      await markStaleRunningAiPathRuns('worker-start');
 
       void (async (): Promise<void> => {
         try {

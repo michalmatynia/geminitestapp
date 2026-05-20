@@ -13,6 +13,7 @@ import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executo
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { buildAiPathErrorReport } from '@/shared/lib/ai-paths/error-reporting';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
@@ -110,8 +111,20 @@ const handleFailure = async (
   runStartMs: number,
   repo: Awaited<ReturnType<typeof getPathRunRepository>>
 ): Promise<void> => {
-  const errorMessage = error.message;
   const errorContext = error.meta ?? {};
+  const errorReport = buildAiPathErrorReport({
+    error,
+    code: 'AI_PATHS_RUN_FAILED',
+    category: 'runtime',
+    scope: 'run',
+    runId: run.id,
+    metadata: {
+      runId: run.id,
+      pathId: run.pathId,
+      ...errorContext,
+    },
+  });
+  const errorMessage = errorReport.userMessage;
   
   const finishedAt = new Date();
   await repo.finalizeRun(run.id, 'failed', {
@@ -120,6 +133,15 @@ const handleFailure = async (
     event: {
       level: 'error',
       message: `Run failed: ${errorMessage}`,
+      metadata: {
+        pathId: run.pathId,
+        error: errorReport.message,
+        errorCode: errorReport.code,
+        errorCategory: errorReport.category,
+        errorScope: errorReport.scope,
+        retryable: errorReport.retryable,
+        errorReport,
+      },
     },
   });
   await recordRuntimeRunFinished({

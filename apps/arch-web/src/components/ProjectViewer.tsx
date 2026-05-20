@@ -616,7 +616,7 @@ function ProjectViewer({ projects }: Props) {
   const active = displayProjects[activeIdx];
 
   return (
-    <section className="viewer-section">
+    <section id="viewer" className="viewer-section">
       <div className="viewer-wrap">
         <div className="viewer-sidebar">
           <div className="viewer-sec-num rev" style={{ fontFamily: 'var(--mono)', fontSize: '10px', letterSpacing: '.22em', color: 'var(--accent)', marginBottom: '4px' }}>

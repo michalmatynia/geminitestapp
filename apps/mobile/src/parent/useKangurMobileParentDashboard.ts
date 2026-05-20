@@ -1,11 +1,15 @@
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileScoreHistory, type UseKangurMobileScoreHistoryResult } from '../scores/useKangurMobileScoreHistory';
-import { useParentDashboardAssignments, type UseParentDashboardAssignmentsResult } from './useParentDashboardAssignments';
-import { useParentDashboardProgress, type UseParentDashboardProgressResult } from './useParentDashboardProgress';
+import { useParentDashboardAssignments } from './useParentDashboardAssignments';
+import { useParentDashboardProgress } from './useParentDashboardProgress';
 import { useParentDashboardResults } from './useParentDashboardResults';
 import { useParentDashboardLearner } from './useParentDashboardLearner';
-import { type UseKangurMobileParentDashboardResult } from './parent-dashboard-types';
+import { 
+  type UseKangurMobileParentDashboardResult,
+  type UseParentDashboardAssignmentsResult,
+  type UseParentDashboardProgressResult,
+} from './parent-dashboard-types';
 
 function resolveDashboardError(
   error: Error | null,

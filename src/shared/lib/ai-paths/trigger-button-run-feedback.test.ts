@@ -247,6 +247,34 @@ describe('trigger-button-run-feedback', () => {
     ).toBeNull();
   });
 
+  it('does not restore stale-running cleanup failures as trigger feedback', () => {
+    persistTriggerButtonRunFeedback({
+      buttonId: 'button-product-modal',
+      pathId: 'path-product-trigger',
+      location: 'product_modal',
+      entityType: 'product',
+      entityId: 'product-1',
+      run: {
+        runId: 'run-stale-cleanup',
+        status: 'failed',
+        updatedAt: '2026-03-11T12:00:00.000Z',
+        finishedAt: '2026-03-11T12:00:07.000Z',
+        errorMessage:
+          'Run marked failed due to stale running state. The worker likely stopped before reporting completion; retry the run.',
+      },
+    });
+
+    expect(
+      readTriggerButtonRunFeedback({
+        buttonId: 'button-product-modal',
+        pathId: 'path-product-trigger',
+        entityType: 'product',
+        entityId: 'product-1',
+      })
+    ).toBeNull();
+    expect(listTriggerButtonRunFeedback({ entityType: 'product' })).toEqual([]);
+  });
+
   it('resolves the presentation for canceled runs', () => {
     expect(resolveTriggerButtonRunFeedbackPresentation('canceled')).toEqual({
       label: 'Canceled',

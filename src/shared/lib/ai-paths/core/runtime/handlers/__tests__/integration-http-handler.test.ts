@@ -4,6 +4,9 @@ import { handleHttp } from '@/shared/lib/ai-paths/core/runtime/handlers/integrat
 import type { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
+const ORIGINAL_INTERNAL_API_BASE_URL = process.env['AI_PATHS_INTERNAL_API_BASE_URL'];
+const ORIGINAL_APP_URL = process.env['NEXT_PUBLIC_APP_URL'];
+
 const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
     id: 'node-http',
@@ -46,7 +49,7 @@ const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerC
     now: new Date().toISOString(),
     allOutputs: {},
     allInputs: {},
-    fetchEntityCached: async () => null,
+    fetchEntityCached: () => Promise.resolve(null),
     reportAiPathsError: vi.fn(),
     toast: vi.fn(),
     simulationEntityType: null,
@@ -69,6 +72,16 @@ const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerC
 describe('handleHttp', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    if (ORIGINAL_INTERNAL_API_BASE_URL === undefined) {
+      delete process.env['AI_PATHS_INTERNAL_API_BASE_URL'];
+    } else {
+      process.env['AI_PATHS_INTERNAL_API_BASE_URL'] = ORIGINAL_INTERNAL_API_BASE_URL;
+    }
+    if (ORIGINAL_APP_URL === undefined) {
+      delete process.env['NEXT_PUBLIC_APP_URL'];
+    } else {
+      process.env['NEXT_PUBLIC_APP_URL'] = ORIGINAL_APP_URL;
+    }
   });
 
   it('blocks redirect chains that resolve to disallowed hosts', async () => {
@@ -80,16 +93,11 @@ describe('handleHttp', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await handleHttp(buildContext(buildNode(), {}));
+    await expect(handleHttp(buildContext(buildNode(), {}))).rejects.toThrow(
+      'Blocked outbound URL: https://example.test/resource'
+    );
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result['bundle']).toEqual(
-      expect.objectContaining({
-        ok: false,
-        status: 0,
-        route: 'blocked_outbound_url',
-      })
-    );
   });
 
   it('follows allowed redirects and resolves response payload', async () => {
@@ -131,5 +139,68 @@ describe('handleHttp', () => {
         status: 200,
       })
     );
+  });
+
+  it('resolves relative internal API URLs against the configured app origin', async () => {
+    process.env['NEXT_PUBLIC_APP_URL'] = 'http://localhost:3000';
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true, value: { tone: 'sales' } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await handleHttp(
+      buildContext(
+        buildNode({
+          config: {
+            http: {
+              ...buildNode().config!.http!,
+              url: '/api/v2/products/ai-paths/description-context?catalogId=catalog-1',
+              responsePath: 'value',
+            },
+          },
+        }),
+        {}
+      )
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:3000/api/v2/products/ai-paths/description-context?catalogId=catalog-1',
+      expect.objectContaining({ method: 'GET' })
+    );
+    expect(result['value']).toEqual({ tone: 'sales' });
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        ok: true,
+        status: 200,
+        url: 'http://localhost:3000/api/v2/products/ai-paths/description-context?catalogId=catalog-1',
+      })
+    );
+  });
+
+  it('does not treat non-API relative paths as internal app fetches', async () => {
+    process.env['NEXT_PUBLIC_APP_URL'] = 'http://localhost:3000';
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      handleHttp(
+        buildContext(
+          buildNode({
+            config: {
+              http: {
+                ...buildNode().config!.http!,
+                url: '/admin/products',
+              },
+            },
+          }),
+          {}
+        )
+      )
+    ).rejects.toThrow('Blocked outbound URL: /admin/products');
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

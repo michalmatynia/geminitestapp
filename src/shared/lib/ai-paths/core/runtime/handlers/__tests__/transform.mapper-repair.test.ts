@@ -185,4 +185,62 @@ describe('handleMapper malformed-object repair', () => {
       ])
     );
   });
+
+  it('resolves nullish and empty fallback mapping expressions', async () => {
+    const ctx = buildContext({
+      nodeInputs: {
+        value: {
+          primary: '',
+          secondary: 'Mapped fallback',
+        },
+      },
+      node: {
+        ...buildMapperNode(),
+        config: {
+          mapper: {
+            outputs: ['result', 'value'],
+            mappings: {
+              result: 'value.primary || value.secondary || value.tertiary',
+              value: 'value.score ?? 0.82',
+            },
+          },
+        },
+      } as AiNode,
+    });
+
+    const output = await handleMapper(ctx);
+    expect(output['result']).toBe('Mapped fallback');
+    expect(output['value']).toBe(0.82);
+  });
+
+  it('falls through to context prompt when parsed model JSON has no mapped description', async () => {
+    const ctx = buildContext({
+      nodeInputs: {
+        context: {
+          prompt: 'Semantic fallback description from product facts.',
+        },
+        value: {
+          box_2d: [523, 234, 666, 387],
+          label: 'wallet',
+        },
+      },
+      node: {
+        ...buildMapperNode(),
+        config: {
+          mapper: {
+            outputs: ['result', 'value'],
+            mappings: {
+              result:
+                'value.selectedDescription || value.finalDescription || value.fallbackDescription || context.prompt',
+              value: 'value.qualityScore ?? 0.82',
+            },
+          },
+        },
+      } as AiNode,
+    });
+
+    const output = await handleMapper(ctx);
+    expect(output['result']).toBe('Semantic fallback description from product facts.');
+    expect(output['value']).toBe(0.82);
+  });
 });

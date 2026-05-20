@@ -16,7 +16,7 @@ const DEFAULT_NODE_TIMEOUT_MS = parseTimeout(
 
 const DEFAULT_BLOCKING_AI_NODE_TIMEOUT_MS = Math.max(
   DEFAULT_NODE_TIMEOUT_MS,
-  parseTimeout(process.env['AI_PATHS_BLOCKING_AI_NODE_TIMEOUT_MS'], 300_000, 30_000)
+  parseTimeout(process.env['AI_PATHS_BLOCKING_AI_NODE_TIMEOUT_MS'], 25 * 60_000, 30_000)
 );
 
 export const DEFAULT_RETRY_BACKOFF_MS = Math.max(

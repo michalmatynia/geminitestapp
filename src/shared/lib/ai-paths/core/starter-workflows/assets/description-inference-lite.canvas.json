@@ -3,11 +3,11 @@
   "kind": "canvas",
   "path": {
     "id": "path_descv3lite",
-    "version": 4,
+    "version": 13,
     "name": "Description Inference v3 Lite",
-    "description": "Single-model, evidence-first ecommerce description workflow optimized for laptop runtime.",
+    "description": "Two-stage, image-aware ecommerce description workflow optimized for laptop runtime.",
     "trigger": "Product Modal - Infer Description Lite",
-    "updatedAt": "2026-03-03T00:00:00.000Z",
+    "updatedAt": "2026-05-20T02:55:00.000Z",
     "executionMode": "server",
     "flowIntensity": "medium",
     "runMode": "block",
@@ -45,6 +45,16 @@
       "config": {
         "bundle": {
           "includePorts": ["bundle", "result", "value", "meta", "entityId", "entityType"]
+        },
+        "runtime": {
+          "inputContracts": {
+            "trigger": {
+              "required": false
+            },
+            "prompt": {
+              "required": false
+            }
+          }
         }
       },
       "connections": {
@@ -99,53 +109,13 @@
             "fromPort": "bundle",
             "toNodeId": "node-prompt-desc-lite",
             "toPort": "bundle"
-          }
-        ]
-      }
-    },
-    {
-      "id": "node-compare-desc-lite",
-      "type": "compare",
-      "title": "Compare",
-      "description": "Quality monitor (observability only).",
-      "position": {
-        "x": 2780,
-        "y": 500
-      },
-      "inputs": ["value"],
-      "outputs": ["value", "valid", "errors"],
-      "config": {
-        "compare": {
-          "operator": "gte",
-          "compareTo": "0.80",
-          "caseSensitive": false,
-          "message": "qualityScore below 0.80"
-        }
-      },
-      "connections": {
-        "incoming": [
-          {
-            "edgeId": "edge-desc-lite-17",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-compare-desc-lite",
-            "toPort": "value"
-          }
-        ],
-        "outgoing": [
-          {
-            "edgeId": "edge-desc-lite-25",
-            "fromNodeId": "node-compare-desc-lite",
-            "fromPort": "valid",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "valid"
           },
           {
-            "edgeId": "edge-desc-lite-26",
-            "fromNodeId": "node-compare-desc-lite",
-            "fromPort": "errors",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "errors"
+            "edgeId": "edge-desc-lite-15b",
+            "fromNodeId": "node-bundle-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-copy-prompt-desc-lite",
+            "toPort": "bundle"
           }
         ]
       }
@@ -164,7 +134,7 @@
       "config": {
         "constant": {
           "valueType": "json",
-          "value": "{\"language\":\"en\",\"tone\":\"clear, factual, ecommerce\",\"targetWordCount\":120,\"maxWordCount\":180,\"minQualityScore\":0.8,\"forbiddenClaims\":[\"brand or franchise claims unless explicit in title, fields, or clearly visible image text\",\"character names unless explicit evidence exists\",\"material or dimensions unless explicit evidence exists\"],\"modelCallBudget\":1,\"metadataFetchBudget\":1}"
+          "value": "{\"language\":\"en\",\"tone\":\"vivid, accurate, premium fandom ecommerce\",\"targetWordCount\":120,\"maxWordCount\":180,\"minQualityScore\":0.8,\"forbiddenClaims\":[\"brand or franchise claims unless explicit in title, fields, or clearly visible image text\",\"character names unless explicit evidence exists\",\"material or dimensions unless explicit evidence exists\"],\"modelCallBudget\":2,\"metadataFetchBudget\":1}"
         }
       },
       "connections": {
@@ -283,71 +253,181 @@
       }
     },
     {
-      "id": "node-mapper-desc-lite",
-      "type": "mapper",
-      "title": "JSON Mapper",
-      "description": "Map selected description and scoring payload.",
+      "id": "node-description-guard-desc-lite",
+      "type": "logical_condition",
+      "title": "Description Guard",
+      "description": "Reject obvious object-detection output before writing the product description.",
       "position": {
-        "x": 2410,
+        "x": 2780,
         "y": 500
       },
-      "inputs": ["context", "result", "bundle", "value"],
-      "outputs": ["result", "value", "bundle"],
+      "inputs": ["result"],
+      "outputs": ["value", "valid", "errors"],
       "config": {
-        "mapper": {
-          "outputs": ["result", "value", "bundle"],
-          "mappings": {
-            "result": "value.selectedDescription",
-            "value": "value.qualityScore",
-            "bundle": "value"
+        "logicalCondition": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "description-not-empty",
+              "inputPort": "result",
+              "operator": "notEmpty"
+            },
+            {
+              "id": "description-not-bounding-box",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "bounding box",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-box-2d",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "box_2d",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-detections",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "detections",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-json-fence",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "```json",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-image-analysis",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "I've analyzed",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-breakdown",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "Here's a breakdown",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-overall-description",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "Overall Description",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-followup-offer",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "If you'd like",
+              "caseSensitive": false
+            },
+            {
+              "id": "description-not-markdown-bold",
+              "inputPort": "result",
+              "operator": "notContains",
+              "compareTo": "**",
+              "caseSensitive": false
+            }
+          ]
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-15d",
+            "fromNodeId": "node-copy-model-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-description-guard-desc-lite",
+            "toPort": "result"
           }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-16",
+            "fromNodeId": "node-description-guard-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-description-router-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-17",
+            "fromNodeId": "node-description-guard-desc-lite",
+            "fromPort": "valid",
+            "toNodeId": "node-description-router-desc-lite",
+            "toPort": "valid"
+          },
+          {
+            "edgeId": "edge-desc-lite-25",
+            "fromNodeId": "node-description-guard-desc-lite",
+            "fromPort": "valid",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "valid"
+          },
+          {
+            "edgeId": "edge-desc-lite-26",
+            "fromNodeId": "node-description-guard-desc-lite",
+            "fromPort": "errors",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "errors"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-description-router-desc-lite",
+      "type": "router",
+      "title": "Valid Description Router",
+      "description": "Only pass model copy to the database when the description guard accepts it.",
+      "position": {
+        "x": 3160,
+        "y": 500
+      },
+      "inputs": ["valid", "value", "errors"],
+      "outputs": ["value", "valid", "errors"],
+      "config": {
+        "router": {
+          "mode": "valid",
+          "matchMode": "truthy"
         }
       },
       "connections": {
         "incoming": [
           {
             "edgeId": "edge-desc-lite-16",
-            "fromNodeId": "node-regex-desc-lite",
+            "fromNodeId": "node-description-guard-desc-lite",
             "fromPort": "value",
-            "toNodeId": "node-mapper-desc-lite",
+            "toNodeId": "node-description-router-desc-lite",
             "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-17",
+            "fromNodeId": "node-description-guard-desc-lite",
+            "fromPort": "valid",
+            "toNodeId": "node-description-router-desc-lite",
+            "toPort": "valid"
           }
         ],
         "outgoing": [
           {
-            "edgeId": "edge-desc-lite-17",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-compare-desc-lite",
-            "toPort": "value"
-          },
-          {
             "edgeId": "edge-desc-lite-18",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "result",
+            "fromNodeId": "node-description-router-desc-lite",
+            "fromPort": "value",
             "toNodeId": "node-update-desc-lite",
             "toPort": "result"
           },
           {
             "edgeId": "edge-desc-lite-22",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "result",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "result"
-          },
-          {
-            "edgeId": "edge-desc-lite-23",
-            "fromNodeId": "node-mapper-desc-lite",
+            "fromNodeId": "node-description-router-desc-lite",
             "fromPort": "value",
             "toNodeId": "node-view-desc-lite",
-            "toPort": "value"
-          },
-          {
-            "edgeId": "edge-desc-lite-24",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "bundle",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "context"
+            "toPort": "result"
           }
         ]
       }
@@ -373,7 +453,30 @@
           "responsePath": ""
         },
         "runtime": {
-          "waitForInputs": true
+          "waitForInputs": true,
+          "inputContracts": {
+            "bundle": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "prompt": {
+              "required": false
+            },
+            "result": {
+              "required": false
+            },
+            "value": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
         }
       },
       "connections": {
@@ -400,8 +503,8 @@
     {
       "id": "node-model-desc-lite",
       "type": "model",
-      "title": "Model",
-      "description": "Single Ollama call for extraction + generation.",
+      "title": "Vision Model",
+      "description": "Vision-capable model pass that extracts concise visual evidence for the copywriter.",
       "position": {
         "x": 1660,
         "y": 500
@@ -410,10 +513,14 @@
       "outputs": ["result", "jobId"],
       "config": {
         "model": {
-          "temperature": 0.1,
-          "maxTokens": 1100,
+          "temperature": 0.2,
+          "maxTokens": 500,
           "vision": true,
-          "waitForResult": true
+          "waitForResult": true,
+          "systemPrompt": "You identify visible product details for an ecommerce copywriter. Return concise plain text visual notes only. Never output bounding boxes, JSON, coordinates, Markdown, headings, bullets, or commentary."
+        },
+        "runtime": {
+          "timeoutMs": 1500000
         }
       },
       "connections": {
@@ -438,8 +545,96 @@
             "edgeId": "edge-desc-lite-15",
             "fromNodeId": "node-model-desc-lite",
             "fromPort": "result",
-            "toNodeId": "node-regex-desc-lite",
-            "toPort": "value"
+            "toNodeId": "node-copy-prompt-desc-lite",
+            "toPort": "result"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-copy-prompt-desc-lite",
+      "type": "prompt",
+      "title": "Copywriter Prompt",
+      "description": "Turns product facts and visual notes into final ecommerce copy.",
+      "position": {
+        "x": 2040,
+        "y": 330
+      },
+      "inputs": ["bundle", "result"],
+      "outputs": ["prompt"],
+      "config": {
+        "prompt": {
+          "template": "TASK TYPE: ecommerce product copywriting. This is not an object detection, localization, or image-analysis task.\\n\\nYou are an expert e-commerce copywriter for pop-culture collectibles and fandom accessories. Generate ONE polished product description in plain text.\\n\\nINPUTS\\n- Product name: \"{{bundle.bundle.title.en}}\"\\n- Localized product name: \"{{bundle.bundle.title.pl}}\"\\n- Category: \"{{bundle.result.categoryName}}\"\\n- Product images metadata: {{bundle.bundle.images}}\\n- Product parameters JSON: {{bundle.bundle.parameters}}\\n- Parameter definitions JSON: {{bundle.result.parameters}}\\n- Visual notes from image model: {{result}}\\n\\nPRODUCT NAME STRUCTURE\\nIf the product name contains values separated by \"|\", treat them as the main listing facts in this likely order: name/title, size, material, category, theme/lore/universe. If a segment is missing or unclear, do not invent it.\\n\\nVISUAL NOTES POLICY\\nVisual notes are optional evidence and may be noisy. Use them only for clearly physical, shopper-visible details such as finish, colors, shape, character/object motifs, artwork style, stones, engraving, clasp, backing, zipper, chain, compartments, card slots, bill pocket, or other obvious product details. Ignore any bounding boxes, labels, coordinates, JSON fragments, Markdown headings, bullets, image-analysis framing, or wording like \"I've analyzed\", \"Here's a breakdown\", or \"Overall Description\". Do not copy the visual-notes phrasing into the final description.\\n\\nSTYLE TARGET\\nWrite like a premium fandom shop description, not like an image analysis report. The result should feel close to these examples in cadence and finish:\\n- \"A subtle declaration of power, for those who have foreseen their path. This 13cm wallet features a striking portrait across a sleek black finish, contrasted by faction insignia and franchise artwork on the reverse. The bi-fold design offers practical everyday carry with dedicated slots for cards and cash, all wrapped in a texture reminiscent of dark armor. Keep your credits close and your allegiance closer with this essential accessory.\"\\n- \"The Divine Priestess offers her blessing, or perhaps a subtle warning, with this striking pin. Crafted from metal with a gleaming gold finish, this 6cm accessory captures serene power amid swirling currents and ornate shellwork. It is a perfect accent for backpacks, lanyards, or displaying your love for the world it comes from.\"\\n\\nPRIMARY GOAL\\nWrite vivid, shopper-ready ecommerce copy that feels like it belongs to the fandom while staying accurate to the available evidence. Lead with mood, lore, and emotional appeal; then weave in product facts and supported visible details. Avoid generic filler and avoid detached catalog language.\\n\\nCONTENT RULES\\n1. Use title/category/parameters as the source of factual claims.\\n2. Strongly prefer direct lore, theme, character, or franchise references when the title, parameters, image text, or visible logos support them.\\n3. Do not claim official/licensed, limited edition, rare, handmade, leather, metal, dimensions, franchise, or character names unless supported by the title, parameters, category, fields, or clearly visible image text.\\n4. No care instructions, shipping/returns, guarantees, screen-color disclaimers, or corporate tone.\\n5. Do not repeat the full product title verbatim.\\n6. Do not write a breakdown, feature list, analysis, or explanation.\\n\\nSTRUCTURE\\n- 85-130 words total.\\n- One polished paragraph only.\\n- First sentence: evocative hook tied to the theme/lore/vibe.\\n- Middle sentences: concrete product details blended naturally, including material/category/size when useful and visible image details when supported.\\n- Final sentence: memorable use-case or ownership line for collecting, gifting, display, cosplay, convention carry, or everyday use, matching the category.\\n\\nABSOLUTE OUTPUT RULES\\nOutput ONLY the final product description text. Plain text only: no Markdown, no headings, no bullets, no numbered lists, no quotes, no JSON, no commentary, no detections. Do not begin with \"Okay\", \"I analyzed\", \"I've analyzed\", \"Here is\", \"Here's\", or \"Overall\"."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-15",
+            "fromNodeId": "node-model-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-copy-prompt-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-15b",
+            "fromNodeId": "node-bundle-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-copy-prompt-desc-lite",
+            "toPort": "bundle"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-15c",
+            "fromNodeId": "node-copy-prompt-desc-lite",
+            "fromPort": "prompt",
+            "toNodeId": "node-copy-model-desc-lite",
+            "toPort": "prompt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-copy-model-desc-lite",
+      "type": "model",
+      "title": "Copywriter Model",
+      "description": "Text-only model pass that writes the final shopper-ready product description.",
+      "position": {
+        "x": 2410,
+        "y": 500
+      },
+      "inputs": ["prompt", "context"],
+      "outputs": ["result", "jobId"],
+      "config": {
+        "model": {
+          "temperature": 1,
+          "maxTokens": 800,
+          "vision": false,
+          "waitForResult": true,
+          "systemPrompt": "You are a product copywriter, not an object detection model. Your only valid output is one polished ecommerce product description paragraph. Never output bounding boxes, coordinates, JSON, Markdown, bullet points, analysis notes, or image-detection language."
+        },
+        "runtime": {
+          "timeoutMs": 1500000
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-15c",
+            "fromNodeId": "node-copy-prompt-desc-lite",
+            "fromPort": "prompt",
+            "toNodeId": "node-copy-model-desc-lite",
+            "toPort": "prompt"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-15d",
+            "fromNodeId": "node-copy-model-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-description-guard-desc-lite",
+            "toPort": "result"
           }
         ]
       }
@@ -520,8 +715,8 @@
     {
       "id": "node-prompt-desc-lite",
       "type": "prompt",
-      "title": "Prompt",
-      "description": "Single-call grounded generation contract (JSON response).",
+      "title": "Vision Notes Prompt",
+      "description": "Asks the vision model for concise product evidence only.",
       "position": {
         "x": 1250,
         "y": 330
@@ -530,7 +725,7 @@
       "outputs": ["prompt", "images"],
       "config": {
         "prompt": {
-          "template": "You are an ecommerce description generator.\\nOutput language: English only.\\nUse only evidence from product data, metadata, and images.\\n\\nProduct JSON:\\n{{bundle.bundle}}\\n\\nMetadata JSON:\\n{{bundle.result}}\\n\\nControls JSON:\\n{{bundle.value}}\\n\\nReturn ONLY valid JSON object with this exact schema:\\n{\"facts\":[{\"text\":\"\",\"source\":\"title|existing_field|metadata|image\",\"confidence\":0.0}],\"finalDescription\":\"\",\"fallbackDescription\":\"\",\"qualityScore\":0.0,\"unsupportedClaims\":[],\"selectedDescription\":\"\"}\\n\\nRules:\\n1. No markdown, no commentary, JSON only.\\n2. No unsupported brand/franchise/character/material/dimension claims.\\n3. selectedDescription MUST be deterministic:\\n   if qualityScore >= {{bundle.value.minQualityScore}} use finalDescription, else fallbackDescription.\\n4. Keep finalDescription concise and shopper-friendly (~{{bundle.value.targetWordCount}} words, hard max {{bundle.value.maxWordCount}})."
+          "template": "TASK TYPE: visual product evidence extraction for ecommerce copywriting.\\n\\nInspect the attached product images and return concise visual notes for a separate copywriter model.\\n\\nPRODUCT FACTS\\n- Product name: \"{{bundle.bundle.title.en}}\"\\n- Localized product name: \"{{bundle.bundle.title.pl}}\"\\n- Category: \"{{bundle.result.categoryName}}\"\\n- Product images: {{bundle.bundle.images}}\\n- Product parameters JSON: {{bundle.bundle.parameters}}\\n\\nINSTRUCTIONS\\nFocus only on visible product evidence: product type, colors, finish, shape, artwork, visible text/logos, motifs, closures, backing, zipper, compartments, card slots, bill pocket, chain, stones, engraving, or other obvious physical details. Use title/category/parameters only to disambiguate what you can see.\\n\\nDo not infer unsupported material, dimensions, franchise, character, official status, rarity, or edition. If a detail is not visible or present in product facts, omit it.\\n\\nOutput one compact plain-text sentence or short paragraph of visual notes only. No Markdown, no headings, no bullets, no JSON, no coordinates, no bounding boxes, no detections, no labels, no commentary, and no ecommerce description."
         }
       },
       "connections": {
@@ -583,64 +778,6 @@
       }
     },
     {
-      "id": "node-regex-desc-lite",
-      "type": "regex",
-      "title": "Regex JSON Extract",
-      "description": "Parse model JSON envelope.",
-      "position": {
-        "x": 2030,
-        "y": 500
-      },
-      "inputs": ["value", "prompt", "regexCallback"],
-      "outputs": ["grouped", "matches", "value", "aiPrompt"],
-      "config": {
-        "regex": {
-          "pattern": "\\{[\\s\\S]*\\}",
-          "flags": "",
-          "mode": "extract_json",
-          "matchMode": "first_overall",
-          "groupBy": "match",
-          "outputMode": "object",
-          "includeUnmatched": false,
-          "unmatchedKey": "__unmatched__",
-          "splitLines": false,
-          "sampleText": "",
-          "aiPrompt": "",
-          "aiAutoRun": false
-        },
-        "runtime": {
-          "waitForInputs": true
-        }
-      },
-      "connections": {
-        "incoming": [
-          {
-            "edgeId": "edge-desc-lite-15",
-            "fromNodeId": "node-model-desc-lite",
-            "fromPort": "result",
-            "toNodeId": "node-regex-desc-lite",
-            "toPort": "value"
-          }
-        ],
-        "outgoing": [
-          {
-            "edgeId": "edge-desc-lite-16",
-            "fromNodeId": "node-regex-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-mapper-desc-lite",
-            "toPort": "value"
-          },
-          {
-            "edgeId": "edge-desc-lite-21",
-            "fromNodeId": "node-regex-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "bundle"
-          }
-        ]
-      }
-    },
-    {
       "id": "node-trigger-desc-lite",
       "type": "trigger",
       "title": "Trigger: Infer Description Lite",
@@ -673,9 +810,9 @@
       "id": "node-update-desc-lite",
       "type": "database",
       "title": "Database Query",
-      "description": "Update product description_en using selectedDescription.",
+      "description": "Update product description_en using guarded model copy.",
       "position": {
-        "x": 3160,
+        "x": 3520,
         "y": 500
       },
       "inputs": [
@@ -744,8 +881,8 @@
         "incoming": [
           {
             "edgeId": "edge-desc-lite-18",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "result",
+            "fromNodeId": "node-description-router-desc-lite",
+            "fromPort": "value",
             "toNodeId": "node-update-desc-lite",
             "toPort": "result"
           },
@@ -779,9 +916,9 @@
       "id": "node-view-desc-lite",
       "type": "viewer",
       "title": "Result Viewer",
-      "description": "Inspect output JSON, selected text, score, and quality monitor.",
+      "description": "Inspect generated description text, guard status, and database result.",
       "position": {
-        "x": 3520,
+        "x": 3880,
         "y": 500
       },
       "inputs": [
@@ -815,43 +952,22 @@
       "connections": {
         "incoming": [
           {
-            "edgeId": "edge-desc-lite-21",
-            "fromNodeId": "node-regex-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "bundle"
-          },
-          {
             "edgeId": "edge-desc-lite-22",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "result",
+            "fromNodeId": "node-description-router-desc-lite",
+            "fromPort": "value",
             "toNodeId": "node-view-desc-lite",
             "toPort": "result"
           },
           {
-            "edgeId": "edge-desc-lite-23",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "value",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "value"
-          },
-          {
-            "edgeId": "edge-desc-lite-24",
-            "fromNodeId": "node-mapper-desc-lite",
-            "fromPort": "bundle",
-            "toNodeId": "node-view-desc-lite",
-            "toPort": "context"
-          },
-          {
             "edgeId": "edge-desc-lite-25",
-            "fromNodeId": "node-compare-desc-lite",
+            "fromNodeId": "node-description-guard-desc-lite",
             "fromPort": "valid",
             "toNodeId": "node-view-desc-lite",
             "toPort": "valid"
           },
           {
             "edgeId": "edge-desc-lite-26",
-            "fromNodeId": "node-compare-desc-lite",
+            "fromNodeId": "node-description-guard-desc-lite",
             "fromPort": "errors",
             "toNodeId": "node-view-desc-lite",
             "toPort": "errors"
@@ -977,29 +1093,50 @@
     {
       "id": "edge-desc-lite-15",
       "fromNodeId": "node-model-desc-lite",
-      "toNodeId": "node-regex-desc-lite",
+      "toNodeId": "node-copy-prompt-desc-lite",
       "fromPort": "result",
-      "toPort": "value"
+      "toPort": "result"
+    },
+    {
+      "id": "edge-desc-lite-15b",
+      "fromNodeId": "node-bundle-desc-lite",
+      "toNodeId": "node-copy-prompt-desc-lite",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-desc-lite-15c",
+      "fromNodeId": "node-copy-prompt-desc-lite",
+      "toNodeId": "node-copy-model-desc-lite",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-desc-lite-15d",
+      "fromNodeId": "node-copy-model-desc-lite",
+      "toNodeId": "node-description-guard-desc-lite",
+      "fromPort": "result",
+      "toPort": "result"
     },
     {
       "id": "edge-desc-lite-16",
-      "fromNodeId": "node-regex-desc-lite",
-      "toNodeId": "node-mapper-desc-lite",
+      "fromNodeId": "node-description-guard-desc-lite",
+      "toNodeId": "node-description-router-desc-lite",
       "fromPort": "value",
       "toPort": "value"
     },
     {
       "id": "edge-desc-lite-17",
-      "fromNodeId": "node-mapper-desc-lite",
-      "toNodeId": "node-compare-desc-lite",
-      "fromPort": "value",
-      "toPort": "value"
+      "fromNodeId": "node-description-guard-desc-lite",
+      "toNodeId": "node-description-router-desc-lite",
+      "fromPort": "valid",
+      "toPort": "valid"
     },
     {
       "id": "edge-desc-lite-18",
-      "fromNodeId": "node-mapper-desc-lite",
+      "fromNodeId": "node-description-router-desc-lite",
       "toNodeId": "node-update-desc-lite",
-      "fromPort": "result",
+      "fromPort": "value",
       "toPort": "result"
     },
     {
@@ -1017,43 +1154,22 @@
       "toPort": "entityType"
     },
     {
-      "id": "edge-desc-lite-21",
-      "fromNodeId": "node-regex-desc-lite",
+      "id": "edge-desc-lite-22",
+      "fromNodeId": "node-description-router-desc-lite",
       "toNodeId": "node-view-desc-lite",
       "fromPort": "value",
-      "toPort": "bundle"
-    },
-    {
-      "id": "edge-desc-lite-22",
-      "fromNodeId": "node-mapper-desc-lite",
-      "toNodeId": "node-view-desc-lite",
-      "fromPort": "result",
       "toPort": "result"
     },
     {
-      "id": "edge-desc-lite-23",
-      "fromNodeId": "node-mapper-desc-lite",
-      "toNodeId": "node-view-desc-lite",
-      "fromPort": "value",
-      "toPort": "value"
-    },
-    {
-      "id": "edge-desc-lite-24",
-      "fromNodeId": "node-mapper-desc-lite",
-      "toNodeId": "node-view-desc-lite",
-      "fromPort": "bundle",
-      "toPort": "context"
-    },
-    {
       "id": "edge-desc-lite-25",
-      "fromNodeId": "node-compare-desc-lite",
+      "fromNodeId": "node-description-guard-desc-lite",
       "toNodeId": "node-view-desc-lite",
       "fromPort": "valid",
       "toPort": "valid"
     },
     {
       "id": "edge-desc-lite-26",
-      "fromNodeId": "node-compare-desc-lite",
+      "fromNodeId": "node-description-guard-desc-lite",
       "toNodeId": "node-view-desc-lite",
       "fromPort": "errors",
       "toPort": "errors"

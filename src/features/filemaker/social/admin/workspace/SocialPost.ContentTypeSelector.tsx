@@ -21,7 +21,7 @@ export function SocialPostContentTypeSelector(): React.JSX.Element {
     if (!activePost) return;
     const next = value as SocialPublishingPostContentType;
     if (next === contentType) return;
-    void patchMutation.mutateAsync({ id: activePost.id, updates: { contentType: next } });
+    patchMutation.mutate({ id: activePost.id, updates: { contentType: next } });
   };
 
   return (

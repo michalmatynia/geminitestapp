@@ -655,6 +655,253 @@ describe('starter workflow registry', () => {
     expect(translation.upgradePolicy?.versionedOverlayScope).toBe('any_provenance_path');
   });
 
+  it('materializes Description Lite as image-aware plain-text ecommerce copywriting', () => {
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_description_inference_lite'),
+      {
+        pathId: 'path_descv3lite_runtime',
+        seededDefault: false,
+      }
+    );
+    const report = evaluateStrictRunPreflight(config);
+    const visionPromptNode = findNodeByTypeAndTitle(config, 'prompt', 'Vision Notes Prompt');
+    const copywriterPromptNode = findNodeByTypeAndTitle(config, 'prompt', 'Copywriter Prompt');
+    const visionModelNode = findNodeByTypeAndTitle(config, 'model', 'Vision Model');
+    const copywriterModelNode = findNodeByTypeAndTitle(config, 'model', 'Copywriter Model');
+    const guardNode = findNodeByTypeAndTitle(config, 'logical_condition', 'Description Guard');
+    const routerNode = findNodeByTypeAndTitle(config, 'router', 'Valid Description Router');
+    const databaseNode = findNodeByType(config, 'database');
+    const visionPromptTemplate =
+      typeof visionPromptNode?.config?.prompt?.template === 'string'
+        ? visionPromptNode.config.prompt.template
+        : '';
+    const copywriterPromptTemplate =
+      typeof copywriterPromptNode?.config?.prompt?.template === 'string'
+        ? copywriterPromptNode.config.prompt.template
+        : '';
+    const guardConditions = guardNode?.config?.logicalCondition?.conditions ?? [];
+    const visionToCopyPromptEdge = (config.edges ?? []).find(
+      (edge) =>
+        edge.from === visionModelNode?.id &&
+        edge.to === copywriterPromptNode?.id &&
+        edge.fromPort === 'result' &&
+        edge.toPort === 'result'
+    );
+    const copyPromptToCopyModelEdge = (config.edges ?? []).find(
+      (edge) =>
+        edge.from === copywriterPromptNode?.id &&
+        edge.to === copywriterModelNode?.id &&
+        edge.fromPort === 'prompt' &&
+        edge.toPort === 'prompt'
+    );
+    const copyModelToGuardEdge = (config.edges ?? []).find(
+      (edge) =>
+        edge.from === copywriterModelNode?.id &&
+        edge.to === guardNode?.id &&
+        edge.fromPort === 'result' &&
+        edge.toPort === 'result'
+    );
+    const routerToDatabaseEdge = (config.edges ?? []).find(
+      (edge) =>
+        edge.from === routerNode?.id &&
+        edge.to === databaseNode?.id &&
+        edge.fromPort === 'value' &&
+        edge.toPort === 'result'
+    );
+
+    expect(visionPromptTemplate).toContain('visual product evidence extraction');
+    expect(visionPromptTemplate).toContain('attached product images');
+    expect(visionPromptTemplate).toContain('no bounding boxes');
+    expect(copywriterPromptTemplate).toContain('expert e-commerce copywriter');
+    expect(copywriterPromptTemplate).toContain('premium fandom shop description');
+    expect(copywriterPromptTemplate).toContain('Visual notes from image model');
+    expect(copywriterPromptTemplate).toContain('TASK TYPE: ecommerce product copywriting');
+    expect(copywriterPromptTemplate).toContain('Output ONLY the final product description text');
+    expect(copywriterPromptTemplate).not.toContain('Existing English description');
+    expect(copywriterPromptTemplate).not.toContain('content_en');
+    expect(visionModelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        vision: true,
+        temperature: 0.2,
+        maxTokens: 500,
+        systemPrompt: expect.stringContaining('visible product details'),
+      })
+    );
+    expect(copywriterModelNode?.config?.model).toEqual(
+      expect.objectContaining({
+        vision: false,
+        temperature: 1,
+        maxTokens: 800,
+        systemPrompt: expect.stringContaining('not an object detection model'),
+      })
+    );
+    expect(config.nodes.some((node) => node.title === 'Fallback Description')).toBe(false);
+    expect(config.nodes.some((node) => node.type === 'regex')).toBe(false);
+    expect(config.nodes.some((node) => node.type === 'mapper')).toBe(false);
+    expect(guardConditions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          operator: 'notContains',
+          compareTo: 'box_2d',
+        }),
+        expect.objectContaining({
+          operator: 'notContains',
+          compareTo: "I've analyzed",
+        }),
+        expect.objectContaining({
+          operator: 'notContains',
+          compareTo: "Here's a breakdown",
+        }),
+      ])
+    );
+    expect(routerNode?.config?.router).toEqual(
+      expect.objectContaining({
+        mode: 'valid',
+        matchMode: 'truthy',
+      })
+    );
+    expect(visionToCopyPromptEdge).toBeDefined();
+    expect(copyPromptToCopyModelEdge).toBeDefined();
+    expect(copyModelToGuardEdge).toBeDefined();
+    expect(routerToDatabaseEdge).toBeDefined();
+    expectSuccessfulStrictRunPreflight(report);
+  });
+
+  it('upgrades stale Description Lite prompt and model settings while preserving the selected model id', () => {
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_description_inference_lite'),
+      {
+        pathId: 'path_descv3lite_runtime',
+        seededDefault: false,
+      }
+    );
+    const bundleNode = findNodeByTypeAndTitle(config, 'bundle', 'Bundle');
+    const visionPromptNode = findNodeByTypeAndTitle(config, 'prompt', 'Vision Notes Prompt');
+    const visionModelNode = findNodeByTypeAndTitle(config, 'model', 'Vision Model');
+    const copywriterPromptNode = findNodeByTypeAndTitle(config, 'prompt', 'Copywriter Prompt');
+    const copywriterModelNode = findNodeByTypeAndTitle(config, 'model', 'Copywriter Model');
+    const guardNode = findNodeByTypeAndTitle(config, 'logical_condition', 'Description Guard');
+    if (
+      !bundleNode ||
+      !visionPromptNode ||
+      !visionModelNode ||
+      !copywriterPromptNode ||
+      !copywriterModelNode ||
+      !guardNode
+    ) {
+      throw new Error('Description Lite fixture is missing required nodes');
+    }
+    const removedCopyNodeIds = new Set([copywriterPromptNode.id, copywriterModelNode.id]);
+    const staleConfig: PathConfig = {
+      ...config,
+      nodes: (config.nodes ?? [])
+        .filter((node) => !removedCopyNodeIds.has(node.id))
+        .map((node) => {
+          if (node.id === visionPromptNode.id) {
+            return {
+              ...node,
+              title: 'Prompt',
+              description: 'Legacy single-model ecommerce description prompt.',
+              config: {
+                ...node.config,
+                prompt: {
+                  ...node.config?.prompt,
+                  template:
+                    'You are an ecommerce description generator. Return ONLY valid JSON with selectedDescription.',
+                },
+              },
+            };
+          }
+          if (node.id === visionModelNode.id) {
+            return {
+              ...node,
+              title: 'Model',
+              description:
+                'Legacy single vision-capable model call for final ecommerce description text.',
+              config: {
+                ...node.config,
+                model: {
+                  modelId: 'gemma3:12b',
+                  temperature: 0.1,
+                  maxTokens: 1100,
+                  vision: true,
+                  waitForResult: true,
+                },
+              },
+            };
+          }
+          return node;
+        }),
+      edges: (config.edges ?? [])
+        .filter(
+          (edge) =>
+            !['edge-desc-lite-15b', 'edge-desc-lite-15c', 'edge-desc-lite-15d'].includes(edge.id)
+        )
+        .map((edge) =>
+          edge.id === 'edge-desc-lite-15'
+            ? {
+                ...edge,
+                from: visionModelNode.id,
+                to: guardNode.id,
+                fromPort: 'result',
+                toPort: 'result',
+              }
+            : edge
+        ),
+      extensions: {
+        aiPathsStarter: {
+          starterKey: 'description_inference_lite',
+          templateId: 'starter_description_inference_lite',
+          templateVersion: 15,
+          seededDefault: false,
+        },
+      },
+    } as PathConfig;
+
+    const upgraded = upgradeStarterWorkflowPathConfig(staleConfig);
+    const report = evaluateStrictRunPreflight(upgraded.config);
+    const copywriterPromptNodeAfterUpgrade = findNodeByTypeAndTitle(
+      upgraded.config,
+      'prompt',
+      'Copywriter Prompt'
+    );
+    const modelNodes = (upgraded.config.nodes ?? []).filter((node) => node.type === 'model');
+    const promptTemplate =
+      typeof copywriterPromptNodeAfterUpgrade?.config?.prompt?.template === 'string'
+        ? copywriterPromptNodeAfterUpgrade.config.prompt.template
+        : '';
+
+    expect(upgraded.changed).toBe(true);
+    expect(promptTemplate).toContain('expert e-commerce copywriter');
+    expect(promptTemplate).toContain('premium fandom shop description');
+    expect(promptTemplate).toContain('Visual notes from image model');
+    expect(promptTemplate).toContain('Output ONLY the final product description text');
+    expect(promptTemplate).not.toContain('Existing English description');
+    expect(promptTemplate).not.toContain('content_en');
+    expect(modelNodes).toHaveLength(2);
+    expect(modelNodes.every((node) => node.config?.model?.modelId === 'gemma3:12b')).toBe(true);
+    expect(findNodeByTypeAndTitle(upgraded.config, 'model', 'Vision Model')?.config?.model).toEqual(
+      expect.objectContaining({
+        modelId: 'gemma3:12b',
+        temperature: 0.2,
+        maxTokens: 500,
+        vision: true,
+      })
+    );
+    expect(
+      findNodeByTypeAndTitle(upgraded.config, 'model', 'Copywriter Model')?.config?.model
+    ).toEqual(
+      expect.objectContaining({
+        modelId: 'gemma3:12b',
+        temperature: 1,
+        maxTokens: 800,
+        vision: false,
+        systemPrompt: expect.stringContaining('not an object detection model'),
+      })
+    );
+    expectSuccessfulStrictRunPreflight(report);
+  });
+
   it('auto-seeds shipped trigger-backed starter workflows with canonical default path ids', () => {
     const triggerBackedDefaultEntries = STARTER_WORKFLOW_REGISTRY.filter(
       (entry) =>
@@ -722,10 +969,12 @@ describe('starter workflow registry', () => {
     } as PathConfig);
 
     const dbNode = findNodeByType(upgraded.config, 'database');
-    const paramsRegexNode = findNodeByTypeAndTitle(upgraded.config, 'regex', 'Regex Parameters JSON');
-    const extraParamsEdge = (upgraded.config.edges ?? []).find(
-      (edge) => edge.id === 'edge-params'
+    const paramsRegexNode = findNodeByTypeAndTitle(
+      upgraded.config,
+      'regex',
+      'Regex Parameters JSON'
     );
+    const extraParamsEdge = (upgraded.config.edges ?? []).find((edge) => edge.id === 'edge-params');
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
@@ -794,7 +1043,9 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('warn');
-    expect(dbNode?.config?.database?.updateTemplate).toContain('marketplaceContentOverrides.$.title');
+    expect(dbNode?.config?.database?.updateTemplate).toContain(
+      'marketplaceContentOverrides.$.title'
+    );
     expect(dbNode?.config?.database?.query?.queryTemplate).toContain('"$elemMatch"');
   });
 
@@ -944,22 +1195,15 @@ describe('starter workflow registry', () => {
     );
 
     // Keep a subset of canonical nodes — simulates a partially migrated config.
-    const keepNodeTypes = new Set([
-      'router',
-      'database',
-      'parser',
-      'prompt',
-    ]);
+    const keepNodeTypes = new Set(['router', 'database', 'parser', 'prompt']);
     const partialConfig: PathConfig = {
       ...canonical,
       nodes: (canonical.nodes ?? []).filter((node) => keepNodeTypes.has(node.type)),
-      edges: (canonical.edges ?? []).filter(
-        (edge) => {
-          const from = canonical.nodes.find(n => n.id === edge.from);
-          const to = canonical.nodes.find(n => n.id === edge.to);
-          return from && to && keepNodeTypes.has(from.type) && keepNodeTypes.has(to.type);
-        }
-      ),
+      edges: (canonical.edges ?? []).filter((edge) => {
+        const from = canonical.nodes.find((n) => n.id === edge.from);
+        const to = canonical.nodes.find((n) => n.id === edge.to);
+        return from && to && keepNodeTypes.has(from.type) && keepNodeTypes.has(to.type);
+      }),
       extensions: {
         aiPathsStarter: {
           starterKey: 'parameter_inference',

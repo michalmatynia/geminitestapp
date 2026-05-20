@@ -4,8 +4,12 @@ import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-po
 
 const ORIGINAL_ALLOWED = process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'];
 const ORIGINAL_DENIED = process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'];
+const ORIGINAL_INTERNAL_API_BASE = process.env['AI_PATHS_INTERNAL_API_BASE_URL'];
 const ORIGINAL_ASSET_BASE = process.env['AI_PATHS_ASSET_BASE_URL'];
 const ORIGINAL_APP_URL = process.env['NEXT_PUBLIC_APP_URL'];
+const ORIGINAL_APP_URL_SERVER = process.env['APP_URL'];
+const ORIGINAL_NEXTAUTH_URL = process.env['NEXTAUTH_URL'];
+const ORIGINAL_VERCEL_URL = process.env['VERCEL_URL'];
 
 afterEach(() => {
   if (ORIGINAL_ALLOWED === undefined) {
@@ -18,6 +22,11 @@ afterEach(() => {
   } else {
     process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'] = ORIGINAL_DENIED;
   }
+  if (ORIGINAL_INTERNAL_API_BASE === undefined) {
+    delete process.env['AI_PATHS_INTERNAL_API_BASE_URL'];
+  } else {
+    process.env['AI_PATHS_INTERNAL_API_BASE_URL'] = ORIGINAL_INTERNAL_API_BASE;
+  }
   if (ORIGINAL_ASSET_BASE === undefined) {
     delete process.env['AI_PATHS_ASSET_BASE_URL'];
   } else {
@@ -28,6 +37,21 @@ afterEach(() => {
   } else {
     process.env['NEXT_PUBLIC_APP_URL'] = ORIGINAL_APP_URL;
   }
+  if (ORIGINAL_APP_URL_SERVER === undefined) {
+    delete process.env['APP_URL'];
+  } else {
+    process.env['APP_URL'] = ORIGINAL_APP_URL_SERVER;
+  }
+  if (ORIGINAL_NEXTAUTH_URL === undefined) {
+    delete process.env['NEXTAUTH_URL'];
+  } else {
+    process.env['NEXTAUTH_URL'] = ORIGINAL_NEXTAUTH_URL;
+  }
+  if (ORIGINAL_VERCEL_URL === undefined) {
+    delete process.env['VERCEL_URL'];
+  } else {
+    process.env['VERCEL_URL'] = ORIGINAL_VERCEL_URL;
+  }
 });
 
 describe('evaluateOutboundUrlPolicy', () => {
@@ -37,8 +61,12 @@ describe('evaluateOutboundUrlPolicy', () => {
   });
 
   it('blocks localhost', () => {
+    delete process.env['AI_PATHS_INTERNAL_API_BASE_URL'];
     delete process.env['AI_PATHS_ASSET_BASE_URL'];
     delete process.env['NEXT_PUBLIC_APP_URL'];
+    delete process.env['APP_URL'];
+    delete process.env['NEXTAUTH_URL'];
+    delete process.env['VERCEL_URL'];
     const result = evaluateOutboundUrlPolicy('http://localhost:3000/api/test');
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('local_hostname_blocked');
@@ -65,6 +93,12 @@ describe('evaluateOutboundUrlPolicy', () => {
   it('allows explicitly allowlisted hosts', () => {
     process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'] = 'localhost';
     const result = evaluateOutboundUrlPolicy('http://localhost:11434/api/tags');
+    expect(result.allowed).toBe(true);
+  });
+
+  it('allows configured internal app origins before localhost blocking', () => {
+    process.env['AI_PATHS_INTERNAL_API_BASE_URL'] = 'http://localhost:3000';
+    const result = evaluateOutboundUrlPolicy('http://localhost:3000/api/v2/products');
     expect(result.allowed).toBe(true);
   });
 });

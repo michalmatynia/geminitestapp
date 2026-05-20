@@ -112,6 +112,7 @@ describe('aiPathRunQueue status', () => {
         total: 2,
       }),
       claimRunForProcessing: vi.fn(),
+      markStaleRunningRuns: vi.fn().mockResolvedValue({ count: 0 }),
     });
     getAiInsightsQueueStatusMock.mockResolvedValue({
       running: true,
@@ -319,6 +320,7 @@ describe('aiPathRunQueue status', () => {
         total: 0,
       }),
       claimRunForProcessing,
+      markStaleRunningRuns: vi.fn().mockResolvedValue({ count: 0 }),
     });
 
     const { scheduleLocalFallbackRun } = await loadModule();

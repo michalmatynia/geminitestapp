@@ -516,11 +516,17 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'description_inference_lite',
-      templateVersion: 6,
+      templateVersion: 16,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
       versionedOverlayScope: 'any_provenance_path',
+      applySingleModelSelectionToAllModelNodes: true,
+      preservedConfigKeysByNodeType: {
+        fetcher: ['fetcher'],
+        model: [],
+        prompt: [],
+      },
     },
   },
   {

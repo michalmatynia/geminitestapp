@@ -20,7 +20,13 @@ const {
 vi.mock('next/dynamic', () => ({
   default: () =>
     function DynamicStub(props: Record<string, unknown>): React.JSX.Element {
-      return <div data-testid='trigger-button-bar' data-location={String(props['location'])} />;
+      return (
+        <div
+          data-testid='trigger-button-bar'
+          data-location={String(props['location'])}
+          data-show-run-feedback={String(props['showRunFeedback'])}
+        />
+      );
     },
 }));
 
@@ -127,6 +133,7 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
+      showTriggerRunFeedback: true,
       triggerButtonsReady: true,
     });
     useProductListFiltersContextMock.mockReturnValue({
@@ -152,6 +159,7 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
+      showTriggerRunFeedback: true,
       triggerButtonsReady: true,
     });
 
@@ -181,12 +189,29 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
+      showTriggerRunFeedback: true,
       triggerButtonsReady: false,
     });
 
     render(<ProductListHeader />);
 
     expect(screen.queryByTestId('trigger-button-bar')).toBeNull();
+  });
+
+  it('passes the trigger run feedback visibility preference into product-list triggers', () => {
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      onCreateProduct: vi.fn(),
+      onCreateFromDraft: vi.fn(),
+      activeDrafts: [],
+      showTriggerRunFeedback: false,
+      triggerButtonsReady: true,
+    });
+
+    render(<ProductListHeader />);
+
+    screen.getAllByTestId('trigger-button-bar').forEach((triggerBar) => {
+      expect(triggerBar).toHaveAttribute('data-show-run-feedback', 'false');
+    });
   });
 
   it('keeps the breadcrumb under a plain heading and moves create actions into the header rail', () => {
@@ -257,6 +282,10 @@ describe('ProductListHeader', () => {
     expect(within(desktopControlsRow).getByTestId('trigger-button-bar')).toHaveAttribute(
       'data-location',
       'product_list'
+    );
+    expect(within(desktopControlsRow).getByTestId('trigger-button-bar')).toHaveAttribute(
+      'data-show-run-feedback',
+      'true'
     );
     expect(within(desktopControlsRow).queryByTestId('filters-content')).toBeNull();
 

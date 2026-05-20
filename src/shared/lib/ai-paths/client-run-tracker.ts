@@ -10,8 +10,16 @@
 import { aiPathRunRecordSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getAiPathRun, streamAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { parseAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+  isAiPathsModelNotConfiguredMessage,
+  resolveAiPathsRunFailureUserMessage,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+
+type ParsedAiPathRunErrorSummary = ReturnType<typeof parseAiPathRunErrorSummary>;
 
 const RUN_DETAIL_POLL_INTERVAL_MS = 5_000;
 const RUN_DETAIL_TRANSIENT_RETRY_DELAY_MS = 5_000;
@@ -319,6 +327,46 @@ const mergeInitialSnapshot = (
   };
 };
 
+const toSummaryMessage = (value: string | null | undefined): string[] =>
+  typeof value === 'string' && value.trim().length > 0 ? [value] : [];
+
+const collectSummaryMessages = (summary: ParsedAiPathRunErrorSummary): string[] => {
+  if (summary === null) return [];
+  return [
+    ...toSummaryMessage(summary.primary?.userMessage ?? null),
+    ...toSummaryMessage(summary.primary?.message ?? null),
+    ...summary.nodeFailures.flatMap((node) => toSummaryMessage(node.message)),
+  ];
+};
+
+const hasMissingModelCode = (summary: ParsedAiPathRunErrorSummary): boolean => {
+  if (summary === null) return false;
+  return (
+    summary.primary?.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE ||
+    summary.codes.some((entry) => entry.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE) ||
+    summary.nodeFailures.some((node) => node.code === AI_PATHS_MODEL_NOT_CONFIGURED_CODE)
+  );
+};
+
+const resolveTerminalErrorMessage = (input: {
+  runMessage: string | null;
+  summary: ParsedAiPathRunErrorSummary;
+}): string | null => {
+  const summary = input.summary;
+  if (
+    hasMissingModelCode(summary) ||
+    collectSummaryMessages(summary).some(isAiPathsModelNotConfiguredMessage)
+  ) {
+    return AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE;
+  }
+
+  return (
+    resolveAiPathsRunFailureUserMessage(input.runMessage) ??
+    resolveAiPathsRunFailureUserMessage(summary?.primary?.userMessage ?? null) ??
+    resolveAiPathsRunFailureUserMessage(summary?.primary?.message ?? null)
+  );
+};
+
 const resolveSnapshotFromDetailPayload = (
   value: unknown,
   fallbackRunId: string,
@@ -334,11 +382,10 @@ const resolveSnapshotFromDetailPayload = (
   if (!runId) return null;
 
   const errorSummary = parseAiPathRunErrorSummary(payload.errorSummary);
-  const errorMessage =
-    run?.errorMessage ??
-    errorSummary?.primary?.userMessage ??
-    errorSummary?.primary?.message ??
-    null;
+  const errorMessage = resolveTerminalErrorMessage({
+    runMessage: run?.errorMessage ?? null,
+    summary: errorSummary,
+  });
   const status = run?.status ?? previous.status ?? 'queued';
 
   return {

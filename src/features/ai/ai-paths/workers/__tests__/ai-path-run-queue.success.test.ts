@@ -152,4 +152,48 @@ describe('ai-path-run queue execution lease success', () => {
       })
     );
   });
+
+  it('marks stale running duplicate runs before skipping a redelivered queue job', async () => {
+    const claimRunForProcessingMock = vi.fn().mockResolvedValue(null);
+    const findRunByIdMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        id: 'run-1',
+        status: 'running',
+      })
+      .mockResolvedValueOnce({
+        id: 'run-1',
+        status: 'failed',
+      });
+    const markStaleRunningRunsMock = vi.fn().mockResolvedValue({ count: 1 });
+
+    getPathRunRepositoryMock.mockResolvedValue({
+      claimRunForProcessing: claimRunForProcessingMock,
+      findRunById: findRunByIdMock,
+      markStaleRunningRuns: markStaleRunningRunsMock,
+      updateRunIfStatus: vi.fn(),
+      createRunEvent: vi.fn(),
+    });
+
+    await loadModule();
+
+    const config = createManagedQueueMock.mock.calls[0]?.[0] as
+      | {
+          processor?: (data: { runId: string }, jobId: string) => Promise<void>;
+        }
+      | undefined;
+
+    if (!config?.processor) {
+      throw new Error('Expected the AI Paths queue module to register a managed queue processor.');
+    }
+
+    await config.processor({ runId: 'run-1' }, 'job-1');
+
+    expect(claimRunForProcessingMock).toHaveBeenCalledWith('run-1');
+    expect(markStaleRunningRunsMock).toHaveBeenCalledWith(expect.any(Number));
+    expect(findRunByIdMock).toHaveBeenCalledTimes(2);
+    expect(mutateAgentLeaseMock).not.toHaveBeenCalled();
+    expect(recordRuntimeRunStartedMock).not.toHaveBeenCalled();
+    expect(processRunMock).not.toHaveBeenCalled();
+  });
 });

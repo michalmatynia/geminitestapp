@@ -8,6 +8,10 @@ import type {
   JobQueueStateValue,
 } from '@/features/ai/ai-paths/components/JobQueueContext';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  AI_PATHS_MODEL_NOT_CONFIGURED_CODE,
+  AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE,
+} from '@/shared/lib/ai-paths/model-configuration-errors';
 
 const { useJobQueueStateMock, useJobQueueActionsMock } = vi.hoisted(() => ({
   useJobQueueStateMock: vi.fn(),
@@ -252,5 +256,42 @@ describe('JobQueueRunCard status pills', () => {
       'href',
       '/api/ai-paths/playwright/run-1/artifacts/runtime-posture.json'
     );
+  });
+
+  it('marks missing model assignment in expanded job run errors', () => {
+    const contextValue = buildContextValue();
+    contextValue.expandedRunIds = new Set(['run-1']);
+    contextValue.runDetails = {
+      'run-1': {
+        run: createRun('failed', {
+          errorMessage: 'AI-Paths run execution failed: run-1',
+          finishedAt: '2026-03-05T00:00:05.000Z',
+        }),
+        nodes: [],
+        events: [
+          {
+            id: 'event-missing-model',
+            runId: 'run-1',
+            nodeId: 'node-model',
+            nodeType: 'model',
+            nodeTitle: 'Model',
+            level: 'error',
+            message:
+              'Node Model failed: AI Paths Model has no model assigned in AI Brain, and this Model node did not select one.',
+            metadata: {},
+            createdAt: '2026-03-05T00:00:04.000Z',
+          },
+        ],
+      },
+    };
+    useJobQueueStateMock.mockReturnValue(toStateValue(contextValue));
+    useJobQueueActionsMock.mockReturnValue(toActionsValue(contextValue));
+
+    render(<JobQueueRunCard runId='run-1' run={createRun('failed')} />);
+
+    expect(screen.getAllByText(AI_PATHS_MODEL_NOT_CONFIGURED_USER_MESSAGE).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getByText(AI_PATHS_MODEL_NOT_CONFIGURED_CODE)).toBeTruthy();
   });
 });

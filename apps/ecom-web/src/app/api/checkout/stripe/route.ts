@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
-import { ORDERS_COLLECTION, type Order } from '@/lib/orders';
+import { ORDERS_COLLECTION, type Order, type OrderItem } from '@/lib/orders';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { ensureAppIndexes } from '@/lib/db-indexes';
 import { createStripePaymentIntent } from '@/lib/stripe';
 import { readPaymentProviderAvailability } from '@/lib/providerSettings';
-import { buildValidatedCheckoutOrder, isRecord, toMinorCurrencyUnit } from '@/lib/checkout-order';
+import { buildValidatedCheckoutOrder, isRecord, toMinorCurrencyUnit, type ValidatedCheckoutOrder } from '@/lib/checkout-order';
 
-function buildOrderPayload(result: any, pricedItems: any, now: string): Omit<Order, '_id'> {
+function buildOrderPayload(result: { order: ValidatedCheckoutOrder }, pricedItems: OrderItem[], now: string): Omit<Order, '_id'> {
   const {
     orderId, userId, email,
     shippingSelection, shippingAddress, inpostPoint,

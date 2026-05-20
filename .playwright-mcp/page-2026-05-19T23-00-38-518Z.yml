@@ -1,0 +1,866 @@
+- generic [active] [ref=e1]:
+  - dialog "Manage Cookie Consent" [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: Manage Cookie Consent
+      - button "Close dialogue" [ref=e5] [cursor=pointer]:
+        - img [ref=e6]
+    - generic [ref=e9]: We use technologies like cookies to store and/or access device information. We do this to improve browsing experience and to show personalized ads. Consenting to these technologies will allow us to process data such as browsing behavior or unique IDs on this site. Not consenting or withdrawing consent, may adversely affect certain features and functions.
+    - generic [ref=e10]:
+      - button "Accept" [ref=e11] [cursor=pointer]
+      - button "Deny" [ref=e12] [cursor=pointer]
+      - button "View preferences" [ref=e13] [cursor=pointer]
+    - list [ref=e15]:
+      - listitem [ref=e16]:
+        - link "Cookie Policy" [ref=e17] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com/cookie-policy-uk/
+      - listitem [ref=e18]:
+        - link "Privacy Policy" [ref=e19] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com/privacy-policy/
+      - listitem
+  - link "Skip to content" [ref=e20] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e21]:
+    - generic [ref=e23]:
+      - paragraph [ref=e26]: TechForge
+      - generic "Expand" [ref=e27]:
+        - img [ref=e31]
+    - generic [ref=e33]:
+      - generic "Home" [ref=e35]:
+        - link [ref=e37] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com
+      - navigation "Menu" [ref=e41]:
+        - list [ref=e42]:
+          - listitem [ref=e43]:
+            - link "News" [ref=e44] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/artificial-intelligence-news/
+          - listitem [ref=e45]:
+            - link "Categories" [ref=e46] [cursor=pointer]:
+              - /url: "#"
+              - text: Categories
+              - img [ref=e48]
+          - listitem [ref=e50]:
+            - link "Events" [ref=e51] [cursor=pointer]:
+              - /url: https://artificialintelligence-news.com/events/
+          - listitem [ref=e52]:
+            - link "Resources" [ref=e53] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources
+              - text: Resources
+              - img [ref=e55]
+          - listitem [ref=e57]:
+            - link "More" [ref=e58] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/advertise/
+              - text: More
+              - img [ref=e60]
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - generic "Search" [ref=e64]:
+            - search [ref=e66]:
+              - generic [ref=e67]:
+                - button "Search" [ref=e68] [cursor=pointer]:
+                  - img [ref=e70]
+                - generic:
+                  - generic: Search
+                  - searchbox "Search"
+          - generic "Follow Us" [ref=e72]:
+            - link [ref=e75] [cursor=pointer]:
+              - /url: https://www.linkedin.com/groups/1906826/
+              - img [ref=e76]
+          - generic "Follow Us" [ref=e78]:
+            - link [ref=e81] [cursor=pointer]:
+              - /url: https://www.facebook.com/AITechNews/
+              - img [ref=e82]
+          - generic "Follow Us" [ref=e84]:
+            - link [ref=e87] [cursor=pointer]:
+              - /url: https://www.youtube.com/channel/UC8mJiUbFxZnFXBKpXq9dJZA
+              - img [ref=e88]
+        - generic "Subscribe to Newsletter" [ref=e91]:
+          - link "Subscribe" [ref=e94] [cursor=pointer]:
+            - /url: "#elementor-action%3Aaction%3Dpopup%3Aopen%26settings%3DeyJpZCI6MTY4OTQsInRvZ2dsZSI6ZmFsc2V9"
+            - generic [ref=e96]: Subscribe
+  - main [ref=e97]:
+    - generic [ref=e99]:
+      - generic [ref=e101]:
+        - list [ref=e105]:
+          - generic [ref=e108]:
+            - link [ref=e111] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/nvidia-h200-china-deal-stalled-trump-xi-summit-2026/
+            - paragraph [ref=e115]:
+              - link "Artificial Intelligence" [ref=e116] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/categories/artificial-intelligence/
+            - heading "The Nvidia H200 China deal survived the Trump-Xi summit–just not in the way anyone expected" [level=1] [ref=e119]:
+              - link "The Nvidia H200 China deal survived the Trump-Xi summit–just not in the way anyone expected" [ref=e120] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/nvidia-h200-china-deal-stalled-trump-xi-summit-2026/
+            - paragraph [ref=e124]: May 19, 2026
+        - list [ref=e128]:
+          - generic [ref=e130]:
+            - link [ref=e133] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/techex-north-america-day-one-lessons-for-all-around-ai-and-more/
+            - generic [ref=e134]:
+              - paragraph [ref=e139]:
+                - link "TechEx Events" [ref=e140] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/techex-events/
+              - paragraph [ref=e144]: May 19, 2026
+            - 'heading "AI is a matter of power, infrastructure and security: TechEx North America" [level=1] [ref=e147]':
+              - 'link "AI is a matter of power, infrastructure and security: TechEx North America" [ref=e148] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/news/techex-north-america-day-one-lessons-for-all-around-ai-and-more/
+          - generic [ref=e150]:
+            - link "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [ref=e153] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/
+              - img "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [ref=e154]
+            - generic [ref=e155]:
+              - paragraph [ref=e160]:
+                - link "AI in Action" [ref=e161] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/
+              - paragraph [ref=e165]: May 18, 2026
+            - heading "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [level=1] [ref=e168]:
+              - link "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [ref=e169] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/
+          - generic [ref=e171]:
+            - link [ref=e174] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/deloitte-scale-autonomous-intelligence-for-real-growth/
+            - generic [ref=e175]:
+              - paragraph [ref=e180]:
+                - link "Interviews" [ref=e181] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/features/interviews/
+              - paragraph [ref=e185]: May 15, 2026
+            - 'heading "Deloitte: Scale ‘autonomous intelligence’ for real growth" [level=1] [ref=e188]':
+              - 'link "Deloitte: Scale ‘autonomous intelligence’ for real growth" [ref=e189] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/news/deloitte-scale-autonomous-intelligence-for-real-growth/
+          - generic [ref=e191]:
+            - link "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e194] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/physical-ai-humanoid-robots-factories/
+              - img "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e195]
+            - generic [ref=e196]:
+              - paragraph [ref=e201]:
+                - link "Physical AI" [ref=e202] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/physical-ai/
+              - paragraph [ref=e206]: May 14, 2026
+            - heading "Physical AI moves closer to factory floors as companies test humanoid robots" [level=1] [ref=e209]:
+              - link "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e210] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/physical-ai-humanoid-robots-factories/
+        - generic [ref=e211]:
+          - list [ref=e214]:
+            - generic [ref=e216]:
+              - paragraph [ref=e220]:
+                - link "AI Business Strategy" [ref=e221] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-business-strategy/
+              - heading "Google made agentic AI governance a product. Enterprises still have to catch up." [level=3] [ref=e224]:
+                - link "Google made agentic AI governance a product. Enterprises still have to catch up." [ref=e225] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/agentic-ai-governance-enterprise-readiness-google/
+            - generic [ref=e231]:
+              - paragraph [ref=e235]:
+                - link "AI and Us" [ref=e236] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/
+              - 'heading "SAP: How enterprise AI governance secures profit margins" [level=3] [ref=e239]':
+                - 'link "SAP: How enterprise AI governance secures profit margins" [ref=e240] [cursor=pointer]':
+                  - /url: https://www.artificialintelligence-news.com/news/sap-how-enterprise-ai-governance-secures-profit-margins/
+            - generic [ref=e246]:
+              - paragraph [ref=e250]:
+                - link "AI Business Strategy" [ref=e251] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-business-strategy/
+              - heading "What LG and NVIDIA’s talks reveal about the future of physical AI" [level=3] [ref=e254]:
+                - link "What LG and NVIDIA’s talks reveal about the future of physical AI" [ref=e255] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/what-lg-and-nvidia-talks-reveal-future-of-physical-ai/
+            - generic [ref=e261]:
+              - paragraph [ref=e265]:
+                - link "AI and Us" [ref=e266] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/
+              - heading "IBM launches AI platform Bob to regulate SDLC costs" [level=3] [ref=e269]:
+                - link "IBM launches AI platform Bob to regulate SDLC costs" [ref=e270] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/ibm-launches-ai-platform-bob-to-regulate-sdlc-costs/
+            - generic [ref=e276]:
+              - paragraph [ref=e280]:
+                - link "AI and Us" [ref=e281] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/
+              - heading "NVIDIA and Google infrastructure cuts AI inference costs" [level=3] [ref=e284]:
+                - link "NVIDIA and Google infrastructure cuts AI inference costs" [ref=e285] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/nvidia-and-google-infrastructure-cuts-ai-inference-costs/
+          - link "See all" [ref=e291] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/popular-posts/
+            - generic [ref=e292]:
+              - img [ref=e294]
+              - generic [ref=e296]: See all
+      - link [ref=e306] [cursor=pointer]:
+        - /url: https://www.artificialintelligence-news.com/go/next-henkel-adhesives-com-us-en-i-uniquely-wired-podcasts-who-are-the-learn-it-alls
+      - generic [ref=e307]:
+        - heading "Latest" [level=2] [ref=e311]
+        - link "View All Latest" [ref=e317] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com/artificial-intelligence-news/
+          - generic [ref=e318]:
+            - img [ref=e320]
+            - generic [ref=e322]: View All Latest
+      - generic [ref=e324]:
+        - list [ref=e328]:
+          - generic [ref=e330]:
+            - link [ref=e333] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/deloitte-scale-autonomous-intelligence-for-real-growth/
+            - generic [ref=e334]:
+              - paragraph [ref=e339]:
+                - link "Interviews" [ref=e340] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/features/interviews/
+              - paragraph [ref=e344]: May 15, 2026
+            - 'heading "Deloitte: Scale ‘autonomous intelligence’ for real growth" [level=1] [ref=e347]':
+              - 'link "Deloitte: Scale ‘autonomous intelligence’ for real growth" [ref=e348] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/news/deloitte-scale-autonomous-intelligence-for-real-growth/
+          - generic [ref=e350]:
+            - link "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e353] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/physical-ai-humanoid-robots-factories/
+              - img "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e354]
+            - generic [ref=e355]:
+              - paragraph [ref=e360]:
+                - link "Physical AI" [ref=e361] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/physical-ai/
+              - paragraph [ref=e365]: May 14, 2026
+            - heading "Physical AI moves closer to factory floors as companies test humanoid robots" [level=1] [ref=e368]:
+              - link "Physical AI moves closer to factory floors as companies test humanoid robots" [ref=e369] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/physical-ai-humanoid-robots-factories/
+          - generic [ref=e371]:
+            - link [ref=e374] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/jbs-dev-on-imperfect-data-and-the-ai-last-mile-from-model-capability-to-cost-sustainability/
+            - generic [ref=e375]:
+              - paragraph [ref=e380]:
+                - link "AI Business Strategy" [ref=e381] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-business-strategy/
+              - paragraph [ref=e385]: May 12, 2026
+            - 'heading "JBS Dev: On imperfect data and the AI last mile – from model capability to cost sustainability" [level=1] [ref=e388]':
+              - 'link "JBS Dev: On imperfect data and the AI last mile – from model capability to cost sustainability" [ref=e389] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/news/jbs-dev-on-imperfect-data-and-the-ai-last-mile-from-model-capability-to-cost-sustainability/
+          - generic [ref=e391]:
+            - link [ref=e394] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/malware-on-hugging-face-malicious-software-masquerading-as-openai-release/
+            - generic [ref=e395]:
+              - paragraph [ref=e400]:
+                - link "Cybersecurity AI" [ref=e401] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/cybersecurity-ai/
+              - paragraph [ref=e405]: May 12, 2026
+            - heading "Hugging Face hosted malicious software masquerading as OpenAI release" [level=1] [ref=e408]:
+              - link "Hugging Face hosted malicious software masquerading as OpenAI release" [ref=e409] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/malware-on-hugging-face-malicious-software-masquerading-as-openai-release/
+          - generic [ref=e411]:
+            - link [ref=e414] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/laserfiche-ai-agents-act-autonomously-for-the-platforms-users/
+            - generic [ref=e415]:
+              - paragraph [ref=e420]:
+                - link "World of Work" [ref=e421] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/world-of-work/
+              - paragraph [ref=e425]: May 12, 2026
+            - heading "Laserfiche unveils AI agents for natural language workflows" [level=1] [ref=e428]:
+              - link "Laserfiche unveils AI agents for natural language workflows" [ref=e429] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/laserfiche-ai-agents-act-autonomously-for-the-platforms-users/
+          - generic [ref=e431]:
+            - link "Bain sees US$100 billion SaaS market in agentic AI automation" [ref=e434] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/bain-agentic-ai-saas-market/
+              - img "Bain sees US$100 billion SaaS market in agentic AI automation" [ref=e435]
+            - generic [ref=e436]:
+              - paragraph [ref=e441]:
+                - link "World of Work" [ref=e442] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/world-of-work/
+              - paragraph [ref=e446]: May 11, 2026
+            - heading "Bain sees US$100 billion SaaS market in agentic AI automation" [level=1] [ref=e449]:
+              - link "Bain sees US$100 billion SaaS market in agentic AI automation" [ref=e450] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/bain-agentic-ai-saas-market/
+          - generic [ref=e452]:
+            - link [ref=e455] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/ringcentral-ai-adds-shopify-calendly-and-whatsapp-to-ai-receptionist/
+            - generic [ref=e456]:
+              - paragraph [ref=e461]:
+                - link "Service Industry AI" [ref=e462] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/service-industry-ai/
+              - paragraph [ref=e466]: May 8, 2026
+            - heading "RingCentral adds Shopify, Calendly, and WhatsApp to AI Receptionist" [level=1] [ref=e469]:
+              - link "RingCentral adds Shopify, Calendly, and WhatsApp to AI Receptionist" [ref=e470] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/ringcentral-ai-adds-shopify-calendly-and-whatsapp-to-ai-receptionist/
+          - generic [ref=e472]:
+            - link [ref=e475] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/ai-in-the-nhs-helping-ease-doctors-burdens/
+            - generic [ref=e476]:
+              - paragraph [ref=e481]:
+                - link "Healthcare & Wellness AI" [ref=e482] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/healthcare-wellness-ai/
+              - paragraph [ref=e486]: May 7, 2026
+            - heading "AI helping ease the UK’s NHS burden" [level=1] [ref=e489]:
+              - link "AI helping ease the UK’s NHS burden" [ref=e490] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/ai-in-the-nhs-helping-ease-doctors-burdens/
+          - generic [ref=e492]:
+            - link [ref=e495] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/hps-ai-and-data-offerings-for-the-enterprise/
+            - generic [ref=e496]:
+              - paragraph [ref=e501]:
+                - link "TechEx Events" [ref=e502] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/techex-events/
+              - paragraph [ref=e506]: May 6, 2026
+            - heading "HP and the art of AI and data for the enterprise" [level=1] [ref=e509]:
+              - link "HP and the art of AI and data for the enterprise" [ref=e510] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/hps-ai-and-data-offerings-for-the-enterprise/
+        - generic [ref=e511]:
+          - generic [ref=e512]:
+            - heading "Join our Community" [level=2] [ref=e515]
+            - paragraph [ref=e518]: Subscribe now to get all our premium content and latest tech news delivered straight to your inbox
+            - link "Click here" [ref=e522] [cursor=pointer]:
+              - /url: "#elementor-action%3Aaction%3Dpopup%3Aopen%26settings%3DeyJpZCI6IjE2ODk0IiwidG9nZ2xlIjpmYWxzZX0%3D"
+              - generic [ref=e524]: Click here
+          - link [ref=e528] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/go/next-henkel-adhesives-com-us-en-i-uniquely-wired-podcasts-who-are-the-learn-it-alls-html-2
+      - generic [ref=e533]:
+        - generic [ref=e535]:
+          - generic [ref=e536]:
+            - heading "Editorial SPOTLIGHT FOCUS" [level=2] [ref=e539]
+            - 'heading "Autonomous AI Systems in the Enterprise: Governance and Control" [level=2] [ref=e542]'
+          - link [ref=e544] [cursor=pointer]:
+            - /url: https://artificialintelligence-news.com/in-the-spotlight-techforge/
+        - generic [ref=e548]:
+          - generic [ref=e551]:
+            - paragraph [ref=e553]: "April 1st-May 15th 2026:"
+            - paragraph [ref=e556]:
+              - strong [ref=e558]: "Autonomous AI Systems in the Enterprise: Governance and Control"
+          - link "Explore More" [ref=e563] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/finance-ai/
+            - generic [ref=e564]:
+              - img [ref=e566]
+              - generic [ref=e568]: Explore More
+        - list [ref=e573]:
+          - generic [ref=e575]:
+            - link [ref=e578] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/physical-ai-security-at-the-enterprise-perimeter-takes-a-step-closer/
+            - heading "Asylon and Thrive Logic bring physical AI to enterprise perimeter security" [level=1] [ref=e582]:
+              - link "Asylon and Thrive Logic bring physical AI to enterprise perimeter security" [ref=e583] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/physical-ai-security-at-the-enterprise-perimeter-takes-a-step-closer/
+          - generic [ref=e585]:
+            - link "Briefcase with tools as a new open-source toolkit from Microsoft focuses on runtime security to force strict governance onto enterprise AI agents." [ref=e588] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/microsoft-open-source-toolkit-secures-ai-agents-at-runtime/
+              - img "Briefcase with tools as a new open-source toolkit from Microsoft focuses on runtime security to force strict governance onto enterprise AI agents." [ref=e589]
+            - heading "Microsoft open-source toolkit secures AI agents at runtime" [level=1] [ref=e593]:
+              - link "Microsoft open-source toolkit secures AI agents at runtime" [ref=e594] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/microsoft-open-source-toolkit-secures-ai-agents-at-runtime/
+          - generic [ref=e596]:
+            - link [ref=e599] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/agentic-ais-governance-challenges-under-the-eu-ai-act-in-2026/
+            - heading "Agentic AI’s governance challenges under the EU AI Act in 2026" [level=1] [ref=e603]:
+              - link "Agentic AI’s governance challenges under the EU AI Act in 2026" [ref=e604] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/agentic-ais-governance-challenges-under-the-eu-ai-act-in-2026/
+          - generic [ref=e606]:
+            - link "Why companies like Apple are building AI agents with limits" [ref=e609] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/why-companies-like-apple-are-building-ai-agents-with-limits/
+              - img "Why companies like Apple are building AI agents with limits" [ref=e610]
+            - heading "Why companies like Apple are building AI agents with limits" [level=1] [ref=e614]:
+              - link "Why companies like Apple are building AI agents with limits" [ref=e615] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/why-companies-like-apple-are-building-ai-agents-with-limits/
+      - generic [ref=e635]:
+        - generic [ref=e636]:
+          - heading "Applications" [level=4] [ref=e639]:
+            - link "Applications" [ref=e640] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/ai-applications/
+          - list [ref=e643]:
+            - generic [ref=e645]:
+              - heading "Thailand becomes one of the first in Asia to get the Sora app" [level=3] [ref=e649]:
+                - link "Thailand becomes one of the first in Asia to get the Sora app" [ref=e650] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/thailand-becomes-one-of-the-first-in-asia-to-get-the-sora-app/
+              - generic [ref=e655]:
+                - paragraph [ref=e659]:
+                  - link "Entertainment & Media" [ref=e660] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/entertainment-media/
+                - paragraph [ref=e663]: October 30, 2025
+            - generic [ref=e670]:
+              - heading "Malaysia launches Ryt Bank, its first AI-powered bank" [level=3] [ref=e674]:
+                - link "Malaysia launches Ryt Bank, its first AI-powered bank" [ref=e675] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/malaysia-launches-ryt-bank-its-first-ai-powered-bank/
+              - generic [ref=e680]:
+                - paragraph [ref=e684]:
+                  - link "Finance AI" [ref=e685] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/finance-ai/
+                - paragraph [ref=e688]: August 26, 2025
+            - generic [ref=e695]:
+              - heading "Google’s Veo 3 AI video creation tools are now widely available" [level=3] [ref=e699]:
+                - link "Google’s Veo 3 AI video creation tools are now widely available" [ref=e700] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/google-veo-3-ai-video-creation-tools-now-widely-available/
+              - generic [ref=e705]:
+                - paragraph [ref=e709]:
+                  - link "AI in Action" [ref=e710] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/
+                - paragraph [ref=e713]: July 29, 2025
+        - generic [ref=e717]:
+          - heading "Computer Vision" [level=4] [ref=e720]:
+            - link "Computer Vision" [ref=e721] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/how-it-works/computer-vision/
+          - list [ref=e724]:
+            - generic [ref=e726]:
+              - heading "US and Japan announce sweeping AI and tech collaboration" [level=3] [ref=e730]:
+                - link "US and Japan announce sweeping AI and tech collaboration" [ref=e731] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/us-and-japan-sweeping-ai-tech-collaboration/
+              - generic [ref=e736]:
+                - paragraph [ref=e740]:
+                  - link "Artificial Intelligence" [ref=e741] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/artificial-intelligence/
+                - paragraph [ref=e744]: April 11, 2024
+            - generic [ref=e751]:
+              - heading "UK and Canada sign AI compute agreement" [level=3] [ref=e755]:
+                - link "UK and Canada sign AI compute agreement" [ref=e756] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/uk-and-canada-sign-ai-compute-agreement/
+              - generic [ref=e761]:
+                - paragraph [ref=e765]:
+                  - link "Artificial Intelligence" [ref=e766] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/artificial-intelligence/
+                - paragraph [ref=e769]: January 31, 2024
+            - generic [ref=e776]:
+              - heading "Quantum AI represents a ‘transformative advancement’" [level=3] [ref=e780]:
+                - link "Quantum AI represents a ‘transformative advancement’" [ref=e781] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/quantum-ai-represents-transformative-advancement/
+              - generic [ref=e786]:
+                - paragraph [ref=e790]:
+                  - link "AI Hardware & Chips" [ref=e791] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_ai-hardware-chips/
+                - paragraph [ref=e794]: November 14, 2023
+        - generic [ref=e798]:
+          - heading "Machine Learning" [level=4] [ref=e801]:
+            - link "Machine Learning" [ref=e802] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/ai-machine-learning/
+          - list [ref=e805]:
+            - generic [ref=e807]:
+              - 'heading "IDC: How EMEA CIOs can jumpstart AI rollouts" [level=3] [ref=e811]':
+                - 'link "IDC: How EMEA CIOs can jumpstart AI rollouts" [ref=e812] [cursor=pointer]':
+                  - /url: https://www.artificialintelligence-news.com/news/idc-how-emea-cios-can-jumpstart-ai-rollouts/
+              - generic [ref=e817]:
+                - paragraph [ref=e821]:
+                  - link "Governance, Regulation & Policy" [ref=e822] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_governance-regulation-and-policy/
+                - paragraph [ref=e825]: April 29, 2026
+            - generic [ref=e832]:
+              - heading "Google warns malicious web pages are poisoning AI agents" [level=3] [ref=e836]:
+                - link "Google warns malicious web pages are poisoning AI agents" [ref=e837] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/google-warns-malicious-web-pages-poisoning-ai-agents/
+              - generic [ref=e842]:
+                - paragraph [ref=e846]:
+                  - link "Governance, Regulation & Policy" [ref=e847] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_governance-regulation-and-policy/
+                - paragraph [ref=e850]: April 27, 2026
+            - generic [ref=e857]:
+              - heading "SAP and ANYbotics drive industrial adoption of physical AI" [level=3] [ref=e861]:
+                - link "SAP and ANYbotics drive industrial adoption of physical AI" [ref=e862] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/sap-and-anybotics-drive-industrial-adoption-physical-ai/
+              - generic [ref=e867]:
+                - paragraph [ref=e871]:
+                  - link "Physical AI" [ref=e872] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/physical-ai/
+                - paragraph [ref=e875]: March 31, 2026
+        - link [ref=e884] [cursor=pointer]:
+          - /url: https://www.ai-expo.net/europe
+      - generic [ref=e886]:
+        - generic [ref=e887]:
+          - heading "Enterprise" [level=4] [ref=e890]:
+            - link "Enterprise" [ref=e891] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/ai-enterprise/
+          - list [ref=e894]:
+            - generic [ref=e896]:
+              - 'heading "SAP: How enterprise AI governance secures profit margins" [level=3] [ref=e900]':
+                - 'link "SAP: How enterprise AI governance secures profit margins" [ref=e901] [cursor=pointer]':
+                  - /url: https://www.artificialintelligence-news.com/news/sap-how-enterprise-ai-governance-secures-profit-margins/
+              - generic [ref=e906]:
+                - paragraph [ref=e910]:
+                  - link "Governance, Regulation & Policy" [ref=e911] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_governance-regulation-and-policy/
+                - paragraph [ref=e914]: May 1, 2026
+            - generic [ref=e921]:
+              - 'heading "IDC: How EMEA CIOs can jumpstart AI rollouts" [level=3] [ref=e925]':
+                - 'link "IDC: How EMEA CIOs can jumpstart AI rollouts" [ref=e926] [cursor=pointer]':
+                  - /url: https://www.artificialintelligence-news.com/news/idc-how-emea-cios-can-jumpstart-ai-rollouts/
+              - generic [ref=e931]:
+                - paragraph [ref=e935]:
+                  - link "Governance, Regulation & Policy" [ref=e936] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_governance-regulation-and-policy/
+                - paragraph [ref=e939]: April 29, 2026
+            - generic [ref=e946]:
+              - heading "Google warns malicious web pages are poisoning AI agents" [level=3] [ref=e950]:
+                - link "Google warns malicious web pages are poisoning AI agents" [ref=e951] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/google-warns-malicious-web-pages-poisoning-ai-agents/
+              - generic [ref=e956]:
+                - paragraph [ref=e960]:
+                  - link "Governance, Regulation & Policy" [ref=e961] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/new_governance-regulation-and-policy/
+                - paragraph [ref=e964]: April 27, 2026
+        - generic [ref=e968]:
+          - heading "Industries" [level=4] [ref=e971]:
+            - link "Industries" [ref=e972] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/ai-industries/
+          - list [ref=e975]:
+            - generic [ref=e977]:
+              - heading "RingCentral adds Shopify, Calendly, and WhatsApp to AI Receptionist" [level=3] [ref=e981]:
+                - link "RingCentral adds Shopify, Calendly, and WhatsApp to AI Receptionist" [ref=e982] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/ringcentral-ai-adds-shopify-calendly-and-whatsapp-to-ai-receptionist/
+              - generic [ref=e987]:
+                - paragraph [ref=e991]:
+                  - link "Service Industry AI" [ref=e992] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/service-industry-ai/
+                - paragraph [ref=e995]: May 8, 2026
+            - generic [ref=e1002]:
+              - heading "AI in law firms entering its closing summaries" [level=3] [ref=e1006]:
+                - link "AI in law firms entering its closing summaries" [ref=e1007] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/ai-in-law-firms-entering-its-closing-summaries/
+              - generic [ref=e1012]:
+                - paragraph [ref=e1016]:
+                  - link "Legal Industry AI" [ref=e1017] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/legal-industry-ai/
+                - paragraph [ref=e1020]: April 22, 2026
+            - generic [ref=e1027]:
+              - heading "Trustpilot partners with AI companies as traditional search declines" [level=3] [ref=e1031]:
+                - link "Trustpilot partners with AI companies as traditional search declines" [ref=e1032] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/ai-in-ecommerce-trustpilot-partnerships-integration-news-trad-search-declines/
+              - generic [ref=e1037]:
+                - paragraph [ref=e1041]:
+                  - link "Retail & Logistics AI" [ref=e1042] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/retail-logistics-ai/
+                - paragraph [ref=e1045]: March 17, 2026
+        - generic [ref=e1049]:
+          - heading "Deep Learning" [level=4] [ref=e1052]:
+            - link "Deep Learning" [ref=e1053] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/categories/ai-deep-reinforcement-learning/
+          - list [ref=e1056]:
+            - generic [ref=e1058]:
+              - heading "IBM Research unveils breakthrough analog AI chip for efficient deep learning" [level=3] [ref=e1062]:
+                - link "IBM Research unveils breakthrough analog AI chip for efficient deep learning" [ref=e1063] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/ibm-research-breakthrough-analog-ai-chip-deep-learning/
+              - generic [ref=e1068]:
+                - paragraph [ref=e1072]:
+                  - link "AI Market Trends" [ref=e1073] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-market-trends/
+                - paragraph [ref=e1076]: August 11, 2023
+            - generic [ref=e1083]:
+              - 'heading "Damian Bogunowicz, Neural Magic: On revolutionising deep learning with CPUs" [level=3] [ref=e1087]':
+                - 'link "Damian Bogunowicz, Neural Magic: On revolutionising deep learning with CPUs" [ref=e1088] [cursor=pointer]':
+                  - /url: https://www.artificialintelligence-news.com/news/damian-bogunowicz-neural-magic-revolutionising-deep-learning-cpus/
+              - generic [ref=e1093]:
+                - paragraph [ref=e1097]:
+                  - link "AI Market Trends" [ref=e1098] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-market-trends/
+                - paragraph [ref=e1101]: July 24, 2023
+            - generic [ref=e1108]:
+              - heading "OpenAI’s GPT-3 is a convincing philosopher" [level=3] [ref=e1112]:
+                - link "OpenAI’s GPT-3 is a convincing philosopher" [ref=e1113] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/openai-gpt-3-is-a-convincing-philosopher/
+              - generic [ref=e1118]:
+                - paragraph [ref=e1122]:
+                  - link "AI Market Trends" [ref=e1123] [cursor=pointer]:
+                    - /url: https://www.artificialintelligence-news.com/categories/inside-ai/ai-market-trends/
+                - paragraph [ref=e1126]: July 27, 2022
+      - generic [ref=e1132]:
+        - heading "Subscribe" [level=2] [ref=e1136]
+        - generic [ref=e1138]:
+          - paragraph [ref=e1142]: All our premium content and latest tech news delivered straight to your inbox
+          - link "Subscribe" [ref=e1147] [cursor=pointer]:
+            - /url: "#elementor-action%3Aaction%3Dpopup%3Aopen%26settings%3DeyJpZCI6IjE2ODk0IiwidG9nZ2xlIjpmYWxzZX0%3D"
+            - generic [ref=e1148]:
+              - img [ref=e1150]
+              - generic [ref=e1152]: Subscribe
+      - generic [ref=e1153]:
+        - heading "Resources" [level=2] [ref=e1157]
+        - link "View All Resources" [ref=e1162] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com/resources/
+          - generic [ref=e1163]:
+            - img [ref=e1165]
+            - generic [ref=e1167]: View All Resources
+      - generic [ref=e1169]:
+        - list [ref=e1173]:
+          - generic [ref=e1175]:
+            - link [ref=e1178] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/uniquely-wired-podcast-with-microsofts-agnes-heftberger/
+            - generic [ref=e1179]:
+              - paragraph [ref=e1182]:
+                - link "AI and Us" [ref=e1183] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/
+              - paragraph [ref=e1186]: April 21, 2026
+            - heading "Uniquely Wired podcast with Microsoft’s Agnes Heftberger" [level=1] [ref=e1189]:
+              - link "Uniquely Wired podcast with Microsoft’s Agnes Heftberger" [ref=e1190] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/resources/uniquely-wired-podcast-with-microsofts-agnes-heftberger/
+          - generic [ref=e1192]:
+            - link [ref=e1195] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-ai-combined-with-automation-is-the-perfect-marriage-for-scalable-intelligent-operations-2/
+            - generic [ref=e1196]:
+              - paragraph [ref=e1199]: Resource
+              - paragraph [ref=e1202]: January 8, 2026
+            - 'heading "On-Demand Webinar: AI Combined with Automation is the Perfect Marriage for Scalable, Intelligent Operations" [level=1] [ref=e1205]':
+              - 'link "On-Demand Webinar: AI Combined with Automation is the Perfect Marriage for Scalable, Intelligent Operations" [ref=e1206] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-ai-combined-with-automation-is-the-perfect-marriage-for-scalable-intelligent-operations-2/
+          - generic [ref=e1208]:
+            - link [ref=e1211] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-dataops-can-build-the-foundation-for-your-generative-ai-ambitions/
+            - generic [ref=e1212]:
+              - paragraph [ref=e1215]: Resource
+              - paragraph [ref=e1218]: January 6, 2026
+            - 'heading "On-Demand Webinar: DataOps Can Build the Foundation For Your Generative AI Ambitions" [level=1] [ref=e1221]':
+              - 'link "On-Demand Webinar: DataOps Can Build the Foundation For Your Generative AI Ambitions" [ref=e1222] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-dataops-can-build-the-foundation-for-your-generative-ai-ambitions/
+          - generic [ref=e1224]:
+            - link [ref=e1227] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-from-complexity-to-clarity-ai-agility-layer-for-intelligent-insurance/
+            - generic [ref=e1228]:
+              - paragraph [ref=e1231]: Resource
+              - paragraph [ref=e1234]: December 11, 2025
+            - 'heading "On-Demand Webinar: From Complexity to Clarity: AI + Agility Layer for Intelligent Insurance" [level=1] [ref=e1237]':
+              - 'link "On-Demand Webinar: From Complexity to Clarity: AI + Agility Layer for Intelligent Insurance" [ref=e1238] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-from-complexity-to-clarity-ai-agility-layer-for-intelligent-insurance/
+          - generic [ref=e1240]:
+            - link [ref=e1243] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-turning-a-hackers-toolkit-against-them/
+            - generic [ref=e1244]:
+              - paragraph [ref=e1247]: Resource
+              - paragraph [ref=e1250]: December 11, 2025
+            - 'heading "On-Demand Webinar: Turning a Hacker’s Toolkit Against Them" [level=1] [ref=e1253]':
+              - 'link "On-Demand Webinar: Turning a Hacker’s Toolkit Against Them" [ref=e1254] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-turning-a-hackers-toolkit-against-them/
+          - generic [ref=e1256]:
+            - link [ref=e1259] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-cms-buyers-briefing-a-live-look-at-whats-next-in-ai-driven-platforms/
+            - generic [ref=e1260]:
+              - paragraph [ref=e1263]: Resource
+              - paragraph [ref=e1266]: December 11, 2025
+            - 'heading "On-Demand Webinar: CMS Buyer’s Briefing: A Live Look at What’s Next in AI-Driven Platforms" [level=1] [ref=e1269]':
+              - 'link "On-Demand Webinar: CMS Buyer’s Briefing: A Live Look at What’s Next in AI-Driven Platforms" [ref=e1270] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/resources/on-demand-webinar-cms-buyers-briefing-a-live-look-at-whats-next-in-ai-driven-platforms/
+        - link [ref=e1274] [cursor=pointer]:
+          - /url: https://techexevent.com/europe/
+      - generic [ref=e1281]:
+        - heading "Events" [level=2] [ref=e1285]
+        - link "View All Events" [ref=e1290] [cursor=pointer]:
+          - /url: https://www.artificialintelligence-news.com/events
+          - generic [ref=e1291]:
+            - img [ref=e1293]
+            - generic [ref=e1295]: View All Events
+      - list [ref=e1300]:
+        - generic [ref=e1302]:
+          - link [ref=e1303] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/events/ai-big-data-expo-north-america-2026/
+          - heading "Expo, In-Person Events" [level=2] [ref=e1310]:
+            - link "Expo" [ref=e1311] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/event-type/expo/
+            - text: ","
+            - link "In-Person Events" [ref=e1312] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/event-type/in-person-events/
+          - generic [ref=e1313]:
+            - heading "AI & Big Data Expo North America 2026" [level=3] [ref=e1317]:
+              - link "AI & Big Data Expo North America 2026" [ref=e1318] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/events/ai-big-data-expo-north-america-2026/
+            - generic [ref=e1320]:
+              - img [ref=e1325]
+              - paragraph [ref=e1329]: 18 May 2026 9:00 am
+              - paragraph [ref=e1332]: to
+              - paragraph [ref=e1335]: 19 May 2026 5:00 pm
+            - generic [ref=e1337]:
+              - img [ref=e1342]
+              - paragraph [ref=e1346]: San Jose Mcenery Convention Center
+              - paragraph [ref=e1349]: in
+              - paragraph [ref=e1352]: San Jose
+          - link [ref=e1365] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/events/ai-big-data-expo-north-america-2026/
+            - img [ref=e1366]
+        - generic [ref=e1369]:
+          - link [ref=e1370] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/events/digital-transformation-week-north-america-2026/
+          - heading "Expo" [level=2] [ref=e1377]:
+            - link "Expo" [ref=e1378] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/event-type/expo/
+          - generic [ref=e1379]:
+            - heading "Digital Transformation North America 2026" [level=3] [ref=e1383]:
+              - link "Digital Transformation North America 2026" [ref=e1384] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/events/digital-transformation-week-north-america-2026/
+            - generic [ref=e1386]:
+              - img [ref=e1391]
+              - paragraph [ref=e1395]: 18 May 2026 9:00 am
+              - paragraph [ref=e1398]: to
+              - paragraph [ref=e1401]: 19 May 2026 5:00 pm
+            - generic [ref=e1403]:
+              - img [ref=e1408]
+              - paragraph [ref=e1412]: San Jose McEnery Convention Center
+              - paragraph [ref=e1415]: in
+              - paragraph [ref=e1418]: CA
+          - link [ref=e1431] [cursor=pointer]:
+            - /url: https://www.artificialintelligence-news.com/events/digital-transformation-week-north-america-2026/
+            - img [ref=e1432]
+      - heading "Related News" [level=2] [ref=e1444]
+      - generic [ref=e1455]:
+        - generic [ref=e1456]:
+          - generic [ref=e1457]:
+            - link [ref=e1459] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/nvidia-h200-china-deal-stalled-trump-xi-summit-2026/
+              - img [ref=e1460]
+            - generic [ref=e1461]:
+              - paragraph [ref=e1463]:
+                - link "AI News" [ref=e1464] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/nvidia-h200-china-deal-stalled-trump-xi-summit-2026/
+              - paragraph [ref=e1466]: May 19, 2026
+            - heading "The Nvidia H200 China deal survived the Trump-Xi summit–just not in the way anyone expected" [level=2] [ref=e1468]:
+              - link "The Nvidia H200 China deal survived the Trump-Xi summit–just not in the way anyone expected" [ref=e1469] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/nvidia-h200-china-deal-stalled-trump-xi-summit-2026/
+          - generic [ref=e1470]:
+            - link [ref=e1472] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/techex-north-america-day-one-lessons-for-all-around-ai-and-more/
+              - img [ref=e1473]
+            - generic [ref=e1474]:
+              - paragraph [ref=e1476]:
+                - link "AI News" [ref=e1477] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/techex-north-america-day-one-lessons-for-all-around-ai-and-more/
+              - paragraph [ref=e1479]: May 19, 2026
+            - 'heading "AI is a matter of power, infrastructure and security: TechEx North America" [level=2] [ref=e1481]':
+              - 'link "AI is a matter of power, infrastructure and security: TechEx North America" [ref=e1482] [cursor=pointer]':
+                - /url: https://www.artificialintelligence-news.com/news/techex-north-america-day-one-lessons-for-all-around-ai-and-more/
+          - generic [ref=e1483]:
+            - link [ref=e1485] [cursor=pointer]:
+              - /url: https://www.developer-tech.com/news/microsoft-claude-code-github-copilot-cli/
+              - img [ref=e1486]
+            - generic [ref=e1487]:
+              - paragraph [ref=e1489]:
+                - link "Developer Tech News" [ref=e1490] [cursor=pointer]:
+                  - /url: https://www.developer-tech.com/news/microsoft-claude-code-github-copilot-cli/
+              - paragraph [ref=e1492]: May 18, 2026
+            - heading "Microsoft moves engineers from Claude Code to GitHub Copilot CLI" [level=2] [ref=e1494]:
+              - link "Microsoft moves engineers from Claude Code to GitHub Copilot CLI" [ref=e1495] [cursor=pointer]:
+                - /url: https://www.developer-tech.com/news/microsoft-claude-code-github-copilot-cli/
+        - generic [ref=e1496]:
+          - generic [ref=e1497]:
+            - link [ref=e1499] [cursor=pointer]:
+              - /url: https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/
+              - img [ref=e1500]
+            - generic [ref=e1501]:
+              - paragraph [ref=e1503]:
+                - link "AI News" [ref=e1504] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/
+              - paragraph [ref=e1506]: May 18, 2026
+            - heading "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [level=2] [ref=e1508]:
+              - link "Amazon launches Alexa for Shopping as Rufus moves behind the scenes" [ref=e1509] [cursor=pointer]:
+                - /url: https://www.artificialintelligence-news.com/news/amazon-alexa-for-shopping-rufus-ai-assistant/
+          - generic [ref=e1510]:
+            - link [ref=e1512] [cursor=pointer]:
+              - /url: https://iottechnews.com/news/lg-cns-in-america-multinationals-success-in-korea-to-the-us/
+              - img [ref=e1513]
+            - generic [ref=e1514]:
+              - paragraph [ref=e1516]:
+                - link "Internet of Things News" [ref=e1517] [cursor=pointer]:
+                  - /url: https://iottechnews.com/news/lg-cns-in-america-multinationals-success-in-korea-to-the-us/
+              - paragraph [ref=e1519]: May 17, 2026
+            - heading "Multinational LG CNS brings its success story to the US" [level=2] [ref=e1521]:
+              - link "Multinational LG CNS brings its success story to the US" [ref=e1522] [cursor=pointer]:
+                - /url: https://iottechnews.com/news/lg-cns-in-america-multinationals-success-in-korea-to-the-us/
+          - generic [ref=e1523]:
+            - link [ref=e1525] [cursor=pointer]:
+              - /url: https://iottechnews.com/news/akamai-on-what-enterprise-ai-needs-at-the-edge/
+              - img [ref=e1526]
+            - generic [ref=e1527]:
+              - paragraph [ref=e1529]:
+                - link "Internet of Things News" [ref=e1530] [cursor=pointer]:
+                  - /url: https://iottechnews.com/news/akamai-on-what-enterprise-ai-needs-at-the-edge/
+              - paragraph [ref=e1532]: May 15, 2026
+            - 'heading "Continuum of compute: Akamai on what enterprise AI needs at the edge" [level=2] [ref=e1534]':
+              - 'link "Continuum of compute: Akamai on what enterprise AI needs at the edge" [ref=e1535] [cursor=pointer]':
+                - /url: https://iottechnews.com/news/akamai-on-what-enterprise-ai-needs-at-the-edge/
+  - contentinfo [ref=e1540]:
+    - generic [ref=e1541]:
+      - heading "Subscribe" [level=2] [ref=e1545]
+      - generic [ref=e1547]:
+        - paragraph [ref=e1551]: All our premium content and latest tech news delivered straight to your inbox
+        - link "Subscribe" [ref=e1556] [cursor=pointer]:
+          - /url: "#elementor-action%3Aaction%3Dpopup%3Aopen%26settings%3DeyJpZCI6MTY4OTQsInRvZ2dsZSI6ZmFsc2V9"
+          - generic [ref=e1557]:
+            - img [ref=e1559]
+            - generic [ref=e1561]: Subscribe
+      - generic [ref=e1562]:
+        - generic [ref=e1566]:
+          - link [ref=e1570] [cursor=pointer]:
+            - /url: https://www.facebook.com/AITechNews/
+            - img [ref=e1571]
+          - link [ref=e1576] [cursor=pointer]:
+            - /url: https://www.linkedin.com/groups/1906826/
+            - img [ref=e1577]
+          - link [ref=e1582] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UC8mJiUbFxZnFXBKpXq9dJZA
+            - img [ref=e1583]
+        - generic [ref=e1585]:
+          - heading "Explore" [level=2] [ref=e1588]
+          - navigation "Menu" [ref=e1591]:
+            - list [ref=e1592]:
+              - listitem [ref=e1593]:
+                - link "Contact Us" [ref=e1594] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/contact-us/
+              - listitem [ref=e1595]:
+                - link "Newsletter" [ref=e1596] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/newsletter/
+              - listitem [ref=e1597]:
+                - link "Privacy Policy" [ref=e1598] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/privacy-policy-2/
+              - listitem [ref=e1599]:
+                - link "Cookie Policy" [ref=e1600] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/cookie-policy-uk/
+        - generic [ref=e1601]:
+          - heading "Reach Our Audience" [level=2] [ref=e1604]
+          - navigation "Menu" [ref=e1607]:
+            - list [ref=e1608]:
+              - listitem [ref=e1609]:
+                - link "Advertise" [ref=e1610] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/advertise/
+              - listitem [ref=e1611]:
+                - link "Contact Us" [ref=e1612] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/contact-us/
+              - listitem [ref=e1613]:
+                - link "Post a Press Release" [ref=e1614] [cursor=pointer]:
+                  - /url: https://techforge.pub/shop
+        - generic [ref=e1615]:
+          - heading "Categories" [level=2] [ref=e1618]
+          - navigation "Menu" [ref=e1621]:
+            - list [ref=e1622]:
+              - listitem [ref=e1623]:
+                - link "AI and Us" [ref=e1624] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-and-us/
+              - listitem [ref=e1625]:
+                - link "AI in Action" [ref=e1626] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/ai-in-action/
+              - listitem [ref=e1627]:
+                - link "How It Works" [ref=e1628] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/how-it-works/
+              - listitem [ref=e1629]:
+                - link "Features" [ref=e1630] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/features/
+              - listitem [ref=e1631]:
+                - link "Inside AI" [ref=e1632] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/inside-ai/
+              - listitem [ref=e1633]:
+                - link "Sponsored Content" [ref=e1634] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/sponsored-content/
+              - listitem [ref=e1635]:
+                - link "TechEx Events" [ref=e1636] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/categories/techex-events/
+              - listitem [ref=e1637]:
+                - link "All Categories" [ref=e1638] [cursor=pointer]:
+                  - /url: https://www.artificialintelligence-news.com/all-categories/
+        - generic [ref=e1639]:
+          - heading "Other Publications" [level=2] [ref=e1642]
+          - navigation "Menu" [ref=e1645]:
+            - list [ref=e1646]:
+              - listitem [ref=e1647]:
+                - link "Explore All" [ref=e1648] [cursor=pointer]:
+                  - /url: https://techforge.pub/publications/
+              - listitem [ref=e1649]:
+                - link "Developer" [ref=e1650] [cursor=pointer]:
+                  - /url: https://www.developer-tech.com/
+              - listitem [ref=e1651]:
+                - link "IoT News" [ref=e1652] [cursor=pointer]:
+                  - /url: https://www.iottechnews.com/
+              - listitem [ref=e1653]:
+                - link "MarketingTech" [ref=e1654] [cursor=pointer]:
+                  - /url: https://www.marketingtechnews.net/
+              - listitem [ref=e1655]:
+                - link "CloudTech" [ref=e1656] [cursor=pointer]:
+                  - /url: https://www.cloudcomputing-news.net/
+              - listitem [ref=e1657]:
+                - link "Telecoms" [ref=e1658] [cursor=pointer]:
+                  - /url: https://www.telecomstechnews.com/
+              - listitem [ref=e1659]:
+                - link "TechHQ" [ref=e1660] [cursor=pointer]:
+                  - /url: https://techhq.com/
+              - listitem [ref=e1661]:
+                - link "TechWire Asia" [ref=e1662] [cursor=pointer]:
+                  - /url: https://techwireasia.com/
+        - generic [ref=e1663]:
+          - paragraph [ref=e1666]:
+            - text: AI News is part of
+            - link "TechForge" [ref=e1667] [cursor=pointer]:
+              - /url: https://techforge.pub/
+          - link [ref=e1674] [cursor=pointer]:
+            - /url: https://techforge.pub/
+  - generic [ref=e1675]: desktop

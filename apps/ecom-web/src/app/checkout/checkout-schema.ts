@@ -1,7 +1,21 @@
 import { z } from 'zod';
 import type { EcomLocale } from '@/lib/locales';
 
-export function buildCheckoutInfoSchema(locale: EcomLocale): z.AnyZodObject {
+const checkoutInfoSchema = z.object({
+  email: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  address: z.string(),
+  apartment: z.string().optional(),
+  city: z.string(),
+  postcode: z.string(),
+  country: z.string(),
+  phone: z.string().optional(),
+});
+
+export type CheckoutInfoData = z.infer<typeof checkoutInfoSchema>;
+
+export function buildCheckoutInfoSchema(locale: EcomLocale): z.ZodType<CheckoutInfoData> {
   const req = locale === 'pl' ? 'To pole jest wymagane.' : 'This field is required.';
   const emailInvalid = locale === 'pl' ? 'Wpisz poprawny adres email.' : 'Enter a valid email address.';
   const phoneInvalid = locale === 'pl' ? 'Wpisz poprawny numer telefonu.' : 'Enter a valid phone number.';
@@ -19,7 +33,5 @@ export function buildCheckoutInfoSchema(locale: EcomLocale): z.AnyZodObject {
       (val) => val === undefined || val.trim() === '' || /^[+\d][\d\s\-()+.]{5,}$/.test(val.trim()),
       { message: phoneInvalid },
     ),
-  });
+  }) as z.ZodType<CheckoutInfoData>;
 }
-
-export type CheckoutInfoData = z.infer<ReturnType<typeof buildCheckoutInfoSchema>>;

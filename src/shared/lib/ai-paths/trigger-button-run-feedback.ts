@@ -60,6 +60,11 @@ const RUN_FEEDBACK_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
   'canceled',
 ]);
 
+const STALE_RUNNING_RECOVERY_ERROR_PATTERNS = [
+  /stale running state/i,
+  /worker likely stopped before reporting completion/i,
+];
+
 const TRIGGER_BUTTON_RUN_FEEDBACK_PRESENTATIONS: Record<
   Exclude<TriggerButtonRunFeedbackStatus, 'waiting'> | 'waiting',
   TriggerButtonRunFeedbackPresentation
@@ -272,6 +277,15 @@ export const isTriggerButtonRunFeedbackTerminal = (
   status: TriggerButtonRunFeedbackSnapshot['status']
 ): boolean => isTrackedRunStatus(status) && TERMINAL_RUN_STATUSES.has(status);
 
+export const isStaleRunningRecoveryRunFeedback = (
+  value: TriggerButtonRunFeedbackSnapshot | null | undefined
+): boolean => {
+  if (!value || value.status !== 'failed') return false;
+  const errorMessage = value.errorMessage?.trim() ?? '';
+  if (errorMessage.length === 0) return false;
+  return STALE_RUNNING_RECOVERY_ERROR_PATTERNS.some((pattern) => pattern.test(errorMessage));
+};
+
 const toTriggerButtonRunFeedbackSnapshot = (
   value: PersistedTriggerButtonRunFeedback
 ): TriggerButtonRunFeedbackSnapshot => ({
@@ -329,18 +343,23 @@ export const readTriggerButtonRunFeedback = (input: {
 
   const prunedMap = readPrunedPersistedFeedbackMap();
 
-  const persisted =
-    prunedMap[
-      buildSharedFeedbackKey({
-        identityType: feedbackIdentity.identityType,
-        identityValue: feedbackIdentity.identityValue,
-        entityType,
-        entityId,
-      })
-    ];
+  const feedbackKey = buildSharedFeedbackKey({
+    identityType: feedbackIdentity.identityType,
+    identityValue: feedbackIdentity.identityValue,
+    entityType,
+    entityId,
+  });
+  const persisted = prunedMap[feedbackKey];
   const normalized = normalizePersistedFeedback(persisted);
   if (normalized) {
-    return toTriggerButtonRunFeedbackSnapshot(normalized);
+    const snapshot = toTriggerButtonRunFeedbackSnapshot(normalized);
+    if (isStaleRunningRecoveryRunFeedback(snapshot)) {
+      const nextMap = { ...prunedMap };
+      delete nextMap[feedbackKey];
+      writePersistedFeedbackMap(nextMap);
+      return null;
+    }
+    return snapshot;
   }
   return null;
 };
@@ -399,6 +418,7 @@ export const listTriggerButtonRunFeedback = (input?: {
   Object.values(prunedMap)
     .map((value) => normalizePersistedFeedback(value))
     .filter((value): value is PersistedTriggerButtonRunFeedback => Boolean(value))
+    .filter((value) => !isStaleRunningRecoveryRunFeedback(value))
     .forEach((value) => {
       if (!matchesFeedbackListFilters(value, filters)) {
         return;
@@ -435,14 +455,13 @@ export const persistTriggerButtonRunFeedback = (input: {
     pathId: input.pathId,
   });
   const currentMap = pruneExpiredFeedback(readPersistedFeedbackMap());
-  currentMap[
-    buildSharedFeedbackKey({
-      identityType: feedbackIdentity.identityType,
-      identityValue: feedbackIdentity.identityValue,
-      entityType,
-      entityId: normalizedEntityId,
-    })
-  ] = {
+  const feedbackKey = buildSharedFeedbackKey({
+    identityType: feedbackIdentity.identityType,
+    identityValue: feedbackIdentity.identityValue,
+    entityType,
+    entityId: normalizedEntityId,
+  });
+  const record: PersistedTriggerButtonRunFeedback = {
     buttonId,
     pathId: normalizeOptionalString(input.pathId),
     location,
@@ -455,6 +474,13 @@ export const persistTriggerButtonRunFeedback = (input: {
     errorMessage: input.run.errorMessage,
     expiresAt: Date.now() + resolveFeedbackTtlMs(input.run.status),
   };
+  if (isStaleRunningRecoveryRunFeedback(record)) {
+    delete currentMap[feedbackKey];
+    writePersistedFeedbackMap(currentMap);
+    return;
+  }
+
+  currentMap[feedbackKey] = record;
   writePersistedFeedbackMap(currentMap);
 };
 

@@ -18,7 +18,7 @@ type UseKangurMobileResultsOptions = {
   operation?: string | null;
 };
 
-type UseKangurMobileResultsResult = {
+export type UseKangurMobileResultsResult = {
   availableOperations: string[];
   error: string | null;
   isEnabled: boolean;

@@ -146,9 +146,9 @@ model extensions and MIME types. The bundled `config.example.php` allows
 A copy-ready Milkbar-specific scaffold is available here:
 
 ```text
-hosting/fastcomet/milkbardesigners.com/public_html/
+hosting/fastcomet/uploads.milkbardesigners.com/public_html/
 ```
 
 Copy the contents of that `public_html/` directory into the FastComet document
-root for `milkbardesigners.com`, then create `api/uploads/config.php` from the
-included `config.example.php`.
+root for `uploads.milkbardesigners.com`, then create `api/uploads/config.php`
+from the included `config.example.php`.
